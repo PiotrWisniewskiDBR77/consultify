@@ -134,7 +134,7 @@ import {
   upsertBenchmark,
 } from '../services/ratioAnalysisService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -232,73 +232,242 @@ function sha256Hex(buffer: Buffer): string {
 }
 
 /**
- * Look up a previously-recorded upload response for this org+key. Returns
- * null if none exists OR if the idempotency table isn't present yet
- * (schema-compat fallback — never blocks upload on a missing optional
- * table). `requestHash` is null both when the row predates the
- * `request_hash` column (schema-compat) and when it's genuinely absent.
+ * ── Codex round-3 fix: reservation/result state machine ──────────────────
+ *
+ * The PREVIOUS shape here (`findIdempotentUpload` + best-effort
+ * `recordIdempotentUpload`, both since removed) only ever wrote the
+ * completion marker ONCE, at the very end, and swallowed every failure of
+ * that write. Root cause: that write went through `dbRun()` ->
+ * `Database.js`'s global connection pool — a DIFFERENT connection than the
+ * one `withStatementUploadIdempotencyLock` holds its `pg_advisory_xact_lock`
+ * on — so it was never actually inside "the transaction" the lock implied.
+ * A failure of just that one INSERT (any reason) left the business writes
+ * (Statement + Pack, which already commit independently per-statement via
+ * that same global pool) durably committed, a 201 already sent, and NO
+ * durable marker — a same-key retry then found nothing and redid the whole
+ * upload, creating a duplicate Statement/Pack.
+ *
+ * FIX: reserve BEFORE doing any work, finalize (or fail) AFTER — both as
+ * their OWN durably-committed statements, independent of whether later
+ * steps in this request succeed. `pg_advisory_xact_lock` remains the outer
+ * serialization layer (unchanged) — it guarantees only ONE caller for a
+ * given (organizationId, idempotencyKey) is ever inside
+ * `reserveIdempotentUpload` at a time, which is what makes the
+ * SELECT-then-branch-then-UPDATE sequence below race-free without needing
+ * its own database transaction. See the `20260805_fin005_statement_upload_
+ * idempotency_state_machine.sql` migration for the schema side of this.
  */
-async function findIdempotentUpload(
-  organizationId: string,
-  idempotencyKey: string
-): Promise<{ statusCode: number; responseJson: string; requestHash: string | null } | null> {
-  try {
-    const rows = await dbAll<{
-      status_code: number;
-      response_json: string;
-      request_hash: string | null;
-    }>(
-      `SELECT status_code, response_json, request_hash FROM financial_statement_upload_idempotency
-       WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
-      [organizationId, idempotencyKey]
-    );
-    const row = Array.isArray(rows) ? rows[0] : undefined;
-    if (!row) return null;
-    return {
-      statusCode: Number(row.status_code) || 201,
-      responseJson: String(row.response_json),
-      requestHash: row.request_hash != null ? String(row.request_hash) : null,
-    };
-  } catch (error) {
-    if (isSchemaCompatError(error)) return null;
-    throw error;
-  }
+
+/**
+ * How long an 'in_progress' reservation is treated as a live, in-flight
+ * upload before a later request for the same (org, key) is allowed to
+ * reclaim it. A real upload -> parse -> persist cycle for a single
+ * financial statement (a handful of sheets, a few hundred rows at most —
+ * see the MAX_XLSX_SHEETS / MAX_XLSX_CELLS / MAX_CSV_BYTES guards below)
+ * should never approach this. It exists purely to recover a reservation
+ * abandoned by a crashed/killed process: a crash releases the pg_advisory_xact_lock
+ * immediately (the pinned connection drops, its transaction aborts), so a
+ * NEW request for the same key is NOT blocked by the lock — but without
+ * this cutoff it would be blocked forever by a permanently 'in_progress'
+ * row that no live process is ever going to finalize or fail.
+ */
+const STALE_IN_PROGRESS_SECONDS = 60;
+
+interface IdempotencyRow {
+  id: string;
+  status: 'in_progress' | 'completed' | 'failed';
+  status_code: number;
+  response_json: string | null;
+  request_hash: string | null;
+  created_at: string;
 }
 
-/** Best-effort record of a successful upload response, keyed by org+idempotency key. */
-async function recordIdempotentUpload(params: {
-  organizationId: string;
-  idempotencyKey: string;
-  statementId: string;
-  statusCode: number;
-  responseJson: string;
-  requestHash: string;
-  createdBy?: string;
-}): Promise<void> {
+type ReservationOutcome =
+  | { kind: 'owner'; reservationId: string }
+  | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+  | { kind: 'conflict' }
+  | { kind: 'in_progress' }
+  | { kind: 'schema_missing' };
+
+/**
+ * Attempt to become the durable OWNER of the (organizationId, idempotencyKey)
+ * reservation for this upload. MUST be called from inside
+ * `withStatementUploadIdempotencyLock` — see the block comment above.
+ *
+ * Requirement 7 (fail-CLOSED for keyed uploads on a schema gap): unlike the
+ * old `findIdempotentUpload`, a schema-compat error on the reservation
+ * INSERT itself (missing table OR missing column — `status` is referenced
+ * directly, so either is caught here) is surfaced as `schema_missing`, not
+ * swallowed into "proceed without protection". A client that supplied an
+ * Idempotency-Key gets a hard rejection with ZERO business writes rather
+ * than a silent downgrade to unprotected. The UNKEYED path (no
+ * Idempotency-Key header) never calls this function at all, so it is
+ * unaffected and keeps working on a schema that predates this feature.
+ */
+async function reserveIdempotentUpload(
+  organizationId: string,
+  idempotencyKey: string,
+  requestHash: string,
+  createdBy?: string
+): Promise<ReservationOutcome> {
+  const reservationId = `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  let inserted: IdempotencyRow | null;
   try {
-    await dbRun(
+    inserted = await dbGet<IdempotencyRow>(
       `INSERT INTO financial_statement_upload_idempotency
-        (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [
-        `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-        params.organizationId,
-        params.idempotencyKey,
-        params.statementId,
-        params.statusCode,
-        params.responseJson,
-        params.requestHash,
-        params.createdBy || null,
-      ],
+        (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_by, created_at)
+       VALUES (?, ?, ?, NULL, 0, NULL, ?, 'in_progress', ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (organization_id, idempotency_key) DO NOTHING
+       RETURNING id, status, status_code, response_json, request_hash, created_at`,
+      [reservationId, organizationId, idempotencyKey, requestHash, createdBy || null],
       { fallback: false }
     );
   } catch (error) {
-    // Best-effort: a failure to RECORD the idempotency marker must never
-    // fail the (already-successful) upload itself. A missing/incompatible
-    // table just means this specific retry-dedup doesn't apply this time.
-    if (!isSchemaCompatError(error)) {
-      logger.warn(`[FinanceStatements] Failed to record upload idempotency marker: ${error}`);
+    if (isSchemaCompatError(error)) return { kind: 'schema_missing' };
+    throw error;
+  }
+  if (inserted) return { kind: 'owner', reservationId: inserted.id };
+
+  // Conflict: a row already exists for this (org, key) — read it and branch.
+  const existing = await dbGet<IdempotencyRow>(
+    `SELECT id, status, status_code, response_json, request_hash, created_at
+       FROM financial_statement_upload_idempotency
+      WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+    [organizationId, idempotencyKey],
+    { fallback: false }
+  );
+  if (!existing) {
+    // Vanishingly unlikely (the conflicting row would have to be deleted
+    // between the INSERT's conflict and this SELECT, by something other
+    // than this code path) — a real inconsistency, not a normal outcome to
+    // paper over.
+    throw new Error(
+      `[FinanceStatements] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on re-read`
+    );
+  }
+
+  if (existing.status === 'completed') {
+    if (existing.request_hash && existing.request_hash !== requestHash) {
+      return { kind: 'conflict' };
     }
+    // Hash matches, or this marker predates the request_hash column
+    // (schema-compat: null) — safe replay either way.
+    return {
+      kind: 'replay',
+      statusCode: Number(existing.status_code) || 201,
+      body: JSON.parse(String(existing.response_json)) as Record<string, unknown>,
+    };
+  }
+
+  // 'failed', or a stale 'in_progress' (crashed/abandoned attempt) — try to
+  // atomically reclaim the SAME row. The staleness comparison uses the
+  // DATABASE's clock (CURRENT_TIMESTAMP), not the app server's, so there is
+  // no app/DB clock-skew risk in the cutoff. Rebinding request_hash to THIS
+  // request is intentional: a 'failed'/abandoned attempt never reached
+  // 'completed', so it never actually established a content binding for
+  // this key — the reclaiming request is free to define one.
+  if (existing.status === 'failed' || existing.status === 'in_progress') {
+    const reclaimed = await dbGet<IdempotencyRow>(
+      `UPDATE financial_statement_upload_idempotency
+          SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
+              status_code = 0, response_json = NULL, statement_id = NULL, completed_at = NULL
+        WHERE id = ?
+          AND (status = 'failed'
+               OR (status = 'in_progress'
+                   AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+        RETURNING id, status, status_code, response_json, request_hash, created_at`,
+      [requestHash, createdBy || null, existing.id],
+      { fallback: false }
+    );
+    if (reclaimed) return { kind: 'owner', reservationId: reclaimed.id };
+    // Not stale after all (lost a theoretical race, or genuinely fresh) —
+    // fall through to "genuinely in progress, retry later".
+  }
+
+  return { kind: 'in_progress' };
+}
+
+/**
+ * Mark a reservation durably COMPLETE — the only signal the route is
+ * allowed to return 201 on (see the caller). Returns false — NEVER throws —
+ * both when the UPDATE affects zero rows (defensive: should not normally
+ * happen since we own the reservation) AND when the UPDATE itself throws
+ * (e.g. a genuine unexpected DB error). Either way the caller treats an
+ * unconfirmed finalize as a hard failure (500-class, never 201) rather than
+ * trusting a write it cannot prove happened.
+ */
+async function finalizeIdempotentUpload(params: {
+  reservationId: string;
+  statementId: string;
+  statusCode: number;
+  responseJson: string;
+}): Promise<boolean> {
+  try {
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency
+          SET status = 'completed', statement_id = ?, status_code = ?, response_json = ?, completed_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'in_progress'`,
+      [params.statementId, params.statusCode, params.responseJson, params.reservationId],
+      { fallback: false }
+    );
+    return Boolean(result?.success) && Number(result?.changes || 0) === 1;
+  } catch (error) {
+    logger.error(
+      `[FinanceStatements] Finalize UPDATE threw for idempotency reservation ${params.reservationId}: ${error}`
+    );
+    return false;
+  }
+}
+
+/**
+ * Mark a reservation FAILED so a later retry for the same (org, key) can
+ * reclaim it instead of being blocked by a dead 'in_progress' row forever.
+ * Best-effort BY DESIGN (a failure to record "this attempt failed" must
+ * never mask or replace the real error being propagated to the client) —
+ * but, unlike the old `recordIdempotentUpload`, a real attempt: any
+ * non-schema-compat failure is logged loudly, not silently swallowed. If
+ * even this UPDATE fails or the row is somehow gone, it is left
+ * 'in_progress' and simply ages into the staleness window above for the
+ * NEXT retry's reclaim path to recover — the safety net, not the primary
+ * path.
+ */
+async function failIdempotentUpload(reservationId: string): Promise<void> {
+  try {
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency SET status = 'failed' WHERE id = ? AND status = 'in_progress'`,
+      [reservationId],
+      { fallback: false }
+    );
+    if (!result?.success || Number(result?.changes || 0) !== 1) {
+      logger.warn(
+        `[FinanceStatements] Marking idempotency reservation ${reservationId} failed did not affect exactly one row — it will age into the staleness window for a later retry to reclaim instead`
+      );
+    }
+  } catch (error) {
+    logger.warn(
+      `[FinanceStatements] Failed to mark idempotency reservation ${reservationId} as failed: ${error}`
+    );
+  }
+}
+
+/**
+ * Best-effort delete of a multer-uploaded temp file on a request path that
+ * does NOT result in a newly-persisted Statement (replay, 409 reuse-reject,
+ * retryable in-progress-reject, fail-closed schema-missing-reject). A
+ * genuinely NEW, successfully-persisted upload keeps its file — it becomes
+ * the Statement's permanent evidentiary source (`sourceFilePath: file.path`
+ * in `performUpload`'s `createStatement` call) — so this must only ever be
+ * called on the non-persisting paths, never the success path.
+ */
+async function cleanupUnpersistedUpload(filePath: string, reason: string): Promise<void> {
+  try {
+    const fs = await import('fs');
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    logger.warn(
+      `[FinanceStatements] Failed to clean up unpersisted upload temp file (${reason}): ${error}`
+    );
   }
 }
 
@@ -830,64 +999,130 @@ router.post(
       return res.status(statusCode).json(body);
     }
 
-    // FIN-005 Codex review Blocker 2 + 3: a retry with the same org +
-    // Idempotency-Key AND the same file content returns the ORIGINAL
-    // response instead of creating a second statement (and, by extension, a
-    // second pack) — but the WHOLE check -> upload -> record sequence now
-    // runs inside a real PostgreSQL advisory lock
+    // FIN-005 Codex review Blocker 2 + 3, hardened by the round-3 reservation
+    // state machine (see the block comment above reserveIdempotentUpload):
+    // a retry with the same org + Idempotency-Key AND the same file content
+    // returns the ORIGINAL response instead of creating a second statement
+    // (and, by extension, a second pack) — the WHOLE reserve -> upload ->
+    // finalize/fail sequence runs inside a real PostgreSQL advisory lock
     // (withStatementUploadIdempotencyLock), so two genuinely concurrent
-    // requests for the same key can never both pass the "no existing
-    // marker" check before either records one. The lock also binds the key
-    // to a SHA-256 of the file bytes: same key + different content is a
-    // hard 409, never a silent replay of the wrong file's result.
+    // requests for the same key can never both become the reservation
+    // owner. The lock also binds the key to a SHA-256 of the file bytes:
+    // same key + different content is a hard 409, never a silent replay of
+    // the wrong file's result.
     const key = idempotencyKey;
     const requestHash = sha256Hex(await (await import('fs')).promises.readFile(file.path));
 
-    const outcome = await withStatementUploadIdempotencyLock(orgId, key, async () => {
-      const existing = await findIdempotentUpload(orgId, key);
-      if (existing) {
-        if (existing.requestHash && existing.requestHash !== requestHash) {
-          return { kind: 'conflict' as const };
+    type LockOutcome =
+      | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'conflict' }
+      | { kind: 'in_progress' }
+      | { kind: 'schema_missing' }
+      | { kind: 'fresh'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'finalize_failed' };
+
+    const outcome: LockOutcome = await withStatementUploadIdempotencyLock(
+      orgId,
+      key,
+      async (): Promise<LockOutcome> => {
+      const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
+
+      if (reservation.kind !== 'owner') {
+        if (reservation.kind === 'replay') {
+          logFinanceEvent('statement.upload.idempotent_replay', {
+            traceId,
+            organizationId: orgId,
+            idempotencyKey: key,
+          });
         }
-        // Hash matches, or this marker predates the request_hash column
-        // (schema-compat: null) — safe replay either way.
-        logFinanceEvent('statement.upload.idempotent_replay', {
-          traceId,
-          organizationId: orgId,
-          idempotencyKey: key,
-        });
-        return {
-          kind: 'replay' as const,
-          statusCode: existing.statusCode,
-          body: JSON.parse(existing.responseJson) as Record<string, unknown>,
-        };
+        return reservation;
       }
 
-      const { statusCode, body } = await performUpload();
-      if (statusCode < 400) {
-        await recordIdempotentUpload({
-          organizationId: orgId,
-          idempotencyKey: key,
-          statementId: String(body.statementId || ''),
-          statusCode,
-          responseJson: JSON.stringify(body),
-          requestHash,
-          createdBy: userId,
-        });
+      let result: { statusCode: number; body: Record<string, unknown> };
+      try {
+        result = await performUpload();
+      } catch (error) {
+        await failIdempotentUpload(reservation.reservationId);
+        throw error;
       }
-      return { kind: 'fresh' as const, statusCode, body };
-    });
 
-    if (outcome.kind === 'conflict') {
-      return res.status(409).json({
-        error: 'Idempotency-Key was already used with a different upload',
-        code: 'IDEMPOTENCY_KEY_REUSED',
+      if (result.statusCode >= 400) {
+        // A controlled negative outcome (signature mismatch, extraction
+        // failure, persist failure, ...) — not a thrown exception, but
+        // still a failure for idempotency purposes: the reservation must
+        // not be left 'in_progress' forever, and must never be finalized as
+        // 'completed'. The route still returns performUpload's OWN status
+        // code/body to the client unchanged.
+        await failIdempotentUpload(reservation.reservationId);
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
+
+      const finalized = await finalizeIdempotentUpload({
+        reservationId: reservation.reservationId,
+        statementId: String(result.body.statementId || ''),
+        statusCode: result.statusCode,
+        responseJson: JSON.stringify(result.body),
       });
+      if (!finalized) {
+        // Defensive — should not normally happen since we own the
+        // reservation. Do NOT return 201 on an unconfirmed finalize: the
+        // caller maps this to a 500-class error. Best-effort mark the row
+        // failed so a retry can reclaim promptly instead of waiting out the
+        // staleness window; if even that fails, the safety net (staleness
+        // reclaim) still applies.
+        logFinanceError(
+          'statement.upload.finalize_unconfirmed',
+          new Error('finalize UPDATE did not affect the owned reservation row'),
+          { traceId, organizationId: orgId, idempotencyKey: key, reservationId: reservation.reservationId }
+        );
+        await failIdempotentUpload(reservation.reservationId);
+        return { kind: 'finalize_failed' as const };
+      }
+
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
+    );
+
+    switch (outcome.kind) {
+      case 'conflict':
+        await cleanupUnpersistedUpload(file.path, 'idempotency key reused with different content');
+        return res.status(409).json({
+          error: 'Idempotency-Key was already used with a different upload',
+          code: 'IDEMPOTENCY_KEY_REUSED',
+        });
+      case 'in_progress':
+        await cleanupUnpersistedUpload(file.path, 'genuinely concurrent in-flight upload for this key');
+        res.setHeader('Retry-After', '5');
+        return res.status(409).json({
+          error: 'Another upload for this Idempotency-Key is already in progress — retry shortly',
+          code: 'UPLOAD_IN_PROGRESS',
+        });
+      case 'schema_missing':
+        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        return res.status(503).json({
+          error:
+            'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',
+          code: 'IDEMPOTENCY_SCHEMA_UNAVAILABLE',
+        });
+      case 'finalize_failed':
+        // No file cleanup here — performUpload() DID succeed and file.path
+        // is now the sourceFilePath of a real (if orphaned-from-the-marker)
+        // Statement row.
+        return res.status(500).json({
+          error: 'Upload completed but could not be durably confirmed — please retry',
+          code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
+        });
+      case 'replay':
+        await cleanupUnpersistedUpload(file.path, 'idempotent replay of a previously completed upload');
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'fresh':
+        return res.status(outcome.statusCode).json(outcome.body);
+      default: {
+        const _exhaustive: never = outcome;
+        throw new Error(`Unreachable idempotency outcome: ${JSON.stringify(_exhaustive)}`);
+      }
     }
-    if (outcome.kind === 'replay') {
-      res.setHeader('Idempotency-Replayed', 'true');
-    }
-    return res.status(outcome.statusCode).json(outcome.body);
   })
 );
 
