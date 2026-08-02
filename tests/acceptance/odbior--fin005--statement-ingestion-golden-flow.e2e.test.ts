@@ -1803,3 +1803,109 @@ describe.each(FIX2_ENDPOINTS)(
     }, 30_000);
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════
+// Codex review Blocker 4 — v8's XLSX/XLS extraction silently "succeeded" on
+// a parse failure. Root cause (confirmed live): v8's local
+// `extractTextFromFile` (routes/v8/finance.routes.ts) wrapped its
+// `XLSX.read(...)` in `try { ... } catch { return { text: '', parseMethod:
+// 'manual' }; }` — ANY parse error (corrupt file, unsupported/unreadable
+// structure) was silently swallowed into an empty-string "success", which
+// then flowed into `analyzeAndExtractFullDocument` / the heuristic fallback
+// and created a REAL Statement from garbage/empty content, returning 201.
+// The legacy endpoint's equivalent already `throw`s on the identical
+// failure class, which its caller already turns into a proper 422 — v8's
+// outer `try { extractTextFromFile(...) } catch { return 422 }` in
+// `performUploadAndAnalyze` already existed and already worked correctly;
+// only the inner xlsx branch needed to stop swallowing. This suite proves
+// the fix directly against the real v8 router + real Postgres: a corrupt
+// .xlsx now fails closed (422, zero Statement rows, temp file cleaned up),
+// and a valid .xlsx immediately after is unaffected (no regression).
+// ═══════════════════════════════════════════════════════════════════════
+
+describe('FIN-005 Blocker 4 — v8 XLSX/XLS extraction fails closed on a parse failure', () => {
+  let app: Express;
+  let token3: string;
+
+  beforeAll(async () => {
+    guardedDatabaseUrl();
+    await seed();
+    app = await buildV8FinanceApp();
+    token3 = mintToken();
+  });
+
+  afterAll(async () => {
+    await cleanup();
+  });
+
+  it('a corrupt .xlsx (PK zip signature, not a valid OOXML workbook) is rejected 422, creates zero Statement rows, and does not leak the temp file', async () => {
+    const fs = await import('fs');
+    const uploadDir = path.join(process.cwd(), 'uploads', 'assessments', SEED.ORG_ID);
+    const listFiles = (): Set<string> =>
+      fs.existsSync(uploadDir) ? new Set(fs.readdirSync(uploadDir)) : new Set();
+
+    // Same fixture technique already used elsewhere in this file (round-3
+    // Proof 2 / Blocker 2 "fail then retry" above): passes the zip-signature
+    // sniff (PK header) so multer's fileFilter accepts it as a plausible
+    // .xlsx, but SheetJS's real `XLSX.read` cannot parse it as a workbook —
+    // this is the exact failure class v8's old catch-and-swallow hid.
+    const fakeZip = Buffer.concat([
+      Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      Buffer.from('not actually a valid ooxml package structure'.repeat(10)),
+    ]);
+    const filename = `${MARK}blocker4-corrupt.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    const beforeFiles = listFiles();
+    const res = await request(app)
+      .post('/api/v8/finance/statements/upload-and-analyze')
+      .set('Authorization', `Bearer ${token3}`)
+      .set('Idempotency-Key', `${MARK}blocker4-corrupt-key`)
+      .attach('file', fakeZip, { filename, contentType })
+      .expect(422);
+    expect(res.body.error).toBe('File extraction failed');
+    expect(String(res.body.detail || '')).toMatch(/Excel parsing failed/i);
+
+    const afterFiles = listFiles();
+    expect([...afterFiles].filter((f) => !beforeFiles.has(f)).length).toBe(0); // temp file cleaned up, not leaked
+
+    const db = client();
+    await db.connect();
+    try {
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filename, SEED.ORG_ID]
+      );
+      expect(rows.rows.length).toBe(0); // zero business writes from the garbage upload
+    } finally {
+      await db.end();
+    }
+  }, 30_000);
+
+  it('a genuinely valid .xlsx upload immediately after still works (no regression to the happy path)', async () => {
+    const filename = `${MARK}blocker4-valid-after-corrupt.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    const res = await request(app)
+      .post('/api/v8/finance/statements/upload-and-analyze')
+      .set('Authorization', `Bearer ${token3}`)
+      .set('Idempotency-Key', `${MARK}blocker4-valid-after-corrupt-key`)
+      .attach('file', makeXlsxFixture(), { filename, contentType })
+      .expect(201);
+    const statementId = String(res.body?.data?.statementIds?.[0] || '');
+    expect(statementId).toBeTruthy();
+
+    const db = client();
+    await db.connect();
+    try {
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filename, SEED.ORG_ID]
+      );
+      expect(rows.rows.length).toBe(1);
+      expect(rows.rows[0].id).toBe(statementId);
+    } finally {
+      await db.end();
+    }
+  }, 30_000);
+});

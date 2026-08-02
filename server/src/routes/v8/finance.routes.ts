@@ -246,8 +246,19 @@ async function extractTextFromFile(
       }
 
       return { text: lines.join('\n').trim(), parseMethod: 'text_extraction' };
-    } catch {
-      return { text: '', parseMethod: 'manual' };
+    } catch (e: any) {
+      // FIN-005 Codex review Blocker 4: this used to swallow EVERY parse
+      // failure (corrupt file, unsupported/unreadable structure, etc.) into
+      // a fake empty-string "success", which then flowed into
+      // analyzeAndExtractFullDocument / the heuristic fallback and created a
+      // real Statement from garbage/empty content with a 201 — never
+      // surfacing the failure. Throw instead, mirroring legacy's
+      // `extractTextFromFile` in finance-statements.routes.ts, whose
+      // existing outer try/catch in `performUploadAndAnalyze` (below)
+      // already turns any thrown error into a proper 422. Scope-limited:
+      // this does NOT port over legacy's zip-bomb/cell-count guards or any
+      // other legacy-specific logic — only stops the false success.
+      throw new Error(`Excel parsing failed: ${e?.message || 'unknown error'}`);
     }
   }
   return { text: '', parseMethod: 'manual' };
