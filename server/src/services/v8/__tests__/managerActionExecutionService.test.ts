@@ -8,6 +8,18 @@ vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
 }));
+vi.mock('../../../utils/queryHelpers.js', () => ({
+  withPgTransaction: async (fn: (client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> }) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*SELECT/i.test(sql)) {
+          return { rows: await mockDbAll(sql, params), rowCount: 0 };
+        }
+        const result = await mockDbRun(sql, params);
+        return { rows: [], rowCount: result?.changes ?? 0 };
+      },
+    }),
+}));
 vi.mock('../managerProblemsService.js', () => ({
   getManagerProblems: (...args: unknown[]) => mockGetManagerProblems(...args),
 }));

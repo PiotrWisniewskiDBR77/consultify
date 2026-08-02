@@ -624,7 +624,8 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
       label: t('initiatives.closureSection.receipt.partial', 'Partially delivered'),
       badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
       icon: 'circle',
-      canRetry: financeStatus === 'FAILED' || resultsStatus === 'FAILED',
+      // FAILED was handled above; TypeScript correctly narrows both legs here.
+      canRetry: false,
     };
   }, [receipt, t]);
 
