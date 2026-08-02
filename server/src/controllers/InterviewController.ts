@@ -27,6 +27,11 @@ import {
   isOrgWideInterviewManagerRole,
   resolveInterviewManagerScope,
 } from '../services/interviewManagerScope.js';
+import {
+  getPublishedInterviewTemplateSnapshot,
+  publishInterviewTemplate,
+  TemplatePublicationError,
+} from '../services/interview/interviewTemplatePublicationService.js';
 import notificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
@@ -781,6 +786,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
       sql: `ALTER TABLE interview_questions ADD COLUMN description TEXT`,
     },
     {
+      name: 'evidence_prompt',
+      sql: `ALTER TABLE interview_questions ADD COLUMN evidence_prompt TEXT`,
+    },
+    {
       name: 'allow_voice',
       sql: `ALTER TABLE interview_questions ADD COLUMN allow_voice INTEGER DEFAULT 0`,
     },
@@ -1364,6 +1373,14 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_templates');
   const missingColumns: Array<{ name: string; sql: string }> = [
     {
+      name: 'status',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN status TEXT DEFAULT 'draft'`,
+    },
+    {
+      name: 'visibility',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN visibility TEXT DEFAULT 'org'`,
+    },
+    {
       name: 'template_scope',
       sql: `ALTER TABLE interview_library_templates ADD COLUMN template_scope TEXT DEFAULT 'organization'`,
     },
@@ -1420,6 +1437,14 @@ async function ensureInterviewTemplateV6Columns(): Promise<void> {
 async function ensureInterviewTemplateQuestionV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_library_template_questions');
   const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'description',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN description TEXT`,
+    },
+    {
+      name: 'evidence_prompt',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN evidence_prompt TEXT`,
+    },
     {
       name: 'answer_type',
       sql: `ALTER TABLE interview_library_template_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
@@ -1870,6 +1895,7 @@ const buildTemplateResponse = (row: any) => {
     answerDesignGuide: row.answer_design_guide || '',
     areaTags: normalizeTemplateAreaTags(parseJson(row.area_tags, [] as string[])),
     status: row.status || 'approved',
+    version: Number(row.version ?? 0),
     sessionsUsed: Number(row.sessions_used ?? 0),
     createdBy: row.created_by || undefined,
     updatedAt: row.updated_at || row.created_at,
@@ -1912,10 +1938,13 @@ async function resolveValidProjectId(params: {
   const raw = String(params.projectId || '').trim();
   if (raw) {
     try {
-      const p = await queryHelpers.queryOne(
-        `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
-        [raw, organizationId]
-      );
+      const p = await queryHelpers.withPgTransaction(async (tx) => {
+        const result = await tx.query(
+          `SELECT id FROM projects WHERE id = ? AND organization_id = ?`,
+          [raw, organizationId]
+        );
+        return result.rows[0] as { id?: string } | undefined;
+      });
       if (p?.id) return String(p.id);
     } catch {
       // ignore; fallback below
@@ -1924,10 +1953,13 @@ async function resolveValidProjectId(params: {
   // Fallback to first project in org (prevents SQLITE_CONSTRAINT on NOT NULL/FK)
   let first: any;
   try {
-    first = await queryHelpers.queryOne(
-      `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
-      [organizationId]
-    );
+    first = await queryHelpers.withPgTransaction(async (tx) => {
+      const result = await tx.query(
+        `SELECT id FROM projects WHERE organization_id = ? ORDER BY created_at ASC LIMIT 1`,
+        [organizationId]
+      );
+      return result.rows[0];
+    });
   } catch {
     try {
       first = await queryHelpers.queryOne(
@@ -1954,10 +1986,12 @@ async function createSessionFromTemplate(params: {
   // storing interview_sessions.name.
   const name = typeof rawName === 'string' ? decodeHtmlEntities(rawName) : rawName;
 
-  const template = await queryHelpers.queryOne(
-    `SELECT * FROM interview_library_templates WHERE id = ?`,
-    [templateId]
-  );
+  const template = await queryHelpers.withPgTransaction(async (tx) => {
+    const result = await tx.query(`SELECT * FROM interview_library_templates WHERE id = ?`, [
+      templateId,
+    ]);
+    return result.rows[0] as any;
+  });
 
   if (!template) throw new Error('Template not found');
   if (!canAccessTemplate(template, user)) {
@@ -2000,92 +2034,88 @@ async function createSessionFromTemplate(params: {
     sessionIsAnonymous = flagOn((assignmentRow as any)?.is_anonymous);
   }
 
-  // Create session from template (snapshot)
-  // Note: Schema uses owner_id (not user_id) and doesn't have topic column
-  await queryHelpers.queryRun(
-    `INSERT INTO interview_sessions
-     (id, organization_id, project_id, name, owner_id, status, progress_json,
-      runtime_mode_default,
-      template_id, template_version,
-      assignment_id, is_anonymous,
-      started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      user.organizationId,
-      resolvedProjectId,
-      name || `Interview ${new Date().toLocaleDateString()}`,
-      user.id, // owner_id
-      'active',
-      JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
-      String(template.runtime_mode_default || '').toLowerCase() === 'task_list'
-        ? 'task_list'
-        : 'single_question',
-      template.id,
-      template.version || 1,
-      assignmentId || null,
-      sessionIsAnonymous,
-      now,
-      now,
-      now,
-      now,
-    ]
+  const publishedSnapshot = await getPublishedInterviewTemplateSnapshot(
+    user.organizationId,
+    template.id,
+    Number(template.version || 1)
   );
+  const templateQuestions = publishedSnapshot
+    ? publishedSnapshot.questions
+    : await queryHelpers.queryAll(
+        `SELECT * FROM interview_library_template_questions WHERE template_id = ? ORDER BY category, sort_order`,
+        [template.id]
+      );
 
-  const templateQuestions = await queryHelpers.queryAll(
-    `SELECT * FROM interview_library_template_questions WHERE template_id = ? ORDER BY category, sort_order`,
-    [template.id]
-  );
-
-  let questionCount = 0;
-  for (const tq of templateQuestions as any[]) {
-    const questionId = uuidv4();
-    const isRequiredFlag = toDbFlag(tq.is_required, 0);
-    const allowVoiceFlag = toDbFlag(tq.allow_voice, 0);
-    const allowFileUploadFlag = toDbFlag(tq.allow_file_upload, 0);
-    const allowUrlFlag = toDbFlag(tq.allow_url, 0);
-    const allowContextNoteFlag = toDbFlag(tq.allow_context_note, 1);
-    await queryHelpers.queryRun(
-      `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, description, evidence_prompt, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, guidance, example_answer, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  const session = await queryHelpers.withPgTransaction(async (tx) => {
+    await tx.query(
+      `INSERT INTO interview_sessions
+       (id, organization_id, project_id, name, owner_id, status, progress_json,
+        runtime_mode_default, template_id, template_version, assignment_id, is_anonymous,
+        started_at, last_activity_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        questionId,
         id,
         user.organizationId,
-        tq.category,
-        tq.question_text,
-        tq.description || null,
-        tq.evidence_prompt || null,
-        'not_started',
-        tq.sort_order,
-        1,
-        isRequiredFlag,
-        tq.answer_type || 'open',
-        tq.answer_options || '[]',
-        tq.expected_answer_shape || null,
-        allowVoiceFlag,
-        allowFileUploadFlag,
-        allowUrlFlag,
-        allowContextNoteFlag,
-        tq.id,
-        tq.guidance || null,
-        tq.example_answer || null,
+        resolvedProjectId,
+        name || `Interview ${new Date().toLocaleDateString()}`,
+        user.id,
+        'active',
+        JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
+        String(template.runtime_mode_default || '').toLowerCase() === 'task_list'
+          ? 'task_list'
+          : 'single_question',
+        template.id,
+        template.version || 1,
+        assignmentId || null,
+        sessionIsAnonymous,
+        now,
+        now,
         now,
         now,
       ]
     );
-    questionCount++;
-  }
 
-  await queryHelpers.queryRun(`UPDATE interview_sessions SET total_questions = ? WHERE id = ?`, [
-    questionCount,
-    id,
-  ]);
-
-  const session = await queryHelpers.queryOne(`SELECT * FROM interview_sessions WHERE id = ?`, [
-    id,
-  ]);
+    for (const tq of templateQuestions as any[]) {
+      await tx.query(
+        `INSERT INTO interview_questions
+         (id, session_id, organization_id, category, question_text, description, evidence_prompt,
+          status, sort_order, is_template, is_required, answer_type, answer_options,
+          expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note,
+          source_template_question_id, guidance, example_answer, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          id,
+          user.organizationId,
+          tq.category,
+          tq.question_text,
+          tq.description || null,
+          tq.evidence_prompt || null,
+          'not_started',
+          tq.sort_order,
+          true,
+          toDbFlag(tq.is_required, 0),
+          tq.answer_type || 'open',
+          tq.answer_options || '[]',
+          tq.expected_answer_shape || null,
+          toDbFlag(tq.allow_voice, 0),
+          toDbFlag(tq.allow_file_upload, 0),
+          toDbFlag(tq.allow_url, 0),
+          toDbFlag(tq.allow_context_note, 1),
+          tq.id,
+          tq.guidance || null,
+          tq.example_answer || null,
+          now,
+          now,
+        ]
+      );
+    }
+    await tx.query(`UPDATE interview_sessions SET total_questions = ? WHERE id = ?`, [
+      templateQuestions.length,
+      id,
+    ]);
+    return (await tx.query(`SELECT * FROM interview_sessions WHERE id = ?`, [id])).rows[0];
+  });
   return buildSessionResponse(session);
 }
 
@@ -5817,10 +5847,12 @@ export const InterviewController = {
     const { projectId, name } = req.body || {};
 
     try {
-      const tpl = await queryHelpers.queryOne(
-        `SELECT * FROM interview_library_templates WHERE id = ?`,
-        [id]
-      );
+      const tpl = await queryHelpers.withPgTransaction(async (tx) => {
+        const result = await tx.query(`SELECT * FROM interview_library_templates WHERE id = ?`, [
+          id,
+        ]);
+        return result.rows[0] as any;
+      });
       if (!tpl || !canAccessTemplate(tpl, user)) {
         res.status(404).json({ error: 'Template not found' });
         return;
@@ -5892,37 +5924,39 @@ export const InterviewController = {
 
     const normalizedAreaTags = normalizeTemplateAreaTags(areaTags);
 
-    await queryHelpers.queryRun(
-      `INSERT INTO interview_library_templates
-       (id, organization_id, name, description, category, status, visibility, template_scope, audience, estimated_time_minutes, runtime_mode_default, answer_design_guide, area_tags, is_default, version, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        templateId,
-        storagePolicy.organizationId,
-        name.trim(),
-        description || '',
-        category || 'CUSTOM',
-        status || 'draft',
-        storagePolicy.visibility,
-        templateScope,
-        audience || '',
-        Number.isFinite(Number(estimatedTimeMinutes)) ? Number(estimatedTimeMinutes) : 10,
-        runtimeModeDefault || 'one_question_per_screen',
-        answerDesignGuide || '',
-        JSON.stringify(normalizedAreaTags),
-        isDefault ? 1 : 0,
-        1,
-        user.id,
-        now,
-        now,
-      ]
-    );
+    const created = await queryHelpers.withPgTransaction(async (tx) => {
+      const result = await tx.query(
+        `INSERT INTO interview_library_templates
+         (id, organization_id, name, description, category, status, visibility, template_scope, audience, estimated_time_minutes, runtime_mode_default, answer_design_guide, area_tags, is_default, version, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         RETURNING *`,
+        [
+          templateId,
+          storagePolicy.organizationId,
+          name.trim(),
+          description || '',
+          category || 'CUSTOM',
+          status || 'draft',
+          storagePolicy.visibility,
+          templateScope,
+          audience || '',
+          Number.isFinite(Number(estimatedTimeMinutes)) ? Number(estimatedTimeMinutes) : 10,
+          runtimeModeDefault || 'one_question_per_screen',
+          answerDesignGuide || '',
+          JSON.stringify(normalizedAreaTags),
+          isDefault ? 1 : 0,
+          0,
+          user.id,
+          now,
+          now,
+        ]
+      );
+      return result.rows[0] as Record<string, unknown> | undefined;
+    });
 
-    const created = await queryHelpers.queryOne(
-      `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
-       FROM interview_library_templates t WHERE t.id = ?`,
-      [templateId]
-    );
+    if (!created) {
+      throw new Error('Template insert did not persist');
+    }
 
     res.status(201).json(buildTemplateResponse(created));
   }),
@@ -6277,8 +6311,9 @@ export const InterviewController = {
       return;
     }
 
-    // bump version on any edit
-    updates.push('version = version + 1', 'updated_at = ?');
+    // Publication version changes only in the atomic publish endpoint. Draft
+    // edits must not impersonate an immutable published version.
+    updates.push('updated_at = ?');
     params.push(new Date().toISOString());
     params.push(id);
 
@@ -6300,6 +6335,29 @@ export const InterviewController = {
     );
 
     res.json(buildTemplateResponse(updated));
+  }),
+
+  publishTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    try {
+      await ensureInterviewTemplateV6Columns();
+      await ensureInterviewTemplateQuestionV6Columns();
+      const result = await publishInterviewTemplate({
+        organizationId: user.organizationId,
+        actorId: user.id,
+        templateId: req.params.id,
+        metadata: (req.body || {}).template || {},
+        questions: Array.isArray((req.body || {}).questions) ? (req.body || {}).questions : [],
+        expectedVersion: Number((req.body || {}).expectedVersion),
+      });
+      res.json(result);
+    } catch (error) {
+      if (error instanceof TemplatePublicationError) {
+        res.status(error.status).json({ error: error.message, code: error.code });
+        return;
+      }
+      throw error;
+    }
   }),
 
   addTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -6370,7 +6428,7 @@ export const InterviewController = {
     );
 
     await queryHelpers.queryRun(
-      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE interview_library_templates SET updated_at = ? WHERE id = ?`,
       [new Date().toISOString(), id]
     );
 
@@ -6511,7 +6569,7 @@ export const InterviewController = {
     );
 
     await queryHelpers.queryRun(
-      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE interview_library_templates SET updated_at = ? WHERE id = ?`,
       [new Date().toISOString(), id]
     );
 
@@ -6553,7 +6611,7 @@ export const InterviewController = {
     ]);
 
     await queryHelpers.queryRun(
-      `UPDATE interview_library_templates SET version = version + 1, updated_at = ? WHERE id = ?`,
+      `UPDATE interview_library_templates SET updated_at = ? WHERE id = ?`,
       [new Date().toISOString(), id]
     );
 

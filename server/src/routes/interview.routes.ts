@@ -306,6 +306,12 @@ router.patch(
   InterviewController.updateTemplate
 );
 
+router.post(
+  '/templates/:id/publish',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.publishTemplate
+);
+
 /** DELETE /interview/templates/:id - Delete template */
 router.delete(
   '/templates/:id',

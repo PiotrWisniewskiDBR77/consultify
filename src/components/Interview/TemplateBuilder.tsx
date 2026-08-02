@@ -246,10 +246,7 @@ const AnswerTypePreview: React.FC<{
     return (
       <div className="space-y-1">
         {sampleOptions.map((opt, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2 text-[11px] text-c-text-muted"
-          >
+          <div key={i} className="flex items-center gap-2 text-[11px] text-c-text-muted">
             <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-c-border-strong">
               {i === 0 ? (
                 <span className="h-1.5 w-1.5 rounded-full bg-c-surface dark:bg-white" />
@@ -330,9 +327,7 @@ const RespondentQuestionPreview: React.FC<{
   return (
     <div className="rounded-xl border border-c-border bg-c-surface p-4">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 text-xs font-semibold text-c-text-muted">
-          {index + 1}.
-        </span>
+        <span className="mt-0.5 text-xs font-semibold text-c-text-muted">{index + 1}.</span>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-medium text-c-text">
             {question.questionText || t('interview.templateBuilder.untitledQuestion')}
@@ -349,9 +344,7 @@ const RespondentQuestionPreview: React.FC<{
             />
           </div>
           {question.helpHint ? (
-            <p className="text-[11px] italic text-c-text-muted">
-              {question.helpHint}
-            </p>
+            <p className="text-[11px] italic text-c-text-muted">{question.helpHint}</p>
           ) : null}
         </div>
       </div>
@@ -684,7 +677,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     if (allowedAnswerTypes.length === ANSWER_TYPES.length) {
       return t('interview.templateBuilder.allAnswerTypes');
     }
-    return allowedAnswerTypes.map((type) => getAnswerTypeLabel(type, (k, f) => t(k, f ?? k), type)).join(', ');
+    return allowedAnswerTypes
+      .map((type) => getAnswerTypeLabel(type, (k, f) => t(k, f ?? k), type))
+      .join(', ');
   }, [allowedAnswerTypes, t]);
 
   const areaTagsLabel = useMemo(() => {
@@ -974,48 +969,58 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         let savedTemplateId = templateId;
         let createdTemplateResponse: any = null;
 
-        // Save template metadata
+        // Draft saves remain editable. Publish is a separate atomic server
+        // transaction that replaces questions and creates an immutable version.
         const templateData = {
           ...template,
           scope: template.scope || 'organization',
-          status: publish ? 'approved' : 'draft',
+          status: 'draft',
         };
 
-        if (templateId) {
-          await Api.patch(`/interview/templates/${templateId}`, templateData);
-        } else {
+        if (!templateId) {
           createdTemplateResponse = await Api.post('/interview/templates', templateData);
           savedTemplateId = (createdTemplateResponse as any).id;
         }
 
-        // Save questions
-        if (savedTemplateId) {
+        const publicationQuestions = questions.map((question) => ({
+          ...(!question.isNew ? { id: question.id } : {}),
+          category: question.category,
+          questionText: question.questionText,
+          sortOrder: question.sortOrder,
+          answerType: question.answerType,
+          isRequired: question.isRequired,
+          helpHint: question.helpHint || '',
+          answerOptions: question.answerOptions,
+          expectedAnswerShape: question.expectedAnswerShape || '',
+          allowVoice: !!question.allowVoice,
+          allowFileUpload: !!question.allowFileUpload,
+          allowUrl: !!question.allowUrl,
+          allowContextNote: question.allowContextNote !== false,
+          description: question.description || '',
+          evidencePrompt: question.evidencePrompt || '',
+          guidance: question.guidance || '',
+          exampleAnswer: question.exampleAnswer || '',
+          sectionTitle: question.sectionTitle || '',
+        }));
+
+        if (publish && savedTemplateId) {
+          await Api.post(`/interview/templates/${savedTemplateId}/publish`, {
+            template: templateData,
+            questions: publicationQuestions,
+            expectedVersion: Number(
+              templateId ? template.version || 0 : createdTemplateResponse?.version || 0
+            ),
+          });
+        } else if (savedTemplateId) {
+          if (templateId) {
+            await Api.patch(`/interview/templates/${templateId}`, templateData);
+          }
           for (const deletedId of deletedQuestionIds) {
             await Api.delete(`/interview/templates/${savedTemplateId}/questions/${deletedId}`);
           }
 
-          // Add/update questions
-          for (const question of questions) {
-            const questionData = {
-              category: question.category,
-              questionText: question.questionText,
-              sortOrder: question.sortOrder,
-              answerType: question.answerType,
-              isRequired: question.isRequired,
-              helpHint: question.helpHint || '',
-              answerOptions: question.answerOptions,
-              expectedAnswerShape: question.expectedAnswerShape || '',
-              allowVoice: !!question.allowVoice,
-              allowFileUpload: !!question.allowFileUpload,
-              allowUrl: !!question.allowUrl,
-              allowContextNote: question.allowContextNote !== false,
-              description: question.description || '',
-              evidencePrompt: question.evidencePrompt || '',
-              guidance: question.guidance || '',
-              exampleAnswer: question.exampleAnswer || '',
-              sectionTitle: question.sectionTitle || '',
-            };
-
+          for (const [index, question] of questions.entries()) {
+            const questionData = publicationQuestions[index];
             if (question.isNew) {
               await Api.post(`/interview/templates/${savedTemplateId}/questions`, questionData);
             } else {
@@ -2295,9 +2300,7 @@ ${sourceText || '(none)'}`;
                                 )}
                               </p>
                               {item.rationale ? (
-                                <p className="text-xs text-c-text-muted">
-                                  {item.rationale}
-                                </p>
+                                <p className="text-xs text-c-text-muted">{item.rationale}</p>
                               ) : null}
                             </div>
                           </div>
@@ -2330,16 +2333,16 @@ ${sourceText || '(none)'}`;
                             className="mt-1 h-4 w-4 rounded border-c-border-strong text-c-info focus:ring-c-focus"
                           />
                           <div className="min-w-0 flex-1 space-y-1.5">
-                            <p className="text-sm font-medium text-c-text">
-                              {item.questionText}
-                            </p>
+                            <p className="text-sm font-medium text-c-text">{item.questionText}</p>
                             <p className="text-xs text-c-text-muted">
-                              {getAnswerTypeLabel(normalizeAnswerType(item.answerType), (k, f) => t(k, f ?? k), '-')}
+                              {getAnswerTypeLabel(
+                                normalizeAnswerType(item.answerType),
+                                (k, f) => t(k, f ?? k),
+                                '-'
+                              )}
                             </p>
                             {item.rationale ? (
-                              <p className="text-xs text-c-text-muted">
-                                {item.rationale}
-                              </p>
+                              <p className="text-xs text-c-text-muted">{item.rationale}</p>
                             ) : null}
                           </div>
                         </div>
@@ -2379,9 +2382,7 @@ ${sourceText || '(none)'}`;
                               <p className="text-sm font-medium text-c-text">
                                 {current.questionText}
                               </p>
-                              <p className="text-xs text-c-text-muted">
-                                {item.reason}
-                              </p>
+                              <p className="text-xs text-c-text-muted">{item.reason}</p>
                             </div>
                           </div>
                         </label>
@@ -2468,9 +2469,7 @@ ${sourceText || '(none)'}`;
 
               <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
                 {template.description ? (
-                  <p className="text-xs text-c-text-muted mb-1">
-                    {template.description}
-                  </p>
+                  <p className="text-xs text-c-text-muted mb-1">{template.description}</p>
                 ) : null}
                 {orderedQuestions.map((question, idx) => (
                   <React.Fragment key={question.id}>
@@ -2784,9 +2783,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             {getAnswerTypeLabel(question.answerType, (k, f) => t(k, f ?? k))}
           </span>
           {question.allowVoice && <Mic size={12} className="text-c-text-muted" />}
-          {question.allowFileUpload && (
-            <Paperclip size={12} className="text-c-text-muted" />
-          )}
+          {question.allowFileUpload && <Paperclip size={12} className="text-c-text-muted" />}
           {question.allowUrl && <Link2 size={12} className="text-c-text-muted" />}
           <button
             onClick={(e) => {
