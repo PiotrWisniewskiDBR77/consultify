@@ -92,39 +92,12 @@ CREATE INDEX IF NOT EXISTS idx_closure_delivery_receipts_pending_sweep
   ON closure_delivery_receipts(next_retry_at)
   WHERE results_status IN ('PENDING', 'FAILED') OR finance_status IN ('PENDING', 'FAILED');
 
--- Finance delivery payload — a NEW, additive table, deliberately NOT reusing
--- any existing Finance table (`initiative_benefits.currency` defaults to an
--- unset 'USD', `financeEnterpriseService`/Atelier tables carry their own
--- unrelated coherence work this packet does not touch). One row per receipt
--- whose Finance leg actually resolved a value (i.e. did NOT end in
--- NEEDS_DECISION) — this table's very existence for a given receipt IS the
--- "delivered" signal for Finance, alongside the parent row's finance_status.
-CREATE TABLE IF NOT EXISTS closure_finance_actuals (
-  id TEXT PRIMARY KEY,
-  organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
-  closure_receipt_id TEXT NOT NULL REFERENCES closure_delivery_receipts(id) ON DELETE CASCADE,
-
-  amount NUMERIC(15, 2) NOT NULL,
-  currency TEXT NOT NULL,
-  -- Where the amount/currency came from — always spelled out, never silently
-  -- assumed, so a reviewer can see exactly what was reused vs. decided here.
-  -- e.g. "results_benefit_target_value+initiatives.budget_currency".
-  value_source TEXT NOT NULL,
-
-  source_tag TEXT NOT NULL DEFAULT 'EXE_009_CLOSURE_RECEIPT',
-  created_by TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_closure_finance_actuals_org
-  ON closure_finance_actuals(organization_id);
-CREATE INDEX IF NOT EXISTS idx_closure_finance_actuals_initiative
-  ON closure_finance_actuals(initiative_id);
-
--- One Finance actual per receipt — the idempotency backstop for the Finance
--- adapter (app-level pre-check via SELECT is the fast path; this is the DB
--- guarantee, same "pre-check + unique-index backstop" shape already used by
--- migration 783's initiative_benefits dedup).
-CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_finance_actuals_receipt
-  ON closure_finance_actuals(closure_receipt_id);
+-- NOTE (Codex review round 2, BLOCKER1): this file originally also created a
+-- `closure_finance_actuals` table here as the Finance leg's delivery target.
+-- Removed — that table was a NEW, isolated ledger nothing in the actual
+-- Finance module read, rejected on review. The Finance leg now calls the
+-- EXISTING canonical `executionRealizationService.recordExecutionRealization`
+-- (writes `roi_realized_values`, read by the real Benefits/ROI UI) instead —
+-- see migration 937_exe009_roi_realized_values_closure_dedup.sql for the
+-- (additive, backward-compatible) dedup key that required, and
+-- closureDeliveryReceiptService.ts's file header for the full rationale.
