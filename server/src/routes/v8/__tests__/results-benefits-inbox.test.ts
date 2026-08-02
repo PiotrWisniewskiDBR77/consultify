@@ -28,9 +28,9 @@ vi.mock('../../../utils/DbPromise.js', () => ({
 // (the canonical writer) instead of an inline INSERT INTO initiative_kpis in
 // this router.
 vi.mock('../../../services/results/kpiDefinitionService.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/results/kpiDefinitionService.js')>(
-    '../../../services/results/kpiDefinitionService.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/results/kpiDefinitionService.js')
+  >('../../../services/results/kpiDefinitionService.js');
   return {
     ...actual,
     createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),

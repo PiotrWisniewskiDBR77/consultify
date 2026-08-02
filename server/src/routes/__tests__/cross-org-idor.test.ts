@@ -167,9 +167,9 @@ const mockUpdateKpiDefinition = vi.fn();
 const mockArchiveKpiDefinition = vi.fn();
 const mockGetCurrentKpiDefinition = vi.fn();
 vi.mock('../../services/results/kpiDefinitionService.js', async () => {
-  const actual = await vi.importActual<typeof import('../../services/results/kpiDefinitionService.js')>(
-    '../../services/results/kpiDefinitionService.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../services/results/kpiDefinitionService.js')
+  >('../../services/results/kpiDefinitionService.js');
   return {
     ...actual,
     createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
@@ -1388,7 +1388,10 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
   it('→ 200 and a canonical update runs when the owned KPI is in an unlocked (active) status', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
-    mockGetCurrentKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 1 });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 1,
+    });
     mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildBenefitsApp();
 
@@ -1441,7 +1444,10 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
     mockDbGet
       .mockResolvedValueOnce({ id: 'kpi-active' })
       .mockResolvedValueOnce({ status: 'active' });
-    mockGetCurrentKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 1 });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 1,
+    });
     mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildV8App();
 

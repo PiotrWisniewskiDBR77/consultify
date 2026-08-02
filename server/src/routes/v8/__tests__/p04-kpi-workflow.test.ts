@@ -40,9 +40,11 @@ vi.mock('../../../services/results/kpiDeviationService.js', () => ({
 vi.mock('../../../services/results/kpiDefinitionService.js', () => ({
   createDefinition: vi.fn().mockResolvedValue({ id: 'kpi-created' }),
   updateDefinition: vi.fn().mockResolvedValue({ id: 'kpi-001', currentDefinitionVersion: 2 }),
-  archiveDefinition: vi
-    .fn()
-    .mockResolvedValue({ id: 'kpi-001', archivedAt: new Date().toISOString(), alreadyArchived: false }),
+  archiveDefinition: vi.fn().mockResolvedValue({
+    id: 'kpi-001',
+    archivedAt: new Date().toISOString(),
+    alreadyArchived: false,
+  }),
   getCurrentDefinition: vi.fn().mockResolvedValue({ id: 'kpi-001', currentDefinitionVersion: 1 }),
   getCurrentDefinitionVersionId: vi.fn().mockResolvedValue(null),
 }));

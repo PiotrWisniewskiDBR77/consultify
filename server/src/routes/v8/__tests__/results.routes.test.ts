@@ -2,8 +2,8 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
 import { KpiDefinitionVersionConflictError } from '../../../services/results/kpiDefinitionService.js';
+import { V8_RESULTS_READ_CONTRACT, V8_RESULTS_WRITE_CONTRACT } from '../results.routes.js';
 
 const mockGetResultsDashboard = vi.fn();
 const mockGetReconciliationOverview = vi.fn();
@@ -66,16 +66,17 @@ vi.mock('../../../services/results/kpiDeviationService.js', () => ({
 // no longer runs in THIS file. Error classes are kept REAL (importActual) so
 // the route's `instanceof` checks against thrown errors still work.
 vi.mock('../../../services/results/kpiDefinitionService.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/results/kpiDefinitionService.js')>(
-    '../../../services/results/kpiDefinitionService.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/results/kpiDefinitionService.js')
+  >('../../../services/results/kpiDefinitionService.js');
   return {
     ...actual,
     createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
     updateDefinition: (...args: unknown[]) => mockUpdateKpiDefinition(...args),
     archiveDefinition: (...args: unknown[]) => mockArchiveKpiDefinition(...args),
     getCurrentDefinition: (...args: unknown[]) => mockGetCurrentKpiDefinition(...args),
-    getCurrentDefinitionVersionId: (...args: unknown[]) => mockGetCurrentDefinitionVersionId(...args),
+    getCurrentDefinitionVersionId: (...args: unknown[]) =>
+      mockGetCurrentDefinitionVersionId(...args),
   };
 });
 
