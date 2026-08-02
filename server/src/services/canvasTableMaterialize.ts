@@ -84,7 +84,16 @@ export async function materializeCanvasTable(input: {
   return {
     baseId,
     tableId,
-    url: `/table-studio?baseId=${encodeURIComponent(baseId)}&tableId=${encodeURIComponent(tableId)}`,
+    // FIX (Codex delta review, area 3): `/table-studio?baseId=&tableId=`
+    // matched zero registered frontend routes (confirmed via
+    // `grep -rn "table-studio" src/` — every successful Table handoff
+    // produced an "Open" link to nowhere). The real, registered route is
+    // `/tabele` (`ROUTES.TABELE`, `src/routes/routeConfig.ts`), whose
+    // `TabeleView` resolves a bare `tp_tables.id` passed as `artifactId`
+    // directly via `resolveAccessibleTableId` -> `resolveDirectTableId` ->
+    // `TablePlatformApi.getTable(id)`. No `/table-studio` route was added —
+    // this replaces the dead link rather than keeping two competing ones.
+    url: `/tabele?artifactId=${encodeURIComponent(tableId)}`,
     fieldCount: seed.fields.length,
     recordCount: seed.records.length,
   };
