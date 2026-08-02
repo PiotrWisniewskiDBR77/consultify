@@ -264,6 +264,12 @@ async function ensureTeresaTables(): Promise<void> {
       [],
       { fallback: true }
     );
+    await dbRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_teresa_handoff_result_proposal
+       ON teresa_handoff_results(proposal_id)`,
+      [],
+      { fallback: false }
+    );
     tablesEnsured = true;
     logger.info(`${LOG_PREFIX} Teresa DB tables ensured`);
   } catch (err) {
@@ -632,7 +638,14 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   if (!detail || typeof detail !== 'object') return null;
   const handoff = detail.handoff_result;
   if (!handoff || typeof handoff !== 'object') return null;
-  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref', 'insight_ref'];
+  const keys = [
+    'signal_id',
+    'initiative_ref',
+    'calendar_ref',
+    'note_ref',
+    'insight_ref',
+    'workbook_ref',
+  ];
   for (const key of keys) {
     const value = (handoff as Record<string, unknown>)[key];
     if (typeof value === 'string' && value.trim().length > 0) return value.trim();
@@ -1482,6 +1495,28 @@ export async function executeProposal(params: {
   }
 
   const currentState = row.state as ActionEnvelopeState;
+  // Execution is idempotent after completion. This is important both for an
+  // explicit user retry and for a client retry after a lost HTTP response.
+  if (currentState === 'completed') {
+    const auditRows = await loadAuditEntries(proposalId);
+    const completedAudit = [...auditRows]
+      .reverse()
+      .find((entry) => entry.action === 'execution_completed');
+    return {
+      success: true,
+      proposal_id: proposalId,
+      target_module: row.target_module as HandoffTargetModule,
+      state: 'completed',
+      audit_entry_id: completedAudit?.id ?? '',
+    };
+  }
+  if (currentState === 'executing') {
+    throw new TeresaCopilotError(
+      'Proposal execution already claimed',
+      'P08_EXECUTION_ALREADY_CLAIMED',
+      409
+    );
+  }
   if (currentState !== 'approved') {
     throw new TeresaCopilotError(
       `Cannot execute proposal in state: ${currentState}. Must be approved first.`,
@@ -1489,8 +1524,40 @@ export async function executeProposal(params: {
     );
   }
 
-  // Transition to executing
-  await transitionState(proposalId, 'executing');
+  // Atomically claim the proposal. A plain SELECT followed by UPDATE allowed
+  // two concurrent requests to execute the same owner-module write.
+  const claim = await dbRun(
+    `UPDATE teresa_proposals
+     SET state = 'executing', updated_at = ?
+     WHERE id = ? AND organization_id = ? AND state = 'approved'`,
+    [new Date().toISOString(), proposalId, organizationId],
+    { fallback: false }
+  );
+  if (claim.changes !== 1) {
+    const latest = await dbGet<ProposalRow>(
+      `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, organizationId],
+      { fallback: false }
+    );
+    if (latest?.state === 'completed') {
+      const auditRows = await loadAuditEntries(proposalId);
+      const completedAudit = [...auditRows]
+        .reverse()
+        .find((entry) => entry.action === 'execution_completed');
+      return {
+        success: true,
+        proposal_id: proposalId,
+        target_module: latest.target_module as HandoffTargetModule,
+        state: 'completed',
+        audit_entry_id: completedAudit?.id ?? '',
+      };
+    }
+    throw new TeresaCopilotError(
+      `Proposal execution already claimed (state: ${latest?.state ?? 'unknown'})`,
+      'P08_EXECUTION_ALREADY_CLAIMED',
+      409
+    );
+  }
   const executionStartAudit = await writeAuditEntry({
     proposalId,
     action: 'execution_started',

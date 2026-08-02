@@ -267,7 +267,10 @@ export async function recordAIRunEvent(input: RecordEventInput): Promise<any> {
   await dbRun(
     `UPDATE ai_run_ledger
      SET status = ?, output_refs = ?, audit = ?, updated_at = CURRENT_TIMESTAMP,
-         closed_at = CASE WHEN ? IN ('rejected', 'failed', 'audited', 'closed') THEN CURRENT_TIMESTAMP ELSE closed_at END
+         closed_at = CASE
+           WHEN ? IN ('rejected', 'failed', 'audited', 'closed') THEN CURRENT_TIMESTAMP
+           ELSE NULLIF(closed_at::text, '')::timestamptz
+         END
      WHERE run_id = ?`,
     [
       input.status,
