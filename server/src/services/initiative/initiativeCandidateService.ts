@@ -52,7 +52,13 @@ const defaultDb: CandidateDb = {
 
 export type CandidateStatus = 'pending' | 'accepted' | 'dismissed';
 
-export type DiscoverySourceType = 'interview_insight' | 'assessment' | 'audit';
+export type DiscoverySourceType =
+  | 'interview_insight'
+  | 'assessment'
+  | 'audit'
+  | 'finance_investment_case'
+  | 'finance_statement_pack'
+  | 'finance_valuation_recommendation';
 
 export interface InitiativeCandidate {
   id: string;
