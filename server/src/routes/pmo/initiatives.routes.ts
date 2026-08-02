@@ -2126,10 +2126,21 @@ router.post(
 
       const now = new Date().toISOString();
       const decId = uuidv4();
+      // decisions.decision_maker_id is NOT NULL on the real schema — it is the
+      // person responsible for deciding, not merely the row's author. Canonical
+      // semantics (DecisionController.createDecision, frozen, read-only for
+      // reference): `decision_maker_id = decisionOwnerId || userId` — an
+      // explicit owner from the request if the caller provided one, otherwise
+      // the session actor. This endpoint does not (yet) accept a caller-chosen
+      // owner — accepting one from the body without its own ownership/capability
+      // check would let any caller with initiative-change access hand a decision
+      // to an arbitrary user id. So: always the session actor, matching
+      // canonical's own default-when-unspecified path. No fabricated system id,
+      // no relaxed NOT NULL, no schema change.
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO decisions (id, organization_id, initiative_id, title, description, type, priority, status, created_by, created_at, updated_at, idempotency_key)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
+          `INSERT INTO decisions (id, organization_id, initiative_id, title, description, type, priority, status, decision_maker_id, created_by, created_at, updated_at, idempotency_key)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
           [
             decId,
             String(orgId),
@@ -2138,6 +2149,7 @@ router.post(
             description || null,
             String(type || 'CHANGE'),
             String(priority || 'medium'),
+            String(actorId),
             String(actorId),
             now,
             now,

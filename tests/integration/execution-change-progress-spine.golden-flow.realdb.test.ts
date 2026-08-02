@@ -475,12 +475,54 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
       expect(auditRows.rows.length).toBeGreaterThanOrEqual(1);
 
       const decisionRow = await h.client.query(
-        `SELECT id, initiative_id, title FROM decisions WHERE id = $1`,
+        `SELECT id, initiative_id, title, decision_maker_id FROM decisions WHERE id = $1`,
         [decisionId]
       );
       expect(decisionRow.rows.length).toBe(1);
       expect(decisionRow.rows[0].initiative_id).toBe(h.initiativeAId);
       expect(decisionRow.rows[0].title).toBe(changeTitle);
+      // decisions.decision_maker_id is NOT NULL on the real schema and must be
+      // the session actor who created the change — never null, never a
+      // fabricated system id.
+      expect(decisionRow.rows[0].decision_maker_id).toBe(h.userAId);
+    }
+  );
+
+  itDB(
+    "POST /changes CREATE: decisionMakerId in the request body cannot spoof decisions.decision_maker_id",
+    async (h) => {
+      // Regression test for the Codex-review blocker: decisions.decision_maker_id
+      // is NOT NULL and MUST come from the authenticated session, never from the
+      // request body — a caller must not be able to hand a decision to an
+      // arbitrary user id it doesn't have ownership/capability over. This
+      // endpoint does not read a decisionMakerId/decisionOwnerId field from the
+      // body at all; assert that sending one is silently ignored rather than
+      // honored, and that the row still resolves to the real session actor.
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const spoofedUserId = `spoofed-user-${suffix()}`;
+      const title = `Spoof attempt ${suffix()}`;
+
+      const res = await request(app)
+        .post(`/api/initiatives/${h.initiativeAId}/changes`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          title,
+          decisionMakerId: spoofedUserId,
+          decisionOwnerId: spoofedUserId,
+          decision_maker_id: spoofedUserId,
+        });
+      expect(res.status).toBe(201);
+      const decisionId = res.body?.decisionId as string;
+      expect(decisionId).toBeTruthy();
+
+      const row = await h.client.query(
+        `SELECT decision_maker_id FROM decisions WHERE id = $1`,
+        [decisionId]
+      );
+      expect(row.rows.length).toBe(1);
+      expect(row.rows[0].decision_maker_id).toBe(h.userAId);
+      expect(row.rows[0].decision_maker_id).not.toBe(spoofedUserId);
     }
   );
 
@@ -585,10 +627,11 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
       expect(secondRes.body?.decisionId).toBe(firstDecisionId);
 
       const rows = await h.client.query(
-        `SELECT id FROM decisions WHERE initiative_id = $1 AND idempotency_key = $2`,
+        `SELECT id, decision_maker_id FROM decisions WHERE initiative_id = $1 AND idempotency_key = $2`,
         [h.initiativeAId, idempotencyKey]
       );
       expect(rows.rows.length).toBe(1);
+      expect(rows.rows[0].decision_maker_id).toBe(h.userAId);
     }
   );
 
@@ -853,11 +896,16 @@ describe('EXE-005-006 — change + progress spine golden flow against a real Pos
       expect(loser.body?.decisionId).toBe(winner.body.decisionId);
 
       const rows = await h.client.query(
-        `SELECT id FROM decisions WHERE initiative_id = $1 AND idempotency_key = $2`,
+        `SELECT id, decision_maker_id FROM decisions WHERE initiative_id = $1 AND idempotency_key = $2`,
         [h.initiativeAId, idempotencyKey]
       );
       expect(rows.rows.length).toBe(1);
       expect(rows.rows[0].id).toBe(winner.body.decisionId);
+      // The single surviving row (whichever request actually won the race)
+      // must still carry the real session actor as decision_maker_id — the
+      // NOT NULL column and the idempotency race must not interact to leave
+      // it null or mismatched.
+      expect(rows.rows[0].decision_maker_id).toBe(h.userAId);
     }
   );
 });
