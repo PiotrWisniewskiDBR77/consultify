@@ -183,6 +183,13 @@ export const QuickUpdateInitiativeSchema = z.object({
   ownerBusinessId: z.string().optional().nullable(),
   ownerExecutionId: z.string().optional().nullable(),
   priority: z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']).optional(),
+  // EXE-006: retry-safe progress updates. validateBody() replaces req.body with
+  // this schema's parsed output — a field the controller reads from req.body
+  // but that isn't declared here is silently stripped before it arrives (found
+  // via the real-Postgres idempotency test in
+  // tests/integration/execution-change-progress-spine.golden-flow.realdb.test.ts,
+  // same class of bug as CreateTaskSchema in the prior EXE-002-004 task).
+  idempotencyKey: z.string().max(255).optional().nullable(),
 });
 
 export const UpdateInitiativeTemplateSchema = z.object({
