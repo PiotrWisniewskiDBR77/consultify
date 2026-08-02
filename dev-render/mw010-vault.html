@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MW-10 Vault Versioning — Isolated Harness</title>
+  </head>
+  <body>
+    <!--
+      MW-10 ISOLATED TEST HARNESS — separate entry point from the shared
+      `dev-render/index.html` → `main.tsx` registry on purpose.
+
+      `main.tsx` statically imports EVERY registered screen (React.lazy still
+      resolves the import path at Vite transform time), including
+      `./screens/tools-sesja-wyjscie`, which does not exist at this
+      worktree's base commit (`integrate/mvp-wave1-abc` @ 496db9b382) — a
+      pre-existing, unrelated gap. Fixing that gap is out of scope for MW-10
+      (not ours to touch), and stubbing it with a placeholder component was
+      rejected on review as masking someone else's broken reference.
+
+      This entry mounts ONLY `vault-sejf-wnetrze` directly
+      (`mw010-vault-main.tsx`), bypassing the shared registry entirely — no
+      stub, no dependency on unrelated screens.
+    -->
+    <div id="dev-render-root" style="height: 100vh; width: 100vw"></div>
+    <script type="module" src="/mw010-vault-main.tsx"></script>
+  </body>
+</html>

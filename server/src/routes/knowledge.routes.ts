@@ -22,6 +22,15 @@ import KnowledgeService, { type VaultDocumentScope } from '../services/Knowledge
 // (contextDocumentService.canAccessProject), NIE cały pipeline uploadAndIngest (dysproporcjonalne
 // wobec zakresu VLT-001, patrz DZIENNIK zadania). Ta sama tabela knowledge_docs, druga usługa.
 import contextDocumentService from '../services/organizationContext/ContextDocumentService.js';
+// ★ MW-10 — jedno źródło uprawnień do dokumentu Vault (dokument I każda jego
+// wersja liczone TYM SAMYM predykatem) + kanoniczna historia wersji.
+import {
+  canDeleteDocument,
+  canMutateDocument,
+  canReadDocument,
+  type VaultAccessContext,
+} from '../services/vault/vaultDocumentAccess.js';
+import vaultVersions from '../services/vault/vaultDocumentVersionService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -43,6 +52,84 @@ async function getMemberProjectIds(userId: string): Promise<string[]> {
     { fallback: true } as any
   );
   return (rows || []).map((r) => String(r.project_id)).filter(Boolean);
+}
+
+/**
+ * ★ MW-10 — ta sama normalizacja nazwy, którą stosuje
+ * `KnowledgeService.addDocument` (`safeFilename`, KnowledgeService.ts:56).
+ * Wiersz wersji musi nieść DOKŁADNIE tę nazwę, którą dostał wiersz dokumentu,
+ * inaczej „aktualna wersja" i dokument rozjeżdżają się w nazwie pliku.
+ */
+const safeFilenameForVersion = (name: string): string =>
+  String(name || 'document')
+    .replace(/[/\\]+/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * ★ MW-10 — kontekst uprawnień wołającego, budowany RAZ i podawany do
+ * `vaultDocumentAccess`. Dzięki temu handler dokumentu i handlery wersji nie
+ * mogą się rozjechać (kontrakt pkt 6).
+ */
+async function buildVaultAccessContext(req: AuthRequest): Promise<VaultAccessContext> {
+  const userId = req.user?.id || null;
+  return {
+    organizationId: String(req.user?.organizationId || ''),
+    userId,
+    isSuperAdmin: req.user?.isSuperAdmin === true,
+    memberProjectIds: userId ? await getMemberProjectIds(userId) : [],
+  };
+}
+
+/** Kształt wersji wystawiany na zewnątrz — stabilne ID, autor, znacznik czasu. */
+const serializeVersion = (v: any) => ({
+  versionId: v.versionId,
+  documentId: v.documentId,
+  versionNumber: v.versionNumber,
+  filename: v.filename,
+  fileSizeBytes: v.fileSizeBytes,
+  contentHash: v.contentHash,
+  chunkCount: v.chunkCount,
+  origin: v.origin,
+  restoredFromVersion: v.restoredFromVersion,
+  note: v.note,
+  createdBy: v.createdBy,
+  createdAt: v.createdAt,
+});
+
+/**
+ * Wczytuje dokument + od razu rozstrzyga uprawnienie. Zwraca gotową odpowiedź
+ * HTTP zamiast rzucać — wszystkie ścieżki wersji wchodzą przez tę bramkę, więc
+ * 404/403 wyglądają identycznie dla dokumentu i dla wersji.
+ */
+async function loadVaultDocumentForRequest(
+  req: AuthRequest,
+  res: Response,
+  documentId: string,
+  need: 'read' | 'mutate' | 'delete'
+): Promise<{ doc: any; ctx: VaultAccessContext } | null> {
+  const orgId = req.user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+  const doc = await KnowledgeService.getDocumentById(orgId, documentId);
+  const ctx = await buildVaultAccessContext(req);
+
+  // Brak prawa ODCZYTU nie może zdradzać istnienia dokumentu → 404, nie 403.
+  if (!canReadDocument(doc, ctx)) {
+    res.status(404).json({ error: 'Document not found' });
+    return null;
+  }
+  if (need === 'mutate' && !canMutateDocument(doc, ctx)) {
+    res.status(403).json({ error: 'Brak uprawnień do edycji dokumentu' });
+    return null;
+  }
+  if (need === 'delete' && !canDeleteDocument(doc, ctx)) {
+    res.status(403).json({ error: 'Brak uprawnień do usunięcia dokumentu' });
+    return null;
+  }
+  return { doc, ctx };
 }
 
 // ==========================================
@@ -189,8 +276,14 @@ router.get(
       const items = await KnowledgeService.getCandidates(status);
       return res.json(items);
     } catch (err: any) {
-      logger.error('[Knowledge] Get candidates failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać kandydatów wiedzy', code: 'KNOWLEDGE_CANDIDATES_LIST_FAILED' });
+      logger.error('[Knowledge] Get candidates failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać kandydatów wiedzy',
+        code: 'KNOWLEDGE_CANDIDATES_LIST_FAILED',
+      });
     }
     return;
   })
@@ -218,8 +311,14 @@ router.post(
       );
       return res.json({ id, message: 'Candidate submitted' });
     } catch (err: any) {
-      logger.error('[Knowledge] Add candidate failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się zgłosić kandydata', code: 'KNOWLEDGE_CANDIDATE_CREATE_FAILED' });
+      logger.error('[Knowledge] Add candidate failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zgłosić kandydata',
+        code: 'KNOWLEDGE_CANDIDATE_CREATE_FAILED',
+      });
     }
     return;
   })
@@ -242,8 +341,14 @@ router.put(
       await KnowledgeService.updateCandidateStatus(req.params.id, status, adminComment);
       return res.json({ message: 'Status updated' });
     } catch (err: any) {
-      logger.error('[Knowledge] Update candidate status failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się zaktualizować statusu kandydata', code: 'KNOWLEDGE_CANDIDATE_STATUS_UPDATE_FAILED' });
+      logger.error('[Knowledge] Update candidate status failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować statusu kandydata',
+        code: 'KNOWLEDGE_CANDIDATE_STATUS_UPDATE_FAILED',
+      });
     }
     return;
   })
@@ -275,8 +380,14 @@ router.put(
       const changes = await KnowledgeService.updateCandidate(req.params.id, updates);
       return res.json({ message: 'Candidate updated', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Update candidate failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się zaktualizować kandydata', code: 'KNOWLEDGE_CANDIDATE_UPDATE_FAILED' });
+      logger.error('[Knowledge] Update candidate failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować kandydata',
+        code: 'KNOWLEDGE_CANDIDATE_UPDATE_FAILED',
+      });
     }
     return;
   })
@@ -308,8 +419,14 @@ router.post(
       );
       return res.json({ message: 'Idea linked to project', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Link idea to project failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się powiązać pomysłu z projektem', code: 'KNOWLEDGE_CANDIDATE_LINK_PROJECT_FAILED' });
+      logger.error('[Knowledge] Link idea to project failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się powiązać pomysłu z projektem',
+        code: 'KNOWLEDGE_CANDIDATE_LINK_PROJECT_FAILED',
+      });
     }
     return;
   })
@@ -334,8 +451,14 @@ router.get(
       const ideas = await KnowledgeService.getApprovedIdeas(filters);
       return res.json(ideas);
     } catch (err: any) {
-      logger.error('[Knowledge] Get approved ideas failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać zatwierdzonych pomysłów', code: 'KNOWLEDGE_CANDIDATES_APPROVED_FAILED' });
+      logger.error('[Knowledge] Get approved ideas failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać zatwierdzonych pomysłów',
+        code: 'KNOWLEDGE_CANDIDATES_APPROVED_FAILED',
+      });
     }
     return;
   })
@@ -357,8 +480,14 @@ router.get(
       const ideas = await KnowledgeService.getIdeasByCategory(req.params.category);
       return res.json(ideas);
     } catch (err: any) {
-      logger.error('[Knowledge] Get ideas by category failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać pomysłów wg kategorii', code: 'KNOWLEDGE_CANDIDATES_BY_CATEGORY_FAILED' });
+      logger.error('[Knowledge] Get ideas by category failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać pomysłów wg kategorii',
+        code: 'KNOWLEDGE_CANDIDATES_BY_CATEGORY_FAILED',
+      });
     }
     return;
   })
@@ -380,8 +509,14 @@ router.get(
       const ideas = await KnowledgeService.getIdeasByProject(req.params.projectId);
       return res.json(ideas);
     } catch (err: any) {
-      logger.error('[Knowledge] Get ideas by project failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać pomysłów wg projektu', code: 'KNOWLEDGE_CANDIDATES_BY_PROJECT_FAILED' });
+      logger.error('[Knowledge] Get ideas by project failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać pomysłów wg projektu',
+        code: 'KNOWLEDGE_CANDIDATES_BY_PROJECT_FAILED',
+      });
     }
     return;
   })
@@ -406,8 +541,14 @@ router.get(
         : await KnowledgeService.getActiveStrategies();
       return res.json(strategies);
     } catch (err: any) {
-      logger.error('[Knowledge] Get strategies failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać strategii', code: 'KNOWLEDGE_STRATEGIES_LIST_FAILED' });
+      logger.error('[Knowledge] Get strategies failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać strategii',
+        code: 'KNOWLEDGE_STRATEGIES_LIST_FAILED',
+      });
     }
     return;
   })
@@ -442,8 +583,14 @@ router.post(
       );
       return res.json({ id, message: 'Strategy created' });
     } catch (err: any) {
-      logger.error('[Knowledge] Create strategy failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się utworzyć strategii', code: 'KNOWLEDGE_STRATEGY_CREATE_FAILED' });
+      logger.error('[Knowledge] Create strategy failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się utworzyć strategii',
+        code: 'KNOWLEDGE_STRATEGY_CREATE_FAILED',
+      });
     }
     return;
   })
@@ -479,8 +626,14 @@ router.put(
       const changes = await KnowledgeService.updateStrategy(req.params.id, updates);
       return res.json({ message: 'Strategy updated', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Update strategy failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się zaktualizować strategii', code: 'KNOWLEDGE_STRATEGY_UPDATE_FAILED' });
+      logger.error('[Knowledge] Update strategy failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować strategii',
+        code: 'KNOWLEDGE_STRATEGY_UPDATE_FAILED',
+      });
     }
     return;
   })
@@ -508,8 +661,14 @@ router.post(
       const changes = await KnowledgeService.linkStrategyToDocument(req.params.id, document_id);
       return res.json({ message: 'Document linked to strategy', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Link strategy to document failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się powiązać dokumentu ze strategią', code: 'KNOWLEDGE_STRATEGY_LINK_DOCUMENT_FAILED' });
+      logger.error('[Knowledge] Link strategy to document failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się powiązać dokumentu ze strategią',
+        code: 'KNOWLEDGE_STRATEGY_LINK_DOCUMENT_FAILED',
+      });
     }
     return;
   })
@@ -537,8 +696,14 @@ router.post(
       const changes = await KnowledgeService.linkStrategyToIdea(req.params.id, idea_id);
       return res.json({ message: 'Idea linked to strategy', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Link strategy to idea failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się powiązać pomysłu ze strategią', code: 'KNOWLEDGE_STRATEGY_LINK_IDEA_FAILED' });
+      logger.error('[Knowledge] Link strategy to idea failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się powiązać pomysłu ze strategią',
+        code: 'KNOWLEDGE_STRATEGY_LINK_IDEA_FAILED',
+      });
     }
     return;
   })
@@ -563,8 +728,14 @@ router.delete(
       );
       return res.json({ message: 'Document unlinked from strategy', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Unlink strategy from document failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się odłączyć dokumentu od strategii', code: 'KNOWLEDGE_STRATEGY_UNLINK_DOCUMENT_FAILED' });
+      logger.error('[Knowledge] Unlink strategy from document failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się odłączyć dokumentu od strategii',
+        code: 'KNOWLEDGE_STRATEGY_UNLINK_DOCUMENT_FAILED',
+      });
     }
     return;
   })
@@ -589,8 +760,14 @@ router.delete(
       );
       return res.json({ message: 'Idea unlinked from strategy', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Unlink strategy from idea failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się odłączyć pomysłu od strategii', code: 'KNOWLEDGE_STRATEGY_UNLINK_IDEA_FAILED' });
+      logger.error('[Knowledge] Unlink strategy from idea failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się odłączyć pomysłu od strategii',
+        code: 'KNOWLEDGE_STRATEGY_UNLINK_IDEA_FAILED',
+      });
     }
     return;
   })
@@ -621,8 +798,14 @@ router.put(
       );
       return res.json({ message: 'Strategy progress updated', changes });
     } catch (err: any) {
-      logger.error('[Knowledge] Update strategy progress failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się zaktualizować postępu strategii', code: 'KNOWLEDGE_STRATEGY_PROGRESS_UPDATE_FAILED' });
+      logger.error('[Knowledge] Update strategy progress failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zaktualizować postępu strategii',
+        code: 'KNOWLEDGE_STRATEGY_PROGRESS_UPDATE_FAILED',
+      });
     }
     return;
   })
@@ -648,8 +831,14 @@ router.get(
       }
       return res.json(strategy);
     } catch (err: any) {
-      logger.error('[Knowledge] Get strategy with related failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać strategii z powiązaniami', code: 'KNOWLEDGE_STRATEGY_RELATED_FAILED' });
+      logger.error('[Knowledge] Get strategy with related failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać strategii z powiązaniami',
+        code: 'KNOWLEDGE_STRATEGY_RELATED_FAILED',
+      });
     }
     return;
   })
@@ -672,8 +861,14 @@ router.put(
       await KnowledgeService.toggleStrategy(req.params.id, isActive);
       return res.json({ message: 'Strategy toggled' });
     } catch (err: any) {
-      logger.error('[Knowledge] Toggle strategy failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się przełączyć strategii', code: 'KNOWLEDGE_STRATEGY_TOGGLE_FAILED' });
+      logger.error('[Knowledge] Toggle strategy failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się przełączyć strategii',
+        code: 'KNOWLEDGE_STRATEGY_TOGGLE_FAILED',
+      });
     }
     return;
   })
@@ -791,12 +986,40 @@ router.post(
       // Process & Index (Async)
       const chunkCount = await KnowledgeService.processDocument(docId, text, orgId);
 
+      // ★ MW-10 (kontrakt pkt 1) — upload zakłada dokument I wersję 1. Wiersz
+      // wersji niesie własny, niezmienny snapshot (`finalPath` + sha256), więc
+      // późniejsza edycja nigdy nie kasuje treści pierwszej wersji.
+      let initialVersion: any = null;
+      try {
+        initialVersion = await vaultVersions.recordInitialVersion({
+          organizationId: orgId,
+          documentId: docId,
+          filename: safeFilenameForVersion(originalname),
+          filepath: finalPath,
+          fileSizeBytes: Number.isFinite(Number(size)) ? Number(size) : null,
+          chunkCount,
+          createdBy: ownerId || null,
+        });
+      } catch (versionErr: any) {
+        logger.error('[Knowledge] Initial version record failed', {
+          err: versionErr,
+          docId,
+          correlationId: (req as any).correlationId,
+        });
+      }
+
       // Record storage usage (Organization Level)
       if (recordStorageAfterUpload) {
         await recordStorageAfterUpload(req, size, 'document_upload');
       }
 
-      return res.json({ message: 'Document uploaded and indexed', docId, chunkCount });
+      return res.json({
+        message: 'Document uploaded and indexed',
+        docId,
+        chunkCount,
+        version: initialVersion ? initialVersion.versionNumber : 1,
+        versionId: initialVersion ? initialVersion.versionId : null,
+      });
     } catch (err: any) {
       logger.error('[Knowledge] Upload document failed', {
         err,
@@ -808,7 +1031,10 @@ router.post(
           fs.unlinkSync(tempPath);
         } catch (e) {}
       }
-      return res.status(500).json({ error: 'Nie udało się przesłać dokumentu', code: 'KNOWLEDGE_DOCUMENT_UPLOAD_FAILED' });
+      return res.status(500).json({
+        error: 'Nie udało się przesłać dokumentu',
+        code: 'KNOWLEDGE_DOCUMENT_UPLOAD_FAILED',
+      });
     }
     return;
   })
@@ -885,8 +1111,14 @@ router.get(
 
       return res.json(parsed);
     } catch (err: any) {
-      logger.error('[Knowledge] Get documents failed', { err, correlationId: (req as any).correlationId });
-      return res.status(500).json({ error: 'Nie udało się pobrać dokumentów wiedzy', code: 'KNOWLEDGE_DOCUMENTS_LIST_FAILED' });
+      logger.error('[Knowledge] Get documents failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się pobrać dokumentów wiedzy',
+        code: 'KNOWLEDGE_DOCUMENTS_LIST_FAILED',
+      });
     }
     return;
   })
@@ -1265,24 +1497,352 @@ router.delete(
 );
 
 /**
- * ★ VLT-002 — czy `req.user` wolno edytować dany dokument Vault? SuperAdmin zawsze;
- * poza tym wyłącznie właściciel WŁASNEGO prywatnego dokumentu (`scope='user' AND
- * owner_id=self`) — zgodnie z zadaniem VLT-002 pkt 3 (klient dostawał 403 przy
- * edycji własnego dokumentu, bo PUT wymuszał `requireSuperAdmin` bezwarunkowo).
- * Dokumentów project/organization NIE odblokowujemy tu dla zwykłych userów — to
- * pozostaje SuperAdmin-only (poza zakresem tego zadania).
+ * ★ VLT-002 / ★ MW-10 — reguła „kto może zmieniać dokument Vault" (SuperAdmin
+ * albo właściciel WŁASNEGO dokumentu prywatnego) przeniesiona 1:1 do
+ * `services/vault/vaultDocumentAccess.ts` i wołana przez
+ * `loadVaultDocumentForRequest`. Dokumenty project/organization pozostają
+ * SuperAdmin-only — bez zmiany względem VLT-002.
  */
-function canEditOwnPrivateDocument(req: AuthRequest, doc: any): boolean {
-  if (req.user?.isSuperAdmin === true) return true;
-  const userId = req.user?.id;
-  if (!userId || !doc) return false;
-  return doc.scope === 'user' && String(doc.owner_id || '') === String(userId);
-}
+
+/**
+ * GET /api/knowledge/documents/:id
+ * ★ MW-10 (kontrakt pkt 5) — świeży odczyt POJEDYNCZEGO dokumentu. Przed MW-10
+ * takiego endpointu nie było wcale: UI potrafił dojść do dokumentu wyłącznie
+ * przez listę, więc twardy reload/deep-link nie miał czego zawołać.
+ */
+router.get(
+  '/documents/:id',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById) return notConfigured(res);
+    const gate = await loadVaultDocumentForRequest(req, res, req.params.id, 'read');
+    if (!gate) return;
+
+    const versions = await vaultVersions.listVersions(gate.ctx.organizationId, gate.doc.id);
+    const currentVersionNumber = Number(gate.doc.version) || versions[0]?.versionNumber || 1;
+    const current =
+      versions.find((v: any) => v.versionNumber === currentVersionNumber) || versions[0] || null;
+
+    return res.json({
+      ...gate.doc,
+      version: currentVersionNumber,
+      versionCount: versions.length,
+      currentVersion: current ? serializeVersion(current) : null,
+      permissions: {
+        canEdit: canMutateDocument(gate.doc, gate.ctx),
+        canDelete: canDeleteDocument(gate.doc, gate.ctx),
+      },
+    });
+  })
+);
+
+/**
+ * GET /api/knowledge/documents/:id/versions
+ * ★ MW-10 (kontrakt pkt 3) — historia ze stabilnym `versionId`, autorem i czasem.
+ */
+router.get(
+  '/documents/:id/versions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById) return notConfigured(res);
+    const gate = await loadVaultDocumentForRequest(req, res, req.params.id, 'read');
+    if (!gate) return;
+
+    const versions = await vaultVersions.listVersions(gate.ctx.organizationId, gate.doc.id);
+    return res.json({
+      documentId: gate.doc.id,
+      currentVersion: Number(gate.doc.version) || versions[0]?.versionNumber || 1,
+      versions: versions.map(serializeVersion),
+    });
+  })
+);
+
+/**
+ * GET /api/knowledge/documents/:id/versions/:versionNumber
+ * Metadane pojedynczej wersji. Uprawnienie IDENTYCZNE jak dla dokumentu
+ * (kontrakt pkt 6) — bo idzie przez tę samą bramkę.
+ */
+router.get(
+  '/documents/:id/versions/:versionNumber',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById) return notConfigured(res);
+    const gate = await loadVaultDocumentForRequest(req, res, req.params.id, 'read');
+    if (!gate) return;
+
+    const versionNumber = Number(req.params.versionNumber);
+    if (!Number.isInteger(versionNumber) || versionNumber < 1) {
+      return res.status(400).json({ error: 'versionNumber musi być dodatnią liczbą całkowitą' });
+    }
+    const version = await vaultVersions.getVersion(
+      gate.ctx.organizationId,
+      gate.doc.id,
+      versionNumber
+    );
+    if (!version) return res.status(404).json({ error: 'Version not found' });
+    return res.json(serializeVersion(version));
+  })
+);
+
+/**
+ * POST /api/knowledge/documents/:id/versions
+ * ★ MW-10 (kontrakt pkt 2 + 10) — nowa treść dokumentu = KOLEJNA, niezmienna
+ * wersja. `expectedVersion` w body to token CAS: jeżeli w międzyczasie ktoś
+ * zapisał swoją wersję, dostajesz 409 z aktualnym numerem — nigdy cichego
+ * nadpisania (last-write-wins).
+ */
+router.post(
+  '/documents/:id/versions',
+  verifyToken,
+  enforceStorageQuota || ((_req: AuthRequest, _res: Response, next: NextFunction) => next()),
+  upload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    let tempPath: string | null = req.file?.path || null;
+    const dropTemp = () => {
+      if (tempPath && fs.existsSync(tempPath)) {
+        try {
+          fs.unlinkSync(tempPath);
+        } catch {
+          /* best effort */
+        }
+      }
+      tempPath = null;
+    };
+
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+      if (!KnowledgeService?.getDocumentById || !KnowledgeService?.processDocument) {
+        return notConfigured(res);
+      }
+
+      const gate = await loadVaultDocumentForRequest(req, res, req.params.id, 'mutate');
+      if (!gate) return dropTemp();
+
+      const rawExpected = req.body?.expectedVersion;
+      let expectedVersion: number | null = null;
+      if (rawExpected !== undefined && rawExpected !== null && String(rawExpected).trim() !== '') {
+        expectedVersion = Number(rawExpected);
+        if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+          dropTemp();
+          return res.status(400).json({ error: 'expectedVersion musi być liczbą całkowitą' });
+        }
+      }
+
+      const claim = await vaultVersions.claimNextVersion({
+        organizationId: gate.ctx.organizationId,
+        documentId: gate.doc.id,
+        expectedVersion,
+      });
+      if (!claim.ok) {
+        dropTemp();
+        if (claim.reason === 'not_found') {
+          return res.status(404).json({ error: 'Document not found' });
+        }
+        return res.status(409).json({
+          error: 'Dokument zmienił się w międzyczasie — odśwież i spróbuj ponownie',
+          code: 'VAULT_VERSION_CONFLICT',
+          currentVersion: claim.currentVersion,
+          expectedVersion,
+        });
+      }
+
+      const filename = safeFilenameForVersion(req.file.originalname);
+      const finalPath = vaultVersions.buildVersionFilePath(gate.ctx.organizationId, filename);
+      try {
+        fs.renameSync(tempPath as string, finalPath);
+      } catch {
+        fs.copyFileSync(tempPath as string, finalPath);
+        fs.unlinkSync(tempPath as string);
+      }
+      tempPath = null;
+
+      let text = '';
+      try {
+        text = await extractDocumentText(finalPath, req.file.mimetype);
+      } catch (extractErr) {
+        logger.error('Document text extraction error', extractErr);
+        text = '';
+      }
+
+      let chunkCount = 0;
+      try {
+        chunkCount = await KnowledgeService.processDocument(
+          gate.doc.id,
+          text,
+          gate.ctx.organizationId
+        );
+      } catch (indexErr) {
+        logger.error('[Knowledge] Reindex on new version failed', { err: indexErr });
+      }
+
+      let version;
+      try {
+        version = await vaultVersions.commitVersion({
+          organizationId: gate.ctx.organizationId,
+          documentId: gate.doc.id,
+          versionNumber: claim.nextVersion,
+          filename,
+          filepath: finalPath,
+          fileSizeBytes: Number.isFinite(Number(req.file.size)) ? Number(req.file.size) : null,
+          contentHash: vaultVersions.hashFile(finalPath),
+          chunkCount,
+          origin: 'edit',
+          note: typeof req.body?.note === 'string' ? req.body.note.slice(0, 500) : null,
+          createdBy: gate.ctx.userId,
+        });
+      } catch (commitErr: any) {
+        // Kompensacja: wskaźnik został już podbity przez CAS, a wiersz wersji
+        // nie powstał — cofamy wskaźnik, żeby dokument nie wskazywał na wersję,
+        // której nie ma.
+        await vaultVersions.releaseVersionClaim({
+          organizationId: gate.ctx.organizationId,
+          documentId: gate.doc.id,
+          previousVersion: claim.previousVersion,
+          claimedVersion: claim.nextVersion,
+        });
+        throw commitErr;
+      }
+
+      if (recordStorageAfterUpload) {
+        await recordStorageAfterUpload(req, req.file.size, 'document_upload');
+      }
+
+      return res.status(201).json({
+        documentId: gate.doc.id,
+        version: serializeVersion(version),
+        currentVersion: claim.nextVersion,
+      });
+    } catch (err: any) {
+      dropTemp();
+      logger.error('[Knowledge] Create document version failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się zapisać nowej wersji dokumentu',
+        code: 'VAULT_VERSION_CREATE_FAILED',
+      });
+    }
+  })
+);
+
+/**
+ * POST /api/knowledge/documents/:id/versions/:versionNumber/restore
+ * ★ MW-10 (kontrakt pkt 4) — restore NIE nadpisuje historii. Tworzy KOLEJNĄ
+ * wersję, której treść jest kopią wskazanej wersji, a wiersz niesie
+ * `origin='restore'` + `restoredFromVersion` (provenance).
+ */
+router.post(
+  '/documents/:id/versions/:versionNumber/restore',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!KnowledgeService?.getDocumentById) return notConfigured(res);
+
+    const gate = await loadVaultDocumentForRequest(req, res, req.params.id, 'mutate');
+    if (!gate) return;
+
+    const sourceNumber = Number(req.params.versionNumber);
+    if (!Number.isInteger(sourceNumber) || sourceNumber < 1) {
+      return res.status(400).json({ error: 'versionNumber musi być dodatnią liczbą całkowitą' });
+    }
+    const source = await vaultVersions.getVersion(
+      gate.ctx.organizationId,
+      gate.doc.id,
+      sourceNumber
+    );
+    if (!source) return res.status(404).json({ error: 'Version not found' });
+
+    const rawExpected = req.body?.expectedVersion;
+    let expectedVersion: number | null = null;
+    if (rawExpected !== undefined && rawExpected !== null && String(rawExpected).trim() !== '') {
+      expectedVersion = Number(rawExpected);
+      if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+        return res.status(400).json({ error: 'expectedVersion musi być liczbą całkowitą' });
+      }
+    }
+
+    const claim = await vaultVersions.claimNextVersion({
+      organizationId: gate.ctx.organizationId,
+      documentId: gate.doc.id,
+      expectedVersion,
+    });
+    if (!claim.ok) {
+      if (claim.reason === 'not_found') {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+      return res.status(409).json({
+        error: 'Dokument zmienił się w międzyczasie — odśwież i spróbuj ponownie',
+        code: 'VAULT_VERSION_CONFLICT',
+        currentVersion: claim.currentVersion,
+        expectedVersion,
+      });
+    }
+
+    try {
+      // Kopia pliku, nie współdzielenie ścieżki — snapshot pozostaje niezmienny
+      // nawet gdyby plik źródłowej wersji został kiedyś usunięty z dysku.
+      const copied = source.filepath
+        ? vaultVersions.copySnapshotFile(gate.ctx.organizationId, source.filepath, source.filename)
+        : null;
+
+      let chunkCount = source.chunkCount;
+      if (copied?.filepath) {
+        try {
+          const text = await extractDocumentText(copied.filepath);
+          chunkCount = await KnowledgeService.processDocument(
+            gate.doc.id,
+            text,
+            gate.ctx.organizationId
+          );
+        } catch (indexErr) {
+          logger.error('[Knowledge] Reindex on restore failed', { err: indexErr });
+        }
+      }
+
+      const version = await vaultVersions.commitVersion({
+        organizationId: gate.ctx.organizationId,
+        documentId: gate.doc.id,
+        versionNumber: claim.nextVersion,
+        filename: source.filename,
+        filepath: copied?.filepath ?? source.filepath,
+        fileSizeBytes: copied?.sizeBytes ?? source.fileSizeBytes,
+        contentHash: copied?.contentHash ?? source.contentHash,
+        chunkCount,
+        origin: 'restore',
+        restoredFromVersion: sourceNumber,
+        note: typeof req.body?.note === 'string' ? req.body.note.slice(0, 500) : null,
+        createdBy: gate.ctx.userId,
+      });
+
+      return res.status(201).json({
+        documentId: gate.doc.id,
+        version: serializeVersion(version),
+        currentVersion: claim.nextVersion,
+        restoredFromVersion: sourceNumber,
+      });
+    } catch (err: any) {
+      await vaultVersions.releaseVersionClaim({
+        organizationId: gate.ctx.organizationId,
+        documentId: gate.doc.id,
+        previousVersion: claim.previousVersion,
+        claimedVersion: claim.nextVersion,
+      });
+      logger.error('[Knowledge] Restore document version failed', {
+        err,
+        correlationId: (req as any).correlationId,
+      });
+      return res.status(500).json({
+        error: 'Nie udało się przywrócić wersji dokumentu',
+        code: 'VAULT_VERSION_RESTORE_FAILED',
+      });
+    }
+  })
+);
 
 /**
  * PUT /api/knowledge/documents/:id
  * Update knowledge document metadata. SuperAdmin, or the owner of their own
- * private (scope='user') document — patrz `canEditOwnPrivateDocument`.
+ * private (scope='user') document — patrz `vaultDocumentAccess.canMutateDocument`.
  */
 router.put(
   '/documents/:id',
@@ -1297,11 +1857,9 @@ router.put(
 
     const { id } = req.params;
 
-    const doc = await KnowledgeService.getDocumentById(orgId, id);
-    if (!doc) return res.status(404).json({ error: 'Document not found' });
-    if (!canEditOwnPrivateDocument(req, doc)) {
-      return res.status(403).json({ error: 'Super admin access required' });
-    }
+    const gate = await loadVaultDocumentForRequest(req, res, id, 'mutate');
+    if (!gate) return;
+    const doc = gate.doc;
 
     const { category, tags, folderId } = req.body || {};
 
@@ -1380,11 +1938,9 @@ router.get(
         .json({ error: 'scope musi być jednym z: user, project, organization' });
     }
 
-    const doc = await KnowledgeService.getDocumentById(orgId, id);
-    if (!doc) return res.status(404).json({ error: 'Document not found' });
-    if (!canEditOwnPrivateDocument(req, doc)) {
-      return res.status(403).json({ error: 'Super admin access required' });
-    }
+    const gate = await loadVaultDocumentForRequest(req, res, id, 'mutate');
+    if (!gate) return;
+    const doc = gate.doc;
 
     const previousScope = doc.scope || 'organization'; // legacy scope IS NULL == 'organization'
     const becameOrgVisibleCount =
@@ -1423,11 +1979,8 @@ router.patch(
         .json({ error: 'scope musi być jednym z: user, project, organization' });
     }
 
-    const doc = await KnowledgeService.getDocumentById(orgId, id);
-    if (!doc) return res.status(404).json({ error: 'Document not found' });
-    if (!canEditOwnPrivateDocument(req, doc)) {
-      return res.status(403).json({ error: 'Super admin access required' });
-    }
+    const gate = await loadVaultDocumentForRequest(req, res, id, 'mutate');
+    if (!gate) return;
 
     const rawProjectId =
       typeof req.body?.project_id === 'string' && req.body.project_id.trim()
@@ -1463,7 +2016,21 @@ router.patch(
 
 /**
  * DELETE /api/knowledge/documents/:id
- * Soft-delete a knowledge document (sets deleted_at). Org-scoped.
+ * Soft-delete a knowledge document (sets deleted_at).
+ *
+ * ★ MW-10 — DWIE zmiany względem stanu przed zadaniem:
+ *  1. Bramka uprawnień. Do MW-10 ten handler sprawdzał WYŁĄCZNIE
+ *     `organization_id`, więc dowolny użytkownik organizacji mógł skasować
+ *     CUDZY dokument prywatny (`scope='user'`), którego nie widział nawet na
+ *     liście. Teraz idzie przez `canDeleteDocument`, który (po recenzji CTO
+ *     2026-08-02) jest identyczny z `canMutateDocument`: dla
+ *     `scope='project'|'organization'` DELETE jest superadmin-only — TAK SAMO
+ *     jak dodanie wersji/restore/edycja metadanych, nie „każdy, kto widzi"
+ *     (pierwsza wersja tego pliku tak miała; recenzja wykazała, że to była
+ *     asymetria bez pokrycia w VLT-002, patrz `vaultDocumentAccess.ts`
+ *     nagłówek DZIENNIK).
+ *  2. Kaskada na wersje (kontrakt pkt 9) — po usunięciu dokumentu nie zostaje
+ *     ANI JEDNA osiągalna wersja.
  */
 router.delete(
   '/documents/:id',
@@ -1475,10 +2042,18 @@ router.delete(
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'Missing document id' });
 
+    const gate = await loadVaultDocumentForRequest(req, res, id, 'delete');
+    if (!gate) return;
+
     const result = await KnowledgeService.deleteDocument(orgId, id);
     if (!result.deleted) return res.status(404).json({ error: 'Document not found' });
 
-    return res.json({ success: true, deleted: id });
+    const versionsRemoved = await vaultVersions.softDeleteVersionsForDocument(
+      gate.ctx.organizationId,
+      id
+    );
+
+    return res.json({ success: true, deleted: id, versionsRemoved });
   })
 );
 

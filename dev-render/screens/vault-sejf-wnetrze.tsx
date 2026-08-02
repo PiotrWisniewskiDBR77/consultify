@@ -17,6 +17,12 @@ import React from 'react';
 
 import { Api } from '../../src/services/api';
 import { VaultDocumentsView } from '../../src/views/vault/VaultDocumentsView';
+import { seedRealisticSession } from '../mocks/seedStore';
+
+// MW-10 — `canChangeScope`/wersje w `VaultDocumentPanel` czytają
+// `currentUser.id` z `useAppStore` (nie z Api), więc bez seeda dev-render
+// pokazywałby panel wersji jako zablokowany (nikt nie jest „właścicielem").
+seedRealisticSession();
 
 const DOCS = [
   {
@@ -100,6 +106,24 @@ const DOCS = [
     project_id: 'proj-1',
     owner_id: 'user-2',
   },
+  // ★ MW-10 — dokument WŁASNY demo-usera (`user-piotr-demo`, patrz
+  // `seedRealisticSession`), żeby `canChangeScope`/panel „Wersje" był
+  // klikalny w tym harnessie (mirror backendu: wersje edytuje tylko
+  // właściciel własnego prywatnego dokumentu).
+  {
+    id: 'doc-mw010-versions',
+    filename: 'MW10_wersjonowanie_demo.docx',
+    category: 'Methodology',
+    tags: ['mw-10', 'wersje'],
+    status: 'indexed',
+    created_at: '2026-08-01T10:00:00Z',
+    chunk_count: 6,
+    file_size_bytes: 51_200,
+    scope: 'user',
+    project_id: null,
+    owner_id: 'user-piotr-demo',
+    folder_id: null,
+  },
 ];
 
 type ApiShape = Record<string, unknown>;
@@ -111,6 +135,61 @@ const FOLDERS = [
   { id: 'folder-1', name: 'Zarząd' },
   { id: 'folder-2', name: 'Zgodność' },
 ];
+
+// ★ MW-10 — historia wersji, STANOWA (ten sam wymóg co FOLDERS powyżej):
+// upload nowej wersji / restore faktycznie dopisuje wiersz, więc klik-po-kliku
+// w harnessie pokazuje TO SAMO co realny backend (`knowledge.routes.ts`
+// `serializeVersion` — kształt pól 1:1).
+type MockVersion = {
+  versionId: string;
+  documentId: string;
+  versionNumber: number;
+  filename: string;
+  fileSizeBytes: number | null;
+  contentHash: string | null;
+  chunkCount: number;
+  origin: 'upload' | 'edit' | 'restore';
+  restoredFromVersion: number | null;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+};
+
+const VERSIONS = new Map<string, MockVersion[]>([
+  [
+    'doc-mw010-versions',
+    [
+      {
+        versionId: 'ver-1',
+        documentId: 'doc-mw010-versions',
+        versionNumber: 1,
+        filename: 'MW10_wersjonowanie_demo.docx',
+        fileSizeBytes: 40_960,
+        contentHash: 'hash-v1',
+        chunkCount: 4,
+        origin: 'upload',
+        restoredFromVersion: null,
+        note: null,
+        createdBy: 'user-piotr-demo',
+        createdAt: '2026-08-01T10:00:00Z',
+      },
+      {
+        versionId: 'ver-2',
+        documentId: 'doc-mw010-versions',
+        versionNumber: 2,
+        filename: 'MW10_wersjonowanie_demo.docx',
+        fileSizeBytes: 51_200,
+        contentHash: 'hash-v2',
+        chunkCount: 6,
+        origin: 'edit',
+        restoredFromVersion: null,
+        note: null,
+        createdBy: 'user-piotr-demo',
+        createdAt: '2026-08-01T12:30:00Z',
+      },
+    ],
+  ],
+]);
 
 const installMocks = (empty: boolean) => {
   const api = Api as unknown as ApiShape;
@@ -145,6 +224,85 @@ const installMocks = (empty: boolean) => {
         (d as Record<string, unknown>).folder_id = null;
       }
     });
+  };
+
+  // ★ MW-10 — kontrakt 1:1 z `knowledge.routes.ts` (GET .../versions,
+  // POST .../versions z CAS, POST .../versions/:n/restore z CAS).
+  api.getKnowledgeDocumentVersions = async (id: string) => {
+    const list = VERSIONS.get(id) || [];
+    const sorted = [...list].sort((a, b) => b.versionNumber - a.versionNumber);
+    return {
+      documentId: id,
+      currentVersion: sorted[0]?.versionNumber ?? 1,
+      versions: sorted,
+    };
+  };
+  api.uploadKnowledgeDocumentVersion = async (id: string, file: File, expectedVersion: number) => {
+    const list = VERSIONS.get(id) || [];
+    const current = Math.max(0, ...list.map((v) => v.versionNumber));
+    if (expectedVersion !== current) {
+      const err = new Error('Dokument zmienił się w międzyczasie') as Error & {
+        code?: string;
+        currentVersion?: number;
+      };
+      err.code = 'VAULT_VERSION_CONFLICT';
+      err.currentVersion = current;
+      throw err;
+    }
+    const nextNumber = current + 1;
+    const version: MockVersion = {
+      versionId: `ver-${nextNumber}-${Date.now()}`,
+      documentId: id,
+      versionNumber: nextNumber,
+      filename: file.name,
+      fileSizeBytes: file.size,
+      contentHash: `hash-v${nextNumber}`,
+      chunkCount: current + 2,
+      origin: 'edit',
+      restoredFromVersion: null,
+      note: null,
+      createdBy: 'user-piotr-demo',
+      createdAt: new Date().toISOString(),
+    };
+    list.push(version);
+    VERSIONS.set(id, list);
+    return { documentId: id, version, currentVersion: nextNumber };
+  };
+  api.restoreKnowledgeDocumentVersion = async (
+    id: string,
+    versionNumber: number,
+    expectedVersion: number
+  ) => {
+    const list = VERSIONS.get(id) || [];
+    const source = list.find((v) => v.versionNumber === versionNumber);
+    const current = Math.max(0, ...list.map((v) => v.versionNumber));
+    if (!source) throw new Error('Version not found');
+    if (expectedVersion !== current) {
+      const err = new Error('Dokument zmienił się w międzyczasie') as Error & {
+        code?: string;
+        currentVersion?: number;
+      };
+      err.code = 'VAULT_VERSION_CONFLICT';
+      err.currentVersion = current;
+      throw err;
+    }
+    const nextNumber = current + 1;
+    const version: MockVersion = {
+      ...source,
+      versionId: `ver-${nextNumber}-${Date.now()}`,
+      versionNumber: nextNumber,
+      origin: 'restore',
+      restoredFromVersion: versionNumber,
+      createdAt: new Date().toISOString(),
+    };
+    list.push(version);
+    VERSIONS.set(id, list);
+    return {
+      documentId: id,
+      version,
+      currentVersion: nextNumber,
+      restoredFromVersion: versionNumber,
+    };
   };
 };
 
