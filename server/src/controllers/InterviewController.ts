@@ -777,6 +777,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
       sql: `ALTER TABLE interview_questions ADD COLUMN expected_answer_shape TEXT`,
     },
     {
+      name: 'description',
+      sql: `ALTER TABLE interview_questions ADD COLUMN description TEXT`,
+    },
+    {
       name: 'allow_voice',
       sql: `ALTER TABLE interview_questions ADD COLUMN allow_voice INTEGER DEFAULT 0`,
     },
@@ -839,6 +843,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
     if (!cols.has(column.name)) {
       try {
         await queryHelpers.queryRun(column.sql);
+        // getTableColumns() caches and returns this Set. Keep the cache coherent
+        // after a successful lazy migration so later requests do not issue the
+        // same ALTER and fill logs with harmless duplicate-column errors.
+        cols.add(column.name);
       } catch (err: any) {
         // Idempotent guard: getTableColumns() caches the column set per-process, so a
         // column added earlier in this process (or by another instance) is absent from the
@@ -846,6 +854,7 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
         // "already exists"/"duplicate column" — safe to ignore; rethrow anything else.
         const m = String(err?.message || err).toLowerCase();
         if (!m.includes('already exists') && !m.includes('duplicate column')) throw err;
+        cols.add(column.name);
       }
     }
   }
@@ -1282,6 +1291,45 @@ async function ensureInterviewAnswerHistoryTable(): Promise<void> {
       saved_by TEXT
     )`
   );
+}
+
+async function snapshotInterviewAnswers(params: {
+  organizationId: string;
+  assignmentId: string;
+  sessionId: string;
+  reason: 'submission' | 'send_back';
+  savedAt: string;
+  savedBy: string;
+}): Promise<number> {
+  await ensureInterviewAnswerHistoryTable();
+  const answeredQuestions = await queryHelpers.queryAll(
+    `SELECT id, answer_text FROM interview_questions
+      WHERE session_id = ?
+        AND organization_id = ?
+        AND answer_text IS NOT NULL
+        AND answer_text != ''`,
+    [params.sessionId, params.organizationId]
+  );
+
+  for (const q of answeredQuestions || []) {
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_answer_history
+       (id, organization_id, assignment_id, session_id, question_id, answer_text, reason, saved_at, saved_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.organizationId,
+        params.assignmentId,
+        params.sessionId,
+        (q as any).id,
+        (q as any).answer_text,
+        params.reason,
+        params.savedAt,
+        params.savedBy,
+      ]
+    );
+  }
+  return (answeredQuestions || []).length;
 }
 
 async function ensureInterviewTemplateV6Columns(): Promise<void> {
@@ -2017,7 +2065,10 @@ async function createSessionFromTemplate(params: {
 // ASSIGNMENTS HELPERS
 // ==========================================
 
-const LOCKED_SESSION_STATUSES = ['completed'] as const;
+// A submitted interview is a review artefact, not an editable draft. The
+// reviewer must explicitly send it back before answers, notes or evidence can
+// change.
+const LOCKED_SESSION_STATUSES = ['submitted', 'completed'] as const;
 
 const calcCompletenessRatio = (answered: number, total: number): number => {
   if (!total || total <= 0) return 0;
@@ -3981,6 +4032,7 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
     await ensureInterviewAssignmentAiReviewColumns();
+    await ensureInterviewQuestionV6Columns();
 
     // Team submission is allowed only for the primary assignee OR team lead (member role=lead).
     let assignment: any = null;
@@ -4157,6 +4209,27 @@ export const InterviewController = {
     }
 
     const newAssignmentStatus = 'submitted';
+
+    // INT-05 — persist the exact answer version before changing lifecycle
+    // state. Submission is fail-closed: success without a durable snapshot
+    // would leave the manager reviewing mutable, unverifiable data.
+    try {
+      await snapshotInterviewAnswers({
+        organizationId: user.organizationId,
+        assignmentId: id,
+        sessionId,
+        reason: 'submission',
+        savedAt: now,
+        savedBy: user.id,
+      });
+    } catch (error) {
+      logger.error('[InterviewController] Failed to snapshot interview submission', error);
+      res.status(500).json({
+        error: 'Submission could not be safely persisted. Please retry.',
+        code: 'SUBMISSION_SNAPSHOT_FAILED',
+      });
+      return;
+    }
 
     try {
       await queryHelpers.queryRun(
@@ -4366,31 +4439,14 @@ export const InterviewController = {
     // interview_answer_history). Fail-open: a snapshot hiccup must never
     // block the send-back itself — history is an audit nicety on top.
     try {
-      await ensureInterviewAnswerHistoryTable();
-      const answeredQuestions = await queryHelpers.queryAll(
-        `SELECT id, answer_text FROM interview_questions
-          WHERE session_id = ?
-            AND answer_text IS NOT NULL
-            AND answer_text != ''`,
-        [(assignment as any).session_id]
-      );
-      for (const q of answeredQuestions || []) {
-        await queryHelpers.queryRun(
-          `INSERT INTO interview_answer_history
-           (id, organization_id, assignment_id, session_id, question_id, answer_text, reason, saved_at, saved_by)
-           VALUES (?, ?, ?, ?, ?, ?, 'send_back', ?, ?)`,
-          [
-            uuidv4(),
-            admin.organizationId,
-            id,
-            (assignment as any).session_id,
-            (q as any).id,
-            (q as any).answer_text,
-            now,
-            admin.id,
-          ]
-        );
-      }
+      await snapshotInterviewAnswers({
+        organizationId: admin.organizationId,
+        assignmentId: id,
+        sessionId: (assignment as any).session_id,
+        reason: 'send_back',
+        savedAt: now,
+        savedBy: admin.id,
+      });
     } catch (err) {
       logger.warn(
         '[InterviewController] sendBackAssignment: answer-history snapshot skipped (fail-open)',
