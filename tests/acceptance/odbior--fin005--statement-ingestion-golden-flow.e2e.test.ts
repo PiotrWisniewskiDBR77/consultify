@@ -1672,5 +1672,134 @@ describe.each(FIX2_ENDPOINTS)(
         await db.end();
       }
     }, 60_000);
+
+    // ═══════════ Adversarial-review gap-closure: fresh vs stale in_progress
+    // reclaim, replicated from the pre-existing /upload versions ("round-3 —
+    // a genuinely fresh (non-stale) in_progress reservation is NOT
+    // reclaimed" / "round-3 — a STALE in_progress reservation ... IS
+    // reclaimed") onto the actual product endpoints. ═══════════
+
+    it(`(e) ${label}: a genuinely fresh (non-stale) in_progress reservation is correctly REJECTED (409 UPLOAD_IN_PROGRESS), not reclaimed`, async () => {
+      const idempotencyKey = `${MARK}fix2-${label}-genuinely-in-flight`;
+      const fixture = makeXlsxFixture();
+      const filename = `${MARK}fix2-${label}-in-flight.xlsx`;
+      const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const requestHash = crypto.createHash('sha256').update(fixture).digest('hex');
+      const manualReservationId = `${MARK}fix2-${label}-manual-reservation`;
+
+      const db = client();
+      await db.connect();
+      try {
+        // Simulate a real in-flight owner: insert a FRESH 'in_progress' row
+        // directly (bypassing the route), matching hash — as if another
+        // request is, right now, still inside performUploadAndAnalyze() for
+        // this key. Same technique as the /upload version above.
+        await db.query(
+          `INSERT INTO financial_statement_upload_idempotency
+             (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_at)
+           VALUES ($1, $2, $3, NULL, 0, NULL, $4, 'in_progress', CURRENT_TIMESTAMP)`,
+          [manualReservationId, SEED.ORG_ID, idempotencyKey, requestHash]
+        );
+
+        const res = await request(app)
+          .post(endpointPath)
+          .set('Authorization', `Bearer ${token2}`)
+          .set('Idempotency-Key', idempotencyKey)
+          .attach('file', fixture, { filename, contentType })
+          .expect(409);
+        expect(res.body.code).toBe('UPLOAD_IN_PROGRESS');
+        expect(res.headers['retry-after']).toBeTruthy();
+
+        const rows = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+          [filename, SEED.ORG_ID]
+        );
+        expect(rows.rows.length).toBe(0); // no Statement created while genuinely in-flight
+      } finally {
+        await db.query(`DELETE FROM financial_statement_upload_idempotency WHERE id = $1`, [
+          manualReservationId,
+        ]);
+        await db.end();
+      }
+    }, 30_000);
+
+    it(`(f) ${label}: a STALE in_progress reservation (created_at far in the past) IS reclaimed and completes normally`, async () => {
+      const idempotencyKey = `${MARK}fix2-${label}-stale-reclaim`;
+      const fixture = makeXlsxFixture();
+      const filename = `${MARK}fix2-${label}-stale.xlsx`;
+      const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      const requestHash = crypto.createHash('sha256').update(fixture).digest('hex');
+      const manualReservationId = `${MARK}fix2-${label}-manual-stale-reservation`;
+
+      const db = client();
+      await db.connect();
+      try {
+        // A reservation abandoned long enough ago (well past the 60s
+        // STALE_IN_PROGRESS_SECONDS cutoff in reserveIdempotentUpload) to
+        // simulate a crashed/killed process that reserved but never
+        // finalized or failed.
+        await db.query(
+          `INSERT INTO financial_statement_upload_idempotency
+             (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_at)
+           VALUES ($1, $2, $3, NULL, 0, NULL, $4, 'in_progress', CURRENT_TIMESTAMP - INTERVAL '10 minutes')`,
+          [manualReservationId, SEED.ORG_ID, idempotencyKey, requestHash]
+        );
+
+        const res = await request(app)
+          .post(endpointPath)
+          .set('Authorization', `Bearer ${token2}`)
+          .set('Idempotency-Key', idempotencyKey)
+          .attach('file', fixture, { filename, contentType })
+          .expect(201);
+        const body = unwrap(res.body);
+        const statementId = String(body.statementIds?.[0] || '');
+        expect(statementId).toBeTruthy();
+
+        const rows = await db.query(
+          `SELECT id, status, statement_id FROM financial_statement_upload_idempotency
+            WHERE organization_id = $1 AND idempotency_key = $2`,
+          [SEED.ORG_ID, idempotencyKey]
+        );
+        expect(rows.rows.length).toBe(1); // the SAME row was reclaimed, not a second one
+        expect(rows.rows[0].id).toBe(manualReservationId);
+        expect(rows.rows[0].status).toBe('completed');
+        expect(rows.rows[0].statement_id).toBe(statementId);
+      } finally {
+        await db.end();
+      }
+    }, 30_000);
+
+    // ═══════════ Adversarial-review gap-closure: IDEMPOTENCY_KEY_TOO_LONG,
+    // replicated from the pre-existing /upload version ("Blocker 3 — an
+    // Idempotency-Key over the length cap is REJECTED (400), never silently
+    // truncated") onto the actual product endpoints. ═══════════
+
+    it(`(g) ${label}: an Idempotency-Key over the length cap is REJECTED (400 IDEMPOTENCY_KEY_TOO_LONG), never silently truncated`, async () => {
+      const tooLongKey = `${MARK}fix2-${label}-too-long-${'x'.repeat(250)}`;
+      expect(tooLongKey.length).toBeGreaterThan(200);
+
+      const res = await request(app)
+        .post(endpointPath)
+        .set('Authorization', `Bearer ${token2}`)
+        .set('Idempotency-Key', tooLongKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}fix2-${label}-key-too-long.xlsx`,
+          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        .expect(400);
+      expect(res.body.code).toBe('IDEMPOTENCY_KEY_TOO_LONG');
+
+      const db = client();
+      await db.connect();
+      try {
+        const rows = await db.query(
+          `SELECT id FROM financial_statements WHERE source_file_name = $1`,
+          [`${MARK}fix2-${label}-key-too-long.xlsx`]
+        );
+        expect(rows.rows.length).toBe(0); // rejected before any work happened
+      } finally {
+        await db.end();
+      }
+    }, 30_000);
   }
 );
