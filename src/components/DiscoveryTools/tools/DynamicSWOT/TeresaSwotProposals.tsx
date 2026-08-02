@@ -458,9 +458,20 @@ export function TeresaSwotProposals({
           editingId === proposal.id &&
           draft !== undefined &&
           draft !== (proposal.proposedAfter?.text ?? '');
+        // IMPORTANT: the backend replaces proposed_after_json wholesale with
+        // editedAfter (it does not merge field-by-field) -- sending only
+        // `{ text: draft }` would strip id/quadrant/impact/source/confidence/
+        // proposalStatus from the persisted item, making it vanish from the
+        // quadrant grid (quadrant becomes undefined, matching none of the 4
+        // fixed quadrants) with no id left to ever find/remove it again. Merge
+        // onto the full proposedAfter shape so only `text` actually changes.
+        const editedAfter =
+          isEdited && proposal.proposedAfter
+            ? { ...proposal.proposedAfter, text: draft }
+            : undefined;
         const res = await Api.acceptSwotProposal(toolSessionId, proposal.id, {
           expectedVersion,
-          ...(isEdited ? { editedAfter: { text: draft } } : {}),
+          ...(editedAfter ? { editedAfter } : {}),
         });
         if (!mountedRef.current) return;
         setLastKnownSessionVersion(res.session?.version ?? null);

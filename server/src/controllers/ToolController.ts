@@ -2891,11 +2891,39 @@ export class ToolController {
       let outcome: AcceptOutcome;
       try {
         outcome = await queryHelpers.withRawPgTransaction<AcceptOutcome>(async (client) => {
+          // Defense-in-depth: `editedAfter` is MERGED onto the proposal's own
+          // proposed_after_json, never a wholesale replace — a caller sending
+          // only `{ text: ... }` (as the shipped UI does) must not strip
+          // id/quadrant/impact/source/confidence/proposalStatus from the item
+          // that ends up in tool_sessions.answers_json (an item missing
+          // `quadrant` silently vanishes from every quadrant grid, with no
+          // `id` left to ever find or remove it again). This read is safe
+          // outside the mutual-exclusion guard below: proposed_after_json is
+          // immutable before a proposal is decided, and the UPDATE's own
+          // `WHERE status = 'pending'` still resolves concurrent accepts to
+          // exactly one winner regardless of when this SELECT ran.
+          let finalAfterJsonParam: string | null = null;
+          if (editedAfter !== undefined) {
+            const baseRes = await client.query(
+              `SELECT proposed_after_json FROM swot_proposals WHERE id = $1 AND tool_session_id = $2 AND organization_id = $3`,
+              [proposalId, toolId, user.organizationId]
+            );
+            const baseJson = (baseRes.rows[0] as { proposed_after_json: string | null } | undefined)
+              ?.proposed_after_json;
+            let base: Record<string, unknown> = {};
+            if (baseJson) {
+              try {
+                base = JSON.parse(baseJson);
+              } catch {
+                base = {};
+              }
+            }
+            finalAfterJsonParam = JSON.stringify({ ...base, ...editedAfter });
+          }
+
           // 1) Single atomic conditional UPDATE — not read-then-write. Under a
           // concurrent double-accept, Postgres resolves this to exactly one
           // winner via ordinary row-level locking on the UPDATE itself.
-          const finalAfterJsonParam =
-            editedAfter !== undefined ? JSON.stringify(editedAfter) : null;
           const acceptRes = await client.query(
             `UPDATE swot_proposals
              SET status = 'accepted',

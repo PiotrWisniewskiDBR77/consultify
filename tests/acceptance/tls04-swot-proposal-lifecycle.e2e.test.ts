@@ -421,6 +421,61 @@ describe('TLS-04 — generate → edit → accept → read-back → hard reload'
     expect(hardReload.body.answers.items).toHaveLength(2);
     evidence(`[tls04-t2] hard reload of sessionId=${sessionId} returns edited text again`);
   });
+
+  // Regression for an adversarial-review finding (post-build fix): the
+  // SHIPPED frontend only ever sends `editedAfter: { text: <edited> }` (never
+  // the full item shape the test above hand-builds for thoroughness). A first
+  // cut of acceptSwotProposal did a bare COALESCE(editedAfter, proposed_after)
+  // REPLACE, so a partial editedAfter silently stripped id/quadrant/impact/
+  // source/confidence/proposalStatus from the persisted item -- it would
+  // vanish from every quadrant grid (quadrant undefined matches none of the 4
+  // fixed quadrants) with no id left to ever find/remove it again. Fixed to
+  // MERGE editedAfter onto proposed_after_json server-side (defense-in-depth,
+  // independent of what any given caller sends). This test sends EXACTLY what
+  // the real UI sends -- a partial `{ text }` -- and proves the persisted item
+  // still has its quadrant/id/other fields intact.
+  it('accepting with a PARTIAL editedAfter ({ text } only, matching what the real UI sends) merges onto the proposal, never strips quadrant/id', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}t2b-partial-edit-session`);
+
+    mockLlmResolveOnce([updateProposal('strengths-1')]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(createRes.status).toBe(201);
+    const proposal = createRes.body.proposals[0];
+    const expectedVersion: number = proposal.expectedVersion;
+
+    const editedText = 'PARTIAL-EDIT: only the text field is sent, like the real UI does';
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion, editedAfter: { text: editedText } });
+    expect(acceptRes.status).toBe(200);
+    expect(acceptRes.body.proposal.finalAfter.text).toBe(editedText);
+    // The merge must have preserved these from proposed_after_json -- a bare
+    // replace would leave them undefined.
+    expect(acceptRes.body.proposal.finalAfter.quadrant).toBe('strengths');
+    expect(acceptRes.body.proposal.finalAfter.id).toBe('strengths-1');
+
+    const readBack = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(readBack.status).toBe(200);
+    const items2 = readBack.body.answers.items as any[];
+    // Must still have exactly 2 items (strengths-1 updated in place, not lost
+    // and not duplicated) and the edited item must still carry its quadrant,
+    // so it still renders in the Strengths column.
+    expect(items2).toHaveLength(2);
+    const readBackItem = items2.find((it) => it.id === 'strengths-1');
+    expect(readBackItem).toBeTruthy();
+    expect(readBackItem.text).toBe(editedText);
+    expect(readBackItem.quadrant).toBe('strengths');
+    evidence(
+      `[tls04-t2b] partial editedAfter merged correctly — quadrant/id survived, item still findable`
+    );
+  });
 });
 
 // ===========================================================================
