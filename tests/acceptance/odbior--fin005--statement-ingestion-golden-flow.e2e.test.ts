@@ -869,6 +869,69 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
     }
   }, 60_000);
 
+  it('finalize that SILENTLY affects zero rows (no error thrown) is still not a success — the "applied cleanly, changed nothing" path, which a throwing fault cannot express', async () => {
+    // WHY THIS EXISTS (coverage gap found by negative control, not by review):
+    // every other finalize fault in this file is injected with a CHECK
+    // constraint, i.e. Postgres REJECTS the UPDATE and `dbRun` THROWS — so
+    // they all exercise `finalizeIdempotentUpload`'s catch block. Sabotaging
+    // the OTHER guard in that function (`changes === 1`) to `return true`
+    // left this whole suite GREEN, which means the "UPDATE ran fine but
+    // matched no row" branch had no test at all. A BEFORE UPDATE trigger
+    // that RETURNs NULL models exactly that: the statement succeeds, zero
+    // rows change, nothing throws.
+    const idempotencyKey = `${MARK}finalize-zero-rows`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const escapedKey = idempotencyKey.replace(/'/g, "''");
+    const db = client();
+    await db.connect();
+    try {
+      await db.query(
+        `CREATE OR REPLACE FUNCTION test_fin005_suppress_finalize() RETURNS trigger AS $$
+         BEGIN
+           IF NEW.idempotency_key = '${escapedKey}' AND NEW.status = 'completed' THEN
+             RETURN NULL; -- suppress the row update: no error, zero rows affected
+           END IF;
+           RETURN NEW;
+         END;
+         $$ LANGUAGE plpgsql`
+      );
+      await db.query(
+        `CREATE TRIGGER trg_test_fin005_suppress_finalize
+           BEFORE UPDATE ON financial_statement_upload_idempotency
+           FOR EACH ROW EXECUTE FUNCTION test_fin005_suppress_finalize()`
+      );
+
+      const res = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}finalize-zero-rows.xlsx`,
+          contentType,
+        });
+
+      // The whole point: an unconfirmed finalize is a hard failure, never a 201.
+      expect(res.status).toBe(500);
+      expect(res.body.code).toBe('STATEMENT_UPLOAD_FINALIZE_FAILED');
+      expect(res.headers['idempotency-replayed']).toBeUndefined();
+
+      // And the marker was never left claiming success.
+      const rows = await db.query(
+        `SELECT status FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(rows.rows.length).toBe(1);
+      expect(rows.rows[0].status).not.toBe('completed');
+    } finally {
+      await db.query(
+        `DROP TRIGGER IF EXISTS trg_test_fin005_suppress_finalize ON financial_statement_upload_idempotency`
+      );
+      await db.query(`DROP FUNCTION IF EXISTS test_fin005_suppress_finalize()`);
+      await db.end();
+    }
+  }, 60_000);
+
   it('round-3 Proof 2 — a performUpload()-level failure AFTER the reservation but BEFORE finalize is reclaimed by a later attempt: end state is exactly ONE Statement, ONE Pack, ONE completed marker', async () => {
     const idempotencyKey = `${MARK}round3-mid-flight-fault`;
     const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -1725,7 +1788,12 @@ describe.each(FIX2_ENDPOINTS)(
       const filename = `${MARK}fix2-${label}-concurrent.xlsx`;
       const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       const fixture = makeXlsxFixture();
-      const N = 4;
+      // 5-way, not 4: the FIN-005 acceptance gate names "5-way concurrency"
+      // explicitly. Four in-flight requests already exercised the same code
+      // path, but the evidence has to match the gate it claims to satisfy —
+      // a 4-way run reported as the 5-way gate is exactly the kind of
+      // near-miss this packet keeps getting rejected for.
+      const N = 5;
 
       const responses = await Promise.all(
         Array.from({ length: N }, () =>
