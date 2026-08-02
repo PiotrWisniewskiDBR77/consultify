@@ -1270,6 +1270,7 @@ export class InitiativeController {
         ownerBusinessId,
         ownerExecutionId,
         priority,
+        idempotencyKey,
       } = req.body as Record<string, unknown>;
 
       if (status !== undefined) {
@@ -1281,7 +1282,7 @@ export class InitiativeController {
       }
 
       const current = await queryHelpers.queryOne(
-        `SELECT status, planned_start_date, planned_end_date, owner_business_id, owner_execution_id, name
+        `SELECT status, planned_start_date, planned_end_date, owner_business_id, owner_execution_id, name, progress
          FROM initiatives
          WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -1289,6 +1290,21 @@ export class InitiativeController {
       if (!current) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
+      }
+
+      // EXE-06: idempotent replay guard for progress updates. If a prior request with the
+      // same idempotencyKey already wrote a progress_updated history entry, this is a retry
+      // (e.g. client timeout + resend) — skip the UPDATE and notifications and return the
+      // same success shape so callers can treat it as a no-op success.
+      if (progress !== undefined && idempotencyKey) {
+        const existingHistory = await queryHelpers.queryOne(
+          `SELECT id FROM initiative_history WHERE initiative_id = ? AND action = ? AND idempotency_key = ?`,
+          [id, 'progress_updated', idempotencyKey]
+        );
+        if (existingHistory) {
+          res.status(200).json({ success: true, message: 'Initiative updated', idempotent: true });
+          return;
+        }
       }
 
       const actorId = req.user?.id;
@@ -1402,6 +1418,38 @@ export class InitiativeController {
 
       const sql = `UPDATE initiatives SET ${updates.join(', ')} WHERE id = ? AND organization_id = ?`;
       await queryHelpers.queryRun(sql, params);
+
+      // EXE-06: record progress changes to initiative_history so the audit trail (GET /:id/history)
+      // stays consistent with the progress shown after GET/reopen. Unlike the owner-change
+      // notification block below (which intentionally swallows errors as best-effort), a failure
+      // to write the audit record here is logged — silent audit gaps are the exact defect this
+      // change closes. A unique-violation on idempotency_key means a concurrent identical retry
+      // already wrote the record; treat that as success, not an error.
+      if (progress !== undefined) {
+        try {
+          await queryHelpers.queryRun(
+            `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes, idempotency_key)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              uuidv4(),
+              id,
+              'progress_updated',
+              JSON.stringify({ progress: (current as Record<string, unknown>).progress ?? null }),
+              JSON.stringify({ progress }),
+              actorId,
+              null,
+              idempotencyKey || null,
+            ]
+          );
+        } catch (err: any) {
+          if (err?.code !== '23505') {
+            logger.error('[quickUpdateInitiative] failed to write progress_updated history', {
+              initiativeId: id,
+              error: err?.message || String(err),
+            });
+          }
+        }
+      }
 
       // Emit owner change notifications (best-effort)
       try {

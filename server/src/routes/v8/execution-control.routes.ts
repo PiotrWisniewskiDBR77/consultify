@@ -844,6 +844,7 @@ const ReplanSchema = z.object({
   forecastEndDate: z.string().optional(),
   forecastEffortHours: z.number().optional(),
   reason: z.string().min(1),
+  idempotencyKey: z.string().optional(),
 });
 
 const EscalateSchema = z.object({
@@ -863,13 +864,23 @@ async function auditLog(
   oldVal: unknown,
   newVal: unknown,
   reason: string | null,
-  userId: string
+  userId: string,
+  idempotencyKey?: string | null
 ) {
   try {
     await dbRun(
-      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by)
-       VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?, ?)`,
-      [orgId, initiativeId, field, String(oldVal ?? ''), String(newVal ?? ''), reason, userId]
+      `INSERT INTO execution_audit_log (id, organization_id, initiative_id, field_changed, old_value, new_value, change_reason, changed_by, idempotency_key)
+       VALUES (gen_random_uuid()::TEXT, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orgId,
+        initiativeId,
+        field,
+        String(oldVal ?? ''),
+        String(newVal ?? ''),
+        reason,
+        userId,
+        idempotencyKey ?? null,
+      ]
     );
   } catch {
     // best-effort audit
@@ -1154,6 +1165,7 @@ router.post(
       forecastEndDate,
       forecastEffortHours,
       reason,
+      idempotencyKey,
     } = req.body;
 
     if (entityType === 'TASK') {
@@ -1197,6 +1209,16 @@ router.post(
         userId
       );
     } else {
+      // Org-scope existence guard MUST run before anything else in this branch —
+      // including the idempotency-replay check below. Checking idempotency first
+      // (as this used to) let a caller from ANY org probe execution_audit_log for
+      // a (entityId, idempotencyKey) pair written by a DIFFERENT org and get a 200
+      // idempotent-replay response without ever proving they own that initiative —
+      // a cross-tenant existence oracle bypassing the 404 this endpoint otherwise
+      // enforces. Found in adversarial review; fixed by reordering, not by adding
+      // organization_id to the idempotency SELECT alone (that alone would still
+      // 404 correctly, but keeping the existence check first and unconditional is
+      // the same defense-in-depth shape every other guard in this file uses).
       const old = (await dbAll(
         `SELECT forecast_start_date, forecast_end_date, planned_start_date, planned_end_date FROM initiatives WHERE id = ? AND organization_id = ?`,
         [entityId, organizationId]
@@ -1211,6 +1233,41 @@ router.post(
           .status(404)
           .json({ error: 'Initiative not found', code: 'EXECUTION_ENTITY_NOT_FOUND' });
       }
+
+      // EXE-06 idempotent retry: a client-supplied idempotencyKey that already
+      // produced an execution_audit_log row for this initiative's 'replan' means
+      // this request is a replay (e.g. a retried POST) — skip the UPDATE/audit
+      // writes and return the same response shape with `idempotent: true`, but
+      // still compute a fresh readback since that is a pure read. Only reachable
+      // once the org-scope guard above has already confirmed entityId belongs to
+      // organizationId, so this SELECT doesn't need its own org predicate to be
+      // safe — but include one anyway for defense in depth.
+      if (idempotencyKey) {
+        const existingAudit = (await dbAll(
+          `SELECT id FROM execution_audit_log WHERE initiative_id = ? AND organization_id = ? AND field_changed = 'replan' AND idempotency_key = ?`,
+          [entityId, organizationId, idempotencyKey]
+        )) as { id: string }[];
+        if (existingAudit?.length) {
+          const readback = await refreshControlTower(
+            organizationId,
+            undefined,
+            entityType,
+            entityId
+          );
+          return res.json({
+            data: {
+              success: true,
+              action: 'replan',
+              entityType,
+              entityId,
+              readback,
+              idempotent: true,
+            },
+            meta: executionControlMutationMeta(),
+          });
+        }
+      }
+
       const sets: string[] = [];
       const params: unknown[] = [];
       if (forecastStartDate) {
@@ -1239,8 +1296,37 @@ router.post(
         JSON.stringify(old[0]),
         JSON.stringify({ forecastStartDate, forecastEndDate }),
         reason,
-        userId
+        userId,
+        idempotencyKey
       );
+
+      // EXE-06: mirror the replan into initiative_history — the canonical audit
+      // trail the front-end actually reads (GET /:id/history "Dziennik zmian").
+      // execution_audit_log (above) is not exposed to the client. Best-effort but
+      // logged on failure (unlike a silent catch) so audit gaps are visible; a
+      // 23505 unique-violation on idempotency_key means a concurrent identical
+      // retry already wrote this record — treat that as success, not an error.
+      try {
+        await dbRun(
+          `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes, idempotency_key)
+           VALUES (gen_random_uuid()::TEXT, ?, 'reforecast', ?, ?, ?, ?, ?)`,
+          [
+            entityId,
+            JSON.stringify(old[0]),
+            JSON.stringify({ forecastStartDate, forecastEndDate }),
+            userId,
+            reason,
+            idempotencyKey ?? null,
+          ]
+        );
+      } catch (err: any) {
+        if (err?.code !== '23505') {
+          console.error('[execution-control] failed to write reforecast history', {
+            initiativeId: entityId,
+            error: err?.message || String(err),
+          });
+        }
+      }
     }
 
     const readback = await refreshControlTower(organizationId, undefined, entityType, entityId);
