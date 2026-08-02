@@ -527,6 +527,32 @@ ON CONFLICT (name) DO UPDATE SET
 -- Reuses existing KB tables + related_modules filter.
 -- ==========================================
 
+-- Guard (strict-schema repair, 2026-08): kb_categories/kb_articles/etc. are
+-- created by 739_knowledge_base_public_articles.sql, a HIGHER-numbered file
+-- that runs AFTER this one in numeric order. On a genuinely fresh DB those
+-- tables do not exist yet at this point, so the INSERTs below are wrapped in
+-- a runtime existence check (PL/pgSQL only plans/executes a statement when
+-- control actually reaches it, so a false IF never touches the missing
+-- tables) instead of reordering the whole file. Additive/idempotent: on an
+-- environment where the tables already exist (including a DB that already
+-- ran the old, unguarded version of this file successfully), behavior is
+-- unchanged — same INSERT ... ON CONFLICT statements, same outcome.
+DO $kb_seed_guard$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_categories'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_category_translations'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_articles'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_article_translations'
+  ) THEN
+
 -- Ensure category exists (if seed migration was skipped in a given env)
 INSERT INTO kb_categories (id, slug, icon, sort_order, is_active, is_public)
 VALUES ('kb-cat-tools-features', 'tools-features', 'Wrench', 5, 1, 0)
@@ -1206,3 +1232,7 @@ ON CONFLICT (article_id, language) DO UPDATE SET
   summary = EXCLUDED.summary,
   content = EXCLUDED.content,
   video_script = EXCLUDED.video_script;
+
+  END IF;
+END
+$kb_seed_guard$;

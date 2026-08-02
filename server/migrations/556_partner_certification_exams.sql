@@ -51,10 +51,18 @@ CREATE INDEX IF NOT EXISTS idx_partner_exam_questions_type_lang
   ON partner_exam_questions(certification_type, language);
 
 -- Attempts (audit)
+-- NOTE (strict-schema repair, 2026-08): certification_id/partner_org_id were
+-- declared TEXT here but partner_certifications.id / partner_organizations.id
+-- are UUID (215_partner_portal.sql) — Postgres refuses to create a FK across
+-- mismatched types, so this CREATE TABLE could never succeed against a real
+-- Postgres catalog regardless of migration order (fresh or otherwise). No
+-- live table/rows exist under the old TEXT declaration to protect (the
+-- statement always errored before committing), so retyping to UUID here is
+-- replay-safe: it just lets the table finally get created.
 CREATE TABLE IF NOT EXISTS partner_certification_attempts (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  certification_id TEXT NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
-  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  certification_id UUID NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
+  partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL,
   started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   deadline_at TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -74,11 +82,12 @@ CREATE INDEX IF NOT EXISTS idx_partner_cert_attempts_org_user_time
   ON partner_certification_attempts(partner_org_id, user_id, started_at DESC);
 
 -- Certificates (revocable)
+-- Same UUID-vs-TEXT FK mismatch fix as partner_certification_attempts above.
 CREATE TABLE IF NOT EXISTS partner_certificates (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
-  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL,
-  certification_id TEXT NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
+  certification_id UUID NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
   certificate_type TEXT NOT NULL, -- sales
   earned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE,
