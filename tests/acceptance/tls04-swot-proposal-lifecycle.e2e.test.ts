@@ -124,7 +124,10 @@ function addProposal(overrides: Partial<RawProposal> = {}): RawProposal {
     targetItemId: null,
     proposedText: 'Nowa szansa: ekspansja oferty na segment MŚP w regionie DACH',
     rationale: 'Rosnący popyt na automatyzację w MŚP otwiera nowy kanał przychodu.',
-    sourceRefs: ['s1'],
+    // Must be a REAL id from baseItems() -- Codex BLOCKER 4's semantic
+    // validation now rejects a non-assumption proposal whose sourceRefs
+    // don't match anything the model was actually given.
+    sourceRefs: ['strengths-1'],
     isAssumption: false,
     confidence: 0.72,
     ...overrides,
@@ -370,19 +373,18 @@ describe('TLS-04 — generate → edit → accept → read-back → hard reload'
     expect(proposal.operation).toBe('update');
     expect(proposal.targetItemId).toBe('strengths-1');
     const expectedVersion: number = proposal.expectedVersion;
-    expect(expectedVersion).toBe(1);
+    // 2, not 1: createSwotSession's own seed PUT (setting the initial items)
+    // is itself a real answers_json write and bumps version 1 -> 2 (Codex
+    // BLOCKER 1 fix) before this proposal is ever generated.
+    expect(expectedVersion).toBe(2);
 
     const editedText =
       'USER EDITED: przewaga rynkowa w B2B ugruntowana kontraktami wieloletnimi';
-    const editedAfter = {
-      id: 'strengths-1',
-      text: editedText,
-      quadrant: 'strengths',
-      impact: 'high',
-      source: 'ai',
-      confidence: 0.75,
-      proposalStatus: 'accepted',
-    };
+    // Codex BLOCKER 3: editedAfter may ONLY ever carry `text` -- the server
+    // is `.strict()` and 400s on any other key (id/quadrant/source/
+    // confidence/proposalStatus are server-owned provenance, never
+    // client-settable). This matches exactly what the shipped UI sends.
+    const editedAfter = { text: editedText };
 
     const acceptRes = await request(app)
       .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
@@ -659,8 +661,8 @@ describe('TLS-04 — stale version', () => {
       .set('Authorization', `Bearer ${tokenA}`)
       .send({});
     const proposal = createRes.body.proposals[0];
-    const staleVersion: number = proposal.expectedVersion; // 1
-    expect(staleVersion).toBe(1);
+    const staleVersion: number = proposal.expectedVersion; // 2 (see t2's note)
+    expect(staleVersion).toBe(2);
 
     // Simulate an intervening edit from elsewhere — bump the session version
     // WITHOUT going through the proposal flow at all.
@@ -855,5 +857,389 @@ describe('TLS-04 — malformed model response, no fake success', () => {
       [sessionId]
     );
     expect(rows.rows[0].c).toBe(0);
+  });
+});
+
+// ===========================================================================
+// CODEX FIX PACKET (2026-08-02) — BLOCKER 1: version guard must observe
+// ordinary SWOT writes, not just accept. Required real flow: generate at V ->
+// real PUT/autosave changes SWOT -> session V+1 -> accept the OLD proposal ->
+// 409 STALE_VERSION -> proposal stays pending -> the MANUAL change survives,
+// never overwritten by the stale AI text.
+// ===========================================================================
+describe('TLS-04 fix packet — BLOCKER 1: ordinary PUT/autosave bumps version, protecting against a stale proposal', () => {
+  it('generate at V -> real PUT changes SWOT -> V+1 -> accept stale proposal -> 409, proposal pending, manual edit survives untouched', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b1-real-autosave-session`);
+
+    // Proposal generated against whatever version createSwotSession's own
+    // seed PUT already left the session at.
+    mockLlmResolveOnce([updateProposal('strengths-1')]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(createRes.status).toBe(201);
+    const proposal = createRes.body.proposals[0];
+    const generatedAgainstVersion: number = proposal.expectedVersion;
+
+    // A REAL ordinary PUT/autosave — not raw SQL — manually changes the SAME
+    // item this proposal targets, to something the AI text must NOT clobber.
+    const manualText = 'MANUALLY EDITED BY USER — this must survive, never the stale AI text';
+    const manuallyEditedItems = items.map((it) =>
+      it.id === 'strengths-1' ? { ...it, text: manualText } : it
+    );
+    const manualPut = await request(app)
+      .put(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ answers: { items: manuallyEditedItems } });
+    expect(manualPut.status).toBe(200);
+
+    const bumped = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [sessionId]);
+    // Codex BLOCKER 1's core fix: an ordinary answers_json-writing PUT bumps
+    // version by exactly 1 -- before this fix it would NOT have moved at all.
+    expect(bumped.rows[0].version).toBe(generatedAgainstVersion + 1);
+
+    // Accept the OLD proposal (still recorded against the pre-edit version).
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: generatedAgainstVersion });
+    expect(acceptRes.status).toBe(409);
+    expect(acceptRes.body.code).toBe('STALE_VERSION');
+    expect(acceptRes.body.currentVersion).toBe(generatedAgainstVersion + 1);
+
+    const pendingCheck = await pgc.query(`SELECT status FROM swot_proposals WHERE id = $1`, [
+      proposal.id,
+    ]);
+    expect(pendingCheck.rows[0].status).toBe('pending');
+
+    // The manual edit is STILL there -- the stale AI proposal never applied.
+    const readBack = await request(app)
+      .get(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    const readBackItem = (readBack.body.answers.items as any[]).find(
+      (it) => it.id === 'strengths-1'
+    );
+    expect(readBackItem.text).toBe(manualText);
+    expect(readBackItem.text).not.toContain('AI PROPOSED');
+    evidence(
+      `[tls04-b1] ordinary PUT bumped version ${generatedAgainstVersion} -> ${generatedAgainstVersion + 1}; stale accept correctly rejected; manual edit intact`
+    );
+  });
+});
+
+// ===========================================================================
+// CODEX FIX PACKET — BLOCKER 2: the CAS source of truth is
+// swot_proposals.expected_version, NEVER a client-supplied expectedVersion.
+// A client that fetches the live (newer) version and sends THAT must still
+// be rejected -- it cannot "refresh" a stale proposal by lying about which
+// version it thinks it's operating against.
+// ===========================================================================
+describe('TLS-04 fix packet — BLOCKER 2: malicious/confused currentVersion cannot bypass staleness', () => {
+  it('proposal generated at V, session bumped to V+1, caller sends expectedVersion=V+1 (the CURRENT version, not the proposal\'s own) -> still 409 STALE_VERSION, zero changes', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b2-malicious-bypass-session`);
+
+    mockLlmResolveOnce([addProposal()]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    const proposal = createRes.body.proposals[0];
+    const proposalOwnVersion: number = proposal.expectedVersion;
+
+    // Real intervening edit (not raw SQL) bumps the session forward.
+    const bumpPut = await request(app)
+      .put(`/api/tools/${sessionId}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ answers: { items } });
+    expect(bumpPut.status).toBe(200);
+    const liveVersionRow = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [
+      sessionId,
+    ]);
+    const liveVersion: number = liveVersionRow.rows[0].version;
+    expect(liveVersion).toBeGreaterThan(proposalOwnVersion);
+
+    // The attack: the caller fetched the CURRENT live version and sends THAT
+    // as expectedVersion, hoping the server naively trusts it as fresh.
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: liveVersion });
+    expect(acceptRes.status).toBe(409);
+    expect(acceptRes.body.code).toBe('STALE_VERSION');
+
+    const pendingCheck = await pgc.query(`SELECT status FROM swot_proposals WHERE id = $1`, [
+      proposal.id,
+    ]);
+    expect(pendingCheck.rows[0].status).toBe('pending');
+    const versionAfter = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [
+      sessionId,
+    ]);
+    expect(versionAfter.rows[0].version).toBe(liveVersion); // unchanged by the rejected accept
+    evidence(
+      `[tls04-b2] client-supplied expectedVersion=${liveVersion} (matching the LIVE session, not the proposal's own ${proposalOwnVersion}) correctly rejected`
+    );
+  });
+
+  it('an expectedVersion assertion that matches the proposal\'s own recorded version still succeeds normally', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b2-honest-assertion-session`);
+
+    mockLlmResolveOnce([addProposal()]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    const proposal = createRes.body.proposals[0];
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: proposal.expectedVersion });
+    expect(acceptRes.status).toBe(200);
+  });
+
+  it('omitting expectedVersion entirely still uses the proposal\'s own recorded version as the real CAS source', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b2-omitted-assertion-session`);
+
+    mockLlmResolveOnce([addProposal()]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    const proposal = createRes.body.proposals[0];
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({}); // no expectedVersion at all
+    expect(acceptRes.status).toBe(200);
+  });
+});
+
+// ===========================================================================
+// CODEX FIX PACKET — BLOCKER 3: editedAfter is `.strict()` -- ONLY `text` is
+// accepted. Any system/provenance field (id/quadrant/source/confidence/
+// proposalStatus) or a prototype-pollution attempt is rejected with 400,
+// BEFORE the request ever reaches the controller. The proposal must remain
+// pending and the session untouched.
+// ===========================================================================
+describe('TLS-04 fix packet — BLOCKER 3: editedAfter is immutable except text', () => {
+  const attackCases: Array<{ label: string; editedAfter: Record<string, unknown> }> = [
+    { label: 'quadrant', editedAfter: { text: 'x', quadrant: 'threats' } },
+    { label: 'id', editedAfter: { text: 'x', id: 'someone-elses-id' } },
+    { label: 'source', editedAfter: { text: 'x', source: 'user' } },
+    { label: 'confidence', editedAfter: { text: 'x', confidence: 0.99 } },
+    { label: 'proposalStatus', editedAfter: { text: 'x', proposalStatus: 'accepted' } },
+    { label: 'constructor', editedAfter: { text: 'x', constructor: { polluted: true } } },
+  ];
+
+  for (const { label, editedAfter } of attackCases) {
+    it(`editedAfter with a "${label}" key -> 400, proposal stays pending, session untouched`, async () => {
+      const items = baseItems();
+      const sessionId = await createSwotSession(tokenA, items, `${P}b3-${label}-session`);
+
+      mockLlmResolveOnce([updateProposal('strengths-1')]);
+      const createRes = await request(app)
+        .post(`/api/tools/${sessionId}/swot-proposals`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({});
+      const proposal = createRes.body.proposals[0];
+      const versionBefore = proposal.expectedVersion;
+
+      const acceptRes = await request(app)
+        .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ expectedVersion: versionBefore, editedAfter });
+      expect(acceptRes.status).toBe(400);
+
+      const pendingCheck = await pgc.query(`SELECT status FROM swot_proposals WHERE id = $1`, [
+        proposal.id,
+      ]);
+      expect(pendingCheck.rows[0].status).toBe('pending');
+      const versionAfter = await pgc.query(`SELECT version FROM tool_sessions WHERE id = $1`, [
+        sessionId,
+      ]);
+      expect(versionAfter.rows[0].version).toBe(versionBefore);
+    });
+  }
+
+  // `__proto__` is handled separately from the loop above: a genuine own
+  // property literally named "__proto__" (as produced by JSON.parse, per the
+  // ECMAScript spec) survives an HTTP JSON round-trip intact -- confirmed
+  // directly (node -e JSON.parse/stringify round-trip keeps it as an own,
+  // enumerable key, and never mutates the REAL Object.prototype by itself).
+  // Whether the validation layer's `.strict()` treats that specific key name
+  // as "unrecognized" (400) or not is a property of the zod/JSON-parsing
+  // stack, not something this test should assert blindly. What actually
+  // matters -- and what the controller's design guarantees regardless of the
+  // validation outcome -- is that NO prototype pollution occurs and the
+  // server-side merge (Codex BLOCKER 3) only ever reads `editedAfter.text`
+  // explicitly, never spreading the object, so a "__proto__" key can never
+  // leak into the persisted item or the response.
+  it('editedAfter with a "__proto__" key never pollutes Object.prototype and never leaks into the persisted item', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b3-proto-session`);
+
+    mockLlmResolveOnce([updateProposal('strengths-1')]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    const proposal = createRes.body.proposals[0];
+    const versionBefore = proposal.expectedVersion;
+
+    const maliciousEditedAfter = JSON.parse('{"text":"safe text","__proto__":{"polluted":true}}');
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: versionBefore, editedAfter: maliciousEditedAfter });
+
+    // The real security property: no global pollution, ever.
+    expect(({} as any).polluted).toBeUndefined();
+    expect((Object.prototype as any).polluted).toBeUndefined();
+
+    if (acceptRes.status === 200) {
+      // Accepted as an ordinary text-only edit -- the "__proto__" attempt was
+      // inert. The persisted item must be clean: real text, real quadrant/id
+      // from the proposal, no stray "polluted" field anywhere.
+      expect(acceptRes.body.proposal.finalAfter.text).toBe('safe text');
+      expect(acceptRes.body.proposal.finalAfter.quadrant).toBe('strengths');
+      expect(acceptRes.body.proposal.finalAfter.id).toBe('strengths-1');
+      expect(acceptRes.body.proposal.finalAfter.polluted).toBeUndefined();
+      const readBack = await request(app)
+        .get(`/api/tools/${sessionId}`)
+        .set('Authorization', `Bearer ${tokenA}`);
+      const item = (readBack.body.answers.items as any[]).find((it) => it.id === 'strengths-1');
+      expect(item.polluted).toBeUndefined();
+    } else {
+      // Or rejected outright -- also an acceptable, safe outcome.
+      expect(acceptRes.status).toBe(400);
+      const pendingCheck = await pgc.query(`SELECT status FROM swot_proposals WHERE id = $1`, [
+        proposal.id,
+      ]);
+      expect(pendingCheck.rows[0].status).toBe('pending');
+    }
+  });
+
+  it('editedAfter with ONLY text still works normally (the one field the real UI actually sends)', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b3-valid-text-only-session`);
+
+    mockLlmResolveOnce([updateProposal('strengths-1')]);
+    const createRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    const proposal = createRes.body.proposals[0];
+
+    const acceptRes = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals/${proposal.id}/accept`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({ expectedVersion: proposal.expectedVersion, editedAfter: { text: 'valid edit' } });
+    expect(acceptRes.status).toBe(200);
+    expect(acceptRes.body.proposal.finalAfter.text).toBe('valid edit');
+    expect(acceptRes.body.proposal.finalAfter.quadrant).toBe('strengths');
+    expect(acceptRes.body.proposal.finalAfter.id).toBe('strengths-1');
+  });
+});
+
+// ===========================================================================
+// CODEX FIX PACKET — BLOCKER 4: semantic validation + provenance honesty.
+// Shape-valid JSON is not the same as semantically valid: a hallucinated
+// targetItemId, a target claimed in the wrong quadrant, or a fabricated
+// sourceRef must all be treated as INVALID_MODEL_RESPONSE, with zero rows
+// persisted -- never silently accepted.
+// ===========================================================================
+describe('TLS-04 fix packet — BLOCKER 4: semantic validation of the model response', () => {
+  it('model returns a targetItemId that does not exist in the current SWOT -> 502 INVALID_MODEL_RESPONSE, zero rows', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b4-nonexistent-target-session`);
+
+    mockLlmResolveOnce([updateProposal('this-id-does-not-exist')]);
+    mockLlmResolveOnce([updateProposal('this-id-does-not-exist')]);
+    const res = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(res.status).toBe(502);
+    expect(res.body.code).toBe('INVALID_MODEL_RESPONSE');
+
+    const rows = await pgc.query(
+      `SELECT COUNT(*)::int AS c FROM swot_proposals WHERE tool_session_id = $1`,
+      [sessionId]
+    );
+    expect(rows.rows[0].c).toBe(0);
+  });
+
+  it('model claims a real item but in the WRONG quadrant -> 502 INVALID_MODEL_RESPONSE, zero rows', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b4-wrong-quadrant-session`);
+
+    // strengths-1 is a real id, but claimed under "threats" -- semantically
+    // impossible, must be rejected even though the shape is schema-valid.
+    const wrongQuadrant = updateProposal('strengths-1', { quadrant: 'threats' });
+    mockLlmResolveOnce([wrongQuadrant]);
+    mockLlmResolveOnce([wrongQuadrant]);
+    const res = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(res.status).toBe(502);
+    expect(res.body.code).toBe('INVALID_MODEL_RESPONSE');
+
+    const rows = await pgc.query(
+      `SELECT COUNT(*)::int AS c FROM swot_proposals WHERE tool_session_id = $1`,
+      [sessionId]
+    );
+    expect(rows.rows[0].c).toBe(0);
+  });
+
+  it('model cites a fabricated sourceRef (not present in the input SWOT) on a non-assumption proposal -> 502 INVALID_MODEL_RESPONSE, zero rows', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b4-fabricated-source-session`);
+
+    const fabricated = addProposal({ sourceRefs: ['totally-made-up-id-42'], isAssumption: false });
+    mockLlmResolveOnce([fabricated]);
+    mockLlmResolveOnce([fabricated]);
+    const res = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(res.status).toBe(502);
+    expect(res.body.code).toBe('INVALID_MODEL_RESPONSE');
+
+    const rows = await pgc.query(
+      `SELECT COUNT(*)::int AS c FROM swot_proposals WHERE tool_session_id = $1`,
+      [sessionId]
+    );
+    expect(rows.rows[0].c).toBe(0);
+  });
+
+  it('an isAssumption:true proposal needs no sourceRefs and is accepted as a genuine assumption, never mislabeled anthropic', async () => {
+    const items = baseItems();
+    const sessionId = await createSwotSession(tokenA, items, `${P}b4-honest-assumption-session`);
+
+    mockLlmResolveOnce([
+      addProposal({ isAssumption: true, sourceRefs: null, confidence: 0.4 }),
+    ]);
+    const res = await request(app)
+      .post(`/api/tools/${sessionId}/swot-proposals`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({});
+    expect(res.status).toBe(201);
+    const proposal = res.body.proposals[0];
+    expect(proposal.isAssumption).toBe(true);
+
+    // Provenance honesty: runtime has no real provider/model metadata from
+    // llm.call's structured path (see swotProposalService.ts) -- must NEVER
+    // assert a specific provider (e.g. 'anthropic') it did not observe.
+    expect(proposal.modelMetadata.provider).toBe('unknown');
+    expect(proposal.modelMetadata.model).toBe('unknown');
+    expect(proposal.modelMetadata.requestedPolicy).toBe('premium');
+    expect(JSON.stringify(proposal.modelMetadata).toLowerCase()).not.toContain('anthropic');
   });
 });

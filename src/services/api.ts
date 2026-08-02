@@ -6924,7 +6924,14 @@ export const Api = {
   acceptSwotProposal: async (
     toolId: string,
     proposalId: string,
-    body: { expectedVersion: number; editedAfter?: { text?: string; [key: string]: unknown } }
+    // `expectedVersion` is an OPTIONAL client-side assertion only -- the
+    // server's real CAS check always uses the proposal's own recorded
+    // expected_version, never this value (Codex BLOCKER 2). `editedAfter`
+    // may ONLY carry `text` -- the backend schema is `.strict()` and 400s on
+    // any other key; all other fields (id/quadrant/source/confidence/
+    // proposalStatus) are server-owned and merged in server-side from the
+    // proposal itself (Codex BLOCKER 3).
+    body: { expectedVersion?: number; editedAfter?: { text: string } }
   ): Promise<{ proposal: SwotProposal; session: { id: string; version: number } }> => {
     const res = await fetch(`${API_URL}/tools/${toolId}/swot-proposals/${proposalId}/accept`, {
       method: 'POST',

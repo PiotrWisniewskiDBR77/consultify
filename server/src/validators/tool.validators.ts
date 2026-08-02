@@ -71,9 +71,25 @@ export const CreateSwotProposalsSchema = z.object({
   quadrantFocus: z.enum(['strengths', 'weaknesses', 'opportunities', 'threats']).optional(),
 });
 
+// TLS-04 fix (Codex BLOCKER 3): editedAfter is the ONLY user-owned field the
+// UI actually edits (a plain text box). `.strict()` rejects ANY other key
+// (including `id`/`quadrant`/`source`/`confidence`/`proposalStatus`/
+// `__proto__`/`constructor`/anything else) with a 400 at the validation
+// layer, before the request ever reaches the controller -- a client can
+// never use this field to overwrite provenance/system fields the server
+// itself owns.
+const EditedAfterSchema = z
+  .object({
+    text: z.string().trim().min(1).max(2000),
+  })
+  .strict();
+
 export const AcceptSwotProposalSchema = z.object({
-  expectedVersion: z.number().int().nonnegative(),
-  editedAfter: z.record(z.string(), z.unknown()).optional(),
+  // Optional, client-side assertion ONLY (Codex BLOCKER 2) -- the real CAS
+  // check always uses swot_proposals.expected_version server-side, never
+  // this value.
+  expectedVersion: z.number().int().nonnegative().optional(),
+  editedAfter: EditedAfterSchema.optional(),
 });
 
 export const RejectSwotProposalSchema = z.object({}).passthrough();

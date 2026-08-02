@@ -1273,6 +1273,17 @@ export class ToolController {
       if (answers !== undefined) {
         setClauses.push('answers_json = ?');
         params.push(JSON.stringify(answers || {}));
+        // TLS-04 fix (Codex BLOCKER 1): every write to the SWOT/tool-session
+        // content itself must bump `version` -- this is the CAS anchor
+        // swot_proposals.expected_version is checked against. Before this
+        // fix, only acceptSwotProposal incremented it, so a stale AI
+        // proposal generated against an OLD version could still pass its
+        // CAS check and clobber a manual edit/autosave made in between
+        // (version never moved to reflect that edit). Scoped to ONLY this
+        // branch -- a wizardState-only or status-only save must NOT bump
+        // version, since it doesn't change SWOT content a proposal could
+        // conflict with.
+        setClauses.push('version = version + 1');
       }
       if (contextSnapshot !== undefined) {
         setClauses.push('context_snapshot = ?');
@@ -2752,9 +2763,10 @@ export class ToolController {
             p.sourceRefs && p.sourceRefs.length > 0 ? JSON.stringify(p.sourceRefs) : null,
           is_assumption: p.isAssumption,
           confidence: p.confidence,
-          // Honest/generic — we don't hardcode a specific model name we're not
-          // certain of.
-          model_metadata_json: JSON.stringify({ provider: 'anthropic', generatedAt: now }),
+          // Honest/generic — never assert a provider/model we did not
+          // actually observe (Codex BLOCKER 4). See swotProposalService.ts's
+          // `attempt()` for exactly what is and isn't known at this seam.
+          model_metadata_json: JSON.stringify({ ...generation.modelMetadata, generatedAt: now }),
           status: 'pending',
           expected_version: session.version,
           created_by: user.id,
@@ -2878,8 +2890,18 @@ export class ToolController {
         return;
       }
 
-      const { expectedVersion, editedAfter } = req.body as {
-        expectedVersion: number;
+      // TLS-04 fix (Codex BLOCKER 2): `expectedVersion` is no longer trusted
+      // as the CAS input. A client that GETs the live session (now at V2),
+      // then calls accept on a proposal that was generated at V1, could
+      // previously send `expectedVersion: 2` and bypass the stale-version
+      // guard entirely -- the real source of truth is what THIS PROPOSAL was
+      // actually generated against (swot_proposals.expected_version), never
+      // whatever version number the client happens to send. `expectedVersion`
+      // in the body is now, at most, an OPTIONAL client-side assertion that
+      // must match the proposal's own recorded expected_version -- it is
+      // never used as the CAS value itself.
+      const { expectedVersion: clientAssertedVersion, editedAfter } = req.body as {
+        expectedVersion?: number;
         editedAfter?: Record<string, unknown>;
       };
 
@@ -2891,17 +2913,25 @@ export class ToolController {
       let outcome: AcceptOutcome;
       try {
         outcome = await queryHelpers.withRawPgTransaction<AcceptOutcome>(async (client) => {
-          // Defense-in-depth: `editedAfter` is MERGED onto the proposal's own
-          // proposed_after_json, never a wholesale replace — a caller sending
-          // only `{ text: ... }` (as the shipped UI does) must not strip
-          // id/quadrant/impact/source/confidence/proposalStatus from the item
-          // that ends up in tool_sessions.answers_json (an item missing
-          // `quadrant` silently vanishes from every quadrant grid, with no
-          // `id` left to ever find or remove it again). This read is safe
-          // outside the mutual-exclusion guard below: proposed_after_json is
-          // immutable before a proposal is decided, and the UPDATE's own
-          // `WHERE status = 'pending'` still resolves concurrent accepts to
-          // exactly one winner regardless of when this SELECT ran.
+          // TLS-04 fix (Codex BLOCKER 3): `editedAfter` may ONLY ever carry
+          // `text` (enforced by AcceptSwotProposalSchema's `.strict()` at the
+          // validation layer — any other key, including id/quadrant/source/
+          // confidence/proposalStatus/__proto__/constructor, is rejected with
+          // 400 before this handler ever runs). The server ALWAYS keeps every
+          // other field from the proposal's own proposed_after_json — this is
+          // an explicit field-by-field override of `text` only, never a
+          // generic object spread of caller input, so no future relaxation of
+          // the schema could silently reopen this to arbitrary-field
+          // injection. A caller sending only `{ text }` (as the shipped UI
+          // does) must not strip id/quadrant/impact/source/confidence/
+          // proposalStatus from the item that ends up in
+          // tool_sessions.answers_json (an item missing `quadrant` silently
+          // vanishes from every quadrant grid, with no `id` left to ever
+          // find/remove it again). This read is safe outside the mutual-
+          // exclusion guard below: proposed_after_json is immutable before a
+          // proposal is decided, and the UPDATE's own `WHERE status =
+          // 'pending'` still resolves concurrent accepts to exactly one
+          // winner regardless of when this SELECT ran.
           let finalAfterJsonParam: string | null = null;
           if (editedAfter !== undefined) {
             const baseRes = await client.query(
@@ -2918,7 +2948,11 @@ export class ToolController {
                 base = {};
               }
             }
-            finalAfterJsonParam = JSON.stringify({ ...base, ...editedAfter });
+            const editedText = (editedAfter as { text?: unknown }).text;
+            finalAfterJsonParam = JSON.stringify({
+              ...base,
+              text: typeof editedText === 'string' ? editedText : base.text,
+            });
           }
 
           // 1) Single atomic conditional UPDATE — not read-then-write. Under a
@@ -2947,6 +2981,22 @@ export class ToolController {
           }
 
           const acceptedProposal = acceptRes.rows[0] as SwotProposalRow;
+
+          // Optional client assertion: if the caller DID send expectedVersion,
+          // it must agree with what this proposal was actually generated
+          // against. A mismatch means the client is confused about which
+          // proposal/version it's operating on -- treat it exactly like a
+          // real stale-version conflict (same code, same rollback), not a
+          // distinct error class the client could learn to route around.
+          if (
+            clientAssertedVersion !== undefined &&
+            clientAssertedVersion !== acceptedProposal.expected_version
+          ) {
+            throw Object.assign(new Error('SWOT_PROPOSAL_EXPECTED_VERSION_ASSERTION_MISMATCH'), {
+              code: 'STALE_VERSION',
+              proposalVersion: acceptedProposal.expected_version,
+            });
+          }
 
           // 2) Re-read the session's CURRENT answers_json/version — same
           // client/transaction, so this sees the accepted-proposal write above
@@ -2987,20 +3037,24 @@ export class ToolController {
 
           const newAnswersJson = JSON.stringify({ ...answers, items: newItems });
 
-          // Optimistic-concurrency CAS on the session. 0 rows ⇒ stale ⇒ throw
-          // ⇒ the whole transaction (including step 1's proposal flip) rolls
-          // back, so the proposal is left `pending` for a legitimate retry.
+          // Optimistic-concurrency CAS on the session — against the
+          // PROPOSAL's OWN recorded expected_version (server truth, set at
+          // generation time), never the client-supplied `expectedVersion`.
+          // 0 rows ⇒ stale ⇒ throw ⇒ the whole transaction (including step
+          // 1's proposal flip) rolls back, so the proposal is left `pending`
+          // for a legitimate retry.
           const sessionUpdateRes = await client.query(
             `UPDATE tool_sessions
              SET answers_json = $1, version = version + 1, updated_at = CURRENT_TIMESTAMP
              WHERE id = $2 AND organization_id = $3 AND version = $4
              RETURNING version`,
-            [newAnswersJson, toolId, user.organizationId, expectedVersion]
+            [newAnswersJson, toolId, user.organizationId, acceptedProposal.expected_version]
           );
 
           if (sessionUpdateRes.rows.length === 0) {
             throw Object.assign(new Error('SWOT_PROPOSAL_STALE_VERSION'), {
               code: 'STALE_VERSION',
+              proposalVersion: acceptedProposal.expected_version,
             });
           }
 
@@ -3011,7 +3065,8 @@ export class ToolController {
           };
         });
       } catch (err) {
-        if ((err as { code?: string } | undefined)?.code === 'STALE_VERSION') {
+        const staleErr = err as { code?: string; proposalVersion?: number } | undefined;
+        if (staleErr?.code === 'STALE_VERSION') {
           // Re-read OUTSIDE the rolled-back transaction so the client gets the
           // TRUE current version to retry with.
           const current = (await queryHelpers.queryOne(
@@ -3022,6 +3077,7 @@ export class ToolController {
             error: 'Session has changed since this proposal was generated',
             code: 'STALE_VERSION',
             currentVersion: current?.version ?? null,
+            proposalVersion: staleErr.proposalVersion ?? null,
           });
           return;
         }

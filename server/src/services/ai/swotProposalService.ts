@@ -63,7 +63,7 @@ export interface GeneratedProposal {
 }
 
 export type GenerateSwotProposalsResult =
-  | { ok: true; proposals: GeneratedProposal[] }
+  | { ok: true; proposals: GeneratedProposal[]; modelMetadata: Record<string, unknown> }
   | { ok: false; code: 'PROVIDER_ERROR' | 'INVALID_MODEL_RESPONSE' };
 
 export interface GenerateSwotProposalsInput {
@@ -146,14 +146,58 @@ function buildUserPrompt(
 
 // ── Single structured attempt ────────────────────────────────────────────────
 type AttemptResult =
-  | { kind: 'success'; value: GeneratedProposal[] }
+  | { kind: 'success'; value: GeneratedProposal[]; modelMetadata: Record<string, unknown> }
   | { kind: 'transport_error' }
   | { kind: 'invalid_response' };
+
+/**
+ * TLS-04 fix (Codex BLOCKER 4, semantic half): shape-valid JSON is not the
+ * same as SEMANTICALLY valid — a model can produce a well-formed proposal
+ * that still hallucinates a targetItemId that doesn't exist, claims the
+ * wrong quadrant for a real item, or cites a sourceRef that isn't anything
+ * the model was actually given. All three are treated as an invalid
+ * response (same retry-then-fail path as a schema-parse failure) — a
+ * proposal is never persisted on the strength of an unverifiable claim.
+ */
+function validateSemantics(
+  proposals: Array<z.infer<typeof GeneratedProposalSchema>>,
+  itemsById: Map<string, { quadrant: string }>
+): { ok: true } | { ok: false; reason: string } {
+  for (const p of proposals) {
+    if (p.operation !== 'add') {
+      const target = p.targetItemId ? itemsById.get(p.targetItemId) : undefined;
+      if (!target) {
+        return {
+          ok: false,
+          reason: `targetItemId "${p.targetItemId}" does not exist in the current SWOT (operation=${p.operation})`,
+        };
+      }
+      if (target.quadrant !== p.quadrant) {
+        return {
+          ok: false,
+          reason: `targetItemId "${p.targetItemId}" belongs to quadrant "${target.quadrant}", not the claimed "${p.quadrant}"`,
+        };
+      }
+    }
+    if (!p.isAssumption) {
+      const refs = p.sourceRefs || [];
+      const unverifiable = refs.filter((ref) => !itemsById.has(ref));
+      if (unverifiable.length > 0) {
+        return {
+          ok: false,
+          reason: `non-assumption proposal cites sourceRefs not present in the input SWOT: ${unverifiable.join(', ')}`,
+        };
+      }
+    }
+  }
+  return { ok: true };
+}
 
 async function attempt(
   llm: any,
   userPrompt: string,
-  temperature: number
+  temperature: number,
+  itemsById: Map<string, { quadrant: string }>
 ): Promise<AttemptResult> {
   let result: unknown;
   try {
@@ -189,8 +233,30 @@ async function attempt(
     return { kind: 'invalid_response' };
   }
 
+  const semantics = validateSemantics(parsed.data, itemsById);
+  if (!semantics.ok) {
+    logger.warn(`[swotProposalService] semantic validation failed: ${semantics.reason}`);
+    return { kind: 'invalid_response' };
+  }
+
+  // TLS-04 fix (Codex BLOCKER 4, provenance half): `llm.call`'s structured
+  // path (server/src/services/ai/llmService.ts `callStructured`) returns
+  // only `{ object, usage }` -- no provider/model identity is surfaced to
+  // the caller today. Rather than widen that shared, heavily-used file's
+  // return contract under time pressure (real ripple risk to every other
+  // caller of the same seam -- canvasGraphLlm.ts and others), record
+  // exactly what is actually known and provable from THIS side of the call:
+  // the tier we requested. Never assert a specific provider/model we did
+  // not observe.
+  const modelMetadata = {
+    provider: 'unknown',
+    model: 'unknown',
+    requestedPolicy: 'premium',
+  };
+
   return {
     kind: 'success',
+    modelMetadata,
     value: parsed.data.map((p) => ({
       quadrant: p.quadrant,
       operation: p.operation,
@@ -221,21 +287,32 @@ export async function generateSwotProposals(
     opportunities: [],
     threats: [],
   };
+  // Also index by id -> quadrant so a proposal's claimed targetItemId/
+  // sourceRefs can be checked against what the model was ACTUALLY given
+  // (Codex BLOCKER 4 semantic validation), not just trusted at face value.
+  const itemsById = new Map<string, { quadrant: string }>();
   for (const item of Array.isArray(input.currentItems) ? input.currentItems : []) {
     const q = item?.quadrant as SwotQuadrant | undefined;
     if (q && byQuadrant[q]) {
       byQuadrant[q].push({ id: item.id, text: item.text });
+      if (typeof item.id === 'string' && item.id) {
+        itemsById.set(item.id, { quadrant: q });
+      }
     }
   }
   const userPrompt = buildUserPrompt(byQuadrant, input.quadrantFocus);
 
-  const first = await attempt(llm, userPrompt, 0.4);
-  if (first.kind === 'success') return { ok: true, proposals: first.value };
+  const first = await attempt(llm, userPrompt, 0.4, itemsById);
+  if (first.kind === 'success') {
+    return { ok: true, proposals: first.value, modelMetadata: first.modelMetadata };
+  }
 
   // Retry once — a transient timeout or a one-off malformed shape must not
   // sink straight to failure. Slightly lower temperature to reduce drift.
-  const second = await attempt(llm, userPrompt, 0.2);
-  if (second.kind === 'success') return { ok: true, proposals: second.value };
+  const second = await attempt(llm, userPrompt, 0.2, itemsById);
+  if (second.kind === 'success') {
+    return { ok: true, proposals: second.value, modelMetadata: second.modelMetadata };
+  }
 
   // Both attempts failed. If EITHER was a transport/availability failure,
   // report PROVIDER_ERROR (retryable, transient); only when BOTH failures
