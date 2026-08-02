@@ -15,6 +15,10 @@ import organizationContextService from '../services/organizationContext/Organiza
 import { hasPermission } from '../services/permissionService.js';
 import * as ReportBuilderService from '../services/reportBuilderService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
+import {
+  handoffSwotRecommendation,
+  SwotCandidateHandoffError,
+} from '../services/tools/swotCandidateHandoffService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
@@ -2552,6 +2556,34 @@ export class ToolController {
       });
 
       res.json(history);
+    }
+  );
+
+  /** TLS-07 — governed, idempotent SWOT recommendation -> Candidate handoff. */
+  static handoffSwotCandidate = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      try {
+        const result = await handoffSwotRecommendation({
+          organizationId: user.organizationId,
+          toolSessionId: req.params.toolId,
+          recommendationId: String(req.body?.id || ''),
+          title: String(req.body?.title || ''),
+          rationale: String(req.body?.rationale || ''),
+          actorId: user.id,
+        });
+        res.status(result.created ? 201 : 200).json(result);
+      } catch (error) {
+        if (error instanceof SwotCandidateHandoffError) {
+          res.status(error.status).json({ error: error.message, code: error.code });
+          return;
+        }
+        throw error;
+      }
     }
   );
 }

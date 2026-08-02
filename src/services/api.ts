@@ -6436,6 +6436,21 @@ export const Api = {
     return handleResponse(res, 'Failed to create initiative');
   },
 
+  handoffSwotCandidate: async (
+    toolSessionId: string,
+    recommendation: { id: string; title: string; rationale: string }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/tools/${encodeURIComponent(toolSessionId)}/swot-candidates`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(recommendation),
+      }
+    );
+    return handleResponse(res, 'Failed to create SWOT candidate');
+  },
+
   updateInitiative: async (id: string, updates: any): Promise<void> => {
     const res = await fetch(`${API_URL}/initiatives/${id}`, {
       method: 'PUT',

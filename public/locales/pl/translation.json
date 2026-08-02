@@ -32572,6 +32572,9 @@
     "createInitiativeModal": {
       "titleIsRequired": "Tytuł jest wymagany",
       "initiativeCreated": "Inicjatywa utworzona",
+      "createCandidate": "Przekaż do kandydatów",
+      "creatingCandidate": "Przekazywanie…",
+      "candidateCreated": "Kandydat utworzony",
       "failedToCreateInitiative": "Nie udało się utworzyć inicjatywy",
       "createInitiative": "Utwórz inicjatywę",
       "title": "Tytuł",
@@ -35073,7 +35076,9 @@
         "strategicInitiativesTitle": "Inicjatywy strategiczne",
         "strategicInitiativesSubtitle": "Inicjatywy utworzone z rekomendacji — gotowe do przeniesienia do modułu Execution.",
         "initiativeCreatedToast": "Inicjatywa utworzona w module Inicjatywy",
-        "initiativeCreateErrorToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia"
+        "initiativeCreateErrorToast": "Nie udało się zapisać inicjatywy w module Inicjatywy — szkic pozostał w sesji narzędzia",
+        "candidateCreatedToast": "Rekomendacja trafiła do Skrzynki Kandydatów",
+        "candidateCreateErrorToast": "Nie udało się przekazać rekomendacji do Skrzynki Kandydatów"
       },
       "inputExplorationPhase": {
         "consultantProposal": "Propozycja konsultanta",

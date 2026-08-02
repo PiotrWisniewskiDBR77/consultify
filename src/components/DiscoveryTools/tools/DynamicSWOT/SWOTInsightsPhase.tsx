@@ -1128,29 +1128,37 @@ function deriveRecommendations(
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RECOMMENDATION CARD with "Create initiative" button
+   RECOMMENDATION CARD with governed Candidate handoff
    ═══════════════════════════════════════════════════════════════ */
 
 function RecommendationCard({
   rec,
   index,
   isPolish,
-  onCreateInitiative,
+  onCreateCandidate,
 }: {
   rec: DerivedRecommendation;
   index: number;
   isPolish: boolean;
-  onCreateInitiative: (rec: DerivedRecommendation) => void;
+  onCreateCandidate: (rec: DerivedRecommendation) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const meta = REC_TYPE_META[rec.type];
   const TypeIcon = meta.icon;
   const [expanded, setExpanded] = useState(false);
-  const [initiativeCreated, setInitiativeCreated] = useState(false);
+  const [candidateCreated, setCandidateCreated] = useState(false);
+  const [isCreatingCandidate, setIsCreatingCandidate] = useState(false);
 
-  const handleCreate = () => {
-    onCreateInitiative(rec);
-    setInitiativeCreated(true);
+  const handleCreate = async () => {
+    setIsCreatingCandidate(true);
+    try {
+      await onCreateCandidate(rec);
+      setCandidateCreated(true);
+    } catch {
+      // Parent owns the user-facing error toast; keep the action retryable.
+    } finally {
+      setIsCreatingCandidate(false);
+    }
   };
 
   return (
@@ -1219,18 +1227,21 @@ function RecommendationCard({
                 : t('discoveryToolsTools.common.showRationale')}
             </button>
 
-            {initiativeCreated ? (
+            {candidateCreated ? (
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
                 <Check className="h-3.5 w-3.5" />
-                {t('discoveryToolsTools.common.initiativeCreated')}
+                {t('discoveryToolsTools.common.candidateCreated')}
               </span>
             ) : (
               <button
                 onClick={handleCreate}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] hover:shadow-md"
+                disabled={isCreatingCandidate}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 dark:bg-[#F4F7FB] px-3 py-2 text-xs font-semibold text-white dark:text-navy-950 shadow-sm transition-all hover:bg-navy-800 dark:hover:bg-[#DDE5EF] hover:shadow-md disabled:cursor-wait disabled:opacity-60"
               >
                 <Rocket className="h-3.5 w-3.5" />
-                {t('discoveryToolsTools.common.createInitiative')}
+                {isCreatingCandidate
+                  ? t('discoveryToolsTools.common.creatingCandidate')
+                  : t('discoveryToolsTools.common.createCandidate')}
               </button>
             )}
           </div>
@@ -1258,7 +1269,7 @@ export function SWOTInsightsPhase({
   onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }) {
   const { t } = useTranslation();
-  const { acceptCard, rejectCard, acceptAllInPhase, addInitiative } = useToolStore();
+  const { acceptCard, rejectCard, acceptAllInPhase } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const tensions = swotData.tensions || [];
   const correlations = swotData.correlations || [];
@@ -1317,35 +1328,20 @@ export function SWOTInsightsPhase({
     [strengths, weaknesses, opportunities, threats, correlations, isPolish]
   );
 
-  const handleCreateInitiative = async (rec: DerivedRecommendation) => {
-    // Local session copy first (offline-safe; drives the "generated initiatives" list).
-    addInitiative({
-      title: rec.title,
-      description: rec.description,
-      type: rec.type,
-      source: 'dynamic-swot',
-      linkedItems: rec.linkedQuadrants,
-      estimatedImpact: rec.estimatedImpact,
-      estimatedEffort: rec.estimatedEffort,
-      rationale: rec.rationale,
-    });
-    // S6.2 Tools→Initiatives handoff: persist to the real initiatives backbone
-    // (M13) with tool provenance. Fail-safe: a backend error keeps the local
-    // draft and surfaces a toast instead of breaking the tool flow.
+  const handleCreateCandidate = async (rec: DerivedRecommendation) => {
+    // TLS-07: hand off to the governed Candidate inbox. Candidate acceptance,
+    // not this SWOT surface, owns eventual Initiative creation.
     try {
-      await Api.createInitiative({
+      await Api.handoffSwotCandidate(session.id, {
+        id: rec.id,
         title: rec.title,
-        description: rec.description,
-        summary: rec.description,
-        impact: rec.estimatedImpact,
-        effort: rec.estimatedEffort,
-        sourceType: 'tool',
-        sourceId: session.id,
+        rationale: `${rec.rationale}\n\n${rec.description}`,
       });
-      toast.success(t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativeCreatedToast'));
+      toast.success(t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateCreatedToast'));
     } catch (err) {
       console.error('[DynamicSWOT] initiative handoff failed:', err);
-      toast.error(t('discoveryToolsTools.dynamicSwot.insightsPhase.initiativeCreateErrorToast'));
+      toast.error(t('discoveryToolsTools.dynamicSwot.insightsPhase.candidateCreateErrorToast'));
+      throw err;
     }
   };
 
@@ -1781,7 +1777,7 @@ export function SWOTInsightsPhase({
                   rec={rec}
                   index={activeMoves.length > 0 ? activeMoves.length + idx : idx}
                   isPolish={isPolish}
-                  onCreateInitiative={handleCreateInitiative}
+                  onCreateCandidate={handleCreateCandidate}
                 />
               ))}
             </div>
