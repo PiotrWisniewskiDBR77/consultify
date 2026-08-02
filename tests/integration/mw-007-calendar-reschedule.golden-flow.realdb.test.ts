@@ -406,6 +406,13 @@ describe('MW-07 — calendar task reschedule golden flow against a real Postgres
       expect(eventBefore.provider).toBe('internal');
       expect(typeof eventBefore.version).toBe('string');
       expect(eventBefore.version.length).toBeGreaterThan(0);
+      // Browser-acceptance finding: CalendarGrid computes
+      // `editable: e.editAuthority !== 'none' && e.editAuthority !== undefined`.
+      // Before this field was added, every task event had editAuthority
+      // undefined, so `editable` was FALSE and drag-reschedule silently never
+      // fired in the real browser despite every backend test passing — a
+      // gap component tests (which mock FullCalendar) could not catch.
+      expect(eventBefore.editAuthority).toBe('local_only');
 
       const putRes = await request(app)
         .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)

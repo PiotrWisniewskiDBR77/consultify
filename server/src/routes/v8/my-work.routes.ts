@@ -1994,6 +1994,15 @@ router.get(
           // event is genuinely internal, never fabricate 'google'/'microsoft' here.
           provider: 'internal',
           version: row.row_version != null ? String(row.row_version) : undefined,
+          // Codex browser-acceptance finding: without this, CalendarGrid's
+          // `editable: e.editAuthority !== 'none' && e.editAuthority !== undefined`
+          // evaluates false for every task event (editAuthority was never set
+          // here), silently disabling drag-reschedule for tasks entirely — the
+          // PUT .../events/task/:id endpoint this unified feed pairs with is
+          // real and working, but nothing could ever reach it via drag. Tasks
+          // ARE genuinely locally editable (not remote-owned), so this is
+          // accurate, not a new capability being granted.
+          editAuthority: 'local_only',
         });
 
         try {
