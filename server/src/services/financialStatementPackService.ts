@@ -227,6 +227,113 @@ async function loadStatementForPack(statementId: string): Promise<PackStatementR
   }
 }
 
+/**
+ * Codex FIN-06 Blocker 1 fix (2026-08-02): the "bonus" columns this file
+ * elsewhere assumes exist on `financial_statements`
+ * (`readiness_status`/`readiness_score`/`quality_summary`/
+ * `quality_reason_codes`/`values_version`) and on `financial_statement_values`
+ * (`is_non_financial`) are added ONLY by `20260719_baseline_gap.sql` — a
+ * best-effort prod-baseline-sync migration that is documented (see this
+ * repo's own FIN-005 fresh-schema tooling notes) to fail/skip on a genuinely
+ * empty database. A DB bootstrapped from a production baseline snapshot has
+ * them; a DB migrated purely from `server/migrations` from scratch does not.
+ *
+ * The PREVIOUS code here called plain `dbAll()` (default `fallback: true`)
+ * referencing those columns directly. On a schema missing them, Postgres
+ * throws "column does not exist" -> `DbPromise.ts`'s default fallback
+ * silently resolves `[]` -> every caller (including FIN-06's Statement Pack
+ * candidate-handoff preview) saw an empty statements array and reported
+ * "P&L x0, BS x0, CF x0" as if that were a real, successful, empty result —
+ * indistinguishable from a genuinely empty pack. Root-caused independently
+ * against a real, freshly-migrated Postgres instance, not assumed.
+ *
+ * Fix: probe with the full column list using `{ fallback: false }` (so a
+ * genuine query error THROWS instead of being swallowed); if it throws a
+ * schema-compat error specifically (`isSchemaCompatError`, the exact
+ * predicate `loadStatementForPack` above already uses for this same class of
+ * gap), retry with ONLY the columns guaranteed present by the base
+ * `20260316_financial_statement_packs.sql` migration's unconditional
+ * `CREATE TABLE financial_statements` — which is everything FIN-06's
+ * statement-type counting actually needs (`statement_type`). Any OTHER
+ * error (not a recognized schema-compat gap) is re-thrown, not masked —
+ * callers must fail closed, never show a fabricated empty result.
+ */
+async function loadPackStatementsWithSchemaCompat(
+  packId: string,
+  organizationId: string
+): Promise<any[]> {
+  const fullSql = `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
+            fs.source_file_name, fs.validation_status, fs.status, fs.readiness_status, fs.readiness_score,
+            fs.quality_summary, fs.quality_reason_codes, fs.values_version, fs.updated_at, fs.created_at,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'fail') AS validation_fail_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'warning') AS validation_warning_count
+     FROM financial_statements fs
+     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+     LEFT JOIN financial_statement_validations fsvl ON fsvl.statement_id = fs.id
+     WHERE fs.statement_pack_id = ?
+       AND fs.organization_id = ?
+     GROUP BY fs.id
+     ORDER BY CASE fs.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END`;
+  try {
+    return await dbAll<any>(fullSql, [packId, organizationId], { fallback: false });
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+
+  // Schema-compat fallback: only columns the base migration guarantees.
+  const coreSql = `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
+            fs.source_file_name, fs.validation_status, fs.status, fs.updated_at, fs.created_at,
+            COUNT(fsv.id) AS total_line_count,
+            COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+            COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'fail') AS validation_fail_count,
+            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'warning') AS validation_warning_count
+     FROM financial_statements fs
+     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+     LEFT JOIN financial_statement_validations fsvl ON fsvl.statement_id = fs.id
+     WHERE fs.statement_pack_id = ?
+       AND fs.organization_id = ?
+     GROUP BY fs.id
+     ORDER BY CASE fs.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END`;
+  return dbAll<any>(coreSql, [packId, organizationId], { fallback: false });
+}
+
+/**
+ * Same Codex FIN-06 Blocker 1 root cause and fix strategy as
+ * `loadPackStatementsWithSchemaCompat` above, for `recomputeStatementPack`'s
+ * differently-shaped read (raw statement rows feeding `computePackAggregate`,
+ * not the joined per-statement line-count view `getStatementPackDetail`
+ * exposes). `recomputeStatementPack` is the function that actually WRITES
+ * `pack_readiness_status` -- the exact signal FIN-06's Statement Pack
+ * eligibility gate depends on -- so silently treating a schema-compat query
+ * failure as "this pack has zero statements" here would have been a live,
+ * broader data-integrity risk (`pruneEmptyPack` on a genuinely non-empty
+ * pack), not just a cosmetic preview bug.
+ */
+async function loadRawPackStatementsWithSchemaCompat(packId: string): Promise<PackStatementRow[]> {
+  const fullSql = `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
+            currency, scaling, status, readiness_status, readiness_score, quality_summary, source_file_name,
+            statement_pack_id
+     FROM financial_statements
+     WHERE statement_pack_id = ?
+     ORDER BY statement_type, updated_at DESC`;
+  try {
+    return await dbAll<PackStatementRow>(fullSql, [packId], { fallback: false });
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+
+  const coreSql = `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
+            currency, scaling, status, source_file_name, statement_pack_id
+     FROM financial_statements
+     WHERE statement_pack_id = ?
+     ORDER BY statement_type, updated_at DESC`;
+  return dbAll<PackStatementRow>(coreSql, [packId], { fallback: false });
+}
+
 async function findExistingPack(statement: PackStatementRow): Promise<string | null> {
   const entityName = normalizeText(statement.entity_name);
   const row = await dbGet<{ id?: string }>(
@@ -573,15 +680,7 @@ async function shadowReconcilePack(packId: string, statements: PackStatementRow[
 }
 
 export async function recomputeStatementPack(packId: string): Promise<string | null> {
-  const statements = await dbAll<PackStatementRow>(
-    `SELECT id, organization_id, entity_name, statement_type, period_start, period_end, period_label,
-            currency, scaling, status, readiness_status, readiness_score, quality_summary, source_file_name,
-            statement_pack_id
-     FROM financial_statements
-     WHERE statement_pack_id = ?
-     ORDER BY statement_type, updated_at DESC`,
-    [packId]
-  );
+  const statements = await loadRawPackStatementsWithSchemaCompat(packId);
   if (!Array.isArray(statements) || statements.length === 0) {
     await pruneEmptyPack(packId);
     return null;
@@ -712,30 +811,9 @@ export async function getStatementPackDetail(
   );
   if (!pack) return null;
 
-  const statements = await dbAll<any>(
-    `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling,
-            fs.source_file_name, fs.validation_status, fs.status, fs.readiness_status, fs.readiness_score,
-            fs.quality_summary, fs.quality_reason_codes, fs.values_version, fs.updated_at, fs.created_at,
-            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
-            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
-            COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count,
-            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'fail') AS validation_fail_count,
-            COUNT(fsvl.id) FILTER (WHERE fsvl.validation_scope = 'statement' AND fsvl.status = 'warning') AS validation_warning_count
-     FROM financial_statements fs
-     LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
-     LEFT JOIN financial_statement_validations fsvl ON fsvl.statement_id = fs.id
-     WHERE fs.statement_pack_id = ?
-       -- Tenant guard. The pack above is org-filtered, but this nested query
-       -- was not, so it relied on the invariant that a statement never hangs
-       -- off another org's pack. Any operation that re-scopes a statement
-       -- WITHOUT clearing statement_pack_id (e.g. an org reassignment or the
-       -- FIN-005 quarantine) breaks that invariant and would surface a foreign
-       -- statement inside this tenant's pack detail. Filter explicitly.
-       AND fs.organization_id = ?
-     GROUP BY fs.id
-     ORDER BY CASE fs.statement_type WHEN 'P&L' THEN 1 WHEN 'BS' THEN 2 WHEN 'CF' THEN 3 ELSE 9 END`,
-    [packId, organizationId]
-  );
+  // Keep both guarantees: fail closed on schema errors and explicitly scope
+  // the nested statement read to the organization owning the pack.
+  const statements = await loadPackStatementsWithSchemaCompat(packId, organizationId);
   const packValidations = await dbAll<any>(
     `SELECT check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json, computed_at
      FROM financial_statement_validations
