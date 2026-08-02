@@ -128,10 +128,20 @@ async function pgReachable(): Promise<boolean> {
 
 // MVP-critical tables: the core baseline four (tasks/organizations/users/
 // projects, same set the MW-07 realdb suites already require to even set up
-// fixtures) plus status_reports — the table this suite exists to guard,
-// since it's the one the release-gate run found silently missing on a fresh
-// `db:migrate:strict` replay.
-const REQUIRED_TABLES = ['status_reports', 'tasks', 'organizations', 'users', 'projects'] as const;
+// fixtures) plus status_reports and meetings — both tables this suite exists
+// to guard, since both were found silently missing on a fresh
+// `db:migrate:strict` replay (same bug class: declared only in a legacy
+// fragment `isSqliteOnlyMigration()` filters out, or — for `meetings` — never
+// declared in any migration at all, only created lazily at request time by
+// `ensureMeetingTables()` in server/src/services/meetingService.ts).
+const REQUIRED_TABLES = [
+  'status_reports',
+  'meetings',
+  'tasks',
+  'organizations',
+  'users',
+  'projects',
+] as const;
 
 async function existingTables(client: Client, names: readonly string[]): Promise<Set<string>> {
   const result = await client.query<{ table_name: string }>(
@@ -177,7 +187,7 @@ describe('Schema migration completeness — db:migrate:strict from empty Postgre
   });
 
   it(
-    'every MVP-critical table exists in information_schema.tables (status_reports, tasks, organizations, users, projects)',
+    'every MVP-critical table exists in information_schema.tables (status_reports, meetings, tasks, organizations, users, projects)',
     async () => {
       if (!reachable || !client) {
         // Vacuous pass — no database configured for this run at all. This is
@@ -195,8 +205,9 @@ describe('Schema migration completeness — db:migrate:strict from empty Postgre
         `Expected all of [${REQUIRED_TABLES.join(', ')}] to exist after running ` +
           '`db:migrate:strict` against this database. Missing: ' +
           `[${missing.join(', ')}]. If this is status_reports, see ` +
-          'server/migrations/20260623_distribution_delivery.sql (FRESH-DB GUARD) — ' +
-          'the fix this test guards.'
+          'server/migrations/20260623_distribution_delivery.sql (FRESH-DB GUARD). ' +
+          'If this is meetings, see server/migrations/20260623_meetings_baseline.sql ' +
+          '(FRESH-DB GUARD) — the fixes this test guards.'
       ).toEqual([]);
     },
     20_000
