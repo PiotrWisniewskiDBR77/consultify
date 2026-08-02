@@ -8143,6 +8143,61 @@ export async function learnStatementAliases(params: {
 // Persistence
 // ---------------------------------------------------------------------------
 
+/**
+ * FIN-005 upload idempotency (Codex review Blocker 2) — serialize concurrent
+ * `POST /finance-statements/upload` requests for one
+ * (organizationId, Idempotency-Key) pair on a pinned PostgreSQL session.
+ *
+ * This is the SAME `pg_advisory_xact_lock` pattern already accepted for
+ * FIN-03/FIN-04's `withFinancialModelIdempotencyLock`
+ * (financialModelingService.ts) — a real PostgreSQL-level guarantee, not a
+ * process-local mutex/Map. `pg_advisory_xact_lock` blocks any OTHER
+ * PostgreSQL session (any other server process, not just this one) that
+ * requests the same two hashed lock keys, so the guarantee holds across
+ * horizontally-scaled server instances.
+ *
+ * WHY a transaction-scoped advisory lock and not a separate reservation row
+ * with an `in_progress` -> `completed`/`failed` status column: the lock IS
+ * the reservation, and its lifetime is tied EXACTLY to the wrapping
+ * transaction — released the instant that transaction ends, on COMMIT *or*
+ * ROLLBACK, regardless of whether `work()` resolved or threw. A first
+ * attempt that fails partway through (parse error, DB error, anything)
+ * therefore can never leave a second attempt permanently blocked: there is
+ * no separate "in_progress" row that could get stuck, because nothing
+ * outlives the transaction. The caller decides what "failure" means for its
+ * own response (this wrapper does not interpret `work()`'s return value) —
+ * the route only persists an idempotency marker for a genuinely successful
+ * upload, so a failed first attempt leaves no marker behind and a retry
+ * with the same key simply does the work again.
+ */
+export async function withStatementUploadIdempotencyLock<T>(
+  organizationId: string,
+  idempotencyKey: string,
+  work: () => Promise<T>
+): Promise<T> {
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
+      `${organizationId}:statement_upload`,
+      idempotencyKey,
+    ]);
+    const result = await work();
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createStatement(params: {
   organizationId: string;
   statementType: string;

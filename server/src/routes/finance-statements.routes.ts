@@ -28,6 +28,8 @@
  *   GET    /packs/:id/aggregate-scope/portfolio             — A3 portfolio aggregate (A1 + ΣA2)
  */
 
+import crypto from 'crypto';
+
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
@@ -109,6 +111,7 @@ import {
   updateStatementReadinessState,
   updateStatementStatus,
   validateStatement,
+  withStatementUploadIdempotencyLock,
 } from '../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../services/financialStatementValueWriteService.js';
 import {
@@ -182,35 +185,80 @@ const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
 
 const MAX_IDEMPOTENCY_KEY_CHARS = 200;
 
-/** Read a client-supplied idempotency key from header or body, bounded and trimmed. */
+/**
+ * Thrown by getIdempotencyKey() when the client-supplied key is over the
+ * length cap. The route maps this to 400 IDEMPOTENCY_KEY_TOO_LONG.
+ *
+ * Codex review Blocker 3, negative control: the PREVIOUS implementation
+ * silently truncated an over-length key with `.slice(0, MAX)`. Truncation is
+ * actively dangerous, not just sloppy — two DIFFERENT long keys that happen
+ * to share the same first MAX_IDEMPOTENCY_KEY_CHARS characters would
+ * truncate to the IDENTICAL stored key, so the second request would
+ * silently replay the first's result even though the client believed it was
+ * using a distinct key for a distinct logical operation. Rejecting is the
+ * only safe option — the client must be told to shorten the key, never have
+ * it silently reinterpreted as someone else's key.
+ */
+export class IdempotencyKeyTooLongError extends Error {}
+
+/**
+ * Read a client-supplied idempotency key from header or body, trimmed.
+ * Returns null if none was supplied. Throws IdempotencyKeyTooLongError if
+ * one was supplied but exceeds MAX_IDEMPOTENCY_KEY_CHARS — see that class's
+ * doc comment for why this must reject, not truncate.
+ */
 function getIdempotencyKey(req: AuthRequest): string | null {
   const headerRaw = req.headers?.['idempotency-key'];
   const header = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
   const bodyRaw = (req.body as Record<string, unknown> | undefined)?.idempotencyKey;
   const raw = String(header || bodyRaw || '').trim();
   if (!raw) return null;
-  return raw.slice(0, MAX_IDEMPOTENCY_KEY_CHARS);
+  if (raw.length > MAX_IDEMPOTENCY_KEY_CHARS) {
+    throw new IdempotencyKeyTooLongError(
+      `Idempotency-Key exceeds ${MAX_IDEMPOTENCY_KEY_CHARS} characters`
+    );
+  }
+  return raw;
+}
+
+/** SHA-256 hex digest of the uploaded file's raw bytes — see Codex review
+ * Blocker 3: the Idempotency-Key header alone doesn't tie a replay to WHAT
+ * was actually uploaded. The file is the only client-supplied parameter this
+ * route reads (no other body field distinguishes one upload from another),
+ * so hashing the file bytes is sufficient to detect a reused key with
+ * different content. Only the hash is ever persisted — never the bytes. */
+function sha256Hex(buffer: Buffer): string {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
 }
 
 /**
  * Look up a previously-recorded upload response for this org+key. Returns
  * null if none exists OR if the idempotency table isn't present yet
  * (schema-compat fallback — never blocks upload on a missing optional
- * table).
+ * table). `requestHash` is null both when the row predates the
+ * `request_hash` column (schema-compat) and when it's genuinely absent.
  */
 async function findIdempotentUpload(
   organizationId: string,
   idempotencyKey: string
-): Promise<{ statusCode: number; responseJson: string } | null> {
+): Promise<{ statusCode: number; responseJson: string; requestHash: string | null } | null> {
   try {
-    const rows = await dbAll<{ status_code: number; response_json: string }>(
-      `SELECT status_code, response_json FROM financial_statement_upload_idempotency
+    const rows = await dbAll<{
+      status_code: number;
+      response_json: string;
+      request_hash: string | null;
+    }>(
+      `SELECT status_code, response_json, request_hash FROM financial_statement_upload_idempotency
        WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
       [organizationId, idempotencyKey]
     );
     const row = Array.isArray(rows) ? rows[0] : undefined;
     if (!row) return null;
-    return { statusCode: Number(row.status_code) || 201, responseJson: String(row.response_json) };
+    return {
+      statusCode: Number(row.status_code) || 201,
+      responseJson: String(row.response_json),
+      requestHash: row.request_hash != null ? String(row.request_hash) : null,
+    };
   } catch (error) {
     if (isSchemaCompatError(error)) return null;
     throw error;
@@ -224,13 +272,14 @@ async function recordIdempotentUpload(params: {
   statementId: string;
   statusCode: number;
   responseJson: string;
+  requestHash: string;
   createdBy?: string;
 }): Promise<void> {
   try {
     await dbRun(
       `INSERT INTO financial_statement_upload_idempotency
-        (id, organization_id, idempotency_key, statement_id, status_code, response_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
       [
         `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
         params.organizationId,
@@ -238,6 +287,7 @@ async function recordIdempotentUpload(params: {
         params.statementId,
         params.statusCode,
         params.responseJson,
+        params.requestHash,
         params.createdBy || null,
       ],
       { fallback: false }
@@ -480,295 +530,364 @@ router.post(
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 
-    // FIN-005: idempotency — a retry with the same org + Idempotency-Key
-    // returns the ORIGINAL response instead of creating a second statement
-    // (and, by extension, a second pack).
-    const idempotencyKey = getIdempotencyKey(req);
-    if (idempotencyKey) {
-      const existing = await findIdempotentUpload(orgId, idempotencyKey);
+    let idempotencyKey: string | null;
+    try {
+      idempotencyKey = getIdempotencyKey(req);
+    } catch (error) {
+      if (error instanceof IdempotencyKeyTooLongError) {
+        return res.status(400).json({
+          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_CHARS} characters`,
+          code: 'IDEMPOTENCY_KEY_TOO_LONG',
+        });
+      }
+      throw error;
+    }
+
+    // The actual upload+persist work, factored out so it can be called
+    // EITHER directly (no Idempotency-Key — nothing to serialize) OR from
+    // inside withStatementUploadIdempotencyLock (key present — exactly one
+    // caller performs this per (org, key) at a time). Every outcome —
+    // success AND the pre-existing error paths (signature mismatch,
+    // extraction failure, persist failure) — is returned as a value rather
+    // than written to `res` directly, so the SAME function works whether or
+    // not it is running inside the lock.
+    const performUpload = async (): Promise<{
+      statusCode: number;
+      body: Record<string, unknown>;
+    }> => {
+      // FIN-005: verify the saved file's first bytes actually match its
+      // declared extension — fileFilter only checked the client-supplied MIME
+      // header, which the client fully controls.
+      const ext = (file.originalname || '').toLowerCase().split('.').pop() || '';
+      try {
+        const fsSniff = await import('fs');
+        const headBuffer = fsSniff.readFileSync(file.path).subarray(0, 4096);
+        if (!sniffFileSignature(headBuffer, ext)) {
+          try {
+            fsSniff.unlinkSync(file.path);
+          } catch {
+            // best-effort cleanup; the mismatch rejection is what matters
+          }
+          logFinanceError('statement.upload.signature_mismatch', new Error('signature mismatch'), {
+            traceId,
+            fileName: file.originalname,
+            ext,
+          });
+          return {
+            statusCode: 422,
+            body: {
+              error: 'File content does not match its declared type',
+              code: 'FILE_UPLOAD_SIGNATURE_MISMATCH',
+            },
+          };
+        }
+      } catch (sniffError: any) {
+        logFinanceError('statement.upload.signature_check_failed', sniffError, {
+          traceId,
+          fileName: file.originalname,
+        });
+        return {
+          statusCode: 422,
+          body: { error: 'Unable to verify uploaded file', detail: sniffError?.message },
+        };
+      }
+
+      await ensureCanonicalRegistryInDatabase();
+
+      logFinanceEvent('statement.upload.started', {
+        traceId,
+        organizationId: orgId,
+        userId,
+        fileName: file.originalname,
+        sizeBytes: file.size,
+        mimeType: file.mimetype,
+      });
+
+      let text: string;
+      let parseMethod: string;
+      try {
+        const result = await extractTextFromFile(file.path, file.originalname);
+        // Strip null bytes — Postgres TEXT columns reject 0x00
+        text = result.text.replace(/\0/g, '');
+        parseMethod = result.parseMethod;
+      } catch (e: any) {
+        logFinanceError('statement.upload.extract_failed', e, {
+          traceId,
+          fileName: file.originalname,
+          sizeBytes: file.size,
+        });
+        return { statusCode: 422, body: { error: 'File extraction failed', detail: e?.message } };
+      }
+
+      // Backward-compatible DB constraint (older DBs allow only 3 values).
+      // Keep the real parse method inside notes for traceability.
+      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+      const notesPrefix =
+        parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
+      const textSummary = summarizeTextPayload(text);
+
+      logFinanceEvent('statement.upload.extracted', {
+        traceId,
+        fileName: file.originalname,
+        parseMethod,
+        effectiveParseMethod,
+        text: textSummary,
+      });
+
+      const detection = detectStatementType(text);
+      const containedStatementTypes = detectContainedStatementTypes(text);
+      const columnSelection = resolveStatementColumnSelection(text, detection);
+      const documentProfile = classifyStatementDocument({
+        fileName: file.originalname,
+        parseMethod: effectiveParseMethod,
+        text,
+      });
+
+      const statementId = await createStatement({
+        organizationId: orgId,
+        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+        periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
+        periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
+        periodLabel: detection.periodLabel || undefined,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        createdBy: userId,
+      });
+      const statementPackId = await syncStatementToPack(statementId);
+      const ingestRunId = await startStatementIngestRun({
+        statementId,
+        organizationId: orgId,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        rawTextLength: text.length,
+        summary: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+
+      logFinanceEvent('statement.upload.detected', {
+        traceId,
+        statementId,
+        statementType: detection.statementType,
+        periodStart: detection.periodStart,
+        periodEnd: detection.periodEnd,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        confidence: detection.confidence,
+      });
+
+      const notesRes = await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${notesPrefix}${text.substring(0, 100000)}`, statementId],
+        { fallback: false }
+      );
+      if (!notesRes?.success) {
+        logFinanceError('statement.upload.persist_failed', notesRes?.error, {
+          traceId,
+          statementId,
+          fileName: file.originalname,
+          notesLength: `${notesPrefix}${text.substring(0, 100000)}`.length,
+          text: textSummary,
+        });
+        return {
+          statusCode: 500,
+          body: { error: 'Failed to persist extracted text', detail: notesRes?.error || 'unknown' },
+        };
+      }
+      await recordStatementSourceArtifact({
+        statementId,
+        ingestRunId,
+        artifactType: 'raw_text',
+        stage: 'upload',
+        contentText: text,
+        metadata: {
+          parseMethod,
+          effectiveParseMethod,
+          sourceFileName: file.originalname,
+          sizeBytes: file.size,
+        },
+        createdBy: userId,
+      });
+      await recordStatementSourceArtifact({
+        statementId,
+        ingestRunId,
+        artifactType: 'document_profile',
+        stage: 'upload',
+        contentJson: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+      await updateStatementIngestRun({
+        ingestRunId,
+        currentStage: 'upload',
+        runStatus: 'running',
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        rawTextLength: text.length,
+      });
+      try {
+        await upsertStatementDocumentIntelligence({
+          statementId,
+          ingestRunId,
+          organizationId: orgId,
+          title: file.originalname,
+          text,
+          statementType: detection.statementType,
+          documentClass: documentProfile.documentClass,
+          templateFamily: documentProfile.templateFamily,
+        });
+      } catch (error) {
+        logFinanceError('statement.document_intelligence.index_failed', error, {
+          traceId,
+          statementId,
+          ingestRunId,
+        });
+      }
+
+      logFinanceEvent('statement.upload.completed', {
+        traceId,
+        statementId,
+        fileName: file.originalname,
+        parseMethod,
+        effectiveParseMethod,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        text: textSummary,
+      });
+
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'upload',
+        resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+        readinessStatus: 'pending',
+        strategy: documentProfile.extractionStrategy,
+        summary:
+          detection.statementType === 'UNKNOWN'
+            ? 'Upload completed with unknown statement type fallback.'
+            : 'Upload completed and initial document profile detected.',
+        reasonCodes:
+          detection.statementType === 'UNKNOWN'
+            ? ['DETECTION_UNKNOWN_FALLBACK']
+            : ['UPLOAD_COMPLETE'],
+        payload: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+
+      logger.info(
+        `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
+      );
+
+      return {
+        statusCode: 201,
+        body: {
+          success: true,
+          statementId,
+          statementPackId,
+          ingestRunId,
+          detection,
+          columnSelection,
+          textLength: text.length,
+          parseMethod,
+          documentClass: documentProfile.documentClass,
+          extractionStrategy: documentProfile.extractionStrategy,
+          templateFamily: documentProfile.templateFamily,
+        },
+      };
+    };
+
+    if (!idempotencyKey) {
+      const { statusCode, body } = await performUpload();
+      return res.status(statusCode).json(body);
+    }
+
+    // FIN-005 Codex review Blocker 2 + 3: a retry with the same org +
+    // Idempotency-Key AND the same file content returns the ORIGINAL
+    // response instead of creating a second statement (and, by extension, a
+    // second pack) — but the WHOLE check -> upload -> record sequence now
+    // runs inside a real PostgreSQL advisory lock
+    // (withStatementUploadIdempotencyLock), so two genuinely concurrent
+    // requests for the same key can never both pass the "no existing
+    // marker" check before either records one. The lock also binds the key
+    // to a SHA-256 of the file bytes: same key + different content is a
+    // hard 409, never a silent replay of the wrong file's result.
+    const key = idempotencyKey;
+    const requestHash = sha256Hex(await (await import('fs')).promises.readFile(file.path));
+
+    const outcome = await withStatementUploadIdempotencyLock(orgId, key, async () => {
+      const existing = await findIdempotentUpload(orgId, key);
       if (existing) {
+        if (existing.requestHash && existing.requestHash !== requestHash) {
+          return { kind: 'conflict' as const };
+        }
+        // Hash matches, or this marker predates the request_hash column
+        // (schema-compat: null) — safe replay either way.
         logFinanceEvent('statement.upload.idempotent_replay', {
           traceId,
           organizationId: orgId,
-          idempotencyKey,
+          idempotencyKey: key,
         });
-        res.setHeader('Idempotency-Replayed', 'true');
-        return res.status(existing.statusCode).json(JSON.parse(existing.responseJson));
+        return {
+          kind: 'replay' as const,
+          statusCode: existing.statusCode,
+          body: JSON.parse(existing.responseJson) as Record<string, unknown>,
+        };
       }
-    }
 
-    // FIN-005: verify the saved file's first bytes actually match its
-    // declared extension — fileFilter only checked the client-supplied MIME
-    // header, which the client fully controls.
-    const ext = (file.originalname || '').toLowerCase().split('.').pop() || '';
-    try {
-      const fsSniff = await import('fs');
-      const headBuffer = fsSniff.readFileSync(file.path).subarray(0, 4096);
-      if (!sniffFileSignature(headBuffer, ext)) {
-        try {
-          fsSniff.unlinkSync(file.path);
-        } catch {
-          // best-effort cleanup; the mismatch rejection is what matters
-        }
-        logFinanceError('statement.upload.signature_mismatch', new Error('signature mismatch'), {
-          traceId,
-          fileName: file.originalname,
-          ext,
-        });
-        return res.status(422).json({
-          error: 'File content does not match its declared type',
-          code: 'FILE_UPLOAD_SIGNATURE_MISMATCH',
+      const { statusCode, body } = await performUpload();
+      if (statusCode < 400) {
+        await recordIdempotentUpload({
+          organizationId: orgId,
+          idempotencyKey: key,
+          statementId: String(body.statementId || ''),
+          statusCode,
+          responseJson: JSON.stringify(body),
+          requestHash,
+          createdBy: userId,
         });
       }
-    } catch (sniffError: any) {
-      logFinanceError('statement.upload.signature_check_failed', sniffError, {
-        traceId,
-        fileName: file.originalname,
-      });
-      return res.status(422).json({ error: 'Unable to verify uploaded file', detail: sniffError?.message });
-    }
-
-    await ensureCanonicalRegistryInDatabase();
-
-    logFinanceEvent('statement.upload.started', {
-      traceId,
-      organizationId: orgId,
-      userId,
-      fileName: file.originalname,
-      sizeBytes: file.size,
-      mimeType: file.mimetype,
+      return { kind: 'fresh' as const, statusCode, body };
     });
 
-    let text: string;
-    let parseMethod: string;
-    try {
-      const result = await extractTextFromFile(file.path, file.originalname);
-      // Strip null bytes — Postgres TEXT columns reject 0x00
-      text = result.text.replace(/\0/g, '');
-      parseMethod = result.parseMethod;
-    } catch (e: any) {
-      logFinanceError('statement.upload.extract_failed', e, {
-        traceId,
-        fileName: file.originalname,
-        sizeBytes: file.size,
-      });
-      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
-    }
-
-    // Backward-compatible DB constraint (older DBs allow only 3 values).
-    // Keep the real parse method inside notes for traceability.
-    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
-    const notesPrefix =
-      parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
-    const textSummary = summarizeTextPayload(text);
-
-    logFinanceEvent('statement.upload.extracted', {
-      traceId,
-      fileName: file.originalname,
-      parseMethod,
-      effectiveParseMethod,
-      text: textSummary,
-    });
-
-    const detection = detectStatementType(text);
-    const containedStatementTypes = detectContainedStatementTypes(text);
-    const columnSelection = resolveStatementColumnSelection(text, detection);
-    const documentProfile = classifyStatementDocument({
-      fileName: file.originalname,
-      parseMethod: effectiveParseMethod,
-      text,
-    });
-
-    const statementId = await createStatement({
-      organizationId: orgId,
-      statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
-      periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
-      periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
-      periodLabel: detection.periodLabel || undefined,
-      currency: detection.currency,
-      scaling: detection.scaling,
-      sourceFileName: file.originalname,
-      sourceFilePath: file.path,
-      parseMethod: effectiveParseMethod,
-      overallConfidence: detection.confidence,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      createdBy: userId,
-    });
-    const statementPackId = await syncStatementToPack(statementId);
-    const ingestRunId = await startStatementIngestRun({
-      statementId,
-      organizationId: orgId,
-      sourceFileName: file.originalname,
-      sourceFilePath: file.path,
-      parseMethod: effectiveParseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      rawTextLength: text.length,
-      summary: {
-        detection,
-        documentProfile,
-        columnSelection,
-        parseMethod,
-        effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
-
-    logFinanceEvent('statement.upload.detected', {
-      traceId,
-      statementId,
-      statementType: detection.statementType,
-      periodStart: detection.periodStart,
-      periodEnd: detection.periodEnd,
-      currency: detection.currency,
-      scaling: detection.scaling,
-      confidence: detection.confidence,
-    });
-
-    const notesRes = await dbRun(
-      `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-      [`${notesPrefix}${text.substring(0, 100000)}`, statementId],
-      { fallback: false }
-    );
-    if (!notesRes?.success) {
-      logFinanceError('statement.upload.persist_failed', notesRes?.error, {
-        traceId,
-        statementId,
-        fileName: file.originalname,
-        notesLength: `${notesPrefix}${text.substring(0, 100000)}`.length,
-        text: textSummary,
-      });
-      return res.status(500).json({
-        error: 'Failed to persist extracted text',
-        detail: notesRes?.error || 'unknown',
+    if (outcome.kind === 'conflict') {
+      return res.status(409).json({
+        error: 'Idempotency-Key was already used with a different upload',
+        code: 'IDEMPOTENCY_KEY_REUSED',
       });
     }
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'raw_text',
-      stage: 'upload',
-      contentText: text,
-      metadata: {
-        parseMethod,
-        effectiveParseMethod,
-        sourceFileName: file.originalname,
-        sizeBytes: file.size,
-      },
-      createdBy: userId,
-    });
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'document_profile',
-      stage: 'upload',
-      contentJson: {
-        detection,
-        documentProfile,
-        columnSelection,
-        parseMethod,
-        effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
-    await updateStatementIngestRun({
-      ingestRunId,
-      currentStage: 'upload',
-      runStatus: 'running',
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      rawTextLength: text.length,
-    });
-    try {
-      await upsertStatementDocumentIntelligence({
-        statementId,
-        ingestRunId,
-        organizationId: orgId,
-        title: file.originalname,
-        text,
-        statementType: detection.statementType,
-        documentClass: documentProfile.documentClass,
-        templateFamily: documentProfile.templateFamily,
-      });
-    } catch (error) {
-      logFinanceError('statement.document_intelligence.index_failed', error, {
-        traceId,
-        statementId,
-        ingestRunId,
-      });
+    if (outcome.kind === 'replay') {
+      res.setHeader('Idempotency-Replayed', 'true');
     }
-
-    logFinanceEvent('statement.upload.completed', {
-      traceId,
-      statementId,
-      fileName: file.originalname,
-      parseMethod,
-      effectiveParseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      text: textSummary,
-    });
-
-    await recordStatementQualityRun({
-      statementId,
-      organizationId: orgId,
-      stage: 'upload',
-      resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
-      readinessStatus: 'pending',
-      strategy: documentProfile.extractionStrategy,
-      summary:
-        detection.statementType === 'UNKNOWN'
-          ? 'Upload completed with unknown statement type fallback.'
-          : 'Upload completed and initial document profile detected.',
-      reasonCodes:
-        detection.statementType === 'UNKNOWN'
-          ? ['DETECTION_UNKNOWN_FALLBACK']
-          : ['UPLOAD_COMPLETE'],
-      payload: {
-        detection,
-        documentProfile,
-        columnSelection,
-        parseMethod,
-        effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
-
-    logger.info(
-      `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
-    );
-
-    const responseBody = {
-      success: true,
-      statementId,
-      statementPackId,
-      ingestRunId,
-      detection,
-      columnSelection,
-      textLength: text.length,
-      parseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-    };
-
-    if (idempotencyKey) {
-      await recordIdempotentUpload({
-        organizationId: orgId,
-        idempotencyKey,
-        statementId,
-        statusCode: 201,
-        responseJson: JSON.stringify(responseBody),
-        createdBy: userId,
-      });
-    }
-
-    res.status(201).json(responseBody);
+    return res.status(outcome.statusCode).json(outcome.body);
   })
 );
 

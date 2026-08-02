@@ -398,6 +398,228 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
     expect(second.body.statementId).not.toBe(first.body.statementId);
   }, 60_000);
 
+  // ═══════════ Codex review Blocker 2: real Postgres-level serialization ═══════════
+
+  it('Blocker 2 — Promise.all concurrency: two genuinely concurrent requests, same org+key+file, produce exactly ONE statement/pack/marker row', async () => {
+    const idempotencyKey = `${MARK}idem-concurrent-1`;
+    const fixture = makeXlsxFixture();
+    const filename = `${MARK}idempotency-concurrent.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    const makeRequest = () =>
+      request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', fixture, { filename, contentType });
+
+    const [a, b] = await Promise.all([makeRequest(), makeRequest()]);
+    // This route's idempotency convention (matching the pre-existing
+    // "idempotent retry" test above): a replay is still 201, distinguished
+    // only by the Idempotency-Replayed header — so both responses are 201
+    // here; what must never happen is BOTH being genuinely fresh creates,
+    // or either being a 500 from a lock/DB race.
+    expect(a.status).toBe(201);
+    expect(b.status).toBe(201);
+    expect(a.body.statementId).toBe(b.body.statementId);
+    // Exactly one of the two is the fresh upload; the other is the replay
+    // (Idempotency-Replayed header) — never both fresh, never neither.
+    const replayed = [a, b].filter((r) => r.headers['idempotency-replayed'] === 'true');
+    expect(replayed.length).toBe(1);
+
+    const db = client();
+    await db.connect();
+    try {
+      const statementRows = await db.query(
+        `SELECT id, statement_pack_id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filename, SEED.ORG_ID]
+      );
+      expect(statementRows.rows.length).toBe(1); // exactly one Statement row, not two
+
+      const packId = statementRows.rows[0].statement_pack_id;
+      expect(packId).toBeTruthy();
+      const packRows = await db.query(`SELECT id FROM financial_statement_packs WHERE id = $1`, [
+        packId,
+      ]);
+      expect(packRows.rows.length).toBe(1); // exactly one Pack row
+
+      const markerRows = await db.query(
+        `SELECT id, statement_id FROM financial_statement_upload_idempotency WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(markerRows.rows.length).toBe(1); // exactly one idempotency marker row
+      expect(markerRows.rows[0].statement_id).toBe(a.body.statementId);
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
+
+  it('Blocker 2 — a failure AFTER the lock is acquired but BEFORE the upload completes does not deadlock a same-key retry', async () => {
+    const idempotencyKey = `${MARK}idem-fail-then-retry`;
+    // Passes the zip-signature sniff (PK header) so the request gets well
+    // into performUpload() — past the lock acquisition and the "no existing
+    // marker" check — before SheetJS's real parse fails.
+    const fakeZip = Buffer.concat([
+      Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      Buffer.from('not actually a valid ooxml package structure'.repeat(10)),
+    ]);
+
+    const failed = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .attach('file', fakeZip, { filename: `${MARK}fail-then-retry.xlsx`, contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      .expect(422);
+    expect(failed.headers['idempotency-replayed']).toBeUndefined();
+
+    // Retry with the SAME key but a genuinely valid file — must succeed,
+    // not hang/deadlock and not be treated as a conflict.
+    const retry = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .attach('file', makeXlsxFixture(), {
+        filename: `${MARK}fail-then-retry-ok.xlsx`,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      .expect(201);
+    expect(retry.body.statementId).toBeTruthy();
+
+    const db = client();
+    await db.connect();
+    try {
+      const markerRows = await db.query(
+        `SELECT status_code FROM financial_statement_upload_idempotency WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      // Only the SUCCESSFUL retry left a marker — the failed first attempt
+      // recorded nothing (no permanent "in_progress" reservation to get stuck on).
+      expect(markerRows.rows.length).toBe(1);
+      expect(markerRows.rows[0].status_code).toBe(201);
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
+
+  // ═══════════ Codex review Blocker 3: idempotency key bound to request content ═══════════
+
+  it('Blocker 3 — same Idempotency-Key, DIFFERENT file content: hard 409 IDEMPOTENCY_KEY_REUSED, never a silent replay', async () => {
+    const idempotencyKey = `${MARK}idem-reuse-check`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    const first = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .attach('file', makeXlsxFixture(), { filename: `${MARK}reuse-a.xlsx`, contentType })
+      .expect(201);
+
+    // Different bytes (different filename inside the workbook + differently
+    // shaped rows), SAME Idempotency-Key.
+    const otherWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      otherWorkbook,
+      XLSX.utils.aoa_to_sheet([['Completely different content', 999]]),
+      'Other'
+    );
+    const otherFixture = XLSX.write(otherWorkbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+
+    const second = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .attach('file', otherFixture, { filename: `${MARK}reuse-b.xlsx`, contentType })
+      .expect(409);
+    expect(second.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+
+    const db = client();
+    await db.connect();
+    try {
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1`,
+        [`${MARK}reuse-b.xlsx`]
+      );
+      expect(rows.rows.length).toBe(0); // the reused-key request never created a second statement
+
+      expect(first.body.statementId).toBeTruthy();
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
+
+  it('Blocker 3 — an Idempotency-Key over the length cap is REJECTED (400), never silently truncated', async () => {
+    const tooLongKey = `${MARK}too-long-${'x'.repeat(250)}`;
+    expect(tooLongKey.length).toBeGreaterThan(200);
+
+    const res = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', tooLongKey)
+      .attach('file', makeXlsxFixture(), {
+        filename: `${MARK}key-too-long.xlsx`,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      .expect(400);
+    expect(res.body.code).toBe('IDEMPOTENCY_KEY_TOO_LONG');
+
+    const db = client();
+    await db.connect();
+    try {
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1`,
+        [`${MARK}key-too-long.xlsx`]
+      );
+      expect(rows.rows.length).toBe(0); // rejected before any work happened
+    } finally {
+      await db.end();
+    }
+  }, 30_000);
+
+  it('Blocker 3 — two DIFFERENT over-length keys sharing a 200-char prefix are BOTH rejected, never collide (truncation would falsely replay)', async () => {
+    const sharedPrefix = `${MARK}shared-prefix-`.padEnd(210, 'p');
+    const keyA = `${sharedPrefix}AAAAAAAAAA`;
+    const keyB = `${sharedPrefix}BBBBBBBBBB`;
+    expect(keyA.length).toBeGreaterThan(200);
+    expect(keyB.length).toBeGreaterThan(200);
+    expect(keyA.slice(0, 200)).toBe(keyB.slice(0, 200)); // genuinely share the truncated prefix
+    expect(keyA).not.toBe(keyB); // but are logically different keys to the client
+
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    const resA = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', keyA)
+      .attach('file', makeXlsxFixture(), { filename: `${MARK}prefix-a.xlsx`, contentType })
+      .expect(400);
+    expect(resA.body.code).toBe('IDEMPOTENCY_KEY_TOO_LONG');
+
+    const resB = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', keyB)
+      .attach('file', makeXlsxFixture(), { filename: `${MARK}prefix-b.xlsx`, contentType })
+      .expect(400);
+    expect(resB.body.code).toBe('IDEMPOTENCY_KEY_TOO_LONG');
+
+    // Neither request did any work — proof there is no "second request
+    // silently replays the first's result" collision left for truncation to
+    // cause (see this suite's file header / the route's
+    // IdempotencyKeyTooLongError doc comment for why truncation was
+    // rejected as an implementation option).
+    const db = client();
+    await db.connect();
+    try {
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name IN ($1, $2)`,
+        [`${MARK}prefix-a.xlsx`, `${MARK}prefix-b.xlsx`]
+      );
+      expect(rows.rows.length).toBe(0);
+    } finally {
+      await db.end();
+    }
+  }, 30_000);
+
   it('malformed file: bytes claiming to be .xlsx but not a real zip/OOXML container fails closed (422, no fake success)', async () => {
     const garbage = Buffer.from('this is not a real xlsx file, just plain garbage bytes\n'.repeat(20));
     const res = await request(app)
