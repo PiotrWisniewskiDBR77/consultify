@@ -754,9 +754,15 @@ async function approveUnit1OnClient(
   );
   const initiative = initiativeRows.rows[0];
   if (!initiative) fail('INITIATIVE_NOT_FOUND', 'Initiative not found', 404);
+  // Compare by parsed instant, not string representation: `initiative.updatedAt`
+  // comes back from this pinned pg connection as a JS Date (node-pg's default
+  // timestamptz type parser), while `expectedInitiativeVersion` was written into
+  // a TEXT column from a Date parameter and round-trips as an ISO-ish string in
+  // a *different* textual shape. `String(Date)` vs that stored string can never
+  // match even when both denote the same instant — compare `.getTime()` instead.
   if (
     request.expectedInitiativeVersion &&
-    String(initiative.updatedAt) !== String(request.expectedInitiativeVersion)
+    new Date(initiative.updatedAt).getTime() !== new Date(request.expectedInitiativeVersion).getTime()
   ) {
     fail('STALE_VERSION', 'The initiative has changed since this closure request was submitted', 409, {
       expected: request.expectedInitiativeVersion,
