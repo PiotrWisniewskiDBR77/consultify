@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import * as ReportBuilderService from './reportBuilderService.js';
+import { getCurrentDefinitionVersionId } from './results/kpiDefinitionService.js';
 import { handleTimeSeriesRecorded } from './results/kpiDeviationService.js';
 import { createKpiReportSnapshot } from './results/kpiReportSnapshotService.js';
 
@@ -146,6 +147,10 @@ class ResultsEnterpriseService {
     if (!ownedConnector?.id) {
       throw new Error('Connector not found');
     }
+    // RES-02 additive pin: which definition version was current when this
+    // connector-sourced measurement was recorded. No other RES-03 behavior
+    // in this method is touched.
+    const definitionVersionId = await getCurrentDefinitionVersionId(data.kpiId, orgId);
     await queryHelpers.queryRun(
       `INSERT INTO kpi_ingestion_log (id, organization_id, connector_id, kpi_id, ingested_value, period, provenance, quality_score)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -161,8 +166,8 @@ class ResultsEnterpriseService {
       ]
     );
     await queryHelpers.queryRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by, definition_version_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         measurementId,
         data.kpiId,
@@ -179,6 +184,7 @@ class ResultsEnterpriseService {
           runSource: data.runSource,
         }),
         data.actorUserId || null,
+        definitionVersionId,
       ]
     );
     // SEC-3: org-scope the current_value write so an org-owned connector cannot overwrite
