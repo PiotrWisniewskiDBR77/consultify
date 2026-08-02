@@ -16,6 +16,7 @@ import {
   getCanonicalLineById,
   getRequiredCanonicalLineIds,
 } from './financeCanonicalRegistry.js';
+import { detachStatementFromPack } from './financialStatementPackService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -8319,6 +8320,7 @@ interface IdempotencyRow {
   response_json: string | null;
   request_hash: string | null;
   created_at: string;
+  statement_id?: string | null;
 }
 
 export type ReservationOutcome =
@@ -8326,7 +8328,18 @@ export type ReservationOutcome =
   | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
   | { kind: 'conflict' }
   | { kind: 'in_progress' }
-  | { kind: 'schema_missing' };
+  | { kind: 'schema_missing' }
+  // Codex round-4 Blocker 1 — true exactly-once recovery on reclaim: a prior
+  // attempt on this SAME reservation row already durably completed a real,
+  // fully-synced Statement+Pack (business writes commit independently of
+  // this row's own finalize/fail outcome), but the row itself never reached
+  // 'completed' (crashed/failed after the business write, before finalize).
+  // Merely orphan-tracking that statement_id (Fix 1) and letting the caller
+  // redo the whole upload would create a permanent, unreferenced duplicate
+  // the instant the redo's OWN Statement+Pack is created. `statementId` here
+  // is that already-complete Statement — the caller must reuse it (a
+  // recovery response), never re-run extraction/persist for this request.
+  | { kind: 'recover'; reservationId: string; statementId: string };
 
 /**
  * Attempt to become the durable OWNER of the (organizationId, idempotencyKey)
@@ -8370,7 +8383,7 @@ export async function reserveIdempotentUpload(
 
   // Conflict: a row already exists for this (org, key) — read it and branch.
   const existing = await dbGet<IdempotencyRow>(
-    `SELECT id, status, status_code, response_json, request_hash, created_at
+    `SELECT id, status, status_code, response_json, request_hash, created_at, statement_id
        FROM financial_statement_upload_idempotency
       WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
     [organizationId, idempotencyKey],
@@ -8407,42 +8420,134 @@ export async function reserveIdempotentUpload(
   // 'completed', so it never actually established a content binding for
   // this key — the reclaiming request is free to define one.
   if (existing.status === 'failed' || existing.status === 'in_progress') {
-    // Orphan-tracking (Fix 1): a reclaim always nulled `statement_id`
-    // unconditionally to make room for the NEW attempt's id, but never
-    // recorded what the OLD (abandoned/failed) attempt's `statement_id` had
-    // been pointing at. Business writes (Statement + Pack) commit
-    // independently, via the global pool, BEFORE this key's reservation is
-    // finalized/failed — so a row that reaches 'failed' with a non-null
-    // `statement_id` (set by `failIdempotentUpload`'s `statementId` param)
-    // references a REAL, fully-persisted Statement that is about to become
-    // permanently unreferenced by any marker the instant this UPDATE nulls
-    // it out. This CASE appends that id into `orphaned_statement_ids`
-    // atomically, in the SAME UPDATE, so no separate SELECT-then-UPDATE is
-    // needed and the existing race-free reclaim guarantee (single
-    // statement, `WHERE ... RETURNING *`) is unchanged. A currently-null
-    // `statement_id` (the common case — most failures happen before any
-    // Statement is ever created) is a no-op append.
-    const reclaimed = await dbGet<IdempotencyRow>(
-      `UPDATE financial_statement_upload_idempotency
-          SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
-              status_code = 0, response_json = NULL,
-              orphaned_statement_ids = CASE
-                WHEN statement_id IS NOT NULL
-                THEN orphaned_statement_ids || jsonb_build_array(statement_id)
-                ELSE orphaned_statement_ids
-              END,
-              statement_id = NULL, completed_at = NULL
+    // ── Codex round-4 Blocker 1: true exactly-once recovery ──────────────
+    //
+    // `withStatementUploadIdempotencyLock`'s `pg_advisory_xact_lock` on
+    // (organizationId, idempotencyKey) guarantees only ONE caller is ever
+    // inside this function for this key at a time — that makes this short
+    // SELECT -> branch -> (compensate) -> UPDATE sequence race-free for this
+    // exact row without needing its own DB transaction, same as the
+    // pre-existing reclaim UPDATE below.
+    //
+    // Step 1: confirm reclaim eligibility using the DATABASE's clock, not
+    // the app server's — identical condition to the reclaim UPDATE's own
+    // WHERE clause. If this returns nothing, a genuinely fresh 'in_progress'
+    // row must never be touched — fall through to "in progress, retry
+    // later" exactly as before this fix.
+    const eligible = await dbGet<{ id: string }>(
+      `SELECT id FROM financial_statement_upload_idempotency
         WHERE id = ?
           AND (status = 'failed'
                OR (status = 'in_progress'
-                   AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
-        RETURNING id, status, status_code, response_json, request_hash, created_at`,
-      [requestHash, createdBy || null, existing.id],
+                   AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))`,
+      [existing.id],
       { fallback: false }
     );
-    if (reclaimed) return { kind: 'owner', reservationId: reclaimed.id };
-    // Not stale after all (lost a theoretical race, or genuinely fresh) —
-    // fall through to "genuinely in progress, retry later".
+
+    if (eligible) {
+      // Step 2: if the abandoned attempt's `statement_id` is set, find out
+      // whether it reached a COMPLETE state — the same signal
+      // `syncStatementToPack` itself sets (`statement_pack_id`
+      // non-null) — before deciding whether to recover it or compensate for
+      // it. Tenant-scoped by `organizationId` as defense in depth.
+      const orphanId = existing.statement_id || null;
+      if (orphanId) {
+        const orphanStatement = await dbGet<{ id: string; statement_pack_id: string | null }>(
+          `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+          [orphanId, organizationId],
+          { fallback: false }
+        );
+
+        if (orphanStatement && orphanStatement.statement_pack_id) {
+          // COMPLETE prior attempt: a real, fully-synced Statement+Pack
+          // already exists. Recover it — do NOT null `statement_id`, do NOT
+          // let the caller re-run extraction/persist. Merely orphan-tracking
+          // this id (the old behavior) would leave it a permanent,
+          // unreferenced duplicate the instant a NEW Statement+Pack is
+          // created by a redo.
+          //
+          // Still transition the row to 'in_progress' (leaving
+          // `statement_id` untouched, unlike the reclaim UPDATE below) so
+          // this caller durably OWNS the row for the finalize step that
+          // follows — `finalizeIdempotentUpload`'s own UPDATE requires
+          // `status = 'in_progress'` (the same invariant the normal
+          // reserve -> finalize/fail flow relies on), and recovery must
+          // satisfy it too, not bypass it.
+          const owned = await dbGet<{ id: string }>(
+            `UPDATE financial_statement_upload_idempotency
+                SET status = 'in_progress', created_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+                AND (status = 'failed'
+                     OR (status = 'in_progress'
+                         AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+              RETURNING id`,
+            [existing.id],
+            { fallback: false }
+          );
+          if (owned) {
+            return { kind: 'recover', reservationId: existing.id, statementId: orphanStatement.id };
+          }
+          // Lost a theoretical race (another caller reclaimed/owned the row
+          // between the eligibility SELECT above and this UPDATE) — fall
+          // through toward "genuinely in progress, retry later" via step 3
+          // below, the same safety net the reclaim UPDATE already relies on.
+        }
+
+        if (orphanStatement && !orphanStatement.statement_pack_id) {
+          // INCOMPLETE prior attempt: createStatement() ran but
+          // syncStatementToPack() never completed — genuinely never a
+          // successful attempt, and unambiguously owned by this exact
+          // reservation row (nothing else can be touching it while this
+          // function holds the (org, key) advisory lock). Compensate using
+          // the EXACT "hard-delete a non-confirmed statement" pattern
+          // already established by the `DELETE /:id` route: detach (a
+          // harmless no-op if never attached — see
+          // detachStatementFromPack's own early-return when there is no
+          // currentPackId), then delete values, then delete the statement
+          // row itself.
+          await detachStatementFromPack(orphanId);
+          await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [orphanId], {
+            fallback: false,
+          });
+          await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [orphanId], {
+            fallback: false,
+          });
+        }
+        // If not found at all: already cleaned up by an earlier compensating
+        // pass (or the id was never really valid) — nothing to compensate,
+        // fall through to reclaim.
+      }
+
+      // Step 3: reclaim the row for a fresh attempt. Compensation above (if
+      // any) already ran, so `statement_id` going into this UPDATE is
+      // either already null (nothing to compensate) or about to be
+      // correctly nulled here — the CASE below is now a pure audit trail:
+      // every id it appends into `orphaned_statement_ids` was either
+      // recovered (never reaches here — returned above) or compensated
+      // (deleted, above) before this UPDATE runs, so nothing routed through
+      // `orphaned_statement_ids` is ever an ACTIVE duplicate anymore.
+      const reclaimed = await dbGet<IdempotencyRow>(
+        `UPDATE financial_statement_upload_idempotency
+            SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
+                status_code = 0, response_json = NULL,
+                orphaned_statement_ids = CASE
+                  WHEN statement_id IS NOT NULL
+                  THEN orphaned_statement_ids || jsonb_build_array(statement_id)
+                  ELSE orphaned_statement_ids
+                END,
+                statement_id = NULL, completed_at = NULL
+          WHERE id = ?
+            AND (status = 'failed'
+                 OR (status = 'in_progress'
+                     AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+          RETURNING id, status, status_code, response_json, request_hash, created_at`,
+        [requestHash, createdBy || null, existing.id],
+        { fallback: false }
+      );
+      if (reclaimed) return { kind: 'owner', reservationId: reclaimed.id };
+      // Not stale after all (lost a theoretical race) — fall through to
+      // "genuinely in progress, retry later".
+    }
   }
 
   return { kind: 'in_progress' };
@@ -8491,20 +8596,26 @@ export async function finalizeIdempotentUpload(params: {
  * for the NEXT retry's reclaim path to recover — the safety net, not the
  * primary path.
  *
- * `statementId` (Fix 1, orphan-tracking): pass this when the caller's
+ * `statementId` (Fix 1, orphan-tracking; superseded/completed by round-4
+ * Blocker 1, true exactly-once recovery): pass this when the caller's
  * business-write step already returned a real, persisted `statementId` for
  * this attempt before the reservation ended up failing (e.g. the
  * finalize-UPDATE-didn't-land case). It reuses the SAME `statement_id`
  * column the success path uses, but with a DIFFERENT meaning on a 'failed'
- * row: "the Statement this abandoned attempt orphaned", not "the Statement
- * this marker represents". That distinction is safe because every read
- * site that treats `statement_id` as a completed marker's payload
- * (`reserveIdempotentUpload`'s replay branch) is gated on
+ * row: "the Statement this abandoned attempt left behind — status not yet
+ * known", not "the Statement this marker represents". That distinction is
+ * safe because every read site that treats `statement_id` as a completed
+ * marker's payload (`reserveIdempotentUpload`'s replay branch) is gated on
  * `status === 'completed'` first — a 'failed' row is never mistaken for a
- * replay regardless of what this column holds. The reclaim path (see
- * `reserveIdempotentUpload`) is what actually preserves this id — it moves
- * it into `orphaned_statement_ids` atomically before nulling `statement_id`
- * for the next attempt, so it is never silently lost.
+ * replay regardless of what this column holds. A later reclaim attempt (see
+ * `reserveIdempotentUpload`) is what resolves that unknown status: if the
+ * Statement this id points at turned out COMPLETE (fully synced to a pack),
+ * the reclaim RECOVERS it (`recover` outcome — reused, never duplicated,
+ * never routed through `orphaned_statement_ids` at all); if it turned out
+ * INCOMPLETE, the reclaim COMPENSATES (deletes it) before proceeding. Only
+ * IDs that were recovered-or-compensated this way ever end up recorded in
+ * `orphaned_statement_ids` — a pure audit trail now, never a reference to an
+ * ACTIVE duplicate.
  */
 export async function failIdempotentUpload(
   reservationId: string,

@@ -138,6 +138,39 @@ function financeMeta() {
   return { version: 'v8' as const, contract: V8_FINANCE_READ_CONTRACT };
 }
 
+/**
+ * FIN-005 Codex round-4 Blocker 1 — v8's twin of the legacy
+ * `buildUploadAndAnalyzeRecoveryResponseBody` (finance-statements.routes.ts).
+ * Recovery only ever has ONE tracked statementId (the pre-existing
+ * `primaryStatementId`-only simplification this endpoint already made for
+ * Fix 2's idempotency wiring), so it is built using the SAME shape as this
+ * endpoint's existing single-statement "fallback" success path, wrapped in
+ * v8's `{ data, meta }` envelope — never the multi-section "smart" shape,
+ * which cannot be honestly reconstructed from one id alone.
+ */
+async function buildV8UploadRecoveryResponseBody(
+  statementId: string,
+  organizationId: string
+): Promise<Record<string, unknown> | null> {
+  const stmt = await dbGet<any>(
+    `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+    [statementId, organizationId]
+  );
+  if (!stmt) return null;
+  return {
+    data: {
+      success: true,
+      mode: 'fallback',
+      statementPackId: stmt.statement_pack_id || null,
+      statementIds: [stmt.id],
+      analysis: null,
+      message: 'Recovered a previously-completed upload for this Idempotency-Key.',
+      recovered: true,
+    },
+    meta: financeMeta(),
+  };
+}
+
 async function ensureStatementIngestRun(params: {
   statementId: string;
   organizationId?: string;
@@ -1592,17 +1625,41 @@ router.post(
 
     type LockOutcome =
       | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'recover'; statusCode: number; body: Record<string, unknown> }
       | { kind: 'conflict' }
       | { kind: 'in_progress' }
       | { kind: 'schema_missing' }
       | { kind: 'fresh'; statusCode: number; body: Record<string, unknown> }
-      | { kind: 'finalize_failed' };
+      | { kind: 'finalize_failed'; recovered?: boolean };
 
     const outcome: LockOutcome = await withStatementUploadIdempotencyLock(
       organizationId,
       key,
       async (): Promise<LockOutcome> => {
         const reservation = await reserveIdempotentUpload(organizationId, key, requestHash, userId);
+
+        if (reservation.kind === 'recover') {
+          // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
+          // already durably completed a real, fully-synced Statement+Pack —
+          // reuse it. No re-extraction, no LLM call, no
+          // performUploadAndAnalyze() call at all.
+          const body = await buildV8UploadRecoveryResponseBody(reservation.statementId, organizationId);
+          if (!body) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementId,
+            statusCode: 201,
+            responseJson: JSON.stringify(body),
+          });
+          if (!finalized) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return { kind: 'recover' as const, statusCode: 201, body };
+        }
 
         if (reservation.kind !== 'owner') {
           if (reservation.kind === 'replay') {
@@ -1687,6 +1744,13 @@ router.post(
           code: 'IDEMPOTENCY_SCHEMA_UNAVAILABLE',
         });
       case 'finalize_failed':
+        // FIN-005 Blocker 1: on the `recover` path performUploadAndAnalyze()
+        // was NEVER called for this request — file.path is not any
+        // Statement's sourceFilePath — so it is safe (and necessary) to
+        // clean it up here.
+        if (outcome.recovered) {
+          await cleanupUnpersistedUpload(file.path, 'recovery finalize unconfirmed (v8)');
+        }
         return res.status(500).json({
           error: 'Upload completed but could not be durably confirmed — please retry',
           code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
@@ -1695,6 +1759,16 @@ router.post(
         await cleanupUnpersistedUpload(
           file.path,
           'idempotent replay of a previously completed upload-and-analyze (v8)'
+        );
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'recover':
+        // FIN-005 Blocker 1: the CURRENT request's uploaded file was never
+        // persisted as any Statement's source — cleaned up here, exactly
+        // like `replay`.
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent recovery of a previously-completed upload-and-analyze for this key (v8)'
         );
         res.setHeader('Idempotency-Replayed', 'true');
         return res.status(outcome.statusCode).json(outcome.body);
