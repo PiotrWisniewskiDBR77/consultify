@@ -9627,6 +9627,16 @@
       "approvedBy": "Approved by",
       "approvedAt": "Approved at",
       "transitionRef": "Transition ref",
+      "receipt": {
+        "delivered": "Delivered to Results & Finance",
+        "failed": "Delivery failed — retry available",
+        "delivering": "Delivering to Results & Finance…",
+        "needsDecision": "Results delivered — Finance mapping needs a product decision",
+        "partial": "Partially delivered",
+        "retry": "Retry delivery",
+        "retryTriggered": "Retry triggered",
+        "retryError": "Failed to trigger retry"
+      },
       "submitForApproval": "Submit for approval",
       "waitingApproval": "Waiting for approval",
       "approve": "Approve",
