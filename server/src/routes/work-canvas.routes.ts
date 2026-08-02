@@ -3564,6 +3564,12 @@ router.post('/drafts/:draftId/proposals', async (req: AuthRequest, res) => {
       target: String(req.body?.target || 'idea') as workCanvasService.WorkCanvasTarget,
       payload:
         req.body?.payload && typeof req.body.payload === 'object' ? req.body.payload : undefined,
+      // FIX (Codex delta review, area 2): optional client-supplied
+      // idempotency key — a double-click/retry on this same key returns
+      // the SAME proposal instead of minting a second one. Omitting it
+      // preserves the exact pre-fix behavior.
+      clientIdempotencyKey:
+        typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey : null,
     });
     return res.status(201).json(envelope(proposal, { auditEventId: `ae-${randomUUID()}` }));
   } catch (error) {

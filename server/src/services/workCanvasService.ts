@@ -859,6 +859,17 @@ export async function createProposal(params: {
   draftId: string;
   target: WorkCanvasTarget;
   payload?: Record<string, unknown>;
+  /**
+   * FIX (Codex delta review, area 2 — "create-time idempotency"): optional,
+   * client-generated key (one per "Propose"/"Confirm" button press).
+   * Backward compatible — omitting it preserves the exact pre-fix behavior
+   * (always a fresh proposal). When supplied, a repeated/concurrent call
+   * with the SAME (organizationId, draftId, clientIdempotencyKey) is
+   * guaranteed by a DB-level partial unique index (migration 800), not
+   * merely a prior SELECT, to resolve to the SAME proposal row — see the
+   * `INSERT ... ON CONFLICT DO NOTHING` + re-SELECT below.
+   */
+  clientIdempotencyKey?: string | null;
 }): Promise<WorkCanvasProposalRecord> {
   await ensureSchema();
   const draft = await getDraft({ organizationId: params.organizationId, draftId: params.draftId });
@@ -877,12 +888,56 @@ export async function createProposal(params: {
     ...(params.payload || {}),
   };
   const requiredCapability = requiredCapabilityForTarget(params.target);
+  const clientIdempotencyKey =
+    typeof params.clientIdempotencyKey === 'string' && params.clientIdempotencyKey.trim()
+      ? params.clientIdempotencyKey.trim().slice(0, 200)
+      : null;
+
+  if (!clientIdempotencyKey) {
+    await dbRun(
+      `INSERT INTO work_canvas_proposals (
+        id, draft_id, organization_id, created_by, target, title, summary, status,
+        payload_json, required_capability, target_object_id, read_back_json,
+        audit_event_id, client_idempotency_key, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        draft.id,
+        params.organizationId,
+        params.actorUserId,
+        params.target,
+        String(payload.title),
+        String(payload.summary),
+        'proposed',
+        JSON.stringify(payload),
+        requiredCapability,
+        null,
+        null,
+        null,
+        null,
+        now,
+        now,
+      ]
+    );
+    const proposal = await getProposal({ organizationId: params.organizationId, proposalId: id });
+    if (!proposal) throw new Error('Canvas proposal read-back failed');
+    return proposal;
+  }
+
+  // Idempotent path: the partial unique index on
+  // (organization_id, draft_id, client_idempotency_key) — not this
+  // application-level check — is what makes two truly concurrent identical
+  // calls safe. Exactly one INSERT wins; the other(s) hit the constraint,
+  // `DO NOTHING` skips their write, and every caller re-SELECTs the SAME
+  // authoritative row by the key regardless of which one "won".
   await dbRun(
     `INSERT INTO work_canvas_proposals (
       id, draft_id, organization_id, created_by, target, title, summary, status,
       payload_json, required_capability, target_object_id, read_back_json,
-      audit_event_id, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      audit_event_id, client_idempotency_key, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (organization_id, draft_id, client_idempotency_key)
+      WHERE client_idempotency_key IS NOT NULL DO NOTHING`,
     [
       id,
       draft.id,
@@ -897,13 +952,20 @@ export async function createProposal(params: {
       null,
       null,
       null,
+      clientIdempotencyKey,
       now,
       now,
-    ]
+    ],
+    { fallback: false }
   );
-  const proposal = await getProposal({ organizationId: params.organizationId, proposalId: id });
+  const proposal = await dbGet<ProposalRow>(
+    `SELECT * FROM work_canvas_proposals
+      WHERE organization_id = ? AND draft_id = ? AND client_idempotency_key = ?`,
+    [params.organizationId, draft.id, clientIdempotencyKey],
+    { fallback: false }
+  );
   if (!proposal) throw new Error('Canvas proposal read-back failed');
-  return proposal;
+  return mapProposal(proposal);
 }
 
 export async function getProposal(params: {
