@@ -207,6 +207,7 @@ import capacityRoutes from './routes/pmo/capacity.routes.js';
 import decisionsRoutes from './routes/pmo/decisions.routes.js';
 import executionRoutes from './routes/pmo/execution.routes.js';
 import governanceRoutes from './routes/pmo/governance.routes.js';
+import initiativeClosureRoutes from './routes/pmo/initiativeClosure.routes.js';
 import initiativesRoutes from './routes/pmo/initiatives.routes.js';
 import pmoRoutes from './routes/pmo/pmo.routes.js';
 import pmoAnalysisRoutes from './routes/pmo/pmo-analysis.routes.js';
@@ -543,6 +544,10 @@ export class ApiGateway {
         initiativeGeneratorBrainRoutes
       );
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativesRoutes);
+      // EXE-08 — closure/evidence gate (/:id/closure-requests/...). Own
+      // auth/org middleware applied inside the router (matches the pattern
+      // used by the other additive initiative-slice mounts on this base path).
+      app.use('/api/initiatives', initiativeClosureRoutes);
       // F5 — „Zrób materiał": /:id/materialize + /portfolio/materialize (additive POST sub-paths, po głównym OK).
       app.use('/api/initiatives', gatewayVerifyToken, trialEntryGuard, initiativeMaterializeRoutes);
       // Additive initiative slices (suggested-changes CRUD + propose engine). Mounted
