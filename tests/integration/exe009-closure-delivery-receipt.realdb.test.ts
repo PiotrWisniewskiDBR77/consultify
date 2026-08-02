@@ -66,6 +66,10 @@ import {
   runReconciliationSweep,
 } from '../../server/src/services/closureDeliveryReceiptService.js';
 import initiativeClosureRoutes from '../../server/src/routes/pmo/initiativeClosure.routes.js';
+// The canonical Benefits/ROI read model (server/src/routes/benefits.routes.ts,
+// mounted at /api/benefits in Gateway.ts) — used to prove the Finance leg's
+// output is visible through the REAL read path, not just a raw SQL peek.
+import benefitsRoutes from '../../server/src/routes/benefits.routes.js';
 
 // ---------------------------------------------------------------------------
 // Route-level RBAC test app (Codex review round 2, BLOCKER3) — same E2E JWT
@@ -98,6 +102,7 @@ function buildApp() {
   const app = express();
   app.use(express.json());
   app.use('/api/initiatives', initiativeClosureRoutes);
+  app.use('/api/benefits', benefitsRoutes);
   return app;
 }
 
@@ -168,6 +173,8 @@ const REQUIRED_TABLES = [
   'initiative_benefits',
   'closure_delivery_receipts',
   'roi_realized_values',
+  'kpi_time_series',
+  'roi_assumptions',
 ] as const;
 
 function suffix(): string {
@@ -177,6 +184,30 @@ function suffix(): string {
 // ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------
+
+/**
+ * Codex review round 3: `kpiTargetValue` (a PLAN) and `monetaryMeasurement`
+ * (an OBSERVED `kpi_time_series` fact) are deliberately SEPARATE knobs now —
+ * the whole point of this round's fix is that a target must NEVER be usable
+ * as a stand-in for an actual. Tests that want Finance to actually deliver
+ * must set `monetaryMeasurement` explicitly; setting only `kpiTargetValue`
+ * (Results-leg-only) must always resolve Finance to NEEDS_DECISION.
+ */
+interface MakeInitiativeOpts {
+  budgetCurrency?: string | null;
+  kpiTargetValue?: number | null;
+  kpiUnit?: string;
+  expectedRoi?: number | null;
+  monetaryMeasurement?: {
+    value: number;
+    /** Defaults to `budgetCurrency` — set differently to test a unit MISMATCH. */
+    unit?: string;
+    /** Age of the measurement's period_end, in days before "now". Defaults to 1 (fresh). */
+    ageDays?: number;
+    /** Defaults to orgAId — set to orgBId to simulate a cross-tenant data-integrity probe. */
+    organizationId?: string;
+  };
+}
 
 interface Harness {
   client: Client;
@@ -190,10 +221,7 @@ interface Harness {
   projectAId: string;
   // Fresh EXECUTING initiative per scenario — created via a factory so each
   // `it()` gets its own isolated row (no shared mutable fixture races).
-  makeInitiative: (
-    label: string,
-    opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null; kpiUnit?: string; expectedRoi?: number | null }
-  ) => Promise<string>;
+  makeInitiative: (label: string, opts?: MakeInitiativeOpts) => Promise<string>;
   /**
    * For tests that exercise `attemptDelivery`/`runReconciliationSweep`
    * directly (fault injection, restart simulation): seeds an initiative
@@ -213,7 +241,7 @@ interface Harness {
    */
   seedClosedInitiativeWithReceipt: (
     label: string,
-    opts?: { budgetCurrency?: string | null; kpiTargetValue?: number | null; kpiUnit?: string; expectedRoi?: number | null }
+    opts?: MakeInitiativeOpts
   ) => Promise<{ initiativeId: string; correlationId: string }>;
   cleanup: () => Promise<void>;
 }
@@ -311,6 +339,35 @@ async function setupHarness(): Promise<Harness | null> {
         [`kpi_${id}`, id, opts.kpiTargetValue, opts.kpiUnit ?? budgetCurrency ?? 'PLN']
       );
     }
+    if (opts.monetaryMeasurement) {
+      // A measurement needs its OWN kpi_id (kpi_time_series.kpi_id is a real
+      // FK) — reuse the target's KPI if one was already created above
+      // (deliberately allowed, so a test can have BOTH a plan and an actual
+      // on the same KPI), otherwise mint a dedicated measurement-only KPI.
+      const measurementKpiId =
+        opts.kpiTargetValue !== undefined && opts.kpiTargetValue !== null ? `kpi_${id}` : `kpi_meas_${id}`;
+      if (measurementKpiId === `kpi_meas_${id}`) {
+        await client.query(
+          `INSERT INTO initiative_kpis (id, initiative_id, name, unit)
+           VALUES ($1, $2, 'Measured value', $3)`,
+          [measurementKpiId, id, opts.monetaryMeasurement.unit ?? budgetCurrency ?? 'PLN']
+        );
+      }
+      const ageDays = opts.monetaryMeasurement.ageDays ?? 1;
+      const measurementOrgId = opts.monetaryMeasurement.organizationId ?? orgAId;
+      await client.query(
+        `INSERT INTO kpi_time_series (id, kpi_id, initiative_id, organization_id, value, period_start, period_end, source)
+         VALUES ($1, $2, $3, $4, $5, CURRENT_DATE - ($6 * INTERVAL '1 day'), CURRENT_DATE - ($6 * INTERVAL '1 day'), 'test-measurement')`,
+        [
+          `kts_${id}`,
+          measurementKpiId,
+          id,
+          measurementOrgId,
+          opts.monetaryMeasurement.value,
+          ageDays,
+        ]
+      );
+    }
     return id;
   };
 
@@ -335,9 +392,11 @@ async function setupHarness(): Promise<Harness | null> {
 
   const cleanup = async () => {
     for (const id of initiativeIds) {
+      await client.query(`DELETE FROM roi_assumptions WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM roi_realized_values WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM closure_delivery_receipts WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_benefits WHERE initiative_id = $1`, [id]).catch(() => {});
+      await client.query(`DELETE FROM kpi_time_series WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_kpis WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_status_history WHERE initiative_id = $1`, [id]).catch(() => {});
       await client.query(`DELETE FROM initiative_history WHERE initiative_id = $1`, [id]).catch(() => {});
@@ -457,7 +516,15 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     );
 
   itDB('golden flow: closure creates exactly one receipt, delivers Results & Finance independently, IDs shared with the audit trail', async (h) => {
-    const initiativeId = await h.makeInitiative('golden', { budgetCurrency: 'PLN', kpiTargetValue: 15000 });
+    // Deliberately DIFFERENT numbers for the planned target (Results leg,
+    // 15000) vs. the observed actual measurement (Finance leg, 12500) — the
+    // whole point of this round's fix is that these are two distinct
+    // concepts and must never collapse into the same figure.
+    const initiativeId = await h.makeInitiative('golden', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: 15000,
+      monetaryMeasurement: { value: 12500 },
+    });
 
     const correlationId = await closeInitiative(h, initiativeId);
 
@@ -502,9 +569,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       [correlationId]
     );
     expect(realization.rows).toHaveLength(1);
-    expect(Number(realization.rows[0].realized_revenue_delta)).toBe(15000);
+    // The ACTUAL measurement (12500), never the planned target (15000).
+    expect(Number(realization.rows[0].realized_revenue_delta)).toBe(12500);
     expect(realization.rows[0].source).toBe('execution');
     expect(delivered.financePayload?.realizationId).toBe(realization.rows[0].id);
+    expect(delivered.financePayload?.sourceMeasurementId).toBeTruthy();
 
     const benefitRow = await h.client.query(
       `SELECT id, source_tag FROM initiative_benefits WHERE initiative_id = $1`,
@@ -515,7 +584,11 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
   });
 
   itDB('identical retry produces the SAME downstream ids, never a duplicate row', async (h) => {
-    const initiativeId = await h.makeInitiative('retry', { budgetCurrency: 'PLN', kpiTargetValue: 5000 });
+    const initiativeId = await h.makeInitiative('retry', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: 5000,
+      monetaryMeasurement: { value: 4200 },
+    });
     const correlationId = await closeInitiative(h, initiativeId);
 
     // First call resolves the race against closeInitiative's own background
@@ -543,23 +616,35 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
   });
 
   itDB(
-    'TWO CONCURRENT attemptDeliveryInternal calls on the SAME receipt never double-write, even on ' +
-      'the no-DB-backstop RESULTS-leg expected_roi fallback path (adversarial-review regression ' +
-      'test for the claimLeg race fix — the Results leg, unlike Finance, still legitimately uses ' +
-      'expected_roi as its pre-existing EXE-08 fallback for initiative_benefits, unaffected by ' +
-      'BLOCKER2 which is about the Finance leg only). No currency-matched KPI here, so the Finance ' +
-      'leg on this receipt correctly resolves to NEEDS_DECISION, not a fabricated value.',
+    'TWO CONCURRENT attemptDeliveryInternal calls on the SAME receipt never double-write ' +
+      '(adversarial-review regression test for the claimLeg race fix). No currency-matched ' +
+      'measurement on this receipt, so the Finance leg correctly resolves to NEEDS_DECISION, ' +
+      'not a fabricated value — this test is about claimLeg atomicity, not the Finance fix.',
     async (h) => {
-      // Deliberately kpiTargetValue: null — this forces
-      // executionResultsBridge.handoffFromInitiativeFallback's path, the one
-      // Results-leg branch whose own dedup is application-level only
-      // (SELECT-then-INSERT, no unique index prior to migration 936). Before
-      // the claimLeg fix, two concurrent attemptDeliveryInternal calls could
-      // both pass that SELECT and both INSERT a duplicate benefit row.
+      // NOTE (Codex review round 3 — discovered while re-testing, out of
+      // THIS round's scope): the original version of this test used
+      // `kpiTargetValue: null` + `expectedRoi` to force
+      // `executionResultsBridge.handoffFromInitiativeFallback`'s no-KPI path
+      // — the one Results-leg branch with no DB unique-index backstop
+      // (pre-migration-936). That path's OWN query
+      // (`SELECT COALESCE(title, name) AS name, expected_roi FROM
+      // initiatives...`) references a `title` column that does not exist in
+      // this schema — a genuine, PRE-EXISTING bug in frozen
+      // executionResultsBridge.ts (confirmed via `git diff` that EXE-09 has
+      // never touched this file), silently swallowed by `dbGet`'s
+      // `fallback: true` default, making the fallback path a permanent
+      // silent no-op in this environment. Not fixed here — out of scope for
+      // this round (Finance target-vs-actual) and out of scope for
+      // single-writer discipline on a frozen file; flagged in the
+      // completion report as a NEEDS_FOLLOWUP for a future M14→M15 fix.
+      // This test now uses a real `initiative_kpis` target instead (still
+      // exercises claimLeg's atomicity for the Results leg; the DB-backstop
+      // -less code path is separately proven safe by the standalone repro
+      // documented in the round-1/round-2 adversarial review).
       const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('race', {
         budgetCurrency: 'PLN',
-        kpiTargetValue: null,
-        expectedRoi: 12000,
+        kpiTargetValue: 12000,
+        kpiUnit: 'count', // non-monetary unit — Finance must stay NEEDS_DECISION regardless.
       });
 
       // Both promises are awaited together, but each one's OWN returned
@@ -616,6 +701,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('results-fail', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 2500,
+      monetaryMeasurement: { value: 2100 },
     });
 
     const outcome = await attemptDeliveryInternal(correlationId, {
@@ -642,6 +728,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const { initiativeId, correlationId } = await h.seedClosedInitiativeWithReceipt('finance-fail', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 3500,
+      monetaryMeasurement: { value: 3100 },
     });
 
     const outcome = await attemptDeliveryInternal(correlationId, {
@@ -669,6 +756,7 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     const { correlationId } = await h.seedClosedInitiativeWithReceipt('restart', {
       budgetCurrency: 'PLN',
       kpiTargetValue: 4200,
+      monetaryMeasurement: { value: 3900 },
     });
 
     const beforeSweep = await getReceiptById(correlationId, h.orgAId);
@@ -788,19 +876,98 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
     }
   });
 
-  itDB('BLOCKER2: explicit monetary KPI (unit == budget_currency) creates EXACTLY ONE canonical actual, confirmed via the real read model', async (h) => {
-    const initiativeId = await h.makeInitiative('explicit-monetary', {
+  // ---------------------------------------------------------------------
+  // Codex review round 3 — target-vs-actual negative controls. A round-2
+  // test HERE incorrectly asserted "explicit monetary KPI TARGET creates a
+  // canonical actual" (unit==budget_currency alone was treated as proof of
+  // realization). That was the core semantic bug this round fixes: a target
+  // is a plan, not evidence anything was achieved, and DONE status is not
+  // evidence either. Replaced with Codex's required negative control #1.
+  // ---------------------------------------------------------------------
+
+  itDB('TARGET-VS-ACTUAL #1: a planned monetary KPI target (unit == budget_currency) at closure, with NO measurement, creates ZERO roi_realized_values and resolves NEEDS_DECISION', async (h) => {
+    const initiativeId = await h.makeInitiative('planned-target-only', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: 15000,
+      kpiUnit: 'PLN',
+      // Deliberately NO monetaryMeasurement — this is exactly the round-2
+      // bug's trigger condition (currency-matched target, nothing else).
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(0);
+  });
+
+  itDB('TARGET-VS-ACTUAL #3: a budget figure (initiatives.budget_currency + planned_budget/actual_budget) alone never creates a Finance actual', async (h) => {
+    const initiativeId = await h.makeInitiative('budget-only', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+    });
+    await h.client.query(
+      `UPDATE initiatives SET planned_budget_total = 100000, actual_budget_total = 100000 WHERE id = $1`,
+      [initiativeId]
+    );
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(0);
+  });
+
+  itDB('TARGET-VS-ACTUAL #4: a monetary-unit KPI with a target but explicitly NO kpi_time_series measurement never creates a Finance actual', async (h) => {
+    const initiativeId = await h.makeInitiative('monetary-kpi-no-measurement', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: 8800,
+      kpiUnit: 'PLN',
+    });
+    // Confirm no measurement exists at all for this initiative (belt and
+    // braces — makeInitiative without `monetaryMeasurement` shouldn't create
+    // one, but this test's whole point is that absence, so verify it).
+    const preCheck = await h.client.query(`SELECT id FROM kpi_time_series WHERE initiative_id = $1`, [
+      initiativeId,
+    ]);
+    expect(preCheck.rows).toHaveLength(0);
+
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+  });
+
+  itDB('TARGET-VS-ACTUAL #5: a real approved-shape monetary MEASUREMENT (kpi_time_series, not a target) creates EXACTLY ONE canonical actual, confirmed via the real Benefits/ROI read model', async (h) => {
+    const initiativeId = await h.makeInitiative('real-measurement', {
       budgetCurrency: 'EUR',
-      kpiTargetValue: 42000,
+      kpiTargetValue: 42000, // a DIFFERENT number — proves the target is NOT what gets used.
       kpiUnit: 'EUR',
+      monetaryMeasurement: { value: 12500, unit: 'EUR' },
     });
     const correlationId = await closeInitiative(h, initiativeId);
     const outcome = await deliverAndFetch(h, correlationId);
     expect(outcome.financeStatus).toBe('DELIVERED');
 
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(1);
+    expect(outcome.financePayload?.realizationId).toBe(rows.rows[0].id);
+    // Lineage: the SOURCE measurement id is recorded, not just the resulting
+    // realization id — an auditor can trace the actual back to its origin.
+    expect(outcome.financePayload?.sourceMeasurementId).toBeTruthy();
+    const measurementRow = await h.client.query(`SELECT id FROM kpi_time_series WHERE initiative_id = $1`, [
+      initiativeId,
+    ]);
+    expect(outcome.financePayload?.sourceMeasurementId).toBe(measurementRow.rows[0].id);
+
     // Read-back through the SAME query the real Benefits/ROI UI uses
-    // (server/src/routes/benefits.routes.ts GET /roi/portfolio/summary),
-    // not just a raw table peek — this IS the canonical read model.
+    // (server/src/routes/benefits.routes.ts GET /roi/portfolio/summary) —
+    // the amount must be the MEASUREMENT (12500), never the target (42000).
     const summary = await h.client.query(
       `SELECT initiative_id, SUM(realized_revenue_delta) AS total
          FROM roi_realized_values
@@ -809,13 +976,43 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
       [h.orgAId, initiativeId]
     );
     expect(summary.rows).toHaveLength(1);
-    expect(Number(summary.rows[0].total)).toBe(42000);
+    expect(Number(summary.rows[0].total)).toBe(12500);
+  });
 
+  itDB('TARGET-VS-ACTUAL #6: a measurement older than the recency window is NOT automatically realized', async (h) => {
+    const initiativeId = await h.makeInitiative('stale-measurement', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+      monetaryMeasurement: { value: 9000, ageDays: 400 }, // well past MONETARY_MEASUREMENT_MAX_AGE_DAYS (180)
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
     const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
       correlationId,
     ]);
-    expect(rows.rows).toHaveLength(1);
-    expect(outcome.financePayload?.realizationId).toBe(rows.rows[0].id);
+    expect(rows.rows).toHaveLength(0);
+  });
+
+  itDB('TARGET-VS-ACTUAL #7: a measurement recorded under a DIFFERENT organization is never picked up cross-tenant (zero leak)', async (h) => {
+    const initiativeId = await h.makeInitiative('foreign-tenant-measurement', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: null,
+      // The measurement row itself claims org B, even though the KPI/
+      // initiative genuinely belong to org A — a deliberate data-integrity
+      // probe: the query's own organization_id filter, not just the
+      // initiative_id join, must be what keeps this from leaking.
+      monetaryMeasurement: { value: 5000, organizationId: h.orgBId },
+    });
+    const correlationId = await closeInitiative(h, initiativeId);
+    const outcome = await deliverAndFetch(h, correlationId);
+
+    expect(outcome.financeStatus).toBe('NEEDS_DECISION');
+    const rows = await h.client.query(`SELECT id FROM roi_realized_values WHERE closure_receipt_id = $1`, [
+      correlationId,
+    ]);
+    expect(rows.rows).toHaveLength(0);
   });
 
   // ---------------------------------------------------------------------
@@ -883,5 +1080,56 @@ describe('EXE-09 closure delivery receipt (real Postgres)', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('INITIATIVE_NOT_FOUND');
+  });
+
+  // ---------------------------------------------------------------------
+  // Codex review round 3 — canonical Finance read-back through the REAL
+  // route, not a raw SQL peek: closure receipt -> approved actual
+  // measurement -> recordExecutionRealization -> canonical GET/read model
+  // -> the SAME realizationId/value/source.
+  // ---------------------------------------------------------------------
+
+  itDB('canonical read-back: the Finance actual is visible through the REAL GET /api/benefits/roi/portfolio/summary route (not just SQL)', async (h) => {
+    const initiativeId = await h.makeInitiative('read-back', {
+      budgetCurrency: 'PLN',
+      kpiTargetValue: 99999, // a different number — proves the route doesn't echo the target either.
+      kpiUnit: 'PLN',
+      monetaryMeasurement: { value: 7300 },
+    });
+    // `GET /roi/portfolio/summary` derives its item list from `roi_assumptions`
+    // (real route behavior, confirmed by reading benefits.routes.ts) — a
+    // minimal row is required for THIS initiative to appear in the response
+    // at all; this is the route's own real precondition, not a test fixture
+    // shortcut around it.
+    await h.client.query(
+      `INSERT INTO roi_assumptions (id, initiative_id, organization_id) VALUES ($1, $2, $3)`,
+      [`roiassum_${initiativeId}`, initiativeId, h.orgAId]
+    );
+
+    const correlationId = await closeInitiative(h, initiativeId);
+    const delivered = await deliverAndFetch(h, correlationId);
+    expect(delivered.financeStatus).toBe('DELIVERED');
+
+    const realizationRow = await h.client.query(
+      `SELECT id, source FROM roi_realized_values WHERE closure_receipt_id = $1`,
+      [correlationId]
+    );
+    expect(realizationRow.rows).toHaveLength(1);
+
+    const app = buildApp();
+    const res = await request(app)
+      .get('/api/benefits/roi/portfolio/summary')
+      .set('Authorization', `Bearer ${makeE2EToken(h.userAId, h.orgAId, 'ADMIN')}`);
+
+    expect(res.status).toBe(200);
+    const item = res.body?.data?.items?.find((i: { initiativeId: string }) => i.initiativeId === initiativeId);
+    expect(item).toBeTruthy();
+    expect(item.hasRealized).toBe(true);
+    // The route sums realized_revenue_delta + realized_cost_delta + realized_savings
+    // for this initiative — only the MEASUREMENT (7300) contributed here, so
+    // the total must equal it exactly, never the target (99999).
+    expect(item.realizedBenefit).toBe(7300);
+    expect(delivered.financePayload?.realizationId).toBe(realizationRow.rows[0].id);
+    expect(realizationRow.rows[0].source).toBe('execution');
   });
 });
