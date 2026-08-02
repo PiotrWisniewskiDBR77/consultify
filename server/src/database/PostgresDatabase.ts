@@ -502,6 +502,48 @@ function getPool(): Pool {
   return pool;
 }
 
+export interface PinnedTransactionClient {
+  queryAll<T = any>(sql: string, params?: unknown[]): Promise<T[]>;
+  queryOne<T = any>(sql: string, params?: unknown[]): Promise<T | null>;
+  queryRun(sql: string, params?: unknown[]): Promise<{ changes: number }>;
+}
+
+/** Run a unit of work on one physical PostgreSQL connection. */
+export async function withPinnedPostgresTransaction<T>(
+  work: (tx: PinnedTransactionClient) => Promise<T>
+): Promise<T> {
+  const client = await getPool().connect();
+  const query = async <R>(sql: string, params: unknown[] = []) => {
+    const adaptedSql = adaptQuery(sql);
+    enforceReadOnly(adaptedSql);
+    return client.query<R>(adaptedSql, params);
+  };
+  const tx: PinnedTransactionClient = {
+    queryAll: async <R>(sql: string, params: unknown[] = []) => (await query<R>(sql, params)).rows,
+    queryOne: async <R>(sql: string, params: unknown[] = []) =>
+      (await query<R>(sql, params)).rows[0] ?? null,
+    queryRun: async (sql: string, params: unknown[] = []) => ({
+      changes: (await query(sql, params)).rowCount ?? 0,
+    }),
+  };
+
+  try {
+    await client.query('BEGIN');
+    const result = await work(tx);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      logger.error('[Postgres] Transaction rollback failed', rollbackError);
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 function getReadPool(): Pool {
   if (readPool) return readPool;
 

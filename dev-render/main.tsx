@@ -57,6 +57,9 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
 const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
+const AssessmentQualityReviewPanelScreen = React.lazy(
+  () => import('./screens/assessment-quality-review-panel')
+);
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -310,6 +313,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
     render: () => <ToolsSesjaWyjscieScreen />,
+  },
+  'assessment-quality-review-panel': {
+    label:
+      'ASSESSMENT — ASM-005/006/007: Outputs → evidence/scoring + accept/return + niezmienny output. ?variant=mixed|accepted|empty',
+    render: () => <AssessmentQualityReviewPanelScreen />,
   },
   'menu-canon-sidebar-check': {
     label:

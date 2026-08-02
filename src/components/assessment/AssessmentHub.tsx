@@ -90,6 +90,7 @@ import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
+import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
@@ -1952,19 +1953,29 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       );
     }
 
-    // ASM-001A: 'outputs' — placeholder surface, not wired to any backend
-    // yet. Honest empty state (shared/states), no CTA that would promise a
-    // feature that doesn't exist.
+    // ASM-005/006/007: 'outputs' now shows the evidence/scoring + manager
+    // accept/return + immutable accepted-output surface for the assessment
+    // selected on the Processes tab (`selectedAssessmentId`, shared Hub
+    // state). No assessment selected yet -> keep the original honest empty
+    // state (ASM-001A placeholder), unchanged, rather than inventing new
+    // Hub chrome.
     if (activeTab === 'outputs') {
+      if (selectedAssessmentId) {
+        return (
+          <div className="h-full overflow-hidden">
+            <AssessmentQualityReviewPanel assessmentId={selectedAssessmentId} />
+          </div>
+        );
+      }
       return (
         <div className="h-full overflow-auto p-6">
           <EmptyState
             variant="new"
             icon={Package}
-            title={t('assessment.outputs.emptyState.title', 'Outputs are not wired up yet')}
+            title={t('assessment.outputs.emptyState.title', 'Select an assessment first')}
             description={t(
               'assessment.outputs.emptyState.description',
-              'This surface will bring together assessment-derived outputs (reports, initiative packs, exports) in one place. Nothing to show here yet.'
+              'Pick an assessment on the Processes tab to review its evidence, accept or return it, and see its accepted output here.'
             )}
           />
         </div>

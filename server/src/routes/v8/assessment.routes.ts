@@ -20,6 +20,18 @@ import AssessmentWorkbenchService, {
   buildWhatNextGuidance,
 } from '../../services/assessment/AssessmentWorkbenchService.js';
 import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
+import {
+  addEvidence,
+  computeDrdScoring,
+  listEvidence,
+} from '../../services/assessment/drdEvidenceScoring.js';
+import {
+  QualityReviewError,
+  listReviewHistory,
+  reviewAssessment,
+} from '../../services/assessment/drdQualityReview.js';
+import type { ReviewAction } from '../../services/assessment/drdQualityReview.js';
+import { getCurrentAcceptedSnapshot } from '../../services/assessment/drdAcceptedSnapshot.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
@@ -762,6 +774,295 @@ router.put(
         completionPercent: nextCompletionPercent,
       },
       meta: assessmentMutationMeta(),
+    });
+  })
+);
+
+// --- ASM-005/006/007: evidence/scoring, quality review, immutable output ---
+//
+// Extends the ASM-001A DRD flow (answers.drd.areas) — deliberately separate
+// from the P28 workbench below (a different, parallel assessment-run
+// concept) and from the legacy AssessmentController approve/report flow.
+// Org-scoping and the permission pattern mirror PUT /:assessmentId above:
+// an org-scoped existence check first (never leak existence via a 403 to a
+// foreign-org caller), then ensureWorkbenchPermission.
+
+function drdAreasFromAnswersJson(answersJson: string | null | undefined): DrdAreasMap | undefined {
+  const answers = parseJsonSafely(answersJson, {} as Record<string, unknown>);
+  return (answers as { drd?: { areas?: DrdAreasMap } })?.drd?.areas;
+}
+
+router.post(
+  '/:assessmentId/evidence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canEdit',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    try {
+      const evidence = await addEvidence({
+        organizationId,
+        assessmentId,
+        axisId: String(req.body?.axisId ?? ''),
+        areaId: String(req.body?.areaId ?? ''),
+        evidenceType: String(req.body?.evidenceType ?? ''),
+        title: String(req.body?.title ?? ''),
+        description: req.body?.description != null ? String(req.body.description) : null,
+        url: req.body?.url != null ? String(req.body.url) : null,
+        createdBy: userId,
+      });
+
+      return res.status(201).json({
+        data: { evidence },
+        meta: assessmentMutationMeta(),
+      });
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (
+        code === 'DRD_AXIS_AREA_INVALID' ||
+        code === 'EVIDENCE_TYPE_INVALID' ||
+        code === 'EVIDENCE_TITLE_REQUIRED'
+      ) {
+        return res.status(400).json({ error: (err as Error).message, code });
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:assessmentId/evidence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = (await queryHelpers.queryOne<{
+      answers_json?: string | null;
+      assessment_type?: string | null;
+    }>(
+      `SELECT answers_json, assessment_type FROM assessments WHERE id = ? AND organization_id = ?`,
+      [assessmentId, organizationId]
+    )) as { answers_json?: string | null; assessment_type?: string | null } | null;
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    const evidence = await listEvidence({ organizationId, assessmentId });
+    const isDrdAssessment = String(existing.assessment_type || '').toUpperCase() === 'DRD';
+    const scoring = isDrdAssessment
+      ? computeDrdScoring(drdAreasFromAnswersJson(existing.answers_json), evidence)
+      : null;
+
+    return res.json({
+      data: { evidence, scoring },
+      meta: assessmentReadMeta(),
+    });
+  })
+);
+
+router.post(
+  '/:assessmentId/review',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    // Accept/return is a reviewer decision, not a general edit — gated on
+    // canApprove (AssessmentPermissionService: admin always, manager only
+    // when explicitly granted). This is the "manager accept/return" gate.
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canApprove',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    const action = req.body?.action;
+    if (action !== 'accept' && action !== 'return') {
+      return res.status(400).json({
+        error: "action must be 'accept' or 'return'",
+        code: 'REVIEW_ACTION_INVALID',
+      });
+    }
+
+    try {
+      const result = await reviewAssessment({
+        organizationId,
+        assessmentId,
+        actorId: userId,
+        actorRole: permission.role || userRole || '',
+        action: action as ReviewAction,
+        rationale: String(req.body?.rationale ?? ''),
+      });
+
+      assessmentAuditLogger
+        .logUpdate(req, assessmentId, { qualityReviewAction: action })
+        .catch((err: unknown) => logger.warn('[Assessment] non-blocking operation failed', err));
+
+      return res.status(action === 'accept' ? 201 : 200).json({
+        data: result,
+        meta: assessmentMutationMeta(),
+      });
+    } catch (err) {
+      if (err instanceof QualityReviewError) {
+        return res.status(err.status).json({
+          error: err.message,
+          code: err.code,
+          ...(err.details ? { details: err.details } : {}),
+        });
+      }
+      throw err;
+    }
+  })
+);
+
+router.get(
+  '/:assessmentId/review-history',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    const reviews = await listReviewHistory({ organizationId, assessmentId });
+    return res.json({
+      data: { reviews },
+      meta: assessmentReadMeta(),
+    });
+  })
+);
+
+router.get(
+  '/:assessmentId/report',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId, userRole } = getV8Context(req);
+    const assessmentId = firstParam(req.params.assessmentId);
+    if (!assessmentId) {
+      return res
+        .status(400)
+        .json({ error: 'Assessment id is required', code: 'ASSESSMENT_ID_REQUIRED' });
+    }
+
+    await ensureAssessmentSchema();
+
+    const existing = await ensureAssessmentInOrg(assessmentId, organizationId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Assessment not found', code: 'ASSESSMENT_NOT_FOUND' });
+    }
+
+    const permission = await ensureWorkbenchPermission({
+      assessmentId,
+      organizationId,
+      userId,
+      userRole,
+      permission: 'canView',
+    });
+    if (!permission.ok) {
+      const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
+      return res.status(denied.status).json(denied.body);
+    }
+
+    // Always the immutable, currently-accepted snapshot — never recomputed
+    // from the live (possibly since-edited/reopened) assessment row. This is
+    // what guarantees "reopen/report returns the same output" (ASM-07).
+    const snapshot = await getCurrentAcceptedSnapshot({ organizationId, assessmentId });
+    if (!snapshot) {
+      return res.status(404).json({
+        error: 'No accepted output exists yet for this assessment',
+        code: 'NO_ACCEPTED_OUTPUT',
+      });
+    }
+
+    return res.json({
+      data: {
+        assessmentId,
+        snapshot: snapshot.snapshot,
+        provenance: snapshot.provenance,
+        acceptedBy: snapshot.acceptedBy,
+        acceptedAt: snapshot.acceptedAt,
+        isCurrent: snapshot.isCurrent,
+      },
+      meta: assessmentReadMeta(),
     });
   })
 );
