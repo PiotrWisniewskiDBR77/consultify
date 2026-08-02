@@ -268,8 +268,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-excel',
+    // FIN-005: CSV statement import — backend now accepts it (see
+    // fileUpload.middleware.ts EXT_TO_MIME_BASES); the picker/dropzone must
+    // allow it too or the golden flow is unreachable from the real screen.
+    'text/csv',
+    'application/csv',
   ]);
-  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls'];
+  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls', '.csv'];
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -282,7 +287,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       ) {
         setFile(f);
       } else {
-        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS'));
+        setError(
+          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV')
+        );
       }
     },
     [t]
@@ -715,13 +722,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <p className="text-sm text-slate-600 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
-                'Supported: PDF, Excel (XLSX/XLS) financial statements'
+                'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
               )}
             </p>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.xlsx,.xls"
+              accept=".pdf,.xlsx,.xls,.csv"
               onChange={handleFileSelect}
               className="hidden"
               aria-hidden="true"
