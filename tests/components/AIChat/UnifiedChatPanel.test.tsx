@@ -1331,6 +1331,11 @@ describe('UnifiedChatPanel (L2)', () => {
       [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }],
       {
         citations: [{ url: 'x' }],
+        sourceLedger: {
+          type: 'source_ledger',
+          used_sources: [{ id: 'doc-1', type: 'document' }],
+          blocked_sources: [],
+        },
         proposal: {
           proposalId: 'proposal-1',
           title: 'Create initiative',
@@ -1355,6 +1360,11 @@ describe('UnifiedChatPanel (L2)', () => {
         metadata: expect.objectContaining({
           artifacts: [expect.objectContaining({ id: 'ar1', title: 'T' })],
           citations: [{ url: 'x' }],
+          sourceLedger: {
+            type: 'source_ledger',
+            used_sources: [{ id: 'doc-1', type: 'document' }],
+            blocked_sources: [],
+          },
           proposal: expect.objectContaining({ proposalId: 'proposal-1' }),
         }),
       })

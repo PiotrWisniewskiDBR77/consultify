@@ -132,7 +132,17 @@ describe('useAIStream', () => {
     const mockOnStreamDone = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onThinking?.({ type: 'stream_meta', sessionId: 'stream-session-123' });
         onChunk('Hello ');
         onChunk('again');
@@ -158,7 +168,17 @@ describe('useAIStream', () => {
     const mockOnStreamDone = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onChunk('Answer with source [1]');
         onThinking?.({
           type: 'citations',
@@ -197,11 +217,62 @@ describe('useAIStream', () => {
     );
   });
 
+  it('should pass the streamed source ledger through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+    const sourceLedger = {
+      type: 'source_ledger',
+      used_sources: [{ id: 'doc-1', type: 'document', title: 'Operating model' }],
+      blocked_sources: [{ category: 'cross_tenant', reason: 'forbidden_by_policy' }],
+      degraded: null,
+    };
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (
+        _message,
+        _history,
+        onChunk,
+        onDone,
+        _systemPrompt,
+        _context,
+        _roleName,
+        _language,
+        onThinking
+      ) => {
+        onChunk('Grounded answer [1]');
+        onThinking?.(sourceLedger);
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Use the operating model', []);
+    });
+
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Grounded answer [1]',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({ sourceLedger })
+    );
+  });
+
   it('should pass streamed TrustBundleV1 through onStreamDone metadata', async () => {
     const mockOnStreamDone = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onChunk('Trusted answer [1]');
         onThinking?.({
           type: 'trust_bundle',
@@ -245,7 +316,17 @@ describe('useAIStream', () => {
     const mockOnStreamDone = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onChunk('Draft ready.');
         onThinking?.({
           type: 'teresa_proposal',
@@ -402,7 +483,17 @@ describe('useAIStream', () => {
     const mockOnDeliverable = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onThinking?.({
           type: 'deliverable',
           draftId: 'gen-777',
@@ -448,7 +539,17 @@ describe('useAIStream', () => {
     };
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onThinking?.({
           type: 'deliverable',
           draftId: 'chat-mindmap-1',
@@ -498,7 +599,17 @@ describe('useAIStream', () => {
     };
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onThinking?.({
           type: 'deliverable',
           draftId: 'chat-process_flow-1',
@@ -535,7 +646,17 @@ describe('useAIStream', () => {
     const mockOnDeliverable = vi.fn();
 
     vi.mocked(Api.chatWithAIStream).mockImplementation(
-      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+      async (
+        message,
+        history,
+        onChunk,
+        onDone,
+        systemPrompt,
+        context,
+        roleName,
+        language,
+        onThinking
+      ) => {
         onThinking?.({ type: 'deliverable', kind: 'doc' });
         onDone();
       }

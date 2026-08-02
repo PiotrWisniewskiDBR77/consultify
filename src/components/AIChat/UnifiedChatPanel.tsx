@@ -1363,12 +1363,14 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               thinking: thinking as any,
               artifacts: artifacts as any,
               citations: meta?.citations,
+              sourceLedger: meta?.sourceLedger,
               streamSessionId: meta?.sessionId,
               extra:
                 aiConfig?.deepResearch ||
                 (aiConfig as any)?.marketResearch ||
                 meta?.policyDecision ||
                 (meta?.policyNotices && meta.policyNotices.length) ||
+                meta?.sourceLedger ||
                 meta?.trustBundle ||
                 meta?.proposal ||
                 meta?.reasoning
@@ -1400,6 +1402,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
                       // this keeps client + server in lockstep and avoids
                       // depending on a refetch for live hydration.
                       ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+                      ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
                       ...(meta?.proposal ? { proposal: meta.proposal } : {}),
                       // Persist the model's chain-of-thought so the per-message
                       // "Tok rozumowania" trace survives reload.
@@ -1445,6 +1448,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? { policyNotices: meta.policyNotices }
             : {}),
           ...(meta?.trustBundle ? { trustBundle: meta.trustBundle } : {}),
+          ...(meta?.sourceLedger ? { sourceLedger: meta.sourceLedger } : {}),
           ...(meta?.proposal ? { proposal: meta.proposal } : {}),
         },
       });

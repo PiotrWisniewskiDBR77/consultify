@@ -17,6 +17,7 @@ export interface PersistedAiResponseMetadata {
   }>;
   artifacts: PersistedConversationArtifact[];
   citations: any[];
+  sourceLedger?: Record<string, unknown>;
   streamSessionId?: string;
   [key: string]: unknown;
 }
@@ -49,15 +50,24 @@ export function buildPersistedAiResponseMetadata(params: {
   thinking?: ThinkingStep[];
   artifacts?: Artifact[];
   citations?: any[];
+  sourceLedger?: Record<string, unknown> | null;
   streamSessionId?: string;
   extra?: Record<string, unknown>;
 }): PersistedAiResponseMetadata {
-  const { thinking = [], artifacts = [], citations = [], streamSessionId, extra = {} } = params;
+  const {
+    thinking = [],
+    artifacts = [],
+    citations = [],
+    sourceLedger,
+    streamSessionId,
+    extra = {},
+  } = params;
 
   return {
     thinkingSteps: normalizeThinkingSteps(thinking),
     artifacts: normalizeArtifactsForConversationMetadata(artifacts),
     citations: Array.isArray(citations) ? citations : [],
+    ...(sourceLedger ? { sourceLedger } : {}),
     ...(streamSessionId ? { streamSessionId } : {}),
     ...extra,
   };
