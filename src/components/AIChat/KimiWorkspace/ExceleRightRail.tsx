@@ -51,7 +51,16 @@
  * zostaje 1:1 jak w Wordzie/Decku, żeby ekran wyglądał TAK SAMO jak reszta,
  * nie „poprawiony inaczej").
  */
-import { Download, History as HistoryIcon, Link2, ListTree, SlidersHorizontal } from 'lucide-react';
+import {
+  Download,
+  FileSpreadsheet,
+  History as HistoryIcon,
+  Link2,
+  ListTree,
+  ShieldOff,
+  SlidersHorizontal,
+  Sparkles,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -71,6 +80,16 @@ export interface ExceleRightRailProps {
   onDownload?: () => void;
   onPreviewFile?: () => void;
   onAllFiles?: () => void;
+  /** MAT-006 (2026-08-02) — workbook lifecycle actions, surfaced in the
+   * "Historia i wydania" tool (the natural home for version/checkpoint/
+   * share/export per the existing §2 poz.7 kanon: "na dole panelu przycisk
+   * Eksportuj/Wyślij", already where `onDownload` lives). */
+  onOpenVersionHistory?: () => void;
+  onCheckpoint?: () => void;
+  onShare?: () => void;
+  onRevokeShare?: () => void;
+  isShared?: boolean;
+  onExportCsv?: () => void;
 }
 
 const PANEL_HEADER = (title: string, subtitle: string): React.ReactElement => (
@@ -90,6 +109,12 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
   onDownload,
   onPreviewFile,
   onAllFiles,
+  onOpenVersionHistory,
+  onCheckpoint,
+  onShare,
+  onRevokeShare,
+  isShared,
+  onExportCsv,
 }) => {
   const { t } = useTranslation();
   // Wspólny hak trwałości szyny (ten sam co Word/Deck/Tabele) — osobny
@@ -271,13 +296,52 @@ export const ExceleRightRail: React.FC<ExceleRightRailProps> = ({
             : t('excele.rightRail.historyEmpty', 'Historia pojawi się po wygenerowaniu')}
         </p>
       )}
-      <div className="pt-2 border-t border-c-border-subtle mt-2">
+      <div className="pt-2 border-t border-c-border-subtle mt-2 space-y-1.5">
         <PreviewActionButton
           variant="neutral"
           icon={Download}
           label={t('excele.rightRail.download', 'Pobierz XLSX')}
           onClick={() => onDownload?.()}
           disabled={!onDownload || isGenerating || (!workbookId && !preview)}
+        />
+        {/* MAT-006 (2026-08-02) — versions/checkpoint/share/CSV. */}
+        <PreviewActionButton
+          variant="neutral"
+          icon={HistoryIcon}
+          label={t('excele.rightRail.versionHistory', 'Historia wersji')}
+          onClick={() => onOpenVersionHistory?.()}
+          disabled={!onOpenVersionHistory || !workbookId}
+        />
+        <PreviewActionButton
+          variant="neutral"
+          icon={Sparkles}
+          label={t('excele.rightRail.checkpoint', 'Utwórz punkt kontrolny')}
+          onClick={() => onCheckpoint?.()}
+          disabled={!onCheckpoint || !workbookId}
+        />
+        {isShared ? (
+          <PreviewActionButton
+            variant="neutral"
+            icon={ShieldOff}
+            label={t('excele.rightRail.revokeShare', 'Cofnij udostępnienie')}
+            onClick={() => onRevokeShare?.()}
+            disabled={!onRevokeShare || !workbookId}
+          />
+        ) : (
+          <PreviewActionButton
+            variant="neutral"
+            icon={Link2}
+            label={t('excele.rightRail.share', 'Udostępnij (kopiuj link)')}
+            onClick={() => onShare?.()}
+            disabled={!onShare || !workbookId}
+          />
+        )}
+        <PreviewActionButton
+          variant="neutral"
+          icon={FileSpreadsheet}
+          label={t('excele.rightRail.exportCsv', 'Eksportuj CSV')}
+          onClick={() => onExportCsv?.()}
+          disabled={!onExportCsv || !workbookId}
         />
       </div>
     </div>

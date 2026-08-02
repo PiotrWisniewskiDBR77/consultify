@@ -3792,3 +3792,49 @@ export async function initDb(): Promise<void> {
 const db = new PostgresDatabase();
 
 export default db;
+
+/**
+ * withPgTransaction — MAT-006 (2026-08-02). Real, single-connection Postgres
+ * transaction helper.
+ *
+ * WHY THIS EXISTS: `DbPromise.transaction()` (server/src/utils/DbPromise.ts)
+ * issues `BEGIN` / each statement / `COMMIT` as SEPARATE `run()` calls, and
+ * every `run()` goes through `executeWithLogging(getPool, ...)` ->
+ * `pool.query(...)`, which checks out a DIFFERENT client from the pool on
+ * EVERY call and releases it immediately after. `BEGIN` on connection A has
+ * no effect on connection B's statements — that helper does not give real
+ * atomicity against Postgres despite its name. This function checks out ONE
+ * client for the whole transaction, so `BEGIN`/work/`COMMIT`|`ROLLBACK` all
+ * run on the same session — genuine atomicity, required for MAT-006 restore
+ * (spec: "Restore happens in a transaction" + fault-injection rollback proof).
+ *
+ * Callers write plain Postgres-native SQL with `$1, $2, ...` placeholders
+ * directly (no `?` -> `$n` adaptation is applied here — that adapter lives in
+ * `adaptQuery`/`replacePositionalPlaceholders` above and is tied to the
+ * SQLite-compatibility surface this helper intentionally bypasses).
+ */
+export async function withPgTransaction<T>(
+  fn: (query: <R = unknown>(sql: string, params?: unknown[]) => Promise<QueryResult<R>>) => Promise<T>
+): Promise<T> {
+  const pool = getPool();
+  if (initDbPromise) await initDbPromise;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(async <R = unknown>(sql: string, params: unknown[] = []) => {
+      const res = await client.query(sql, sanitizeParams(params));
+      return { rows: res.rows as R[], rowCount: res.rowCount ?? 0 };
+    });
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      logger.error('[Postgres] withPgTransaction ROLLBACK failed:', rollbackErr);
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}

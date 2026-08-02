@@ -8,15 +8,24 @@
  *      a new generated_workbooks row (editable starting point)
  */
 
+import { createHash } from 'crypto';
+
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { withPgTransaction } from '../database/PostgresDatabase.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
+import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
+import {
+  buildWorkbookCsv,
+  WorkbookCsvExportError,
+} from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -26,6 +35,81 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// MAT-006 (2026-08-02) — public share reader. MUST be registered before
+// `router.use(verifyToken)` below (mirrors presentations.routes.ts's
+// `GET /shared/:token`, registered before that router's own
+// `router.use(verifyToken)`) — this router is mounted at the SCOPED path
+// `/api/workbook` (Gateway.ts), and registered before every bare-`/api`
+// router in Gateway.ts, so a request to `/api/workbook/shared/:token`
+// resolves here directly and never reaches any later bare-`/api` router's
+// own `verifyToken` middleware. See workbook.routes.ts discovery notes
+// (MAT-006 report) for the full audit of this bug class (found + fixed
+// elsewhere for `workstreams.routes.ts` in MAT-007/009).
+//
+// Deny-list mirrors presentations' `PUBLIC_DECK_DENY_FIELDS` — strips every
+// tenant/internal/actor field before the row ever leaves this process.
+// ---------------------------------------------------------------------------
+const WORKBOOK_PUBLIC_DENY_FIELDS = new Set([
+  'organization_id',
+  'created_by',
+  'share_token',
+  'share_created_by',
+  'share_expires_at',
+  'prompt',
+  'pipeline_log',
+  'validation_errors',
+  'action_contract_json',
+  'source_pack_json',
+  'evidence_refs_json',
+]);
+
+function toPublicWorkbookRow(row: Record<string, unknown>) {
+  const schemaJson = typeof row.schema_json === 'string' ? JSON.parse(row.schema_json) : null;
+  const filtered = Object.fromEntries(
+    Object.entries(row).filter(([k]) => !WORKBOOK_PUBLIC_DENY_FIELDS.has(k))
+  );
+  return {
+    ...filtered,
+    schema_json: undefined,
+    sheets: Array.isArray(schemaJson?.sheets) ? schemaJson.sheets : [],
+    title: (row.title as string) || schemaJson?.title || null,
+    description: (row.description as string) || schemaJson?.description || null,
+  };
+}
+
+const publicWorkbookViewerLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests' },
+});
+
+/**
+ * GET /api/workbook/shared/:token
+ * Unauthenticated public reader for a shared workbook. Single 404 surface for
+ * missing / revoked (token nulled by DELETE .../share) / expired — anti-
+ * enumeration, matches presentations' `/shared/:token` design exactly.
+ */
+router.get(
+  '/shared/:token',
+  publicWorkbookViewerLimiter,
+  asyncHandler(async (req, res) => {
+    const row = await queryHelpers.queryOne<Record<string, unknown>>(
+      `SELECT id, title, description, schema_json, sheet_count, file_name, created_at, share_expires_at
+       FROM generated_workbooks
+       WHERE share_token = ? AND (share_expires_at IS NULL OR share_expires_at > CURRENT_TIMESTAMP)`,
+      [req.params.token]
+    );
+    if (!row) {
+      res.status(404).json({ error: 'Shared workbook not found' });
+      return;
+    }
+    res.json({ data: toPublicWorkbookRow(row) });
+  })
+);
 
 /**
  * Składa jeden czytelny string groundingu dla WorkbookGeneratorService z
@@ -240,6 +324,38 @@ async function ensureWorkbookSchema() {
     );
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_workbooks_org ON generated_workbooks(organization_id)`
+    );
+    // MAT-006 (2026-08-02) — lifecycle columns/table. Same runtime
+    // self-healing idiom as the 3 columns above; the sanctioned migration
+    // counterpart is `server/migrations/20260802_mat006_workbook_lifecycle.sql`.
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1`
+    );
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS share_token TEXT`
+    );
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS share_created_by TEXT`
+    );
+    await queryHelpers.queryRun(
+      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS share_expires_at TIMESTAMP`
+    );
+    await queryHelpers.queryRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_generated_workbooks_share_token ON generated_workbooks(share_token) WHERE share_token IS NOT NULL`
+    );
+    await queryHelpers.queryRun(`
+      CREATE TABLE IF NOT EXISTS generated_workbook_versions (
+        id TEXT PRIMARY KEY,
+        workbook_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        schema_json_snapshot TEXT NOT NULL,
+        sheet_count INTEGER DEFAULT 0,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_gwv_workbook_version ON generated_workbook_versions(workbook_id, version DESC)`
     );
   } catch {
     /* table may already exist */
@@ -1155,6 +1271,19 @@ router.post(
  * `schema_json` zamiast serwować stary bufor (patrz istniejący fallback
  * "Try to regenerate from stored schema" w `GET /:id/download` poniżej —
  * reużyty, nie duplikowany).
+ *
+ * MAT-006 (2026-08-02): every cell edit now (a) snapshots the PRE-edit
+ * `schema_json` into `generated_workbook_versions` at its current version
+ * (immutable history, never mutated in place — mirrors
+ * `presentation_deck_versions`'s autosave pattern) and (b) applies the
+ * `UPDATE` as a compare-and-swap keyed on that same version
+ * (`WHERE version = ?`), so two concurrent edits reading the same starting
+ * version can no longer both silently win — the loser's `changes` comes back
+ * 0 and gets a 409 `VERSION_CONFLICT`, exactly like presentations' autosave.
+ * `expectedVersion` in the body is OPTIONAL (backward-compatible with the
+ * existing fire-and-forget caller in `EditableSpreadsheetGrid.tsx`): when
+ * present it is checked for a stale read BEFORE the write is even attempted;
+ * when absent the CAS still runs against the version this request just read.
  */
 router.patch(
   '/:id/cell',
@@ -1166,7 +1295,18 @@ router.patch(
     }
 
     const { id } = req.params;
-    const { sheetIndex, rowIndex, columnKey, value, formula } = req.body || {};
+    const { sheetIndex, rowIndex, columnKey, value, formula, expectedVersion } = req.body || {};
+
+    if (
+      expectedVersion !== undefined &&
+      (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+    ) {
+      res.status(400).json({
+        error: 'expectedVersion must be a positive integer when present',
+        classified: createP23Error('validation_failed', 'Invalid expectedVersion'),
+      });
+      return;
+    }
 
     if (typeof sheetIndex !== 'number' || !Number.isInteger(sheetIndex) || sheetIndex < 0) {
       res.status(400).json({
@@ -1210,8 +1350,8 @@ router.patch(
 
     await ensureWorkbookSchema();
 
-    const row = await queryHelpers.queryOne<{ schema_json: string | null }>(
-      `SELECT schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+    const row = await queryHelpers.queryOne<{ schema_json: string | null; version: number }>(
+      `SELECT schema_json, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
 
@@ -1219,6 +1359,17 @@ router.patch(
       res.status(404).json({
         error: 'Workbook not found or expired',
         classified: createP23Error('access_denied', `Workbook ${id} not found for this organization`),
+      });
+      return;
+    }
+
+    const currentVersion = Number(row.version) || 1;
+    if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      res.status(409).json({
+        error: 'Version conflict: workbook was modified by another session. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: currentVersion,
+        clientVersion: expectedVersion,
       });
       return;
     }
@@ -1276,10 +1427,46 @@ router.patch(
     // Undefined fields are dropped by JSON.stringify — no explicit delete needed.
     targetRow.cells[columnKey] = nextCell as (typeof sheet.rows)[number]['cells'][string];
 
-    await queryHelpers.queryRun(
-      `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
-      [JSON.stringify(schema), id, user.organizationId]
+    // Snapshot the PRE-edit state into immutable history at its current
+    // version BEFORE overwriting — mirrors presentations' autosave. Best-
+    // effort: a history-write failure must never block the actual edit
+    // (matches this file's existing fail-soft posture elsewhere).
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [
+          uuidv4(),
+          id,
+          currentVersion,
+          row.schema_json,
+          Array.isArray(schema?.sheets) ? schema.sheets.length : 0,
+          user.id,
+        ]
+      );
+    } catch (err) {
+      logger.warn(`[WorkbookRoutes] Could not snapshot version history for ${id}:`, err);
+    }
+
+    const nextVersion = currentVersion + 1;
+    const updateResult = await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET schema_json = ?, version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
+      [JSON.stringify(schema), nextVersion, id, user.organizationId, currentVersion]
     );
+
+    if (!updateResult?.changes) {
+      const latest = await queryHelpers.queryOne<{ version: number }>(
+        `SELECT version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+        [id, user.organizationId]
+      );
+      res.status(409).json({
+        error: 'Version conflict: workbook changed during save. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: Number(latest?.version) || currentVersion,
+        clientVersion: currentVersion,
+      });
+      return;
+    }
 
     // Invaliduje bufor .xlsx w pamięci — następny GET /:id/download odbuduje
     // plik ZE ŚWIEŻEGO schema_json (istniejąca ścieżka "Try to regenerate from
@@ -1292,6 +1479,7 @@ router.patch(
       rowIndex,
       columnKey,
       cell: targetRow.cells[columnKey],
+      version: nextVersion,
     });
   })
 );
@@ -1329,8 +1517,11 @@ router.get(
       evidence_refs_json?: string | null;
       created_by: string;
       created_at: string;
+      version?: number;
+      share_token?: string | null;
+      share_expires_at?: string | null;
     }>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
+      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at, version, share_token, share_expires_at
      FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -1356,7 +1547,536 @@ router.get(
       created_by: row.created_by,
       created_at: row.created_at,
       downloadUrl: `/api/workbook/${row.id}/download`,
+      // MAT-006: CAS version + share status (never the raw token — presence
+      // only, so the UI can render "Shared" without ever holding the secret).
+      version: Number(row.version) || 1,
+      isShared: Boolean(row.share_token),
+      shareExpiresAt: row.share_expires_at || null,
     });
+  })
+);
+
+// =============================================================================
+// MAT-006 (2026-08-02) — Workbook lifecycle: versions, checkpoint, restore,
+// share/revoke, CSV export. All routes below are authenticated + org-scoped
+// (this router's `router.use(verifyToken)` / `requireOrgAccess()` above
+// already gate everything past the public `/shared/:token` reader at the top
+// of this file). Patterned directly on presentations.routes.ts's deck
+// version/restore/share (see MAT-006 report for the side-by-side diff of
+// what was reused vs. deliberately improved — real transaction for restore,
+// hashed token in audit trail).
+// =============================================================================
+
+const workbookShareRateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many share operations, slow down.' },
+});
+
+function hashShareToken(token: string): string {
+  // Never persist/log the raw token — a short one-way hash is enough to
+  // correlate audit events without reconstructing the secret.
+  //
+  // NOTE: presentations.routes.ts's analogous `hashIp()` uses
+  // `require('crypto')` inline and that pattern was copied here initially —
+  // but this router runs as genuine ESM under `tsx` (confirmed via a live
+  // browser proof: `ReferenceError: require is not defined` at this exact
+  // line), so a top-level `import { createHash } from 'crypto'` is used
+  // instead. `presentations.routes.ts` is out of MAT-006's boundaries
+  // (frozen, Presentation Studio) so it is deliberately NOT touched here —
+  // noting this as a pre-existing latent bug there for the record only.
+  return createHash('sha256').update(token).digest('hex').slice(0, 16);
+}
+
+/**
+ * GET /api/workbook/:id/versions
+ * Version history, newest first. Registered as its own path segment so it
+ * can never collide with the generic `GET /:id` above (Express matches by
+ * segment count, not just prefix).
+ */
+router.get(
+  '/:id/versions',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id } = req.params;
+    await ensureWorkbookSchema();
+
+    const wb = await queryHelpers.queryOne<{ id: string; version: number }>(
+      `SELECT id, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!wb) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+
+    const versions = await queryHelpers.queryAll<{
+      id: string;
+      version: number;
+      sheet_count: number;
+      created_by: string;
+      created_at: string;
+    }>(
+      `SELECT id, version, sheet_count, created_by, created_at
+       FROM generated_workbook_versions
+       WHERE workbook_id = ?
+       ORDER BY version DESC
+       LIMIT 50`,
+      [id]
+    );
+
+    res.json({ data: versions || [], currentVersion: Number(wb.version) || 1 });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/checkpoint
+ * Explicit, user-initiated snapshot — distinct from the implicit per-edit
+ * versioning `PATCH /:id/cell` already does. Snapshots the CURRENT
+ * `schema_json` into history (no content change) and bumps `version`, so a
+ * checkpoint is a real, restorable, named point in the timeline. CAS'd via
+ * optional `expectedVersion` exactly like the cell PATCH above.
+ */
+router.post(
+  '/:id/checkpoint',
+  requireAudit,
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id } = req.params;
+    const expectedVersion = req.body?.expectedVersion;
+    if (
+      expectedVersion !== undefined &&
+      (!Number.isInteger(expectedVersion) || expectedVersion < 1)
+    ) {
+      res.status(400).json({ error: 'expectedVersion must be a positive integer when present' });
+      return;
+    }
+    await ensureWorkbookSchema();
+
+    const row = await queryHelpers.queryOne<{ schema_json: string | null; version: number }>(
+      `SELECT schema_json, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) {
+      res.status(404).json({ error: 'Workbook not found or expired' });
+      return;
+    }
+
+    const currentVersion = Number(row.version) || 1;
+    if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      res.status(409).json({
+        error: 'Version conflict: workbook was modified. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: currentVersion,
+        clientVersion: expectedVersion,
+      });
+      return;
+    }
+
+    let sheetCount = 0;
+    try {
+      const parsed = JSON.parse(row.schema_json);
+      sheetCount = Array.isArray(parsed?.sheets) ? parsed.sheets.length : 0;
+    } catch {
+      /* keep 0 */
+    }
+
+    await queryHelpers.queryRun(
+      `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [uuidv4(), id, currentVersion, row.schema_json, sheetCount, user.id]
+    );
+
+    const nextVersion = currentVersion + 1;
+    const updateResult = await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
+      [nextVersion, id, user.organizationId, currentVersion]
+    );
+
+    if (!updateResult?.changes) {
+      const latest = await queryHelpers.queryOne<{ version: number }>(
+        `SELECT version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+        [id, user.organizationId]
+      );
+      res.status(409).json({
+        error: 'Version conflict: workbook changed during checkpoint. Please refresh.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: Number(latest?.version) || currentVersion,
+        clientVersion: currentVersion,
+      });
+      return;
+    }
+
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'checkpoint',
+      resourceType: 'generated_workbook',
+      resourceId: id,
+      metadata: { organizationId: user.organizationId, checkpointedFromVersion: currentVersion, newVersion: nextVersion },
+    });
+
+    res.json({ ok: true, version: nextVersion, checkpointedFromVersion: currentVersion });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/versions/:versionId/restore
+ *
+ * Real, single-connection transaction (`withPgTransaction` —
+ * `server/src/database/PostgresDatabase.ts`) with a `SELECT ... FOR UPDATE`
+ * row lock, so a second concurrent restore/edit genuinely BLOCKS until the
+ * first commits (not just a CAS race that might both read the same stale
+ * version) — then re-checks `expectedVersion` against the post-lock row, so
+ * it always sees accurate data and correctly reports 409 instead of racing.
+ * The pre-restore state is snapshotted into history FIRST (inside the same
+ * transaction) — restore is a NEW forward version, never a rewrite of past
+ * history, and the artifact id never changes (same `generated_workbooks`
+ * row, only `schema_json`/`version` move).
+ *
+ * Test-only fault injection: when `NODE_ENV === 'test'` AND the request
+ * carries `x-mat006-force-restore-fault: 1`, a deliberately-invalid INSERT
+ * is issued AFTER the legitimate pre-restore snapshot INSERT but BEFORE the
+ * final UPDATE, to prove the whole transaction (including that earlier,
+ * individually-successful INSERT) rolls back atomically — never reachable
+ * outside test mode.
+ */
+router.post(
+  '/:id/versions/:versionId/restore',
+  requireAudit,
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id, versionId } = req.params;
+    const expectedVersion = Number(req.body?.expectedVersion);
+    if (!Number.isInteger(expectedVersion) || expectedVersion < 1) {
+      res.status(400).json({
+        error: 'expectedVersion is required',
+        code: 'EXPECTED_VERSION_REQUIRED',
+      });
+      return;
+    }
+    await ensureWorkbookSchema();
+
+    const forceFault =
+      process.env.NODE_ENV === 'test' && req.headers['x-mat006-force-restore-fault'] === '1';
+
+    type RestoreOutcome =
+      | { status: 'not_found' }
+      | { status: 'version_not_found' }
+      | { status: 'conflict'; serverVersion: number }
+      | { status: 'ok'; newVersion: number; restoredFromVersion: number };
+
+    let outcome: RestoreOutcome;
+    try {
+      outcome = await withPgTransaction<RestoreOutcome>(async (query) => {
+        const wbRows = await query<{
+          id: string;
+          organization_id: string;
+          version: number;
+          schema_json: string;
+        }>(
+          `SELECT id, organization_id, version, schema_json FROM generated_workbooks WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+          [id, user.organizationId]
+        );
+        const wb = wbRows.rows[0];
+        if (!wb) return { status: 'not_found' };
+
+        const liveVersion = Number(wb.version) || 1;
+        if (liveVersion !== expectedVersion) {
+          return { status: 'conflict', serverVersion: liveVersion };
+        }
+
+        const versionRows = await query<{
+          id: string;
+          version: number;
+          schema_json_snapshot: string;
+          sheet_count: number;
+        }>(
+          `SELECT id, version, schema_json_snapshot, sheet_count FROM generated_workbook_versions WHERE id = $1 AND workbook_id = $2`,
+          [versionId, id]
+        );
+        const versionRow = versionRows.rows[0];
+        if (!versionRow) return { status: 'version_not_found' };
+
+        let preRestoreSheetCount = 0;
+        try {
+          const parsed = JSON.parse(wb.schema_json || '{}');
+          preRestoreSheetCount = Array.isArray(parsed?.sheets) ? parsed.sheets.length : 0;
+        } catch {
+          /* keep 0 */
+        }
+
+        // Snapshot the CURRENT (pre-restore) state into history BEFORE
+        // overwriting — immutable history, never rewritten.
+        await query(
+          `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)`,
+          [uuidv4(), id, liveVersion, wb.schema_json, preRestoreSheetCount, user.id]
+        );
+
+        if (forceFault) {
+          // Deliberate constraint violation (NOT NULL primary key) — proves
+          // the transaction, INCLUDING the INSERT immediately above, rolls
+          // back atomically rather than leaving a partial/corrupt state.
+          await query(
+            `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot) VALUES (NULL, $1, $2, $3)`,
+            [id, liveVersion + 1, '{}']
+          );
+        }
+
+        const newVersion = liveVersion + 1;
+        const updateRes = await query(
+          `UPDATE generated_workbooks SET schema_json = $1, version = $2 WHERE id = $3 AND organization_id = $4 AND version = $5`,
+          [versionRow.schema_json_snapshot, newVersion, id, user.organizationId, liveVersion]
+        );
+        if (!updateRes.rowCount) {
+          // Unreachable in practice given the FOR UPDATE lock above, but a
+          // thrown error here still rolls back the transaction correctly.
+          throw new Error('RESTORE_CAS_LOST');
+        }
+
+        return { status: 'ok', newVersion, restoredFromVersion: versionRow.version };
+      });
+    } catch (err) {
+      logger.error(`[WorkbookRoutes] Restore transaction failed for ${id}:`, err);
+      res.status(500).json({ error: 'Restore failed', code: 'RESTORE_TRANSACTION_FAILED' });
+      return;
+    }
+
+    if (outcome.status === 'not_found') {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    if (outcome.status === 'version_not_found') {
+      res.status(404).json({ error: 'Version not found' });
+      return;
+    }
+    if (outcome.status === 'conflict') {
+      res.status(409).json({
+        error: 'Version conflict: workbook was modified before restore.',
+        code: 'VERSION_CONFLICT',
+        serverVersion: outcome.serverVersion,
+        clientVersion: expectedVersion,
+      });
+      return;
+    }
+
+    // Invalidate the in-memory .xlsx buffer so GET /:id/download rebuilds
+    // from the just-restored schema_json instead of serving a stale buffer.
+    workbookCache.delete(id);
+
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'restore',
+      resourceType: 'generated_workbook',
+      resourceId: id,
+      metadata: {
+        organizationId: user.organizationId,
+        restoredFromVersion: outcome.restoredFromVersion,
+        newVersion: outcome.newVersion,
+      },
+    });
+
+    res.json({ ok: true, version: outcome.newVersion, restoredFromVersion: outcome.restoredFromVersion });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/share
+ * Mints a durable, crypto-random share token (uuid v4 x2, 244 bits of CSPRNG
+ * entropy — not sequential/guessable). Default 7-day expiry, overridable via
+ * `expiresInDays`. The raw token is returned to the caller ONCE in this
+ * response and NEVER written to logs or the audit trail (only a short sha256
+ * prefix is persisted in the audit metadata, for correlation only).
+ */
+router.post(
+  '/:id/share',
+  workbookShareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id } = req.params;
+    const expiresInDaysRaw = req.body?.expiresInDays;
+    const expiresInDays =
+      typeof expiresInDaysRaw === 'number' && expiresInDaysRaw > 0 && expiresInDaysRaw <= 365
+        ? expiresInDaysRaw
+        : 7;
+    await ensureWorkbookSchema();
+
+    const before = await queryHelpers.queryOne<{ id: string; title: string; share_token: string | null }>(
+      `SELECT id, title, share_token FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!before) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+
+    const token = `${uuidv4()}${uuidv4()}`.replace(/-/g, '');
+    const expiresAt = new Date(Date.now() + expiresInDays * 86400000).toISOString();
+
+    await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET share_token = ?, share_created_by = ?, share_expires_at = ? WHERE id = ? AND organization_id = ?`,
+      [token, user.id, expiresAt, id, user.organizationId]
+    );
+
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'share',
+      resourceType: 'generated_workbook',
+      resourceId: id,
+      before: { hadShareToken: Boolean(before.share_token) },
+      after: { shareTokenHash: hashShareToken(token), shareExpiresAt: expiresAt },
+      metadata: { organizationId: user.organizationId, title: before.title },
+    });
+
+    // `shareUrl` is the FRONTEND page (`SharedWorkbookView`, AppRoutes.tsx)
+    // that a human opens; it fetches the JSON API (`/api/workbook/shared/:token`)
+    // itself. Relative path — caller (browser) resolves it against its own origin.
+    res.json({ shareToken: token, expiresAt, shareUrl: `/excele/shared/${token}` });
+  })
+);
+
+/**
+ * DELETE /api/workbook/:id/share
+ * Atomically nulls `share_token` (single UPDATE — no read-modify-write gap),
+ * so `/shared/:token` (`WHERE share_token = ?`) stops matching immediately.
+ * Idempotent: revoking an already-revoked/never-shared workbook still
+ * returns 200 `{ revoked: true }` — there is no "un-revoke via retry" path
+ * because the UPDATE always sets NULL unconditionally, never conditionally
+ * restores a previous value.
+ */
+router.delete(
+  '/:id/share',
+  workbookShareRateLimiter,
+  requireAudit,
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id } = req.params;
+    await ensureWorkbookSchema();
+
+    const before = await queryHelpers.queryOne<{ id: string; title: string; share_token: string | null }>(
+      `SELECT id, title, share_token FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!before) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET share_token = NULL, share_created_by = NULL, share_expires_at = NULL WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+
+    await req.emitAuditEvent?.({
+      actorType: 'USER',
+      action: 'share_revoke',
+      resourceType: 'generated_workbook',
+      resourceId: id,
+      before: { hadShareToken: Boolean(before.share_token) },
+      after: { hadShareToken: false },
+      metadata: { organizationId: user.organizationId, title: before.title },
+    });
+
+    res.json({ revoked: true });
+  })
+);
+
+/**
+ * GET /api/workbook/:id/export/csv?sheetIndex=N
+ * Single-sheet CSV export — see `workbookCsvExport.ts` header for the full,
+ * explicit contract (one sheet, UTF-8, formulas as inert text, no styling).
+ * The same contract is echoed in `X-Consultify-Csv-Scope` /
+ * `X-Consultify-Csv-Limitation` response headers, not just in code comments.
+ */
+router.get(
+  '/:id/export/csv',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { id } = req.params;
+    const sheetIndexRaw = req.query.sheetIndex;
+    const sheetIndex = sheetIndexRaw !== undefined ? Number(sheetIndexRaw) : 0;
+    if (!Number.isInteger(sheetIndex) || sheetIndex < 0) {
+      res.status(400).json({ error: 'sheetIndex must be a non-negative integer' });
+      return;
+    }
+    await ensureWorkbookSchema();
+
+    const row = await queryHelpers.queryOne<{ schema_json: string | null; title: string | null }>(
+      `SELECT schema_json, title FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) {
+      res.status(404).json({ error: 'Workbook not found or expired' });
+      return;
+    }
+
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(row.schema_json);
+    } catch (err) {
+      logger.error(`[WorkbookRoutes] Stored schema for ${id} is not valid JSON:`, err);
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+
+    let result;
+    try {
+      result = buildWorkbookCsv(schema, sheetIndex);
+    } catch (err) {
+      if (err instanceof WorkbookCsvExportError) {
+        res.status(400).json({ error: err.message, code: err.code });
+        return;
+      }
+      throw err;
+    }
+
+    const safeSheetName = result.sheetName.replace(/[^a-zA-Z0-9_-]+/g, '_') || 'Sheet';
+    const safeTitle = (row.title || 'workbook').replace(/\s+/g, '_');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safeTitle}_${safeSheetName}.csv"`
+    );
+    // Explicit, machine-readable contract limitation — not only in docs.
+    res.setHeader(
+      'X-Consultify-Csv-Scope',
+      `sheet ${result.sheetIndex + 1} of ${result.totalSheets} ("${result.sheetName}")`
+    );
+    // NOTE: header VALUES must stay ASCII/Latin1-safe (Node's raw HTTP header
+    // validation throws "Invalid character in header content" on e.g. an
+    // em-dash) — plain hyphen here, unlike the prose docs/comments above.
+    res.setHeader(
+      'X-Consultify-Csv-Limitation',
+      'CSV covers exactly one sheet; formulas are exported as inert source text (not computed values); styling/formatting/merges/other sheets are not preserved - use the XLSX export for those.'
+    );
+    res.send(result.csv);
   })
 );
 

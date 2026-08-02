@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -80,8 +81,10 @@ import {
 } from '../services/presentationDeckCollaboratorService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
+  buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
+  type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
 import {
   evaluateRevertEligibility,
@@ -572,6 +575,51 @@ async function ensureDeckLineageSchema(): Promise<void> {
     if (!isSchemaMissingError(error)) {
       logger.warn('[Presentations] Could not ensure source_refs_json column', error);
     }
+  }
+}
+
+// MAT-007/009 root-cause fix (part 2): POST /decks and POST /decks/from-template
+// build canonical deck_json (see buildDeckDocumentFromStructuredSlides above) but,
+// unlike the AI generateDeck() pipeline (presentationGeneratorService.ts:2076-2127),
+// never rendered a physical PPTX or set export_path — so GET /decks/:id/download
+// (`if (!deck || !deck.export_path) return res.status(404)`) 404s for every deck
+// created through these two routes, even after the content-shape fix above. This
+// reuses the EXACT same render call the generator pipeline already makes
+// (PptxPipelineService.generateFromUnifiedJson via deckDocumentToRenderableUnifiedJson)
+// so the golden-flow export step works against a real, existing contract instead of
+// a new one. Best-effort / non-fatal: a render failure must not fail deck creation —
+// the deck is still fully usable in the builder; export can be retried by editing +
+// re-triggering a stale re-render, or a future manual export attempt will just 404
+// exactly as it did before this change, not worse.
+async function renderInitialPptxForDeck(params: {
+  deckId: string;
+  organizationId: string;
+  deckDocument: ReturnType<typeof buildDeckDocumentFromStructuredSlides>;
+}): Promise<void> {
+  try {
+    if (!Array.isArray(params.deckDocument.cards) || params.deckDocument.cards.length === 0) {
+      return;
+    }
+    const unifiedJson = deckDocumentToRenderableUnifiedJson(params.deckDocument, null);
+    const pipeline = new PptxPipelineService();
+    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
+      template: (params.deckDocument.meta?.theme as any) || undefined,
+      language: (params.deckDocument.meta?.language as any) || undefined,
+      confidentiality: (params.deckDocument.meta?.confidentiality as any) || undefined,
+    });
+    const exportDir = exportsDir('presentations');
+    const exportPath = path.join(exportDir, `${params.deckId}.pptx`);
+    fs.mkdirSync(exportDir, { recursive: true });
+    fs.writeFileSync(exportPath, result.buffer);
+    await dbRun(
+      `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      [exportPath, params.deckId, params.organizationId]
+    );
+  } catch (renderErr) {
+    logger.warn('[presentations] initial PPTX render failed (non-fatal, deck still usable)', {
+      deckId: params.deckId,
+      error: (renderErr as any)?.message || renderErr,
+    });
   }
 }
 
@@ -1691,12 +1739,30 @@ router.post(
 
     const deckId = uuidv4().replace(/-/g, '');
     const slideCount = Array.isArray(slides) ? slides.length : 0;
+    // MAT-007/009 root-cause fix: build the canonical deck_json (schemaVersion
+    // 1, real DeckDocumentCard[]) up front so the row this INSERT creates is
+    // self-consistent from the start — GET /decks/:id and the DeckBuilder both
+    // read deck_json first (see normalizeDeckDocument), and previously this
+    // route only ever wrote to the never-read `presentation_cards` table,
+    // leaving deck_json NULL while slide_count correctly reported the count.
+    // That produced "Ready, N slides" in the list but "Card 1 of 0" in the
+    // builder. See docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/MAT-006B_PRESENTATION_LIFECYCLE_E2E.md.
+    const canonicalDeckDocument = buildDeckDocumentFromStructuredSlides({
+      deckId,
+      organizationId: orgId,
+      title,
+      theme: theme || 'modern',
+      slides: Array.isArray(slides) ? (slides as StructuredSlideInput[]) : [],
+      status: 'draft',
+      createdBy: userId,
+    });
+    const deckJsonStr = JSON.stringify(canonicalDeckDocument);
 
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -1710,6 +1776,7 @@ router.post(
             sourcePack: sourcePack || {},
             evidenceRefs: Array.isArray(evidenceRefs) ? evidenceRefs : [],
           }),
+          deckJsonStr,
         ]
       );
 
@@ -1717,11 +1784,22 @@ router.post(
         for (let i = 0; i < slides.length; i++) {
           const slide = slides[i];
           const cardId = uuidv4().replace(/-/g, '');
-          await dbRun(
-            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
-          );
+          // Best-effort legacy mirror; deck_json above is now the source of
+          // truth read by GET /decks/:id and the builder. presentation_cards
+          // may not exist in every environment, so a failure here must not
+          // fail deck creation (the canonical row above already succeeded).
+          try {
+            await dbRun(
+              `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
+            );
+          } catch (cardsErr) {
+            logger.warn('[presentations] presentation_cards mirror insert failed (non-fatal)', {
+              deckId,
+              error: (cardsErr as any)?.message || cardsErr,
+            });
+          }
         }
       }
 
@@ -1753,6 +1831,12 @@ router.post(
         ]);
         throw artifactErr;
       }
+
+      await renderInitialPptxForDeck({
+        deckId,
+        organizationId: orgId,
+        deckDocument: canonicalDeckDocument,
+      });
 
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
@@ -1834,11 +1918,24 @@ router.post(
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
+    // MAT-007/009 root-cause fix — see matching comment in `POST /decks`
+    // above: persist canonical deck_json at creation so this row never lands
+    // in the "Ready + slide_count>0, empty builder" state.
+    const canonicalDeckDocument = buildDeckDocumentFromStructuredSlides({
+      deckId,
+      organizationId: orgId,
+      title,
+      theme: 'modern',
+      slides: slides as StructuredSlideInput[],
+      status: 'draft',
+      createdBy: userId,
+    });
+    const deckJsonStr = JSON.stringify(canonicalDeckDocument);
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -1849,17 +1946,25 @@ router.post(
             templateArtifactId,
             canonicalTemplateId: resolved.canonicalTemplateId,
           }),
+          deckJsonStr,
         ]
       );
 
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         const cardId = uuidv4().replace(/-/g, '');
-        await dbRun(
-          `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-          [cardId, deckId, i, slide.type, JSON.stringify(slide.content)]
-        );
+        try {
+          await dbRun(
+            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [cardId, deckId, i, slide.type, JSON.stringify(slide.content)]
+          );
+        } catch (cardsErr) {
+          logger.warn('[presentations] presentation_cards mirror insert failed (non-fatal)', {
+            deckId,
+            error: (cardsErr as any)?.message || cardsErr,
+          });
+        }
       }
 
       await (req as any).emitAuditEvent?.({
@@ -1890,6 +1995,12 @@ router.post(
         ]);
         throw artifactErr;
       }
+
+      await renderInitialPptxForDeck({
+        deckId,
+        organizationId: orgId,
+        deckDocument: canonicalDeckDocument,
+      });
 
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {

@@ -122,6 +122,13 @@ const SharedPresentationView = lazyWithRetry(() =>
     default: m.SharedPresentationView,
   }))
 );
+// MAT-006 (2026-08-02) — public, unauthenticated reader for a shared
+// workbook (`GET /api/workbook/shared/:token`), mirrors SharedPresentationView.
+const SharedWorkbookView = lazyWithRetry(() =>
+  import('@/components/AIChat/KimiWorkspace/SharedWorkbookView').then((m) => ({
+    default: m.SharedWorkbookView,
+  }))
+);
 const ReportsAndPresentationsHub = lazyWithRetry(() =>
   import('@/components/ReportsAndPresentations/ReportsAndPresentationsHub').then((m) => ({
     default: m.ReportsAndPresentationsHub,
@@ -2391,6 +2398,18 @@ export const AppRoutes: React.FC = () => {
           element={
             <RouteErrorBoundary>
               <SharedPresentationView />
+            </RouteErrorBoundary>
+          }
+        />
+        {/* MAT-006 (2026-08-02) — public, unauthenticated workbook share
+            viewer, same shape as /presentations/shared/:shareToken above. */}
+        <Route
+          path="/excele/shared/:shareToken"
+          element={
+            <RouteErrorBoundary>
+              <Suspense fallback={<LoadingScreen message="Ładowanie skoroszytu..." />}>
+                <SharedWorkbookView />
+              </Suspense>
             </RouteErrorBoundary>
           }
         />
