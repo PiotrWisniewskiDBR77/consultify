@@ -26,7 +26,15 @@ import {
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
-import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import {
+  assertUsersInOrganization,
+  buildInitiativeCapabilityContract,
+  computeApprovalProfile,
+  computeInitiativeCapabilities,
+  crossTenantDenialBody,
+  getInitiativeTopBarCapabilities,
+  resolveInitiativeCapabilityContext,
+} from '../services/initiative/initiativeCapabilityMatrix.js';
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
@@ -112,22 +120,14 @@ const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, 
   }
 };
 
-const getTopBarCapabilities = (status: string, userRoles: string[]) => {
-  const currentStatus = normalizeStatus(status);
-  const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-  const rolesUpper = (userRoles || []).map((r) => String(r || '').toUpperCase());
-  const isAdmin = rolesUpper.includes('ADMIN') || rolesUpper.includes('SUPERADMIN');
-  const hasEditRole =
-    isAdmin ||
-    rolesUpper.some((r) =>
-      ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(r)
-    );
-  return {
-    canEditPriority: hasEditRole && !isTerminal,
-    canEditOwner: hasEditRole && !isTerminal,
-    canEditTargetDate: hasEditRole && !isTerminal,
-  };
-};
+/**
+ * INI-04 — the write path reads the SAME matrix as the two read models.
+ * Previously this re-encoded the role/status rules inline, so a drift between
+ * "the UI was told it may edit the owner" and "the PUT answers 403" was
+ * invisible. Now both sides resolve through `initiativeCapabilityMatrix`.
+ */
+const getTopBarCapabilities = (status: string, userRoles: string[]) =>
+  getInitiativeTopBarCapabilities(normalizeStatus(status), userRoles);
 
 /**
  * Parse multilingual text and return translation for user's language
@@ -767,9 +767,10 @@ export class InitiativeController {
         return;
       }
 
-      // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities
+      // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities.
+      // INI-04: role profile = owner/sponsor/project role/gate roles/steering board + RACI.
       const accessCtx = userId
-        ? await resolveInitiativeAccessContext(orgId, id, userId, req.user?.role)
+        ? await resolveInitiativeCapabilityContext(orgId, id, userId, req.user?.role)
         : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
@@ -822,6 +823,24 @@ export class InitiativeController {
           roles: effectiveRoles,
         });
         return;
+      }
+
+      // INI-04 tenant scope: owner/sponsor are INPUTS to the capability matrix
+      // (the resolver turns them into INITIATIVE_OWNER / BUSINESS_OWNER /
+      // PROJECT_SPONSOR effective roles). Accepting a foreign-org user id here
+      // would mint a capability for someone outside the tenant, so the write is
+      // denied before it can reach the row.
+      if (isOwnerUpdate) {
+        const scope = await assertUsersInOrganization(orgId, [
+          body.ownerId as string | undefined,
+          body.ownerBusinessId as string | undefined,
+          body.ownerExecutionId as string | undefined,
+          body.sponsorId as string | undefined,
+        ]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       // 3. Build update map — only include fields that are provided
@@ -1317,9 +1336,10 @@ export class InitiativeController {
       const initiativeName = String((current as any)?.name || 'Initiative');
       const currentStatus = normalizeStatus((current as any)?.status);
 
-      // Enforce top-bar edit rules for quick update endpoint
+      // Enforce top-bar edit rules for quick update endpoint (INI-04: same matrix
+      // as PUT /:id and as the two gate-readiness read models).
       const accessCtx = actorId
-        ? await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role)
+        ? await resolveInitiativeCapabilityContext(orgId, id, actorId, req.user?.role)
         : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
@@ -1356,6 +1376,15 @@ export class InitiativeController {
           roles: effectiveRoles,
         });
         return;
+      }
+
+      // INI-04 tenant scope — same rule as PUT /initiatives/:id.
+      if (ownerBusinessId !== undefined || ownerExecutionId !== undefined) {
+        const scope = await assertUsersInOrganization(orgId, [ownerBusinessId, ownerExecutionId]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       const existingStart = (current as Record<string, unknown>).planned_start_date as
@@ -4366,6 +4395,18 @@ export class InitiativeController {
         return;
       }
 
+      // INI-04 tenant scope: a RACI row with `raci_type` A or R now grants EDIT
+      // capability through the canonical matrix, so an internal stakeholder must
+      // belong to this organization. (External stakeholders carry no user_id and
+      // therefore no capability at all — they are unaffected.)
+      if (userId) {
+        const scope = await assertUsersInOrganization(orgId, [userId as string]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
+      }
+
       const rawRole = String(role || '').trim();
       const rawRaci = String(raciType || '').trim();
 
@@ -4463,6 +4504,33 @@ export class InitiativeController {
           null,
         ]
       );
+
+      // INI-04 audit: RACI is now a capability input, so a RACI edit is a role
+      // profile change and is recorded as one (actor + change + what it grants).
+      try {
+        await auditEventsService.log({
+          actorId,
+          actorType: 'USER',
+          action: 'initiative.role_profile.changed',
+          resourceType: 'initiative',
+          resourceId: initiativeId,
+          after: {
+            raci: {
+              added: {
+                userId: userId || null,
+                externalName: userId ? null : externalName,
+                raciType: resolvedRaci,
+                role: resolvedDbRole,
+              },
+            },
+          },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
 
       res.status(201).json({ success: true, id });
     }
@@ -5021,6 +5089,32 @@ export class InitiativeController {
         return;
       }
 
+      // INI-04 tenant scope: an explicit gate-role row is the single most direct
+      // way to mint an initiative capability, so a foreign-org user id is refused
+      // BEFORE the destructive DELETE below — a rejected request must leave the
+      // existing approval profile intact.
+      const scope = await assertUsersInOrganization(
+        orgId,
+        (roles as Array<{ userId?: string }>).map((role) => role?.userId)
+      );
+      if (!scope.ok) {
+        res.status(403).json(crossTenantDenialBody(scope.offending));
+        return;
+      }
+
+      // Previous profile — captured for the audit record (requirement: the audit
+      // shows the actor, the profile CHANGE, and the resulting capability).
+      let previousRoles: any[] = [];
+      try {
+        previousRoles = await queryHelpers.queryAll(
+          `SELECT gate_role as "gateRole", user_id as "userId"
+             FROM initiative_gate_roles WHERE initiative_id = ?`,
+          [initiativeId]
+        );
+      } catch {
+        // Table may not exist yet
+      }
+
       // Delete all explicit roles and re-insert
       try {
         await queryHelpers.queryRun(`DELETE FROM initiative_gate_roles WHERE initiative_id = ?`, [
@@ -5046,15 +5140,66 @@ export class InitiativeController {
         }
       }
 
+      // Capability outcome AFTER the change, resolved through the canonical
+      // matrix — so the audit answers "what did this profile edit actually grant
+      // the actor", not just "which rows moved".
+      let capabilityOutcome: Record<string, unknown> | null = null;
+      try {
+        const ctx = await resolveInitiativeCapabilityContext(
+          orgId,
+          initiativeId,
+          actorId,
+          req.user?.role
+        );
+        const statusRow = await queryHelpers.queryOne(
+          `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [initiativeId, orgId]
+        );
+        const decision = computeInitiativeCapabilities({
+          status: normalizeStatus((statusRow as any)?.status),
+          effectiveRoles: ctx.effectiveRoles,
+        });
+        capabilityOutcome = {
+          effectiveRoles: ctx.effectiveRoles,
+          canEditCards: decision.cards.canEditCards,
+          topBar: decision.topBar,
+        };
+      } catch {
+        capabilityOutcome = null;
+      }
+
       // Audit
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO initiative_history (id, initiative_id, action, new_value, changed_by)
-           VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), initiativeId, 'gate_roles_updated', JSON.stringify(inserted), actorId]
+          `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            initiativeId,
+            'gate_roles_updated',
+            JSON.stringify(previousRoles),
+            JSON.stringify(inserted),
+            actorId,
+          ]
         );
       } catch {
         // best-effort
+      }
+      try {
+        await auditEventsService.log({
+          actorId,
+          actorType: 'USER',
+          action: 'initiative.role_profile.changed',
+          resourceType: 'initiative',
+          resourceId: initiativeId,
+          before: { gateRoles: previousRoles },
+          after: { gateRoles: inserted, capabilityOutcome },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
       }
 
       res.json({ success: true, roles: inserted });
@@ -5239,17 +5384,23 @@ export class InitiativeController {
       const ini = initiative as any;
       const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
 
-      // Canonical role resolution (system role + project membership + gate roles + steering board)
+      // Canonical role resolution (system role + project membership + gate roles
+      // + steering board + RACI) — INI-04: identical profile to the writers.
       const accessCtx =
         orgId && currentUserId
-          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId, req.user?.role)
+          ? await resolveInitiativeCapabilityContext(
+              orgId,
+              initiativeId,
+              currentUserId,
+              req.user?.role
+            )
           : null;
-      const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
+      const steeringBoardEnabled = !!accessCtx?.steeringBoardEnabled;
       const userRoles = accessCtx?.effectiveRoles || [];
 
       // Expanded assignments include initiative gate roles + derived + project roles + steering board members
       const expandedAssignments: Array<{ gateRole: string; userId: string }> = [
-        ...(accessCtx?.roleAssignments || []),
+        ...(accessCtx?.access?.roleAssignments || []),
       ];
 
       const projectId = accessCtx?.projectId ? String(accessCtx.projectId) : null;
@@ -5318,37 +5469,15 @@ export class InitiativeController {
         }
       }
 
-      // Get valid next transitions and check which ones the user can execute
-      const validNext = VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [];
-      const availableTransitions: any[] = [];
-
-      for (const nextStatus of validNext) {
-        const gate = getGateForTransition(currentStatus as any, nextStatus as any);
-        const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
-        const effectiveRequiredRoles = steeringBoardEnabled
-          ? requiredRoles
-          : requiredRoles.flatMap((r: string) => {
-              if (r === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
-              return [r];
-            });
-        const canExecute =
-          userRoles.includes('ADMIN') ||
-          (gate ? effectiveRequiredRoles.some((r: string) => userRoles.includes(r)) : true);
-
-        // Get assigned users for the required roles
-        const assignedApprovers = effectiveRequiredRoles.flatMap((role: string) =>
-          expandedAssignments.filter((gr: any) => String(gr.gateRole).toUpperCase() === role)
-        );
-
-        availableTransitions.push({
-          targetStatus: nextStatus,
-          gate: gate || null,
-          requiredRoles: effectiveRequiredRoles,
-          assignedApprovers,
-          canCurrentUserExecute: canExecute,
-          hasAssignedApprover: assignedApprovers.length > 0,
-        });
-      }
+      // Approval profile — INI-04: computed by the canonical matrix, the same
+      // one `initiativeTransitionService` enforces on PATCH /:id/status, so the
+      // CTA the UI renders and the gate the writer applies cannot disagree.
+      const availableTransitions: any[] = computeApprovalProfile({
+        status: currentStatus,
+        effectiveRoles: userRoles,
+        steeringBoardEnabled,
+        assignments: expandedAssignments,
+      });
 
       // Readiness criteria for current stage
       const readiness: any[] = [];
@@ -5579,59 +5708,13 @@ export class InitiativeController {
         }
       }
 
-      // Capabilities contract (v1) — backend is source of truth for UI enablement
-      const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-      const isAdmin = userRoles.some((r: string) =>
-        ['ADMIN', 'SUPERADMIN'].includes(String(r || '').toUpperCase())
-      );
-      const hasEditRole =
-        isAdmin ||
-        userRoles.some((r: string) =>
-          [
-            'PMO',
-            'PROJECT_MANAGER',
-            'PROJECT_LEAD',
-            'INITIATIVE_OWNER',
-            'PROJECT_SPONSOR',
-          ].includes(String(r || '').toUpperCase())
-        );
-
-      const topBar = {
-        canEditPriority: hasEditRole && !isTerminal,
-        canEditOwner: hasEditRole && !isTerminal,
-        canEditTargetDate: hasEditRole && !isTerminal,
-      };
-
-      const contextCreateActions = (() => {
-        if (!hasEditRole || isTerminal) return [];
-        if (['PLANNING', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'BLOCKED'].includes(currentStatus)) {
-          return ['task', 'decision', 'raid'];
-        }
-        if (['REVIEW', 'PROMOTED', 'PENDING_REVIEW', 'DRAFT'].includes(currentStatus)) {
-          return ['decision', 'raid'];
-        }
-        return [];
-      })();
-
-      const cards = {
-        canEditCards:
-          topBar.canEditPriority ||
-          topBar.canEditOwner ||
-          topBar.canEditTargetDate ||
-          contextCreateActions.length > 0,
-        reasonCode:
-          topBar.canEditPriority ||
-          topBar.canEditOwner ||
-          topBar.canEditTargetDate ||
-          contextCreateActions.length > 0
-            ? null
-            : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE',
-      };
-
-      const ai = {
-        canUseAi: cards.canEditCards && !isTerminal,
-        allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
-      };
+      // Capabilities contract (v1) — backend is source of truth for UI enablement.
+      // INI-04: ONE matrix (`initiativeCapabilityMatrix`) shared with the v8 read
+      // model, PUT /:id, PATCH /:id/quick-update and the transition service.
+      const capabilityDecision = computeInitiativeCapabilities({
+        status: currentStatus,
+        effectiveRoles: userRoles,
+      });
 
       const blockingItems = await getBlockingReadinessItems(orgId, initiativeId);
 
@@ -5648,31 +5731,10 @@ export class InitiativeController {
           label: item.label,
           suggestedAction: item.suggestedAction,
         })),
-        capabilities: {
-          version: 1,
-          source: 'backend',
-          topBar,
-          cards,
-          reasonCodes: {
-            topBar: {
-              priority: topBar.canEditPriority ? null : 'TOP_BAR_PRIORITY_LOCKED_BY_ROLE_OR_STATUS',
-              owner: topBar.canEditOwner ? null : 'TOP_BAR_OWNER_LOCKED_BY_ROLE_OR_STATUS',
-              targetDate: topBar.canEditTargetDate
-                ? null
-                : 'TOP_BAR_TARGET_DATE_LOCKED_BY_ROLE_OR_STATUS',
-            },
-            cards: { edit: cards.canEditCards ? null : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE' },
-            ai: { use: ai.canUseAi ? null : 'AI_LOCKED_NO_EDIT_CAPABILITY' },
-          },
-          ctaBar: {
-            workflowActions: availableTransitions
-              .filter((t: any) => t.canCurrentUserExecute)
-              .map((t: any) => ({ targetStatus: t.targetStatus, gate: t.gate || null })),
-            contextCreateActions,
-            canUseAi: ai.canUseAi,
-            aiAllowedSectionKeys: ai.allowedSectionKeys,
-          },
-        },
+        capabilities: buildInitiativeCapabilityContract({
+          decision: capabilityDecision,
+          availableTransitions,
+        }),
         readiness,
         allBlocking: blockingItems.length === 0,
         allWarnings: readiness.filter((r: any) => r.severity === 'warning' && !r.pass).length === 0,
