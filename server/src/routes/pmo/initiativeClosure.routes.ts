@@ -31,6 +31,10 @@ import {
   submitClosureRequest,
 } from '../../services/initiative/initiativeClosureService.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import {
+  getReceiptForInitiative,
+  manualRetryReceipt,
+} from '../../services/closureDeliveryReceiptService.js';
 
 const router = Router();
 
@@ -302,5 +306,51 @@ router.post(
     }
   }
 );
+
+/**
+ * EXE-09 — GET /api/initiatives/:id/closure-receipt
+ *
+ * Read-only status of the durable Results/Finance delivery receipt for this
+ * initiative's closure (see closureDeliveryReceiptService.ts,
+ * migration 935). Additive to this router — no existing route below this
+ * point is modified. Returns `{ receipt: null }` (200, not 404) when the
+ * initiative has never closed — "no receipt yet" is a normal state, not an
+ * error, and the UI must not render any delivered/failed status for it.
+ */
+router.get('/:id/closure-receipt', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const { id: initiativeId } = req.params;
+    const receipt = await getReceiptForInitiative(initiativeId, auth.orgId);
+    res.json({ receipt });
+  } catch (err) {
+    handleClosureError(res, err);
+  }
+});
+
+/**
+ * EXE-09 — POST /api/initiatives/:id/closure-receipt/retry
+ *
+ * Operator-triggered retry (contract point 8: "użytkownik/operator może
+ * odczytać stan i bezpiecznie ponowić"). Safe to call repeatedly — each leg
+ * only re-attempts while its own status is retry-eligible.
+ */
+router.post('/:id/closure-receipt/retry', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const { id: initiativeId } = req.params;
+    const existing = await getReceiptForInitiative(initiativeId, auth.orgId);
+    if (!existing) {
+      res.status(404).json({ error: 'No closure receipt for this initiative', code: 'CLOSURE_RECEIPT_NOT_FOUND' });
+      return;
+    }
+    const receipt = await manualRetryReceipt(existing.id, auth.orgId);
+    res.json({ success: true, receipt });
+  } catch (err) {
+    handleClosureError(res, err);
+  }
+});
 
 export default router;
