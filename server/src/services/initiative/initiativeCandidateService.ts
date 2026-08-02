@@ -849,3 +849,68 @@ export async function dismissCandidate(
     return false;
   }
 }
+
+// ---------------------------------------------------------------------------
+// createCandidateFromSource (ASM-08)
+// ---------------------------------------------------------------------------
+
+/**
+ * Single-row, fail-CLOSED candidate insert for a caller that already knows
+ * exactly which (sourceType, sourceId) it wants and has already validated
+ * everything that makes the write legitimate (e.g. ASM-08's "the source is
+ * an accepted/current immutable Assessment Output" gate).
+ *
+ * Deliberately distinct from `scanForCandidates` (bulk, discovery-driven,
+ * fail-soft, deterministic/AI-proposed title+rationale) — this is a direct,
+ * single-record write for a caller supplying its own title/rationale, and it
+ * THROWS on failure instead of degrading, because the caller (a handoff
+ * receipt writer running inside its own transaction) needs to know the
+ * write did not happen so it can roll back rather than persist a receipt
+ * pointing at a candidate that was never created.
+ *
+ * Does not de-dup against `scanForCandidates`' own (org, source_type,
+ * source_id) keys — callers using a source_type distinct from the F2
+ * discovery values ('interview_insight' | 'assessment' | 'audit') never
+ * collide with F2's dedup set, by construction.
+ */
+export async function createCandidateFromSource(
+  db: CandidateDb,
+  params: {
+    organizationId: string;
+    sourceType: string;
+    sourceId: string;
+    title: string;
+    rationale: string;
+    fitScore?: number;
+    createdBy?: string | null;
+  }
+): Promise<InitiativeCandidate> {
+  const { organizationId, sourceType, sourceId, title, rationale } = params;
+  if (!organizationId) throw new Error('organizationId is required to create a candidate');
+  if (!sourceType || !sourceId) {
+    throw new Error('sourceType and sourceId are required to create a candidate');
+  }
+  if (!title || !String(title).trim()) {
+    throw new Error('title is required to create a candidate');
+  }
+
+  const row = await db.queryOne<Record<string, unknown>>(
+    `INSERT INTO initiative_candidates
+       (organization_id, source_type, source_id, title, rationale, fit_score, status, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)
+     RETURNING *`,
+    [
+      organizationId,
+      sourceType,
+      sourceId,
+      String(title).trim(),
+      rationale ?? '',
+      params.fitScore ?? 1,
+      params.createdBy ?? null,
+    ]
+  );
+  if (!row) {
+    throw new Error('Candidate insert did not return a row');
+  }
+  return mapRow(row);
+}
