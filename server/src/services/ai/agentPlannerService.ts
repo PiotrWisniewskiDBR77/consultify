@@ -87,7 +87,118 @@ export interface SSEEmitter {
   emit: (event: string, data: unknown) => void;
 }
 
+export interface ExecutionLease {
+  planId: string;
+  ownerToken: string;
+  fencingToken: number;
+}
+
+export class AgentExecutionLeaseLostError extends Error {
+  readonly code = 'AGENT_EXECUTION_LEASE_LOST';
+
+  constructor(planId: string) {
+    super(`Execution lease lost for plan ${planId}`);
+    this.name = 'AgentExecutionLeaseLostError';
+  }
+}
+
+export class AgentResultPersistenceError extends Error {
+  readonly code = 'AGENT_RESULT_PERSISTENCE_FAILED';
+
+  constructor(planId: string, cause: unknown) {
+    super(`Result persistence failed for plan ${planId}`, { cause });
+    this.name = 'AgentResultPersistenceError';
+  }
+}
+
+type PlanToolExecutor = (
+  toolName: string,
+  input: Record<string, unknown>,
+  execution?: { operationKey: string; ownerToken: string; fencingToken: number }
+) => Promise<unknown>;
+
 class AgentPlannerService {
+  private readonly executionLeaseSeconds = 300;
+  private readonly heartbeatIntervalMs = 60_000;
+
+  async claimExecution(planId: string, ownerToken = randomUUID()): Promise<ExecutionLease | null> {
+    const result = await dbRun(
+      `UPDATE ai_agent_plans
+       SET status = 'executing',
+           execution_owner_token = ?,
+           execution_fencing_token = COALESCE(execution_fencing_token, 0) + 1,
+           execution_lease_expires_at = datetime('now', '+${this.executionLeaseSeconds} seconds'),
+           execution_heartbeat_at = datetime('now'),
+           started_at = COALESCE(started_at, datetime('now')),
+           updated_at = datetime('now')
+       WHERE id = ?
+         AND (
+           status IN ('planning', 'scheduled', 'awaiting_approval', 'paused')
+           OR (
+             status = 'executing'
+             AND (execution_lease_expires_at IS NULL OR execution_lease_expires_at <= datetime('now'))
+           )
+         )`,
+      [ownerToken, planId]
+    );
+    if (!result.changes) return null;
+    const claimed = (await dbGet(
+      `SELECT execution_fencing_token FROM ai_agent_plans
+       WHERE id = ? AND execution_owner_token = ?`,
+      [planId, ownerToken]
+    )) as { execution_fencing_token?: number } | undefined;
+    if (!claimed) throw new AgentExecutionLeaseLostError(planId);
+    return {
+      planId,
+      ownerToken,
+      fencingToken: Number(claimed.execution_fencing_token || 0),
+    };
+  }
+
+  async renewExecutionLease(lease: ExecutionLease): Promise<void> {
+    const result = await dbRun(
+      `UPDATE ai_agent_plans
+       SET execution_lease_expires_at = datetime('now', '+${this.executionLeaseSeconds} seconds'),
+           execution_heartbeat_at = datetime('now'),
+           updated_at = datetime('now')
+       WHERE id = ? AND status = 'executing'
+         AND execution_owner_token = ? AND execution_fencing_token = ?
+         AND execution_lease_expires_at > datetime('now')`,
+      [lease.planId, lease.ownerToken, lease.fencingToken]
+    );
+    if (!result.changes) throw new AgentExecutionLeaseLostError(lease.planId);
+  }
+
+  private leasePredicate(alias = ''): string {
+    const prefix = alias ? `${alias}.` : '';
+    return `${prefix}execution_owner_token = ? AND ${prefix}execution_fencing_token = ? AND ${prefix}execution_lease_expires_at > datetime('now')`;
+  }
+
+  private async guardedPlanRun(
+    lease: ExecutionLease,
+    sql: string,
+    params: unknown[]
+  ): Promise<void> {
+    const result = await dbRun(sql, [...params, lease.ownerToken, lease.fencingToken]);
+    if (!result.changes) throw new AgentExecutionLeaseLostError(lease.planId);
+  }
+
+  private async guardedStepRun(
+    lease: ExecutionLease,
+    sqlPrefix: string,
+    params: unknown[],
+    stepId: string
+  ): Promise<void> {
+    const result = await dbRun(
+      `${sqlPrefix}
+       WHERE id = ? AND EXISTS (
+         SELECT 1 FROM ai_agent_plans p
+         WHERE p.id = ai_agent_plan_steps.plan_id AND ${this.leasePredicate('p')}
+       )`,
+      [...params, stepId, lease.ownerToken, lease.fencingToken]
+    );
+    if (!result.changes) throw new AgentExecutionLeaseLostError(lease.planId);
+  }
   async createPlan(input: {
     organizationId: string;
     userId: string;
@@ -199,7 +310,7 @@ class AgentPlannerService {
    */
   async executePlan(
     planId: string,
-    toolExecutor: (toolName: string, input: Record<string, unknown>) => Promise<unknown>,
+    toolExecutor: PlanToolExecutor,
     emitter?: SSEEmitter
   ): Promise<AgentPlan> {
     const plan = await this.getPlan(planId);
@@ -209,16 +320,8 @@ class AgentPlannerService {
       return plan;
     }
 
-    // Claim the whole run before invoking any tool. Queue delivery is at-least-once;
-    // without a database CAS two workers can execute the same side effect in parallel.
-    const claim = await dbRun(
-      `UPDATE ai_agent_plans
-       SET status = 'executing', started_at = COALESCE(started_at, datetime('now')),
-           updated_at = datetime('now')
-       WHERE id = ? AND status IN ('planning', 'scheduled', 'awaiting_approval', 'paused')`,
-      [planId]
-    );
-    if (!claim.changes) {
+    const lease = await this.claimExecution(planId);
+    if (!lease) {
       const alreadyClaimed = await this.getPlan(planId);
       if (!alreadyClaimed) throw new Error(`Plan ${planId} disappeared during execution claim`);
       return alreadyClaimed;
@@ -246,13 +349,15 @@ class AgentPlannerService {
             typeof step.toolInput?.waitHours === 'number' ? step.toolInput.waitHours : 24;
           const resumeAt = new Date(Date.now() + hours * 3_600_000).toISOString();
           step.toolInput = { ...step.toolInput, resumeAt };
-          await dbRun(`UPDATE ai_agent_plan_steps SET tool_input_json = ? WHERE id = ?`, [
-            JSON.stringify(step.toolInput),
-            step.id,
-          ]);
+          await this.guardedStepRun(
+            lease,
+            `UPDATE ai_agent_plan_steps SET tool_input_json = ?`,
+            [JSON.stringify(step.toolInput)],
+            step.id
+          );
         }
-        await this.updateStepStatus(step.id, 'awaiting_approval');
-        await this.updatePlanStatus(planId, 'awaiting_approval', i);
+        await this.updateStepStatus(step.id, 'awaiting_approval', lease);
+        await this.releaseLeaseAtCheckpoint(lease, 'awaiting_approval', i);
         emitter?.emit('agent_checkpoint', {
           planId,
           stepIndex: i,
@@ -273,7 +378,7 @@ class AgentPlannerService {
       });
 
       const startMs = Date.now();
-      await this.updateStepStatus(step.id, 'running');
+      await this.updateStepStatus(step.id, 'running', lease);
 
       // Zmienne między krokami (Fala 1, 2026-07-26): `$step.N.pole` w
       // toolInput odnosi się do WYNIKU kroku o numerze N (1-based, ten sam
@@ -288,20 +393,44 @@ class AgentPlannerService {
       const resolvedInput = this.resolveStepInputVariables(step.toolInput, plan.steps.slice(0, i));
 
       try {
-        const result = await this.runToolWithRetry(toolExecutor, step.toolName, resolvedInput);
+        const operationKey = `agent-plan:${planId}:step:${step.id}`;
+        let heartbeatFailure: unknown = null;
+        const heartbeat = setInterval(() => {
+          void this.renewExecutionLease(lease).catch((error) => {
+            heartbeatFailure = error;
+          });
+        }, this.heartbeatIntervalMs);
+        let result: unknown;
+        try {
+          result = await this.runToolWithRetry(
+            toolExecutor,
+            step.toolName,
+            resolvedInput,
+            { operationKey, ownerToken: lease.ownerToken, fencingToken: lease.fencingToken }
+          );
+        } finally {
+          clearInterval(heartbeat);
+        }
+        if (heartbeatFailure) throw heartbeatFailure;
         const durationMs = Date.now() - startMs;
 
         step.result = result;
         step.status = 'completed';
         step.durationMs = durationMs;
 
-        await dbRun(
-          `UPDATE ai_agent_plan_steps
-           SET status = 'completed', result_json = ?, duration_ms = ?,
-               completed_at = datetime('now')
-           WHERE id = ?`,
-          [JSON.stringify(result), durationMs, step.id]
-        );
+        try {
+          await this.guardedStepRun(
+            lease,
+            `UPDATE ai_agent_plan_steps
+             SET status = 'completed', result_json = ?, duration_ms = ?,
+                 completed_at = datetime('now')`,
+            [JSON.stringify(result), durationMs],
+            step.id
+          );
+        } catch (error) {
+          if (error instanceof AgentExecutionLeaseLostError) throw error;
+          throw new AgentResultPersistenceError(planId, error);
+        }
 
         emitter?.emit('agent_step_complete', {
           planId,
@@ -311,18 +440,24 @@ class AgentPlannerService {
           success: true,
         });
       } catch (err: any) {
+        if (
+          err instanceof AgentExecutionLeaseLostError ||
+          err instanceof AgentResultPersistenceError
+        )
+          throw err;
         const durationMs = Date.now() - startMs;
         step.status = 'failed';
         step.errorMessage = err?.message || 'Unknown error';
         step.durationMs = durationMs;
         failedSteps.push(step);
 
-        await dbRun(
+        await this.guardedStepRun(
+          lease,
           `UPDATE ai_agent_plan_steps
            SET status = 'failed', error_message = ?, duration_ms = ?,
-               completed_at = datetime('now')
-           WHERE id = ?`,
-          [step.errorMessage, durationMs, step.id]
+               completed_at = datetime('now')`,
+          [step.errorMessage, durationMs],
+          step.id
         );
 
         emitter?.emit('agent_step_complete', {
@@ -343,7 +478,7 @@ class AgentPlannerService {
       // panel's progress bar keeps moving through a partially-failing plan;
       // per-step status/errorMessage (already surfaced to the UI) is what
       // distinguishes success from failure at each position.
-      await this.updatePlanProgress(planId, i + 1);
+      await this.updatePlanProgress(planId, i + 1, lease);
     }
 
     const finalStatus: PlanStatus = failedSteps.length > 0 ? 'completed_with_errors' : 'completed';
@@ -358,7 +493,7 @@ class AgentPlannerService {
         ? `Completed ${plan.steps.length}/${plan.steps.length} steps.`
         : `Completed ${plan.steps.length - failedSteps.length}/${plan.steps.length} steps (${failedSteps.length} failed — see report).`;
 
-    await this.finalizePlan(planId, finalStatus, finalResultSummary, finalErrorMessage);
+    await this.finalizePlan(planId, finalStatus, finalResultSummary, finalErrorMessage, lease);
     emitter?.emit('agent_plan', {
       planId,
       status: finalStatus,
@@ -678,15 +813,25 @@ class AgentPlannerService {
     userId: string;
   }): Promise<AgentPlan> {
     const plan = await this.getPlan(payload.planId);
-    if (!plan || plan.organizationId !== payload.organizationId) {
+    if (
+      !plan ||
+      plan.organizationId !== payload.organizationId ||
+      plan.userId !== payload.userId
+    ) {
       throw Object.assign(new Error('Plan not found'), { statusCode: 404 });
     }
     const { executeToolCall } = await import('./toolDefinitions.js');
 
-    const executor = async (toolName: string, input: Record<string, unknown>) => {
+    const executor: PlanToolExecutor = async (
+      toolName,
+      input,
+      execution
+    ) => {
       return executeToolCall(toolName, input, {
         organizationId: payload.organizationId,
         userId: payload.userId,
+        conversationId: plan.conversationId,
+        sessionId: execution?.operationKey,
       });
     };
 
@@ -726,31 +871,68 @@ class AgentPlannerService {
     planId: string,
     status: PlanStatus,
     resultSummary: string,
-    errorMessage?: string
+    errorMessage: string | undefined,
+    lease: ExecutionLease
   ): Promise<void> {
-    await dbRun(
+    await this.guardedPlanRun(
+      lease,
       `UPDATE ai_agent_plans
        SET status = ?, result_summary = ?, error_message = ?, completed_at = datetime('now'),
-           updated_at = datetime('now')
-       WHERE id = ?`,
+           updated_at = datetime('now'), execution_owner_token = NULL,
+           execution_lease_expires_at = NULL, execution_heartbeat_at = NULL
+       WHERE id = ? AND ${this.leasePredicate()}`,
       [status, resultSummary, errorMessage || null, planId]
     );
   }
 
-  private async updateStepStatus(stepId: string, status: StepStatus): Promise<void> {
+  private async updateStepStatus(
+    stepId: string,
+    status: StepStatus,
+    lease?: ExecutionLease
+  ): Promise<void> {
     const startedClause = status === 'running' ? ", started_at = datetime('now')" : '';
+    if (lease) {
+      await this.guardedStepRun(
+        lease,
+        `UPDATE ai_agent_plan_steps SET status = ?${startedClause}`,
+        [status],
+        stepId
+      );
+      return;
+    }
     await dbRun(`UPDATE ai_agent_plan_steps SET status = ?${startedClause} WHERE id = ?`, [
       status,
       stepId,
     ]);
   }
 
-  private async updatePlanProgress(planId: string, completedSteps: number): Promise<void> {
-    await dbRun(
+  private async updatePlanProgress(
+    planId: string,
+    completedSteps: number,
+    lease: ExecutionLease
+  ): Promise<void> {
+    await this.guardedPlanRun(
+      lease,
       `UPDATE ai_agent_plans
        SET completed_steps = ?, current_step_index = ?, updated_at = datetime('now')
-       WHERE id = ?`,
+       WHERE id = ? AND ${this.leasePredicate()}`,
       [completedSteps, completedSteps, planId]
+    );
+  }
+
+  private async releaseLeaseAtCheckpoint(
+    lease: ExecutionLease,
+    status: 'awaiting_approval' | 'paused',
+    currentStep: number
+  ): Promise<void> {
+    await this.guardedPlanRun(
+      lease,
+      `UPDATE ai_agent_plans
+       SET status = ?, current_step_index = ?, updated_at = datetime('now'),
+           execution_owner_token = NULL, execution_lease_expires_at = NULL,
+           execution_heartbeat_at = NULL
+       WHERE id = ? AND ${this.leasePredicate()}`,
+      [status, currentStep, lease.planId]
     );
   }
 
@@ -810,16 +992,17 @@ class AgentPlannerService {
    * druga próba by przeszła.
    */
   private async runToolWithRetry(
-    toolExecutor: (toolName: string, input: Record<string, unknown>) => Promise<unknown>,
+    toolExecutor: PlanToolExecutor,
     toolName: string,
     input: Record<string, unknown>,
+    execution: { operationKey: string; ownerToken: string; fencingToken: number },
     maxAttempts = 3,
     delayMs = 400
   ): Promise<unknown> {
     let lastError: unknown;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        return await toolExecutor(toolName, input);
+        return await toolExecutor(toolName, input, execution);
       } catch (err) {
         lastError = err;
         if (attempt < maxAttempts) {

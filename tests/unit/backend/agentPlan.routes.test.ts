@@ -366,7 +366,7 @@ describe('Agent Plan Routes (HP-4 fundament)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.total).toBe(1);
-      expect(listPlans).toHaveBeenCalledWith('test-org', undefined);
+      expect(listPlans).toHaveBeenCalledWith('test-org', 'test-user');
     });
 
     it('narrows to the current user when ?mine=1', async () => {

@@ -205,7 +205,9 @@ function canAccessPlan(
   req: AuthRequest
 ): boolean {
   const userId = req.user?.id;
-  const role = String(req.user?.role || '').toUpperCase();
+  // `req.user.role` is the UI-facing mapped role (ADMIN -> administrator).
+  // Authorization must use the canonical membership/JWT role resolved by auth.
+  const role = String(req.userRole || req.user?.role || '').toUpperCase();
   return plan.userId === userId || ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(role);
 }
 
@@ -343,6 +345,9 @@ router.patch(
     if (!assertPlanInOrg(existingPlan, organizationId)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
+    if (!canAccessPlan(existingPlan, req)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
     if (existingPlan.status !== 'planning') {
       return res.status(409).json({
         success: false,
@@ -384,6 +389,9 @@ router.post(
     if (!assertPlanInOrg(existingPlan, organizationId)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
+    if (!canAccessPlan(existingPlan, req)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
     if (existingPlan.status !== 'planning') {
       return res.status(409).json({
         success: false,
@@ -399,7 +407,11 @@ router.post(
       await agentPlannerService.replaceSteps(planId, steps);
     }
 
-    const dispatch = await tryDispatchBackgroundExecution({ planId, organizationId, userId });
+    const dispatch = await tryDispatchBackgroundExecution({
+      planId,
+      organizationId,
+      userId: existingPlan.userId,
+    });
     const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
 
     return res.json({ success: true, plan, dispatch });
@@ -427,6 +439,9 @@ router.post(
     const planId = String(req.params.id || '');
     const existingPlan = await agentPlannerService.getPlan(planId);
     if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (!canAccessPlan(existingPlan, req)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
 
@@ -458,7 +473,9 @@ router.get(
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    const mineOnly = String(req.query?.mine || '') === '1';
+    const role = String(req.user?.role || '').toUpperCase();
+    const privileged = ['OWNER', 'ADMIN', 'SUPERADMIN'].includes(role);
+    const mineOnly = String(req.query?.mine || '') === '1' || !privileged;
     const plans = await agentPlannerService.listPlans(
       organizationId,
       mineOnly ? userId : undefined
@@ -676,6 +693,9 @@ router.patch(
     if (!assertPlanInOrg(existingPlan, organizationId)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
+    if (!canAccessPlan(existingPlan, req)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
 
     const { folderId } = req.body as { folderId: string | null };
     await agentPlannerService.setFolder(planId, organizationId, folderId);
@@ -745,7 +765,11 @@ router.post(
       });
     }
 
-    const dispatch = await tryDispatchBackgroundExecution({ planId, organizationId, userId });
+    const dispatch = await tryDispatchBackgroundExecution({
+      planId,
+      organizationId,
+      userId: existingPlan.userId,
+    });
     const plan = await agentPlannerService.getPlan(planId);
 
     return res.json({ success: true, plan, dispatch });
@@ -767,6 +791,9 @@ router.post(
     const planId = String(req.params.id || '');
     const existingPlan = await agentPlannerService.getPlan(planId);
     if (!assertPlanInOrg(existingPlan, organizationId)) {
+      return res.status(404).json({ success: false, error: 'Plan not found' });
+    }
+    if (!canAccessPlan(existingPlan, req)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
 

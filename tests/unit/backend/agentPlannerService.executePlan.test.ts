@@ -34,6 +34,9 @@ interface PlanRow {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  execution_owner_token: string | null;
+  execution_fencing_token: number;
+  execution_lease_expires_at: string | null;
 }
 
 interface StepRow {
@@ -124,6 +127,9 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         completed_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        execution_owner_token: null,
+        execution_fencing_token: 0,
+        execution_lease_expires_at: null,
       });
       return { changes: 1 };
     }
@@ -155,16 +161,24 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 
     if (s.startsWith('UPDATE ai_agent_plan_steps')) {
       if (s.includes("status = 'completed'") && s.includes('result_json')) {
-        const [result_json, duration_ms, id] = params as [string, number, string];
+        const [result_json, duration_ms] = params as [string, number];
+        const id = params[params.length - 3] as string;
         const step = findStepAnyPlan(id);
         if (step) Object.assign(step, { status: 'completed', result_json, duration_ms });
         return { changes: 1 };
       }
       if (s.includes("status = 'failed'") && s.includes('error_message')) {
-        const [error_message, duration_ms, id] = params as [string, number, string];
+        const [error_message, duration_ms] = params as [string, number];
+        const id = params[params.length - 3] as string;
         const step = findStepAnyPlan(id);
         if (step) Object.assign(step, { status: 'failed', error_message, duration_ms });
         return { changes: 1 };
+      }
+      if (s.includes('tool_input_json = ?')) {
+        const id = params[params.length - 3] as string;
+        const step = findStepAnyPlan(id);
+        if (step) step.tool_input_json = params[0] as string;
+        return { changes: step ? 1 : 0 };
       }
       if (s.includes("status = 'pending'") && s.includes('approved_by')) {
         const [approved_by, id] = params as [string, string];
@@ -178,21 +192,38 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         return { changes: 1 };
       }
       // generic single-status update (e.g. updateStepStatus -> 'awaiting_approval' | 'running')
-      const [status, id] = params as [string, string];
+      const status = params[0] as string;
+      const id = (s.includes('EXISTS') ? params[params.length - 3] : params[1]) as string;
       const step = findStepAnyPlan(id);
       if (step) Object.assign(step, { status });
       return { changes: 1 };
     }
 
     if (s.startsWith('UPDATE ai_agent_plans')) {
-      if (s.includes("status IN ('planning', 'scheduled', 'awaiting_approval', 'paused')")) {
-        const id = params[0] as string;
+      if (s.includes('execution_owner_token = ?') && s.includes('COALESCE(execution_fencing_token')) {
+        const [ownerToken, id] = params as [string, string];
         const plan = db.plans.get(id);
-        if (!plan || !['planning', 'scheduled', 'awaiting_approval', 'paused'].includes(plan.status)) {
+        if (
+          !plan ||
+          !['planning', 'scheduled', 'awaiting_approval', 'paused'].includes(plan.status)
+        ) {
           return { changes: 0 };
         }
         plan.status = 'executing';
+        plan.execution_owner_token = ownerToken;
+        plan.execution_fencing_token += 1;
+        plan.execution_lease_expires_at = new Date(Date.now() + 300_000).toISOString();
         return { changes: 1 };
+      }
+      if (s.includes('execution_lease_expires_at =') && s.includes("status = 'executing'")) {
+        const [id, ownerToken, fencingToken] = params as [string, string, number];
+        const plan = db.plans.get(id);
+        const matches =
+          plan?.status === 'executing' &&
+          plan.execution_owner_token === ownerToken &&
+          plan.execution_fencing_token === fencingToken;
+        if (matches) plan!.execution_lease_expires_at = new Date(Date.now() + 300_000).toISOString();
+        return { changes: matches ? 1 : 0 };
       }
       if (s.includes('result_summary = ?') && s.includes('error_message = ?')) {
         // finalizePlan
@@ -204,8 +235,8 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
           string,
         ];
         const plan = db.plans.get(id);
-        if (plan) Object.assign(plan, { status, result_summary, error_message });
-        return { changes: 1 };
+        if (plan) Object.assign(plan, { status, result_summary, error_message, execution_owner_token: null, execution_lease_expires_at: null });
+        return { changes: plan ? 1 : 0 };
       }
       if (s.includes('completed_steps = ?')) {
         // updatePlanProgress
@@ -213,6 +244,12 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         const plan = db.plans.get(id);
         if (plan) Object.assign(plan, { completed_steps, current_step_index });
         return { changes: 1 };
+      }
+      if (s.includes('execution_owner_token = NULL') && s.includes('current_step_index = ?')) {
+        const [status, current_step_index, id] = params as [string, number, string];
+        const plan = db.plans.get(id);
+        if (plan) Object.assign(plan, { status, current_step_index, execution_owner_token: null, execution_lease_expires_at: null });
+        return { changes: plan ? 1 : 0 };
       }
       // dynamic updatePlanStatus(planId, status, currentStep?, errorMessage?)
       let idx = 0;
@@ -236,6 +273,14 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 
     if (s.startsWith('SELECT * FROM ai_agent_plans WHERE id = ?')) {
       return db.plans.get(params[0] as string) || undefined;
+    }
+
+    if (s.startsWith('SELECT execution_fencing_token FROM ai_agent_plans')) {
+      const [planId, ownerToken] = params as [string, string];
+      const plan = db.plans.get(planId);
+      return plan?.execution_owner_token === ownerToken
+        ? { execution_fencing_token: plan.execution_fencing_token }
+        : undefined;
     }
 
     if (s.includes('FROM ai_agent_plan_steps') && s.includes("status = 'awaiting_approval'")) {
@@ -398,7 +443,11 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
     expect(approved?.steps[0].approvedAt).toBeTruthy();
 
     await agentPlannerService.executePlan(plan.id, executor);
-    expect(executor).toHaveBeenCalledWith('create_initiative_draft', payload);
+    expect(executor).toHaveBeenCalledWith(
+      'create_initiative_draft',
+      payload,
+      expect.objectContaining({ operationKey: `agent-plan:${plan.id}:step:${plan.steps[0].id}` })
+    );
 
     const materialized = await agentPlannerService.getPlan(plan.id);
     expect(materialized?.status).toBe('completed');
@@ -528,7 +577,7 @@ describe('agentPlannerService.executePlan — zmienne między krokami (Fala 1, 2
     expect(executor).toHaveBeenNthCalledWith(2, 'calculate_financial', {
       score: 87,
       label: 'fixed',
-    });
+    }, expect.objectContaining({ operationKey: expect.any(String) }));
   });
 
   it('leaves the reference untouched when the referenced step has no result yet (bad index)', async () => {
@@ -542,7 +591,12 @@ describe('agentPlannerService.executePlan — zmienne między krokami (Fala 1, 2
     const executor = vi.fn().mockResolvedValue('ok');
     await agentPlannerService.executePlan(plan.id, executor);
 
-    expect(executor).toHaveBeenNthCalledWith(1, 'search_web', { q: '$step.9.missing' });
+    expect(executor).toHaveBeenNthCalledWith(
+      1,
+      'search_web',
+      { q: '$step.9.missing' },
+      expect.objectContaining({ operationKey: expect.any(String) })
+    );
   });
 
   it('does not mutate the stored tool_input_json — DB keeps the template, not the resolved value', async () => {
