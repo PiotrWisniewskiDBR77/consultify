@@ -580,7 +580,15 @@ export async function returnClosureRequest(input: ReturnClosureRequestInput) {
   return { id: input.closureRequestId, status: 'returned' as const };
 }
 
-async function assertActorCanApprove(orgId: string, initiativeId: string, actorId: string) {
+/**
+ * Exported (EXE-09, minimal additive visibility change only — no behavior
+ * change) so a new route acting on the SAME initiative-closure capability
+ * (retrying a stuck Results/Finance delivery for an already-closed
+ * initiative) can reuse the EXACT same approver-role gate instead of
+ * inventing a parallel one. Same semantics: "can this actor act on this
+ * initiative's closure."
+ */
+export async function assertActorCanApprove(orgId: string, initiativeId: string, actorId: string) {
   const access = await resolveInitiativeAccessContext(orgId, initiativeId, actorId);
   const permitted = access.effectiveRoles.some((r) => CLOSURE_APPROVER_ROLES.has(r));
   if (!permitted) {
