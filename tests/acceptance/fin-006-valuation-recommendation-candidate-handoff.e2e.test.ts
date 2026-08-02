@@ -53,12 +53,14 @@ const VAL_GOLDEN = `${PREFIX}val-golden`;
 const VAL_CONCURRENCY = `${PREFIX}val-concurrency`;
 const VAL_CROSSTENANT = `${PREFIX}val-crosstenant`;
 const VAL_CONVERT = `${PREFIX}val-convert`;
+const VAL_RICH = `${PREFIX}val-rich`;
 
 const REC_GOLDEN = `${PREFIX}rec-golden`;
 const REC_CONCURRENCY = `${PREFIX}rec-concurrency`;
 const REC_CROSSTENANT = `${PREFIX}rec-crosstenant`;
 const REC_CONVERT = `${PREFIX}rec-convert`;
 const REC_UNKNOWN = `${PREFIX}rec-does-not-exist`;
+const REC_RICH = `${PREFIX}rec-rich`;
 
 function mintTokenFor(userId: string, orgId: string, email: string): string {
   return jwt.sign(
@@ -141,6 +143,14 @@ beforeAll(async () => {
   );
   await client.query(migration);
 
+  // Defensive: apply the `source_snapshot` retrofit migration too (additive
+  // ALTER TABLE ... ADD COLUMN IF NOT EXISTS — safe to re-run).
+  const snapshotMigration = await fs.readFile(
+    'server/migrations/20260802_fin006_candidate_handoff_source_snapshot.sql',
+    'utf8'
+  );
+  await client.query(snapshotMigration);
+
   await seedTenant(client, ORG_A, USER_A, EMAIL_A);
   await seedTenant(client, ORG_B, USER_B, EMAIL_B);
 
@@ -172,6 +182,38 @@ beforeAll(async () => {
     recommendationId: REC_CONVERT,
     titleSuffix: 'convert',
   });
+
+  // A richer fixture, hand-built to include the OPTIONAL real fields a
+  // production `generateAdvisory()` recommendation carries (`risks`) plus a
+  // non-empty `assumptions` blob on the parent valuation — proves the
+  // adapter carries REAL values over when they genuinely exist, not just
+  // that it falls back to 'unknown' when they don't (covered by REC_GOLDEN).
+  await client.query(
+    `INSERT INTO valuations
+       (id, organization_id, project_id, title, status, source_type, source_id,
+        horizon_years, currency, assumptions, peers, results, advisory, version, created_by)
+     VALUES ($1,$2,NULL,$3,'APPROVED','manual',NULL,5,'EUR',$4,'[]','{}',$5,3,$6)`,
+    [
+      VAL_RICH,
+      ORG_A,
+      `${PREFIX}Valuation ${VAL_RICH}`,
+      JSON.stringify({ waccPercent: 12.5, terminalGrowthPercent: 2.5, horizonYears: 5 }),
+      JSON.stringify({
+        generatedAt: new Date().toISOString(),
+        recommendations: [
+          {
+            id: REC_RICH,
+            category: 'risk_reduction',
+            title: `${PREFIX}Reduce risk rich`,
+            hypothesis: 'De-risk execution rich',
+            mechanism: 'Lower perceived risk rich',
+            risks: ['Requires sustained operational cadence.', 'May impact customer experience.'],
+          },
+        ],
+      }),
+      USER_A,
+    ]
+  );
 
   tokenA = mintTokenFor(USER_A, ORG_A, EMAIL_A);
   tokenB = mintTokenFor(USER_B, ORG_B, EMAIL_B);
@@ -228,6 +270,72 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
     expect(known.body.data.preview.sourceId).toBe(REC_GOLDEN);
     expect(known.body.data.preview.title).toBe(`${PREFIX}Reduce risk golden`);
     expect(known.body.data.preview.rationale).toContain('golden');
+
+    // sourceSnapshot: every field present (real value or literal 'unknown'),
+    // never missing, never a fabricated/estimated number.
+    const snap = known.body.data.preview.sourceSnapshot;
+    expect(snap).toBeDefined();
+    for (const key of [
+      'currency',
+      'capex',
+      'opex',
+      'npv',
+      'irr',
+      'roi',
+      'payback',
+      'baselineOrScenario',
+      'assumptions',
+      'risks',
+      'sourceVersion',
+      'sourceFingerprint',
+    ]) {
+      expect(snap, `sourceSnapshot.${key} must be present`).toHaveProperty(key);
+      expect(snap[key], `sourceSnapshot.${key} must never be null`).not.toBeNull();
+    }
+    // Real values, carried over verbatim from the parent valuation row.
+    expect(snap.currency).toBe('PLN');
+    expect(snap.sourceVersion).toBe('1');
+    // This fixture's hand-built advisory recommendation has no `risks` key
+    // at all (unlike a production `generateAdvisory()` recommendation,
+    // which always has one) -> genuinely absent, honestly 'unknown', never
+    // fabricated as `[]`.
+    expect(snap.risks).toBe('unknown');
+    // Fixture's `valuations.assumptions` is the column default `{}` (no
+    // scalar keys) -> honestly 'unknown', not a fabricated empty list.
+    expect(snap.assumptions).toBe('unknown');
+    // No npv/irr/roi/payback/capex/opex/scenario field exists on either the
+    // recommendation object or the valuations row.
+    expect(snap.npv).toBe('unknown');
+    expect(snap.irr).toBe('unknown');
+    expect(snap.roi).toBe('unknown');
+    expect(snap.payback).toBe('unknown');
+    expect(snap.capex).toBe('unknown');
+    expect(snap.opex).toBe('unknown');
+    expect(snap.baselineOrScenario).toBe('unknown');
+    expect(typeof snap.sourceFingerprint).toBe('string');
+    expect(snap.sourceFingerprint.length).toBeGreaterThan(0);
+  });
+
+  it('preview: a recommendation WITH real risks + a valuation WITH real assumptions carries them over verbatim', async () => {
+    const res = await request(app)
+      .get(`/api/finance/candidate-handoff/valuation-recommendation/${REC_RICH}/preview`)
+      .set('Authorization', `Bearer ${tokenA}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.eligible).toBe(true);
+    const snap = res.body.data.preview.sourceSnapshot;
+    expect(snap.currency).toBe('EUR');
+    expect(snap.sourceVersion).toBe('3');
+    // Real `risks` array, carried over verbatim (not fabricated, not 'unknown').
+    expect(snap.risks).toEqual([
+      'Requires sustained operational cadence.',
+      'May impact customer experience.',
+    ]);
+    // Real scalar assumption keys, formatted as "key: value" strings.
+    expect(snap.assumptions).toContain('waccPercent: 12.5');
+    expect(snap.assumptions).toContain('terminalGrowthPercent: 2.5');
+    expect(snap.assumptions).toContain('horizonYears: 5');
+    // Still honestly 'unknown' — no npv/irr/roi/payback field on this source.
+    expect(snap.npv).toBe('unknown');
   });
 
   it('confirm: creates candidate + receipt, retry is idempotent (same candidateId, one row)', async () => {
@@ -240,6 +348,12 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
     const candidateId = confirm1.body.data.candidateId;
     expect(candidateId).toBeTruthy();
 
+    // Confirm response carries the same real-values-only snapshot preview did.
+    expect(confirm1.body.data.sourceSnapshot).toBeDefined();
+    expect(confirm1.body.data.sourceSnapshot.currency).toBe('PLN');
+    expect(confirm1.body.data.sourceSnapshot.risks).toBe('unknown');
+    expect(confirm1.body.data.sourceSnapshot.npv).toBe('unknown');
+
     const candidateRow = await client.query(
       `SELECT source_type, source_id, organization_id, status FROM initiative_candidates WHERE id = $1`,
       [candidateId]
@@ -251,12 +365,15 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
     expect(candidateRow.rows[0].status).toBe('pending');
 
     const handoffRow = await client.query(
-      `SELECT source_type, source_id, candidate_id FROM finance_candidate_handoffs WHERE organization_id = $1 AND source_id = $2`,
+      `SELECT source_type, source_id, candidate_id, source_snapshot FROM finance_candidate_handoffs WHERE organization_id = $1 AND source_id = $2`,
       [ORG_A, REC_GOLDEN]
     );
     expect(handoffRow.rows).toHaveLength(1);
     expect(handoffRow.rows[0].source_type).toBe('finance_valuation_recommendation');
     expect(handoffRow.rows[0].candidate_id).toBe(candidateId);
+    // Direct-DB verification: the persisted source_snapshot column matches
+    // exactly what the confirm response returned.
+    expect(handoffRow.rows[0].source_snapshot).toEqual(confirm1.body.data.sourceSnapshot);
 
     const confirm2 = await request(app)
       .post(`/api/finance/candidate-handoff/valuation-recommendation/${REC_GOLDEN}/confirm`)
@@ -283,6 +400,8 @@ describe('FIN-06 — valuation recommendation candidate handoff', () => {
     expect(lineage.status, JSON.stringify(lineage.body)).toBe(200);
     expect(lineage.body.data.sourceId).toBe(REC_GOLDEN);
     expect(lineage.body.data.candidateId).toBe(candidateId);
+    // Reopen preserves the SAME source_snapshot captured at confirm time.
+    expect(lineage.body.data.sourceSnapshot).toEqual(confirm1.body.data.sourceSnapshot);
   });
 
   it('lineage read-back 404s before any handoff exists', async () => {

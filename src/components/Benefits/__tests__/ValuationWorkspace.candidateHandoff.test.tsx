@@ -48,13 +48,17 @@ vi.mock('react-i18next', () => ({
 // vi.mock factories are hoisted above module-level declarations, so the
 // mocks they reference must come from vi.hoisted (plain `const` here would
 // throw "Cannot access before initialization").
-const { toastFn, previewMock, confirmMock, navigateMock } = vi.hoisted(() => ({
+const { toastFn, previewMock, confirmMock, getHandoffMock, navigateMock } = vi.hoisted(() => ({
   // Capture the render-prop function toast(fn) invocations get called with,
   // so tests can render its returned JSX (the "Otwórz" link) and assert on
   // it, the same way react-hot-toast would when it actually renders.
   toastFn: vi.fn((_arg: unknown) => 'toast-id'),
   previewMock: vi.fn(),
   confirmMock: vi.fn(),
+  // The shared FinanceCandidateHandoffModal's best-effort fresh read-back
+  // after a successful confirm. Defaults to "no receipt yet" so existing
+  // scenarios (which don't care about it) aren't forced to stub it.
+  getHandoffMock: vi.fn().mockResolvedValue(null),
   navigateMock: vi.fn(),
 }));
 
@@ -70,6 +74,7 @@ vi.mock('react-hot-toast', () => {
 vi.mock('@/services/api/v8/financeCandidateHandoffValuation', () => ({
   previewValuationRecommendationCandidateHandoff: (...args: unknown[]) => previewMock(...args),
   confirmValuationRecommendationCandidateHandoff: (...args: unknown[]) => confirmMock(...args),
+  getValuationRecommendationCandidateHandoff: (...args: unknown[]) => getHandoffMock(...args),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -158,6 +163,8 @@ async function openResultsTabWithRecommendation() {
 beforeEach(() => {
   previewMock.mockReset();
   confirmMock.mockReset();
+  getHandoffMock.mockReset();
+  getHandoffMock.mockResolvedValue(null);
   toastFn.mockClear();
   navigateMock.mockClear();
   global.fetch = vi.fn(mockFetchImplementation) as unknown as typeof fetch;
@@ -305,5 +312,39 @@ describe('ValuationWorkspace — Send as Initiative Candidate', () => {
       screen.getByText('To zalecenie zostało już wcześniej wysłane jako kandydat na Initiative')
     ).toBeInTheDocument();
     expect(screen.queryByText('Utworzono kandydata na Initiative')).not.toBeInTheDocument();
+  });
+
+  it('attempts a fresh read-back of the handoff receipt after a successful confirm (FinanceCandidateHandoffModal.fetchHandoff wiring)', async () => {
+    previewMock.mockResolvedValue({
+      eligible: true,
+      preview: {
+        title: 'Reduce net debt before close',
+        rationale: 'Improves EV multiple ahead of the raise.',
+        sourceType: 'finance_valuation_recommendation',
+        sourceId: RECOMMENDATION_ID,
+      },
+    });
+    confirmMock.mockResolvedValue({ created: true, candidateId: 'cand-999' });
+    getHandoffMock.mockResolvedValue({
+      id: 'handoff-1',
+      organizationId: 'org-1',
+      sourceType: 'finance_valuation_recommendation',
+      sourceId: RECOMMENDATION_ID,
+      candidateId: 'cand-999',
+      createdBy: 'user-1',
+      createdAt: '2026-08-01T00:00:00.000Z',
+    });
+
+    renderWorkspace();
+    const convertButton = await openResultsTabWithRecommendation();
+    fireEvent.click(convertButton);
+
+    const confirmButton = await screen.findByRole('button', { name: 'Wyślij' });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => expect(getHandoffMock).toHaveBeenCalledWith(RECOMMENDATION_ID));
+    // The success toast still fires after the read-back settles — a failed
+    // or slow read-back never blocks the honest, backend-confirmed success.
+    await waitFor(() => expect(toastFn).toHaveBeenCalledTimes(1));
   });
 });

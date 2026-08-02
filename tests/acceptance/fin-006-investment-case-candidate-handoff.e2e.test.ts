@@ -137,6 +137,14 @@ beforeAll(async () => {
   );
   await client.query(migration);
 
+  // Defensive: apply the `source_snapshot` retrofit migration too (additive
+  // ALTER TABLE ... ADD COLUMN IF NOT EXISTS — safe to re-run).
+  const snapshotMigration = await fs.readFile(
+    'server/migrations/20260802_fin006_candidate_handoff_source_snapshot.sql',
+    'utf8'
+  );
+  await client.query(snapshotMigration);
+
   await seedTenant(client, ORG_A, USER_A, EMAIL_A);
   await seedTenant(client, ORG_B, USER_B, EMAIL_B);
 
@@ -215,6 +223,47 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     expect(approved.body.data.preview.rationale).toContain('EUR');
     // No fabricated NPV/IRR/payback/fitScore — financial_models has no such column.
     expect(approved.body.data.preview.fitScore).toBeUndefined();
+
+    // sourceSnapshot: every field present (real value or literal 'unknown'),
+    // never missing, never a fabricated/estimated number.
+    const snap = approved.body.data.preview.sourceSnapshot;
+    expect(snap).toBeDefined();
+    for (const key of [
+      'currency',
+      'capex',
+      'opex',
+      'npv',
+      'irr',
+      'roi',
+      'payback',
+      'baselineOrScenario',
+      'assumptions',
+      'risks',
+      'sourceVersion',
+      'sourceFingerprint',
+    ]) {
+      expect(snap, `sourceSnapshot.${key} must be present`).toHaveProperty(key);
+      expect(snap[key], `sourceSnapshot.${key} must never be null`).not.toBeNull();
+    }
+    // Real values, carried over verbatim from the row.
+    expect(snap.currency).toBe('EUR');
+    expect(snap.baselineOrScenario).toBe('base');
+    expect(snap.sourceVersion).toBe('2');
+    expect(typeof snap.sourceFingerprint).toBe('string');
+    expect(snap.sourceFingerprint.length).toBeGreaterThan(0);
+    // financial_models has NO npv/irr/roi/payback/capex/opex/assumptions
+    // field or computed-on-read value reachable by modelId — honestly
+    // 'unknown', never 0/null/fabricated.
+    expect(snap.npv).toBe('unknown');
+    expect(snap.irr).toBe('unknown');
+    expect(snap.roi).toBe('unknown');
+    expect(snap.payback).toBe('unknown');
+    expect(snap.capex).toBe('unknown');
+    expect(snap.opex).toBe('unknown');
+    expect(snap.assumptions).toBe('unknown');
+    // Fixture's approved_snapshot has a real (empty) validations array ->
+    // a genuine computed "no risks flagged" result, not 'unknown'.
+    expect(snap.risks).toEqual([]);
   });
 
   it('confirm: creates candidate + receipt, retry is idempotent (same candidateId, one row)', async () => {
@@ -227,6 +276,12 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     const candidateId = confirm1.body.data.candidateId;
     expect(candidateId).toBeTruthy();
 
+    // Confirm response carries the same real-values-only snapshot preview did.
+    expect(confirm1.body.data.sourceSnapshot).toBeDefined();
+    expect(confirm1.body.data.sourceSnapshot.currency).toBe('EUR');
+    expect(confirm1.body.data.sourceSnapshot.baselineOrScenario).toBe('base');
+    expect(confirm1.body.data.sourceSnapshot.npv).toBe('unknown');
+
     const candidateRow = await client.query(
       `SELECT source_type, source_id, organization_id, status FROM initiative_candidates WHERE id = $1`,
       [candidateId]
@@ -238,12 +293,15 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     expect(candidateRow.rows[0].status).toBe('pending');
 
     const handoffRow = await client.query(
-      `SELECT source_type, source_id, candidate_id FROM finance_candidate_handoffs WHERE organization_id = $1 AND source_id = $2`,
+      `SELECT source_type, source_id, candidate_id, source_snapshot FROM finance_candidate_handoffs WHERE organization_id = $1 AND source_id = $2`,
       [ORG_A, MODEL_GOLDEN]
     );
     expect(handoffRow.rows).toHaveLength(1);
     expect(handoffRow.rows[0].source_type).toBe('finance_investment_case');
     expect(handoffRow.rows[0].candidate_id).toBe(candidateId);
+    // Direct-DB verification: the persisted source_snapshot column matches
+    // exactly what the confirm response returned — never re-derived on read.
+    expect(handoffRow.rows[0].source_snapshot).toEqual(confirm1.body.data.sourceSnapshot);
 
     const confirm2 = await request(app)
       .post(`/api/finance/candidate-handoff/investment-case/${MODEL_GOLDEN}/confirm`)
@@ -270,6 +328,9 @@ describe('FIN-06 — investment case (financial_models) candidate handoff', () =
     expect(lineage.status, JSON.stringify(lineage.body)).toBe(200);
     expect(lineage.body.data.sourceId).toBe(MODEL_GOLDEN);
     expect(lineage.body.data.candidateId).toBe(candidateId);
+    // Reopen preserves the SAME source_snapshot captured at confirm time —
+    // never re-derived on GET.
+    expect(lineage.body.data.sourceSnapshot).toEqual(confirm1.body.data.sourceSnapshot);
   });
 
   it('lineage read-back 404s before any handoff exists', async () => {

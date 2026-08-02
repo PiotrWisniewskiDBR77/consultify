@@ -105,6 +105,14 @@ beforeAll(async () => {
     );
     await client.query(migrationSql);
 
+    // Defensive, idempotent application of the `source_snapshot` retrofit
+    // migration too (additive ALTER TABLE ... ADD COLUMN IF NOT EXISTS).
+    const snapshotMigrationSql = await fs.readFile(
+      'server/migrations/20260802_fin006_candidate_handoff_source_snapshot.sql',
+      'utf8'
+    );
+    await client.query(snapshotMigrationSql);
+
     // Org B (cross-tenant fixture) + its owning user + ACTIVE membership.
     await client.query(
       `INSERT INTO organizations (id, name, plan, status, is_active, created_at)
@@ -219,6 +227,45 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
     expect(golden.body.data.preview.rationale).toContain('CF x0');
     expect(golden.body.data.preview.rationale).toContain('PLN');
     expect(golden.body.data.preview.fitScore).toBeCloseTo(0.82, 2);
+
+    // sourceSnapshot: every field present (real value or literal 'unknown'),
+    // never missing, never a fabricated/estimated number.
+    const snap = golden.body.data.preview.sourceSnapshot;
+    expect(snap).toBeDefined();
+    for (const key of [
+      'currency',
+      'capex',
+      'opex',
+      'npv',
+      'irr',
+      'roi',
+      'payback',
+      'baselineOrScenario',
+      'assumptions',
+      'risks',
+      'sourceVersion',
+      'sourceFingerprint',
+    ]) {
+      expect(snap, `sourceSnapshot.${key} must be present`).toHaveProperty(key);
+      expect(snap[key], `sourceSnapshot.${key} must never be null`).not.toBeNull();
+    }
+    // Real value, carried over verbatim from the pack row.
+    expect(snap.currency).toBe('PLN');
+    // financial_statement_packs has no capex/opex/npv/irr/roi/payback/
+    // scenario/assumptions/version column at all — honestly 'unknown'.
+    expect(snap.capex).toBe('unknown');
+    expect(snap.opex).toBe('unknown');
+    expect(snap.npv).toBe('unknown');
+    expect(snap.irr).toBe('unknown');
+    expect(snap.roi).toBe('unknown');
+    expect(snap.payback).toBe('unknown');
+    expect(snap.baselineOrScenario).toBe('unknown');
+    expect(snap.assumptions).toBe('unknown');
+    expect(snap.sourceVersion).toBe('unknown');
+    // Real, stored pack_quality_reason_codes (fixture hardcodes '["complete"]').
+    expect(snap.risks).toEqual(['complete']);
+    expect(typeof snap.sourceFingerprint).toBe('string');
+    expect(snap.sourceFingerprint.length).toBeGreaterThan(0);
   });
 
   it('confirm: creates candidate + receipt; retry is idempotent (same candidateId, no duplicate rows)', async () => {
@@ -231,6 +278,12 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
     const candidateId = confirm1.body.data.candidateId;
     expect(candidateId).toBeTruthy();
 
+    // Confirm response carries the same real-values-only snapshot preview did.
+    expect(confirm1.body.data.sourceSnapshot).toBeDefined();
+    expect(confirm1.body.data.sourceSnapshot.currency).toBe('PLN');
+    expect(confirm1.body.data.sourceSnapshot.risks).toEqual(['complete']);
+    expect(confirm1.body.data.sourceSnapshot.npv).toBe('unknown');
+
     const client = pgClient();
     await client.connect();
     try {
@@ -241,6 +294,15 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
       expect(candidateRow.rows).toHaveLength(1);
       expect(candidateRow.rows[0].source_type).toBe('finance_statement_pack');
       expect(candidateRow.rows[0].source_id).toBe(PACK.golden);
+
+      // Direct-DB verification: the persisted source_snapshot column
+      // matches exactly what the confirm response returned.
+      const handoffRow = await client.query(
+        `SELECT source_snapshot FROM finance_candidate_handoffs WHERE source_id = $1`,
+        [PACK.golden]
+      );
+      expect(handoffRow.rows).toHaveLength(1);
+      expect(handoffRow.rows[0].source_snapshot).toEqual(confirm1.body.data.sourceSnapshot);
     } finally {
       await client.end();
     }
@@ -277,6 +339,8 @@ describe('FIN-06 — statement pack candidate handoff (golden flow, idempotency,
     expect(lineage.body.data.sourceId).toBe(PACK.golden);
     expect(lineage.body.data.candidateId).toBe(candidateId);
     expect(lineage.body.data.sourceType).toBe('finance_statement_pack');
+    // Reopen preserves the SAME source_snapshot captured at confirm time.
+    expect(lineage.body.data.sourceSnapshot).toEqual(confirm1.body.data.sourceSnapshot);
   });
 
   it('confirm rejects a not-ready pack (409 SOURCE_NOT_ELIGIBLE, reason NOT_READY)', async () => {

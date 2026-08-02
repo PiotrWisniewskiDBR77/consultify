@@ -7,15 +7,25 @@
  * flow this file used to cover (hence the historical filename — kept so no
  * dangling coverage gap opens up under a renamed/orphaned file).
  *
+ * As of the FIN-06 "one shared flow" pass, the "Initiatives" output type's
+ * preview → confirm UI is the shared `FinanceCandidateHandoffModal`
+ * (`variant="embedded"`), not a bespoke inline block — this dialog now only
+ * supplies the copy/API bindings and its own eligibility-reachability gate
+ * (`supportsInvestmentCaseHandoff`). The dialog's own generic submit footer
+ * is hidden for this output type since the embedded modal supplies its own
+ * Confirm button (which only ever renders once a real eligible preview is in
+ * hand — there is no perpetually-disabled ghost button to click).
+ *
  * Coverage bar (per FIN-06's "no fake receipt" mandate):
- *   - an ineligible preview shows the REAL reason, never a success state;
+ *   - an ineligible preview shows the REAL reason, never a success state,
+ *     and no Confirm action is offered at all;
  *   - a successful confirm shows a REAL candidateId-driven result, never a
  *     fabricated stub;
  *   - a 4xx/409 from confirm shows a REAL error, never success;
  *   - a source type that cannot resolve a `financial_models.id` (this
  *     dialog's `analysisType` prop is 'financial_analysis' or 'valuation' for
  *     two of its three real callers) never even attempts the call — it shows
- *     an honest "unsupported" explanation instead.
+ *     an honest "unsupported" explanation instead, with no handoff UI at all.
  */
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -51,12 +61,15 @@ vi.mock('@/services/api', () => ({
 
 const previewInvestmentCaseCandidateHandoff = vi.fn();
 const confirmInvestmentCaseCandidateHandoff = vi.fn();
+const getInvestmentCaseCandidateHandoff = vi.fn();
 
 vi.mock('@/services/api/v8/financeCandidateHandoff', () => ({
   previewInvestmentCaseCandidateHandoff: (...args: unknown[]) =>
     previewInvestmentCaseCandidateHandoff(...args),
   confirmInvestmentCaseCandidateHandoff: (...args: unknown[]) =>
     confirmInvestmentCaseCandidateHandoff(...args),
+  getInvestmentCaseCandidateHandoff: (...args: unknown[]) =>
+    getInvestmentCaseCandidateHandoff(...args),
 }));
 
 vi.mock('@/services/financeExportService', () => ({
@@ -69,12 +82,16 @@ vi.mock('@/services/funnelAnalytics', () => ({
 
 import { ExportToOutputDialog } from '../../../src/components/Finance/ExportToOutputDialog';
 
-describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', () => {
+describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff (shared FinanceCandidateHandoffModal)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Best-effort fresh read-back after confirm — most scenarios below don't
+    // exercise the confirm path, but default it to "no receipt yet" so any
+    // that do never hang on an unresolved mock.
+    getInvestmentCaseCandidateHandoff.mockResolvedValue(null);
   });
 
-  it('checks eligibility and shows the real ineligible reason, never a success state', async () => {
+  it('checks eligibility and shows the real ineligible reason, offering no Confirm action at all', async () => {
     previewInvestmentCaseCandidateHandoff.mockResolvedValue({
       eligible: false,
       reason: 'NOT_APPROVED',
@@ -104,10 +121,10 @@ describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', ()
       ).toBeInTheDocument();
     });
 
-    const confirmButton = screen.getByRole('button', { name: 'Send as Candidate' });
-    expect(confirmButton).toBeDisabled();
-
-    fireEvent.click(confirmButton);
+    // No perpetually-disabled ghost button — the embedded modal's Confirm
+    // button only renders once a real eligible preview is in hand, and the
+    // dialog's own generic footer is hidden for this output type.
+    expect(screen.queryByRole('button', { name: 'Send as Candidate' })).not.toBeInTheDocument();
     expect(confirmInvestmentCaseCandidateHandoff).not.toHaveBeenCalled();
     expect(onExportComplete).not.toHaveBeenCalled();
   });
@@ -165,6 +182,47 @@ describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', ()
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('distinguishes an idempotent replay (created: false) from a fresh creation in the receipt title', async () => {
+    previewInvestmentCaseCandidateHandoff.mockResolvedValue({
+      eligible: true,
+      preview: {
+        title: 'Expand distribution network',
+        rationale: 'Approved model shows 18% IRR uplift.',
+        sourceType: 'finance_investment_case',
+        sourceId: 'model-1',
+      },
+    });
+    confirmInvestmentCaseCandidateHandoff.mockResolvedValue({
+      created: false,
+      candidateId: 'candidate-77',
+    });
+    const onExportComplete = vi.fn();
+
+    render(
+      <ExportToOutputDialog
+        open
+        onClose={vi.fn()}
+        analysisId="model-1"
+        analysisTitle="Q3 expansion model"
+        analysisType="financial_model"
+        onExportComplete={onExportComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Initiatives/i }));
+    const confirmButton = await screen.findByRole('button', { name: 'Send as Candidate' });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(onExportComplete).toHaveBeenCalledWith(
+        expect.objectContaining({
+          outputId: 'candidate-77',
+          title: 'Already sent as Initiative candidate: Expand distribution network',
+        })
+      );
+    });
+  });
+
   it('shows a real error on a 409 from confirm, never success', async () => {
     previewInvestmentCaseCandidateHandoff.mockResolvedValue({
       eligible: true,
@@ -209,7 +267,7 @@ describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', ()
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('never attempts the handoff for a source type that cannot resolve a financial_models.id', async () => {
+  it('never attempts the handoff for a source type that cannot resolve a financial_models.id, and offers no handoff UI', async () => {
     render(
       <ExportToOutputDialog
         open
@@ -228,6 +286,6 @@ describe('ExportToOutputDialog — FIN-06 Investment Case candidate handoff', ()
     });
 
     expect(previewInvestmentCaseCandidateHandoff).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: 'Send as Candidate' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Send as Candidate' })).not.toBeInTheDocument();
   });
 });
