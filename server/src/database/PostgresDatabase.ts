@@ -570,9 +570,12 @@ export async function withPinnedPostgresTransaction<T>(
  * schema initialisation exactly like `executeWithLogging` does, so the client
  * is not handed out before the schema promise settles.
  *
- * Intended for one caller (`atelierFinancePromotionTransaction.ts`). Do not
- * widen this into a general "give me a connection" utility — routes and
- * services should keep going through `DbPromise`.
+ * Authorized callers: `atelierFinancePromotionTransaction.ts` and
+ * `kpiDefinitionService.ts` (RES-02 — canonical KPI definition writes need
+ * the same one-connection guarantee: a version row and its audit entry must
+ * never land without each other). Do not widen this into a general "give me a
+ * connection" utility beyond genuinely atomicity-critical, multi-statement
+ * writes — routes and services should keep going through `DbPromise`.
  */
 export async function getPoolClientForPinnedTransaction(): Promise<PoolClient> {
   const activePool = getPool();
