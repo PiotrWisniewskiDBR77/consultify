@@ -29,9 +29,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { createDefinition as createKpiDefinition } from './results/kpiDefinitionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { createDefinition as createKpiDefinition } from './results/kpiDefinitionService.js';
 
 export const BENEFIT_HANDOFF_SOURCE = 'M14_CLOSURE_HANDOFF';
 

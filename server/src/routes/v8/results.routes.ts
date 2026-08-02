@@ -24,10 +24,10 @@ import {
   createDefinition as createKpiDefinition,
   getCurrentDefinition as getCurrentKpiDefinition,
   getCurrentDefinitionVersionId,
-  updateDefinition as updateKpiDefinition,
   KpiDefinitionArchivedError,
   KpiDefinitionNotFoundError,
   KpiDefinitionVersionConflictError,
+  updateDefinition as updateKpiDefinition,
 } from '../../services/results/kpiDefinitionService.js';
 import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import {
@@ -46,13 +46,13 @@ import {
   linkRecoveryActionTask,
   markRecoveryActionTaskLinkFailed,
   progressRecoveryCard,
+  type RecoveryActionRow,
+  type RecoveryCardRow,
   RecoveryCardServiceError,
   resolveRecoveryCheckpoint,
   toActionDTO,
   toCheckpointDTO,
   updateRecoveryCard,
-  type RecoveryActionRow,
-  type RecoveryCardRow,
 } from '../../services/results/kpiRecoveryCardService.js';
 import {
   createKpiReportSnapshot,
@@ -202,8 +202,8 @@ async function createV8KpiReportArtifact(params: {
 // on why 'edit_finance_artifacts'/'manage_reconciliation_finance' are excluded.
 import {
   assertKpiPermission as p04AssertKpiPermission,
-  kpiRoleFromRequest as p04KpiRoleFromRequest,
   type KpiGuardedAction as P04KpiGuardedAction,
+  kpiRoleFromRequest as p04KpiRoleFromRequest,
 } from '../../services/results/kpiPermissions.js';
 
 /**
@@ -709,7 +709,8 @@ router.post(
       baselineValue: baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
       targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : null,
       measurementFrequency: measurementFrequency || 'MONTHLY',
-      alertThreshold: alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+      alertThreshold:
+        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
       alertDirection: alertDirection || 'BELOW',
       ownerUserId: ownerUserId || null,
       direction: direction || 'HIGHER_IS_BETTER',
@@ -3175,7 +3176,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -3493,7 +3497,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 

@@ -29,10 +29,10 @@ import {
   createDefinition as createKpiDefinition,
   getCurrentDefinition as getCurrentKpiDefinition,
   getCurrentDefinitionVersionId,
-  updateDefinition as updateKpiDefinition,
   KpiDefinitionArchivedError,
   KpiDefinitionNotFoundError,
   KpiDefinitionVersionConflictError,
+  updateDefinition as updateKpiDefinition,
 } from '../services/results/kpiDefinitionService.js';
 import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
 import { assertKpiPermission } from '../services/results/kpiPermissions.js';
@@ -237,7 +237,8 @@ router.post(
       baselineValue: baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
       targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : null,
       measurementFrequency: measurementFrequency || 'MONTHLY',
-      alertThreshold: alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
+      alertThreshold:
+        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
       alertDirection: alertDirection || 'BELOW',
       ownerUserId: ownerUserId || null,
       direction: direction || 'HIGHER_IS_BETTER',

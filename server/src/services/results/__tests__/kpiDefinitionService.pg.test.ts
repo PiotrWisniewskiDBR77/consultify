@@ -91,9 +91,10 @@ async function withClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T>
 }
 
 async function seedOrgAndInitiative(orgId: string, initiativeId: string): Promise<void> {
-  await control.query(`INSERT INTO organizations (id, name) VALUES ($1, $1) ON CONFLICT (id) DO NOTHING`, [
-    orgId,
-  ]);
+  await control.query(
+    `INSERT INTO organizations (id, name) VALUES ($1, $1) ON CONFLICT (id) DO NOTHING`,
+    [orgId]
+  );
   await control.query(
     `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, 'Test initiative', 'DRAFT')
      ON CONFLICT (id) DO NOTHING`,

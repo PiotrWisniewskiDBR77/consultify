@@ -46,7 +46,6 @@
  * does not exist — `KpiDefinitionNotFoundError`, never a leak of its shape.
  */
 import crypto from 'crypto';
-
 import type { PoolClient } from 'pg';
 
 import { getPoolClientForPinnedTransaction } from '../../database/PostgresDatabase.js';
@@ -251,9 +250,7 @@ function computeDefinitionHash(definition: KpiDefinitionFields): string {
   return crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
-async function withPinnedTransaction<T>(
-  work: (client: PoolClient) => Promise<T>
-): Promise<T> {
+async function withPinnedTransaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await getPoolClientForPinnedTransaction();
   let began = false;
   try {
@@ -390,10 +387,9 @@ export async function createDefinition(
     );
     const definitionVersionId = versionRes.rows[0].id as string;
 
-    await client.query(
-      `UPDATE initiative_kpis SET current_definition_version = 1 WHERE id = $1`,
-      [kpiId]
-    );
+    await client.query(`UPDATE initiative_kpis SET current_definition_version = 1 WHERE id = $1`, [
+      kpiId,
+    ]);
 
     await insertAuditEntry(client, {
       organizationId,

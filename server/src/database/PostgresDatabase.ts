@@ -3848,7 +3848,9 @@ export default db;
  * SQLite-compatibility surface this helper intentionally bypasses).
  */
 export async function withPgTransaction<T>(
-  fn: (query: <R = unknown>(sql: string, params?: unknown[]) => Promise<QueryResult<R>>) => Promise<T>
+  fn: (
+    query: <R = unknown>(sql: string, params?: unknown[]) => Promise<QueryResult<R>>
+  ) => Promise<T>
 ): Promise<T> {
   const pool = getPool();
   if (initDbPromise) await initDbPromise;

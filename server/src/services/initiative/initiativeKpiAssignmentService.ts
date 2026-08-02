@@ -1,15 +1,15 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import { getTableColumns } from '../../utils/dbSchema.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   archiveDefinition,
   createDefinition,
   getCurrentDefinition,
-  updateDefinition,
-  KpiDefinitionVersionConflictError,
   type KpiDefinitionFields,
+  KpiDefinitionVersionConflictError,
+  updateDefinition,
 } from '../results/kpiDefinitionService.js';
-import { getTableColumns } from '../../utils/dbSchema.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 
 /**
  * This route's public contract has no `expectedVersion` field (there was no

@@ -53,12 +53,12 @@ import {
   RecordDeviationParamsSchema,
   RecordROIRealizationParamsSchema,
 } from '../../types/resultsROIContinuity.js';
-import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import { eventBus } from '../event/EventBus.js';
 import { send as sendNotification } from '../notificationService.js';
+import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
 
 // ==========================================
 // HELPERS
