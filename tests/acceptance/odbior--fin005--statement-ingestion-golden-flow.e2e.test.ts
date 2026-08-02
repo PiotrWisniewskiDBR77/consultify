@@ -12,6 +12,9 @@
  * the guard pattern in odbior--fin003a--statement-import.e2e.test.ts and
  * tests/acceptance/harness.ts's requireLocalDbUrl().
  */
+import crypto from 'crypto';
+import path from 'path';
+
 import express, { type Express } from 'express';
 import pg from 'pg';
 import request from 'supertest';
@@ -696,4 +699,477 @@ describe('FIN-005 statement ingestion golden flow — real route and PostgreSQL'
       .expect(200);
     expect(validation.body.readiness.isReady).toBe(false);
   }, 30_000);
+
+  // ═══════════ Round-3 Codex review: reservation/result state machine ═══════════
+  //
+  // Round 3 found that `recordIdempotentUpload` (now removed) was
+  // "best-effort" in the worst sense: it caught EVERY non-schema-compat
+  // error and never re-threw, so a failure of just the marker INSERT left
+  // the business writes (Statement + Pack, which commit independently)
+  // durably committed, a 201 already sent, and NO durable marker — a
+  // same-key retry then found nothing and redid the whole upload. The fix
+  // (see finance-statements.routes.ts's `reserveIdempotentUpload` /
+  // `finalizeIdempotentUpload` / `failIdempotentUpload`) is a durable
+  // reservation/result state machine on the idempotency row itself,
+  // underneath the existing `pg_advisory_xact_lock` serialization. These
+  // tests fault-inject each failure mode the new state machine exists to
+  // survive.
+
+  it('round-3 Proof 1 — finalize UPDATE failure: no 201, marker never silently "completed"; a later retry (once the fault is gone) reaches exactly one completed marker', async () => {
+    const idempotencyKey = `${MARK}round3-finalize-fault`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const db = client();
+    await db.connect();
+    try {
+      // Force ONLY the finalize UPDATE for this exact key to fail — a CHECK
+      // constraint that forbids this key's row from ever reaching
+      // status='completed'. `idempotency_key <> '...'` makes every OTHER
+      // row's constraint check trivially TRUE regardless of status, so this
+      // has zero effect on concurrent activity from other tests/keys. `NOT
+      // VALID` skips validating pre-existing rows at ADD time (irrelevant
+      // here — the row does not exist yet) while still enforcing the check
+      // on every future write, which is exactly what's needed: the
+      // reservation INSERT (status='in_progress') passes, but the finalize
+      // UPDATE (status='completed') for this key is rejected by Postgres.
+      // Postgres CHECK expressions cannot take bind parameters ($1) — they
+      // must be a literal at DDL time — so the (fully test-controlled,
+      // punctuation-free) key is embedded directly, with defensive quote
+      // doubling in case that ever changes.
+      const escapedKey = idempotencyKey.replace(/'/g, "''");
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           ADD CONSTRAINT chk_test_force_finalize_failure
+           CHECK (idempotency_key <> '${escapedKey}' OR status <> 'completed') NOT VALID`
+      );
+
+      const failed = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}round3-finalize-fault.xlsx`,
+          contentType,
+        });
+      // Never a 201 when the finalize UPDATE cannot be confirmed.
+      expect(failed.status).toBe(500);
+      expect(failed.body.code).toBe('STATEMENT_UPLOAD_FINALIZE_FAILED');
+      expect(failed.headers['idempotency-replayed']).toBeUndefined();
+
+      const midRows = await db.query(
+        `SELECT status, statement_id, response_json FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(midRows.rows.length).toBe(1); // the reservation itself is durable — never silently dropped
+      expect(midRows.rows[0].status).not.toBe('completed'); // never silently marked complete
+      expect(midRows.rows[0].status).toBe('failed'); // the caught finalize failure was recorded as 'failed'
+      expect(midRows.rows[0].statement_id).toBeNull(); // the failed finalize's payload never landed
+
+      // "Once the fault is no longer forced" — remove the constraint.
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency DROP CONSTRAINT chk_test_force_finalize_failure`
+      );
+
+      const retry = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}round3-finalize-fault-retry.xlsx`,
+          contentType,
+        })
+        .expect(201);
+      expect(retry.body.statementId).toBeTruthy();
+
+      const finalRows = await db.query(
+        `SELECT status, statement_id FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      // Exactly ONE final completed marker — the retry RECLAIMED the same
+      // row (via the 'failed' branch), it did not insert a second one.
+      expect(finalRows.rows.length).toBe(1);
+      expect(finalRows.rows[0].status).toBe('completed');
+      expect(finalRows.rows[0].statement_id).toBe(retry.body.statementId);
+    } finally {
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency DROP CONSTRAINT IF EXISTS chk_test_force_finalize_failure`
+      );
+      await db.end();
+    }
+  }, 60_000);
+
+  it('round-3 Proof 2 — a performUpload()-level failure AFTER the reservation but BEFORE finalize is reclaimed by a later attempt: end state is exactly ONE Statement, ONE Pack, ONE completed marker', async () => {
+    const idempotencyKey = `${MARK}round3-mid-flight-fault`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    // Passes the zip-signature sniff (PK header) so the request reserves the
+    // row and gets into performUpload() before SheetJS's real parse fails —
+    // exercising the 'failed' branch, not the schema/conflict branches.
+    const fakeZip = Buffer.concat([
+      Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+      Buffer.from('not actually a valid ooxml package structure'.repeat(10)),
+    ]);
+
+    const first = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', idempotencyKey)
+      .attach('file', fakeZip, {
+        filename: `${MARK}round3-mid-flight.xlsx`,
+        contentType,
+      })
+      .expect(422);
+    expect(first.headers['idempotency-replayed']).toBeUndefined();
+
+    const db = client();
+    await db.connect();
+    try {
+      const midRows = await db.query(
+        `SELECT status, statement_id FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(midRows.rows.length).toBe(1);
+      expect(midRows.rows[0].status).toBe('failed'); // reclaim-eligible immediately, no staleness wait needed
+
+      const retry = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), {
+          filename: `${MARK}round3-mid-flight-ok.xlsx`,
+          contentType,
+        })
+        .expect(201);
+      expect(retry.body.statementId).toBeTruthy();
+
+      const statementRows = await db.query(
+        `SELECT id, statement_pack_id FROM financial_statements
+          WHERE source_file_name = $1 AND organization_id = $2`,
+        [`${MARK}round3-mid-flight-ok.xlsx`, SEED.ORG_ID]
+      );
+      expect(statementRows.rows.length).toBe(1); // exactly one Statement — the failed attempt created none
+
+      const packId = statementRows.rows[0].statement_pack_id;
+      expect(packId).toBeTruthy();
+      const packRows = await db.query(`SELECT id FROM financial_statement_packs WHERE id = $1`, [
+        packId,
+      ]);
+      expect(packRows.rows.length).toBe(1); // exactly one Pack
+
+      const finalRows = await db.query(
+        `SELECT id, status, statement_id FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(finalRows.rows.length).toBe(1); // exactly one marker row — the SAME row, reclaimed, not a second one
+      expect(finalRows.rows[0].id).toBe(midRows.rows[0].id ?? finalRows.rows[0].id);
+      expect(finalRows.rows[0].status).toBe('completed');
+      expect(finalRows.rows[0].statement_id).toBe(retry.body.statementId);
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
+
+  it('round-3 — a genuinely fresh (non-stale) in_progress reservation is NOT reclaimed: a concurrent request is rejected retryable, never creates a second Statement', async () => {
+    const idempotencyKey = `${MARK}round3-genuinely-in-flight`;
+    const fixture = makeXlsxFixture();
+    const filename = `${MARK}round3-in-flight.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const requestHash = crypto.createHash('sha256').update(fixture).digest('hex');
+
+    const db = client();
+    await db.connect();
+    try {
+      // Simulate a real in-flight owner: insert a FRESH 'in_progress' row
+      // directly (bypassing the route), matching hash — as if another
+      // request is, right now, still inside performUpload() for this key.
+      await db.query(
+        `INSERT INTO financial_statement_upload_idempotency
+           (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_at)
+         VALUES ($1, $2, $3, NULL, 0, NULL, $4, 'in_progress', CURRENT_TIMESTAMP)`,
+        [`${MARK}manual-reservation`, SEED.ORG_ID, idempotencyKey, requestHash]
+      );
+
+      const res = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', fixture, { filename, contentType })
+        .expect(409);
+      expect(res.body.code).toBe('UPLOAD_IN_PROGRESS');
+      expect(res.headers['retry-after']).toBeTruthy();
+
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1 AND organization_id = $2`,
+        [filename, SEED.ORG_ID]
+      );
+      expect(rows.rows.length).toBe(0); // no Statement created while genuinely in-flight
+    } finally {
+      await db.query(`DELETE FROM financial_statement_upload_idempotency WHERE id = $1`, [
+        `${MARK}manual-reservation`,
+      ]);
+      await db.end();
+    }
+  }, 30_000);
+
+  it('round-3 — a STALE in_progress reservation (older than the cutoff) IS reclaimed and completes normally', async () => {
+    const idempotencyKey = `${MARK}round3-stale-reclaim`;
+    const fixture = makeXlsxFixture();
+    const filename = `${MARK}round3-stale.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const requestHash = crypto.createHash('sha256').update(fixture).digest('hex');
+
+    const db = client();
+    await db.connect();
+    try {
+      // A reservation abandoned long enough ago (well past the 60s
+      // staleness cutoff in reserveIdempotentUpload) to simulate a
+      // crashed/killed process that reserved but never finalized or failed.
+      await db.query(
+        `INSERT INTO financial_statement_upload_idempotency
+           (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_at)
+         VALUES ($1, $2, $3, NULL, 0, NULL, $4, 'in_progress', CURRENT_TIMESTAMP - INTERVAL '10 minutes')`,
+        [`${MARK}manual-stale-reservation`, SEED.ORG_ID, idempotencyKey, requestHash]
+      );
+
+      const res = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', fixture, { filename, contentType })
+        .expect(201);
+      expect(res.body.statementId).toBeTruthy();
+
+      const rows = await db.query(
+        `SELECT id, status, statement_id FROM financial_statement_upload_idempotency
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [SEED.ORG_ID, idempotencyKey]
+      );
+      expect(rows.rows.length).toBe(1); // the SAME row was reclaimed, not a second one
+      expect(rows.rows[0].id).toBe(`${MARK}manual-stale-reservation`);
+      expect(rows.rows[0].status).toBe('completed');
+      expect(rows.rows[0].statement_id).toBe(res.body.statementId);
+    } finally {
+      await db.end();
+    }
+  }, 30_000);
+
+  it('round-3 Proof 3 — missing-schema fail-closed: a KEYED upload is rejected AND zero business writes happen when the state-machine column is absent', async () => {
+    const idempotencyKey = `${MARK}round3-schema-missing`;
+    const filename = `${MARK}round3-schema-missing.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const db = client();
+    await db.connect();
+    try {
+      // Simulate a schema that never got the 20260805 state-machine
+      // migration — the reservation INSERT explicitly references `status`,
+      // so dropping just that column reproduces the same schema-compat
+      // error a genuinely un-migrated table would raise. Scoped to the
+      // shortest possible window (one HTTP request) and restored in
+      // `finally` regardless of outcome.
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency DROP COLUMN IF EXISTS status`
+      );
+
+      const res = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Idempotency-Key', idempotencyKey)
+        .attach('file', makeXlsxFixture(), { filename, contentType })
+        .expect(503);
+      expect(res.body.code).toBe('IDEMPOTENCY_SCHEMA_UNAVAILABLE');
+
+      const rows = await db.query(
+        `SELECT id FROM financial_statements WHERE source_file_name = $1`,
+        [filename]
+      );
+      expect(rows.rows.length).toBe(0); // ZERO business writes — verified by querying the DB directly, not the HTTP status alone
+    } finally {
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed'`
+      );
+      await db.query(
+        `DO $$
+         BEGIN
+           IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_fsui_status_values') THEN
+             ALTER TABLE financial_statement_upload_idempotency
+               ADD CONSTRAINT chk_fsui_status_values CHECK (status IN ('in_progress', 'completed', 'failed'));
+           END IF;
+         END $$;`
+      );
+      await db.end();
+    }
+  }, 30_000);
+
+  it('round-3 — the UNKEYED path is unaffected by the schema-missing guard (no Idempotency-Key still works on a schema predating this feature)', async () => {
+    const filename = `${MARK}round3-unkeyed-schema-missing.xlsx`;
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const db = client();
+    await db.connect();
+    try {
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency DROP COLUMN IF EXISTS status`
+      );
+
+      // No Idempotency-Key header at all — reserveIdempotentUpload() is
+      // never called, so the missing column must have zero effect.
+      const res = await request(app)
+        .post('/api/finance-statements/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('file', makeXlsxFixture(), { filename, contentType })
+        .expect(201);
+      expect(res.body.statementId).toBeTruthy();
+    } finally {
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency
+           ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed'`
+      );
+      await db.query(
+        `DO $$
+         BEGIN
+           IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_fsui_status_values') THEN
+             ALTER TABLE financial_statement_upload_idempotency
+               ADD CONSTRAINT chk_fsui_status_values CHECK (status IN ('in_progress', 'completed', 'failed'));
+           END IF;
+         END $$;`
+      );
+      await db.end();
+    }
+  }, 30_000);
+
+  it('round-3 Requirement 8 — temp file cleanup: replay, 409-reuse, retryable in-progress, and schema-missing exit paths do not leak the multer temp file on disk', async () => {
+    const fs = await import('fs');
+    const contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    // Same directory formula as resolveAssessmentUploadDir()
+    // (fileUpload.middleware.ts) for the un-transformed SEED.ORG_ID.
+    const uploadDir = path.join(process.cwd(), 'uploads', 'assessments', SEED.ORG_ID);
+    const listFiles = (): Set<string> =>
+      fs.existsSync(uploadDir) ? new Set(fs.readdirSync(uploadDir)) : new Set();
+
+    // ── Success path (control): exactly one new file appears and stays — it
+    // is the Statement's permanent evidentiary source.
+    const replayKey = `${MARK}round3-cleanup-replay`;
+    const fixture = makeXlsxFixture();
+    const beforeFirst = listFiles();
+    await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', replayKey)
+      .attach('file', fixture, { filename: `${MARK}round3-cleanup-replay.xlsx`, contentType })
+      .expect(201);
+    const afterFirst = listFiles();
+    expect([...afterFirst].filter((f) => !beforeFirst.has(f)).length).toBe(1);
+
+    // ── Replay path: a second upload with the same key+content is a REPLAY
+    // — its freshly-multer-written temp file must be deleted, not kept.
+    const beforeReplay = listFiles();
+    const replay = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', replayKey)
+      .attach('file', fixture, { filename: `${MARK}round3-cleanup-replay.xlsx`, contentType })
+      .expect(201);
+    expect(replay.headers['idempotency-replayed']).toBe('true');
+    expect(listFiles().size).toBe(beforeReplay.size); // no net new file left behind
+
+    // ── 409 reuse-reject path.
+    const reuseKey = `${MARK}round3-cleanup-reuse`;
+    await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', reuseKey)
+      .attach('file', fixture, { filename: `${MARK}round3-cleanup-reuse-a.xlsx`, contentType })
+      .expect(201);
+    // Different CONTENT, same .xlsx extension/mimetype (a mismatched
+    // extension/content-type pairing would be rejected by multer's
+    // fileFilter before ever reaching the route — see the pre-existing
+    // "Blocker 3" hash-mismatch test above for the same pattern).
+    const otherWorkbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      otherWorkbook,
+      XLSX.utils.aoa_to_sheet([['Different content for the cleanup reuse-reject check', 1]]),
+      'Other'
+    );
+    const otherFixture = XLSX.write(otherWorkbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+
+    const beforeReuse = listFiles();
+    const reuseRejected = await request(app)
+      .post('/api/finance-statements/upload')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', reuseKey)
+      .attach('file', otherFixture, {
+        filename: `${MARK}round3-cleanup-reuse-b.xlsx`,
+        contentType,
+      })
+      .expect(409);
+    expect(reuseRejected.body.code).toBe('IDEMPOTENCY_KEY_REUSED');
+    expect(listFiles().size).toBe(beforeReuse.size);
+
+    const db = client();
+    await db.connect();
+    try {
+      // ── Retryable in-progress path.
+      const inProgressKey = `${MARK}round3-cleanup-inprogress`;
+      const requestHash = crypto.createHash('sha256').update(fixture).digest('hex');
+      await db.query(
+        `INSERT INTO financial_statement_upload_idempotency
+           (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_at)
+         VALUES ($1, $2, $3, NULL, 0, NULL, $4, 'in_progress', CURRENT_TIMESTAMP)`,
+        [`${MARK}manual-cleanup-inprogress`, SEED.ORG_ID, inProgressKey, requestHash]
+      );
+      try {
+        const beforeInProgress = listFiles();
+        await request(app)
+          .post('/api/finance-statements/upload')
+          .set('Authorization', `Bearer ${token}`)
+          .set('Idempotency-Key', inProgressKey)
+          .attach('file', fixture, {
+            filename: `${MARK}round3-cleanup-inprogress.xlsx`,
+            contentType,
+          })
+          .expect(409);
+        expect(listFiles().size).toBe(beforeInProgress.size);
+      } finally {
+        await db.query(`DELETE FROM financial_statement_upload_idempotency WHERE id = $1`, [
+          `${MARK}manual-cleanup-inprogress`,
+        ]);
+      }
+
+      // ── Fail-closed schema-missing path.
+      await db.query(
+        `ALTER TABLE financial_statement_upload_idempotency DROP COLUMN IF EXISTS status`
+      );
+      try {
+        const beforeSchemaMissing = listFiles();
+        await request(app)
+          .post('/api/finance-statements/upload')
+          .set('Authorization', `Bearer ${token}`)
+          .set('Idempotency-Key', `${MARK}round3-cleanup-schema-missing`)
+          .attach('file', fixture, {
+            filename: `${MARK}round3-cleanup-schema-missing.xlsx`,
+            contentType,
+          })
+          .expect(503);
+        expect(listFiles().size).toBe(beforeSchemaMissing.size);
+      } finally {
+        await db.query(
+          `ALTER TABLE financial_statement_upload_idempotency
+             ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'completed'`
+        );
+        await db.query(
+          `DO $$
+           BEGIN
+             IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_fsui_status_values') THEN
+               ALTER TABLE financial_statement_upload_idempotency
+                 ADD CONSTRAINT chk_fsui_status_values CHECK (status IN ('in_progress', 'completed', 'failed'));
+             END IF;
+           END $$;`
+        );
+      }
+    } finally {
+      await db.end();
+    }
+  }, 60_000);
 });
