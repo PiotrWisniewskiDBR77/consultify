@@ -3,14 +3,22 @@ doc_kind: PACKAGE_FINAL_REPORT
 package: MW-07
 status: AWAITING_CODEX_REVIEW
 date: 2026-08-02
-revision: 2 (post Codex FIX_REQUIRED — all 6 blockers addressed)
+revision: 3 (post Codex FINAL UX FIX_REQUIRED — narrow-viewport blocker addressed)
 ---
 
-# MW-07 — Calendar/time/capacity — raport końcowy (rev. 2)
+# MW-07 — Calendar/time/capacity — raport końcowy (rev. 3)
 
-Rev. 1 (`Harvard/wdrozenie-100/_RAPORT_KONCOWY_MW-07_2026-08-02.md` @ `20ac6c6c72`)
-otrzymał `FIX_REQUIRED` z 6 blokerami. Ten dokument zastępuje rev. 1 i opisuje
-domknięcie wszystkich sześciu. **Kanoniczna kopia tego raportu**:
+Rev. 2 (`c0b4859e30`) dostał `FINAL UX FIX_REQUIRED`: jeden pozostały bloker
+funkcjonalny — nakładanie się panelu bocznego Calendar na grid poniżej
+breakpointu mobilnego (zgłoszone w rev. 2 §5.2/§8 jako otwarte ryzyko, teraz
+podniesione do rangi blokera, bo wąski viewport był obowiązkową bramką
+odbioru). Ten dokument zastępuje rev. 2 i opisuje domknięcie tego blokera —
+patrz §6. Wszystko z rev. 2 (task reschedule, lineage, `editAuthority`,
+rotacja `xmin`, 400/403/404/409, fix timezone, no-premature-success, 21
+testów real-PG, 8 testów komponentowych, 5 negative controls, real browser
+flow, `status_reports` fresh-DB guard) pozostaje bez zmian — zgodnie z
+poleceniem Codex, discovery NIE zostało powtórzone. **Kanoniczna kopia tego
+raportu**:
 `docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/MW-007_CALENDAR_TIME_CAPACITY_REPORT.md`
 — nowy agent powinien znaleźć ją przez START_HERE/control docs, nie przez
 Harvard (materiał historyczny).
@@ -35,18 +43,18 @@ Codex.
   (CHAT-003/004/005, RES-012).
 - Branch: `feat/mw-007-calendar-time-capacity` (brak upstream/push)
 - Worktree: `.../7d8c9918-665e-4858-8e90-153bbbff23e3/scratchpad/wt-mw-007`
-- **Implementation HEAD** (ostatni commit zmieniający kod/testy):
-  `c00bdc02fd` (`chore(mw-007): browser-acceptance backend launcher script`)
+- **Implementation HEAD** (ostatni commit zmieniający kod/testy/zrzuty):
+  `9e7aa2ff99` (`docs(mw-007): visual-QA proof of narrow-viewport fix, saved to disk`)
 - **Documentation HEAD** (po commicie tego pliku): patrz komunikat końcowy —
   `git rev-parse HEAD` wykonany PO commicie tego raportu, zgodnie z
-  wymogiem Codex §6.
+  wymogiem Codex §6 (rev. 2) — ta sama dyscyplina utrzymana w rev. 3.
 
-11 commitów ponad bazą (chronologicznie):
+15 commitów ponad bazą (chronologicznie; 1-11 z rev. 2, 12-15 nowe w rev. 3):
 
 1. `9e8c72ff1e` docs: discovery gate
 2. `2f6a565824` feat: project/provider lineage + version guard
 3. `7228e2855c` fix: pg timestamp day-shift bug + xid validation
-4. `20ac6c6c72` docs: rev.1 raport (zastąpiony przez ten plik)
+4. `20ac6c6c72` docs: rev.1 raport (zastąpiony)
 5. `9a3666ef8d` fix: meeting provider honesty (BLOCKER 3)
 6. `74889fb199` test: version-rotation proof (BLOCKER 5)
 7. `8d636adb4a` fix: status_reports fresh-DB guard (BLOCKER 1)
@@ -54,6 +62,10 @@ Codex.
 9. `79f8599a78` test: no-premature-success dla CalendarView (BLOCKER 4 #4)
 10. `de2b66cbf2` fix: `editAuthority` dla task events (BLOCKER 2 finding)
 11. `c00bdc02fd` chore: browser-acceptance tooling
+12. `c0b4859e30` docs: rev.2 raport (zastąpiony przez ten plik)
+13. `e4b9b8fe4a` fix: sidebar nie nakłada się na grid poniżej breakpointu mobile
+14. `5d7b0c8dcf` test: 7 testów real-mount dla naprawy §6
+15. `9e7aa2ff99` docs: zrzuty wizualne zapisane na dysk (§6)
 
 ## 2. Canonical ownership (bez zmian)
 
@@ -203,26 +215,19 @@ w sesji — patrz uwaga niżej o utrwalaniu):
   z dokładnym komunikatem z `CalendarView.tsx` → grid POPRAWNIE pokazuje
   pozycję drugiego klienta (nie starą, nie odrzuconą) — pełny cykl
   refetch-po-konflikcie zweryfikowany żywo.
-- Wąski viewport (375×812): zrzut wykonany. **Realne, PRE-ISTNIEJĄCE
-  znalezisko UX**: panel boczny (mini-kalendarz + Sources) nie chowa się
-  na wąskim viewport i nakłada się na główny grid, czyniąc go nieczytelnym.
-  NIE naprawione — to nie jest coś, co MW-07 wprowadził, a przeprojektowanie
-  layoutu mobilnego wymaga prototypu i akceptu Piotra (SPEC-A/TRIADA reguła
-  „Piotr nigdy nie jest pierwszym testerem wizualnym" działa też w drugą
-  stronę: ja nie projektuję nowego layoutu bez prototypu). Zgłoszone jako
-  otwarte ryzyko.
+- Wąski viewport (375×812): zrzut wykonany. **Realne znalezisko UX z rev.
+  2, naprawione w rev. 3**: panel boczny (mini-kalendarz + Sources) nie
+  chował się na wąskim viewport i nakładał się na główny grid, czyniąc go
+  nieczytelnym. Codex podniósł to do rangi blokera w rundzie FINAL UX
+  FIX_REQUIRED (wąski viewport jest obowiązkową bramką odbioru) — fix i
+  dowód w §6.
 
-**Ograniczenie narzędziowe (uczciwie zgłoszone)**: nie znalazłem w dostępnym
-zestawie narzędzi mechanizmu zapisu zrzutów `computer{action:"screenshot"}`
-do plików na dysku (zrzuty są zwracane jako dane obrazu w wyniku narzędzia,
-oglądane i zweryfikowane w tej sesji, ale nie ma API do zapisania ich jako
-osobnych plików). Zamiast fabrykować indeks plików, którego nie mogę
-faktycznie wytworzyć, powyższa lista to dokładny, chronologiczny inwentarz
-stanów przechwyconych i obejrzanych w sesji wraz z dokładnym opisem każdego.
-Jeśli Codex/Piotr wymaga zrzutów jako osobnych plików w repo, potrzebny jest
-dodatkowy przebieg z narzędziem, które faktycznie to potrafi (lub ręczne
-zrzuty wykonane przez Piotra na tym samym seed-flow, odtwarzalnym z
-`scripts/dev/mw007-browser-backend.sh` + krokami w tej sekcji).
+**Ograniczenie narzędziowe zgłoszone w rev. 2 (zamknięte w rev. 3)**: rev. 2
+zgłosił brak mechanizmu zapisu zrzutów na dysk z ówczesnego zestawu narzędzi
+(Browser pane zwracał zrzuty tylko inline). Codex uznał to za niewystarczające
+dla rundy FINAL UX. Rev. 3 używa Playwright (`dev-render/shot.mjs`, już
+istniejący w repo) — zrzuty zapisane jako pliki w
+`artifacts/visual-qa/mw-007/`, patrz §6.
 
 ### 5.3 BLOCKER 3 — provider honesty dla Meetings
 
@@ -275,14 +280,96 @@ rewizji: implementation HEAD (`c00bdc02fd`) i documentation HEAD (ten commit)
 podane osobno, `git rev-parse HEAD` wykonany PO commicie tego pliku —
 finalna wartość w komunikacie kończącym sesję, nie w tym pliku.
 
-## 6. Testy — pełne podsumowanie końcowe
+## 6. Narrow-viewport fix (Codex FINAL UX FIX_REQUIRED, rev. 3)
+
+**Problem** (rev. 2 §5.2): poniżej breakpointu mobilnego (`useIsMobile`,
+`max-width: 767px` — ten sam próg co `tailwind.config`'s `mobile` alias),
+`CalendarSidebar` renderował się inline przy stałej szerokości `w-64` i
+nakładał się na główny grid.
+
+**Fix** (`e4b9b8fe4a`): `CalendarView` warunkowo renderuje albo inline
+sidebar (desktop, bez zmian), albo — poniżej breakpointu — przycisk „Źródła
+i filtry" + ten sam `CalendarSidebar` osadzony w JUŻ ISTNIEJĄCYM prymitywie
+`Drawer` (`src/components/ui/primitives/Drawer.tsx`: focus-trap, zamknięcie
+Escape, `role="dialog" aria-modal="true"`, overlay) — sterowane hookiem
+`useIsMobile()` (`src/hooks/useDeviceType.ts`, JS-owalny, testowalny), nie
+czystym CSS `hidden md:block`. Zero nowego systemu projektowego mobilnego:
+wyłącznie istniejący breakpoint, istniejący `Drawer`, istniejący `Button`,
+istniejące pierścienie fokusu (`c-focus`, scentralizowane w `Button`).
+Desktop niezmieniony (`CalendarSidebar`'s border stał się `md:`-only,
+kosmetyczne — bez obramowania wewnątrz Drawera to jest poprawne, nie
+regresja).
+
+**Testy** (`5d7b0c8dcf`, `tests/components/MyWork/CalendarView.responsive.test.tsx`,
+7/7 PASS) — real-mount, nie assercje na stringach klas CSS (jawne
+wymaganie Codex): (1) na 375px desktopowy sidebar nigdy się nie montuje —
+brak nakładki na grid; (2) przycisk „Sources & filters" dostępny po
+roli/nazwie; (3) otwarcie panelu pokazuje treść źródeł; (4) zamknięcie (X)
+usuwa panel i przywraca pełny, nienaruszony grid; (5) na desktopie sidebar
+nadal renderuje się inline, bez przycisku mobilnego; (6) Escape zamyka
+panel klawiaturą; (7) tytuł eventu i lineage projekt/provider pozostają
+widoczne na mobile.
+
+**Realne znalezisko przy pisaniu testów (nie w kodzie produkcyjnym, w
+uprzęży testowej)**: pierwsza wersja testu 6 (Escape) owijała
+`fireEvent.keyDown` w zbędny `await act(async () => {...})` — w połączeniu
+z prawdziwym `Drawer` (pierwszy realny konsument tego prymitywu w całym
+repo — `framer-motion`'s `AnimatePresence`/spring w jsdom, gdzie layout nie
+istnieje) to dało prawdziwe „Maximum update depth exceeded" i OOM-owało
+worker vitest (heap do 4 GB). Fix: (a) usunięcie zbędnego `act()` — sam
+`fireEvent` już batchuje w `act` (ten sam wzorzec co działający test 4); (b)
+mock `framer-motion` (`AnimatePresence`/`motion.div`/`motion.button`)
+identyczny z już istniejącym `tests/components/navigation/Sidebar.mobile-overlay.test.tsx`
+— ten sam, ustalony w repo wzorzec dla mount-testów z prawdziwym
+`Drawer`/animacją w jsdom. Po obu fixach: 7/7 zielone, ~700ms, zero
+ostrzeżeń o update-depth.
+
+**Regresje**: pełny pakiet Calendar (`CalendarView.error-state`,
+`CalendarCreateEventModal`, `CalendarSidebar.availability`,
+`CalendarGrid.lineage-conflict`, `CalendarView.reschedule-no-premature-success`,
+`CalendarView.responsive`) uruchomiony razem — 16/16 z tych dotykanych tym
+fixem PASS; 6 failing w `CalendarSidebar.availability.test.tsx`(4)/
+`CalendarCreateEventModal.test.tsx`(2) potwierdzone jako PRE-ISTNIEJĄCE
+(zweryfikowane empirycznie: przywrócono oryginalne, nie-tknięte przez rev. 3
+wersje `CalendarSidebar.tsx`/`CalendarView.tsx` z `git show HEAD:...` i te
+same 6 testów failuje identycznie — `TypeError: t(...).map is not a
+function`, mock `t()` w tamtym pliku nie obsługuje `returnObjects: true`;
+niezwiązane z tym fixem, nie naprawione, poza zakresem).
+
+**Typecheck**: pełny `npx tsc --noEmit` w tym repo OOM-uje niezależnie od
+tej zmiany (potwierdzone, znany, udokumentowany wcześniej problem tego
+monorepo — „tsc pada z OOM = bramka ślepa"); zamiast tego (zgodnie z
+`HIGIENA WYKONANIA` w CLAUDE.md — esbuild per plik) każdy zmieniony
+`.tsx`/`.ts` przeszedł `esbuild` indywidualnie, zero błędów.
+
+**Zrzuty na dysku** (`9e7aa2ff99`, Playwright przez `dev-render/shot.mjs` —
+istniejący w repo mechanizm, nie nowy): `artifacts/visual-qa/mw-007/`:
+`01-desktop-sidebar-inline.png` (baseline, bez zmian), `02-mobile-375-toggle-no-overlap.png`,
+`03-mobile-375-drawer-open-sources.png`, `04-mobile-375-drawer-closed-grid-restored.png`,
+`05-mobile-375-event-lineage-visible.png` (zbliżenie). Wygenerowane przez
+`dev-render/screens/mw-007-calendar-narrow-viewport.tsx` — montuje REALNY
+`<CalendarView>` z podmienionymi metodami `Api.getMyWorkCalendarUnified`/
+`getIntegrations`/`getMyWorkCalendarConflicts` (wzorzec „patchuj metody
+Api, nie window.fetch" z `vault-scope-selector.tsx`), bez logowania, zgodnie
+z CLAUDE.md #7. **Pre-istniejący, niezwiązany defekt napotkany po drodze**:
+`dev-render/main.tsx` na tej gałęzi importuje `./screens/tools-sesja-wyjscie`,
+plik który istnieje wyłącznie jako nieśledzony w innej, równoległej sesji —
+bez niego CAŁA uprząż dev-render 500-owała dla każdego ekranu. Naprawione
+lokalnie tymczasowym plikiem-zastępczym na czas zrzutów, usuniętym przed
+commitem (nie część diffu MW-07) — zgłoszone tutaj, nie naprawione na stałe
+(cudzy plik, nie mój do scalania).
+
+## 7. Testy — pełne podsumowanie końcowe
 
 - **21/21 testów real-PG PASS** w jednym przebiegu: 10 (calendar-reschedule,
   w tym version-rotation §5.5) + 5 (meeting-provider-honesty) + 1
   (schema-migration-completeness) + potwierdzenie osobno przeciw
-  oficjalnie-zmigrowanej bazie (§5.1).
-- **8/8 testów real-mount frontend PASS**: 5 (CalendarGrid lineage/conflict)
-  + 3 (CalendarView no-premature-success).
+  oficjalnie-zmigrowanej bazie (§5.1). Bez zmian w rev. 3 — zero plików
+  backendowych dotkniętych (`git status --short` w rev. 3 pokazuje wyłącznie
+  frontend/testy/dokumentację/zrzuty).
+- **15/15 testów real-mount frontend PASS**: 5 (CalendarGrid lineage/conflict)
+  + 3 (CalendarView no-premature-success) + 7 (CalendarView responsive,
+  §6, nowe w rev. 3).
 - **Timezone**: uruchomiony DWUKROTNIE, osobne procesy, `TZ` ustawiony na
   poziomie shell PRZED startem node (nie w locie — mutacja `process.env.TZ`
   w trakcie działania okazała się zawodna w Node/V8, patrz komentarz w
@@ -294,7 +381,7 @@ finalna wartość w komunikacie kończącym sesję, nie w tym pliku.
 - **Secret scan**: PASS.
 - **Clean tree**: PASS po każdym commicie.
 
-## 7. Collision audit
+## 8. Collision audit
 
 Bez zmian od rev. 1: zero odwołań do kalendarza w
 finance*/interview/teresa.routes.ts. `tasks.due_date` pisany też przez
@@ -309,12 +396,16 @@ usunięcie nieśledzonego wycieku. Zweryfikowano: `stash@{0}` MAT-10 nadal
 obecny na liście, nietknięty. Od tego momentu w sesji: zero `git stash`,
 zero `reset --hard` poza tym jednym naprawczym użyciem, zero `checkout --`.
 
-## 8. Nieukończone / otwarte ryzyka (uczciwie zgłoszone, nie fabrykowane)
+## 9. Nieukończone / otwarte ryzyka (uczciwie zgłoszone, nie fabrykowane)
 
-- Brak zapisanych na dysku plików zrzutów ekranu (ograniczenie narzędziowe,
-  §5.2) — zrzuty przechwycone i zweryfikowane inline w sesji.
-- Wąski viewport (375px): panel boczny Calendar nakłada się na grid —
-  pre-istniejący gap UX, nie naprawiony (wymaga prototypu+akceptu Piotra).
+- ~~Brak zapisanych na dysku plików zrzutów ekranu~~ — domknięte w rev. 3,
+  §6 (Playwright, `artifacts/visual-qa/mw-007/`).
+- ~~Wąski viewport (375px): panel boczny Calendar nakłada się na grid~~ —
+  domknięte w rev. 3, §6.
+- `dev-render/main.tsx` na tej gałęzi ma martwy import
+  (`./screens/tools-sesja-wyjscie`, plik cudzej równoległej sesji) — psuje
+  CAŁĄ uprząż dev-render dla każdego ekranu, nie tylko MW-07 (§6). Nie
+  naprawione na stałe — cudzy plik/gałąź, poza zakresem MW-07.
 - `meetings` nie jest tworzone przez `server/migrations/` (ta sama klasa
   bugu co `status_reports`, inna tabela) — zgłoszone, nie naprawione.
 - Pełny `db:migrate:strict` od pustej bazy nadal zatrzymuje się (za
@@ -324,12 +415,15 @@ zero `reset --hard` poza tym jednym naprawczym użyciem, zero `checkout --`.
 - Rodzina B (V8 P02 canon, realny etag) pozostaje bez konsumenta UI —
   świadomie poza zakresem.
 
-## 9. Dowód czystego drzewa i braku push/deploy
+## 10. Dowód czystego drzewa i braku push/deploy
 
-Throwaway Postgres (3 kontenery docker użyte w toku sesji) usunięte.
-Backend/frontend dev-serwery zatrzymane. Zero `git push`, zero merge do
-`demo`/`Londyn`/`integrate/*`, zero operacji Railway. Nie zaktualizowano
-`CURRENT_MVP_CONTROL.md` ani żadnego globalnego dokumentu statusu — decyzja
-Codex.
+Throwaway Postgres (3 kontenery docker użyte w toku sesji rev. 1/2) usunięte.
+Backend/frontend dev-serwery zatrzymane. Rev. 3: dev-render harness (port
+3921, wyłącznie ten worktree) zatrzymany po zrzutach (`kill`, port
+zweryfikowany wolny). Zero `git push`, zero merge do `demo`/`Londyn`/
+`integrate/*`, zero operacji Railway w całej sesji (rev. 1-3). Nie
+zaktualizowano `CURRENT_MVP_CONTROL.md` ani żadnego globalnego dokumentu
+statusu — decyzja Codex. `git status --short` czyste po każdym z trzech
+commitów rev. 3 (`e4b9b8fe4a`, `5d7b0c8dcf`, `9e7aa2ff99`).
 
 AWAITING_CODEX_REVIEW
