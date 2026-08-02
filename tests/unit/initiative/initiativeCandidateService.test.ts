@@ -288,7 +288,7 @@ describe('F2/L1 — listCandidates', () => {
 
 // ===========================================================================
 describe('F2/L1 — acceptCandidate', () => {
-  it('zwraca payload generatora i oznacza accepted', async () => {
+  it('zwraca payload generatora i zapisuje accepted dopiero z initiative receipt', async () => {
     const db = makeDb({
       queryOne: async () => ({
         id: 'c1',
@@ -308,9 +308,10 @@ describe('F2/L1 — acceptCandidate', () => {
     expect(payload!.sourceType).toBe('audit');
     expect(payload!.brief).toContain('Inicjatywa: Audyt');
     expect(payload!.brief).toContain('Uzasadnienie');
-    // mark accepted wykonany
+    // Domyślny mock lejka zwraca init-default, więc receipt jest kompletny.
     const updateCall = db.calls.run.find(([sql]) => sql.includes("status = 'accepted'"));
     expect(updateCall).toBeDefined();
+    expect(updateCall![0]).toContain('initiative_id = ?');
   });
 
   it('nieistniejący kandydat → null', async () => {
@@ -332,7 +333,7 @@ describe('F2/L1 — acceptCandidate', () => {
     await expect(acceptCandidate(db, 'c1', 'org-1')).resolves.toBeNull();
   });
 
-  it('zwraca payload nawet gdy mark-accepted padnie (recoverable)', async () => {
+  it('zwraca payload nawet gdy zapis receipt padnie (recoverable)', async () => {
     const db = makeDb({
       queryOne: async () => ({
         id: 'c1',
@@ -341,7 +342,8 @@ describe('F2/L1 — acceptCandidate', () => {
         source_id: 'as-1',
         title: 'T',
         rationale: 'R',
-        status: 'pending',
+        status: 'accepted',
+        initiative_id: 'init-existing',
       }),
       queryRun: async () => {
         throw new Error('update fail');
@@ -461,7 +463,7 @@ describe('F2→F1 — acceptCandidate tworzy DRAFT + uruchamia generator', () =>
     expect(payload!.filled).toBe(false);
   });
 
-  it('fail-soft: createInitiative rzuca → payload z initiativeId=null, brak fill', async () => {
+  it('fail-soft: createInitiative rzuca → payload z initiativeId=null, brak fill i brak fałszywego accepted', async () => {
     const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
     const deps = makeAcceptDeps({
       createInitiative: (async () => {
@@ -474,15 +476,55 @@ describe('F2→F1 — acceptCandidate tworzy DRAFT + uruchamia generator', () =>
     expect(payload!.initiativeId).toBeNull();
     expect(payload!.filled).toBe(false);
     expect(deps.fillCalls).toHaveLength(0); // brak initiativeId → brak fill
+    expect(db.calls.run.some(([sql]) => sql.includes("status = 'accepted'"))).toBe(false);
   });
 
-  it('oznacza kandydata accepted przed tworzeniem DRAFTU', async () => {
+  it('po utworzeniu DRAFTU zapisuje org-scoped receipt i accepted', async () => {
     const db = makeDb({ queryOne: async () => candidateRow, queryRun: async () => ({ changes: 1 }) });
     const deps = makeAcceptDeps();
     await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
 
     const updateCall = db.calls.run.find(([sql]) => sql.includes("status = 'accepted'"));
     expect(updateCall).toBeDefined();
+    expect(updateCall![0]).toContain('initiative_id = ?');
+    expect(updateCall![0]).toContain('organization_id = ?');
+    expect(updateCall![1]).toEqual(['init-9', null, 'c1', 'org-1']);
+  });
+
+  it('retry zaakceptowanego kandydata zwraca receipt bez ponownego create ani fill', async () => {
+    const db = makeDb({
+      queryOne: async () => ({ ...candidateRow, status: 'accepted', initiative_id: 'init-receipt' }),
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    expect(payload!.initiativeId).toBe('init-receipt');
+    expect(deps.createCalls).toHaveLength(0);
+    expect(deps.fillCalls).toHaveLength(0);
+    expect(db.calls.run).toHaveLength(0);
+  });
+
+  it('semanticzny duplikat zapisuje jawny merge receipt do istniejącej inicjatywy', async () => {
+    const db = makeDb({
+      queryOne: async (sql: string) => (sql.includes('initiative_candidates') ? candidateRow : null),
+      queryAll: async (sql: string) =>
+        sql.includes('FROM initiatives')
+          ? [{ id: 'init-existing', title: 'Inicjatywa: Czas obsługi', status: 'DRAFT' }]
+          : [],
+      queryRun: async () => ({ changes: 1 }),
+    });
+    const deps = makeAcceptDeps();
+
+    const payload = await acceptCandidate(db, 'c1', { orgId: 'org-1', deps });
+
+    expect(payload!.initiativeId).toBe('init-existing');
+    expect(payload!.duplicateOfInitiativeId).toBe('init-existing');
+    expect(deps.createCalls).toHaveLength(0);
+    expect(deps.fillCalls).toHaveLength(0);
+    const receipt = db.calls.run.find(([sql]) => sql.includes('duplicate_of_initiative_id'));
+    expect(receipt![1]).toEqual(['init-existing', 'init-existing', 'c1', 'org-1']);
   });
 
   it('filled=false gdy generator nic nie wypełnił (qualitySummary.filled=0)', async () => {

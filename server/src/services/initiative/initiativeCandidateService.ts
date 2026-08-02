@@ -65,6 +65,10 @@ export interface InitiativeCandidate {
   status: CandidateStatus;
   createdAt?: string;
   createdBy?: string | null;
+  /** Durable acceptance receipt. Prevents a retry from minting another DRAFT. */
+  initiativeId?: string | null;
+  duplicateOfInitiativeId?: string | null;
+  acceptedAt?: string | null;
 }
 
 /** Raw discovery artifact pulled from a source table before scoring. */
@@ -416,6 +420,10 @@ function mapRow(row: Record<string, unknown>): InitiativeCandidate {
     status: String(row.status ?? 'pending') as CandidateStatus,
     createdAt: row.created_at != null ? String(row.created_at) : undefined,
     createdBy: row.created_by != null ? String(row.created_by) : null,
+    initiativeId: row.initiative_id != null ? String(row.initiative_id) : null,
+    duplicateOfInitiativeId:
+      row.duplicate_of_initiative_id != null ? String(row.duplicate_of_initiative_id) : null,
+    acceptedAt: row.accepted_at != null ? String(row.accepted_at) : null,
   };
 }
 
@@ -643,7 +651,8 @@ export async function listCandidates(
 // ---------------------------------------------------------------------------
 
 /**
- * Accept a candidate → (a) mark it accepted, (b) CREATE a DRAFT initiative from it
+ * Accept a candidate → (a) resolve or CREATE a DRAFT initiative from it,
+ * (b) persist a durable candidate→initiative receipt and mark it accepted,
  * through the canonical funnel (lineage source_type/source_id from the candidate),
  * and (c) OPTIONALLY trigger the F1 generator (generateFullInitiative) to fill the
  * DRAFT (default ON, fail-soft). Returns the launch payload PLUS the new
@@ -653,8 +662,9 @@ export async function listCandidates(
  * `orgId`; an object unlocks userId / fill / language / injectable deps.
  *
  * Fail-soft posture (the accept itself never throws → null only when unresolvable):
- *   - mark-accepted failing → still proceed (stale 'pending' is recoverable).
- *   - DRAFT creation failing → payload returned with initiativeId=null, filled=false.
+ *   - receipt/status write failing → still return the resolved initiative (retry can recover).
+ *   - DRAFT creation failing → payload returned with initiativeId=null, filled=false and
+ *     the candidate remains pending so an operator can retry.
  *   - fill failing → DRAFT still created; filled=false.
  */
 export async function acceptCandidate(
@@ -684,16 +694,6 @@ export async function acceptCandidate(
 
     const candidate = mapRow(row);
 
-    // (a) Mark accepted (idempotent — accepting an accepted candidate is a no-op-ish).
-    try {
-      await db.queryRun(`UPDATE initiative_candidates SET status = 'accepted' WHERE id = ?`, [
-        candidate.id,
-      ]);
-    } catch {
-      // degrade — even if the status write fails we still proceed; a stale
-      // 'pending' is recoverable.
-    }
-
     const brief = [candidate.title, candidate.rationale].filter(Boolean).join('\n\n');
     // Lineage source_type must be non-'manual' so the funnel enforces sourceId. A
     // candidate without a sourceId would trip the lineage guard → degrade source to
@@ -707,9 +707,12 @@ export async function acceptCandidate(
     // discovery artifact proposing the same underlying initiative). Advisory
     // + fail-soft: any failure here just falls through to normal creation.
     const orgForDedup = orgId || candidate.organizationId;
-    let initiativeId: string | null = null;
-    let duplicateOfInitiativeId: string | null = null;
-    if (orgForDedup) {
+    // A prior successful accept is a durable receipt: return it without creating
+    // or filling anything again. This is the normal retry/double-click path.
+    let initiativeId: string | null = candidate.initiativeId ?? null;
+    let duplicateOfInitiativeId: string | null = candidate.duplicateOfInitiativeId ?? null;
+    const reusedReceipt = Boolean(initiativeId);
+    if (!initiativeId && orgForDedup) {
       const dup = await findDuplicateInitiative(db, orgForDedup, candidate.title);
       if (dup) {
         initiativeId = dup.id;
@@ -765,11 +768,33 @@ export async function acceptCandidate(
       }
     }
 
+    // Persist the receipt only after an initiative was actually resolved. Keeping
+    // failed creations pending makes recovery visible and one-click retryable.
+    if (initiativeId && !reusedReceipt) {
+      try {
+        const receiptParams: unknown[] = [initiativeId, duplicateOfInitiativeId, candidate.id];
+        let receiptSql = `UPDATE initiative_candidates
+          SET status = 'accepted', initiative_id = ?, duplicate_of_initiative_id = ?, accepted_at = NOW()
+          WHERE id = ?`;
+        if (orgId) {
+          receiptSql += ` AND organization_id = ?`;
+          receiptParams.push(orgId);
+        }
+        await db.queryRun(receiptSql, receiptParams);
+      } catch (receiptErr) {
+        logger.warn(
+          `[initiativeCandidateService] acceptance receipt failed for candidate ${candidate.id} (recoverable): ${
+            (receiptErr as Error)?.message || receiptErr
+          }`
+        );
+      }
+    }
+
     // (c) OPTIONALLY trigger F1 fill — fail-soft so accept still succeeds.
     // Never re-fill a pre-existing initiative matched by (b0): it may already
     // have real, human-reviewed content that the generator must not clobber.
     let filled = false;
-    if (fill && initiativeId && !duplicateOfInitiativeId) {
+    if (fill && initiativeId && !duplicateOfInitiativeId && !reusedReceipt) {
       try {
         const orgForFill = orgId || candidate.organizationId;
         const result = await deps.generateFull(deps.generatorDeps(), {
