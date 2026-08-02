@@ -1172,7 +1172,23 @@ export class TaskController {
         assignees,
         progress,
         blockedReason,
+        idempotencyKey,
       } = body;
+
+      // EXE-002-004: idempotent retry support, scoped to tasks created under an
+      // initiative. A repeated POST with the same (initiativeId, idempotencyKey)
+      // pair returns the already-created task instead of inserting a duplicate.
+      // Tasks without an initiativeId (project/loose tasks) are unaffected.
+      if (initiativeId && idempotencyKey) {
+        const existingTask = await DbPromise.get<TaskRow>(
+          `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
+          [initiativeId, idempotencyKey, orgId]
+        );
+        if (existingTask) {
+          res.status(200).json({ ...existingTask, idempotent: true });
+          return;
+        }
+      }
 
       let effectiveProjectId = projectId || null;
       const effectiveListId = listId || workstreamId || null;
@@ -1266,13 +1282,18 @@ export class TaskController {
                 expected_outcome, decision_impact, evidence_required, strategic_contribution,
                 roadmap_initiative_id, kpi_id, raid_item_id, assignees,
                 progress, blocked_reason, blocked_by_decision_id, blocked_at,
-                custom_fields_json,
+                custom_fields_json, idempotency_key,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-      const result = await DbPromise.run(sql, [
+      // Idempotency is only enforced for tasks created under an initiative
+      // (matches the early-return check above and the partial unique index
+      // on tasks(initiative_id, idempotency_key) WHERE idempotency_key IS NOT NULL).
+      const effectiveIdempotencyKey = initiativeId && idempotencyKey ? idempotencyKey : null;
+
+      const insertParams = [
         id,
         effectiveProjectId,
         orgId,
@@ -1312,9 +1333,35 @@ export class TaskController {
         effectiveBlockedByDecisionId,
         effectiveBlockedAt,
         finalCustomFieldsJson,
+        effectiveIdempotencyKey,
         now,
         now,
-      ]);
+      ];
+
+      let result: Awaited<ReturnType<typeof DbPromise.run>>;
+      if (effectiveIdempotencyKey) {
+        // Race guard: two concurrent retries can both pass the pre-insert
+        // SELECT above. Let a unique-violation on (initiative_id, idempotency_key)
+        // surface as a thrown error here, then resolve it by re-reading the
+        // row the other request inserted instead of failing the request.
+        try {
+          result = await DbPromise.run(sql, insertParams, { fallback: false });
+        } catch (insertErr: any) {
+          if (insertErr?.code === '23505') {
+            const winningTask = await DbPromise.get<TaskRow>(
+              `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
+              [initiativeId, effectiveIdempotencyKey, orgId]
+            );
+            if (winningTask) {
+              res.status(200).json({ ...winningTask, idempotent: true });
+              return;
+            }
+          }
+          throw insertErr;
+        }
+      } else {
+        result = await DbPromise.run(sql, insertParams);
+      }
 
       if (!result.success) {
         logger.error('[TaskController] Task creation failed:', result.error);

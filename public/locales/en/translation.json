@@ -9397,7 +9397,19 @@
       "emptyPlanTitle": "This initiative has no plan yet",
       "emptyPlanHint": "Tasks feed the schedule (Gantt) and initiative progress. Add the first task or let AI propose a complete plan.",
       "emptyPlanAddFirst": "Add the first task",
-      "emptyPlanGenerateAi": "Generate a plan with AI"
+      "emptyPlanGenerateAi": "Generate a plan with AI",
+      "addMilestone": "Add milestone",
+      "newMilestoneTitle": "New milestone",
+      "milestoneNamePlaceholder": "e.g. Go-live approved",
+      "targetDate": "Target date",
+      "createMilestone": "Create milestone",
+      "milestoneCreated": "Milestone created",
+      "failedToCreateMilestone": "Failed to create milestone",
+      "milestonesHeading": "Milestones",
+      "noMilestonesYet": "No milestones yet",
+      "milestonesLoading": "Loading milestones…",
+      "milestonesLoadError": "Could not load milestones",
+      "taskCreated": "Task created"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
@@ -9824,6 +9836,7 @@
       "createTaskError": "Nie udało się utworzyć zadania",
       "createDecisionError": "Nie udało się utworzyć decyzji",
       "createRaidError": "Nie udało się dodać elementu RAID",
+      "deleteRaidError": "Nie udało się usunąć elementu RAID",
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",

@@ -84,6 +84,13 @@ export const CreateTaskSchema = z.object({
   kpiId: FlexibleId.optional().nullable(),
   raidItemId: FlexibleId.optional().nullable(),
   customFields: z.record(z.string(), z.unknown()).optional(),
+  // EXE-002-004: retry-safe create. validateBody() replaces req.body with
+  // this schema's parsed output (z.object() strips unknown keys by
+  // default), so a field TaskController.createTask reads from req.body
+  // MUST be declared here or it never survives past this middleware —
+  // silently, with no validation error (found via the real-Postgres
+  // idempotency test in tests/integration/execution-spine.golden-flow.realdb.test.ts).
+  idempotencyKey: z.string().max(255).optional().nullable(),
 });
 
 export const UpdateTaskSchema = CreateTaskSchema.partial().omit({ organizationId: true });

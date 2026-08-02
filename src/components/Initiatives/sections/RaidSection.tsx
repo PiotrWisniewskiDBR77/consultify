@@ -11,7 +11,8 @@
  */
 
 import { AlertTriangle } from 'lucide-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -20,10 +21,14 @@ import type {
   RiskResponseStrategy,
 } from '@/components/shared/NModeSections/RaidCanvas';
 import { RaidCanvas } from '@/components/shared/NModeSections/RaidCanvas';
+import { Api } from '@/services/api';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps } from './types';
+
+/** Local-only ids are generated client-side before the server confirms the row. */
+const isTempRaidId = (id: string): boolean => id.startsWith('raid-');
 
 export const RaidSection: React.FC<InitiativeSectionProps> = ({
   sectionType,
@@ -39,10 +44,40 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
     raidAiRequest,
     requestRaidAi,
     initiative,
+    initiativeId,
     status,
     priority,
     users,
   } = useInitiativeContext();
+
+  // ── Persistence plumbing ────────────────────────────────────────────
+  // RaidCanvas fires onUpdateItem on every keystroke for free-text fields
+  // (title, owner, source, contingency, mitigation, proposedAction…). We
+  // debounce those into a merged PATCH per item; discrete field changes
+  // (selects, date picker) go straight through.
+  const pendingPatchRef = useRef<Record<string, Partial<RaidItem>>>({});
+  const patchTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  // Ids removed locally while their create POST was still in flight — used
+  // to clean up the orphaned server row once the real id comes back.
+  const removedWhilePendingRef = useRef<Set<string>>(new Set());
+  // Edits made to a brand-new item while its create POST is still in
+  // flight can't PATCH yet (no real id exists server-side). Queue them
+  // here keyed by tempId and flush under the real id once the POST
+  // resolves — otherwise they're silently dropped (data-loss bug fixed
+  // 2026-08-01: sendRaidPatch no-ops on temp ids with nowhere for the
+  // edit to go).
+  const queuedPatchForTempIdRef = useRef<Record<string, Partial<RaidItem>>>({});
+
+  // Debounced PATCHes are fire-and-forget timers outside React's render
+  // cycle — clear them on unmount so navigating away mid-edit doesn't
+  // leave a stray Api.patch call scheduled after the component is gone.
+  useEffect(() => {
+    return () => {
+      Object.values(patchTimersRef.current).forEach((timer) => clearTimeout(timer));
+      patchTimersRef.current = {};
+      pendingPatchRef.current = {};
+    };
+  }, []);
 
   // ── Map initiative RaidItems → RaidCanvas RaidItems ──────────────────
 
@@ -70,10 +105,41 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
 
   // ── Handlers ─────────────────────────────────────────────────────────
 
+  /** Backend PATCH /initiatives/:id/raid/:raidId only persists these fields. */
+  const sendRaidPatch = useCallback(
+    (id: string, updates: Partial<RaidItem>) => {
+      if (!initiativeId || isTempRaidId(id)) return;
+
+      const body: Record<string, unknown> = {};
+      if (updates.title !== undefined) body.title = updates.title;
+      if (updates.description !== undefined) body.description = updates.description;
+      if (updates.status !== undefined) body.status = String(updates.status).toUpperCase();
+      if (updates.impact !== undefined) body.severity = String(updates.impact).toUpperCase();
+      if (updates.probability !== undefined)
+        body.probability = String(updates.probability).toUpperCase();
+      if (updates.dueDate !== undefined) body.dueDate = updates.dueDate || null;
+      if (updates.owner !== undefined) body.ownerId = updates.owner || null;
+
+      // Fields like category/mitigation/contingency/proposedAction/source/
+      // responseStrategy/type have no column on this endpoint today — they
+      // stay local-only (UI still reflects them via setRaidItems above).
+      if (Object.keys(body).length === 0) return;
+
+      Api.patch(`/initiatives/${initiativeId}/raid/${id}`, body).catch(() => {
+        // Best-effort — local state already reflects the edit; a silent
+        // background sync failure shouldn't interrupt typing.
+      });
+    },
+    [initiativeId]
+  );
+
   const handleAddItem = useCallback(
     (type: RaidType) => {
+      if (!initiativeId) return;
+
+      const tempId = `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
       const newItem = {
-        id: `raid-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        id: tempId,
         type,
         title: '',
         severity: 'MEDIUM' as const,
@@ -82,8 +148,51 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         mitigationPlan: '',
       };
       setRaidItems((prev) => [newItem, ...prev]);
+
+      Api.post(`/initiatives/${initiativeId}/raid`, {
+        type: String(type).toUpperCase(),
+        title: '',
+        description: '',
+        severity: 'MEDIUM',
+        idempotencyKey: tempId,
+      })
+        .then((res: any) => {
+          const realId = res?.id;
+          if (!realId) return;
+
+          if (removedWhilePendingRef.current.has(tempId)) {
+            // User already removed the row locally before the server id
+            // came back — the local list no longer has it, so just clean
+            // up the now-orphaned server-side row.
+            removedWhilePendingRef.current.delete(tempId);
+            delete queuedPatchForTempIdRef.current[tempId];
+            Api.delete(`/initiatives/${initiativeId}/raid/${realId}`).catch(() => {});
+            return;
+          }
+
+          setRaidItems((prev) =>
+            prev.map((item) => (item.id === tempId ? { ...item, id: realId } : item))
+          );
+          toast.success(t('initiatives.raidItemAdded2'));
+
+          // Flush any edit(s) the user made while the create POST was still
+          // in flight — these were queued (not dropped) by sendRaidPatch
+          // because there was no real id to PATCH against yet.
+          const queued = queuedPatchForTempIdRef.current[tempId];
+          if (queued) {
+            delete queuedPatchForTempIdRef.current[tempId];
+            sendRaidPatch(realId, queued);
+          }
+        })
+        .catch((e: any) => {
+          removedWhilePendingRef.current.delete(tempId);
+          toast.error(e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item'));
+          // Roll back the optimistic local item — the UI must not claim
+          // something was saved when it wasn't.
+          setRaidItems((prev) => prev.filter((item) => item.id !== tempId));
+        });
     },
-    [setRaidItems]
+    [setRaidItems, initiativeId, t, sendRaidPatch]
   );
 
   const handleUpdateItem = useCallback(
@@ -111,15 +220,90 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
           return patch;
         })
       );
+
+      // Keystroke-driven free-text fields get debounced so we don't fire a
+      // PATCH per character. Discrete field changes (selects, date input)
+      // go straight through.
+      const isKeystrokeField =
+        updates.title !== undefined ||
+        updates.description !== undefined ||
+        updates.owner !== undefined;
+
+      if (!isKeystrokeField) {
+        if (isTempRaidId(id)) {
+          // Create POST still in flight — nothing to PATCH yet. Queue so
+          // handleAddItem's .then() can flush it once the real id lands.
+          queuedPatchForTempIdRef.current[id] = {
+            ...(queuedPatchForTempIdRef.current[id] || {}),
+            ...updates,
+          };
+          return;
+        }
+        sendRaidPatch(id, updates);
+        return;
+      }
+
+      const pending = pendingPatchRef.current;
+      pending[id] = { ...(pending[id] || {}), ...updates };
+
+      const timers = patchTimersRef.current;
+      if (timers[id]) clearTimeout(timers[id]);
+      timers[id] = setTimeout(() => {
+        const merged = pending[id];
+        delete pending[id];
+        delete timers[id];
+        if (!merged) return;
+        if (isTempRaidId(id)) {
+          // The create POST for this item still hadn't resolved by the
+          // time the debounce fired — queue instead of dropping (fixes
+          // the 2026-08-01 silent-data-loss bug: this branch used to call
+          // sendRaidPatch(id, merged) here, which no-ops on temp ids and
+          // threw the edit away for good).
+          queuedPatchForTempIdRef.current[id] = {
+            ...(queuedPatchForTempIdRef.current[id] || {}),
+            ...merged,
+          };
+          return;
+        }
+        sendRaidPatch(id, merged);
+      }, 400);
     },
-    [setRaidItems]
+    [setRaidItems, sendRaidPatch]
   );
 
   const handleRemoveItem = useCallback(
     (id: string) => {
       setRaidItems((prev) => prev.filter((item) => item.id !== id));
+
+      // Drop any pending debounced patch for this item.
+      const timers = patchTimersRef.current;
+      if (timers[id]) {
+        clearTimeout(timers[id]);
+        delete timers[id];
+      }
+      delete pendingPatchRef.current[id];
+
+      if (!initiativeId) return;
+
+      if (isTempRaidId(id)) {
+        // Create POST is still in flight — mark for cleanup once the real
+        // id comes back, since there's nothing to DELETE yet. Also drop
+        // any edit queued for this temp id — the item is gone, nothing
+        // left to flush.
+        removedWhilePendingRef.current.add(id);
+        delete queuedPatchForTempIdRef.current[id];
+        toast.success(t('initiatives.raidItemRemoved2'));
+        return;
+      }
+
+      toast.success(t('initiatives.raidItemRemoved2'));
+      Api.delete(`/initiatives/${initiativeId}/raid/${id}`).catch((e: any) => {
+        toast.error(
+          e?.message || t('initiatives.toast.deleteRaidError', 'Failed to remove RAID item')
+        );
+      });
     },
-    [setRaidItems]
+    [setRaidItems, initiativeId, t]
   );
 
   const handleConvertToIssue = useCallback(

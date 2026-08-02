@@ -3092,7 +3092,7 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const { id: initiativeId } = req.params;
-      const { name, description, targetDate, isGate } = req.body;
+      const { name, description, targetDate, isGate, idempotencyKey } = req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
@@ -3115,6 +3115,38 @@ export class InitiativeController {
         return;
       }
 
+      // EXE-02/03/04: map an existing row to the same JSON shape as the
+      // normal create response, for both the pre-insert idempotency check
+      // and the post-insert unique-violation race fallback below.
+      const mapMilestoneRow = (row: any) => ({
+        id: row.id,
+        initiativeId: row.initiative_id,
+        name: row.name,
+        description: row.description,
+        targetDate: row.target_date,
+        status: row.status,
+        orderIndex: row.order_index,
+        isGate: Boolean(row.is_gate),
+        createdAt: row.created_at,
+      });
+
+      if (idempotencyKey) {
+        const existingMilestone = await queryHelpers.queryOne<any>(
+          `SELECT id, initiative_id, name, description, target_date, status, order_index, is_gate, created_at
+           FROM initiative_milestones
+           WHERE initiative_id = ? AND idempotency_key = ?`,
+          [initiativeId, idempotencyKey]
+        );
+        if (existingMilestone) {
+          res.status(200).json({
+            success: true,
+            idempotent: true,
+            milestone: mapMilestoneRow(existingMilestone),
+          });
+          return;
+        }
+      }
+
       // Get next order index
       // H4.4 fix (SQLite-izm systemowy — MEMORY finding_unquoted_camelcase_aliases_systemic):
       // unquoted camelCase alias `maxOrder` gets folded to lowercase `maxorder` by
@@ -3131,23 +3163,47 @@ export class InitiativeController {
       const milestoneId = uuidv4();
       const now = new Date().toISOString();
 
-      await queryHelpers.queryRun(
-        `INSERT INTO initiative_milestones (
-          id, initiative_id, organization_id, name, description, target_date, status, order_index, is_gate, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?)`,
-        [
-          milestoneId,
-          initiativeId,
-          orgId,
-          name,
-          description || null,
-          targetDate || null,
-          nextOrder,
-          isGate ? 1 : 0,
-          now,
-          now,
-        ]
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_milestones (
+            id, initiative_id, organization_id, name, description, target_date, status, order_index, is_gate, idempotency_key, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?, ?, ?)`,
+          [
+            milestoneId,
+            initiativeId,
+            orgId,
+            name,
+            description || null,
+            targetDate || null,
+            nextOrder,
+            isGate ? 1 : 0,
+            idempotencyKey || null,
+            now,
+            now,
+          ]
+        );
+      } catch (err: any) {
+        // Two concurrent retries with the same idempotencyKey can both pass the
+        // pre-insert SELECT and race the unique index — fall back to the row
+        // that won instead of surfacing a 500 to the caller.
+        if (idempotencyKey && err?.code === '23505') {
+          const raceMilestone = await queryHelpers.queryOne<any>(
+            `SELECT id, initiative_id, name, description, target_date, status, order_index, is_gate, created_at
+             FROM initiative_milestones
+             WHERE initiative_id = ? AND idempotency_key = ?`,
+            [initiativeId, idempotencyKey]
+          );
+          if (raceMilestone) {
+            res.status(200).json({
+              success: true,
+              idempotent: true,
+              milestone: mapMilestoneRow(raceMilestone),
+            });
+            return;
+          }
+        }
+        throw err;
+      }
 
       res.status(201).json({
         success: true,
@@ -3441,7 +3497,7 @@ export class InitiativeController {
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
       const { id: initiativeId } = req.params;
-      const { userId, name, role, allocationPercentage, startDate, endDate, notes, source } =
+      const { userId, name, role, allocationPercentage, startDate, endDate, notes, source, idempotencyKey } =
         req.body;
 
       if (!orgId) {
@@ -3454,39 +3510,107 @@ export class InitiativeController {
         return;
       }
 
+      // EXE-02/03/04: this endpoint previously had no organization-scope guard —
+      // a caller from another org who knew a foreign initiativeId could attach a
+      // resource to it. Match the same guard pattern used in createMilestone.
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      // Map an existing row to the same JSON shape as the normal create
+      // response, for both the pre-insert idempotency check and the
+      // post-insert unique-violation race fallback below.
+      const mapResourceRow = (row: any) => ({
+        id: row.id,
+        initiativeId: row.initiative_id,
+        userId: row.user_id,
+        name: row.name,
+        role: row.role,
+        allocationPercentage: row.allocation_percentage,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        notes: row.notes,
+        source: row.source,
+      });
+
+      if (idempotencyKey) {
+        const existingResource = await queryHelpers.queryOne<any>(
+          `SELECT id, initiative_id, user_id, name, role, allocation_percentage, start_date, end_date, notes, source
+           FROM initiative_resources
+           WHERE initiative_id = ? AND idempotency_key = ?`,
+          [initiativeId, idempotencyKey]
+        );
+        if (existingResource) {
+          res.status(200).json({
+            success: true,
+            idempotent: true,
+            resource: mapResourceRow(existingResource),
+          });
+          return;
+        }
+      }
+
       const resourceId = uuidv4();
       const now = new Date().toISOString();
 
-      await queryHelpers.queryRun(
-        `INSERT INTO initiative_resources (
-          id,
-          initiative_id,
-          organization_id,
-          user_id,
-          name,
-          role,
-          allocation_percentage,
-          start_date,
-          end_date,
-          notes,
-          created_at,
-          source
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          resourceId,
-          initiativeId,
-          orgId,
-          userId || null,
-          name || null,
-          role,
-          allocationPercentage || 100,
-          startDate || null,
-          endDate || null,
-          notes || null,
-          now,
-          source || 'manual',
-        ]
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO initiative_resources (
+            id,
+            initiative_id,
+            organization_id,
+            user_id,
+            name,
+            role,
+            allocation_percentage,
+            start_date,
+            end_date,
+            notes,
+            created_at,
+            source,
+            idempotency_key
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            resourceId,
+            initiativeId,
+            orgId,
+            userId || null,
+            name || null,
+            role,
+            allocationPercentage || 100,
+            startDate || null,
+            endDate || null,
+            notes || null,
+            now,
+            source || 'manual',
+            idempotencyKey || null,
+          ]
+        );
+      } catch (err: any) {
+        if (idempotencyKey && err?.code === '23505') {
+          const raceResource = await queryHelpers.queryOne<any>(
+            `SELECT id, initiative_id, user_id, name, role, allocation_percentage, start_date, end_date, notes, source
+             FROM initiative_resources
+             WHERE initiative_id = ? AND idempotency_key = ?`,
+            [initiativeId, idempotencyKey]
+          );
+          if (raceResource) {
+            res.status(200).json({
+              success: true,
+              idempotent: true,
+              resource: mapResourceRow(raceResource),
+            });
+            return;
+          }
+        }
+        throw err;
+      }
 
       try {
         await syncInitiativeCapacity(initiativeId, orgId);
@@ -4491,7 +4615,8 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { type, title, description, severity, probability, dueDate, ownerId } = req.body || {};
+      const { type, title, description, severity, probability, dueDate, ownerId, idempotencyKey } =
+        req.body || {};
       if (!orgId || !actorId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -4501,30 +4626,69 @@ export class InitiativeController {
         return;
       }
 
+      // EXE-02/03/04: this endpoint previously had no organization-scope guard
+      // (unlike updateRaidItem below, which already filters by organization_id).
+      // Match that same guard pattern for the initiatives row.
+      const initiative = await queryHelpers.queryOne(
+        'SELECT id FROM initiatives WHERE id = ? AND organization_id = ?',
+        [initiativeId, orgId]
+      );
+
+      if (!initiative) {
+        res.status(404).json({ error: 'Initiative not found' });
+        return;
+      }
+
+      if (idempotencyKey) {
+        const existingRaid = await queryHelpers.queryOne<any>(
+          `SELECT id FROM raid_items WHERE initiative_id = ? AND idempotency_key = ?`,
+          [initiativeId, idempotencyKey]
+        );
+        if (existingRaid) {
+          res.status(200).json({ success: true, idempotent: true, id: existingRaid.id });
+          return;
+        }
+      }
+
       const id = uuidv4();
       const impactVal = severity ? String(severity).toUpperCase() : null;
       const probVal = probability ? String(probability).toUpperCase() : null;
       const riskScore = calculateRiskScore(probVal || 'LOW', impactVal || 'LOW');
       const scoreCategory = categorizeScore(riskScore, DEFAULT_THRESHOLDS);
-      await queryHelpers.queryRun(
-        `INSERT INTO raid_items (
-          id, organization_id, initiative_id, type, title, description, impact, probability, risk_score, score_category, due_date, owner_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          id,
-          orgId,
-          initiativeId,
-          String(type).toUpperCase(),
-          title,
-          description || null,
-          impactVal,
-          probVal,
-          riskScore,
-          scoreCategory,
-          dueDate || null,
-          ownerId || null,
-        ]
-      );
+      try {
+        await queryHelpers.queryRun(
+          `INSERT INTO raid_items (
+            id, organization_id, initiative_id, type, title, description, impact, probability, risk_score, score_category, due_date, owner_id, idempotency_key
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            orgId,
+            initiativeId,
+            String(type).toUpperCase(),
+            title,
+            description || null,
+            impactVal,
+            probVal,
+            riskScore,
+            scoreCategory,
+            dueDate || null,
+            ownerId || null,
+            idempotencyKey || null,
+          ]
+        );
+      } catch (err: any) {
+        if (idempotencyKey && err?.code === '23505') {
+          const raceRaid = await queryHelpers.queryOne<any>(
+            `SELECT id FROM raid_items WHERE initiative_id = ? AND idempotency_key = ?`,
+            [initiativeId, idempotencyKey]
+          );
+          if (raceRaid) {
+            res.status(200).json({ success: true, idempotent: true, id: raceRaid.id });
+            return;
+          }
+        }
+        throw err;
+      }
 
       await queryHelpers.queryRun(
         `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by, notes)

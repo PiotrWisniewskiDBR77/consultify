@@ -239,8 +239,14 @@ const InitiativesPortfolioAnalysisScreen = React.lazy(
 // ── Screen registry (extensible) ──────────────────────────────────────────
 const FabRailKebabScreen = React.lazy(() => import('./screens/fab-rail-kebab'));
 const PrawyPanelSzynaIkonScreen = React.lazy(() => import('./screens/prawy-panel-szyna-ikon'));
+const Exe002004UiAuditScreen = React.lazy(() => import('./screens/exe-002-004-ui-audit'));
 
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'exe-002-004-ui-audit': {
+    label:
+      'EXE-002-004 — audyt UI: milestone-creation (Tasks & Milestones) + RAID persistence (RaidSection), REALNY <InitiativeDocumentView sourceModule="execution">, stanowy mock POST/PATCH/DELETE',
+    render: () => <Exe002004UiAuditScreen />,
+  },
   'fab-rail-kebab': {
     label: 'PILNE-9 — pływające przyciski vs kebab ostatniego wiersza (&fix=off = stan przed)',
     render: () => <FabRailKebabScreen />,

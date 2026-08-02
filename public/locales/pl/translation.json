@@ -8665,7 +8665,19 @@
       "emptyPlanTitle": "Ta inicjatywa nie ma jeszcze planu",
       "emptyPlanHint": "Zadania zasilają harmonogram (Gantt) i postęp inicjatywy. Dodaj pierwsze zadanie albo pozwól AI zaproponować kompletny plan.",
       "emptyPlanAddFirst": "Dodaj pierwsze zadanie",
-      "emptyPlanGenerateAi": "Wygeneruj plan z AI"
+      "emptyPlanGenerateAi": "Wygeneruj plan z AI",
+      "addMilestone": "Dodaj kamień milowy",
+      "newMilestoneTitle": "Nowy kamień milowy",
+      "milestoneNamePlaceholder": "np. Zatwierdzenie startu",
+      "targetDate": "Data docelowa",
+      "createMilestone": "Utwórz kamień milowy",
+      "milestoneCreated": "Kamień milowy utworzony",
+      "failedToCreateMilestone": "Nie udało się utworzyć kamienia milowego",
+      "milestonesHeading": "Kamienie milowe",
+      "noMilestonesYet": "Brak kamieni milowych",
+      "milestonesLoading": "Wczytywanie kamieni milowych…",
+      "milestonesLoadError": "Nie udało się wczytać kamieni milowych",
+      "taskCreated": "Zadanie utworzone"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",
@@ -9092,6 +9104,7 @@
       "createTaskError": "Nie udało się utworzyć zadania",
       "createDecisionError": "Nie udało się utworzyć decyzji",
       "createRaidError": "Nie udało się dodać elementu RAID",
+      "deleteRaidError": "Nie udało się usunąć elementu RAID",
       "aiGenerationError": "Generowanie AI nie powiodło się",
       "approvalRequestError": "Nie udało się wysłać prośby o zatwierdzenie",
       "archiveError": "Nie udało się zarchiwizować",
