@@ -39,6 +39,7 @@ import Api from '../../services/api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
+  type V8FinanceCaseScenario,
   type V8FinanceModelCreatePayload,
   type V8FinanceModelEventCreatePayload,
 } from '../../services/api/v8/finance';
@@ -248,14 +249,31 @@ async function deleteModelEventWithFallback(eventId: string) {
   }
 }
 
-async function updateModelWithFallback(modelId: string, body: Record<string, unknown>) {
+async function updateModelWithFallback(
+  modelId: string,
+  body: Record<string, unknown>,
+  opts?: { expectedVersion?: number }
+) {
   try {
-    return await V8FinanceApi.updateModel(modelId, body);
+    return await V8FinanceApi.updateModel(modelId, body, opts);
   } catch (error) {
+    // FIN-03 CAS: a 409 VERSION_CONFLICT must reach the caller as-is — never
+    // silently retried against the legacy route (shouldFallbackToLegacyFinance
+    // already excludes 409, this comment just makes the intent explicit).
     if (!shouldFallbackToLegacyFinance(error)) {
       throw error;
     }
     return await Api.put(`/api/financial-modeling/models/${modelId}`, body);
+  }
+}
+
+async function getCaseScenariosWithFallback(modelId: string) {
+  try {
+    return await V8FinanceApi.getCaseScenarios(modelId);
+  } catch {
+    // FIN-04 has no legacy predecessor route; a model that isn't part of a
+    // case (or a transient error) just means "no scenario panel to show".
+    return { scenarios: [] as V8FinanceCaseScenario[], count: 0, baselineModelId: null };
   }
 }
 
@@ -429,6 +447,21 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     {}
   );
 
+  // FIN-03 — save state for the assumptions CAS write. 'saved' is only reached
+  // AFTER the server confirms the write AND we've re-fetched the persisted
+  // model (durable read-back) — never set optimistically before the request
+  // resolves.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'conflict' | 'error'>(
+    'idle'
+  );
+  const [saveConflict, setSaveConflict] = useState<{ serverVersion: number | null } | null>(null);
+
+  // FIN-04 — sibling scenarios (Base/Upside/Downside + case root) of the
+  // selected model's Investment Case, with baseline selection.
+  const [caseScenarios, setCaseScenarios] = useState<V8FinanceCaseScenario[]>([]);
+  const [baselineBusyId, setBaselineBusyId] = useState<string | null>(null);
+  const [baselineError, setBaselineError] = useState<string | null>(null);
+
   // ── Load models ──
   const loadModels = useCallback(async () => {
     try {
@@ -446,15 +479,19 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   const selectModel = useCallback(async (modelId: string) => {
     setLoading(true);
     try {
+      // Real GET, every time — this is what makes a hard reload/reopen show
+      // the SAME case/scenarios/baseline: nothing here is read from a client
+      // cache or localStorage, it always re-fetches from the backend.
       const model = await getModelDetailWithFallback(modelId);
       setSelectedModel(model);
       setEvents((model as any)?.events || []);
       setAssumptions((model as any)?.assumptions_json || {});
       try {
-        const [outData, valData, assumptionsStatusData] = await Promise.all([
+        const [outData, valData, assumptionsStatusData, caseData] = await Promise.all([
           getModelOutputsWithFallback(modelId).catch(() => null),
           getModelValidationsWithFallback(modelId).catch(() => null),
           getModelAssumptionsStatusWithFallback(modelId).catch(() => null),
+          getCaseScenariosWithFallback(modelId),
         ]);
         setOutputs(
           ((outData as any)?.grouped || {}) as Record<string, Record<string, OutputLine[]>>
@@ -474,11 +511,15 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
           ? (assumptionsStatusData as any).assumptions
           : [];
         setAssumptionsStatus(Object.fromEntries(statusRows.map((row) => [row.key, row])));
+        setCaseScenarios(
+          Array.isArray((caseData as any)?.scenarios) ? (caseData as any).scenarios : []
+        );
       } catch {
         setOutputs({});
         setValidations([]);
         setValidationSummary({ total: 0, pass: 0, fail: 0, warning: 0 });
         setAssumptionsStatus({});
+        setCaseScenarios([]);
       }
       setError(null);
       trackFunnelEvent('financial_model_created', { modelId }); // viewed
@@ -632,13 +673,59 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
   };
 
   // ── Save assumptions ──
+  // FIN-03: optimistic-concurrency (CAS) write. `expectedVersion` pins the
+  // update to the version this session last read; a 409 VERSION_CONFLICT
+  // means someone else changed the model since — surfaced honestly (never
+  // silently overwritten). Success is only reported AFTER the server
+  // confirms the write AND we've re-fetched the persisted model — no
+  // optimistic/premature success.
   const handleSaveAssumptions = async () => {
     if (!selectedModel) return;
+    setSaveState('saving');
+    setSaveConflict(null);
     try {
-      await updateModelWithFallback(selectedModel.id, { assumptions });
+      await updateModelWithFallback(
+        selectedModel.id,
+        { assumptions },
+        { expectedVersion: selectedModel.version }
+      );
+      await selectModel(selectedModel.id);
+      setSaveState('saved');
       onModelChanged?.(selectedModel.id);
-    } catch {
-      /* noop */
+    } catch (e: any) {
+      if (e?.status === 409) {
+        setSaveState('conflict');
+        setSaveConflict({ serverVersion: (e?.data?.serverVersion as number) ?? null });
+      } else {
+        setSaveState('error');
+        setError(e?.data?.error || e?.response?.data?.error || e?.message || String(e));
+      }
+    }
+  };
+
+  // ── FIN-04: set baseline ──
+  // Calls the EXISTING POST /finance/models/:modelId/set-baseline endpoint
+  // (no new route). Reloads the scenario list from the server afterward so
+  // the "exactly one baseline" invariant shown in the UI always reflects
+  // backend truth, not a locally-guessed toggle.
+  const handleSetBaseline = async (scenarioModelId: string) => {
+    if (!selectedModel) return;
+    setBaselineBusyId(scenarioModelId);
+    setBaselineError(null);
+    try {
+      await V8FinanceApi.setBaseline(scenarioModelId);
+      const refreshed = await getCaseScenariosWithFallback(selectedModel.id);
+      setCaseScenarios(
+        Array.isArray((refreshed as any)?.scenarios) ? (refreshed as any).scenarios : []
+      );
+      if (scenarioModelId === selectedModel.id) {
+        await selectModel(selectedModel.id);
+      }
+      onModelChanged?.(selectedModel.id);
+    } catch (e: any) {
+      setBaselineError(e?.data?.error || e?.message || String(e));
+    } finally {
+      setBaselineBusyId(null);
     }
   };
 
@@ -984,6 +1071,68 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               </div>
             )}
 
+            {/* FIN-04 — Investment Case scenarios (Base/Upside/Downside) + baseline
+                selection. Only shown once the model actually has siblings (i.e. it
+                is part of a case with more than one scenario). Reading from
+                `caseScenarios`, which selectModel() always re-fetches from the
+                server — so a reopen shows the same baseline, not a stale local
+                guess. */}
+            {caseScenarios.length > 1 && (
+              <div
+                className="mx-6 mt-4 rounded-2xl border border-c-border-subtle bg-c-surface p-4"
+                data-testid="case-scenarios-panel"
+              >
+                <div className="mb-3 flex items-center justify-between gap-4">
+                  <h3 className="text-sm font-semibold text-c-text">
+                    {t('finance.model.scenarios.title', 'Scenariusze i baseline')}
+                  </h3>
+                  {baselineError && (
+                    <span className="text-xs text-c-danger" data-testid="baseline-error">
+                      {baselineError}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {caseScenarios.map((s) => (
+                    <div
+                      key={s.id}
+                      data-testid={`scenario-chip-${s.id}`}
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs ${
+                        s.is_baseline
+                          ? 'border-c-focus bg-c-focus/10 text-c-text'
+                          : 'border-c-border bg-c-surface-raised text-c-text-secondary'
+                      }`}
+                    >
+                      <span className="font-medium">{s.name}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-c-text-muted">
+                        {s.scenario || '—'}
+                      </span>
+                      {s.is_baseline ? (
+                        <span
+                          className="rounded-full bg-c-focus/20 px-2 py-0.5 text-[10px] font-semibold text-c-text"
+                          data-testid={`baseline-badge-${s.id}`}
+                        >
+                          {t('finance.model.scenarios.baseline', 'Baseline')}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSetBaseline(s.id)}
+                          disabled={baselineBusyId !== null}
+                          className="rounded-lg border border-c-border px-2 py-1 text-[10px] font-medium text-c-text-secondary hover:border-c-focus hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-50"
+                          data-testid={`set-baseline-${s.id}`}
+                        >
+                          {baselineBusyId === s.id
+                            ? t('finance.model.scenarios.settingBaseline', 'Ustawiam…')
+                            : t('finance.model.scenarios.setBaseline', 'Ustaw jako baseline')}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="mx-6 mt-3 p-3 bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-xl flex items-start gap-2">
                 <AlertTriangle size={14} className="text-danger-500 mt-0.5 shrink-0" />
@@ -1172,12 +1321,55 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                         />
                       </div>
                     ))}
-                    <button
-                      onClick={handleSaveAssumptions}
-                      className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500"
-                    >
-                      {t('common.save', 'Save')}
-                    </button>
+                    <div className="mt-2 flex items-center gap-3">
+                      <button
+                        onClick={handleSaveAssumptions}
+                        disabled={saveState === 'saving'}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 disabled:opacity-50"
+                        data-testid="save-assumptions"
+                      >
+                        {saveState === 'saving'
+                          ? t('common.saving', 'Zapisuję…')
+                          : t('common.save', 'Save')}
+                      </button>
+                      {saveState === 'saved' && (
+                        <span
+                          className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+                          data-testid="save-success"
+                        >
+                          <CheckCircle2 size={14} />
+                          {t('finance.model.saved', 'Zapisano')}
+                        </span>
+                      )}
+                    </div>
+                    {saveState === 'conflict' && (
+                      <div
+                        className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300"
+                        data-testid="version-conflict-banner"
+                      >
+                        {t(
+                          'finance.model.versionConflict',
+                          'Model został zmieniony przez kogoś innego od ostatniego odczytu. Odśwież, aby zobaczyć aktualną wersję, i spróbuj ponownie.'
+                        )}
+                        {saveConflict?.serverVersion != null && (
+                          <>
+                            {' '}
+                            ({t('finance.model.serverVersion', 'wersja serwera')}:{' '}
+                            {saveConflict.serverVersion})
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void selectModel(selectedModel.id).then(() => setSaveState('idle'));
+                          }}
+                          className="ml-2 font-medium underline underline-offset-2 hover:no-underline"
+                          data-testid="version-conflict-reload"
+                        >
+                          {t('common.reload', 'Odśwież')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -294,9 +294,14 @@ describe('FinancialModelWorkspace V8 outputs seam', () => {
     });
 
     await waitFor(() => {
-      expect(V8FinanceApi.updateModel).toHaveBeenCalledWith('model-1', {
-        assumptions: { initialCash: 1000 },
-      });
+      // FIN-03 CAS: the workspace now pins the write to the version it last
+      // read (baseModel.version === 1) so a stale write 409s instead of
+      // silently overwriting a concurrent change.
+      expect(V8FinanceApi.updateModel).toHaveBeenCalledWith(
+        'model-1',
+        { assumptions: { initialCash: 1000 } },
+        { expectedVersion: 1 },
+      );
     });
 
     expect(Api.put).not.toHaveBeenCalledWith('/api/financial-modeling/models/model-1', {
