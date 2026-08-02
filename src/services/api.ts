@@ -1270,6 +1270,32 @@ function toAxiosLikeResponse<T = any>(payload: T): any {
   });
 }
 
+// --- TLS-04: Teresa-assisted SWOT proposals ---
+// Wire-format DTO returned by /api/tools/:toolId/swot-proposals* — mirrors the
+// backend contract exactly (camelCase). Proposals are NEVER auto-applied: a
+// proposal only changes the SWOT matrix once accepted via acceptSwotProposal.
+export interface SwotProposal {
+  id: string;
+  toolSessionId: string;
+  quadrant: 'strengths' | 'weaknesses' | 'opportunities' | 'threats';
+  operation: 'add' | 'update' | 'remove';
+  targetItemId: string | null;
+  before: { text: string; [key: string]: unknown } | null;
+  proposedAfter: { text: string; [key: string]: unknown } | null;
+  finalAfter: { text: string; [key: string]: unknown } | null;
+  rationale: string;
+  sourceRefs: string[] | null;
+  isAssumption: boolean;
+  confidence: number;
+  modelMetadata: Record<string, unknown>;
+  status: 'pending' | 'accepted' | 'rejected';
+  expectedVersion: number;
+  createdBy: string;
+  createdAt: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+}
+
 export const Api = {
   // --- AUTH ---
   login: async (email: string, password: string): Promise<User> => {
@@ -6868,6 +6894,57 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to update tool session');
+  },
+
+  // --- TLS-04: Teresa-assisted SWOT proposals ---
+  // Teresa never writes to the SWOT matrix directly: she proposes, the user
+  // decides (accept/reject) via these endpoints. `options.signal` lets callers
+  // cancel an in-flight generate (e.g. user navigates away / hits Cancel).
+  createSwotProposals: async (
+    toolId: string,
+    body?: { quadrantFocus?: 'strengths' | 'weaknesses' | 'opportunities' | 'threats' },
+    options?: { signal?: AbortSignal }
+  ): Promise<{ proposals: SwotProposal[] }> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/swot-proposals`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body || {}),
+      signal: options?.signal,
+    });
+    return handleResponse(res, 'Failed to generate SWOT proposals');
+  },
+
+  listSwotProposals: async (toolId: string): Promise<{ proposals: SwotProposal[] }> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/swot-proposals`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load SWOT proposals');
+  },
+
+  acceptSwotProposal: async (
+    toolId: string,
+    proposalId: string,
+    body: { expectedVersion: number; editedAfter?: { text?: string; [key: string]: unknown } }
+  ): Promise<{ proposal: SwotProposal; session: { id: string; version: number } }> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/swot-proposals/${proposalId}/accept`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    });
+    return handleResponse(res, 'Failed to accept SWOT proposal');
+  },
+
+  rejectSwotProposal: async (
+    toolId: string,
+    proposalId: string,
+    body?: Record<string, unknown>
+  ): Promise<{ proposal: SwotProposal }> => {
+    const res = await fetch(`${API_URL}/tools/${toolId}/swot-proposals/${proposalId}/reject`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body || {}),
+    });
+    return handleResponse(res, 'Failed to reject SWOT proposal');
   },
 
   /**

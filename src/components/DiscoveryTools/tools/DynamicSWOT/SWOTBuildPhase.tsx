@@ -13,6 +13,7 @@ import {
 
 import { InlineAssist } from '../../InlineAssist';
 import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
+import { TeresaSwotProposals } from './TeresaSwotProposals';
 
 type QuadrantId = SWOTItem['quadrant'];
 
@@ -412,6 +413,13 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
           ) : null}
         </div>
       </div>
+
+      {/* TLS-04: Teresa-assisted SWOT — proposals are generated + persisted
+          server-side (swot_proposals table) and only ever change the matrix
+          after an explicit Accept. Mounted here (not ToolCanvas) because this
+          is the one place that already has `session.id` + the quadrant data
+          in scope without threading new props through ToolCanvas. */}
+      <TeresaSwotProposals toolSessionId={session.id} isPolish={isPolish} />
 
       <SwotMatrixVisual data={swotData} isPolish={isPolish} />
 
