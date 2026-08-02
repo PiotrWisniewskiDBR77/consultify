@@ -8931,6 +8931,16 @@
       "approvedBy": "Zatwierdził(a)",
       "approvedAt": "Data zatwierdzenia",
       "transitionRef": "Referencja przejścia",
+      "receipt": {
+        "delivered": "Dostarczono do Results i Finance",
+        "failed": "Dostarczenie nie powiodło się — możliwe ponowienie",
+        "delivering": "Trwa dostarczanie do Results i Finance…",
+        "needsDecision": "Results dostarczone — mapowanie w Finance wymaga decyzji produktowej",
+        "partial": "Dostarczono częściowo",
+        "retry": "Ponów dostarczenie",
+        "retryTriggered": "Ponowienie uruchomione",
+        "retryError": "Nie udało się uruchomić ponowienia"
+      },
       "submitForApproval": "Wyślij do zatwierdzenia",
       "waitingApproval": "Czeka na zatwierdzenie",
       "approve": "Zatwierdź",

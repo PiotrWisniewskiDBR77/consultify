@@ -75,14 +75,21 @@
  *    `isAdmin` bypass) — this suite's "no role" user gets NEITHER, to prove
  *    the 403 path.
  *
- * 5. Evidence ownership (`assertEvidenceRefBelongsToOrg`) checks ONLY that the
- *    referenced task/milestone/decision belongs to the CALLER's organization
- *    — not that it belongs to the specific initiative under closure. This
- *    suite exploits that (intentionally, matching real service behavior) to
- *    share one `task`(status='done') + one `initiative_milestone`
- *    (status='COMPLETED') evidence pair across every closure request that
- *    needs 2 satisfying evidence refs, instead of minting a fresh pair per
- *    initiative.
+ * 5. ★ FIXED (was a real bug, Codex review): evidence ownership
+ *    (`assertEvidenceRefBelongsToInitiative`, initiativeClosureService.ts)
+ *    now checks that the referenced task/milestone/decision belongs to BOTH
+ *    the caller's organization AND the SPECIFIC initiative under closure,
+ *    AND is itself in a terminal/approved state (task done/completed,
+ *    milestone COMPLETED, decision approved) — checked at
+ *    add-evidence time, not just at readiness/submit time. The earlier
+ *    version checked organization_id only, which let evidence from a
+ *    DIFFERENT initiative in the same org close this one. This suite mints
+ *    a FRESH task+milestone pair PER initiative that needs 2 satisfying
+ *    evidence refs (`evidenceByInitiative` map in the harness) instead of
+ *    sharing one pool — sharing would now itself be invalid (an evidence rig
+ *    attached to initiative A can no longer satisfy initiative B's
+ *    closure). See negative controls B2-B7 for the ownership/terminal
+ *    -status matrix this enables testing.
  *
  * 6. `initiativeClosureService.approveClosureRequest` does NOT pass a
  *    `__testSyncHook` into its `executeInitiativeTransition` call (grepped —
@@ -170,6 +177,7 @@ if (process.env.DATABASE_URL || process.env.PGHOST || process.env.DB_HOST) {
 // touches the DB pool at import time).
 import initiativesRoutes from '../../server/src/routes/pmo/initiatives.routes.js';
 import initiativeClosureRoutes from '../../server/src/routes/pmo/initiativeClosure.routes.js';
+import { approveClosureRequest } from '../../server/src/services/initiative/initiativeClosureService.js';
 
 // ---------------------------------------------------------------------------
 // Connection probe (same contract as the sibling realdb golden-flow files)
@@ -226,14 +234,14 @@ async function pgReachable(): Promise<boolean> {
   }
 }
 
-async function tablesExist(client: Client, names: readonly string[]): Promise<boolean> {
+async function findMissingTables(client: Client, names: readonly string[]): Promise<string[]> {
   const result = await client.query<{ table_name: string }>(
     `SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public' AND table_name = ANY($1)`,
     [names as unknown as string[]]
   );
   const found = new Set(result.rows.map((r) => r.table_name));
-  return names.every((n) => found.has(n));
+  return names.filter((n) => !found.has(n));
 }
 
 const REQUIRED_TABLES = [
@@ -317,12 +325,30 @@ interface Harness {
   initiativeCrossTenantClosureId: string;
   initiativeCompleteBypassId: string;
   initiativeFaultInjectionId: string;
+  initiativeEvidenceOwnershipId: string;
+  // Two-unit recovery seam tests (scenarios A/B/C — see file header).
+  initiativeRecoveryAId: string;
+  initiativeRecoveryBId: string;
+  initiativeRecoveryCId: string;
   allInitiativeIds: string[];
 
-  // Shared evidence rows, org A (see file header point 5).
-  taskDoneId: string;
-  milestoneDoneId: string;
+  // Evidence MUST belong to the SPECIFIC initiative under closure (see file
+  // header point 5) — a fresh task+milestone pair, both terminal
+  // (done/COMPLETED), minted PER initiative that needs 2 satisfying evidence
+  // refs, keyed by that initiative's id. Sharing one pool across initiatives
+  // would now itself be an invalid-evidence bug, not a convenience.
+  evidenceByInitiative: Record<string, { taskId: string; milestoneId: string }>;
+  // Org A, attached to initiativeGoldenId — decision-evidence-type coverage
+  // (only the golden-flow test exercises the 'decision' evidenceType).
   decisionApprovedId: string;
+
+  // Ownership/terminal-status negative-control fixtures, all on
+  // initiativeEvidenceOwnershipId unless noted:
+  taskIncompleteId: string; // belongs to this initiative, status='todo' (not terminal)
+  milestoneIncompleteId: string; // belongs to this initiative, status='PENDING' (not terminal)
+  decisionPendingId: string; // belongs to this initiative, status='pending' (not terminal)
+  decisionNoInitiativeId: string; // org A, initiative_id = NULL ("no relation")
+
   // Org B evidence, used to prove cross-tenant evidence injection fails.
   taskOrgBId: string;
 
@@ -334,9 +360,20 @@ function suffix(): string {
 }
 
 async function setupHarness(): Promise<Harness | null> {
-  if (!(await pgReachable())) return null;
+  // A completely unconfigured environment (no DATABASE_URL/PGHOST/DB_HOST at
+  // all) is a legitimate "no Postgres available here" — vacuous pass, same
+  // as the sibling realdb suites.
   const config = buildClientConfig();
   if (!config) return null;
+
+  // From here on, the caller EXPLICITLY pointed this run at a database.
+  // Connection failure (Postgres genuinely not up yet) still yields a
+  // vacuous skip — but a *reachable* database with an *incomplete* schema is
+  // a real bug, not an environment gap, and must fail the suite loudly
+  // rather than silently reporting a false green (Codex review finding: a
+  // schema-incomplete run was previously indistinguishable from "no DB
+  // configured").
+  if (!(await pgReachable())) return null;
 
   const client = new Client(config);
   try {
@@ -345,14 +382,29 @@ async function setupHarness(): Promise<Harness | null> {
     return null;
   }
 
+  let missing: string[];
   try {
-    if (!(await tablesExist(client, REQUIRED_TABLES))) {
-      await client.end().catch(() => {});
-      return null;
-    }
-  } catch {
+    missing = await findMissingTables(client, REQUIRED_TABLES);
+  } catch (err) {
     await client.end().catch(() => {});
-    return null;
+    throw new Error(
+      `DATABASE_URL is configured and reachable, but the fresh-schema check itself failed: ` +
+        `${err instanceof Error ? err.message : String(err)}. Run the standard migration ` +
+        `bootstrap (server/scripts/migrate.postgres.ts --safe) against this database before ` +
+        `re-running this suite.`
+    );
+  }
+  if (missing.length > 0) {
+    await client.end().catch(() => {});
+    throw new Error(
+      `DATABASE_URL is configured and reachable, but the schema is incomplete — missing table(s): ` +
+        `${missing.join(', ')}. This is a hard FAILURE, not a skip: a configured database must be ` +
+        `fully migrated. Run the standard migration bootstrap ` +
+        `(server/scripts/migrate.postgres.ts --safe, plus --only 293_initiative_milestones.sql,` +
+        `247_initiative_enhancements.sql,063_raid_items.sql for a known pre-existing, unrelated ` +
+        `fresh-install gap in those three specific files) against this database before re-running ` +
+        `this suite.`
+    );
   }
 
   const tag = suffix();
@@ -411,6 +463,10 @@ async function setupHarness(): Promise<Harness | null> {
   const initiativeCrossTenantClosureId = `init_exe08_xtenant_${tag}`;
   const initiativeCompleteBypassId = `init_exe08_bypass_${tag}`;
   const initiativeFaultInjectionId = `init_exe08_fault_${tag}`;
+  const initiativeEvidenceOwnershipId = `init_exe08_evown_${tag}`;
+  const initiativeRecoveryAId = `init_exe08_recA_${tag}`;
+  const initiativeRecoveryBId = `init_exe08_recB_${tag}`;
+  const initiativeRecoveryCId = `init_exe08_recC_${tag}`;
 
   const allInitiativeIds = [
     initiativeGoldenId,
@@ -422,6 +478,10 @@ async function setupHarness(): Promise<Harness | null> {
     initiativeCrossTenantClosureId,
     initiativeCompleteBypassId,
     initiativeFaultInjectionId,
+    initiativeEvidenceOwnershipId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
   ];
 
   // Every initiative: EXECUTING, owner_business_id=userAId (grants
@@ -440,6 +500,10 @@ async function setupHarness(): Promise<Harness | null> {
     [initiativeCrossTenantClosureId, 'EXE-08 Cross-Tenant Closure Initiative'],
     [initiativeCompleteBypassId, 'EXE-08 Complete Bypass Initiative'],
     [initiativeFaultInjectionId, 'EXE-08 Fault Injection Initiative'],
+    [initiativeEvidenceOwnershipId, 'EXE-08 Evidence Ownership Initiative'],
+    [initiativeRecoveryAId, 'EXE-08 Recovery Scenario A Initiative'],
+    [initiativeRecoveryBId, 'EXE-08 Recovery Scenario B Initiative'],
+    [initiativeRecoveryCId, 'EXE-08 Recovery Scenario C Initiative'],
   ] as const) {
     await client.query(
       `INSERT INTO initiatives
@@ -450,37 +514,83 @@ async function setupHarness(): Promise<Harness | null> {
     );
   }
 
-  // Shared evidence pool (org A) — see file header point 5. Both marked
-  // done/completed so they never trip getReadinessChecklist's
-  // "incompleteItemsExplained" item for initiativeGoldenId (the initiative
-  // they're nominally attached to); every OTHER initiative above has ZERO
-  // tasks/milestones of its own, so that check is trivially satisfied there
-  // too (COUNT(*) = 0).
-  const taskDoneId = `task_exe08_evidence_${tag}`;
-  await client.query(
-    `INSERT INTO tasks (id, organization_id, initiative_id, title, status)
-     VALUES ($1, $2, $3, 'EXE-08 evidence task (done)', 'done')`,
-    [taskDoneId, orgAId, initiativeGoldenId]
-  );
-
-  const milestoneDoneId = `milestone_exe08_evidence_${tag}`;
-  await client.query(
-    `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, status)
-     VALUES ($1, $2, $3, 'EXE-08 evidence milestone (completed)', 'COMPLETED')`,
-    [milestoneDoneId, initiativeGoldenId, orgAId]
-  );
+  // Per-initiative evidence pairs (see file header point 5 / Harness type
+  // comment) — a fresh task (status='done') + milestone (status='COMPLETED')
+  // MINTED FOR, AND ATTACHED TO, each specific initiative that needs 2
+  // satisfying evidence refs. Using another initiative's pair to satisfy
+  // THIS initiative's closure must be rejected (negative controls B2/B3).
+  const evidenceByInitiative: Record<string, { taskId: string; milestoneId: string }> = {};
+  for (const initiativeId of [
+    initiativeGoldenId,
+    initiativeIncompleteEvidenceId,
+    initiativeIdemApproveId,
+    initiativeConcurrentApproveId,
+    initiativeStaleVersionId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
+  ]) {
+    const taskId = `task_exe08_ev_${initiativeId}`;
+    await client.query(
+      `INSERT INTO tasks (id, organization_id, initiative_id, title, status)
+       VALUES ($1, $2, $3, 'EXE-08 evidence task (done)', 'done')`,
+      [taskId, orgAId, initiativeId]
+    );
+    const milestoneId = `milestone_exe08_ev_${initiativeId}`;
+    await client.query(
+      `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, status)
+       VALUES ($1, $2, $3, 'EXE-08 evidence milestone (completed)', 'COMPLETED')`,
+      [milestoneId, initiativeId, orgAId]
+    );
+    evidenceByInitiative[initiativeId] = { taskId, milestoneId };
+  }
 
   // Decision evidence — status='approved' (never 'pending'/'escalated') and a
   // type outside ('SCOPE_CHANGE','RISK_ACCEPTANCE','BLOCKER_RESOLUTION',
   // 'PHASE_TRANSITION') so it can never trip
   // `hasPendingExecutionGateDecisions` for any initiative under test (see
-  // file header point 2).
+  // file header point 2). Attached to initiativeGoldenId — only the
+  // golden-flow test exercises the 'decision' evidenceType.
   const decisionApprovedId = `decision_exe08_evidence_${tag}`;
   await client.query(
     `INSERT INTO decisions
       (id, organization_id, initiative_id, title, type, decision_maker_id, status, created_by)
      VALUES ($1, $2, $3, 'EXE-08 evidence decision (approved)', 'CLOSURE_EVIDENCE', $4, 'approved', $4)`,
     [decisionApprovedId, orgAId, initiativeGoldenId, userAId]
+  );
+
+  // Ownership/terminal-status negative-control fixtures — all attached to
+  // initiativeEvidenceOwnershipId (so they legitimately belong to the
+  // initiative under test in these controls) but each deliberately NOT
+  // terminal, to prove `assertEvidenceRefBelongsToInitiative` rejects them
+  // (409 EVIDENCE_NOT_TERMINAL, not silently accepted).
+  const taskIncompleteId = `task_exe08_incomplete_${tag}`;
+  await client.query(
+    `INSERT INTO tasks (id, organization_id, initiative_id, title, status)
+     VALUES ($1, $2, $3, 'EXE-08 evidence task (incomplete)', 'todo')`,
+    [taskIncompleteId, orgAId, initiativeEvidenceOwnershipId]
+  );
+  const milestoneIncompleteId = `milestone_exe08_incomplete_${tag}`;
+  await client.query(
+    `INSERT INTO initiative_milestones (id, initiative_id, organization_id, name, status)
+     VALUES ($1, $2, $3, 'EXE-08 evidence milestone (incomplete)', 'PENDING')`,
+    [milestoneIncompleteId, initiativeEvidenceOwnershipId, orgAId]
+  );
+  const decisionPendingId = `decision_exe08_pending_${tag}`;
+  await client.query(
+    `INSERT INTO decisions
+      (id, organization_id, initiative_id, title, type, decision_maker_id, status, created_by)
+     VALUES ($1, $2, $3, 'EXE-08 evidence decision (pending)', 'CLOSURE_EVIDENCE', $4, 'pending', $4)`,
+    [decisionPendingId, orgAId, initiativeEvidenceOwnershipId, userAId]
+  );
+  // Org A, but no initiative_id at all — "exists, but has no relation to any
+  // initiative" (negative control B4).
+  const decisionNoInitiativeId = `decision_exe08_noinit_${tag}`;
+  await client.query(
+    `INSERT INTO decisions
+      (id, organization_id, initiative_id, title, type, decision_maker_id, status, created_by)
+     VALUES ($1, $2, NULL, 'EXE-08 evidence decision (no initiative link)', 'CLOSURE_EVIDENCE', $3, 'approved', $3)`,
+    [decisionNoInitiativeId, orgAId, userAId]
   );
 
   // Org B evidence — used ONLY to prove cross-tenant evidence injection is
@@ -544,10 +654,17 @@ async function setupHarness(): Promise<Harness | null> {
     initiativeCrossTenantClosureId,
     initiativeCompleteBypassId,
     initiativeFaultInjectionId,
+    initiativeEvidenceOwnershipId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
     allInitiativeIds,
-    taskDoneId,
-    milestoneDoneId,
+    evidenceByInitiative,
     decisionApprovedId,
+    taskIncompleteId,
+    milestoneIncompleteId,
+    decisionPendingId,
+    decisionNoInitiativeId,
     taskOrgBId,
     cleanup,
   };
@@ -574,16 +691,24 @@ async function driveClosureRequestToSubmitted(
   const closureRequestId = createRes.body.id as string;
   expect(closureRequestId).toBeTruthy();
 
+  const evidence = h.evidenceByInitiative[initiativeId];
+  if (!evidence) {
+    throw new Error(
+      `driveClosureRequestToSubmitted: no evidence pair minted for initiative ${initiativeId} — ` +
+        `add it to the evidenceByInitiative loop in setupHarness.`
+    );
+  }
+
   const ev1 = await request(app)
     .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
     .set('Authorization', `Bearer ${ownerToken}`)
-    .send({ evidenceType: 'task', evidenceRefId: h.taskDoneId });
+    .send({ evidenceType: 'task', evidenceRefId: evidence.taskId });
   expect(ev1.status).toBe(201);
 
   const ev2 = await request(app)
     .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
     .set('Authorization', `Bearer ${ownerToken}`)
-    .send({ evidenceType: 'milestone', evidenceRefId: h.milestoneDoneId });
+    .send({ evidenceType: 'milestone', evidenceRefId: evidence.milestoneId });
   expect(ev2.status).toBe(201);
 
   const submitRes = await request(app)
@@ -688,10 +813,11 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
 
       // 3. POST evidence x2 (real task + milestone in the same org), GET
       //    readiness after each, checking checklist progress.
+      const goldenEvidence = h.evidenceByInitiative[initiativeId];
       const evTask = await request(app)
         .post(evidenceUrl)
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ evidenceType: 'task', evidenceRefId: h.taskDoneId });
+        .send({ evidenceType: 'task', evidenceRefId: goldenEvidence.taskId });
       expect(evTask.status).toBe(201);
       expect(evTask.body.success).toBe(true);
 
@@ -703,7 +829,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const evMilestone = await request(app)
         .post(evidenceUrl)
         .set('Authorization', `Bearer ${ownerToken}`)
-        .send({ evidenceType: 'milestone', evidenceRefId: h.milestoneDoneId });
+        .send({ evidenceType: 'milestone', evidenceRefId: goldenEvidence.milestoneId });
       expect(evMilestone.status).toBe(201);
       expect(evMilestone.body.success).toBe(true);
 
@@ -859,7 +985,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
     const ev1 = await request(app)
       .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
       .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ evidenceType: 'task', evidenceRefId: h.taskDoneId });
+      .send({ evidenceType: 'task', evidenceRefId: h.evidenceByInitiative[initiativeId].taskId });
     expect(ev1.status).toBe(201);
 
     const submitRes = await request(app)
@@ -908,6 +1034,183 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const rows = await h.client.query(
         `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1 AND evidence_ref_id = $2`,
         [closureRequestId, h.taskOrgBId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
+
+  // -------------------------------------------------------------------------
+  // Negative controls B2-B7 — evidence ownership/terminal-status matrix
+  // (Codex review: assertEvidenceRefBelongsToInitiative). All against
+  // h.initiativeEvidenceOwnershipId. Each proves: (a) no evidence row gets
+  // created, (b) readiness/evidenceMinimumTwo never counts the rejected ref.
+  // -------------------------------------------------------------------------
+
+  async function openDraftOn(app: express.Express, initiativeId: string, ownerToken: string): Promise<string> {
+    const createRes = await request(app)
+      .post(`/api/initiatives/${initiativeId}/closure-requests`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({});
+    expect(createRes.status).toBe(201);
+    return createRes.body.id as string;
+  }
+
+  async function assertEvidenceRejected(
+    app: express.Express,
+    initiativeId: string,
+    closureRequestId: string,
+    ownerToken: string,
+    body: { evidenceType: string; evidenceRefId: string },
+    expectedStatus: number,
+    expectedCode: string
+  ): Promise<void> {
+    const res = await request(app)
+      .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send(body);
+    expect(res.status).toBe(expectedStatus);
+    expect(res.body.code).toBe(expectedCode);
+  }
+
+  itDB('negative control B2: task belongs to a DIFFERENT initiative in the same org -> 404, not accepted', async (h) => {
+    const app = buildApp();
+    const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+    const initiativeId = h.initiativeEvidenceOwnershipId;
+    const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+    // A real, terminal, org-A task — but attached to initiativeGoldenId, not this one.
+    const foreignTaskId = h.evidenceByInitiative[h.initiativeGoldenId].taskId;
+    await assertEvidenceRejected(
+      app,
+      initiativeId,
+      closureRequestId,
+      ownerToken,
+      { evidenceType: 'task', evidenceRefId: foreignTaskId },
+      404,
+      'EVIDENCE_REF_NOT_FOUND'
+    );
+    const rows = await h.client.query(
+      `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+      [closureRequestId]
+    );
+    expect(rows.rows.length).toBe(0);
+  });
+
+  itDB(
+    'negative control B3: milestone belongs to a DIFFERENT initiative in the same org -> 404, not accepted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      const foreignMilestoneId = h.evidenceByInitiative[h.initiativeGoldenId].milestoneId;
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'milestone', evidenceRefId: foreignMilestoneId },
+        404,
+        'EVIDENCE_REF_NOT_FOUND'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
+
+  itDB(
+    'negative control B4: decision exists but has NO relation to any initiative -> 404, not accepted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'decision', evidenceRefId: h.decisionNoInitiativeId },
+        404,
+        'EVIDENCE_REF_NOT_FOUND'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
+
+  itDB(
+    'negative control B5: task belongs to this initiative but is NOT done -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'task', evidenceRefId: h.taskIncompleteId },
+        409,
+        'EVIDENCE_NOT_TERMINAL'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
+
+  itDB(
+    'negative control B6: milestone belongs to this initiative but is NOT completed -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'milestone', evidenceRefId: h.milestoneIncompleteId },
+        409,
+        'EVIDENCE_NOT_TERMINAL'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
+      );
+      expect(rows.rows.length).toBe(0);
+    }
+  );
+
+  itDB(
+    'negative control B7: decision belongs to this initiative but is still pending -> 409 EVIDENCE_NOT_TERMINAL, not accepted',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeEvidenceOwnershipId;
+      const closureRequestId = await openDraftOn(app, initiativeId, ownerToken);
+      await assertEvidenceRejected(
+        app,
+        initiativeId,
+        closureRequestId,
+        ownerToken,
+        { evidenceType: 'decision', evidenceRefId: h.decisionPendingId },
+        409,
+        'EVIDENCE_NOT_TERMINAL'
+      );
+      const rows = await h.client.query(
+        `SELECT id FROM initiative_closure_evidence WHERE closure_request_id = $1`,
+        [closureRequestId]
       );
       expect(rows.rows.length).toBe(0);
     }
@@ -1114,7 +1417,7 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       const evidenceRes = await request(app)
         .post(`/api/initiatives/${initiativeId}/closure-requests/${closureRequestId}/evidence`)
         .set('Authorization', `Bearer ${attackerToken}`)
-        .send({ evidenceType: 'task', evidenceRefId: h.taskDoneId });
+        .send({ evidenceType: 'task', evidenceRefId: h.evidenceByInitiative[h.initiativeGoldenId].taskId });
       expect(evidenceRes.status).toBe(404);
 
       const submitRes = await request(app)
@@ -1167,25 +1470,15 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   );
 
   // -------------------------------------------------------------------------
-  // Fault injection — the layer this file CAN control (a fabricated
-  // closureRequestId on a real, owned initiative). See file header point 6
-  // for why fault injection INSIDE the frozen transition engine is out of
-  // scope for this file.
-  //
-  // NEEDS_FOLLOWUP (out of scope here — different file, single-writer
-  // discipline): `initiativeClosureService.ts`'s call to
-  // `executeInitiativeTransition` does not pass `__testSyncHook`
-  // (initiativeTransitionService.ts's own, existing test-injection point).
-  // Wiring it through `approveClosureRequest` (e.g. an optional param
-  // threaded to the `executeInitiativeTransition` call) would let a future
-  // test in `initiativeClosureService`'s own suite deterministically inject a
-  // mid-transition failure/abort and assert the closure request lands in
-  // `transition_failed` and self-heals correctly — that suite does not exist
-  // yet and is not this file's job to create.
+  // Negative control (honestly named — NOT fault injection, just a 404
+  // check): approve against a fabricated closureRequestId on a real, owned
+  // initiative. Real fault injection (proving the two-unit recovery model
+  // actually recovers) is below, using the test-only seam added to
+  // approveClosureRequest/reconcileClosureRequestStatus per Codex review.
   // -------------------------------------------------------------------------
 
   itDB(
-    'fault injection (controlled layer): approve against a fabricated closureRequestId -> 404, no writes',
+    'negative control: approve against a fabricated closureRequestId -> 404, no writes',
     async (h) => {
       const app = buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
@@ -1210,5 +1503,202 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       );
       expect(historyRows.rows.length).toBe(0);
     }
+  );
+
+  // -------------------------------------------------------------------------
+  // REAL fault injection — the honest two-unit atomicity model
+  // (initiativeClosureService.ts file header) proven to actually recover,
+  // not just documented as theoretically sound (Codex review). Uses the
+  // test-only crash-injection seam on approveClosureRequest, calling the
+  // service directly (never reachable via HTTP — initiativeClosure.routes.ts
+  // only ever passes the named body fields, never these flags).
+  // -------------------------------------------------------------------------
+
+  async function countHistory(h: Harness, initiativeId: string, action: string): Promise<number> {
+    const rows = await h.client.query(
+      `SELECT id FROM initiative_history WHERE initiative_id = $1 AND action = $2`,
+      [initiativeId, action]
+    );
+    return rows.rows.length;
+  }
+
+  itDB(
+    'recovery scenario A: crash after Unit 1 commits, before the engine is called -> stuck pending, retry completes exactly once',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryAId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailAfterUnit1: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_AFTER_UNIT1_BEFORE_ENGINE');
+
+      // Unit 1 committed (durable approval decision); Unit 2 (the engine)
+      // was never called.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('approved_pending_transition');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('EXECUTING');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(0);
+
+      // Retry — a plain call, no injected flag. reconcileClosureRequestStatus
+      // (called at the top of approveClosureRequest) detects the stuck
+      // pending state, sees the initiative is NOT done, and retries Unit 2
+      // itself before Unit 1 even runs again.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status, transition_audit_ref as "transitionAuditRef" FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+      expect(finalRow.rows[0].transitionAuditRef).toBeTruthy();
+      const finalInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(finalInitiative.rows[0].status).toBe('DONE');
+
+      // KEY assertion: exactly ONE approval decision, exactly ONE engine
+      // transition — the retry did not duplicate either.
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
+  );
+
+  itDB(
+    'recovery scenario B: crash after the engine succeeds, before finalize -> initiative already DONE, retry finalizes without a second transition',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryBId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailAfterEngineBeforeFinalize: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_AFTER_ENGINE_BEFORE_FINALIZE');
+
+      // The engine already ran and succeeded; only the finalize write on the
+      // closure request itself never happened.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('approved_pending_transition');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('DONE');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+
+      // Retry — reconcileClosureRequestStatus sees the initiative is ALREADY
+      // done and just finalizes; it must NOT call the engine a second time.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.idempotent).toBe(true);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+
+      // KEY assertion: still exactly ONE of each — no second transition, no
+      // second approval record.
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
+  );
+
+  itDB(
+    'recovery scenario C: crash before Unit 1 commits -> nothing persisted, retry proceeds cleanly',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryCId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailBeforeUnit1Commit: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_BEFORE_UNIT1_COMMIT');
+
+      // Unit 1's own transaction rolled back — nothing at all was persisted.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('submitted');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('EXECUTING');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(0);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(0);
+
+      // Retry — a completely clean, ordinary approve, as if the first call
+      // never happened.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.idempotent).toBe(false);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+      const finalInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(finalInitiative.rows[0].status).toBe('DONE');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
   );
 });

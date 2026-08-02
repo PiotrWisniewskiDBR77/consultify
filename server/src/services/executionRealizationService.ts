@@ -32,6 +32,16 @@ export interface RecordExecutionRealizationParams {
   varianceNotes?: string | null;
   /** Authenticated caller id — never client-supplied. */
   recordedBy: string;
+  /**
+   * EXE-09 (minimal additive param, migration 937) — when a closure-triggered
+   * automated write (as opposed to the normal human-entered write this
+   * service exists for) provides this, it becomes the idempotency key: a
+   * partial unique index on `roi_realized_values.closure_receipt_id`
+   * guarantees at most one realization row per closure receipt, even under
+   * a retried/concurrent delivery attempt. `undefined`/omitted for every
+   * existing (human-entry) caller — completely inert for them.
+   */
+  closureReceiptId?: string;
 }
 
 export interface ExecutionRealizationResult {
@@ -71,8 +81,8 @@ export async function recordExecutionRealization(
     `INSERT INTO roi_realized_values (
        id, initiative_id, organization_id, period_month,
        realized_revenue_delta, realized_cost_delta, realized_savings,
-       source, variance_notes, recorded_by
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       source, variance_notes, recorded_by, closure_receipt_id
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       params.initiativeId,
@@ -84,6 +94,7 @@ export async function recordExecutionRealization(
       'execution',
       varianceNotes,
       params.recordedBy,
+      params.closureReceiptId ?? null,
     ]
   );
 

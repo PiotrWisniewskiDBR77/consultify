@@ -68,7 +68,7 @@ export interface ClosureHandoffResult {
  *   `target_value` (KPIs without a target can't seed a measurable benefit).
  * - Idempotent: a KPI that already has a closure benefit is skipped, so a repeat
  *   DONE — or a DONE → revert → DONE cycle — never produces duplicates. The
- *   partial unique index (migration 783) is the backstop; this pre-check avoids
+ *   source-KPI unique index (migration 938) is the backstop; this pre-check avoids
  *   relying on DB error semantics that differ across sqlite/pg.
  * - No KPIs (or none with a target) → zero benefits, no error.
  *
@@ -111,7 +111,7 @@ export async function handoffFromClosure(
     // Dedup: skip if a closure benefit already exists for this KPI.
     const existing = await dbGet<{ id: string }>(
       `SELECT id FROM initiative_benefits
-        WHERE initiative_id = ? AND kpi_id = ? AND source_tag = ?
+        WHERE initiative_id = ? AND source_initiative_kpi_id = ? AND source_tag = ?
         LIMIT 1`,
       [initiativeId, kpi.id, CLOSURE_HANDOFF_SOURCE],
       { fallback: true }
@@ -124,9 +124,9 @@ export async function handoffFromClosure(
     await dbRun(
       `INSERT INTO initiative_benefits (
          id, initiative_id, organization_id, name, description,
-         benefit_type, kpi_id, target_value, status, source_tag,
+         benefit_type, kpi_id, source_initiative_kpi_id, target_value, status, source_tag,
          created_by, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, 'quantitative', ?, ?, 'tracking', ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, 'quantitative', NULL, ?, ?, 'tracking', ?, ?, ?, ?)`,
       [
         randomUUID(),
         initiativeId,
@@ -185,12 +185,26 @@ async function handoffFromInitiativeFallback(
     return result;
   }
 
+  // EXE-09 (Codex review, minimal additive fix to frozen EXE-08 code,
+  // explicitly required this round): this query previously read
+  // `COALESCE(title, name)` — `initiatives` has never had a `title` column
+  // in this schema (confirmed: only `name`), so the query always threw
+  // "column \"title\" does not exist". With `{ fallback: true }` (the
+  // previous setting) that error was silently swallowed and `initiative`
+  // resolved to `null`, making this whole fallback path a permanent silent
+  // no-op — a real "planned KPIs or expected_roi" case would report
+  // "nothing to hand off" and mark the closure DELIVERED without ever
+  // actually creating a benefit row. Fixed: read the real column, and use
+  // `{ fallback: false }` so any FUTURE genuine error here throws instead of
+  // being swallowed — it propagates to `handoffFromClosure`'s caller
+  // (`attemptDeliveryInternal` in closureDeliveryReceiptService.ts), which
+  // records it as a retryable FAILED status rather than a false DELIVERED.
   const initiative = await dbGet<InitiativeFallbackRow>(
-    `SELECT COALESCE(title, name) AS name, expected_roi
+    `SELECT name, expected_roi
        FROM initiatives
       WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId],
-    { fallback: true }
+    { fallback: false }
   );
 
   const expectedRoi =

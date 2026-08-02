@@ -108,6 +108,8 @@ const REQ_ID = 'req-1';
 const LIST_URL = `/initiatives/${INITIATIVE_ID}/closure-requests`;
 const DETAIL_URL = `/initiatives/${INITIATIVE_ID}/closure-requests/${REQ_ID}`;
 const READINESS_URL = `/initiatives/${INITIATIVE_ID}/closure-requests/${REQ_ID}/readiness`;
+// EXE-09
+const RECEIPT_URL = `/initiatives/${INITIATIVE_ID}/closure-receipt`;
 
 const SECTION_PROPS: any = {
   sectionType: { id: 'closure', label: 'Closure' },
@@ -157,6 +159,10 @@ function makeState(detailOverrides: Record<string, unknown> = {}) {
     list: [detail] as any[],
     evidence: [] as any[],
     readiness: { items: [], ready: true, incompleteTaskCount: 0, incompleteMilestoneCount: 0 } as any,
+    // EXE-09 — null by default: "no receipt yet" is the normal state for
+    // every pre-existing test in this file (none of them close an
+    // initiative), and must never render any delivery chip.
+    receipt: null as null | Record<string, unknown>,
   };
   return state;
 }
@@ -168,6 +174,7 @@ function wireGet(state: ReturnType<typeof makeState>) {
       return Promise.resolve({ closureRequest: state.detail, evidence: state.evidence });
     }
     if (url === READINESS_URL) return Promise.resolve(state.readiness);
+    if (url === RECEIPT_URL) return Promise.resolve({ receipt: state.receipt });
     return Promise.resolve({});
   });
 }
@@ -472,5 +479,56 @@ describe('ClosureSection', () => {
 
     // Fully read-only — nothing left to edit on a done request.
     expect(container.querySelectorAll('textarea').length).toBe(0);
+  });
+
+  // EXE-09 — closure delivery receipt chip.
+  it('receipt PENDING/DELIVERING: never renders "Delivered" — no premature success', async () => {
+    const state = makeState({ status: 'done' });
+    state.receipt = { id: 'receipt-1', resultsStatus: 'PENDING', financeStatus: 'PENDING' };
+    wireGet(state);
+
+    render(<ClosureSection {...SECTION_PROPS} />);
+
+    expect(await screen.findByText('Delivering to Results & Finance…')).toBeInTheDocument();
+    expect(screen.queryByText('Delivered to Results & Finance')).not.toBeInTheDocument();
+    expect(screen.queryByText('Retry delivery')).not.toBeInTheDocument();
+  });
+
+  it('receipt with a FAILED leg: shows the failed/retry chip and a working retry button', async () => {
+    const state = makeState({ status: 'done' });
+    state.receipt = { id: 'receipt-1', resultsStatus: 'FAILED', resultsLastError: 'boom', financeStatus: 'DELIVERED' };
+    wireGet(state);
+    (Api.post as any).mockImplementation((url: string) => {
+      if (url.endsWith('/closure-receipt/retry')) {
+        return Promise.resolve({
+          success: true,
+          receipt: { id: 'receipt-1', resultsStatus: 'DELIVERED', financeStatus: 'DELIVERED' },
+        });
+      }
+      return Promise.resolve({});
+    });
+
+    render(<ClosureSection {...SECTION_PROPS} />);
+
+    expect(await screen.findByText('Delivery failed — retry available')).toBeInTheDocument();
+    const retryBtn = screen.getByText('Retry delivery').closest('button')!;
+    expect(retryBtn).not.toBeDisabled();
+
+    fireEvent.click(retryBtn);
+
+    expect(await screen.findByText('Delivered to Results & Finance')).toBeInTheDocument();
+  });
+
+  it('receipt with Finance NEEDS_DECISION (Results delivered): shows the missing-mapping chip, no retry button', async () => {
+    const state = makeState({ status: 'done' });
+    state.receipt = { id: 'receipt-1', resultsStatus: 'DELIVERED', financeStatus: 'NEEDS_DECISION' };
+    wireGet(state);
+
+    render(<ClosureSection {...SECTION_PROPS} />);
+
+    expect(
+      await screen.findByText('Results delivered — Finance mapping needs a product decision')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Retry delivery')).not.toBeInTheDocument();
   });
 });

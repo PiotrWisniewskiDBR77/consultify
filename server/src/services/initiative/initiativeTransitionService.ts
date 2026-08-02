@@ -23,7 +23,7 @@ import {
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
 import auditEventsService from '../AuditEventsService.js';
-import { fireClosureHandoff } from '../executionResultsBridge.js';
+import { createReceiptOnClosure, triggerImmediateDeliveryBestEffort } from '../closureDeliveryReceiptService.js';
 import notificationService from '../notificationService.js';
 import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
@@ -1474,6 +1474,23 @@ export async function executeInitiativeTransition(
       historyVals
     );
 
+    // EXE-09 — durable closure→Results/Finance delivery receipt, written
+    // atomically in THIS SAME transaction (same `client`, same
+    // `correlationId` as the audit rows above) so a closure can never commit
+    // without a receipt to track its downstream delivery. Replaces the old
+    // purely-fire-and-forget `fireClosureHandoff` call below with a durable
+    // row; the actual delivery attempt still happens outside this
+    // transaction (see the post-commit trigger below), but its durable
+    // bookkeeping does not depend on that attempt ever running.
+    if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+      await createReceiptOnClosure(client, {
+        organizationId: orgId,
+        initiativeId: id,
+        correlationId,
+        actorId: actorId || null,
+      });
+    }
+
     return {
       kind: 'success',
       currentStatus,
@@ -1543,14 +1560,17 @@ export async function executeInitiativeTransition(
   // on every successful status transition. Fail-safe (never throws/blocks).
   void recordStageHandoff(orgId, id, currentStatus, nextStatus, actorId);
 
-  // M14 → M15 closure handoff (Decision B1b, hardened G1 2026-07-10): on
-  // close (→ DONE), materialize the initiative's planned KPIs (or, absent
-  // those, its expected_roi business case) into the canonical M15 registry
-  // (initiative_benefits). fireClosureHandoff is the SINGLE choke-point
-  // wrapper used by every DONE-transition path in this codebase — fire-and-forget
-  // + idempotent internally, so it never blocks the status change.
+  // EXE-09 — best-effort IMMEDIATE delivery attempt for the receipt row
+  // already committed atomically inside the transaction above. Unlike the
+  // old `fireClosureHandoff` (fire-and-forget with nothing durable behind
+  // it), a failure or a process crash right here loses nothing: the
+  // receipt already exists in PENDING state and
+  // `runReconciliationSweep`/its cron (server/src/index.ts) will pick it up
+  // and retry independently of whether this call ever ran. Still
+  // non-blocking by design — callers must not wait on downstream delivery
+  // to get a response to the status change itself.
   if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
-    fireClosureHandoff(orgId, id, actorId || null);
+    triggerImmediateDeliveryBestEffort(correlationId);
   }
 
   // Emit notifications (best-effort)

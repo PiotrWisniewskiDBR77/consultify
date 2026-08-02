@@ -12,13 +12,66 @@
 --     application, not by a DB FK (the three referent tables have no shared
 --     parent to FK against polymorphically). A bare external URL is stored
 --     only as supplementary `notes`, never as the sole evidence reference.
+--
+-- Renamed from a "20260802_...sql"-dated filename to this plain-numbered one
+-- (Codex review): this project's migration runner sorts filenames as plain
+-- strings, so every dated file runs BEFORE any plain-numbered file — which
+-- meant this file, when dated, ran before several tables it depends on
+-- (initiative_section_types, initiative_history) reliably existed on a
+-- fresh-Postgres bootstrap, silently deleting the whole feature (each
+-- migration file commits as one transaction; one failing statement rolls
+-- back everything else in the same file). Numbered 934 (after
+-- 933_initiative_section_types_closure.sql) to run safely after the plain
+-- -numbered block that creates those tables.
+--
+-- Defensive reconciliation (does NOT modify the frozen
+-- 20260802_exe005006_change_progress_spine.sql — same "additive, replay
+-- -safe" reasoning as that file's own header comment, and the SAME
+-- CREATE TABLE IF NOT EXISTS statement it already uses for the identical
+-- reason, reproduced here verbatim rather than assumed): this migration's
+-- `writeInitiativeHistory` helper (initiativeClosureService.ts) reads and
+-- writes `initiative_history`, including its `idempotency_key` column. On a
+-- fresh-Postgres bootstrap `initiative_history` is NOT reliably already
+-- present by the time this file runs — its historical DDL lives in
+-- baseline/never-ran migrations that can fail, and the sibling EXE-05/06
+-- file's own attempt to create it gets rolled back by ITS later, unrelated
+-- failure (its last statement touches `execution_audit_log`, which does not
+-- exist yet at that point in migration order — and a migration file commits
+-- as one transaction, so that failure undoes everything earlier in the same
+-- file, including a successful CREATE TABLE). Confirmed by reproducing a
+-- fresh-Postgres bootstrap twice. Both this CREATE TABLE and the ALTER below
+-- are therefore needed here, independent of whether the sibling file
+-- succeeded.
+CREATE TABLE IF NOT EXISTS initiative_history (
+  id TEXT PRIMARY KEY,
+  initiative_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  old_value TEXT,
+  new_value TEXT,
+  changed_by TEXT NOT NULL,
+  changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  notes TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_initiative_history_initiative ON initiative_history(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_initiative_history_action ON initiative_history(action);
+
+ALTER TABLE initiative_history ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_initiative_history_idempotency
+  ON initiative_history(initiative_id, action, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS initiative_closure_requests (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
   initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
 
-  requested_by TEXT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+  -- No FK to users(id): this is a NOT NULL audit-identity column ("who
+  -- requested this"), same convention as decisions.decision_maker_id and
+  -- initiative_history.changed_by elsewhere in this schema — a NOT NULL
+  -- column can never carry ON DELETE SET NULL without self-contradiction
+  -- (that combination throws at the FIRST user deletion, not at migration
+  -- time — caught by Codex review against a real Postgres run).
+  requested_by TEXT NOT NULL,
   requested_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   -- Optimistic-concurrency token: the initiative's own `updated_at` as read at
@@ -100,11 +153,38 @@ CREATE TABLE IF NOT EXISTS initiative_closure_evidence (
   evidence_ref_id TEXT NOT NULL,
 
   notes TEXT,
-  added_by TEXT NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+  -- No FK to users(id) — see requested_by comment above (same contradiction,
+  -- same fix).
+  added_by TEXT NOT NULL,
   added_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   idempotency_key TEXT
 );
+
+-- Reconciliation for environments where this migration already ran with the
+-- earlier, self-contradictory FK definitions (NOT NULL + ON DELETE SET
+-- NULL) — drop those two constraints if present. Additive/idempotent: a
+-- no-op on a fresh install (the CREATE TABLE above never adds them) and a
+-- no-op on a second run here (constraint already gone).
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'initiative_closure_requests'
+      AND constraint_name = 'initiative_closure_requests_requested_by_fkey'
+  ) THEN
+    ALTER TABLE initiative_closure_requests DROP CONSTRAINT initiative_closure_requests_requested_by_fkey;
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name = 'initiative_closure_evidence'
+      AND constraint_name = 'initiative_closure_evidence_added_by_fkey'
+  ) THEN
+    ALTER TABLE initiative_closure_evidence DROP CONSTRAINT initiative_closure_evidence_added_by_fkey;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_closure_evidence_request
   ON initiative_closure_evidence(closure_request_id);
@@ -121,19 +201,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_evidence_idempotency
 CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_evidence_no_dup_ref
   ON initiative_closure_evidence(closure_request_id, evidence_type, evidence_ref_id);
 
--- Register the new "closure" section in the initiative section library
--- (server/migrations/529_initiative_section_types.sql) so the frontend's
--- ClosureSection.tsx (registry key 'closure', component_key 'closure') is
--- actually reachable through InitiativeDocumentView's DB-backed section
--- renderer, not just present in the frontend registry.ts (a registry-only
--- entry silently never renders once this table has rows — the renderer
--- reads its section list from here, not from the frontend default map).
--- Placed after 'history' (order 140), left column, system section.
-DO $$
-BEGIN
-  IF to_regclass('public.initiative_section_types') IS NOT NULL THEN
-    INSERT INTO initiative_section_types (id, key, name, name_pl, description, description_pl, category, column_position, default_order, icon, icon_color, icon_bg, component_key, is_system, is_active) VALUES
-    ('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', 1, 1)
-    ON CONFLICT DO NOTHING;
-  END IF;
-END $$;
+-- The "closure" initiative_section_types seed row is intentionally NOT in
+-- this file — see server/migrations/933_initiative_section_types_closure.sql.
+-- This file's own filename prefix ("20260802_...") sorts, in this project's
+-- migration runner, BEFORE every plain-numbered file including
+-- 529_initiative_section_types.sql (verified empirically: a fresh-Postgres
+-- bootstrap applies every "2026....sql"-prefixed file, in date order, before
+-- ANY plain-numbered file — the runner sorts filenames as plain strings, and
+-- '2' < '5'). A seed INSERT into initiative_section_types placed HERE would
+-- run before that table exists on a truly fresh install, failing (and, since
+-- each migration file commits as one transaction, rolling back this file's
+-- own CREATE TABLEs too) — silently deleting the whole closure/evidence
+-- feature on fresh installs. Confirmed by reproducing a fresh-Postgres
+-- bootstrap and inspecting schema_migrations: this file executed at
+-- 05:50:50, 529_initiative_section_types.sql at 05:50:51 (a whole second
+-- later, once the plain-numbered block starts). Splitting the seed into a
+-- separately, later-numbered file is the fix — not reordering statements
+-- within this one, which cannot change WHEN this file itself runs.

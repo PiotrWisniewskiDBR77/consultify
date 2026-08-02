@@ -1996,6 +1996,21 @@ if (startServer && shouldStartHttpServer) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
     }
 
+    // EXE-09: closure→Results/Finance delivery receipt reconciliation sweep.
+    // Opt-OUT (on by default) — retries any closure_delivery_receipts row
+    // whose Results/Finance leg is still PENDING/FAILED, so a failed or
+    // interrupted delivery (including one lost to a process restart between
+    // closure-commit and its first delivery attempt) is recovered
+    // automatically rather than sitting stuck forever.
+    try {
+      const { startClosureReceiptReconciliationCron } = await import(
+        './services/closureDeliveryReceiptService.js'
+      );
+      startClosureReceiptReconciliationCron();
+    } catch (err: any) {
+      logger.warn('[Server] Closure delivery receipt reconciliation sweep not started:', err?.message);
+    }
+
     // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress
     // flush every 15 min. Fail-soft; sends nothing when the buffer is empty or
     // Slack is unconfigured.

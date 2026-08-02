@@ -89,6 +89,22 @@ interface ReadinessResult {
   incompleteMilestoneCount: number;
 }
 
+/**
+ * EXE-09 — durable closure→Results/Finance delivery receipt. Read-only here;
+ * the backend (closureDeliveryReceiptService.ts) is the only writer. Never
+ * inferred locally — mirrors this file's own "no premature success" rule for
+ * the closure request itself (see file header).
+ */
+type LegStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'FAILED' | 'NEEDS_DECISION';
+
+interface ClosureReceipt {
+  id: string;
+  resultsStatus: Exclude<LegStatus, 'NEEDS_DECISION'>;
+  resultsLastError?: string | null;
+  financeStatus: LegStatus;
+  financeLastError?: string | null;
+}
+
 const formatDateTime = (value?: string | null): string => {
   if (!value) return '—';
   const d = new Date(value);
@@ -122,6 +138,8 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [readiness, setReadiness] = useState<ReadinessResult | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [receipt, setReceipt] = useState<ClosureReceipt | null>(null);
+  const [retryingReceipt, setRetryingReceipt] = useState(false);
 
   // ── Editable closure fields (draft/returned only) ──────────────────────
   const [rationale, setRationale] = useState('');
@@ -166,9 +184,14 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
   const fetchDetail = useCallback(
     async (requestId: string): Promise<ClosureRequestDetail | null> => {
       if (!initiativeId) return null;
-      const [detailRes, readinessRes] = await Promise.all([
+      const [detailRes, readinessRes, receiptRes] = await Promise.all([
         Api.get(`/initiatives/${initiativeId}/closure-requests/${requestId}`),
         Api.get(`/initiatives/${initiativeId}/closure-requests/${requestId}/readiness`),
+        // EXE-09 — best-effort: an org/environment without this route deployed
+        // yet (or a closure request that never reached done) must not break
+        // the rest of the section. `receipt: null` is a normal, expected
+        // response shape, not an error.
+        Api.get(`/initiatives/${initiativeId}/closure-receipt`).catch(() => null),
       ]);
       const cr: ClosureRequestDetail | null = detailRes?.closureRequest || null;
       setDetail(cr);
@@ -183,11 +206,32 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
             }
           : null
       );
+      setReceipt(receiptRes?.receipt ?? null);
       setNotReadyChecklist(null);
       return cr;
     },
     [initiativeId]
   );
+
+  const handleRetryReceipt = useCallback(async () => {
+    if (!initiativeId || retryingReceipt) return;
+    setRetryingReceipt(true);
+    try {
+      const res = await Api.post(`/initiatives/${initiativeId}/closure-receipt/retry`, {});
+      setReceipt(res?.receipt ?? null);
+      toast.success(
+        t('initiatives.closureSection.receipt.retryTriggered', 'Retry triggered')
+      );
+    } catch (e: any) {
+      toast.error(
+        e?.data?.error ||
+          e?.message ||
+          t('initiatives.closureSection.receipt.retryError', 'Failed to trigger retry')
+      );
+    } finally {
+      setRetryingReceipt(false);
+    }
+  }, [initiativeId, retryingReceipt, t]);
 
   const refreshAfterAction = useCallback(
     async (preferredId?: string | null) => {
@@ -522,6 +566,68 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     }
   };
 
+  // EXE-09 — one combined label for the two independent legs. "Delivered"
+  // requires BOTH legs terminal-success; NEEDS_DECISION on Finance alone
+  // (Results delivered) is its own distinct state, not folded into either
+  // "delivered" or "failed" — it is neither: nothing to retry, but not done.
+  const receiptSummary = useMemo(():
+    | { label: string; badgeClass: string; icon: 'check' | 'spinner' | 'alert' | 'circle'; canRetry: boolean }
+    | null => {
+    if (!receipt) return null;
+    const { resultsStatus, financeStatus } = receipt;
+    const anyDelivering = resultsStatus === 'DELIVERING' || financeStatus === 'DELIVERING';
+    const anyPending = resultsStatus === 'PENDING' || financeStatus === 'PENDING';
+    const anyFailed = resultsStatus === 'FAILED' || financeStatus === 'FAILED';
+    const financeNeedsDecision = financeStatus === 'NEEDS_DECISION';
+    const bothDelivered = resultsStatus === 'DELIVERED' && financeStatus === 'DELIVERED';
+    const onlyResultsDelivered = resultsStatus === 'DELIVERED' && financeNeedsDecision;
+
+    if (bothDelivered) {
+      return {
+        label: t('initiatives.closureSection.receipt.delivered', 'Delivered to Results & Finance'),
+        badgeClass: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+        icon: 'check',
+        canRetry: false,
+      };
+    }
+    if (anyFailed) {
+      return {
+        label: t('initiatives.closureSection.receipt.failed', 'Delivery failed — retry available'),
+        badgeClass: 'bg-danger-500/15 text-danger-600 dark:text-danger-400',
+        icon: 'alert',
+        canRetry: true,
+      };
+    }
+    if (anyDelivering || anyPending) {
+      return {
+        label: t('initiatives.closureSection.receipt.delivering', 'Delivering to Results & Finance…'),
+        badgeClass: 'bg-c-info/15 text-c-info',
+        icon: 'spinner',
+        canRetry: false,
+      };
+    }
+    if (onlyResultsDelivered) {
+      return {
+        label: t(
+          'initiatives.closureSection.receipt.needsDecision',
+          'Results delivered — Finance mapping needs a product decision'
+        ),
+        badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+        icon: 'circle',
+        canRetry: false,
+      };
+    }
+    // Results delivered, Finance neither delivered nor needs-decision yet —
+    // shouldn't normally linger here, but render as "partially delivered"
+    // rather than silently showing nothing.
+    return {
+      label: t('initiatives.closureSection.receipt.partial', 'Partially delivered'),
+      badgeClass: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+      icon: 'circle',
+      canRetry: financeStatus === 'FAILED' || resultsStatus === 'FAILED',
+    };
+  }, [receipt, t]);
+
   const evidenceTypeLabel = (evT: string): string => {
     switch (evT) {
       case 'task':
@@ -848,6 +954,35 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
                   <div className="text-[10px] text-slate-400 dark:text-slate-500">
                     {t('initiatives.closureSection.transitionRef', 'Transition ref')}:{' '}
                     {detail.transitionAuditRef}
+                  </div>
+                )}
+
+                {/* EXE-09 — Results/Finance delivery receipt status. Read-only
+                    display of durable server state; never claims "delivered"
+                    while the backend still reports PENDING/DELIVERING/FAILED. */}
+                {receiptSummary && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1.5 border-t border-emerald-500/20">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium ${receiptSummary.badgeClass}`}
+                    >
+                      {receiptSummary.icon === 'spinner' && (
+                        <Loader2 size={10} className="animate-spin" />
+                      )}
+                      {receiptSummary.icon === 'check' && <CheckCircle2 size={10} />}
+                      {receiptSummary.icon === 'alert' && <AlertTriangle size={10} />}
+                      {receiptSummary.icon === 'circle' && <Circle size={10} />}
+                      {receiptSummary.label}
+                    </span>
+                    {!readonly && receiptSummary.canRetry && (
+                      <button
+                        onClick={() => void handleRetryReceipt()}
+                        disabled={retryingReceipt}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-slate-200 dark:border-navy-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50 inline-flex items-center gap-1"
+                      >
+                        {retryingReceipt && <Loader2 size={10} className="animate-spin" />}
+                        {t('initiatives.closureSection.receipt.retry', 'Retry delivery')}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
