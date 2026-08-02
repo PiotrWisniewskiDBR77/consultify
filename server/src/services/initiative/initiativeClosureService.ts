@@ -95,43 +95,64 @@ function fail(code: string, message: string, httpStatus: number, details?: Recor
 }
 
 // ---------------------------------------------------------------------------
-// Evidence ownership validation — evidence MUST point at a real, org-owned
-// row. Never trust a bare id without checking it actually belongs to the
-// caller's organization (cross-tenant evidence injection is an explicit
-// negative-control requirement for this packet).
+// Evidence ownership validation — evidence MUST point at a real row that (a)
+// belongs to the caller's organization AND (b) belongs to the SPECIFIC
+// initiative being closed AND (c) is itself in a terminal/approved state.
+// Never trust a bare id: checking only organization_id would let evidence
+// from a DIFFERENT initiative in the SAME org close this one (Codex review
+// finding — a real cross-initiative evidence bypass, not theoretical: two
+// unrelated initiatives could "close" off the same shared task). Checking
+// only initiative_id without a terminal-status check would let an
+// in-progress task/milestone/decision count as "done" evidence.
 // ---------------------------------------------------------------------------
 
-async function assertEvidenceRefBelongsToOrg(
+async function assertEvidenceRefBelongsToInitiative(
   orgId: string,
+  initiativeId: string,
   evidenceType: EvidenceType,
   evidenceRefId: string
 ): Promise<void> {
-  let row: unknown;
+  let row: { id: string; status: string | null } | null = null;
+  let terminal = false;
   if (evidenceType === 'task') {
-    row = await queryHelpers.queryOne(
-      `SELECT id FROM tasks WHERE id = ? AND organization_id = ?`,
-      [evidenceRefId, orgId]
+    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+      `SELECT id, status FROM tasks WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+      [evidenceRefId, orgId, initiativeId]
     );
+    terminal = !!row && ['done', 'completed'].includes(String(row.status || '').toLowerCase());
   } else if (evidenceType === 'milestone') {
-    row = await queryHelpers.queryOne(
-      `SELECT id FROM initiative_milestones WHERE id = ? AND organization_id = ?`,
-      [evidenceRefId, orgId]
+    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+      `SELECT id, status FROM initiative_milestones WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+      [evidenceRefId, orgId, initiativeId]
     );
+    terminal = !!row && String(row.status || '').toUpperCase() === 'COMPLETED';
   } else if (evidenceType === 'decision') {
-    row = await queryHelpers.queryOne(
-      `SELECT id FROM decisions WHERE id = ? AND organization_id = ?`,
-      [evidenceRefId, orgId]
+    // decisions.status domain is 'pending' | 'approved' | 'rejected' |
+    // 'deferred' (server/src/types/index.ts DecisionStatus) — 'approved' is
+    // the only resolved/accepted terminal state.
+    row = await queryHelpers.queryOne<{ id: string; status: string | null }>(
+      `SELECT id, status FROM decisions WHERE id = ? AND organization_id = ? AND initiative_id = ?`,
+      [evidenceRefId, orgId, initiativeId]
     );
+    terminal = !!row && String(row.status || '').toLowerCase() === 'approved';
   } else {
     fail('EVIDENCE_TYPE_INVALID', `Unknown evidence type: ${String(evidenceType)}`, 400);
   }
   if (!row) {
-    // 404, not a more specific "wrong org" message — do not confirm the
-    // referenced row's existence to a caller who doesn't own it.
+    // 404, not a more specific "wrong org/initiative" message — do not
+    // confirm the referenced row's existence to a caller who doesn't own it
+    // or reveal that it exists but belongs to a different initiative.
     fail(
       'EVIDENCE_REF_NOT_FOUND',
-      `Evidence reference (${evidenceType}:${evidenceRefId}) was not found in this organization`,
+      `Evidence reference (${evidenceType}:${evidenceRefId}) was not found for this initiative`,
       404
+    );
+  }
+  if (!terminal) {
+    fail(
+      'EVIDENCE_NOT_TERMINAL',
+      `Evidence reference (${evidenceType}:${evidenceRefId}) exists but is not in a terminal/approved state`,
+      409
     );
   }
 }
@@ -251,7 +272,12 @@ export async function addEvidence(input: AddEvidenceInput) {
     );
   }
 
-  await assertEvidenceRefBelongsToOrg(input.orgId, input.evidenceType, input.evidenceRefId);
+  await assertEvidenceRefBelongsToInitiative(
+    input.orgId,
+    input.initiativeId,
+    input.evidenceType,
+    input.evidenceRefId
+  );
 
   if (input.idempotencyKey) {
     const existing = await queryHelpers.queryOne<{ id: string }>(
