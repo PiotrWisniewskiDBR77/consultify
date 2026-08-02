@@ -168,7 +168,12 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       if (s.includes("status = 'pending'") && s.includes('approved_by')) {
         const [approved_by, id] = params as [string, string];
         const step = findStepAnyPlan(id);
-        if (step) Object.assign(step, { status: 'pending', approved_by });
+        if (step)
+          Object.assign(step, {
+            status: 'pending',
+            approved_by,
+            approved_at: new Date().toISOString(),
+          });
         return { changes: 1 };
       }
       // generic single-status update (e.g. updateStepStatus -> 'awaiting_approval' | 'running')
@@ -355,6 +360,43 @@ describe('agentPlannerService.executePlan — continue-on-error (HP-4, Piotr dec
     expect(result.status).toBe('awaiting_approval');
     expect(result.steps[1].status).toBe('awaiting_approval');
     expect(result.steps[2].status).toBe('pending');
+  });
+
+  it('persists approval actor, approved payload and materialized result across read-back', async () => {
+    const payload = { title: 'Approved initiative', source: 'run-agent' };
+    const plan = await agentPlannerService.createPlan({
+      organizationId: 'org-1',
+      userId: 'owner-1',
+      title: 'Auditable side effect',
+      steps: [{ toolName: 'create_initiative_draft', toolInput: payload }],
+    });
+
+    const executor = vi.fn().mockResolvedValue({ initiativeId: 'ini-42', status: 'DRAFT' });
+    const checkpoint = await agentPlannerService.executePlan(plan.id, executor);
+    expect(checkpoint.status).toBe('awaiting_approval');
+    expect(executor).not.toHaveBeenCalled();
+
+    await agentPlannerService.approveStep(plan.id, 0, 'approver-7');
+    const approved = await agentPlannerService.getPlan(plan.id);
+    expect(approved?.steps[0]).toMatchObject({
+      status: 'pending',
+      toolInput: payload,
+      approvedBy: 'approver-7',
+    });
+    expect(approved?.steps[0].approvedAt).toBeTruthy();
+
+    await agentPlannerService.executePlan(plan.id, executor);
+    expect(executor).toHaveBeenCalledWith('create_initiative_draft', payload);
+
+    const materialized = await agentPlannerService.getPlan(plan.id);
+    expect(materialized?.status).toBe('completed');
+    expect(materialized?.steps[0]).toMatchObject({
+      status: 'completed',
+      toolInput: payload,
+      result: { initiativeId: 'ini-42', status: 'DRAFT' },
+      approvedBy: 'approver-7',
+    });
+    expect(materialized?.steps[0].approvedAt).toBeTruthy();
   });
 });
 
