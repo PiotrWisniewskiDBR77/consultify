@@ -205,6 +205,8 @@ async function persistTriageRow({
 }
 
 async function syncCanonicalInboxState({
+  userId,
+  organizationId,
   itemId,
   action,
   params,
@@ -212,6 +214,8 @@ async function syncCanonicalInboxState({
   fromAISuggestion,
   confidence,
 }: {
+  userId: string;
+  organizationId: string;
   itemId?: string;
   action: InboxTriageAction;
   params?: Record<string, unknown>;
@@ -229,7 +233,10 @@ async function syncCanonicalInboxState({
     ...(fromAISuggestion ? { fromAISuggestion: true, confidence: confidence ?? null } : {}),
   };
 
-  return inboxService.triageItem(itemId, mapActionToCanonicalMutation(action), metadata);
+  return inboxService.triageItem(itemId, mapActionToCanonicalMutation(action), metadata, {
+    userId,
+    organizationId,
+  });
 }
 
 export async function applyGovernedInboxTriage({
@@ -271,6 +278,8 @@ export async function applyGovernedInboxTriage({
     triagedAt,
   });
   const item = await syncCanonicalInboxState({
+    userId,
+    organizationId,
     itemId,
     action,
     params,
@@ -334,6 +343,8 @@ export async function applyGovernedBulkInboxTriage({
       triagedAt,
     });
     await syncCanonicalInboxState({
+      userId,
+      organizationId,
       itemId: itemIdByKey.get(itemKey),
       action,
       params,

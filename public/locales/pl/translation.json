@@ -2423,7 +2423,14 @@
         "sla": "SLA"
       },
       "linkedTask": "Powiązane zadanie",
-      "linkedDecision": "Powiązana decyzja"
+      "linkedDecision": "Powiązana decyzja",
+      "lineageSource": "Źródło",
+      "lineageSourceTask": "Zadanie źródłowe",
+      "lineageRecipient": "Odbiorca",
+      "lineageOrganization": "Organizacja",
+      "lineageUpdated": "Zaktualizowano",
+      "lineageSourceStatus": "Status źródła",
+      "lineageInitiative": "Inicjatywa"
     },
     "notificationDetail": {
       "toastError": "Nie znaleziono powiadomienia",
@@ -2912,6 +2919,28 @@
         "approve": "Przyjmij",
         "reject": "Odrzuć",
         "returnForClarification": "Zwróć do wyjaśnienia"
+      },
+      "create": {
+        "heading": "Nowa decyzja",
+        "noProjectTitle": "Najpierw wybierz projekt",
+        "noProjectDescription": "Wybierz projekt, zanim utworzysz decyzję.",
+        "titleLabel": "Tytuł",
+        "titlePlaceholder": "Tytuł decyzji",
+        "descriptionLabel": "Opis",
+        "descriptionPlaceholder": "Co należy zdecydować i dlaczego teraz?",
+        "priorityLabel": "Priorytet",
+        "priorityOptions": {
+          "low": "Niski",
+          "medium": "Średni",
+          "high": "Wysoki",
+          "critical": "Krytyczny"
+        },
+        "dueDateLabel": "Termin",
+        "submit": "Utwórz decyzję",
+        "submitting": "Tworzenie…",
+        "retry": "Spróbuj ponownie",
+        "permissionDenied": "Nie masz uprawnień do tworzenia decyzji w tym projekcie.",
+        "genericError": "Nie udało się utworzyć decyzji. {{msg}}"
       }
     },
     "decisionPreview": {
@@ -3335,6 +3364,13 @@
       "viewSourceInMindmap": "Pokaż źródło w mapie →",
       "viewSource": "Pokaż źródło →",
       "taskStarted": "Rozpoczęto zadanie",
+      "acceptFlowSuccess": "Zadanie rozpoczęte — Skrzynka zaktualizowana",
+      "acceptFlowError": "Nie udało się rozpocząć zadania",
+      "inboxCloseRecoveryTitle": "Zadanie rozpoczęte — synchronizacja Skrzynki w toku",
+      "inboxCloseRetry": "Ponów synchronizację Skrzynki",
+      "inboxCloseRecoveryBody": "Zadanie zostało poprawnie zaktualizowane, ale zamknięcie jego elementu w Skrzynce się nie powiodło. Ponowienie jest bezpieczne — nigdy nie zduplikuje aktualizacji zadania.",
+      "inboxCloseUnsupportedTitle": "Synchronizacja Skrzynki niedostępna dla tej organizacji",
+      "inboxCloseUnsupportedBody": "Samo zadanie zostało zaktualizowane poprawnie. Ta organizacja nie obsługuje jeszcze automatycznego zamykania Skrzynki, więc nie ma tu nic do ponowienia.",
       "start": "Rozpocznij",
       "sentToReview": "Wysłano do przeglądu",
       "sendToReview": "Do przeglądu",

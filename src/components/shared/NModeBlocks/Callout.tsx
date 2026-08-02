@@ -115,7 +115,7 @@ export const Callout: React.FC<CalloutProps> = ({
           {action && (
             <button
               onClick={action.onClick}
-              className={`mt-2 ${textSize} font-medium underline underline-offset-2 hover:no-underline transition-all`}
+              className={`mt-2 ${textSize} font-medium underline underline-offset-2 hover:no-underline transition-all rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-1`}
             >
               {action.label}
             </button>

@@ -110,6 +110,7 @@ import {
 } from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
+import { isM05DecisionWorkspaceEnabled } from '@/utils/m05DecisionWorkspaceFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import {
   dispatchPilotAccessBlocked,
@@ -163,6 +164,14 @@ const IdeaMapWorkspace = lazyWithRetry(() =>
 );
 const DecisionDetailView = lazyWithRetry(() =>
   import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
+);
+// MW-06 — controlled swap: DecisionWorkspace (real backend, supports create)
+// replaces DecisionDetailView (localStorage-faked) behind a default-OFF flag
+// until the product owner accepts a clean screenshot. See MW-DEC-004
+// integration note (docs/modules/02_moja-praca/golden-flow-packet/) for the
+// full rationale.
+const DecisionWorkspace = lazyWithRetry(() =>
+  import('./Decision/DecisionWorkspace').then((m) => ({ default: m.DecisionWorkspace }))
 );
 const NotificationDetailView = lazyWithRetry(() =>
   import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
@@ -3697,11 +3706,20 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'decision':
         return (
           <React.Suspense fallback={lazyFallback}>
-            <DecisionDetailView
-              decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
-              onClose={() => handleCloseDocument(activeDoc.id)}
-              onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-            />
+            {isM05DecisionWorkspaceEnabled() ? (
+              <DecisionWorkspace
+                decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
+                projectId={currentProjectId}
+                onClose={() => handleCloseDocument(activeDoc.id)}
+                onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+              />
+            ) : (
+              <DecisionDetailView
+                decisionId={activeDoc.data?.isNew ? null : activeDoc.id}
+                onClose={() => handleCloseDocument(activeDoc.id)}
+                onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
+              />
+            )}
           </React.Suspense>
         );
       case 'notification':

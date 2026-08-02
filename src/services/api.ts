@@ -4381,13 +4381,24 @@ export const Api = {
     return handleResponse(res, 'Failed to create task');
   },
 
-  updateTask: async (id: string, updates: any): Promise<void> => {
+  // Widened from Promise<void> to Promise<any> (golden-flow MW-CORE-003):
+  // the canonical `PUT /api/tasks/:id` route (TaskController.updateTask)
+  // always responds with the re-SELECTed row (real read-back, never
+  // optimistic — see TaskController.ts's final `res.json(updatedTask)`),
+  // but this wrapper discarded it. Every existing call site only does
+  // `await Api.updateTask(...)` without using a return value (grepped:
+  // InitiativeTasksTab.tsx, TaskInbox.tsx, MyTasksList.tsx,
+  // TasksCalendarView.tsx, Focus/FocusBoard.tsx, Portfolio/InitiativeSidePanel.tsx),
+  // so returning the parsed body is additive and safe. Needed so the
+  // Task-assigned → Inbox accept/mark-in-progress flow can read the
+  // server-confirmed status instead of assuming success.
+  updateTask: async (id: string, updates: any): Promise<any> => {
     const res = await fetch(`${API_URL}/tasks/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    await handleResponse(res, 'Failed to update task');
+    return handleResponse(res, 'Failed to update task');
   },
 
   deleteTask: async (id: string): Promise<void> => {

@@ -3171,7 +3171,14 @@
         "sla": "SLA"
       },
       "linkedTask": "Linked task",
-      "linkedDecision": "Linked decision"
+      "linkedDecision": "Linked decision",
+      "lineageSource": "Source",
+      "lineageSourceTask": "Source task",
+      "lineageRecipient": "Recipient",
+      "lineageOrganization": "Organization",
+      "lineageUpdated": "Updated",
+      "lineageSourceStatus": "Source status",
+      "lineageInitiative": "Initiative"
     },
     "notificationDetail": {
       "toastError": "Notification not found",
@@ -3660,6 +3667,28 @@
         "approve": "Approve",
         "reject": "Reject",
         "returnForClarification": "Return for clarification"
+      },
+      "create": {
+        "heading": "New decision",
+        "noProjectTitle": "Select a project first",
+        "noProjectDescription": "Select a project before creating a decision.",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Decision title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "What must be decided and why now?",
+        "priorityLabel": "Priority",
+        "priorityOptions": {
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "critical": "Critical"
+        },
+        "dueDateLabel": "Due date",
+        "submit": "Create decision",
+        "submitting": "Creating…",
+        "retry": "Retry",
+        "permissionDenied": "You don't have permission to create decisions in this project.",
+        "genericError": "Could not create the decision. {{msg}}"
       }
     },
     "decisionPreview": {
@@ -4083,6 +4112,13 @@
       "viewSourceInMindmap": "View source in mindmap →",
       "viewSource": "View source →",
       "taskStarted": "Task started",
+      "acceptFlowSuccess": "Task started — Inbox updated",
+      "acceptFlowError": "Failed to start task",
+      "inboxCloseRecoveryTitle": "Task started — Inbox sync pending",
+      "inboxCloseRetry": "Retry Inbox sync",
+      "inboxCloseRecoveryBody": "The task was updated successfully, but closing its Inbox item failed. Retrying is safe — it will never duplicate the task update.",
+      "inboxCloseUnsupportedTitle": "Inbox sync not available for this organization",
+      "inboxCloseUnsupportedBody": "The task itself was updated normally. This organization does not yet support automatic Inbox closing, so there is nothing to retry here.",
       "start": "Start",
       "sentToReview": "Sent to review",
       "sendToReview": "Send to Review",
