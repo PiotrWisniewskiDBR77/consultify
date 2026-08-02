@@ -24,12 +24,12 @@
 import type { Response } from 'express';
 import { Router } from 'express';
 
+import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import {
   confirmInvestmentCaseCandidateHandoff,
   getInvestmentCaseCandidateHandoff,
   previewInvestmentCaseCandidate,
 } from '../services/finance/financeInvestmentCaseCandidateHandoff.js';
-import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 

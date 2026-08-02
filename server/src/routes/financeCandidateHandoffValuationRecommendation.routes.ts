@@ -20,12 +20,12 @@ import type { Response } from 'express';
 import { Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import {
   confirmValuationRecommendationCandidateHandoff,
   getValuationRecommendationCandidateHandoff,
   previewValuationRecommendationCandidate,
 } from '../services/finance/financeValuationRecommendationCandidateHandoff.js';
-import { FinanceCandidateHandoffError } from '../services/finance/financeCandidateHandoffCore.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
