@@ -15,6 +15,7 @@ import {
   type V8ResultsRoiInitiativeDetail,
 } from '@/services/api/v8/results';
 
+import { PostInvestmentReviewPanel } from './PostInvestmentReviewPanel';
 import type { ROILockState } from './ROIAnalysisView';
 import { ROIAssumptionEditor, ROIAssumptionsData } from './ROIAssumptionEditor';
 
@@ -569,6 +570,13 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                     {t('results.roi.noHistory', 'No history yet')}
                   </p>
                 )}
+              </div>
+
+              {/* FIN-007: durable post-investment review — approved Finance
+                  baseline vs. the realized entries above, reconciled and
+                  persisted. A fresh GET every drawer open; no client cache. */}
+              <div className="mt-4">
+                <PostInvestmentReviewPanel initiativeId={initiativeId} />
               </div>
             </div>
           )}

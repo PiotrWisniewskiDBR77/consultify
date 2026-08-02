@@ -50,6 +50,18 @@ import {
 } from '../../services/extendedRatiosService.js';
 import { detectEarlyWarnings, type KpiLineagePair } from '../../services/kpiLineageService.js';
 import {
+  ActualNotFoundError,
+  ActualPeriodMismatchError,
+  BaselineLineNotFoundError,
+  BaselineNotApprovedForReviewError,
+  BaselineVersionConflictForReviewError,
+  createPostInvestmentReview,
+  getPostInvestmentReview,
+  listPostInvestmentReviews,
+  ReviewInProgressError,
+  ReviewKeyConflictError,
+} from '../../services/postInvestmentReviewService.js';
+import {
   reconcile,
   reconcileOrganization,
   reconcilePortfolio,
@@ -75,6 +87,7 @@ import {
   getLedger,
 } from '../../services/valueLedgerService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -575,6 +588,164 @@ router.post(
     }
     const result = benchmarkStatus(value, benchmark);
     return res.json({ data: result, meta: meta() });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// 5. postInvestmentReviewService — FIN-007 durable post-investment review
+//    receipt (approved baseline vs. Execution-recorded actuals). References
+//    the canonical roi_realized_values rows by id; never a second ledger.
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /post-investment-reviews
+ * Body: { initiativeId, actualIds: string[], baselineModelId, baselineExpectedVersion,
+ *         baselineStatementType: 'P&L'|'BS'|'CF', baselineLineCode, baselinePeriodDate,
+ *         tolerancePct? }
+ * Requires an Idempotency-Key header.
+ */
+router.post(
+  '/post-investment-reviews',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const operationKey =
+      (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) || '';
+    if (!operationKey) {
+      return res.status(400).json({
+        error: 'Idempotency-Key header is required to create a post-investment review',
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+      });
+    }
+
+    const body = req.body || {};
+    const initiativeId = String(body.initiativeId || '').trim();
+    const actualIds = Array.isArray(body.actualIds)
+      ? body.actualIds.filter((id: unknown) => typeof id === 'string' && id.length > 0)
+      : [];
+    const baselineModelId = String(body.baselineModelId || '').trim();
+    const baselineExpectedVersion = Number(body.baselineExpectedVersion);
+    const baselineStatementType = body.baselineStatementType;
+    const baselineLineCode = String(body.baselineLineCode || '').trim();
+    const baselinePeriodDate = String(body.baselinePeriodDate || '').trim();
+
+    if (!initiativeId || actualIds.length === 0 || !baselineModelId || !baselineLineCode) {
+      return res.status(400).json({
+        error:
+          'initiativeId, actualIds (non-empty), baselineModelId and baselineLineCode are required',
+        code: 'POST_INVESTMENT_REVIEW_BAD_INPUT',
+      });
+    }
+    if (!['P&L', 'BS', 'CF'].includes(baselineStatementType)) {
+      return res.status(400).json({
+        error: "baselineStatementType must be one of 'P&L', 'BS', 'CF'",
+        code: 'POST_INVESTMENT_REVIEW_BAD_INPUT',
+      });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(baselinePeriodDate)) {
+      return res.status(400).json({
+        error: 'baselinePeriodDate must be an ISO date (YYYY-MM-DD)',
+        code: 'POST_INVESTMENT_REVIEW_BAD_INPUT',
+      });
+    }
+
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+
+    try {
+      const review = await createPostInvestmentReview({
+        organizationId,
+        initiativeId,
+        actualIds,
+        baselineModelId,
+        baselineExpectedVersion,
+        baselineStatementType,
+        baselineLineCode,
+        baselinePeriodDate,
+        tolerancePct: typeof body.tolerancePct === 'number' ? body.tolerancePct : undefined,
+        createdBy: userId,
+        operationKey,
+      });
+      return res.status(201).json({ data: review, meta: meta() });
+    } catch (error) {
+      if (error instanceof ReviewKeyConflictError) {
+        return res.status(409).json({ error: error.message, code: 'IDEMPOTENCY_KEY_REUSED' });
+      }
+      if (error instanceof ReviewInProgressError) {
+        res.setHeader('Retry-After', '5');
+        return res.status(409).json({ error: error.message, code: 'REVIEW_IN_PROGRESS' });
+      }
+      if (error instanceof BaselineNotApprovedForReviewError) {
+        return res.status(400).json({ error: error.message, code: 'BASELINE_NOT_APPROVED' });
+      }
+      if (error instanceof BaselineVersionConflictForReviewError) {
+        return res.status(409).json({
+          error: error.message,
+          code: 'BASELINE_VERSION_CONFLICT',
+          serverVersion: error.serverVersion,
+        });
+      }
+      if (error instanceof BaselineLineNotFoundError) {
+        return res.status(422).json({ error: error.message, code: 'BASELINE_LINE_NOT_FOUND' });
+      }
+      if (error instanceof ActualNotFoundError) {
+        return res.status(404).json({ error: error.message, code: 'ACTUAL_NOT_FOUND' });
+      }
+      if (error instanceof ActualPeriodMismatchError) {
+        return res.status(400).json({ error: error.message, code: 'ACTUAL_PERIOD_MISMATCH' });
+      }
+      throw error;
+    }
+  })
+);
+
+/**
+ * GET /post-investment-reviews/:id
+ * Fresh, org-scoped read-back — a foreign-org id 404s (never leaks existence).
+ */
+router.get(
+  '/post-investment-reviews/:id',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const review = await getPostInvestmentReview(String(req.params.id), organizationId);
+    if (!review) {
+      return res
+        .status(404)
+        .json({ error: 'Post-investment review not found', code: 'REVIEW_NOT_FOUND' });
+    }
+    return res.json({ data: review, meta: meta() });
+  })
+);
+
+/**
+ * GET /post-investment-reviews?initiativeId=...
+ * Org-scoped list, newest first, completed reviews only.
+ */
+router.get(
+  '/post-investment-reviews',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const initiativeId = String(req.query.initiativeId || '').trim();
+    if (!initiativeId) {
+      return res.status(400).json({
+        error: 'initiativeId query param is required',
+        code: 'POST_INVESTMENT_REVIEW_BAD_INPUT',
+      });
+    }
+    const reviews = await listPostInvestmentReviews(organizationId, initiativeId);
+    return res.json({ data: reviews, meta: meta() });
   })
 );
 
