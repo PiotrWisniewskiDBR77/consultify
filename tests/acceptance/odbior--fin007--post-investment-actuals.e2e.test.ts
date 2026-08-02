@@ -438,6 +438,116 @@ describe('FIN-007 post-investment actuals round trip — real routes and Postgre
     }
   });
 
+  it('explicit baseline locator (statementType/lineCode/periodDate) is validated fail-closed at review creation — a real approved baseline, but the wrong line or the wrong period, is rejected 422, never a fabricated projected value', async () => {
+    // Closes a documented coverage gap (FIN-07 controlled handoff): the
+    // version/approved/tenant predicates already had tests above, but the
+    // locator predicates resolveApprovedBaselineLine() also enforces
+    // (statementType/lineCode/periodDate not present in the frozen
+    // snapshot) had none. All three funnel through the SAME
+    // BaselineLineNotFoundError -> 422 path, so one baseline exercises all
+    // three failure shapes without inventing a new one.
+    const periodDate = '2027-01-01';
+    const baseline = await createApprovedBaseline({
+      organizationId: SEED.ORG_ID,
+      initiativeId,
+      createdBy: SEED.USER_ID,
+      periodDate,
+      revenueAmount: 70_000,
+      namePrefix: `${MARK}locator-`,
+    });
+    const write = await request(execApp)
+      .post('/api/v8/execution-control/realizations/baseline')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', `${MARK}locator-actual`)
+      .send({
+        initiativeId,
+        periodMonth: periodDate,
+        realizedRevenueDelta: 69_000,
+        baselineModelId: baseline.modelId,
+        baselineExpectedVersion: baseline.version,
+      })
+      .expect(201);
+    const actualId = write.body.data.entry.id;
+
+    // (a) A lineCode that does not exist in this period's P&L.
+    const wrongLine = await request(financeApp)
+      .post('/api/v8/finance/value-tracking/post-investment-reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', `${MARK}locator-wrong-line`)
+      .send({
+        initiativeId,
+        actualIds: [actualId],
+        baselineModelId: baseline.modelId,
+        baselineExpectedVersion: baseline.version,
+        baselineStatementType: 'P&L',
+        baselineLineCode: 'NOT_A_REAL_LINE_CODE',
+        baselinePeriodDate: periodDate,
+      });
+    expect(wrongLine.status).toBe(422);
+    expect(wrongLine.body.code).toBe('BASELINE_LINE_NOT_FOUND');
+
+    // (b) A periodDate that does not exist in the snapshot at all.
+    const wrongPeriod = await request(financeApp)
+      .post('/api/v8/finance/value-tracking/post-investment-reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', `${MARK}locator-wrong-period`)
+      .send({
+        initiativeId,
+        actualIds: [actualId],
+        baselineModelId: baseline.modelId,
+        baselineExpectedVersion: baseline.version,
+        baselineStatementType: 'P&L',
+        baselineLineCode: 'REVENUE',
+        baselinePeriodDate: '2099-01-01',
+      });
+    expect(wrongPeriod.status).toBe(422);
+    expect(wrongPeriod.body.code).toBe('BASELINE_LINE_NOT_FOUND');
+
+    // (c) A statementType this model genuinely has no matching line for —
+    // still funnels through the identical guard (missing-line, not a
+    // separate code path per statement type).
+    const wrongStatement = await request(financeApp)
+      .post('/api/v8/finance/value-tracking/post-investment-reviews')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Idempotency-Key', `${MARK}locator-wrong-statement`)
+      .send({
+        initiativeId,
+        actualIds: [actualId],
+        baselineModelId: baseline.modelId,
+        baselineExpectedVersion: baseline.version,
+        baselineStatementType: 'CF',
+        baselineLineCode: 'NOT_A_REAL_LINE_CODE',
+        baselinePeriodDate: periodDate,
+      });
+    expect(wrongStatement.status).toBe(422);
+    expect(wrongStatement.body.code).toBe('BASELINE_LINE_NOT_FOUND');
+
+    // None of the three rejected attempts left a review claiming success —
+    // the reservation row from each (RESERVE-before-validate, same pattern
+    // as the finalize-failure test above) exists but is 'failed', never
+    // 'completed'. A fresh retry with the same key would reclaim it.
+    const dbLocator = client();
+    await dbLocator.connect();
+    try {
+      const rows = await dbLocator.query(
+        `SELECT idempotency_key, status FROM finance_post_investment_reviews
+          WHERE organization_id = $1 AND idempotency_key IN ($2, $3, $4)`,
+        [
+          SEED.ORG_ID,
+          `${MARK}locator-wrong-line`,
+          `${MARK}locator-wrong-period`,
+          `${MARK}locator-wrong-statement`,
+        ]
+      );
+      expect(rows.rows.length).toBe(3);
+      for (const row of rows.rows) {
+        expect(row.status).not.toBe('completed');
+      }
+    } finally {
+      await dbLocator.end();
+    }
+  });
+
   it('retry of the same Idempotency-Key + same payload returns the SAME actual, no duplicate', async () => {
     const periodDate = '2026-05-01';
     const baseline = await createApprovedBaseline({
