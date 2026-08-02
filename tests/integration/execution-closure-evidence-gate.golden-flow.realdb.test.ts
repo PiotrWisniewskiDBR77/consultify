@@ -177,6 +177,7 @@ if (process.env.DATABASE_URL || process.env.PGHOST || process.env.DB_HOST) {
 // touches the DB pool at import time).
 import initiativesRoutes from '../../server/src/routes/pmo/initiatives.routes.js';
 import initiativeClosureRoutes from '../../server/src/routes/pmo/initiativeClosure.routes.js';
+import { approveClosureRequest } from '../../server/src/services/initiative/initiativeClosureService.js';
 
 // ---------------------------------------------------------------------------
 // Connection probe (same contract as the sibling realdb golden-flow files)
@@ -325,6 +326,10 @@ interface Harness {
   initiativeCompleteBypassId: string;
   initiativeFaultInjectionId: string;
   initiativeEvidenceOwnershipId: string;
+  // Two-unit recovery seam tests (scenarios A/B/C — see file header).
+  initiativeRecoveryAId: string;
+  initiativeRecoveryBId: string;
+  initiativeRecoveryCId: string;
   allInitiativeIds: string[];
 
   // Evidence MUST belong to the SPECIFIC initiative under closure (see file
@@ -459,6 +464,9 @@ async function setupHarness(): Promise<Harness | null> {
   const initiativeCompleteBypassId = `init_exe08_bypass_${tag}`;
   const initiativeFaultInjectionId = `init_exe08_fault_${tag}`;
   const initiativeEvidenceOwnershipId = `init_exe08_evown_${tag}`;
+  const initiativeRecoveryAId = `init_exe08_recA_${tag}`;
+  const initiativeRecoveryBId = `init_exe08_recB_${tag}`;
+  const initiativeRecoveryCId = `init_exe08_recC_${tag}`;
 
   const allInitiativeIds = [
     initiativeGoldenId,
@@ -471,6 +479,9 @@ async function setupHarness(): Promise<Harness | null> {
     initiativeCompleteBypassId,
     initiativeFaultInjectionId,
     initiativeEvidenceOwnershipId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
   ];
 
   // Every initiative: EXECUTING, owner_business_id=userAId (grants
@@ -490,6 +501,9 @@ async function setupHarness(): Promise<Harness | null> {
     [initiativeCompleteBypassId, 'EXE-08 Complete Bypass Initiative'],
     [initiativeFaultInjectionId, 'EXE-08 Fault Injection Initiative'],
     [initiativeEvidenceOwnershipId, 'EXE-08 Evidence Ownership Initiative'],
+    [initiativeRecoveryAId, 'EXE-08 Recovery Scenario A Initiative'],
+    [initiativeRecoveryBId, 'EXE-08 Recovery Scenario B Initiative'],
+    [initiativeRecoveryCId, 'EXE-08 Recovery Scenario C Initiative'],
   ] as const) {
     await client.query(
       `INSERT INTO initiatives
@@ -512,6 +526,9 @@ async function setupHarness(): Promise<Harness | null> {
     initiativeIdemApproveId,
     initiativeConcurrentApproveId,
     initiativeStaleVersionId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
   ]) {
     const taskId = `task_exe08_ev_${initiativeId}`;
     await client.query(
@@ -638,6 +655,9 @@ async function setupHarness(): Promise<Harness | null> {
     initiativeCompleteBypassId,
     initiativeFaultInjectionId,
     initiativeEvidenceOwnershipId,
+    initiativeRecoveryAId,
+    initiativeRecoveryBId,
+    initiativeRecoveryCId,
     allInitiativeIds,
     evidenceByInitiative,
     decisionApprovedId,
@@ -1450,25 +1470,15 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
   );
 
   // -------------------------------------------------------------------------
-  // Fault injection — the layer this file CAN control (a fabricated
-  // closureRequestId on a real, owned initiative). See file header point 6
-  // for why fault injection INSIDE the frozen transition engine is out of
-  // scope for this file.
-  //
-  // NEEDS_FOLLOWUP (out of scope here — different file, single-writer
-  // discipline): `initiativeClosureService.ts`'s call to
-  // `executeInitiativeTransition` does not pass `__testSyncHook`
-  // (initiativeTransitionService.ts's own, existing test-injection point).
-  // Wiring it through `approveClosureRequest` (e.g. an optional param
-  // threaded to the `executeInitiativeTransition` call) would let a future
-  // test in `initiativeClosureService`'s own suite deterministically inject a
-  // mid-transition failure/abort and assert the closure request lands in
-  // `transition_failed` and self-heals correctly — that suite does not exist
-  // yet and is not this file's job to create.
+  // Negative control (honestly named — NOT fault injection, just a 404
+  // check): approve against a fabricated closureRequestId on a real, owned
+  // initiative. Real fault injection (proving the two-unit recovery model
+  // actually recovers) is below, using the test-only seam added to
+  // approveClosureRequest/reconcileClosureRequestStatus per Codex review.
   // -------------------------------------------------------------------------
 
   itDB(
-    'fault injection (controlled layer): approve against a fabricated closureRequestId -> 404, no writes',
+    'negative control: approve against a fabricated closureRequestId -> 404, no writes',
     async (h) => {
       const app = buildApp();
       const ownerToken = makeE2EToken(h.userAId, h.orgAId);
@@ -1493,5 +1503,202 @@ describe('EXE-08 — closure/evidence gate golden flow against a real Postgres d
       );
       expect(historyRows.rows.length).toBe(0);
     }
+  );
+
+  // -------------------------------------------------------------------------
+  // REAL fault injection — the honest two-unit atomicity model
+  // (initiativeClosureService.ts file header) proven to actually recover,
+  // not just documented as theoretically sound (Codex review). Uses the
+  // test-only crash-injection seam on approveClosureRequest, calling the
+  // service directly (never reachable via HTTP — initiativeClosure.routes.ts
+  // only ever passes the named body fields, never these flags).
+  // -------------------------------------------------------------------------
+
+  async function countHistory(h: Harness, initiativeId: string, action: string): Promise<number> {
+    const rows = await h.client.query(
+      `SELECT id FROM initiative_history WHERE initiative_id = $1 AND action = $2`,
+      [initiativeId, action]
+    );
+    return rows.rows.length;
+  }
+
+  itDB(
+    'recovery scenario A: crash after Unit 1 commits, before the engine is called -> stuck pending, retry completes exactly once',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryAId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailAfterUnit1: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_AFTER_UNIT1_BEFORE_ENGINE');
+
+      // Unit 1 committed (durable approval decision); Unit 2 (the engine)
+      // was never called.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('approved_pending_transition');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('EXECUTING');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(0);
+
+      // Retry — a plain call, no injected flag. reconcileClosureRequestStatus
+      // (called at the top of approveClosureRequest) detects the stuck
+      // pending state, sees the initiative is NOT done, and retries Unit 2
+      // itself before Unit 1 even runs again.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status, transition_audit_ref as "transitionAuditRef" FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+      expect(finalRow.rows[0].transitionAuditRef).toBeTruthy();
+      const finalInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(finalInitiative.rows[0].status).toBe('DONE');
+
+      // KEY assertion: exactly ONE approval decision, exactly ONE engine
+      // transition — the retry did not duplicate either.
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
+  );
+
+  itDB(
+    'recovery scenario B: crash after the engine succeeds, before finalize -> initiative already DONE, retry finalizes without a second transition',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryBId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailAfterEngineBeforeFinalize: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_AFTER_ENGINE_BEFORE_FINALIZE');
+
+      // The engine already ran and succeeded; only the finalize write on the
+      // closure request itself never happened.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('approved_pending_transition');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('DONE');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+
+      // Retry — reconcileClosureRequestStatus sees the initiative is ALREADY
+      // done and just finalizes; it must NOT call the engine a second time.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.idempotent).toBe(true);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+
+      // KEY assertion: still exactly ONE of each — no second transition, no
+      // second approval record.
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
+  );
+
+  itDB(
+    'recovery scenario C: crash before Unit 1 commits -> nothing persisted, retry proceeds cleanly',
+    async (h) => {
+      const app = buildApp();
+      const ownerToken = makeE2EToken(h.userAId, h.orgAId);
+      const initiativeId = h.initiativeRecoveryCId;
+      const closureRequestId = await driveClosureRequestToSubmitted(app, initiativeId, ownerToken, h);
+
+      await expect(
+        approveClosureRequest({
+          orgId: h.orgAId,
+          initiativeId,
+          closureRequestId,
+          actorId: h.userAId,
+          __testFailBeforeUnit1Commit: true,
+        })
+      ).rejects.toThrow('TEST_INJECTED_FAILURE_BEFORE_UNIT1_COMMIT');
+
+      // Unit 1's own transaction rolled back — nothing at all was persisted.
+      const stuckRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(stuckRow.rows[0].status).toBe('submitted');
+      const stuckInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(stuckInitiative.rows[0].status).toBe('EXECUTING');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(0);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(0);
+
+      // Retry — a completely clean, ordinary approve, as if the first call
+      // never happened.
+      const retryResult = await approveClosureRequest({
+        orgId: h.orgAId,
+        initiativeId,
+        closureRequestId,
+        actorId: h.userAId,
+      });
+      expect(retryResult.ok).toBe(true);
+      expect(retryResult.idempotent).toBe(false);
+      expect(retryResult.status).toBe('done');
+
+      const finalRow = await h.client.query(
+        `SELECT status FROM initiative_closure_requests WHERE id = $1`,
+        [closureRequestId]
+      );
+      expect(finalRow.rows[0].status).toBe('done');
+      const finalInitiative = await h.client.query(`SELECT status FROM initiatives WHERE id = $1`, [
+        initiativeId,
+      ]);
+      expect(finalInitiative.rows[0].status).toBe('DONE');
+      expect(await countHistory(h, initiativeId, 'closure_approved')).toBe(1);
+      expect(await countHistory(h, initiativeId, 'status_changed')).toBe(1);
+    },
+    30_000
   );
 });

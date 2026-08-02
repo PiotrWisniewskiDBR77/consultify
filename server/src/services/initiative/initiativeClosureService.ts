@@ -651,6 +651,17 @@ export interface ApproveClosureRequestInput {
   actorRole?: string | null;
   reviewRationale?: string;
   idempotencyKey?: string;
+
+  // Test-only crash-injection seam (Codex review: prove the honest two-unit
+  // recovery model actually recovers, not just that it's documented as
+  // theoretically sound). NEVER populated by initiativeClosure.routes.ts —
+  // that adapter passes only the named HTTP-body fields above, so these
+  // cannot be reached from a request body. Mirrors the pattern of the
+  // canonical engine's own `__testSyncHook` (initiativeTransitionService.ts)
+  // without touching that frozen file.
+  __testFailBeforeUnit1Commit?: boolean; // throws inside Unit 1's own transaction, before its final writes -> ROLLBACK, nothing persisted (recovery scenario C).
+  __testFailAfterUnit1?: boolean; // throws after Unit 1 commits, before Unit 2 (the engine) is called (recovery scenario A).
+  __testFailAfterEngineBeforeFinalize?: boolean; // throws after Unit 2 (the engine) succeeds, before the finalize write (recovery scenario B).
 }
 
 export type ApproveClosureRequestResult =
@@ -662,6 +673,14 @@ export async function approveClosureRequest(
 ): Promise<ApproveClosureRequestResult> {
   await assertInitiativeInOrg(input.orgId, input.initiativeId);
   await assertActorCanApprove(input.orgId, input.initiativeId, input.actorId);
+
+  // Recover from a prior crash (real or test-injected) before attempting a
+  // fresh approval — if a PREVIOUS call left this request stuck in
+  // approved_pending_transition/transition_failed, either finalize it (the
+  // engine already succeeded) or retry Unit 2 (the engine was never
+  // reached). See reconcileClosureRequestStatus doc comment. This call is a
+  // no-op for the normal 'draft'/'submitted' path.
+  await reconcileClosureRequestStatus(input.orgId, input.closureRequestId);
 
   // ---- Unit 1: durably record the approval decision (own transaction) ----
   const unit1 = await withPgTransaction(async (client) => {
@@ -676,6 +695,10 @@ export async function approveClosureRequest(
     // -flight on unit 2 or crashed before reconciling. Let the caller re-poll
     // (GET reconciles on read) rather than racing a second engine call here.
     return { ok: true, idempotent: true, status: unit1.status };
+  }
+
+  if (input.__testFailAfterUnit1) {
+    throw new Error('TEST_INJECTED_FAILURE_AFTER_UNIT1_BEFORE_ENGINE');
   }
 
   // ---- Unit 2: the canonical engine performs the actual transition ----
@@ -704,6 +727,10 @@ export async function approveClosureRequest(
       transitionResult.statusCode || 409,
       { engineError: transitionResult.body }
     );
+  }
+
+  if (input.__testFailAfterEngineBeforeFinalize) {
+    throw new Error('TEST_INJECTED_FAILURE_AFTER_ENGINE_BEFORE_FINALIZE');
   }
 
   // ---- Reconciliation: finalize the closure request to `done` ----
@@ -794,6 +821,14 @@ async function approveUnit1OnClient(
       expected: request.expectedInitiativeVersion,
       actual: initiative.updatedAt,
     });
+  }
+
+  if (input.__testFailBeforeUnit1Commit) {
+    // Thrown INSIDE Unit 1's own withPgTransaction callback, after the row
+    // lock and all validation but before any write in this function — the
+    // caller's ROLLBACK undoes the transaction, proving nothing partial is
+    // ever left behind (recovery scenario C).
+    throw new Error('TEST_INJECTED_FAILURE_BEFORE_UNIT1_COMMIT');
   }
 
   await client.query(
@@ -892,19 +927,39 @@ async function finalizeClosureRequestDone(
 }
 
 /**
- * Self-healing reconciliation: called on every GET of a closure request. If
- * the request is stuck in `approved_pending_transition`/`transition_failed`
- * but the initiative is ACTUALLY already DONE (the engine call in unit 2
- * succeeded but the finalize-write in this process crashed before recording
- * it), heal the closure request to `done` instead of leaving it stale.
+ * Self-healing reconciliation: called on every GET of a closure request, and
+ * at the top of every fresh `approveClosureRequest` call (so a retry via
+ * POST .../approve heals too, not just a poll via GET). If the request is
+ * stuck in `approved_pending_transition`/`transition_failed`, there are
+ * exactly two ways it got there and this function resolves both:
+ *
+ *   (B) Unit 2 (the engine) already succeeded but the finalize write never
+ *       ran (process crashed between the engine call and
+ *       `finalizeClosureRequestDone`) — the initiative is ALREADY DONE.
+ *       Just finalize; no second engine call.
+ *
+ *   (A) Unit 2 was NEVER called (process crashed between Unit 1's commit and
+ *       the engine call) — the initiative is still NOT DONE. Retry Unit 2
+ *       here. This is safe even if another process is concurrently
+ *       attempting the same thing: the canonical engine takes its own row
+ *       lock on `initiatives` and checks `expectedCurrentStatus`, so a
+ *       second concurrent call either serializes behind the first (and then
+ *       sees the initiative already DONE, a clean no-op via the `!ok` branch
+ *       below re-checking live status) or the first was the one that never
+ *       actually started, and this one proceeds — never two real
+ *       transitions, never two audit rows for one approval.
  */
 export async function reconcileClosureRequestStatus(orgId: string, closureRequestId: string) {
   const request = await queryHelpers.queryOne<{
     id: string;
     status: string;
     initiativeId: string;
+    approverId: string | null;
+    reviewRationale: string | null;
   }>(
-    `SELECT id, status, initiative_id as "initiativeId" FROM initiative_closure_requests
+    `SELECT id, status, initiative_id as "initiativeId", approver_id as "approverId",
+            review_rationale as "reviewRationale"
+     FROM initiative_closure_requests
      WHERE id = ? AND organization_id = ?`,
     [closureRequestId, orgId]
   );
@@ -915,7 +970,51 @@ export async function reconcileClosureRequestStatus(orgId: string, closureReques
     `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
     [request.initiativeId, orgId]
   );
-  if (initiative?.status === 'DONE') {
+  if (!initiative) return;
+
+  if (initiative.status === 'DONE') {
     await finalizeClosureRequestDone(closureRequestId, orgId);
+    return;
   }
+
+  // Scenario A: the initiative is not DONE, so Unit 2 was never (successfully)
+  // called. approver_id is set by Unit 1's own write before this status is
+  // ever reachable, so it is always present here — but guard anyway rather
+  // than crash a reconciliation call on unexpected state.
+  if (!request.approverId) return;
+
+  let transitionResult;
+  try {
+    transitionResult = await executeInitiativeTransition({
+      orgId,
+      initiativeId: request.initiativeId,
+      actorId: request.approverId,
+      nextStatusInput: 'DONE',
+      reason: request.reviewRationale || 'Closure approved (reconciliation retry)',
+      expectedCurrentStatus: 'EXECUTING',
+      actor: { kind: 'user' },
+    });
+  } catch (err) {
+    await markTransitionFailed(closureRequestId, orgId, err);
+    return;
+  }
+
+  if (!transitionResult.ok) {
+    // Re-check live status: a concurrent caller may have completed the
+    // transition between our read above and this call being rejected for
+    // "current status is no longer EXECUTING" — that is success, not
+    // failure, from this reconciliation's point of view.
+    const recheck = await queryHelpers.queryOne<{ status: string }>(
+      `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [request.initiativeId, orgId]
+    );
+    if (recheck?.status === 'DONE') {
+      await finalizeClosureRequestDone(closureRequestId, orgId);
+      return;
+    }
+    await markTransitionFailed(closureRequestId, orgId, transitionResult);
+    return;
+  }
+
+  await finalizeClosureRequestDone(closureRequestId, orgId, transitionResult.correlationId);
 }
