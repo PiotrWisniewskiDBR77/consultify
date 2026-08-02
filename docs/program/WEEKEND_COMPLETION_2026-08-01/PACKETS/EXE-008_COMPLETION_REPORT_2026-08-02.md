@@ -7,9 +7,9 @@ Status: **ACTIVE_FIX → gotowe do ponownego review** (fix packet po Codex revie
 
 - Branch: `feat/exe-008-closure-evidence-gate`
 - Base: `fc0eb001a9` (EXE-05/06, frozen, Codex-accepted)
-- HEAD: `3d206d7e02ef41744bb89a6f8df3da087006bd3c`
+- HEAD (kod+testy niezależnie zweryfikowane przez Codex): `e8f20245a0391a74b34e4310a04ac3680c85e4b6`
 - Worktree: `.../scratchpad/wt-exe-008`, izolowany, drzewo czyste (`git status --short` puste), brak drugiego aktywnego writera, brak push/merge/deploy.
-- 13 commitów od base (9 z pierwszego przejścia + 4 z tego fix packetu).
+- 14 commitów od base (9 z pierwszego przejścia + 4 z fix packetu + 1 docs-only: raport ukończenia).
 
 ## Commity tego fix packetu (po pierwszym review)
 
@@ -18,8 +18,9 @@ Status: **ACTIVE_FIX → gotowe do ponownego review** (fix packet po Codex revie
 3. `40fb4924fd` — fix: przenumerowanie migracji poza zepsutą strefę dated-filename; twardy FAIL zamiast vacuous skip przy niekompletnym schemacie (BLOCKER 1, część 2).
 4. `0659e074d1` — fix: evidence musi należeć do zamykanej inicjatywy, nie tylko do organizacji (BLOCKER 2).
 5. `3d206d7e02` — feat: realny recovery dla obu punktów awarii modelu dwóch jednostek (BLOCKER 3).
+6. `e8f20245a0` — docs: raport ukończenia dla fix packetu Codex (BLOCKER 4, ten dokument — pierwsza wersja).
 
-(BLOCKER 4 = ten dokument.)
+(BLOCKER 4 = ten dokument; poprawiony ponownie poniżej po niezależnej weryfikacji Codex — patrz „Independent Codex verification" i addendum na końcu.)
 
 ## Canoniczny właściciel statusu inicjatywy
 
@@ -158,6 +159,18 @@ Readiness checklist, evidence 404, submitted state, 422 z konkretną listą brak
 
 Brak — jeden writer per plik przez cały czas trwania pakietu, włącznie z fix packetem.
 
+## Independent Codex verification
+
+Codex niezależnie uruchomił pełny suite na HEAD `e8f20245a0391a74b34e4310a04ac3680c85e4b6` i potwierdził:
+
+- real-PG: **18/18 PASS**
+- component: **8/8 PASS**
+- razem: **26/26 PASS**
+- `git diff --check` — clean
+- drzewo czyste (`git status --short` puste) przed tą korektą dokumentu
+
+Na tej podstawie Codex zaakceptował implementację i testy merytorycznie — pozostała wyłącznie ta korekta dokumentacyjna (bez zmian w kodzie/migracjach/testach) przed CODE_GO_FROZEN.
+
 ## Dowód czystego drzewa
 
 - `git status --short` — puste.
@@ -168,5 +181,19 @@ Brak — jeden writer per plik przez cały czas trwania pakietu, włącznie z fi
 - Brak push/merge/deploy, brak dotknięcia Railway/demo.
 
 Nie deklaruję samodzielnie CODE_GO.
+
+---
+
+## Addendum — po commicie tej korekty dokumentu
+
+**WAŻNE — rozróżnienie dwóch HEAD:**
+- **Reviewed code HEAD** (kod + testy niezależnie zweryfikowane przez Codex, 26/26 PASS): `e8f20245a0391a74b34e4310a04ac3680c85e4b6`. Kod/migracje/testy od tego commitu NIE zmieniły się.
+- **Final docs HEAD** (po tej korekcie, docs-only): patrz niżej.
+
+Ten dokument z zasady nie może zawierać własnego SHA (commit nie może opisywać samego siebie — infinite regress). Dlatego:
+
+- Reviewed code HEAD pozostaje `e8f20245a0391a74b34e4310a04ac3680c85e4b6` — to jest commit, którego zawartość (kod/testy/migracje) Codex faktycznie zweryfikował 26/26 PASS. Ten SHA jest niezmienny i NIE jest tożsamy z HEAD po tej korekcie.
+- Ten docs-only commit (korekta raportu) wprowadza 15. commit od base (14 poprzednich + ten). Jego dokładny SHA jest podany w odpowiedzi sesji/chat towarzyszącej temu commitowi (wynik `git rev-parse HEAD` wykonany PO commicie) — nie tutaj, z powodu wyżej.
+- Zakres zmian tego commitu: WYŁĄCZNIE `docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/EXE-008_COMPLETION_REPORT_2026-08-02.md` — zero zmian w `server/`, `src/`, `tests/`, `server/migrations/`.
 
 **AWAITING_CODEX_REVIEW.**
