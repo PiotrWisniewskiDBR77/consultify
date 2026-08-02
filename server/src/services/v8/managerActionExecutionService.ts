@@ -1,8 +1,40 @@
-import { all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+import { all as rawDbAll, run as rawDbRun } from '../../utils/DbPromise.js';
+import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
 import { send as notifySend } from '../notificationService.js';
 import { getManagerProblems } from './managerProblemsService.js';
 
 type ManagerProblemRow = Awaited<ReturnType<typeof getManagerProblems>>[number];
+
+interface ManagerTransactionContext {
+  client: PgTransactionClient;
+  afterCommit: Array<() => Promise<void>>;
+}
+
+const managerTransaction = new AsyncLocalStorage<ManagerTransactionContext>();
+
+async function dbAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const context = managerTransaction.getStore();
+  if (context) return (await context.client.query<T>(sql, params)).rows;
+  return rawDbAll<T>(sql, params, { fallback: false });
+}
+
+async function dbRun(sql: string, params: unknown[] = []) {
+  const context = managerTransaction.getStore();
+  if (context) {
+    const result = await context.client.query(sql, params);
+    if (result.rowCount !== 1) {
+      throw new Error(`Manager mutation expected exactly one changed row, got ${result.rowCount}`);
+    }
+    return { success: true, changes: result.rowCount };
+  }
+  const result = await rawDbRun(sql, params, { fallback: false });
+  if (result.changes !== 1) {
+    throw new Error(`Manager mutation expected exactly one changed row, got ${result.changes ?? 0}`);
+  }
+  return result;
+}
 
 export interface ManagerActionExecutionResult {
   success: true;
@@ -120,8 +152,7 @@ async function managerAuditLog(
   entityId: string,
   detail: string
 ) {
-  try {
-    await dbRun(
+  await dbRun(
       `INSERT INTO manager_action_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
        VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NOW())`,
       [
@@ -135,9 +166,6 @@ async function managerAuditLog(
         userId,
       ]
     );
-  } catch {
-    // audit log table may not exist; non-blocking
-  }
 }
 
 async function executeProblemActionInternal(
@@ -419,7 +447,7 @@ async function executeProblemActionInternal(
         );
         addChange('DECISION', row.sourceEntityId);
         if (sponsorId && sponsorId !== userId) {
-          try {
+          managerTransaction.getStore()?.afterCommit.push(async () => {
             await notifySend({
               userId: sponsorId,
               organizationId,
@@ -432,9 +460,7 @@ async function executeProblemActionInternal(
               actorId: userId,
               isActionable: true,
             });
-          } catch {
-            /* fail-safe — escalation stands even if notification fails */
-          }
+          });
         }
         return {
           message: sponsorId
@@ -613,33 +639,40 @@ export async function executeManagerProblemAction(args: {
     throw new Error(`Problem ${args.problemId} not found in lane ${args.laneId}`);
   }
 
-  const result = await executeProblemActionInternal(
-    args.organizationId,
-    args.userId,
-    row,
-    args.actionId
+  const afterCommit: Array<() => Promise<void>> = [];
+  const response = await withPgTransaction((client) =>
+    managerTransaction.run({ client, afterCommit }, async () => {
+      const result = await executeProblemActionInternal(
+        args.organizationId,
+        args.userId,
+        row,
+        args.actionId
+      );
+
+      for (const entity of result.changedEntities) {
+        await managerAuditLog(
+          args.organizationId,
+          args.userId,
+          args.actionId,
+          entity.entityType,
+          entity.entityId,
+          `Lane: ${args.laneId}, Problem: ${args.problemId}, Action: ${args.actionId}`
+        );
+      }
+
+      return {
+        success: true as const,
+        message: result.message,
+        changedCount: result.changedEntities.length,
+        changedEntities: result.changedEntities,
+      };
+    })
   );
-
-  for (const entity of result.changedEntities) {
-    await managerAuditLog(
-      args.organizationId,
-      args.userId,
-      args.actionId,
-      entity.entityType,
-      entity.entityId,
-      `Lane: ${args.laneId}, Problem: ${args.problemId}, Action: ${args.actionId}`
-    );
-  }
-
-  return {
-    success: true,
-    message: result.message,
-    changedCount: result.changedEntities.length,
-    changedEntities: result.changedEntities,
-  };
+  await Promise.allSettled(afterCommit.map((effect) => effect()));
+  return response;
 }
 
-export async function applyManagerSuggestion(args: {
+async function applyManagerSuggestionInternal(args: {
   organizationId: string;
   userId: string;
   laneId: string;
@@ -950,4 +983,32 @@ export async function applyManagerSuggestion(args: {
     changedCount: changedEntities.length,
     changedEntities,
   };
+}
+
+export async function applyManagerSuggestion(args: {
+  organizationId: string;
+  userId: string;
+  laneId: string;
+  suggestionId: string;
+  projectId?: string;
+}): Promise<ManagerActionExecutionResult> {
+  const afterCommit: Array<() => Promise<void>> = [];
+  const response = await withPgTransaction((client) =>
+    managerTransaction.run({ client, afterCommit }, async () => {
+      const result = await applyManagerSuggestionInternal(args);
+      for (const entity of result.changedEntities) {
+        await managerAuditLog(
+          args.organizationId,
+          args.userId,
+          args.suggestionId,
+          entity.entityType,
+          entity.entityId,
+          `Lane: ${args.laneId}, Suggestion: ${args.suggestionId}`
+        );
+      }
+      return result;
+    })
+  );
+  await Promise.allSettled(afterCommit.map((effect) => effect()));
+  return response;
 }

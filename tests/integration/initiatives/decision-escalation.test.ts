@@ -14,6 +14,18 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   all: (...a: any[]) => dbAll(...a),
   run: (...a: any[]) => dbRun(...a),
 }));
+vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
+  withPgTransaction: async (fn: (client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> }) => Promise<unknown>) =>
+    fn({
+      query: async (sql: string, params: unknown[] = []) => {
+        if (/^\s*SELECT/i.test(sql)) {
+          return { rows: await dbAll(sql, params), rowCount: 0 };
+        }
+        const result = await dbRun(sql, params);
+        return { rows: [], rowCount: result?.changes ?? 0 };
+      },
+    }),
+}));
 vi.mock('../../../server/src/services/notificationService.js', () => ({
   send: (...a: any[]) => notifySend(...a),
 }));
