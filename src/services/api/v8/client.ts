@@ -39,8 +39,16 @@ export async function v8Post<T>(
   return json.data;
 }
 
-export async function v8PostMultipart<T>(path: string, formData: FormData): Promise<T> {
-  const headers = getHeaders();
+// `extraHeaders` (FIN-005 Fix 2): lets a caller attach request-scoped
+// headers — e.g. `Idempotency-Key` for FinancialStatementImportWizard's
+// upload retries — without this generic multipart helper needing to know
+// anything about idempotency itself.
+export async function v8PostMultipart<T>(
+  path: string,
+  formData: FormData,
+  extraHeaders?: Record<string, string>
+): Promise<T> {
+  const headers = { ...getHeaders(), ...(extraHeaders || {}) };
   delete headers['Content-Type'];
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'POST',

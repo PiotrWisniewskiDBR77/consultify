@@ -104,7 +104,18 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
       expect(screen.getByText('Detection Results')).toBeTruthy();
     });
 
-    expect(Api.postMultipart).not.toHaveBeenCalledWith('/api/finance-statements/upload-and-analyze', expect.any(FormData));
+    // FIN-005 Fix 2: the wizard now also sends a stable Idempotency-Key
+    // header on the v8 call — the mock call's 2nd arg is the FormData, 3rd
+    // is the extra-headers object.
+    const [, extraHeaders] = vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mock.calls[0];
+    expect(typeof (extraHeaders as any)?.['Idempotency-Key']).toBe('string');
+    expect((extraHeaders as any)['Idempotency-Key'].length).toBeGreaterThan(0);
+
+    expect(Api.postMultipart).not.toHaveBeenCalledWith(
+      '/api/finance-statements/upload-and-analyze',
+      expect.any(FormData),
+      expect.anything()
+    );
   });
 
   it('falls back to legacy upload-and-analyze in the wizard on bounded compatibility statuses', async () => {
@@ -118,9 +129,23 @@ describe('FinancialStatementImportWizard V8 manual flow seam', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Upload & Analyze' }));
 
     await waitFor(() => {
-      expect(Api.postMultipart).toHaveBeenCalledWith('/api/finance-statements/upload-and-analyze', expect.any(FormData));
+      expect(Api.postMultipart).toHaveBeenCalledWith(
+        '/api/finance-statements/upload-and-analyze',
+        expect.any(FormData),
+        expect.objectContaining({ 'Idempotency-Key': expect.any(String) })
+      );
       expect(screen.getByText('Detection Results')).toBeTruthy();
     });
+
+    // FIN-005 Fix 2: the retry onto legacy must reuse the SAME key the v8
+    // attempt used for this same file — never a fresh one — so the server's
+    // reservation/finalize/fail state machine can actually dedupe them as
+    // one logical upload attempt.
+    const v8Key = (vi.mocked(V8FinanceApi.uploadAndAnalyzeStatement).mock.calls[0][1] as any)?.[
+      'Idempotency-Key'
+    ];
+    const legacyKey = (vi.mocked(Api.postMultipart).mock.calls[0][2] as any)?.['Idempotency-Key'];
+    expect(legacyKey).toBe(v8Key);
   });
 
   it('prefers governed detect/extract/map and canonical lines before legacy fallback in the wizard manual flow', async () => {

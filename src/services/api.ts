@@ -11168,9 +11168,14 @@ export const Api = {
     return toAxiosLikeResponse(payload);
   },
 
-  postMultipart: async (url: string, formData: FormData) => {
+  // `extraHeaders` (FIN-005 Fix 2): lets a caller attach request-scoped
+  // headers — e.g. `Idempotency-Key` for FinancialStatementImportWizard's
+  // upload retries — without this generic multipart helper needing to know
+  // anything about idempotency itself. Merged AFTER the default headers so a
+  // caller can override (Content-Type is already stripped below either way).
+  postMultipart: async (url: string, formData: FormData, extraHeaders?: Record<string, string>) => {
     const fullUrl = buildApiUrl(url);
-    const headers = getHeaders();
+    const headers = { ...getHeaders(), ...(extraHeaders || {}) };
     // Browser must set multipart boundary; do not send Content-Type.
     delete headers['Content-Type'];
 
