@@ -644,4 +644,69 @@ describe('MW-07 — calendar task reschedule golden flow against a real Postgres
       }
     }
   );
+
+  itDB(
+    'Codex BLOCKER 5: version token is re-issued on every mutation and a hard reload always returns the latest one — GET A / PUT(A)->B / PUT(A) 409 / PUT(B)->success / GET returns latest',
+    async (h) => {
+      const app = buildApp();
+      const token = makeE2EToken(h.userAId, h.orgAId);
+
+      // GET version A.
+      const readA = await request(app)
+        .get('/api/v8/my-work/calendar/unified?sources=task')
+        .set('Authorization', `Bearer ${token}`);
+      const eventA = readA.body.data.events.find((e: any) => e.sourceId === h.taskGoldenId);
+      const versionA = eventA.version;
+      expect(typeof versionA).toBe('string');
+
+      // PUT with A -> success, and the response carries a NEW version B
+      // distinct from A (the token is re-issued on every mutation, not
+      // reused/frozen).
+      const putWithA = await request(app)
+        .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ start: '2027-01-05', expectedVersion: versionA });
+      expect(putWithA.status).toBe(200);
+      const versionB = putWithA.body.data.version;
+      expect(typeof versionB).toBe('string');
+      expect(versionB).not.toBe(versionA);
+
+      // A second PUT still holding the now-stale A is rejected 409 — the
+      // version token from the request body is never trusted as ownership
+      // proof by itself; it is compared against the row's actual current
+      // token, which has already moved on.
+      const putWithStaleA = await request(app)
+        .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ start: '2027-02-05', expectedVersion: versionA });
+      expect(putWithStaleA.status).toBe(409);
+
+      // PUT with the CURRENT version B succeeds and re-issues yet another
+      // new version C.
+      const putWithB = await request(app)
+        .put(`/api/v8/my-work/calendar/events/task/${h.taskGoldenId}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ start: '2027-03-05', expectedVersion: versionB });
+      expect(putWithB.status).toBe(200);
+      const versionC = putWithB.body.data.version;
+      expect(versionC).not.toBe(versionB);
+      expect(versionC).not.toBe(versionA);
+
+      // Hard-reload-equivalent: a completely fresh GET returns the LATEST
+      // date and the LATEST version (C), never a stale intermediate one —
+      // and every step above still enforced the real
+      // organization_id/assignee_id predicates in the same UPDATE (the
+      // version token was never accepted as a substitute for tenant/owner
+      // checks — see the cross-user/cross-org tests in this same file,
+      // which exercise the identical WHERE clause).
+      const readFinal = await request(app)
+        .get('/api/v8/my-work/calendar/unified?sources=task')
+        .set('Authorization', `Bearer ${token}`);
+      const eventFinal = readFinal.body.data.events.find(
+        (e: any) => e.sourceId === h.taskGoldenId
+      );
+      expect(eventFinal.start).toBe('2027-03-05');
+      expect(eventFinal.version).toBe(versionC);
+    }
+  );
 });
