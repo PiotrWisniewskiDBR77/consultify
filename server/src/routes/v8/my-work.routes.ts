@@ -2574,7 +2574,12 @@ router.put(
       start: z.string().min(1),
       end: z.string().optional(),
       allDay: z.boolean().optional(),
-      expectedVersion: z.string().min(1).optional(),
+      // Postgres xmin (our version token) is always an unsigned integer
+      // literal — reject anything else with a clean 400 before it ever
+      // reaches `... AND xmin = ?::xid`, which otherwise throws a raw
+      // Postgres 22P02 (surfaced as an unhandled 500) for e.g. a stale/
+      // forged non-numeric value from a client.
+      expectedVersion: z.string().regex(/^\d+$/).optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
