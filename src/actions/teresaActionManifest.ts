@@ -34,8 +34,8 @@
  *     detektory: nazwa narzędzia → akcja z rejestru → ten sam handler,
  *     którego używa UI (Z4: Teresa nie ma nic, czego nie ma w interfejsie).
  *
- * TRANSPORT (fala „Teresa steruje Ideą przez rejestr", 2026-07-24 — ADDYTYWNY,
- * za flagą, DEFAULT OFF):
+ * TRANSPORT (fala „Teresa steruje Ideą przez rejestr", aktywowany kanonicznie
+ * 2026-08-02; jawne `false` pozostaje kill-switchem):
  *   ↑ w górę: `UnifiedChatPanel` woła `buildTeresaToolManifest({ tool })` (patrz
  *     niżej — filtr po OTWARTYM narzędziu) i wkłada wynik do `context.
  *     ideaActionManifest` zapytania `/chat/stream`. Pole `context` jest
@@ -53,9 +53,9 @@
  *   Bezpieczeństwo (confirmBeforeRun, „akcja nie istnieje w tej reprezentacji")
  *   egzekwuje sam rejestr w `runIdeaAction`, po stronie frontu.
  *
- * DWIE FLAGI, OBIE OFF DOMYŚLNIE: gdy którakolwiek OFF (albo manifest pusty),
- * czat działa DOKŁADNIE jak dziś — regexowe detektory intencji zostają jako
- * zapas i NIE są w tej fali usuwane.
+ * Obie flagi są domyślnie ON. Gdy frontendowa flaga jest jawnie OFF, lokalne
+ * detektory regexowe są rollbackiem. Przy ON nie przechwytują promptu, więc
+ * istnieje dokładnie jedna aktywna ścieżka wykonawcza: registry.
  */
 
 import type { ActionContext, ActionDef, ActionResult, Tool } from './ideaActionRegistry';
@@ -129,6 +129,22 @@ export function buildTeresaToolManifest(options?: { tool?: Tool }): TeresaToolDe
       },
     };
   });
+}
+
+/**
+ * Legacy regex intent detectors are a rollback path, not a second executor.
+ * Once the governed registry transport is enabled, the prompt must reach the
+ * model/tool manifest instead of being intercepted locally first.
+ */
+export function shouldUseLegacyIdeaIntentFallback(registryTransportEnabled: boolean): boolean {
+  return !registryTransportEnabled;
+}
+
+/** Shape consumed by the server's `ideaTools.defs` bridge. */
+export function toServerIdeaActionManifest(
+  tools: TeresaToolDefinition[]
+): TeresaToolDefinition['function'][] {
+  return tools.map((tool) => tool.function);
 }
 
 /** Nazwa narzędzia z manifestu → definicja akcji (albo undefined, gdy modelowi się przywidziało). */

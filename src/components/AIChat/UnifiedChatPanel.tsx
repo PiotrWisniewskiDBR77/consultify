@@ -97,6 +97,8 @@ import { isRtlLanguage } from '../../utils/textDirection';
 import {
   buildTeresaToolManifest,
   executeTeresaTool,
+  shouldUseLegacyIdeaIntentFallback,
+  toServerIdeaActionManifest,
 } from '../../actions/teresaActionManifest';
 import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
 import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
@@ -852,11 +854,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // którym wróci tool-call. Dzięki temu wykonanie na froncie dotyczy dokładnie
   // tej reprezentacji, którą model widział (manifest jest po niej filtrowany).
   const teresaIdeaCtxRef = useRef<{ ideaId: string; tool: CanvasToolType } | null>(null);
-  // Flaga BUILDOWA (default OFF). OFF ⇒ nie budujemy ani nie wysyłamy manifestu,
-  // a `context` zapytania jest bajt-w-bajt jak dziś. Serwer ma DRUGĄ flagę
-  // (ENABLE_TERESA_IDEA_ACTIONS) — dopiero obie ON włączają transport.
+  // Flaga buildowa jest default ON. Jawne `false` jest kill-switchem, który
+  // przywraca legacy regex fallback; registry i fallback nigdy nie wykonują
+  // tego samego polecenia równolegle.
   const teresaIdeaActionsEnabled =
-    import.meta.env.VITE_ENABLE_TERESA_IDEA_ACTIONS === 'true';
+    import.meta.env.VITE_ENABLE_TERESA_IDEA_ACTIONS !== 'false';
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -1965,8 +1967,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     // TĄ SAMĄ ścieżką co klik człowieka: executeTeresaTool → runIdeaAction →
     // handler → szyna 'idea-workspace-quick-action'. Bezpieczeństwo (confirm-
     // BeforeRun, „akcja nie istnieje w tej reprezentacji") egzekwuje sam rejestr;
-    // odmowę/komunikat pokazujemy w czacie. Detektory regexowe zostają jako
-    // zapas — ta ścieżka ich nie usuwa.
+    // odmowę/komunikat pokazujemy w czacie. Detektory regexowe działają tylko
+    // po jawnym wyłączeniu registry kill-switchem.
     onIdeaAction: async (payload) => {
       const ideaCtx = teresaIdeaCtxRef.current;
       if (!ideaCtx) {
@@ -3363,7 +3365,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // silently no-op instead of reaching the LLM (see useEffect above).
       const mmAction =
         activeIdeaWorkspaceTool === 'mindmap' ? detectMindmapIntent(text) : null;
-      if (mmAction) {
+      if (shouldUseLegacyIdeaIntentFallback(teresaIdeaActionsEnabled) && mmAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -3397,7 +3399,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // gate above for why.
       const pfAction =
         activeIdeaWorkspaceTool === 'process_flow' ? detectProcessFlowIntent(text) : null;
-      if (pfAction) {
+      if (shouldUseLegacyIdeaIntentFallback(teresaIdeaActionsEnabled) && pfAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -3492,7 +3494,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // gate above for why.
       const wbAction =
         activeIdeaWorkspaceTool === 'whiteboard' ? detectWhiteboardIntent(text) : null;
-      if (wbAction) {
+      if (shouldUseLegacyIdeaIntentFallback(teresaIdeaActionsEnabled) && wbAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
           role: 'user',
@@ -3995,7 +3997,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const teresaIdeaId =
         typeof workspaceContext?.entityId === 'string' ? workspaceContext.entityId : '';
       const teresaIdeaManifest = teresaIdeaTool
-        ? buildTeresaToolManifest({ tool: teresaIdeaTool }).map((t) => t.function)
+        ? toServerIdeaActionManifest(buildTeresaToolManifest({ tool: teresaIdeaTool }))
         : null;
       teresaIdeaCtxRef.current = teresaIdeaTool
         ? { ideaId: teresaIdeaId, tool: teresaIdeaTool }

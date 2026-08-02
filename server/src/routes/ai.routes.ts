@@ -4438,8 +4438,8 @@ router.post(
       // (przepuszczalne pole `context`, więc bez zmian w walidatorze). Model widzi
       // je jako narzędzia; ich wywołanie NIE wykonuje się tu (serwer nie ma
       // dostępu do płótna w przeglądarce) — emitujemy SSE `idea_action`, a front
-      // wykonuje je przez executeTeresaTool(). Gated: flaga OFF ⇒ manifest jest
-      // ignorowany i czat działa dokładnie jak dziś.
+      // wykonuje je przez executeTeresaTool(). Registry jest default ON; jawne
+      // OFF ignoruje manifest i uruchamia frontendowy legacy fallback.
       try {
         if (featureFlags.ENABLE_TERESA_IDEA_ACTIONS && !aiModes?.deepResearch) {
           const rawManifest = (context as any)?.ideaActionManifest;
