@@ -120,3 +120,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_evidence_idempotency
 -- (distinct from the idempotency_key path, which guards retried requests).
 CREATE UNIQUE INDEX IF NOT EXISTS idx_closure_evidence_no_dup_ref
   ON initiative_closure_evidence(closure_request_id, evidence_type, evidence_ref_id);
+
+-- Register the new "closure" section in the initiative section library
+-- (server/migrations/529_initiative_section_types.sql) so the frontend's
+-- ClosureSection.tsx (registry key 'closure', component_key 'closure') is
+-- actually reachable through InitiativeDocumentView's DB-backed section
+-- renderer, not just present in the frontend registry.ts (a registry-only
+-- entry silently never renders once this table has rows — the renderer
+-- reads its section list from here, not from the frontend default map).
+-- Placed after 'history' (order 140), left column, system section.
+INSERT OR IGNORE INTO initiative_section_types (id, key, name, name_pl, description, description_pl, category, column_position, default_order, icon, icon_color, icon_bg, component_key, is_system, is_active) VALUES
+('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', 1, 1);
