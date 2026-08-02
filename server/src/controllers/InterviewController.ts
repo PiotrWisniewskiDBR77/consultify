@@ -8761,7 +8761,7 @@ ${JSON.stringify(questions || [], null, 2)}
     }
     const userOrgId = String(req.user?.organizationId || (req as any).organizationId || '');
     if (String((orgRow as any).organization_id) !== userOrgId) {
-      res.status(403).json({ error: 'Forbidden' });
+      res.status(404).json({ error: 'Insight not found' });
       return;
     }
     const interviewInsightService = await import('../services/InterviewInsightService.js');

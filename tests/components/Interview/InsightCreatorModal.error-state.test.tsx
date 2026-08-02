@@ -37,7 +37,7 @@ const tEn = (key: string, opt?: unknown): string => {
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: tEn,
-    i18n: { language: 'en', changeLanguage: () => {} },
+    i18n: { language: 'en', changeLanguage: () => {}, getFixedT: () => tEn },
   }),
 }));
 
