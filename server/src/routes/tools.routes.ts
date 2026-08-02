@@ -13,9 +13,12 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
 import {
+  AcceptSwotProposalSchema,
   ApproveToolSchema,
+  CreateSwotProposalsSchema,
   CreateToolSessionSchema,
   GenerateInitiativesSchema,
+  RejectSwotProposalSchema,
   RequestReviewSchema,
   SendBackSchema,
   SuggestToolSchema,
@@ -65,5 +68,26 @@ router.get('/:toolId/comments', ToolController.listComments);
 router.post('/:toolId/comments', ToolController.addComment);
 router.delete('/:toolId/comments/:commentId', ToolController.deleteComment);
 router.get('/:toolId/history', ToolController.getHistory);
+
+// TLS-04 — Teresa-assisted SWOT: proposals are a durable, reviewable record
+// (diff, sources/assumption, confidence, rationale) that never auto-saves;
+// the user explicitly accepts/edits/rejects before anything touches the
+// real SWOT data in tool_sessions.answers_json.
+router.post(
+  '/:toolId/swot-proposals',
+  validateBody(CreateSwotProposalsSchema),
+  ToolController.createSwotProposals
+);
+router.get('/:toolId/swot-proposals', ToolController.listSwotProposals);
+router.post(
+  '/:toolId/swot-proposals/:proposalId/accept',
+  validateBody(AcceptSwotProposalSchema),
+  ToolController.acceptSwotProposal
+);
+router.post(
+  '/:toolId/swot-proposals/:proposalId/reject',
+  validateBody(RejectSwotProposalSchema),
+  ToolController.rejectSwotProposal
+);
 
 export default router;

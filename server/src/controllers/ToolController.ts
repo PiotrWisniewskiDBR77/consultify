@@ -4,8 +4,11 @@
  */
 
 import type { Response } from 'express';
+import type { PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 
+import { generateSwotProposals } from '../services/ai/swotProposalService.js';
+import auditEventsService from '../services/AuditEventsService.js';
 import { safePersistToolSessionConclusion } from '../services/conclusions/toolConclusionBridge.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -677,6 +680,59 @@ const upsertToolDecision = async (params: {
   );
   return id;
 };
+
+// TLS-04 — Teresa-assisted SWOT: a proposal is a durable, reviewable record
+// (diff, sources/assumption, confidence, rationale) the user must explicitly
+// accept/edit/reject before anything touches the real SWOT data. It NEVER
+// auto-saves. See createSwotProposals/listSwotProposals/acceptSwotProposal/
+// rejectSwotProposal below.
+type SwotProposalRow = {
+  id: string;
+  tool_session_id: string;
+  organization_id: string;
+  quadrant: string;
+  operation: string;
+  target_item_id: string | null;
+  before_json: string | null;
+  proposed_after_json: string | null;
+  final_after_json: string | null;
+  rationale: string;
+  source_refs_json: string | null;
+  is_assumption: boolean;
+  // NUMERIC comes back from `pg` as a string (no type-parser override in this
+  // codebase) — mapSwotProposalRow coerces it back to a number for the client.
+  confidence: number | string;
+  model_metadata_json: string;
+  status: string;
+  expected_version: number;
+  created_by: string;
+  created_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
+};
+
+const mapSwotProposalRow = (row: SwotProposalRow) => ({
+  id: row.id,
+  toolSessionId: row.tool_session_id,
+  organizationId: row.organization_id,
+  quadrant: row.quadrant,
+  operation: row.operation,
+  targetItemId: row.target_item_id,
+  before: safeParseJSON<unknown>(row.before_json, null),
+  proposedAfter: safeParseJSON<unknown>(row.proposed_after_json, null),
+  finalAfter: safeParseJSON<unknown>(row.final_after_json, null),
+  rationale: row.rationale,
+  sourceRefs: safeParseJSON<string[] | null>(row.source_refs_json, null),
+  isAssumption: Boolean(row.is_assumption),
+  confidence: Number(row.confidence),
+  modelMetadata: safeParseJSON<Record<string, unknown>>(row.model_metadata_json, {}),
+  status: row.status,
+  expectedVersion: row.expected_version,
+  createdBy: row.created_by,
+  createdAt: row.created_at,
+  decidedBy: row.decided_by,
+  decidedAt: row.decided_at,
+});
 
 export class ToolController {
   static createToolSession = asyncHandler(
@@ -2558,7 +2614,6 @@ export class ToolController {
       res.json(history);
     }
   );
-
   /** TLS-07 — governed, idempotent SWOT recommendation -> Candidate handoff. */
   static handoffSwotCandidate = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -2584,6 +2639,482 @@ export class ToolController {
         }
         throw error;
       }
+    }
+  );
+  // ── TLS-04: Teresa-assisted SWOT proposals ────────────────────────────────
+
+  /**
+   * POST /api/tools/:toolId/swot-proposals
+   * Teresa generates 1-5 candidate SWOT edits (add/update/remove), each a
+   * standalone `swot_proposals` row with status='pending'. NOTHING in
+   * tool_sessions.answers_json is touched here — generation is pure
+   * propose-and-store, never auto-apply.
+   */
+  static createSwotProposals = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id, tool_type, answers_json, version FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string; tool_type: string; answers_json: string | null; version: number } | null;
+
+      // Cross-tenant convention: bare 404, never 403/leaky message.
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+      if (session.tool_type !== 'dynamic-swot') {
+        res.status(400).json({ error: 'Tool session is not a SWOT tool' });
+        return;
+      }
+
+      const answers = safeJsonParse(session.answers_json) as { items?: unknown };
+      const items: any[] = Array.isArray(answers.items) ? answers.items : [];
+
+      const generation = await generateSwotProposals({
+        toolSessionId: toolId,
+        organizationId: user.organizationId,
+        currentItems: items,
+        quadrantFocus: req.body?.quadrantFocus,
+      });
+
+      if (!generation.ok) {
+        try {
+          await auditEventsService.log({
+            actorType: 'AI',
+            action: 'SWOT_PROPOSAL_GENERATION_FAILED',
+            resourceType: 'tool_session',
+            resourceId: toolId,
+            organizationId: user.organizationId,
+            metadata: { code: generation.code },
+          });
+        } catch (auditErr) {
+          logger.warn('[ToolController] failed to log SWOT_PROPOSAL_GENERATION_FAILED audit event', {
+            auditErr,
+          });
+        }
+
+        if (generation.code === 'PROVIDER_ERROR') {
+          res.status(503).json({
+            error: 'Teresa is unavailable right now',
+            code: 'PROVIDER_ERROR',
+            retryable: true,
+          });
+        } else {
+          res.status(502).json({
+            error: 'Teresa returned an unusable response',
+            code: 'INVALID_MODEL_RESPONSE',
+            retryable: true,
+          });
+        }
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const rows: SwotProposalRow[] = generation.proposals.map((p) => {
+        const existingItem =
+          p.operation !== 'add' ? items.find((it) => it?.id === p.targetItemId) : undefined;
+
+        // A full SWOTItem-shaped object (see src/store/useToolStore.ts) so the
+        // client can render/apply it as-is. null for 'remove' — there is no
+        // "after" item once removed.
+        const proposedAfter =
+          p.operation === 'remove'
+            ? null
+            : {
+                id: p.operation === 'update' && p.targetItemId ? p.targetItemId : uuidv4(),
+                text: p.proposedText || '',
+                quadrant: p.quadrant,
+                impact: existingItem?.impact || 'medium',
+                source: 'ai',
+                confidence: p.confidence,
+                proposalStatus: 'ai-proposed',
+              };
+
+        return {
+          id: uuidv4(),
+          tool_session_id: toolId,
+          organization_id: user.organizationId,
+          quadrant: p.quadrant,
+          operation: p.operation,
+          target_item_id: p.targetItemId ?? null,
+          before_json: existingItem ? JSON.stringify(existingItem) : null,
+          proposed_after_json: proposedAfter ? JSON.stringify(proposedAfter) : null,
+          final_after_json: null,
+          rationale: p.rationale,
+          source_refs_json:
+            p.sourceRefs && p.sourceRefs.length > 0 ? JSON.stringify(p.sourceRefs) : null,
+          is_assumption: p.isAssumption,
+          confidence: p.confidence,
+          // Honest/generic — we don't hardcode a specific model name we're not
+          // certain of.
+          model_metadata_json: JSON.stringify({ provider: 'anthropic', generatedAt: now }),
+          status: 'pending',
+          expected_version: session.version,
+          created_by: user.id,
+          created_at: now,
+          decided_by: null,
+          decided_at: null,
+        };
+      });
+
+      // All inserts atomically — a partial batch (some proposals persisted,
+      // some not) would be a confusing half-state for the reviewer.
+      await queryHelpers.withRawPgTransaction(async (client: PoolClient) => {
+        for (const row of rows) {
+          await client.query(
+            `INSERT INTO swot_proposals (
+              id, tool_session_id, organization_id, quadrant, operation, target_item_id,
+              before_json, proposed_after_json, final_after_json, rationale, source_refs_json,
+              is_assumption, confidence, model_metadata_json, status, expected_version,
+              created_by, created_at
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+            [
+              row.id,
+              row.tool_session_id,
+              row.organization_id,
+              row.quadrant,
+              row.operation,
+              row.target_item_id,
+              row.before_json,
+              row.proposed_after_json,
+              row.final_after_json,
+              row.rationale,
+              row.source_refs_json,
+              row.is_assumption,
+              row.confidence,
+              row.model_metadata_json,
+              row.status,
+              row.expected_version,
+              row.created_by,
+              row.created_at,
+            ]
+          );
+        }
+      });
+
+      try {
+        await auditEventsService.log({
+          actorType: 'AI',
+          action: 'SWOT_PROPOSAL_CREATED',
+          resourceType: 'swot_proposal',
+          resourceId: rows[0]?.id || toolId,
+          organizationId: user.organizationId,
+          metadata: { count: rows.length, toolSessionId: toolId },
+        });
+      } catch (auditErr) {
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_CREATED audit event', { auditErr });
+      }
+
+      res.status(201).json({ proposals: rows.map(mapSwotProposalRow) });
+    }
+  );
+
+  /**
+   * GET /api/tools/:toolId/swot-proposals
+   */
+  static listSwotProposals = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const rows = (await queryHelpers.queryAll(
+        `SELECT * FROM swot_proposals WHERE tool_session_id = ? AND organization_id = ? ORDER BY created_at ASC`,
+        [toolId, user.organizationId]
+      )) as SwotProposalRow[];
+
+      res.json({ proposals: rows.map(mapSwotProposalRow) });
+    }
+  );
+
+  /**
+   * POST /api/tools/:toolId/swot-proposals/:proposalId/accept
+   *
+   * The ONLY path by which a proposal's content can reach the real SWOT.
+   * Two guarantees, both enforced by ONE transaction on ONE dedicated
+   * PoolClient (queryHelpers.withPgTransaction — see that helper's docblock
+   * for why a bare BEGIN/…/COMMIT through the pooled helpers would NOT be
+   * atomic in this codebase):
+   *
+   *  1. Concurrency: the proposal flip is a SINGLE atomic conditional
+   *     UPDATE (`WHERE status = 'pending'`), never read-then-write — under
+   *     concurrent accept/reject/accept, Postgres row-level locking lets
+   *     exactly one statement's WHERE match, so exactly one caller wins;
+   *     the loser sees 0 rows and is told ALREADY_DECIDED.
+   *  2. Optimistic concurrency on the session: the tool_sessions write is
+   *     ALSO a conditional UPDATE (`WHERE version = expectedVersion`). If
+   *     the session moved since the proposal was generated, this UPDATE
+   *     matches 0 rows and we THROW inside the transaction callback — which
+   *     rolls back the WHOLE transaction, including the proposal-status
+   *     flip from step 1, leaving the proposal `pending` again for a
+   *     legitimate retry (never left half-accepted).
+   */
+  static acceptSwotProposal = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId, proposalId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const { expectedVersion, editedAfter } = req.body as {
+        expectedVersion: number;
+        editedAfter?: Record<string, unknown>;
+      };
+
+      type AcceptOutcome =
+        | { kind: 'not_found' }
+        | { kind: 'already_decided'; status: string }
+        | { kind: 'accepted'; proposal: SwotProposalRow; sessionVersion: number };
+
+      let outcome: AcceptOutcome;
+      try {
+        outcome = await queryHelpers.withRawPgTransaction<AcceptOutcome>(async (client) => {
+          // 1) Single atomic conditional UPDATE — not read-then-write. Under a
+          // concurrent double-accept, Postgres resolves this to exactly one
+          // winner via ordinary row-level locking on the UPDATE itself.
+          const finalAfterJsonParam =
+            editedAfter !== undefined ? JSON.stringify(editedAfter) : null;
+          const acceptRes = await client.query(
+            `UPDATE swot_proposals
+             SET status = 'accepted',
+                 decided_by = $1,
+                 decided_at = CURRENT_TIMESTAMP,
+                 final_after_json = COALESCE($2::text, proposed_after_json)
+             WHERE id = $3 AND tool_session_id = $4 AND organization_id = $5 AND status = 'pending'
+             RETURNING *`,
+            [user.id, finalAfterJsonParam, proposalId, toolId, user.organizationId]
+          );
+
+          if (acceptRes.rows.length === 0) {
+            const check = await client.query(
+              `SELECT status FROM swot_proposals WHERE id = $1 AND tool_session_id = $2 AND organization_id = $3`,
+              [proposalId, toolId, user.organizationId]
+            );
+            if (check.rows.length === 0) {
+              return { kind: 'not_found' };
+            }
+            return { kind: 'already_decided', status: (check.rows[0] as { status: string }).status };
+          }
+
+          const acceptedProposal = acceptRes.rows[0] as SwotProposalRow;
+
+          // 2) Re-read the session's CURRENT answers_json/version — same
+          // client/transaction, so this sees the accepted-proposal write above
+          // and is itself covered by the same rollback if the CAS below fails.
+          const sessionRes = await client.query(
+            `SELECT answers_json, version FROM tool_sessions WHERE id = $1 AND organization_id = $2`,
+            [toolId, user.organizationId]
+          );
+          if (sessionRes.rows.length === 0) {
+            // Parent session vanished mid-flight (shouldn't happen — FK CASCADE
+            // would have deleted this proposal row too). Abort — rolls back.
+            throw new Error('SWOT_PROPOSAL_PARENT_SESSION_MISSING');
+          }
+          const sessionRow = sessionRes.rows[0] as { answers_json: string | null; version: number };
+          let answers: { items?: unknown; [k: string]: unknown };
+          try {
+            answers = sessionRow.answers_json ? JSON.parse(sessionRow.answers_json) : {};
+          } catch {
+            answers = {};
+          }
+          const items: any[] = Array.isArray(answers.items) ? [...(answers.items as any[])] : [];
+
+          const appliedItem = acceptedProposal.final_after_json
+            ? JSON.parse(acceptedProposal.final_after_json)
+            : null;
+
+          let newItems: any[];
+          if (acceptedProposal.operation === 'add') {
+            newItems = appliedItem ? [...items, appliedItem] : items;
+          } else if (acceptedProposal.operation === 'update') {
+            newItems = appliedItem
+              ? items.map((it) => (it?.id === acceptedProposal.target_item_id ? appliedItem : it))
+              : items;
+          } else {
+            // remove
+            newItems = items.filter((it) => it?.id !== acceptedProposal.target_item_id);
+          }
+
+          const newAnswersJson = JSON.stringify({ ...answers, items: newItems });
+
+          // Optimistic-concurrency CAS on the session. 0 rows ⇒ stale ⇒ throw
+          // ⇒ the whole transaction (including step 1's proposal flip) rolls
+          // back, so the proposal is left `pending` for a legitimate retry.
+          const sessionUpdateRes = await client.query(
+            `UPDATE tool_sessions
+             SET answers_json = $1, version = version + 1, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2 AND organization_id = $3 AND version = $4
+             RETURNING version`,
+            [newAnswersJson, toolId, user.organizationId, expectedVersion]
+          );
+
+          if (sessionUpdateRes.rows.length === 0) {
+            throw Object.assign(new Error('SWOT_PROPOSAL_STALE_VERSION'), {
+              code: 'STALE_VERSION',
+            });
+          }
+
+          return {
+            kind: 'accepted',
+            proposal: acceptedProposal,
+            sessionVersion: (sessionUpdateRes.rows[0] as { version: number }).version,
+          };
+        });
+      } catch (err) {
+        if ((err as { code?: string } | undefined)?.code === 'STALE_VERSION') {
+          // Re-read OUTSIDE the rolled-back transaction so the client gets the
+          // TRUE current version to retry with.
+          const current = (await queryHelpers.queryOne(
+            `SELECT version FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+            [toolId, user.organizationId]
+          )) as { version: number } | null;
+          res.status(409).json({
+            error: 'Session has changed since this proposal was generated',
+            code: 'STALE_VERSION',
+            currentVersion: current?.version ?? null,
+          });
+          return;
+        }
+        throw err;
+      }
+
+      if (outcome.kind === 'not_found') {
+        res.status(404).json({ error: 'Proposal not found' });
+        return;
+      }
+      if (outcome.kind === 'already_decided') {
+        res.status(409).json({
+          error: 'Proposal already decided',
+          code: 'ALREADY_DECIDED',
+          status: outcome.status,
+        });
+        return;
+      }
+
+      try {
+        await auditEventsService.log({
+          actorType: 'USER',
+          actorId: user.id,
+          action: 'SWOT_PROPOSAL_ACCEPTED',
+          resourceType: 'swot_proposal',
+          resourceId: proposalId,
+          organizationId: user.organizationId,
+          before: {
+            quadrant: outcome.proposal.quadrant,
+            operation: outcome.proposal.operation,
+            previousItem: safeParseJSON<unknown>(outcome.proposal.before_json, null),
+          },
+          after: {
+            appliedItem: safeParseJSON<unknown>(outcome.proposal.final_after_json, null),
+          },
+        });
+      } catch (auditErr) {
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_ACCEPTED audit event', { auditErr });
+      }
+
+      res.json({
+        proposal: mapSwotProposalRow(outcome.proposal),
+        session: { id: toolId, version: outcome.sessionVersion },
+      });
+    }
+  );
+
+  /**
+   * POST /api/tools/:toolId/swot-proposals/:proposalId/reject
+   * Does NOT touch tool_sessions at all — the literal proof that rejecting a
+   * proposal never changes the real SWOT.
+   */
+  static rejectSwotProposal = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId, proposalId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      // Single atomic conditional UPDATE, wrapped in withPgTransaction purely
+      // to go through a genuine writable client and get RETURNING rows back
+      // (queryHelpers.queryRun discards RETURNING; queryAll reads via the
+      // read pool, which is wrong for a write) — not because this needs
+      // multi-statement rollback semantics.
+      type RejectOutcome =
+        | { kind: 'not_found' }
+        | { kind: 'already_decided'; status: string }
+        | { kind: 'rejected'; proposal: SwotProposalRow };
+
+      const outcome = await queryHelpers.withRawPgTransaction<RejectOutcome>(async (client) => {
+        const rejectRes = await client.query(
+          `UPDATE swot_proposals
+           SET status = 'rejected', decided_by = $1, decided_at = CURRENT_TIMESTAMP
+           WHERE id = $2 AND tool_session_id = $3 AND organization_id = $4 AND status = 'pending'
+           RETURNING *`,
+          [user.id, proposalId, toolId, user.organizationId]
+        );
+
+        if (rejectRes.rows.length === 0) {
+          const check = await client.query(
+            `SELECT status FROM swot_proposals WHERE id = $1 AND tool_session_id = $2 AND organization_id = $3`,
+            [proposalId, toolId, user.organizationId]
+          );
+          if (check.rows.length === 0) {
+            return { kind: 'not_found' };
+          }
+          return { kind: 'already_decided', status: (check.rows[0] as { status: string }).status };
+        }
+
+        return { kind: 'rejected', proposal: rejectRes.rows[0] as SwotProposalRow };
+      });
+
+      if (outcome.kind === 'not_found') {
+        res.status(404).json({ error: 'Proposal not found' });
+        return;
+      }
+      if (outcome.kind === 'already_decided') {
+        res.status(409).json({
+          error: 'Proposal already decided',
+          code: 'ALREADY_DECIDED',
+          status: outcome.status,
+        });
+        return;
+      }
+
+      try {
+        await auditEventsService.log({
+          actorType: 'USER',
+          actorId: user.id,
+          action: 'SWOT_PROPOSAL_REJECTED',
+          resourceType: 'swot_proposal',
+          resourceId: proposalId,
+          organizationId: user.organizationId,
+        });
+      } catch (auditErr) {
+        logger.warn('[ToolController] failed to log SWOT_PROPOSAL_REJECTED audit event', { auditErr });
+      }
+
+      res.json({ proposal: mapSwotProposalRow(outcome.proposal) });
     }
   );
 }

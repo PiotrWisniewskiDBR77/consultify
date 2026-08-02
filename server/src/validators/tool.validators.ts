@@ -66,6 +66,18 @@ export const SuggestToolSchema = z.object({
   lang: z.enum(['en', 'pl']).optional(),
 });
 
+// TLS-04 — Teresa-assisted SWOT: proposal generation + accept/reject.
+export const CreateSwotProposalsSchema = z.object({
+  quadrantFocus: z.enum(['strengths', 'weaknesses', 'opportunities', 'threats']).optional(),
+});
+
+export const AcceptSwotProposalSchema = z.object({
+  expectedVersion: z.number().int().nonnegative(),
+  editedAfter: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const RejectSwotProposalSchema = z.object({}).passthrough();
+
 export type CreateToolSessionRequest = z.infer<typeof CreateToolSessionSchema>;
 export type UpdateToolSessionRequest = z.infer<typeof UpdateToolSessionSchema>;
 export type GenerateInitiativesRequest = z.infer<typeof GenerateInitiativesSchema>;
@@ -73,3 +85,6 @@ export type SendBackRequest = z.infer<typeof SendBackSchema>;
 export type RequestReviewRequest = z.infer<typeof RequestReviewSchema>;
 export type ApproveToolRequest = z.infer<typeof ApproveToolSchema>;
 export type SuggestToolRequest = z.infer<typeof SuggestToolSchema>;
+export type CreateSwotProposalsRequest = z.infer<typeof CreateSwotProposalsSchema>;
+export type AcceptSwotProposalRequest = z.infer<typeof AcceptSwotProposalSchema>;
+export type RejectSwotProposalRequest = z.infer<typeof RejectSwotProposalSchema>;

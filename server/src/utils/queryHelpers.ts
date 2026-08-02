@@ -261,6 +261,33 @@ export async function withPgTransaction<T>(
 }
 
 /**
+ * Raw PostgreSQL transaction for call sites that intentionally use `$1` style
+ * placeholders and the native PoolClient result shape. Keep this separate
+ * from `withPgTransaction`, whose established contract adapts `?` placeholders.
+ */
+export async function withRawPgTransaction<T>(
+  fn: (client: import('pg').PoolClient) => Promise<T>
+): Promise<T> {
+  const { acquirePgClient } = await import('../database/PostgresDatabase.js');
+  const client = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      logger.error('[QueryHelper] withRawPgTransaction: ROLLBACK failed:', rollbackError);
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Parse JSON fields safely
  */
 export function parseJsonFields(
