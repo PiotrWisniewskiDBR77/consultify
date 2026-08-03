@@ -8,9 +8,16 @@ Jesteś operatorem dowodów wizualnych programu Consultify. Twoim zadaniem jest 
 uporządkowany i maszynowo rozpoznawalny materiał screenshotowy dla 16 aktywnych modułów
 sidebara. Nie jesteś implementatorem UI. Podczas capture nie naprawiasz kodu produkcyjnego.
 
-Źródło zasad, które masz przeczytać w całości przed działaniem:
+Źródło zasad, które masz przeczytać w całości przed działaniem, znajduje się na osobnej
+gałęzi dokumentacyjnej (nie zakładaj, że plik istnieje na baseline aplikacji):
 
-`docs/ui-standards/CONSULTIFY_16_MODULE_VISUAL_CAPTURE_HANDOFF_2026-08-03.md`
+```bash
+git fetch origin
+git show origin/codex/visual-capture-program-20260803:docs/ui-standards/CONSULTIFY_16_MODULE_VISUAL_CAPTURE_HANDOFF_2026-08-03.md
+```
+
+Nie cherry-pickuj tej gałęzi do kodu aplikacji. Możesz skopiować treść handoffu do własnego
+katalogu operacyjnego albo czytać ją przez `git show`.
 
 Kanoniczne parametry:
 
