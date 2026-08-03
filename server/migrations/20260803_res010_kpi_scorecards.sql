@@ -68,6 +68,54 @@ CREATE TABLE IF NOT EXISTS kpi_scorecard_items (
   UNIQUE (scorecard_id, kpi_id)
 );
 
+-- Historical demo/staging schemas may already contain the legacy join table
+-- without tenant ownership or foreign keys. CREATE TABLE IF NOT EXISTS is a
+-- no-op in that case, so upgrade the existing shape explicitly. Ownership is
+-- derived only from the canonical parent scorecard; unresolved rows abort the
+-- migration instead of being assigned to an arbitrary organization.
+ALTER TABLE kpi_scorecard_items
+  ADD COLUMN IF NOT EXISTS organization_id TEXT;
+
+UPDATE kpi_scorecard_items AS item
+SET organization_id = scorecard.organization_id
+FROM kpi_scorecards AS scorecard
+WHERE item.scorecard_id = scorecard.id
+  AND item.organization_id IS NULL;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM kpi_scorecard_items WHERE organization_id IS NULL) THEN
+    RAISE EXCEPTION
+      'RES-10 tenant backfill failed: kpi_scorecard_items contains rows without a resolvable scorecard organization';
+  END IF;
+END $$;
+
+ALTER TABLE kpi_scorecard_items
+  ALTER COLUMN organization_id SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'kpi_scorecard_items_scorecard_id_fkey'
+      AND conrelid = 'kpi_scorecard_items'::regclass
+  ) THEN
+    ALTER TABLE kpi_scorecard_items
+      ADD CONSTRAINT kpi_scorecard_items_scorecard_id_fkey
+      FOREIGN KEY (scorecard_id) REFERENCES kpi_scorecards(id) ON DELETE CASCADE;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'kpi_scorecard_items_kpi_id_fkey'
+      AND conrelid = 'kpi_scorecard_items'::regclass
+  ) THEN
+    ALTER TABLE kpi_scorecard_items
+      ADD CONSTRAINT kpi_scorecard_items_kpi_id_fkey
+      FOREIGN KEY (kpi_id) REFERENCES initiative_kpis(id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_kpi_scorecard_items_org ON kpi_scorecard_items(organization_id);
 CREATE INDEX IF NOT EXISTS idx_kpi_scorecard_items_scorecard ON kpi_scorecard_items(scorecard_id);
 CREATE INDEX IF NOT EXISTS idx_kpi_scorecard_items_kpi ON kpi_scorecard_items(kpi_id);
