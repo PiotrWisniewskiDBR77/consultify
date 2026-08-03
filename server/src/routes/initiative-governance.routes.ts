@@ -23,6 +23,13 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
   return { userId, orgId };
 };
 
+/**
+ * RES-10: explicit owner marker on every goals response. `goals` /
+ * `goal_initiative_links` are Initiatives-owned — distinct from Results'
+ * `kpi_scorecards` (kpiScorecardService). Never mix the two contracts.
+ */
+export const INITIATIVE_GOALS_OWNER_DOMAIN = 'initiatives' as const;
+
 // ── INIT-04: Goals/OKR ──
 
 router.post(
@@ -47,7 +54,10 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.status(201).json(await initiativeGovernanceService.createGoal(id.orgId, p.data));
+    res.status(201).json({
+      ...(await initiativeGovernanceService.createGoal(id.orgId, p.data)),
+      ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN,
+    });
   })
 );
 
@@ -57,7 +67,10 @@ router.get(
     const id = requireUser(req, res);
     if (!id) return;
     const parentGoalId = req.query.parentGoalId as string | undefined;
-    res.json({ goals: await initiativeGovernanceService.getGoals(id.orgId, parentGoalId) });
+    res.json({
+      goals: await initiativeGovernanceService.getGoals(id.orgId, parentGoalId),
+      ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN,
+    });
   })
 );
 
@@ -71,7 +84,7 @@ router.get(
       res.status(404).json({ error: 'Goal not found' });
       return;
     }
-    res.json(g);
+    res.json({ ...g, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 
@@ -96,7 +109,8 @@ router.put(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res.json(await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, p.data));
+    const updated = await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, p.data);
+    res.json({ ...updated, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 
@@ -115,7 +129,7 @@ router.get(
       res.status(404).json({ error: 'Goal not found' });
       return;
     }
-    res.json(rollup);
+    res.json({ ...rollup, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 
@@ -130,16 +144,13 @@ router.post(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    res
-      .status(201)
-      .json(
-        await initiativeGovernanceService.linkGoalToInitiative(
-          id.orgId,
-          req.params.goalId,
-          p.data.initiativeId,
-          p.data.contributionWeight
-        )
-      );
+    const linked = await initiativeGovernanceService.linkGoalToInitiative(
+      id.orgId,
+      req.params.goalId,
+      p.data.initiativeId,
+      p.data.contributionWeight
+    );
+    res.status(201).json({ ...linked, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 
@@ -153,6 +164,7 @@ router.get(
         id.orgId,
         req.params.goalId
       ),
+      ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN,
     });
   })
 );
@@ -162,13 +174,12 @@ router.delete(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const id = requireUser(req, res);
     if (!id) return;
-    res.json(
-      await initiativeGovernanceService.unlinkGoalFromInitiative(
-        id.orgId,
-        req.params.goalId,
-        req.params.initiativeId
-      )
+    const unlinked = await initiativeGovernanceService.unlinkGoalFromInitiative(
+      id.orgId,
+      req.params.goalId,
+      req.params.initiativeId
     );
+    res.json({ ...unlinked, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );
 
