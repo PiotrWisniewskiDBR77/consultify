@@ -2048,6 +2048,29 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             </select>
                           </div>
                         </div>
+
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.visibility', 'Visibility')}
+                          </div>
+                          <select
+                            aria-label={t('results.drawer.visibility', 'Visibility')}
+                            className={`${inputCls} appearance-none`}
+                            value={settingsVisibility}
+                            onChange={(e) => setSettingsVisibility(e.target.value as any)}
+                            disabled={!editMode}
+                          >
+                            <option value="org_visible">
+                              {t('results.drawer.visibilityOrg', 'Organization')}
+                            </option>
+                            <option value="initiative_restricted">
+                              {t('results.drawer.visibilityTeam', 'Initiative team only')}
+                            </option>
+                            <option value="private_to_owner">
+                              {t('results.drawer.visibilityPrivate', 'Private (owner only)')}
+                            </option>
+                          </select>
+                        </div>
                       </div>
 
                       <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
@@ -2209,30 +2232,6 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             onChange={(e) => setSettingsRedThreshold(e.target.value)}
                             disabled={!editMode}
                           />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                        <div>
-                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                            {t('results.drawer.visibility', 'Visibility')}
-                          </div>
-                          <select
-                            className={`${inputCls} appearance-none`}
-                            value={settingsVisibility}
-                            onChange={(e) => setSettingsVisibility(e.target.value as any)}
-                            disabled={!editMode}
-                          >
-                            <option value="org_visible">
-                              {t('results.drawer.visibilityOrg', 'Organization')}
-                            </option>
-                            <option value="initiative_restricted">
-                              {t('results.drawer.visibilityTeam', 'Initiative team only')}
-                            </option>
-                            <option value="private_to_owner">
-                              {t('results.drawer.visibilityPrivate', 'Private (owner only)')}
-                            </option>
-                          </select>
                         </div>
                       </div>
 
