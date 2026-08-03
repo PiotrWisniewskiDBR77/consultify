@@ -5,6 +5,8 @@
  *        → line extraction with confidence → mapping to canonical lines → validation.
  */
 
+import crypto from 'crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -14,6 +16,7 @@ import {
   getCanonicalLineById,
   getRequiredCanonicalLineIds,
 } from './financeCanonicalRegistry.js';
+import { detachStatementFromPack } from './financialStatementPackService.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -8142,6 +8145,715 @@ export async function learnStatementAliases(params: {
 // ---------------------------------------------------------------------------
 // Persistence
 // ---------------------------------------------------------------------------
+
+/**
+ * FIN-005 upload idempotency (Codex review Blocker 2) — serialize concurrent
+ * `POST /finance-statements/upload` requests for one
+ * (organizationId, Idempotency-Key) pair on a pinned PostgreSQL session.
+ *
+ * This is the SAME `pg_advisory_xact_lock` pattern already accepted for
+ * FIN-03/FIN-04's `withFinancialModelIdempotencyLock`
+ * (financialModelingService.ts) — a real PostgreSQL-level guarantee, not a
+ * process-local mutex/Map. `pg_advisory_xact_lock` blocks any OTHER
+ * PostgreSQL session (any other server process, not just this one) that
+ * requests the same two hashed lock keys, so the guarantee holds across
+ * horizontally-scaled server instances.
+ *
+ * WHY a transaction-scoped advisory lock and not a separate reservation row
+ * with an `in_progress` -> `completed`/`failed` status column: the lock IS
+ * the reservation, and its lifetime is tied EXACTLY to the wrapping
+ * transaction — released the instant that transaction ends, on COMMIT *or*
+ * ROLLBACK, regardless of whether `work()` resolved or threw. A first
+ * attempt that fails partway through (parse error, DB error, anything)
+ * therefore can never leave a second attempt permanently blocked: there is
+ * no separate "in_progress" row that could get stuck, because nothing
+ * outlives the transaction. The caller decides what "failure" means for its
+ * own response (this wrapper does not interpret `work()`'s return value) —
+ * the route only persists an idempotency marker for a genuinely successful
+ * upload, so a failed first attempt leaves no marker behind and a retry
+ * with the same key simply does the work again.
+ */
+export async function withStatementUploadIdempotencyLock<T>(
+  organizationId: string,
+  idempotencyKey: string,
+  work: () => Promise<T>
+): Promise<T> {
+  const { getPoolClientForPinnedTransaction } = await import('../database/PostgresDatabase.js');
+  const client = await getPoolClientForPinnedTransaction();
+  try {
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`, [
+      `${organizationId}:statement_upload`,
+      idempotencyKey,
+    ]);
+    const result = await work();
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Preserve the original failure.
+    }
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// ════════════════════════════════════════════════
+// FIN-005: Upload idempotency — shared state machine
+//
+// Moved here (pure refactor, out of finance-statements.routes.ts) so the
+// SAME reservation/finalize/fail/cleanup primitives can be wired into every
+// endpoint that persists a Statement from an uploaded file — not just
+// `POST /finance-statements/upload`, which is the only one that had them
+// before. See `withStatementUploadIdempotencyLock` immediately above for the
+// outer per-(org,key) serialization layer these primitives run underneath.
+// ════════════════════════════════════════════════
+
+export const MAX_IDEMPOTENCY_KEY_CHARS = 200;
+
+/**
+ * Thrown by getIdempotencyKey() when the client-supplied key is over the
+ * length cap. Callers map this to 400 IDEMPOTENCY_KEY_TOO_LONG.
+ *
+ * Codex review Blocker 3, negative control: a PREVIOUS implementation
+ * silently truncated an over-length key with `.slice(0, MAX)`. Truncation is
+ * actively dangerous, not just sloppy — two DIFFERENT long keys that happen
+ * to share the same first MAX_IDEMPOTENCY_KEY_CHARS characters would
+ * truncate to the IDENTICAL stored key, so the second request would
+ * silently replay the first's result even though the client believed it was
+ * using a distinct key for a distinct logical operation. Rejecting is the
+ * only safe option — the client must be told to shorten the key, never have
+ * it silently reinterpreted as someone else's key.
+ */
+export class IdempotencyKeyTooLongError extends Error {}
+
+/**
+ * Minimal shape `getIdempotencyKey` needs from an Express-style request —
+ * kept structural (not `express.Request`) so this service has no dependency
+ * on the `express` types, and so it works unchanged against both the legacy
+ * `AuthRequest` (finance-statements.routes.ts) and the v8 route's own
+ * request type.
+ */
+export interface IdempotencyKeyRequestLike {
+  headers?: Record<string, string | string[] | undefined>;
+  body?: unknown;
+}
+
+/**
+ * Read a client-supplied idempotency key from header or body, trimmed.
+ * Returns null if none was supplied. Throws IdempotencyKeyTooLongError if
+ * one was supplied but exceeds MAX_IDEMPOTENCY_KEY_CHARS — see that class's
+ * doc comment for why this must reject, not truncate.
+ */
+export function getIdempotencyKey(req: IdempotencyKeyRequestLike): string | null {
+  const headerRaw = req.headers?.['idempotency-key'];
+  const header = Array.isArray(headerRaw) ? headerRaw[0] : headerRaw;
+  const bodyRaw = (req.body as Record<string, unknown> | undefined)?.idempotencyKey;
+  const raw = String(header || bodyRaw || '').trim();
+  if (!raw) return null;
+  if (raw.length > MAX_IDEMPOTENCY_KEY_CHARS) {
+    throw new IdempotencyKeyTooLongError(
+      `Idempotency-Key exceeds ${MAX_IDEMPOTENCY_KEY_CHARS} characters`
+    );
+  }
+  return raw;
+}
+
+/** SHA-256 hex digest of an uploaded file's raw bytes — see Codex review
+ * Blocker 3: the Idempotency-Key header alone doesn't tie a replay to WHAT
+ * was actually uploaded. Hashing the file bytes is sufficient to detect a
+ * reused key with different content. Only the hash is ever persisted —
+ * never the bytes. */
+export function sha256Hex(buffer: Buffer): string {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+/**
+ * ── Codex round-3 fix: reservation/result state machine ──────────────────
+ *
+ * The PREVIOUS shape here (`findIdempotentUpload` + best-effort
+ * `recordIdempotentUpload`, both since removed) only ever wrote the
+ * completion marker ONCE, at the very end, and swallowed every failure of
+ * that write. Root cause: that write went through `dbRun()` ->
+ * `Database.js`'s global connection pool — a DIFFERENT connection than the
+ * one `withStatementUploadIdempotencyLock` holds its `pg_advisory_xact_lock`
+ * on — so it was never actually inside "the transaction" the lock implied.
+ * A failure of just that one INSERT (any reason) left the business writes
+ * (Statement + Pack, which already commit independently per-statement via
+ * that same global pool) durably committed, a 201 already sent, and NO
+ * durable marker — a same-key retry then found nothing and redid the whole
+ * upload, creating a duplicate Statement/Pack.
+ *
+ * FIX: reserve BEFORE doing any work, finalize (or fail) AFTER — both as
+ * their OWN durably-committed statements, independent of whether later
+ * steps in this request succeed. `pg_advisory_xact_lock` remains the outer
+ * serialization layer (unchanged) — it guarantees only ONE caller for a
+ * given (organizationId, idempotencyKey) is ever inside
+ * `reserveIdempotentUpload` at a time, which is what makes the
+ * SELECT-then-branch-then-UPDATE sequence below race-free without needing
+ * its own database transaction. See the `20260805_fin005_statement_upload_
+ * idempotency_state_machine.sql` migration for the schema side of this.
+ */
+
+/**
+ * How long an 'in_progress' reservation is treated as a live, in-flight
+ * upload before a later request for the same (org, key) is allowed to
+ * reclaim it. A real upload -> parse -> persist cycle for a single
+ * financial statement (a handful of sheets, a few hundred rows at most)
+ * should never approach this. It exists purely to recover a reservation
+ * abandoned by a crashed/killed process: a crash releases the
+ * pg_advisory_xact_lock immediately (the pinned connection drops, its
+ * transaction aborts), so a NEW request for the same key is NOT blocked by
+ * the lock — but without this cutoff it would be blocked forever by a
+ * permanently 'in_progress' row that no live process is ever going to
+ * finalize or fail.
+ */
+export const STALE_IN_PROGRESS_SECONDS = 60;
+
+interface IdempotencyRow {
+  id: string;
+  status: 'in_progress' | 'completed' | 'failed';
+  status_code: number;
+  response_json: string | null;
+  request_hash: string | null;
+  created_at: string;
+  statement_id?: string | null;
+}
+
+export type ReservationOutcome =
+  | { kind: 'owner'; reservationId: string }
+  | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+  | { kind: 'conflict' }
+  | { kind: 'in_progress' }
+  | { kind: 'schema_missing' }
+  // Codex round-4 Blocker 1 — true exactly-once recovery on reclaim: a prior
+  // attempt on this SAME reservation row already durably completed a real,
+  // fully-synced Statement+Pack (business writes commit independently of
+  // this row's own finalize/fail outcome), but the row itself never reached
+  // 'completed' (crashed/failed after the business write, before finalize).
+  // Merely orphan-tracking that statement_id (Fix 1) and letting the caller
+  // redo the whole upload would create a permanent, unreferenced duplicate
+  // the instant the redo's OWN Statement+Pack is created. `statementId` here
+  // is that already-complete Statement — the caller must reuse it (a
+  // recovery response), never re-run extraction/persist for this request.
+  | { kind: 'recover'; reservationId: string; statementId: string }
+  // Codex round-5 — MULTI-SECTION recovery: the abandoned attempt recorded
+  // its COMPLETE intended response (every section's Statement id plus the
+  // real multi-section body) before its finalize step failed, and every one
+  // of those Statements has been re-verified as still present and fully
+  // synced to a pack. The caller replays `body` VERBATIM — same
+  // `mode: 'smart'`, same `statementIds`, same `analysis` the original
+  // success would have returned — instead of the single-id `mode: 'fallback'`
+  // reconstruction, which silently dropped every section after the first.
+  | {
+      kind: 'recover_result';
+      reservationId: string;
+      statusCode: number;
+      body: Record<string, unknown>;
+      statementIds: string[];
+    };
+
+/**
+ * What an ABANDONED keyed attempt leaves behind on its own 'failed' row, in
+ * the `response_json` column.
+ *
+ * WHY `response_json` AND NOT A NEW COLUMN: the column already exists and is
+ * NULL on every non-'completed' row, so this needs no migration and no data
+ * model change at all. The dual meaning is safe for exactly the reason the
+ * existing `statement_id` dual meaning is safe — the ONLY site that reads
+ * `response_json` as a replayable payload (`reserveIdempotentUpload`'s replay
+ * branch) is gated on `status === 'completed'` first, and the reclaim UPDATE
+ * nulls the column.
+ *
+ * `statementIds` is recorded even when `result` is absent (a throw, or a
+ * controlled non-2xx): knowing HOW MANY Statements an abandoned attempt
+ * created is what lets recovery tell "one section, honestly reconstructable"
+ * apart from "several sections, NOT reconstructable from a single id" — the
+ * latter must never be answered with a fallback single-statement success.
+ */
+export interface FailedAttemptRecord {
+  statementIds: string[];
+  /** Present only when the attempt actually produced a complete success body
+   * and then failed at finalize — the only case a full replay is honest. */
+  result?: { statusCode: number; body: Record<string, unknown> };
+}
+
+const FAILED_ATTEMPT_ENVELOPE_KEY = '__fin005_failed_attempt';
+
+function encodeFailedAttemptRecord(record: FailedAttemptRecord): string {
+  return JSON.stringify({ [FAILED_ATTEMPT_ENVELOPE_KEY]: record });
+}
+
+/** Tolerant by design: anything unparseable or foreign is treated as "nothing
+ * recorded", which degrades to the pre-existing single-id behavior instead of
+ * throwing inside the reservation path. */
+export function parseFailedAttemptRecord(raw: string | null): FailedAttemptRecord | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const envelope = parsed?.[FAILED_ATTEMPT_ENVELOPE_KEY] as
+      | { statementIds?: unknown; result?: unknown }
+      | undefined;
+    if (!envelope || !Array.isArray(envelope.statementIds)) return null;
+    const statementIds = (envelope.statementIds as unknown[]).filter(
+      (id): id is string => typeof id === 'string' && id.length > 0
+    );
+    const rawResult = envelope.result as { statusCode?: unknown; body?: unknown } | undefined;
+    const result =
+      rawResult &&
+      typeof rawResult === 'object' &&
+      rawResult.body &&
+      typeof rawResult.body === 'object'
+        ? {
+            statusCode: Number(rawResult.statusCode) || 201,
+            body: rawResult.body as Record<string, unknown>,
+          }
+        : undefined;
+    return { statementIds, result };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-verify, against the database, that EVERY Statement an abandoned attempt
+ * created still exists in this organization and is fully synced to a pack
+ * (`statement_pack_id IS NOT NULL` — the same completeness signal the
+ * single-id recovery path uses). Tenant-scoped as defense in depth.
+ *
+ * A recorded response is only replayable if this returns true for the whole
+ * set: replaying a body that advertises N statement ids while some of them no
+ * longer exist would hand the client a receipt it cannot read back.
+ */
+async function areAllStatementsComplete(
+  statementIds: string[],
+  organizationId: string
+): Promise<boolean> {
+  if (statementIds.length === 0) return false;
+  for (const id of statementIds) {
+    const row = await dbGet<{ id: string; statement_pack_id: string | null }>(
+      `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+      [id, organizationId],
+      { fallback: false }
+    );
+    if (!row || !row.statement_pack_id) return false;
+  }
+  return true;
+}
+
+/**
+ * Compensating hard-delete for an abandoned attempt's Statement, reusing the
+ * exact pattern the pre-existing `DELETE /finance-statements/:id` route uses.
+ * Safe to call while holding the (org, key) advisory lock — nothing else can
+ * be touching this reservation's own statements.
+ */
+async function compensateAbandonedStatement(statementId: string): Promise<void> {
+  await detachStatementFromPack(statementId);
+  await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId], {
+    fallback: false,
+  });
+  await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [statementId], {
+    fallback: false,
+  });
+}
+
+/**
+ * Attempt to become the durable OWNER of the (organizationId, idempotencyKey)
+ * reservation for this upload. MUST be called from inside
+ * `withStatementUploadIdempotencyLock` — see the block comment above.
+ *
+ * Requirement 7 (fail-CLOSED for keyed uploads on a schema gap): a
+ * schema-compat error on the reservation INSERT itself (missing table OR
+ * missing column — `status` is referenced directly, so either is caught
+ * here) is surfaced as `schema_missing`, not swallowed into "proceed
+ * without protection". A client that supplied an Idempotency-Key gets a
+ * hard rejection with ZERO business writes rather than a silent downgrade
+ * to unprotected. The UNKEYED path (no Idempotency-Key header) never calls
+ * this function at all, so it is unaffected and keeps working on a schema
+ * that predates this feature.
+ */
+export async function reserveIdempotentUpload(
+  organizationId: string,
+  idempotencyKey: string,
+  requestHash: string,
+  createdBy?: string
+): Promise<ReservationOutcome> {
+  const reservationId = `fsui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+  let inserted: IdempotencyRow | null;
+  try {
+    inserted = await dbGet<IdempotencyRow>(
+      `INSERT INTO financial_statement_upload_idempotency
+        (id, organization_id, idempotency_key, statement_id, status_code, response_json, request_hash, status, created_by, created_at)
+       VALUES (?, ?, ?, NULL, 0, NULL, ?, 'in_progress', ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (organization_id, idempotency_key) DO NOTHING
+       RETURNING id, status, status_code, response_json, request_hash, created_at`,
+      [reservationId, organizationId, idempotencyKey, requestHash, createdBy || null],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (isSchemaCompatError(error)) return { kind: 'schema_missing' };
+    throw error;
+  }
+  if (inserted) return { kind: 'owner', reservationId: inserted.id };
+
+  // Conflict: a row already exists for this (org, key) — read it and branch.
+  const existing = await dbGet<IdempotencyRow>(
+    `SELECT id, status, status_code, response_json, request_hash, created_at, statement_id
+       FROM financial_statement_upload_idempotency
+      WHERE organization_id = ? AND idempotency_key = ? LIMIT 1`,
+    [organizationId, idempotencyKey],
+    { fallback: false }
+  );
+  if (!existing) {
+    // Vanishingly unlikely (the conflicting row would have to be deleted
+    // between the INSERT's conflict and this SELECT, by something other
+    // than this code path) — a real inconsistency, not a normal outcome to
+    // paper over.
+    throw new Error(
+      `[FinancialStatementService] Idempotency reservation conflict for ${organizationId}/${idempotencyKey} but no row found on re-read`
+    );
+  }
+
+  if (existing.status === 'completed') {
+    if (existing.request_hash && existing.request_hash !== requestHash) {
+      return { kind: 'conflict' };
+    }
+    // Hash matches, or this marker predates the request_hash column
+    // (schema-compat: null) — safe replay either way.
+    return {
+      kind: 'replay',
+      statusCode: Number(existing.status_code) || 201,
+      body: JSON.parse(String(existing.response_json)) as Record<string, unknown>,
+    };
+  }
+
+  // 'failed', or a stale 'in_progress' (crashed/abandoned attempt) — try to
+  // atomically reclaim the SAME row. The staleness comparison uses the
+  // DATABASE's clock (CURRENT_TIMESTAMP), not the app server's, so there is
+  // no app/DB clock-skew risk in the cutoff. Rebinding request_hash to THIS
+  // request is intentional: a 'failed'/abandoned attempt never reached
+  // 'completed', so it never actually established a content binding for
+  // this key — the reclaiming request is free to define one.
+  if (existing.status === 'failed' || existing.status === 'in_progress') {
+    // ── Codex round-4 Blocker 1: true exactly-once recovery ──────────────
+    //
+    // `withStatementUploadIdempotencyLock`'s `pg_advisory_xact_lock` on
+    // (organizationId, idempotencyKey) guarantees only ONE caller is ever
+    // inside this function for this key at a time — that makes this short
+    // SELECT -> branch -> (compensate) -> UPDATE sequence race-free for this
+    // exact row without needing its own DB transaction, same as the
+    // pre-existing reclaim UPDATE below.
+    //
+    // Step 1: confirm reclaim eligibility using the DATABASE's clock, not
+    // the app server's — identical condition to the reclaim UPDATE's own
+    // WHERE clause. If this returns nothing, a genuinely fresh 'in_progress'
+    // row must never be touched — fall through to "in progress, retry
+    // later" exactly as before this fix.
+    const eligible = await dbGet<{ id: string }>(
+      `SELECT id FROM financial_statement_upload_idempotency
+        WHERE id = ?
+          AND (status = 'failed'
+               OR (status = 'in_progress'
+                   AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))`,
+      [existing.id],
+      { fallback: false }
+    );
+
+    if (eligible) {
+      // ── Codex round-5: MULTI-SECTION recovery ────────────────────────────
+      //
+      // Step 2a: prefer the abandoned attempt's OWN recorded receipt over
+      // reconstructing one. `failIdempotentUpload` now persists the complete
+      // intended response (and the full set of Statement ids) whenever the
+      // attempt got as far as producing one, so a multi-section upload that
+      // died at finalize can be replayed EXACTLY — every section, the real
+      // `mode`, the real `analysis` — instead of being answered with a
+      // single-id `mode: 'fallback'` body that silently dropped sections 2..N.
+      const failedAttempt = parseFailedAttemptRecord(existing.response_json);
+      const recordedIds =
+        failedAttempt && failedAttempt.statementIds.length > 0
+          ? failedAttempt.statementIds
+          : existing.statement_id
+            ? [existing.statement_id]
+            : [];
+
+      if (failedAttempt?.result && recordedIds.length > 0) {
+        if (await areAllStatementsComplete(recordedIds, organizationId)) {
+          // Take durable ownership exactly like the single-id recovery path
+          // (finalizeIdempotentUpload requires status='in_progress'), leaving
+          // `statement_id` and `response_json` untouched so a crash HERE
+          // leaves the receipt intact for the next retry.
+          const owned = await dbGet<{ id: string }>(
+            `UPDATE financial_statement_upload_idempotency
+                SET status = 'in_progress', created_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+                AND (status = 'failed'
+                     OR (status = 'in_progress'
+                         AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+              RETURNING id`,
+            [existing.id],
+            { fallback: false }
+          );
+          if (owned) {
+            return {
+              kind: 'recover_result',
+              reservationId: existing.id,
+              statusCode: failedAttempt.result.statusCode,
+              body: failedAttempt.result.body,
+              statementIds: recordedIds,
+            };
+          }
+          // Lost a theoretical race — fall through to the safety net below.
+        } else {
+          // The receipt exists but the world moved on: at least one of the
+          // Statements it advertises is gone or was never completed. Replaying
+          // it would hand the client ids it cannot read back. Fail CLOSED on
+          // the replay: compensate the whole set so no partial ghost survives,
+          // then let this request redo the upload honestly.
+          for (const id of recordedIds) await compensateAbandonedStatement(id);
+        }
+      } else if (recordedIds.length > 1) {
+        // Several Statements were created but NO complete response was ever
+        // recorded (the attempt threw, or returned a controlled non-2xx). A
+        // multi-section operation cannot be honestly reconstructed from ids
+        // alone — there is no `analysis`, no section metadata, no
+        // ordering. Emitting a single-statement `mode: 'fallback'` success
+        // here is exactly the defect this round exists to remove. Compensate
+        // every one of them and let the retry redo the whole upload.
+        for (const id of recordedIds) await compensateAbandonedStatement(id);
+      }
+
+      // Step 2b: the pre-existing SINGLE-statement paths, unchanged. Reached
+      // when the abandoned attempt tracked at most one Statement and recorded
+      // no complete response — for a single-section upload one complete
+      // Statement genuinely IS the whole operation.
+      const orphanId =
+        failedAttempt?.result || recordedIds.length > 1 ? null : existing.statement_id || null;
+      if (orphanId) {
+        const orphanStatement = await dbGet<{ id: string; statement_pack_id: string | null }>(
+          `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+          [orphanId, organizationId],
+          { fallback: false }
+        );
+
+        if (orphanStatement && orphanStatement.statement_pack_id) {
+          // COMPLETE prior attempt: a real, fully-synced Statement+Pack
+          // already exists. Recover it — do NOT null `statement_id`, do NOT
+          // let the caller re-run extraction/persist. Merely orphan-tracking
+          // this id (the old behavior) would leave it a permanent,
+          // unreferenced duplicate the instant a NEW Statement+Pack is
+          // created by a redo.
+          //
+          // Still transition the row to 'in_progress' (leaving
+          // `statement_id` untouched, unlike the reclaim UPDATE below) so
+          // this caller durably OWNS the row for the finalize step that
+          // follows — `finalizeIdempotentUpload`'s own UPDATE requires
+          // `status = 'in_progress'` (the same invariant the normal
+          // reserve -> finalize/fail flow relies on), and recovery must
+          // satisfy it too, not bypass it.
+          const owned = await dbGet<{ id: string }>(
+            `UPDATE financial_statement_upload_idempotency
+                SET status = 'in_progress', created_at = CURRENT_TIMESTAMP
+              WHERE id = ?
+                AND (status = 'failed'
+                     OR (status = 'in_progress'
+                         AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+              RETURNING id`,
+            [existing.id],
+            { fallback: false }
+          );
+          if (owned) {
+            return { kind: 'recover', reservationId: existing.id, statementId: orphanStatement.id };
+          }
+          // Lost a theoretical race (another caller reclaimed/owned the row
+          // between the eligibility SELECT above and this UPDATE) — fall
+          // through toward "genuinely in progress, retry later" via step 3
+          // below, the same safety net the reclaim UPDATE already relies on.
+        }
+
+        if (orphanStatement && !orphanStatement.statement_pack_id) {
+          // INCOMPLETE prior attempt: createStatement() ran but
+          // syncStatementToPack() never completed — genuinely never a
+          // successful attempt, and unambiguously owned by this exact
+          // reservation row (nothing else can be touching it while this
+          // function holds the (org, key) advisory lock). Compensate using
+          // the EXACT "hard-delete a non-confirmed statement" pattern
+          // already established by the `DELETE /:id` route: detach (a
+          // harmless no-op if never attached — see
+          // detachStatementFromPack's own early-return when there is no
+          // currentPackId), then delete values, then delete the statement
+          // row itself.
+          await detachStatementFromPack(orphanId);
+          await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [orphanId], {
+            fallback: false,
+          });
+          await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [orphanId], {
+            fallback: false,
+          });
+        }
+        // If not found at all: already cleaned up by an earlier compensating
+        // pass (or the id was never really valid) — nothing to compensate,
+        // fall through to reclaim.
+      }
+
+      // Step 3: reclaim the row for a fresh attempt. Compensation above (if
+      // any) already ran, so `statement_id` going into this UPDATE is
+      // either already null (nothing to compensate) or about to be
+      // correctly nulled here — the CASE below is now a pure audit trail:
+      // every id it appends into `orphaned_statement_ids` was either
+      // recovered (never reaches here — returned above) or compensated
+      // (deleted, above) before this UPDATE runs, so nothing routed through
+      // `orphaned_statement_ids` is ever an ACTIVE duplicate anymore.
+      const reclaimed = await dbGet<IdempotencyRow>(
+        `UPDATE financial_statement_upload_idempotency
+            SET status = 'in_progress', request_hash = ?, created_by = ?, created_at = CURRENT_TIMESTAMP,
+                status_code = 0, response_json = NULL,
+                orphaned_statement_ids = CASE
+                  WHEN statement_id IS NOT NULL
+                  THEN orphaned_statement_ids || jsonb_build_array(statement_id)
+                  ELSE orphaned_statement_ids
+                END,
+                statement_id = NULL, completed_at = NULL
+          WHERE id = ?
+            AND (status = 'failed'
+                 OR (status = 'in_progress'
+                     AND created_at < CURRENT_TIMESTAMP - INTERVAL '${STALE_IN_PROGRESS_SECONDS} seconds'))
+          RETURNING id, status, status_code, response_json, request_hash, created_at`,
+        [requestHash, createdBy || null, existing.id],
+        { fallback: false }
+      );
+      if (reclaimed) return { kind: 'owner', reservationId: reclaimed.id };
+      // Not stale after all (lost a theoretical race) — fall through to
+      // "genuinely in progress, retry later".
+    }
+  }
+
+  return { kind: 'in_progress' };
+}
+
+/**
+ * Mark a reservation durably COMPLETE — the only signal a caller is allowed
+ * to treat as success (see e.g. the `/upload` route). Returns false — NEVER
+ * throws — both when the UPDATE affects zero rows (defensive: should not
+ * normally happen since the caller owns the reservation) AND when the
+ * UPDATE itself throws (e.g. a genuine unexpected DB error). Either way the
+ * caller treats an unconfirmed finalize as a hard failure (500-class, never
+ * 2xx) rather than trusting a write it cannot prove happened.
+ */
+export async function finalizeIdempotentUpload(params: {
+  reservationId: string;
+  statementId: string;
+  statusCode: number;
+  responseJson: string;
+}): Promise<boolean> {
+  try {
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency
+          SET status = 'completed', statement_id = ?, status_code = ?, response_json = ?, completed_at = CURRENT_TIMESTAMP
+        WHERE id = ? AND status = 'in_progress'`,
+      [params.statementId, params.statusCode, params.responseJson, params.reservationId],
+      { fallback: false }
+    );
+    return Boolean(result?.success) && Number(result?.changes || 0) === 1;
+  } catch (error) {
+    logger.error(
+      `[FinancialStatementService] Finalize UPDATE threw for idempotency reservation ${params.reservationId}: ${error}`
+    );
+    return false;
+  }
+}
+
+/**
+ * Mark a reservation FAILED so a later retry for the same (org, key) can
+ * reclaim it instead of being blocked by a dead 'in_progress' row forever.
+ * Best-effort BY DESIGN (a failure to record "this attempt failed" must
+ * never mask or replace the real error being propagated to the client) —
+ * but a real attempt: any non-schema-compat failure is logged loudly, not
+ * silently swallowed. If even this UPDATE fails or the row is somehow gone,
+ * it is left 'in_progress' and simply ages into the staleness window above
+ * for the NEXT retry's reclaim path to recover — the safety net, not the
+ * primary path.
+ *
+ * `statementId` (Fix 1, orphan-tracking; superseded/completed by round-4
+ * Blocker 1, true exactly-once recovery): pass this when the caller's
+ * business-write step already returned a real, persisted `statementId` for
+ * this attempt before the reservation ended up failing (e.g. the
+ * finalize-UPDATE-didn't-land case). It reuses the SAME `statement_id`
+ * column the success path uses, but with a DIFFERENT meaning on a 'failed'
+ * row: "the Statement this abandoned attempt left behind — status not yet
+ * known", not "the Statement this marker represents". That distinction is
+ * safe because every read site that treats `statement_id` as a completed
+ * marker's payload (`reserveIdempotentUpload`'s replay branch) is gated on
+ * `status === 'completed'` first — a 'failed' row is never mistaken for a
+ * replay regardless of what this column holds. A later reclaim attempt (see
+ * `reserveIdempotentUpload`) is what resolves that unknown status: if the
+ * Statement this id points at turned out COMPLETE (fully synced to a pack),
+ * the reclaim RECOVERS it (`recover` outcome — reused, never duplicated,
+ * never routed through `orphaned_statement_ids` at all); if it turned out
+ * INCOMPLETE, the reclaim COMPENSATES (deletes it) before proceeding. Only
+ * IDs that were recovered-or-compensated this way ever end up recorded in
+ * `orphaned_statement_ids` — a pure audit trail now, never a reference to an
+ * ACTIVE duplicate.
+ */
+export async function failIdempotentUpload(
+  reservationId: string,
+  statementIdOrIds?: string | string[],
+  pendingResult?: { statusCode: number; body: Record<string, unknown> }
+): Promise<void> {
+  const statementIds = (
+    Array.isArray(statementIdOrIds) ? statementIdOrIds : statementIdOrIds ? [statementIdOrIds] : []
+  ).filter((id) => typeof id === 'string' && id.length > 0);
+  try {
+    // `statement_id` keeps its established meaning (the FIRST/primary
+    // Statement this abandoned attempt left behind) so the pre-existing
+    // single-statement recovery path is untouched. `response_json`
+    // additionally carries the FULL set of ids and — when the attempt got far
+    // enough to have one — the complete intended response, which is what
+    // makes multi-section recovery honest instead of a first-section guess.
+    // See FailedAttemptRecord for why reusing this column needs no migration.
+    const record =
+      statementIds.length > 0 || pendingResult
+        ? encodeFailedAttemptRecord({ statementIds, result: pendingResult })
+        : null;
+    const result = await dbRun(
+      `UPDATE financial_statement_upload_idempotency SET status = 'failed', statement_id = ?, response_json = ? WHERE id = ? AND status = 'in_progress'`,
+      [statementIds[0] || null, record, reservationId],
+      { fallback: false }
+    );
+    if (!result?.success || Number(result?.changes || 0) !== 1) {
+      logger.warn(
+        `[FinancialStatementService] Marking idempotency reservation ${reservationId} failed did not affect exactly one row — it will age into the staleness window for a later retry to reclaim instead`
+      );
+    }
+  } catch (error) {
+    logger.warn(
+      `[FinancialStatementService] Failed to mark idempotency reservation ${reservationId} as failed: ${error}`
+    );
+  }
+}
+
+/**
+ * Best-effort delete of a multer-uploaded temp file on a request path that
+ * does NOT result in a newly-persisted Statement (replay, 409 reuse-reject,
+ * retryable in-progress-reject, fail-closed schema-missing-reject). A
+ * genuinely NEW, successfully-persisted upload keeps its file — it becomes
+ * the Statement's permanent evidentiary source — so this must only ever be
+ * called on the non-persisting paths, never the success path.
+ */
+export async function cleanupUnpersistedUpload(filePath: string, reason: string): Promise<void> {
+  try {
+    const fs = await import('fs');
+    await fs.promises.unlink(filePath);
+  } catch (error) {
+    logger.warn(
+      `[FinancialStatementService] Failed to clean up unpersisted upload temp file (${reason}): ${error}`
+    );
+  }
+}
 
 export async function createStatement(params: {
   organizationId: string;

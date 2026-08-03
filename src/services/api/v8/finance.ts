@@ -595,10 +595,11 @@ export const V8FinanceApi = {
     v8Get<{ statements: V8FinanceStatementSummary[]; count: number }>('/finance/statements', {
       ...(params?.readiness ? { readiness: params.readiness } : {}),
     }),
-  uploadAndAnalyzeStatement: (formData: FormData) =>
+  uploadAndAnalyzeStatement: (formData: FormData, extraHeaders?: Record<string, string>) =>
     v8PostMultipart<V8FinanceStatementUploadAnalyzeResult>(
       '/finance/statements/upload-and-analyze',
-      formData
+      formData,
+      extraHeaders
     ),
   getStatement: (statementId: string) =>
     v8Get<{ statement: V8FinanceStatementDetail }>(`/finance/statements/${statementId}`),

@@ -393,9 +393,35 @@ describe('V8FinanceApi', () => {
 
     const data = await V8FinanceApi.uploadAndAnalyzeStatement(formData);
 
-    expect(v8PostMultipart).toHaveBeenCalledWith('/finance/statements/upload-and-analyze', formData);
+    // FIN-005 Fix 2: uploadAndAnalyzeStatement now threads an optional
+    // extraHeaders 3rd param (e.g. Idempotency-Key) through to
+    // v8PostMultipart — undefined here since this call site doesn't pass one.
+    expect(v8PostMultipart).toHaveBeenCalledWith(
+      '/finance/statements/upload-and-analyze',
+      formData,
+      undefined
+    );
     expect(data.mode).toBe('legacy');
     expect(data.statementIds).toEqual(['statement-1']);
+  });
+
+  it('threads an Idempotency-Key header through to v8PostMultipart when provided', async () => {
+    vi.mocked(v8PostMultipart).mockResolvedValue({
+      success: true,
+      mode: 'smart',
+      statementIds: ['statement-2'],
+    } as any);
+
+    const formData = new FormData();
+    formData.append('file', new Blob(['revenue']), 'statement.csv');
+
+    await V8FinanceApi.uploadAndAnalyzeStatement(formData, { 'Idempotency-Key': 'key-abc' });
+
+    expect(v8PostMultipart).toHaveBeenCalledWith(
+      '/finance/statements/upload-and-analyze',
+      formData,
+      { 'Idempotency-Key': 'key-abc' }
+    );
   });
 
   it('requests governed finance statement ratios from the V8 namespace', async () => {

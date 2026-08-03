@@ -82,6 +82,20 @@ const mockDbRun = vi.fn();
 const mockSyncStatementToPack = vi.fn();
 const mockAutoMapLines = vi.fn();
 const mockPersistComputeResult = vi.fn();
+// FIN-005 Fix 2: /statements/upload-and-analyze now goes through the same
+// idempotency primitives /finance-statements/upload already used (moved to
+// financialStatementService.ts). getIdempotencyKey defaults to "no header
+// sent" (null) so the pre-existing unkeyed-request tests below exercise the
+// same direct performUploadAndAnalyze() call they always did.
+const mockGetIdempotencyKey = vi.fn(() => null);
+const mockReserveIdempotentUpload = vi.fn();
+const mockFinalizeIdempotentUpload = vi.fn();
+const mockFailIdempotentUpload = vi.fn();
+const mockCleanupUnpersistedUpload = vi.fn();
+const mockSha256Hex = vi.fn();
+const mockWithStatementUploadIdempotencyLock = vi.fn(
+  (_organizationId: string, _key: string, work: () => Promise<unknown>) => work()
+);
 
 vi.mock('../../../services/v8/financeIntegrationService.js', () => ({
   getFinanceDashboard: (...args: unknown[]) => mockGetFinanceDashboard(...args),
@@ -163,6 +177,18 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   updateStatementStatus: (...args: unknown[]) => mockUpdateStatementStatus(...args),
   updateStatementIngestRun: (...args: unknown[]) => mockUpdateStatementIngestRun(...args),
   validateStatement: (...args: unknown[]) => mockValidateStatement(...args),
+  cleanupUnpersistedUpload: (...args: unknown[]) => mockCleanupUnpersistedUpload(...args),
+  failIdempotentUpload: (...args: unknown[]) => mockFailIdempotentUpload(...args),
+  finalizeIdempotentUpload: (...args: unknown[]) => mockFinalizeIdempotentUpload(...args),
+  getIdempotencyKey: (...args: unknown[]) => mockGetIdempotencyKey(...args),
+  IdempotencyKeyTooLongError: class IdempotencyKeyTooLongError extends Error {},
+  MAX_IDEMPOTENCY_KEY_CHARS: 200,
+  reserveIdempotentUpload: (...args: unknown[]) => mockReserveIdempotentUpload(...args),
+  sha256Hex: (...args: unknown[]) => mockSha256Hex(...args),
+  withStatementUploadIdempotencyLock: (...args: unknown[]) =>
+    mockWithStatementUploadIdempotencyLock(
+      ...(args as [string, string, () => Promise<unknown>])
+    ),
 }));
 
 vi.mock('../../../services/financeCanonicalRegistrySyncService.js', () => ({

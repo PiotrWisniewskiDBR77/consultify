@@ -190,14 +190,36 @@ async function confirmStatementWithFallback(statementId: string) {
   }
 }
 
-async function uploadAndAnalyzeWithFallback(formData: FormData) {
+/** crypto.randomUUID() with a defensive fallback for environments where it's
+ * unavailable (older browsers, some test/SSR contexts). Only needs to be
+ * unique per file-selection, not cryptographically strong. */
+function generateIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `fin005-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// FIN-005 Fix 2: `idempotencyKey` is threaded through to BOTH the v8 call and
+// the legacy fallback call — a client retry (automatic on the v8→legacy
+// fallback path, or manual after a timeout/network error) must reuse the
+// SAME key so the server's reservation/finalize/fail state machine can
+// dedupe it instead of creating a second real Statement/Pack. See
+// FinancialStatementImportWizard's `uploadIdempotencyKey` state for where
+// this key is generated/held.
+async function uploadAndAnalyzeWithFallback(formData: FormData, idempotencyKey?: string) {
+  const extraHeaders = idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined;
   try {
-    return await V8FinanceApi.uploadAndAnalyzeStatement(formData);
+    return await V8FinanceApi.uploadAndAnalyzeStatement(formData, extraHeaders);
   } catch (error) {
     if (!shouldFallbackToLegacyFinance(error)) {
       throw error;
     }
-    return await Api.postMultipart('/api/finance-statements/upload-and-analyze', formData);
+    return await Api.postMultipart(
+      '/api/finance-statements/upload-and-analyze',
+      formData,
+      extraHeaders
+    );
   }
 }
 
@@ -220,6 +242,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   // Upload state
   const [file, setFile] = useState<File | null>(null);
+  // FIN-005 Fix 2: one stable key per SELECTED file, reused across every
+  // automatic (v8→legacy) or manual retry of THAT file's upload — an upload
+  // whose LLM analysis legitimately exceeds the client's request timeout,
+  // retried with a fresh key every time, used to create a genuine duplicate
+  // Statement/Pack on the server. Regenerated only when the user picks a
+  // genuinely different file (handleFileSelect / handleDrop below).
+  const [uploadIdempotencyKey, setUploadIdempotencyKey] = useState<string | null>(null);
   const [statementId, setStatementId] = useState<string | null>(null);
   const [detection, setDetection] = useState<Detection | null>(null);
 
@@ -260,7 +289,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) setFile(f);
+    if (f) {
+      setFile(f);
+      setUploadIdempotencyKey(generateIdempotencyKey());
+    }
     setError(null);
   };
 
@@ -268,8 +300,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-excel',
+    // FIN-005: CSV statement import — backend now accepts it (see
+    // fileUpload.middleware.ts EXT_TO_MIME_BASES); the picker/dropzone must
+    // allow it too or the golden flow is unreachable from the real screen.
+    'text/csv',
+    'application/csv',
   ]);
-  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls'];
+  const ACCEPTED_EXTS = ['.pdf', '.xlsx', '.xls', '.csv'];
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -281,8 +318,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
           ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))
       ) {
         setFile(f);
+        setUploadIdempotencyKey(generateIdempotencyKey());
       } else {
-        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS'));
+        setError(
+          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV')
+        );
       }
     },
     [t]
@@ -310,8 +350,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
       const formData = new FormData();
       formData.append('file', file);
 
+      // FIN-005 Fix 2: fall back to generating a key here too, defensively —
+      // handleFileSelect/handleDrop always set one when `file` is set, but a
+      // missing key must never silently disable idempotency protection.
+      const idempotencyKey = uploadIdempotencyKey || generateIdempotencyKey();
+      if (!uploadIdempotencyKey) setUploadIdempotencyKey(idempotencyKey);
+
       // Try smart upload first (LLM analyzes entire document)
-      const data = await uploadAndAnalyzeWithFallback(formData);
+      const data = await uploadAndAnalyzeWithFallback(formData, idempotencyKey);
 
       if (data.mode === 'smart' && data.analysis) {
         // LLM successfully analyzed the document — skip detect/extract steps
@@ -357,7 +403,32 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
         setStep('detect');
       }
     } catch (e: any) {
-      setError(e?.response?.data?.error || e?.message || String(e));
+      // FIN-005 Fix 2: the two new idempotency failure codes get an honest,
+      // distinct message instead of falling into the generic error path —
+      // UPLOAD_IN_PROGRESS is a transient "retry shortly" state (the SAME
+      // key stays valid, a retry can reclaim it once the in-flight/stale
+      // attempt clears), IDEMPOTENCY_KEY_REUSED means this key is no longer
+      // trustworthy for a retry (its recorded content hash no longer
+      // matches), so a fresh key is generated before the user can try again.
+      const code = e?.data?.code || e?.response?.data?.code;
+      if (code === 'UPLOAD_IN_PROGRESS') {
+        setError(
+          t(
+            'finance.importWizard.uploadInProgress',
+            'Upload already processing — try again shortly'
+          )
+        );
+      } else if (code === 'IDEMPOTENCY_KEY_REUSED') {
+        setUploadIdempotencyKey(generateIdempotencyKey());
+        setError(
+          t(
+            'finance.importWizard.idempotencyKeyReused',
+            'This upload could not be safely retried — please try again'
+          )
+        );
+      } else {
+        setError(e?.response?.data?.error || e?.data?.error || e?.message || String(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -715,13 +786,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({
             <p className="text-sm text-slate-600 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
-                'Supported: PDF, Excel (XLSX/XLS) financial statements'
+                'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
               )}
             </p>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.xlsx,.xls"
+              accept=".pdf,.xlsx,.xls,.csv"
               onChange={handleFileSelect}
               className="hidden"
               aria-hidden="true"

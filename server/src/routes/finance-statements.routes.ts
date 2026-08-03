@@ -31,6 +31,7 @@
 import { Request, Response, Router } from 'express';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
+import { sniffFileSignature } from '../middleware/fileUpload.middleware.js';
 import { upload } from '../middleware/fileUpload.middleware.js';
 import {
   searchStatementDocumentIntelligence,
@@ -75,6 +76,7 @@ import {
 import type { DetectionResult } from '../services/financialStatementService.js';
 import {
   autoMapLines,
+  cleanupUnpersistedUpload,
   classifyStatementDocument,
   confirmStatement,
   createStatement,
@@ -82,12 +84,17 @@ import {
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
+  failIdempotentUpload,
+  finalizeIdempotentUpload,
+  getIdempotencyKey,
   getLatestStatementIngestRun,
+  IdempotencyKeyTooLongError,
   learnStatementAliases,
   loadLatestStatementVersionSnapshot,
   loadPersistedStatementCandidateRows,
   loadStatementSourceText,
   locateStatementSections,
+  MAX_IDEMPOTENCY_KEY_CHARS,
   openStatementRepairSession,
   persistStatementCandidateRows,
   persistStatementExtractedSections,
@@ -96,10 +103,12 @@ import {
   persistStatementValueEvidence,
   recordStatementQualityRun,
   recordStatementSourceArtifact,
+  reserveIdempotentUpload,
   resolveDuplicateSuggestedMappings,
   resolveStatementColumnSelection,
   runCfoAutoValidation,
   saveStatementValues,
+  sha256Hex,
   snapshotCanonicalStatementVersion,
   snapshotStatementValueVersion,
   startStatementIngestRun,
@@ -108,6 +117,7 @@ import {
   updateStatementReadinessState,
   updateStatementStatus,
   validateStatement,
+  withStatementUploadIdempotencyLock,
 } from '../services/financialStatementService.js';
 import { saveStatementValuesFlow } from '../services/financialStatementValueWriteService.js';
 import {
@@ -130,7 +140,7 @@ import {
   upsertBenchmark,
 } from '../services/ratioAnalysisService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
@@ -175,6 +185,20 @@ function isSchemaCompatError(error: unknown): boolean {
 
 const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
 
+// ════════════════════════════════════════════════
+// FIN-005: Upload idempotency
+//
+// The reservation/finalize/fail/cleanup state machine (getIdempotencyKey,
+// sha256Hex, reserveIdempotentUpload, finalizeIdempotentUpload,
+// failIdempotentUpload, cleanupUnpersistedUpload, MAX_IDEMPOTENCY_KEY_CHARS,
+// IdempotencyKeyTooLongError) used to live here. It has moved to
+// `financialStatementService.ts` (imported above) — pure refactor, same
+// behavior — so it can be wired into every endpoint that persists a
+// Statement from an uploaded file, not just this one. See that file's
+// "FIN-005: Upload idempotency — shared state machine" section for the full
+// history/rationale.
+// ════════════════════════════════════════════════
+
 async function ensureIngestRun(params: {
   statementId: string;
   organizationId?: string;
@@ -204,6 +228,91 @@ async function ensureIngestRun(params: {
   });
 }
 
+/**
+ * FIN-005 Codex round-4 Blocker 1 — build the SAME success response shape
+ * `/upload`'s performUpload() returns on a fresh single-statement success,
+ * but from an ALREADY-COMPLETE recovered Statement
+ * (`reserveIdempotentUpload`'s `recover` outcome) instead of re-running
+ * extraction against the CURRENT request's uploaded file. Per Codex's
+ * explicit requirement, recovery never re-extracts — this Statement's real
+ * source is a DIFFERENT, earlier upload; only the persisted row is read
+ * back. `columnSelection` is not a persisted column (it was always a
+ * runtime-only artifact of the original extraction), so it is reported as
+ * `null` here rather than invented — every other field the fresh-success
+ * shape carries IS a real column on `financial_statements` and is read back
+ * directly. Returns `null` if the recovered statement has vanished between
+ * `reserveIdempotentUpload`'s lookup and this call (should not normally
+ * happen — the caller treats that defensively, same as any other
+ * not-found).
+ */
+async function buildUploadRecoveryResponseBody(
+  statementId: string,
+  organizationId: string
+): Promise<Record<string, unknown> | null> {
+  const raw = await dbGet<any>(
+    `SELECT * FROM financial_statements WHERE id = ? AND organization_id = ?`,
+    [statementId, organizationId]
+  );
+  if (!raw) return null;
+  const stmt = serializeRowPeriodFields(raw);
+  const ingestRunId = await getLatestStatementIngestRun(statementId);
+  return {
+    success: true,
+    statementId: stmt.id,
+    statementPackId: stmt.statement_pack_id || null,
+    ingestRunId: ingestRunId || null,
+    detection: {
+      statementType: stmt.statement_type,
+      confidence: Number(stmt.overall_confidence) || 0,
+      periodStart: stmt.period_start,
+      periodEnd: stmt.period_end,
+      periodLabel: stmt.period_label,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      language: 'unknown',
+    },
+    // Not a persisted column — see doc comment above.
+    columnSelection: null,
+    textLength: typeof stmt.notes === 'string' ? stmt.notes.length : 0,
+    parseMethod: stmt.parse_method,
+    documentClass: stmt.document_class,
+    extractionStrategy: stmt.extraction_strategy,
+    templateFamily: stmt.template_family,
+    recovered: true,
+  };
+}
+
+/**
+ * FIN-005 Codex round-4 Blocker 1 — the `upload-and-analyze` twin of
+ * `buildUploadRecoveryResponseBody`, above. Recovery only ever has ONE
+ * tracked statementId (the pre-existing `primaryStatementId`-only
+ * simplification these endpoints already made for Fix 2's idempotency
+ * wiring — a multi-section LLM analysis is treated as ONE atomic unit for
+ * idempotency purposes), so it is built using the SAME shape as these
+ * endpoints' existing single-statement "fallback" branch — never the
+ * multi-section "smart" shape, which cannot be honestly reconstructed from
+ * one id alone.
+ */
+async function buildUploadAndAnalyzeRecoveryResponseBody(
+  statementId: string,
+  organizationId: string
+): Promise<Record<string, unknown> | null> {
+  const stmt = await dbGet<any>(
+    `SELECT id, statement_pack_id FROM financial_statements WHERE id = ? AND organization_id = ?`,
+    [statementId, organizationId]
+  );
+  if (!stmt) return null;
+  return {
+    success: true,
+    mode: 'fallback',
+    statementPackId: stmt.statement_pack_id || null,
+    statementIds: [stmt.id],
+    analysis: null,
+    message: 'Recovered a previously-completed upload for this Idempotency-Key.',
+    recovered: true,
+  };
+}
+
 function parseJsonArray(raw: unknown): any[] {
   if (Array.isArray(raw)) return raw;
   if (typeof raw === 'string' && raw.trim().startsWith('[')) {
@@ -220,6 +329,76 @@ function parseJsonArray(raw: unknown): any[] {
 // T050: Financial Statement Ingestion
 // ════════════════════════════════════════════════
 
+// Pathological-workbook guard (FIN-005): a small compressed .xlsx can still
+// decompress into a huge sheet grid. These caps are generous for any real
+// financial statement (which is a handful of sheets and a few hundred rows)
+// while bounding the worst case. Not a full pre-decompression zip-bomb
+// defense (SheetJS doesn't expose central-directory sizes before parsing) —
+// see FIN-005 report for the documented residual risk.
+const MAX_XLSX_SHEETS = 200;
+const MAX_XLSX_CELLS = 500_000;
+
+// CSV decode guard (FIN-005): cap how much we'll ever try to decode/scan for
+// delimiter detection, independent of the 10 MB upload cap enforced by
+// fileUpload.middleware — defense in depth if that cap is ever changed.
+const MAX_CSV_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Decode an uploaded CSV buffer into text, handling the encoding/delimiter
+ * variants common in real-world (especially Polish-locale) exports:
+ *  - UTF-8 BOM (EF BB BF) — stripped.
+ *  - UTF-16 LE/BE BOM — decoded properly instead of read as UTF-8 garbage.
+ *  - Windows-1250 (cp1250) — common for older Polish accounting software
+ *    exports; detected by re-checking for the U+FFFD replacement character
+ *    that a genuine UTF-8 decode of cp1250 bytes produces, then re-decoded
+ *    via the platform's built-in `TextDecoder('windows-1250')`.
+ * Delimiter (comma vs semicolon — semicolon is the norm for Polish-locale
+ * Excel CSV exports since a comma is the decimal separator there) is left to
+ * the downstream extractor, which tokenizes on whitespace/number boundaries
+ * rather than a fixed delimiter — this function's job is only to get the
+ * BYTES turned into correct TEXT.
+ */
+function decodeCsvBuffer(buffer: Buffer): string {
+  const bounded = buffer.subarray(0, MAX_CSV_BYTES);
+
+  // UTF-16 BOM checks first — decoding UTF-16 bytes as UTF-8/cp1250 would be
+  // silently wrong rather than throwing.
+  if (bounded.length >= 2 && bounded[0] === 0xff && bounded[1] === 0xfe) {
+    return bounded.subarray(2).toString('utf16le');
+  }
+  if (bounded.length >= 2 && bounded[0] === 0xfe && bounded[1] === 0xff) {
+    // UTF-16 BE: swap byte pairs, then decode as LE (Node has no native BE decoder).
+    const swapped = Buffer.alloc(bounded.length - 2);
+    for (let i = 2; i + 1 < bounded.length; i += 2) {
+      swapped[i - 2] = bounded[i + 1];
+      swapped[i - 1] = bounded[i];
+    }
+    return swapped.toString('utf16le');
+  }
+
+  // UTF-8 BOM (EF BB BF) — strip before decoding.
+  const hasUtf8Bom =
+    bounded.length >= 3 && bounded[0] === 0xef && bounded[1] === 0xbb && bounded[2] === 0xbf;
+  const withoutBom = hasUtf8Bom ? bounded.subarray(3) : bounded;
+
+  const utf8Text = withoutBom.toString('utf-8');
+  // A genuine UTF-8 decode of non-UTF-8 bytes (e.g. real Windows-1250) always
+  // produces U+FFFD replacement characters where multi-byte sequences don't
+  // form valid UTF-8. A real UTF-8 file legitimately containing U+FFFD is
+  // vanishingly rare in a financial export, so this is a safe, cheap signal.
+  if (utf8Text.includes('�')) {
+    try {
+      const decoder = new TextDecoder('windows-1250');
+      return decoder.decode(withoutBom);
+    } catch {
+      // Platform lacks the windows-1250 decoder (shouldn't happen on modern
+      // Node with full-icu) — fall back to the UTF-8 read rather than throw.
+      return utf8Text;
+    }
+  }
+  return utf8Text;
+}
+
 async function extractTextFromFile(
   filePath: string,
   originalName: string
@@ -231,7 +410,8 @@ async function extractTextFromFile(
   }
   if (ext === 'csv') {
     const fs = await import('fs');
-    const text = fs.readFileSync(filePath, 'utf-8');
+    const buffer = fs.readFileSync(filePath);
+    const text = decodeCsvBuffer(buffer);
     return { text, parseMethod: 'csv_import' };
   }
   if (ext === 'xlsx' || ext === 'xls') {
@@ -239,7 +419,34 @@ async function extractTextFromFile(
       const fs = await import('fs');
       const XLSX = await import('xlsx');
       const buffer = fs.readFileSync(filePath);
+
+      // Zip-bomb / pathological-workbook guard, BEFORE the full parse below.
+      // `bookSheets: true` is a lightweight SheetJS peek that returns sheet
+      // names without parsing cell content, so it's cheap even on a
+      // maliciously crafted archive.
+      const peek = XLSX.read(buffer, { type: 'buffer', bookSheets: true });
+      if (peek.SheetNames.length > MAX_XLSX_SHEETS) {
+        throw new Error(
+          `Workbook has ${peek.SheetNames.length} sheets, exceeding the ${MAX_XLSX_SHEETS}-sheet safety limit`
+        );
+      }
+
       const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+      let totalCells = 0;
+      for (const sheetName of wb.SheetNames) {
+        const ws = wb.Sheets[sheetName];
+        const ref = ws?.['!ref'];
+        if (!ref) continue;
+        const range = XLSX.utils.decode_range(ref);
+        const rows = range.e.r - range.s.r + 1;
+        const cols = range.e.c - range.s.c + 1;
+        totalCells += Math.max(0, rows) * Math.max(0, cols);
+        if (totalCells > MAX_XLSX_CELLS) {
+          throw new Error(
+            `Workbook cell count exceeds the ${MAX_XLSX_CELLS.toLocaleString('en-US')}-cell safety limit`
+          );
+        }
+      }
 
       const skipSheetPattern =
         /^(cover|okładka|spis\s+treści|table\s+of\s+contents|notes|noty|index|summary|disclaimer|info)$/i;
@@ -305,234 +512,563 @@ router.post(
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 
-    await ensureCanonicalRegistryInDatabase();
-
-    logFinanceEvent('statement.upload.started', {
-      traceId,
-      organizationId: orgId,
-      userId,
-      fileName: file.originalname,
-      sizeBytes: file.size,
-      mimeType: file.mimetype,
-    });
-
-    let text: string;
-    let parseMethod: string;
+    let idempotencyKey: string | null;
     try {
-      const result = await extractTextFromFile(file.path, file.originalname);
-      // Strip null bytes — Postgres TEXT columns reject 0x00
-      text = result.text.replace(/\0/g, '');
-      parseMethod = result.parseMethod;
-    } catch (e: any) {
-      logFinanceError('statement.upload.extract_failed', e, {
-        traceId,
-        fileName: file.originalname,
-        sizeBytes: file.size,
-      });
-      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
+      idempotencyKey = getIdempotencyKey(req);
+    } catch (error) {
+      if (error instanceof IdempotencyKeyTooLongError) {
+        return res.status(400).json({
+          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_CHARS} characters`,
+          code: 'IDEMPOTENCY_KEY_TOO_LONG',
+        });
+      }
+      throw error;
     }
 
-    // Backward-compatible DB constraint (older DBs allow only 3 values).
-    // Keep the real parse method inside notes for traceability.
-    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
-    const notesPrefix =
-      parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
-    const textSummary = summarizeTextPayload(text);
+    // FIN-005 Codex review Blocker 2: set the instant the Statement row for
+    // this attempt is durably created (right after createStatement()
+    // succeeds, below) — mirrors the exact anyStatementPersisted/
+    // primaryStatementId pattern the upload-and-analyze endpoints already
+    // use. Before this, every failIdempotentUpload call here derived the
+    // statementId from `result.body.statementId` — which the notes-persist
+    // failure branch (below) never set, so a Statement that WAS durably
+    // created before that later step failed had no way to reach
+    // failIdempotentUpload at all: not "orphaned and tracked" but not
+    // tracked in any way. Deriving from this hoisted variable instead means
+    // every failure branch — regardless of what result.body happens to
+    // contain — can still record the real statementId for Fix 1's
+    // orphan-tracking/Blocker 1's recovery to find. It is also the signal
+    // used to gate cleanupUnpersistedUpload: once a real Statement's
+    // sourceFilePath is this upload's file, no later failure in the SAME
+    // attempt may delete it.
+    let anyStatementPersisted = false;
+    let primaryStatementId: string | null = null;
 
-    logFinanceEvent('statement.upload.extracted', {
-      traceId,
-      fileName: file.originalname,
-      parseMethod,
-      effectiveParseMethod,
-      text: textSummary,
-    });
+    // The actual upload+persist work, factored out so it can be called
+    // EITHER directly (no Idempotency-Key — nothing to serialize) OR from
+    // inside withStatementUploadIdempotencyLock (key present — exactly one
+    // caller performs this per (org, key) at a time). Every outcome —
+    // success AND the pre-existing error paths (signature mismatch,
+    // extraction failure, persist failure) — is returned as a value rather
+    // than written to `res` directly, so the SAME function works whether or
+    // not it is running inside the lock.
+    const performUpload = async (): Promise<{
+      statusCode: number;
+      body: Record<string, unknown>;
+    }> => {
+      // FIN-005: verify the saved file's first bytes actually match its
+      // declared extension — fileFilter only checked the client-supplied MIME
+      // header, which the client fully controls.
+      const ext = (file.originalname || '').toLowerCase().split('.').pop() || '';
+      try {
+        const fsSniff = await import('fs');
+        const headBuffer = fsSniff.readFileSync(file.path).subarray(0, 4096);
+        if (!sniffFileSignature(headBuffer, ext)) {
+          try {
+            fsSniff.unlinkSync(file.path);
+          } catch {
+            // best-effort cleanup; the mismatch rejection is what matters
+          }
+          logFinanceError('statement.upload.signature_mismatch', new Error('signature mismatch'), {
+            traceId,
+            fileName: file.originalname,
+            ext,
+          });
+          return {
+            statusCode: 422,
+            body: {
+              error: 'File content does not match its declared type',
+              code: 'FILE_UPLOAD_SIGNATURE_MISMATCH',
+            },
+          };
+        }
+      } catch (sniffError: any) {
+        logFinanceError('statement.upload.signature_check_failed', sniffError, {
+          traceId,
+          fileName: file.originalname,
+        });
+        return {
+          statusCode: 422,
+          body: { error: 'Unable to verify uploaded file', detail: sniffError?.message },
+        };
+      }
 
-    const detection = detectStatementType(text);
-    const containedStatementTypes = detectContainedStatementTypes(text);
-    const columnSelection = resolveStatementColumnSelection(text, detection);
-    const documentProfile = classifyStatementDocument({
-      fileName: file.originalname,
-      parseMethod: effectiveParseMethod,
-      text,
-    });
+      await ensureCanonicalRegistryInDatabase();
 
-    const statementId = await createStatement({
-      organizationId: orgId,
-      statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
-      periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
-      periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
-      periodLabel: detection.periodLabel || undefined,
-      currency: detection.currency,
-      scaling: detection.scaling,
-      sourceFileName: file.originalname,
-      sourceFilePath: file.path,
-      parseMethod: effectiveParseMethod,
-      overallConfidence: detection.confidence,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      createdBy: userId,
-    });
-    const statementPackId = await syncStatementToPack(statementId);
-    const ingestRunId = await startStatementIngestRun({
-      statementId,
-      organizationId: orgId,
-      sourceFileName: file.originalname,
-      sourceFilePath: file.path,
-      parseMethod: effectiveParseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      rawTextLength: text.length,
-      summary: {
-        detection,
-        documentProfile,
-        columnSelection,
+      logFinanceEvent('statement.upload.started', {
+        traceId,
+        organizationId: orgId,
+        userId,
+        fileName: file.originalname,
+        sizeBytes: file.size,
+        mimeType: file.mimetype,
+      });
+
+      let text: string;
+      let parseMethod: string;
+      try {
+        const result = await extractTextFromFile(file.path, file.originalname);
+        // Strip null bytes — Postgres TEXT columns reject 0x00
+        text = result.text.replace(/\0/g, '');
+        parseMethod = result.parseMethod;
+      } catch (e: any) {
+        logFinanceError('statement.upload.extract_failed', e, {
+          traceId,
+          fileName: file.originalname,
+          sizeBytes: file.size,
+        });
+        return { statusCode: 422, body: { error: 'File extraction failed', detail: e?.message } };
+      }
+
+      // Backward-compatible DB constraint (older DBs allow only 3 values).
+      // Keep the real parse method inside notes for traceability.
+      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+      const notesPrefix =
+        parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
+      const textSummary = summarizeTextPayload(text);
+
+      logFinanceEvent('statement.upload.extracted', {
+        traceId,
+        fileName: file.originalname,
         parseMethod,
         effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
-
-    logFinanceEvent('statement.upload.detected', {
-      traceId,
-      statementId,
-      statementType: detection.statementType,
-      periodStart: detection.periodStart,
-      periodEnd: detection.periodEnd,
-      currency: detection.currency,
-      scaling: detection.scaling,
-      confidence: detection.confidence,
-    });
-
-    const notesRes = await dbRun(
-      `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-      [`${notesPrefix}${text.substring(0, 100000)}`, statementId],
-      { fallback: false }
-    );
-    if (!notesRes?.success) {
-      logFinanceError('statement.upload.persist_failed', notesRes?.error, {
-        traceId,
-        statementId,
-        fileName: file.originalname,
-        notesLength: `${notesPrefix}${text.substring(0, 100000)}`.length,
         text: textSummary,
       });
-      return res.status(500).json({
-        error: 'Failed to persist extracted text',
-        detail: notesRes?.error || 'unknown',
-      });
-    }
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'raw_text',
-      stage: 'upload',
-      contentText: text,
-      metadata: {
-        parseMethod,
-        effectiveParseMethod,
-        sourceFileName: file.originalname,
-        sizeBytes: file.size,
-      },
-      createdBy: userId,
-    });
-    await recordStatementSourceArtifact({
-      statementId,
-      ingestRunId,
-      artifactType: 'document_profile',
-      stage: 'upload',
-      contentJson: {
-        detection,
-        documentProfile,
-        columnSelection,
-        parseMethod,
-        effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
-    await updateStatementIngestRun({
-      ingestRunId,
-      currentStage: 'upload',
-      runStatus: 'running',
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      rawTextLength: text.length,
-    });
-    try {
-      await upsertStatementDocumentIntelligence({
-        statementId,
-        ingestRunId,
-        organizationId: orgId,
-        title: file.originalname,
+
+      const detection = detectStatementType(text);
+      const containedStatementTypes = detectContainedStatementTypes(text);
+      const columnSelection = resolveStatementColumnSelection(text, detection);
+      const documentProfile = classifyStatementDocument({
+        fileName: file.originalname,
+        parseMethod: effectiveParseMethod,
         text,
-        statementType: detection.statementType,
-        documentClass: documentProfile.documentClass,
-        templateFamily: documentProfile.templateFamily,
       });
-    } catch (error) {
-      logFinanceError('statement.document_intelligence.index_failed', error, {
+
+      const statementId = await createStatement({
+        organizationId: orgId,
+        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+        periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
+        periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
+        periodLabel: detection.periodLabel || undefined,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        createdBy: userId,
+      });
+      // FIN-005 Blocker 2: record this the instant the Statement row exists
+      // — every step below (notes persist, source artifacts, etc.) can fail
+      // without losing track of it.
+      anyStatementPersisted = true;
+      primaryStatementId = statementId;
+      const statementPackId = await syncStatementToPack(statementId);
+      const ingestRunId = await startStatementIngestRun({
+        statementId,
+        organizationId: orgId,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        rawTextLength: text.length,
+        summary: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+
+      logFinanceEvent('statement.upload.detected', {
         traceId,
         statementId,
-        ingestRunId,
+        statementType: detection.statementType,
+        periodStart: detection.periodStart,
+        periodEnd: detection.periodEnd,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        confidence: detection.confidence,
       });
-    }
 
-    logFinanceEvent('statement.upload.completed', {
-      traceId,
-      statementId,
-      fileName: file.originalname,
-      parseMethod,
-      effectiveParseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-      text: textSummary,
-    });
+      const notesRes = await dbRun(
+        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${notesPrefix}${text.substring(0, 100000)}`, statementId],
+        { fallback: false }
+      );
+      if (!notesRes?.success) {
+        logFinanceError('statement.upload.persist_failed', notesRes?.error, {
+          traceId,
+          statementId,
+          fileName: file.originalname,
+          notesLength: `${notesPrefix}${text.substring(0, 100000)}`.length,
+          text: textSummary,
+        });
+        return {
+          statusCode: 500,
+          body: { error: 'Failed to persist extracted text', detail: notesRes?.error || 'unknown' },
+        };
+      }
+      await recordStatementSourceArtifact({
+        statementId,
+        ingestRunId,
+        artifactType: 'raw_text',
+        stage: 'upload',
+        contentText: text,
+        metadata: {
+          parseMethod,
+          effectiveParseMethod,
+          sourceFileName: file.originalname,
+          sizeBytes: file.size,
+        },
+        createdBy: userId,
+      });
+      await recordStatementSourceArtifact({
+        statementId,
+        ingestRunId,
+        artifactType: 'document_profile',
+        stage: 'upload',
+        contentJson: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+      await updateStatementIngestRun({
+        ingestRunId,
+        currentStage: 'upload',
+        runStatus: 'running',
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        rawTextLength: text.length,
+      });
+      try {
+        await upsertStatementDocumentIntelligence({
+          statementId,
+          ingestRunId,
+          organizationId: orgId,
+          title: file.originalname,
+          text,
+          statementType: detection.statementType,
+          documentClass: documentProfile.documentClass,
+          templateFamily: documentProfile.templateFamily,
+        });
+      } catch (error) {
+        logFinanceError('statement.document_intelligence.index_failed', error, {
+          traceId,
+          statementId,
+          ingestRunId,
+        });
+      }
 
-    await recordStatementQualityRun({
-      statementId,
-      organizationId: orgId,
-      stage: 'upload',
-      resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
-      readinessStatus: 'pending',
-      strategy: documentProfile.extractionStrategy,
-      summary:
-        detection.statementType === 'UNKNOWN'
-          ? 'Upload completed with unknown statement type fallback.'
-          : 'Upload completed and initial document profile detected.',
-      reasonCodes:
-        detection.statementType === 'UNKNOWN'
-          ? ['DETECTION_UNKNOWN_FALLBACK']
-          : ['UPLOAD_COMPLETE'],
-      payload: {
-        detection,
-        documentProfile,
-        columnSelection,
+      logFinanceEvent('statement.upload.completed', {
+        traceId,
+        statementId,
+        fileName: file.originalname,
         parseMethod,
         effectiveParseMethod,
-      },
-      createdBy: userId,
-    });
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        text: textSummary,
+      });
 
-    logger.info(
-      `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'upload',
+        resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+        readinessStatus: 'pending',
+        strategy: documentProfile.extractionStrategy,
+        summary:
+          detection.statementType === 'UNKNOWN'
+            ? 'Upload completed with unknown statement type fallback.'
+            : 'Upload completed and initial document profile detected.',
+        reasonCodes:
+          detection.statementType === 'UNKNOWN'
+            ? ['DETECTION_UNKNOWN_FALLBACK']
+            : ['UPLOAD_COMPLETE'],
+        payload: {
+          detection,
+          documentProfile,
+          columnSelection,
+          parseMethod,
+          effectiveParseMethod,
+        },
+        createdBy: userId,
+      });
+
+      logger.info(
+        `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
+      );
+
+      return {
+        statusCode: 201,
+        body: {
+          success: true,
+          statementId,
+          statementPackId,
+          ingestRunId,
+          detection,
+          columnSelection,
+          textLength: text.length,
+          parseMethod,
+          documentClass: documentProfile.documentClass,
+          extractionStrategy: documentProfile.extractionStrategy,
+          templateFamily: documentProfile.templateFamily,
+        },
+      };
+    };
+
+    if (!idempotencyKey) {
+      try {
+        const { statusCode, body } = await performUpload();
+        if (statusCode >= 400 && !anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload failed (unkeyed)');
+        }
+        return res.status(statusCode).json(body);
+      } catch (error) {
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload threw (unkeyed)');
+        }
+        throw error;
+      }
+    }
+
+    // FIN-005 Codex review Blocker 2 + 3, hardened by the round-3 reservation
+    // state machine (see the block comment above reserveIdempotentUpload):
+    // a retry with the same org + Idempotency-Key AND the same file content
+    // returns the ORIGINAL response instead of creating a second statement
+    // (and, by extension, a second pack) — the WHOLE reserve -> upload ->
+    // finalize/fail sequence runs inside a real PostgreSQL advisory lock
+    // (withStatementUploadIdempotencyLock), so two genuinely concurrent
+    // requests for the same key can never both become the reservation
+    // owner. The lock also binds the key to a SHA-256 of the file bytes:
+    // same key + different content is a hard 409, never a silent replay of
+    // the wrong file's result.
+    const key = idempotencyKey;
+    const requestHash = sha256Hex(await (await import('fs')).promises.readFile(file.path));
+
+    type LockOutcome =
+      | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'recover'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'conflict' }
+      | { kind: 'in_progress' }
+      | { kind: 'schema_missing' }
+      | { kind: 'fresh'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'finalize_failed'; recovered?: boolean };
+
+    const outcome: LockOutcome = await withStatementUploadIdempotencyLock(
+      orgId,
+      key,
+      async (): Promise<LockOutcome> => {
+      const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
+
+      if (reservation.kind === 'recover_result') {
+        // Codex round-5: a prior attempt for this key recorded a COMPLETE
+        // response and every Statement it names is still present and
+        // pack-synced. `/upload` itself only ever creates one Statement, so
+        // this is normally reached only when the SAME key was first used
+        // against an upload-and-analyze endpoint; either way the honest
+        // answer is the recorded receipt verbatim, never a re-derived one.
+        const finalized = await finalizeIdempotentUpload({
+          reservationId: reservation.reservationId,
+          statementId: reservation.statementIds[0] || '',
+          statusCode: reservation.statusCode,
+          responseJson: JSON.stringify(reservation.body),
+        });
+        if (!finalized) {
+          await failIdempotentUpload(reservation.reservationId, reservation.statementIds, {
+            statusCode: reservation.statusCode,
+            body: reservation.body,
+          });
+          return { kind: 'finalize_failed' as const, recovered: true };
+        }
+        return {
+          kind: 'recover' as const,
+          statusCode: reservation.statusCode,
+          body: reservation.body,
+        };
+      }
+
+      if (reservation.kind === 'recover') {
+        // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
+        // already durably completed a real, fully-synced Statement+Pack —
+        // reuse it. No re-extraction, no performUpload() call at all: the
+        // CURRENT request's uploaded file is not this Statement's source
+        // (an earlier, different upload is), so it is never touched here —
+        // only cleaned up by the caller, same as a replay.
+        const body = await buildUploadRecoveryResponseBody(reservation.statementId, orgId);
+        if (!body) {
+          // Defensive: the recovered statement vanished between
+          // reserveIdempotentUpload's lookup and here. Never fabricate a
+          // 201 for a Statement that cannot actually be read back.
+          await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+          return { kind: 'finalize_failed' as const, recovered: true };
+        }
+        const finalized = await finalizeIdempotentUpload({
+          reservationId: reservation.reservationId,
+          statementId: reservation.statementId,
+          statusCode: 201,
+          responseJson: JSON.stringify(body),
+        });
+        if (!finalized) {
+          await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+          return { kind: 'finalize_failed' as const, recovered: true };
+        }
+        return { kind: 'recover' as const, statusCode: 201, body };
+      }
+
+      if (reservation.kind !== 'owner') {
+        if (reservation.kind === 'replay') {
+          logFinanceEvent('statement.upload.idempotent_replay', {
+            traceId,
+            organizationId: orgId,
+            idempotencyKey: key,
+          });
+        }
+        return reservation;
+      }
+
+      let result: { statusCode: number; body: Record<string, unknown> };
+      try {
+        result = await performUpload();
+      } catch (error) {
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload threw');
+        }
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+        throw error;
+      }
+
+      if (result.statusCode >= 400) {
+        // A controlled negative outcome (signature mismatch, extraction
+        // failure, persist failure, ...) — not a thrown exception, but
+        // still a failure for idempotency purposes: the reservation must
+        // not be left 'in_progress' forever, and must never be finalized as
+        // 'completed'. The route still returns performUpload's OWN status
+        // code/body to the client unchanged.
+        //
+        // FIN-005 Blocker 2: this used to derive the statementId for
+        // failIdempotentUpload from `result.body.statementId` — which the
+        // notes-persist-failure branch inside performUpload() never sets
+        // (its controlled-failure body is `{ error, detail }`, no
+        // statementId) — so a Statement that WAS durably created before that
+        // later step failed was passed to failIdempotentUpload with no id at
+        // all: not "orphaned and tracked" (Fix 1's `orphaned_statement_ids`)
+        // but not tracked in any way. `primaryStatementId` is set the
+        // instant createStatement() succeeds, independent of what ends up in
+        // the response body, so it survives every failure shape.
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload controlled failure');
+        }
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
+
+      const finalized = await finalizeIdempotentUpload({
+        reservationId: reservation.reservationId,
+        statementId: primaryStatementId || '',
+        statusCode: result.statusCode,
+        responseJson: JSON.stringify(result.body),
+      });
+      if (!finalized) {
+        // Defensive — should not normally happen since we own the
+        // reservation. Do NOT return 201 on an unconfirmed finalize: the
+        // caller maps this to a 500-class error. Best-effort mark the row
+        // failed so a retry can reclaim promptly instead of waiting out the
+        // staleness window; if even that fails, the safety net (staleness
+        // reclaim) still applies.
+        logFinanceError(
+          'statement.upload.finalize_unconfirmed',
+          new Error('finalize UPDATE did not affect the owned reservation row'),
+          { traceId, organizationId: orgId, idempotencyKey: key, reservationId: reservation.reservationId }
+        );
+        // Fix 1: performUpload() DID already durably create+persist a real
+        // Statement (result.body.statementId) — it is the finalize UPDATE
+        // that failed to land, not the business write. Recording that id
+        // here (instead of leaving it implicit) is what lets a later
+        // reclaim of this same row move it into `orphaned_statement_ids`
+        // instead of silently losing the reference the moment the reclaim
+        // nulls `statement_id` for the next attempt.
+        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+        return { kind: 'finalize_failed' as const };
+      }
+
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
     );
 
-    res.status(201).json({
-      success: true,
-      statementId,
-      statementPackId,
-      ingestRunId,
-      detection,
-      columnSelection,
-      textLength: text.length,
-      parseMethod,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-    });
+    switch (outcome.kind) {
+      case 'conflict':
+        await cleanupUnpersistedUpload(file.path, 'idempotency key reused with different content');
+        return res.status(409).json({
+          error: 'Idempotency-Key was already used with a different upload',
+          code: 'IDEMPOTENCY_KEY_REUSED',
+        });
+      case 'in_progress':
+        await cleanupUnpersistedUpload(file.path, 'genuinely concurrent in-flight upload for this key');
+        res.setHeader('Retry-After', '5');
+        return res.status(409).json({
+          error: 'Another upload for this Idempotency-Key is already in progress — retry shortly',
+          code: 'UPLOAD_IN_PROGRESS',
+        });
+      case 'schema_missing':
+        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        return res.status(503).json({
+          error:
+            'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',
+          code: 'IDEMPOTENCY_SCHEMA_UNAVAILABLE',
+        });
+      case 'finalize_failed':
+        // FIN-005 Blocker 1: on the `recover` path, performUpload() was
+        // NEVER called for this request — file.path is not any Statement's
+        // sourceFilePath (the recovered Statement's source is a different,
+        // earlier upload) — so, unlike the genuine-fresh-success case, it IS
+        // safe (and necessary, to avoid leaking it) to clean it up here.
+        if (outcome.recovered) {
+          await cleanupUnpersistedUpload(file.path, 'recovery finalize unconfirmed');
+        }
+        // Otherwise: no file cleanup — performUpload() DID succeed and
+        // file.path is now the sourceFilePath of a real (if
+        // orphaned-from-the-marker) Statement row.
+        return res.status(500).json({
+          error: 'Upload completed but could not be durably confirmed — please retry',
+          code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
+        });
+      case 'replay':
+        await cleanupUnpersistedUpload(file.path, 'idempotent replay of a previously completed upload');
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'recover':
+        // FIN-005 Blocker 1: the CURRENT request's uploaded file was never
+        // persisted as any Statement's source — the recovered Statement
+        // already has its OWN, different, earlier source file — so it is
+        // genuinely unpersisted and cleaned up here, exactly like `replay`.
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent recovery of a previously-completed upload for this key'
+        );
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'fresh':
+        return res.status(outcome.statusCode).json(outcome.body);
+      default: {
+        const _exhaustive: never = outcome;
+        throw new Error(`Unreachable idempotency outcome: ${JSON.stringify(_exhaustive)}`);
+      }
+    }
   })
 );
 
@@ -554,271 +1090,557 @@ router.post(
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
 
-    await ensureCanonicalRegistryInDatabase();
-
-    // 1. Extract text (for fallback and notes)
-    let text: string;
-    let parseMethod: string;
+    // FIN-005 Fix 2: this endpoint (and the v8 twin at
+    // /api/v8/finance/statements/upload-and-analyze) is what the product's
+    // FinancialStatementImportWizard actually calls — the idempotency state
+    // machine below was previously wired ONLY into /upload, which nothing in
+    // the frontend calls. A slow upload (LLM analysis can legitimately
+    // exceed the client's request timeout) retried by the client used to
+    // create a genuine duplicate Statement/Pack every time.
+    let idempotencyKey: string | null;
     try {
-      const result = await extractTextFromFile(file.path, file.originalname);
-      text = result.text.replace(/\0/g, '');
-      parseMethod = result.parseMethod;
-    } catch (e: any) {
-      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
+      idempotencyKey = getIdempotencyKey(req);
+    } catch (error) {
+      if (error instanceof IdempotencyKeyTooLongError) {
+        return res.status(400).json({
+          error: `Idempotency-Key must be at most ${MAX_IDEMPOTENCY_KEY_CHARS} characters`,
+          code: 'IDEMPOTENCY_KEY_TOO_LONG',
+        });
+      }
+      throw error;
     }
 
-    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+    // Set the instant the FIRST Statement row for this attempt is durably
+    // created (fallback branch, or the first loop iteration below) — once
+    // true, `file.path` is a real Statement's `sourceFilePath` and must
+    // NEVER be deleted by a later failure in this SAME attempt (e.g. a
+    // second section's saveStatementValues throwing), even though the
+    // attempt as a whole is reported as failed. This is the reconciliation
+    // between "delete the temp file on every non-persisting exit path" and
+    // "never break an already-persisted Statement's evidentiary source" for
+    // the multi-section case, where a partial success is possible.
+    // `primaryStatementId` is the id finalizeIdempotentUpload/
+    // failIdempotentUpload are called with — per FIN-005 Fix 2 scope, a
+    // multi-section document is treated as ONE atomic unit for idempotency
+    // purposes (single reservation/completion), so only the FIRST created
+    // statement is tracked on the marker row; the full set is still
+    // returned in the response body unchanged (`statementIds`/`statements`).
+    // Codex round-5 CLOSED the residual gap this comment used to disclaim:
+    // `createdStatementIds` below tracks EVERY section, and
+    // `failIdempotentUpload` records the complete intended response, so a
+    // multi-section attempt that dies at finalize is replayed in full rather
+    // than reconstructed from `primaryStatementId` as a single section.
+    let anyStatementPersisted = false;
+    let primaryStatementId: string | null = null;
+    const createdStatementIds: string[] = [];
 
-    logFinanceEvent('statement.smartUpload.started', {
-      traceId,
-      organizationId: orgId,
-      userId,
-      fileName: file.originalname,
-      sizeBytes: file.size,
-    });
+    const performUploadAndAnalyze = async (): Promise<{
+      statusCode: number;
+      body: Record<string, unknown>;
+    }> => {
+      await ensureCanonicalRegistryInDatabase();
 
-    // 2. LLM analyzes entire document — finds all sections, extracts all lines
-    const analysis = await analyzeAndExtractFullDocument({
-      filePath: file.path,
-      fileName: file.originalname,
-      traceId,
-    });
+      // 1. Extract text (for fallback and notes)
+      let text: string;
+      let parseMethod: string;
+      try {
+        const result = await extractTextFromFile(file.path, file.originalname);
+        text = result.text.replace(/\0/g, '');
+        parseMethod = result.parseMethod;
+      } catch (e: any) {
+        return { statusCode: 422, body: { error: 'File extraction failed', detail: e?.message } };
+      }
 
-    if (!analysis || analysis.sections.length === 0) {
-      // Fallback: create single statement with heuristic detection (old behavior)
-      const detection = detectStatementType(text);
-      const documentProfile = classifyStatementDocument({
+      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod)
+        ? parseMethod
+        : 'manual';
+
+      logFinanceEvent('statement.smartUpload.started', {
+        traceId,
+        organizationId: orgId,
+        userId,
         fileName: file.originalname,
-        parseMethod: effectiveParseMethod,
-        text,
-      });
-      const statementId = await createStatement({
-        organizationId: orgId,
-        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
-        periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
-        periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
-        periodLabel: detection.periodLabel || undefined,
-        currency: detection.currency,
-        scaling: detection.scaling,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        overallConfidence: detection.confidence,
-        documentClass: documentProfile.documentClass,
-        extractionStrategy: documentProfile.extractionStrategy,
-        templateFamily: documentProfile.templateFamily,
-        createdBy: userId,
-      });
-      const statementPackId = await syncStatementToPack(statementId);
-      await dbRun(
-        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId],
-        { fallback: false }
-      );
-
-      return res.status(201).json({
-        success: true,
-        mode: 'fallback',
-        statementPackId,
-        statementIds: [statementId],
-        analysis: null,
-        message: 'LLM analysis unavailable — created single statement with heuristic detection.',
-      });
-    }
-
-    // 3. Create statements for each section found by LLM
-    const createdStatements: Array<{
-      statementId: string;
-      statementType: string;
-      lineCount: number;
-    }> = [];
-    let packId: string | null = null;
-
-    for (const section of analysis.sections) {
-      const statementId = await createStatement({
-        organizationId: orgId,
-        statementType: section.statementType,
-        periodStart: analysis.periodStart || new Date().getFullYear() + '-01-01',
-        periodEnd: analysis.periodEnd || new Date().getFullYear() + '-12-31',
-        periodLabel: analysis.periodLabel || undefined,
-        currency: analysis.currency,
-        scaling: analysis.scaling,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        overallConfidence: 0.9,
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        createdBy: userId,
+        sizeBytes: file.size,
       });
 
-      // Store text for later reference
-      await dbRun(
-        `UPDATE financial_statements SET notes = ? WHERE id = ?`,
-        [`${text.substring(0, 100000)}`, statementId],
-        { fallback: false }
-      );
-
-      // Sync to pack (first statement creates the pack, rest join it)
-      const thisPackId = await syncStatementToPack(statementId);
-      if (!packId && thisPackId) packId = thisPackId;
-
-      // Update pack metadata with entity name from LLM
-      if (packId && analysis.entityName) {
-        await dbRun(
-          `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
-          [analysis.entityName, packId]
-        );
-      }
-
-      const ingestRunId = await startStatementIngestRun({
-        statementId,
-        organizationId: orgId,
-        sourceFileName: file.originalname,
-        sourceFilePath: file.path,
-        parseMethod: effectiveParseMethod,
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        rawTextLength: text.length,
-        summary: {
-          analysis: { entityName: analysis.entityName, sectionType: section.statementType },
-        },
-        createdBy: userId,
+      // 2. LLM analyzes entire document — finds all sections, extracts all lines
+      const analysis = await analyzeAndExtractFullDocument({
+        filePath: file.path,
+        fileName: file.originalname,
+        traceId,
       });
 
-      // 4. Save LLM-extracted lines as values and auto-map
-      const extractedLines = section.lines.map((line, idx) => ({
-        originalLabel: line.originalLabel,
-        value: line.value,
-        confidence: line.confidence,
-        sourceRow: line.sourceRow ?? idx + 1,
-        suggestedCanonicalId: line.suggestedCanonicalId || undefined,
-        suggestedCanonicalLabel: undefined as string | undefined,
-        isNonFinancial: false,
-      }));
-
-      let mappedLines = extractedLines;
-      try {
-        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+      if (!analysis || analysis.sections.length === 0) {
+        // Fallback: create single statement with heuristic detection (old behavior)
+        const detection = detectStatementType(text);
+        const documentProfile = classifyStatementDocument({
+          fileName: file.originalname,
+          parseMethod: effectiveParseMethod,
+          text,
+        });
+        const statementId = await createStatement({
           organizationId: orgId,
+          statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+          periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
+          periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
+          periodLabel: detection.periodLabel || undefined,
+          currency: detection.currency,
+          scaling: detection.scaling,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          overallConfidence: detection.confidence,
+          documentClass: documentProfile.documentClass,
+          extractionStrategy: documentProfile.extractionStrategy,
+          templateFamily: documentProfile.templateFamily,
+          createdBy: userId,
         });
-        if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
-      } catch (mapError) {
-        logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
-          statementId,
-          statementType: section.statementType,
-          error: String(mapError),
-        });
+        anyStatementPersisted = true;
+        primaryStatementId = statementId;
+        createdStatementIds.push(statementId);
+        const statementPackId = await syncStatementToPack(statementId);
+        await dbRun(
+          `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+          [`${text.substring(0, 100000)}`, statementId],
+          { fallback: false }
+        );
+
+        return {
+          statusCode: 201,
+          body: {
+            success: true,
+            mode: 'fallback',
+            statementPackId,
+            statementIds: [statementId],
+            analysis: null,
+            message: 'LLM analysis unavailable — created single statement with heuristic detection.',
+          },
+        };
       }
 
-      const valuesToSave = mappedLines.map((l) => ({
-        canonicalLineId: (l as any).suggestedCanonicalId || null,
-        originalLabel: l.originalLabel,
-        value: l.value,
-        confidence: l.confidence,
-        sourceRow: l.sourceRow,
-        mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-          | 'auto'
-          | 'unmapped',
-        isNonFinancial: !!(l as any).isNonFinancial,
-      }));
+      // 3. Create statements for each section found by LLM
+      const createdStatements: Array<{
+        statementId: string;
+        statementType: string;
+        lineCount: number;
+      }> = [];
+      let packId: string | null = null;
 
-      await saveStatementValues(statementId, valuesToSave);
-      await updateStatementStatus(statementId, 'imported');
+      for (const section of analysis.sections) {
+        const statementId = await createStatement({
+          organizationId: orgId,
+          statementType: section.statementType,
+          periodStart: analysis.periodStart || new Date().getFullYear() + '-01-01',
+          periodEnd: analysis.periodEnd || new Date().getFullYear() + '-12-31',
+          periodLabel: analysis.periodLabel || undefined,
+          currency: analysis.currency,
+          scaling: analysis.scaling,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          overallConfidence: 0.9,
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          createdBy: userId,
+        });
+        anyStatementPersisted = true;
+        if (!primaryStatementId) primaryStatementId = statementId;
+        createdStatementIds.push(statementId);
 
-      // 5. Run validation + readiness
-      try {
-        const validationResult = validateStatement(valuesToSave, section.statementType);
-        if (validationResult) {
-          await persistStatementValidationLedger({
+        // Store text for later reference
+        await dbRun(
+          `UPDATE financial_statements SET notes = ? WHERE id = ?`,
+          [`${text.substring(0, 100000)}`, statementId],
+          { fallback: false }
+        );
+
+        // Sync to pack (first statement creates the pack, rest join it)
+        const thisPackId = await syncStatementToPack(statementId);
+        if (!packId && thisPackId) packId = thisPackId;
+
+        // Update pack metadata with entity name from LLM
+        if (packId && analysis.entityName) {
+          await dbRun(
+            `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
+            [analysis.entityName, packId]
+          );
+        }
+
+        const ingestRunId = await startStatementIngestRun({
+          statementId,
+          organizationId: orgId,
+          sourceFileName: file.originalname,
+          sourceFilePath: file.path,
+          parseMethod: effectiveParseMethod,
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          rawTextLength: text.length,
+          summary: {
+            analysis: { entityName: analysis.entityName, sectionType: section.statementType },
+          },
+          createdBy: userId,
+        });
+
+        // 4. Save LLM-extracted lines as values and auto-map
+        const extractedLines = section.lines.map((line, idx) => ({
+          originalLabel: line.originalLabel,
+          value: line.value,
+          confidence: line.confidence,
+          sourceRow: line.sourceRow ?? idx + 1,
+          suggestedCanonicalId: line.suggestedCanonicalId || undefined,
+          suggestedCanonicalLabel: undefined as string | undefined,
+          isNonFinancial: false,
+        }));
+
+        let mappedLines = extractedLines;
+        try {
+          const autoMapped = await autoMapLines(extractedLines as any, section.statementType, {
+            organizationId: orgId,
+          });
+          if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
+        } catch (mapError) {
+          logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
             statementId,
             statementType: section.statementType,
-            messages: validationResult.messages || [],
-            values: valuesToSave.map((value) => ({
-              canonicalLineId: value.canonicalLineId,
-              value: Number(value.value || 0),
-              isNonFinancial: value.isNonFinancial,
-            })),
+            error: String(mapError),
           });
-          const readinessResult = evaluateStatementReadiness({
-            rawStatus: 'imported',
-            statementType: section.statementType,
-            validationStatus: validationResult.status,
+        }
+
+        const valuesToSave = mappedLines.map((l) => ({
+          canonicalLineId: (l as any).suggestedCanonicalId || null,
+          originalLabel: l.originalLabel,
+          value: l.value,
+          confidence: l.confidence,
+          sourceRow: l.sourceRow,
+          mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
+            | 'auto'
+            | 'unmapped',
+          isNonFinancial: !!(l as any).isNonFinancial,
+        }));
+
+        await saveStatementValues(statementId, valuesToSave);
+        await updateStatementStatus(statementId, 'imported');
+
+        // 5. Run validation + readiness
+        try {
+          const validationResult = validateStatement(valuesToSave, section.statementType);
+          if (validationResult) {
+            await persistStatementValidationLedger({
+              statementId,
+              statementType: section.statementType,
+              messages: validationResult.messages || [],
+              values: valuesToSave.map((value) => ({
+                canonicalLineId: value.canonicalLineId,
+                value: Number(value.value || 0),
+                isNonFinancial: value.isNonFinancial,
+              })),
+            });
+            const readinessResult = evaluateStatementReadiness({
+              rawStatus: 'imported',
+              statementType: section.statementType,
+              validationStatus: validationResult.status,
+              currency: analysis.currency,
+              scaling: analysis.scaling,
+              validationMessages: validationResult.messages,
+              values: valuesToSave,
+            });
+            if (readinessResult) {
+              await updateStatementReadinessState(statementId, readinessResult);
+            }
+          }
+        } catch (valError) {
+          logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
+            statementId,
+            error: String(valError),
+          });
+        }
+
+        await updateStatementIngestRun({
+          ingestRunId,
+          currentStage: 'complete',
+          runStatus: 'completed',
+          documentClass: 'mixed_report',
+          extractionStrategy: 'llm_full_document',
+          templateFamily: null,
+          rawTextLength: text.length,
+        });
+
+        createdStatements.push({
+          statementId,
+          statementType: section.statementType,
+          lineCount: section.lines.length,
+        });
+      }
+
+      // 8. Recompute pack quality
+      if (packId) {
+        try {
+          await recomputeStatementPackForOrganization(orgId, packId);
+        } catch (recomputeError) {
+          logger.warn('[SmartUpload] Pack recompute failed', {
+            packId,
+            error: String(recomputeError),
+          });
+        }
+      }
+
+      logFinanceEvent('statement.smartUpload.completed', {
+        traceId,
+        packId,
+        entityName: analysis.entityName,
+        sectionCount: analysis.sections.length,
+        statementIds: createdStatements.map((s) => s.statementId),
+      });
+
+      return {
+        statusCode: 201,
+        body: {
+          success: true,
+          mode: 'smart',
+          statementPackId: packId,
+          statementIds: createdStatements.map((s) => s.statementId),
+          statements: createdStatements,
+          analysis: {
+            entityName: analysis.entityName,
+            periodLabel: analysis.periodLabel,
+            periodStart: analysis.periodStart,
+            periodEnd: analysis.periodEnd,
             currency: analysis.currency,
             scaling: analysis.scaling,
-            validationMessages: validationResult.messages,
-            values: valuesToSave,
-          });
-          if (readinessResult) {
-            await updateStatementReadinessState(statementId, readinessResult);
-          }
-        }
-      } catch (valError) {
-        logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
-          statementId,
-          error: String(valError),
-        });
-      }
+            language: analysis.language,
+            documentDescription: analysis.documentDescription,
+            sectionTypes: analysis.sections.map((s) => s.statementType),
+            totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
+            warnings: analysis.warnings,
+          },
+        },
+      };
+    };
 
-      await updateStatementIngestRun({
-        ingestRunId,
-        currentStage: 'complete',
-        runStatus: 'completed',
-        documentClass: 'mixed_report',
-        extractionStrategy: 'llm_full_document',
-        templateFamily: null,
-        rawTextLength: text.length,
-      });
-
-      createdStatements.push({
-        statementId,
-        statementType: section.statementType,
-        lineCount: section.lines.length,
-      });
-    }
-
-    // 8. Recompute pack quality
-    if (packId) {
+    if (!idempotencyKey) {
       try {
-        await recomputeStatementPackForOrganization(orgId, packId);
-      } catch (recomputeError) {
-        logger.warn('[SmartUpload] Pack recompute failed', {
-          packId,
-          error: String(recomputeError),
-        });
+        const { statusCode, body } = await performUploadAndAnalyze();
+        if (statusCode >= 400 && !anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload-and-analyze failed (unkeyed)');
+        }
+        return res.status(statusCode).json(body);
+      } catch (error) {
+        if (!anyStatementPersisted) {
+          await cleanupUnpersistedUpload(file.path, 'upload-and-analyze threw (unkeyed)');
+        }
+        throw error;
       }
     }
 
-    logFinanceEvent('statement.smartUpload.completed', {
-      traceId,
-      packId,
-      entityName: analysis.entityName,
-      sectionCount: analysis.sections.length,
-      statementIds: createdStatements.map((s) => s.statementId),
-    });
+    // Keyed path — same reserve -> work -> finalize/fail pattern as /upload
+    // (see reserveIdempentUpload/finalizeIdempotentUpload/failIdempotentUpload
+    // in financialStatementService.ts), plus the cleanup-on-failure calls
+    // /upload itself does not do for every failure branch (this endpoint
+    // adds them explicitly — see the FIN-005 Fix 2 final report for the
+    // scope decision on why /upload was left as-is here).
+    const key = idempotencyKey;
+    const requestHash = sha256Hex(await (await import('fs')).promises.readFile(file.path));
 
-    res.status(201).json({
-      success: true,
-      mode: 'smart',
-      statementPackId: packId,
-      statementIds: createdStatements.map((s) => s.statementId),
-      statements: createdStatements,
-      analysis: {
-        entityName: analysis.entityName,
-        periodLabel: analysis.periodLabel,
-        periodStart: analysis.periodStart,
-        periodEnd: analysis.periodEnd,
-        currency: analysis.currency,
-        scaling: analysis.scaling,
-        language: analysis.language,
-        documentDescription: analysis.documentDescription,
-        sectionTypes: analysis.sections.map((s) => s.statementType),
-        totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
-        warnings: analysis.warnings,
-      },
-    });
+    type LockOutcome =
+      | { kind: 'replay'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'recover'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'conflict' }
+      | { kind: 'in_progress' }
+      | { kind: 'schema_missing' }
+      | { kind: 'fresh'; statusCode: number; body: Record<string, unknown> }
+      | { kind: 'finalize_failed'; recovered?: boolean };
+
+    const outcome: LockOutcome = await withStatementUploadIdempotencyLock(
+      orgId,
+      key,
+      async (): Promise<LockOutcome> => {
+        const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
+
+        if (reservation.kind === 'recover_result') {
+          // Codex round-5 — MULTI-SECTION recovery: replay the abandoned
+          // attempt's OWN complete, durably-recorded response verbatim (every
+          // section id, the real mode/analysis), after every Statement it
+          // names was re-verified present and pack-synced. No re-extraction,
+          // no new Statement/Pack.
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementIds[0] || '',
+            statusCode: reservation.statusCode,
+            responseJson: JSON.stringify(reservation.body),
+          });
+          if (!finalized) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementIds, {
+              statusCode: reservation.statusCode,
+              body: reservation.body,
+            });
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return {
+            kind: 'recover' as const,
+            statusCode: reservation.statusCode,
+            body: reservation.body,
+          };
+        }
+
+        if (reservation.kind === 'recover') {
+          // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
+          // already durably completed a real, fully-synced Statement+Pack —
+          // reuse it. No re-extraction, no LLM call, no
+          // performUploadAndAnalyze() call at all. Round-5: only ever reached
+          // for a genuinely SINGLE-statement attempt — a multi-section one
+          // either replays its recorded receipt above or is compensated and
+          // redone, never reconstructed from one id as "fallback".
+          const body = await buildUploadAndAnalyzeRecoveryResponseBody(
+            reservation.statementId,
+            orgId
+          );
+          if (!body) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementId,
+            statusCode: 201,
+            responseJson: JSON.stringify(body),
+          });
+          if (!finalized) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return { kind: 'recover' as const, statusCode: 201, body };
+        }
+
+        if (reservation.kind !== 'owner') {
+          if (reservation.kind === 'replay') {
+            logFinanceEvent('statement.smartUpload.idempotent_replay', {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+            });
+          }
+          return reservation;
+        }
+
+        let result: { statusCode: number; body: Record<string, unknown> };
+        try {
+          result = await performUploadAndAnalyze();
+        } catch (error) {
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload-and-analyze threw');
+          }
+          // No complete response exists for a thrown attempt — record the id
+          // set only, so a retry can tell one section (recoverable) from
+          // several (must be compensated and redone).
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds);
+          throw error;
+        }
+
+        if (result.statusCode >= 400) {
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload-and-analyze controlled failure');
+          }
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds);
+          return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+        }
+
+        const finalized = await finalizeIdempotentUpload({
+          reservationId: reservation.reservationId,
+          statementId: primaryStatementId || '',
+          statusCode: result.statusCode,
+          responseJson: JSON.stringify(result.body),
+        });
+        if (!finalized) {
+          // Defensive — should not normally happen. Do NOT return a 2xx on
+          // an unconfirmed finalize. No file cleanup: performUploadAndAnalyze()
+          // DID succeed, so file.path is a real Statement's sourceFilePath.
+          logFinanceError(
+            'statement.smartUpload.finalize_unconfirmed',
+            new Error('finalize UPDATE did not affect the owned reservation row'),
+            {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+              reservationId: reservation.reservationId,
+            }
+          );
+          // THE round-5 fix: persist the COMPLETE response this attempt would
+          // have returned, plus every Statement id it created, so the retry
+          // replays all sections instead of just the first.
+          await failIdempotentUpload(reservation.reservationId, createdStatementIds, {
+            statusCode: result.statusCode,
+            body: result.body,
+          });
+          return { kind: 'finalize_failed' as const };
+        }
+
+        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+      }
+    );
+
+    switch (outcome.kind) {
+      case 'conflict':
+        await cleanupUnpersistedUpload(file.path, 'idempotency key reused with different content');
+        return res.status(409).json({
+          error: 'Idempotency-Key was already used with a different upload',
+          code: 'IDEMPOTENCY_KEY_REUSED',
+        });
+      case 'in_progress':
+        await cleanupUnpersistedUpload(
+          file.path,
+          'genuinely concurrent in-flight upload for this key'
+        );
+        res.setHeader('Retry-After', '5');
+        return res.status(409).json({
+          error: 'Another upload for this Idempotency-Key is already in progress — retry shortly',
+          code: 'UPLOAD_IN_PROGRESS',
+        });
+      case 'schema_missing':
+        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        return res.status(503).json({
+          error:
+            'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',
+          code: 'IDEMPOTENCY_SCHEMA_UNAVAILABLE',
+        });
+      case 'finalize_failed':
+        // FIN-005 Blocker 1: on the `recover` path performUploadAndAnalyze()
+        // was NEVER called for this request — file.path is not any
+        // Statement's sourceFilePath — so it is safe (and necessary) to
+        // clean it up here, unlike the genuine-fresh-success case.
+        if (outcome.recovered) {
+          await cleanupUnpersistedUpload(file.path, 'recovery finalize unconfirmed');
+        }
+        return res.status(500).json({
+          error: 'Upload completed but could not be durably confirmed — please retry',
+          code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
+        });
+      case 'replay':
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent replay of a previously completed upload-and-analyze'
+        );
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'recover':
+        // FIN-005 Blocker 1: the CURRENT request's uploaded file was never
+        // persisted as any Statement's source — the recovered Statement
+        // already has its OWN, different, earlier source file — so it is
+        // genuinely unpersisted and cleaned up here, exactly like `replay`.
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent recovery of a previously-completed upload-and-analyze for this key'
+        );
+        res.setHeader('Idempotency-Replayed', 'true');
+        return res.status(outcome.statusCode).json(outcome.body);
+      case 'fresh':
+        return res.status(outcome.statusCode).json(outcome.body);
+      default: {
+        const _exhaustive: never = outcome;
+        throw new Error(`Unreachable idempotency outcome: ${JSON.stringify(_exhaustive)}`);
+      }
+    }
   })
 );
 
