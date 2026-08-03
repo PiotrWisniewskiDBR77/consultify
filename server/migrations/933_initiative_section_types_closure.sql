@@ -43,7 +43,12 @@ BEGIN
     INSERT INTO initiative_section_types
       (id, key, name, name_pl, description, description_pl, category, column_position, default_order, icon, icon_color, icon_bg, component_key, is_system, is_active)
     VALUES
-      ('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', TRUE, TRUE)
+      -- is_system/is_active are INTEGER (0/1) on the live table
+      -- (529_initiative_section_types.sql: `is_system INTEGER DEFAULT 0`,
+      -- `is_active INTEGER DEFAULT 1`) — not boolean. Postgres has no
+      -- implicit boolean->integer cast, so this must use 1, not TRUE
+      -- (strict-schema repair, 2026-08; same value, correct literal type).
+      ('ist-closure', 'closure', 'Closure & Evidence', 'Zamknięcie i dowody', 'Closure request, evidence pack and approval workflow required before DONE', 'Wniosek o zamknięcie, pakiet dowodów i proces zatwierdzenia wymagany przed DONE', 'content', 'left', 145, 'CheckCircle2', 'text-emerald-600', 'from-emerald-600/10 to-teal-600/10', 'closure', 1, 1)
     ON CONFLICT (id) DO NOTHING;
   END IF;
 END $$;

@@ -719,6 +719,22 @@ ON CONFLICT (id) DO NOTHING;
 -- KB ARTICLES (How to use) for newly added tools
 -- ==========================================
 
+-- Guard (strict-schema repair, 2026-08): kb_articles/kb_article_translations
+-- are created by 739_knowledge_base_public_articles.sql, a HIGHER-numbered
+-- file that runs after this one. Same guard pattern as
+-- 559_tools_known_tools_library.sql — see that file's comment for the full
+-- rationale. Additive/idempotent: unchanged behavior wherever the tables
+-- already exist.
+DO $kb_seed_guard$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_articles'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'kb_article_translations'
+  ) THEN
+
 INSERT INTO kb_articles (
   id, category_id, slug, status, is_featured, is_public, view_count, reading_time_minutes,
   thumbnail_url, video_url, video_teaser_url, related_modules, target_audience, created_at
@@ -1473,4 +1489,8 @@ ON CONFLICT (article_id, language) DO UPDATE SET
   summary = EXCLUDED.summary,
   content = EXCLUDED.content,
   video_script = EXCLUDED.video_script;
+
+  END IF;
+END
+$kb_seed_guard$;
 

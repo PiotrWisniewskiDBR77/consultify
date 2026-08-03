@@ -17,9 +17,14 @@ CREATE TABLE IF NOT EXISTS partner_program_runtime (
   last_transition_note TEXT
 );
 
+-- partner_org_id is UUID here (not TEXT) to match partner_organizations.id
+-- (215_partner_portal.sql: `id UUID PRIMARY KEY DEFAULT gen_random_uuid()`)
+-- -- Postgres has no implicit FK type coercion, so a TEXT column here could
+-- never actually create this table (strict-schema repair, 2026-08; same
+-- semantics, correct column type).
 CREATE TABLE IF NOT EXISTS partner_program_ledger (
   id TEXT PRIMARY KEY,
-  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
   entry_type TEXT NOT NULL,
   amount NUMERIC(18, 4) DEFAULT 0 NOT NULL,
   currency TEXT NOT NULL DEFAULT 'EUR',

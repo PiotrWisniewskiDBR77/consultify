@@ -39,6 +39,15 @@ ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS terminated_at TIMESTAMPTZ;
 ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS termination_reason TEXT;
 ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_activity TIMESTAMPTZ;
 
+-- Strict-schema repair (2026-08): this migration's own header documents the
+-- assumed "parity" shape as already having `last_activity_at` (distinct from
+-- `last_activity` added above) — true on demo/staging where
+-- 20260719_baseline_gap.sql had already run, but not guaranteed on a
+-- genuinely fresh DB driven by the strict path alone (that column is only
+-- added by the same giant, later-running baseline_gap file). Guard it here
+-- too so the UPDATE below never 42703s regardless of run order.
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMPTZ;
+
 UPDATE user_sessions
 SET last_activity = COALESCE(last_activity, last_activity_at, last_active_at, created_at)
 WHERE last_activity IS NULL;

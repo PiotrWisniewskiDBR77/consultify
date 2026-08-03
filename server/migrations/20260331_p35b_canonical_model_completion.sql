@@ -22,6 +22,15 @@ CREATE TABLE IF NOT EXISTS conversations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- `conversations` already exists by the time this runs (created earlier by
+-- 073_conversations.sql without a `deleted_at` column), so the CREATE TABLE
+-- IF NOT EXISTS above is a no-op and never actually adds `deleted_at` — the
+-- same "CREATE TABLE IF NOT EXISTS won't add new columns" gotcha the
+-- indexes at the bottom of this file need guarded for (strict-schema
+-- repair, 2026-08; additive, matches the guard pattern already used below
+-- for visibility_scope/access_policy_version/etc.).
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ DEFAULT NULL;
+
 CREATE TABLE IF NOT EXISTS conversation_messages (
     id TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
     conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,

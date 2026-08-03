@@ -77,6 +77,10 @@ create table if not exists "public"."account_deletion_requests" (
     "scheduled_for" text,
     "completed_at" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "account_deletion_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."account_deletion_requests" add column if not exists "scheduled_for" text;
+alter table "public"."account_deletion_requests" add column if not exists "completed_at" text;
+
 
 create table if not exists "public"."adkar_assessments" (
     "id" text not null,
@@ -107,6 +111,12 @@ create table if not exists "public"."admin_approval_requests" (
     "created_at" text default now(),
     "updated_at" text default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "admin_approval_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."admin_approval_requests" add column if not exists "approvers_json" text default '[]'::text;
+alter table "public"."admin_approval_requests" add column if not exists "request_data_json" text default '{}'::text;
+alter table "public"."admin_approval_requests" add column if not exists "completed_at" text;
+alter table "public"."admin_approval_requests" add column if not exists "updated_at" text default now();
+
 
 create table if not exists "public"."admin_approval_workflows" (
     "id" text not null,
@@ -120,6 +130,16 @@ create table if not exists "public"."admin_approval_workflows" (
     "created_at" text default now(),
     "updated_at" text default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "admin_approval_workflows" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."admin_approval_workflows" add column if not exists "name" text;
+alter table "public"."admin_approval_workflows" add column if not exists "description" text;
+alter table "public"."admin_approval_workflows" add column if not exists "resource_type" text;
+alter table "public"."admin_approval_workflows" add column if not exists "trigger_conditions_json" text default '{}'::text;
+alter table "public"."admin_approval_workflows" add column if not exists "approvers_json" text default '[]'::text;
+alter table "public"."admin_approval_workflows" add column if not exists "created_by" text;
+alter table "public"."admin_approval_workflows" add column if not exists "is_active" integer default 1;
+alter table "public"."admin_approval_workflows" add column if not exists "updated_at" text default now();
+
 
 create table if not exists "public"."admin_audit_logs" (
     "id" text not null,
@@ -384,6 +404,27 @@ create table if not exists "public"."ai_audit_logs" (
     "constraints_applied_json" text,
     "correlation_id" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_audit_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_audit_logs" add column if not exists "project_id" text;
+alter table "public"."ai_audit_logs" add column if not exists "action_type" text;
+alter table "public"."ai_audit_logs" add column if not exists "action_description" text;
+alter table "public"."ai_audit_logs" add column if not exists "context_snapshot" text;
+alter table "public"."ai_audit_logs" add column if not exists "data_sources_used" text;
+alter table "public"."ai_audit_logs" add column if not exists "ai_role" text;
+alter table "public"."ai_audit_logs" add column if not exists "policy_level" text;
+alter table "public"."ai_audit_logs" add column if not exists "confidence_level" text default 'MEDIUM'::text;
+alter table "public"."ai_audit_logs" add column if not exists "ai_suggestion" text;
+alter table "public"."ai_audit_logs" add column if not exists "user_decision" text;
+alter table "public"."ai_audit_logs" add column if not exists "user_feedback" text;
+alter table "public"."ai_audit_logs" add column if not exists "ai_project_role" text;
+alter table "public"."ai_audit_logs" add column if not exists "justification" text;
+alter table "public"."ai_audit_logs" add column if not exists "approving_user" text;
+alter table "public"."ai_audit_logs" add column if not exists "regulatory_mode" text;
+alter table "public"."ai_audit_logs" add column if not exists "reasoning_summary" text;
+alter table "public"."ai_audit_logs" add column if not exists "data_used_json" text;
+alter table "public"."ai_audit_logs" add column if not exists "constraints_applied_json" text;
+alter table "public"."ai_audit_logs" add column if not exists "correlation_id" text;
+
 
 create table if not exists "public"."ai_authoring_audit" (
     "id" text not null default (gen_random_uuid())::text,
@@ -490,6 +531,13 @@ create table if not exists "public"."ai_conversations" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_conversations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_conversations" add column if not exists "model" text;
+alter table "public"."ai_conversations" add column if not exists "context_json" text;
+alter table "public"."ai_conversations" add column if not exists "status" text default 'active'::text;
+alter table "public"."ai_conversations" add column if not exists "message_count" integer default 0;
+alter table "public"."ai_conversations" add column if not exists "total_tokens" integer default 0;
+
 
 create table if not exists "public"."ai_cost_alerts_sent" (
     "id" text not null,
@@ -759,6 +807,12 @@ create table if not exists "public"."ai_feature_control" (
     "config_json" text,
     "created_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_feature_control" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_feature_control" add column if not exists "organization_id" text;
+alter table "public"."ai_feature_control" add column if not exists "feature_name" text;
+alter table "public"."ai_feature_control" add column if not exists "config_json" text;
+alter table "public"."ai_feature_control" add column if not exists "created_at" timestamp with time zone default now();
+
 
 create table if not exists "public"."ai_global_strategies" (
     "id" text not null,
@@ -846,6 +900,9 @@ create table if not exists "public"."ai_industry_templates" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_industry_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_industry_templates" add column if not exists "constraints" text;
+
 
 create table if not exists "public"."ai_instruction_suggestions" (
     "id" text not null,
@@ -1106,6 +1163,11 @@ create table if not exists "public"."ai_organization_memory" (
     "embedding" text,
     "created_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_organization_memory" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_organization_memory" add column if not exists "memory_type" text;
+alter table "public"."ai_organization_memory" add column if not exists "content" text;
+alter table "public"."ai_organization_memory" add column if not exists "embedding" text;
+
 
 create table if not exists "public"."ai_organization_settings" (
     "organization_id" text not null,
@@ -1133,6 +1195,11 @@ create table if not exists "public"."ai_partial_responses" (
     "content" text default ''::text,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_partial_responses" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_partial_responses" add column if not exists "conversation_id" text;
+alter table "public"."ai_partial_responses" add column if not exists "partial_content" text;
+alter table "public"."ai_partial_responses" add column if not exists "status" text default 'pending'::text;
+
 
 create table if not exists "public"."ai_pattern_feedback" (
     "id" text not null,
@@ -1230,6 +1297,12 @@ create table if not exists "public"."ai_project_memory" (
     "embedding" text,
     "created_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_project_memory" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_project_memory" add column if not exists "organization_id" text;
+alter table "public"."ai_project_memory" add column if not exists "memory_type" text;
+alter table "public"."ai_project_memory" add column if not exists "content" text;
+alter table "public"."ai_project_memory" add column if not exists "embedding" text;
+
 
 create table if not exists "public"."ai_prompt_blocks" (
     "id" text not null,
@@ -1275,6 +1348,13 @@ create table if not exists "public"."ai_purpose_assignments" (
     "prompt_version" text,
     "policy_version" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_purpose_assignments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_purpose_assignments" add column if not exists "fallback_model_id" text;
+alter table "public"."ai_purpose_assignments" add column if not exists "release_bundle_id" text;
+alter table "public"."ai_purpose_assignments" add column if not exists "prompt_key" text;
+alter table "public"."ai_purpose_assignments" add column if not exists "prompt_version" text;
+alter table "public"."ai_purpose_assignments" add column if not exists "policy_version" text;
+
 
 create table if not exists "public"."ai_purposes" (
     "purpose" text not null,
@@ -1481,6 +1561,13 @@ create table if not exists "public"."ai_usage_logs" (
     "flag_reason" text,
     "error_message" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "ai_usage_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."ai_usage_logs" add column if not exists "estimated_cost_usd" real;
+alter table "public"."ai_usage_logs" add column if not exists "error_class" text;
+alter table "public"."ai_usage_logs" add column if not exists "eval_score" real;
+alter table "public"."ai_usage_logs" add column if not exists "flagged" boolean default false;
+alter table "public"."ai_usage_logs" add column if not exists "flag_reason" text;
+
 
 create table if not exists "public"."ai_user_memory" (
     "id" text not null default (gen_random_uuid())::text,
@@ -1830,6 +1917,9 @@ create table if not exists "public"."assessment_initiative_batches" (
     "report_id" text,
     "run_id" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "assessment_initiative_batches" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."assessment_initiative_batches" add column if not exists "run_id" text;
+
 
 create table if not exists "public"."assessment_initiative_generation_runs" (
     "id" text not null,
@@ -1932,6 +2022,35 @@ create table if not exists "public"."assessment_reports" (
     "counterpoints_json" jsonb default '[]'::jsonb,
     "rejected_reason" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "assessment_reports" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."assessment_reports" add column if not exists "project_id" text;
+alter table "public"."assessment_reports" add column if not exists "name" text;
+alter table "public"."assessment_reports" add column if not exists "status" text default 'DRAFT'::text;
+alter table "public"."assessment_reports" add column if not exists "template_id" text;
+alter table "public"."assessment_reports" add column if not exists "axis_data" text;
+alter table "public"."assessment_reports" add column if not exists "executive_summary" text;
+alter table "public"."assessment_reports" add column if not exists "detailed_analysis" text;
+alter table "public"."assessment_reports" add column if not exists "recommendations" text;
+alter table "public"."assessment_reports" add column if not exists "generated_by" text;
+alter table "public"."assessment_reports" add column if not exists "generation_params" text;
+alter table "public"."assessment_reports" add column if not exists "created_by" text;
+alter table "public"."assessment_reports" add column if not exists "updated_by" text;
+alter table "public"."assessment_reports" add column if not exists "approved_by" text;
+alter table "public"."assessment_reports" add column if not exists "approved_at" timestamp without time zone;
+alter table "public"."assessment_reports" add column if not exists "builder_report_id" text;
+alter table "public"."assessment_reports" add column if not exists "rejected_by" text;
+alter table "public"."assessment_reports" add column if not exists "rejected_at" timestamp without time zone;
+alter table "public"."assessment_reports" add column if not exists "rejection_reason" text;
+alter table "public"."assessment_reports" add column if not exists "utilized_by" text;
+alter table "public"."assessment_reports" add column if not exists "utilized_at" timestamp without time zone;
+alter table "public"."assessment_reports" add column if not exists "utilization_notes" text;
+alter table "public"."assessment_reports" add column if not exists "sponsor_mode" boolean default false;
+alter table "public"."assessment_reports" add column if not exists "insight_source_ids" jsonb default '[]'::jsonb;
+alter table "public"."assessment_reports" add column if not exists "assumptions_json" jsonb default '[]'::jsonb;
+alter table "public"."assessment_reports" add column if not exists "unknowns_json" jsonb default '[]'::jsonb;
+alter table "public"."assessment_reports" add column if not exists "counterpoints_json" jsonb default '[]'::jsonb;
+alter table "public"."assessment_reports" add column if not exists "rejected_reason" text;
+
 
 create table if not exists "public"."assessment_roles" (
     "id" text not null,
@@ -2003,6 +2122,24 @@ create table if not exists "public"."assessments" (
     "assessment_definition_version" text,
     "p28_workbench_v1" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."assessments" add column if not exists "name" text;
+alter table "public"."assessments" add column if not exists "assessment_type" text;
+alter table "public"."assessments" add column if not exists "answers_json" text;
+alter table "public"."assessments" add column if not exists "score_summary" text;
+alter table "public"."assessments" add column if not exists "context_snapshot" text;
+alter table "public"."assessments" add column if not exists "completion_percent" text;
+alter table "public"."assessments" add column if not exists "approved_at" text;
+alter table "public"."assessments" add column if not exists "created_by" text;
+alter table "public"."assessments" add column if not exists "confidence_avg" real default 0;
+alter table "public"."assessments" add column if not exists "current_section_id" text;
+alter table "public"."assessments" add column if not exists "navigation_json" text default '{}'::text;
+alter table "public"."assessments" add column if not exists "review_requested_at" timestamp without time zone;
+alter table "public"."assessments" add column if not exists "report_approved_at" timestamp without time zone;
+alter table "public"."assessments" add column if not exists "updated_by" text;
+alter table "public"."assessments" add column if not exists "assessment_definition_id" text;
+alter table "public"."assessments" add column if not exists "assessment_definition_version" text;
+
 
 create table if not exists "public"."audit_events" (
     "id" text not null,
@@ -2879,6 +3016,11 @@ create table if not exists "public"."communication_plans" (
     "stakeholder_registry_json" text,
     "governance_level" text default 'standard'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "communication_plans" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."communication_plans" add column if not exists "plan_type" text default 'general'::text;
+alter table "public"."communication_plans" add column if not exists "stakeholder_registry_json" text;
+alter table "public"."communication_plans" add column if not exists "governance_level" text default 'standard'::text;
+
 
 create table if not exists "public"."communication_send_log" (
     "id" uuid not null default gen_random_uuid(),
@@ -2954,6 +3096,13 @@ create table if not exists "public"."compliance_settings" (
     "created_at" text,
     "updated_by" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "compliance_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."compliance_settings" add column if not exists "setting_type" text;
+alter table "public"."compliance_settings" add column if not exists "settings_data" text;
+alter table "public"."compliance_settings" add column if not exists "enabled" text;
+alter table "public"."compliance_settings" add column if not exists "created_at" text;
+alter table "public"."compliance_settings" add column if not exists "updated_by" text;
+
 
 create table if not exists "public"."compliance_status" (
     "id" text not null,
@@ -3908,6 +4057,15 @@ create table if not exists "public"."feature_flags" (
     "organization_id" text,
     "variants" text default '[]'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "feature_flags" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."feature_flags" add column if not exists "name" text default ''::text;
+alter table "public"."feature_flags" add column if not exists "flag_type" text default 'boolean'::text;
+alter table "public"."feature_flags" add column if not exists "targeting_rules" text default '[]'::text;
+alter table "public"."feature_flags" add column if not exists "rollout_percentage" real default 0;
+alter table "public"."feature_flags" add column if not exists "environment" text default 'production'::text;
+alter table "public"."feature_flags" add column if not exists "organization_id" text;
+alter table "public"."feature_flags" add column if not exists "variants" text default '[]'::text;
+
 
 create table if not exists "public"."feature_requests" (
     "id" text not null,
@@ -4141,6 +4299,10 @@ create table if not exists "public"."financial_model_validations" (
     "details" text,
     "computed_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "financial_model_validations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."financial_model_validations" add column if not exists "check_code" text;
+alter table "public"."financial_model_validations" add column if not exists "check_name" text;
+
 
 create table if not exists "public"."financial_model_version_diffs" (
     "id" text not null,
@@ -4578,6 +4740,12 @@ create table if not exists "public"."help_events" (
     "step_id" text,
     "route" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "help_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."help_events" add column if not exists "organization_id" text;
+alter table "public"."help_events" add column if not exists "playbook_key" text;
+alter table "public"."help_events" add column if not exists "step_id" text;
+alter table "public"."help_events" add column if not exists "route" text;
+
 
 create table if not exists "public"."help_micro_video_dismissals" (
     "id" text not null default (gen_random_uuid())::text,
@@ -4821,6 +4989,10 @@ create table if not exists "public"."initiative_intangible_assets" (
     "source" text default 'manual'::text,
     "cost_type" text default 'OPEX'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "initiative_intangible_assets" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."initiative_intangible_assets" add column if not exists "source" text default 'manual'::text;
+alter table "public"."initiative_intangible_assets" add column if not exists "cost_type" text default 'OPEX'::text;
+
 
 create table if not exists "public"."initiative_kpi_mappings" (
     "id" text not null default (gen_random_uuid())::text,
@@ -4849,6 +5021,19 @@ create table if not exists "public"."initiative_kpi_mappings" (
     "post_implementation_target_value" double precision,
     "post_implementation_measurement_frequency" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "initiative_kpi_mappings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."initiative_kpi_mappings" add column if not exists "definition_source" text default 'initiative-custom'::text;
+alter table "public"."initiative_kpi_mappings" add column if not exists "observation_phase" text default 'post-implementation'::text;
+alter table "public"."initiative_kpi_mappings" add column if not exists "tracked_in_realization" integer default 0;
+alter table "public"."initiative_kpi_mappings" add column if not exists "tracked_post_implementation" integer default 1;
+alter table "public"."initiative_kpi_mappings" add column if not exists "observation_status" text default 'active'::text;
+alter table "public"."initiative_kpi_mappings" add column if not exists "realization_baseline_value" double precision;
+alter table "public"."initiative_kpi_mappings" add column if not exists "realization_target_value" double precision;
+alter table "public"."initiative_kpi_mappings" add column if not exists "realization_measurement_frequency" text;
+alter table "public"."initiative_kpi_mappings" add column if not exists "post_implementation_baseline_value" double precision;
+alter table "public"."initiative_kpi_mappings" add column if not exists "post_implementation_target_value" double precision;
+alter table "public"."initiative_kpi_mappings" add column if not exists "post_implementation_measurement_frequency" text;
+
 
 create table if not exists "public"."initiative_suggested_changes" (
     "id" text not null,
@@ -4882,6 +5067,10 @@ create table if not exists "public"."initiative_tools" (
     "source" text default 'manual'::text,
     "cost_type" text default 'OPEX'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "initiative_tools" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."initiative_tools" add column if not exists "source" text default 'manual'::text;
+alter table "public"."initiative_tools" add column if not exists "cost_type" text default 'OPEX'::text;
+
 
 create table if not exists "public"."insight_source_baskets" (
     "id" text not null,
@@ -5185,6 +5374,11 @@ create table if not exists "public"."interview_insight_findings" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "interview_insight_findings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."interview_insight_findings" add column if not exists "readback_status" text default 'draft_interpretation'::text;
+alter table "public"."interview_insight_findings" add column if not exists "readback_summary" text;
+alter table "public"."interview_insight_findings" add column if not exists "readback_updated_at" timestamp without time zone;
+
 
 create table if not exists "public"."interview_insight_handoffs" (
     "id" text not null,
@@ -5594,6 +5788,10 @@ create table if not exists "public"."legal_document_acceptances" (
     "organization_id" text,
     "scope" text default 'USER'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "legal_document_acceptances" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."legal_document_acceptances" add column if not exists "organization_id" text;
+alter table "public"."legal_document_acceptances" add column if not exists "scope" text default 'USER'::text;
+
 
 create table if not exists "public"."legal_documents" (
     "id" text not null,
@@ -5623,6 +5821,19 @@ create table if not exists "public"."legal_documents" (
     "title" text,
     "requires_reaccept_from" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "legal_documents" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."legal_documents" add column if not exists "content_md" text;
+alter table "public"."legal_documents" add column if not exists "doc_type" text;
+alter table "public"."legal_documents" add column if not exists "effective_from" text;
+alter table "public"."legal_documents" add column if not exists "expires_at" text;
+alter table "public"."legal_documents" add column if not exists "is_active" boolean default false;
+alter table "public"."legal_documents" add column if not exists "change_summary" text;
+alter table "public"."legal_documents" add column if not exists "scope_type" text default 'global'::text;
+alter table "public"."legal_documents" add column if not exists "scope_value" text;
+alter table "public"."legal_documents" add column if not exists "previous_version_id" text;
+alter table "public"."legal_documents" add column if not exists "title" text;
+alter table "public"."legal_documents" add column if not exists "requires_reaccept_from" text;
+
 
 create table if not exists "public"."legal_holds" (
     "id" text not null,
@@ -5673,6 +5884,9 @@ create table if not exists "public"."llm_logs" (
     "user_id" text,
     "tokens_used" integer
 );
+-- Strict-schema repair (2026-08, auto-generated): "llm_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."llm_logs" add column if not exists "trace_id" text;
+
 
 create table if not exists "public"."llm_routing_rules" (
     "id" text not null,
@@ -5839,6 +6053,9 @@ create table if not exists "public"."maturity_assessments" (
     "initiatives_count" integer default 0,
     "updated_at" timestamp without time zone
 );
+-- Strict-schema repair (2026-08, auto-generated): "maturity_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."maturity_assessments" add column if not exists "updated_at" timestamp without time zone;
+
 
 create table if not exists "public"."maturity_scores" (
     "id" text not null,
@@ -6120,6 +6337,16 @@ create table if not exists "public"."multi_framework_assessments" (
     "version" integer default 1,
     "updated_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "multi_framework_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."multi_framework_assessments" add column if not exists "framework" text default 'DRD'::text;
+alter table "public"."multi_framework_assessments" add column if not exists "status" text default 'DRAFT'::text;
+alter table "public"."multi_framework_assessments" add column if not exists "created_by" uuid;
+alter table "public"."multi_framework_assessments" add column if not exists "overall_score" numeric(3,2);
+alter table "public"."multi_framework_assessments" add column if not exists "data" jsonb default '{}'::jsonb;
+alter table "public"."multi_framework_assessments" add column if not exists "category_scores" jsonb default '{}'::jsonb;
+alter table "public"."multi_framework_assessments" add column if not exists "version" integer default 1;
+alter table "public"."multi_framework_assessments" add column if not exists "updated_at" timestamp with time zone default now();
+
 
 create table if not exists "public"."multi_framework_initiatives" (
     "id" uuid not null default gen_random_uuid(),
@@ -6483,6 +6710,10 @@ create table if not exists "public"."okr_check_ins" (
     "checked_by" text,
     "created_at" timestamp with time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "okr_check_ins" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."okr_check_ins" add column if not exists "checked_at" timestamp with time zone default now();
+alter table "public"."okr_check_ins" add column if not exists "checked_by" text;
+
 
 create table if not exists "public"."okr_cycles" (
     "id" text not null default (gen_random_uuid())::text,
@@ -7293,6 +7524,9 @@ create table if not exists "public"."partner_resource_downloads" (
     "ip_hash" text,
     "user_agent" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "partner_resource_downloads" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."partner_resource_downloads" add column if not exists "user_agent" text;
+
 
 create table if not exists "public"."partner_resources" (
     "id" uuid not null default gen_random_uuid(),
@@ -7317,6 +7551,14 @@ create table if not exists "public"."partner_resources" (
     "mime_type" text,
     "size_bytes" bigint default 0
 );
+-- Strict-schema repair (2026-08, auto-generated): "partner_resources" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."partner_resources" add column if not exists "version" text default 'v1'::text;
+alter table "public"."partner_resources" add column if not exists "status" text default 'active'::text;
+alter table "public"."partner_resources" add column if not exists "file_key" text;
+alter table "public"."partner_resources" add column if not exists "file_name" text;
+alter table "public"."partner_resources" add column if not exists "mime_type" text;
+alter table "public"."partner_resources" add column if not exists "size_bytes" bigint default 0;
+
 
 create table if not exists "public"."partner_specializations" (
     "id" uuid not null default gen_random_uuid(),
@@ -7546,6 +7788,12 @@ create table if not exists "public"."presentation_templates" (
     "layout_policy_json" text default '{}'::text,
     "source_requirements_json" text default '[]'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "presentation_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."presentation_templates" add column if not exists "template_family" text;
+alter table "public"."presentation_templates" add column if not exists "template_recipe_json" text default '{}'::text;
+alter table "public"."presentation_templates" add column if not exists "layout_policy_json" text default '{}'::text;
+alter table "public"."presentation_templates" add column if not exists "source_requirements_json" text default '[]'::text;
+
 
 create table if not exists "public"."preserved_conversations" (
     "id" text not null,
@@ -8021,6 +8269,9 @@ create table if not exists "public"."report_quality_gates" (
     "is_resolved" boolean default false,
     "checked_at" timestamp without time zone default now()
 );
+-- Strict-schema repair (2026-08, auto-generated): "report_quality_gates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."report_quality_gates" add column if not exists "checked_at" timestamp without time zone default now();
+
 
 create table if not exists "public"."report_snapshots" (
     "id" text not null,
@@ -8357,6 +8608,9 @@ create table if not exists "public"."schema_migrations" (
     "execution_time_ms" integer,
     "status" text not null default 'success'::text
 );
+-- Strict-schema repair (2026-08, auto-generated): "schema_migrations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."schema_migrations" add column if not exists "checksum" text;
+
 
 create table if not exists "public"."scim_conflict_log" (
     "id" text not null,
@@ -8426,6 +8680,9 @@ create table if not exists "public"."security_incidents" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
+-- Strict-schema repair (2026-08, auto-generated): "security_incidents" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."security_incidents" add column if not exists "type" text;
+
 
 create table if not exists "public"."security_policies" (
     "id" text not null,
@@ -8531,6 +8788,13 @@ create table if not exists "public"."spending_alerts" (
     "notify_emails" text,
     "updated_at" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "spending_alerts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."spending_alerts" add column if not exists "type" text;
+alter table "public"."spending_alerts" add column if not exists "threshold_type" text;
+alter table "public"."spending_alerts" add column if not exists "action" text;
+alter table "public"."spending_alerts" add column if not exists "notify_emails" text;
+alter table "public"."spending_alerts" add column if not exists "updated_at" text;
+
 
 create table if not exists "public"."sso_auth_states" (
     "id" text not null default (gen_random_uuid())::text,
@@ -8597,6 +8861,11 @@ create table if not exists "public"."sso_configurations" (
     "is_default" integer default 0,
     "jit_provisioning" integer default 1
 );
+-- Strict-schema repair (2026-08, auto-generated): "sso_configurations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."sso_configurations" add column if not exists "is_enabled" integer default 0;
+alter table "public"."sso_configurations" add column if not exists "is_default" integer default 0;
+alter table "public"."sso_configurations" add column if not exists "jit_provisioning" integer default 1;
+
 
 create table if not exists "public"."sso_login_attempts" (
     "id" text not null,
@@ -8951,6 +9220,27 @@ create table if not exists "public"."system_feedback" (
     "responded_by" text,
     "updated_at" timestamp without time zone
 );
+-- Strict-schema repair (2026-08, auto-generated): "system_feedback" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."system_feedback" add column if not exists "route_path" text;
+alter table "public"."system_feedback" add column if not exists "device_type" text;
+alter table "public"."system_feedback" add column if not exists "screen_size" text;
+alter table "public"."system_feedback" add column if not exists "user_agent_hash" text;
+alter table "public"."system_feedback" add column if not exists "ui_language" text;
+alter table "public"."system_feedback" add column if not exists "ui_theme" text;
+alter table "public"."system_feedback" add column if not exists "workspace_context_json" text;
+alter table "public"."system_feedback" add column if not exists "severity" text default 'NORMAL'::text;
+alter table "public"."system_feedback" add column if not exists "duplicate_of" text;
+alter table "public"."system_feedback" add column if not exists "notification_sent" integer default 0;
+alter table "public"."system_feedback" add column if not exists "user_name" text;
+alter table "public"."system_feedback" add column if not exists "rating" integer;
+alter table "public"."system_feedback" add column if not exists "priority" text default 'medium'::text;
+alter table "public"."system_feedback" add column if not exists "metadata" text;
+alter table "public"."system_feedback" add column if not exists "admin_response" text;
+alter table "public"."system_feedback" add column if not exists "admin_notes" text;
+alter table "public"."system_feedback" add column if not exists "responded_at" timestamp without time zone;
+alter table "public"."system_feedback" add column if not exists "responded_by" text;
+alter table "public"."system_feedback" add column if not exists "updated_at" timestamp without time zone;
+
 
 create table if not exists "public"."system_health_alerts" (
     "id" text not null,
@@ -9490,6 +9780,9 @@ create table if not exists "public"."user_availability" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "settings" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "user_availability" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."user_availability" add column if not exists "settings" text;
+
 
 create table if not exists "public"."user_collaboration_preferences" (
     "user_id" text not null,
@@ -9652,6 +9945,10 @@ create table if not exists "public"."user_settings_history" (
     "setting_key" text,
     "changed_at" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "user_settings_history" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."user_settings_history" add column if not exists "setting_key" text;
+alter table "public"."user_settings_history" add column if not exists "changed_at" text;
+
 
 create table if not exists "public"."user_settings_templates" (
     "id" text not null,
@@ -9666,6 +9963,11 @@ create table if not exists "public"."user_settings_templates" (
     "is_default" text,
     "is_global" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "user_settings_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."user_settings_templates" add column if not exists "settings" text;
+alter table "public"."user_settings_templates" add column if not exists "is_default" text;
+alter table "public"."user_settings_templates" add column if not exists "is_global" text;
+
 
 create table if not exists "public"."user_skills" (
     "id" text not null default (gen_random_uuid())::text,
@@ -9919,6 +10221,16 @@ create table if not exists "public"."webhook_deliveries" (
     "response_time_ms" text,
     "created_at" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "webhook_deliveries" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."webhook_deliveries" add column if not exists "subscription_id" text;
+alter table "public"."webhook_deliveries" add column if not exists "event" text;
+alter table "public"."webhook_deliveries" add column if not exists "status" text;
+alter table "public"."webhook_deliveries" add column if not exists "attempts" text;
+alter table "public"."webhook_deliveries" add column if not exists "response_code" text;
+alter table "public"."webhook_deliveries" add column if not exists "status_code" text;
+alter table "public"."webhook_deliveries" add column if not exists "response_time_ms" text;
+alter table "public"."webhook_deliveries" add column if not exists "created_at" text;
+
 
 create table if not exists "public"."webhook_events" (
     "id" text not null,
@@ -9960,6 +10272,10 @@ create table if not exists "public"."webhook_subscriptions" (
     "events" text,
     "secret_hash" text
 );
+-- Strict-schema repair (2026-08, auto-generated): "webhook_subscriptions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
+alter table "public"."webhook_subscriptions" add column if not exists "events" text;
+alter table "public"."webhook_subscriptions" add column if not exists "secret_hash" text;
+
 
 create table if not exists "public"."white_label_assets" (
     "id" text not null,

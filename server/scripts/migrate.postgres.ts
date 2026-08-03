@@ -93,6 +93,200 @@ function getAllMigrations(dir: string): Migration[] {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Deterministic execution-order contract
+// ---------------------------------------------------------------------------
+// Plain filename sort (the historical behavior) breaks down once two naming
+// schemes coexist in `server/migrations/`:
+//
+//   NUMBERED  000_..., 500_...938_...  — the older, canonical Postgres-native
+//             producers (baseline + incremental schema, zero-padded 3-digit
+//             version prefixes).
+//   DATED     20260101_..., 2026-06-08_... — newer incremental migrations
+//             (YYYYMMDD or YYYY-MM-DD prefixes), added chronologically after
+//             the numbered series was mostly frozen, that ALTER/backfill
+//             tables the numbered migrations create.
+//
+// Lexicographic string sort puts almost all DATED files BEFORE almost all
+// NUMBERED files >= 300, because the character '2' (start of "2026...")
+// sorts before '3'-'9' (start of "300_".."938_"). Concretely: on a fresh DB,
+// the raw filename sort runs all ~269 dated migrations first, then all
+// ~221 numbered 500-938 migrations — even though dated migrations like
+// `20260719_baseline_gap.sql` reference tables (`initiative_budget_items`,
+// `report_builder_templates`, `interview_library_templates`, ...) that only
+// the numbered 500-938 migrations create. That is the actual dependency
+// bug: consumers were scheduled before producers, purely as an artifact of
+// ASCII string comparison, not any real dependency analysis.
+//
+// Fix: classify each migration into an explicit phase and sort within each
+// phase by a phase-appropriate key (numeric version, or calendar date) —
+// NOT a full manual topological sort of ~700+ files, and NOT raw filename
+// sort where that breaks the dependency graph.
+//
+//   Phase 0 — NUMBERED  sorted by numeric version (000 baseline first, then
+//                        500..938 as historical producers), filename as tie
+//                        breaker for duplicate version numbers (e.g. the two
+//                        100_owner_role*.sql files).
+//   Phase 1 — DATED      sorted by calendar date (YYYY, MM, DD), filename as
+//                        tie breaker for same-day migrations.
+//   Phase 2 — LATE       explicit, documented manifest (LATE_PHASE_MANIFEST
+//                        below) of hotfix/backfill/guard migrations that
+//                        must run after BOTH phase 0 and phase 1, because
+//                        they consume objects created by dated migrations
+//                        themselves (date-order alone does not place them
+//                        correctly). Discovered empirically in ETAP 1 of
+//                        STRICT_SCHEMA_REPAIR_REPORT.md by iterating strict
+//                        runs against a fresh container.
+//   Phase 3 — OTHER      anything matching neither pattern (e.g.
+//                        `init-pgvector.sql`) — order-independent, runs
+//                        last, sorted by filename.
+
+const NUMBERED_RE = /^(\d{3})[a-zA-Z]?_/;
+const DATED_RE = /^(\d{4})-?(\d{2})-?(\d{2})[_-]/;
+
+// Filenames that must run after every phase-0 (numbered) and phase-1 (dated)
+// migration. Each entry is a hotfix/backfill/guard whose own date prefix
+// would otherwise place it too early relative to other dated migrations it
+// actually depends on. See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1 for the
+// per-file dependency trace that justifies each entry.
+const LATE_PHASE_MANIFEST: string[] = [];
+const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
+
+// `isSqliteOnlyMigration()` blanket-excludes every numbered migration with
+// version < 500 as "legacy/SQLite-first, superseded by the baseline". That
+// heuristic is correct for most of the <500 range, but a handful of those
+// files are the ONLY producer of a table that later (>=500 or dated)
+// migrations depend on, are already fully Postgres-native (CREATE TABLE IF
+// NOT EXISTS, no SQLite dialect), and do not conflict with anything
+// `000_z_core_baseline.sql` creates. Excluding them entirely — rather than
+// just re-ordering them — left those tables uncreated on a genuinely fresh
+// strict run even after the phase fix above (verified against a live
+// Postgres catalog, not just exit codes). Each entry here is promoted back
+// into the run (still sorted into phase 0 by its own numeric version, so it
+// runs alongside the other historical producers) with a one-line reason.
+// See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1/3 for the full trace.
+const PROMOTED_LEGACY_PRODUCERS: string[] = [
+  // Sole producer of `conversations` / `conversation_messages` for the
+  // strict path (000_z_core_baseline.sql does not create them). Consumed by
+  // 515_team_chat_projects.sql (ALTER ... ADD COLUMN). Already
+  // Postgres-native (gen_random_uuid()::text, NOW(), JSONB, catalog-guarded
+  // DO $$ blocks) — no SQLite idiom, no conflict with baseline.
+  '073_conversations.sql',
+  // Sole producer of `partner_organizations`, `partner_users`,
+  // `partner_certifications`, etc. Consumed by 730_partner_users_uuid_columns.sql,
+  // 778_partner_users_missing_columns.sql, 799_partner_certifications_missing_columns.sql,
+  // 555_partner_resources.sql, 20260719_baseline_gap.sql. Postgres-native
+  // (gen_random_uuid(), no SQLite idiom); no conflicting definition in baseline.
+  '215_partner_portal.sql',
+  // Sole producer of `integrations` / `integration_providers`. Consumed by
+  // 566_sync_hub_guardrails_t086_t008.sql (guarded ALTER via
+  // information_schema check, but needs the table itself to exist first).
+  // Postgres-native, no SQLite idiom, no baseline conflict.
+  '256_integrations_system.sql',
+];
+const PROMOTED_LEGACY_SET = new Set(PROMOTED_LEGACY_PRODUCERS);
+
+// Two kinds of producer/consumer inversion that phase + numeric/date sort
+// alone cannot fix, because they invert relative to their OWN phase's sort
+// key (not just the numbered-vs-dated phase boundary already handled above):
+//
+//   a) A lower-numbered phase-0 file consumes a table only a HIGHER-numbered
+//      phase-0 file creates (e.g. 559 needs 739's kb_categories).
+//   b) A phase-0 (numbered) file consumes a table only a phase-1 (dated)
+//      file creates (e.g. 756_interview_insight_downstream_lineage.sql
+//      needs my_ideas, created by 20260220_my_work_my_ideas.sql).
+//
+// Rather than moving every small consumer, this forces the ONE
+// self-contained producer into phase 0 at a synthetic version, so it runs
+// early alongside the other historical producers. The real filename is
+// untouched; only its sort position changes.
+const EARLY_VERSION_OVERRIDES: Record<string, number> = {
+  // Self-contained (no FK to anything outside kb_*); creates
+  // kb_categories/kb_articles/kb_category_translations/kb_article_translations,
+  // consumed by 559_tools_known_tools_library.sql and
+  // 562_tools_toolsets_speed.sql (both < 739 numerically). Sorted to run
+  // right after 558 / before 559 so both consumers see the tables.
+  '739_knowledge_base_public_articles.sql': 558.5,
+  // Self-contained (no FK at all); sole producer of `my_ideas`, consumed by
+  // 756_interview_insight_downstream_lineage.sql (phase 0). Without this
+  // override it would run in phase 1 (dated), after phase 0 already needed
+  // it. Sorted to run early in phase 0 (before 502, the first "real"
+  // producer in that range) since nothing else needs to precede it.
+  '20260220_my_work_my_ideas.sql': 501.5,
+  // Large ~55-table "prod missing tables" reconciliation dump. All of its
+  // CREATE TABLE statements are self-contained IF NOT EXISTS, and its only
+  // external FK targets (organizations/projects/users/reports/invoices/
+  // webhooks) are already produced by baseline or the 000_zz producer file.
+  // Its number (900) sorted it far too late: 792_admin_sessions_extended_columns.sql
+  // (ALTER, guarded but needs the table) and other consumers in the 790s
+  // need admin_sessions/admin_audit_logs/etc. before then. Sorted to run
+  // right after the 000_zz producer file, before any other 500+ producer.
+  '900_prod_missing_tables_hotfix.sql': 501.6,
+  // Sole producer of `permission_requests`. Consumed by
+  // 795_permission_requests_missing_columns.sql (phase 0, numbered).
+  // Self-contained (only FK to organizations/users, both baseline).
+  '20260101_add_profile_fields_and_permission_requests.sql': 501.7,
+  // Sole producer of `financial_statement_packs`. Consumed by
+  // 915_finance_aggregate_scope.sql (phase 0). Also ALTERs `financial_models`
+  // (produced by 571_financial_modeling_t054.sql), so it cannot move all the
+  // way to the front — sorted to run right after 571 instead.
+  '20260316_financial_statement_packs.sql': 571.5,
+  // Sole producer of `initiative_candidates`. Consumed by
+  // 932_initiative_candidate_acceptance_receipt.sql (phase 0). No FK at all.
+  '20260627_initiative_candidates.sql': 501.8,
+  // Sole producer of interview_library_template_questions.answer_type (+
+  // several sibling columns) and interview_library_template_versions.
+  // Consumed by 20260703_interview_question_consultant_grade_rewrite.sql
+  // (dated, but earlier date than this file's own 2026-08-02 name — a
+  // same-phase-1 producer/consumer inversion, not just the numbered/dated
+  // boundary). All statements are `ALTER TABLE IF EXISTS ... ADD COLUMN IF
+  // NOT EXISTS` — safe to run early EXCEPT that "IF EXISTS" on the target
+  // table means running it before interview_library_template_questions
+  // exists would silently no-op and mark this migration 'success' forever,
+  // never actually adding the columns. Sorted to run right after
+  // 727_beta_missing_tables.sql (which creates that table), not all the way
+  // to the front.
+  '20260802_int001_template_publication_versions.sql': 727.5,
+};
+
+function phaseAndKeyFor(m: Migration): { phase: number; key: string } {
+  const f = m.filename;
+  if (LATE_PHASE_SET.has(f)) {
+    return { phase: 2, key: f };
+  }
+  if (Object.prototype.hasOwnProperty.call(EARLY_VERSION_OVERRIDES, f)) {
+    const version = EARLY_VERSION_OVERRIDES[f];
+    const paddedInt = String(Math.trunc(version)).padStart(6, '0');
+    const fraction = version % 1 !== 0 ? String(version).split('.')[1] : '0';
+    return { phase: 0, key: `${paddedInt}.${fraction}_${f}` };
+  }
+  const numbered = f.match(NUMBERED_RE);
+  if (numbered) {
+    const version = Number.parseInt(numbered[1], 10);
+    const paddedInt = String(Math.trunc(version)).padStart(6, '0');
+    const fraction = version % 1 !== 0 ? String(version).split('.')[1] : '0';
+    return { phase: 0, key: `${paddedInt}.${fraction}_${f}` };
+  }
+  const dated = f.match(DATED_RE);
+  if (dated) {
+    const [, y, mo, d] = dated;
+    return { phase: 1, key: `${y}${mo}${d}_${f}` };
+  }
+  return { phase: 3, key: f };
+}
+
+function compareMigrationOrder(a: Migration, b: Migration): number {
+  const pa = phaseAndKeyFor(a);
+  const pb = phaseAndKeyFor(b);
+  if (pa.phase !== pb.phase) return pa.phase - pb.phase;
+  if (pa.key === pb.key) return 0;
+  return pa.key < pb.key ? -1 : 1;
+}
+
+function sortMigrationsDeterministically(migrations: Migration[]): Migration[] {
+  return [...migrations].sort(compareMigrationOrder);
+}
+
 function isSqliteOnlyMigration(m: Migration): boolean {
   const f = m.filename.toLowerCase();
   const versionNum = Number.parseInt(m.version, 10);
@@ -278,12 +472,23 @@ async function main() {
     await ensureSchemaMigrationsTable(pool);
     const applied = await getApplied(pool);
 
-    const all = getAllMigrations(migrationsDir)
-      .filter((m) => (only.size ? only.has(m.filename) : true))
-      // NOTE: allow explicit `--only` to run even legacy (<500) migrations.
-      .filter((m) => (only.size ? true : !isSqliteOnlyMigration(m)));
+    const all = sortMigrationsDeterministically(
+      getAllMigrations(migrationsDir)
+        .filter((m) => (only.size ? only.has(m.filename) : true))
+        // NOTE: allow explicit `--only` to run even legacy (<500) migrations.
+        // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
+        // specific, verified-safe producer files (see comment above).
+        .filter(
+          (m) =>
+            only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
+        )
+    );
 
-    const filtered = from ? all.filter((m) => m.filename >= from) : all;
+    // `--from` resumes at a specific file's position in the DETERMINISTIC
+    // execution order (not raw filename string comparison, which would no
+    // longer match actual execution order once phases are involved).
+    const fromIndex = from ? all.findIndex((m) => m.filename === from) : -1;
+    const filtered = from ? (fromIndex >= 0 ? all.slice(fromIndex) : all) : all;
 
     const pending = filtered.filter((m) => {
       const a = applied.get(m.filename);

@@ -93,12 +93,26 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'initiatives' AND column_name = 'estimated_roi'
     ) THEN
+        -- Strict-schema repair (2026-08): `expected_roi` was later changed
+        -- TEXT by 903_expected_roi_to_text.sql (an earlier, plain-numbered
+        -- migration this file's own header did not anticipate — it was
+        -- written when both columns were still numeric); `estimated_roi`
+        -- stayed REAL/numeric. A bare COALESCE(expected_roi, estimated_roi)
+        -- can't match text with real. real->text is always safe (explicit
+        -- cast below). text->real is only safe for numeric-looking values,
+        -- so the mirror direction is scoped to rows where expected_roi is
+        -- actually numeric, leaving free-text values in expected_roi alone
+        -- (no behavior change for those rows; they simply don't mirror back
+        -- into the deprecated numeric column, same as before this file
+        -- could run at all).
         UPDATE initiatives
-           SET expected_roi = COALESCE(expected_roi, estimated_roi)
+           SET expected_roi = COALESCE(expected_roi, estimated_roi::text)
          WHERE expected_roi IS NULL AND estimated_roi IS NOT NULL;
         UPDATE initiatives
-           SET estimated_roi = COALESCE(estimated_roi, expected_roi)
-         WHERE estimated_roi IS NULL AND expected_roi IS NOT NULL;
+           SET estimated_roi = COALESCE(estimated_roi, expected_roi::real)
+         WHERE estimated_roi IS NULL
+           AND expected_roi IS NOT NULL
+           AND expected_roi ~ '^-?[0-9]+(\.[0-9]+)?$';
     END IF;
 END $$;
 
