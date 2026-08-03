@@ -672,10 +672,13 @@ export async function recomputeKeyResultScore(
   if (!kr) return 0;
 
   let score = 0;
+  // seq (RES-009) is a deterministic write-order tie-breaker for checked_at
+  // collisions (two check-ins landing on the identical instant) — without
+  // it, "latest" is ambiguous and Postgres may pick either row.
   const latestCheckIn = (await dbGet(
     `SELECT score FROM okr_check_ins
      WHERE key_result_id = ? AND score IS NOT NULL
-     ORDER BY checked_at DESC LIMIT 1`,
+     ORDER BY checked_at DESC, seq DESC LIMIT 1`,
     [keyResultId]
   )) as { score: number | null } | undefined;
   if (latestCheckIn && isNum(latestCheckIn.score)) {
@@ -764,10 +767,12 @@ export async function listCheckIns(
     organizationId,
   ])) as { id: string } | undefined;
   if (!kr) return [];
+  // seq (RES-009): deterministic tie-breaker, see recomputeKeyResultScore's
+  // identical comment — checked_at alone is not a reliable sort key.
   const rows =
     ((await dbAll(
       `SELECT id, key_result_id, confidence, value, score, note, checked_at, checked_by
-       FROM okr_check_ins WHERE key_result_id = ? ORDER BY checked_at DESC`,
+       FROM okr_check_ins WHERE key_result_id = ? ORDER BY checked_at DESC, seq DESC`,
       [keyResultId]
     )) as CheckInRow[] | undefined) ?? [];
   return rows.map(mapCheckInRow);

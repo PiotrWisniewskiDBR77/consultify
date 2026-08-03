@@ -1,0 +1,17 @@
+-- RES-009: deterministic tie-breaker for okr_check_ins ordering.
+--
+-- Both listCheckIns and recomputeKeyResultScore's "latest explicit-score
+-- check-in wins" read order by `checked_at DESC` alone. checked_at is
+-- TIMESTAMPTZ DEFAULT now() — two check-ins written back-to-back (no
+-- deliberate delay between them, e.g. a rapid double-submit or a fast test)
+-- can land on the identical instant, at which point Postgres' ORDER BY has
+-- no defined tie-break and may return either row first. For
+-- recomputeKeyResultScore this is not just a display-order nit — it can
+-- persist the WRONG check-in's score onto the Key Result.
+--
+-- Fix: an additive, monotonically-increasing write-order column. Never used
+-- as a semantic identifier (that stays `id`, a random UUID) — purely a tie-
+-- breaker for `ORDER BY checked_at DESC, seq DESC`. BIGSERIAL backfills
+-- existing rows automatically (idempotent: ADD COLUMN IF NOT EXISTS skips
+-- entirely, sequence and all, if this migration already ran).
+ALTER TABLE okr_check_ins ADD COLUMN IF NOT EXISTS seq BIGSERIAL;
