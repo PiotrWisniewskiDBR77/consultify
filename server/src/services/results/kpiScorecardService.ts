@@ -20,16 +20,24 @@
  * read/write `goals` / `goal_initiative_links` from here, and the routes that
  * expose this service must never fall back to the Initiatives goals API.
  *
- * LAZY DDL: tables are provisioned on first hit (`CREATE TABLE IF NOT EXISTS`)
- * rather than through a migration file, mirroring the D10 OKR tables in
- * `resultsStrategic.routes.ts` — this repo's precedent for exactly this
- * situation (staging/demo/prod all provision on first hit, no separate
- * migration deploy to coordinate).
+ * SCHEMA OWNER: `server/migrations/20260803_res010_kpi_scorecards.sql` is the
+ * ONLY place these two tables are created (additive migration, FK/unique/
+ * indexes, organization_id NOT NULL on both). This module does NOT create or
+ * alter schema in the request path — no lazy DDL, no CREATE/ALTER/DROP here.
+ * If the migration has not run, every query below rejects with the real
+ * Postgres "relation does not exist" error (all calls use `{ fallback: false
+ * }`, so DbPromise never swallows that into a silent empty success) — that
+ * surfaces as a loud 500, correctly read as an environment/deploy problem,
+ * not as "no scorecards yet".
  *
  * PLACEHOLDER STYLE: `?` positional, like every other DbPromise caller in
  * this file's sibling routes (`v8/results.routes.ts`, `resultsStrategic.routes.ts`)
  * — `PostgresDatabase.replacePositionalPlaceholders` rewrites `?` to `$N`
  * before hitting `pg`. Do not mix in literal `$N` here.
+ *
+ * `initiative_kpis.is_on_target` is INTEGER (0/1), not BOOLEAN — matches the
+ * real column added by `565_kpi_time_series_roi_attribution_finance.sql` /
+ * `20260719_baseline_gap.sql`. Compare against `1`, never against `true`.
  *
  * FAIL-CLOSED TENANCY: every read and write is scoped by organizationId in
  * the query itself, never filtered in JS after an unscoped read.
@@ -41,7 +49,7 @@
  * cross-tenant rows. Belt-and-suspenders here: the join columns are also
  * always validated against the caller's org before a write.
  */
-import { all as dbAll, exec as dbExec, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 
 export const RESULTS_SCORECARD_OWNER_DOMAIN = 'results' as const;
 
@@ -75,44 +83,6 @@ export interface KpiScorecardItemRow {
   sortOrder: number;
 }
 
-let scorecardTablesReady = false;
-
-async function ensureScorecardTables(): Promise<void> {
-  if (scorecardTablesReady) return;
-  await dbExec(`
-    CREATE TABLE IF NOT EXISTS kpi_scorecards (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      organization_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      department TEXT,
-      period_label TEXT,
-      period_start DATE,
-      period_end DATE,
-      status TEXT NOT NULL DEFAULT 'active',
-      created_by TEXT,
-      created_at TIMESTAMPTZ DEFAULT now(),
-      updated_at TIMESTAMPTZ DEFAULT now()
-    );
-  `);
-  await dbExec(`
-    CREATE TABLE IF NOT EXISTS kpi_scorecard_items (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      scorecard_id TEXT NOT NULL,
-      organization_id TEXT NOT NULL,
-      kpi_id TEXT NOT NULL,
-      sort_order INTEGER NOT NULL DEFAULT 0,
-      created_at TIMESTAMPTZ DEFAULT now(),
-      UNIQUE (scorecard_id, kpi_id)
-    );
-  `);
-  scorecardTablesReady = true;
-}
-
-/** Test-only: forces the next call to re-run ensureScorecardTables(). */
-export function __resetScorecardTablesReadyForTests(): void {
-  scorecardTablesReady = false;
-}
-
 function toScorecardRow(r: any): KpiScorecardRow {
   return {
     id: r.id,
@@ -132,7 +102,7 @@ function toScorecardRow(r: any): KpiScorecardRow {
 
 const SCORECARD_COUNTS_SQL = `
   SELECT COUNT(i.id) AS kpi_count,
-         COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, false) = true) AS on_target_count
+         COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
     FROM kpi_scorecard_items i
     LEFT JOIN initiative_kpis k ON k.id = i.kpi_id AND k.organization_id = i.organization_id
    WHERE i.scorecard_id = ? AND i.organization_id = ?
@@ -140,12 +110,11 @@ const SCORECARD_COUNTS_SQL = `
 
 /** All scorecards for the org, with KPI/on-target counts. Fail-closed: org-scoped in the query. */
 export async function listScorecards(organizationId: string): Promise<KpiScorecardRow[]> {
-  await ensureScorecardTables();
   const rows = await dbAll<any>(
     `SELECT s.id, s.organization_id, s.name, s.department, s.period_label, s.period_start,
             s.period_end, s.status, s.created_at, s.updated_at,
             COUNT(i.id) AS kpi_count,
-            COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, false) = true) AS on_target_count
+            COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
        FROM kpi_scorecards s
        LEFT JOIN kpi_scorecard_items i ON i.scorecard_id = s.id AND i.organization_id = s.organization_id
        LEFT JOIN initiative_kpis k ON k.id = i.kpi_id AND k.organization_id = s.organization_id
@@ -164,7 +133,6 @@ export async function getScorecard(
   organizationId: string,
   scorecardId: string
 ): Promise<{ id: string; name: string } | null> {
-  await ensureScorecardTables();
   const row = await dbGet<{ id: string; name: string }>(
     `SELECT id, name FROM kpi_scorecards WHERE id = ? AND organization_id = ?`,
     [scorecardId, organizationId],
@@ -182,7 +150,6 @@ export async function getScorecardKpis(
   organizationId: string,
   scorecardId: string
 ): Promise<{ scorecard: { id: string; name: string }; kpis: KpiScorecardItemRow[] } | null> {
-  await ensureScorecardTables();
   const card = await getScorecard(organizationId, scorecardId);
   if (!card) return null;
 
@@ -209,7 +176,7 @@ export async function getScorecardKpis(
       unit: r.unit,
       direction: r.direction,
       progressPercentage: r.progress_percentage,
-      isOnTarget: r.is_on_target,
+      isOnTarget: r.is_on_target == null ? null : Number(r.is_on_target) === 1,
       category: r.category,
       initiativeId: r.initiative_id,
       sortOrder: Number(r.sort_order ?? 0),
@@ -230,7 +197,6 @@ export async function createScorecard(
   organizationId: string,
   data: CreateScorecardInput
 ): Promise<KpiScorecardRow> {
-  await ensureScorecardTables();
   const rows = await dbAll<any>(
     `INSERT INTO kpi_scorecards
        (organization_id, name, department, period_label, period_start, period_end, created_by)
@@ -275,7 +241,6 @@ export async function updateScorecard(
   scorecardId: string,
   data: UpdateScorecardInput
 ): Promise<KpiScorecardRow | null> {
-  await ensureScorecardTables();
   const existing = await getScorecard(organizationId, scorecardId);
   if (!existing) return null;
 
@@ -326,7 +291,6 @@ export async function addKpiToScorecard(
   kpiId: string,
   sortOrder = 0
 ): Promise<void> {
-  await ensureScorecardTables();
   const kpi = await dbGet<{ id: string }>(
     `SELECT id FROM initiative_kpis WHERE id = ? AND organization_id = ?`,
     [kpiId, organizationId],
@@ -348,7 +312,6 @@ export async function removeKpiFromScorecard(
   scorecardId: string,
   kpiId: string
 ): Promise<void> {
-  await ensureScorecardTables();
   await dbRun(
     `DELETE FROM kpi_scorecard_items WHERE scorecard_id = ? AND organization_id = ? AND kpi_id = ?`,
     [scorecardId, organizationId, kpiId],

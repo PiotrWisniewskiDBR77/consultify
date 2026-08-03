@@ -13,8 +13,18 @@
  *   RES10_PG_URL=postgresql://res10:res10@localhost:55432/res10 \
  *     npx vitest run tests/integration/kpiScorecardService.tenant.pg.test.ts --retry=0
  */
+import fs from 'fs';
+import path from 'path';
+
 import { Client } from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// Resolved relative to the repo root (vitest's cwd), same convention
+// server/scripts/migrate.postgres.ts itself uses for --dir.
+const MIGRATION_PATH = path.resolve(
+  process.cwd(),
+  'server/migrations/20260803_res010_kpi_scorecards.sql'
+);
 
 const PG_URL = process.env.RES10_PG_URL;
 const describeIfPg = PG_URL ? describe : describe.skip;
@@ -60,7 +70,9 @@ describeIfPg('RES-10 — kpiScorecardService cross-tenant (real PostgreSQL)', ()
       `DROP TABLE IF EXISTS kpi_scorecard_items, kpi_scorecards, initiative_kpis CASCADE`
     );
     // Minimal slice of the live `initiative_kpis` schema — just the columns
-    // kpiScorecardService reads/joins.
+    // kpiScorecardService reads/joins. `is_on_target` is INTEGER (0/1) here,
+    // matching the real column type (565_kpi_time_series_roi_attribution_finance.sql /
+    // 20260719_baseline_gap.sql), not BOOLEAN.
     await client.query(`
       CREATE TABLE initiative_kpis (
         id TEXT PRIMARY KEY,
@@ -72,16 +84,23 @@ describeIfPg('RES-10 — kpiScorecardService cross-tenant (real PostgreSQL)', ()
         unit TEXT,
         direction TEXT,
         progress_percentage REAL,
-        is_on_target BOOLEAN DEFAULT false,
+        is_on_target INTEGER DEFAULT 0,
         category TEXT,
         initiative_id TEXT
       )`);
     await client.query(
       `INSERT INTO initiative_kpis (id, organization_id, name, is_on_target) VALUES
-         ('kpi-of-A-1', $1, 'A margin', true),
-         ('kpi-of-B-1', $2, 'B margin', true)`,
+         ('kpi-of-A-1', $1, 'A margin', 1),
+         ('kpi-of-B-1', $2, 'B margin', 1)`,
       [ORG_A, ORG_B]
     );
+
+    // kpiScorecardService no longer creates its own tables (RES-10 CTO fix:
+    // schema ownership moves to a real migration, no lazy DDL in the request
+    // path) — apply the actual migration file, so this test proves the real
+    // schema artifact, not a hand-rolled stand-in.
+    const migrationSql = fs.readFileSync(MIGRATION_PATH, 'utf-8');
+    await client.query(migrationSql);
   }, 60_000);
 
   afterAll(async () => {
