@@ -87,6 +87,39 @@ export async function loadLifecycleStatesForOrg(
 }
 
 /**
+ * Point lookup for a single artifact, tenant-scoped. Added for MAT-010's
+ * durability-confirmation poll (Codex final review, Blocker 2): after a
+ * lifecycle transition's fire-and-forget `persistLifecycleState` call, the
+ * route polls THIS function to confirm the row actually reflects the new
+ * status in Postgres before responding.
+ */
+export async function loadLifecycleStateForArtifact(
+  artifactId: string,
+  organizationId: string
+): Promise<DocumentLifecycleState | null> {
+  if (!artifactId || !organizationId) return null;
+  try {
+    const rows = await dbAll<LifecycleRow>(
+      `SELECT artifact_id, organization_id, status,
+              status_changed_at, status_changed_by, status_reason, history_json
+         FROM document_lifecycle_states
+        WHERE artifact_id = $1 AND organization_id = $2
+        LIMIT 1`,
+      [artifactId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rowToState(rows[0]);
+  } catch (err) {
+    logger.warn('[DocumentStudio][LifecycleDao] loadLifecycleStateForArtifact failed', {
+      artifactId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+/**
  * Upsert a lifecycle state. Best-effort; never throws.
  * ON CONFLICT DO UPDATE — one row per (artifact_id, organization_id).
  */

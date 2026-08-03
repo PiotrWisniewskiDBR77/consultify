@@ -21,6 +21,15 @@ import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
+// MAT-010 — canonical artifact lineage. `created` hooks use the `...Safe`
+// variant: lineage recording must never alter this frozen MAT-05/06 flow.
+// Every OTHER event type uses `...Tracked` (Codex review, second round) —
+// see `respondIfLineageLost` below for why those sites CAN'T stay fire-open.
+import {
+  deriveCreatedEventIdempotencyKey,
+  recordLineageEventSafe,
+  recordLineageEventTracked,
+} from '../services/lineage/artifactLineageService.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import {
   buildWorkbookCsv,
@@ -98,7 +107,11 @@ router.get(
   publicWorkbookViewerLimiter,
   asyncHandler(async (req, res) => {
     const row = await queryHelpers.queryOne<Record<string, unknown>>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, created_at, share_expires_at
+      // MAT-010: `organization_id` added to the projection ONLY to scope the
+      // lineage hook below. The public payload is unchanged — `organization_id`
+      // is the first entry in `WORKBOOK_PUBLIC_DENY_FIELDS`, so
+      // `toPublicWorkbookRow()` strips it before the row leaves this process.
+      `SELECT id, organization_id, title, description, schema_json, sheet_count, file_name, created_at, share_expires_at
        FROM generated_workbooks
        WHERE share_token = ? AND (share_expires_at IS NULL OR share_expires_at > CURRENT_TIMESTAMP)`,
       [req.params.token]
@@ -107,6 +120,21 @@ router.get(
       res.status(404).json({ error: 'Shared workbook not found' });
       return;
     }
+
+    // MAT-010 lineage hook (fail-open). This request is UNAUTHENTICATED: the
+    // tenant is derived server-side from the matched row, never from the
+    // request, and there is no actor to attribute (`actorUserId: null`).
+    // Recorded AFTER the row matched, so a revoked/expired/unknown token —
+    // which returned 404 above — never produces a lineage entry.
+    await recordLineageEventSafe({
+      organizationId: String(row.organization_id),
+      artifactKind: 'workbook',
+      sourceRecordId: String(row.id),
+      eventType: 'public_open',
+      actorUserId: null,
+      detail: { via: 'public_share_link' },
+    });
+
     res.json({ data: toPublicWorkbookRow(row) });
   })
 );
@@ -276,11 +304,57 @@ router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
 // In-memory cache for recent workbooks (bounded to 50 entries)
-const workbookCache = new Map<
-  string,
-  { buffer: Buffer; fileName: string; schema: any; createdAt: string }
->();
+//
+// MAT-010 SECURITY FIX (2026-08-02) — TENANT SCOPING.
+// -------------------------------------------------------------------------
+// This cache used to be keyed by workbook id ALONE, with no organization on
+// the entry, and was consulted by `GET /:id/download` and `GET /:id/schema`
+// BEFORE any ownership check. `requireOrgAccess()` only proves the CALLER has
+// a well-formed org — it does not scope the requested RESOURCE. A user in
+// org B who knew or guessed an org A workbook id therefore read org A's
+// cached title, schema and .xlsx bytes. Confirmed by executed test, not by
+// code reading.
+//
+// The fix: every entry now carries its owning `organizationId`, and the ONLY
+// way to read the cache is `getOwnedCachedWorkbook()`, which requires the
+// caller's session org and returns undefined on mismatch. A cross-tenant
+// request therefore falls through to the DB branch, whose
+// `WHERE ... AND organization_id = ?` produces the SAME 404 body as an
+// unknown id — no existence oracle. The legitimate owner's fast path is
+// untouched.
+//
+// Chosen over composite keying (`${org}:${id}`) because the two eviction
+// sites (`workbookCache.delete(id)` after a cell edit and after a restore)
+// stay correct as-is: ids are UUIDs, so at most one entry can ever exist per
+// id, and deleting by id can never strand another tenant's entry.
+interface CachedWorkbook {
+  buffer: Buffer;
+  fileName: string;
+  schema: any;
+  createdAt: string;
+  /** Owning tenant. Required — the cache is never readable without matching it. */
+  organizationId: string;
+}
+const workbookCache = new Map<string, CachedWorkbook>();
 const MAX_CACHE = 50;
+
+/**
+ * The ONLY sanctioned read of `workbookCache`. Grep for this name to audit
+ * every cache-served response: a bare `workbookCache.get(...)` in a request
+ * path is a tenant-isolation defect by construction.
+ *
+ * Returns the entry only when it exists AND belongs to the caller's org.
+ */
+function getOwnedCachedWorkbook(
+  id: string,
+  organizationId: string | null | undefined
+): CachedWorkbook | undefined {
+  if (!organizationId) return undefined;
+  const entry = workbookCache.get(id);
+  if (!entry) return undefined;
+  if (entry.organizationId !== organizationId) return undefined;
+  return entry;
+}
 
 function pruneCache() {
   if (workbookCache.size <= MAX_CACHE) return;
@@ -290,6 +364,36 @@ function pruneCache() {
   while (workbookCache.size > MAX_CACHE) {
     workbookCache.delete(entries.shift()![0]);
   }
+}
+
+/**
+ * MAT-010 (Codex review, second round) — the closing half of the durability
+ * fix. `recordLineageEventTracked` tells the truth about whether an event's
+ * intent survived ANYWHERE (direct write or the durable pending/outbox
+ * fallback). When it did not — a genuine double failure — the calling route
+ * must not report unconditional success (the business mutation already
+ * committed and is NOT rolled back; only the HTTP response is honest about
+ * the audit trail). Returns `true` when the caller should send this 500 and
+ * stop; `false` when the caller should proceed with its normal response.
+ *
+ * Client-retry safety after this 500 is verified per event type at each call
+ * site's own comment, not assumed uniformly — see
+ * `recordLineageEventTracked`'s doc comment in artifactLineageService.ts for
+ * the full reasoning (CAS guards on version/restore/checkpoint; single-column
+ * overwrite, not accumulation, on share_minted; already-idempotent
+ * share_revoked; no persisted side effect on export).
+ */
+function respondIfLineageLost(
+  res: import('express').Response,
+  outcome: { durable: boolean }
+): boolean {
+  if (outcome.durable) return false;
+  res.status(500).json({
+    success: false,
+    error: 'Lineage could not be durably recorded for this operation',
+    code: 'LINEAGE_RECOVERY_REQUIRED',
+  });
+  return true;
 }
 
 // Ensure storage table exists
@@ -406,6 +510,8 @@ async function finalizeGeneratedWorkbook(params: {
     fileName: result.fileName,
     schema: result.schema,
     createdAt: result.generatedAt,
+    // MAT-010 tenant scoping — see `getOwnedCachedWorkbook`.
+    organizationId: user.organizationId,
   });
   pruneCache();
 
@@ -534,6 +640,35 @@ async function finalizeGeneratedWorkbook(params: {
       message: err instanceof Error ? err.message : String(err),
     });
   }
+
+  // MAT-010 lineage hook (fail-open) — head of the lineage chain. Placed in
+  // this SHARED tail so both `/generate` and `/templates/:id/build` are covered
+  // by one insertion, and after the registry attempt above so the canonical
+  // artifact id resolves immediately in the normal case.
+  await recordLineageEventSafe({
+    organizationId: user.organizationId,
+    artifactKind: 'workbook',
+    sourceRecordId: result.id,
+    eventType: 'created',
+    actorUserId: user.id,
+    titleSnapshot: result.schema?.title ?? null,
+    // Deterministic key — closes a real race against the backfill scan's
+    // deterministic-rebuild path (both derive the SAME key for the SAME
+    // artifact), so whichever writes second dedups instead of duplicating.
+    idempotencyKey: deriveCreatedEventIdempotencyKey({
+      artifactKind: 'workbook',
+      sourceRecordId: result.id,
+    }),
+    sourceContext: {
+      source: params.source,
+      projectId: params.projectId ?? null,
+      sourceInitiativeId: params.sourceInitiativeId ?? null,
+      conversationId: params.conversationId ?? null,
+      artifactRunId: params.artifactRunId ?? null,
+      sheetCount: Array.isArray(result.schema?.sheets) ? result.schema.sheets.length : null,
+    },
+    detail: { artifactId },
+  });
 
   return {
     id: result.id,
@@ -877,7 +1012,14 @@ router.post(
     const fileName = `${title.replace(/\s+/g, '_')}.xlsx`;
     const generatedAt = new Date().toISOString();
 
-    workbookCache.set(id, { buffer, fileName, schema, createdAt: generatedAt });
+    workbookCache.set(id, {
+      buffer,
+      fileName,
+      schema,
+      createdAt: generatedAt,
+      // MAT-010 tenant scoping — see `getOwnedCachedWorkbook`.
+      organizationId: user.organizationId,
+    });
     pruneCache();
 
     // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
@@ -941,6 +1083,22 @@ router.post(
       logger.warn('[WorkbookRoutes] Failed to register blank workbook in artifact registry:', err);
     }
 
+    // MAT-010 lineage hook (fail-open) — head of the lineage chain. Runs after
+    // the registry attempt so `canonicalArtifactId` resolves on the first try
+    // in the normal case; the receipt is still created (and the canonical id
+    // backfilled later) when the registry attempt above failed.
+    await recordLineageEventSafe({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'created',
+      actorUserId: user.id,
+      titleSnapshot: title,
+      idempotencyKey: deriveCreatedEventIdempotencyKey({ artifactKind: 'workbook', sourceRecordId: id }),
+      sourceContext: { source: 'workbook_blank_manual', sheetCount: schema.sheets.length },
+      detail: { artifactId },
+    });
+
     res.status(201).json({
       id,
       title,
@@ -975,7 +1133,11 @@ router.get(
     }
 
     const { id } = req.params;
-    const cached = workbookCache.get(id);
+    // MAT-010: tenant-scoped cache read. Before this fix the lookup was
+    // `workbookCache.get(id)` — no org — and served another tenant's .xlsx
+    // bytes on a cache hit. A cross-tenant caller now misses and falls
+    // through to the DB branch below, which 404s identically to an unknown id.
+    const cached = getOwnedCachedWorkbook(id, user.organizationId);
 
     if (cached) {
       res.setHeader(
@@ -983,6 +1145,26 @@ router.get(
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       );
       res.setHeader('Content-Disposition', `attachment; filename="${cached.fileName}"`);
+
+      // MAT-010 lineage hook. Now that the cache entry is proven to belong to
+      // `user.organizationId`, the earlier reason for skipping this branch —
+      // that an export could be filed under the WRONG tenant — no longer
+      // applies, so cache-served downloads are no longer a gap in the
+      // lineage. Recorded before `res.send` for the same reason as the DB
+      // branch: the response is the observable side effect. `...Tracked` +
+      // `respondIfLineageLost` (Codex review, second round): re-running an
+      // export has no persisted side effect to duplicate, so declining
+      // success on a genuine double failure is retry-safe.
+      const exportOutcome = await recordLineageEventTracked({
+        organizationId: user.organizationId,
+        artifactKind: 'workbook',
+        sourceRecordId: id,
+        eventType: 'export',
+        actorUserId: user.id,
+        detail: { format: 'xlsx', fileName: cached.fileName, servedFrom: 'cache' },
+      });
+      if (respondIfLineageLost(res, exportOutcome)) return;
+
       res.send(cached.buffer);
       return;
     }
@@ -1029,6 +1211,26 @@ router.get(
       'Content-Disposition',
       `attachment; filename="${row.file_name || 'workbook.xlsx'}"`
     );
+
+    // MAT-010 lineage hook. This database-backed branch proves ownership via
+    // its `WHERE ... AND organization_id = ?` above.
+    //
+    // HISTORY: this hook was originally attached ONLY here, because the
+    // `workbookCache` fast-path at the top of this handler was keyed by
+    // workbook id alone with no tenant check — recording from it could have
+    // filed an export under the wrong organization. That cache is now
+    // tenant-scoped (`getOwnedCachedWorkbook`), so the fast path carries its
+    // own hook too and cache-served downloads are no longer a lineage gap.
+    const exportOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'export',
+      actorUserId: user.id,
+      detail: { format: 'xlsx', fileName: row.file_name || 'workbook.xlsx' },
+    });
+    if (respondIfLineageLost(res, exportOutcome)) return;
+
     res.send(buffer);
   })
 );
@@ -1092,7 +1294,10 @@ router.get(
 
     const { id } = req.params;
 
-    const cached = workbookCache.get(id);
+    // MAT-010: tenant-scoped cache read (was `workbookCache.get(id)` — no org,
+    // consulted before any ownership check, so org B could read org A's
+    // schema and title). Cross-tenant now misses and 404s via the DB branch.
+    const cached = getOwnedCachedWorkbook(id, user.organizationId);
     if (cached?.schema) {
       res.json({
         id,
@@ -1473,6 +1678,27 @@ router.patch(
     // stored schema" poniżej), zamiast serwować stary, przed-edycją bufor.
     workbookCache.delete(id);
 
+    // MAT-010 lineage hook. Recorded only past the CAS guard above, so a
+    // 409-losing write never appears in the lineage. `...Tracked` +
+    // `respondIfLineageLost` (Codex review, second round): retry-safe because
+    // the CAS guard above rejects a retried PATCH once the mutation has
+    // actually applied (stale `expectedVersion` -> 409, never a double-apply).
+    const versionOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'version',
+      actorUserId: user.id,
+      detail: {
+        version: nextVersion,
+        previousVersion: currentVersion,
+        sheetIndex,
+        rowIndex,
+        columnKey,
+      },
+    });
+    if (respondIfLineageLost(res, versionOutcome)) return;
+
     res.json({
       ok: true,
       sheetIndex,
@@ -1725,6 +1951,19 @@ router.post(
       metadata: { organizationId: user.organizationId, checkpointedFromVersion: currentVersion, newVersion: nextVersion },
     });
 
+    // MAT-010 lineage hook. `...Tracked` + `respondIfLineageLost` (Codex
+    // review, second round): retry-safe, same CAS guard as version/PATCH
+    // above.
+    const checkpointOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'checkpoint',
+      actorUserId: user.id,
+      detail: { version: nextVersion, checkpointedFromVersion: currentVersion },
+    });
+    if (respondIfLineageLost(res, checkpointOutcome)) return;
+
     res.json({ ok: true, version: nextVersion, checkpointedFromVersion: currentVersion });
   })
 );
@@ -1890,6 +2129,24 @@ router.post(
       },
     });
 
+    // MAT-010 lineage hook. Restore is a NEW forward version, and the lineage
+    // reflects that: an appended `restore` event, never a rewrite of the
+    // earlier lineage — same receipt, same artifact id. `...Tracked` +
+    // `respondIfLineageLost` (Codex review, second round): retry-safe, same
+    // CAS guard (`outcome.status === 'conflict'`) as above.
+    const restoreOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'restore',
+      actorUserId: user.id,
+      detail: {
+        version: outcome.newVersion,
+        restoredFromVersion: outcome.restoredFromVersion,
+      },
+    });
+    if (respondIfLineageLost(res, restoreOutcome)) return;
+
     res.json({ ok: true, version: outcome.newVersion, restoredFromVersion: outcome.restoredFromVersion });
   })
 );
@@ -1947,6 +2204,26 @@ router.post(
       metadata: { organizationId: user.organizationId, title: before.title },
     });
 
+    // MAT-010 lineage hook. Only the token HASH is recorded, never the raw
+    // token. `...Tracked` + `respondIfLineageLost` (Codex review, second
+    // round): the business write above is `UPDATE ... SET share_token = ?`,
+    // a single-column overwrite, not an append — a retry mints a NEW token
+    // that REPLACES this one; there is still exactly one valid token
+    // afterward, never an accumulation. The residual cost of declining
+    // success here is the previous (already-minted) token becoming invalid
+    // sooner than expected, not data corruption or an accumulation of live
+    // credentials.
+    const shareOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'share_minted',
+      actorUserId: user.id,
+      titleSnapshot: before.title,
+      detail: { shareTokenHash: hashShareToken(token), expiresAt },
+    });
+    if (respondIfLineageLost(res, shareOutcome)) return;
+
     // `shareUrl` is the FRONTEND page (`SharedWorkbookView`, AppRoutes.tsx)
     // that a human opens; it fetches the JSON API (`/api/workbook/shared/:token`)
     // itself. Relative path — caller (browser) resolves it against its own origin.
@@ -1999,6 +2276,21 @@ router.delete(
       after: { hadShareToken: false },
       metadata: { organizationId: user.organizationId, title: before.title },
     });
+
+    // MAT-010 lineage hook. `...Tracked` + `respondIfLineageLost` (Codex
+    // review, second round): retry-safe — this route's own doc comment
+    // above already establishes it is idempotent (nulling an already-null
+    // token is a no-op), so a retried revoke cannot double-apply anything.
+    const revokeOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'share_revoked',
+      actorUserId: user.id,
+      titleSnapshot: before.title,
+      detail: { hadShareToken: Boolean(before.share_token) },
+    });
+    if (respondIfLineageLost(res, revokeOutcome)) return;
 
     res.json({ revoked: true });
   })
@@ -2076,6 +2368,27 @@ router.get(
       'X-Consultify-Csv-Limitation',
       'CSV covers exactly one sheet; formulas are exported as inert source text (not computed values); styling/formatting/merges/other sheets are not preserved - use the XLSX export for those.'
     );
+
+    // MAT-010 lineage hook. Recorded only once the CSV actually built — a 400
+    // (bad sheetIndex) or 404 above never yields an export event. `...Tracked`
+    // + `respondIfLineageLost` (Codex review, second round): re-running an
+    // export has no persisted side effect to duplicate.
+    const csvExportOutcome = await recordLineageEventTracked({
+      organizationId: user.organizationId,
+      artifactKind: 'workbook',
+      sourceRecordId: id,
+      eventType: 'export',
+      actorUserId: user.id,
+      titleSnapshot: row.title,
+      detail: {
+        format: 'csv',
+        sheetIndex: result.sheetIndex,
+        sheetName: result.sheetName,
+        totalSheets: result.totalSheets,
+      },
+    });
+    if (respondIfLineageLost(res, csvExportOutcome)) return;
+
     res.send(result.csv);
   })
 );

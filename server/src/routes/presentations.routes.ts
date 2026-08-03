@@ -3,6 +3,13 @@
  * Deck generation, templates, brand kits, export.
  */
 
+// MAT-010: top-level import, NOT an inline `require('crypto')`. This file's
+// existing `hashIp()` uses the require() form, which throws
+// "ReferenceError: require is not defined" under the real ESM dev server
+// (found the hard way in MAT-006). That latent bug is out of MAT-010's
+// boundary and is left untouched — but not repeated here.
+import { createHash } from 'crypto';
+
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
@@ -34,6 +41,17 @@ import {
   resolvePresentationTemplateForCreation,
   type TemplateResolveErrorCode,
 } from '../services/materials/creationIntent.js';
+// MAT-010 — canonical artifact lineage. `created` (below) and `public_open`
+// hooks stay on the fail-open `...Safe` variant — see their own comments for
+// why. Every OTHER event type uses `...Tracked` (Codex review, second round)
+// — see `respondIfLineageLost` below for why those sites CAN'T stay fire-open.
+import {
+  deriveCreatedEventIdempotencyKey,
+  cancelPendingLineageIntent,
+  preflightStreamingExportIntent,
+  recordLineageEventSafe,
+  recordLineageEventTracked,
+} from '../services/lineage/artifactLineageService.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import { uploadMedia as uploadOrganizationMedia } from '../services/organizationMediaService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
@@ -289,6 +307,41 @@ function ensureConfidentialityPolicy(
   return true;
 }
 
+/**
+ * MAT-010 (Codex review, second round) — the closing half of the durability
+ * fix. `recordLineageEventTracked` tells the truth about whether an event's
+ * intent survived ANYWHERE (direct write or the durable pending/outbox
+ * fallback). When it did not — a genuine double failure — the calling route
+ * must not report unconditional success (the business mutation already
+ * committed and is NOT rolled back; only the HTTP response is honest about
+ * the audit trail). Returns `true` when the caller should send this 500 and
+ * stop; `false` when the caller should proceed with its normal response.
+ *
+ * Mirrors `workbook.routes.ts`'s function of the same name exactly (same
+ * signature, same body, same status code/shape) — kept as a local copy
+ * rather than a shared import because both route files are independently
+ * frozen modules and this durability fix must not introduce a new
+ * cross-route dependency.
+ *
+ * Client-retry safety after this 500 is verified per event type at each call
+ * site's own comment, not assumed uniformly — see
+ * `recordLineageEventTracked`'s doc comment in artifactLineageService.ts for
+ * the full reasoning (CAS guard on version/restore; single-column overwrite,
+ * not accumulation, on share_minted; already-idempotent share_revoked; no
+ * persisted side effect on export — except the two streamed export sites
+ * where the response is already committed by the time the hook runs, see
+ * their own comments).
+ */
+function respondIfLineageLost(res: Response, outcome: { durable: boolean }): boolean {
+  if (outcome.durable) return false;
+  res.status(500).json({
+    success: false,
+    error: 'Lineage could not be durably recorded for this operation',
+    code: 'LINEAGE_RECOVERY_REQUIRED',
+  });
+  return true;
+}
+
 const EXPORT_MAX_SLIDE_COUNT = 60;
 const EXPORT_MAX_PAYLOAD_BYTES = 50_000_000;
 const pendingDeckAiOperations = new Map<
@@ -362,7 +415,16 @@ async function recordPresentationExportRecord(params: {
   filePath?: string | null;
   fileUrl?: string | null;
   errorCategory?: string | null;
-}) {
+  // Codex review, third round (Blocker A) — when the caller already ran
+  // `preflightStreamingExportIntent` before streaming began (PDF/PNG), these
+  // thread the SAME idempotency key / occurredAt through so this
+  // post-stream call converges on the pre-flight's durable pending row
+  // instead of deriving an unrelated one. Omitted by every other caller —
+  // `recordLineageEventTracked` derives its own when these are undefined,
+  // unchanged from before this round.
+  lineageIdempotencyKey?: string;
+  lineageOccurredAt?: string;
+}): Promise<{ durable: boolean } | null> {
   try {
     await dbRun(
       `INSERT INTO presentation_export_records (id, deck_id, organization_id, user_id, format, status, quality_result, quality_report_json, fidelity_score, file_path, file_url, storage_provider, error_category, completed_at)
@@ -386,6 +448,41 @@ async function recordPresentationExportRecord(params: {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not record export QA', error);
   }
+
+  // MAT-010 lineage hook. Only a genuinely completed export becomes an
+  // `export` lineage entry; failed/blocked attempts stay in
+  // `presentation_export_records` where the QA detail belongs. `...Tracked`
+  // (Codex review, second round): retry-safety verified — re-running an
+  // export has no persisted side effect to duplicate, the file is simply
+  // regenerated. IMPORTANT: this helper has no `res` of its own — it is
+  // called from several route handlers below. Most call the lineage hook
+  // BEFORE their response is sent and can gate on the returned outcome via
+  // `respondIfLineageLost`; the pdf and png success paths call it AFTER
+  // `doc.pipe(res)`/`archive.pipe(res)` have already streamed the response,
+  // so they cannot act on `durable: false` — see their own comments for that
+  // residual gap. Returns `null` (nothing to track/gate) for non-`completed`
+  // statuses, unchanged from the prior behavior.
+  if (params.status === 'completed') {
+    return recordLineageEventTracked({
+      organizationId: params.organizationId,
+      artifactKind: 'presentation',
+      sourceRecordId: params.deckId,
+      eventType: 'export',
+      actorUserId: params.userId || null,
+      detail: { format: params.format },
+      idempotencyKey: params.lineageIdempotencyKey,
+      occurredAt: params.lineageOccurredAt,
+    });
+  }
+  return null;
+}
+
+/**
+ * MAT-010 — share-token digest for the lineage trail. The raw token is never
+ * written to the lineage (mirrors `workbook.routes.ts`'s `hashShareToken`).
+ */
+function hashLineageShareToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex').slice(0, 16);
 }
 
 async function recordPresentationRuntimeEvent(params: {
@@ -657,6 +754,34 @@ async function syncArtifactRegistryForDeck(params: {
       nativeStatus: params.status || 'draft',
     },
   });
+
+  // MAT-010 lineage hook (fail-open) — head of the lineage chain for decks.
+  // Placed inside this shared helper so BOTH deck-creation call sites are
+  // covered by one insertion, and after `registerArtifactOrigin` above so the
+  // canonical artifact id resolves immediately.
+  //
+  // Fail-open matters especially here: both call sites wrap this helper in a
+  // try/catch that DELETES the freshly created deck on throw. A lineage
+  // failure must never trigger that rollback — hence `...Safe`, which never
+  // throws.
+  await recordLineageEventSafe({
+    organizationId: params.organizationId,
+    artifactKind: 'presentation',
+    sourceRecordId: params.deckId,
+    eventType: 'created',
+    actorUserId: params.userId,
+    titleSnapshot: params.title,
+    idempotencyKey: deriveCreatedEventIdempotencyKey({
+      artifactKind: 'presentation',
+      sourceRecordId: params.deckId,
+    }),
+    sourceContext: {
+      source: params.source ?? null,
+      presentationMode: params.presentationMode ?? null,
+      slideCount: params.slideCount ?? null,
+    },
+    detail: { status: params.status || 'draft' },
+  });
 }
 
 function buildAuditEventSummary(row: any): string {
@@ -809,6 +934,19 @@ router.get(
     if (!row) {
       return res.status(404).json({ success: false, error: 'Shared presentation not found' });
     }
+
+    // MAT-010 lineage hook (fail-open). UNAUTHENTICATED request: the tenant
+    // comes from the matched row (server-side), never from the requester, and
+    // there is no actor. Placed after the row matched, so a revoked/expired/
+    // unknown token — 404'd above — never produces a lineage entry.
+    await recordLineageEventSafe({
+      organizationId: String(row.organization_id),
+      artifactKind: 'presentation',
+      sourceRecordId: String(row.id),
+      eventType: 'public_open',
+      actorUserId: null,
+      detail: { via: 'public_share_link' },
+    });
 
     res.json({ success: true, data: toPublicDeckRow(row) });
   })
@@ -1760,7 +1898,15 @@ router.post(
 
     try {
       await ensureDeckLineageSchema();
-      await dbRun(
+      // MAT-010 G8 fix — `dbRun` defaults `fallback: true` (see DbPromise.ts),
+      // which resolves `{ success: false }` on a DB error instead of
+      // rejecting (e.g. an `organization_id` FK violation). Without this
+      // check the route fell through to card inserts, audit, registry sync
+      // and PPTX render for a deck row that was NEVER written, then answered
+      // 201 with an id pointing at nothing. Checking `.success` restores the
+      // existing catch/500 path for a failed create — no new behavior, just
+      // no longer silently trusting an unchecked write.
+      const deckInsertResult = await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
          VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
@@ -1779,6 +1925,11 @@ router.post(
           deckJsonStr,
         ]
       );
+      if (!deckInsertResult?.success) {
+        throw new Error(
+          `presentation_decks insert failed: ${deckInsertResult?.error || 'unknown error'}`
+        );
+      }
 
       if (Array.isArray(slides)) {
         for (let i = 0; i < slides.length; i++) {
@@ -1933,7 +2084,10 @@ router.post(
     const deckJsonStr = JSON.stringify(canonicalDeckDocument);
     try {
       await ensureDeckLineageSchema();
-      await dbRun(
+      // MAT-010 G8 fix — see matching comment in `POST /decks` above: `dbRun`
+      // resolves `{ success: false }` rather than throwing, so an unchecked
+      // insert can answer 201 for a deck row that was never written.
+      const deckInsertResult = await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
          VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
@@ -1949,6 +2103,11 @@ router.post(
           deckJsonStr,
         ]
       );
+      if (!deckInsertResult?.success) {
+        throw new Error(
+          `presentation_decks insert failed: ${deckInsertResult?.error || 'unknown error'}`
+        );
+      }
 
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
@@ -2150,7 +2309,7 @@ router.get(
         status: 'failed',
         errorCategory: 'limit_exceeded',
       }).catch(() => null);
-      await recordPresentationExportRecord({
+      const limitExportOutcome = await recordPresentationExportRecord({
         organizationId: orgId,
         userId,
         deckId: String(req.params.id || ''),
@@ -2159,6 +2318,10 @@ router.get(
         qualityReport: quality.report,
         filePath: deck.export_path,
       });
+      // Response not yet sent — safe to fail-closed on a genuine double
+      // failure. Retry-safety: re-running this export has no persisted side
+      // effect to duplicate (see `recordPresentationExportRecord`'s comment).
+      if (limitExportOutcome && respondIfLineageLost(res, limitExportOutcome)) return;
       return res
         .status(422)
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
@@ -2309,6 +2472,29 @@ router.get(
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
+    // Codex review, third round (Blocker A) — durable pending intent BEFORE
+    // the first byte is sent. `doc.pipe(res)` below streams the response
+    // immediately as pages render; once that starts, headers/body are
+    // committed and a later lineage failure can never become a 5xx (see
+    // the comment at `doc.end()` below). If we cannot even persist the
+    // INTENT to record this export, refuse to start streaming at all —
+    // a plain error response, zero bytes sent — rather than risk total,
+    // silent lineage loss on an export the client will believe succeeded.
+    const pdfExportIntent = await preflightStreamingExportIntent({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      sourceRecordId: String(deckId || ''),
+      actorUserId: userId,
+      detail: { format: 'pdf' },
+    });
+    if (!pdfExportIntent) {
+      return res.status(500).json({
+        success: false,
+        error: 'Lineage could not be durably recorded before export',
+        code: 'LINEAGE_RECOVERY_REQUIRED',
+      });
+    }
+
     const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -2388,6 +2574,18 @@ router.get(
         format: 'pdf',
         status: 'completed',
       }).catch(() => null);
+      // NOTE (Codex review, third round — Blocker A CLOSED): `doc.pipe(res)`
+      // above has ALREADY streamed headers and body to the client by the
+      // time `doc.end()` returns — there is nothing left to un-send, so
+      // this call itself still cannot fail-closed on an export the client
+      // has already received. What changed: `pdfExportIntent` above already
+      // persisted a durable pending row BEFORE any byte was sent (aborting
+      // the whole request if even THAT failed) — so if this direct write
+      // also fails, nothing is lost: the pre-flight row is what the next
+      // scheduled reconciliation tick replays, converging on the SAME
+      // idempotency key. Threading `pdfExportIntent`'s key/occurredAt
+      // through is what makes this finalize idempotent rather than a
+      // second, unrelated attempt.
       await recordPresentationExportRecord({
         organizationId: orgId,
         userId,
@@ -2396,6 +2594,8 @@ router.get(
         status: 'completed',
         qualityReport: quality.report,
         filePath: null,
+        lineageIdempotencyKey: pdfExportIntent.idempotencyKey,
+        lineageOccurredAt: pdfExportIntent.occurredAt,
       });
       sendNotification({
         userId,
@@ -2408,6 +2608,14 @@ router.get(
         actionUrl: `/presentations/builder/${deckId}`,
       }).catch(() => null);
     } catch (exportErr: any) {
+      // Blocker A: the export genuinely failed after the pre-flight intent
+      // was persisted (possibly after partial bytes already streamed) —
+      // cancel it so reconciliation never fabricates a false `completed`
+      // event for a failed export.
+      await cancelPendingLineageIntent({
+        organizationId: orgId,
+        idempotencyKey: pdfExportIntent.idempotencyKey,
+      });
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -2530,6 +2738,26 @@ router.post(
       entityId: String(req.params.id || ''),
       actionUrl: `/presentations/builder/${req.params.id}`,
     }).catch(() => null);
+
+    // MAT-010 lineage hook. Only a token HASH reaches the lineage. `...Tracked`
+    // + `respondIfLineageLost` (Codex review, second round): the business
+    // write above is `UPDATE ... SET share_token = ?`, a single-column
+    // overwrite, not an append — a retry mints a NEW token that REPLACES this
+    // one; there is still exactly one valid token afterward, never an
+    // accumulation. The residual cost of declining success here is the
+    // previous (already-minted) token becoming invalid sooner than expected,
+    // not data corruption or an accumulation of live credentials.
+    const shareOutcome = await recordLineageEventTracked({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      sourceRecordId: String(req.params.id),
+      eventType: 'share_minted',
+      actorUserId: shareUserId,
+      titleSnapshot: before.title,
+      detail: { shareTokenHash: hashLineageShareToken(token), expiresAt },
+    });
+    if (respondIfLineageLost(res, shareOutcome)) return;
+
     res.json({ success: true, data: { shareToken: token, expiresAt } });
   })
 );
@@ -2564,6 +2792,22 @@ router.delete(
       after: { shareToken: null, shareExpiresAt: null },
       metadata: { organizationId: orgId, title: before.title },
     });
+
+    // MAT-010 lineage hook. `...Tracked` + `respondIfLineageLost` (Codex
+    // review, second round): retry-safe — this route is already documented
+    // idempotent above (nulling an already-null token is a no-op), so a
+    // retried revoke cannot double-apply anything.
+    const revokeOutcome = await recordLineageEventTracked({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      sourceRecordId: String(req.params.id),
+      eventType: 'share_revoked',
+      actorUserId: getUserId(req),
+      titleSnapshot: before.title,
+      detail: { hadShareToken: Boolean(before.share_token) },
+    });
+    if (respondIfLineageLost(res, revokeOutcome)) return;
+
     res.json({ success: true, data: { revoked: true } });
   })
 );
@@ -3015,7 +3259,11 @@ router.post(
       'Content-Disposition',
       `attachment; filename="${deck.title || 'presentation'}.html"`
     );
-    await recordPresentationExportRecord({
+    // Response headers are set but the body is not yet sent — safe to
+    // fail-closed on a genuine double failure. Retry-safety: re-running this
+    // export has no persisted side effect to duplicate (see
+    // `recordPresentationExportRecord`'s comment).
+    const htmlExportOutcome = await recordPresentationExportRecord({
       organizationId: orgId,
       userId,
       deckId: String(deckId || ''),
@@ -3024,6 +3272,7 @@ router.post(
       qualityReport: quality.report,
       filePath: null,
     });
+    if (htmlExportOutcome && respondIfLineageLost(res, htmlExportOutcome)) return;
     res.send(htmlBuffer);
   })
 );
@@ -3253,6 +3502,26 @@ router.put(
         clientVersion,
       });
     }
+
+    // MAT-010 lineage hook. Recorded only PAST the compare-and-swap guard
+    // above, so a 409-losing writer never appears in the lineage. This is the
+    // deck's real version-producing route: it snapshots the prior state into
+    // `presentation_deck_versions` and advances `presentation_decks.version`.
+    // `...Tracked` + `respondIfLineageLost` (Codex review, second round):
+    // retry-safe because the CAS guard above rejects a retried PUT once the
+    // mutation has actually applied (stale/behind version -> 409, never a
+    // double-apply).
+    const versionOutcome = await recordLineageEventTracked({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      // `String(...)` because Express types `req.params` values as
+      // `string | string[]` — same idiom as the share routes above.
+      sourceRecordId: String(deckId),
+      eventType: 'version',
+      actorUserId: userId,
+      detail: { version: newVersion, previousVersion: expectedVersion, via: 'autosave' },
+    });
+    if (respondIfLineageLost(res, versionOutcome)) return;
 
     res.json({ success: true, version: newVersion });
   })
@@ -7001,6 +7270,33 @@ router.post(
         .status(422)
         .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
+
+    // Codex review, third round (Blocker A) — same durable pre-flight intent
+    // as the PDF route above, for the same reason: `archive.pipe(res)`
+    // below streams immediately, so once it starts a later lineage failure
+    // can never become a 5xx. If we cannot even persist the intent, refuse
+    // to start streaming — zero bytes sent. NOTE: unlike the PDF route,
+    // this route has no try/catch around generation today (a pre-existing
+    // gap, not introduced here — `recordPresentationExportRecord({status:
+    // 'failed'})` is never called for PNG either) — a mid-generation throw
+    // (e.g. `sharp`) leaves this pending row uncancelled, same class of gap
+    // as the route's pre-existing lack of failure bookkeeping, not a new
+    // regression from this change.
+    const pngExportIntent = await preflightStreamingExportIntent({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      sourceRecordId: String(deckId || ''),
+      actorUserId: userId,
+      detail: { format: 'png' },
+    });
+    if (!pngExportIntent) {
+      return res.status(500).json({
+        success: false,
+        error: 'Lineage could not be durably recorded before export',
+        code: 'LINEAGE_RECOVERY_REQUIRED',
+      });
+    }
+
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;
@@ -7029,6 +7325,13 @@ router.post(
     }
 
     await archive.finalize();
+    // NOTE (Codex review, third round — Blocker A CLOSED): `archive.pipe(res)`
+    // above has ALREADY streamed the zip to the client by the time
+    // `archive.finalize()` resolves, so this call itself still cannot
+    // fail-closed. What changed: `pngExportIntent` above already persisted
+    // a durable pending row BEFORE any byte was sent — threading its
+    // key/occurredAt through makes this finalize converge with that
+    // pre-flight row instead of being a second, unrelated attempt.
     await recordPresentationExportRecord({
       organizationId: orgId,
       userId,
@@ -7037,6 +7340,8 @@ router.post(
       status: 'completed',
       qualityReport: quality.report,
       filePath: null,
+      lineageIdempotencyKey: pngExportIntent.idempotencyKey,
+      lineageOccurredAt: pngExportIntent.occurredAt,
     });
   })
 );
@@ -7307,6 +7612,29 @@ router.post(
         /* non-blocking */
       }
     }
+
+    // MAT-010 lineage hook. Past the CAS guard above, so a 409-losing restore
+    // never appears in the lineage. Restore is a NEW forward version, never a
+    // rewrite of history, and the deck id is unchanged — hence the same
+    // `sourceRecordId` as every other event. `...Tracked` +
+    // `respondIfLineageLost` (Codex review, second round): retry-safe, same
+    // CAS guard (`expectedVersion` check + the UPDATE's own `AND version = ?`)
+    // as above.
+    const restoreOutcome = await recordLineageEventTracked({
+      organizationId: orgId,
+      artifactKind: 'presentation',
+      // `String(...)` — see the autosave hook: Express types `req.params`
+      // values as `string | string[]`.
+      sourceRecordId: String(deckId),
+      eventType: 'restore',
+      actorUserId: userId,
+      detail: {
+        version: newVersion,
+        restoredFromVersion: versionRow.version,
+        versionId: String(versionId),
+      },
+    });
+    if (respondIfLineageLost(res, restoreOutcome)) return;
 
     res.json({ success: true, version: newVersion, restoredFromVersion: versionRow.version });
   })

@@ -87,6 +87,39 @@ export async function loadSnapshotsForOrg(
 }
 
 /**
+ * Point lookup by primary key, tenant-scoped. Added for MAT-010's
+ * durability-confirmation poll (Codex final review, Blocker 2): after
+ * `createDocumentVersionSnapshot`'s fire-and-forget `persistSnapshot` call,
+ * the route polls THIS function to confirm the row actually landed in
+ * Postgres before responding — closing the race where a process killed
+ * between the HTTP response and the async write completing would lose data
+ * the client was told was saved.
+ */
+export async function loadSnapshotById(
+  versionId: string,
+  organizationId: string
+): Promise<DocumentVersionSnapshot | null> {
+  if (!versionId || !organizationId) return null;
+  try {
+    const rows = await dbAll<SnapshotRow>(
+      `SELECT * FROM document_version_snapshots
+         WHERE version_id = $1 AND organization_id = $2
+         LIMIT 1`,
+      [versionId, organizationId]
+    );
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+    return rowToSnapshot(rows[0]);
+  } catch (err) {
+    logger.warn('[DocumentStudio][SnapshotDao] loadSnapshotById failed', {
+      versionId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+/**
  * Append a snapshot. Idempotent — ON CONFLICT (version_id) DO NOTHING
  * so a duplicate write from a retry or race is safe.
  */
