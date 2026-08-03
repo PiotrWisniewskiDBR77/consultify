@@ -55,6 +55,9 @@ import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertie
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -66,39 +69,33 @@ import {
 import { muteNotificationTypeForSession } from '@/utils/notificationMuteSession';
 
 import { Api } from '../../services/api';
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
-import { mergeChangeValue } from '@/services/cardAnalysis';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
+import type { NModeArtifactType } from '../shared/NModeLayout/cardSets';
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
-import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
-import { AutoFitTextarea } from '../shared/AutoFitTextarea';
-import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
-import type { NModeArtifactType } from '../shared/NModeLayout/cardSets';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import type { NModePropertyField, NModeSection } from '../shared/NModeLayout/types';
-// MIGRACJA (D-8): kompozycja kart Notification wyprowadzona z WIĄŻĄCEGO kontraktu
-// karty (cardContract.types.ts) zamiast zahardkodowanego nModeSections — patrz
-// notificationCardContract.ts. Za flagą (default OFF), wzorzec = POC Decision.
-import {
-  NOTIFICATION_CARD_RENDER_IDS,
-  NOTIFICATION_CARD_SPEC,
-} from './notificationCardContract';
-import TeresaMark from '../shared/TeresaMark';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
+import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 // SPEC-N §2.2 — prawy panel artefaktu (Akcje·Wlasciwosci·Powiazania·Komentarze·Historia).
 // Tu w wariancie SKROCONYM: Wlasciwosci + Historia (decyzja wlasciciela K2).
 // `NModePropertiesStrip` przestal byc importowany — 6 pol metadanych przenioslo sie
 // z poziomego paska pod naglowkiem do sekcji Wlasciwosci tego panelu.
 import { PreviewActionBar } from '../shared/PreviewPane/PreviewActionBar';
+import TeresaMark from '../shared/TeresaMark';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '../standard/ArtifactRightPanel';
+// MIGRACJA (D-8): kompozycja kart Notification wyprowadzona z WIĄŻĄCEGO kontraktu
+// karty (cardContract.types.ts) zamiast zahardkodowanego nModeSections — patrz
+// notificationCardContract.ts. Za flagą (default OFF), wzorzec = POC Decision.
+import { NOTIFICATION_CARD_RENDER_IDS, NOTIFICATION_CARD_SPEC } from './notificationCardContract';
 // ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
 // JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
 // `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
@@ -1933,10 +1930,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
 
               {!aiAnalysis && (
                 <div className="py-10 text-center">
-                  <TeresaMark
-                    size={28}
-                    className="mx-auto mb-2 text-c-text-muted"
-                  />
+                  <TeresaMark size={28} className="mx-auto mb-2 text-c-text-muted" />
                   <p className="text-sm text-c-text-muted">
                     {t('myWork.notificationDetail.noDataForAnalysis', 'No data for analysis')}
                   </p>
@@ -2038,10 +2032,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 {/* Checklist items — urgency-aware */}
                 {totalCount === 0 ? (
                   <div className="py-8 text-center">
-                    <CheckSquare
-                      size={24}
-                      className="mx-auto mb-2 text-c-text-muted"
-                    />
+                    <CheckSquare size={24} className="mx-auto mb-2 text-c-text-muted" />
                     <p className="text-xs text-c-text-muted">
                       {readMode
                         ? t('myWork.notificationDetail.noStepsYet', 'No steps yet')
@@ -2076,9 +2067,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         <div
                           key={item.id}
                           className={`group flex items-start gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${urgencyBorder} ${
-                            done
-                              ? 'opacity-50 hover:opacity-70'
-                              : 'hover:bg-c-surface-raised'
+                            done ? 'opacity-50 hover:opacity-70' : 'hover:bg-c-surface-raised'
                           }`}
                         >
                           <button
@@ -2187,10 +2176,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                 </div>
               ) : comments.length === 0 ? (
                 <div className="py-10 text-center">
-                  <MessageCircle
-                    size={28}
-                    className="mx-auto mb-2 text-c-text-muted"
-                  />
+                  <MessageCircle size={28} className="mx-auto mb-2 text-c-text-muted" />
                   <p className="text-sm text-c-text-muted mb-4">
                     {t('myWork.notificationDetail.noCommentsYet', 'No comments yet')}
                   </p>
@@ -2348,17 +2334,13 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                   <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.entries', 'Entries')}
                   </p>
-                  <p className="text-sm font-semibold text-c-text-secondary">
-                    {allEntries.length}
-                  </p>
+                  <p className="text-sm font-semibold text-c-text-secondary">{allEntries.length}</p>
                 </div>
                 <div className="rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
                     {t('myWork.notificationDetail.comments2', 'Comments')}
                   </p>
-                  <p className="text-sm font-semibold text-c-text-secondary">
-                    {comments.length}
-                  </p>
+                  <p className="text-sm font-semibold text-c-text-secondary">{comments.length}</p>
                 </div>
                 <div className="rounded-xl border border-c-border bg-white/70 dark:bg-c-surface/70 px-3 py-2">
                   <p className="text-[11px] uppercase tracking-wide text-c-text-muted">
@@ -2396,12 +2378,8 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                         {entry.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-c-text-secondary">
-                          {entry.description}
-                        </p>
-                        <p className="text-xs text-c-text-muted">
-                          {formatDate(entry.timestamp)}
-                        </p>
+                        <p className="text-sm text-c-text-secondary">{entry.description}</p>
+                        <p className="text-xs text-c-text-muted">{formatDate(entry.timestamp)}</p>
                       </div>
                     </div>
                   ))}
@@ -2534,7 +2512,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       .filter((id) => !NOTIFICATION_CARD_RENDER_IDS.includes(id));
     if (missing.length > 0) {
       // eslint-disable-next-line no-console
-      console.warn('[notificationCardContract] sekcje lewej nawigacji bez wpisu w katalogu:', missing);
+      console.warn(
+        '[notificationCardContract] sekcje lewej nawigacji bez wpisu w katalogu:',
+        missing
+      );
     }
   }, [notificationCardContractEnabled, nModeSections]);
 
@@ -2636,7 +2617,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
       `${isPolish ? 'Waga' : 'Severity'}: ${notification?.severity ?? '—'}`,
       `${isPolish ? 'Kategoria' : 'Category'}: ${notification?.category ?? '—'}`,
       `${isPolish ? 'Wiadomość' : 'Message'}: ${notification?.message ?? '—'}`,
-      notification?.projectName ? `${isPolish ? 'Projekt' : 'Project'}: ${notification.projectName}` : '',
+      notification?.projectName
+        ? `${isPolish ? 'Projekt' : 'Project'}: ${notification.projectName}`
+        : '',
       sourceEntity?.title
         ? `${isPolish ? 'Źródło' : 'Source'}: ${sourceEntity.type ?? ''} — ${sourceEntity.title}`
         : '',
@@ -2930,22 +2913,22 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
         onClick: openPrimarySource,
       }
     : readMode
-    ? undefined
-    : {
-        // Osobny klucz od paskowego `markRead` ("Przeczytane" w pl to status,
-        // nie czasownik — slot primary musi mowic, co sie stanie po kliknieciu).
-        label: {
-          en: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
-          pl: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
-        },
-        icon: MailOpen as React.FC<{ size?: number; className?: string }>,
-        onClick: handleMarkRead,
-        disabled: notification.isRead,
-        title: {
-          en: 'Mark as read (shortcut: M)',
-          pl: 'Oznacz jako przeczytane (skrót: M)',
-        },
-      };
+      ? undefined
+      : {
+          // Osobny klucz od paskowego `markRead` ("Przeczytane" w pl to status,
+          // nie czasownik — slot primary musi mowic, co sie stanie po kliknieciu).
+          label: {
+            en: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
+            pl: t('myWork.notificationDetail.primaryMarkRead', 'Mark as read'),
+          },
+          icon: MailOpen as React.FC<{ size?: number; className?: string }>,
+          onClick: handleMarkRead,
+          disabled: notification.isRead,
+          title: {
+            en: 'Mark as read (shortcut: M)',
+            pl: 'Oznacz jako przeczytane (skrót: M)',
+          },
+        };
 
   // ── SPEC-N §2.2 — prawy panel (wariant SKROCONY wg decyzji K2) ──────────────
   // Wlasciwosci + Historia. BEZ Komentarzy (wiadomosc systemowa nie jest
@@ -2995,28 +2978,30 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
   // pozycje ZMIENIAJĄ STAN („Wycisz to" / „Wycisz podobne" zapisują regułę
   // wyciszenia, „Usuń" kasuje rekord), więc w Podglądzie kebab zostaje z samym
   // czytaniem, które dokłada powłoka („Skopiuj kod obiektu" / „Kopiuj link").
-  const headerOverflowItems = readMode ? [] : [
-    {
-      id: 'mute-this',
-      label: t('myWork.notificationDetail.muteThis', 'Mute this'),
-      icon: BellOff as React.FC<{ size?: number; className?: string }>,
-      onClick: () => void handleMuteThis(),
-    },
-    {
-      id: 'mute-similar',
-      label: t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)'),
-      icon: BellOff as React.FC<{ size?: number; className?: string }>,
-      onClick: () => void handleMuteSimilar(),
-    },
-    {
-      id: 'delete',
-      label: t('myWork.notificationDetail.delete', 'Delete'),
-      icon: Trash2 as React.FC<{ size?: number; className?: string }>,
-      onClick: () => void handleDelete(),
-      title: deleteShortcutTitle,
-      danger: true,
-    },
-  ];
+  const headerOverflowItems = readMode
+    ? []
+    : [
+        {
+          id: 'mute-this',
+          label: t('myWork.notificationDetail.muteThis', 'Mute this'),
+          icon: BellOff as React.FC<{ size?: number; className?: string }>,
+          onClick: () => void handleMuteThis(),
+        },
+        {
+          id: 'mute-similar',
+          label: t('myWork.notificationDetail.muteSimilarType', 'Mute similar (type)'),
+          icon: BellOff as React.FC<{ size?: number; className?: string }>,
+          onClick: () => void handleMuteSimilar(),
+        },
+        {
+          id: 'delete',
+          label: t('myWork.notificationDetail.delete', 'Delete'),
+          icon: Trash2 as React.FC<{ size?: number; className?: string }>,
+          onClick: () => void handleDelete(),
+          title: deleteShortcutTitle,
+          danger: true,
+        },
+      ];
 
   // Zrodla i zalozenia — dlaczego ta karta w ogole powstala. Tresc: „Dlaczego
   // to dostales" (regula silnika) + linia kontekstu z kontraktu. Oba wyszly
@@ -3635,10 +3620,7 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-c-info/10 to-c-info/10 dark:from-c-info/20 dark:to-c-info/20">
-                            <TeresaMark
-                              size={18}
-                              className="text-c-info"
-                            />
+                            <TeresaMark size={18} className="text-c-info" />
                           </div>
                           <span className="text-sm font-semibold text-c-text-secondary">
                             {t('myWork.notificationDetail.aIAnalysis2', 'AI Analysis')}
@@ -3850,7 +3832,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/10 dark:from-amber-500/20 dark:to-amber-500/20">
-                            <MessageCircle size={18} className="text-amber-500 dark:text-amber-400" />
+                            <MessageCircle
+                              size={18}
+                              className="text-amber-500 dark:text-amber-400"
+                            />
                           </div>
                           <span className="text-sm font-semibold text-c-text-secondary">
                             {t('myWork.notificationDetail.comments3', 'Comments')}
@@ -3957,7 +3942,10 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                   </div>
                                   <div>
                                     <p className="text-sm text-c-text-secondary">
-                                      {t('myWork.notificationDetail.markedAsRead', 'Marked as read')}
+                                      {t(
+                                        'myWork.notificationDetail.markedAsRead',
+                                        'Marked as read'
+                                      )}
                                     </p>
                                     <p className="text-xs text-c-text-muted">
                                       {formatDate(notification.readAt)}
@@ -3997,7 +3985,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                           <span className="text-[10px] font-mono text-c-text-muted bg-c-surface-raised/80 px-2 py-0.5 rounded-lg">
                             #notif-{notificationId.slice(0, 8)}
                           </span>
-                          <motion.div animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}>
+                          <motion.div
+                            animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
+                          >
                             <ChevronDown size={18} className="text-c-text-muted" />
                           </motion.div>
                         </div>
@@ -4030,7 +4020,9 @@ export const NotificationDetailView: React.FC<NotificationDetailViewProps> = ({
                                   <div
                                     className={`w-2.5 h-2.5 rounded-full ${severityConfig.color}`}
                                   />
-                                  <span className={`text-sm font-medium ${severityConfig.textColor}`}>
+                                  <span
+                                    className={`text-sm font-medium ${severityConfig.textColor}`}
+                                  >
                                     {isPolish ? severityConfig.label.pl : severityConfig.label.en}
                                   </span>
                                 </div>

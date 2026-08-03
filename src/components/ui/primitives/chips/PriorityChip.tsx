@@ -56,12 +56,7 @@ export interface PriorityChipProps {
   title?: string;
 }
 
-export const PriorityChip: React.FC<PriorityChipProps> = ({
-  level,
-  label,
-  className,
-  title,
-}) => (
+export const PriorityChip: React.FC<PriorityChipProps> = ({ level, label, className, title }) => (
   <span title={title}>
     <PriorityCell
       value={level}

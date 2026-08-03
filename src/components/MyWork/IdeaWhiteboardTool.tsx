@@ -46,12 +46,12 @@ import ReactFlow, {
   useStore as useReactFlowStore,
 } from 'reactflow';
 
+import { SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { isCanvasObjectEditBarEnabled } from '@/utils/canvasObjectEditBarFlag';
-import { SkeletonState } from '@/components/shared/states';
 import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
   isIdeaBottomBarUnifiedEnabled,
@@ -89,20 +89,35 @@ import {
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
 export type { CanvasBgPattern } from './ideaSelectionTypes';
-import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
-import { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
-import { IdeaProposalReview } from './IdeaProposalReview';
-import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
-import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
-import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
-import { useConfirmDialog } from './shared/ConfirmDialog';
-import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
+import {
+  isWhiteboardSessionInPanelEnabled,
+  WHITEBOARD_SESSION_PANEL_SLOT_ID,
+} from '@/utils/whiteboardSessionInPanelFlag';
+
+import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
 import {
   type EdgeArrowDirection,
   nextArrowDirection,
   resolveArrowDirection,
 } from './canvas/edgeArrowMarkers';
-import { WhiteboardEdgeContextMenu } from './whiteboard/WhiteboardEdgeContextMenu';
+import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
+import {
+  buildStyleGroups,
+  ObjectEditBarDock,
+  useObjectEditBarSlot,
+} from './canvas/objectEditBarDock';
+import { MenuListPopover } from './canvas/ObjectEditBarPopovers';
+import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
+import { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
+import { IdeaProposalReview } from './IdeaProposalReview';
+import { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
+import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
+import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
+import { IDEA_PANEL_TOOL_SLOT_ID } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
+import { useConfirmDialog } from './shared/ConfirmDialog';
+import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { whiteboardEdgeTypes, whiteboardNodeTypes } from './whiteboard/nodes/nodeTypes';
 import {
   appendComment as appendNodeComment,
@@ -112,6 +127,7 @@ import {
 } from './whiteboard/nodes/whiteboardNodeComments';
 import { WhiteboardNodeCommentThread } from './whiteboard/nodes/WhiteboardNodeCommentThread';
 import { STICKY_COLORS, useIsDark } from './whiteboard/nodes/whiteboardNodeHelpers';
+import { usePortalSlot } from './whiteboard/usePortalSlot';
 import { useWhiteboardCollab } from './whiteboard/useWhiteboardCollab';
 import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
 import {
@@ -137,6 +153,7 @@ import {
   type WhiteboardSharePolicy,
   type WhiteboardVoteEntry,
 } from './whiteboard/whiteboardContracts';
+import { WhiteboardEdgeContextMenu } from './whiteboard/WhiteboardEdgeContextMenu';
 import { WhiteboardEmptyState } from './whiteboard/WhiteboardEmptyState';
 import { uploadWhiteboardImageWithFallback } from './whiteboard/whiteboardImageUpload';
 import {
@@ -152,26 +169,10 @@ import {
   type WbNodeKind,
 } from './whiteboard/whiteboardProposalPatch';
 import { toggleReaction } from './whiteboard/whiteboardReactions';
-import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
-import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
-import { MenuListPopover } from './canvas/ObjectEditBarPopovers';
-import {
-  buildStyleGroups,
-  ObjectEditBarDock,
-  useObjectEditBarSlot,
-} from './canvas/objectEditBarDock';
 import { WhiteboardSelectionBar } from './whiteboard/WhiteboardSelectionBar';
-import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardSessionPanel } from './whiteboard/WhiteboardSessionPanel';
+import { WhiteboardStyleBar } from './whiteboard/WhiteboardStyleBar';
 import { WhiteboardToolbar } from './whiteboard/WhiteboardToolbar';
-import { usePortalSlot } from './whiteboard/usePortalSlot';
-import { emitIdeaUndoState } from './ideaUndoStateBus';
-import { IDEA_PANEL_TOOL_SLOT_ID } from './panel/ideaPanel6Sections';
-import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
-import {
-  isWhiteboardSessionInPanelEnabled,
-  WHITEBOARD_SESSION_PANEL_SLOT_ID,
-} from '@/utils/whiteboardSessionInPanelFlag';
 
 // ── Node/edge types (extracted to whiteboard/nodes/) ─────────────────────────
 const nodeTypes = whiteboardNodeTypes;
@@ -1044,7 +1045,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.undo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
+  }, [
+    appendActivity,
+    currentUserId,
+    drawingPaths,
+    edges,
+    emitUndoState,
+    isPl,
+    nodes,
+    restoreSnapshot,
+    scenes,
+  ]);
 
   const redoWhiteboard = useCallback(() => {
     const next = redoStackRef.current[0];
@@ -1057,7 +1068,17 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     appendActivity(
       createWhiteboardActivityEntry('history', t('myWork.whiteboard.activity.redo'), currentUserId)
     );
-  }, [appendActivity, currentUserId, drawingPaths, edges, emitUndoState, isPl, nodes, restoreSnapshot, scenes]);
+  }, [
+    appendActivity,
+    currentUserId,
+    drawingPaths,
+    edges,
+    emitUndoState,
+    isPl,
+    nodes,
+    restoreSnapshot,
+    scenes,
+  ]);
   const handleSelectionUpdate = useCallback(
     (nds: Node[]) => {
       const selected = nds.filter((n: Node) => n.selected);
@@ -3070,14 +3091,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   );
 
   // ── Edge context menu (P2-6, rozdz. 08 §4) ────────────────────────────────
-  const handleEdgeContextMenu = useCallback(
-    (e: React.MouseEvent, edgeId: string) => {
-      e.preventDefault();
-      setContextMenuPos(null);
-      setEdgeContextMenu({ edgeId, x: e.clientX, y: e.clientY });
-    },
-    []
-  );
+  const handleEdgeContextMenu = useCallback((e: React.MouseEvent, edgeId: string) => {
+    e.preventDefault();
+    setContextMenuPos(null);
+    setEdgeContextMenu({ edgeId, x: e.clientX, y: e.clientY });
+  }, []);
 
   // edge.set_label — realny handler: aktualizuje data.label, autosave przez
   // onGraphChange, realtime przez collab update_edge.
@@ -3662,12 +3680,42 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               title={t('myWork.whiteboard.selectionBar.align')}
               close={close}
               items={[
-                { id: 'left', label: t('myWork.whiteboard.selection.alignLeft'), icon: AlignLeft, onClick: () => alignNodes('left') },
-                { id: 'center', label: t('myWork.whiteboard.selection.alignCenter'), icon: AlignCenter, onClick: () => alignNodes('center') },
-                { id: 'right', label: t('myWork.whiteboard.selection.alignRight'), icon: AlignRight, onClick: () => alignNodes('right') },
-                { id: 'top', label: t('myWork.whiteboard.selection.alignTop'), icon: ArrowUp, onClick: () => alignNodes('top') },
-                { id: 'middle', label: t('myWork.whiteboard.selection.alignMiddle'), icon: AlignCenter, onClick: () => alignNodes('middle') },
-                { id: 'bottom', label: t('myWork.whiteboard.selection.alignBottom'), icon: ArrowDown, onClick: () => alignNodes('bottom') },
+                {
+                  id: 'left',
+                  label: t('myWork.whiteboard.selection.alignLeft'),
+                  icon: AlignLeft,
+                  onClick: () => alignNodes('left'),
+                },
+                {
+                  id: 'center',
+                  label: t('myWork.whiteboard.selection.alignCenter'),
+                  icon: AlignCenter,
+                  onClick: () => alignNodes('center'),
+                },
+                {
+                  id: 'right',
+                  label: t('myWork.whiteboard.selection.alignRight'),
+                  icon: AlignRight,
+                  onClick: () => alignNodes('right'),
+                },
+                {
+                  id: 'top',
+                  label: t('myWork.whiteboard.selection.alignTop'),
+                  icon: ArrowUp,
+                  onClick: () => alignNodes('top'),
+                },
+                {
+                  id: 'middle',
+                  label: t('myWork.whiteboard.selection.alignMiddle'),
+                  icon: AlignCenter,
+                  onClick: () => alignNodes('middle'),
+                },
+                {
+                  id: 'bottom',
+                  label: t('myWork.whiteboard.selection.alignBottom'),
+                  icon: ArrowDown,
+                  onClick: () => alignNodes('bottom'),
+                },
               ]}
             />
           ),
@@ -3684,8 +3732,18 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               title={t('myWork.whiteboard.selectionBar.distribute')}
               close={close}
               items={[
-                { id: 'dist_h', label: t('myWork.whiteboard.selection.distributeH'), icon: ArrowLeftRight, onClick: () => distributeNodes('horizontal') },
-                { id: 'dist_v', label: t('myWork.whiteboard.selection.distributeV'), icon: ArrowUpDown, onClick: () => distributeNodes('vertical') },
+                {
+                  id: 'dist_h',
+                  label: t('myWork.whiteboard.selection.distributeH'),
+                  icon: ArrowLeftRight,
+                  onClick: () => distributeNodes('horizontal'),
+                },
+                {
+                  id: 'dist_v',
+                  label: t('myWork.whiteboard.selection.distributeV'),
+                  icon: ArrowUpDown,
+                  onClick: () => distributeNodes('vertical'),
+                },
               ]}
             />
           ),
@@ -3873,38 +3931,38 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         )
       ) : (
         <div className="flex-1 relative">
-          {whiteboardSessionInPanelEnabled
-            ? sessionPanelSlot &&
-              createPortal(
-                <WhiteboardSessionPanel
-                  isPl={isPl}
-                  locked={locked}
-                  sessionState={sessionState}
-                  whiteboardModeCopy={whiteboardModeCopy}
-                  activityLog={activityLog}
-                  historyLog={historyLog}
-                  libraryItems={libraryItems}
-                  onCycleGovernance={cycleGovernance}
-                  onRestoreLatestHistory={restoreLatestHistory}
-                  onPhaseChange={handlePhaseChange}
-                  embedded
-                />,
-                sessionPanelSlot
-              )
-            : (
-                <WhiteboardSessionPanel
-                  isPl={isPl}
-                  locked={locked}
-                  sessionState={sessionState}
-                  whiteboardModeCopy={whiteboardModeCopy}
-                  activityLog={activityLog}
-                  historyLog={historyLog}
-                  libraryItems={libraryItems}
-                  onCycleGovernance={cycleGovernance}
-                  onRestoreLatestHistory={restoreLatestHistory}
-                  onPhaseChange={handlePhaseChange}
-                />
-              )}
+          {whiteboardSessionInPanelEnabled ? (
+            sessionPanelSlot &&
+            createPortal(
+              <WhiteboardSessionPanel
+                isPl={isPl}
+                locked={locked}
+                sessionState={sessionState}
+                whiteboardModeCopy={whiteboardModeCopy}
+                activityLog={activityLog}
+                historyLog={historyLog}
+                libraryItems={libraryItems}
+                onCycleGovernance={cycleGovernance}
+                onRestoreLatestHistory={restoreLatestHistory}
+                onPhaseChange={handlePhaseChange}
+                embedded
+              />,
+              sessionPanelSlot
+            )
+          ) : (
+            <WhiteboardSessionPanel
+              isPl={isPl}
+              locked={locked}
+              sessionState={sessionState}
+              whiteboardModeCopy={whiteboardModeCopy}
+              activityLog={activityLog}
+              historyLog={historyLog}
+              libraryItems={libraryItems}
+              onCycleGovernance={cycleGovernance}
+              onRestoreLatestHistory={restoreLatestHistory}
+              onPhaseChange={handlePhaseChange}
+            />
+          )}
 
           {/* Idea lifecycle stage badge */}
           {ideaStage && (
@@ -3946,21 +4004,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           ) : null}
 
           {!wbEditBarDocked && (
-          <WhiteboardSelectionBar
-            isPl={isPl}
-            locked={locked}
-            selectedCount={selectedCount}
-            hasSelectedFrame={hasSelectedFrame}
-            ideaId={ideaId}
-            selectedNodeIds={selectedNodeIds}
-            onAlignNodes={alignNodes}
-            onDistributeNodes={distributeNodes}
-            onGroupSelected={groupSelected}
-            onUngroupSelected={ungroupSelected}
-            onDuplicateSelected={duplicateSelected}
-            onLockSelected={lockSelected}
-            onDeleteSelected={deleteSelected}
-          />
+            <WhiteboardSelectionBar
+              isPl={isPl}
+              locked={locked}
+              selectedCount={selectedCount}
+              hasSelectedFrame={hasSelectedFrame}
+              ideaId={ideaId}
+              selectedNodeIds={selectedNodeIds}
+              onAlignNodes={alignNodes}
+              onDistributeNodes={distributeNodes}
+              onGroupSelected={groupSelected}
+              onUngroupSelected={ungroupSelected}
+              onDuplicateSelected={duplicateSelected}
+              onLockSelected={lockSelected}
+              onDeleteSelected={deleteSelected}
+            />
           )}
 
           <ReactFlowProvider>

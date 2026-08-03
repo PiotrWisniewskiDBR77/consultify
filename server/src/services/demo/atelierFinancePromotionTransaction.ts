@@ -456,7 +456,8 @@ export async function probePinnedTransactionSupport(): Promise<PinnedSupportProb
     if (!database) {
       return {
         supported: false,
-        reason: 'probe answered without current_database(); the active database driver is not PostgreSQL',
+        reason:
+          'probe answered without current_database(); the active database driver is not PostgreSQL',
         database: null,
       };
     }
@@ -610,7 +611,9 @@ export async function identifyNonPostgresSeam(): Promise<NonPgSeamVerdict> {
     }
     considered.push(`the configured database driver is "${type || '<unknown>'}"`);
   } catch (error) {
-    considered.push(`the database configuration could not be inspected (${(error as Error).message})`);
+    considered.push(
+      `the database configuration could not be inspected (${(error as Error).message})`
+    );
   }
 
   return { recognised: false, decidesAlone: false, signal: considered.join('; ') };
@@ -720,7 +723,10 @@ function reportUnavailable(seam: string): { mode: 'unavailable'; reason: string;
  * transaction ends the promotion — it never degrades to a non-atomic path.
  * Every caller of this has issued ZERO promotion UPDATEs.
  */
-function refuse(reason: string, evidence: string): { mode: 'refused'; reason: string; evidence: string } {
+function refuse(
+  reason: string,
+  evidence: string
+): { mode: 'refused'; reason: string; evidence: string } {
   logger.error(
     `[atelier-finance-seed] pinned promotion transaction REFUSED — ${reason}; failing closed with ZERO promotion UPDATEs issued (no compensating fallback on PostgreSQL). Why this is not treated as a test seam: ${evidence}`
   );
@@ -883,10 +889,11 @@ export async function runPinnedPromotionTransaction(
 
   const rolledBack = async (reason: string): Promise<PinnedPromotionOutcome> => {
     const rollbackIssued = await rollback();
-    logger.warn(
-      `[atelier-finance-seed] pinned promotion transaction ROLLED BACK — ${reason}`,
-      { applied, rollbackIssued, backendPid }
-    );
+    logger.warn(`[atelier-finance-seed] pinned promotion transaction ROLLED BACK — ${reason}`, {
+      applied,
+      rollbackIssued,
+      backendPid,
+    });
     return { mode: 'pinned', status: 'rolled-back', reason, applied, rollbackIssued, backendPid };
   };
 

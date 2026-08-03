@@ -25,11 +25,11 @@
  * per-artifact-kind admin read endpoint `GET /api/artifact-lineage/pending`
  * remains available for on-demand inspection).
  */
-import logger from '../utils/Logger.js';
 import {
   backfillMissingLineageReceipts,
   reconcilePendingLineageEvents,
 } from '../services/lineage/artifactLineageService.js';
+import logger from '../utils/Logger.js';
 
 export interface LineageReconciliationTickResult {
   reconcile: { scanned: number; recovered: number; stillFailing: number };

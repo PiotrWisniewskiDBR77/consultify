@@ -157,7 +157,8 @@ function expectNothingClaimsReady(): void {
       for (const [column, value] of Object.entries(row)) {
         const text = String(value ?? '');
         if (column === 'readiness_status' && text === 'ready') offences.push(`${table}.${column}`);
-        if (column === 'pack_readiness_status' && text === 'ready') offences.push(`${table}.${column}`);
+        if (column === 'pack_readiness_status' && text === 'ready')
+          offences.push(`${table}.${column}`);
         if (column === 'validation_status' && text === 'pass') offences.push(`${table}.${column}`);
         if (column === 'status' && (text === 'confirmed' || text === 'APPROVED')) {
           offences.push(`${table}.${column}=${text}`);

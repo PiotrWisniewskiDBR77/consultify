@@ -11,12 +11,13 @@
  * lockstep with `isAreaAnswered` in `drdCompletion.ts` (which is not exported)
  * — do not let the two drift.
  */
-import { DRD_STRUCTURE } from '../../data/drdStructure.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
-import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
 import { v4 as uuidv4 } from 'uuid';
-import { computeDrdCompletion } from './drdCompletion.js';
+
+import { DRD_STRUCTURE } from '../../data/drdStructure.js';
+import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { DrdAreaAnswerState, DrdAreasMap } from './drdCompletion.js';
+import { computeDrdCompletion } from './drdCompletion.js';
 
 export type { DrdAreasMap };
 

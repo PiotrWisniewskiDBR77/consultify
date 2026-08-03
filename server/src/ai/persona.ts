@@ -807,7 +807,9 @@ export function buildPersonaPrompt(
     // O5.4 fix: previously always emphasis.instructions (English), even when
     // lang==='pl' — every other section switched language, this overlay
     // silently didn't. Fall back to English when a screen has no PL variant.
-    parts.push(lang === 'pl' && emphasis.instructionsPl ? emphasis.instructionsPl : emphasis.instructions);
+    parts.push(
+      lang === 'pl' && emphasis.instructionsPl ? emphasis.instructionsPl : emphasis.instructions
+    );
   }
 
   // Output contract goes LAST so it has the highest recency/salience.

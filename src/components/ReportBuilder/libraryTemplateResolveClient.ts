@@ -90,8 +90,10 @@ export async function getReportBuilderTemplateDetails(
     id: String(t.id ?? templateId),
     name: String(t.name ?? t.title ?? ''),
     description: (t.description as string | undefined) ?? null,
-    reportType: (t.report_type as string | undefined) ?? (t.reportType as string | undefined) ?? null,
-    sourceType: (t.source_type as string | undefined) ?? (t.sourceType as string | undefined) ?? null,
+    reportType:
+      (t.report_type as string | undefined) ?? (t.reportType as string | undefined) ?? null,
+    sourceType:
+      (t.source_type as string | undefined) ?? (t.sourceType as string | undefined) ?? null,
     isSystem: Boolean(t.is_system ?? t.isSystem),
   };
 }

@@ -50,8 +50,8 @@ import { useTranslation } from 'react-i18next';
 import { Callout } from '@/components/shared/NModeBlocks';
 import {
   type CardLayout,
-  NModeActionBar,
   type NModeAction,
+  NModeActionBar,
   NModeCardManager,
   type NModePropertyField,
   type NModeSection,
@@ -600,7 +600,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
     });
     return out;
-  }, [questions, isPolish, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+  }, [
+    questions,
+    isPolish,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   const runAiQualityReview = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -1965,7 +1969,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         label: { en: 'Last activity', pl: 'Aktywność' },
         type: 'text',
         value: session?.lastActivityAt
-          ? new Date(session.lastActivityAt).toLocaleDateString(t('interview.workspace.enUs', 'en-US'))
+          ? new Date(session.lastActivityAt).toLocaleDateString(
+              t('interview.workspace.enUs', 'en-US')
+            )
           : '-',
         onChange: () => {},
         readOnly: true,
@@ -2049,10 +2055,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // wiec zero nowych kluczy i18n. Ton mapujemy z realnego lifecycleStatus:
   // sent_back → rejected (czerwien semantyczna), approved/completed → success,
   // in_progress/submitted → info (aktywna praca / w przegladzie), assigned → neutral.
-  const statusToneMap: Record<
-    string,
-    'draft' | 'review' | 'approved' | 'rejected' | 'neutral'
-  > = {
+  const statusToneMap: Record<string, 'draft' | 'review' | 'approved' | 'rejected' | 'neutral'> = {
     assigned: 'neutral',
     in_progress: 'review',
     submitted: 'review',
@@ -2182,10 +2185,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             const isClickable = Boolean(item.id);
             const content = (
               <>
-                <Link2
-                  size={13}
-                  className="mt-0.5 shrink-0 text-c-text-muted"
-                />
+                <Link2 size={13} className="mt-0.5 shrink-0 text-c-text-muted" />
                 <div className="min-w-0">
                   <p
                     className={`text-xs font-medium truncate ${
@@ -2380,7 +2380,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {aiEvaluationUpdatedAt && (
                   <p className="text-xs opacity-80">
                     {t('interview.workspace.lastReview')}{' '}
-                    {new Date(aiEvaluationUpdatedAt).toLocaleString(t('interview.workspace.enUs', 'en-US'))}
+                    {new Date(aiEvaluationUpdatedAt).toLocaleString(
+                      t('interview.workspace.enUs', 'en-US')
+                    )}
                   </p>
                 )}
               </div>
@@ -2584,9 +2586,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                i ta sama sciezka kodu, tylko inna gestosc. */
             <div
               className={
-                presentationMode === 'c'
-                  ? 'h-[420px] -mx-1'
-                  : 'h-[70vh] min-h-[540px] -mx-1'
+                presentationMode === 'c' ? 'h-[420px] -mx-1' : 'h-[70vh] min-h-[540px] -mx-1'
               }
             >
               <InterviewSingleQuestionRuntime
@@ -2794,7 +2794,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 {companyProfile.name ? (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Building2 size={14} className="text-c-text-secondary" /> {companyProfile.name}
+                      <Building2 size={14} className="text-c-text-secondary" />{' '}
+                      {companyProfile.name}
                     </div>
                     {companyProfile.industry && (
                       <div className="text-xs text-c-text-muted">{companyProfile.industry}</div>
@@ -2979,7 +2980,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   ))}
                 </ul>
               ) : (
-                <div className="text-sm text-c-text-secondary">{t('interview.workspace.noFactsYet')}</div>
+                <div className="text-sm text-c-text-secondary">
+                  {t('interview.workspace.noFactsYet')}
+                </div>
               )}
             </div>
           </NModeSectionWrapper>
@@ -3016,7 +3019,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     evidence: { none: true, reason: 'pliki i linki wgrywa czlowiek; AI ich nie tworzy' },
     'company-facts': { none: true, reason: 'twarde dane o firmie — zrodlo zewnetrzne, nie model' },
     stakeholders: { none: true, reason: 'lista osob — dane wprowadzane recznie' },
-    'open-gaps': { none: true, reason: 'luki wynikaja z pytan bez odpowiedzi, liczone, nie pisane' },
+    'open-gaps': {
+      none: true,
+      reason: 'luki wynikaja z pytan bez odpowiedzi, liczone, nie pisane',
+    },
   };
 
   if (import.meta.env.DEV) {

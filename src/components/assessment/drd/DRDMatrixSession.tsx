@@ -243,9 +243,7 @@ export const DRDMatrixSession: React.FC<Props> = ({
                               <span
                                 className="inline-flex items-center gap-0.5 h-5 px-1.5 rounded-full border border-dashed border-blue-500/50 bg-blue-500/10 text-[9px] font-bold text-blue-700 dark:text-blue-200"
                                 title={
-                                  isPl
-                                    ? `Poziom docelowy: ${tgt}`
-                                    : `Target (TO-BE) level: ${tgt}`
+                                  isPl ? `Poziom docelowy: ${tgt}` : `Target (TO-BE) level: ${tgt}`
                                 }
                               >
                                 <Target size={9} />

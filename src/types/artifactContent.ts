@@ -1,12 +1,6 @@
 export const ARTIFACT_CONTENT_ENVELOPE_VERSION = 'artifact-content/v1' as const;
 export const CANONICAL_FORMATS = ['markdown', 'json'] as const;
-export const CANONICAL_KINDS = [
-  'document',
-  'presentation',
-  'sheet',
-  'canvas',
-  'unknown',
-] as const;
+export const CANONICAL_KINDS = ['document', 'presentation', 'sheet', 'canvas', 'unknown'] as const;
 export const MARKDOWN_PROJECTION_STATUSES = ['synced', 'stale', 'failed', 'missing'] as const;
 export const PROJECTION_COMPLETENESS_VALUES = ['full', 'truncated'] as const;
 
@@ -69,20 +63,32 @@ export function isCanonicalFormat(value: unknown): value is CanonicalFormat {
 }
 
 export function isMarkdownProjectionStatus(value: unknown): value is MarkdownProjectionStatus {
-  return typeof value === 'string' && MARKDOWN_PROJECTION_STATUSES.includes(value as MarkdownProjectionStatus);
+  return (
+    typeof value === 'string' &&
+    MARKDOWN_PROJECTION_STATUSES.includes(value as MarkdownProjectionStatus)
+  );
 }
 
 export function validateArtifactContentEnvelope(
-  envelope: Partial<ArtifactContentEnvelopeV1> | LegacyArtifactContentEnvelope | null | undefined,
+  envelope: Partial<ArtifactContentEnvelopeV1> | LegacyArtifactContentEnvelope | null | undefined
 ): ArtifactContentValidationResult {
   const errors: string[] = [];
   if (!envelope) return { valid: false, errors: ['Content envelope is required.'] };
-  if (!isCanonicalFormat(envelope.canonicalFormat)) errors.push('canonicalFormat must be markdown or json.');
-  if (typeof envelope.contentMd !== 'string') errors.push('contentMd must be a string Markdown projection.');
-  if ('envelopeVersion' in envelope && envelope.envelopeVersion !== ARTIFACT_CONTENT_ENVELOPE_VERSION) {
+  if (!isCanonicalFormat(envelope.canonicalFormat))
+    errors.push('canonicalFormat must be markdown or json.');
+  if (typeof envelope.contentMd !== 'string')
+    errors.push('contentMd must be a string Markdown projection.');
+  if (
+    'envelopeVersion' in envelope &&
+    envelope.envelopeVersion !== ARTIFACT_CONTENT_ENVELOPE_VERSION
+  ) {
     errors.push('envelopeVersion must be artifact-content/v1.');
   }
-  if ('projection' in envelope && envelope.projection && !isMarkdownProjectionStatus(envelope.projection.status)) {
+  if (
+    'projection' in envelope &&
+    envelope.projection &&
+    !isMarkdownProjectionStatus(envelope.projection.status)
+  ) {
     errors.push('projection.status must be synced, stale, failed, or missing.');
   }
   return { valid: errors.length === 0, errors };

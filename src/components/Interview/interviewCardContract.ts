@@ -52,11 +52,7 @@
  * (`aiContract` na sekcji) krzyżuje granicę powłoki → osobny pakiet.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,7 +74,14 @@ const OVERVIEW = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 0, idWArtefakcie: 'overview' },
+    {
+      artefakt: 'interview',
+      rola: 'domyslna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 0,
+      idWArtefakcie: 'overview',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -91,12 +94,20 @@ const QUESTIONS = definiujKarteKanoniczna({
   ikona: 'FileText',
   rolaAI: 'asystuje',
   aiPrompt: {
-    szablon: 'Prowadź wywiad pytanie-po-pytaniu w trybie konwersacyjnym; parsuj wypowiedzi do odpowiedzi.',
+    szablon:
+      'Prowadź wywiad pytanie-po-pytaniu w trybie konwersacyjnym; parsuj wypowiedzi do odpowiedzi.',
     kluczPromptu: 'interview.questions-assist', // tryb konwersacyjny (ConversationalPanel, :2899)
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'rdzen', klasa: 'L', kolumna: 'left', kolejnosc: 1, idWArtefakcie: 'questions' },
+    {
+      artefakt: 'interview',
+      rola: 'rdzen',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 1,
+      idWArtefakcie: 'questions',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -113,7 +124,14 @@ const NOTES = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2, idWArtefakcie: 'notes' },
+    {
+      artefakt: 'interview',
+      rola: 'domyslna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 2,
+      idWArtefakcie: 'notes',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -131,7 +149,14 @@ const ATTACHMENTS = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 3, idWArtefakcie: 'evidence' },
+    {
+      artefakt: 'interview',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 3,
+      idWArtefakcie: 'evidence',
+    },
   ],
   statusKanonu: {
     stan: 'rozjazd',
@@ -152,7 +177,14 @@ const COMPANY_FACTS = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 4, idWArtefakcie: 'company-facts' },
+    {
+      artefakt: 'interview',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 4,
+      idWArtefakcie: 'company-facts',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -184,11 +216,19 @@ const OPEN_GAPS = definiujKarteKanoniczna({
   rolaAI: 'systemowa',
   aiPrompt: {
     none: true,
-    reason: 'luki = pytania bez odpowiedzi, liczone przez system, nie pisane (InterviewWorkspace:2906)',
+    reason:
+      'luki = pytania bez odpowiedzi, liczone przez system, nie pisane (InterviewWorkspace:2906)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 6, idWArtefakcie: 'open-gaps' },
+    {
+      artefakt: 'interview',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 6,
+      idWArtefakcie: 'open-gaps',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -211,7 +251,14 @@ const SUMMARY = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'interview', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7, idWArtefakcie: 'summary' },
+    {
+      artefakt: 'interview',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 7,
+      idWArtefakcie: 'summary',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });

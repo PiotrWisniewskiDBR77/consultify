@@ -19,7 +19,10 @@ import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../../middleware/rbac.middleware.js';
-import type { AuthenticatedRequest } from '../../types/index.js';
+import {
+  getReceiptForInitiative,
+  retryDeliveryForOrg,
+} from '../../services/closureDeliveryReceiptService.js';
 import {
   addEvidence,
   approveClosureRequest,
@@ -32,11 +35,8 @@ import {
   returnClosureRequest,
   submitClosureRequest,
 } from '../../services/initiative/initiativeClosureService.js';
+import type { AuthenticatedRequest } from '../../types/index.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import {
-  getReceiptForInitiative,
-  retryDeliveryForOrg,
-} from '../../services/closureDeliveryReceiptService.js';
 
 const router = Router();
 
@@ -57,7 +57,10 @@ function handleClosureError(res: Response, err: unknown): void {
   });
 }
 
-function requireAuth(req: AuthenticatedRequest, res: Response): { orgId: string; actorId: string } | null {
+function requireAuth(
+  req: AuthenticatedRequest,
+  res: Response
+): { orgId: string; actorId: string } | null {
   const orgId = req.user?.organizationId;
   const actorId = req.user?.id;
   if (!orgId || !actorId) {
@@ -131,16 +134,14 @@ router.get('/:id/closure-requests', async (req: AuthenticatedRequest, res: Respo
  * Self-heals approved_pending_transition/transition_failed -> done on read
  * (see initiativeClosureService.reconcileClosureRequestStatus doc comment).
  */
-router.get(
-  '/:id/closure-requests/:requestId',
-  async (req: AuthenticatedRequest, res: Response) => {
-    const auth = requireAuth(req, res);
-    if (!auth) return;
-    try {
-      const { id: initiativeId, requestId } = req.params;
-      await reconcileClosureRequestStatus(auth.orgId, requestId);
-      const row = await queryHelpers.queryOne(
-        `SELECT id, status, approval_status as "approvalStatus", requested_by as "requestedBy",
+router.get('/:id/closure-requests/:requestId', async (req: AuthenticatedRequest, res: Response) => {
+  const auth = requireAuth(req, res);
+  if (!auth) return;
+  try {
+    const { id: initiativeId, requestId } = req.params;
+    await reconcileClosureRequestStatus(auth.orgId, requestId);
+    const row = await queryHelpers.queryOne(
+      `SELECT id, status, approval_status as "approvalStatus", requested_by as "requestedBy",
                 requested_at as "requestedAt", closure_rationale as "closureRationale",
                 outcome_summary as "outcomeSummary", acceptance_criteria_snapshot as "acceptanceCriteriaSnapshot",
                 completed_items_snapshot as "completedItemsSnapshot", exceptions_waivers as "exceptionsWaivers",
@@ -150,26 +151,25 @@ router.get(
                 version, created_at as "createdAt", updated_at as "updatedAt"
          FROM initiative_closure_requests
          WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
-        [requestId, initiativeId, auth.orgId]
-      );
-      if (!row) {
-        res.status(404).json({ error: 'Closure request not found' });
-        return;
-      }
-      const evidence = await queryHelpers.queryAll(
-        `SELECT id, evidence_type as "evidenceType", evidence_ref_id as "evidenceRefId",
+      [requestId, initiativeId, auth.orgId]
+    );
+    if (!row) {
+      res.status(404).json({ error: 'Closure request not found' });
+      return;
+    }
+    const evidence = await queryHelpers.queryAll(
+      `SELECT id, evidence_type as "evidenceType", evidence_ref_id as "evidenceRefId",
                 notes, added_by as "addedBy", added_at as "addedAt"
          FROM initiative_closure_evidence
          WHERE closure_request_id = ? AND organization_id = ?
          ORDER BY added_at ASC`,
-        [requestId, auth.orgId]
-      );
-      res.json({ closureRequest: row, evidence });
-    } catch (err) {
-      handleClosureError(res, err);
-    }
+      [requestId, auth.orgId]
+    );
+    res.json({ closureRequest: row, evidence });
+  } catch (err) {
+    handleClosureError(res, err);
   }
-);
+});
 
 /**
  * GET /api/initiatives/:id/closure-requests/:requestId/readiness
@@ -354,7 +354,10 @@ router.post('/:id/closure-receipt/retry', async (req: AuthenticatedRequest, res:
     await assertActorCanApprove(auth.orgId, initiativeId, auth.actorId);
     const existing = await getReceiptForInitiative(initiativeId, auth.orgId);
     if (!existing) {
-      res.status(404).json({ error: 'No closure receipt for this initiative', code: 'CLOSURE_RECEIPT_NOT_FOUND' });
+      res.status(404).json({
+        error: 'No closure receipt for this initiative',
+        code: 'CLOSURE_RECEIPT_NOT_FOUND',
+      });
       return;
     }
     const receipt = await retryDeliveryForOrg(existing.id, auth.orgId);

@@ -3,12 +3,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  ArtifactPropertiesTable,
-  type ArtifactPropertyRow,
-} from '@/components/standard/ArtifactPropertiesTable';
-import { formatListDate } from '@/utils/listDateFormat';
-
-import {
   type ActionRow,
   type DetailsAction,
   type MetaPill,
@@ -19,7 +13,12 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import {
+  ArtifactPropertiesTable,
+  type ArtifactPropertyRow,
+} from '@/components/standard/ArtifactPropertiesTable';
 import { EntityStatusChip } from '@/components/ui/primitives/chips';
+import { formatListDate } from '@/utils/listDateFormat';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InterviewSessionPreviewBody

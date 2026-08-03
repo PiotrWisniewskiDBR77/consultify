@@ -70,11 +70,7 @@ export interface ManifestSignature {
   value: string;
 }
 
-export type ManifestSignatureFailure =
-  | 'missing'
-  | 'algorithm'
-  | 'key-id'
-  | 'value';
+export type ManifestSignatureFailure = 'missing' | 'algorithm' | 'key-id' | 'value';
 
 /**
  * Read the signing key from the environment.
@@ -173,7 +169,12 @@ export function verifyManifestSignature(
   signature: ManifestSignature | null | undefined,
   key: ManifestSigningKey
 ): { ok: true } | { ok: false; failure: ManifestSignatureFailure } {
-  if (!signature || typeof signature !== 'object' || typeof signature.value !== 'string' || !signature.value) {
+  if (
+    !signature ||
+    typeof signature !== 'object' ||
+    typeof signature.value !== 'string' ||
+    !signature.value
+  ) {
     return { ok: false, failure: 'missing' };
   }
   if (signature.algorithm !== MANIFEST_SIGNATURE_ALGORITHM) {

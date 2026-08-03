@@ -25,21 +25,23 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
-import { critiqueWorkbook } from '../workbookQualityGate.js';
-import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
+import { buildFromTemplate, WORKBOOK_TEMPLATES } from '../templates/index.js';
 import {
   buildThreeScenarioPnLSchema,
   type ScenarioDrivers,
   type ThreeScenarioPnLParams,
 } from '../templates/threeScenarioPnL.js';
-import { WORKBOOK_TEMPLATES, buildFromTemplate } from '../templates/index.js';
+import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
+import { critiqueWorkbook } from '../workbookQualityGate.js';
+import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const PARAMS_A: Required<Pick<ThreeScenarioPnLParams, 'companyName' | 'currencyCode' | 'startYear' | 'baseRevenue'>> & {
+const PARAMS_A: Required<
+  Pick<ThreeScenarioPnLParams, 'companyName' | 'currencyCode' | 'startYear' | 'baseRevenue'>
+> & {
   base: ScenarioDrivers;
   bull: ScenarioDrivers;
   bear: ScenarioDrivers;
@@ -48,9 +50,30 @@ const PARAMS_A: Required<Pick<ThreeScenarioPnLParams, 'companyName' | 'currencyC
   currencyCode: 'PLN',
   startYear: 2026,
   baseRevenue: 1_000_000,
-  base: { revenueGrowthPct: 0.08, cogsPct: 0.55, opexPct: 0.22, daPct: 0.05, interestPct: 0.02, taxRatePct: 0.19 },
-  bull: { revenueGrowthPct: 0.18, cogsPct: 0.5, opexPct: 0.2, daPct: 0.05, interestPct: 0.015, taxRatePct: 0.19 },
-  bear: { revenueGrowthPct: 0.0, cogsPct: 0.62, opexPct: 0.26, daPct: 0.05, interestPct: 0.03, taxRatePct: 0.19 },
+  base: {
+    revenueGrowthPct: 0.08,
+    cogsPct: 0.55,
+    opexPct: 0.22,
+    daPct: 0.05,
+    interestPct: 0.02,
+    taxRatePct: 0.19,
+  },
+  bull: {
+    revenueGrowthPct: 0.18,
+    cogsPct: 0.5,
+    opexPct: 0.2,
+    daPct: 0.05,
+    interestPct: 0.015,
+    taxRatePct: 0.19,
+  },
+  bear: {
+    revenueGrowthPct: 0.0,
+    cogsPct: 0.62,
+    opexPct: 0.26,
+    daPct: 0.05,
+    interestPct: 0.03,
+    taxRatePct: 0.19,
+  },
 };
 
 const PARAMS_B: ThreeScenarioPnLParams = {
@@ -58,9 +81,30 @@ const PARAMS_B: ThreeScenarioPnLParams = {
   currencyCode: 'USD',
   startYear: 2030,
   baseRevenue: 5_000_000,
-  base: { revenueGrowthPct: 0.06, cogsPct: 0.6, opexPct: 0.18, daPct: 0.04, interestPct: 0.025, taxRatePct: 0.21 },
-  bull: { revenueGrowthPct: 0.14, cogsPct: 0.55, opexPct: 0.16, daPct: 0.04, interestPct: 0.02, taxRatePct: 0.21 },
-  bear: { revenueGrowthPct: -0.03, cogsPct: 0.66, opexPct: 0.22, daPct: 0.04, interestPct: 0.035, taxRatePct: 0.21 },
+  base: {
+    revenueGrowthPct: 0.06,
+    cogsPct: 0.6,
+    opexPct: 0.18,
+    daPct: 0.04,
+    interestPct: 0.025,
+    taxRatePct: 0.21,
+  },
+  bull: {
+    revenueGrowthPct: 0.14,
+    cogsPct: 0.55,
+    opexPct: 0.16,
+    daPct: 0.04,
+    interestPct: 0.02,
+    taxRatePct: 0.21,
+  },
+  bear: {
+    revenueGrowthPct: -0.03,
+    cogsPct: 0.66,
+    opexPct: 0.22,
+    daPct: 0.04,
+    interestPct: 0.035,
+    taxRatePct: 0.21,
+  },
 };
 
 type ScenKey = 'base' | 'bull' | 'bear';

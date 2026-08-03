@@ -31,14 +31,13 @@ import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/Exc
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLauncher';
 import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
-import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
-import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
+import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
+import { isWorkbookTemplatesEnabled } from '@/utils/workbookTemplatesFlag';
 
 import { type FilterChip, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -49,6 +48,7 @@ import {
   MENU_3_LEFT_CLASS,
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { BundleHistoryPanel } from './BundleHistoryPanel';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
@@ -130,7 +130,12 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
 
   return (
     <div ref={ref} className="relative flex items-center">
-      <button type="button" onClick={onNewTemplate} data-testid="outputs-new-btn" className={`${ctaBase} rounded-l-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}>
+      <button
+        type="button"
+        onClick={onNewTemplate}
+        data-testid="outputs-new-btn"
+        className={`${ctaBase} rounded-l-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
+      >
         <span>{label}</span>
       </button>
       <button
@@ -164,10 +169,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
             >
               <Wand2 size={14} className="shrink-0 text-c-text-muted" />
               <span>
-                {t(
-                  'rap.templatesLauncher.openDeckArchitect',
-                  'Architekt szablonów (Prezentacja)'
-                )}
+                {t('rap.templatesLauncher.openDeckArchitect', 'Architekt szablonów (Prezentacja)')}
               </span>
             </button>
           )}
@@ -381,8 +383,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   type MaterialStart = 'blank' | 'ai' | 'from_template';
 
   const [materialsLauncherOpen, setMaterialsLauncherOpen] = useState(false);
-  const [materialsLauncherFormat, setMaterialsLauncherFormat] =
-    useState<MaterialFormat | null>(null);
+  const [materialsLauncherFormat, setMaterialsLauncherFormat] = useState<MaterialFormat | null>(
+    null
+  );
 
   const openMaterialsLauncher = useCallback((defaultFormat: MaterialFormat | null) => {
     setMaterialsLauncherFormat(defaultFormat);
@@ -409,11 +412,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             ? '/prezentacje?view=new&entry=blank'
             : start === 'ai'
               ? '/prezentacje?view=new&entry=ai'
-              // "Z szablonu" — brak konkretnego templateId na tym kroku (KROK 2
-              // nie wybiera pojedynczego szablonu), więc lądujemy na ekranie
-              // wyboru szablonu Decka (ArtifactModuleHome „Templates"), zgodnie
-              // z tym, co robi własny TriModeChooser Prezentacji (onTemplate).
-              : '/prezentacje'
+              : // "Z szablonu" — brak konkretnego templateId na tym kroku (KROK 2
+                // nie wybiera pojedynczego szablonu), więc lądujemy na ekranie
+                // wyboru szablonu Decka (ArtifactModuleHome „Templates"), zgodnie
+                // z tym, co robi własny TriModeChooser Prezentacji (onTemplate).
+                '/prezentacje'
         );
       } else {
         navigate(
@@ -421,8 +424,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             ? '/excele?view=new&entry=blank'
             : start === 'ai'
               ? '/excele?view=new&entry=ai'
-              // "Z szablonu" — jw., ekran wyboru szablonu Excela (ArtifactModuleHome).
-              : '/excele'
+              : // "Z szablonu" — jw., ekran wyboru szablonu Excela (ArtifactModuleHome).
+                '/excele'
         );
       }
     },
@@ -515,7 +518,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const templateFormatTiles = useMemo(
     () => [
-      { id: 'document' as TemplateFormat, icon: FileText, title: t('rap.templatesLauncher.document', 'Word') },
+      {
+        id: 'document' as TemplateFormat,
+        icon: FileText,
+        title: t('rap.templatesLauncher.document', 'Word'),
+      },
       {
         id: 'presentation' as TemplateFormat,
         icon: Presentation,

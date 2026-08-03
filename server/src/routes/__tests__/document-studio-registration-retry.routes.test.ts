@@ -125,14 +125,16 @@ describe('registerGeneratedDocumentOrigin — retry on transient registration fa
     expect(registerArtifactOriginMock).toHaveBeenCalledTimes(2);
     // First (failed) attempt logged at warn, with the artifactId already present.
     const warnCall = loggerWarnMock.mock.calls.find(
-      (call) => typeof call[0] === 'string' && call[0].includes('Outputs registration attempt failed')
+      (call) =>
+        typeof call[0] === 'string' && call[0].includes('Outputs registration attempt failed')
     );
     expect(warnCall).toBeDefined();
     expect(warnCall?.[1]).toMatchObject({ artifactId: FAKE_ARTIFACT_ID, attempt: 1 });
 
     // Retry absorbed the failure — no permanent-failure error log for this path.
     const permanentFailureLog = loggerErrorMock.mock.calls.find(
-      (call) => typeof call[0] === 'string' && call[0].includes('Outputs registration permanently failed')
+      (call) =>
+        typeof call[0] === 'string' && call[0].includes('Outputs registration permanently failed')
     );
     expect(permanentFailureLog).toBeUndefined();
   });
@@ -152,7 +154,8 @@ describe('registerGeneratedDocumentOrigin — retry on transient registration fa
     expect(registerArtifactOriginMock).toHaveBeenCalledTimes(3);
 
     const permanentFailureLog = loggerErrorMock.mock.calls.find(
-      (call) => typeof call[0] === 'string' && call[0].includes('Outputs registration permanently failed')
+      (call) =>
+        typeof call[0] === 'string' && call[0].includes('Outputs registration permanently failed')
     );
     expect(permanentFailureLog).toBeDefined();
     expect(permanentFailureLog?.[1]).toMatchObject({

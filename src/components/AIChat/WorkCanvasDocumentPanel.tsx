@@ -28,12 +28,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { Api } from '@/services/api';
-import { WorkCanvasApi } from '@/services/api/workCanvas';
 import type {
   WorkCanvasConversionProposal,
   WorkCanvasTarget,
 } from '@/components/AIChat/WorkCanvas/types';
+import { Api } from '@/services/api';
+import { WorkCanvasApi } from '@/services/api/workCanvas';
 import type {
   ActiveCanvasDocument,
   CanvasActionAvailability,
@@ -946,9 +946,7 @@ function WorkCanvasMarkdownDocumentPanel({
   const draftOriginProvenanceRef = React.useRef<Record<string, unknown> | null>(null);
   const expandSourceNoticeShownRef = React.useRef(false);
   const handoffKeysRef = React.useRef(new Map<string, string>());
-  const handoffFlightsRef = React.useRef(
-    new Map<string, Promise<WorkCanvasConversionProposal>>()
-  );
+  const handoffFlightsRef = React.useRef(new Map<string, Promise<WorkCanvasConversionProposal>>());
 
   const activeTemplate =
     starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
@@ -1061,7 +1059,9 @@ function WorkCanvasMarkdownDocumentPanel({
                     proposal.status === 'approved' && proposal.targetObjectId
                 )
                 .sort((a: WorkCanvasConversionProposal, b: WorkCanvasConversionProposal) =>
-                  String(b.updatedAt || b.createdAt).localeCompare(String(a.updatedAt || a.createdAt))
+                  String(b.updatedAt || b.createdAt).localeCompare(
+                    String(a.updatedAt || a.createdAt)
+                  )
                 )[0];
               if (durableReceipt) showDurableHandoffReceipt(durableReceipt, 'Previously created');
               lastSavedContentRef.current =

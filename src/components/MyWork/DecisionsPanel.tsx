@@ -48,9 +48,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type CardViewStyle, CardViewSwitcher } from '@/components/shared/CardViewSwitcher';
-import { PriorityCell } from '@/components/standard/PriorityCell';
 import type { GenericListItem, ListColumn, ListSection } from '@/components/shared/ViewLayouts';
 import { ClickUpListView, NotionListView } from '@/components/shared/ViewLayouts';
+import { PriorityCell } from '@/components/standard/PriorityCell';
 import { LoadingState } from '@/components/ui/primitives';
 
 import { Api } from '../../services/api';

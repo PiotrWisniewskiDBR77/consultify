@@ -73,8 +73,7 @@ export const IdeaCanvasSecondBar: React.FC<IdeaCanvasSecondBarProps> = ({
       data-testid="idea-canvas-second-bar"
       data-edit-bar-active={editing ? 'true' : undefined}
     >
-      {!editing &&
-        left.map((action) => <Btn key={action.id} action={action} />)}
+      {!editing && left.map((action) => <Btn key={action.id} action={action} />)}
 
       {editBarEnabled ? (
         <div

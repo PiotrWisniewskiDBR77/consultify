@@ -198,9 +198,7 @@ describe('POST /api/document-studio/templates/resolve', () => {
   it('rejects a missing templateArtifactId before touching the resolver', async () => {
     asUser();
 
-    const res = await request(createApp())
-      .post('/api/document-studio/templates/resolve')
-      .send({});
+    const res = await request(createApp()).post('/api/document-studio/templates/resolve').send({});
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('templateArtifactId_required');

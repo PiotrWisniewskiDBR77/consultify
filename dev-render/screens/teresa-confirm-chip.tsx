@@ -17,8 +17,7 @@ import { MessageRenderer } from '../../src/components/AIChat/MessageRenderer';
 import { useAppStore } from '../../src/store/useAppStore';
 
 useAppStore.setState({
-  theme:
-    new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light',
+  theme: new URLSearchParams(window.location.search).get('theme') === 'dark' ? 'dark' : 'light',
 } as any);
 
 const isPl = new URLSearchParams(window.location.search).get('lang') !== 'en';
@@ -110,9 +109,7 @@ const Screen: React.FC = () => {
     language: 'pl' | 'en';
   } | null>({ messageId: 'ai1', language: isPl ? 'pl' : 'en' });
   const [busy, setBusy] = React.useState(false);
-  const [log, setLog] = React.useState<string>(
-    isPl ? '(czeka na decyzję)' : '(awaiting decision)'
-  );
+  const [log, setLog] = React.useState<string>(isPl ? '(czeka na decyzję)' : '(awaiting decision)');
 
   const commonProps: Record<string, unknown> = {
     ...NOOP_DEFAULTS,

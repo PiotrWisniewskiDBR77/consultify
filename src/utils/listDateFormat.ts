@@ -130,9 +130,6 @@ export function formatRelativeHint(value: unknown, teraz: Date): string | null {
  * Data + dymek ze zapisem względnym — gotowy zestaw dla komórki tabeli.
  * `{ text: '24/07/2026', title: '4 dni temu' }`
  */
-export function listDateCell(
-  value: unknown,
-  teraz: Date
-): { text: string; title: string | null } {
+export function listDateCell(value: unknown, teraz: Date): { text: string; title: string | null } {
   return { text: formatListDate(value), title: formatRelativeHint(value, teraz) };
 }

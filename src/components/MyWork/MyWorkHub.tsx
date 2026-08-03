@@ -110,8 +110,8 @@ import {
 } from '@/utils/canvasObjectEditBarFlag';
 import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
-import { isM05DecisionWorkspaceEnabled } from '@/utils/m05DecisionWorkspaceFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
+import { isM05DecisionWorkspaceEnabled } from '@/utils/m05DecisionWorkspaceFlag';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
@@ -1984,9 +1984,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         const stanPrzed = dokumentPrzed
           ? createDefaultIdeaWorkspaceState(dokumentPrzed as any)
           : null;
-        setIdeaWorkspaceStateById((prev) =>
-          moveIdeaWorkspaceState(prev, docId, nextId, stanPrzed)
-        );
+        setIdeaWorkspaceStateById((prev) => moveIdeaWorkspaceState(prev, docId, nextId, stanPrzed));
         setOpenDocuments((prev) => {
           const existing = prev.find((d) => d.id === docId);
           if (!existing) return prev;
@@ -2605,9 +2603,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     // separator i pille nieaktywnych dokumentów. Odznaczenie = powrót.
     // Dokładnie to, o co prosił właściciel: „na środku tej belki".
     const editing = ideaEditBarActive;
-    const visibleHubDocs = editing
-      ? hubDocs.filter((doc) => doc.id === activeDocumentId)
-      : hubDocs;
+    const visibleHubDocs = editing ? hubDocs.filter((doc) => doc.id === activeDocumentId) : hubDocs;
     const visibleChildItems = editing
       ? childItems.filter((doc) => doc.id === childActiveId)
       : childItems;
@@ -2643,7 +2639,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               // poza ekran ani nie nachodził na karty (wąskie okno).
               // W trybie edycji lewa strona przestaje być „elastyczna": oddaje
               // resztę linii paskowi edycji i sama zwęża się do tytułu.
-              ideaTopBarOneLine ? (editing ? 'min-w-0 flex-none max-w-[38%]' : 'min-w-0 flex-1') : ''
+              ideaTopBarOneLine
+                ? editing
+                  ? 'min-w-0 flex-none max-w-[38%]'
+                  : 'min-w-0 flex-1'
+                : ''
             }`}
             data-testid={ideaTopBarOneLine ? 'idea-one-line-identity' : undefined}
             data-editing={editing ? 'true' : undefined}

@@ -115,7 +115,9 @@ export function mergeInsightSectionOverrides(
   existing: Record<string, InsightSectionOverride> | null | undefined,
   incoming: unknown,
   userId?: string | null
-): { ok: true; value: Record<string, InsightSectionOverride> } | { ok: false } & InsightSectionOverridesMergeError {
+):
+  | { ok: true; value: Record<string, InsightSectionOverride> }
+  | ({ ok: false } & InsightSectionOverridesMergeError) {
   let payload: unknown = incoming;
   if (typeof payload === 'string') {
     try {

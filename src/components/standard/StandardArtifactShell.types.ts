@@ -233,10 +233,7 @@ export type IdSekcjiPanelu = (typeof KOLEJNOSC_SEKCJI_PANELU)[number];
 //  przed nadużyciem."
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ArtifactHeaderConfig = Omit<
-  NModeHeaderConfig,
-  'draftSavedLabel' | 'primaryAction'
-> & {
+export type ArtifactHeaderConfig = Omit<NModeHeaderConfig, 'draftSavedLabel' | 'primaryAction'> & {
   /**
    * WYCOFANY (SPEC-N §2.7). Wskaźnik zapisu żyje w `saveState`/`lastSavedLabel`,
    * status cyklu życia — w treści karty. Typ `never` czyni nadużycie niemożliwym.

@@ -80,9 +80,7 @@ export const DocumentStudioAiEntryPanel: React.FC<DocumentStudioAiEntryPanelProp
   // ponownie odpalać generację.
   const firedRef = useRef(false);
   const handleModuleIntent = useCallback(
-    (
-      content: string
-    ): boolean | { handled: boolean; reply?: string } => {
+    (content: string): boolean | { handled: boolean; reply?: string } => {
       if (firedRef.current) return false;
       const trimmed = content.trim();
       if (trimmed.length < MIN_DESCRIPTION_LENGTH) return false;

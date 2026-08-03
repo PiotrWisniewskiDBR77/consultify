@@ -154,7 +154,13 @@ describe.skipIf(!REAL_PG)('INI-05 negative control — capability guard neutrali
       // CASCADE: throwaway DB only (never reached in SHARED_DB mode above) —
       // other test files sharing this same container across the session may
       // have left FK-referencing tables (initiative_resources, etc.) behind.
-      for (const table of ['initiative_history', 'projects', 'initiatives', 'users', 'organizations']) {
+      for (const table of [
+        'initiative_history',
+        'projects',
+        'initiatives',
+        'users',
+        'organizations',
+      ]) {
         await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
       }
     }
@@ -169,21 +175,23 @@ describe.skipIf(!REAL_PG)('INI-05 negative control — capability guard neutrali
       [initiativeId, orgA, 'negative control target']
     );
     // moveInitiative's own project-ownership check needs a real row too.
-    await pool.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
-      targetProjectId,
-      orgA,
-      'Negative control project',
-    ]).catch(async () => {
-      // projects table may not exist in throwaway mode — create it once.
-      await pool.query(
-        `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, name TEXT NOT NULL)`
-      );
-      await pool.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
+    await pool
+      .query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
         targetProjectId,
         orgA,
         'Negative control project',
-      ]);
-    });
+      ])
+      .catch(async () => {
+        // projects table may not exist in throwaway mode — create it once.
+        await pool.query(
+          `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, name TEXT NOT NULL)`
+        );
+        await pool.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
+          targetProjectId,
+          orgA,
+          'Negative control project',
+        ]);
+      });
 
     const res = await call(InitiativeController.moveInitiative, {
       user: { id: noRoleUserA, organizationId: orgA, role: 'user' },

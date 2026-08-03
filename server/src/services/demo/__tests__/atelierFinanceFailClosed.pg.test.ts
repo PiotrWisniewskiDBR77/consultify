@@ -140,7 +140,9 @@ function withLostCommitAck(client: PoolClient): PoolClient {
         };
       }
       const value = Reflect.get(target, prop, target) as unknown;
-      return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+      return typeof value === 'function'
+        ? (value as (...a: unknown[]) => unknown).bind(target)
+        : value;
     },
   }) as PoolClient;
 }
@@ -169,8 +171,7 @@ process.env.DB_MANAGED_SCHEMA = process.env.DB_MANAGED_SCHEMA ?? 'false';
 // The NEEDS_OPERATOR hold is a FILE. Point it at a scratch directory so this
 // suite cannot leave one under the repository (or, worse, inherit one).
 process.env.ATELIER_FINANCE_HOLD_DIR =
-  process.env.ATELIER_FINANCE_HOLD_DIR ??
-  fs.mkdtempSync(path.join(os.tmpdir(), 'fin005-holds-'));
+  process.env.ATELIER_FINANCE_HOLD_DIR ?? fs.mkdtempSync(path.join(os.tmpdir(), 'fin005-holds-'));
 
 const CONNECTION_STRING = process.env.DATABASE_URL ?? '';
 const REAL_DB_REQUESTED =
@@ -306,47 +307,39 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   // The seam is identified POSITIVELY, and NODE_ENV is not one of the signals.
   // -------------------------------------------------------------------------
 
-  it(
-    'does NOT recognise a seam here, even though NODE_ENV === "test"',
-    async () => {
-      expect(process.env.NODE_ENV).toBe('test');
-      expect(process.env.MOCK_DB).toBe('false');
-      const seam = await identifyNonPostgresSeam();
-      expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
-      // The evidence is stated, not assumed — including that the PARTIAL mock in
-      // this very file is not mistaken for a full test double.
-      expect(seam.signal).toMatch(/DbPromise get\/all\/run are real functions/);
-      expect(seam.signal).toMatch(/MOCK_DB=false/);
-    },
-    60_000
-  );
+  it('does NOT recognise a seam here, even though NODE_ENV === "test"', async () => {
+    expect(process.env.NODE_ENV).toBe('test');
+    expect(process.env.MOCK_DB).toBe('false');
+    const seam = await identifyNonPostgresSeam();
+    expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
+    // The evidence is stated, not assumed — including that the PARTIAL mock in
+    // this very file is not mistaken for a full test double.
+    expect(seam.signal).toMatch(/DbPromise get\/all\/run are real functions/);
+    expect(seam.signal).toMatch(/MOCK_DB=false/);
+  }, 60_000);
 
-  it(
-    'asking the seam question INSTALLS NOTHING — it is a read, not a command',
-    async () => {
-      // `getDatabaseInstance()` creates and installs the process-wide singleton
-      // when none exists. The seam predicate used to call it, so a read-only
-      // question changed the process. It now peeks at what is already there.
-      const KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
-      const holder = process as unknown as Record<string, unknown>;
-      const globalHolder = globalThis as unknown as Record<string, unknown>;
-      const savedProcess = holder[KEY];
-      const savedGlobal = globalHolder[KEY];
-      try {
-        delete holder[KEY];
-        delete globalHolder[KEY];
-        const seam = await identifyNonPostgresSeam();
-        expect(holder[KEY], 'the seam question must not install a database').toBeUndefined();
-        expect(globalHolder[KEY], 'the seam question must not install a database').toBeUndefined();
-        expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
-        expect(seam.signal).toMatch(/no database instance is installed yet/);
-      } finally {
-        if (savedProcess !== undefined) holder[KEY] = savedProcess;
-        if (savedGlobal !== undefined) globalHolder[KEY] = savedGlobal;
-      }
-    },
-    60_000
-  );
+  it('asking the seam question INSTALLS NOTHING — it is a read, not a command', async () => {
+    // `getDatabaseInstance()` creates and installs the process-wide singleton
+    // when none exists. The seam predicate used to call it, so a read-only
+    // question changed the process. It now peeks at what is already there.
+    const KEY = '__CONSULTIFY_GLOBAL_DB_INSTANCE__';
+    const holder = process as unknown as Record<string, unknown>;
+    const globalHolder = globalThis as unknown as Record<string, unknown>;
+    const savedProcess = holder[KEY];
+    const savedGlobal = globalHolder[KEY];
+    try {
+      delete holder[KEY];
+      delete globalHolder[KEY];
+      const seam = await identifyNonPostgresSeam();
+      expect(holder[KEY], 'the seam question must not install a database').toBeUndefined();
+      expect(globalHolder[KEY], 'the seam question must not install a database').toBeUndefined();
+      expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
+      expect(seam.signal).toMatch(/no database instance is installed yet/);
+    } finally {
+      if (savedProcess !== undefined) holder[KEY] = savedProcess;
+      if (savedGlobal !== undefined) globalHolder[KEY] = savedGlobal;
+    }
+  }, 60_000);
 
   // -------------------------------------------------------------------------
   // FIN-005 P1-1b — the falsified claim, kept dead.
@@ -365,73 +358,61 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   // did not exist. Verified by running them against the previous commit.
   // -------------------------------------------------------------------------
 
-  it(
-    'IGNORES MOCK_DB=true — an env var is a claim about intent, never evidence about the database',
-    async () => {
-      const previous = process.env.MOCK_DB;
-      process.env.MOCK_DB = 'true';
-      try {
-        const seam = await identifyNonPostgresSeam();
-        expect(
-          seam.recognised,
-          `MOCK_DB must not open the non-atomic path; seam said: ${seam.signal}`
-        ).toBe(false);
-        expect(seam.signal).toMatch(/MOCK_DB=true \(IGNORED/);
-      } finally {
-        process.env.MOCK_DB = previous;
-      }
-    },
-    60_000
-  );
-
-  it(
-    'asks the DATABASE first: with MOCK_DB=true the decision is still "postgres", never "seam"',
-    async () => {
-      const previous = process.env.MOCK_DB;
-      process.env.MOCK_DB = 'true';
-      try {
-        const decision = await decidePinnedTransactionSeam();
-        expect(decision.outcome, `decision evidence: ${decision.seam.signal}`).toBe('postgres');
-        if (decision.outcome === 'postgres') {
-          expect(decision.probe.supported).toBe(true);
-          expect(decision.probe.database).toBeTruthy();
-        }
-      } finally {
-        process.env.MOCK_DB = previous;
-      }
-    },
-    60_000
-  );
-
-  it(
-    'MOCK_DB=true on a real PostgreSQL still promotes through the PINNED transaction',
-    async () => {
-      const ids = await seedThenDemote('mock-db-true');
-
-      const previous = process.env.MOCK_DB;
-      const warn = vi.spyOn(logger, 'warn');
-      let result: Awaited<ReturnType<typeof seed>>;
-      let warnLines: string[];
-      try {
-        process.env.MOCK_DB = 'true';
-        result = await seed('mock-db-true');
-      } finally {
-        process.env.MOCK_DB = previous;
-        warnLines = warn.mock.calls.map((call) => String(call[0]));
-        warn.mockRestore();
-      }
-
-      expect(result.status, result.reason ?? '').toBe('complete');
-      // THE TEETH. Before the fix this line was present and the fixture was
-      // promoted by five separate autocommitted UPDATEs on a real database.
+  it('IGNORES MOCK_DB=true — an env var is a claim about intent, never evidence about the database', async () => {
+    const previous = process.env.MOCK_DB;
+    process.env.MOCK_DB = 'true';
+    try {
+      const seam = await identifyNonPostgresSeam();
       expect(
-        warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
-        'a stray MOCK_DB=true must not be able to open the non-atomic path'
+        seam.recognised,
+        `MOCK_DB must not open the non-atomic path; seam said: ${seam.signal}`
       ).toBe(false);
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+      expect(seam.signal).toMatch(/MOCK_DB=true \(IGNORED/);
+    } finally {
+      process.env.MOCK_DB = previous;
+    }
+  }, 60_000);
+
+  it('asks the DATABASE first: with MOCK_DB=true the decision is still "postgres", never "seam"', async () => {
+    const previous = process.env.MOCK_DB;
+    process.env.MOCK_DB = 'true';
+    try {
+      const decision = await decidePinnedTransactionSeam();
+      expect(decision.outcome, `decision evidence: ${decision.seam.signal}`).toBe('postgres');
+      if (decision.outcome === 'postgres') {
+        expect(decision.probe.supported).toBe(true);
+        expect(decision.probe.database).toBeTruthy();
+      }
+    } finally {
+      process.env.MOCK_DB = previous;
+    }
+  }, 60_000);
+
+  it('MOCK_DB=true on a real PostgreSQL still promotes through the PINNED transaction', async () => {
+    const ids = await seedThenDemote('mock-db-true');
+
+    const previous = process.env.MOCK_DB;
+    const warn = vi.spyOn(logger, 'warn');
+    let result: Awaited<ReturnType<typeof seed>>;
+    let warnLines: string[];
+    try {
+      process.env.MOCK_DB = 'true';
+      result = await seed('mock-db-true');
+    } finally {
+      process.env.MOCK_DB = previous;
+      warnLines = warn.mock.calls.map((call) => String(call[0]));
+      warn.mockRestore();
+    }
+
+    expect(result.status, result.reason ?? '').toBe('complete');
+    // THE TEETH. Before the fix this line was present and the fixture was
+    // promoted by five separate autocommitted UPDATEs on a real database.
+    expect(
+      warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
+      'a stray MOCK_DB=true must not be able to open the non-atomic path'
+    ).toBe(false);
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // Every way a pinned transaction can fail to exist on a REAL database.
@@ -477,7 +458,8 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'exhausted';
       },
-      reason: /could not check out a (pinned connection|client from the authorised write pool): sorry, too many clients already/,
+      reason:
+        /could not check out a (pinned connection|client from the authorised write pool): sorry, too many clients already/,
       timeoutMs: 180_000,
     },
     {
@@ -486,7 +468,8 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'refused';
       },
-      reason: /could not check out a (pinned connection|client from the authorised write pool): connect ECONNREFUSED/,
+      reason:
+        /could not check out a (pinned connection|client from the authorised write pool): connect ECONNREFUSED/,
       timeoutMs: 180_000,
     },
     {
@@ -495,7 +478,8 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
       arm: () => {
         fault.checkout = 'hang';
       },
-      reason: /could not check out a (pinned connection|client from the authorised write pool): pool checkout did not complete within/,
+      reason:
+        /could not check out a (pinned connection|client from the authorised write pool): pool checkout did not complete within/,
       timeoutMs: 180_000,
     },
   ];
@@ -566,60 +550,52 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   // A LOST COMMIT ACK, end to end through the seed — FIN-005 P1-3.
   // -------------------------------------------------------------------------
 
-  it(
-    'a lost COMMIT ACK over a transaction that DID commit ends the seed COMPLETE, on evidence',
-    async () => {
-      const ids = await seedThenDemote('commit-landed');
+  it('a lost COMMIT ACK over a transaction that DID commit ends the seed COMPLETE, on evidence', async () => {
+    const ids = await seedThenDemote('commit-landed');
 
-      const info = vi.spyOn(logger, 'info');
-      let result: Awaited<ReturnType<typeof seed>>;
-      let infoLines: string[];
-      try {
-        fault.commit = 'landed';
-        result = await seed('commit-landed');
-      } finally {
-        infoLines = info.mock.calls.map((call) => String(call[0]));
-        info.mockRestore();
-        fault.commit = null;
-      }
+    const info = vi.spyOn(logger, 'info');
+    let result: Awaited<ReturnType<typeof seed>>;
+    let infoLines: string[];
+    try {
+      fault.commit = 'landed';
+      result = await seed('commit-landed');
+    } finally {
+      infoLines = info.mock.calls.map((call) => String(call[0]));
+      info.mockRestore();
+      fault.commit = null;
+    }
 
-      expect(result.status, result.reason ?? '').toBe('complete');
-      expect(
-        infoLines.some((line) => line.includes('commit ack lost-then-confirmed')),
-        'the seed must record that the ack was lost and then PROVED'
-      ).toBe(true);
+    expect(result.status, result.reason ?? '').toBe('complete');
+    expect(
+      infoLines.some((line) => line.includes('commit ack lost-then-confirmed')),
+      'the seed must record that the ack was lost and then PROVED'
+    ).toBe(true);
 
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
-  it(
-    'a lost COMMIT ACK over a transaction that did NOT commit is reported rolled back, with evidence',
-    async () => {
-      const ids = await seedThenDemote('commit-aborted');
+  it('a lost COMMIT ACK over a transaction that did NOT commit is reported rolled back, with evidence', async () => {
+    const ids = await seedThenDemote('commit-aborted');
 
-      let result: Awaited<ReturnType<typeof seed>>;
-      try {
-        fault.commit = 'aborted';
-        result = await seed('commit-aborted');
-      } finally {
-        fault.commit = null;
-      }
+    let result: Awaited<ReturnType<typeof seed>>;
+    try {
+      fault.commit = 'aborted';
+      result = await seed('commit-aborted');
+    } finally {
+      fault.commit = null;
+    }
 
-      expect(result.status).toBe('incomplete');
-      expect(result.reason).toMatch(/reconciliation proved it did NOT/);
-      expect(result.reason).toMatch(
-        /all 5 promoted records read back in their pre-promotion state on a fresh connection/
-      );
-      await expectNoPartialReady(ids);
+    expect(result.status).toBe('incomplete');
+    expect(result.reason).toMatch(/reconciliation proved it did NOT/);
+    expect(result.reason).toMatch(
+      /all 5 promoted records read back in their pre-promotion state on a fresh connection/
+    );
+    await expectNoPartialReady(ids);
 
-      const recovery = await seed('commit-aborted');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('commit-aborted');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // FIN-005 P1-3b — the `committed` direction used to rest on FLAGS.
@@ -635,159 +611,151 @@ suite('FIN-005 — the Finance seed fails closed on a real PostgreSQL', () => {
   // BEFORE THE FIX this test fails on the FIRST assertion: the seed returns
   // `complete`. Verified by running it against the previous commit.
   // -------------------------------------------------------------------------
-  it(
-    'a lost COMMIT ACK over a ROLLBACK of an already-ready-looking fixture is NOT "confirmed" — the pre-state decides',
-    async () => {
-      const ids = idsFor('commit-stale-flags');
-      await deleteFixture(ids);
-      const first = await seed('commit-stale-flags');
-      expect(first.status, first.reason ?? '').toBe('complete');
+  it('a lost COMMIT ACK over a ROLLBACK of an already-ready-looking fixture is NOT "confirmed" — the pre-state decides', async () => {
+    const ids = idsFor('commit-stale-flags');
+    await deleteFixture(ids);
+    const first = await seed('commit-stale-flags');
+    expect(first.status, first.reason ?? '').toBe('complete');
 
-      // Leave every readiness FLAG looking promoted and break only the columns
-      // no flag check reads. This is what an interrupted older build leaves
-      // behind, and it is not the state the promotion intends.
-      await control.query(
-        `UPDATE financial_statement_packs
+    // Leave every readiness FLAG looking promoted and break only the columns
+    // no flag check reads. This is what an interrupted older build leaves
+    // behind, and it is not the state the promotion intends.
+    await control.query(
+      `UPDATE financial_statement_packs
             SET pack_readiness_score = 0,
                 source_statement_count = 0,
                 missing_statement_types = '["P&L","BS","CF"]'
           WHERE id = $1`,
-        [ids.packId]
-      );
+      [ids.packId]
+    );
 
-      let result: Awaited<ReturnType<typeof seed>>;
-      try {
-        fault.commit = 'aborted';
-        result = await seed('commit-stale-flags');
-      } finally {
-        fault.commit = null;
-      }
+    let result: Awaited<ReturnType<typeof seed>>;
+    try {
+      fault.commit = 'aborted';
+      result = await seed('commit-stale-flags');
+    } finally {
+      fault.commit = null;
+    }
 
-      // The transaction really did roll back, and the reconciliation says so on
-      // the strength of the pre-state snapshot rather than of five flags.
-      expect(result.status, result.reason ?? '').toBe('incomplete');
-      expect(result.reason).toMatch(/reconciliation proved it did NOT/);
-      expect(result.reason).toMatch(
-        /every promotion-owned column matches the snapshot taken under the FOR UPDATE locks/
-      );
+    // The transaction really did roll back, and the reconciliation says so on
+    // the strength of the pre-state snapshot rather than of five flags.
+    expect(result.status, result.reason ?? '').toBe('incomplete');
+    expect(result.reason).toMatch(/reconciliation proved it did NOT/);
+    expect(result.reason).toMatch(
+      /every promotion-owned column matches the snapshot taken under the FOR UPDATE locks/
+    );
 
-      // And the evidence that the old verdict was WRONG, not merely imprecise:
-      // the pack still carries the incoherent numbers the "committed" verdict
-      // would have blessed as a complete fixture.
-      const pack = await control.query(
-        `SELECT pack_status, pack_readiness_status, pack_readiness_score, source_statement_count,
+    // And the evidence that the old verdict was WRONG, not merely imprecise:
+    // the pack still carries the incoherent numbers the "committed" verdict
+    // would have blessed as a complete fixture.
+    const pack = await control.query(
+      `SELECT pack_status, pack_readiness_status, pack_readiness_score, source_statement_count,
                 missing_statement_types
            FROM financial_statement_packs WHERE id = $1`,
-        [ids.packId]
-      );
-      expect(pack.rows[0]?.pack_status).toBe('confirmed');
-      expect(pack.rows[0]?.pack_readiness_status).toBe('ready');
-      expect(Number(pack.rows[0]?.pack_readiness_score)).toBe(0);
-      expect(Number(pack.rows[0]?.source_statement_count)).toBe(0);
+      [ids.packId]
+    );
+    expect(pack.rows[0]?.pack_status).toBe('confirmed');
+    expect(pack.rows[0]?.pack_readiness_status).toBe('ready');
+    expect(Number(pack.rows[0]?.pack_readiness_score)).toBe(0);
+    expect(Number(pack.rows[0]?.source_statement_count)).toBe(0);
 
-      // No hold: `not-committed` is a decided outcome, not an in-doubt one.
-      expect(readAtelierFinanceOperatorHold(orgFor('commit-stale-flags'))).toBeNull();
+    // No hold: `not-committed` is a decided outcome, not an in-doubt one.
+    expect(readAtelierFinanceOperatorHold(orgFor('commit-stale-flags'))).toBeNull();
 
-      // ...and the fixture recovers on the next, fault-free run.
-      const recovery = await seed('commit-stale-flags');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-      const healed = await control.query(
-        `SELECT pack_readiness_score, source_statement_count FROM financial_statement_packs WHERE id = $1`,
-        [ids.packId]
-      );
-      expect(Number(healed.rows[0]?.pack_readiness_score)).toBe(100);
-      expect(Number(healed.rows[0]?.source_statement_count)).toBe(3);
-    },
-    180_000
-  );
+    // ...and the fixture recovers on the next, fault-free run.
+    const recovery = await seed('commit-stale-flags');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+    const healed = await control.query(
+      `SELECT pack_readiness_score, source_statement_count FROM financial_statement_packs WHERE id = $1`,
+      [ids.packId]
+    );
+    expect(Number(healed.rows[0]?.pack_readiness_score)).toBe(100);
+    expect(Number(healed.rows[0]?.source_statement_count)).toBe(3);
+  }, 180_000);
 
-  it(
-    'a lost COMMIT ACK over a MIXED result is NEEDS_OPERATOR — never complete, never "rolled back"',
-    async () => {
-      const ids = await seedThenDemote('commit-mixed');
+  it('a lost COMMIT ACK over a MIXED result is NEEDS_OPERATOR — never complete, never "rolled back"', async () => {
+    const ids = await seedThenDemote('commit-mixed');
 
-      let result: Awaited<ReturnType<typeof seed>>;
-      try {
-        fault.commit = 'mixed';
-        fault.mixedStatementId = ids.statementIds[0];
-        result = await seed('commit-mixed');
-      } finally {
-        fault.commit = null;
-        fault.mixedStatementId = '';
-      }
+    let result: Awaited<ReturnType<typeof seed>>;
+    try {
+      fault.commit = 'mixed';
+      fault.mixedStatementId = ids.statementIds[0];
+      result = await seed('commit-mixed');
+    } finally {
+      fault.commit = null;
+      fault.mixedStatementId = '';
+    }
 
-      expect(result.status).toBe('incomplete');
-      expect(result.reason).toMatch(/COMMIT INDETERMINATE — NEEDS_OPERATOR/);
-      expect(result.reason).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
-      // No compensating demotion was attempted, and none was claimed.
-      expect(result.promotion?.rolledBack).toBe(false);
-      expect(result.promotion?.rowsStillClaimingReady).toHaveLength(4);
+    expect(result.status).toBe('incomplete');
+    expect(result.reason).toMatch(/COMMIT INDETERMINATE — NEEDS_OPERATOR/);
+    expect(result.reason).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
+    // No compensating demotion was attempted, and none was claimed.
+    expect(result.promotion?.rolledBack).toBe(false);
+    expect(result.promotion?.rowsStillClaimingReady).toHaveLength(4);
 
-      // ---------------------------------------------------------------------
-      // FIN-005 P1-3c — the verdict SURVIVES, and the next run does not erase it.
-      //
-      // BEFORE THE FIX this block read `const recovery = await seed(...);
-      // expect(recovery.status).toBe('complete')` — the suite asserted the
-      // silent erasure as if it were a feature. Nothing persisted the verdict,
-      // so the next run's phase 0 saw the mixed residue, demoted it,
-      // re-promoted and returned `complete`. A NEEDS_OPERATOR that clears
-      // itself is not NEEDS_OPERATOR.
-      // ---------------------------------------------------------------------
-      const holdFile = atelierFinanceOperatorHoldPath(orgFor('commit-mixed'));
-      expect(fs.existsSync(holdFile), 'the in-doubt verdict must be on disk').toBe(true);
-      const hold = readAtelierFinanceOperatorHold(orgFor('commit-mixed'));
-      expect(hold?.rowsClaimingReady).toHaveLength(4);
-      expect(hold?.reconciliation).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
-      // The instruction names the ATTRIBUTED acknowledgement, and says in so
-      // many words that deleting the file by hand is not it.
-      expect(hold?.acknowledgement).toMatch(/acknowledgeAtelierFinanceCommitIndeterminate/);
-      expect(hold?.acknowledgement).toMatch(/Do NOT simply delete/);
+    // ---------------------------------------------------------------------
+    // FIN-005 P1-3c — the verdict SURVIVES, and the next run does not erase it.
+    //
+    // BEFORE THE FIX this block read `const recovery = await seed(...);
+    // expect(recovery.status).toBe('complete')` — the suite asserted the
+    // silent erasure as if it were a feature. Nothing persisted the verdict,
+    // so the next run's phase 0 saw the mixed residue, demoted it,
+    // re-promoted and returned `complete`. A NEEDS_OPERATOR that clears
+    // itself is not NEEDS_OPERATOR.
+    // ---------------------------------------------------------------------
+    const holdFile = atelierFinanceOperatorHoldPath(orgFor('commit-mixed'));
+    expect(fs.existsSync(holdFile), 'the in-doubt verdict must be on disk').toBe(true);
+    const hold = readAtelierFinanceOperatorHold(orgFor('commit-mixed'));
+    expect(hold?.rowsClaimingReady).toHaveLength(4);
+    expect(hold?.reconciliation).toMatch(/MIXED state after a lost COMMIT ack: 4\/5/);
+    // The instruction names the ATTRIBUTED acknowledgement, and says in so
+    // many words that deleting the file by hand is not it.
+    expect(hold?.acknowledgement).toMatch(/acknowledgeAtelierFinanceCommitIndeterminate/);
+    expect(hold?.acknowledgement).toMatch(/Do NOT simply delete/);
 
-      // FIN-005 P1-B — the promotion marker is in NEEDS_OPERATOR as well, and
-      // carries the run id, the five row ids and the target it ran against.
-      const marker = readAtelierFinancePromotionMarker(orgFor('commit-mixed'));
-      expect(marker?.state).toBe('NEEDS_OPERATOR');
-      expect(marker?.rowIds).toHaveLength(5);
-      expect(marker?.target.database).toBeTruthy();
+    // FIN-005 P1-B — the promotion marker is in NEEDS_OPERATOR as well, and
+    // carries the run id, the five row ids and the target it ran against.
+    const marker = readAtelierFinancePromotionMarker(orgFor('commit-mixed'));
+    expect(marker?.state).toBe('NEEDS_OPERATOR');
+    expect(marker?.rowIds).toHaveLength(5);
+    expect(marker?.target.database).toBeTruthy();
 
-      // Snapshot the residue: the blocked run must not touch a single row.
-      const residueBefore = await residueSnapshot(ids);
+    // Snapshot the residue: the blocked run must not touch a single row.
+    const residueBefore = await residueSnapshot(ids);
 
-      const blocked = await seed('commit-mixed');
-      expect(blocked.status).toBe('incomplete');
-      expect(blocked.reason).toMatch(/NEEDS_OPERATOR — refusing to run/);
-      expect(blocked.reason).toMatch(/has not been acknowledged/);
-      expect(await residueSnapshot(ids), 'a blocked run must heal nothing').toEqual(residueBefore);
+    const blocked = await seed('commit-mixed');
+    expect(blocked.status).toBe('incomplete');
+    expect(blocked.reason).toMatch(/NEEDS_OPERATOR — refusing to run/);
+    expect(blocked.reason).toMatch(/has not been acknowledged/);
+    expect(await residueSnapshot(ids), 'a blocked run must heal nothing').toEqual(residueBefore);
 
-      // A SECOND blocked run behaves identically — the hold does not decay.
-      const blockedAgain = await seed('commit-mixed');
-      expect(blockedAgain.status).toBe('incomplete');
-      expect(await residueSnapshot(ids)).toEqual(residueBefore);
+    // A SECOND blocked run behaves identically — the hold does not decay.
+    const blockedAgain = await seed('commit-mixed');
+    expect(blockedAgain.status).toBe('incomplete');
+    expect(await residueSnapshot(ids)).toEqual(residueBefore);
 
-      // The operator investigates, then acknowledges. Only now may the fixture
-      // be healed and READY re-earned.
-      const ack = acknowledgeAtelierFinanceCommitIndeterminate(orgFor('commit-mixed'), {
-        operator: 'fin005-suite',
-        decision: 'commit-did-not-land',
-        note: 'reconciliation showed a MIXED state; the residue was inspected and re-seeding is authorised',
-      });
-      expect(ack.cleared).toBe(true);
-      // The audit record is written BEFORE anything is cleared, and it names who
-      // decided what.
-      const audit = JSON.parse(fs.readFileSync(ack.auditPath as string, 'utf8'));
-      expect(audit.operator).toBe('fin005-suite');
-      expect(audit.decision).toBe('commit-did-not-land');
-      expect(audit.clearedHold).toBeTruthy();
-      expect(fs.existsSync(holdFile)).toBe(false);
-      expect(readAtelierFinancePromotionMarker(orgFor('commit-mixed'))).toBeNull();
+    // The operator investigates, then acknowledges. Only now may the fixture
+    // be healed and READY re-earned.
+    const ack = acknowledgeAtelierFinanceCommitIndeterminate(orgFor('commit-mixed'), {
+      operator: 'fin005-suite',
+      decision: 'commit-did-not-land',
+      note: 'reconciliation showed a MIXED state; the residue was inspected and re-seeding is authorised',
+    });
+    expect(ack.cleared).toBe(true);
+    // The audit record is written BEFORE anything is cleared, and it names who
+    // decided what.
+    const audit = JSON.parse(fs.readFileSync(ack.auditPath as string, 'utf8'));
+    expect(audit.operator).toBe('fin005-suite');
+    expect(audit.decision).toBe('commit-did-not-land');
+    expect(audit.clearedHold).toBeTruthy();
+    expect(fs.existsSync(holdFile)).toBe(false);
+    expect(readAtelierFinancePromotionMarker(orgFor('commit-mixed'))).toBeNull();
 
-      const recovery = await seed('commit-mixed');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('commit-mixed');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // Helpers

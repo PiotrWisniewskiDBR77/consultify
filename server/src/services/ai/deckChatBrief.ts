@@ -55,7 +55,9 @@ export function inferDeckAudience(text: string): DeckAudience {
     return 'executive';
   }
   // Inwestor / VC / fundusz → investor.
-  if (hasAny(t, ['inwestor', 'inwestora', 'inwestorów', 'investor', ' vc ', 'venture', 'fundusz'])) {
+  if (
+    hasAny(t, ['inwestor', 'inwestora', 'inwestorów', 'investor', ' vc ', 'venture', 'fundusz'])
+  ) {
     return 'investor';
   }
   // Klient / oferta / sprzedaż → sponsor (zewnętrzny decydent; też zapala register executive).
@@ -219,7 +221,10 @@ function coerceGoal(raw?: string): DeckGoal | null {
  * Ustala brief decka: jawne wartości od modelu WYGRYWAJĄ, inaczej wnioskujemy z
  * `intent`. Tytuł: `overrides.title` → oczyszczony `intent`.
  */
-export function resolveDeckBrief(intent: string, overrides: DeckBriefOverrides = {}): ResolvedDeckBrief {
+export function resolveDeckBrief(
+  intent: string,
+  overrides: DeckBriefOverrides = {}
+): ResolvedDeckBrief {
   const modelAudience = coerceAudience(overrides.audience);
   const modelGoal = coerceGoal(overrides.goal);
   return {

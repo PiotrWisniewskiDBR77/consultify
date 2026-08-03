@@ -12,10 +12,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  critiqueWorkbook,
-  shouldRegenerateWorkbook,
-  parseSumRanges,
   colIndexToLetter,
+  critiqueWorkbook,
+  parseSumRanges,
+  shouldRegenerateWorkbook,
 } from '../workbookQualityGate.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
@@ -166,8 +166,18 @@ describe('workbookQualityGate — WQ-04/05 formaty', () => {
             { key: 'amt', header: 'Kwota', type: 'currency' },
           ],
           rows: [
-            { cells: { name: { value: 'A' }, amt: { value: 100, style: { numberFormat: '#,##0.00 zł' } } } },
-            { cells: { name: { value: 'B' }, amt: { value: 200, style: { numberFormat: '$#,##0.00' } } } },
+            {
+              cells: {
+                name: { value: 'A' },
+                amt: { value: 100, style: { numberFormat: '#,##0.00 zł' } },
+              },
+            },
+            {
+              cells: {
+                name: { value: 'B' },
+                amt: { value: 200, style: { numberFormat: '$#,##0.00' } },
+              },
+            },
           ],
         },
       ],
@@ -309,7 +319,7 @@ describe('workbookQualityGate — WQ-09 niespójna kolumna obliczeniowa', () => 
         { formula: '=A2*B2' },
         { formula: '=A3*B3' },
         { value: 150 }, // zapomniana formuła
-      ]),
+      ])
     );
     const inc = report.issues.find((i) => i.code === 'WQ-09-INCONSISTENT-CALC-COL');
     expect(inc).toBeDefined();
@@ -321,14 +331,14 @@ describe('workbookQualityGate — WQ-09 niespójna kolumna obliczeniowa', () => 
 
   it('GRANICA: kolumna w całości formuł → NIE flaga', () => {
     const report = critiqueWorkbook(
-      calcColWb([{ formula: '=A2*B2' }, { formula: '=A3*B3' }, { formula: '=A4*B4' }]),
+      calcColWb([{ formula: '=A2*B2' }, { formula: '=A3*B3' }, { formula: '=A4*B4' }])
     );
     expect(report.issues.find((i) => i.code === 'WQ-09-INCONSISTENT-CALC-COL')).toBeUndefined();
   });
 
   it('GRANICA: formuły NIE są większością (1 formuła, 2 stałe) → NIE flaga (legalna kolumna mieszana)', () => {
     const report = critiqueWorkbook(
-      calcColWb([{ formula: '=A2*B2' }, { value: 100 }, { value: 200 }]),
+      calcColWb([{ formula: '=A2*B2' }, { value: 100 }, { value: 200 }])
     );
     expect(report.issues.find((i) => i.code === 'WQ-09-INCONSISTENT-CALC-COL')).toBeUndefined();
   });

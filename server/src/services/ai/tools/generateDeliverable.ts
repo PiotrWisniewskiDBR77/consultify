@@ -17,7 +17,6 @@
  */
 
 import { featureFlags } from '../../../config/FeatureFlags.js';
-import { inferAudienceLabel, resolveDeckBrief, type ResolvedDeckBrief } from '../deckChatBrief.js';
 import type { DeliverableFormat } from '../../../types/deliverablesGeneration.js';
 import logger from '../../../utils/Logger.js';
 import {
@@ -45,6 +44,7 @@ import {
   buildWhiteboardSkeleton,
   type CanvasSkeletonGraph,
 } from '../canvasToolSkeletons.js';
+import { inferAudienceLabel, type ResolvedDeckBrief, resolveDeckBrief } from '../deckChatBrief.js';
 import { buildMindmapSkeleton, type MindmapSkeletonGraph } from '../mindmapSkeleton.js';
 
 type DeliverableKind =
@@ -203,7 +203,11 @@ export async function generateDeliverable(
   // `internal/inform` i tytułu-polecenia (audyt 2026-07-22). Reszta typów bez zmian.
   const deckBrief: ResolvedDeckBrief | null =
     format === 'deck'
-      ? resolveDeckBrief(intent, { audience: params.audience, goal: params.goal, title: params.title })
+      ? resolveDeckBrief(intent, {
+          audience: params.audience,
+          goal: params.goal,
+          title: params.title,
+        })
       : null;
   const title =
     deckBrief && deckBrief.title ? deckBrief.title : deriveTitle(params.title, intent, language);

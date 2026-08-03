@@ -3,7 +3,10 @@ import { createHash } from 'node:crypto';
 import type { ArtifactContentEnvelopeV1 } from '../../types/artifactContent.js';
 import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import { AppError } from '../../utils/ErrorHandler.js';
-import type { ArtifactContentAdapter, ArtifactContentAdapterResult } from './artifactContentResolverService.js';
+import type {
+  ArtifactContentAdapter,
+  ArtifactContentAdapterResult,
+} from './artifactContentResolverService.js';
 
 export const SHEET_CONTENT_ERROR_CODES = {
   INVALID_CURSOR: 'ARTIFACT_CONTENT_SHEET_INVALID_CURSOR',
@@ -63,7 +66,10 @@ function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
   if (value && typeof value === 'object') {
     const source = value as Record<string, unknown>;
-    return `{${Object.keys(source).sort().map((key) => `${JSON.stringify(key)}:${stableJson(source[key])}`).join(',')}}`;
+    return `{${Object.keys(source)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableJson(source[key])}`)
+      .join(',')}}`;
   }
   return JSON.stringify(value) ?? 'null';
 }
@@ -100,14 +106,25 @@ export function encodeSheetCursor(cursor: SheetCursor): string {
 
 export function decodeSheetCursor(cursor: string): SheetCursor {
   try {
-    const parsed = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Partial<SheetCursor>;
+    const parsed = JSON.parse(
+      Buffer.from(cursor, 'base64url').toString('utf8')
+    ) as Partial<SheetCursor>;
     if (
-      !parsed || typeof parsed.createdAt !== 'string' || !parsed.createdAt ||
-      Number.isNaN(Date.parse(parsed.createdAt)) || typeof parsed.id !== 'string' || !parsed.id
-    ) throw new Error('invalid');
+      !parsed ||
+      typeof parsed.createdAt !== 'string' ||
+      !parsed.createdAt ||
+      Number.isNaN(Date.parse(parsed.createdAt)) ||
+      typeof parsed.id !== 'string' ||
+      !parsed.id
+    )
+      throw new Error('invalid');
     return { createdAt: parsed.createdAt, id: parsed.id };
   } catch {
-    throw new AppError('Invalid sheet content cursor', 400, SHEET_CONTENT_ERROR_CODES.INVALID_CURSOR);
+    throw new AppError(
+      'Invalid sheet content cursor',
+      400,
+      SHEET_CONTENT_ERROR_CODES.INVALID_CURSOR
+    );
   }
 }
 
@@ -118,8 +135,10 @@ function markdownValue(value: unknown): string {
 }
 
 function clampLimit(mode: SheetMode, requested?: number): number {
-  const fallback = mode === 'preview' ? SHEET_CONTENT_LIMITS.previewDefault : SHEET_CONTENT_LIMITS.fullDefault;
-  const maximum = mode === 'preview' ? SHEET_CONTENT_LIMITS.previewMax : SHEET_CONTENT_LIMITS.fullMax;
+  const fallback =
+    mode === 'preview' ? SHEET_CONTENT_LIMITS.previewDefault : SHEET_CONTENT_LIMITS.fullDefault;
+  const maximum =
+    mode === 'preview' ? SHEET_CONTENT_LIMITS.previewMax : SHEET_CONTENT_LIMITS.fullMax;
   if (!Number.isFinite(requested) || !requested || requested < 1) return fallback;
   return Math.min(Math.floor(requested), maximum);
 }
@@ -147,7 +166,7 @@ export async function resolveSheetArtifactContent(params: {
        JOIN tp_bases b ON b.id = t.base_id
       WHERE t.id = ? AND b.organization_id = ?`,
     [params.originRecordId, params.organizationId],
-    { fallback: false },
+    { fallback: false }
   );
   if (!table) return null;
 
@@ -157,7 +176,7 @@ export async function resolveSheetArtifactContent(params: {
       WHERE table_id = ?
       ORDER BY field_order ASC, name ASC, id ASC`,
     [table.id],
-    { fallback: false },
+    { fallback: false }
   );
   const views = await dbAll<ViewRow>(
     `SELECT id, name, view_type, visible_field_ids, config, is_default, ordinal
@@ -165,7 +184,7 @@ export async function resolveSheetArtifactContent(params: {
       WHERE table_id = ?
       ORDER BY is_default DESC, ordinal ASC NULLS LAST, name ASC, id ASC`,
     [table.id],
-    { fallback: false },
+    { fallback: false }
   );
   const records = await dbAll<RecordRow>(
     `SELECT id, data, created_at, updated_at
@@ -175,27 +194,50 @@ export async function resolveSheetArtifactContent(params: {
       ORDER BY created_at ASC, id ASC
       LIMIT ?`,
     [table.id, cursor?.createdAt ?? null, cursor?.createdAt ?? null, cursor?.id ?? null, limit + 1],
-    { fallback: false },
+    { fallback: false }
   );
 
   const normalizedFields = fields.map((field) => ({
-    id: field.id, name: field.name, type: field.field_type,
-    options: normalizeJson(field.options), computed: Boolean(field.is_computed), order: field.field_order,
+    id: field.id,
+    name: field.name,
+    type: field.field_type,
+    options: normalizeJson(field.options),
+    computed: Boolean(field.is_computed),
+    order: field.field_order,
   }));
   const normalizedViews = views.map((view) => ({
-    id: view.id, name: view.name, type: view.view_type,
-    visibleFieldIds: normalizeJson(view.visible_field_ids), config: normalizeJson(view.config),
-    default: Boolean(view.is_default), ordinal: view.ordinal,
+    id: view.id,
+    name: view.name,
+    type: view.view_type,
+    visibleFieldIds: normalizeJson(view.visible_field_ids),
+    config: normalizeJson(view.config),
+    default: Boolean(view.is_default),
+    ordinal: view.ordinal,
   }));
 
-  const selected: Array<{ id: string; data: Record<string, unknown>; createdAt: string; updatedAt: string }> = [];
+  const selected: Array<{
+    id: string;
+    data: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
+  }> = [];
   let recordBytes = 0;
   let byteLimited = false;
   for (const row of records.slice(0, limit)) {
-    const normalized = { id: row.id, data: parseJsonObject(row.data), createdAt: row.created_at, updatedAt: row.updated_at };
+    const normalized = {
+      id: row.id,
+      data: parseJsonObject(row.data),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
     const bytes = Buffer.byteLength(stableJson(normalized), 'utf8');
     if (bytes > byteCap && selected.length === 0) {
-      throw new AppError('Sheet record exceeds the content payload limit', 413, SHEET_CONTENT_ERROR_CODES.RECORD_TOO_LARGE, { recordId: row.id });
+      throw new AppError(
+        'Sheet record exceeds the content payload limit',
+        413,
+        SHEET_CONTENT_ERROR_CODES.RECORD_TOO_LARGE,
+        { recordId: row.id }
+      );
     }
     if (recordBytes + bytes > byteCap) {
       byteLimited = true;
@@ -207,9 +249,16 @@ export async function resolveSheetArtifactContent(params: {
 
   const hasMore = byteLimited || records.length > selected.length;
   const last = selected.at(-1);
-  const nextCursor = hasMore && last ? encodeSheetCursor({ createdAt: last.createdAt, id: last.id }) : null;
+  const nextCursor =
+    hasMore && last ? encodeSheetCursor({ createdAt: last.createdAt, id: last.id }) : null;
   const snapshotCore = {
-    table: { id: table.id, baseId: table.base_id, name: table.name, description: table.description, schemaVersion: table.schema_version },
+    table: {
+      id: table.id,
+      baseId: table.base_id,
+      name: table.name,
+      description: table.description,
+      schemaVersion: table.schema_version,
+    },
     fields: normalizedFields,
     views: normalizedViews,
     records: selected,
@@ -241,14 +290,23 @@ export async function resolveSheetArtifactContent(params: {
   ].join('\n');
   const completeness = hasMore ? 'truncated' : 'full';
   const envelope: ArtifactContentEnvelopeV1 = {
-    envelopeVersion: 'artifact-content/v1', canonicalFormat: 'json', canonicalKind: 'sheet',
-    contentSchemaVersion: 'table-platform/sheet-snapshot-v1', contentMd, contentJson,
+    envelopeVersion: 'artifact-content/v1',
+    canonicalFormat: 'json',
+    canonicalKind: 'sheet',
+    contentSchemaVersion: 'table-platform/sheet-snapshot-v1',
+    contentMd,
+    contentJson,
     projection: {
-      status: 'synced', projectedAt: null, error: null, completeness,
-      projectedFromRevision: null, projectedFromHash: pageHash,
+      status: 'synced',
+      projectedAt: null,
+      error: null,
+      completeness,
+      projectedFromRevision: null,
+      projectedFromHash: pageHash,
     },
     provenance: { originRuntime: 'sheet', originRecordId: table.id, originRevision: null },
-    artifactType: 'sheet', markdownProjectionStatus: 'synced',
+    artifactType: 'sheet',
+    markdownProjectionStatus: 'synced',
   };
   return { envelope, originRevision: null };
 }

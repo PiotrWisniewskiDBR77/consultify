@@ -1,4 +1,12 @@
-import { AlertTriangle, ArrowLeft, Check, ChevronDown, ChevronRight, Download, ExternalLink } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 

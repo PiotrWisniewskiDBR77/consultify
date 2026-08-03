@@ -313,7 +313,11 @@ const OverflowMenu: React.FC<{ chips: TopBarChipDescriptor[] }> = ({ chips }) =>
  * flagą `ff_ideaTableGuidedBar` — przy fladze OFF slot zostaje pusty.
  */
 const ToolActionSlot: React.FC = () => (
-  <div id={IDEA_MENU1_TOOL_SLOT_ID} data-testid={IDEA_MENU1_TOOL_SLOT_ID} style={{ display: 'contents' }} />
+  <div
+    id={IDEA_MENU1_TOOL_SLOT_ID}
+    data-testid={IDEA_MENU1_TOOL_SLOT_ID}
+    style={{ display: 'contents' }}
+  />
 );
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -422,7 +426,9 @@ export const TopBar: React.FC<TopBarProps> = ({
           data-testid="mels-topbar-back"
         >
           <ArrowLeft size={18} className="flex-shrink-0" aria-hidden="true" />
-          {backLabel ? <span className="hidden md:inline whitespace-nowrap">{backLabel}</span> : null}
+          {backLabel ? (
+            <span className="hidden md:inline whitespace-nowrap">{backLabel}</span>
+          ) : null}
         </button>
       ) : null}
 

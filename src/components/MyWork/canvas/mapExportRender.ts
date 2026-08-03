@@ -152,9 +152,9 @@ export function getContentBounds(viewport: HTMLElement): MapBounds | null {
 
 /** Realne tło płótna (zależne od motywu), z sensownym fallbackiem. */
 export function readCanvasBackground(container: HTMLElement): string {
-  const probe = (container.classList.contains('react-flow')
-    ? container
-    : container.querySelector('.react-flow')) as HTMLElement | null;
+  const probe = (
+    container.classList.contains('react-flow') ? container : container.querySelector('.react-flow')
+  ) as HTMLElement | null;
   const raw = probe ? getComputedStyle(probe).backgroundColor : '';
   if (!raw || raw === 'transparent' || /rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)/.test(raw)) {
     return '#ffffff';
@@ -244,13 +244,20 @@ function parseColor(raw: string | null | undefined): SolidColor | null {
   if (!value || value === 'none' || value === 'transparent') return null;
   const match = /^rgba?\(([^)]+)\)$/i.exec(value);
   if (match) {
-    const parts = match[1].split(/[,/\s]+/).filter(Boolean).map(Number);
+    const parts = match[1]
+      .split(/[,/\s]+/)
+      .filter(Boolean)
+      .map(Number);
     const [r, g, b] = parts;
     const alpha = parts.length > 3 && Number.isFinite(parts[3]) ? parts[3] : 1;
     if (![r, g, b].every(Number.isFinite)) return null;
     if (alpha <= 0) return null;
     const hex = `#${[r, g, b]
-      .map((channel) => Math.max(0, Math.min(255, Math.round(channel))).toString(16).padStart(2, '0'))
+      .map((channel) =>
+        Math.max(0, Math.min(255, Math.round(channel)))
+          .toString(16)
+          .padStart(2, '0')
+      )
       .join('')}`;
     return { hex, alpha };
   }
@@ -318,11 +325,7 @@ function findPaintSource(nodeElement: HTMLElement): HTMLElement {
     // Schodzimy TYLKO do elementu, ktory realnie wypelnia wezel. Bez tego
     // wchodzilismy w ozdobny pasek akcentu karty notatki i braly stad kolor
     // oraz promien narozy calego prostokata.
-    if (
-      !child ||
-      child.offsetWidth < nodeWidth * 0.8 ||
-      child.offsetHeight < nodeHeight * 0.6
-    ) {
+    if (!child || child.offsetWidth < nodeWidth * 0.8 || child.offsetHeight < nodeHeight * 0.6) {
       break;
     }
     element = child;
@@ -442,7 +445,7 @@ export function buildVectorSvg(container: HTMLElement, options: VectorSvgOptions
     const gradientId = referencedId && availableDefIds.has(referencedId) ? referencedId : null;
     const solid = gradientId
       ? null
-      : parseColor(strokeRaw) ?? (referencedId ? { hex: '#94a3b8', alpha: 1 } : null);
+      : (parseColor(strokeRaw) ?? (referencedId ? { hex: '#94a3b8', alpha: 1 } : null));
     if (!gradientId && !solid) continue;
     seenPaths.add(d);
 
@@ -475,7 +478,9 @@ export function buildVectorSvg(container: HTMLElement, options: VectorSvgOptions
     const parts: string[] = [];
     parts.push(
       `<rect x="0" y="0" width="${box.width}" height="${box.height}" rx="${radius.toFixed(2)}" ry="${radius.toFixed(2)}"` +
-        (fill ? ` fill="${fill.hex}"${fill.alpha < 1 ? ` fill-opacity="${fill.alpha.toFixed(3)}"` : ''}` : ' fill="none"') +
+        (fill
+          ? ` fill="${fill.hex}"${fill.alpha < 1 ? ` fill-opacity="${fill.alpha.toFixed(3)}"` : ''}`
+          : ' fill="none"') +
         (stroke && strokeWidth > 0
           ? ` stroke="${stroke.hex}" stroke-width="${strokeWidth}"${stroke.alpha < 1 ? ` stroke-opacity="${stroke.alpha.toFixed(3)}"` : ''}`
           : '') +

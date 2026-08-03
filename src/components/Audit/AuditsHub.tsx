@@ -45,7 +45,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { type FilterChip } from '@/components/shared/ModuleHub';
 import type { ModuleTab, ViewMode } from '@/components/shared/ModuleHub/types';
-import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_LEFT_CLASS,
@@ -60,6 +59,7 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
+import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { EntityStatusChip, MetaChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import { isAuditProgramEditEnabled } from '@/utils/auditProgramEditStubFlag';
@@ -817,7 +817,9 @@ export const AuditsHub: React.FC = () => {
                   <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
                     <StandardTable
                       columns={drdColumns}
-                      data={drdReports as unknown as Array<Record<string, unknown> & { id: string }>}
+                      data={
+                        drdReports as unknown as Array<Record<string, unknown> & { id: string }>
+                      }
                       selectedRowId={selectedDrdReportId}
                       onRowClick={(row) =>
                         setSelectedDrdReportId(String((row as unknown as DrdReportRow).id))
@@ -888,137 +890,141 @@ export const AuditsHub: React.FC = () => {
                 </div>
               ) : (
                 <>
-              {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7):
+                  {/* Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7):
                   StandardTable + StandardPreview, 1:1 with the Assessment
                   'list' / Results KPI catalog adopters. Single click selects a
                   row and opens the program preview in the right pane. Kebab
                   (⋮) carries Open · Generate surveys · Open preview/Edit/Archive
                   (Edit+Archive disabled — no wired UI/API yet, see
                   auditProgramEditStubFlag.ts) · Delete. */}
-              <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
-                <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
-                  <StandardTable
-                    columns={columns}
-                    data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
-                    selectedRowId={selectedId}
-                    onRowClick={(row) => setSelectedId(String((row as unknown as AuditRow).id))}
-                    rowDescription={() => null}
-                    defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
-                    persistKey="audits.programs.list"
-                    selection={{ selectedIds: selectedListIds, onChange: setSelectedListIds }}
-                    empty={{
-                      icon: ShieldCheck,
-                      title:
-                        query.trim() || statusFilter !== 'all'
-                          ? t('audit.noProgramsMatchFilters')
-                          : t('audit.noAuditProgramsYet'),
-                      actionLabel: t('audit.newAuditProgram'),
-                      onAction: () => openWizard(null),
-                    }}
-                    rowMenu={(row) => buildRowMenu(row as unknown as AuditRow)}
-                  />
-                </div>
+                  <div className="h-[calc(100vh-260px)] min-h-[420px] flex overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface">
+                    <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
+                      <StandardTable
+                        columns={columns}
+                        data={rows as unknown as Array<Record<string, unknown> & { id: string }>}
+                        selectedRowId={selectedId}
+                        onRowClick={(row) => setSelectedId(String((row as unknown as AuditRow).id))}
+                        rowDescription={() => null}
+                        defaultSort={{ columnId: 'updatedAt', direction: 'desc' }}
+                        persistKey="audits.programs.list"
+                        selection={{ selectedIds: selectedListIds, onChange: setSelectedListIds }}
+                        empty={{
+                          icon: ShieldCheck,
+                          title:
+                            query.trim() || statusFilter !== 'all'
+                              ? t('audit.noProgramsMatchFilters')
+                              : t('audit.noAuditProgramsYet'),
+                          actionLabel: t('audit.newAuditProgram'),
+                          onAction: () => openWizard(null),
+                        }}
+                        rowMenu={(row) => buildRowMenu(row as unknown as AuditRow)}
+                      />
+                    </div>
 
-                {selectedProgram ? (
-                  <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-                    <StandardPreview
-                      title={selectedProgram.name || t('audit.program')}
-                      onClose={() => setSelectedId(null)}
-                      // No `onOpenFull`: the preview pane IS the program's full
-                      // view (no separate detail route exists for /audits) —
-                      // omitting the header's "Open" button rather than wiring
-                      // a same-row no-op is the honest choice here.
-                      meta={{
-                        pills: [
-                          {
-                            label: statusLabel(selectedProgram.status),
-                            tone: statusChipTone(selectedProgram.status),
-                          },
-                          ...(selectedProgram.surveysGenerated
-                            ? [
-                                {
-                                  label: t('audit.surveysGenerated'),
-                                  tone: 'success' as const,
-                                },
-                              ]
-                            : []),
-                        ],
-                        trailing: (
-                          <span className="text-[11px] font-semibold text-c-text-secondary">
-                            {selectedProgram.updatedAt
-                              ? new Date(selectedProgram.updatedAt).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric',
-                                })
-                              : '—'}
-                          </span>
-                        ),
-                      }}
-                      details={{
-                        text: [
-                          `${t('audit.objective')}: ${selectedProgram.objective || '—'}`,
-                          `${t('audit.templates')}: ${selectedProgram.templateCount}`,
-                          `${t('audit.assignees')}: ${selectedProgram.assigneeCount}`,
-                          `${t('audit.completion')}: ${
-                            completionSummary ? `${completionSummary.percent}%` : '—'
-                          }`,
-                          '',
-                          selectedProgram.description?.trim() ||
-                            t('common.noDescription', 'No description'),
-                        ].join('\n'),
-                        onCopy: () => {
-                          void navigator.clipboard?.writeText(
-                            `${selectedProgram.name} — ${statusLabel(selectedProgram.status)}`
-                          );
-                        },
-                      }}
-                      ai={{
-                        hints: [t('audit.aiHintSummarize'), t('audit.aiHintNextSteps')],
-                        disabled: true,
-                        disabledTooltip: t('common.comingSoon', 'Coming soon'),
-                      }}
-                      relations={
-                        Array.isArray(selectedProgram.config.plan)
-                          ? selectedProgram.config.plan.map((row, i) => ({
-                              id: String((row as { areaKey?: string })?.areaKey ?? i),
-                              label: String((row as { area?: string })?.area ?? '') || '—',
-                              value:
-                                String((row as { suggestedRole?: string })?.suggestedRole ?? '') ||
-                                '—',
-                            }))
-                          : []
-                      }
-                      relationsEmptyLabel={t('audit.noSuggestedPlan')}
-                      actions={previewActions}
-                    />
-                  </aside>
-                ) : null}
-              </div>
+                    {selectedProgram ? (
+                      <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
+                        <StandardPreview
+                          title={selectedProgram.name || t('audit.program')}
+                          onClose={() => setSelectedId(null)}
+                          // No `onOpenFull`: the preview pane IS the program's full
+                          // view (no separate detail route exists for /audits) —
+                          // omitting the header's "Open" button rather than wiring
+                          // a same-row no-op is the honest choice here.
+                          meta={{
+                            pills: [
+                              {
+                                label: statusLabel(selectedProgram.status),
+                                tone: statusChipTone(selectedProgram.status),
+                              },
+                              ...(selectedProgram.surveysGenerated
+                                ? [
+                                    {
+                                      label: t('audit.surveysGenerated'),
+                                      tone: 'success' as const,
+                                    },
+                                  ]
+                                : []),
+                            ],
+                            trailing: (
+                              <span className="text-[11px] font-semibold text-c-text-secondary">
+                                {selectedProgram.updatedAt
+                                  ? new Date(selectedProgram.updatedAt).toLocaleDateString(
+                                      undefined,
+                                      {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                      }
+                                    )
+                                  : '—'}
+                              </span>
+                            ),
+                          }}
+                          details={{
+                            text: [
+                              `${t('audit.objective')}: ${selectedProgram.objective || '—'}`,
+                              `${t('audit.templates')}: ${selectedProgram.templateCount}`,
+                              `${t('audit.assignees')}: ${selectedProgram.assigneeCount}`,
+                              `${t('audit.completion')}: ${
+                                completionSummary ? `${completionSummary.percent}%` : '—'
+                              }`,
+                              '',
+                              selectedProgram.description?.trim() ||
+                                t('common.noDescription', 'No description'),
+                            ].join('\n'),
+                            onCopy: () => {
+                              void navigator.clipboard?.writeText(
+                                `${selectedProgram.name} — ${statusLabel(selectedProgram.status)}`
+                              );
+                            },
+                          }}
+                          ai={{
+                            hints: [t('audit.aiHintSummarize'), t('audit.aiHintNextSteps')],
+                            disabled: true,
+                            disabledTooltip: t('common.comingSoon', 'Coming soon'),
+                          }}
+                          relations={
+                            Array.isArray(selectedProgram.config.plan)
+                              ? selectedProgram.config.plan.map((row, i) => ({
+                                  id: String((row as { areaKey?: string })?.areaKey ?? i),
+                                  label: String((row as { area?: string })?.area ?? '') || '—',
+                                  value:
+                                    String(
+                                      (row as { suggestedRole?: string })?.suggestedRole ?? ''
+                                    ) || '—',
+                                }))
+                              : []
+                          }
+                          relationsEmptyLabel={t('audit.noSuggestedPlan')}
+                          actions={previewActions}
+                        />
+                      </aside>
+                    ) : null}
+                  </div>
 
-              {/* Load more (#19e server-side pagination). Only when more rows exist
+                  {/* Load more (#19e server-side pagination). Only when more rows exist
                 AND the user isn't narrowing the current page via search/status. */}
-              {programs.length < total && (
-                <div className="mt-3 flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => void loadMore()}
-                    disabled={loadingMore}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-60"
-                  >
-                    {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {t('audit.loadMore')}
-                  </button>
-                  <span className="text-[11px] text-c-text-muted">
-                    {t('audit.showingOfTotal', {
-                      shown: programs.length,
-                      total,
-                    })}
-                  </span>
-                </div>
+                  {programs.length < total && (
+                    <div className="mt-3 flex flex-col items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => void loadMore()}
+                        disabled={loadingMore}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-c-border px-4 py-2 text-sm text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-60"
+                      >
+                        {loadingMore && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {t('audit.loadMore')}
+                      </button>
+                      <span className="text-[11px] text-c-text-muted">
+                        {t('audit.showingOfTotal', {
+                          shown: programs.length,
+                          total,
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
-            </>
-          )}
             </>
           )}
         </div>

@@ -156,7 +156,11 @@ const TYPE_CHIP: Record<string, { bg: string; text: string; border: string }> = 
   report: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
   tool: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/20' },
   insight: { bg: 'bg-lime-500/10', text: 'text-lime-400', border: 'border-lime-500/20' },
-  external: { bg: 'bg-c-border-subtle/10', text: 'text-c-text-secondary', border: 'border-c-border/20' },
+  external: {
+    bg: 'bg-c-border-subtle/10',
+    text: 'text-c-text-secondary',
+    border: 'border-c-border/20',
+  },
 };
 
 const getChip = (type: string) =>
@@ -228,7 +232,8 @@ const getStatusBadge = (status?: string) => {
   const s = String(status || '')
     .trim()
     .toLowerCase();
-  if (!s) return 'border-c-border-strong/50 text-c-text-secondary bg-c-surface-raised/60 dark:bg-c-border-subtle/10';
+  if (!s)
+    return 'border-c-border-strong/50 text-c-text-secondary bg-c-surface-raised/60 dark:bg-c-border-subtle/10';
   if (['approved', 'completed', 'done', 'closed', 'mitigated', 'resolved'].includes(s))
     return 'border-emerald-400/40 text-emerald-400 bg-emerald-500/10';
   if (['in progress', 'in_progress', 'active', 'open', 'monitoring', 'monitored'].includes(s))
@@ -259,9 +264,7 @@ const SectionCard: React.FC<{
     <div className="flex items-center justify-between px-4 py-3 border-b border-c-border/80 dark:border-c-border-subtle/60 bg-c-surface/50 dark:bg-c-surface/30">
       <div className="flex items-center gap-2.5">
         {icon}
-        <span className="text-[13px] font-semibold text-c-text dark:text-c-text">
-          {title}
-        </span>
+        <span className="text-[13px] font-semibold text-c-text dark:text-c-text">{title}</span>
         <span className="text-[11px] font-medium text-c-text-secondary dark:text-c-text-muted bg-c-surface-raised dark:bg-c-surface-raised px-2 py-0.5 rounded-full tabular-nums">
           {count}
         </span>
@@ -308,7 +311,9 @@ const FormField: React.FC<{
   children: React.ReactNode;
 }> = ({ label, children }) => (
   <label className="block space-y-1.5">
-    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">{label}</span>
+    <span className="text-xs font-medium text-c-text-secondary dark:text-c-text-secondary">
+      {label}
+    </span>
     {children}
   </label>
 );
@@ -802,7 +807,9 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {filteredAttachments.length === 0 ? (
           <EmptyState
-            icon={<Paperclip size={20} className="text-c-text-secondary dark:text-c-text-secondary" />}
+            icon={
+              <Paperclip size={20} className="text-c-text-secondary dark:text-c-text-secondary" />
+            }
             message={t('sharedComponents.attachmentsLinksCanvas.emptyAttachments')}
           />
         ) : (
@@ -1019,7 +1026,9 @@ Write a clear, professional comment explaining why this link exists and its sign
       >
         {internalItems.length === 0 ? (
           <EmptyState
-            icon={<LinkIcon size={20} className="text-c-text-secondary dark:text-c-text-secondary" />}
+            icon={
+              <LinkIcon size={20} className="text-c-text-secondary dark:text-c-text-secondary" />
+            }
             message={t('sharedComponents.attachmentsLinksCanvas.emptyInternalLinks')}
           />
         ) : (
@@ -1424,7 +1433,9 @@ Write a clear, professional comment explaining why this link exists and its sign
                       <ArrowLeft
                         size={16}
                         className={
-                          selectedLinkDirection === 'incoming' ? 'text-blue-500' : 'text-c-text-secondary'
+                          selectedLinkDirection === 'incoming'
+                            ? 'text-blue-500'
+                            : 'text-c-text-secondary'
                         }
                       />
                       <span

@@ -37,8 +37,14 @@ const ZALOZENIA = {
     wiersz({ driver: { value: 'Nakład początkowy (inwestycja)' }, wartosc: { value: 500000 } }),
     wiersz({ driver: { value: 'Przepływ operacyjny brutto — rok 1' }, wartosc: { value: 220000 } }),
     wiersz({ driver: { value: 'Wzrost przepływów % rocznie' }, wartosc: { value: 0.06 } }),
-    wiersz({ driver: { value: 'Stopa dyskontowa (wymagana stopa zwrotu)' }, wartosc: { value: 0.1 } }),
-    wiersz({ driver: { value: 'Wartość rezydualna (koniec horyzontu)' }, wartosc: { value: 50000 } }),
+    wiersz({
+      driver: { value: 'Stopa dyskontowa (wymagana stopa zwrotu)' },
+      wartosc: { value: 0.1 },
+    }),
+    wiersz({
+      driver: { value: 'Wartość rezydualna (koniec horyzontu)' },
+      wartosc: { value: 50000 },
+    }),
     wiersz({ driver: { value: 'Stopa podatkowa' }, wartosc: { value: 0.19 } }),
   ],
 };

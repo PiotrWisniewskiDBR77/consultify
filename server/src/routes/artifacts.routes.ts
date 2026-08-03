@@ -1612,7 +1612,7 @@ router.get(
     }
     const { etag: _etag, ...payload } = content;
     res.json({ data: payload });
-  }),
+  })
 );
 
 router.get(

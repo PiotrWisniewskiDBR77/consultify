@@ -40,9 +40,8 @@ vi.mock('../../../utils/Logger.js', () => ({
 
 const mockBuildWorkbookBuffer = vi.fn();
 vi.mock('../WorkbookBuilder.js', async () => {
-  const actual = await vi.importActual<typeof import('../WorkbookBuilder.js')>(
-    '../WorkbookBuilder.js'
-  );
+  const actual =
+    await vi.importActual<typeof import('../WorkbookBuilder.js')>('../WorkbookBuilder.js');
   return {
     ...actual,
     buildWorkbookBuffer: (...args: unknown[]) => mockBuildWorkbookBuffer(...args),

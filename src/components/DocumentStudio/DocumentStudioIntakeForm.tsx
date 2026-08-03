@@ -488,7 +488,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           />
           <span>
             <span className="font-medium text-c-text">
-              {t('documentStudio.intake.useLlmLabel', 'Generate section content with AI (recommended)')}
+              {t(
+                'documentStudio.intake.useLlmLabel',
+                'Generate section content with AI (recommended)'
+              )}
             </span>
             <span className="block text-xs text-c-text-secondary">
               {t(

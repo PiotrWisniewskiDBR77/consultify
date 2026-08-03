@@ -213,8 +213,16 @@ export const RightRail: React.FC<RightRailProps> = ({
             type="button"
             onClick={onToggleCollapse}
             className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
-            title={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
-            aria-label={collapsed ? (collapseLabel ?? 'Expand right rail') : (collapseLabel ?? 'Collapse right rail')}
+            title={
+              collapsed
+                ? (collapseLabel ?? 'Expand right rail')
+                : (collapseLabel ?? 'Collapse right rail')
+            }
+            aria-label={
+              collapsed
+                ? (collapseLabel ?? 'Expand right rail')
+                : (collapseLabel ?? 'Collapse right rail')
+            }
             aria-expanded={!collapsed}
             aria-controls={showPanel ? panelDomId : undefined}
             data-testid="mels-right-rail-toggle"

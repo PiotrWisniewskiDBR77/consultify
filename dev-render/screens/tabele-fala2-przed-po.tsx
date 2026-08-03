@@ -105,8 +105,8 @@ export default function TabeleFala2PrzedPo() {
       <header className="mb-8">
         <h1 className="text-base font-semibold">Fala tabel — 2026-07-28 · render-verify</h1>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-c-text-muted">
-          Cztery naprawy z przeglądu 128 zrzutów. Prawa kolumna to realne komponenty
-          produkcyjne po zmianie; lewa odtwarza stan sprzed naprawy.
+          Cztery naprawy z przeglądu 128 zrzutów. Prawa kolumna to realne komponenty produkcyjne po
+          zmianie; lewa odtwarza stan sprzed naprawy.
         </p>
       </header>
 
@@ -163,8 +163,8 @@ export default function TabeleFala2PrzedPo() {
           }
         />
         <p className="mt-2 text-[11px] text-c-text-muted">
-          Ostatni wiersz pokazuje przy okazji N-79: ekran podaje surowe „MEDIUM" z bazy,
-          a chip normalizuje zapis do „Medium".
+          Ostatni wiersz pokazuje przy okazji N-79: ekran podaje surowe „MEDIUM" z bazy, a chip
+          normalizuje zapis do „Medium".
         </p>
       </Sekcja>
 
@@ -230,8 +230,20 @@ export default function TabeleFala2PrzedPo() {
             details={{ content: 'Decyzja czeka na rozstrzygnięcie.', wordCount: 5 }}
             actions={{
               resolutions: [
-                { id: 'approve', variant: 'positive', label: 'Approve', shortcut: 'A', onClick: noop },
-                { id: 'reject', variant: 'destructive', label: 'Reject', shortcut: 'R', onClick: noop },
+                {
+                  id: 'approve',
+                  variant: 'positive',
+                  label: 'Approve',
+                  shortcut: 'A',
+                  onClick: noop,
+                },
+                {
+                  id: 'reject',
+                  variant: 'destructive',
+                  label: 'Reject',
+                  shortcut: 'R',
+                  onClick: noop,
+                },
               ],
             }}
           />
@@ -239,7 +251,9 @@ export default function TabeleFala2PrzedPo() {
       </Sekcja>
       <Sekcja
         tytul="4 · Kebab wiersza bez atrap (P-17 / P-18)"
-        opis={'Po lewej kebab Sejfu tak, jak wyglądał: trzy z czterech pozycji martwe, każda z bezużytecznym „Coming soon (backend)”. Po prawej ten sam kebab dziś — „jeszcze tego nie ma” znika, a blokada z POWODEM zostaje, bo uczy reguły produktu.'}
+        opis={
+          'Po lewej kebab Sejfu tak, jak wyglądał: trzy z czterech pozycji martwe, każda z bezużytecznym „Coming soon (backend)”. Po prawej ten sam kebab dziś — „jeszcze tego nie ma” znika, a blokada z POWODEM zostaje, bo uczy reguły produktu.'
+        }
       >
         <Para
           przed={
@@ -310,7 +324,9 @@ export default function TabeleFala2PrzedPo() {
         opis="Podgląd zatwierdzonego przydziału był po prostu urwany — stopka znikała, bo przyciski renderowały się tylko dla trzech statusów roboczych. Pustka nie do odróżnienia od brakującej funkcji. Baner to wzorzec z Interview → Initiatives."
       >
         <Para
-          przed={<div className="p-6 text-center text-xs text-c-text-muted">(nic — koniec panelu)</div>}
+          przed={
+            <div className="p-6 text-center text-xs text-c-text-muted">(nic — koniec panelu)</div>
+          }
           po={
             <div className="rounded-token-md border-l-2 border-emerald-400/70 bg-emerald-50/60 px-3 py-2 text-xs text-emerald-800 dark:bg-emerald-500/[0.08] dark:text-emerald-200">
               Zatwierdzone — przydział jest zamknięty i nie wymaga już działania.

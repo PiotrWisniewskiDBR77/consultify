@@ -323,7 +323,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       const label = typeof segment === 'string' ? segment : segment.label;
                       const to = typeof segment === 'string' ? undefined : segment.to;
                       return (
-                        // eslint-disable-next-line react/no-array-index-key -- segments are a static, ordered path; label alone isn't unique enough (e.g. two "Documents" levels).
                         <React.Fragment key={`${index}-${label}`}>
                           {index > 0 ? (
                             <ChevronRight

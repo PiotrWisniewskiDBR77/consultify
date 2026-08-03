@@ -13,7 +13,13 @@
 import { Check, ChevronDown, Loader2, Rocket, Search, Sparkles, Star } from 'lucide-react';
 import React from 'react';
 
-type Row = { file: string; label: string; oldCls: string; newCls: string; content: React.ReactNode };
+type Row = {
+  file: string;
+  label: string;
+  oldCls: string;
+  newCls: string;
+  content: React.ReactNode;
+};
 
 const ROWS: Row[] = [
   {

@@ -101,66 +101,65 @@ export const WhiteboardSessionPanel: React.FC<WhiteboardSessionPanelProps> = ({
       )}
 
       {tresc && (
-      <div className={`${kartaCls} px-3 py-2.5`}>
-        <div className="flex items-center justify-between gap-3">
-          {/* Nazwa panelu + rola: w wersji panelowej niesie je zwijalny nagłówek
+        <div className={`${kartaCls} px-3 py-2.5`}>
+          <div className="flex items-center justify-between gap-3">
+            {/* Nazwa panelu + rola: w wersji panelowej niesie je zwijalny nagłówek
               wyżej, więc tutaj byłby dubel (Doktryna Gęstości). */}
-          {!embedded && (
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
-                {t('myWork.whiteboard.sessionPanel.layer')}
+            {!embedded && (
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">
+                  {t('myWork.whiteboard.sessionPanel.layer')}
+                </div>
+                <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
               </div>
-              <div className="text-[11px] font-semibold text-c-text">{roleLabel}</div>
-            </div>
-          )}
-          <div className={embedded ? 'text-left' : 'text-right'}>
-            <div className="text-[10px] font-semibold text-c-text-secondary">
-              {whiteboardModeCopy.modeLabel}
-            </div>
-            <div className="text-[9px] text-c-text-secondary">
-              {sessionState.timerEndsAt
-                ? `${Math.max(0, Math.ceil((sessionState.timerEndsAt - Date.now()) / 1000))}s`
-                : t('myWork.whiteboard.sessionPanel.timerOff')}
+            )}
+            <div className={embedded ? 'text-left' : 'text-right'}>
+              <div className="text-[10px] font-semibold text-c-text-secondary">
+                {whiteboardModeCopy.modeLabel}
+              </div>
+              <div className="text-[9px] text-c-text-secondary">
+                {sessionState.timerEndsAt
+                  ? `${Math.max(0, Math.ceil((sessionState.timerEndsAt - Date.now()) / 1000))}s`
+                  : t('myWork.whiteboard.sessionPanel.timerOff')}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
-            {whiteboardModeCopy.exitHint}
-          </span>
-          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
-            {sessionState.votingOpen
-              ? t('myWork.whiteboard.sessionPanel.votingOpen')
-              : t('myWork.whiteboard.sessionPanel.votingClosed')}
-          </span>
-          <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
-            {sessionState.followMe
-              ? t('myWork.whiteboard.sessionPanel.followOn')
-              : t('myWork.whiteboard.sessionPanel.followOff')}
-          </span>
-          {sessionState.spotlightNodeId && (
-            <span className="px-2 py-1 rounded-full bg-warning-500/10 text-[10px] font-medium text-warning-700 dark:text-warning-300">
-              {t('myWork.whiteboard.sessionPanel.spotlightActive')}
+          <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+            <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
+              {whiteboardModeCopy.exitHint}
             </span>
-          )}
+            <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
+              {sessionState.votingOpen
+                ? t('myWork.whiteboard.sessionPanel.votingOpen')
+                : t('myWork.whiteboard.sessionPanel.votingClosed')}
+            </span>
+            <span className="px-2 py-1 rounded-full bg-c-surface-raised text-[10px] font-medium text-c-text-secondary">
+              {sessionState.followMe
+                ? t('myWork.whiteboard.sessionPanel.followOn')
+                : t('myWork.whiteboard.sessionPanel.followOff')}
+            </span>
+            {sessionState.spotlightNodeId && (
+              <span className="px-2 py-1 rounded-full bg-warning-500/10 text-[10px] font-medium text-warning-700 dark:text-warning-300">
+                {t('myWork.whiteboard.sessionPanel.spotlightActive')}
+              </span>
+            )}
+          </div>
+          <div className="mt-2 border-t border-c-border-subtle pt-2">
+            <WhiteboardPhaseBar
+              isPl={isPl}
+              currentPhase={sessionState.facilitationPhase}
+              locked={locked}
+              onPhaseChange={onPhaseChange}
+              wrap={embedded}
+            />
+          </div>
+          <div className="mt-2 text-[10px] leading-4 text-c-text-muted">
+            {whiteboardModeCopy.helper}
+          </div>
         </div>
-        <div className="mt-2 border-t border-c-border-subtle pt-2">
-          <WhiteboardPhaseBar
-            isPl={isPl}
-            currentPhase={sessionState.facilitationPhase}
-            locked={locked}
-            onPhaseChange={onPhaseChange}
-            wrap={embedded}
-          />
-        </div>
-        <div className="mt-2 text-[10px] leading-4 text-c-text-muted">
-          {whiteboardModeCopy.helper}
-        </div>
-      </div>
       )}
 
-      {tresc &&
-        (activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
+      {tresc && (activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
         <div className={`${kartaCls} px-3 py-2.5 space-y-2`}>
           <div className="flex items-center justify-between gap-3">
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-c-text-muted">

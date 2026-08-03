@@ -36,7 +36,14 @@
  *   ?screen=prawy-panel-szyna-ikon            → light
  *   ?screen=prawy-panel-szyna-ikon&theme=dark → dark
  */
-import { Activity, ChevronLeft, ChevronRight, Link2, MessageSquare, LayoutGrid } from 'lucide-react';
+import {
+  Activity,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  Link2,
+  MessageSquare,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -139,7 +146,15 @@ const LegacyBrokenRightRail: React.FC<{
   panelWidth: number;
   collapsed: boolean;
   onToggleCollapse: () => void;
-}> = ({ tools, activeToolId, onSelectTool, panelContent, panelWidth, collapsed, onToggleCollapse }) => {
+}> = ({
+  tools,
+  activeToolId,
+  onSelectTool,
+  panelContent,
+  panelWidth,
+  collapsed,
+  onToggleCollapse,
+}) => {
   const activeTool = activeToolId ? (tools.find((t) => t.id === activeToolId) ?? null) : null;
   const showPanel = !collapsed && Boolean(activeTool) && Boolean(panelContent);
 
@@ -269,17 +284,15 @@ export function PrawyPanelSzynaIkonScreen(): React.ReactElement {
               {legacyCollapsed ? 'Rozwiń (spoza panelu)' : 'Zwiń (spoza panelu)'}
             </button>
             <p className="text-[11px] text-c-text-muted">
-              (przycisk pomocniczy do testu — w starej wersji jedyny sposób zwinięcia to strzałka
-              na samej szynie, ta sama, która potem znikała)
+              (przycisk pomocniczy do testu — w starej wersji jedyny sposób zwinięcia to strzałka na
+              samej szynie, ta sama, która potem znikała)
             </p>
           </div>
           <LegacyBrokenRightRail
             tools={tools}
             activeToolId={legacyActiveId}
             onSelectTool={setLegacyActiveId}
-            panelContent={
-              legacyActiveId ? <DemoPanelContent toolId={legacyActiveId} /> : undefined
-            }
+            panelContent={legacyActiveId ? <DemoPanelContent toolId={legacyActiveId} /> : undefined}
             panelWidth={320}
             collapsed={legacyCollapsed}
             onToggleCollapse={() => setLegacyCollapsed((v) => !v)}
@@ -304,9 +317,7 @@ export function PrawyPanelSzynaIkonScreen(): React.ReactElement {
             tools={tools}
             activeToolId={fixedActiveId}
             onSelectTool={setFixedActiveId}
-            panelContent={
-              fixedActiveId ? <DemoPanelContent toolId={fixedActiveId} /> : undefined
-            }
+            panelContent={fixedActiveId ? <DemoPanelContent toolId={fixedActiveId} /> : undefined}
             panelWidth={320}
             collapsed={fixedCollapsed}
             onToggleCollapse={() => setFixedCollapsed((v) => !v)}

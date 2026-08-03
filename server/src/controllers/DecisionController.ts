@@ -10,13 +10,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
 import {
+  createDecisionAlternative,
+  createDecisionComment,
+  createDecisionRisk,
   DecisionConflictError,
   DecisionNotFoundError,
   DecisionSubResourceNotFoundError,
   DecisionValidationError,
-  createDecisionAlternative,
-  createDecisionComment,
-  createDecisionRisk,
   deleteDecisionAlternative,
   deleteDecisionComment,
   deleteDecisionRisk,
@@ -1208,7 +1208,9 @@ export class DecisionController {
         taskId: taskIdValue,
       });
       if (!relatedObjectsCheck.ok) {
-        res.status(400).json({ error: relatedObjectsCheck.message, field: relatedObjectsCheck.field });
+        res
+          .status(400)
+          .json({ error: relatedObjectsCheck.message, field: relatedObjectsCheck.field });
         return;
       }
 
@@ -1519,7 +1521,11 @@ export class DecisionController {
       const requestedStatus = String(statusInput || '').toLowerCase();
       const isDeferredAction = requestedStatus === 'deferred';
       const normalizedStatus = normalizeStatus(statusInput || '');
-      if (!['approved', 'rejected', 'pending', 'returned_for_clarification'].includes(normalizedStatus)) {
+      if (
+        !['approved', 'rejected', 'pending', 'returned_for_clarification'].includes(
+          normalizedStatus
+        )
+      ) {
         res.status(400).json({ error: 'Invalid decision' });
         return;
       }
@@ -1564,8 +1570,7 @@ export class DecisionController {
         return;
       }
 
-      const expectedVersionValue =
-        typeof expectedVersion === 'number' ? expectedVersion : version;
+      const expectedVersionValue = typeof expectedVersion === 'number' ? expectedVersion : version;
 
       let result;
       try {
@@ -2541,10 +2546,9 @@ export class DecisionController {
         LEFT JOIN users requester ON d.created_by = requester.id
         WHERE d.id = ?
       `;
-      const decision = await queryHelpers.queryOne<DecisionRow & { version?: number; decided_by?: string | null }>(
-        sql,
-        [id]
-      );
+      const decision = await queryHelpers.queryOne<
+        DecisionRow & { version?: number; decided_by?: string | null }
+      >(sql, [id]);
       if (!decision || decision.organization_id !== orgId) {
         res.status(404).json({ error: 'Decision not found' });
         return;
@@ -2568,7 +2572,11 @@ export class DecisionController {
         getDecisionAggregateExtras(id, orgId),
       ]);
 
-      const escalation = computeEscalationLevel(decision.deadline, decision.priority, decision.impact);
+      const escalation = computeEscalationLevel(
+        decision.deadline,
+        decision.priority,
+        decision.impact
+      );
       const statusNormalized = normalizeStatus(decision.status);
       const { type: relatedObjectType, id: relatedObjectId } = resolveRelatedObject(decision);
       const structured = buildStructuredFields(decision);
@@ -2633,7 +2641,10 @@ export class DecisionController {
 
   /** POST /api/decisions/:id/comments */
   static createComment = asyncHandler(
-    async (req: AuthenticatedRequest<CreateDecisionCommentRequest>, res: Response): Promise<void> => {
+    async (
+      req: AuthenticatedRequest<CreateDecisionCommentRequest>,
+      res: Response
+    ): Promise<void> => {
       const { id } = req.params;
       const userId = req.user?.id;
       const orgId = req.user?.organizationId;
@@ -2658,7 +2669,10 @@ export class DecisionController {
 
   /** PUT /api/decisions/:id/comments/:commentId */
   static updateComment = asyncHandler(
-    async (req: AuthenticatedRequest<UpdateDecisionCommentRequest>, res: Response): Promise<void> => {
+    async (
+      req: AuthenticatedRequest<UpdateDecisionCommentRequest>,
+      res: Response
+    ): Promise<void> => {
       const { id, commentId } = req.params as { id: string; commentId: string };
       const userId = req.user?.id;
       const orgId = req.user?.organizationId;
@@ -2725,16 +2739,18 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
       }
       if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add alternatives' });
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can add alternatives' });
         return;
       }
       try {
@@ -2773,16 +2789,18 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
       }
       if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit alternatives' });
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can edit alternatives' });
         return;
       }
       try {
@@ -2813,10 +2831,10 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
@@ -2850,16 +2868,18 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
       }
       if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can add risks' });
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can add risks' });
         return;
       }
       try {
@@ -2894,16 +2914,18 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
       }
       if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can edit risks' });
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can edit risks' });
         return;
       }
       try {
@@ -2934,16 +2956,18 @@ export class DecisionController {
       const decisionRow = await queryHelpers.queryOne<{
         created_by?: string;
         decision_maker_id?: string;
-      }>(`SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`, [
-        id,
-        orgId,
-      ]);
+      }>(
+        `SELECT created_by, decision_maker_id FROM decisions WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
       if (!decisionRow) {
         res.status(404).json({ error: 'Decision not found' });
         return;
       }
       if (!isDossierEditor(decisionRow, userId, req.user?.role)) {
-        res.status(403).json({ error: 'Only the decision preparer, owner, or admin can delete risks' });
+        res
+          .status(403)
+          .json({ error: 'Only the decision preparer, owner, or admin can delete risks' });
         return;
       }
       try {

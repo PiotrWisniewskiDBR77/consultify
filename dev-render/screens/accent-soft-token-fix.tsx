@@ -38,10 +38,12 @@ export default function AccentSoftTokenFixScreen(): React.ReactElement {
       <h1 style={{ fontSize: 18, marginBottom: 4 }}>
         J23 · bg-c-accent-soft — miękki tint, nie pełny crimson
       </h1>
-      <p style={{ fontSize: 13, color: 'var(--c-text-secondary)', marginBottom: 28, maxWidth: 720 }}>
+      <p
+        style={{ fontSize: 13, color: 'var(--c-text-secondary)', marginBottom: 28, maxWidth: 720 }}
+      >
         Odznaka REKOMENDACJA używa <code>bg-c-accent-soft</code> + <code>text-c-accent</code>. Jeśli
-        tło jest pełnym crimsonem i tekst nieczytelny — bug żyje. Po naprawie: delikatny tint,
-        tekst crimson wyraźny.
+        tło jest pełnym crimsonem i tekst nieczytelny — bug żyje. Po naprawie: delikatny tint, tekst
+        crimson wyraźny.
       </p>
 
       {/* Odznaka REKOMENDACJA — realny wzorzec (selected / tag) */}

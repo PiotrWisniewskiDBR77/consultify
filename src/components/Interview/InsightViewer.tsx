@@ -61,12 +61,13 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { confidenceShortLabel } from '@/components/Conclusions/conclusionMeta';
 import { InitiativeGeneratorModal } from '@/components/Initiatives/Wizard/InitiativeGeneratorModal';
 import { PresentMode } from '@/components/Presentations/DeckBuilder/PresentMode';
 import type { DeckCard } from '@/components/Presentations/wizard/types';
-import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 // n-Type §6.2–6.4 — ręczna edycja treści sekcji Insightu (właściciel 2026-07-23).
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import { AutoFitTextarea } from '@/components/shared/AutoFitTextarea';
 import { Select } from '@/components/shared/forms';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
@@ -77,19 +78,15 @@ import {
   type NModeCardStatus,
   NModeSectionWrapper,
 } from '@/components/shared/NModeLayout';
-import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisField } from '@/services/cardAnalysis';
 import { NCardAIAnalysisPanel } from '@/components/shared/NModeLayout/NCardAIAnalysisPanel';
-import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
+import { Menu2AIButton, NModeMenu2 } from '@/components/shared/NModeLayout/NModeMenu2';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
 // ToolbarAISolidButton celowo NIE importowany (SPEC-N §2.3 — poza slotem primary
 // nic nie jest solid; AI Consultant zjechał na wariant outline/split).
-import {
-  ToolbarGhostButton,
-} from '@/components/shared/NModeLayout/NModeToolbar';
+import { ToolbarGhostButton } from '@/components/shared/NModeLayout/NModeToolbar';
 import { SectionErrorBoundary } from '@/components/shared/NModeLayout/SectionErrorBoundary';
 import type { NModeSection, PropertyFieldOption } from '@/components/shared/NModeLayout/types';
+import { useCardAIAnalysis } from '@/components/shared/NModeLayout/useCardAIAnalysis';
 import { type CardLayout, useCardLayout } from '@/components/shared/NModeLayout/useCardLayout';
 import {
   ActivityLogCanvas,
@@ -106,23 +103,19 @@ import {
 } from '@/components/shared/NModeSections';
 import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
-import { confidenceShortLabel } from '@/components/Conclusions/conclusionMeta';
 import { Button, LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
-import {
-  type ArtifactConversion,
-  ConclusionsApi,
-} from '@/services/api/conclusions.api';
+import { type ArtifactConversion, ConclusionsApi } from '@/services/api/conclusions.api';
 import {
   type V8InsightAnalysis,
   type V8InsightAnalysisMatrixCell,
@@ -135,6 +128,8 @@ import {
   type V8InterviewReportReadiness,
   type V8InterviewReportWorksheetStatus,
 } from '@/services/api/v8/interview';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
@@ -714,9 +709,7 @@ function insightOpensInPreview(
 ): boolean {
   if (!i) return false;
   const eff =
-    i.reviewStatus === 'in_review' || i.reviewStatus === 'published'
-      ? i.reviewStatus
-      : i.status;
+    i.reviewStatus === 'in_review' || i.reviewStatus === 'published' ? i.reviewStatus : i.status;
   return eff === 'completed' || eff === 'in_review' || eff === 'published';
 }
 
@@ -2465,7 +2458,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     isPolish,
     readbackSummary.challenged,
     readbackSummary.unresolved,
-    v6Signals,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+    v6Signals,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   const analysisTopicsById = useMemo(
     () =>
@@ -2759,9 +2754,19 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   >(() => {
     const raw = (insight as any)?.sectionOverrides ?? (insight as any)?.section_overrides;
     if (!raw) return {};
-    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    const parsed =
+      typeof raw === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(raw);
+            } catch {
+              return null;
+            }
+          })()
+        : raw;
     if (!parsed || typeof parsed !== 'object') return {};
-    const out: Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }> = {};
+    const out: Record<string, { content: string; updatedAt?: string; updatedBy?: string | null }> =
+      {};
     for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
       if (typeof value === 'string') out[id] = { content: value };
       else if (value && typeof value === 'object' && typeof (value as any).content === 'string') {
@@ -2840,11 +2845,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         if (!insight) return;
         setSavingSectionId(sectionId);
         try {
-          await V8InterviewApi.updateInsight(insight.id, { sectionOverrides: { [sectionId]: null } });
+          await V8InterviewApi.updateInsight(insight.id, {
+            sectionOverrides: { [sectionId]: null },
+          });
           const nextMap = { ...sectionOverrides };
           delete nextMap[sectionId];
           setInsight((prev) =>
-            prev ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any) : prev
+            prev
+              ? ({ ...prev, sectionOverrides: nextMap, section_overrides: nextMap } as any)
+              : prev
           );
           setSectionDrafts((prev) => {
             const next = { ...prev };
@@ -3011,7 +3020,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     seedTeresaPrompt,
     setChatSystemPrompt,
     setChatContextActions,
-    openChatWithContext,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+    openChatWithContext,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   // Sprzątanie: akcje kontekstowe insightu nie mogą wyciekać do innych modułów.
   useEffect(() => {
@@ -3602,7 +3613,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     draftPriority,
     insightId,
     isPolish,
-    (currentUser as any)?.name,, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+    (currentUser as any)?.name,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   const handleDeleteComment = useCallback(
     (commentId: string) => {
@@ -3838,7 +3851,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             style: 'bg-c-tag-2 text-c-tag-foreground',
           };
         default:
-          return { icon: <Clock size={12} />, label: type, style: 'bg-c-tag-8 text-c-tag-foreground' };
+          return {
+            icon: <Clock size={12} />,
+            label: type,
+            style: 'bg-c-tag-8 text-c-tag-foreground',
+          };
       }
     },
     [isPolish]
@@ -3922,13 +3939,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="mt-3 space-y-2">
                     {truthReviewSummary.safeClaims.length > 0 ? (
                       truthReviewSummary.safeClaims.map((finding) => (
-                        <div
-                          key={finding.id}
-                          className="text-sm text-c-text-secondary"
-                        >
-                          <div className="font-medium text-c-text">
-                            {finding.finding_statement}
-                          </div>
+                        <div key={finding.id} className="text-sm text-c-text-secondary">
+                          <div className="font-medium text-c-text">{finding.finding_statement}</div>
                           <div className="mt-1 text-xs text-c-text-muted">
                             {finding.confidence_level} ·{' '}
                             {
@@ -4044,9 +4056,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   <div className="text-[11px] uppercase tracking-[0.16em] text-danger-700 dark:text-danger-400">
                     {t('interview.insightViewer.issuesRisks')}
                   </div>
-                  <div className="mt-1 text-2xl font-bold text-c-text">
-                    {insightCounts.issues}
-                  </div>
+                  <div className="mt-1 text-2xl font-bold text-c-text">{insightCounts.issues}</div>
                 </div>
                 <div className="rounded-xl border border-emerald-200/40 dark:border-emerald-900/30 bg-emerald-50/60 dark:bg-emerald-500/10 px-4 py-3 shadow-[inset_3px_0_0_theme(colors.emerald.400)]">
                   {/* AA (sędzia grafiki, pkt 6): `emerald-600` (#388A22) dawał
@@ -4988,9 +4998,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key={topic.id}
                         className="rounded-2xl bg-emerald-500/[0.05] px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-c-text">
-                          {topic.label}
-                        </div>
+                        <div className="font-medium text-c-text">{topic.label}</div>
                         <div className="mt-1 text-xs text-c-text-muted">
                           {topic.supportingStakeholderLabels.join(', ') ||
                             t('interview.insightViewer.noLenses')}
@@ -5013,9 +5021,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key={topic.id}
                         className="rounded-2xl bg-amber-500/[0.05] px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-c-text">
-                          {topic.label}
-                        </div>
+                        <div className="font-medium text-c-text">{topic.label}</div>
                         <div className="mt-1 text-xs text-c-text-muted">
                           {topic.supportingSessionIds.length === 1
                             ? sessionLenses.find((lens) =>
@@ -5051,9 +5057,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key={lens.id}
                         className="rounded-2xl bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary"
                       >
-                        <div className="font-medium text-c-text">
-                          {lens.label}
-                        </div>
+                        <div className="font-medium text-c-text">{lens.label}</div>
                         <div className="mt-1 text-xs text-c-text-muted space-y-1">
                           {lens.localSummary}
                           {(lens.role || lens.department) && (
@@ -5124,14 +5128,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       </thead>
                       <tbody>
                         {visibleAnalysisTopicRows.map((row) => (
-                          <tr
-                            key={row.id}
-                            className="border-t border-c-border-subtle"
-                          >
+                          <tr key={row.id} className="border-t border-c-border-subtle">
                             <td className="px-4 py-3 align-top min-w-[220px]">
-                              <div className="font-medium text-c-text">
-                                {row.label}
-                              </div>
+                              <div className="font-medium text-c-text">{row.label}</div>
                               <div className="mt-1 text-xs text-c-text-muted">
                                 {analysisTopicsById[row.id]?.kind}
                               </div>
@@ -5265,14 +5264,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     const limitsKey = `theme-${idx}`;
                     const limitsExpanded = expandedLimits.has(limitsKey);
                     return (
-                      <div
-                        key={idx}
-                        className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2"
-                      >
+                      <div key={idx} className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-c-text">
-                            {theme.title}
-                          </div>
+                          <div className="text-sm font-semibold text-c-text">{theme.title}</div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
@@ -5351,10 +5345,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {findingLimits.length > 0 ? (
                                 <ul className="space-y-1">
                                   {findingLimits.map((limit, li) => (
-                                    <li
-                                      key={li}
-                                      className="text-xs italic text-c-text-muted"
-                                    >
+                                    <li key={li} className="text-xs italic text-c-text-muted">
                                       {limit}
                                     </li>
                                   ))}
@@ -5542,9 +5533,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-c-text">
-                            {issue.title}
-                          </div>
+                          <div className="text-sm font-semibold text-c-text">{issue.title}</div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}
@@ -5617,10 +5606,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {findingLimits.length > 0 ? (
                                 <ul className="space-y-1">
                                   {findingLimits.map((limit, li) => (
-                                    <li
-                                      key={li}
-                                      className="text-xs italic text-c-text-muted"
-                                    >
+                                    <li key={li} className="text-xs italic text-c-text-muted">
                                       {limit}
                                     </li>
                                   ))}
@@ -5786,9 +5772,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2"
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-c-text">
-                            {opp.title}
-                          </div>
+                          <div className="text-sm font-semibold text-c-text">{opp.title}</div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
                             <span
                               className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}
@@ -5861,10 +5845,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {findingLimits.length > 0 ? (
                                 <ul className="space-y-1">
                                   {findingLimits.map((limit, li) => (
-                                    <li
-                                      key={li}
-                                      className="text-xs italic text-c-text-muted"
-                                    >
+                                    <li key={li} className="text-xs italic text-c-text-muted">
                                       {limit}
                                     </li>
                                   ))}
@@ -6008,14 +5989,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     };
                     const cfg = typeConfig[signal.type] || typeConfig.emerging_pattern;
                     return (
-                      <div
-                        key={idx}
-                        className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2"
-                      >
+                      <div key={idx} className="rounded-xl bg-c-surface-raised px-4 py-4 space-y-2">
                         <div className="flex items-start justify-between gap-3">
-                          <div className="text-sm font-semibold text-c-text">
-                            {signal.title}
-                          </div>
+                          <div className="text-sm font-semibold text-c-text">{signal.title}</div>
                           <span
                             className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}
                           >
@@ -6570,9 +6546,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <div className="text-sm font-semibold text-c-text">
-                              {lens.label}
-                            </div>
+                            <div className="text-sm font-semibold text-c-text">{lens.label}</div>
                             <div className="mt-1 text-xs text-c-text-muted">
                               {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                                 (analysisLensMode === 'session'
@@ -6586,9 +6560,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                         </div>
 
-                        <div className="text-xs text-c-text-muted">
-                          {lens.localSummary}
-                        </div>
+                        <div className="text-xs text-c-text-muted">{lens.localSummary}</div>
 
                         {contradictedSupportedTopics.length > 0 && (
                           <Callout
@@ -6720,9 +6692,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-sm font-semibold text-c-text">
-                            {session.name}
-                          </div>
+                          <div className="text-sm font-semibold text-c-text">{session.name}</div>
                           <div className="text-xs text-c-text-muted">
                             {session.templateName || t('interview.insightViewer.sourceSession')}
                           </div>
@@ -6742,10 +6712,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           </div>
                           {summary.facts.length > 0 ? (
                             summary.facts.slice(0, 4).map((fact) => (
-                              <div
-                                key={fact}
-                                className="text-sm text-c-text-secondary"
-                              >
+                              <div key={fact} className="text-sm text-c-text-secondary">
                                 {fact}
                               </div>
                             ))
@@ -6772,10 +6739,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             ])
                               .slice(0, 4)
                               .map((item) => (
-                                <div
-                                  key={item}
-                                  className="text-sm text-c-text-secondary"
-                                >
+                                <div key={item} className="text-sm text-c-text-secondary">
                                   {item}
                                 </div>
                               ))
@@ -6834,13 +6798,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         <MessageSquare size={14} className="text-blue-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-c-text-secondary">
-                          {session.name}
-                        </p>
+                        <p className="text-sm font-medium text-c-text-secondary">{session.name}</p>
                         {session.templateName && (
-                          <p className="text-xs text-c-text-secondary">
-                            {session.templateName}
-                          </p>
+                          <p className="text-xs text-c-text-secondary">{session.templateName}</p>
                         )}
                       </div>
                     </div>
@@ -6941,9 +6901,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             key={topic.id}
                             className="rounded-xl bg-white/70 dark:bg-c-surface-raised/40 px-3 py-2"
                           >
-                            <div className="text-sm font-medium text-c-text">
-                              {topic.label}
-                            </div>
+                            <div className="text-sm font-medium text-c-text">{topic.label}</div>
                             {topic.divergenceNote && (
                               <div className="mt-1 text-xs text-c-text-secondary">
                                 {topic.divergenceNote}
@@ -7012,9 +6970,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-3 py-3"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="text-sm font-medium text-c-text">
-                          {topic.label}
-                        </div>
+                        <div className="text-sm font-medium text-c-text">{topic.label}</div>
                         <span className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
                           {topic.confidenceLevel}
                         </span>
@@ -7084,10 +7040,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     key={i}
                     className="flex items-start gap-2 rounded-xl border border-dashed border-c-border bg-c-surface-raised px-3 py-2.5"
                   >
-                    <EyeOff
-                      size={14}
-                      className="mt-0.5 flex-shrink-0 text-c-text-muted"
-                    />
+                    <EyeOff size={14} className="mt-0.5 flex-shrink-0 text-c-text-muted" />
                     <span className="text-sm text-c-text-secondary">{item}</span>
                   </li>
                 ))}
@@ -7138,9 +7091,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       key={lens.id}
                       className="rounded-2xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-4 py-3"
                     >
-                      <div className="text-sm font-semibold text-c-text">
-                        {lens.label}
-                      </div>
+                      <div className="text-sm font-semibold text-c-text">{lens.label}</div>
                       <div className="mt-0.5 text-xs text-c-text-muted">
                         {[lens.role, lens.department].filter(Boolean).join(' · ') ||
                           t('interview.insightViewer.perspective')}
@@ -7302,9 +7253,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         className="rounded-xl border border-c-border-subtle bg-white/70 dark:bg-c-surface-raised/30 px-3 py-3"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <div className="text-sm font-medium text-c-text">
-                            {role}
-                          </div>
+                          <div className="text-sm font-medium text-c-text">{role}</div>
                           <span className="text-xs font-semibold text-c-text-muted">
                             {lenses.length} · {share}%
                           </span>
@@ -7400,9 +7349,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key={c.id}
                         className="rounded-xl bg-white dark:bg-c-surface-raised border border-c-border-subtle px-3 py-2"
                       >
-                        <div className="text-sm text-c-text">
-                          {c.candidate_statement}
-                        </div>
+                        <div className="text-sm text-c-text">{c.candidate_statement}</div>
                         <div className="mt-1 text-[10px] uppercase tracking-wide text-c-text-muted">
                           {c.confidence_hint}
                         </div>
@@ -7949,10 +7896,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         // nietknięty, więc Zadanie/Decyzja/Inicjatywa/Powiadomienie/Narzędzie nie
         // dostają żadnej zmiany szerokości.
         component: rawComponent ? (
-          <div
-            className="w-full"
-            style={{ maxWidth: 'var(--ntype-content-analytics-max-width)' }}
-          >
+          <div className="w-full" style={{ maxWidth: 'var(--ntype-content-analytics-max-width)' }}>
             {rawComponent}
           </div>
         ) : null,
@@ -8504,74 +8448,74 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     });
 
     const generated: CardAnalysisField[] = ((): CardAnalysisField[] => {
-    switch (activeNSection) {
-      case 'executive-summary':
-        return [
-          field(
-            'executive-summary',
-            isPolish ? 'Podsumowanie' : 'Executive summary',
-            insight?.executiveSummary || executiveSummary || ''
-          ),
-        ];
+      switch (activeNSection) {
+        case 'executive-summary':
+          return [
+            field(
+              'executive-summary',
+              isPolish ? 'Podsumowanie' : 'Executive summary',
+              insight?.executiveSummary || executiveSummary || ''
+            ),
+          ];
 
-      case 'consulting-readout':
-        return [
-          field(
-            'consulting-readout',
-            isPolish ? 'Odczyt konsultingowy' : 'Consulting readout',
-            insight?.content || ''
-          ),
-        ];
+        case 'consulting-readout':
+          return [
+            field(
+              'consulting-readout',
+              isPolish ? 'Odczyt konsultingowy' : 'Consulting readout',
+              insight?.content || ''
+            ),
+          ];
 
-      case 'themes':
-        return [
-          field(
-            'themes',
-            isPolish ? 'Tematy' : 'Themes',
-            asLines(v6Themes, (th) => `${th?.title ?? th?.name ?? ''}: ${th?.description ?? ''}`)
-          ),
-        ];
+        case 'themes':
+          return [
+            field(
+              'themes',
+              isPolish ? 'Tematy' : 'Themes',
+              asLines(v6Themes, (th) => `${th?.title ?? th?.name ?? ''}: ${th?.description ?? ''}`)
+            ),
+          ];
 
-      case 'issues-risks':
-        return [
-          field(
-            'issues-risks',
-            isPolish ? 'Problemy i ryzyka' : 'Issues & risks',
-            asLines(v6Issues, (i) => `${i?.title ?? ''}: ${i?.description ?? ''}`)
-          ),
-        ];
+        case 'issues-risks':
+          return [
+            field(
+              'issues-risks',
+              isPolish ? 'Problemy i ryzyka' : 'Issues & risks',
+              asLines(v6Issues, (i) => `${i?.title ?? ''}: ${i?.description ?? ''}`)
+            ),
+          ];
 
-      case 'opportunities':
-        return [
-          field(
-            'opportunities',
-            isPolish ? 'Przestrzenie szans' : 'Opportunity spaces',
-            asLines(v6Opportunities, (o) => `${o?.title ?? ''}: ${o?.description ?? ''}`)
-          ),
-        ];
+        case 'opportunities':
+          return [
+            field(
+              'opportunities',
+              isPolish ? 'Przestrzenie szans' : 'Opportunity spaces',
+              asLines(v6Opportunities, (o) => `${o?.title ?? ''}: ${o?.description ?? ''}`)
+            ),
+          ];
 
-      case 'signals':
-        return [
-          field(
-            'signals',
-            isPolish ? 'Sygnały' : 'Signals',
-            asLines(v6Signals, (s) => `${s?.title ?? s?.signal ?? ''}: ${s?.description ?? ''}`)
-          ),
-        ];
+        case 'signals':
+          return [
+            field(
+              'signals',
+              isPolish ? 'Sygnały' : 'Signals',
+              asLines(v6Signals, (s) => `${s?.title ?? s?.signal ?? ''}: ${s?.description ?? ''}`)
+            ),
+          ];
 
-      default:
-        // Karty pochodne (macierz, cytaty, przemilczenia, konsensus…) są
-        // wyliczane z tych samych źródeł co powyżej. Zamiast zgadywać ich
-        // wewnętrzny kształt, podajemy trzon Insightu jako kontekst i MÓWIMY,
-        // że treść tej karty nie jest wystawiona do analizy pole-po-polu.
-        return [
-          field(
-            'insight-core',
-            isPolish ? 'Treść wniosku (trzon)' : 'Insight content (core)',
-            insight?.content || insight?.executiveSummary || ''
-          ),
-        ];
-    }
+        default:
+          // Karty pochodne (macierz, cytaty, przemilczenia, konsensus…) są
+          // wyliczane z tych samych źródeł co powyżej. Zamiast zgadywać ich
+          // wewnętrzny kształt, podajemy trzon Insightu jako kontekst i MÓWIMY,
+          // że treść tej karty nie jest wystawiona do analizy pole-po-polu.
+          return [
+            field(
+              'insight-core',
+              isPolish ? 'Treść wniosku (trzon)' : 'Insight content (core)',
+              insight?.content || insight?.executiveSummary || ''
+            ),
+          ];
+      }
     })();
 
     // Jedyne pole, do którego karta POTRAFI zapisać — ręczna redakcja sekcji.
@@ -8711,7 +8655,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       <div className="flex flex-col items-center justify-center h-full bg-white dark:bg-c-bg gap-4">
         <AlertCircle size={48} className="text-danger-400" />
         <p className="text-danger-500">{error}</p>
-        <button onClick={onClose} className="text-sm text-c-text-muted hover:text-c-text-secondary underline">
+        <button
+          onClick={onClose}
+          className="text-sm text-c-text-muted hover:text-c-text-secondary underline"
+        >
           {t('interview.insightViewer.goBack')}
         </button>
       </div>
@@ -8835,9 +8782,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       isEmpty: readMode || !statusEditable || statusBaseOptions.length === 0,
       badge: readMode ? 0 : undefined,
       showZeroBadge: true,
-      emptyLabel: readMode
-        ? undefined
-        : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
+      emptyLabel: readMode ? undefined : t('interview.insightViewer.actionsLiveInHeaderAndToolbar'),
       children: readMode ? null : (
         <div className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-1.5">
@@ -9354,114 +9299,107 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 ) : undefined
               }
               sectionsMenu={
-              <div className="relative" ref={sectionsMenuRef}>
-                <ToolbarGhostButton
-                  icon={<Layers size={14} />}
-                  onClick={() => {
-                    setSectionsMenuOpen((v) => !v);
-                    setExportMenuOpen(false);
-                    setAiMenuOpen(false);
-                  }}
-                >
-                  {t('interview.insightViewer.sections')}
-                  <ChevronDown
-                    size={13}
-                    className={`ml-0.5 transition-transform ${sectionsMenuOpen ? 'rotate-180' : ''}`}
-                  />
-                </ToolbarGhostButton>
-                {sectionsMenuOpen && (
-                  <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
-                    {(() => {
-                      // Group like the left nav (#22b). Walk in canonical order.
-                      // MIGRACJA (domknięcie dedup Phase-D): gdy kontrakt kart ON,
-                      // „Sekcje ▾" respektuje katalog kanoniczny — sekcje spoza
-                      // katalogu (np. `executive-memo`/`recommendations`, scalone
-                      // z rdzeniem Faza 0 DEDUP) NIE pojawiają się tu, tak samo jak
-                      // już znikły z „+ Nowa karta ▾" (AddCardMenu → layout.availableToAdd
-                      // z tego samego katalogu). Flaga OFF ⇒ bez zmian (32 sekcje jak dotąd).
-                      const catalogIds = insightCardContractEnabled
-                        ? new Set(cardLayout.catalog.map((c) => c.id))
-                        : null;
-                      const groups: { group: string; items: NModeSection[] }[] = [];
-                      orderedNModeSectionsWithContent
-                        .filter((s) => !catalogIds || catalogIds.has(s.id))
-                        .forEach((s) => {
-                          const g = s.group ?? '';
-                          let bucket = groups.find((b) => b.group === g);
-                          if (!bucket) {
-                            bucket = { group: g, items: [] };
-                            groups.push(bucket);
-                          }
-                          bucket.items.push(s);
-                        });
-                      return groups.map((bucket) => (
-                        <div key={bucket.group} className="px-1 py-1">
-                          {bucket.group && (
-                            <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-                              {bucket.group}
-                            </div>
-                          )}
-                          {bucket.items.map((s) => {
-                            const empty = s.hasData === false && !s.alwaysShow;
-                            const hidden = hiddenSectionIds.has(s.id);
-                            const Icon = s.icon;
-                            return (
-                              <button
-                                key={s.id}
-                                type="button"
-                                onClick={() =>
-                                  // SSOT = cardLayout; hidden state syncs down via effect.
-                                  hidden ? cardLayout.showCard(s.id) : cardLayout.hideCard(s.id)
-                                }
-                                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-state-hover"
-                              >
-                                <span className="shrink-0 text-c-text-muted">
-                                  {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
-                                </span>
-                                <Icon
-                                  size={13}
-                                  className={
-                                    empty
-                                      ? 'text-c-text-muted/60'
-                                      : 'text-c-text-muted'
+                <div className="relative" ref={sectionsMenuRef}>
+                  <ToolbarGhostButton
+                    icon={<Layers size={14} />}
+                    onClick={() => {
+                      setSectionsMenuOpen((v) => !v);
+                      setExportMenuOpen(false);
+                      setAiMenuOpen(false);
+                    }}
+                  >
+                    {t('interview.insightViewer.sections')}
+                    <ChevronDown
+                      size={13}
+                      className={`ml-0.5 transition-transform ${sectionsMenuOpen ? 'rotate-180' : ''}`}
+                    />
+                  </ToolbarGhostButton>
+                  {sectionsMenuOpen && (
+                    <div className="absolute left-0 z-30 mt-1 w-72 max-h-[70vh] overflow-y-auto rounded-xl border border-c-border-subtle bg-white dark:bg-c-surface shadow-lg py-1">
+                      {(() => {
+                        // Group like the left nav (#22b). Walk in canonical order.
+                        // MIGRACJA (domknięcie dedup Phase-D): gdy kontrakt kart ON,
+                        // „Sekcje ▾" respektuje katalog kanoniczny — sekcje spoza
+                        // katalogu (np. `executive-memo`/`recommendations`, scalone
+                        // z rdzeniem Faza 0 DEDUP) NIE pojawiają się tu, tak samo jak
+                        // już znikły z „+ Nowa karta ▾" (AddCardMenu → layout.availableToAdd
+                        // z tego samego katalogu). Flaga OFF ⇒ bez zmian (32 sekcje jak dotąd).
+                        const catalogIds = insightCardContractEnabled
+                          ? new Set(cardLayout.catalog.map((c) => c.id))
+                          : null;
+                        const groups: { group: string; items: NModeSection[] }[] = [];
+                        orderedNModeSectionsWithContent
+                          .filter((s) => !catalogIds || catalogIds.has(s.id))
+                          .forEach((s) => {
+                            const g = s.group ?? '';
+                            let bucket = groups.find((b) => b.group === g);
+                            if (!bucket) {
+                              bucket = { group: g, items: [] };
+                              groups.push(bucket);
+                            }
+                            bucket.items.push(s);
+                          });
+                        return groups.map((bucket) => (
+                          <div key={bucket.group} className="px-1 py-1">
+                            {bucket.group && (
+                              <div className="px-2 pt-1 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+                                {bucket.group}
+                              </div>
+                            )}
+                            {bucket.items.map((s) => {
+                              const empty = s.hasData === false && !s.alwaysShow;
+                              const hidden = hiddenSectionIds.has(s.id);
+                              const Icon = s.icon;
+                              return (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() =>
+                                    // SSOT = cardLayout; hidden state syncs down via effect.
+                                    hidden ? cardLayout.showCard(s.id) : cardLayout.hideCard(s.id)
                                   }
-                                />
-                                <span
-                                  className={`flex-1 truncate ${
-                                    empty
-                                      ? 'text-c-text-muted'
-                                      : 'text-c-text-secondary'
-                                  } ${hidden ? 'line-through opacity-60' : ''}`}
+                                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs rounded-lg hover:bg-state-hover"
                                 >
-                                  {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
-                                </span>
-                                {empty && (
-                                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide bg-c-surface-raised text-c-text-muted">
-                                    {t('interview.insightViewer.empty2')}
+                                  <span className="shrink-0 text-c-text-muted">
+                                    {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                                   </span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ));
-                    })()}
-                    <div className="my-1 h-px bg-c-surface-raised" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        cardLayout.resetToDefault();
-                        setSectionsMenuOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-c-text-secondary hover:bg-state-hover"
-                    >
-                      <RefreshCw size={14} />
-                      {t('interview.insightViewer.restoreDefaults')}
-                    </button>
-                  </div>
-                )}
-              </div>
-
+                                  <Icon
+                                    size={13}
+                                    className={empty ? 'text-c-text-muted/60' : 'text-c-text-muted'}
+                                  />
+                                  <span
+                                    className={`flex-1 truncate ${
+                                      empty ? 'text-c-text-muted' : 'text-c-text-secondary'
+                                    } ${hidden ? 'line-through opacity-60' : ''}`}
+                                  >
+                                    {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}
+                                  </span>
+                                  {empty && (
+                                    <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide bg-c-surface-raised text-c-text-muted">
+                                      {t('interview.insightViewer.empty2')}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ));
+                      })()}
+                      <div className="my-1 h-px bg-c-surface-raised" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          cardLayout.resetToDefault();
+                          setSectionsMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-medium text-c-text-secondary hover:bg-state-hover"
+                      >
+                        <RefreshCw size={14} />
+                        {t('interview.insightViewer.restoreDefaults')}
+                      </button>
+                    </div>
+                  )}
+                </div>
               }
             />
           );
@@ -9737,16 +9675,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                           {checked ? (
                             <CheckSquare size={15} className="shrink-0 text-blue-500" />
                           ) : (
-                            <Square
-                              size={15}
-                              className="shrink-0 text-c-border-strong"
-                            />
+                            <Square size={15} className="shrink-0 text-c-border-strong" />
                           )}
                           <span
                             className={`flex-1 text-xs ${
-                              empty
-                                ? 'text-c-text-muted'
-                                : 'text-c-text-secondary'
+                              empty ? 'text-c-text-muted' : 'text-c-text-secondary'
                             }`}
                           >
                             {t(`interview.insightViewer.sectionLabel.${s.id}`, s.label.en)}

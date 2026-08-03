@@ -19,7 +19,7 @@
 
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { fakeDb, type FakeCall } from './helpers/fakeFinanceDb.js';
+import { type FakeCall, fakeDb } from './helpers/fakeFinanceDb.js';
 
 vi.mock('../../../utils/DbPromise.js', async () => {
   const { createDbPromiseMock } = await import('./helpers/fakeFinanceDb.js');

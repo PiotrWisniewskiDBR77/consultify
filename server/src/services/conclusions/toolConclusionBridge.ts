@@ -406,11 +406,14 @@ export async function persistToolSessionConclusion(
 
   const quality = validateToolConclusionQuality(candidate, params.answers);
   if (!quality.ok) {
-    logger?.warn('[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted', {
-      sessionId: params.sessionId,
-      toolType: params.toolType ?? null,
-      failures: quality.failures,
-    });
+    logger?.warn(
+      '[ToolConclusionBridge] Tool conclusion rejected by quality gate — not persisted',
+      {
+        sessionId: params.sessionId,
+        toolType: params.toolType ?? null,
+        failures: quality.failures,
+      }
+    );
     return false;
   }
 

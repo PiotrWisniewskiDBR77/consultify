@@ -57,11 +57,7 @@ export interface IdeaPanelActivityProps {
   selection: IdeaWorkspaceSelection;
   graphNodes: any[];
   /** Przywrócenie migawki — bez handlera nie rysujemy martwego przycisku (Z3). */
-  onRestoreSnapshot?: (
-    nodes: any[],
-    edges: any[],
-    extensions?: Record<string, unknown>
-  ) => void;
+  onRestoreSnapshot?: (nodes: any[], edges: any[], extensions?: Record<string, unknown>) => void;
 }
 
 /** Jeden wpis scalonej osi czasu — komentarz albo zdarzenie/wersja. */
@@ -155,10 +151,7 @@ export const IdeaPanelActivity: React.FC<IdeaPanelActivityProps> = ({
     return () => window.removeEventListener('mm-activity-update', onUpdate);
   }, [pobierz]);
 
-  const zBlobu = useMemo(
-    () => zblobu(graphNodes, isPl, wybranyId),
-    [graphNodes, isPl, wybranyId]
-  );
+  const zBlobu = useMemo(() => zblobu(graphNodes, isPl, wybranyId), [graphNodes, isPl, wybranyId]);
 
   const etykietaDlaId = useCallback(
     (nodeId: string): string => {
@@ -396,7 +389,11 @@ export const IdeaPanelActivity: React.FC<IdeaPanelActivityProps> = ({
                   <button
                     type="button"
                     onClick={() =>
-                      onRestoreSnapshot(h.snapshot!.nodes, h.snapshot!.edges, h.snapshot!.extensions)
+                      onRestoreSnapshot(
+                        h.snapshot!.nodes,
+                        h.snapshot!.edges,
+                        h.snapshot!.extensions
+                      )
                     }
                     className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold text-c-focus-solid hover:bg-c-focus/10 transition-colors"
                     data-testid="idea-panel-activity-restore"

@@ -62,11 +62,7 @@
  *     (decyzja Piotra 07-08: struktura ≠ kolor). Ten plik dodaje 0 crimson.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────

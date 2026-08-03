@@ -240,9 +240,13 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
     // layout family with a string the renderer doesn't recognise. Left available on the
     // OutlineItem for a dedicated layout-selection change to consume deliberately.
     dataNeeded: Array.isArray(item.dataNeeded)
-      ? item.dataNeeded.filter((d: unknown): d is string => typeof d === 'string' && d.trim().length > 0)
+      ? item.dataNeeded.filter(
+          (d: unknown): d is string => typeof d === 'string' && d.trim().length > 0
+        )
       : Array.isArray(item.data_needed)
-        ? item.data_needed.filter((d: unknown): d is string => typeof d === 'string' && d.trim().length > 0)
+        ? item.data_needed.filter(
+            (d: unknown): d is string => typeof d === 'string' && d.trim().length > 0
+          )
         : undefined,
     suggestedVisual:
       typeof item.suggestedVisual === 'string' && item.suggestedVisual.trim()
@@ -458,7 +462,9 @@ export interface DeckSlideFromOutline {
  * Exported so the route (production caller) and the test can both use the
  * same function — the route must never re-derive this mapping inline.
  */
-export function mapOutlineBlueprintToDeckSlides(outlineBlueprint: unknown[]): DeckSlideFromOutline[] {
+export function mapOutlineBlueprintToDeckSlides(
+  outlineBlueprint: unknown[]
+): DeckSlideFromOutline[] {
   const items = Array.isArray(outlineBlueprint) ? outlineBlueprint : [];
   return items.map((raw, index) => {
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;

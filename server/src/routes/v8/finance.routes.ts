@@ -15,7 +15,6 @@ import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { createBudget, listBudgets } from '../../services/budgetingService.js';
 import { searchStatementDocumentIntelligence } from '../../services/documentIntelligenceService.js';
 import { ensureCanonicalRegistryInDatabase } from '../../services/financeCanonicalRegistrySyncService.js';
-import { serializeRowPeriodFields } from '../../services/financePeriodFormat.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -27,6 +26,7 @@ import {
   isLikelySubtotalOrAggregate,
   isNonFinancialByPolicy,
 } from '../../services/financeMappingPolicy.js';
+import { serializeRowPeriodFields } from '../../services/financePeriodFormat.js';
 import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
 import {
   approveAnalysis,
@@ -1601,10 +1601,7 @@ router.post(
               language: analysis.language,
               documentDescription: analysis.documentDescription,
               sectionTypes: analysis.sections.map((section) => section.statementType),
-              totalLines: analysis.sections.reduce(
-                (sum, section) => sum + section.lines.length,
-                0
-              ),
+              totalLines: analysis.sections.reduce((sum, section) => sum + section.lines.length, 0),
               warnings: analysis.warnings,
             },
           },
@@ -1683,7 +1680,10 @@ router.post(
           // genuinely SINGLE-statement attempt (round-5: a multi-section one
           // either replays its recorded receipt above or is compensated and
           // redone — never reconstructed from one id).
-          const body = await buildV8UploadRecoveryResponseBody(reservation.statementId, organizationId);
+          const body = await buildV8UploadRecoveryResponseBody(
+            reservation.statementId,
+            organizationId
+          );
           if (!body) {
             await failIdempotentUpload(reservation.reservationId, reservation.statementId);
             return { kind: 'finalize_failed' as const, recovered: true };
@@ -1768,7 +1768,10 @@ router.post(
 
     switch (outcome.kind) {
       case 'conflict':
-        await cleanupUnpersistedUpload(file.path, 'idempotency key reused with different content (v8)');
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotency key reused with different content (v8)'
+        );
         return res.status(409).json({
           error: 'Idempotency-Key was already used with a different upload',
           code: 'IDEMPOTENCY_KEY_REUSED',

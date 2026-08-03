@@ -57,7 +57,9 @@ const ZoomBtn: React.FC<{
   </button>
 );
 
-const Divider = () => <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />;
+const Divider = () => (
+  <div className="w-px h-5 bg-c-border-subtle dark:bg-c-border-subtle mx-0.5" />
+);
 
 export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   isPolish,

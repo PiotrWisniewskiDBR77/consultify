@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { AppView } from '../../types';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from '../../components/Initiatives/initiativesViewDefaults';
+import { AppView } from '../../types';
 import { buildCanonicalRedirectTarget } from '../canonicalRedirect';
 import { getAppViewFromPath, getRouteFromAppView, ROUTES } from '../routeConfig';
 

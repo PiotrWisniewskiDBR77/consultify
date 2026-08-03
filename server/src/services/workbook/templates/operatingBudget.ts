@@ -27,7 +27,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -330,7 +337,10 @@ function buildBudgetSheet(startYear: number, currencyHint: 'pln' | 'eur' | 'usd'
     // Row 2 — Przychody: m1 = Assumptions revenue; m>1 chains off prior month.
     fRow(
       'Przychody',
-      (col, i) => (i === 0 ? aRef(AR.revenue) : `${MONTH_COLS[i - 1]}${PL.revenue}*(1+${aRef(AR.revenueGrowth)})`),
+      (col, i) =>
+        i === 0
+          ? aRef(AR.revenue)
+          : `${MONTH_COLS[i - 1]}${PL.revenue}*(1+${aRef(AR.revenueGrowth)})`,
       () => `SUM(B${PL.revenue}:M${PL.revenue})`
     ),
     // Row 3 — Koszty zmienne = Revenue(this col) * variableCostPct.
@@ -349,27 +359,35 @@ function buildBudgetSheet(startYear: number, currencyHint: 'pln' | 'eur' | 'usd'
     // Row 5 — Czynsz: m1 = Assumptions rent; m>1 chains off prior month * (1+fixedCostGrowth).
     fRow(
       'Czynsz',
-      (col, i) => (i === 0 ? aRef(AR.rent) : `${MONTH_COLS[i - 1]}${PL.rent}*(1+${aRef(AR.fixedCostGrowth)})`),
+      (col, i) =>
+        i === 0 ? aRef(AR.rent) : `${MONTH_COLS[i - 1]}${PL.rent}*(1+${aRef(AR.fixedCostGrowth)})`,
       () => `SUM(B${PL.rent}:M${PL.rent})`
     ),
     // Row 6 — Wynagrodzenia (same chain pattern).
     fRow(
       'Wynagrodzenia',
-      (col, i) => (i === 0 ? aRef(AR.salaries) : `${MONTH_COLS[i - 1]}${PL.salaries}*(1+${aRef(AR.fixedCostGrowth)})`),
+      (col, i) =>
+        i === 0
+          ? aRef(AR.salaries)
+          : `${MONTH_COLS[i - 1]}${PL.salaries}*(1+${aRef(AR.fixedCostGrowth)})`,
       () => `SUM(B${PL.salaries}:M${PL.salaries})`
     ),
     // Row 7 — Marketing (same chain pattern).
     fRow(
       'Marketing',
       (col, i) =>
-        i === 0 ? aRef(AR.marketing) : `${MONTH_COLS[i - 1]}${PL.marketing}*(1+${aRef(AR.fixedCostGrowth)})`,
+        i === 0
+          ? aRef(AR.marketing)
+          : `${MONTH_COLS[i - 1]}${PL.marketing}*(1+${aRef(AR.fixedCostGrowth)})`,
       () => `SUM(B${PL.marketing}:M${PL.marketing})`
     ),
     // Row 8 — Pozostałe koszty stałe (same chain pattern).
     fRow(
       'Pozostałe koszty stałe',
       (col, i) =>
-        i === 0 ? aRef(AR.otherFixed) : `${MONTH_COLS[i - 1]}${PL.otherFixed}*(1+${aRef(AR.fixedCostGrowth)})`,
+        i === 0
+          ? aRef(AR.otherFixed)
+          : `${MONTH_COLS[i - 1]}${PL.otherFixed}*(1+${aRef(AR.fixedCostGrowth)})`,
       () => `SUM(B${PL.otherFixed}:M${PL.otherFixed})`
     ),
     // Row 9 — Koszty stałe razem = Czynsz + Wynagrodzenia + Marketing + Pozostałe (arithmetic,
@@ -477,17 +495,37 @@ export function buildOperatingBudgetSchema(params: OperatingBudgetParams = {}): 
       ? Math.floor(params.startYear as number)
       : new Date().getFullYear();
 
-  const baseMonthlyRevenue = safeAmount(params.baseMonthlyRevenue, OPERATING_BUDGET_GENERAL_DEFAULTS.baseMonthlyRevenue);
+  const baseMonthlyRevenue = safeAmount(
+    params.baseMonthlyRevenue,
+    OPERATING_BUDGET_GENERAL_DEFAULTS.baseMonthlyRevenue
+  );
   const monthlyRevenueGrowthPct = safeFraction(
     params.monthlyRevenueGrowthPct,
     OPERATING_BUDGET_DRIVER_DEFAULTS.monthlyRevenueGrowthPct
   );
-  const variableCostPct = safeFraction(params.variableCostPct, OPERATING_BUDGET_DRIVER_DEFAULTS.variableCostPct, 0, 1);
+  const variableCostPct = safeFraction(
+    params.variableCostPct,
+    OPERATING_BUDGET_DRIVER_DEFAULTS.variableCostPct,
+    0,
+    1
+  );
   const rentMonthly = safeAmount(params.rentMonthly, OPERATING_BUDGET_DRIVER_DEFAULTS.rentMonthly);
-  const salariesMonthly = safeAmount(params.salariesMonthly, OPERATING_BUDGET_DRIVER_DEFAULTS.salariesMonthly);
-  const marketingMonthly = safeAmount(params.marketingMonthly, OPERATING_BUDGET_DRIVER_DEFAULTS.marketingMonthly);
-  const otherFixedMonthly = safeAmount(params.otherFixedMonthly, OPERATING_BUDGET_DRIVER_DEFAULTS.otherFixedMonthly);
-  const fixedCostGrowthPct = safeFraction(params.fixedCostGrowthPct, OPERATING_BUDGET_DRIVER_DEFAULTS.fixedCostGrowthPct);
+  const salariesMonthly = safeAmount(
+    params.salariesMonthly,
+    OPERATING_BUDGET_DRIVER_DEFAULTS.salariesMonthly
+  );
+  const marketingMonthly = safeAmount(
+    params.marketingMonthly,
+    OPERATING_BUDGET_DRIVER_DEFAULTS.marketingMonthly
+  );
+  const otherFixedMonthly = safeAmount(
+    params.otherFixedMonthly,
+    OPERATING_BUDGET_DRIVER_DEFAULTS.otherFixedMonthly
+  );
+  const fixedCostGrowthPct = safeFraction(
+    params.fixedCostGrowthPct,
+    OPERATING_BUDGET_DRIVER_DEFAULTS.fixedCostGrowthPct
+  );
 
   const { hint, label } = currencyMeta(params.currencyCode);
 

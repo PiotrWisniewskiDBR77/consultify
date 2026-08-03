@@ -102,11 +102,7 @@ function windowHasAssumptionMarker(text: string, index: number, length: number):
 function contextAround(text: string, index: number, length: number): string {
   const from = Math.max(0, index - 30);
   const to = Math.min(text.length, index + length + 30);
-  return text
-    .slice(from, to)
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 80);
+  return text.slice(from, to).replace(/\s+/g, ' ').trim().slice(0, 80);
 }
 
 /**
@@ -119,7 +115,10 @@ export function detectFabricatedNumbersInText(text: string): FabricationReport {
 
   const seen = new Set<string>(); // dedup po (value@index)
   const scan = (regex: RegExp, filter?: (raw: string) => boolean): void => {
-    const re = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : `${regex.flags}g`);
+    const re = new RegExp(
+      regex.source,
+      regex.flags.includes('g') ? regex.flags : `${regex.flags}g`
+    );
     let m: RegExpExecArray | null;
     while ((m = re.exec(text)) !== null) {
       const raw = m[0];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCanonicalRedirectTarget } from '../canonicalRedirect';
 import { AppView } from '../../types';
+import { buildCanonicalRedirectTarget } from '../canonicalRedirect';
 import { getAppViewFromPath, getRouteFromAppView, ROUTES } from '../routeConfig';
 
 describe('Finance canonical route', () => {

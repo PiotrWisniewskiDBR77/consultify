@@ -53,8 +53,8 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { ConvertToOutputMenu } from '@/components/MyWork/ConvertToOutputMenu';
 import {
-  type ActionRow,
   actionPillClass,
+  type ActionRow,
   type MetaPill,
   PreviewActionBar,
   PreviewAIHintStrip,
@@ -67,14 +67,17 @@ import {
 const noop = () => undefined;
 
 // ── Legenda: skutek akcji → wariant (kanon §7.3b, tabela rozstrzygająca) ─────
-const LEGENDA: { wariant: 'emerald' | 'red' | 'amber' | 'neutral' | 'primary'; skutek: string; przyklad: string }[] =
-  [
-    { wariant: 'emerald', skutek: 'Zamyka sprawę pozytywnie', przyklad: 'Zrobione · Zatwierdź' },
-    { wariant: 'red', skutek: 'Odrzuca formalnie / usuwa', przyklad: 'Odrzuć · Usuń' },
-    { wariant: 'amber', skutek: 'Podnosi pilność', przyklad: 'Eskaluj' },
-    { wariant: 'neutral', skutek: 'Wszystko pozostałe', przyklad: 'Dziś · Deleguj · Zapisz' },
-    { wariant: 'primary', skutek: 'Jedyna główna akcja preview', przyklad: 'Konwertuj' },
-  ];
+const LEGENDA: {
+  wariant: 'emerald' | 'red' | 'amber' | 'neutral' | 'primary';
+  skutek: string;
+  przyklad: string;
+}[] = [
+  { wariant: 'emerald', skutek: 'Zamyka sprawę pozytywnie', przyklad: 'Zrobione · Zatwierdź' },
+  { wariant: 'red', skutek: 'Odrzuca formalnie / usuwa', przyklad: 'Odrzuć · Usuń' },
+  { wariant: 'amber', skutek: 'Podnosi pilność', przyklad: 'Eskaluj' },
+  { wariant: 'neutral', skutek: 'Wszystko pozostałe', przyklad: 'Dziś · Deleguj · Zapisz' },
+  { wariant: 'primary', skutek: 'Jedyna główna akcja preview', przyklad: 'Konwertuj' },
+];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ZAKŁADKA 1 — IDEAS (Ideas → widok tabeli)
@@ -119,7 +122,14 @@ const INBOX_RELATIONS: RelationItem[] = [
 const INBOX_ACTIONS: ActionRow[] = [
   {
     buttons: [
-      { label: 'Dziś', icon: Zap, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'T' },
+      {
+        label: 'Dziś',
+        icon: Zap,
+        onClick: noop,
+        colorScheme: 'neutral',
+        flex: true,
+        shortcut: 'T',
+      },
       {
         label: 'Tydzień',
         icon: CalendarClock,
@@ -144,7 +154,13 @@ const INBOX_ACTIONS: ActionRow[] = [
       // 'Zrobione' zamyka sprawe pozytywnie — ten sam skutek co Tasks.'Zrobione' ponizej,
       // wiec ten sam wariant emerald (§7.3b). Bylo 'neutral' — rozjazd znaleziony i naprawiony
       // w InboxContent.tsx po zgloszeniu Piotra 2026-07-21 na tym wlasnie ekranie.
-      { label: 'Zrobione', icon: CheckCircle2, onClick: noop, colorScheme: 'emerald', shortcut: 'D' },
+      {
+        label: 'Zrobione',
+        icon: CheckCircle2,
+        onClick: noop,
+        colorScheme: 'emerald',
+        shortcut: 'D',
+      },
       { label: 'Zapisz', icon: Bookmark, onClick: noop, colorScheme: 'neutral', shortcut: 'S' },
       { label: 'Notatka', icon: FileText, onClick: noop, colorScheme: 'neutral', shortcut: 'N' },
       { label: 'Odrzuć', icon: Archive, onClick: noop, colorScheme: 'neutral', shortcut: 'X' },
@@ -170,8 +186,22 @@ const TASKS_RELATIONS: RelationItem[] = [
 const TASKS_ACTIONS: ActionRow[] = [
   {
     buttons: [
-      { label: 'Dziś', icon: Zap, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'T' },
-      { label: 'Odłóż', icon: Pause, onClick: noop, colorScheme: 'neutral', flex: true, shortcut: 'Z' },
+      {
+        label: 'Dziś',
+        icon: Zap,
+        onClick: noop,
+        colorScheme: 'neutral',
+        flex: true,
+        shortcut: 'T',
+      },
+      {
+        label: 'Odłóż',
+        icon: Pause,
+        onClick: noop,
+        colorScheme: 'neutral',
+        flex: true,
+        shortcut: 'Z',
+      },
     ],
   },
   {
@@ -215,7 +245,14 @@ const DECISIONS_RELATIONS: RelationItem[] = [
 const DECISIONS_ACTIONS: ActionRow[] = [
   {
     buttons: [
-      { label: 'Zatwierdź', icon: Check, onClick: noop, colorScheme: 'emerald', flex: true, shortcut: 'A' },
+      {
+        label: 'Zatwierdź',
+        icon: Check,
+        onClick: noop,
+        colorScheme: 'emerald',
+        flex: true,
+        shortcut: 'A',
+      },
       { label: 'Odrzuć', icon: X, onClick: noop, colorScheme: 'red', flex: true, shortcut: 'R' },
     ],
   },
@@ -237,7 +274,9 @@ const Kolumna: React.FC<{
         <div className="mt-0.5 truncate text-[11px] text-c-text-muted" title={tytul}>
           {tytul}
         </div>
-        <div className="mt-1 font-mono text-[10px] leading-tight text-c-text-muted/70">{zrodlo}</div>
+        <div className="mt-1 font-mono text-[10px] leading-tight text-c-text-muted/70">
+          {zrodlo}
+        </div>
       </div>
     </header>
     <div className="flex flex-1 flex-col gap-2.5 p-3.5">{children}</div>
@@ -260,9 +299,9 @@ export const Preview4ZakladkiScreen: React.FC = () => {
             <p className="mt-1 max-w-3xl text-sm text-c-text-secondary">
               Ta sama akcja ma wyglądać tak samo w każdej zakładce. O wariancie decyduje{' '}
               <strong className="font-semibold text-c-text-primary">skutek akcji</strong> — co
-              przycisk robi z rekordem — a nie to, na którym ekranie stoi. Rodzina planowania (Dziś ·
-              Tydzień · Później · Odłóż) idzie w całości na neutral; „Zrobione" i „Zatwierdź" to ten
-              sam skutek, więc ten sam zielony; „primary" występuje maksymalnie raz na preview.
+              przycisk robi z rekordem — a nie to, na którym ekranie stoi. Rodzina planowania (Dziś
+              · Tydzień · Później · Odłóż) idzie w całości na neutral; „Zrobione" i „Zatwierdź" to
+              ten sam skutek, więc ten sam zielony; „primary" występuje maksymalnie raz na preview.
             </p>
           </header>
 
@@ -405,7 +444,12 @@ export const Preview4ZakladkiScreen: React.FC = () => {
                   rows={[]}
                   overflowLabel="More actions"
                   overflowActions={[
-                    { label: 'Więcej info', icon: MessageSquare, onClick: noop, colorScheme: 'neutral' },
+                    {
+                      label: 'Więcej info',
+                      icon: MessageSquare,
+                      onClick: noop,
+                      colorScheme: 'neutral',
+                    },
                     { label: 'Deleguj', icon: UserPlus, onClick: noop, colorScheme: 'neutral' },
                     { label: 'Przypomnij', icon: Bell, onClick: noop, colorScheme: 'neutral' },
                     { label: 'Eskaluj', icon: TrendingUp, onClick: noop, colorScheme: 'amber' },
@@ -436,14 +480,13 @@ export const Preview4ZakladkiScreen: React.FC = () => {
                 całym zrzucie — granatowo-biały kontrast, nie crimson.
               </li>
               <li>
-                • Cała rodzina planowania (Dziś · Tydzień · Później · Odłóż · Przypomnij ·
-                Deleguj · Zapisz · Notatka) jest neutralna.
+                • Cała rodzina planowania (Dziś · Tydzień · Później · Odłóż · Przypomnij · Deleguj ·
+                Zapisz · Notatka) jest neutralna.
               </li>
               <li>
                 • <strong className="text-c-text-primary">Decisions</strong>: 7 widocznych
                 przycisków w 3 wierszach → 3 (Zatwierdź/Odrzuć/Odłóż) + menu „…" (Więcej
-                info/Deleguj/Przypomnij/Eskaluj) — zgodnie z DOKTRYNA_GESTOSCI §1 (≤5
-                widocznych).
+                info/Deleguj/Przypomnij/Eskaluj) — zgodnie z DOKTRYNA_GESTOSCI §1 (≤5 widocznych).
               </li>
             </ul>
           </footer>

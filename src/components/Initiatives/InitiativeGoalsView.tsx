@@ -485,7 +485,10 @@ export const InitiativeGoalsView: React.FC<InitiativeGoalsViewProps> = ({
             {stats.objectives}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('initiatives.goals.objectivesOnlyHint', 'Top-level objectives, excluding key results.')}
+            {t(
+              'initiatives.goals.objectivesOnlyHint',
+              'Top-level objectives, excluding key results.'
+            )}
           </div>
         </div>
       </div>
@@ -583,7 +586,10 @@ export const InitiativeGoalsView: React.FC<InitiativeGoalsViewProps> = ({
             <div className="mt-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 max-h-44 overflow-y-auto space-y-2">
               {initiativeOptions.length === 0 ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('initiatives.goals.noInitiatives', 'No initiatives available in current scope.')}
+                  {t(
+                    'initiatives.goals.noInitiatives',
+                    'No initiatives available in current scope.'
+                  )}
                 </div>
               ) : (
                 initiativeOptions.map((initiative) => (
@@ -643,7 +649,10 @@ export const InitiativeGoalsView: React.FC<InitiativeGoalsViewProps> = ({
               title={item.title}
               subtitle={
                 item.description ||
-                t('initiatives.goals.previewSubtitle', 'Governed goal built on initiative delivery.')
+                t(
+                  'initiatives.goals.previewSubtitle',
+                  'Governed goal built on initiative delivery.'
+                )
               }
               metaPills={metaPills(item)}
             />

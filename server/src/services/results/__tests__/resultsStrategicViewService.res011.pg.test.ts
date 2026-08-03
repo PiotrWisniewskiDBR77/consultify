@@ -180,7 +180,7 @@ suite('resultsStrategicViewService — RES-011 roll-up correctness (real Postgre
     expect(view.bdn.nodes.filter((n: any) => n.type === 'benefit')).toHaveLength(1);
   });
 
-  it('2. NEGATIVE CONTROL — fail-closed tenant scope: a foreign org sees zero rows, not an error and not org A\'s data', async () => {
+  it("2. NEGATIVE CONTROL — fail-closed tenant scope: a foreign org sees zero rows, not an error and not org A's data", async () => {
     const orgA = orgFor('tenant-a');
     const orgB = orgFor('tenant-b');
     await control.query(

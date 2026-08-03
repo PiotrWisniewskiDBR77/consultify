@@ -1342,13 +1342,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         {answered ? <Check size={10} /> : idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-c-text-secondary truncate">
-                          {q.questionText}
-                        </p>
+                        <p className="text-sm text-c-text-secondary truncate">{q.questionText}</p>
                         {snippet && (
-                          <p className="text-xs text-c-text-secondary truncate mt-0.5">
-                            {snippet}
-                          </p>
+                          <p className="text-xs text-c-text-secondary truncate mt-0.5">{snippet}</p>
                         )}
                       </div>
                     </button>
@@ -1363,10 +1359,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 const catConfig = CATEGORY_CONFIG[cat];
                 const catQs = orderedQuestions.filter((q) => q.category === cat);
                 return (
-                  <div
-                    key={cat}
-                    className="rounded-xl border border-c-border overflow-hidden"
-                  >
+                  <div key={cat} className="rounded-xl border border-c-border overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-c-bg/60 dark:bg-c-bg/40">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}
@@ -2122,9 +2115,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
                     {/* Live interim transcript preview while dictating */}
                     {isRecording && liveInterim && (
-                      <p className="mt-1.5 text-xs italic text-c-text-muted">
-                        {liveInterim}
-                      </p>
+                      <p className="mt-1.5 text-xs italic text-c-text-muted">{liveInterim}</p>
                     )}
 
                     {/* Drag overlay */}
@@ -2543,9 +2534,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                 {/* ── Context capture section (always visible) ── */}
                 <div
                   className={`space-y-3 pt-3 border-t ${
-                    immersive
-                      ? 'border-c-border dark:border-white/[0.06]'
-                      : 'border-c-border/40'
+                    immersive ? 'border-c-border dark:border-white/[0.06]' : 'border-c-border/40'
                   }`}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">

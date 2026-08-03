@@ -22,14 +22,17 @@ import {
   isValidTransition,
   VALID_TRANSITIONS,
 } from '../../constants/initiativeStatuses.js';
-import auditEventsService from '../AuditEventsService.js';
-import { createReceiptOnClosure, triggerImmediateDeliveryBestEffort } from '../closureDeliveryReceiptService.js';
-import notificationService from '../notificationService.js';
 import { gateAiSoftBlocks } from '../../types/gateAi.js';
 import logger from '../../utils/Logger.js';
 import { flagOn } from '../../utils/pgFlags.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { PgTransactionClient } from '../../utils/queryHelpers.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
+import auditEventsService from '../AuditEventsService.js';
+import {
+  createReceiptOnClosure,
+  triggerImmediateDeliveryBestEffort,
+} from '../closureDeliveryReceiptService.js';
+import notificationService from '../notificationService.js';
 import { getGateReadiness } from './gateAiReadinessService.js';
 import { recordGateAiEvent } from './gateAiTelemetryService.js';
 import { getTimelineFlags } from './gateTimelineService.js';
@@ -519,989 +522,1013 @@ export async function executeInitiativeTransition(
   let outcome: TransitionOutcome;
   try {
     outcome = await queryHelpers.withPgTransaction(async (client) => {
-    // CONCURRENCY FIX: lock the row FIRST. Every check below reads
-    // `currentStatus`/`initiativeName`/etc. from THIS locked row.
-    const lockedRows = (
-      await client.query<Record<string, unknown>>(
-        `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? FOR UPDATE`,
-        [id, orgId]
-      )
-    ).rows;
-    const lockedRow = lockedRows[0];
-    if (!lockedRow) {
-      return { kind: 'error', statusCode: 404, body: { error: 'Initiative not found' } };
-    }
+      // CONCURRENCY FIX: lock the row FIRST. Every check below reads
+      // `currentStatus`/`initiativeName`/etc. from THIS locked row.
+      const lockedRows = (
+        await client.query<Record<string, unknown>>(
+          `SELECT * FROM initiatives WHERE id = ? AND organization_id = ? FOR UPDATE`,
+          [id, orgId]
+        )
+      ).rows;
+      const lockedRow = lockedRows[0];
+      if (!lockedRow) {
+        return { kind: 'error', statusCode: 404, body: { error: 'Initiative not found' } };
+      }
 
-    const currentStatus = normalizeInitiativeDbStatusForRead(String(lockedRow.status || ''));
-    const initiativeName = String(lockedRow.name || 'Initiative');
-    const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
+      const currentStatus = normalizeInitiativeDbStatusForRead(String(lockedRow.status || ''));
+      const initiativeName = String(lockedRow.name || 'Initiative');
+      const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
 
-    // DISAMBIGUATION GUARD (see ExecuteInitiativeTransitionParams.expectedCurrentStatus
-    // doc comment): must run BEFORE isValidTransition, since e.g. SCHEDULED->EXECUTING
-    // and BLOCKED->EXECUTING are BOTH independently valid — this is the check that
-    // makes /unblock fail cleanly on a non-BLOCKED initiative instead of silently
-    // acting as if it were /start-execution.
-    if (params.expectedCurrentStatus) {
-      const expected = normalizeStatus(params.expectedCurrentStatus);
-      if (currentStatus !== expected) {
+      // DISAMBIGUATION GUARD (see ExecuteInitiativeTransitionParams.expectedCurrentStatus
+      // doc comment): must run BEFORE isValidTransition, since e.g. SCHEDULED->EXECUTING
+      // and BLOCKED->EXECUTING are BOTH independently valid — this is the check that
+      // makes /unblock fail cleanly on a non-BLOCKED initiative instead of silently
+      // acting as if it were /start-execution.
+      if (params.expectedCurrentStatus) {
+        const expected = normalizeStatus(params.expectedCurrentStatus);
+        if (currentStatus !== expected) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: `This action requires the initiative to be ${expected}, but it is ${currentStatus}`,
+              rule: 'UNEXPECTED_CURRENT_STATUS',
+              from: currentStatus,
+              expected,
+              to: nextStatus,
+            },
+          };
+        }
+      }
+
+      // TRANSITION VALIDATION: check if from→to is allowed
+      if (!isValidTransition(currentStatus as any, nextStatus as any)) {
         return {
           kind: 'error',
           statusCode: 400,
           body: {
-            error: `This action requires the initiative to be ${expected}, but it is ${currentStatus}`,
-            rule: 'UNEXPECTED_CURRENT_STATUS',
+            error: `Invalid status transition: ${currentStatus} → ${nextStatus}`,
+            rule: 'INVALID_TRANSITION',
             from: currentStatus,
-            expected,
             to: nextStatus,
+            validNext: VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [],
           },
         };
       }
-    }
 
-    // TRANSITION VALIDATION: check if from→to is allowed
-    if (!isValidTransition(currentStatus as any, nextStatus as any)) {
-      return {
-        kind: 'error',
-        statusCode: 400,
-        body: {
-          error: `Invalid status transition: ${currentStatus} → ${nextStatus}`,
-          rule: 'INVALID_TRANSITION',
-          from: currentStatus,
-          to: nextStatus,
-          validNext: VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [],
-        },
-      };
-    }
-
-    // RBAC + gate enforcement (enterprise governance)
-    // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
-    // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
-    // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
-    const gate =
-      nextStatus === 'CANCELLED'
-        ? null
-        : getGateForTransition(currentStatus as any, nextStatus as any);
-    if (gate && isSystemActor) {
-      // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01; widened
-      // 2026-08-01 for the Decision/Initiative integration packet) —
-      // DELIBERATELY NARROW allow-list, not a blanket "system can do
-      // anything" bypass. Originally just `GateType.START`
-      // (`initiativeAutoStartJob`, SCHEDULED->EXECUTING). Now also allows
-      // `GateType.UNBLOCK` (BLOCKED->EXECUTING) for exactly one caller:
-      // `DecisionController.ts`'s post-commit cascade, which re-evaluates an
-      // initiative's block state after a decision resolves. Rationale for
-      // including UNBLOCK here rather than requiring a human
-      // PROJECT_SPONSOR/STEERING_COMMITTEE role for this one automated path:
-      // the actual safety gate — the GO/NO-GO decision-currency check
-      // (`hasApprovedGateDecision` for GOVERNANCE_DECISION_MAKING, a few
-      // lines below) — is NEVER skipped for system actors regardless of this
-      // allow-list, exactly like the START case. Widening this allow-list
-      // only removes the human-RBAC-role requirement for a cascade that is
-      // itself gated by that same GO/NO-GO check; it does not weaken it.
-      // There is still no human role lookup at all for a system actor (a
-      // cascade/cron caller has no `req.user`/role to look up) — just this
-      // hardcoded allow-list of two gates.
-      const SYSTEM_ACTOR_ALLOWED_GATES: readonly string[] = [GateType.START, GateType.UNBLOCK];
-      if (!SYSTEM_ACTOR_ALLOWED_GATES.includes(gate)) {
-        return {
-          kind: 'error',
-          statusCode: 403,
-          body: {
-            error: 'System actor is not authorized for this gate',
-            gate,
-            from: currentStatus,
-            to: nextStatus,
-          },
-        };
-      }
-      // Authorized — fall through without a human accessCtx/role lookup.
-    } else if (gate) {
-      // INI-04: the approval decision comes from the SAME matrix the two
-      // gate-readiness read models use to render the CTA bar. Previously this
-      // was a fourth hand-rolled copy of the rule, so a drift would have shown
-      // the user a button that the writer then refused.
-      const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
-      const steeringBoardEnabled = accessCtx.steeringBoardEnabled;
-      const effectiveRequiredRoles = resolveGateRequiredRoles(gate, steeringBoardEnabled);
-
-      const canExecute = canExecuteGate({
-        gate,
-        effectiveRoles: accessCtx.effectiveRoles,
-        steeringBoardEnabled,
-      });
-
-      if (!canExecute) {
-        return {
-          kind: 'error',
-          statusCode: 403,
-          body: {
-            error: 'Permission denied for this status transition',
-            gate,
-            from: currentStatus,
-            to: nextStatus,
-            roles: accessCtx.effectiveRoles,
-            requiredRoles: effectiveRequiredRoles,
-          },
-        };
-      }
-      if (
-        gate === GateType.SUBMIT_FOR_REVIEW &&
-        accessCtx.effectiveRoles.includes('CONSULTANT')
-      ) {
-        const createdBy = lockedRow.created_by ? String(lockedRow.created_by) : null;
-        if (createdBy && actorId && createdBy !== String(actorId)) {
+      // RBAC + gate enforcement (enterprise governance)
+      // - Consultant can only SUBMIT_FOR_REVIEW for initiatives they authored (created_by)
+      // - PM/Lead/PMO gate approvals move initiatives to global visibility (REVIEW)
+      // CANCELLED is a lifecycle escape hatch — no gate, no AI soft-block, no readiness check.
+      const gate =
+        nextStatus === 'CANCELLED'
+          ? null
+          : getGateForTransition(currentStatus as any, nextStatus as any);
+      if (gate && isSystemActor) {
+        // ★ System-actor RBAC carve-out (INI-005 fix, 2026-08-01; widened
+        // 2026-08-01 for the Decision/Initiative integration packet) —
+        // DELIBERATELY NARROW allow-list, not a blanket "system can do
+        // anything" bypass. Originally just `GateType.START`
+        // (`initiativeAutoStartJob`, SCHEDULED->EXECUTING). Now also allows
+        // `GateType.UNBLOCK` (BLOCKED->EXECUTING) for exactly one caller:
+        // `DecisionController.ts`'s post-commit cascade, which re-evaluates an
+        // initiative's block state after a decision resolves. Rationale for
+        // including UNBLOCK here rather than requiring a human
+        // PROJECT_SPONSOR/STEERING_COMMITTEE role for this one automated path:
+        // the actual safety gate — the GO/NO-GO decision-currency check
+        // (`hasApprovedGateDecision` for GOVERNANCE_DECISION_MAKING, a few
+        // lines below) — is NEVER skipped for system actors regardless of this
+        // allow-list, exactly like the START case. Widening this allow-list
+        // only removes the human-RBAC-role requirement for a cascade that is
+        // itself gated by that same GO/NO-GO check; it does not weaken it.
+        // There is still no human role lookup at all for a system actor (a
+        // cascade/cron caller has no `req.user`/role to look up) — just this
+        // hardcoded allow-list of two gates.
+        const SYSTEM_ACTOR_ALLOWED_GATES: readonly string[] = [GateType.START, GateType.UNBLOCK];
+        if (!SYSTEM_ACTOR_ALLOWED_GATES.includes(gate)) {
           return {
             kind: 'error',
             statusCode: 403,
             body: {
-              error: 'Consultants can only submit initiatives they created',
+              error: 'System actor is not authorized for this gate',
               gate,
               from: currentStatus,
               to: nextStatus,
             },
           };
         }
-      }
-      if (gate === GateType.SEND_BACK && !reason) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'Reason is required to send back an initiative',
-            gate,
-            from: currentStatus,
-            to: nextStatus,
-            requiresReason: true,
-          },
-        };
-      }
-    }
+        // Authorized — fall through without a human accessCtx/role lookup.
+      } else if (gate) {
+        // INI-04: the approval decision comes from the SAME matrix the two
+        // gate-readiness read models use to render the CTA bar. Previously this
+        // was a fourth hand-rolled copy of the rule, so a drift would have shown
+        // the user a button that the writer then refused.
+        const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
+        const steeringBoardEnabled = accessCtx.steeringBoardEnabled;
+        const effectiveRequiredRoles = resolveGateRequiredRoles(gate, steeringBoardEnabled);
 
-    // M13 Depth · Fala 1 — AI gate soft-block (advisory, per-org flag, fail-open).
-    // Forward-progress gates only; flag OFF or any error → zero behavior change.
-    // Below-threshold readiness OR a blocking timeline flag requires an explicit
-    // `overrideReason` to proceed; every decision is recorded to telemetry.
-    //
-    // System-actor design decision (INI-005 fix, 2026-08-01): this soft-block
-    // is SKIPPED for the system actor. Rationale: it's an advisory heuristic
-    // whose only escape hatch is a human-authored `overrideReason` — that
-    // doesn't translate to an unattended job (there's no human to author a
-    // justification, and inventing one would be dishonest telemetry). By
-    // contrast, readiness (`getBlockingReadinessItems`, below/unchanged) is a
-    // hard data-completeness gate, not a judgment call, so it still applies
-    // to the system actor — and the GO/NO-GO decision-currency check is
-    // NEVER skipped for any actor, system included.
-    if (gate && isAiGate(gate) && !isSystemActor) {
-      try {
-        if (await isInitiativeGateAiEnabled(orgId)) {
-          const [aiReadiness, timeline] = await Promise.all([
-            getGateReadiness(id, gate, orgId),
-            getTimelineFlags(id, gate, orgId),
-          ]);
-          const timelineBlock = !!timeline?.flags?.some((f: any) => f.severity === 'block');
-          const softBlocks = gateAiSoftBlocks({
-            enabled: true,
-            gate,
-            aiReadiness,
-            timeline,
-          } as any);
-          if (softBlocks && !overrideReasonTrimmed) {
+        const canExecute = canExecuteGate({
+          gate,
+          effectiveRoles: accessCtx.effectiveRoles,
+          steeringBoardEnabled,
+        });
+
+        if (!canExecute) {
+          return {
+            kind: 'error',
+            statusCode: 403,
+            body: {
+              error: 'Permission denied for this status transition',
+              gate,
+              from: currentStatus,
+              to: nextStatus,
+              roles: accessCtx.effectiveRoles,
+              requiredRoles: effectiveRequiredRoles,
+            },
+          };
+        }
+        if (
+          gate === GateType.SUBMIT_FOR_REVIEW &&
+          accessCtx.effectiveRoles.includes('CONSULTANT')
+        ) {
+          const createdBy = lockedRow.created_by ? String(lockedRow.created_by) : null;
+          if (createdBy && actorId && createdBy !== String(actorId)) {
+            return {
+              kind: 'error',
+              statusCode: 403,
+              body: {
+                error: 'Consultants can only submit initiatives they created',
+                gate,
+                from: currentStatus,
+                to: nextStatus,
+              },
+            };
+          }
+        }
+        if (gate === GateType.SEND_BACK && !reason) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'Reason is required to send back an initiative',
+              gate,
+              from: currentStatus,
+              to: nextStatus,
+              requiresReason: true,
+            },
+          };
+        }
+      }
+
+      // M13 Depth · Fala 1 — AI gate soft-block (advisory, per-org flag, fail-open).
+      // Forward-progress gates only; flag OFF or any error → zero behavior change.
+      // Below-threshold readiness OR a blocking timeline flag requires an explicit
+      // `overrideReason` to proceed; every decision is recorded to telemetry.
+      //
+      // System-actor design decision (INI-005 fix, 2026-08-01): this soft-block
+      // is SKIPPED for the system actor. Rationale: it's an advisory heuristic
+      // whose only escape hatch is a human-authored `overrideReason` — that
+      // doesn't translate to an unattended job (there's no human to author a
+      // justification, and inventing one would be dishonest telemetry). By
+      // contrast, readiness (`getBlockingReadinessItems`, below/unchanged) is a
+      // hard data-completeness gate, not a judgment call, so it still applies
+      // to the system actor — and the GO/NO-GO decision-currency check is
+      // NEVER skipped for any actor, system included.
+      if (gate && isAiGate(gate) && !isSystemActor) {
+        try {
+          if (await isInitiativeGateAiEnabled(orgId)) {
+            const [aiReadiness, timeline] = await Promise.all([
+              getGateReadiness(id, gate, orgId),
+              getTimelineFlags(id, gate, orgId),
+            ]);
+            const timelineBlock = !!timeline?.flags?.some((f: any) => f.severity === 'block');
+            const softBlocks = gateAiSoftBlocks({
+              enabled: true,
+              gate,
+              aiReadiness,
+              timeline,
+            } as any);
+            if (softBlocks && !overrideReasonTrimmed) {
+              await recordGateAiEvent({
+                organizationId: orgId,
+                initiativeId: id,
+                gate,
+                score: aiReadiness?.score ?? null,
+                timelineBlock,
+                blocked: true,
+                overridden: false,
+                userId: actorId,
+              });
+              return {
+                kind: 'error',
+                statusCode: 422,
+                body: {
+                  error:
+                    'Gate readiness is below threshold. Provide an overrideReason to proceed anyway.',
+                  code: 'INITIATIVE_GATE_AI_SOFT_BLOCK',
+                  gate,
+                  from: currentStatus,
+                  to: nextStatus,
+                  aiReadiness,
+                  timeline,
+                },
+              };
+            }
             await recordGateAiEvent({
               organizationId: orgId,
               initiativeId: id,
               gate,
               score: aiReadiness?.score ?? null,
               timelineBlock,
-              blocked: true,
-              overridden: false,
+              blocked: false,
+              overridden: softBlocks,
+              overrideReason: softBlocks ? overrideReasonTrimmed : null,
               userId: actorId,
             });
-            return {
-              kind: 'error',
-              statusCode: 422,
-              body: {
-                error:
-                  'Gate readiness is below threshold. Provide an overrideReason to proceed anyway.',
-                code: 'INITIATIVE_GATE_AI_SOFT_BLOCK',
-                gate,
-                from: currentStatus,
-                to: nextStatus,
-                aiReadiness,
-                timeline,
-              },
-            };
           }
-          await recordGateAiEvent({
-            organizationId: orgId,
-            initiativeId: id,
-            gate,
-            score: aiReadiness?.score ?? null,
-            timelineBlock,
-            blocked: false,
-            overridden: softBlocks,
-            overrideReason: softBlocks ? overrideReasonTrimmed : null,
-            userId: actorId,
-          });
+        } catch (e: any) {
+          logger.warn('[initiatives] gate-ai soft-block skipped (fail-open):', e?.message);
         }
-      } catch (e: any) {
-        logger.warn('[initiatives] gate-ai soft-block skipped (fail-open):', e?.message);
-      }
-    }
-
-    // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
-    // CANCELLED bypasses readiness (same as gate bypass above).
-    const blockingItems =
-      nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
-    if (blockingItems.length > 0) {
-      return {
-        kind: 'error',
-        statusCode: 400,
-        body: {
-          error: 'Gate readiness check failed. Complete missing requirements before transitioning.',
-          rule: 'GATE_BLOCKED',
-          gate_blocked: true,
-          missing: blockingItems,
-          from: currentStatus,
-          to: nextStatus,
-        },
-        notify: {
-          type: 'initiative.gate_blocked',
-          title: 'Initiative gate blocked',
-          body: `${initiativeName}: ${blockingItems[0]?.label || 'Readiness check failed'}.`,
-          priority: 'high',
-          metadata: { currentStatus, nextStatus, missing: blockingItems },
-        },
-      };
-    }
-
-    // Gate decision validation
-    // Canonical flow (PMO):
-    // DRAFT -> PENDING_REVIEW -> REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED -> EXECUTING -> DONE -> TRACKING
-    let satisfyingDecisionId: string | null = null;
-    // Tracks which pmoDomain satisfied the gate above, so the pre-commit recheck
-    // (right before the write path) knows which gate tuple to re-verify against
-    // a possible concurrent decision write. See `TransitionGateSupersededError`.
-    let decisionGatePmoDomain: string | null = null;
-
-    // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
-    if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
-      const goNoGo = await hasApprovedGateDecision(orgId, id, 'GOVERNANCE_DECISION_MAKING', client);
-      if (!goNoGo.ok) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'Go/No-Go decision is required to promote this initiative',
-            rule: 'GATE_DECISION_REQUIRED',
-          },
-          notify: {
-            type: 'initiative.gate_blocked',
-            title: 'Initiative gate blocked',
-            body: `${initiativeName}: Go/No-Go decision is required to promote.`,
-            priority: 'high',
-            metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
-          },
-        };
-      }
-      satisfyingDecisionId = goNoGo.decisionId;
-      decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
-      await syncHook('after-decision-read');
-    }
-
-    // PROMOTED -> PLANNING: requires Resources Commit decision
-    if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
-      const resourcesCommit = await hasApprovedGateDecision(
-        orgId,
-        id,
-        'RESOURCE_RESPONSIBILITY',
-        client
-      );
-      if (!resourcesCommit.ok) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'Resources Commit decision is required to start planning',
-            rule: 'GATE_DECISION_REQUIRED',
-          },
-          notify: {
-            type: 'initiative.gate_blocked',
-            title: 'Initiative gate blocked',
-            body: `${initiativeName}: Resources Commit decision is required to start planning.`,
-            priority: 'high',
-            metadata: { currentStatus, nextStatus, gate: 'RESOURCE_RESPONSIBILITY' },
-          },
-        };
-      }
-      satisfyingDecisionId = resourcesCommit.decisionId;
-      decisionGatePmoDomain = 'RESOURCE_RESPONSIBILITY';
-      await syncHook('after-decision-read');
-    }
-
-    // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates + milestones + baseline)
-    let plannedStart: unknown;
-    let plannedEnd: unknown;
-    if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
-      const scheduleLock = await hasApprovedGateDecision(orgId, id, 'SCHEDULE_MILESTONES', client);
-      if (!scheduleLock.ok) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'Schedule Lock decision is required to schedule this initiative',
-            rule: 'GATE_DECISION_REQUIRED',
-          },
-          notify: {
-            type: 'initiative.gate_blocked',
-            title: 'Initiative gate blocked',
-            body: `${initiativeName}: Schedule Lock decision is required to schedule.`,
-            priority: 'high',
-            metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_MILESTONES' },
-          },
-        };
-      }
-      satisfyingDecisionId = scheduleLock.decisionId;
-      decisionGatePmoDomain = 'SCHEDULE_MILESTONES';
-      await syncHook('after-decision-read');
-
-      plannedStart = lockedRow.planned_start_date;
-      plannedEnd = lockedRow.planned_end_date;
-      if (!plannedStart || !plannedEnd) {
-        return {
-          kind: 'error',
-          statusCode: 400,
-          body: {
-            error: 'plannedStartDate and plannedEndDate are required to schedule this initiative',
-            rule: 'SCHEDULE_DATES_REQUIRED',
-          },
-          notify: {
-            type: 'initiative.gate_blocked',
-            title: 'Initiative gate blocked',
-            body: `${initiativeName}: plannedStartDate and plannedEndDate are required to schedule.`,
-            priority: 'high',
-            metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_DATES_REQUIRED' },
-          },
-        };
       }
 
-      // Require at least one milestone before baselining/scheduling
-      try {
-        const m = await queryHelpers.queryOne(
-          `SELECT COUNT(*) as c
-           FROM initiative_milestones
-           WHERE initiative_id = ? AND organization_id = ?`,
-          [id, orgId]
-        );
-        const c = Number((m as any)?.c || 0);
-        if (c <= 0) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'At least one milestone is required to schedule this initiative',
-              rule: 'SCHEDULE_MILESTONES_REQUIRED',
-            },
-          };
-        }
-      } catch (e: any) {
-        const msg = String(e?.message || e || '').toLowerCase();
-        if (
-          msg.includes('no such table') ||
-          msg.includes('does not exist') ||
-          msg.includes('relation')
-        ) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error:
-                'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
-              rule: 'SCHEDULE_SCHEMA_MISSING',
-              table: 'initiative_milestones',
-            },
-          };
-        }
-        throw e;
-      }
-
-      // Create schedule baseline snapshot (versioned) — on the SAME pinned client
-      // as the rest of this transition, so it commits/rolls back atomically with
-      // the state UPDATE below (previously a separate, unpinned queryRun call).
-      const existingBaselineVersion = Number((lockedRow as any)?.baseline_version || 0) || 0;
-      const baselineVersion = existingBaselineVersion + 1;
-      const baselineId = uuidv4();
-      const capturedAt = new Date().toISOString();
-
-      const milestones = (await queryHelpers
-        .queryAll(
-          `SELECT id, name, description, target_date, actual_date, status, order_index, is_gate, gate_decision_id
-           FROM initiative_milestones
-           WHERE initiative_id = ? AND organization_id = ?
-           ORDER BY order_index ASC, target_date ASC`,
-          [id, orgId]
-        )
-        .catch(() => [])) as any[];
-
-      const deps = (await queryHelpers
-        .queryAll(
-          `SELECT id, from_initiative_id, to_initiative_id, type
-           FROM initiative_dependencies
-           WHERE organization_id = ?
-             AND (from_initiative_id = ? OR to_initiative_id = ?)
-           ORDER BY created_at ASC`,
-          [orgId, id, id]
-        )
-        .catch(() => [])) as any[];
-
-      const snapshot = {
-        initiativeId: id,
-        statusAtBaseline: currentStatus,
-        plannedStartDate: plannedStart,
-        plannedEndDate: plannedEnd,
-        milestones: (milestones || []).map((mm) => ({
-          id: mm.id,
-          name: mm.name,
-          description: mm.description || null,
-          targetDate: mm.target_date || null,
-          actualDate: mm.actual_date || null,
-          status: mm.status || null,
-          orderIndex: mm.order_index ?? 0,
-          isGate: flagOn(mm.is_gate),
-          gateDecisionId: mm.gate_decision_id || null,
-        })),
-        dependencies: (deps || []).map((d) => ({
-          id: d.id,
-          fromInitiativeId: d.from_initiative_id,
-          toInitiativeId: d.to_initiative_id,
-          type: d.type,
-        })),
-        capturedAt,
-        capturedBy: actorId || null,
-      };
-
-      try {
-        await client.query(
-          `INSERT INTO initiative_schedule_baselines
-             (id, organization_id, initiative_id, version, status_at_baseline, planned_start_date, planned_end_date, snapshot, created_by, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            baselineId,
-            orgId,
-            id,
-            baselineVersion,
-            currentStatus,
-            plannedStart,
-            plannedEnd,
-            JSON.stringify(snapshot),
-            actorId || null,
-            capturedAt,
-          ]
-        );
-      } catch (e: any) {
-        const msg = String(e?.message || e || '').toLowerCase();
-        if (
-          msg.includes('no such table') ||
-          msg.includes('does not exist') ||
-          msg.includes('relation')
-        ) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error:
-                'Schedule baseline schema is required to schedule (missing initiative_schedule_baselines). Run migrations.',
-              rule: 'SCHEDULE_BASELINE_SCHEMA_MISSING',
-              table: 'initiative_schedule_baselines',
-            },
-          };
-        }
-        throw e;
-      }
-
-      // Persist baseline reference on the locked row (so UI can show version +
-      // lock state) — best-effort for legacy schemas missing these columns,
-      // same as before, but now on the pinned client.
-      if (initiativeColumns.has('baseline_version') && initiativeColumns.has('schedule_baseline_id')) {
-        await client.query(
-          `UPDATE initiatives
-           SET baseline_version = ?, schedule_baseline_id = ?
-           WHERE id = ? AND organization_id = ?`,
-          [baselineVersion, baselineId, id, orgId]
-        );
-      }
-    }
-
-    // NEW (H16 fix): SCHEDULED -> EXECUTING (START) now requires GO/NO-GO
-    // decision currency, exactly like the three gates above. This transition
-    // previously had ZERO decision enforcement — the entire bypass this
-    // packet closes (only PMO-role RBAC was ever checked, via the `gate`
-    // block above / the legacy /start-execution endpoint had no check at
-    // all). Reuses the SAME gate/pmoDomain as the REVIEW->PROMOTED check
-    // (GOVERNANCE_DECISION_MAKING) — it's the same GO/NO-GO governance
-    // decision that must still be current (not superseded by a later
-    // NO-GO/pending re-decision) at the moment execution actually starts.
-    //
-    // EXTENDED (INI-005 follow-up, 2026-08-01) to also cover BLOCKED ->
-    // EXECUTING (UNBLOCK, /unblock endpoint — previously a raw UPDATE with
-    // NO decision check at all). Design decision, made explicit: unblocking
-    // resumes execution, and the exact rework/supersession risk the H16 fix
-    // exists for applies just as much here — a block can span a rework cycle
-    // where the initiative's GO decision gets superseded by a NO-GO before
-    // anyone unblocks it. Requiring a CURRENT approved GOVERNANCE_DECISION_
-    // MAKING decision at unblock time (not just at the original SCHEDULED->
-    // EXECUTING start) closes that gap too, for the same reason and via the
-    // same check — not a separate, parallel decision type.
-    if (
-      (currentStatus === 'SCHEDULED' || currentStatus === 'BLOCKED') &&
-      nextStatus === 'EXECUTING'
-    ) {
-      const executionGoNoGo = await hasApprovedGateDecision(
-        orgId,
-        id,
-        'GOVERNANCE_DECISION_MAKING',
-        client
-      );
-      if (!executionGoNoGo.ok) {
+      // V4-INIT-01: Gate readiness blocking — block transition if blocking items exist.
+      // CANCELLED bypasses readiness (same as gate bypass above).
+      const blockingItems =
+        nextStatus === 'CANCELLED' ? [] : await getBlockingReadinessItems(orgId, id);
+      if (blockingItems.length > 0) {
         return {
           kind: 'error',
           statusCode: 400,
           body: {
             error:
-              currentStatus === 'BLOCKED'
-                ? 'A current Go/No-Go decision is required to unblock and resume execution of this initiative'
-                : 'Go/No-Go decision is required to start execution of this initiative',
-            rule: 'GATE_DECISION_REQUIRED',
+              'Gate readiness check failed. Complete missing requirements before transitioning.',
+            rule: 'GATE_BLOCKED',
+            gate_blocked: true,
+            missing: blockingItems,
+            from: currentStatus,
+            to: nextStatus,
           },
           notify: {
             type: 'initiative.gate_blocked',
             title: 'Initiative gate blocked',
-            body:
-              currentStatus === 'BLOCKED'
-                ? `${initiativeName}: a current Go/No-Go decision is required to unblock.`
-                : `${initiativeName}: Go/No-Go decision is required to start execution.`,
+            body: `${initiativeName}: ${blockingItems[0]?.label || 'Readiness check failed'}.`,
             priority: 'high',
-            metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
+            metadata: { currentStatus, nextStatus, missing: blockingItems },
           },
         };
       }
-      satisfyingDecisionId = executionGoNoGo.decisionId;
-      decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
-      await syncHook('after-decision-read');
-    }
 
-    // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
-    // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
-    // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
-    if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
-      return {
-        kind: 'error',
-        statusCode: 400,
-        body: { error: 'Blocked status requires a reason', rule: 'BLOCKED_REASON_REQUIRED' },
-      };
-    }
+      // Gate decision validation
+      // Canonical flow (PMO):
+      // DRAFT -> PENDING_REVIEW -> REVIEW -> PROMOTED -> PLANNING -> APPROVED -> SCHEDULED -> EXECUTING -> DONE -> TRACKING
+      let satisfyingDecisionId: string | null = null;
+      // Tracks which pmoDomain satisfied the gate above, so the pre-commit recheck
+      // (right before the write path) knows which gate tuple to re-verify against
+      // a possible concurrent decision write. See `TransitionGateSupersededError`.
+      let decisionGatePmoDomain: string | null = null;
 
-    if (
-      ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
-      nextStatus === 'DONE' &&
-      (await hasPendingExecutionGateDecisions(orgId, id))
-    ) {
-      return {
-        kind: 'error',
-        statusCode: 400,
-        body: {
-          error: 'Resolve pending execution gate decisions before closing this initiative',
-          rule: 'EXECUTION_GATE_DECISION_REQUIRED',
-        },
-      };
-    }
+      // REVIEW -> PROMOTED: requires Go/No-Go decision (governance)
+      if (currentStatus === 'REVIEW' && nextStatus === 'PROMOTED') {
+        const goNoGo = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'GOVERNANCE_DECISION_MAKING',
+          client
+        );
+        if (!goNoGo.ok) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'Go/No-Go decision is required to promote this initiative',
+              rule: 'GATE_DECISION_REQUIRED',
+            },
+            notify: {
+              type: 'initiative.gate_blocked',
+              title: 'Initiative gate blocked',
+              body: `${initiativeName}: Go/No-Go decision is required to promote.`,
+              priority: 'high',
+              metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
+            },
+          };
+        }
+        satisfyingDecisionId = goNoGo.decisionId;
+        decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
+        await syncHook('after-decision-read');
+      }
 
-    // DONE -> TRACKING (Benefits start) policy enforcement:
-    // - Business Owner must be assigned (initiative.owner_business_id)
-    // - at least 1 KPI must exist, and at least 1 KPI must have target + unit
-    if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
-      const ownerBusinessId = lockedRow.owner_business_id
-        ? String(lockedRow.owner_business_id)
-        : '';
-      if (!ownerBusinessId) {
+      // PROMOTED -> PLANNING: requires Resources Commit decision
+      if (currentStatus === 'PROMOTED' && nextStatus === 'PLANNING') {
+        const resourcesCommit = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'RESOURCE_RESPONSIBILITY',
+          client
+        );
+        if (!resourcesCommit.ok) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'Resources Commit decision is required to start planning',
+              rule: 'GATE_DECISION_REQUIRED',
+            },
+            notify: {
+              type: 'initiative.gate_blocked',
+              title: 'Initiative gate blocked',
+              body: `${initiativeName}: Resources Commit decision is required to start planning.`,
+              priority: 'high',
+              metadata: { currentStatus, nextStatus, gate: 'RESOURCE_RESPONSIBILITY' },
+            },
+          };
+        }
+        satisfyingDecisionId = resourcesCommit.decisionId;
+        decisionGatePmoDomain = 'RESOURCE_RESPONSIBILITY';
+        await syncHook('after-decision-read');
+      }
+
+      // APPROVED -> SCHEDULED: requires Schedule Lock decision (and dates + milestones + baseline)
+      let plannedStart: unknown;
+      let plannedEnd: unknown;
+      if (currentStatus === 'APPROVED' && nextStatus === 'SCHEDULED') {
+        const scheduleLock = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'SCHEDULE_MILESTONES',
+          client
+        );
+        if (!scheduleLock.ok) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'Schedule Lock decision is required to schedule this initiative',
+              rule: 'GATE_DECISION_REQUIRED',
+            },
+            notify: {
+              type: 'initiative.gate_blocked',
+              title: 'Initiative gate blocked',
+              body: `${initiativeName}: Schedule Lock decision is required to schedule.`,
+              priority: 'high',
+              metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_MILESTONES' },
+            },
+          };
+        }
+        satisfyingDecisionId = scheduleLock.decisionId;
+        decisionGatePmoDomain = 'SCHEDULE_MILESTONES';
+        await syncHook('after-decision-read');
+
+        plannedStart = lockedRow.planned_start_date;
+        plannedEnd = lockedRow.planned_end_date;
+        if (!plannedStart || !plannedEnd) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'plannedStartDate and plannedEndDate are required to schedule this initiative',
+              rule: 'SCHEDULE_DATES_REQUIRED',
+            },
+            notify: {
+              type: 'initiative.gate_blocked',
+              title: 'Initiative gate blocked',
+              body: `${initiativeName}: plannedStartDate and plannedEndDate are required to schedule.`,
+              priority: 'high',
+              metadata: { currentStatus, nextStatus, gate: 'SCHEDULE_DATES_REQUIRED' },
+            },
+          };
+        }
+
+        // Require at least one milestone before baselining/scheduling
+        try {
+          const m = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
+           FROM initiative_milestones
+           WHERE initiative_id = ? AND organization_id = ?`,
+            [id, orgId]
+          );
+          const c = Number((m as any)?.c || 0);
+          if (c <= 0) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error: 'At least one milestone is required to schedule this initiative',
+                rule: 'SCHEDULE_MILESTONES_REQUIRED',
+              },
+            };
+          }
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation')
+          ) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error:
+                  'Milestones schema is required to schedule (missing initiative_milestones). Run migrations.',
+                rule: 'SCHEDULE_SCHEMA_MISSING',
+                table: 'initiative_milestones',
+              },
+            };
+          }
+          throw e;
+        }
+
+        // Create schedule baseline snapshot (versioned) — on the SAME pinned client
+        // as the rest of this transition, so it commits/rolls back atomically with
+        // the state UPDATE below (previously a separate, unpinned queryRun call).
+        const existingBaselineVersion = Number((lockedRow as any)?.baseline_version || 0) || 0;
+        const baselineVersion = existingBaselineVersion + 1;
+        const baselineId = uuidv4();
+        const capturedAt = new Date().toISOString();
+
+        const milestones = (await queryHelpers
+          .queryAll(
+            `SELECT id, name, description, target_date, actual_date, status, order_index, is_gate, gate_decision_id
+           FROM initiative_milestones
+           WHERE initiative_id = ? AND organization_id = ?
+           ORDER BY order_index ASC, target_date ASC`,
+            [id, orgId]
+          )
+          .catch(() => [])) as any[];
+
+        const deps = (await queryHelpers
+          .queryAll(
+            `SELECT id, from_initiative_id, to_initiative_id, type
+           FROM initiative_dependencies
+           WHERE organization_id = ?
+             AND (from_initiative_id = ? OR to_initiative_id = ?)
+           ORDER BY created_at ASC`,
+            [orgId, id, id]
+          )
+          .catch(() => [])) as any[];
+
+        const snapshot = {
+          initiativeId: id,
+          statusAtBaseline: currentStatus,
+          plannedStartDate: plannedStart,
+          plannedEndDate: plannedEnd,
+          milestones: (milestones || []).map((mm) => ({
+            id: mm.id,
+            name: mm.name,
+            description: mm.description || null,
+            targetDate: mm.target_date || null,
+            actualDate: mm.actual_date || null,
+            status: mm.status || null,
+            orderIndex: mm.order_index ?? 0,
+            isGate: flagOn(mm.is_gate),
+            gateDecisionId: mm.gate_decision_id || null,
+          })),
+          dependencies: (deps || []).map((d) => ({
+            id: d.id,
+            fromInitiativeId: d.from_initiative_id,
+            toInitiativeId: d.to_initiative_id,
+            type: d.type,
+          })),
+          capturedAt,
+          capturedBy: actorId || null,
+        };
+
+        try {
+          await client.query(
+            `INSERT INTO initiative_schedule_baselines
+             (id, organization_id, initiative_id, version, status_at_baseline, planned_start_date, planned_end_date, snapshot, created_by, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              baselineId,
+              orgId,
+              id,
+              baselineVersion,
+              currentStatus,
+              plannedStart,
+              plannedEnd,
+              JSON.stringify(snapshot),
+              actorId || null,
+              capturedAt,
+            ]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (
+            msg.includes('no such table') ||
+            msg.includes('does not exist') ||
+            msg.includes('relation')
+          ) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error:
+                  'Schedule baseline schema is required to schedule (missing initiative_schedule_baselines). Run migrations.',
+                rule: 'SCHEDULE_BASELINE_SCHEMA_MISSING',
+                table: 'initiative_schedule_baselines',
+              },
+            };
+          }
+          throw e;
+        }
+
+        // Persist baseline reference on the locked row (so UI can show version +
+        // lock state) — best-effort for legacy schemas missing these columns,
+        // same as before, but now on the pinned client.
+        if (
+          initiativeColumns.has('baseline_version') &&
+          initiativeColumns.has('schedule_baseline_id')
+        ) {
+          await client.query(
+            `UPDATE initiatives
+           SET baseline_version = ?, schedule_baseline_id = ?
+           WHERE id = ? AND organization_id = ?`,
+            [baselineVersion, baselineId, id, orgId]
+          );
+        }
+      }
+
+      // NEW (H16 fix): SCHEDULED -> EXECUTING (START) now requires GO/NO-GO
+      // decision currency, exactly like the three gates above. This transition
+      // previously had ZERO decision enforcement — the entire bypass this
+      // packet closes (only PMO-role RBAC was ever checked, via the `gate`
+      // block above / the legacy /start-execution endpoint had no check at
+      // all). Reuses the SAME gate/pmoDomain as the REVIEW->PROMOTED check
+      // (GOVERNANCE_DECISION_MAKING) — it's the same GO/NO-GO governance
+      // decision that must still be current (not superseded by a later
+      // NO-GO/pending re-decision) at the moment execution actually starts.
+      //
+      // EXTENDED (INI-005 follow-up, 2026-08-01) to also cover BLOCKED ->
+      // EXECUTING (UNBLOCK, /unblock endpoint — previously a raw UPDATE with
+      // NO decision check at all). Design decision, made explicit: unblocking
+      // resumes execution, and the exact rework/supersession risk the H16 fix
+      // exists for applies just as much here — a block can span a rework cycle
+      // where the initiative's GO decision gets superseded by a NO-GO before
+      // anyone unblocks it. Requiring a CURRENT approved GOVERNANCE_DECISION_
+      // MAKING decision at unblock time (not just at the original SCHEDULED->
+      // EXECUTING start) closes that gap too, for the same reason and via the
+      // same check — not a separate, parallel decision type.
+      if (
+        (currentStatus === 'SCHEDULED' || currentStatus === 'BLOCKED') &&
+        nextStatus === 'EXECUTING'
+      ) {
+        const executionGoNoGo = await hasApprovedGateDecision(
+          orgId,
+          id,
+          'GOVERNANCE_DECISION_MAKING',
+          client
+        );
+        if (!executionGoNoGo.ok) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error:
+                currentStatus === 'BLOCKED'
+                  ? 'A current Go/No-Go decision is required to unblock and resume execution of this initiative'
+                  : 'Go/No-Go decision is required to start execution of this initiative',
+              rule: 'GATE_DECISION_REQUIRED',
+            },
+            notify: {
+              type: 'initiative.gate_blocked',
+              title: 'Initiative gate blocked',
+              body:
+                currentStatus === 'BLOCKED'
+                  ? `${initiativeName}: a current Go/No-Go decision is required to unblock.`
+                  : `${initiativeName}: Go/No-Go decision is required to start execution.`,
+              priority: 'high',
+              metadata: { currentStatus, nextStatus, gate: 'GOVERNANCE_DECISION_MAKING' },
+            },
+          };
+        }
+        satisfyingDecisionId = executionGoNoGo.decisionId;
+        decisionGatePmoDomain = 'GOVERNANCE_DECISION_MAKING';
+        await syncHook('after-decision-read');
+      }
+
+      // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
+      // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
+      // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
+      if (nextStatus === 'BLOCKED' && !String(reason ?? '').trim()) {
+        return {
+          kind: 'error',
+          statusCode: 400,
+          body: { error: 'Blocked status requires a reason', rule: 'BLOCKED_REASON_REQUIRED' },
+        };
+      }
+
+      if (
+        ['EXECUTING', 'BLOCKED'].includes(currentStatus) &&
+        nextStatus === 'DONE' &&
+        (await hasPendingExecutionGateDecisions(orgId, id))
+      ) {
         return {
           kind: 'error',
           statusCode: 400,
           body: {
-            error: 'Business Owner is required to start benefits tracking',
-            rule: 'BENEFITS_OWNER_REQUIRED',
-            field: 'ownerBusinessId',
+            error: 'Resolve pending execution gate decisions before closing this initiative',
+            rule: 'EXECUTION_GATE_DECISION_REQUIRED',
           },
         };
       }
 
-      try {
-        const kpiCount = await queryHelpers.queryOne(
-          `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
-          [id]
-        );
-        const cAll = Number((kpiCount as any)?.c || 0);
-        if (cAll <= 0) {
+      // DONE -> TRACKING (Benefits start) policy enforcement:
+      // - Business Owner must be assigned (initiative.owner_business_id)
+      // - at least 1 KPI must exist, and at least 1 KPI must have target + unit
+      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
+        const ownerBusinessId = lockedRow.owner_business_id
+          ? String(lockedRow.owner_business_id)
+          : '';
+        if (!ownerBusinessId) {
           return {
             kind: 'error',
             statusCode: 400,
             body: {
-              error: 'At least one KPI is required to start benefits tracking',
-              rule: 'BENEFITS_KPI_REQUIRED',
+              error: 'Business Owner is required to start benefits tracking',
+              rule: 'BENEFITS_OWNER_REQUIRED',
+              field: 'ownerBusinessId',
             },
           };
         }
 
-        const readyCount = await queryHelpers.queryOne(
-          `SELECT COUNT(*) as c
+        try {
+          const kpiCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
+            [id]
+          );
+          const cAll = Number((kpiCount as any)?.c || 0);
+          if (cAll <= 0) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error: 'At least one KPI is required to start benefits tracking',
+                rule: 'BENEFITS_KPI_REQUIRED',
+              },
+            };
+          }
+
+          const readyCount = await queryHelpers.queryOne(
+            `SELECT COUNT(*) as c
            FROM initiative_kpis
            WHERE initiative_id = ?
              AND target_value IS NOT NULL
              AND unit IS NOT NULL`,
-          [id]
-        );
-        const cReady = Number((readyCount as any)?.c || 0);
-        if (cReady <= 0) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'KPI target and unit are required to start benefits tracking',
-              rule: 'BENEFITS_KPI_TARGET_REQUIRED',
-            },
-          };
+            [id]
+          );
+          const cReady = Number((readyCount as any)?.c || 0);
+          if (cReady <= 0) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error: 'KPI target and unit are required to start benefits tracking',
+                rule: 'BENEFITS_KPI_TARGET_REQUIRED',
+              },
+            };
+          }
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          // If KPI schema is missing, block transition with a clear message.
+          if (msg.includes('no such table') || msg.includes('initiative_kpis')) {
+            return {
+              kind: 'error',
+              statusCode: 400,
+              body: {
+                error:
+                  'KPI schema is required to start benefits tracking (missing initiative_kpis)',
+                rule: 'BENEFITS_KPI_SCHEMA_MISSING',
+              },
+            };
+          }
+          throw e;
         }
-      } catch (e: any) {
-        const msg = String(e?.message || e || '').toLowerCase();
-        // If KPI schema is missing, block transition with a clear message.
-        if (msg.includes('no such table') || msg.includes('initiative_kpis')) {
-          return {
-            kind: 'error',
-            statusCode: 400,
-            body: {
-              error: 'KPI schema is required to start benefits tracking (missing initiative_kpis)',
-              rule: 'BENEFITS_KPI_SCHEMA_MISSING',
-            },
-          };
+      }
+
+      // ★ PRE-COMMIT GATE-DECISION RECHECK (decision-race fix, 2026-08-01).
+      // The advisory lock inside `hasApprovedGateDecision` only serializes this
+      // transition against OTHER transitions — it does NOT block a concurrent
+      // `DecisionController.ts` write (that file runs bare autocommit statements
+      // against the shared pool and does not take this lock; see the honest-scope
+      // note on `hasApprovedGateDecision`). So even with the earlier read pinned
+      // to this transaction's client, a competing decision write (e.g. a NO-GO
+      // superseding the GO this transition read moments ago) can still land
+      // between that read and this point. Re-run the SAME check right before the
+      // write path commits, on the SAME pinned client: if the gate no longer
+      // resolves to the exact decision row this transition already validated
+      // against, THROW (not return — see `TransitionGateSupersededError`'s doc
+      // comment for why an early `return` here would let an already-executed
+      // schedule-baseline INSERT reach COMMIT anyway).
+      if (satisfyingDecisionId && decisionGatePmoDomain) {
+        const recheck = await hasApprovedGateDecision(orgId, id, decisionGatePmoDomain, client);
+        if (!recheck.ok || recheck.decisionId !== satisfyingDecisionId) {
+          throw new TransitionGateSupersededError(
+            gate ?? decisionGatePmoDomain,
+            decisionGatePmoDomain
+          );
         }
-        throw e;
       }
-    }
+      await syncHook('before-commit');
 
-    // ★ PRE-COMMIT GATE-DECISION RECHECK (decision-race fix, 2026-08-01).
-    // The advisory lock inside `hasApprovedGateDecision` only serializes this
-    // transition against OTHER transitions — it does NOT block a concurrent
-    // `DecisionController.ts` write (that file runs bare autocommit statements
-    // against the shared pool and does not take this lock; see the honest-scope
-    // note on `hasApprovedGateDecision`). So even with the earlier read pinned
-    // to this transaction's client, a competing decision write (e.g. a NO-GO
-    // superseding the GO this transition read moments ago) can still land
-    // between that read and this point. Re-run the SAME check right before the
-    // write path commits, on the SAME pinned client: if the gate no longer
-    // resolves to the exact decision row this transition already validated
-    // against, THROW (not return — see `TransitionGateSupersededError`'s doc
-    // comment for why an early `return` here would let an already-executed
-    // schedule-baseline INSERT reach COMMIT anyway).
-    if (satisfyingDecisionId && decisionGatePmoDomain) {
-      const recheck = await hasApprovedGateDecision(orgId, id, decisionGatePmoDomain, client);
-      if (!recheck.ok || recheck.decisionId !== satisfyingDecisionId) {
-        throw new TransitionGateSupersededError(gate ?? decisionGatePmoDomain, decisionGatePmoDomain);
-      }
-    }
-    await syncHook('before-commit');
+      // ---- WRITE PATH (atomic from here on: state UPDATE + both history INSERTs) ----
+      const now = new Date().toISOString();
+      const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
+      const lifecycleParams: unknown[] = [nextStatus, now];
 
-    // ---- WRITE PATH (atomic from here on: state UPDATE + both history INSERTs) ----
-    const now = new Date().toISOString();
-    const lifecycleUpdates: string[] = ['status = ?', 'updated_at = ?'];
-    const lifecycleParams: unknown[] = [nextStatus, now];
-
-    if (nextStatus === 'PENDING_REVIEW') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'review_requested_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'review_requested_by',
-        actorId || null
-      );
-    }
-    if (nextStatus === 'APPROVED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'approved_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'approved_by',
-        actorId || null
-      );
-      if (reason) {
+      if (nextStatus === 'PENDING_REVIEW') {
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
           initiativeColumns,
-          'approval_comment',
-          reason
+          'review_requested_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'review_requested_by',
+          actorId || null
         );
       }
-    }
-    if (nextStatus === 'SCHEDULED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'execution_started_at',
-        null
-      ); // will be set when EXECUTING starts
-    }
-    // INI-005 follow-up (2026-08-01): only set execution_started_at on a
-    // GENUINE first start (SCHEDULED->EXECUTING, the START gate). Excluded
-    // for BLOCKED->EXECUTING (UNBLOCK) — that's a resume, not a new start;
-    // the raw UPDATE this replaced never touched this column on unblock
-    // either, so this preserves that behavior rather than resetting the
-    // original start timestamp every time an initiative is blocked/unblocked.
-    if (nextStatus === 'EXECUTING' && currentStatus !== 'BLOCKED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'execution_started_at',
-        now
-      );
-    }
-    if (nextStatus === 'BLOCKED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'blocked_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'blocked_reason',
-        reason || null
-      );
-    }
-    if (currentStatus === 'BLOCKED' && nextStatus === 'EXECUTING') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'unblocked_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'blocked_at',
-        null
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'blocked_reason',
-        null
-      );
-    }
-    if (nextStatus === 'DONE') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'done_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'done_by',
-        actorId || null
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'completed_at',
-        now
-      );
-    }
-    if (nextStatus === 'CANCELLED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'cancelled_at',
-        now
-      );
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'cancelled_reason',
-        reason || null
-      );
-    }
-    if (nextStatus === 'ARCHIVED') {
-      pushOptionalColumnUpdate(
-        lifecycleUpdates,
-        lifecycleParams,
-        initiativeColumns,
-        'archived_at',
-        now
-      );
-    }
-    if (
-      actorId &&
-      (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' &&
-      initiativeColumns.has('updated_by')
-    ) {
-      lifecycleUpdates.push('updated_by = ?');
-      lifecycleParams.push(actorId);
-    }
+      if (nextStatus === 'APPROVED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'approved_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'approved_by',
+          actorId || null
+        );
+        if (reason) {
+          pushOptionalColumnUpdate(
+            lifecycleUpdates,
+            lifecycleParams,
+            initiativeColumns,
+            'approval_comment',
+            reason
+          );
+        }
+      }
+      if (nextStatus === 'SCHEDULED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'execution_started_at',
+          null
+        ); // will be set when EXECUTING starts
+      }
+      // INI-005 follow-up (2026-08-01): only set execution_started_at on a
+      // GENUINE first start (SCHEDULED->EXECUTING, the START gate). Excluded
+      // for BLOCKED->EXECUTING (UNBLOCK) — that's a resume, not a new start;
+      // the raw UPDATE this replaced never touched this column on unblock
+      // either, so this preserves that behavior rather than resetting the
+      // original start timestamp every time an initiative is blocked/unblocked.
+      if (nextStatus === 'EXECUTING' && currentStatus !== 'BLOCKED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'execution_started_at',
+          now
+        );
+      }
+      if (nextStatus === 'BLOCKED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_reason',
+          reason || null
+        );
+      }
+      if (currentStatus === 'BLOCKED' && nextStatus === 'EXECUTING') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'unblocked_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_at',
+          null
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'blocked_reason',
+          null
+        );
+      }
+      if (nextStatus === 'DONE') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'done_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'done_by',
+          actorId || null
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'completed_at',
+          now
+        );
+      }
+      if (nextStatus === 'CANCELLED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'cancelled_at',
+          now
+        );
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'cancelled_reason',
+          reason || null
+        );
+      }
+      if (nextStatus === 'ARCHIVED') {
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'archived_at',
+          now
+        );
+      }
+      if (
+        actorId &&
+        (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' &&
+        initiativeColumns.has('updated_by')
+      ) {
+        lifecycleUpdates.push('updated_by = ?');
+        lifecycleParams.push(actorId);
+      }
 
-    lifecycleParams.push(id, orgId);
-    await client.query(
-      `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`,
-      lifecycleParams
-    );
+      lifecycleParams.push(id, orgId);
+      await client.query(
+        `UPDATE initiatives SET ${lifecycleUpdates.join(', ')} WHERE id = ? AND organization_id = ?`,
+        lifecycleParams
+      );
 
-    // Benefits tracking window defaults — same transaction/client now. Only a
-    // genuinely-missing legacy column is swallowed; any other error aborts
-    // (rolls back) the whole transition, unlike the previous best-effort catch.
-    if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
-      const trackingStart = now;
-      const trackingEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // default 90 days
-      try {
-        await client.query(
-          `UPDATE initiatives
+      // Benefits tracking window defaults — same transaction/client now. Only a
+      // genuinely-missing legacy column is swallowed; any other error aborts
+      // (rolls back) the whole transition, unlike the previous best-effort catch.
+      if (currentStatus === 'DONE' && nextStatus === 'TRACKING') {
+        const trackingStart = now;
+        const trackingEnd = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // default 90 days
+        try {
+          await client.query(
+            `UPDATE initiatives
            SET tracking_started_at = COALESCE(tracking_started_at, ?),
                tracking_started_by = COALESCE(tracking_started_by, ?),
                tracking_start_date = COALESCE(tracking_start_date, ?),
                tracking_end_date = COALESCE(tracking_end_date, ?),
                updated_at = ?
            WHERE id = ? AND organization_id = ?`,
-          [trackingStart, actorId || null, trackingStart, trackingEnd, now, id, orgId]
-        );
-      } catch (e: any) {
-        const msg = String(e?.message || e || '').toLowerCase();
-        if (!msg.includes('no such column') && !msg.includes('does not exist')) throw e;
-        // ignore for legacy schemas
+            [trackingStart, actorId || null, trackingStart, trackingEnd, now, id, orgId]
+          );
+        } catch (e: any) {
+          const msg = String(e?.message || e || '').toLowerCase();
+          if (!msg.includes('no such column') && !msg.includes('does not exist')) throw e;
+          // ignore for legacy schemas
+        }
       }
-    }
 
-    // Audit trail — ONE correlationId shared by both rows. It IS the
-    // initiative_status_history primary key, and is also embedded in
-    // initiative_history's `notes` JSON (which already carried a JSON blob —
-    // no migration needed to link the two rows losslessly). Any failure here
-    // rolls back the WHOLE transition: the state must not change if the audit
-    // trail doesn't (previously these were two independent best-effort
-    // try/catch INSERTs that could silently no-op after the state UPDATE had
-    // already committed).
-    const correlationId = uuidv4();
+      // Audit trail — ONE correlationId shared by both rows. It IS the
+      // initiative_status_history primary key, and is also embedded in
+      // initiative_history's `notes` JSON (which already carried a JSON blob —
+      // no migration needed to link the two rows losslessly). Any failure here
+      // rolls back the WHOLE transition: the state must not change if the audit
+      // trail doesn't (previously these were two independent best-effort
+      // try/catch INSERTs that could silently no-op after the state UPDATE had
+      // already committed).
+      const correlationId = uuidv4();
 
-    const statusHistoryColumns = getColumnNameSet(
-      await queryHelpers.getTableColumns('initiative_status_history')
-    );
-    const statusHistoryCols = ['id', 'initiative_id', 'organization_id', 'from_status', 'to_status'];
-    const statusHistoryVals: unknown[] = [correlationId, id, orgId, currentStatus, nextStatus];
-    if (statusHistoryColumns.has('changed_by')) {
-      statusHistoryCols.push('changed_by');
-      statusHistoryVals.push(actorId || null);
-    }
-    if (statusHistoryColumns.has('reason')) {
-      statusHistoryCols.push('reason');
-      statusHistoryVals.push(reason || null);
-    }
-    if (statusHistoryColumns.has('gate_type')) {
-      statusHistoryCols.push('gate_type');
-      statusHistoryVals.push(gate || null);
-    }
-    if (statusHistoryColumns.has('created_at')) {
-      statusHistoryCols.push('created_at');
-      statusHistoryVals.push(now);
-    }
-    await client.query(
-      `INSERT INTO initiative_status_history (${statusHistoryCols.join(', ')}) VALUES (${statusHistoryCols
-        .map(() => '?')
-        .join(', ')})`,
-      statusHistoryVals
-    );
+      const statusHistoryColumns = getColumnNameSet(
+        await queryHelpers.getTableColumns('initiative_status_history')
+      );
+      const statusHistoryCols = [
+        'id',
+        'initiative_id',
+        'organization_id',
+        'from_status',
+        'to_status',
+      ];
+      const statusHistoryVals: unknown[] = [correlationId, id, orgId, currentStatus, nextStatus];
+      if (statusHistoryColumns.has('changed_by')) {
+        statusHistoryCols.push('changed_by');
+        statusHistoryVals.push(actorId || null);
+      }
+      if (statusHistoryColumns.has('reason')) {
+        statusHistoryCols.push('reason');
+        statusHistoryVals.push(reason || null);
+      }
+      if (statusHistoryColumns.has('gate_type')) {
+        statusHistoryCols.push('gate_type');
+        statusHistoryVals.push(gate || null);
+      }
+      if (statusHistoryColumns.has('created_at')) {
+        statusHistoryCols.push('created_at');
+        statusHistoryVals.push(now);
+      }
+      await client.query(
+        `INSERT INTO initiative_status_history (${statusHistoryCols.join(', ')}) VALUES (${statusHistoryCols
+          .map(() => '?')
+          .join(', ')})`,
+        statusHistoryVals
+      );
 
-    const historyColumns = getColumnNameSet(
-      await queryHelpers.getTableColumns('initiative_history')
-    );
-    const histId = uuidv4();
-    const historyNotes = JSON.stringify({
-      actorName: actorName || null,
-      from: currentStatus,
-      to: nextStatus,
-      reason: reason || null,
-      gate: gate || null,
-      correlationId,
-      decisionId: satisfyingDecisionId,
-    });
-    const historyCols = ['id', 'initiative_id', 'action'];
-    const historyVals: unknown[] = [histId, id, 'status_changed'];
-    if (historyColumns.has('changed_by')) {
-      historyCols.push('changed_by');
-      historyVals.push(actorId || 'system');
-    }
-    if (historyColumns.has('changed_at')) {
-      historyCols.push('changed_at');
-      historyVals.push(now);
-    }
-    if (historyColumns.has('notes')) {
-      historyCols.push('notes');
-      historyVals.push(historyNotes);
-    }
-    await client.query(
-      `INSERT INTO initiative_history (${historyCols.join(', ')}) VALUES (${historyCols
-        .map(() => '?')
-        .join(', ')})`,
-      historyVals
-    );
-
-    // EXE-09 — durable closure→Results/Finance delivery receipt, written
-    // atomically in THIS SAME transaction (same `client`, same
-    // `correlationId` as the audit rows above) so a closure can never commit
-    // without a receipt to track its downstream delivery. Replaces the old
-    // purely-fire-and-forget `fireClosureHandoff` call below with a durable
-    // row; the actual delivery attempt still happens outside this
-    // transaction (see the post-commit trigger below), but its durable
-    // bookkeeping does not depend on that attempt ever running.
-    if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
-      await createReceiptOnClosure(client, {
-        organizationId: orgId,
-        initiativeId: id,
+      const historyColumns = getColumnNameSet(
+        await queryHelpers.getTableColumns('initiative_history')
+      );
+      const histId = uuidv4();
+      const historyNotes = JSON.stringify({
+        actorName: actorName || null,
+        from: currentStatus,
+        to: nextStatus,
+        reason: reason || null,
+        gate: gate || null,
         correlationId,
-        actorId: actorId || null,
+        decisionId: satisfyingDecisionId,
       });
-    }
+      const historyCols = ['id', 'initiative_id', 'action'];
+      const historyVals: unknown[] = [histId, id, 'status_changed'];
+      if (historyColumns.has('changed_by')) {
+        historyCols.push('changed_by');
+        historyVals.push(actorId || 'system');
+      }
+      if (historyColumns.has('changed_at')) {
+        historyCols.push('changed_at');
+        historyVals.push(now);
+      }
+      if (historyColumns.has('notes')) {
+        historyCols.push('notes');
+        historyVals.push(historyNotes);
+      }
+      await client.query(
+        `INSERT INTO initiative_history (${historyCols.join(', ')}) VALUES (${historyCols
+          .map(() => '?')
+          .join(', ')})`,
+        historyVals
+      );
 
-    return {
-      kind: 'success',
-      currentStatus,
-      nextStatus,
-      gate: gate || null,
-      correlationId,
-      initiativeName,
-    };
+      // EXE-09 — durable closure→Results/Finance delivery receipt, written
+      // atomically in THIS SAME transaction (same `client`, same
+      // `correlationId` as the audit rows above) so a closure can never commit
+      // without a receipt to track its downstream delivery. Replaces the old
+      // purely-fire-and-forget `fireClosureHandoff` call below with a durable
+      // row; the actual delivery attempt still happens outside this
+      // transaction (see the post-commit trigger below), but its durable
+      // bookkeeping does not depend on that attempt ever running.
+      if (currentStatus !== 'DONE' && nextStatus === 'DONE') {
+        await createReceiptOnClosure(client, {
+          organizationId: orgId,
+          initiativeId: id,
+          correlationId,
+          actorId: actorId || null,
+        });
+      }
+
+      return {
+        kind: 'success',
+        currentStatus,
+        nextStatus,
+        gate: gate || null,
+        correlationId,
+        initiativeName,
+      };
     });
   } catch (err) {
     if (err instanceof TransitionGateSupersededError) {
@@ -1611,8 +1638,7 @@ export async function executeInitiativeTransition(
             actorId,
             actorName,
             severity: statusSeverity,
-            priority:
-              nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
+            priority: nextStatus === 'BLOCKED' || nextStatus === 'CANCELLED' ? 'high' : 'normal',
             metadata: { from: currentStatus, to: nextStatus, reason, gate },
           })
         )
@@ -1621,8 +1647,7 @@ export async function executeInitiativeTransition(
     // 2. Gate-specific notification: notify users who hold the gate role for the NEXT gate
     // This tells the approver "this initiative is now waiting for your decision"
     try {
-      const nextTransitions =
-        VALID_TRANSITIONS[nextStatus as keyof typeof VALID_TRANSITIONS] || [];
+      const nextTransitions = VALID_TRANSITIONS[nextStatus as keyof typeof VALID_TRANSITIONS] || [];
       const nextGates = nextTransitions
         .map((to: string) => getGateForTransition(nextStatus as any, to as any))
         .filter(Boolean)
@@ -1675,10 +1700,7 @@ export async function executeInitiativeTransition(
         for (const nextGate of nextGates) {
           const requiredRoles = GATE_PERMISSIONS[nextGate as keyof typeof GATE_PERMISSIONS] || [];
           for (const roleUser of gateRoleUsers) {
-            if (
-              requiredRoles.includes(roleUser.gateRole as any) &&
-              roleUser.userId !== actorId
-            ) {
+            if (requiredRoles.includes(roleUser.gateRole as any) && roleUser.userId !== actorId) {
               nextGateApprovers.add(roleUser.userId);
             }
           }
@@ -1963,7 +1985,13 @@ export async function applyDecisionBlockTransitionOnClient(
     await queryHelpers.getTableColumns('initiative_status_history')
   );
   const statusHistoryCols = ['id', 'initiative_id', 'organization_id', 'from_status', 'to_status'];
-  const statusHistoryVals: unknown[] = [correlationId, initiativeId, orgId, currentStatus, 'BLOCKED'];
+  const statusHistoryVals: unknown[] = [
+    correlationId,
+    initiativeId,
+    orgId,
+    currentStatus,
+    'BLOCKED',
+  ];
   if (statusHistoryColumns.has('changed_by')) {
     statusHistoryCols.push('changed_by');
     statusHistoryVals.push(DECISION_BLOCK_SYSTEM_ACTOR_ID);

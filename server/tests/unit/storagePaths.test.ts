@@ -98,9 +98,7 @@ describe('storagePaths', () => {
 
     it('exportsDir()/uploadsDir() land under the volume once STORAGE_DIR is set', () => {
       process.env.STORAGE_DIR = scratchDir;
-      expect(exportsDir('presentations')).toBe(
-        path.join(scratchDir, 'exports', 'presentations')
-      );
+      expect(exportsDir('presentations')).toBe(path.join(scratchDir, 'exports', 'presentations'));
       expect(uploadsDir('avatars')).toBe(path.join(scratchDir, 'uploads', 'avatars'));
     });
 

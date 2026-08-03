@@ -30,10 +30,10 @@ import {
 } from '@/components/shared/PreviewPane';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
+  V8ResultsApi,
   type V8ResultsKpiCatalogEntry,
   type V8ResultsScorecard,
   type V8ResultsScorecardKpi,
-  V8ResultsApi,
 } from '@/services/api/v8/results';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -196,7 +196,8 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
         id: 'kpiCount',
         label: t('results.kpiScorecards.kpiCount', 'KPIs'),
         width: '16%',
-        render: (row) => `${row.onTargetCount ?? 0} / ${row.kpiCount ?? 0} ${t('results.kpiScorecards.onTarget', 'on target')}`,
+        render: (row) =>
+          `${row.onTargetCount ?? 0} / ${row.kpiCount ?? 0} ${t('results.kpiScorecards.onTarget', 'on target')}`,
       },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
     ],
@@ -316,7 +317,10 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             {stats.total}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('results.kpiScorecards.totalHint', 'Department x period cards curated from the KPI catalog.')}
+            {t(
+              'results.kpiScorecards.totalHint',
+              'Department x period cards curated from the KPI catalog.'
+            )}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
@@ -327,7 +331,10 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             {stats.active}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('results.kpiScorecards.activeHint', 'Scorecards currently tracking delivery or benefits.')}
+            {t(
+              'results.kpiScorecards.activeHint',
+              'Scorecards currently tracking delivery or benefits.'
+            )}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">

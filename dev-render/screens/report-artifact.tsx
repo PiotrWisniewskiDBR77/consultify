@@ -62,7 +62,10 @@ const doc: ReportDocument = {
           rows: [
             { cells: ['Rekrutacja', '180k EUR', '96k EUR', 'W toku'], tone: 'default' },
             { cells: ['Marketing lokalny', '120k EUR', '88k EUR', 'W toku'], tone: 'default' },
-            { cells: ['Systemy i integracje', '90k EUR', '81k EUR', 'Zagrożone'], tone: 'critical' },
+            {
+              cells: ['Systemy i integracje', '90k EUR', '81k EUR', 'Zagrożone'],
+              tone: 'critical',
+            },
             { cells: ['Compliance / prawo', '40k EUR', '12k EUR', 'Na czas'], tone: 'good' },
           ],
         },

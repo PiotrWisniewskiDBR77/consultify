@@ -216,84 +216,80 @@ describe('FIN-005 — the compensating fallback cannot be trusted with a late wr
     vi.restoreAllMocks();
   });
 
-  it(
-    'RED: on the fallback path the abandoned UPDATE lands and re-promotes the row AFTER the seed reported failure',
-    async () => {
-      const ids = getAtelierFinanceCanonicalIds(ORG_ID);
-      const victim = ids.statementIds[0];
+  it('RED: on the fallback path the abandoned UPDATE lands and re-promotes the row AFTER the seed reported failure', async () => {
+    const ids = getAtelierFinanceCanonicalIds(ORG_ID);
+    const victim = ids.statementIds[0];
 
-      // Build the fixture once, cleanly, so the fault lands on the promotion
-      // rather than on the fixture build.
-      const first = await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID });
-      expect(first.status, first.reason ?? '').toBe('complete');
+    // Build the fixture once, cleanly, so the fault lands on the promotion
+    // rather than on the fixture build.
+    const first = await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID });
+    expect(first.status, first.reason ?? '').toBe('complete');
 
-      // Demote everything back to phase 1 so the next run has to re-promote.
-      for (const statementId of ids.statementIds) {
-        Object.assign(fakeDb.row('financial_statements', statementId) ?? {}, {
-          status: 'imported',
-          validation_status: 'pending',
-          readiness_status: 'pending',
-          readiness_score: 0,
-        });
-      }
-      Object.assign(fakeDb.row('financial_analyses', ids.analysisId) ?? {}, { status: 'DRAFT' });
-      Object.assign(fakeDb.row('financial_statement_packs', ids.packId) ?? {}, {
-        pack_status: 'draft',
-        pack_readiness_status: 'pending',
-        pack_readiness_score: 0,
+    // Demote everything back to phase 1 so the next run has to re-promote.
+    for (const statementId of ids.statementIds) {
+      Object.assign(fakeDb.row('financial_statements', statementId) ?? {}, {
+        status: 'imported',
+        validation_status: 'pending',
+        readiness_status: 'pending',
+        readiness_score: 0,
       });
+    }
+    Object.assign(fakeDb.row('financial_analyses', ids.analysisId) ?? {}, { status: 'DRAFT' });
+    Object.assign(fakeDb.row('financial_statement_packs', ids.packId) ?? {}, {
+      pack_status: 'draft',
+      pack_readiness_status: 'pending',
+      pack_readiness_score: 0,
+    });
 
-      // Arm both teeth: the victim's promotion is abandoned-but-not-cancelled,
-      // and its compensating demote is lost, so nothing papers over the damage.
-      late.victimId = victim;
-      // `kind === 'update'` is load-bearing: phase 1's INSERT writes
-      // `readiness_status = 'pending'` too, and failing THAT would break the
-      // fixture build instead of the compensation.
-      fakeDb.config.onWrite = (write) =>
-        write.kind === 'update' &&
-        write.table === 'financial_statements' &&
-        write.id === victim &&
-        write.values.readiness_status === 'pending'
-          ? `FIN005_LATE_WRITE_DEMOTE_LOST ${victim}`
-          : null;
+    // Arm both teeth: the victim's promotion is abandoned-but-not-cancelled,
+    // and its compensating demote is lost, so nothing papers over the damage.
+    late.victimId = victim;
+    // `kind === 'update'` is load-bearing: phase 1's INSERT writes
+    // `readiness_status = 'pending'` too, and failing THAT would break the
+    // fixture build instead of the compensation.
+    fakeDb.config.onWrite = (write) =>
+      write.kind === 'update' &&
+      write.table === 'financial_statements' &&
+      write.id === victim &&
+      write.values.readiness_status === 'pending'
+        ? `FIN005_LATE_WRITE_DEMOTE_LOST ${victim}`
+        : null;
 
-      const warn = vi.spyOn(logger, 'warn');
-      let warnLines: string[];
-      let result: Awaited<ReturnType<typeof upsertAtelierFinanceGoldenFlow>>;
-      try {
-        result = await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID });
-      } finally {
-        warnLines = warn.mock.calls.map((call) => String(call[0]));
-        warn.mockRestore();
-      }
+    const warn = vi.spyOn(logger, 'warn');
+    let warnLines: string[];
+    let result: Awaited<ReturnType<typeof upsertAtelierFinanceGoldenFlow>>;
+    try {
+      result = await upsertAtelierFinanceGoldenFlow({ organizationId: ORG_ID });
+    } finally {
+      warnLines = warn.mock.calls.map((call) => String(call[0]));
+      warn.mockRestore();
+    }
 
-      // The fallback really did run — otherwise this proves nothing about it.
-      expect(
-        warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
-        'this half of the proof requires the fallback path'
-      ).toBe(true);
+    // The fallback really did run — otherwise this proves nothing about it.
+    expect(
+      warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
+      'this half of the proof requires the fallback path'
+    ).toBe(true);
 
-      // The operation returned FAILURE and said its compensation could not
-      // reach the row it needed to undo...
-      expect(result.status).toBe('incomplete');
-      expect(result.promotion?.rolledBack).toBe(true);
-      expect(result.promotion?.rollbackErrors.join(' | ')).toMatch(
-        new RegExp(`statement ${victim}: `)
-      );
-      // ...while still reporting, truthfully AT THAT INSTANT, that nothing in
-      // the fixture claims READY. This is the claim that decays.
-      expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
-      expect(claimsReady(fakeDb.row('financial_statements', victim))).toBe(false);
+    // The operation returned FAILURE and said its compensation could not
+    // reach the row it needed to undo...
+    expect(result.status).toBe('incomplete');
+    expect(result.promotion?.rolledBack).toBe(true);
+    expect(result.promotion?.rollbackErrors.join(' | ')).toMatch(
+      new RegExp(`statement ${victim}: `)
+    );
+    // ...while still reporting, truthfully AT THAT INSTANT, that nothing in
+    // the fixture claims READY. This is the claim that decays.
+    expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
+    expect(claimsReady(fakeDb.row('financial_statements', victim))).toBe(false);
 
-      // ...and then the write nobody cancelled landed.
-      expect(late.landed, 'the deferred promotion must have been scheduled').not.toBeNull();
-      await late.landed;
+    // ...and then the write nobody cancelled landed.
+    expect(late.landed, 'the deferred promotion must have been scheduled').not.toBeNull();
+    await late.landed;
 
-      expect(
-        claimsReady(fakeDb.row('financial_statements', victim)),
-        'RED PROOF: the UPDATE the JS timeout abandoned lands and re-promotes the row, long after the seed reported failure'
-      ).toBe(true);
-    },
-    60_000
-  );
+    expect(
+      claimsReady(fakeDb.row('financial_statements', victim)),
+      'RED PROOF: the UPDATE the JS timeout abandoned lands and re-promotes the row, long after the seed reported failure'
+    ).toBe(true);
+  }, 60_000);
 });

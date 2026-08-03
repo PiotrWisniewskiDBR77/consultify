@@ -23,7 +23,7 @@ describe('canonical Artifact Run type mapping', () => {
         publishArtifactType,
         allowedOriginRuntimes,
       });
-    },
+    }
   );
 
   it.each([
@@ -35,25 +35,32 @@ describe('canonical Artifact Run type mapping', () => {
     ['sheet', 'presentation'],
   ] as const)('rejects contradictory pair %s/%s', (artifactFamily, outputType) => {
     expect(() => mapCanonicalArtifactType({ artifactFamily, outputType })).toThrowError(
-      expect.objectContaining({ statusCode: 400, code: ARTIFACT_TYPE_MAPPING_INVALID }),
+      expect.objectContaining({ statusCode: 400, code: ARTIFACT_TYPE_MAPPING_INVALID })
     );
   });
 
   it('requires explicit template output while allowing every explicit template subtype', () => {
     expect(() => mapExplicitArtifactRunType({ artifactFamily: 'template' })).toThrowError(
-      expect.objectContaining({ statusCode: 400, code: ARTIFACT_TYPE_MAPPING_INVALID }),
+      expect.objectContaining({ statusCode: 400, code: ARTIFACT_TYPE_MAPPING_INVALID })
     );
-    expect(mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'report' })?.outputType).toBe('report');
-    expect(mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'presentation' })?.outputType).toBe('presentation');
-    expect(mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'sheet' })?.outputType).toBe('sheet');
+    expect(
+      mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'report' })?.outputType
+    ).toBe('report');
+    expect(
+      mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'presentation' })
+        ?.outputType
+    ).toBe('presentation');
+    expect(
+      mapExplicitArtifactRunType({ artifactFamily: 'template', outputType: 'sheet' })?.outputType
+    ).toBe('sheet');
   });
 
   it.each(['finance_output', 'results_artifact'])(
     'does not map publish extension %s into an Artifact Run family',
     (artifactFamily) => {
       expect(() =>
-        mapCanonicalArtifactType({ artifactFamily: artifactFamily as any, outputType: 'report' }),
+        mapCanonicalArtifactType({ artifactFamily: artifactFamily as any, outputType: 'report' })
       ).toThrowError(expect.objectContaining({ code: ARTIFACT_TYPE_MAPPING_INVALID }));
-    },
+    }
   );
 });

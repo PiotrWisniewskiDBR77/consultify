@@ -4,8 +4,8 @@ import React from 'react';
 import { EdgeProps } from 'reactflow';
 
 import {
-  EdgeArrowMarkers,
   arrowMarkerAttrs,
+  EdgeArrowMarkers,
   resolveArrowDirection,
 } from '../canvas/edgeArrowMarkers';
 import { pointsToPath, routeOrthogonal, type RoutePoint } from './edgeRouting';

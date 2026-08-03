@@ -816,7 +816,9 @@ export const TasksKanbanBoard: React.FC<TasksKanbanBoardProps> = ({
           // podaje tytuł zadania + kolumnę docelową + krok naprawczy.
           const httpStatus = Number((error as { status?: number } | undefined)?.status) || 0;
           const shortTitle =
-            (task.title || '').length > 40 ? `${(task.title || '').slice(0, 40)}…` : task.title || '';
+            (task.title || '').length > 40
+              ? `${(task.title || '').slice(0, 40)}…`
+              : task.title || '';
           const ctx = { title: shortTitle, column: targetColDef.label };
           let message: string;
           if (httpStatus === 404) {

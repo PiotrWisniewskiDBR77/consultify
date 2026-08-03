@@ -42,7 +42,14 @@
  *  - Identyczny co do piksela dla 4 narzędzi (mindmap/process_flow/whiteboard/
  *    table) — różni się WYŁĄCZNIE deklaracja treści.
  */
-import { FileSpreadsheet, Link2, MessageSquare, Repeat, SlidersHorizontal, Sparkles } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  Link2,
+  MessageSquare,
+  Repeat,
+  SlidersHorizontal,
+  Sparkles,
+} from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { PreviewActionBar } from '@/components/shared/PreviewPane';

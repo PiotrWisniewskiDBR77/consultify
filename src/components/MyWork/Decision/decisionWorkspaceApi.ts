@@ -103,8 +103,14 @@ export const decisionWorkspaceApi = {
   postComment: (decisionId: string, body: string): Promise<DecisionCommentDTO> =>
     Api.post(`/decisions/${decisionId}/comments`, { body }) as Promise<DecisionCommentDTO>,
 
-  updateComment: (decisionId: string, commentId: string, body: string): Promise<DecisionCommentDTO> =>
-    Api.put(`/decisions/${decisionId}/comments/${commentId}`, { body }) as Promise<DecisionCommentDTO>,
+  updateComment: (
+    decisionId: string,
+    commentId: string,
+    body: string
+  ): Promise<DecisionCommentDTO> =>
+    Api.put(`/decisions/${decisionId}/comments/${commentId}`, {
+      body,
+    }) as Promise<DecisionCommentDTO>,
 
   deleteComment: (decisionId: string, commentId: string): Promise<void> =>
     Api.delete(`/decisions/${decisionId}/comments/${commentId}`) as unknown as Promise<void>,
@@ -126,7 +132,9 @@ export const decisionWorkspaceApi = {
     ) as Promise<DecisionAlternativeDTO>,
 
   deleteAlternative: (decisionId: string, alternativeId: string): Promise<void> =>
-    Api.delete(`/decisions/${decisionId}/alternatives/${alternativeId}`) as unknown as Promise<void>,
+    Api.delete(
+      `/decisions/${decisionId}/alternatives/${alternativeId}`
+    ) as unknown as Promise<void>,
 
   postRisk: (decisionId: string, input: CreateRiskInput): Promise<DecisionRiskDTO> =>
     Api.post(`/decisions/${decisionId}/risks`, input) as Promise<DecisionRiskDTO>,

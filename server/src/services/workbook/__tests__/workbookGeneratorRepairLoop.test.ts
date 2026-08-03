@@ -92,7 +92,12 @@ const CLEAN_SCHEMA = {
 // Benign responses for the ancillary phases so only the deterministic critic loop
 // is the thing under test.
 const PLAN_JSON = JSON.stringify({ domain: 'finance', sheets: [], total_complexity: 'low' });
-const CONFIRM_JSON = JSON.stringify({ approved: true, confidence: 0.9, issues: [], missing_elements: [] });
+const CONFIRM_JSON = JSON.stringify({
+  approved: true,
+  confidence: 0.9,
+  issues: [],
+  missing_elements: [],
+});
 const REVIEW_JSON = JSON.stringify({
   scores: {},
   overall_score: 4.5,

@@ -64,9 +64,7 @@ export const StreamingState: React.FC<StreamingStateProps> = ({
   // Nothing has streamed in yet → reserve the layout with a content-shaped
   // skeleton instead of a blank pane.
   if (isStreaming && !hasContent) {
-    return (
-      <SkeletonState variant={skeletonVariant} label={streamingLabel} className={className} />
-    );
+    return <SkeletonState variant={skeletonVariant} label={streamingLabel} className={className} />;
   }
 
   return (

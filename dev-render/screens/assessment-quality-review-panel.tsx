@@ -63,9 +63,7 @@ function buildScoring(axesWithEvidence: string[]) {
   return {
     completionPercent: 100,
     overallAvgAchievedLevel: axes.reduce((acc, a) => acc + a.avgAchievedLevel, 0) / axes.length,
-    evidenceCoverage: Math.round(
-      ((axes.length - axesMissingEvidence.length) / axes.length) * 100
-    ),
+    evidenceCoverage: Math.round(((axes.length - axesMissingEvidence.length) / axes.length) * 100),
     axesMissingEvidence,
     axes,
   };
@@ -147,7 +145,8 @@ const REVIEWS_MIXED = [
     action: 'return',
     actorId: 'Piotr Wiśniewski',
     actorRole: 'admin',
-    rationale: 'Brakuje dowodów dla osi Modele Biznesowe i Kultura — proszę uzupełnić przed ponowną akceptacją.',
+    rationale:
+      'Brakuje dowodów dla osi Modele Biznesowe i Kultura — proszę uzupełnić przed ponowną akceptacją.',
     previousStatus: 'DRAFT',
     newStatus: 'DRAFT',
     createdAt: '2026-07-14T16:00:00Z',
@@ -156,7 +155,12 @@ const REVIEWS_MIXED = [
 
 const VARIANTS: Record<
   string,
-  { evidence: typeof EVIDENCE_MIXED; scoring: ReturnType<typeof buildScoring>; reviews: typeof REVIEWS_MIXED; report: 'ok' | '404' }
+  {
+    evidence: typeof EVIDENCE_MIXED;
+    scoring: ReturnType<typeof buildScoring>;
+    reviews: typeof REVIEWS_MIXED;
+    report: 'ok' | '404';
+  }
 > = {
   mixed: {
     evidence: EVIDENCE_MIXED,
@@ -220,7 +224,9 @@ const VARIANTS: Record<
 };
 
 const params = new URLSearchParams(window.location.search);
-const variant = VARIANTS[params.get('variant') || 'mixed'] ? params.get('variant') || 'mixed' : 'mixed';
+const variant = VARIANTS[params.get('variant') || 'mixed']
+  ? params.get('variant') || 'mixed'
+  : 'mixed';
 const data = VARIANTS[variant];
 
 // Install the offline fetch stub once (idempotent across HMR).
@@ -284,8 +290,16 @@ if (!g.__ASM_QUALITY_REVIEW_FETCH__) {
           return jsonResponse({
             data: {
               assessmentId: ASSESSMENT_ID,
-              snapshot: { assessmentId: ASSESSMENT_ID, assessmentType: 'DRD', scoring: data.scoring },
-              provenance: { acceptedBy: 'Piotr Wiśniewski', acceptedAt: '2026-07-22T10:00:00Z', reviewId: 'rev-2' },
+              snapshot: {
+                assessmentId: ASSESSMENT_ID,
+                assessmentType: 'DRD',
+                scoring: data.scoring,
+              },
+              provenance: {
+                acceptedBy: 'Piotr Wiśniewski',
+                acceptedAt: '2026-07-22T10:00:00Z',
+                reviewId: 'rev-2',
+              },
               acceptedBy: 'Piotr Wiśniewski',
               acceptedAt: '2026-07-22T10:00:00Z',
               isCurrent: true,
@@ -293,7 +307,10 @@ if (!g.__ASM_QUALITY_REVIEW_FETCH__) {
             meta: {},
           });
         }
-        return notFound({ error: 'No accepted output exists yet for this assessment', code: 'NO_ACCEPTED_OUTPUT' });
+        return notFound({
+          error: 'No accepted output exists yet for this assessment',
+          code: 'NO_ACCEPTED_OUTPUT',
+        });
       }
     } catch {
       /* fall through to real fetch (e.g. i18n /locales/**) */

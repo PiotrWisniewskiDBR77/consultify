@@ -10,7 +10,11 @@ import {
   type P07AttachmentState,
 } from './v8/notebookCanon.js';
 
-const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(baseStorageDir(), 'uploads', 'notebook-attachments');
+const NOTEBOOK_ATTACHMENT_UPLOAD_DIR = path.join(
+  baseStorageDir(),
+  'uploads',
+  'notebook-attachments'
+);
 const MAX_NOTEBOOK_ATTACHMENT_SIZE = 25 * 1024 * 1024;
 const NOTEBOOK_ATTACHMENT_MUTATION_MAX_RETRIES = 3;
 const NOTEBOOK_ATTACHMENT_STAGING_DIR = path.join(

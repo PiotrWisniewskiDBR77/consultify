@@ -59,7 +59,13 @@ function createMockDb() {
     source_type: 'ASSESSMENT',
     report_type: null,
     sections_json: JSON.stringify([
-      { key: 'exec_summary', type: 'narrative', title: 'Executive summary', required: true, order: 0 },
+      {
+        key: 'exec_summary',
+        type: 'narrative',
+        title: 'Executive summary',
+        required: true,
+        order: 0,
+      },
     ]),
     is_active: 1,
   };

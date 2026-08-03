@@ -42,8 +42,8 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { BudgetWorkspace } from './BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from './FinancialAnalysisWorkspace';
 import { FinancialMappingPanel } from './FinancialMappingPanel';

@@ -23,7 +23,6 @@ import {
   normalizeFinancialData,
   validateFinancialData,
 } from '../services/economicsFinancials.js';
-import { resolveStoredRelativePath } from '../utils/storagePaths.js';
 import * as finAnalysisSvc from '../services/financialAnalysisService.js';
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
@@ -43,6 +42,7 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js'
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import { flagOn } from '../utils/pgFlags.js';
+import { resolveStoredRelativePath } from '../utils/storagePaths.js';
 
 logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);

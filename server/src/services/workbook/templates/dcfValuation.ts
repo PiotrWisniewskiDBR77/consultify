@@ -29,7 +29,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -69,7 +76,15 @@ export const DCF_GENERAL_DEFAULTS = {
 } as const;
 
 export const DCF_DRIVER_DEFAULTS: Required<
-  Pick<DcfValuationParams, 'fcfGrowthPct' | 'waccPct' | 'terminalGrowthPct' | 'horizonYears' | 'netDebt' | 'sharesOutstanding'>
+  Pick<
+    DcfValuationParams,
+    | 'fcfGrowthPct'
+    | 'waccPct'
+    | 'terminalGrowthPct'
+    | 'horizonYears'
+    | 'netDebt'
+    | 'sharesOutstanding'
+  >
 > = {
   fcfGrowthPct: 0.08,
   waccPct: 0.1,
@@ -237,7 +252,11 @@ function buildAssumptionsSheet(
     row('FCF rok bazowy (rok 0)', fcf0, curFmt, amountValidation),
     row('Wzrost FCF (prognoza) % rocznie', fcfGrowthPct, pctFmt, percentValidation),
     row('WACC (stopa dyskontowa) %', waccPct, pctFmt, { ...percentValidation, min: 0.001, max: 1 }),
-    row('Wzrost terminalny (g) %', terminalGrowthPct, pctFmt, { ...percentValidation, min: -0.5, max: 0.5 }),
+    row('Wzrost terminalny (g) %', terminalGrowthPct, pctFmt, {
+      ...percentValidation,
+      min: -0.5,
+      max: 0.5,
+    }),
     row('Dług netto', netDebt, curFmt, amountValidation),
     row('Liczba akcji', sharesOutstanding, '# ##0', sharesValidation),
     row('Horyzont prognozy (lata)', horizonYears, '0', horizonValidation),
@@ -269,7 +288,11 @@ function buildAssumptionsSheet(
 const FCF_ROW = { fcf: 2, discountFactor: 3, pv: 4 } as const;
 const PROJEKCJA_SHEET = 'Projekcja FCF';
 
-function buildProjectionSheet(valuationYear: number, horizonYears: number, currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
+function buildProjectionSheet(
+  valuationYear: number,
+  horizonYears: number,
+  currencyHint: 'pln' | 'eur' | 'usd'
+): Sheet {
   const columns: ColumnDef[] = [{ key: 'pozycja', header: 'Pozycja', type: 'text', width: 32 }];
   for (let n = 1; n <= horizonYears; n++) {
     columns.push({ key: `rok${n}`, header: `Rok ${n} (${valuationYear + n})`, type: 'number' });
@@ -278,7 +301,11 @@ function buildProjectionSheet(valuationYear: number, horizonYears: number, curre
 
   const yearCols = Array.from({ length: horizonYears }, (_, i) => colLetter(i + 1)); // B, C, D, ...
 
-  function fRow(label: string, formulaFor: (col: string, n: number) => string, numberFormat: string): Row {
+  function fRow(
+    label: string,
+    formulaFor: (col: string, n: number) => string,
+    numberFormat: string
+  ): Row {
     const cells: Record<string, Cell> = { pozycja: { value: label } };
     yearCols.forEach((col, i) => {
       const n = i + 1; // 1-based year index
@@ -291,18 +318,26 @@ function buildProjectionSheet(valuationYear: number, horizonYears: number, curre
     // Row 2 — FCF: Year1 = FCF0*(1+growth); Yn = Y(n-1)*(1+growth).
     fRow(
       'Przepływy pieniężne (FCF)',
-      (col, n) => (n === 1 ? `${aRef(AR.fcf0)}*(1+${aRef(AR.fcfGrowth)})` : `${yearCols[n - 2]}${FCF_ROW.fcf}*(1+${aRef(AR.fcfGrowth)})`),
+      (col, n) =>
+        n === 1
+          ? `${aRef(AR.fcf0)}*(1+${aRef(AR.fcfGrowth)})`
+          : `${yearCols[n - 2]}${FCF_ROW.fcf}*(1+${aRef(AR.fcfGrowth)})`,
       currencyFmt
     ),
     // Row 3 — Discount factor = 1/(1+WACC)^n.
     fRow('Współczynnik dyskontowy', (col, n) => `1/(1+${aRef(AR.wacc)})^${n}`, '0.000'),
     // Row 4 — PV of FCF = FCF(n) * DiscountFactor(n).
-    fRow('Zdyskontowany FCF (PV)', (col) => `${col}${FCF_ROW.fcf}*${col}${FCF_ROW.discountFactor}`, currencyFmt),
+    fRow(
+      'Zdyskontowany FCF (PV)',
+      (col) => `${col}${FCF_ROW.fcf}*${col}${FCF_ROW.discountFactor}`,
+      currencyFmt
+    ),
   ];
 
   return {
     name: PROJEKCJA_SHEET,
-    purpose: 'Projekcja wolnych przepływów pieniężnych (FCF) i ich wartości bieżącej — każda pozycja = formuła.',
+    purpose:
+      'Projekcja wolnych przepływów pieniężnych (FCF) i ich wartości bieżącej — każda pozycja = formuła.',
     columns,
     rows,
     freezeRow: 1,
@@ -326,7 +361,16 @@ function buildProjectionSheet(valuationYear: number, horizonYears: number, curre
 //   9  Wartość na akcję
 // ---------------------------------------------------------------------------
 
-const WR = { sumPv: 2, tv: 3, pvTv: 4, ev: 5, netDebt: 6, equity: 7, shares: 8, perShare: 9 } as const;
+const WR = {
+  sumPv: 2,
+  tv: 3,
+  pvTv: 4,
+  ev: 5,
+  netDebt: 6,
+  equity: 7,
+  shares: 8,
+  perShare: 9,
+} as const;
 
 function buildWycenaSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
   const columns: ColumnDef[] = [
@@ -343,7 +387,10 @@ function buildWycenaSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'u
   ): Row => ({
     cells: {
       metryka: { value: label, style: opts.summary ? { bold: true } : undefined },
-      wartosc: { formula, style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary } },
+      wartosc: {
+        formula,
+        style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary },
+      },
     },
     isSummary: opts.summary,
   });
@@ -358,7 +405,10 @@ function buildWycenaSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'u
       'Wartość rezydualna (Terminal Value)',
       `'${PROJEKCJA_SHEET}'!${lastYearCol}${FCF_ROW.fcf}*(1+${aRef(AR.terminalGrowth)})/(${aRef(AR.wacc)}-${aRef(AR.terminalGrowth)})`
     ),
-    metricRow('Zdyskontowana wartość rezydualna (PV TV)', `B${WR.tv}/(1+${aRef(AR.wacc)})^${horizonYears}`),
+    metricRow(
+      'Zdyskontowana wartość rezydualna (PV TV)',
+      `B${WR.tv}/(1+${aRef(AR.wacc)})^${horizonYears}`
+    ),
     metricRow('Enterprise Value (EV)', `B${WR.sumPv}+B${WR.pvTv}`, { summary: true }),
     metricRow('Dług netto', aRef(AR.netDebt)),
     metricRow('Equity Value', `B${WR.ev}-B${WR.netDebt}`, { summary: true }),
@@ -390,7 +440,12 @@ export function buildDcfValuationSchema(params: DcfValuationParams = {}): Workbo
   const fcf0 = safeAmount(params.fcf0, DCF_GENERAL_DEFAULTS.fcf0);
   const fcfGrowthPct = safeFraction(params.fcfGrowthPct, DCF_DRIVER_DEFAULTS.fcfGrowthPct);
   const waccPct = safeFraction(params.waccPct, DCF_DRIVER_DEFAULTS.waccPct, 0.001, 1);
-  let terminalGrowthPct = safeFraction(params.terminalGrowthPct, DCF_DRIVER_DEFAULTS.terminalGrowthPct, -0.5, 0.5);
+  const terminalGrowthPct = safeFraction(
+    params.terminalGrowthPct,
+    DCF_DRIVER_DEFAULTS.terminalGrowthPct,
+    -0.5,
+    0.5
+  );
   let waccResolved = waccPct;
   // Defensive: a Gordon-growth TV divides by (WACC - g); if the caller passed a
   // WACC ≤ terminal growth, nudge WACC just above it so the default model never
@@ -400,16 +455,33 @@ export function buildDcfValuationSchema(params: DcfValuationParams = {}): Workbo
     waccResolved = terminalGrowthPct + 0.01;
   }
   const netDebt = safeAmount(params.netDebt, DCF_DRIVER_DEFAULTS.netDebt);
-  const sharesOutstanding = safePositive(params.sharesOutstanding, DCF_DRIVER_DEFAULTS.sharesOutstanding);
+  const sharesOutstanding = safePositive(
+    params.sharesOutstanding,
+    DCF_DRIVER_DEFAULTS.sharesOutstanding
+  );
   const horizonYears = Math.min(
     10,
-    Math.max(3, Number.isFinite(params.horizonYears) ? Math.round(params.horizonYears as number) : DCF_DRIVER_DEFAULTS.horizonYears)
+    Math.max(
+      3,
+      Number.isFinite(params.horizonYears)
+        ? Math.round(params.horizonYears as number)
+        : DCF_DRIVER_DEFAULTS.horizonYears
+    )
   );
 
   const { hint, label } = currencyMeta(params.currencyCode);
 
   const sheets: Sheet[] = [
-    buildAssumptionsSheet(fcf0, fcfGrowthPct, waccResolved, terminalGrowthPct, netDebt, sharesOutstanding, horizonYears, label),
+    buildAssumptionsSheet(
+      fcf0,
+      fcfGrowthPct,
+      waccResolved,
+      terminalGrowthPct,
+      netDebt,
+      sharesOutstanding,
+      horizonYears,
+      label
+    ),
     buildProjectionSheet(valuationYear, horizonYears, hint),
     buildWycenaSheet(horizonYears, hint),
   ];

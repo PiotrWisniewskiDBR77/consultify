@@ -16,7 +16,16 @@
  * narzuca `ArtifactRightPanel`. Tokeny wyłącznie `c-*` — zero
  * navy/slate/hex, zero primary-*, zero crimson (CLAUDE.md UI pkt 6).
  */
-import { Download, Eye, FileSpreadsheet, FolderOpen, History, Link2, ShieldOff, Sparkles } from 'lucide-react';
+import {
+  Download,
+  Eye,
+  FileSpreadsheet,
+  FolderOpen,
+  History,
+  Link2,
+  ShieldOff,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 

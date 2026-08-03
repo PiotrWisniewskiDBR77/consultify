@@ -40,8 +40,7 @@ export interface ArtifactPropertiesTableProps {
   valueLabel: string;
 }
 
-const TH_BASE =
-  'font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle';
+const TH_BASE = 'font-medium text-c-text-muted px-3 py-2 border-b border-c-border-subtle';
 const TD_KEY = 'px-3 py-2 text-c-text-muted';
 const TD_VAL = 'px-3 py-2 text-right text-c-text';
 

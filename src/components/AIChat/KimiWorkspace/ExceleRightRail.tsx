@@ -64,7 +64,10 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { RightRail, type RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
+import {
+  RightRail,
+  type RightRailToolDescriptor,
+} from '@/components/shared/ExecutiveModuleShell/RightRail';
 import { useRailState } from '@/components/shared/ExecutiveModuleShell/useRailState';
 import { PreviewActionButton } from '@/components/shared/PreviewPane';
 

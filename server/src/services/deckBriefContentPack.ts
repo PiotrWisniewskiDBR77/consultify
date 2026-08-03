@@ -21,8 +21,8 @@
  * caller wtedy spada na dotychczasowe zachowanie (zero regresji).
  */
 
-import { generateChatResponse } from './aiService.js';
 import logger from '../utils/Logger.js';
+import { generateChatResponse } from './aiService.js';
 
 /** Model tier — 'standard' rozwiązywany przez LLMConfigService (jak Word). */
 const MODEL_DEFAULT = 'standard';
@@ -224,8 +224,7 @@ export function coercePack(raw: string): DeckBriefContentPack | null {
     ? parsed.kpis
         .filter(isRecord)
         .map((k) => {
-          const value =
-            typeof k.value === 'number' ? k.value : str(k.value);
+          const value = typeof k.value === 'number' ? k.value : str(k.value);
           return { label: str(k.label), value, unit: str(k.unit) || undefined };
         })
         .filter((k) => k.label.length > 0 && (typeof k.value === 'number' || k.value.length > 0))

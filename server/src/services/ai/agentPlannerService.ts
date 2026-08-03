@@ -402,12 +402,11 @@ class AgentPlannerService {
         }, this.heartbeatIntervalMs);
         let result: unknown;
         try {
-          result = await this.runToolWithRetry(
-            toolExecutor,
-            step.toolName,
-            resolvedInput,
-            { operationKey, ownerToken: lease.ownerToken, fencingToken: lease.fencingToken }
-          );
+          result = await this.runToolWithRetry(toolExecutor, step.toolName, resolvedInput, {
+            operationKey,
+            ownerToken: lease.ownerToken,
+            fencingToken: lease.fencingToken,
+          });
         } finally {
           clearInterval(heartbeat);
         }
@@ -813,20 +812,12 @@ class AgentPlannerService {
     userId: string;
   }): Promise<AgentPlan> {
     const plan = await this.getPlan(payload.planId);
-    if (
-      !plan ||
-      plan.organizationId !== payload.organizationId ||
-      plan.userId !== payload.userId
-    ) {
+    if (!plan || plan.organizationId !== payload.organizationId || plan.userId !== payload.userId) {
       throw Object.assign(new Error('Plan not found'), { statusCode: 404 });
     }
     const { executeToolCall } = await import('./toolDefinitions.js');
 
-    const executor: PlanToolExecutor = async (
-      toolName,
-      input,
-      execution
-    ) => {
+    const executor: PlanToolExecutor = async (toolName, input, execution) => {
       return executeToolCall(toolName, input, {
         organizationId: payload.organizationId,
         userId: payload.userId,

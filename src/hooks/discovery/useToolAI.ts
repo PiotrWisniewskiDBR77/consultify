@@ -290,30 +290,33 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   );
 
   // Request AI suggestions for current step
-  const requestSuggestions = useCallback(async (level?: ToolDetailLevel) => {
-    setError(null);
+  const requestSuggestions = useCallback(
+    async (level?: ToolDetailLevel) => {
+      setError(null);
 
-    if (!currentStepDef) return;
+      if (!currentStepDef) return;
 
-    const prompt = getToolSuggestionPrompt(
-      toolType,
-      currentStepDef.id,
-      currentSession?.inputData,
-      level
-    );
-
-    if (prompt) {
-      setPendingAction('suggestions');
-      setActiveAiActionId(
-        currentStepDef.id === 'mission'
-          ? 'frame-mission'
-          : currentStepDef.id === 'input'
-            ? 'find-signals'
-            : 'build-analysis'
+      const prompt = getToolSuggestionPrompt(
+        toolType,
+        currentStepDef.id,
+        currentSession?.inputData,
+        level
       );
-      await sendMessage(prompt);
-    }
-  }, [currentSession?.inputData, currentStepDef, sendMessage, toolType]);
+
+      if (prompt) {
+        setPendingAction('suggestions');
+        setActiveAiActionId(
+          currentStepDef.id === 'mission'
+            ? 'frame-mission'
+            : currentStepDef.id === 'input'
+              ? 'find-signals'
+              : 'build-analysis'
+        );
+        await sendMessage(prompt);
+      }
+    },
+    [currentSession?.inputData, currentStepDef, sendMessage, toolType]
+  );
 
   // Generate correlations / synthesis for strategic tools
   const generateCorrelations = useCallback(async () => {
@@ -455,18 +458,21 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   }, [toolType, currentSession, sendMessage]);
 
   // Generate summary and initiatives
-  const generateSummary = useCallback(async (level?: ToolDetailLevel) => {
-    if (!currentSession) return;
+  const generateSummary = useCallback(
+    async (level?: ToolDetailLevel) => {
+      if (!currentSession) return;
 
-    setError(null);
-    const prompt = getToolSummaryPrompt(toolType, currentSession.inputData, level);
+      setError(null);
+      const prompt = getToolSummaryPrompt(toolType, currentSession.inputData, level);
 
-    if (prompt) {
-      setPendingAction('summary');
-      setActiveAiActionId('finalize-outputs');
-      await sendMessage(prompt);
-    }
-  }, [toolType, currentSession, sendMessage]);
+      if (prompt) {
+        setPendingAction('summary');
+        setActiveAiActionId('finalize-outputs');
+        await sendMessage(prompt);
+      }
+    },
+    [toolType, currentSession, sendMessage]
+  );
 
   const generateFullSession = useCallback(async () => {
     if (!currentSession) return;

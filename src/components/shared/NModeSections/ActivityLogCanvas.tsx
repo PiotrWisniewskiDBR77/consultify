@@ -92,9 +92,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
               <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted">
                 {card.label}
               </p>
-              <p className="text-sm font-semibold text-c-text dark:text-c-text">
-                {card.value}
-              </p>
+              <p className="text-sm font-semibold text-c-text dark:text-c-text">{card.value}</p>
             </div>
           ))}
         </div>
@@ -120,9 +118,7 @@ export const ActivityLogCanvas: React.FC<ActivityLogCanvasProps> = ({
                       {meta.icon}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm text-c-text dark:text-c-text">
-                        {entry.description}
-                      </p>
+                      <p className="text-sm text-c-text dark:text-c-text">{entry.description}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted">
                         <span>{new Date(entry.timestamp).toLocaleString()}</span>
                         {entry.userName && <span>{`· ${entry.userName}`}</span>}

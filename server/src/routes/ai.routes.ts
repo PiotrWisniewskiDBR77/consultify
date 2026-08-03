@@ -25,13 +25,13 @@ import {
 } from '../services/ai/chatStabilizationPolicy.js';
 import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
-// Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
-// surowym `process.env.ENABLE_TERESA_MINDMAP` w tym pliku.
-import { isTeresaMindmapSearchEnabled } from '../services/ai/tools/orgRetrievalShared.js';
 import {
   numericConfidenceFromVerification,
   verifyRuntimeCitations,
 } from '../services/ai/runtimeCitationVerification.js';
+// Krok C: wspólny helper Funkcji B (retrieval search_org_mindmaps) — koniec z
+// surowym `process.env.ENABLE_TERESA_MINDMAP` w tym pliku.
+import { isTeresaMindmapSearchEnabled } from '../services/ai/tools/orgRetrievalShared.js';
 import {
   isDbr77ProductTruthQuery,
   type WorkerWebAccessPolicy,
@@ -1881,7 +1881,9 @@ router.post(
         ? [
             '## OTWARTA REPREZENTACJA IDEI',
             `Użytkownik ma OTWARTĄ reprezentację: ${IDEA_TOOL_NAMES[ideaToolKey][isPolish ? 'pl' : 'en']} (\`${ideaToolKey}\`)${
-              typeof ideaCtx.ideaId === 'string' && ideaCtx.ideaId ? ` — Idea \`${ideaCtx.ideaId}\`.` : '.'
+              typeof ideaCtx.ideaId === 'string' && ideaCtx.ideaId
+                ? ` — Idea \`${ideaCtx.ideaId}\`.`
+                : '.'
             }`,
             'Narzędzia `idea_*`, które dostałeś, działają WŁAŚNIE na tej otwartej reprezentacji.',
             'Nie proś użytkownika, żeby ją otworzył, i nie twierdź, że jej nie widzisz — jest otwarta.',

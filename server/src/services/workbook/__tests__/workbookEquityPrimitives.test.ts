@@ -15,8 +15,8 @@ import JSZip from 'jszip';
 import { describe, expect, it } from 'vitest';
 
 import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
-import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
+import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
 
 // 1x1 transparent PNG (base64, no data-URI prefix).
 const TINY_PNG =
@@ -48,8 +48,18 @@ const EQ_SEED: WorkbookSchema = {
         scenarioColumns: ['base', 'bull', 'bear'],
         selectorLabel: 'Scenariusz',
         drivers: [
-          { label: 'Revenue growth %', values: [0.05, 0.12, -0.02], numberFormat: '0.0%', namePrefix: 'RevGrowth' },
-          { label: 'EBITDA margin %', values: [0.18, 0.24, 0.12], numberFormat: '0.0%', namePrefix: 'EbitdaMargin' },
+          {
+            label: 'Revenue growth %',
+            values: [0.05, 0.12, -0.02],
+            numberFormat: '0.0%',
+            namePrefix: 'RevGrowth',
+          },
+          {
+            label: 'EBITDA margin %',
+            values: [0.18, 0.24, 0.12],
+            numberFormat: '0.0%',
+            namePrefix: 'EbitdaMargin',
+          },
         ],
       },
       sensitivityTables: [
@@ -128,7 +138,12 @@ describe('EQ-A — scenario switch (dropdown + CHOOSE/MATCH + named ranges)', ()
     ws.eachRow((row) => {
       row.eachCell((cell) => {
         const v: any = cell.value;
-        if (v && typeof v === 'object' && typeof v.formula === 'string' && v.formula.includes('CHOOSE')) {
+        if (
+          v &&
+          typeof v === 'object' &&
+          typeof v.formula === 'string' &&
+          v.formula.includes('CHOOSE')
+        ) {
           chooseCells.push({ addr: cell.address, f: v.formula });
         }
       });
@@ -179,7 +194,12 @@ describe('EQ-B — sensitivity table (N×M formula grid + color-scale)', () => {
     ws.eachRow((row) => {
       row.eachCell((cell) => {
         const v: any = cell.value;
-        if (v && typeof v === 'object' && typeof v.formula === 'string' && /\* \(1 \+/.test(v.formula)) {
+        if (
+          v &&
+          typeof v === 'object' &&
+          typeof v.formula === 'string' &&
+          /\* \(1 \+/.test(v.formula)
+        ) {
           interior.push({ addr: cell.address, f: v.formula });
         }
       });
@@ -211,7 +231,9 @@ describe('EQ-C — chart image mount (exceljs addImage, no native chart API)', (
     const buf = await buildWorkbookBuffer(EQ_SEED, { applyConsultantStyling: true });
     const zip = await JSZip.loadAsync(buf as any);
     const media = Object.keys(zip.files).filter((f) => /^xl\/media\/image\d+\.png$/.test(f));
-    const drawings = Object.keys(zip.files).filter((f) => /^xl\/drawings\/drawing\d+\.xml$/.test(f));
+    const drawings = Object.keys(zip.files).filter((f) =>
+      /^xl\/drawings\/drawing\d+\.xml$/.test(f)
+    );
     expect(media.length).toBeGreaterThanOrEqual(1);
     expect(drawings.length).toBeGreaterThanOrEqual(1);
 

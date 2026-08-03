@@ -29,7 +29,8 @@ vi.mock('../documentStudio/documentTemplateRegistryDao.js', () => ({
   SYSTEM_ORG_ID: '__system__',
   persistTemplate: (...args: unknown[]) => persistTemplateMock(...(args as [never])),
   persistAuditEntry: (...args: unknown[]) => persistAuditEntryMock(...(args as [never])),
-  loadTemplatesForOrg: (...args: unknown[]) => loadTemplatesForOrgMock(...(args as [string])) as never,
+  loadTemplatesForOrg: (...args: unknown[]) =>
+    loadTemplatesForOrgMock(...(args as [string])) as never,
   loadAuditForTemplate: (...args: unknown[]) =>
     loadAuditForTemplateMock(...(args as [string, string])) as never,
   loadTemplateById: vi.fn(async () => null),
@@ -61,9 +62,8 @@ const {
   getDeliverableTemplate,
   listDeliverableTemplates,
 } = await import('../deliverableTemplateService.js');
-const { __resetTemplateRegistryForTests, getTemplate, isTemplateUsableForGeneration } = await import(
-  '../documentStudio/documentTemplateService.js'
-);
+const { __resetTemplateRegistryForTests, getTemplate, isTemplateUsableForGeneration } =
+  await import('../documentStudio/documentTemplateService.js');
 
 const ORG_ID = 'org-canon-1';
 const USER_ID = 'user-canon-1';
@@ -86,8 +86,20 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
       'Opis testowy',
       {
         sections_json: [
-          { title: 'Wstęp', block: 'heading', depth: 'short', hint: 'Kontekst projektu', ai_filled: true },
-          { title: 'Analiza', block: 'paragraph', depth: 'long', hint: 'Rozwinięcie', ai_filled: true },
+          {
+            title: 'Wstęp',
+            block: 'heading',
+            depth: 'short',
+            hint: 'Kontekst projektu',
+            ai_filled: true,
+          },
+          {
+            title: 'Analiza',
+            block: 'paragraph',
+            depth: 'long',
+            hint: 'Rozwinięcie',
+            ai_filled: true,
+          },
         ],
       },
       ORG_ID,
@@ -128,7 +140,11 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
       'doc',
       'Szablon do edycji',
       'Opis',
-      { sections_json: [{ title: 'Sekcja 1', block: 'paragraph', depth: 'medium', hint: '', ai_filled: false }] },
+      {
+        sections_json: [
+          { title: 'Sekcja 1', block: 'paragraph', depth: 'medium', hint: '', ai_filled: false },
+        ],
+      },
       ORG_ID,
       USER_ID
     );
@@ -148,7 +164,13 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
         name: 'Szablon po edycji',
         meta: {
           sections_json: [
-            { title: 'Sekcja zaktualizowana', block: 'bullets', depth: 'short', hint: 'x', ai_filled: true },
+            {
+              title: 'Sekcja zaktualizowana',
+              block: 'bullets',
+              depth: 'short',
+              hint: 'x',
+              ai_filled: true,
+            },
           ],
         },
       },
@@ -173,7 +195,11 @@ describe('createDeliverableTemplate("doc") — canon rewrite to document_studio_
       'doc',
       'Szablon widoczny w Bibliotece',
       'Opis',
-      { sections_json: [{ title: 'Sekcja', block: 'paragraph', depth: 'medium', hint: '', ai_filled: false }] },
+      {
+        sections_json: [
+          { title: 'Sekcja', block: 'paragraph', depth: 'medium', hint: '', ai_filled: false },
+        ],
+      },
       ORG_ID,
       USER_ID
     );

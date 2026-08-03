@@ -212,7 +212,9 @@ let drainTimer: ReturnType<typeof setInterval> | null = null;
 export function startNotificationOutboxDrainCron(): void {
   if (process.env.NODE_ENV === 'test') return;
   if (String(process.env.NOTIFICATION_OUTBOX_DRAIN_ENABLED ?? 'true').toLowerCase() === 'false') {
-    logger.info('[NotificationOutbox] NOTIFICATION_OUTBOX_DRAIN_ENABLED=false — drain not started.');
+    logger.info(
+      '[NotificationOutbox] NOTIFICATION_OUTBOX_DRAIN_ENABLED=false — drain not started.'
+    );
     return;
   }
   if (drainTimer) return;

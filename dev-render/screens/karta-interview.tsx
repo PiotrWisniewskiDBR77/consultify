@@ -117,8 +117,7 @@ const RAW_QUESTIONS: Q[] = [
   {
     id: 'q-str-3',
     category: 'strategy',
-    questionText:
-      'Jakie są kryteria sukcesu wdrożenia z perspektywy zarządu i jak będą mierzone?',
+    questionText: 'Jakie są kryteria sukcesu wdrożenia z perspektywy zarządu i jak będą mierzone?',
     answerText: '',
     status: 'not_started',
     confidenceScore: 0,
@@ -178,7 +177,8 @@ const RAW_QUESTIONS: Q[] = [
     status: 'in_progress',
     confidenceScore: 2,
     isRequired: true,
-    contextNote: 'Liczba 71% niewiarygodna — nie używać w raporcie do czasu weryfikacji na surowych danych.',
+    contextNote:
+      'Liczba 71% niewiarygodna — nie używać w raporcie do czasu weryfikacji na surowych danych.',
     sortOrder: 4,
   },
 
@@ -378,7 +378,8 @@ const MOCK_EVIDENCE = [
     evidenceType: 'file',
     name: 'gniazdo_spawalnicze_layout.pdf',
     title: 'Layout hali — gniazdo spawalnicze z wymiarami',
-    description: 'Rysunek z 2021 r. Zweryfikowany na hali — zgodny poza dostawioną szafą narzędziową.',
+    description:
+      'Rysunek z 2021 r. Zweryfikowany na hali — zgodny poza dostawioną szafą narzędziową.',
     fileSize: 2_310_400,
     fileType: 'pdf',
     mimeType: 'application/pdf',
@@ -395,7 +396,8 @@ const MOCK_EVIDENCE = [
     name: 'FENG — ścieżka SMART, moduł Wdrożenie innowacji',
     title: 'Warunki naboru FENG (PARP)',
     url: 'https://www.parp.gov.pl/component/grants/grants/sciezka-smart',
-    description: 'Nabór do 30.10.2026, intensywność wsparcia dla średniego przedsiębiorstwa: do 40%.',
+    description:
+      'Nabór do 30.10.2026, intensywność wsparcia dla średniego przedsiębiorstwa: do 40%.',
     uploadedBy: 'user-piotr-demo',
     uploadedAt: '2026-07-16T12:02:00Z',
     createdAt: '2026-07-16T12:02:00Z',

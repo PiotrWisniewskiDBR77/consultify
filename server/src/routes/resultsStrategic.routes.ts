@@ -10,6 +10,7 @@ import { type Response, Router } from 'express';
 
 import verifyToken, { type AuthRequest } from '../middleware/auth.middleware.js';
 import { requireProjectCapability } from '../middleware/effectiveCapability.middleware.js';
+import { kpiVisibilitySql } from '../services/results/kpiVisibilityService.js';
 import {
   cascadeRollup,
   closeCycle,
@@ -34,7 +35,6 @@ import {
   type StrategicInitiativeToKpi,
   type StrategicKpi,
 } from '../services/results/resultsStrategicViewService.js';
-import { kpiVisibilitySql } from '../services/results/kpiVisibilityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 

@@ -32,33 +32,31 @@
  * write to — switching Galeria ↔ Tabela does not create a second, divergent
  * filter state.
  */
-import type { LucideIcon } from 'lucide-react';
-import {
-  AlertTriangle,
-  Check,
-  Eye,
-  FileSpreadsheet,
-  FileText,
-  Presentation,
-} from 'lucide-react';
 import type { TFunction } from 'i18next';
+import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle, Check, Eye, FileSpreadsheet, FileText, Presentation } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DocumentStructurePreview } from '@/components/DocumentStudio/DocumentStructurePreview';
 import type { StructurePreviewSection } from '@/components/DocumentStudio/DocumentStructurePreview';
+import { DocumentStructurePreview } from '@/components/DocumentStudio/DocumentStructurePreview';
 import { SlideSilhouette } from '@/components/Presentations/SlideSilhouette';
-import { NEUTRAL_SHEET_SILHOUETTE, SheetSilhouette } from '@/components/Sheets/SheetSilhouette';
+import type { FilterChip } from '@/components/shared/ModuleHub';
 import {
   MENU_1_PRIMARY_CTA,
   MENU_3_ACTION_NEUTRAL,
   Menu3Badge,
   Menu3Chip,
 } from '@/components/shared/ModuleMenu3';
-import type { FilterChip } from '@/components/shared/ModuleHub';
+import { NEUTRAL_SHEET_SILHOUETTE, SheetSilhouette } from '@/components/Sheets/SheetSilhouette';
 import { cn } from '@/utils/cn';
 
-import { TEMPLATE_TYPE_META, type TemplateItem, type TemplateScope, type TemplateType } from './types';
+import {
+  TEMPLATE_TYPE_META,
+  type TemplateItem,
+  type TemplateScope,
+  type TemplateType,
+} from './types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Polish plural helper (bloki: sekcje/slajdy) — mirrors the prototype's
@@ -205,7 +203,12 @@ const TemplateTile: React.FC<{
     </span>,
   ];
   const blockLabel = blockCountLabel(item);
-  if (blockLabel) footerParts.push(<span key="blocks" className="tabular-nums">{blockLabel}</span>);
+  if (blockLabel)
+    footerParts.push(
+      <span key="blocks" className="tabular-nums">
+        {blockLabel}
+      </span>
+    );
   footerParts.push(<span key="scope">{scopeLabel(item.scope)}</span>);
 
   return (
@@ -257,11 +260,7 @@ const TemplateTile: React.FC<{
               <Check size={16} />
               {t('rap.actions.useTemplate', 'Użyj wzorca')}
             </button>
-            <button
-              type="button"
-              className={MENU_3_ACTION_NEUTRAL}
-              onClick={() => onPreview(item)}
-            >
+            <button type="button" className={MENU_3_ACTION_NEUTRAL} onClick={() => onPreview(item)}>
               <Eye size={12} />
               {t('rap.preview.open', 'Podgląd')}
             </button>
@@ -317,7 +316,7 @@ export interface TemplatesGalleryViewProps {
   activeFilters: FilterChip[];
   onFilterChange: (filters: FilterChip[]) => void;
   scopeLabel: (scope: TemplateItem['scope']) => string;
-  usePathFor: (item: TemplateItem) => string | null;
+  resolveUsePath: (item: TemplateItem) => string | null;
   onUse: (item: TemplateItem) => void;
   onPreview: (item: TemplateItem) => void;
 }
@@ -328,7 +327,7 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
   activeFilters,
   onFilterChange,
   scopeLabel,
-  usePathFor,
+  resolveUsePath,
   onUse,
   onPreview,
 }) => {
@@ -375,12 +374,18 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
       onFilterChange(rest);
       return;
     }
-    onFilterChange([...rest, { id: `scope-${scope}`, column: 'scope', value: scope, label: scopeLabel(scope) }]);
+    onFilterChange([
+      ...rest,
+      { id: `scope-${scope}`, column: 'scope', value: scope, label: scopeLabel(scope) },
+    ]);
   };
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-1.5" data-testid="template-gallery-filters">
+      <div
+        className="mb-4 flex flex-wrap items-center gap-1.5"
+        data-testid="template-gallery-filters"
+      >
         <Menu3Chip active={!currentType} onClick={() => setTypeFilter(null)}>
           {t('rap.templates.allFormats', 'Wszystkie')}
           <Menu3Badge count={typeCount(null)} active={!currentType} />
@@ -418,7 +423,7 @@ export const TemplatesGalleryView: React.FC<TemplatesGalleryViewProps> = ({
             <TemplateTile
               key={item.id}
               item={item}
-              usePath={usePathFor(item)}
+              usePath={resolveUsePath(item)}
               scopeLabel={scopeLabel}
               onUse={onUse}
               onPreview={onPreview}

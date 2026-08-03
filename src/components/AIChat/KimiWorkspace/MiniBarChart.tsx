@@ -70,7 +70,10 @@ export const MiniBarChart: React.FC<MiniBarChartProps> = ({ series, height = 80 
       {values.map((v, i) => {
         const pct = Math.max(4, (Math.abs(v) / max) * 100);
         return (
-          <div key={`${labels[i]}-${i}`} className="flex-1 min-w-0 flex flex-col items-center gap-1">
+          <div
+            key={`${labels[i]}-${i}`}
+            className="flex-1 min-w-0 flex flex-col items-center gap-1"
+          >
             <svg
               viewBox="0 0 10 100"
               preserveAspectRatio="none"

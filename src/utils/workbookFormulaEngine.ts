@@ -280,7 +280,15 @@ class Lexer {
 type Node =
   | { t: 'num'; v: number }
   | { t: 'str'; v: string }
-  | { t: 'ref'; sheet: string | null; c1: number; r1: number; c2: number; r2: number; isRange: boolean }
+  | {
+      t: 'ref';
+      sheet: string | null;
+      c1: number;
+      r1: number;
+      c2: number;
+      r2: number;
+      isRange: boolean;
+    }
   | { t: 'unknown'; name: string }
   | { t: 'call'; name: string; args: Node[] }
   | { t: 'unary'; op: '-'; arg: Node }
@@ -478,10 +486,7 @@ function resolveSheetKey(ctx: EvalCtx, sheetName: string | null): string {
 
 /** Zwraca listę wartości komórek dla node'a REF (pojedyncza komórka → tablica
  *  1-elementowa; zakres → wszystkie komórki w kolejności wiersz-po-wierszu). */
-function expandRef(
-  node: Extract<Node, { t: 'ref' }>,
-  ctx: EvalCtx
-): ComputedScalar[] {
+function expandRef(node: Extract<Node, { t: 'ref' }>, ctx: EvalCtx): ComputedScalar[] {
   const sheetKey = resolveSheetKey(ctx, node.sheet);
   const out: ComputedScalar[] = [];
   for (let r = node.r1; r <= node.r2; r++) {
@@ -609,7 +614,10 @@ function computeIrr(cashflows: number[], guess: number): number {
   const npvAt = (rate: number): number =>
     cashflows.reduce((acc, cf, i) => acc + cf / Math.pow(1 + rate, i), 0);
   const dNpvAt = (rate: number): number =>
-    cashflows.reduce((acc, cf, i) => (i === 0 ? acc : acc - (i * cf) / Math.pow(1 + rate, i + 1)), 0);
+    cashflows.reduce(
+      (acc, cf, i) => (i === 0 ? acc : acc - (i * cf) / Math.pow(1 + rate, i + 1)),
+      0
+    );
 
   let rate = Number.isFinite(guess) ? guess : 0.1;
   for (let i = 0; i < 60; i++) {
@@ -704,7 +712,10 @@ function evalCall(node: Extract<Node, { t: 'call' }>, ctx: EvalCtx): ComputedSca
     case 'NPV': {
       if (args.length < 2) throw new FormulaError('#ARG!');
       const rate = toNumber(evalScalar(args[0], ctx));
-      const values = args.slice(1).flatMap((a) => evalArgList(a, ctx)).filter(isFiniteNumberValue);
+      const values = args
+        .slice(1)
+        .flatMap((a) => evalArgList(a, ctx))
+        .filter(isFiniteNumberValue);
       return values.reduce((acc, v, i) => acc + v / Math.pow(1 + rate, i + 1), 0);
     }
     case 'IRR': {
@@ -868,7 +879,9 @@ export function parseCellInput(raw: string): { value?: ComputedScalar; formula?:
   if (/^(prawda|true)$/i.test(trimmed)) return { value: true };
   if (/^(fałsz|falsz|false)$/i.test(trimmed)) return { value: false };
   const isPercent = trimmed.endsWith('%');
-  const numCandidate = (isPercent ? trimmed.slice(0, -1) : trimmed).replace(/\s/g, '').replace(',', '.');
+  const numCandidate = (isPercent ? trimmed.slice(0, -1) : trimmed)
+    .replace(/\s/g, '')
+    .replace(',', '.');
   if (numCandidate !== '' && /^[+-]?\d+(\.\d+)?$/.test(numCandidate)) {
     const n = parseFloat(numCandidate);
     return { value: isPercent ? n / 100 : n };

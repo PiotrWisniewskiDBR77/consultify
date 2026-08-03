@@ -1273,7 +1273,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     ['targets', t('results.drawer.targetsTitle', 'Targets')],
                     ['deviation', t('results.deviation.title', 'Deviation case')],
                     ...(isResultsFlagEnabled('recoveryCard')
-                      ? ([['recovery', t('results.recoveryCard.tabLabel', 'Recovery Card')]] as const)
+                      ? ([
+                          ['recovery', t('results.recoveryCard.tabLabel', 'Recovery Card')],
+                        ] as const)
                       : []),
                     ['record', t('results.drawer.recordTitle', 'Record New Value')],
                     ['history', t('results.drawer.history', 'History')],

@@ -40,8 +40,7 @@ const isSectionVisible = (s: NModeSection, showAll: boolean) =>
 // Szerokość z tokenu gridu n-Type (--ntype-left-panel-width: 216px) — wspólna
 // dla sześciu kart, żeby lewy panel nie zmieniał szerokości między kartami ani
 // zależnie od długości nazw sekcji (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
-const N_MODE_LEFT_NAV_WIDTH_CLASS =
-  'hidden lg:block w-[var(--ntype-left-panel-width)]';
+const N_MODE_LEFT_NAV_WIDTH_CLASS = 'hidden lg:block w-[var(--ntype-left-panel-width)]';
 
 // Panel ma WŁASNE przewijanie zamiast rosnąć z całą stroną (SSOT „Lewy panel
 // sekcji": Inicjatywa = 26 sekcji rosła do ~2437px i przewijała się razem ze
@@ -149,7 +148,11 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
           )}
           <Icon
             size={14}
-            className={isActive ? 'text-c-focus-solid' : 'text-c-text-muted group-hover:text-c-text-secondary'}
+            className={
+              isActive
+                ? 'text-c-focus-solid'
+                : 'text-c-text-muted group-hover:text-c-text-secondary'
+            }
           />
           <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
@@ -282,7 +285,11 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
         <span className="flex items-center gap-2">
           <Icon
             size={14}
-            className={isActive ? 'text-c-focus-solid' : 'text-c-text-muted group-hover:text-c-text-secondary'}
+            className={
+              isActive
+                ? 'text-c-focus-solid'
+                : 'text-c-text-muted group-hover:text-c-text-secondary'
+            }
           />
           <span className="whitespace-nowrap flex-1 min-w-0 truncate">
             {isPolish ? section.label.pl : section.label.en}
@@ -419,9 +426,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   // marginesu; teraz odstęp niesie wyłącznie ten pas (pr), a NModeCanvas nie ma
   // już własnego pl (SSOT: _GRID_STABILIZATION_COMMAND_2026-07-24).
   return (
-    <nav
-      className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-[var(--ntype-column-gap)]`}
-    >
+    <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-[var(--ntype-column-gap)]`}>
       {/* Panel dostaje WŁASNE przewijanie zamiast rosnąć z całą stroną (SSOT
           „Lewy panel sekcji": Inicjatywa = 26 sekcji rosła do ~2437px). Karty
           z małą liczbą sekcji (4-7) nigdy nie sięgają `max-h`, więc dla nich

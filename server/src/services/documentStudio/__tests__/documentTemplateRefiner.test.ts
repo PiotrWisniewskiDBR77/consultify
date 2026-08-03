@@ -239,9 +239,7 @@ describe('AI Template Architect refiner safety contract (MVP-3)', () => {
       template.sectionBlueprint.map((s) => s.title)
     );
     for (const section of refined.sectionBlueprint) {
-      expect(section.keyMessage).toBe(
-        'The current operating model cannot scale past 3x volume.'
-      );
+      expect(section.keyMessage).toBe('The current operating model cannot scale past 3x volume.');
       expect(section.dataNeeded).toEqual(dataNeeded);
       expect(section.suggestedEvidence).toBe('quote from stakeholder interview');
     }

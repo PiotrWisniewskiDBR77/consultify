@@ -46,12 +46,10 @@ export function ReaderBlockRenderer({ block }: { block: ReaderBlock }): React.Re
     case 'heading': {
       const level = Math.min(3, Math.max(1, Number(content.level) || 2));
       const text = typeof content.text === 'string' ? content.text : '';
-      const Tag = (`h${level + 1}`) as 'h2' | 'h3' | 'h4';
+      const Tag = `h${level + 1}` as 'h2' | 'h3' | 'h4';
       const sizeClass = level === 1 ? 'text-xl' : level === 2 ? 'text-lg' : 'text-base';
       return (
-        <Tag className={`${sizeClass} font-semibold text-c-text mt-6 mb-2 first:mt-0`}>
-          {text}
-        </Tag>
+        <Tag className={`${sizeClass} font-semibold text-c-text mt-6 mb-2 first:mt-0`}>{text}</Tag>
       );
     }
 
@@ -146,8 +144,14 @@ export function ReaderBlockRenderer({ block }: { block: ReaderBlock }): React.Re
       if (!url) return null;
       return (
         <figure className="mb-4">
-          <img src={url} alt={alt} className="max-w-full rounded-lg border border-c-border-subtle" />
-          {alt ? <figcaption className="mt-1 text-xs text-c-text-secondary">{alt}</figcaption> : null}
+          <img
+            src={url}
+            alt={alt}
+            className="max-w-full rounded-lg border border-c-border-subtle"
+          />
+          {alt ? (
+            <figcaption className="mt-1 text-xs text-c-text-secondary">{alt}</figcaption>
+          ) : null}
         </figure>
       );
     }

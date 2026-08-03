@@ -1988,9 +1988,8 @@ if (startServer && shouldStartHttpServer) {
     // each row (dedupe_key collapses duplicates to a single send) and marks
     // it SENT/FAILED.
     try {
-      const { startNotificationOutboxDrainCron } = await import(
-        './services/notificationOutboxService.js'
-      );
+      const { startNotificationOutboxDrainCron } =
+        await import('./services/notificationOutboxService.js');
       startNotificationOutboxDrainCron();
     } catch (err: any) {
       logger.warn('[Server] Notification outbox drain not started:', err?.message);
@@ -2003,12 +2002,14 @@ if (startServer && shouldStartHttpServer) {
     // closure-commit and its first delivery attempt) is recovered
     // automatically rather than sitting stuck forever.
     try {
-      const { startClosureReceiptReconciliationCron } = await import(
-        './services/closureDeliveryReceiptService.js'
-      );
+      const { startClosureReceiptReconciliationCron } =
+        await import('./services/closureDeliveryReceiptService.js');
       startClosureReceiptReconciliationCron();
     } catch (err: any) {
-      logger.warn('[Server] Closure delivery receipt reconciliation sweep not started:', err?.message);
+      logger.warn(
+        '[Server] Closure delivery receipt reconciliation sweep not started:',
+        err?.message
+      );
     }
 
     // Slack Command Center progress feed (Filar 4 / F3): batched #cf-progress

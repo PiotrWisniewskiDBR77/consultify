@@ -86,7 +86,11 @@ export async function computeAttribution(
       : false;
     if (
       !isKpiVisible(
-        { visibility: kpi.visibility, ownerUserId: kpi.owner_user_id, initiativeId: kpi.initiative_id },
+        {
+          visibility: kpi.visibility,
+          ownerUserId: kpi.owner_user_id,
+          initiativeId: kpi.initiative_id,
+        },
         viewer,
         isMember
       )

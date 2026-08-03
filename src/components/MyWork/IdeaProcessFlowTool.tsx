@@ -58,6 +58,7 @@ import ReactFlow, {
   useUpdateNodeInternals,
 } from 'reactflow';
 
+import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { Api } from '@/services/api';
 import {
   generateAIProposal,
@@ -67,7 +68,6 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 import { isCanvasObjectEditBarEnabled } from '@/utils/canvasObjectEditBarFlag';
-import { ErrorState, SkeletonState } from '@/components/shared/states';
 import {
   IDEA_BOTTOM_BAR_MINIMAP_LIFT,
   isIdeaBottomBarUnifiedEnabled,
@@ -77,6 +77,7 @@ import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import TeresaMark from '../shared/TeresaMark';
 import { getCanvasBg } from './canvas/canvasBackground';
+import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
@@ -87,6 +88,17 @@ import {
   publishIdeaCanvasCursorMode,
 } from './canvas/ideaCanvasCursorMode';
 import { FOCUS_RING } from './canvas/motionTokens';
+import { ObjectEditBar } from './canvas/ObjectEditBar';
+import {
+  buildStyleGroups,
+  ObjectEditBarDock,
+  useObjectEditBarSlot,
+} from './canvas/objectEditBarDock';
+import {
+  ArrowDirectionPopover,
+  ColorPalettePopover,
+  MenuListPopover,
+} from './canvas/ObjectEditBarPopovers';
 import { publishProcessFlowGridState } from './canvas/processFlowGridState';
 import { useCanvasSnappingRef } from './canvas/useCanvasSnapping';
 import { formatIdeaMapSyncLabel, resolveIdeaMapHydration } from './canvas/useIdeaMapSync';
@@ -101,6 +113,7 @@ import {
   type IdeaWorkspaceInsertDetail,
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
+import { emitIdeaUndoState } from './ideaUndoStateBus';
 import {
   CollaborationOverlay,
   type CollaborationSessionState,
@@ -148,18 +161,6 @@ import {
   getNodeContextActions,
   ProcessFlowContextMenu,
 } from './processflow/ProcessFlowContextMenu';
-import { readCanvasObjectStyle } from './canvas/canvasObjectStyle';
-import { ObjectEditBar } from './canvas/ObjectEditBar';
-import {
-  ArrowDirectionPopover,
-  ColorPalettePopover,
-  MenuListPopover,
-} from './canvas/ObjectEditBarPopovers';
-import {
-  buildStyleGroups,
-  ObjectEditBarDock,
-  useObjectEditBarSlot,
-} from './canvas/objectEditBarDock';
 import { ProcessFlowFloatingToolbar } from './processflow/ProcessFlowFloatingToolbar';
 import { ProcessFlowNodeCommentThread } from './processflow/ProcessFlowNodeCommentThread';
 import { ProcessFlowPropertiesPanel } from './processflow/ProcessFlowPropertiesPanel';
@@ -182,7 +183,6 @@ import {
 } from './processflow/useProcessFlowPersistence';
 import { useProcessFlowQuickActions } from './processflow/useProcessFlowQuickActions';
 import { useProcessFlowReadback } from './processflow/useProcessFlowReadback';
-import { emitIdeaUndoState } from './ideaUndoStateBus';
 import { useProcessFlowUndoRedo } from './processflow/useProcessFlowUndoRedo';
 import { useProcessFlowValidation } from './processflow/useProcessFlowValidation';
 import { validateFlowWarnings, type ValidationWarning } from './processflow/validateFlow';
@@ -1569,7 +1569,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // Nigdy nie wkladamy do zwinietego toru — rozwijamy go. To ta sama
       // migawka undo (pushUndo wyzej zrzuca rowniez `lanes`), wiec jeden
       // Ctrl+Z cofa i wezel, i rozwiniecie.
-      const lanesAfter = lane.collapsed ? toggleLaneCollapsed(baseLanes, lane.id, false) : baseLanes;
+      const lanesAfter = lane.collapsed
+        ? toggleLaneCollapsed(baseLanes, lane.id, false)
+        : baseLanes;
       if (lane.collapsed) {
         setLanes(lanesAfter);
         collab.broadcastLanes?.(lanesAfter);
@@ -3200,23 +3202,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               their nodes on the very first pan. `overflow-hidden` keeps a band
               that scrolls out of the canvas from painting over the toolbar. */}
           <ReactFlowProvider>
-          <div className="absolute inset-0 overflow-hidden">
-            <LaneSystemViewportLayer
-              lanes={lanes}
-              isPl={!!isPl}
-              locked={locked}
-              onRename={handleLaneRename}
-              onDelete={handleLaneDelete}
-              onColorChange={handleLaneColorChange}
-              onMoveUp={handleLaneMoveUp}
-              onMoveDown={handleLaneMoveDown}
-              onToggleCollapse={handleLaneToggleCollapse}
-              onResize={handleLaneResize}
-              dragOverLaneId={dragOverLaneId}
-            />
-          </div>
+            <div className="absolute inset-0 overflow-hidden">
+              <LaneSystemViewportLayer
+                lanes={lanes}
+                isPl={!!isPl}
+                locked={locked}
+                onRename={handleLaneRename}
+                onDelete={handleLaneDelete}
+                onColorChange={handleLaneColorChange}
+                onMoveUp={handleLaneMoveUp}
+                onMoveDown={handleLaneMoveDown}
+                onToggleCollapse={handleLaneToggleCollapse}
+                onResize={handleLaneResize}
+                dragOverLaneId={dragOverLaneId}
+              />
+            </div>
 
-          {/* D2 2026-07-28: pstryczki siatki i przyciągania NIE wiszą już jako
+            {/* D2 2026-07-28: pstryczki siatki i przyciągania NIE wiszą już jako
               bezpodpisowa nakładka `absolute top-2 left-2` nad płótnem. Powód
               podwójny: (a) właściciel nie wiedział, co robią („nie wiem co to są
               te dwa przyciski w ogóle"), (b) zasłaniały pstryczek zwijania
@@ -3227,34 +3229,34 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               ['process_flow']`), a stan jedzie w górę przez
               `publishProcessFlowGridState`. Tu zostaje sam stan i płótno. */}
 
-          {/* V51-28: Empty state overlay */}
-          {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <div className="text-center pointer-events-auto">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-c-surface-raised flex items-center justify-center">
-                  <GitMerge size={24} className="text-c-info" />
+            {/* V51-28: Empty state overlay */}
+            {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                <div className="text-center pointer-events-auto">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-c-surface-raised flex items-center justify-center">
+                    <GitMerge size={24} className="text-c-info" />
+                  </div>
+                  <div className="text-sm font-semibold text-c-text-secondary mb-1">
+                    {t('myWorkIdeas.processFlowTool.emptyProcessFlow')}
+                  </div>
+                  <div className="text-[11px] text-c-text-secondary mb-3 max-w-[220px]">
+                    {t('myWorkIdeas.processFlowTool.addStepsFromToolbarPressEnter')}
+                  </div>
+                  {!locked && (
+                    <button
+                      onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)',
+                      }}
+                    >
+                      <Plus size={14} />
+                      {t('myWorkIdeas.processFlowTool.addStart')}
+                    </button>
+                  )}
                 </div>
-                <div className="text-sm font-semibold text-c-text-secondary mb-1">
-                  {t('myWorkIdeas.processFlowTool.emptyProcessFlow')}
-                </div>
-                <div className="text-[11px] text-c-text-secondary mb-3 max-w-[220px]">
-                  {t('myWorkIdeas.processFlowTool.addStepsFromToolbarPressEnter')}
-                </div>
-                {!locked && (
-                  <button
-                    onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
-                    style={{
-                      backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)',
-                    }}
-                  >
-                    <Plus size={14} />
-                    {t('myWorkIdeas.processFlowTool.addStart')}
-                  </button>
-                )}
               </div>
-            </div>
-          )}
+            )}
 
             <EdgeRehydrateFix
               nodeIdsKey={nodes.map((n) => n.id).join(',')}
@@ -3327,9 +3329,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))
                     : prev
                 );
-                setEdges((prev) =>
-                  prev.map((e) => ({ ...e, selected: e.id === edge.id }))
-                );
+                setEdges((prev) => prev.map((e) => ({ ...e, selected: e.id === edge.id })));
                 setContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
               }}
               onPaneContextMenu={(event: React.MouseEvent) => {
@@ -3793,56 +3793,55 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                     : undefined,
                 })
               : contextMenu.edgeId
-              ? getEdgeContextActions({
-                  edgeId: contextMenu.edgeId,
-                  isPl: !!isPl,
-                  locked,
-                  currentCondition: String(
-                    (edges as Edge[]).find((e) => e.id === contextMenu.edgeId)?.data
-                      ?.conditionType ?? ''
-                  ),
-                  // Etykieta + styl: otwiera ten sam EdgeStylePopover co lewy
-                  // klik (label/kolor/styl linii/strzalka) — jedno zrodlo prawdy.
-                  onEditProps: () =>
-                    setEdgeStylePopover({
-                      edgeId: contextMenu.edgeId!,
-                      x: contextMenu.x,
-                      y: contextMenu.y,
-                    }),
-                  // Krawedz jest zaznaczona (patrz onEdgeContextMenu), wiec
-                  // insertBetween/deleteSelected dzialaja na niej — bez duplikatu.
-                  onInsertNode: () => insertBetween(),
-                  onReverse: () => handleEdgeReverse(contextMenu.edgeId!),
-                  onSetCondition: (cond) =>
-                    handleEdgeConditionChange(contextMenu.edgeId!, cond),
-                  onDelete: () => deleteSelected(),
-                })
-              : getCanvasContextActions({
-                  isPl: !!isPl,
-                  locked,
-                  // B1: menu kontekstowe zna dokladne miejsce prawego klika —
-                  // do dzis je gubilo i wezel ladowal gdzie indziej.
-                  onAddNode: (shape) =>
-                    addNode(shape as FlowShape, {
-                      position: screenToFlow(contextMenu.x, contextMenu.y),
-                    }),
-                  // P1-4: „Wklej" bylo podpiete pod duplicateSelected(), wiec
-                  // duplikowalo zaznaczenie zamiast wkleic schowek — a w menu TLA
-                  // zaznaczenia zwykle nie ma, wiec byl to martwy klik. Teraz
-                  // wkleja realny schowek i mowi, gdy jest pusty.
-                  onPaste: () => {
-                    const ile = pasteClipboard();
-                    if (ile === 0) {
-                      toast(
-                        isPl
-                          ? 'Schowek jest pusty — najpierw skopiuj zaznaczone elementy.'
-                          : 'Clipboard is empty — copy a selection first.'
-                      );
-                    }
-                  },
-                  pasteDisabled: clipboardCount() === 0,
-                  onAutoLayout: () => handleAutoLayout(),
-                })
+                ? getEdgeContextActions({
+                    edgeId: contextMenu.edgeId,
+                    isPl: !!isPl,
+                    locked,
+                    currentCondition: String(
+                      (edges as Edge[]).find((e) => e.id === contextMenu.edgeId)?.data
+                        ?.conditionType ?? ''
+                    ),
+                    // Etykieta + styl: otwiera ten sam EdgeStylePopover co lewy
+                    // klik (label/kolor/styl linii/strzalka) — jedno zrodlo prawdy.
+                    onEditProps: () =>
+                      setEdgeStylePopover({
+                        edgeId: contextMenu.edgeId!,
+                        x: contextMenu.x,
+                        y: contextMenu.y,
+                      }),
+                    // Krawedz jest zaznaczona (patrz onEdgeContextMenu), wiec
+                    // insertBetween/deleteSelected dzialaja na niej — bez duplikatu.
+                    onInsertNode: () => insertBetween(),
+                    onReverse: () => handleEdgeReverse(contextMenu.edgeId!),
+                    onSetCondition: (cond) => handleEdgeConditionChange(contextMenu.edgeId!, cond),
+                    onDelete: () => deleteSelected(),
+                  })
+                : getCanvasContextActions({
+                    isPl: !!isPl,
+                    locked,
+                    // B1: menu kontekstowe zna dokladne miejsce prawego klika —
+                    // do dzis je gubilo i wezel ladowal gdzie indziej.
+                    onAddNode: (shape) =>
+                      addNode(shape as FlowShape, {
+                        position: screenToFlow(contextMenu.x, contextMenu.y),
+                      }),
+                    // P1-4: „Wklej" bylo podpiete pod duplicateSelected(), wiec
+                    // duplikowalo zaznaczenie zamiast wkleic schowek — a w menu TLA
+                    // zaznaczenia zwykle nie ma, wiec byl to martwy klik. Teraz
+                    // wkleja realny schowek i mowi, gdy jest pusty.
+                    onPaste: () => {
+                      const ile = pasteClipboard();
+                      if (ile === 0) {
+                        toast(
+                          isPl
+                            ? 'Schowek jest pusty — najpierw skopiuj zaznaczone elementy.'
+                            : 'Clipboard is empty — copy a selection first.'
+                        );
+                      }
+                    },
+                    pasteDisabled: clipboardCount() === 0,
+                    onAutoLayout: () => handleAutoLayout(),
+                  })
           }
           onClose={() => setContextMenu(null)}
         />

@@ -17,6 +17,7 @@ import {
   getContextPackSnapshot,
   saveContextPackSnapshot,
 } from './contextPackBuilder.js';
+import { generateDeckBriefContentPack } from './deckBriefContentPack.js';
 import {
   contentLeaksTemplateInventory,
   isTemplateInventoryLeak,
@@ -28,7 +29,6 @@ import {
   type EvidenceContract,
   type EvidenceContractSource,
 } from './evidence/evidenceContract.js';
-import { generateDeckBriefContentPack } from './deckBriefContentPack.js';
 import { safePersistEvidenceContract } from './evidence/evidenceContractBridge.js';
 import { generateNarrative } from './narrativeEngine/index.js';
 import type { NarrativeEngineInput } from './narrativeEngine/types.js';
@@ -2387,7 +2387,9 @@ export function resolveDeckNarrativeBrief(
   if (!briefText) return null;
   const hasRichSource =
     Array.isArray(setup.sourceArtifacts) &&
-    setup.sourceArtifacts.some((s) => DECK_RICH_SOURCE_TYPES.has(String((s as { type?: unknown }).type)));
+    setup.sourceArtifacts.some((s) =>
+      DECK_RICH_SOURCE_TYPES.has(String((s as { type?: unknown }).type))
+    );
   return hasRichSource ? null : briefText;
 }
 

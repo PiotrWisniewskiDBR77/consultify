@@ -45,7 +45,8 @@ const MOCK: CardAnalysisResult = {
     {
       id: 'gap-1',
       title: 'Zakres bez wyłączeń',
-      detail: 'Opis mówi co wchodzi, nie mówi co świadomie NIE wchodzi — to najczęstsze źródło sporu przy odbiorze.',
+      detail:
+        'Opis mówi co wchodzi, nie mówi co świadomie NIE wchodzi — to najczęstsze źródło sporu przy odbiorze.',
       criterionId: 'scope-clarity',
       severity: 'medium',
     },
@@ -122,8 +123,7 @@ const MOCK: CardAnalysisResult = {
 const WRITABLE = ['description', 'expectedOutcome'];
 
 export default function NTypeAnalizujAiScreen(): React.ReactElement {
-  const isPolish =
-    new URLSearchParams(window.location.search).get('lang') !== 'en';
+  const isPolish = new URLSearchParams(window.location.search).get('lang') !== 'en';
   const [open, setOpen] = useState(true);
   const [readMode, setReadMode] = useState(false);
   const [applied, setApplied] = useState<string[]>([]);
@@ -159,12 +159,15 @@ export default function NTypeAnalizujAiScreen(): React.ReactElement {
 
         <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4">
           <p className="text-xs text-c-text-secondary">
-            Panel po prawej pokazuje wynik dla AKTYWNEJ KARTY „Opis i zakres" (Zadanie).
-            Kolejność szuflad jest wiążąca: Braki · Ryzyka · Sugestie · Proponowane zmiany.
+            Panel po prawej pokazuje wynik dla AKTYWNEJ KARTY „Opis i zakres" (Zadanie). Kolejność
+            szuflad jest wiążąca: Braki · Ryzyka · Sugestie · Proponowane zmiany.
           </p>
           <ul className="mt-3 list-disc pl-5 text-xs text-c-text-muted">
             <li>Zmiana „Oczekiwany rezultat" — pole zapisywalne → „Zastosuj" aktywne.</li>
-            <li>Zmiana „Dowody" — pole poza listą zapisywalnych → „Zastosuj" wyłączone + „Kopiuj treść".</li>
+            <li>
+              Zmiana „Dowody" — pole poza listą zapisywalnych → „Zastosuj" wyłączone + „Kopiuj
+              treść".
+            </li>
             <li>Przełącz „Podgląd" w menu 2 → wszystkie „Zastosuj" gasną z powodem.</li>
           </ul>
           <p className="mt-3 text-xs text-c-text">

@@ -824,9 +824,7 @@ function buildSystemPrompt(
     const n = ctx.existingNodes.find((x: any) => String(x?.id) === String(id));
     return String(n?.data?.label || n?.label || '').trim();
   };
-  const editStepTargetNode = ctx.existingNodes.find(
-    (n: any) => String(n?.id) === editStepTargetId
-  );
+  const editStepTargetNode = ctx.existingNodes.find((n: any) => String(n?.id) === editStepTargetId);
   const editStepTargetLabel = String(
     editStepTargetNode?.data?.label || editStepTargetNode?.label || ''
   ).trim();
@@ -1201,9 +1199,8 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   // tylko fallbackiem. Bez tego polska mapa przy interfejsie EN dostawała angielskie
   // propozycje. Dalszy kod (buildSystemPrompt / buildUserMessage / formatIdeaGeneratorOutput)
   // czyta `context.language`, więc podmiana tutaj naprawia WSZYSTKIE generatory naraz.
-  const { resolveResponseLanguage, withLanguageInstruction } = await import(
-    './ai/responseLanguage.js'
-  );
+  const { resolveResponseLanguage, withLanguageInstruction } =
+    await import('./ai/responseLanguage.js');
   const responseLanguage = resolveResponseLanguage({
     requested: rawScopedContext.language,
     samples: [
@@ -1214,7 +1211,9 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
       ...(rawScopedContext.existingNodes || [])
         .slice(0, 60)
         .map((n: any) => String(n?.data?.label || n?.label || '')),
-      ...(rawScopedContext.existingLanes || []).slice(0, 20).map((l: any) => String(l?.label || '')),
+      ...(rawScopedContext.existingLanes || [])
+        .slice(0, 20)
+        .map((l: any) => String(l?.label || '')),
     ],
   });
   const scopedContext: GeneratorContext = { ...rawScopedContext, language: responseLanguage };

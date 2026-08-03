@@ -348,7 +348,8 @@ export const NotificationDropdown = () => {
           <span // bialy tekst na `c-danger` dawal 3.44 (w ciemnym token podnosi sie do
             // #ed5565, co pomaga TLU, ale szkodzi TEKSTOWI na nim). Odznaka ma
             // 10px, wiec obowiazuje prog 4.5 — staly danger-600 daje ~7.4:1.
-            className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-danger-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-c-surface shadow-sm">
+            className="absolute top-0.5 right-0.5 min-w-[16px] h-4 bg-danger-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border-2 border-c-surface shadow-sm"
+          >
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

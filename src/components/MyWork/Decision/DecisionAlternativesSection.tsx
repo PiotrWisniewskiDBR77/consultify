@@ -240,7 +240,10 @@ export const DecisionAlternativesSection: React.FC<DecisionAlternativesSectionPr
                   <textarea
                     value={editDraft.description}
                     onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))}
-                    placeholder={t('myWork.decisionWorkspace.alternatives.description', 'Description')}
+                    placeholder={t(
+                      'myWork.decisionWorkspace.alternatives.description',
+                      'Description'
+                    )}
                     rows={2}
                     className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   />
@@ -267,7 +270,9 @@ export const DecisionAlternativesSection: React.FC<DecisionAlternativesSectionPr
                       {alt.isRecommended ? (
                         <Star size={12} className="shrink-0 text-amber-500 fill-amber-500" />
                       ) : null}
-                      <span className="text-xs font-semibold text-c-text truncate">{alt.title}</span>
+                      <span className="text-xs font-semibold text-c-text truncate">
+                        {alt.title}
+                      </span>
                     </div>
                     {canEdit && !isFinalized ? (
                       <div className="flex items-center gap-1 shrink-0">
@@ -305,7 +310,8 @@ export const DecisionAlternativesSection: React.FC<DecisionAlternativesSectionPr
                       {alt.drawbacks ? (
                         <div>
                           <span className="font-medium text-c-text-muted">
-                            {t('myWork.decisionWorkspace.alternatives.drawbacks', 'Drawbacks')}:{' '}
+                            {t('myWork.decisionWorkspace.alternatives.drawbacks', 'Drawbacks')}
+                            :{' '}
                           </span>
                           <span className="text-c-text-secondary">{alt.drawbacks}</span>
                         </div>
@@ -313,7 +319,8 @@ export const DecisionAlternativesSection: React.FC<DecisionAlternativesSectionPr
                       {alt.costOrFeasibility ? (
                         <div>
                           <span className="font-medium text-c-text-muted">
-                            {t('myWork.decisionWorkspace.alternatives.cost', 'Cost/feasibility')}:{' '}
+                            {t('myWork.decisionWorkspace.alternatives.cost', 'Cost/feasibility')}
+                            :{' '}
                           </span>
                           <span className="text-c-text-secondary">{alt.costOrFeasibility}</span>
                         </div>
@@ -339,7 +346,10 @@ export const DecisionAlternativesSection: React.FC<DecisionAlternativesSectionPr
             <input
               value={draft.title}
               onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-              placeholder={t('myWork.decisionWorkspace.alternatives.titlePlaceholder', 'Alternative title')}
+              placeholder={t(
+                'myWork.decisionWorkspace.alternatives.titlePlaceholder',
+                'Alternative title'
+              )}
               className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs font-medium text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             />
             <textarea

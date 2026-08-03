@@ -77,7 +77,8 @@ const suite = REACHABLE && HAS_SCHEMA ? describe.sequential : describe.skip;
 
 const ORG_PREFIX = 'res011-evidence';
 const orgFor = (key: string): string => `${ORG_PREFIX}-${key}-${Date.now().toString(36)}`;
-const artifactIdFor = (key: string): string => `${key}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6)}`;
+const artifactIdFor = (key: string): string =>
+  `${key}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6)}`;
 
 let control: Pool;
 let evidence: typeof import('../evidenceEnvelopeService.js');
@@ -104,7 +105,7 @@ suite('evidenceEnvelopeService — RES-011 cross-tenant guard (real PostgreSQL)'
     await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
   }, 60_000);
 
-  it('1. getEnvelope is org-scoped: org B cannot read org A\'s envelope by artifactId', async () => {
+  it("1. getEnvelope is org-scoped: org B cannot read org A's envelope by artifactId", async () => {
     const orgA = orgFor('read-a');
     const orgB = orgFor('read-b');
     await seedOrg(orgA);
@@ -158,7 +159,7 @@ suite('evidenceEnvelopeService — RES-011 cross-tenant guard (real PostgreSQL)'
     expect(stillOwnedByA?.confidence).toBe(0.9);
   });
 
-  it('3. THE FIX: org B\'s attachSource against org A\'s artifactId is REJECTED, no append happens', async () => {
+  it("3. THE FIX: org B's attachSource against org A's artifactId is REJECTED, no append happens", async () => {
     const orgA = orgFor('attach-a');
     const orgB = orgFor('attach-b');
     await seedOrg(orgA);

@@ -443,7 +443,9 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }, [assessmentId]);
 
   const updateCoreAssessmentSession = useCallback(
-    async (payload: Record<string, any>): Promise<{ updatedAt?: string; completionPercent?: number }> => {
+    async (
+      payload: Record<string, any>
+    ): Promise<{ updatedAt?: string; completionPercent?: number }> => {
       if (!assessmentId) throw new Error('Missing assessment id');
 
       try {

@@ -69,8 +69,10 @@ export function moveBlockInList(
   const aOrder = a.position.order;
   const bOrder = b.position.order;
   return blocks.map((blk) => {
-    if (blk.block_id === a.block_id) return { ...blk, position: { ...blk.position, order: bOrder } };
-    if (blk.block_id === b.block_id) return { ...blk, position: { ...blk.position, order: aOrder } };
+    if (blk.block_id === a.block_id)
+      return { ...blk, position: { ...blk.position, order: bOrder } };
+    if (blk.block_id === b.block_id)
+      return { ...blk, position: { ...blk.position, order: aOrder } };
     return blk;
   });
 }

@@ -41,11 +41,19 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
+import {
+  buildFromTemplate,
+  buildFromTemplateFlat,
+  listWorkbookTemplates,
+  WORKBOOK_TEMPLATES,
+} from '../templates/index.js';
+import {
+  buildProjectViabilitySchema,
+  type ProjectViabilityParams,
+} from '../templates/projectViability.js';
 import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
 import { critiqueWorkbook } from '../workbookQualityGate.js';
 import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
-import { buildProjectViabilitySchema, type ProjectViabilityParams } from '../templates/projectViability.js';
-import { WORKBOOK_TEMPLATES, listWorkbookTemplates, buildFromTemplate, buildFromTemplateFlat } from '../templates/index.js';
 
 async function load(buf: Buffer): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
@@ -67,7 +75,9 @@ function fontArgbOf(ws: ExcelJS.Worksheet, addr: string): string | null {
 }
 
 /** Every populated cell (any row) across the whole workbook schema. */
-function allCells(schema: ReturnType<typeof buildProjectViabilitySchema>): Array<{ formula?: string; value?: unknown }> {
+function allCells(
+  schema: ReturnType<typeof buildProjectViabilitySchema>
+): Array<{ formula?: string; value?: unknown }> {
   const out: Array<{ formula?: string; value?: unknown }> = [];
   for (const sheet of schema.sheets) {
     for (const row of sheet.rows) {
@@ -269,9 +279,13 @@ function makeEvaluator(wb: ExcelJS.Workbook) {
               skipWs();
             }
             if (peek() === ')') i++;
-            const npvAt = (r: number) => series.reduce((acc, v, idx) => acc + v / Math.pow(1 + r, idx), 0);
+            const npvAt = (r: number) =>
+              series.reduce((acc, v, idx) => acc + v / Math.pow(1 + r, idx), 0);
             const dnpvAt = (r: number) =>
-              series.reduce((acc, v, idx) => (idx === 0 ? acc : acc - (idx * v) / Math.pow(1 + r, idx + 1)), 0);
+              series.reduce(
+                (acc, v, idx) => (idx === 0 ? acc : acc - (idx * v) / Math.pow(1 + r, idx + 1)),
+                0
+              );
             let rate = guess;
             for (let iter = 0; iter < 200; iter++) {
               const f = npvAt(rate);
@@ -433,7 +447,9 @@ describe('registry — projectViability is registered', () => {
     const schema = buildFromTemplateFlat('projectViability', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -444,7 +460,12 @@ describe('registry — projectViability is registered', () => {
   it('passes the canonical WorkbookSchema validator (default params) with the expected 4 sheets', () => {
     const pv = buildProjectViabilitySchema();
     expect(WorkbookSchemaValidator.safeParse(pv).success).toBe(true);
-    expect(pv.sheets.map((s) => s.name)).toEqual(['Założenia', 'Przepływy', 'Wyniki', 'Wrażliwość']);
+    expect(pv.sheets.map((s) => s.name)).toEqual([
+      'Założenia',
+      'Przepływy',
+      'Wyniki',
+      'Wrażliwość',
+    ]);
   });
 });
 
@@ -452,7 +473,9 @@ describe('registry — projectViability is registered', () => {
 // Fixtures + independent JS reference model
 // ---------------------------------------------------------------------------
 
-const PV_PARAMS_A: Required<Omit<ProjectViabilityParams, 'currencyCode'>> & { currencyCode: 'PLN' } = {
+const PV_PARAMS_A: Required<Omit<ProjectViabilityParams, 'currencyCode'>> & {
+  currencyCode: 'PLN';
+} = {
   projectName: 'Projekt Alfa',
   currencyCode: 'PLN',
   startYear: 2027,
@@ -494,7 +517,9 @@ interface ReferenceModel {
   paybackDiscounted: number;
 }
 
-function referenceProjectViability(p: Required<Omit<ProjectViabilityParams, 'currencyCode'>>): ReferenceModel {
+function referenceProjectViability(
+  p: Required<Omit<ProjectViabilityParams, 'currencyCode'>>
+): ReferenceModel {
   const N = p.horizonYears;
   const gross = new Array<number>(N + 1).fill(0);
   const tax = new Array<number>(N + 1).fill(0);
@@ -520,7 +545,8 @@ function referenceProjectViability(p: Required<Omit<ProjectViabilityParams, 'cur
   const npv = cumDiscounted[N];
 
   const npvAt = (r: number) => net.reduce((acc, v, idx) => acc + v / Math.pow(1 + r, idx), 0);
-  const dnpvAt = (r: number) => net.reduce((acc, v, idx) => (idx === 0 ? acc : acc - (idx * v) / Math.pow(1 + r, idx + 1)), 0);
+  const dnpvAt = (r: number) =>
+    net.reduce((acc, v, idx) => (idx === 0 ? acc : acc - (idx * v) / Math.pow(1 + r, idx + 1)), 0);
   let irr = 0.1;
   for (let iter = 0; iter < 200; iter++) {
     const f = npvAt(irr);
@@ -538,11 +564,33 @@ function referenceProjectViability(p: Required<Omit<ProjectViabilityParams, 'cur
   const paybackSimple = cumUndiscounted.slice(1).filter((v) => v < 0).length;
   const paybackDiscounted = cumDiscounted.slice(1).filter((v) => v < 0).length;
 
-  return { gross, tax, net, discFactor, discounted, cumUndiscounted, cumDiscounted, npv, irr, sumPvOperating, pi, paybackSimple, paybackDiscounted };
+  return {
+    gross,
+    tax,
+    net,
+    discFactor,
+    discounted,
+    cumUndiscounted,
+    cumDiscounted,
+    npv,
+    irr,
+    sumPvOperating,
+    pi,
+    paybackSimple,
+    paybackDiscounted,
+  };
 }
 
 const YEAR_COLS_A = ['B', 'C', 'D', 'E', 'F', 'G']; // horizon=5 → years 0..5
-const ENGINE_ROW = { gross: 2, tax: 3, net: 4, discountFactor: 5, discounted: 6, cumUndiscounted: 7, cumDiscounted: 8 };
+const ENGINE_ROW = {
+  gross: 2,
+  tax: 3,
+  net: 4,
+  discountFactor: 5,
+  discounted: 6,
+  cumUndiscounted: 7,
+  cumDiscounted: 8,
+};
 const WR = { npv: 2, irr: 3, sumPvOperating: 4, pi: 5, paybackSimple: 6, paybackDiscounted: 7 };
 
 // ---------------------------------------------------------------------------
@@ -551,7 +599,9 @@ const WR = { npv: 2, irr: 3, sumPvOperating: 4, pi: 5, paybackSimple: 6, payback
 
 describe('projectViability — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every populated "Przepływy" cell is a FORMULA (gross/tax omitted at Year 0 by design)', async () => {
-    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Przepływy')!;
     for (let r = ENGINE_ROW.gross; r <= ENGINE_ROW.cumDiscounted; r++) {
       for (const col of YEAR_COLS_A) {
@@ -595,7 +645,9 @@ describe('projectViability — (a) read-back — formulas, chained, cross-sheet'
   it('"Wyniki" sheet: NPV/IRR/PI/payback are real formulas referencing "Przepływy" + "Założenia"', async () => {
     const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A));
     const ws = (await load(buf)).getWorksheet('Wyniki')!;
-    expect(formulaOf(ws, `B${WR.npv}`)).toBe("NPV('Założenia'!$B$5,'Przepływy'!C4:G4)+'Przepływy'!B4");
+    expect(formulaOf(ws, `B${WR.npv}`)).toBe(
+      "NPV('Założenia'!$B$5,'Przepływy'!C4:G4)+'Przepływy'!B4"
+    );
     expect(formulaOf(ws, `B${WR.irr}`)).toBe("IRR('Przepływy'!B4:G4)");
     expect(formulaOf(ws, `B${WR.sumPvOperating}`)).toBe("SUM('Przepływy'!C6:G6)");
     expect(formulaOf(ws, `B${WR.pi}`)).toBe(`B${WR.sumPvOperating}/'Założenia'!$B$2`);
@@ -634,29 +686,52 @@ describe('projectViability — (a) read-back — formulas, chained, cross-sheet'
 describe('projectViability — (b) math verification — evaluated workbook == independent JS model', () => {
   it('engine rows (gross/tax/net/discount/discounted/cumulative) match the reference model, every year', async () => {
     for (const params of [PV_PARAMS_A, PV_PARAMS_B]) {
-      const full: Required<Omit<ProjectViabilityParams, 'currencyCode'>> = { ...PV_PARAMS_A, ...params } as any;
+      const full: Required<Omit<ProjectViabilityParams, 'currencyCode'>> = {
+        ...PV_PARAMS_A,
+        ...params,
+      } as any;
       const wb = await load(await buildWorkbookBuffer(buildProjectViabilitySchema(full)));
       const ev = makeEvaluator(wb);
       const ref = referenceProjectViability(full);
-      const cols = Array.from({ length: full.horizonYears + 1 }, (_, n) => String.fromCharCode(66 + n));
+      const cols = Array.from({ length: full.horizonYears + 1 }, (_, n) =>
+        String.fromCharCode(66 + n)
+      );
       for (let n = 0; n <= full.horizonYears; n++) {
         const col = cols[n];
         if (n >= 1) {
-          expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.gross}`)).toBeCloseTo(ref.gross[n], 4);
+          expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.gross}`)).toBeCloseTo(
+            ref.gross[n],
+            4
+          );
           expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.tax}`)).toBeCloseTo(ref.tax[n], 4);
         }
         expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.net}`)).toBeCloseTo(ref.net[n], 4);
-        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.discountFactor}`)).toBeCloseTo(ref.discFactor[n], 8);
-        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.discounted}`)).toBeCloseTo(ref.discounted[n], 4);
-        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.cumUndiscounted}`)).toBeCloseTo(ref.cumUndiscounted[n], 4);
-        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.cumDiscounted}`)).toBeCloseTo(ref.cumDiscounted[n], 4);
+        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.discountFactor}`)).toBeCloseTo(
+          ref.discFactor[n],
+          8
+        );
+        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.discounted}`)).toBeCloseTo(
+          ref.discounted[n],
+          4
+        );
+        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.cumUndiscounted}`)).toBeCloseTo(
+          ref.cumUndiscounted[n],
+          4
+        );
+        expect(ev.cellValue('Przepływy', `${col}${ENGINE_ROW.cumDiscounted}`)).toBeCloseTo(
+          ref.cumDiscounted[n],
+          4
+        );
       }
     }
   });
 
   it('NPV / IRR / PI / payback (simple + discounted) match the reference model', async () => {
     for (const params of [PV_PARAMS_A, PV_PARAMS_B]) {
-      const full: Required<Omit<ProjectViabilityParams, 'currencyCode'>> = { ...PV_PARAMS_A, ...params } as any;
+      const full: Required<Omit<ProjectViabilityParams, 'currencyCode'>> = {
+        ...PV_PARAMS_A,
+        ...params,
+      } as any;
       const wb = await load(await buildWorkbookBuffer(buildProjectViabilitySchema(full)));
       const ev = makeEvaluator(wb);
       const ref = referenceProjectViability(full);
@@ -670,8 +745,16 @@ describe('projectViability — (b) math verification — evaluated workbook == i
   });
 
   it('changing the discount rate changes NPV (proof the model COMPUTES, not hardcodes)', async () => {
-    const low = await load(await buildWorkbookBuffer(buildProjectViabilitySchema({ ...PV_PARAMS_A, discountRatePct: 0.05 })));
-    const high = await load(await buildWorkbookBuffer(buildProjectViabilitySchema({ ...PV_PARAMS_A, discountRatePct: 0.25 })));
+    const low = await load(
+      await buildWorkbookBuffer(
+        buildProjectViabilitySchema({ ...PV_PARAMS_A, discountRatePct: 0.05 })
+      )
+    );
+    const high = await load(
+      await buildWorkbookBuffer(
+        buildProjectViabilitySchema({ ...PV_PARAMS_A, discountRatePct: 0.25 })
+      )
+    );
     const npvLow = makeEvaluator(low).cellValue('Wyniki', `B${WR.npv}`);
     const npvHigh = makeEvaluator(high).cellValue('Wyniki', `B${WR.npv}`);
     // Higher discount rate on the SAME cash flows must produce a LOWER NPV.
@@ -738,13 +821,17 @@ describe('projectViability — (c) quality gate — critic-clean', () => {
 
 describe('projectViability — (d) font-color convention — blue input / black formula / green cross-sheet', () => {
   it('an Assumptions input cell (literal value) gets the BLUE font', async () => {
-    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Założenia')!;
     expect(fontArgbOf(ws, 'B2')).toBe('FF0000FF'); // investment input
   });
 
   it('a LOCAL (same-sheet) formula cell gets the BLACK font', async () => {
-    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Przepływy')!;
     // D4 = net cash flow, Year 2 = "D2-D3" — no cross-sheet reference at all.
     expect(formulaOf(ws, `D${ENGINE_ROW.net}`)).toBe('D2-D3');
@@ -752,7 +839,9 @@ describe('projectViability — (d) font-color convention — blue input / black 
   });
 
   it('a CROSS-SHEET formula cell gets the GREEN font', async () => {
-    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Przepływy')!;
     // B4 = net cash flow, Year 0 = "-'Założenia'!$B$2" — reaches into Założenia.
     expect(formulaOf(ws, `B${ENGINE_ROW.net}`)).toBe("-'Założenia'!$B$2");
@@ -760,7 +849,9 @@ describe('projectViability — (d) font-color convention — blue input / black 
   });
 
   it('the NPV cell (cross-sheet) also gets the GREEN font on the Wyniki sheet', async () => {
-    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildProjectViabilitySchema(PV_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Wyniki')!;
     expect(fontArgbOf(ws, `B${WR.npv}`)).toBe('FF008000');
   });
@@ -768,7 +859,10 @@ describe('projectViability — (d) font-color convention — blue input / black 
   it('an explicit schema fontColor always wins over the automatic convention', async () => {
     const schema = buildProjectViabilitySchema(PV_PARAMS_A);
     const zSheet = schema.sheets.find((s) => s.name === 'Założenia')!;
-    zSheet.rows[0].cells.wartosc.style = { ...zSheet.rows[0].cells.wartosc.style, fontColor: 'FF00FF' };
+    zSheet.rows[0].cells.wartosc.style = {
+      ...zSheet.rows[0].cells.wartosc.style,
+      fontColor: 'FF00FF',
+    };
     const buf = await buildWorkbookBuffer(schema, { applyConsultantStyling: true });
     const ws = (await load(buf)).getWorksheet('Założenia')!;
     expect(fontArgbOf(ws, 'B2')).toBe('FFFF00FF'); // explicit magenta, NOT the automatic blue

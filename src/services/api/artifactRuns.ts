@@ -173,10 +173,12 @@ const ARTIFACT_RUNS_BASE = '/api/artifact-runs';
  * The client never derives lifecycle state from Execution Spine; backend values are canonical.
  */
 export function normalizeArtifactRunStatusFields(
-  payload: ArtifactRunRecord | (Omit<ArtifactRunRecord, 'persistedRunStatus' | 'effectiveRunStatus'> & {
-    persistedRunStatus?: ArtifactRunStatus;
-    effectiveRunStatus?: ArtifactRunStatus;
-  })
+  payload:
+    | ArtifactRunRecord
+    | (Omit<ArtifactRunRecord, 'persistedRunStatus' | 'effectiveRunStatus'> & {
+        persistedRunStatus?: ArtifactRunStatus;
+        effectiveRunStatus?: ArtifactRunStatus;
+      })
 ): ArtifactRunRecord {
   const effectiveRunStatus = payload.effectiveRunStatus ?? payload.runStatus;
   const persistedRunStatus = payload.persistedRunStatus ?? payload.runStatus;

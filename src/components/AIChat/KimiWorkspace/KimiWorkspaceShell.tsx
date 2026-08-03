@@ -28,14 +28,7 @@ import {
   Table,
   X,
 } from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -185,7 +178,8 @@ const KebabMenu: React.FC<{ items: KimiHeaderKebabItem[]; ariaLabel: string }> =
     }
     const update = () => {
       const r = btnRef.current?.getBoundingClientRect();
-      if (r) setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+      if (r)
+        setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
     };
     update();
     window.addEventListener('resize', update);
@@ -659,7 +653,10 @@ function ArtifactPreviewPane({
                 ))}
               </div>
             )}
-            {isExceleEditEnabled() && preview.workbookId && preview.rawSheets && preview.rawSheets.length > 0 ? (
+            {isExceleEditEnabled() &&
+            preview.workbookId &&
+            preview.rawSheets &&
+            preview.rawSheets.length > 0 ? (
               // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28,
               // za flagą ff_excele_edit, domyślnie OFF) — klik→edycja→przeliczenie
               // formuł zależnych→zapis, patrz EditableSpreadsheetGrid.tsx.
@@ -725,9 +722,7 @@ function ArtifactPreviewPane({
                                     key={`${col}-${ci}`}
                                     title={isFormula ? raw : undefined}
                                     className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
-                                      isFormula
-                                        ? 'font-mono text-c-text-secondary'
-                                        : 'text-c-text'
+                                      isFormula ? 'font-mono text-c-text-secondary' : 'text-c-text'
                                     }`}
                                   >
                                     {String(raw ?? '')}

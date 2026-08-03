@@ -11,10 +11,10 @@
  * (duplicates the existing double-click-to-edit affordance on the edge label
  * itself, so both entry points stay in sync — same onLabelChange handler).
  */
+import type { TFunction } from 'i18next';
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Ban } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import type { Edge } from 'reactflow';
 
 export type EdgeArrowDirection = 'none' | 'start' | 'end' | 'both';

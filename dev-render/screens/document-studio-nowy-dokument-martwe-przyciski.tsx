@@ -38,13 +38,13 @@
  */
 import React from 'react';
 
+import { DocumentStudioDocumentPanel } from '@/components/DocumentStudio/DocumentStudioDocumentPanel';
+import type { DocumentSchema } from '@/components/DocumentStudio/types';
+
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { useAppStore } from '../../src/store/useAppStore';
 import { seedRealisticSession } from '../mocks/seedStore';
-
-import { DocumentStudioDocumentPanel } from '@/components/DocumentStudio/DocumentStudioDocumentPanel';
-import type { DocumentSchema } from '@/components/DocumentStudio/types';
 
 seedRealisticSession();
 

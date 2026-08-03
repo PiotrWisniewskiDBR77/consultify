@@ -661,7 +661,9 @@ function structuredSlideToCard(
   // its only content instead of showing as "empty" for a different reason.
   if (blocks.length <= 1 && !nestedBlocks) {
     const fallbackText = Object.entries(content)
-      .filter(([key, value]) => key !== 'title' && key !== 'heading' && typeof value === 'string' && value)
+      .filter(
+        ([key, value]) => key !== 'title' && key !== 'heading' && typeof value === 'string' && value
+      )
       .map(([, value]) => String(value))
       .join(' · ');
     if (fallbackText) pushBlock('paragraph', { text: fallbackText });

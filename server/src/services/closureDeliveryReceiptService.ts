@@ -63,10 +63,10 @@
  *   packet — do not add one without a Piotr/Codex decision.
  */
 
-import * as queryHelpers from '../utils/queryHelpers.js';
-import { withPgTransaction, type PgTransactionClient } from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
-import { handoffFromClosure, CLOSURE_HANDOFF_SOURCE } from './executionResultsBridge.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../utils/queryHelpers.js';
+import { CLOSURE_HANDOFF_SOURCE, handoffFromClosure } from './executionResultsBridge.js';
 
 const LOG_PREFIX = '[ClosureDeliveryReceipt]';
 
@@ -229,7 +229,10 @@ export async function getReceiptForInitiative(
  * didn't happen, for the title-column reason just fixed or any other
  * future cause — must never be reported as DELIVERED).
  */
-async function initiativeHadResultsSignal(initiativeId: string, organizationId: string): Promise<boolean> {
+async function initiativeHadResultsSignal(
+  initiativeId: string,
+  organizationId: string
+): Promise<boolean> {
   const kpiCount = await queryHelpers.queryOne<{ n: string }>(
     `SELECT COUNT(*)::int AS n FROM initiative_kpis WHERE initiative_id = ? AND target_value IS NOT NULL`,
     [initiativeId]
@@ -286,7 +289,13 @@ interface MonetaryMeasurementRow {
 async function findCandidateMonetaryMeasurement(
   organizationId: string,
   initiativeId: string
-): Promise<{ amount: number; currency: string; valueSource: string; measurementId: string; ageDays: number } | null> {
+): Promise<{
+  amount: number;
+  currency: string;
+  valueSource: string;
+  measurementId: string;
+  ageDays: number;
+} | null> {
   const initiative = await queryHelpers.queryOne<InitiativeFinanceRow>(
     `SELECT budget_currency FROM initiatives WHERE id = ? AND organization_id = ?`,
     [initiativeId, organizationId]
@@ -443,7 +452,11 @@ export async function attemptDeliveryInternal(
     throw new Error(`${LOG_PREFIX} attemptDeliveryInternal: no receipt found for id ${receiptId}`);
   }
 
-  const { organization_id: organizationId, initiative_id: initiativeId, actor_id: actorId } = receipt;
+  const {
+    organization_id: organizationId,
+    initiative_id: initiativeId,
+    actor_id: actorId,
+  } = receipt;
 
   // ---- Results leg ----
   if (receipt.results_status !== 'DELIVERED' && (await claimLeg(receiptId, 'results'))) {
@@ -539,7 +552,7 @@ export async function attemptDeliveryInternal(
           }
         : { reason: 'NO_MONETARY_MEASUREMENT' };
       const message = candidate
-        ? 'An observed kpi_time_series measurement exists (currency-matched to the initiative\'s ' +
+        ? "An observed kpi_time_series measurement exists (currency-matched to the initiative's " +
           `budget_currency; id=${candidate.measurementId}) but this codebase has no approval/sign-off ` +
           'process for a measurement — it is surfaced as a candidate only, never auto-booked as a ' +
           'realized actual. Needs an explicit human decision (via the existing manual Record ' +
@@ -584,7 +597,9 @@ export async function attemptDeliveryInternal(
     result.financeStatus === 'PENDING' ||
     result.financeStatus === 'FAILED';
   const nextRetryAt = stillPending
-    ? new Date(Date.now() + backoffMs(Math.max(result.resultsAttempts, result.financeAttempts))).toISOString()
+    ? new Date(
+        Date.now() + backoffMs(Math.max(result.resultsAttempts, result.financeAttempts))
+      ).toISOString()
     : null;
   await queryHelpers.queryRun(
     `UPDATE closure_delivery_receipts SET next_retry_at = ? WHERE id = ?`,
@@ -636,7 +651,9 @@ export async function retryDeliveryForOrg(
 ): Promise<ClosureDeliveryReceipt> {
   const existing = await getReceiptById(receiptId, organizationId);
   if (!existing) {
-    throw new Error(`${LOG_PREFIX} retryDeliveryForOrg: no receipt ${receiptId} in organization ${organizationId}`);
+    throw new Error(
+      `${LOG_PREFIX} retryDeliveryForOrg: no receipt ${receiptId} in organization ${organizationId}`
+    );
   }
   await queryHelpers.queryRun(
     `UPDATE closure_delivery_receipts SET next_retry_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
@@ -678,10 +695,10 @@ async function claimDueReceipts(limit: number): Promise<string[]> {
     const ids = rows.map((r) => r.id);
     if (ids.length > 0) {
       const leaseUntil = new Date(Date.now() + 60_000).toISOString();
-      await client.query(`UPDATE closure_delivery_receipts SET next_retry_at = ? WHERE id = ANY(?)`, [
-        leaseUntil,
-        ids,
-      ]);
+      await client.query(
+        `UPDATE closure_delivery_receipts SET next_retry_at = ? WHERE id = ANY(?)`,
+        [leaseUntil, ids]
+      );
     }
     return ids;
   });
@@ -737,7 +754,9 @@ export function startClosureReceiptReconciliationCron(intervalMs: number = 30_00
   if (cronHandle) return;
   cronHandle = setInterval(() => {
     runReconciliationSweep().catch((err) => {
-      logger.error(`${LOG_PREFIX} reconciliation cron tick failed: ${err instanceof Error ? err.message : err}`);
+      logger.error(
+        `${LOG_PREFIX} reconciliation cron tick failed: ${err instanceof Error ? err.message : err}`
+      );
     });
   }, intervalMs);
   if (typeof cronHandle.unref === 'function') cronHandle.unref();

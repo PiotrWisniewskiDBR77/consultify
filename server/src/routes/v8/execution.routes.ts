@@ -5,8 +5,8 @@ import { ZodError } from 'zod';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import * as artifactRegistryService from '../../services/v8/artifactRegistryService.js';
-import * as executionSpineService from '../../services/v8/executionSpineService.js';
 import { getExecutionManagementSnapshot } from '../../services/v8/executionManagementSnapshotService.js';
+import * as executionSpineService from '../../services/v8/executionSpineService.js';
 import * as toolGovernanceService from '../../services/v8/toolGovernanceService.js';
 import {
   type ProposalStatus,
@@ -24,7 +24,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const initiativeId = String(req.params.initiativeId || '').trim();
-    const projectId = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : undefined;
+    const projectId =
+      typeof req.query.projectId === 'string' ? req.query.projectId.trim() : undefined;
     const snapshot = await getExecutionManagementSnapshot(
       organizationId,
       initiativeId,

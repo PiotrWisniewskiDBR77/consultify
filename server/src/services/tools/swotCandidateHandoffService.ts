@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 import { createCandidateFromSource } from '../initiative/initiativeCandidateService.js';
 
 export class SwotCandidateHandoffError extends Error {
@@ -84,7 +84,9 @@ export async function handoffSwotRecommendation(params: {
     if (!source) {
       throw new SwotCandidateHandoffError('SWOT_SESSION_NOT_FOUND', 404, 'SWOT session not found');
     }
-    const normalizedType = String(source.tool_type || '').trim().toLowerCase();
+    const normalizedType = String(source.tool_type || '')
+      .trim()
+      .toLowerCase();
     if (normalizedType !== 'dynamic-swot') {
       throw new SwotCandidateHandoffError(
         'NOT_SWOT_SESSION',

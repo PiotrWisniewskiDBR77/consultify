@@ -64,7 +64,9 @@ const NOTIFICATION_TYPE_LABELS: Record<string, Bilingual> = {
 };
 
 export function notificationTypeLabel(raw: string | null | undefined, isPolish: boolean): string {
-  const key = String(raw ?? '').trim().toUpperCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toUpperCase();
   if (!key) return '';
   return pick(NOTIFICATION_TYPE_LABELS, key, isPolish) ?? humanizeEnum(key);
 }
@@ -87,7 +89,9 @@ export function notificationCategoryLabel(
   raw: string | null | undefined,
   isPolish: boolean
 ): string {
-  const key = String(raw ?? '').trim().toLowerCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   if (!key) return '';
   return pick(NOTIFICATION_CATEGORY_LABELS, key, isPolish) ?? humanizeEnum(key);
 }
@@ -116,7 +120,9 @@ const LINKED_TYPE_LABELS: Record<string, Bilingual> = {
 };
 
 export function linkedTypeLabel(raw: string | null | undefined, isPolish: boolean): string {
-  const key = String(raw ?? '').trim().toLowerCase();
+  const key = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   if (!key) return '';
   return pick(LINKED_TYPE_LABELS, key, isPolish) ?? humanizeEnum(key);
 }

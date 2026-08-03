@@ -72,9 +72,13 @@ export const DecisionCommentsSection: React.FC<DecisionCommentsSectionProps> = (
         );
       } else {
         setPostError(
-          t('myWork.decisionWorkspace.comments.errorGeneric', 'Could not post your comment. {{msg}}', {
-            msg: apiErr.data?.error || apiErr.message || '',
-          })
+          t(
+            'myWork.decisionWorkspace.comments.errorGeneric',
+            'Could not post your comment. {{msg}}',
+            {
+              msg: apiErr.data?.error || apiErr.message || '',
+            }
+          )
         );
       }
       // Draft text is intentionally NOT cleared — the user can retry.
@@ -130,7 +134,9 @@ export const DecisionCommentsSection: React.FC<DecisionCommentsSectionProps> = (
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xs font-semibold text-c-text">{authorName}</span>
-                    <span className="text-[10px] text-c-text-muted">{formatDateTime(c.createdAt)}</span>
+                    <span className="text-[10px] text-c-text-muted">
+                      {formatDateTime(c.createdAt)}
+                    </span>
                   </div>
                   <p className="mt-0.5 text-xs text-c-text-secondary whitespace-pre-wrap break-words">
                     {c.body}

@@ -27,7 +27,7 @@ import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 import { ErrorState } from '@/components/shared/states';
-import { StandardTable, type StandardRowMenu, type TableColumn } from '@/components/standard';
+import { type StandardRowMenu, StandardTable, type TableColumn } from '@/components/standard';
 import { StatusChip } from '@/components/ui/primitives/chips';
 import { V8AssessmentApi } from '@/services/api/v8';
 import type { V8AssessmentDefinitionRecord } from '@/services/api/v8/assessment';

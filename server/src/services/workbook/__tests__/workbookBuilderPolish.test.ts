@@ -35,13 +35,19 @@ const FIN_SEED: WorkbookSchema = {
         {
           cells: {
             param: { value: 'Tax rate' },
-            value: { value: 0.19, validation: { type: 'decimal', operator: 'between', min: 0, max: 1 } },
+            value: {
+              value: 0.19,
+              validation: { type: 'decimal', operator: 'between', min: 0, max: 1 },
+            },
           },
         },
         {
           cells: {
             param: { value: 'Scenario' },
-            value: { value: 'Base', validation: { type: 'list', values: ['Base', 'Bull', 'Bear'] } },
+            value: {
+              value: 'Base',
+              validation: { type: 'list', values: ['Base', 'Bull', 'Bear'] },
+            },
           },
         },
       ],
@@ -56,9 +62,30 @@ const FIN_SEED: WorkbookSchema = {
       ],
       rows: [
         // delta = 2026 - 2025 → 100000 - 120000 = -20000 (negative, same sheet)
-        { cells: { pozycja: { value: 'Przychody' }, y2025: { value: 120000 }, y2026: { value: 100000 }, delta: { formula: '=C2-B2' } } },
-        { cells: { pozycja: { value: 'COGS' }, y2025: { value: 30000 }, y2026: { value: 35000 }, delta: { formula: '=C3-B3' } } },
-        { cells: { pozycja: { value: 'TOTAL' }, y2025: { formula: '=SUM(B2:B3)' }, y2026: { formula: '=SUM(C2:C3)' }, delta: { formula: '=SUM(D2:D3)' } } },
+        {
+          cells: {
+            pozycja: { value: 'Przychody' },
+            y2025: { value: 120000 },
+            y2026: { value: 100000 },
+            delta: { formula: '=C2-B2' },
+          },
+        },
+        {
+          cells: {
+            pozycja: { value: 'COGS' },
+            y2025: { value: 30000 },
+            y2026: { value: 35000 },
+            delta: { formula: '=C3-B3' },
+          },
+        },
+        {
+          cells: {
+            pozycja: { value: 'TOTAL' },
+            y2025: { formula: '=SUM(B2:B3)' },
+            y2026: { formula: '=SUM(C2:C3)' },
+            delta: { formula: '=SUM(D2:D3)' },
+          },
+        },
       ],
     },
   ],
@@ -110,13 +137,27 @@ describe('polish/1 — fullCalcOnLoad + cached trivial formula results', () => {
     const seed: WorkbookSchema = {
       title: 't',
       sheets: [
-        { name: 'Assumptions', columns: [{ key: 'k', header: 'K' }, { key: 'v', header: 'V', type: 'number' }], rows: [{ cells: { k: { value: 'rate' }, v: { value: 5 } } }] },
-        { name: 'Calc', columns: [{ key: 'a', header: 'A', type: 'number' }], rows: [{ cells: { a: { formula: "=Assumptions!B2*2" } } }] },
+        {
+          name: 'Assumptions',
+          columns: [
+            { key: 'k', header: 'K' },
+            { key: 'v', header: 'V', type: 'number' },
+          ],
+          rows: [{ cells: { k: { value: 'rate' }, v: { value: 5 } } }],
+        },
+        {
+          name: 'Calc',
+          columns: [{ key: 'a', header: 'A', type: 'number' }],
+          rows: [{ cells: { a: { formula: '=Assumptions!B2*2' } } }],
+        },
       ],
     };
     const buf = await buildWorkbookBuffer(seed);
     const wb = await load(buf);
-    const cell = wb.getWorksheet('Calc')!.getRow(2).getCell(1).value as { formula?: string; result?: unknown };
+    const cell = wb.getWorksheet('Calc')!.getRow(2).getCell(1).value as {
+      formula?: string;
+      result?: unknown;
+    };
     expect(cell.formula).toContain('Assumptions');
     expect(cell.result).toBeUndefined();
   });
@@ -128,7 +169,10 @@ describe('polish/1 — fullCalcOnLoad + cached trivial formula results', () => {
       sheets: [
         {
           name: 'S',
-          columns: [{ key: 'a', header: 'A', type: 'number' }, { key: 'b', header: 'B', type: 'number' }],
+          columns: [
+            { key: 'a', header: 'A', type: 'number' },
+            { key: 'b', header: 'B', type: 'number' },
+          ],
           rows: [
             { cells: { a: { value: 10 }, b: { formula: '=A2' } } },
             { cells: { a: { formula: '=B2+1' }, b: { value: 3 } } }, // A3 depends on B2 (a formula)
@@ -194,7 +238,14 @@ describe('polish/3 — named ranges from Assumptions inputs', () => {
     const seed: WorkbookSchema = {
       title: 't',
       sheets: [
-        { name: 'Data', columns: [{ key: 'k', header: 'K' }, { key: 'v', header: 'V', type: 'number' }], rows: [{ cells: { k: { value: 'foo' }, v: { value: 1 } } }] },
+        {
+          name: 'Data',
+          columns: [
+            { key: 'k', header: 'K' },
+            { key: 'v', header: 'V', type: 'number' },
+          ],
+          rows: [{ cells: { k: { value: 'foo' }, v: { value: 1 } } }],
+        },
       ],
     };
     const buf = await buildWorkbookBuffer(seed);
@@ -206,8 +257,20 @@ describe('polish/3 — named ranges from Assumptions inputs', () => {
     const seed: WorkbookSchema = {
       title: 't',
       sheets: [
-        { name: 'Assumptions', isAssumptions: true, columns: [{ key: 'k', header: 'K' }, { key: 'v', header: 'V', type: 'number' }], rows: [{ cells: { k: { value: 'Tax rate' }, v: { value: 0.19 } } }] },
-        { name: 'Calc', columns: [{ key: 'a', header: 'A', type: 'number' }], rows: [{ cells: { a: { formula: '=Assumptions!B2' } } }] },
+        {
+          name: 'Assumptions',
+          isAssumptions: true,
+          columns: [
+            { key: 'k', header: 'K' },
+            { key: 'v', header: 'V', type: 'number' },
+          ],
+          rows: [{ cells: { k: { value: 'Tax rate' }, v: { value: 0.19 } } }],
+        },
+        {
+          name: 'Calc',
+          columns: [{ key: 'a', header: 'A', type: 'number' }],
+          rows: [{ cells: { a: { formula: '=Assumptions!B2' } } }],
+        },
       ],
     };
     const buf = await buildWorkbookBuffer(seed);
@@ -258,7 +321,12 @@ describe('polish/4 — data validation on Assumptions inputs', () => {
           isAssumptions: true,
           columns: [
             { key: 'k', header: 'K' },
-            { key: 'v', header: 'V', type: 'number', validation: { type: 'whole', operator: 'greaterThan', min: 0 } },
+            {
+              key: 'v',
+              header: 'V',
+              type: 'number',
+              validation: { type: 'whole', operator: 'greaterThan', min: 0 },
+            },
           ],
           rows: [
             { cells: { k: { value: 'a' }, v: { value: 5 } } },

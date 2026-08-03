@@ -33,6 +33,7 @@ import {
   LayoutTemplate,
   Lightbulb,
   Link2,
+  type LucideIcon,
   MessageSquare,
   MessagesSquare,
   MousePointer2,
@@ -46,14 +47,9 @@ import {
   Trash2,
   Wand2,
   Workflow,
-  type LucideIcon,
 } from 'lucide-react';
 
-import {
-  getActionsForSurface,
-  runIdeaAction,
-  type IconName,
-} from '@/actions/ideaActionRegistry';
+import { getActionsForSurface, type IconName, runIdeaAction } from '@/actions/ideaActionRegistry';
 import type {
   RightRailToolDescriptor,
   TopBarChipDescriptor,
@@ -414,12 +410,7 @@ export type IdeaCanvasRightToolId =
  * `disabled` / `disabledReasons`, bo host (`IdeaMapWorkspace`, poza zakresem
  * tej zmiany) woła builder starymi kluczami. Mapowanie: patrz `LEGACY_NA_KANON`.
  */
-export type IdeaCanvasRightToolLegacyId =
-  | 'problem'
-  | 'status'
-  | 'inspector'
-  | 'convert'
-  | 'health';
+export type IdeaCanvasRightToolLegacyId = 'problem' | 'status' | 'inspector' | 'convert' | 'health';
 
 const LEGACY_NA_KANON: Record<IdeaCanvasRightToolLegacyId, IdeaCanvasRightToolId | null> = {
   problem: 'overview',
@@ -487,9 +478,7 @@ export function buildIdeaCanvasRightRailTools(args?: {
   disabledReasons?: Partial<Record<KluczEtykiety, string>>;
 }): RightRailToolDescriptor[] {
   const polski = args?.isPolish ?? wykryjPolski(args?.labels);
-  const bazowe = polski
-    ? IDEA_CANVAS_RIGHT_RAIL_LABELS_PL
-    : DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS;
+  const bazowe = polski ? IDEA_CANVAS_RIGHT_RAIL_LABELS_PL : DEFAULT_IDEA_CANVAS_RIGHT_RAIL_LABELS;
 
   // Z kluczy starych bierzemy WYŁĄCZNIE stan wyłączenia i powód — etykiety
   // opisywały inne zakładki, więc byłyby mylące.

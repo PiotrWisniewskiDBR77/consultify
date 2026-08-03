@@ -15,10 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-const GATEWAY_PATH = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../Gateway.ts'
-);
+const GATEWAY_PATH = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../Gateway.ts');
 
 function readGatewaySource(): string {
   return fs.readFileSync(GATEWAY_PATH, 'utf8');

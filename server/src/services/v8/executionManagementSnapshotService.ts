@@ -59,7 +59,9 @@ export async function getExecutionManagementSnapshot(
   deps: QueryDeps = defaultDeps
 ): Promise<ExecutionManagementSnapshot | null> {
   const projectClause = projectId ? ' AND i.project_id = ?' : '';
-  const params = projectId ? [initiativeId, organizationId, projectId] : [initiativeId, organizationId];
+  const params = projectId
+    ? [initiativeId, organizationId, projectId]
+    : [initiativeId, organizationId];
   const initiative = await deps.get<InitiativeRow>(
     `SELECT i.id,
             i.project_id as "projectId",

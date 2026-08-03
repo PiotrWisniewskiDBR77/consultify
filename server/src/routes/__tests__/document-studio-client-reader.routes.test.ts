@@ -134,7 +134,10 @@ function createApp(): Express {
   return app;
 }
 
-async function mintLink(app: Express, accessScope: string): Promise<{ token: string; shareLinkId: string }> {
+async function mintLink(
+  app: Express,
+  accessScope: string
+): Promise<{ token: string; shareLinkId: string }> {
   mockUser = { id: 'user-reader-1', organizationId: ORG, role: 'CONSULTANT' };
   const created = await request(app)
     .post(`/api/document-studio/${ARTIFACT}/share-links`)

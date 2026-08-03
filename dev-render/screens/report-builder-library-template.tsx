@@ -40,8 +40,8 @@
  */
 import React from 'react';
 
-import { Api } from '../../src/services/api';
 import { AppProviders } from '../../src/providers/AppProviders';
+import { Api } from '../../src/services/api';
 import { ReportBuilderView } from '../../src/views/ReportBuilderView';
 import { seedRealisticSession } from '../mocks/seedStore';
 
@@ -87,7 +87,11 @@ if (tenEkran && !g.__RB_LIB_TPL_FETCH__) {
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url =
-      typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
 
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
 

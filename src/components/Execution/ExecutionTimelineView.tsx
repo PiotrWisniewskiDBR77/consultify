@@ -26,8 +26,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
 import { FullInitiative, InitiativeStatus } from '../../types';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 

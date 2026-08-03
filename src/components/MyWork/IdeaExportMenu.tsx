@@ -209,7 +209,12 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   // P0-2 guard rail: parsing no longer imports immediately — it stages the
   // parsed graph here until the user explicitly confirms the replacement.
   const [pendingImport, setPendingImport] = useState<{
-    parsed: { nodes: any[]; edges: any[]; extensions?: Record<string, unknown>; mappingReport?: string[] };
+    parsed: {
+      nodes: any[];
+      edges: any[];
+      extensions?: Record<string, unknown>;
+      mappingReport?: string[];
+    };
     sourceFormat: 'drawio_xml' | 'bpmn_xml' | 'diagram_package';
   } | null>(null);
   const [importBusy, setImportBusy] = useState(false);
@@ -287,6 +292,8 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
   // tylko znaki wrogie systemom plikow.
   const safeFilename =
     (title || '')
+      // Control characters are intentionally excluded from exported filenames.
+      // eslint-disable-next-line no-control-regex
       .replace(/[\\/:*?"<>| -]/g, ' ')
       .trim()
       .replace(/\s+/g, '_')
@@ -1019,7 +1026,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         {exportError && (
           <div className="mx-5 mb-1 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3 dark:border-amber-500/40 dark:bg-amber-950/30">
             <div className="flex items-start gap-2">
-              <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <AlertTriangle
+                size={14}
+                className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400"
+              />
               <div className="flex-1">
                 <div className="text-[12px] font-bold text-amber-800 dark:text-amber-200">
                   {t('myWorkIdeas.exportMenu.exportFailedTitle', {

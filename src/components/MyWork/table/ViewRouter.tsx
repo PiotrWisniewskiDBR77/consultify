@@ -54,9 +54,9 @@ import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
 import type { ColumnDef, FilterGroup, SortConfig, TableEdge, TableNode } from './tableTypes';
 import { TimelineView } from './TimelineView';
-import { buildDateColumnSeedPlan } from './ViewSetupEmptyState';
 import type { ViewLayout } from './useTableViews';
 import ViewErrorBoundary from './ViewErrorBoundary';
+import { buildDateColumnSeedPlan } from './ViewSetupEmptyState';
 import { ViewSwitcher } from './ViewSwitcher';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -388,7 +388,11 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   const extendSelectionTo = useCallback(
     (rowId: string, colKey: string) => {
       setSelRange((prev) => ({
-        anchor: prev?.anchor ?? (focusedRowId && focusedColKey ? { rowId: focusedRowId, colKey: focusedColKey } : { rowId, colKey }),
+        anchor:
+          prev?.anchor ??
+          (focusedRowId && focusedColKey
+            ? { rowId: focusedRowId, colKey: focusedColKey }
+            : { rowId, colKey }),
         focus: { rowId, colKey },
       }));
       pendingDomFocusRef.current = true;
@@ -1115,9 +1119,7 @@ export const PlatformGridView: React.FC<PlatformGridViewProps> = ({
             className="bg-c-surface rounded-xl shadow-xl border border-c-border p-4 w-80"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold mb-2 text-c-text">
-              {isPl ? 'Notatka' : 'Note'}
-            </h3>
+            <h3 className="text-sm font-semibold mb-2 text-c-text">{isPl ? 'Notatka' : 'Note'}</h3>
             <textarea
               autoFocus
               value={noteEditor.value}

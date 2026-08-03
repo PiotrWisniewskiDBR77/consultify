@@ -9,11 +9,11 @@
  * is NEUTRAL — no per-stage colour, the dot is a single `c-info` tone.
  */
 
-import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import React from 'react';
 
-import { bucketIdeaStageForList, getIdeaStageBucketLabel } from './ideaEntryTypes';
 import { IDEA_TOOL_ICON } from './ideaCanvasMelsChips';
+import { bucketIdeaStageForList, getIdeaStageBucketLabel } from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 // ── Tool identity icon ──────────────────────────────────────────────────────

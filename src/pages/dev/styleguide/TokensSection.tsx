@@ -159,10 +159,7 @@ export const TokensSection: React.FC = () => {
       <div className="flex flex-wrap items-end gap-3">
         {SPACING_SCALE.map((px) => (
           <div key={px} className="flex flex-col items-center gap-1">
-            <div
-              className="rounded-token-xs bg-c-accent/30"
-              style={{ width: px, height: 20 }}
-            />
+            <div className="rounded-token-xs bg-c-accent/30" style={{ width: px, height: 20 }} />
             <span className="text-[10px] text-c-text-muted">{px}px</span>
           </div>
         ))}
@@ -172,7 +169,9 @@ export const TokensSection: React.FC = () => {
       <div className="flex flex-wrap items-end gap-4">
         {RADIUS_SCALE.map((r) => (
           <div key={r.token} className="flex flex-col items-center gap-1">
-            <div className={`h-12 w-12 border border-c-border bg-c-surface-raised ${r.className}`} />
+            <div
+              className={`h-12 w-12 border border-c-border bg-c-surface-raised ${r.className}`}
+            />
             <span className="text-[10px] text-c-text-muted">
               {r.token} ({r.px})
             </span>

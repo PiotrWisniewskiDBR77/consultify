@@ -17,17 +17,17 @@ import logger from '../../utils/Logger.js';
 import { AIPipeline } from '../ai/AIPipeline.js';
 import { createP23Error, type P23ClassifiedError } from '../v8/exceleCanon.js';
 import {
-  buildWorkbookBuffer,
-  classifyBuildError,
-  validateWorkbookSchema,
-} from './WorkbookBuilder.js';
-import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
-import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
-import {
   buildFromTemplateFlat,
   listWorkbookTemplates,
   type WorkbookTemplateId,
 } from './templates/index.js';
+import {
+  buildWorkbookBuffer,
+  classifyBuildError,
+  validateWorkbookSchema,
+} from './WorkbookBuilder.js';
+import { critiqueWorkbook, type WorkbookQualityReport } from './workbookQualityGate.js';
+import { type WorkbookSchema, WorkbookSchemaValidator } from './WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -301,7 +301,7 @@ FORMULA REFERENCE (write the BODY only — no leading "="):
 - Growth off an assumption: "B2*(1+'Assumptions'!B3)"
 - Conditional: "IF(B2>0,B2*'Assumptions'!B4,0)"
 - Percentage / share-of-total: "B2/B$12"
-- Scenario pick (paired with scenarioSwitch): "CHOOSE(MATCH($B$1,{\"Base\",\"Bull\",\"Bear\"},0),C4,D4,E4)"
+- Scenario pick (paired with scenarioSwitch): "CHOOSE(MATCH($B$1,{"Base","Bull","Bear"},0),C4,D4,E4)"
 
 MODELING PRIMITIVES (prefer these over brute-force copies — they are what an equity-research-grade model uses):
 - scenarioSwitch: build ONE P&L/model sheet whose drivers flip with a dropdown, instead of 3 near-duplicate Base/Bull/Bear sheets. Put it on the sheet as "scenarioSwitch": list the scenarios, the driver rows (one value per scenario), the label/active/scenario columns, and the selector cell. The builder writes the dropdown + CHOOSE/MATCH selection formulas — you do NOT hand-write those.
@@ -690,8 +690,15 @@ class WorkbookGeneratorService {
   // =========================================================================
 
   async generate(params: WorkbookGenerationParams): Promise<WorkbookGenerationResult> {
-    const { prompt, userId, organizationId, projectId, researchContext, language, organizationName } =
-      params;
+    const {
+      prompt,
+      userId,
+      organizationId,
+      projectId,
+      researchContext,
+      language,
+      organizationName,
+    } = params;
     const id = uuidv4();
     const llmParams = { userId, organizationId, projectId };
     const pipelineLog: PipelinePhaseLog[] = [];
@@ -765,193 +772,195 @@ class WorkbookGeneratorService {
         detail: 'No registered template matched — using free-form PLAN→CONFIRM→GENERATE pipeline.',
       });
 
-    // =====================================================================
-    // PHASE 1: PLAN — LLM analyzes request and decomposes into structure
-    // =====================================================================
-    let plan = '';
-    const p1Start = Date.now();
-    try {
-      plan = await this.callLLM(
-        PLANNING_SYSTEM_PROMPT,
-        `User request: ${userPrompt}\n\nAnalyze this request and produce a workbook plan as JSON.`,
-        llmParams,
-        4000,
-        'workbook_plan'
-      );
-      pipelineLog.push({
-        phase: 'plan',
-        status: 'ok',
-        durationMs: Date.now() - p1Start,
-        detail: `${plan.length} chars`,
-      });
-      logger.info(
-        `[WorkbookGenerator] Phase 1 PLAN: OK (${plan.length} chars, ${Date.now() - p1Start}ms)`
-      );
-    } catch (err) {
-      pipelineLog.push({
-        phase: 'plan',
-        status: 'failed',
-        durationMs: Date.now() - p1Start,
-        detail: String(err),
-      });
-      logger.warn(`[WorkbookGenerator] Phase 1 PLAN: FAILED, continuing without plan`, err);
-    }
-
-    // =====================================================================
-    // PHASE 2: CONFIRM — validate plan against user intent
-    // =====================================================================
-    let confirmedPlan = plan;
-    const p2Start = Date.now();
-
-    if (plan) {
+      // =====================================================================
+      // PHASE 1: PLAN — LLM analyzes request and decomposes into structure
+      // =====================================================================
+      let plan = '';
+      const p1Start = Date.now();
       try {
-        const confirmationResponse = await this.callLLM(
-          CONFIRMATION_SYSTEM_PROMPT,
-          `ORIGINAL USER REQUEST:\n${userPrompt}\n\nPLAN TO REVIEW:\n${plan}\n\nReview this plan and return your assessment as JSON.`,
+        plan = await this.callLLM(
+          PLANNING_SYSTEM_PROMPT,
+          `User request: ${userPrompt}\n\nAnalyze this request and produce a workbook plan as JSON.`,
           llmParams,
           4000,
-          'workbook_confirm'
+          'workbook_plan'
         );
+        pipelineLog.push({
+          phase: 'plan',
+          status: 'ok',
+          durationMs: Date.now() - p1Start,
+          detail: `${plan.length} chars`,
+        });
+        logger.info(
+          `[WorkbookGenerator] Phase 1 PLAN: OK (${plan.length} chars, ${Date.now() - p1Start}ms)`
+        );
+      } catch (err) {
+        pipelineLog.push({
+          phase: 'plan',
+          status: 'failed',
+          durationMs: Date.now() - p1Start,
+          detail: String(err),
+        });
+        logger.warn(`[WorkbookGenerator] Phase 1 PLAN: FAILED, continuing without plan`, err);
+      }
 
-        const confirmResult = extractJsonFromResponse(confirmationResponse);
-        if (confirmResult && typeof confirmResult === 'object') {
-          const cr = confirmResult as any;
-          const approved = cr.approved === true;
-          const confidence = typeof cr.confidence === 'number' ? cr.confidence : 0;
-          const issueCount = Array.isArray(cr.issues) ? cr.issues.length : 0;
-          const criticalIssues = Array.isArray(cr.issues)
-            ? cr.issues.filter((i: any) => i.severity === 'critical').length
-            : 0;
-          const missingCount = Array.isArray(cr.missing_elements) ? cr.missing_elements.length : 0;
+      // =====================================================================
+      // PHASE 2: CONFIRM — validate plan against user intent
+      // =====================================================================
+      let confirmedPlan = plan;
+      const p2Start = Date.now();
 
-          if (!approved && cr.revised_plan) {
-            confirmedPlan =
-              typeof cr.revised_plan === 'string'
-                ? cr.revised_plan
-                : JSON.stringify(cr.revised_plan);
-            pipelineLog.push({
-              phase: 'confirm',
-              status: 'warning',
-              durationMs: Date.now() - p2Start,
-              detail: `NOT approved (confidence=${confidence.toFixed(2)}, ${criticalIssues} critical, ${issueCount} total issues, ${missingCount} missing). Using revised plan.`,
-            });
-            logger.info(
-              `[WorkbookGenerator] Phase 2 CONFIRM: Plan revised (${issueCount} issues, ${missingCount} missing)`
-            );
-          } else if (!approved) {
-            pipelineLog.push({
-              phase: 'confirm',
-              status: 'warning',
-              durationMs: Date.now() - p2Start,
-              detail: `NOT approved but no revised plan provided (confidence=${confidence.toFixed(2)}). Proceeding with original.`,
-            });
-            logger.warn(
-              `[WorkbookGenerator] Phase 2 CONFIRM: Not approved but no revised plan, using original`
-            );
+      if (plan) {
+        try {
+          const confirmationResponse = await this.callLLM(
+            CONFIRMATION_SYSTEM_PROMPT,
+            `ORIGINAL USER REQUEST:\n${userPrompt}\n\nPLAN TO REVIEW:\n${plan}\n\nReview this plan and return your assessment as JSON.`,
+            llmParams,
+            4000,
+            'workbook_confirm'
+          );
+
+          const confirmResult = extractJsonFromResponse(confirmationResponse);
+          if (confirmResult && typeof confirmResult === 'object') {
+            const cr = confirmResult as any;
+            const approved = cr.approved === true;
+            const confidence = typeof cr.confidence === 'number' ? cr.confidence : 0;
+            const issueCount = Array.isArray(cr.issues) ? cr.issues.length : 0;
+            const criticalIssues = Array.isArray(cr.issues)
+              ? cr.issues.filter((i: any) => i.severity === 'critical').length
+              : 0;
+            const missingCount = Array.isArray(cr.missing_elements)
+              ? cr.missing_elements.length
+              : 0;
+
+            if (!approved && cr.revised_plan) {
+              confirmedPlan =
+                typeof cr.revised_plan === 'string'
+                  ? cr.revised_plan
+                  : JSON.stringify(cr.revised_plan);
+              pipelineLog.push({
+                phase: 'confirm',
+                status: 'warning',
+                durationMs: Date.now() - p2Start,
+                detail: `NOT approved (confidence=${confidence.toFixed(2)}, ${criticalIssues} critical, ${issueCount} total issues, ${missingCount} missing). Using revised plan.`,
+              });
+              logger.info(
+                `[WorkbookGenerator] Phase 2 CONFIRM: Plan revised (${issueCount} issues, ${missingCount} missing)`
+              );
+            } else if (!approved) {
+              pipelineLog.push({
+                phase: 'confirm',
+                status: 'warning',
+                durationMs: Date.now() - p2Start,
+                detail: `NOT approved but no revised plan provided (confidence=${confidence.toFixed(2)}). Proceeding with original.`,
+              });
+              logger.warn(
+                `[WorkbookGenerator] Phase 2 CONFIRM: Not approved but no revised plan, using original`
+              );
+            } else {
+              pipelineLog.push({
+                phase: 'confirm',
+                status: 'ok',
+                durationMs: Date.now() - p2Start,
+                detail: `Approved (confidence=${confidence.toFixed(2)}, ${issueCount} minor issues)`,
+              });
+              logger.info(
+                `[WorkbookGenerator] Phase 2 CONFIRM: Approved (confidence=${confidence.toFixed(2)})`
+              );
+            }
           } else {
             pipelineLog.push({
               phase: 'confirm',
-              status: 'ok',
+              status: 'warning',
               durationMs: Date.now() - p2Start,
-              detail: `Approved (confidence=${confidence.toFixed(2)}, ${issueCount} minor issues)`,
+              detail: 'Could not parse confirmation response',
             });
-            logger.info(
-              `[WorkbookGenerator] Phase 2 CONFIRM: Approved (confidence=${confidence.toFixed(2)})`
-            );
           }
-        } else {
+        } catch (err) {
           pipelineLog.push({
             phase: 'confirm',
-            status: 'warning',
+            status: 'failed',
             durationMs: Date.now() - p2Start,
-            detail: 'Could not parse confirmation response',
+            detail: String(err),
           });
+          logger.warn(`[WorkbookGenerator] Phase 2 CONFIRM: FAILED, using original plan`, err);
         }
-      } catch (err) {
+      } else {
         pipelineLog.push({
           phase: 'confirm',
-          status: 'failed',
-          durationMs: Date.now() - p2Start,
-          detail: String(err),
+          status: 'skipped',
+          durationMs: 0,
+          detail: 'No plan to confirm',
         });
-        logger.warn(`[WorkbookGenerator] Phase 2 CONFIRM: FAILED, using original plan`, err);
       }
-    } else {
-      pipelineLog.push({
-        phase: 'confirm',
-        status: 'skipped',
-        durationMs: 0,
-        detail: 'No plan to confirm',
-      });
-    }
 
-    // =====================================================================
-    // PHASE 3: GENERATE — LLM produces the WorkbookSchema JSON
-    // =====================================================================
-    const p3Start = Date.now();
-    const maxAttempts = 3;
+      // =====================================================================
+      // PHASE 3: GENERATE — LLM produces the WorkbookSchema JSON
+      // =====================================================================
+      const p3Start = Date.now();
+      const maxAttempts = 3;
 
-    generationPrompt = confirmedPlan
-      ? `CONFIRMED PLAN:\n${confirmedPlan}\n\nORIGINAL USER REQUEST:\n${userPrompt}\n\nProduce the complete WorkbookSchema JSON following the confirmed plan. Return ONLY the JSON.`
-      : `USER REQUEST:\n${userPrompt}\n\nProduce a complete WorkbookSchema JSON. Return ONLY the JSON.`;
+      generationPrompt = confirmedPlan
+        ? `CONFIRMED PLAN:\n${confirmedPlan}\n\nORIGINAL USER REQUEST:\n${userPrompt}\n\nProduce the complete WorkbookSchema JSON following the confirmed plan. Return ONLY the JSON.`
+        : `USER REQUEST:\n${userPrompt}\n\nProduce a complete WorkbookSchema JSON. Return ONLY the JSON.`;
 
-    let currentPrompt = generationPrompt;
+      let currentPrompt = generationPrompt;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const content = await this.callLLM(
-          GENERATION_SYSTEM_PROMPT,
-          currentPrompt,
-          llmParams,
-          16000,
-          'workbook_generate'
-        );
-
-        const parsed = extractJsonFromResponse(content);
-
-        if (!parsed) {
-          logger.warn(
-            `[WorkbookGenerator] Phase 3 attempt ${attempt}: No valid JSON (${content.length} chars)`
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const content = await this.callLLM(
+            GENERATION_SYSTEM_PROMPT,
+            currentPrompt,
+            llmParams,
+            16000,
+            'workbook_generate'
           );
-          if (attempt === maxAttempts)
-            throw new Error('LLM did not return valid JSON after 3 attempts');
-          currentPrompt = `${generationPrompt}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a JSON object starting with { and ending with }. No markdown, no backticks, no explanation.`;
-          continue;
-        }
 
-        const validated = WorkbookSchemaValidator.safeParse(parsed);
-        if (!validated.success) {
-          const errorSummary = validated.error.issues
-            .map((e) => `${e.path.join('.')}: ${e.message}`)
-            .join('; ');
-          logger.warn(
-            `[WorkbookGenerator] Phase 3 attempt ${attempt}: Validation failed: ${errorSummary}`
-          );
-          if (attempt === maxAttempts) {
-            schema = this.repairSchema(parsed as any);
-            break;
+          const parsed = extractJsonFromResponse(content);
+
+          if (!parsed) {
+            logger.warn(
+              `[WorkbookGenerator] Phase 3 attempt ${attempt}: No valid JSON (${content.length} chars)`
+            );
+            if (attempt === maxAttempts)
+              throw new Error('LLM did not return valid JSON after 3 attempts');
+            currentPrompt = `${generationPrompt}\n\nIMPORTANT: Your previous response was not valid JSON. Return ONLY a JSON object starting with { and ending with }. No markdown, no backticks, no explanation.`;
+            continue;
           }
-          currentPrompt = `${generationPrompt}\n\nYour previous JSON had these validation errors:\n${errorSummary}\n\nFix these issues and return valid JSON only.`;
-          continue;
+
+          const validated = WorkbookSchemaValidator.safeParse(parsed);
+          if (!validated.success) {
+            const errorSummary = validated.error.issues
+              .map((e) => `${e.path.join('.')}: ${e.message}`)
+              .join('; ');
+            logger.warn(
+              `[WorkbookGenerator] Phase 3 attempt ${attempt}: Validation failed: ${errorSummary}`
+            );
+            if (attempt === maxAttempts) {
+              schema = this.repairSchema(parsed as any);
+              break;
+            }
+            currentPrompt = `${generationPrompt}\n\nYour previous JSON had these validation errors:\n${errorSummary}\n\nFix these issues and return valid JSON only.`;
+            continue;
+          }
+
+          schema = validated.data;
+          break;
+        } catch (err) {
+          logger.error(`[WorkbookGenerator] Phase 3 attempt ${attempt} failed:`, err);
+          if (attempt === maxAttempts) throw err;
         }
-
-        schema = validated.data;
-        break;
-      } catch (err) {
-        logger.error(`[WorkbookGenerator] Phase 3 attempt ${attempt} failed:`, err);
-        if (attempt === maxAttempts) throw err;
       }
-    }
 
-    pipelineLog.push({
-      phase: 'generate',
-      status: 'ok',
-      durationMs: Date.now() - p3Start,
-      detail: `"${schema!.title}" — ${schema!.sheets.length} sheets, ${schema!.sheets.reduce((sum, s) => sum + s.rows.length, 0)} total rows`,
-    });
-    logger.info(
-      `[WorkbookGenerator] Phase 3 GENERATE: OK — "${schema!.title}" with ${schema!.sheets.length} sheets`
-    );
+      pipelineLog.push({
+        phase: 'generate',
+        status: 'ok',
+        durationMs: Date.now() - p3Start,
+        detail: `"${schema!.title}" — ${schema!.sheets.length} sheets, ${schema!.sheets.reduce((sum, s) => sum + s.rows.length, 0)} total rows`,
+      });
+      logger.info(
+        `[WorkbookGenerator] Phase 3 GENERATE: OK — "${schema!.title}" with ${schema!.sheets.length} sheets`
+      );
     } // end: no template matched — free-form PLAN→CONFIRM→GENERATE branch
 
     // =====================================================================
@@ -1109,7 +1118,7 @@ class WorkbookGeneratorService {
     if (!qualityReport.passed && WORKBOOK_REPAIR_MAX_ITERS > 0) {
       logger.info(
         `[WorkbookGenerator] Phase 5 REPAIR: critic failed (score=${qualityReport.score}, ` +
-          `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical) — entering bounded repair loop`,
+          `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical) — entering bounded repair loop`
       );
 
       for (let iter = 1; iter <= WORKBOOK_REPAIR_MAX_ITERS && !qualityReport.passed; iter++) {
@@ -1118,7 +1127,7 @@ class WorkbookGeneratorService {
         const defectList = qualityReport.issues
           .map(
             (i) =>
-              `- [${i.severity}] ${i.code} on sheet "${i.sheet}"${i.cell ? ` cell ${i.cell}` : ''}: ${i.message}${i.fix ? ` → Fix: ${i.fix}` : ''}`,
+              `- [${i.severity}] ${i.code} on sheet "${i.sheet}"${i.cell ? ` cell ${i.cell}` : ''}: ${i.message}${i.fix ? ` → Fix: ${i.fix}` : ''}`
           )
           .join('\n');
 
@@ -1153,7 +1162,7 @@ class WorkbookGeneratorService {
                 detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: score ${qualityReport.score}/100, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}.`,
               });
               logger.info(
-                `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: score=${qualityReport.score}, passed=${qualityReport.passed}`,
+                `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: score=${qualityReport.score}, passed=${qualityReport.passed}`
               );
             } else {
               pipelineLog.push({
@@ -1162,7 +1171,9 @@ class WorkbookGeneratorService {
                 durationMs: Date.now() - repairStart,
                 detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: LLM output did not improve quality (kept prior schema).`,
               });
-              logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: no improvement, keeping prior schema`);
+              logger.warn(
+                `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: no improvement, keeping prior schema`
+              );
               break; // brak poprawy — nie marnujemy kolejnych iteracji
             }
           } else {
@@ -1172,7 +1183,9 @@ class WorkbookGeneratorService {
               durationMs: Date.now() - repairStart,
               detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS}: LLM returned no valid schema (kept prior).`,
             });
-            logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: invalid repair schema, keeping prior`);
+            logger.warn(
+              `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: invalid repair schema, keeping prior`
+            );
             break;
           }
         } catch (repairErr) {
@@ -1182,7 +1195,10 @@ class WorkbookGeneratorService {
             durationMs: Date.now() - repairStart,
             detail: `Repair pass ${iter}/${WORKBOOK_REPAIR_MAX_ITERS} threw: ${String(repairErr)} (kept prior schema).`,
           });
-          logger.warn(`[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: threw, keeping prior schema`, repairErr);
+          logger.warn(
+            `[WorkbookGenerator] Phase 5 REPAIR pass ${iter}: threw, keeping prior schema`,
+            repairErr
+          );
           break;
         }
       }
@@ -1190,7 +1206,7 @@ class WorkbookGeneratorService {
       if (!qualityReport.passed) {
         logger.warn(
           `[WorkbookGenerator] Phase 5 REPAIR: exhausted ${WORKBOOK_REPAIR_MAX_ITERS} pass(es), building fail-soft with ` +
-            `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical issue(s) remaining`,
+            `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical issue(s) remaining`
         );
       }
     }
@@ -1198,7 +1214,10 @@ class WorkbookGeneratorService {
     for (const iss of qualityReport.issues) {
       // Klasyfikuj wg kanonu P23 (kod z krytyka), dołącz do telemetrii błędów.
       classifiedErrors.push(
-        createP23Error(iss.canonCode, `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`),
+        createP23Error(
+          iss.canonCode,
+          `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`
+        )
       );
     }
     if (qualityReport.issues.length > 0) {
@@ -1211,7 +1230,7 @@ class WorkbookGeneratorService {
         } critical (fail-soft: reported, build continues).`,
       });
       logger.info(
-        `[WorkbookGenerator] Phase 5 QUALITY GATE: score=${qualityReport.score}, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}`,
+        `[WorkbookGenerator] Phase 5 QUALITY GATE: score=${qualityReport.score}, ${qualityReport.issues.length} issue(s), passed=${qualityReport.passed}`
       );
     }
 
@@ -1324,8 +1343,8 @@ class WorkbookGeneratorService {
       classifiedErrors.push(
         createP23Error(
           iss.canonCode,
-          `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`,
-        ),
+          `${iss.code} [${iss.sheet}${iss.cell ? `!${iss.cell}` : ''}] ${iss.message}`
+        )
       );
     }
 
@@ -1357,7 +1376,7 @@ class WorkbookGeneratorService {
     });
 
     logger.info(
-      `[WorkbookGenerator] Template build complete: "${schema.title}" — ${schema.sheets.length} sheets, ${buffer.length} bytes, quality=${qualityReport.score}/100`,
+      `[WorkbookGenerator] Template build complete: "${schema.title}" — ${schema.sheets.length} sheets, ${buffer.length} bytes, quality=${qualityReport.score}/100`
     );
 
     return {

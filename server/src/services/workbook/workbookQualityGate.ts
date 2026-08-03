@@ -56,9 +56,9 @@
  * Każde znalezisko CRITICAL niesie `blocking: true` (nie przepuszczamy takiego arkusza dalej).
  */
 
-import { createP23Error, type P23ErrorCode } from '../v8/exceleCanon.js';
-import type { WorkbookSchema, Sheet, Row, ColumnDef } from './WorkbookSchema.js';
 import logger from '../../utils/Logger.js';
+import { createP23Error, type P23ErrorCode } from '../v8/exceleCanon.js';
+import type { ColumnDef, Row, Sheet, WorkbookSchema } from './WorkbookSchema.js';
 
 // ── Typy ─────────────────────────────────────────────────────────────────────
 
@@ -210,7 +210,7 @@ function issue(
   severity: WorkbookIssueSeverity,
   sheet: string,
   message: string,
-  extra?: { cell?: string | null; col?: string | null; fix?: string },
+  extra?: { cell?: string | null; col?: string | null; fix?: string }
 ): WorkbookIssue {
   return {
     code,
@@ -260,17 +260,14 @@ export function parseSumRanges(formula: string): SumRange[] | null {
 
 function checkMagicNumbers(sheet: Sheet): WorkbookIssue[] {
   const out: WorkbookIssue[] = [];
-  const computedCols = new Set(
-    sheet.columns.filter(isComputedColumn).map((c) => c.key),
-  );
+  const computedCols = new Set(sheet.columns.filter(isComputedColumn).map((c) => c.key));
 
   sheet.rows.forEach((row, rowIdx) => {
     const summary = isSummaryRow(row, sheet.columns);
     sheet.columns.forEach((col, colIdx) => {
       const c = row.cells[col.key];
       if (!c) return;
-      const isConstNumber =
-        !c.formula && typeof c.value === 'number' && Number.isFinite(c.value);
+      const isConstNumber = !c.formula && typeof c.value === 'number' && Number.isFinite(c.value);
       if (!isConstNumber) return;
 
       const inComputedCol = computedCols.has(col.key);
@@ -290,8 +287,8 @@ function checkMagicNumbers(sheet: Sheet): WorkbookIssue[] {
               fix: summary
                 ? 'Zastąp stałą formułą =SUM(...) obejmującą wiersze danych.'
                 : 'Zastąp stałą formułą wyliczającą tę wartość z komórek źródłowych.',
-            },
-          ),
+            }
+          )
         );
       }
     });
@@ -358,8 +355,8 @@ function checkSumCoverage(sheet: Sheet): WorkbookIssue[] {
               cell: addr,
               col: col.key,
               fix: `Rozszerz zakres na ${letter}${expectedFrom}:${letter}${expectedTo}.`,
-            },
-          ),
+            }
+          )
         );
       } else if (overshoot.length > 0) {
         out.push(
@@ -373,8 +370,8 @@ function checkSumCoverage(sheet: Sheet): WorkbookIssue[] {
               cell: addr,
               col: col.key,
               fix: `Zawęź zakres do wierszy danych ${letter}${expectedFrom}:${letter}${expectedTo}.`,
-            },
-          ),
+            }
+          )
         );
       }
     });
@@ -437,8 +434,8 @@ function checkAssumptionsSeparation(workbook: WorkbookSchema): WorkbookIssue[] {
                 cell: addr,
                 col: col.key,
                 fix: `Zastąp stałą referencją, np. ='${assumptionsSheet.name}'!<komórka>.`,
-              },
-            ),
+              }
+            )
           );
         }
       });
@@ -497,8 +494,8 @@ function checkFormatConsistency(sheet: Sheet): WorkbookIssue[] {
             {
               col: col.key,
               fix: 'Ustaw numberFormat "0.0%" na kolumnie lub komórkach.',
-            },
-          ),
+            }
+          )
         );
       }
     }
@@ -516,8 +513,8 @@ function checkFormatConsistency(sheet: Sheet): WorkbookIssue[] {
           {
             col: col.key,
             fix: 'Ujednolić number format w całej kolumnie (jeden format na jednostkę).',
-          },
-        ),
+          }
+        )
       );
     }
 
@@ -535,8 +532,8 @@ function checkFormatConsistency(sheet: Sheet): WorkbookIssue[] {
             cell: addr,
             col: col.key,
             fix: 'Nadaj tej komórce ten sam number format co reszcie kolumny.',
-          },
-        ),
+          }
+        )
       );
     }
   });
@@ -575,8 +572,8 @@ function checkBrokenFormulaRefs(workbook: WorkbookSchema): WorkbookIssue[] {
                   cell: addr,
                   col: col.key,
                   fix: `Popraw nazwę arkusza lub dodaj arkusz „${name}".`,
-                },
-              ),
+                }
+              )
             );
           }
         }
@@ -603,8 +600,8 @@ function checkBrokenFormulaRefs(workbook: WorkbookSchema): WorkbookIssue[] {
                     cell: addr,
                     col: col.key,
                     fix: 'Popraw referencję — wskazuje poza zakres danych arkusza.',
-                  },
-                ),
+                  }
+                )
               );
               break; // jedna flaga na formułę wystarczy
             }
@@ -672,8 +669,8 @@ function checkFormulaSyntax(sheet: Sheet): WorkbookIssue[] {
             cell: addr,
             col: col.key,
             fix: 'Zapisz czystą formułę z co najwyżej jednym wiodącym „=" i niepustą treścią (np. "SUM(B2:B4)").',
-          },
-        ),
+          }
+        )
       );
     });
   });
@@ -725,8 +722,8 @@ function checkCrossSheetOutOfBounds(workbook: WorkbookSchema): WorkbookIssue[] {
                   cell: addr,
                   col: col.key,
                   fix: `Popraw referencję — „${target.name}" ma dane do ${lastCell}.`,
-                },
-              ),
+                }
+              )
             );
             break; // jedna flaga na formułę wystarczy
           }
@@ -769,11 +766,7 @@ function checkInconsistentCalcColumns(sheet: Sheet): WorkbookIssue[] {
       if (!c) return;
       if (typeof c.formula === 'string' && c.formula.trim() !== '') {
         formulaCount++;
-      } else if (
-        !c.formula &&
-        typeof c.value === 'number' &&
-        Number.isFinite(c.value)
-      ) {
+      } else if (!c.formula && typeof c.value === 'number' && Number.isFinite(c.value)) {
         constNumberCount++;
         constNumberRows.push(rowIdx);
       }
@@ -798,8 +791,8 @@ function checkInconsistentCalcColumns(sheet: Sheet): WorkbookIssue[] {
             cell: addr,
             col: col.key,
             fix: `Wstaw w ${addr} formułę spójną z resztą kolumny „${col.header}".`,
-          },
-        ),
+          }
+        )
       );
     }
   });
@@ -828,8 +821,8 @@ function checkAssumptionsLayer(workbook: WorkbookSchema): WorkbookIssue[] {
 
   const hasFormula = sheets.some((s) =>
     s.rows.some((r) =>
-      Object.values(r.cells).some((c) => typeof c?.formula === 'string' && c.formula.trim() !== ''),
-    ),
+      Object.values(r.cells).some((c) => typeof c?.formula === 'string' && c.formula.trim() !== '')
+    )
   );
   if (!hasFormula) return []; // zrzut danych, nie model
 
@@ -850,7 +843,7 @@ function checkAssumptionsLayer(workbook: WorkbookSchema): WorkbookIssue[] {
             'Dodaj arkusz „Założenia" (isAssumptions: true) ze WSZYSTKIMI surowymi wejściami ' +
             '(driver · wartość · jednostka · źródło · zakres) i podmień stałe w pozostałych arkuszach ' +
             "na referencje typu 'Założenia'!$B$3.",
-        },
+        }
       ),
     ];
   }
@@ -869,7 +862,7 @@ function checkAssumptionsLayer(workbook: WorkbookSchema): WorkbookIssue[] {
           .join(', ')}) — jeden model = JEDNO źródło wejść (doktryna §2 R-A1).`,
         {
           fix: 'Scal wejścia do jednego arkusza Założeń; pozostałe arkusze mają referować do niego.',
-        },
+        }
       ),
     ];
   }
@@ -906,7 +899,7 @@ const CYCLE_MAX_RANGE_CELLS = 5000;
 
 /** Wyciąga adresy komórek/zakresów z formuły. Zwraca surowe trójki (arkusz|null, kol, wiersz). */
 function extractCellRefs(
-  formula: string,
+  formula: string
 ): Array<{ sheet: string | null; c1: number; r1: number; c2: number; r2: number }> {
   const out: Array<{ sheet: string | null; c1: number; r1: number; c2: number; r2: number }> = [];
   const re =
@@ -1008,8 +1001,8 @@ function checkFormulaCycles(workbook: WorkbookSchema): WorkbookIssue[] {
           fix:
             'Przeprojektuj łańcuch obliczeń tak, by graf był ACYKLICZNY (doktryna §4 E3) — ' +
             'np. licz odsetki od salda OTWARCIA okresu, nie od salda średniego; total nie może sumować sam siebie.',
-        },
-      ),
+        }
+      )
     );
   };
 

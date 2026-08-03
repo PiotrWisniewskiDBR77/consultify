@@ -19,9 +19,14 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import { PlatformGridView } from '@/components/MyWork/table/ViewRouter';
 import type { FormatRule } from '@/components/MyWork/table/ConditionalFormatting';
-import type { ColumnDef, FilterGroup, SortConfig, TableNode } from '@/components/MyWork/table/tableTypes';
+import type {
+  ColumnDef,
+  FilterGroup,
+  SortConfig,
+  TableNode,
+} from '@/components/MyWork/table/tableTypes';
+import { PlatformGridView } from '@/components/MyWork/table/ViewRouter';
 import type { FieldType } from '@/types/tablePlatform';
 
 const isPl = (new URLSearchParams(window.location.search).get('lang') || 'pl') !== 'en';
@@ -36,7 +41,12 @@ const FIELDS: {
   isComputed: boolean;
 }[] = [
   { id: 'label', name: isPl ? 'Nazwa' : 'Label', fieldType: 'singleLineText', isComputed: false },
-  { id: 'owner', name: isPl ? 'Właściciel' : 'Owner', fieldType: 'singleLineText', isComputed: false },
+  {
+    id: 'owner',
+    name: isPl ? 'Właściciel' : 'Owner',
+    fieldType: 'singleLineText',
+    isComputed: false,
+  },
   { id: 'status', name: 'Status', fieldType: 'singleSelect', isComputed: false },
   { id: 'budget', name: isPl ? 'Budżet' : 'Budget', fieldType: 'number', isComputed: false },
   {
@@ -204,8 +214,7 @@ export function IdeaTableToolSortFilterScreen(): React.ReactElement {
           : 'Dev-render — header-click sort + per-column filter (PlatformGridView, Fala 7). "Budget" has a blank cell (Zofia L.) — verify it lands last in both sort directions.'}
       </div>
       <div className="mb-2 text-[11px] text-c-text-secondary">
-        sort: <code>{JSON.stringify(sort)}</code> · filters:{' '}
-        <code>{JSON.stringify(filters)}</code>
+        sort: <code>{JSON.stringify(sort)}</code> · filters: <code>{JSON.stringify(filters)}</code>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
         <PlatformGridView

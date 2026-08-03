@@ -493,10 +493,7 @@ function tryComputeFormula(rawFormula: string, grid: NumericGrid): number | null
     const val = grid.get(token);
     if (val === undefined || !Number.isFinite(val)) return null;
     // Replace the whole token; wrap negatives in parens to preserve precedence.
-    expr = expr.replace(
-      new RegExp(`\\b${token}\\b`, 'g'),
-      val < 0 ? `(${val})` : String(val)
-    );
+    expr = expr.replace(new RegExp(`\\b${token}\\b`, 'g'), val < 0 ? `(${val})` : String(val));
   }
   // After substitution only numbers/operators/parens/spaces may remain.
   if (!/^[0-9.+\-*/()\s]+$/.test(expr)) return null;
@@ -591,7 +588,8 @@ function assumptionNameRefs(
   const keyColKey = sheetDef.nameKeyColumn ?? cols[0].key;
   // Default value column: first numeric-ish column, else the 2nd column.
   const numericCol = cols.find(
-    (c) => c.type === 'number' || c.type === 'currency' || c.type === 'percent' || c.type === 'rating'
+    (c) =>
+      c.type === 'number' || c.type === 'currency' || c.type === 'percent' || c.type === 'rating'
   );
   const valueColKey = sheetDef.nameValueColumn ?? numericCol?.key ?? cols[1].key;
 
@@ -798,10 +796,7 @@ function emitScenarioSwitch(
 // Supports 1-D (no rowInputs → single output row) and 2-D grids.
 // ---------------------------------------------------------------------------
 
-function emitSensitivityTable(
-  ws: ExcelJS.Worksheet,
-  st: SensitivityTable
-): void {
+function emitSensitivityTable(ws: ExcelJS.Worksheet, st: SensitivityTable): void {
   const anchor = parseA1(st.anchorCell);
   if (!anchor) {
     logger.warn('[WorkbookBuilder] sensitivityTable skipped — bad anchorCell', {
@@ -838,7 +833,11 @@ function emitSensitivityTable(
     const cell = ws.getCell(a1(c0 + 1 + j, r0));
     cell.value = cv;
     if (headerFmt) cell.numFmt = headerFmt;
-    cell.font = { ...(cell.font ?? {}), bold: true, color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) } };
+    cell.font = {
+      ...(cell.font ?? {}),
+      bold: true,
+      color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) },
+    };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
     cell.alignment = { horizontal: 'center' };
   });
@@ -851,7 +850,11 @@ function emitSensitivityTable(
       const rc = ws.getCell(a1(c0, rowNum));
       rc.value = rv as number;
       if (headerFmt) rc.numFmt = headerFmt;
-      rc.font = { ...(rc.font ?? {}), bold: true, color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) } };
+      rc.font = {
+        ...(rc.font ?? {}),
+        bold: true,
+        color: { argb: hexToArgb(FONT_COLOR_INPUT_HEX) },
+      };
       rc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2F7' } };
       rc.alignment = { horizontal: 'center' };
     }
@@ -871,7 +874,9 @@ function emitSensitivityTable(
         ...(cell.font ?? {}),
         color: {
           argb: hexToArgb(
-            formulaReferencesOtherSheet(formula) ? FONT_COLOR_CROSS_SHEET_HEX : FONT_COLOR_FORMULA_HEX
+            formulaReferencesOtherSheet(formula)
+              ? FONT_COLOR_CROSS_SHEET_HEX
+              : FONT_COLOR_FORMULA_HEX
           ),
         },
       };
@@ -910,11 +915,7 @@ function emitSensitivityTable(
 // pre-rendered PNG via worksheet.addImage is the realistic alternative).
 // ---------------------------------------------------------------------------
 
-function emitChartImages(
-  wb: ExcelJS.Workbook,
-  ws: ExcelJS.Worksheet,
-  images: ChartImage[]
-): void {
+function emitChartImages(wb: ExcelJS.Workbook, ws: ExcelJS.Worksheet, images: ChartImage[]): void {
   for (const img of images) {
     try {
       const base64 = img.pngBase64.replace(/^data:image\/png;base64,/, '');

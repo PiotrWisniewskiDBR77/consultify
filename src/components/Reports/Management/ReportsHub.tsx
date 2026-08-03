@@ -48,10 +48,10 @@ import {
   ViewMode,
 } from '../../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../../standard/StandardModuleBar';
 import { type RowAction } from '../../shared/RowActionsMenu';
 import { EmptyState, LoadingState } from '../../shared/states';
 import { TableWithPreviewLayout } from '../../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../../standard/StandardModuleBar';
 import { EntityStatusChip, MetaChip } from '../../ui/primitives/chips';
 import { ErrorState } from '../../ui/primitives/ErrorState';
 import { PortfolioHealthReport } from './PortfolioHealthReport';

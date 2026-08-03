@@ -136,10 +136,8 @@ export function arrowMarkerAttrs(
 ): { markerStart?: string; markerEnd?: string } {
   const ids = arrowMarkerIds(edgeId);
   return {
-    markerEnd:
-      direction === 'end' || direction === 'both' ? `url(#${ids.end})` : undefined,
-    markerStart:
-      direction === 'start' || direction === 'both' ? `url(#${ids.start})` : undefined,
+    markerEnd: direction === 'end' || direction === 'both' ? `url(#${ids.end})` : undefined,
+    markerStart: direction === 'start' || direction === 'both' ? `url(#${ids.start})` : undefined,
   };
 }
 

@@ -60,7 +60,6 @@ import {
   buildArtifactLink,
   getArtifactPath,
 } from '@/utils/artifactLinks';
-
 import {
   CANVAS_OBJECT_EDIT_BAR_SLOT_ID,
   isCanvasObjectEditBarEnabled,
@@ -74,22 +73,16 @@ import {
   canvasShapeClasses,
   readCanvasObjectStyle,
 } from './canvas/canvasObjectStyle';
+import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import { getIdeaCanvasCursorClass, getIdeaCanvasCursorProps } from './canvas/ideaCanvasCursorMode';
 import { ObjectEditBar, type ObjectEditBarGroup } from './canvas/ObjectEditBar';
-import {
-  ArrowDirectionPopover,
-  type CanvasArrowDirection,
-} from './canvas/ObjectEditBarPopovers';
 import {
   buildStyleGroups,
   ObjectEditBarDock,
   useObjectEditBarSlot,
 } from './canvas/objectEditBarDock';
-import { CanvasSnapGuides } from './canvas/CanvasSnapGuides';
-import { CanvasZoomControls } from './canvas/CanvasZoomControls';
-import {
-  getIdeaCanvasCursorClass,
-  getIdeaCanvasCursorProps,
-} from './canvas/ideaCanvasCursorMode';
+import { ArrowDirectionPopover, type CanvasArrowDirection } from './canvas/ObjectEditBarPopovers';
 import { useCanvasSnapping } from './canvas/useCanvasSnapping';
 import { useIdeaCollab } from './canvas/useIdeaCollab';
 import { getIdeasToolInteractionProps } from './canvas/useIdeasToolDefaults';
@@ -147,14 +140,8 @@ import { LabeledEdge } from './mindmap/LabeledEdge';
 import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
 import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
-import { MindMapFrameNode } from './mindmap/MindMapFrameNode';
-import {
-  MM_MIN_NODE_HEIGHT,
-  MM_MIN_NODE_WIDTH,
-  MindMapNodeResizer,
-  useNodeHasExplicitSize,
-} from './mindmap/MindMapNodeResizer';
 import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
+import { MindMapFrameNode } from './mindmap/MindMapFrameNode';
 import { normalizeMindmapNodeQuickAction } from './mindmap/mindmapInteractionGrammar';
 import {
   appendAIHistoryEntry,
@@ -163,6 +150,12 @@ import {
   collectDescendantIds,
   copyNodeStyle,
 } from './mindmap/mindMapNodeModel';
+import {
+  MindMapNodeResizer,
+  MM_MIN_NODE_HEIGHT,
+  MM_MIN_NODE_WIDTH,
+  useNodeHasExplicitSize,
+} from './mindmap/MindMapNodeResizer';
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
@@ -1351,11 +1344,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           ? '[clip-path:polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]'
           : 'rounded-xl';
 
-  const innerRotate = useCanvasShape
-    ? canvasShape.inner
-    : shape === 'diamond'
-      ? '-rotate-45'
-      : '';
+  const innerRotate = useCanvasShape ? canvasShape.inner : shape === 'diamond' ? '-rotate-45' : '';
 
   // PASEK EDYCJI OBIEKTU — tu renderer CZYTA to, co pasek zapisuje. Krytyczne:
   // `bgColor` i `borderColor` są ODDZIELNE (stare `data.color` sterowało obiema
@@ -5905,278 +5894,278 @@ function MindMapInner({
       ) : (
         <MindMapIdeaIdContext.Provider value={ideaId}>
           <MindMapLockedContext.Provider value={Boolean(locked)}>
-          <MindMapInteractionModeContext.Provider value={interactionMode}>
-            <ReactFlow
-              nodes={enrichedNodes}
-              edges={focusFilteredEdges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
-                onViewportReport?.(viewport);
-                saveViewportOnly();
-                try {
-                  localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport));
-                } catch {
-                  /* */
-                }
-              }}
-              onNodeClick={onNodeClick}
-              onNodeDoubleClick={onNodeDoubleClick}
-              onNodeContextMenu={onNodeContextMenu}
-              onPaneClick={onPaneClick}
-              onPaneContextMenu={onPaneContextMenu}
-              onConnect={onConnect}
-              onEdgeClick={onEdgeClick}
-              onNodeDrag={onNodeDragCombined}
-              onNodeDragStop={onNodeDragStop}
-              {...(alignSnapEnabled && snapEnabled
-                ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
-                : {})}
-              {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
-              nodeTypes={reactFlowNodeTypes}
-              edgeTypes={reactFlowEdgeTypes}
-              // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
-              // Tab/arrow keys to node focus-traversal — which silently swallows the
-              // mind-map grammar (Tab=add child, Enter=sibling, arrows=navigate)
-              // before our own keydown handler can see it. Disable it so the map's
-              // grammar actually works. (We provide arrow/Tab navigation ourselves.)
-              disableKeyboardA11y
-              {...getIdeasToolInteractionProps('mindmap', {
-                locked,
-                connectMode: interactionMode === 'connect',
-              })}
-              // Z1 (parytet z Tablicą/Przepływem): tryb kursora z lewego raila
-              // REALNIE przestawia płótno, nie tylko afordancję węzła. `select`
-              // = zero nadpisań (Z10 nietknięte). `connect` mapujemy na `select`
-              // helpera (helper zna tylko select/pan/draw) — helper nie nadpisuje
-              // niczego dla select, więc uchwyty/`nodesConnectable`/crosshair
-              // trybu connect zostają nietknięte. `pan` = rączka (nic się nie
-              // rusza ani nie zaznacza). Spread MUSI być po
-              // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
-              {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
-              className={`mm-canvas bg-c-bg ${
-                interactionMode === 'connect'
-                  ? 'cursor-crosshair'
-                  : getIdeaCanvasCursorClass(interactionMode === 'pan' ? 'pan' : 'select') ||
-                    'cursor-default'
-              }`}
-              aria-label={t('mindmap.ideaRecommendationMapArrowNavigationEnte')}
-              defaultEdgeOptions={reactFlowDefaultEdgeOptions}
-              onDragOver={(event: React.DragEvent) => {
-                if (event.dataTransfer.types.includes('application/idea-context-item')) {
+            <MindMapInteractionModeContext.Provider value={interactionMode}>
+              <ReactFlow
+                nodes={enrichedNodes}
+                edges={focusFilteredEdges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
+                  onViewportReport?.(viewport);
+                  saveViewportOnly();
+                  try {
+                    localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport));
+                  } catch {
+                    /* */
+                  }
+                }}
+                onNodeClick={onNodeClick}
+                onNodeDoubleClick={onNodeDoubleClick}
+                onNodeContextMenu={onNodeContextMenu}
+                onPaneClick={onPaneClick}
+                onPaneContextMenu={onPaneContextMenu}
+                onConnect={onConnect}
+                onEdgeClick={onEdgeClick}
+                onNodeDrag={onNodeDragCombined}
+                onNodeDragStop={onNodeDragStop}
+                {...(alignSnapEnabled && snapEnabled
+                  ? { snapToGrid: true, snapGrid: [16, 16] as [number, number] }
+                  : {})}
+                {...(onlyRenderVisibleElements ? { onlyRenderVisibleElements: true } : {})}
+                nodeTypes={reactFlowNodeTypes}
+                edgeTypes={reactFlowEdgeTypes}
+                // ReactFlow's built-in keyboard-a11y makes nodes focusable and binds
+                // Tab/arrow keys to node focus-traversal — which silently swallows the
+                // mind-map grammar (Tab=add child, Enter=sibling, arrows=navigate)
+                // before our own keydown handler can see it. Disable it so the map's
+                // grammar actually works. (We provide arrow/Tab navigation ourselves.)
+                disableKeyboardA11y
+                {...getIdeasToolInteractionProps('mindmap', {
+                  locked,
+                  connectMode: interactionMode === 'connect',
+                })}
+                // Z1 (parytet z Tablicą/Przepływem): tryb kursora z lewego raila
+                // REALNIE przestawia płótno, nie tylko afordancję węzła. `select`
+                // = zero nadpisań (Z10 nietknięte). `connect` mapujemy na `select`
+                // helpera (helper zna tylko select/pan/draw) — helper nie nadpisuje
+                // niczego dla select, więc uchwyty/`nodesConnectable`/crosshair
+                // trybu connect zostają nietknięte. `pan` = rączka (nic się nie
+                // rusza ani nie zaznacza). Spread MUSI być po
+                // getIdeasToolInteractionProps, żeby wygrał z domyślnymi.
+                {...getIdeaCanvasCursorProps(interactionMode === 'pan' ? 'pan' : 'select')}
+                className={`mm-canvas bg-c-bg ${
+                  interactionMode === 'connect'
+                    ? 'cursor-crosshair'
+                    : getIdeaCanvasCursorClass(interactionMode === 'pan' ? 'pan' : 'select') ||
+                      'cursor-default'
+                }`}
+                aria-label={t('mindmap.ideaRecommendationMapArrowNavigationEnte')}
+                defaultEdgeOptions={reactFlowDefaultEdgeOptions}
+                onDragOver={(event: React.DragEvent) => {
+                  if (event.dataTransfer.types.includes('application/idea-context-item')) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'copy';
+                  }
+                }}
+                onDrop={(event: React.DragEvent) => {
+                  const raw = event.dataTransfer.getData('application/idea-context-item');
+                  if (!raw) return;
                   event.preventDefault();
-                  event.dataTransfer.dropEffect = 'copy';
-                }
-              }}
-              onDrop={(event: React.DragEvent) => {
-                const raw = event.dataTransfer.getData('application/idea-context-item');
-                if (!raw) return;
-                event.preventDefault();
-                try {
-                  const item = JSON.parse(raw);
-                  const position = screenToFlowPosition({
-                    x: event.clientX,
-                    y: event.clientY,
-                  });
-                  const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-                  const branchKey =
-                    item.type === 'initiative'
-                      ? 'options'
-                      : item.type === 'gap'
-                        ? 'causes'
-                        : item.type === 'insight'
-                          ? 'evidence'
-                          : item.type === 'kpi'
-                            ? 'validation'
-                            : 'uncategorized';
-                  const newNode = {
-                    id: newId,
-                    type: 'idea' as const,
-                    position,
-                    data: {
-                      label: item.title || item.text || 'Dropped item',
-                      branchKey,
-                      sourceType: 'context_panel',
-                      priority: 50,
-                      notes: item.detail || '',
-                      context: item.source ? `Source: ${item.source}` : '',
-                      semanticType:
-                        item.type === 'gap'
-                          ? 'risk'
+                  try {
+                    const item = JSON.parse(raw);
+                    const position = screenToFlowPosition({
+                      x: event.clientX,
+                      y: event.clientY,
+                    });
+                    const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                    const branchKey =
+                      item.type === 'initiative'
+                        ? 'options'
+                        : item.type === 'gap'
+                          ? 'causes'
                           : item.type === 'insight'
                             ? 'evidence'
                             : item.type === 'kpi'
+                              ? 'validation'
+                              : 'uncategorized';
+                    const newNode = {
+                      id: newId,
+                      type: 'idea' as const,
+                      position,
+                      data: {
+                        label: item.title || item.text || 'Dropped item',
+                        branchKey,
+                        sourceType: 'context_panel',
+                        priority: 50,
+                        notes: item.detail || '',
+                        context: item.source ? `Source: ${item.source}` : '',
+                        semanticType:
+                          item.type === 'gap'
+                            ? 'risk'
+                            : item.type === 'insight'
                               ? 'evidence'
-                              : item.type === 'initiative'
-                                ? 'action'
-                                : 'topic',
-                      status: 'idea',
-                      tags: item.type ? [item.type] : [],
-                    },
-                  };
-                  const nearestNode = nodes
-                    .filter((n) => !n.hidden)
-                    .reduce(
-                      (best, n) => {
-                        const dx = n.position.x - position.x;
-                        const dy = n.position.y - position.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        if (!best || dist < best.dist) return { node: n, dist };
-                        return best;
+                              : item.type === 'kpi'
+                                ? 'evidence'
+                                : item.type === 'initiative'
+                                  ? 'action'
+                                  : 'topic',
+                        status: 'idea',
+                        tags: item.type ? [item.type] : [],
                       },
-                      null as { node: any; dist: number } | null
-                    );
+                    };
+                    const nearestNode = nodes
+                      .filter((n) => !n.hidden)
+                      .reduce(
+                        (best, n) => {
+                          const dx = n.position.x - position.x;
+                          const dy = n.position.y - position.y;
+                          const dist = Math.sqrt(dx * dx + dy * dy);
+                          if (!best || dist < best.dist) return { node: n, dist };
+                          return best;
+                        },
+                        null as { node: any; dist: number } | null
+                      );
 
-                  const parentId =
-                    nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
-                  const colors = branchColor(branchKey);
-                  const newEdge = {
-                    id: `edge-${newId}`,
-                    source: parentId,
-                    target: newId,
-                    type: 'gradient',
-                    style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-                    animated: true,
-                    data: { edgeRole: 'structural' },
-                  };
+                    const parentId =
+                      nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
+                    const colors = branchColor(branchKey);
+                    const newEdge = {
+                      id: `edge-${newId}`,
+                      source: parentId,
+                      target: newId,
+                      type: 'gradient',
+                      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+                      animated: true,
+                      data: { edgeRole: 'structural' },
+                    };
 
-                  pushUndo();
-                  setNodes((prev) => [
-                    ...prev.map((n) => ({ ...n, selected: false })),
-                    { ...newNode, selected: true },
-                  ]);
-                  setEdges((prev) => [...prev, newEdge]);
-                } catch {
-                  /* ignore bad data */
-                }
-              }}
-            >
-              {/* P2: background via SSOT canvasBackground.ts */}
-              {(() => {
-                const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light');
-                return (
-                  <Background
-                    color={bg.color}
-                    gap={bg.gap}
-                    size={bg.size}
-                    variant={bg.variant as any}
+                    pushUndo();
+                    setNodes((prev) => [
+                      ...prev.map((n) => ({ ...n, selected: false })),
+                      { ...newNode, selected: true },
+                    ]);
+                    setEdges((prev) => [...prev, newEdge]);
+                  } catch {
+                    /* ignore bad data */
+                  }
+                }}
+              >
+                {/* P2: background via SSOT canvasBackground.ts */}
+                {(() => {
+                  const bg = getCanvasBg('mindmap', isDarkMindmap ? 'dark' : 'light');
+                  return (
+                    <Background
+                      color={bg.color}
+                      gap={bg.gap}
+                      size={bg.size}
+                      variant={bg.variant as any}
+                    />
+                  );
+                })()}
+                {/* M06 Fala 3.1 / Z14: alignment guides during drag (flag-gated, read-only). */}
+                {alignSnapEnabled && <CanvasSnapGuides threshold={6} />}
+                {showMiniMap && (
+                  <MiniMap
+                    nodeColor={miniMapNodeColor}
+                    // Stroke = fill: a fixed grey 3px outline swallowed the node colour
+                    // at this scale and made every node read as the same dot.
+                    nodeStrokeColor={miniMapNodeColor}
+                    nodeStrokeWidth={1}
+                    nodeBorderRadius={6}
+                    /**
+                     * The mask paints everything OUTSIDE the current viewport, so it has to
+                     * CONTRAST with the minimap background. `var(--c-bg)` is the page
+                     * background itself → effectively zero contrast in light mode, i.e.
+                     * "where am I" was invisible. Semi-transparent slate reads in both themes.
+                     */
+                    maskColor={isDarkMindmap ? 'rgba(2, 6, 23, 0.55)' : 'rgba(15, 23, 42, 0.28)'}
+                    /**
+                     * `marginBottom` lifts the minimap clear of `CanvasZoomControls`
+                     * (bottom-3, ~42px tall, z-dropdown) — it used to slide underneath.
+                     */
+                    style={{
+                      width: 180,
+                      height: 130,
+                      marginBottom: 62,
+                      zIndex: 10,
+                      // Inline, not a class: React Flow's own stylesheet hard-codes a
+                      // white `.react-flow__minimap` background and loads after Tailwind,
+                      // so a `bg-*` utility loses and dark mode stays a white slab.
+                      backgroundColor: 'var(--c-surface)',
+                    }}
+                    zoomable
+                    pannable
+                    className="rounded-xl border border-c-border shadow-lg"
                   />
-                );
-              })()}
-              {/* M06 Fala 3.1 / Z14: alignment guides during drag (flag-gated, read-only). */}
-              {alignSnapEnabled && <CanvasSnapGuides threshold={6} />}
-              {showMiniMap && (
-                <MiniMap
-                  nodeColor={miniMapNodeColor}
-                  // Stroke = fill: a fixed grey 3px outline swallowed the node colour
-                  // at this scale and made every node read as the same dot.
-                  nodeStrokeColor={miniMapNodeColor}
-                  nodeStrokeWidth={1}
-                  nodeBorderRadius={6}
-                  /**
-                   * The mask paints everything OUTSIDE the current viewport, so it has to
-                   * CONTRAST with the minimap background. `var(--c-bg)` is the page
-                   * background itself → effectively zero contrast in light mode, i.e.
-                   * "where am I" was invisible. Semi-transparent slate reads in both themes.
-                   */
-                  maskColor={isDarkMindmap ? 'rgba(2, 6, 23, 0.55)' : 'rgba(15, 23, 42, 0.28)'}
-                  /**
-                   * `marginBottom` lifts the minimap clear of `CanvasZoomControls`
-                   * (bottom-3, ~42px tall, z-dropdown) — it used to slide underneath.
-                   */
-                  style={{
-                    width: 180,
-                    height: 130,
-                    marginBottom: 62,
-                    zIndex: 10,
-                    // Inline, not a class: React Flow's own stylesheet hard-codes a
-                    // white `.react-flow__minimap` background and loads after Tailwind,
-                    // so a `bg-*` utility loses and dark mode stays a white slab.
-                    backgroundColor: 'var(--c-surface)',
-                  }}
-                  zoomable
-                  pannable
-                  className="rounded-xl border border-c-border shadow-lg"
-                />
-              )}
+                )}
 
-              {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
-              {visibleIdeaNodeCount === 0 && (
-                <>
-                  {locked ? (
-                    <Panel position="center">
-                      <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-c-surface/80 backdrop-blur-xl shadow-2xl border border-c-border-subtle p-8 text-center onboarding-overlay-enter">
-                        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
-                          <Lightbulb size={28} className="text-white" />
+                {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
+                {visibleIdeaNodeCount === 0 && (
+                  <>
+                    {locked ? (
+                      <Panel position="center">
+                        <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-c-surface/80 backdrop-blur-xl shadow-2xl border border-c-border-subtle p-8 text-center onboarding-overlay-enter">
+                          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                            <Lightbulb size={28} className="text-white" />
+                          </div>
+                          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                            {t('mindmap.describeYourChallenge')}
+                          </h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                            {t('mindmap.fillInTheTitleAndDescription')}
+                          </p>
+                          <div className="space-y-2 text-left mb-6">
+                            {[
+                              { n: '1', en: 'Name your challenge' },
+                              { n: '2', en: 'Describe the problem or idea' },
+                              { n: '3', en: 'Click "Accept" in the Tools panel' },
+                            ].map((step) => (
+                              <div key={step.n} className="flex items-center gap-3">
+                                <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
+                                  {step.n}
+                                </span>
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                  {t(`myWorkMindmap.emptyStep.${step.n}`, step.en)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onCenterEdit?.()}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
+                          >
+                            <Sparkles size={16} />
+                            {t('mindmap.openPanelStart')}
+                          </button>
                         </div>
-                        <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
-                          {t('mindmap.describeYourChallenge')}
-                        </h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-                          {t('mindmap.fillInTheTitleAndDescription')}
-                        </p>
-                        <div className="space-y-2 text-left mb-6">
-                          {[
-                            { n: '1', en: 'Name your challenge' },
-                            { n: '2', en: 'Describe the problem or idea' },
-                            { n: '3', en: 'Click "Accept" in the Tools panel' },
-                          ].map((step) => (
-                            <div key={step.n} className="flex items-center gap-3">
-                              <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
-                                {step.n}
-                              </span>
-                              <span className="text-sm text-slate-600 dark:text-slate-300">
-                                {t(`myWorkMindmap.emptyStep.${step.n}`, step.en)}
-                              </span>
-                            </div>
-                          ))}
+                      </Panel>
+                    ) : (
+                      <Panel position="bottom-center">
+                        <div className="mb-14 px-5 py-3 rounded-2xl bg-c-surface/90 backdrop-blur-xl border border-c-border-subtle shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
+                          <Lightbulb size={16} className="text-amber-500 shrink-0" />
+                          <span className="text-slate-600 dark:text-slate-300">
+                            {t('mindmap.selectABranchAndPressTab')}
+                          </span>
+                          <div className="w-px h-5 bg-c-border" />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => onCenterEdit?.()}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
-                        >
-                          <Sparkles size={16} />
-                          {t('mindmap.openPanelStart')}
-                        </button>
-                      </div>
-                    </Panel>
-                  ) : (
-                    <Panel position="bottom-center">
-                      <div className="mb-14 px-5 py-3 rounded-2xl bg-c-surface/90 backdrop-blur-xl border border-c-border-subtle shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
-                        <Lightbulb size={16} className="text-amber-500 shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-300">
-                          {t('mindmap.selectABranchAndPressTab')}
-                        </span>
-                        <div className="w-px h-5 bg-c-border" />
-                      </div>
-                    </Panel>
-                  )}
-                </>
-              )}
+                      </Panel>
+                    )}
+                  </>
+                )}
 
-              {/* Cluster Bubbles overlay */}
-              {showClusterBubbles && (
-                <ClusterBubbles
-                  nodes={enrichedNodes
-                    .filter((n) => !n.hidden)
-                    .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-                  edges={focusFilteredEdges
-                    .filter((e) => !e.hidden)
-                    .map((e) => ({ source: e.source, target: e.target }))}
-                  enabled={showClusterBubbles}
-                />
-              )}
+                {/* Cluster Bubbles overlay */}
+                {showClusterBubbles && (
+                  <ClusterBubbles
+                    nodes={enrichedNodes
+                      .filter((n) => !n.hidden)
+                      .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
+                    edges={focusFilteredEdges
+                      .filter((e) => !e.hidden)
+                      .map((e) => ({ source: e.source, target: e.target }))}
+                    enabled={showClusterBubbles}
+                  />
+                )}
 
-              {/* Active branch info removed — redundant with visual branch nodes on canvas */}
-            </ReactFlow>
-            {/* Overlay „Zdrowie mapy" — TYLKO przy fladze OFF. Przy ON tę samą
+                {/* Active branch info removed — redundant with visual branch nodes on canvas */}
+              </ReactFlow>
+              {/* Overlay „Zdrowie mapy" — TYLKO przy fladze OFF. Przy ON tę samą
                 treść rysuje sekcja „AI" prawego panelu (IdeaWorkspaceTools),
                 więc overlay zniknąłby jako duplikat, a nie jako utrata funkcji. */}
-            {showHealthScore && !paneleWPrawymPanelu && (
-              <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
-            )}
-          </MindMapInteractionModeContext.Provider>
+              {showHealthScore && !paneleWPrawymPanelu && (
+                <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
+              )}
+            </MindMapInteractionModeContext.Provider>
           </MindMapLockedContext.Provider>
         </MindMapIdeaIdContext.Provider>
       )}

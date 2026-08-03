@@ -32,9 +32,7 @@ export function GrowthPathsLibraryGraphic({
         <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-c-info">
           {labels.eyebrow}
         </div>
-        <h3 className="mt-2 text-xl font-bold leading-tight text-c-text">
-          {labels.title}
-        </h3>
+        <h3 className="mt-2 text-xl font-bold leading-tight text-c-text">{labels.title}</h3>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-c-text-secondary">
           {labels.subtitle}
         </p>
@@ -46,9 +44,7 @@ export function GrowthPathsLibraryGraphic({
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-c-info">
               Growth mission
             </div>
-            <p className="mt-2 text-sm font-medium leading-relaxed text-c-text">
-              {labels.mission}
-            </p>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-c-text">{labels.mission}</p>
           </div>
           <div className="rounded-2xl border border-c-border-subtle bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="space-y-2">
@@ -60,9 +56,7 @@ export function GrowthPathsLibraryGraphic({
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-c-text text-xs font-bold text-c-bg">
                     {index + 1}
                   </div>
-                  <div className="text-sm font-semibold text-c-text">
-                    {stage}
-                  </div>
+                  <div className="text-sm font-semibold text-c-text">{stage}</div>
                 </div>
               ))}
             </div>
@@ -77,16 +71,12 @@ export function GrowthPathsLibraryGraphic({
                 className="rounded-2xl border border-c-border-subtle bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-c-text">
-                    {title}
-                  </div>
+                  <div className="text-sm font-semibold text-c-text">{title}</div>
                   <span className="rounded-full bg-c-info/10 px-2 py-0.5 text-[10px] font-bold text-c-info">
                     Q{index + 1}
                   </span>
                 </div>
-                <div className="mt-2 text-xs leading-relaxed text-c-text-secondary">
-                  {text}
-                </div>
+                <div className="mt-2 text-xs leading-relaxed text-c-text-secondary">{text}</div>
               </div>
             ))}
           </div>
@@ -94,9 +84,7 @@ export function GrowthPathsLibraryGraphic({
             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-300">
               Strategic comparison
             </div>
-            <p className="mt-2 text-sm leading-relaxed text-c-text-secondary">
-              {labels.insight}
-            </p>
+            <p className="mt-2 text-sm leading-relaxed text-c-text-secondary">{labels.insight}</p>
           </div>
           <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 text-sm font-medium text-emerald-800 dark:border-emerald-900/40 dark:text-emerald-200">
             {labels.output}

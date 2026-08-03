@@ -73,7 +73,12 @@ const THEMES = [
   {
     id: 'minimal',
     labelEn: 'Minimal',
-    colors: ['var(--c-tag-8)', 'var(--c-border-strong)', 'var(--c-text-secondary)', 'var(--c-surface-raised)'],
+    colors: [
+      'var(--c-tag-8)',
+      'var(--c-border-strong)',
+      'var(--c-text-secondary)',
+      'var(--c-surface-raised)',
+    ],
   },
 ] as const;
 

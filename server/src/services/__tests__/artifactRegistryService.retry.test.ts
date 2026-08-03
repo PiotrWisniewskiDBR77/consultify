@@ -120,25 +120,28 @@ describe('artifactRegistryService.retryArtifactRun', () => {
     mocks.transition.mockReset().mockResolvedValue(undefined);
   });
 
-  it.each(['failed', 'rejected', 'cancelled'])('creates a child for %s without mutating the parent', async (status) => {
-    const parent = seedParent(status);
+  it.each(['failed', 'rejected', 'cancelled'])(
+    'creates a child for %s without mutating the parent',
+    async (status) => {
+      const parent = seedParent(status);
 
-    const child = await retryArtifactRun({
-      runId: parent.run_id,
-      organizationId: parent.organization_id,
-      actorUserId: 'actor-1',
-    });
+      const child = await retryArtifactRun({
+        runId: parent.run_id,
+        organizationId: parent.organization_id,
+        actorUserId: 'actor-1',
+      });
 
-    expect(child.retryOfRunId).toBe(parent.run_id);
-    expect(child.runStatus).toBe('planned');
-    expect(child.persistedRunStatus).toBe('planned');
-    expect(child.effectiveRunStatus).toBe('planned');
-    expect(mocks.rows.get('org-a:parent').run_status).toBe(status);
-    const audit = mocks.audits.at(-1)!;
-    expect(audit[4]).toBe(status);
-    expect(audit[5]).toBe(status);
-    expect(JSON.parse(audit[7])).toMatchObject({ childRunId: child.runId });
-  });
+      expect(child.retryOfRunId).toBe(parent.run_id);
+      expect(child.runStatus).toBe('planned');
+      expect(child.persistedRunStatus).toBe('planned');
+      expect(child.effectiveRunStatus).toBe('planned');
+      expect(mocks.rows.get('org-a:parent').run_status).toBe(status);
+      const audit = mocks.audits.at(-1)!;
+      expect(audit[4]).toBe(status);
+      expect(audit[5]).toBe(status);
+      expect(JSON.parse(audit[7])).toMatchObject({ childRunId: child.runId });
+    }
+  );
 
   it.each([
     'planned',
@@ -181,7 +184,9 @@ describe('artifactRegistryService.retryArtifactRun', () => {
     expect(first.runId).toBe(second.runId);
     expect(second.runId).toBe(third.runId);
     expect(mocks.handoff).toHaveBeenCalledTimes(1);
-    expect([...mocks.rows.values()].filter((row) => row.retry_of_run_id === 'parent')).toHaveLength(1);
+    expect([...mocks.rows.values()].filter((row) => row.retry_of_run_id === 'parent')).toHaveLength(
+      1
+    );
   });
 
   it('scopes parent and child lookup to the tenant', async () => {
@@ -223,18 +228,21 @@ describe('artifactRegistryService.computeArtifactRunPreflight', () => {
       plan: { outputType },
     }) as any;
 
-  it.each(['report', 'presentation'] as const)('preserves the grounded %s green path', async (outputType) => {
-    const preflight = await computeArtifactRunPreflight({
-      run: run(outputType),
-      executionRunExists: true,
-      materializationParams: {
-        runId: 'run-1',
-        organizationId: 'org-a',
-        actorUserId: 'actor-1',
-      },
-    });
-    expect(preflight.state).toBe('passed');
-  });
+  it.each(['report', 'presentation'] as const)(
+    'preserves the grounded %s green path',
+    async (outputType) => {
+      const preflight = await computeArtifactRunPreflight({
+        run: run(outputType),
+        executionRunExists: true,
+        materializationParams: {
+          runId: 'run-1',
+          organizationId: 'org-a',
+          actorUserId: 'actor-1',
+        },
+      });
+      expect(preflight.state).toBe('passed');
+    }
+  );
 
   it('blocks a sheet when tableId is missing', async () => {
     const preflight = await computeArtifactRunPreflight({
@@ -249,7 +257,7 @@ describe('artifactRegistryService.computeArtifactRunPreflight', () => {
     });
     expect(preflight.state).toBe('attention_required');
     expect(preflight.checks).toContainEqual(
-      expect.objectContaining({ id: 'materialization_target', status: 'failed' }),
+      expect.objectContaining({ id: 'materialization_target', status: 'failed' })
     );
   });
 

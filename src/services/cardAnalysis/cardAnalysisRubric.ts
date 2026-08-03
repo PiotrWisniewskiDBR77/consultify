@@ -663,7 +663,10 @@ export const DOCTRINE_RULES: readonly DoctrineRule[] = [
   },
   {
     id: 'doktryna-mece',
-    name: { pl: 'MECE (rozłączne i wyczerpujące)', en: 'MECE (mutually exclusive, collectively exhaustive)' },
+    name: {
+      pl: 'MECE (rozłączne i wyczerpujące)',
+      en: 'MECE (mutually exclusive, collectively exhaustive)',
+    },
     rule: {
       pl: 'Każda lista (opcje, ryzyka, zakres, zadania, przyczyny) ma pozycje wzajemnie rozłączne, razem wyczerpujące temat i na jednym poziomie ogólności.',
       en: 'Every list (options, risks, scope, tasks, causes) has items that are mutually exclusive, collectively exhaustive and at one level of abstraction.',
@@ -675,7 +678,10 @@ export const DOCTRINE_RULES: readonly DoctrineRule[] = [
   },
   {
     id: 'doktryna-kwantyfikacja',
-    name: { pl: 'KWANTYFIKACJA Z JAWNYMI ZAŁOŻENIAMI', en: 'QUANTIFICATION WITH EXPLICIT ASSUMPTIONS' },
+    name: {
+      pl: 'KWANTYFIKACJA Z JAWNYMI ZAŁOŻENIAMI',
+      en: 'QUANTIFICATION WITH EXPLICIT ASSUMPTIONS',
+    },
     rule: {
       pl: 'Twierdzenie o wielkości ma liczbę, jednostkę, okres i źródło. Jeśli liczba jest szacunkiem — obok stoi założenie, z którego wynika, i sposób przeliczenia.',
       en: 'A claim about magnitude has a number, a unit, a period and a source. If the number is an estimate, the assumption behind it and the conversion are stated next to it.',

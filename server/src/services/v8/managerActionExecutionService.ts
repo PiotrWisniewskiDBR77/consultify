@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { all as rawDbAll, run as rawDbRun } from '../../utils/DbPromise.js';
-import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 import { send as notifySend } from '../notificationService.js';
 import { getManagerProblems } from './managerProblemsService.js';
 
@@ -31,7 +31,9 @@ async function dbRun(sql: string, params: unknown[] = []) {
   }
   const result = await rawDbRun(sql, params, { fallback: false });
   if (result.changes !== 1) {
-    throw new Error(`Manager mutation expected exactly one changed row, got ${result.changes ?? 0}`);
+    throw new Error(
+      `Manager mutation expected exactly one changed row, got ${result.changes ?? 0}`
+    );
   }
   return result;
 }
@@ -153,19 +155,19 @@ async function managerAuditLog(
   detail: string
 ) {
   await dbRun(
-      `INSERT INTO manager_action_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
+    `INSERT INTO manager_action_audit_log (id, organization_id, entity_type, entity_id, action, old_value, new_value, reason, user_id, created_at)
        VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?, NOW())`,
-      [
-        `mgr-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        organizationId,
-        entityType,
-        entityId,
-        `manager_${action}`,
-        detail,
-        `Manager cockpit action: ${action}`,
-        userId,
-      ]
-    );
+    [
+      `mgr-audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      organizationId,
+      entityType,
+      entityId,
+      `manager_${action}`,
+      detail,
+      `Manager cockpit action: ${action}`,
+      userId,
+    ]
+  );
 }
 
 async function executeProblemActionInternal(

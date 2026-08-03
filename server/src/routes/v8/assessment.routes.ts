@@ -12,31 +12,31 @@ import { ensureAssessmentSchema, normalizeStatus } from '../../controllers/Asses
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import AssessmentDefinitionService from '../../services/assessment/AssessmentDefinitionService.js';
-import { computeDrdCompletion } from '../../services/assessment/drdCompletion.js';
-import type { DrdAreasMap } from '../../services/assessment/drdCompletion.js';
 import AssessmentWorkbenchService, {
   assertPromotionPayloadShape,
   buildBoundedPromotionPayload,
   buildWhatNextGuidance,
 } from '../../services/assessment/AssessmentWorkbenchService.js';
-import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
-import {
-  addEvidence,
-  computeDrdScoring,
-  listEvidence,
-} from '../../services/assessment/drdEvidenceScoring.js';
-import {
-  QualityReviewError,
-  listReviewHistory,
-  reviewAssessment,
-} from '../../services/assessment/drdQualityReview.js';
-import type { ReviewAction } from '../../services/assessment/drdQualityReview.js';
 import { getCurrentAcceptedSnapshot } from '../../services/assessment/drdAcceptedSnapshot.js';
 import {
   CandidateHandoffError,
   getCandidateHandoff,
   handoffAssessmentToCandidate,
 } from '../../services/assessment/drdCandidateHandoff.js';
+import type { DrdAreasMap } from '../../services/assessment/drdCompletion.js';
+import { computeDrdCompletion } from '../../services/assessment/drdCompletion.js';
+import {
+  addEvidence,
+  computeDrdScoring,
+  listEvidence,
+} from '../../services/assessment/drdEvidenceScoring.js';
+import type { ReviewAction } from '../../services/assessment/drdQualityReview.js';
+import {
+  listReviewHistory,
+  QualityReviewError,
+  reviewAssessment,
+} from '../../services/assessment/drdQualityReview.js';
+import AssessmentPermissionService from '../../services/assessmentPermissionService.js';
 import { assessmentAuditLogger } from '../../utils/AssessmentAuditLogger.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
@@ -405,7 +405,10 @@ router.get(
       assessmentDefinitionId: assessment.assessment_definition_id || null,
       assessmentDefinitionVersion: assessment.assessment_definition_version || null,
       ...(derivedCompletionPercent !== undefined
-        ? { completion_percent: derivedCompletionPercent, completionPercent: derivedCompletionPercent }
+        ? {
+            completion_percent: derivedCompletionPercent,
+            completionPercent: derivedCompletionPercent,
+          }
         : {}),
     };
 
@@ -470,9 +473,7 @@ router.post(
         });
       }
 
-      const definition = await AssessmentDefinitionService.getDefinitionById(
-        requestedDefinitionId
-      );
+      const definition = await AssessmentDefinitionService.getDefinitionById(requestedDefinitionId);
       if (!definition) {
         return res.status(400).json({
           error: 'Assessment definition not found',

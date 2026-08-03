@@ -181,8 +181,7 @@ if (!g.__INSIGHT_ARTIFACT_FETCH__) {
   setTimeout(() => {
     const realFetch = window.fetch.bind(window);
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      const url =
-        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
       if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
       if (url.includes('/evidence/insight/')) {
         return new Response(JSON.stringify(MOCK_EVIDENCE_ENVELOPE), {

@@ -185,7 +185,8 @@ if (!g.__EXE002004_AUDIT_FETCH__) {
           const existing = state.milestones.find(
             (m) => (m as any)._idempotencyKey === idempotencyKey
           );
-          if (existing) return jsonResponse({ success: true, idempotent: true, milestone: existing });
+          if (existing)
+            return jsonResponse({ success: true, idempotent: true, milestone: existing });
         }
         const created: MilestoneRow & { _idempotencyKey?: string } = {
           id: genId('ms'),
@@ -259,9 +260,7 @@ if (!g.__EXE002004_AUDIT_FETCH__) {
         const body = await readJsonBody(init);
         const idempotencyKey = body.idempotencyKey as string | undefined;
         if (idempotencyKey && body.initiativeId) {
-          const existing = state.tasks.find(
-            (t) => (t as any)._idempotencyKey === idempotencyKey
-          );
+          const existing = state.tasks.find((t) => (t as any)._idempotencyKey === idempotencyKey);
           if (existing) return jsonResponse({ ...existing, idempotent: true });
         }
         const created: TaskRow & { _idempotencyKey?: string } = {

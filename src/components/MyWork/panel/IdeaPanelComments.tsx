@@ -410,7 +410,11 @@ export const IdeaPanelComments: React.FC<IdeaPanelCommentsProps> = ({
                   }`}
                   aria-hidden="true"
                 >
-                  {czyAI(c.author) ? <Sparkles size={10} /> : (c.author || '?').slice(0, 1).toUpperCase()}
+                  {czyAI(c.author) ? (
+                    <Sparkles size={10} />
+                  ) : (
+                    (c.author || '?').slice(0, 1).toUpperCase()
+                  )}
                 </span>
                 <span className="text-[11px] font-semibold text-c-text truncate">{c.author}</span>
                 {czyAI(c.author) && (

@@ -186,9 +186,7 @@ vi.mock('../../../services/financialStatementService.js', () => ({
   reserveIdempotentUpload: (...args: unknown[]) => mockReserveIdempotentUpload(...args),
   sha256Hex: (...args: unknown[]) => mockSha256Hex(...args),
   withStatementUploadIdempotencyLock: (...args: unknown[]) =>
-    mockWithStatementUploadIdempotencyLock(
-      ...(args as [string, string, () => Promise<unknown>])
-    ),
+    mockWithStatementUploadIdempotencyLock(...(args as [string, string, () => Promise<unknown>])),
 }));
 
 vi.mock('../../../services/financeCanonicalRegistrySyncService.js', () => ({
@@ -792,9 +790,27 @@ describe('V8 finance read-only routes', () => {
       // Real canonical Atelier FY2015/16/17 CF lines (verified against the
       // actual expandEventToAmounts/computeModel arithmetic, not invented).
       periods: [
-        { date: '2015-12-31', label: 'FY2015', pl: {}, bs: {}, cf: { OPERATING_CF: 2_400_000, INVESTING_CF: -800_000, FINANCING_CF: 0 } },
-        { date: '2016-12-31', label: 'FY2016', pl: {}, bs: {}, cf: { OPERATING_CF: 2_001_920, INVESTING_CF: 0, FINANCING_CF: 0 } },
-        { date: '2017-12-31', label: 'FY2017', pl: {}, bs: {}, cf: { OPERATING_CF: 2_003_841.536, INVESTING_CF: 0, FINANCING_CF: 0 } },
+        {
+          date: '2015-12-31',
+          label: 'FY2015',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 2_400_000, INVESTING_CF: -800_000, FINANCING_CF: 0 },
+        },
+        {
+          date: '2016-12-31',
+          label: 'FY2016',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 2_001_920, INVESTING_CF: 0, FINANCING_CF: 0 },
+        },
+        {
+          date: '2017-12-31',
+          label: 'FY2017',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 2_003_841.536, INVESTING_CF: 0, FINANCING_CF: 0 },
+        },
       ],
       validations: [],
       overallStatus: 'pass',

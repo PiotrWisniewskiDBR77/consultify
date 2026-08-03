@@ -58,8 +58,8 @@ vi.mock('../../organizationContext/OrganizationContextService.js', () => ({
 
 import logger from '../../../utils/Logger.js';
 import {
-  upsertAtelierFinanceGoldenFlow,
   type AtelierFinanceSeedResult,
+  upsertAtelierFinanceGoldenFlow,
 } from '../atelierFinanceSeed.js';
 
 const ORG_ID = 'demo-atelier-atomicity-test';
@@ -507,7 +507,9 @@ describe('FIN-005 — an applied-then-rejected write the compensation cannot fix
     // Zero promotions RECORDED — and a rollback ran regardless.
     expect(result.promotion?.statementPromotionsIssued).toBe(0);
     expect(result.promotion?.rolledBack).toBe(true);
-    expect(result.promotion?.rollbackErrors.join(' ')).toContain('demotion of the P&L exploded too');
+    expect(result.promotion?.rollbackErrors.join(' ')).toContain(
+      'demotion of the P&L exploded too'
+    );
     expect(result.promotion?.rowsStillClaimingReady.join(' ')).toContain('atelier-fy2014-pl');
 
     // The store proves the "failed" write had really been applied.
@@ -520,12 +522,17 @@ describe('FIN-005 — an applied-then-rejected write the compensation cannot fix
 
     // The other two were never promoted, and the demotion no-ops left them alone.
     for (const slug of ['atelier-fy2014-bs', 'atelier-fy2014-cf']) {
-      const row = fakeDb.rows('financial_statements').find((item) => String(item.id).endsWith(slug));
+      const row = fakeDb
+        .rows('financial_statements')
+        .find((item) => String(item.id).endsWith(slug));
       expect(row?.readiness_status, `${slug} drifted`).toBe('pending');
     }
 
     const line = errored.find((entry) => entry.includes('INCOMPLETE'));
-    expect(line, 'a fixture still holding a READY row must be an ERROR, not a warning').toBeTruthy();
+    expect(
+      line,
+      'a fixture still holding a READY row must be an ERROR, not a warning'
+    ).toBeTruthy();
     expect(line).toContain('COMPENSATING ROLLBACK DID NOT COMPLETE');
     expect(line).toContain('atelier-fy2014-pl');
     expect(warned.filter((entry) => entry.includes('INCOMPLETE'))).toEqual([]);
@@ -638,7 +645,9 @@ describe('FIN-005 — a rollback that itself fails is reported, never papered ov
 
     // The two statements whose demotion succeeded really were demoted.
     for (const slug of ['atelier-fy2014-pl', 'atelier-fy2014-bs']) {
-      const row = fakeDb.rows('financial_statements').find((item) => String(item.id).endsWith(slug));
+      const row = fakeDb
+        .rows('financial_statements')
+        .find((item) => String(item.id).endsWith(slug));
       expect(row?.readiness_status, `${slug} was not rolled back`).toBe('pending');
     }
 

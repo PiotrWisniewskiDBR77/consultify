@@ -91,8 +91,7 @@ function buildTemplateOutlinePreview(
 ): DocumentOutline {
   return {
     documentType: template.documentType,
-    title:
-      intake.title?.trim() || `${template.documentType.replace(/_/g, ' ')}: ${template.name}`,
+    title: intake.title?.trim() || `${template.documentType.replace(/_/g, ' ')}: ${template.name}`,
     sections: template.sectionBlueprint.map((blueprint) => ({
       title: blueprint.title,
       level: blueprint.level,
@@ -141,8 +140,7 @@ export const DocumentStudioView: React.FC = () => {
   // (`POST /document-studio/templates/resolve` → `resolveDocumentTemplateForCreation`),
   // który sprawdza dostęp organizacji, scope, status i to, czy rekord źródłowy
   // nadal istnieje. Dopiero wynik serwera zasila Mode 3.
-  const templateArtifactIdFromQuery =
-    (searchParams.get('templateArtifactId') || '').trim() || null;
+  const templateArtifactIdFromQuery = (searchParams.get('templateArtifactId') || '').trim() || null;
   const [resolvedTemplateId, setResolvedTemplateId] = useState<string | null>(null);
   const [templateResolveState, setTemplateResolveState] = useState<
     'idle' | 'resolving' | 'resolved' | 'error'
@@ -170,7 +168,9 @@ export const DocumentStudioView: React.FC = () => {
           : 'choose'
   );
 
-  const [activeTab, setActiveTab] = useState<Tab>(tabParam === 'templates' ? 'templates' : 'generate');
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam === 'templates' ? 'templates' : 'generate'
+  );
   const [phase, setPhase] = useState<Phase>('intake');
   const [intake, setIntake] = useState<DocumentIntake | null>(null);
   const [outline, setOutline] = useState<DocumentOutline | null>(null);
@@ -300,8 +300,7 @@ export const DocumentStudioView: React.FC = () => {
         });
       case 'TEMPLATE_NOT_INDEXED':
         return t('documentStudio.view.templateNotIndexed', {
-          defaultValue:
-            'Tego wzorca nie ma w Twoim indeksie Biblioteki. Wybierz inny wzorzec.',
+          defaultValue: 'Tego wzorca nie ma w Twoim indeksie Biblioteki. Wybierz inny wzorzec.',
         });
       case 'TEMPLATE_FORBIDDEN':
         return t('documentStudio.view.templateForbidden', {

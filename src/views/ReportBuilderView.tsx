@@ -151,7 +151,9 @@ const LibraryTemplateReportCreateFlow: React.FC<{
   }
 
   if (phase === 'error') {
-    const message = LIBRARY_TEMPLATE_ERROR_MESSAGES[errorCode] || LIBRARY_TEMPLATE_ERROR_MESSAGES.TEMPLATE_RESOLVE_FAILED;
+    const message =
+      LIBRARY_TEMPLATE_ERROR_MESSAGES[errorCode] ||
+      LIBRARY_TEMPLATE_ERROR_MESSAGES.TEMPLATE_RESOLVE_FAILED;
     return (
       <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="w-full max-w-md bg-white dark:bg-navy-900 rounded-2xl shadow-2xl p-6">

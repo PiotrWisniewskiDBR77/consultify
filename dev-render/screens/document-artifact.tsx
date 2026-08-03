@@ -36,7 +36,12 @@ const schema: DocumentSchema = {
   templateRef: { templateId: 'tpl-steering-committee', templateVersion: '2.1' },
   createdAt: new Date('2026-07-14T09:00:00Z').toISOString(),
   sourceRefs: [
-    { sourceType: 'initiative', sourceId: 'init-1', sourceTitle: 'Ekspansja DE', sourceVersion: '4' },
+    {
+      sourceType: 'initiative',
+      sourceId: 'init-1',
+      sourceTitle: 'Ekspansja DE',
+      sourceVersion: '4',
+    },
     { sourceType: 'table', sourceId: 'tbl-budget-de', sourceTitle: 'Budżet — arkusz kontroli' },
     { sourceType: 'interview', sourceId: 'int-9', sourceTitle: 'Wywiad: zespół sprzedaży DE' },
   ],

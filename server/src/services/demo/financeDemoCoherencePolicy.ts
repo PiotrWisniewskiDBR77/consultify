@@ -32,10 +32,10 @@ import { createHash } from 'node:crypto';
 import { getAtelierFinanceCanonicalIds } from './atelierFinanceSeed.js';
 import {
   buildManifestSignature,
-  verifyManifestSignature,
   MANIFEST_SIGNATURE_ALGORITHM,
   type ManifestSignature,
   type ManifestSigningKey,
+  verifyManifestSignature,
 } from './financeDemoManifestSignature.js';
 
 export type { ManifestSignature, ManifestSigningKey };
@@ -109,7 +109,10 @@ export const FIN005_APPROVED_DEMO_TARGETS: ReadonlyArray<DemoTargetFingerprint> 
 export const FIN005_FORBIDDEN_TARGET_PATTERNS: ReadonlyArray<{ label: string; pattern: RegExp }> =
   Object.freeze([
     Object.freeze({ label: 'production database host (centerbeam)', pattern: /centerbeam/i }),
-    Object.freeze({ label: 'production identifier', pattern: /(^|[^a-z])prod(uction)?([^a-z]|$)/i }),
+    Object.freeze({
+      label: 'production identifier',
+      pattern: /(^|[^a-z])prod(uction)?([^a-z]|$)/i,
+    }),
     Object.freeze({ label: 'live identifier', pattern: /(^|[^a-z])live([^a-z]|$)/i }),
   ]);
 
@@ -384,11 +387,7 @@ export const FINANCE_DEMO_NAME_FLAGS: ReadonlyArray<{ flag: string; pattern: Reg
  * `table` narrows the check further: an id that is canonical for
  * `financial_models` is not canonical when found in `financial_analyses`.
  */
-export function isCanonicalDemoRowId(
-  id: unknown,
-  organizationId: string,
-  table?: string
-): boolean {
+export function isCanonicalDemoRowId(id: unknown, organizationId: string, table?: string): boolean {
   const normalizedId = normalizeText(id);
   const normalizedOrg = normalizeText(organizationId);
   if (!normalizedId || !normalizedOrg) return false;
@@ -658,7 +657,9 @@ export function verifyCanonicalFixture(
   }
   for (const analysis of readback.analyses) {
     if (analysis.organizationId !== org) {
-      violations.push(`analysis ${analysis.id} belongs to "${analysis.organizationId}", not "${org}"`);
+      violations.push(
+        `analysis ${analysis.id} belongs to "${analysis.organizationId}", not "${org}"`
+      );
     }
     const analysisStatusProblem = describeStateProblem(
       `analysis ${analysis.id}`,
@@ -913,7 +914,9 @@ export function assertQuarantineOrganizationReusable(
     problems.push('is_active is true, expected false');
   }
   if (Number(row.userCount) !== 0) {
-    problems.push(`it has ${row.userCount} user(s) — rows must never be moved into a tenant with users`);
+    problems.push(
+      `it has ${row.userCount} user(s) — rows must never be moved into a tenant with users`
+    );
   }
   if (Number(row.memberCount) !== 0) {
     problems.push(
@@ -1191,10 +1194,7 @@ export function manifestSignaturePayload(manifest: CleanupManifest): string {
  * Sign with HMAC-SHA256. Requires a key — there is no unkeyed path, because an
  * unkeyed digest is not a signature (see `financeDemoManifestSignature.ts`).
  */
-export function signManifest(
-  manifest: CleanupManifest,
-  key: ManifestSigningKey
-): CleanupManifest {
+export function signManifest(manifest: CleanupManifest, key: ManifestSigningKey): CleanupManifest {
   const { signature: _signature, checksum: _legacyChecksum, ...rest } = manifest;
   return { ...rest, signature: buildManifestSignature(canonicalJson(rest), key) };
 }
@@ -1209,10 +1209,7 @@ export function signManifest(
  * No branch of this function prints key material — only the key ID, which is a
  * public label.
  */
-export function assertManifestIntegrity(
-  manifest: CleanupManifest,
-  key: ManifestSigningKey
-): void {
+export function assertManifestIntegrity(manifest: CleanupManifest, key: ManifestSigningKey): void {
   if (!manifest || typeof manifest !== 'object') fail('Manifest is not an object.');
   if (!key || !key.secret || !key.keyId) {
     fail('No manifest signing key was supplied — refusing to validate a manifest without one.');

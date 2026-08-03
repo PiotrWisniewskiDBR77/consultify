@@ -309,7 +309,10 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
            (SELECT COUNT(*)::int FROM initiatives WHERE organization_id = ANY($1::text[])) AS inits,
            (SELECT COUNT(*)::int FROM organizations WHERE id = ANY($1::text[])) AS orgs,
            (SELECT COUNT(*)::int FROM users WHERE id = ANY($2::text[])) AS users`,
-        [[orgA, orgB], [ownerUserA, noRoleUserA, userB]]
+        [
+          [orgA, orgB],
+          [ownerUserA, noRoleUserA, userB],
+        ]
       );
       if (
         residue.rows[0].inits !== 0 ||

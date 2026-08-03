@@ -534,10 +534,7 @@ export const V8FinanceApi = {
     }),
   computeModel: (modelId: string) =>
     v8Post<V8FinanceModelComputeResult>(`/finance/models/${modelId}/compute`, {}),
-  approveModel: (
-    modelId: string,
-    opts?: { expectedVersion?: number; idempotencyKey?: string }
-  ) =>
+  approveModel: (modelId: string, opts?: { expectedVersion?: number; idempotencyKey?: string }) =>
     v8Post<V8FinanceModelApproveResult & { code?: string; serverVersion?: number }>(
       `/finance/models/${modelId}/approve`,
       {
@@ -575,7 +572,9 @@ export const V8FinanceApi = {
   ) =>
     v8Put<{ success: boolean; code?: string; serverVersion?: number }>(
       `/finance/models/${modelId}`,
-      opts?.expectedVersion !== undefined ? { ...body, expectedVersion: opts.expectedVersion } : body
+      opts?.expectedVersion !== undefined
+        ? { ...body, expectedVersion: opts.expectedVersion }
+        : body
     ),
   deleteModel: (modelId: string) =>
     v8Delete<{ success: boolean; deleted: string }>(`/finance/models/${modelId}`),

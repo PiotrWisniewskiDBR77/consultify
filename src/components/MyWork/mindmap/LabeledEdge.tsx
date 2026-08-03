@@ -4,8 +4,8 @@ import React, { useCallback, useState } from 'react';
 import { type EdgeProps } from 'reactflow';
 
 import {
-  EdgeArrowMarkers,
   arrowMarkerAttrs,
+  EdgeArrowMarkers,
   resolveArrowDirection,
 } from '../canvas/edgeArrowMarkers';
 

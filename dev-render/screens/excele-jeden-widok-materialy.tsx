@@ -65,8 +65,20 @@ const WORKBOOK = {
           { key: 'q2', header: 'Q2' },
         ],
         rows: [
-          { cells: { pozycja: { value: 'Przychód' }, q1: { value: 100000 }, q2: { formula: 'B2*1.1' } } },
-          { cells: { pozycja: { value: 'Koszty' }, q1: { value: 60000 }, q2: { formula: 'B3*1.05' } } },
+          {
+            cells: {
+              pozycja: { value: 'Przychód' },
+              q1: { value: 100000 },
+              q2: { formula: 'B2*1.1' },
+            },
+          },
+          {
+            cells: {
+              pozycja: { value: 'Koszty' },
+              q1: { value: 60000 },
+              q2: { formula: 'B3*1.05' },
+            },
+          },
         ],
       },
     ],
@@ -93,9 +105,8 @@ function MaterialySheetsListHost(): React.ReactElement {
           Materiały ▸ Arkusze — 1 wiersz (kind=sheet, sheetOrigin=workbook)
         </div>
         <div className="mt-0.5 text-xs text-c-text-muted">
-          Kliknij "Otwórz" (kebab wiersza albo dwuklik) — powinno wylądować w
-          `/excele?artifactId={ID}` z edytowalną siatką (nie pobranie pliku,
-          nie Table Studio).
+          Kliknij "Otwórz" (kebab wiersza albo dwuklik) — powinno wylądować w `/excele?artifactId=
+          {ID}` z edytowalną siatką (nie pobranie pliku, nie Table Studio).
         </div>
       </div>
       <div className="flex-1 min-h-0">

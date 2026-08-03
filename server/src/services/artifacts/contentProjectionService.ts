@@ -1,8 +1,8 @@
 import {
-  normalizeArtifactContentEnvelope,
   type ArtifactCanonicalFormat as CanonicalFormat,
   type ArtifactContentEnvelopeV1 as ArtifactContentEnvelope,
   type ArtifactProjectionStatus as MarkdownProjectionStatus,
+  normalizeArtifactContentEnvelope,
 } from '../../types/artifactContent.js';
 
 export type { ArtifactContentEnvelope, CanonicalFormat, MarkdownProjectionStatus };

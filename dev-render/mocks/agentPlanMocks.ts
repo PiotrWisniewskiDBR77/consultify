@@ -41,7 +41,11 @@ let pollCount = 0;
 
 function makeSteps(manifestId: string): AgentPlanMockStep[] {
   const base: Array<Pick<AgentPlanMockStep, 'toolName' | 'toolInput' | 'requiresApproval'>> = [
-    { toolName: 'search_knowledge_base', toolInput: { query: manifestId }, requiresApproval: false },
+    {
+      toolName: 'search_knowledge_base',
+      toolInput: { query: manifestId },
+      requiresApproval: false,
+    },
     {
       toolName: 'analyze_context',
       toolInput: { manifestId },
@@ -121,7 +125,11 @@ export function installAgentPlanFetchMock(): void {
     }
 
     // POST /api/ai/agent-plan — create plan from manifestId.
-    if (url.includes('/api/ai/agent-plan') && !url.match(/agent-plan\/[^/]+/) && init?.method === 'POST') {
+    if (
+      url.includes('/api/ai/agent-plan') &&
+      !url.match(/agent-plan\/[^/]+/) &&
+      init?.method === 'POST'
+    ) {
       const parsedBody = init?.body ? JSON.parse(String(init.body)) : {};
       const manifestId = String(parsedBody.manifestId || 'unknown-manifest');
       pollCount = 0;

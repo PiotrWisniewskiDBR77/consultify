@@ -60,6 +60,14 @@ import {
   startSheetGeneration,
 } from '@/services/deliverablesGeneration';
 
+// Z4 transport (fala „Teresa steruje Ideą przez rejestr") — manifest narzędzi z
+// rejestru akcji + wykonawca (ta sama ścieżka, co klik człowieka).
+import {
+  buildTeresaToolManifest,
+  executeTeresaTool,
+  shouldUseLegacyIdeaIntentFallback,
+  toServerIdeaActionManifest,
+} from '../../actions/teresaActionManifest';
 import { useTeresaVoiceContext } from '../../contexts/TeresaVoiceContext';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useChatActions } from '../../hooks/useChatActions';
@@ -92,17 +100,9 @@ import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
 import { detectMessageLanguage } from '../../utils/detectMessageLanguage';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
-// Z4 transport (fala „Teresa steruje Ideą przez rejestr") — manifest narzędzi z
-// rejestru akcji + wykonawca (ta sama ścieżka, co klik człowieka).
-import {
-  buildTeresaToolManifest,
-  executeTeresaTool,
-  shouldUseLegacyIdeaIntentFallback,
-  toServerIdeaActionManifest,
-} from '../../actions/teresaActionManifest';
+import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
 import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
-import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
 import TeresaMark from '../shared/TeresaMark';
 import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
@@ -857,8 +857,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // Flaga buildowa jest default ON. Jawne `false` jest kill-switchem, który
   // przywraca legacy regex fallback; registry i fallback nigdy nie wykonują
   // tego samego polecenia równolegle.
-  const teresaIdeaActionsEnabled =
-    import.meta.env.VITE_ENABLE_TERESA_IDEA_ACTIONS !== 'false';
+  const teresaIdeaActionsEnabled = import.meta.env.VITE_ENABLE_TERESA_IDEA_ACTIONS !== 'false';
 
   // ========================================================================
   // Local state (must be declared before hooks that depend on them)
@@ -1991,7 +1990,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           // ma `teresa.confirmBeforeRun` — zamiast samego tekstu odmowy dajemy
           // wiadomości znacznik, który MessageRenderer zamienia w przyciski
           // „Potwierdź"/„Anuluj" (JEDNO oczekujące potwierdzenie na raz).
-          const needsConfirmation = Boolean((result.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation);
+          const needsConfirmation = Boolean(
+            (result.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation
+          );
           const messageId = `idea-action-${Date.now()}`;
           addChatMessage({
             id: messageId,
@@ -3363,8 +3364,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // Z20: only when the Mind Map canvas is actually the open tool — otherwise
       // 'idea-workspace-quick-action' has no listener and the prompt would
       // silently no-op instead of reaching the LLM (see useEffect above).
-      const mmAction =
-        activeIdeaWorkspaceTool === 'mindmap' ? detectMindmapIntent(text) : null;
+      const mmAction = activeIdeaWorkspaceTool === 'mindmap' ? detectMindmapIntent(text) : null;
       if (shouldUseLegacyIdeaIntentFallback(teresaIdeaActionsEnabled) && mmAction) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -4844,8 +4844,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // wygenerowany skoroszyt bezpośrednio (wzorem Kimi ExceleView), zamiast
       // montować nieistniejący draft. Rozpoznanie po obecności workbookId.
       if (deliverable.workbookId) {
-        const url =
-          deliverable.downloadUrl || `/api/workbook/${deliverable.workbookId}/download`;
+        const url = deliverable.downloadUrl || `/api/workbook/${deliverable.workbookId}/download`;
         window.open(url, '_blank');
         return;
       }

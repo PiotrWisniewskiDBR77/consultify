@@ -92,7 +92,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       )}
 
       {(onRetry || onBack) && (
-        <div className={`flex flex-wrap items-center justify-center gap-3 ${compact ? 'mt-4' : 'mt-6'}`}>
+        <div
+          className={`flex flex-wrap items-center justify-center gap-3 ${compact ? 'mt-4' : 'mt-6'}`}
+        >
           {onBack && (
             <button
               type="button"

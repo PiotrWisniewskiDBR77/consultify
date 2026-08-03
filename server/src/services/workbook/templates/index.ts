@@ -38,58 +38,58 @@
 
 import { z } from 'zod';
 
+import type { WorkbookSchema } from '../WorkbookSchema.js';
 import {
-  buildThreeScenarioPnLSchema,
-  DEFAULT_BASE,
-  DEFAULT_BULL,
-  DEFAULT_BEAR,
-  THREE_SCENARIO_GENERAL_DEFAULTS,
-  type ScenarioDrivers,
-  type ThreeScenarioPnLParams,
-} from './threeScenarioPnL.js';
-import {
-  buildOperatingBudgetSchema,
-  OPERATING_BUDGET_GENERAL_DEFAULTS,
-  OPERATING_BUDGET_DRIVER_DEFAULTS,
-  type OperatingBudgetParams,
-} from './operatingBudget.js';
-import {
-  buildDcfValuationSchema,
-  DCF_GENERAL_DEFAULTS,
-  DCF_DRIVER_DEFAULTS,
-  type DcfValuationParams,
-} from './dcfValuation.js';
-import {
-  buildBreakEvenSchema,
-  BREAK_EVEN_GENERAL_DEFAULTS,
   BREAK_EVEN_DRIVER_DEFAULTS,
+  BREAK_EVEN_GENERAL_DEFAULTS,
   type BreakEvenParams,
+  buildBreakEvenSchema,
 } from './breakEven.js';
 import {
   buildCashflow12mSchema,
-  CASHFLOW_GENERAL_DEFAULTS,
   CASHFLOW_DRIVER_DEFAULTS,
+  CASHFLOW_GENERAL_DEFAULTS,
   type Cashflow12mParams,
 } from './cashflow12m.js';
 import {
-  buildUnitEconomicsSchema,
-  UNIT_ECONOMICS_GENERAL_DEFAULTS,
-  UNIT_ECONOMICS_DRIVER_DEFAULTS,
-  type UnitEconomicsParams,
-} from './unitEconomics.js';
+  buildDcfValuationSchema,
+  DCF_DRIVER_DEFAULTS,
+  DCF_GENERAL_DEFAULTS,
+  type DcfValuationParams,
+} from './dcfValuation.js';
 import {
   buildLoanAmortizationSchema,
-  LOAN_AMORTIZATION_GENERAL_DEFAULTS,
   LOAN_AMORTIZATION_DRIVER_DEFAULTS,
+  LOAN_AMORTIZATION_GENERAL_DEFAULTS,
   type LoanAmortizationParams,
 } from './loanAmortization.js';
 import {
+  buildOperatingBudgetSchema,
+  OPERATING_BUDGET_DRIVER_DEFAULTS,
+  OPERATING_BUDGET_GENERAL_DEFAULTS,
+  type OperatingBudgetParams,
+} from './operatingBudget.js';
+import {
   buildProjectViabilitySchema,
-  PROJECT_VIABILITY_GENERAL_DEFAULTS,
   PROJECT_VIABILITY_DRIVER_DEFAULTS,
+  PROJECT_VIABILITY_GENERAL_DEFAULTS,
   type ProjectViabilityParams,
 } from './projectViability.js';
-import type { WorkbookSchema } from '../WorkbookSchema.js';
+import {
+  buildThreeScenarioPnLSchema,
+  DEFAULT_BASE,
+  DEFAULT_BEAR,
+  DEFAULT_BULL,
+  type ScenarioDrivers,
+  THREE_SCENARIO_GENERAL_DEFAULTS,
+  type ThreeScenarioPnLParams,
+} from './threeScenarioPnL.js';
+import {
+  buildUnitEconomicsSchema,
+  UNIT_ECONOMICS_DRIVER_DEFAULTS,
+  UNIT_ECONOMICS_GENERAL_DEFAULTS,
+  type UnitEconomicsParams,
+} from './unitEconomics.js';
 
 /** Stable identifiers for registered model templates. */
 export type WorkbookTemplateId =
@@ -158,7 +158,12 @@ export interface WorkbookTemplateEntry<P = any> {
 // ---------------------------------------------------------------------------
 
 /** The 6 scenario drivers, in vertical order, with PL labels + sane bounds. */
-const DRIVER_FIELDS: Array<{ key: keyof ScenarioDrivers; label: string; min: number; max: number }> = [
+const DRIVER_FIELDS: Array<{
+  key: keyof ScenarioDrivers;
+  label: string;
+  min: number;
+  max: number;
+}> = [
   { key: 'revenueGrowthPct', label: 'Wzrost przychodów %/rok', min: -1, max: 5 },
   { key: 'cogsPct', label: 'COGS % przychodów', min: 0, max: 1 },
   { key: 'opexPct', label: 'OPEX % przychodów', min: 0, max: 1 },
@@ -167,7 +172,11 @@ const DRIVER_FIELDS: Array<{ key: keyof ScenarioDrivers; label: string; min: num
   { key: 'taxRatePct', label: 'Stopa podatkowa %', min: 0, max: 1 },
 ];
 
-const SCENARIO_GROUPS: Array<{ prefix: keyof ThreeScenarioPnLParams; label: string; defaults: ScenarioDrivers }> = [
+const SCENARIO_GROUPS: Array<{
+  prefix: keyof ThreeScenarioPnLParams;
+  label: string;
+  defaults: ScenarioDrivers;
+}> = [
   { prefix: 'base', label: 'Base (bazowy)', defaults: DEFAULT_BASE },
   { prefix: 'bull', label: 'Bull (optymistyczny)', defaults: DEFAULT_BULL },
   { prefix: 'bear', label: 'Bear (pesymistyczny)', defaults: DEFAULT_BEAR },
@@ -922,10 +931,7 @@ export function getWorkbookTemplate(id: string): WorkbookTemplateEntry | null {
  * `params` is the builder's NATIVE (possibly nested) shape — the same contract as
  * before. To build from a validated FLAT param map, use `buildFromTemplateFlat`.
  */
-export function buildFromTemplate(
-  id: string,
-  params: unknown
-): WorkbookSchema | null {
+export function buildFromTemplate(id: string, params: unknown): WorkbookSchema | null {
   const entry = getWorkbookTemplate(id);
   if (!entry) return null;
   return entry.build(params as any);
@@ -987,9 +993,7 @@ export function buildTemplateParamsSchema(entry: WorkbookTemplateEntry): z.ZodTy
         break;
       case 'enum':
         field =
-          p.options && p.options.length
-            ? z.enum(p.options as [string, ...string[]])
-            : z.string();
+          p.options && p.options.length ? z.enum(p.options as [string, ...string[]]) : z.string();
         break;
       case 'integer': {
         let n = z.coerce.number().int();
@@ -1015,22 +1019,22 @@ export function buildTemplateParamsSchema(entry: WorkbookTemplateEntry): z.ZodTy
 }
 
 export {
-  buildThreeScenarioPnLSchema,
-  buildOperatingBudgetSchema,
-  buildDcfValuationSchema,
   buildBreakEvenSchema,
   buildCashflow12mSchema,
-  buildUnitEconomicsSchema,
+  buildDcfValuationSchema,
   buildLoanAmortizationSchema,
+  buildOperatingBudgetSchema,
   buildProjectViabilitySchema,
+  buildThreeScenarioPnLSchema,
+  buildUnitEconomicsSchema,
 };
 export type {
-  ThreeScenarioPnLParams,
-  OperatingBudgetParams,
-  DcfValuationParams,
   BreakEvenParams,
   Cashflow12mParams,
-  UnitEconomicsParams,
+  DcfValuationParams,
   LoanAmortizationParams,
+  OperatingBudgetParams,
   ProjectViabilityParams,
+  ThreeScenarioPnLParams,
+  UnitEconomicsParams,
 };

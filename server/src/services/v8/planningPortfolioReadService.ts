@@ -12,12 +12,12 @@ import {
 } from '../initiative/initiativeCapabilityMatrix.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
-import { kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 import {
   hasInitiativeStatusSchemaDrift,
   mapDbStatusToP11Lifecycle,
   normalizeInitiativeDbStatusForRead,
 } from '../initiative/initiativeLifecycleCanon.js';
+import { kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 
 function isMissingPlanningSupportTableError(error: unknown, tableName: string): boolean {
   const message = String((error as any)?.message || error || '').toLowerCase();

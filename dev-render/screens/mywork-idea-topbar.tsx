@@ -17,11 +17,11 @@
  *      [&ff_ideaTopBarOneLine=1 → scalony układ]
  *      [&theme=light|dark]
  */
-import React from 'react';
-
 // Efekty uboczne: seed sesji + mock Api mapy + siatka bezpieczeństwa fetch
 // + wymuszenie `ff_melsCanvas=1`. MUSI być przed importem huba.
 import './mindmap-canvas';
+
+import React from 'react';
 
 import { MyWorkHub } from '../../src/components/MyWork/MyWorkHub';
 import { AppProviders } from '../../src/providers/AppProviders';
@@ -86,7 +86,15 @@ const GRAF_TABLICY = {
       data: { label: 'Gdzie klient traci najwięcej czasu?' },
     },
   ],
-  edges: [{ id: 'wb-e1', source: 'wb-shape', target: 'wb-sticky-2', type: 'labeled', label: 'zacznij tutaj' }],
+  edges: [
+    {
+      id: 'wb-e1',
+      source: 'wb-shape',
+      target: 'wb-sticky-2',
+      type: 'labeled',
+      label: 'zacznij tutaj',
+    },
+  ],
   extensions: {},
 };
 
@@ -96,11 +104,36 @@ const GRAF_PRZEPLYWU = {
   version: 4,
   preferredTool: 'process_flow',
   nodes: [
-    { id: 'pf-start', type: 'flowNode', position: { x: 40, y: 40 }, data: { label: 'Zapytanie od klienta', shape: 'start', laneId: 'lane-sprzedaz' } },
-    { id: 'pf-a1', type: 'flowNode', position: { x: 240, y: 40 }, data: { label: 'Kwalifikacja leada', shape: 'action', laneId: 'lane-sprzedaz' } },
-    { id: 'pf-d1', type: 'flowNode', position: { x: 440, y: 40 }, data: { label: 'Pasuje do profilu?', shape: 'decision', laneId: 'lane-sprzedaz' } },
-    { id: 'pf-a2', type: 'flowNode', position: { x: 660, y: 220 }, data: { label: 'Warsztat Discovery', shape: 'action', laneId: 'lane-delivery' } },
-    { id: 'pf-end', type: 'flowNode', position: { x: 900, y: 220 }, data: { label: 'Wdrożenie uruchomione', shape: 'end', laneId: 'lane-delivery' } },
+    {
+      id: 'pf-start',
+      type: 'flowNode',
+      position: { x: 40, y: 40 },
+      data: { label: 'Zapytanie od klienta', shape: 'start', laneId: 'lane-sprzedaz' },
+    },
+    {
+      id: 'pf-a1',
+      type: 'flowNode',
+      position: { x: 240, y: 40 },
+      data: { label: 'Kwalifikacja leada', shape: 'action', laneId: 'lane-sprzedaz' },
+    },
+    {
+      id: 'pf-d1',
+      type: 'flowNode',
+      position: { x: 440, y: 40 },
+      data: { label: 'Pasuje do profilu?', shape: 'decision', laneId: 'lane-sprzedaz' },
+    },
+    {
+      id: 'pf-a2',
+      type: 'flowNode',
+      position: { x: 660, y: 220 },
+      data: { label: 'Warsztat Discovery', shape: 'action', laneId: 'lane-delivery' },
+    },
+    {
+      id: 'pf-end',
+      type: 'flowNode',
+      position: { x: 900, y: 220 },
+      data: { label: 'Wdrożenie uruchomione', shape: 'end', laneId: 'lane-delivery' },
+    },
   ],
   edges: [
     { id: 'pf-e1', source: 'pf-start', target: 'pf-a1', type: 'flowEdge' },
@@ -140,8 +173,10 @@ if (GRAF_PER_NARZEDZIE[TOOL]) {
     return biezacaMapa;
   };
   Api.getMyIdeaMap = (async () => ({ map: biezacaMapa })) as typeof Api.getMyIdeaMap;
-  Api.syncMyIdeaMap = (async (_id: string, payload: any) => scal(payload)) as typeof Api.syncMyIdeaMap;
-  Api.saveMyIdeaMap = (async (_id: string, payload: any) => scal(payload)) as typeof Api.saveMyIdeaMap;
+  Api.syncMyIdeaMap = (async (_id: string, payload: any) =>
+    scal(payload)) as typeof Api.syncMyIdeaMap;
+  Api.saveMyIdeaMap = (async (_id: string, payload: any) =>
+    scal(payload)) as typeof Api.saveMyIdeaMap;
 }
 
 // Rząd pilli huba odtwarza się z `sessionStorage` (`readStoredMyWorkDocuments`).

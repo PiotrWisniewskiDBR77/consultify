@@ -51,11 +51,7 @@ import { ResultsKpiScorecardsView } from '../ResultsKpiScorecardsView';
 
 const mountScorecards = () =>
   render(
-    <ResultsKpiScorecardsView
-      activeFilters={[]}
-      onFilterChange={() => {}}
-      initiatives={[]}
-    />
+    <ResultsKpiScorecardsView activeFilters={[]} onFilterChange={() => {}} initiatives={[]} />
   );
 
 describe('ResultsKpiScorecardsView — RES-11 visibility (mounted)', () => {

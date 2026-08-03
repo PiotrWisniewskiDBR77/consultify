@@ -105,7 +105,17 @@ export function useProcessFlowNodes(opts: UseProcessFlowNodesOpts) {
         ...removedNodeIdList.map((id) => ({ op: 'remove_node', data: { id } })),
       ]);
     }
-  }, [locked, nodes, edges, confirmBulkDelete, onNodesDeleted, pushUndo, setEdges, setNodes, collab]);
+  }, [
+    locked,
+    nodes,
+    edges,
+    confirmBulkDelete,
+    onNodesDeleted,
+    pushUndo,
+    setEdges,
+    setNodes,
+    collab,
+  ]);
 
   /**
    * Wkleja podane wezly (z krawedziami miedzy nimi) jako NOWE elementy.

@@ -52,7 +52,10 @@ const WYNIKI = {
 const WORKBOOK = {
   id: ID,
   title: 'Budżet operacyjny (mock — otwarty z Recent)',
-  schema_json: { title: 'Budżet operacyjny (mock — otwarty z Recent)', sheets: [ZALOZENIA, WYNIKI] },
+  schema_json: {
+    title: 'Budżet operacyjny (mock — otwarty z Recent)',
+    sheets: [ZALOZENIA, WYNIKI],
+  },
 };
 
 function installMocks(): () => void {
@@ -64,7 +67,12 @@ function installMocks(): () => void {
 
   const realFetch = window.fetch.bind(window);
   window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : (input as Request).url;
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : (input as Request).url;
     if (url.includes('/artifacts?')) {
       const raw = {
         originRuntime: 'sheet',

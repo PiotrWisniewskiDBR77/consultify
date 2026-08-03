@@ -35,9 +35,7 @@ describe('buildWorkbookGridSheets', () => {
   });
 
   it('trims whitespace-only names down to the fallback', () => {
-    const result = buildWorkbookGridSheets([
-      { name: '   ', columns: [], rows: [] },
-    ]);
+    const result = buildWorkbookGridSheets([{ name: '   ', columns: [], rows: [] }]);
 
     expect(result[0].name).toBe('Sheet 1');
   });
@@ -51,7 +49,10 @@ describe('buildWorkbookGridSheets', () => {
     const result = buildWorkbookGridSheets([
       {
         name: 'Założenia',
-        columns: [{ key: 'label', header: 'Pozycja' }, { key: 'y1', header: 'Rok 1' }],
+        columns: [
+          { key: 'label', header: 'Pozycja' },
+          { key: 'y1', header: 'Rok 1' },
+        ],
         rows: [
           {
             cells: {

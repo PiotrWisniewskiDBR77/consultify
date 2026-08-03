@@ -19,14 +19,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
-import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import { AppProviders } from '../../src/providers/AppProviders';
-import { seedRealisticSession } from '../mocks/seedStore';
-
 import { AIConsultantPanel } from '@/components/shared/NModeLayout/AIConsultantPanel';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import type { WorkspaceContext } from '@/types/workspace';
+
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { seedRealisticSession } from '../mocks/seedStore';
 
 const params = new URLSearchParams(window.location.search);
 const isPl = params.get('lang') !== 'en';

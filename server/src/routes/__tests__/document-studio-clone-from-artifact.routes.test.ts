@@ -35,7 +35,8 @@ vi.mock('../../utils/DbPromise.js', () => ({
 const mockGetDocumentArtifact = vi.fn();
 
 vi.mock('../../services/documentStudio/documentStudioService.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../services/documentStudio/documentStudioService.js')>();
+  const actual =
+    await importOriginal<typeof import('../../services/documentStudio/documentStudioService.js')>();
   return {
     ...actual,
     getDocumentArtifact: (...args: unknown[]) => mockGetDocumentArtifact(...args),
@@ -132,7 +133,9 @@ beforeEach(() => {
 describe('POST /templates/from-artifact/:artifactId', () => {
   it('401 when unauthenticated', async () => {
     const app = createApp();
-    const res = await request(app).post('/api/document-studio/templates/from-artifact/artifact-1').send({});
+    const res = await request(app)
+      .post('/api/document-studio/templates/from-artifact/artifact-1')
+      .send({});
     expect(res.status).toBe(401);
   });
 

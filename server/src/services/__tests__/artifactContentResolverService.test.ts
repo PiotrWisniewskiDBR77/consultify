@@ -66,7 +66,10 @@ describe('artifactContentResolverService', () => {
     const resolve = vi.fn().mockResolvedValue({ envelope, originRevision: 'rev-1' });
     registerArtifactContentAdapter('test_runtime', { resolve });
 
-    const result = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    const result = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
 
     expect(resolve).toHaveBeenCalledWith({
       artifactId: 'artifact-1',
@@ -82,14 +85,14 @@ describe('artifactContentResolverService', () => {
         contentHash: expect.stringMatching(/^[a-f0-9]{64}$/),
         etag: expect.stringMatching(/^"[a-f0-9]{64}"$/),
         envelope,
-      }),
+      })
     );
   });
 
   it('does not resolve an artifact from another tenant', async () => {
     seed('org-b');
     await expect(
-      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' }),
+      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' })
     ).rejects.toMatchObject({
       statusCode: 404,
       code: ARTIFACT_CONTENT_ERROR_CODES.ARTIFACT_NOT_FOUND,
@@ -99,14 +102,14 @@ describe('artifactContentResolverService', () => {
   it('fails closed when primary origin is missing', async () => {
     state.artifacts.set('org-a:artifact-1', { artifact_id: 'artifact-1' });
     await expect(
-      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' }),
+      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' })
     ).rejects.toMatchObject({ code: ARTIFACT_CONTENT_ERROR_CODES.ORIGIN_MISSING });
   });
 
   it('fails closed for an unregistered runtime', async () => {
     seed();
     await expect(
-      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' }),
+      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' })
     ).rejects.toMatchObject({
       statusCode: 422,
       code: ARTIFACT_CONTENT_ERROR_CODES.RUNTIME_UNSUPPORTED,
@@ -117,7 +120,7 @@ describe('artifactContentResolverService', () => {
     seed();
     registerArtifactContentAdapter('test_runtime', { resolve: vi.fn().mockResolvedValue(null) });
     await expect(
-      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' }),
+      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' })
     ).rejects.toMatchObject({
       statusCode: 404,
       code: ARTIFACT_CONTENT_ERROR_CODES.ORIGIN_NOT_FOUND,
@@ -130,7 +133,7 @@ describe('artifactContentResolverService', () => {
       resolve: vi.fn().mockResolvedValue({ envelope: { contentMd: 'placeholder' } as any }),
     });
     await expect(
-      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' }),
+      resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' })
     ).rejects.toMatchObject({ code: ARTIFACT_CONTENT_ERROR_CODES.INVALID_ENVELOPE });
   });
 
@@ -144,10 +147,10 @@ describe('artifactContentResolverService', () => {
     const secondHash = computeArtifactContentHash(reordered);
     expect(firstHash).toBe(secondHash);
     expect(computeArtifactContentEtag({ originRevision: 'rev-1', contentHash: firstHash })).toBe(
-      computeArtifactContentEtag({ originRevision: 'rev-1', contentHash: secondHash }),
+      computeArtifactContentEtag({ originRevision: 'rev-1', contentHash: secondHash })
     );
-    expect(computeArtifactContentEtag({ originRevision: 'rev-2', contentHash: firstHash })).not.toBe(
-      computeArtifactContentEtag({ originRevision: 'rev-1', contentHash: firstHash }),
-    );
+    expect(
+      computeArtifactContentEtag({ originRevision: 'rev-2', contentHash: firstHash })
+    ).not.toBe(computeArtifactContentEtag({ originRevision: 'rev-1', contentHash: firstHash }));
   });
 });

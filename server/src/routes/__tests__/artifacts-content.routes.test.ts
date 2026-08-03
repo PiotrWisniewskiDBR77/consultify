@@ -88,7 +88,10 @@ describe('GET /api/artifacts/:id/content', () => {
     const { etag: _etag, ...expectedPayload } = payload;
     expect(response.body.data).toEqual(expectedPayload);
     expect(response.body.data).not.toHaveProperty('etag');
-    expect(resolved.resolve).toHaveBeenCalledWith({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    expect(resolved.resolve).toHaveBeenCalledWith({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
   });
 
   it('returns 304 for a matching If-None-Match ETag', async () => {

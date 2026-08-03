@@ -33,17 +33,20 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
+import { buildDcfValuationSchema, type DcfValuationParams } from '../templates/dcfValuation.js';
+import {
+  buildFromTemplate,
+  buildFromTemplateFlat,
+  listWorkbookTemplates,
+  WORKBOOK_TEMPLATES,
+} from '../templates/index.js';
+import {
+  buildOperatingBudgetSchema,
+  type OperatingBudgetParams,
+} from '../templates/operatingBudget.js';
 import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
 import { critiqueWorkbook } from '../workbookQualityGate.js';
 import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
-import { buildOperatingBudgetSchema, type OperatingBudgetParams } from '../templates/operatingBudget.js';
-import { buildDcfValuationSchema, type DcfValuationParams } from '../templates/dcfValuation.js';
-import {
-  WORKBOOK_TEMPLATES,
-  listWorkbookTemplates,
-  buildFromTemplate,
-  buildFromTemplateFlat,
-} from '../templates/index.js';
 
 async function load(buf: Buffer): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
@@ -59,7 +62,9 @@ function formulaOf(ws: ExcelJS.Worksheet, addr: string): string | null {
 }
 
 /** Every populated cell (any row) across the whole workbook schema. */
-function allCells(schema: ReturnType<typeof buildOperatingBudgetSchema>): Array<{ formula?: string; value?: unknown }> {
+function allCells(
+  schema: ReturnType<typeof buildOperatingBudgetSchema>
+): Array<{ formula?: string; value?: unknown }> {
   const out: Array<{ formula?: string; value?: unknown }> = [];
   for (const sheet of schema.sheets) {
     for (const row of sheet.rows) {
@@ -341,7 +346,9 @@ describe('registry — operatingBudget + dcfValuation are registered', () => {
     const schema = buildFromTemplateFlat('operatingBudget', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -349,7 +356,9 @@ describe('registry — operatingBudget + dcfValuation are registered', () => {
     const schema = buildFromTemplateFlat('dcfValuation', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -441,7 +450,16 @@ function referenceBudget(p: Required<OperatingBudgetParams>): BudgetMonth[] {
 }
 
 const MONTH_COLS = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-const BUDGET_ROW = { revenue: 2, varCost: 3, margin: 4, fixedTotal: 9, totalCost: 10, result: 11, cum: 12, marginPct: 13 };
+const BUDGET_ROW = {
+  revenue: 2,
+  varCost: 3,
+  margin: 4,
+  fixedTotal: 9,
+  totalCost: 10,
+  result: 11,
+  cum: 12,
+  marginPct: 13,
+};
 
 describe('operatingBudget — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every Budżet line item cell (12 months + RAZEM) is a FORMULA', async () => {
@@ -526,11 +544,20 @@ describe('operatingBudget — (b) math verification — evaluated workbook == in
       const ref = referenceBudget(full);
       for (let m = 0; m < 12; m++) {
         const col = MONTH_COLS[m];
-        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.revenue}`)).toBeCloseTo(ref[m].revenue, 4);
-        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.totalCost}`)).toBeCloseTo(ref[m].totalCost, 4);
+        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.revenue}`)).toBeCloseTo(
+          ref[m].revenue,
+          4
+        );
+        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.totalCost}`)).toBeCloseTo(
+          ref[m].totalCost,
+          4
+        );
         expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.result}`)).toBeCloseTo(ref[m].result, 4);
         expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.cum}`)).toBeCloseTo(ref[m].cum, 4);
-        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.marginPct}`)).toBeCloseTo(ref[m].marginPct, 8);
+        expect(ev.cellValue('Budżet', `${col}${BUDGET_ROW.marginPct}`)).toBeCloseTo(
+          ref[m].marginPct,
+          8
+        );
       }
     }
   });
@@ -618,7 +645,9 @@ const WR = { sumPv: 2, tv: 3, pvTv: 4, ev: 5, netDebt: 6, equity: 7, shares: 8, 
 
 describe('dcfValuation — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every Projekcja FCF cell (FCF / discount factor / PV, all years) is a FORMULA', async () => {
-    const buf = await buildWorkbookBuffer(buildDcfValuationSchema(DCF_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildDcfValuationSchema(DCF_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Projekcja FCF')!;
     for (let n = 1; n <= DCF_PARAMS_A.horizonYears; n++) {
       const col = String.fromCharCode(65 + n); // B, C, D, ...

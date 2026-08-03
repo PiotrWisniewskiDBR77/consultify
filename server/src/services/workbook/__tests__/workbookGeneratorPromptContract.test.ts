@@ -14,16 +14,13 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SERVICE_SRC = readFileSync(
-  resolve(__dirname, '../WorkbookGeneratorService.ts'),
-  'utf8',
-);
+const SERVICE_SRC = readFileSync(resolve(__dirname, '../WorkbookGeneratorService.ts'), 'utf8');
 
 /** Isolate the GENERATION_SYSTEM_PROMPT template literal body. */
 function generationPrompt(): string {

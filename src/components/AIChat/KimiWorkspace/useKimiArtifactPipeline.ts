@@ -428,11 +428,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       const origin = currentRun.materializationOrigin;
       const title =
         currentRun.plan.titleHint ||
-        (lane === 'excele'
-          ? 'Spreadsheet'
-          : lane === 'tabele'
-            ? 'Table'
-            : 'Presentation');
+        (lane === 'excele' ? 'Spreadsheet' : lane === 'tabele' ? 'Table' : 'Presentation');
 
       if (lane === 'prezentacje' && origin?.originRecordId) {
         const deckId = origin.originRecordId;
@@ -655,7 +651,8 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                       ? {
                           ...prev,
                           gridLoading: false,
-                          gridError: 'Nie udało się wczytać podglądu komórek. Pobierz plik, aby zobaczyć zawartość.',
+                          gridError:
+                            'Nie udało się wczytać podglądu komórek. Pobierz plik, aby zobaczyć zawartość.',
                         }
                       : prev
                   );
@@ -799,11 +796,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       if (!activeConvId) {
         try {
           const laneTitle =
-            lane === 'excele'
-              ? 'Spreadsheet'
-              : lane === 'tabele'
-                ? 'Table'
-                : 'Presentation';
+            lane === 'excele' ? 'Spreadsheet' : lane === 'tabele' ? 'Table' : 'Presentation';
           await useConversationStore.getState().createConversation({
             title: `${laneTitle}: ${goal.slice(0, 60)}`,
           });
@@ -1151,11 +1144,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
 
     const origin = currentRun.materializationOrigin;
     const laneSegment =
-      lane === 'prezentacje'
-        ? 'prezentacje'
-        : lane === 'tabele'
-          ? 'tabele'
-          : 'excele';
+      lane === 'prezentacje' ? 'prezentacje' : lane === 'tabele' ? 'tabele' : 'excele';
     const artifactPath = origin?.originRecordId
       ? `/${laneSegment}?artifactId=${origin.originRecordId}`
       : null;

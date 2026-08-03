@@ -44,7 +44,11 @@ import { useTranslation } from 'react-i18next';
 import { PresentationModeSwitcher } from '@/components/MyWork/shared/PresentationModeSwitcher';
 import { MENU_1_PRIMARY_CTA } from '@/components/shared/ModuleMenu3';
 import type { PresentationMode } from '@/hooks/usePresentationMode';
-import { ARTIFACT_IDENTITY, type ArtifactType, buildArtifactPermalink } from '@/utils/artifactLinks';
+import {
+  ARTIFACT_IDENTITY,
+  type ArtifactType,
+  buildArtifactPermalink,
+} from '@/utils/artifactLinks';
 
 import type { NModeHeaderConfig } from './types';
 
@@ -124,7 +128,8 @@ const HeaderOverflowMenu: React.FC<{ items: OverflowMenuItem[]; ariaLabel: strin
     }
     const update = () => {
       const r = btnRef.current?.getBoundingClientRect();
-      if (r) setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+      if (r)
+        setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
     };
     update();
     window.addEventListener('resize', update);
@@ -390,7 +395,9 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               className="min-w-0 truncate text-xl font-bold text-c-text"
               title={title || resolvedPlaceholder}
             >
-              {title || <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>}
+              {title || (
+                <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>
+              )}
             </span>
           ) : (
             <button
@@ -400,7 +407,9 @@ export const NModeHeader: React.FC<NModeHeaderProps> = ({
               className="min-w-0 truncate rounded-sm text-left text-xl font-bold bg-transparent text-c-text border-b-2 border-transparent hover:border-c-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)]"
               title={title || resolvedPlaceholder}
             >
-              {title || <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>}
+              {title || (
+                <span className="text-c-text-muted font-normal">{resolvedPlaceholder}</span>
+              )}
             </button>
           )}
 

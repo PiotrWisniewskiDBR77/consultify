@@ -472,7 +472,8 @@ function mapArtifactPresentation(raw: any): PresentationItem {
  */
 export function resolveSheetOrigin(raw: any): SheetOrigin {
   const originSummary = raw?.originSummary;
-  const sourceTable = originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
+  const sourceTable =
+    originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
   return sourceTable === 'tp_tables' ? 'table_export' : 'workbook';
 }
 

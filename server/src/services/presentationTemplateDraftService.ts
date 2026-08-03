@@ -417,7 +417,8 @@ export async function refinePresentationTemplateWithLlm(
     const contentHints = sanitizeContentHints(entry.contentHints) ?? original.contentHints;
     const keyMessage = sanitizeKeyMessage(entry.keyMessage) ?? original.keyMessage;
     const dataNeeded = sanitizeDataNeeded(entry.dataNeeded) ?? original.dataNeeded;
-    const suggestedVisual = sanitizeSuggestedVisual(entry.suggestedVisual) ?? original.suggestedVisual;
+    const suggestedVisual =
+      sanitizeSuggestedVisual(entry.suggestedVisual) ?? original.suggestedVisual;
     refinedOutline.push({
       intent: original.intent,
       title,

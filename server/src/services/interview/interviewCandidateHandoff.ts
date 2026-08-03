@@ -280,7 +280,8 @@ async function resolveEligibleSource(
     throw new InterviewCandidateHandoffError('FINDING_NOT_FOUND', 404, 'Insight finding not found');
   }
 
-  const isAccepted = finding.review_status === 'published' && finding.readback_status === 'confirmed_by_client';
+  const isAccepted =
+    finding.review_status === 'published' && finding.readback_status === 'confirmed_by_client';
   if (!isAccepted) {
     throw new InterviewCandidateHandoffError(
       'FINDING_NOT_ACCEPTED',

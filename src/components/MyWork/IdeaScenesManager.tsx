@@ -224,82 +224,82 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
           </div>
 
           {listaWidoczna && (
-          <div className="max-h-[200px] overflow-y-auto p-1 space-y-0.5">
-            {scenes.map((scene, i) => (
-              <div
-                key={scene.id}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group cursor-pointer"
-                onClick={() => onNavigateToScene(scene.viewport)}
-              >
-                <span className="text-[9px] font-bold text-slate-600 w-3">{i + 1}</span>
-                {editingId === scene.id ? (
-                  <input
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onBlur={() => handleRenameScene(scene.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleRenameScene(scene.id);
-                      if (e.key === 'Escape') setEditingId(null);
-                    }}
-                    className="flex-1 text-[10px] bg-transparent border-b border-c-info outline-none text-slate-700 dark:text-slate-300"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ) : (
-                  <span className="flex-1 text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
-                    {scene.name}
-                  </span>
-                )}
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMoveScene(scene.id, 'up');
-                    }}
-                    aria-label={t('myWorkIdeas.scenesManager.moveUp')}
-                    title={t('myWorkIdeas.scenesManager.moveUp')}
-                    className="p-0.5 text-slate-600 hover:text-slate-600"
-                  >
-                    <ChevronUp size={10} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMoveScene(scene.id, 'down');
-                    }}
-                    aria-label={t('myWorkIdeas.scenesManager.moveDown')}
-                    title={t('myWorkIdeas.scenesManager.moveDown')}
-                    className="p-0.5 text-slate-600 hover:text-slate-600"
-                  >
-                    <ChevronDown size={10} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingId(scene.id);
-                      setEditName(scene.name);
-                    }}
-                    aria-label={t('myWorkIdeas.scenesManager.rename')}
-                    title={t('myWorkIdeas.scenesManager.rename')}
-                    className="p-0.5 text-slate-600 hover:text-c-info"
-                  >
-                    <Edit3 size={10} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteScene(scene.id);
-                    }}
-                    aria-label={t('myWorkIdeas.scenesManager.deleteScene')}
-                    title={t('myWorkIdeas.scenesManager.deleteScene')}
-                    className="p-0.5 text-slate-600 hover:text-danger-500"
-                  >
-                    <Trash2 size={10} />
-                  </button>
+            <div className="max-h-[200px] overflow-y-auto p-1 space-y-0.5">
+              {scenes.map((scene, i) => (
+                <div
+                  key={scene.id}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group cursor-pointer"
+                  onClick={() => onNavigateToScene(scene.viewport)}
+                >
+                  <span className="text-[9px] font-bold text-slate-600 w-3">{i + 1}</span>
+                  {editingId === scene.id ? (
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onBlur={() => handleRenameScene(scene.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRenameScene(scene.id);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      className="flex-1 text-[10px] bg-transparent border-b border-c-info outline-none text-slate-700 dark:text-slate-300"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span className="flex-1 text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                      {scene.name}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMoveScene(scene.id, 'up');
+                      }}
+                      aria-label={t('myWorkIdeas.scenesManager.moveUp')}
+                      title={t('myWorkIdeas.scenesManager.moveUp')}
+                      className="p-0.5 text-slate-600 hover:text-slate-600"
+                    >
+                      <ChevronUp size={10} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMoveScene(scene.id, 'down');
+                      }}
+                      aria-label={t('myWorkIdeas.scenesManager.moveDown')}
+                      title={t('myWorkIdeas.scenesManager.moveDown')}
+                      className="p-0.5 text-slate-600 hover:text-slate-600"
+                    >
+                      <ChevronDown size={10} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(scene.id);
+                        setEditName(scene.name);
+                      }}
+                      aria-label={t('myWorkIdeas.scenesManager.rename')}
+                      title={t('myWorkIdeas.scenesManager.rename')}
+                      className="p-0.5 text-slate-600 hover:text-c-info"
+                    >
+                      <Edit3 size={10} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteScene(scene.id);
+                      }}
+                      aria-label={t('myWorkIdeas.scenesManager.deleteScene')}
+                      title={t('myWorkIdeas.scenesManager.deleteScene')}
+                      className="p-0.5 text-slate-600 hover:text-danger-500"
+                    >
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

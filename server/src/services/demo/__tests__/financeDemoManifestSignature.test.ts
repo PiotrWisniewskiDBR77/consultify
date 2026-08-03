@@ -16,12 +16,12 @@ import {
   buildManifestSignature,
   computeManifestHmac,
   constantTimeEquals,
-  resolveManifestSigningKey,
-  verifyManifestSignature,
   MANIFEST_HMAC_KEY_ENV,
   MANIFEST_HMAC_KEY_ID_ENV,
   MANIFEST_HMAC_MIN_KEY_LENGTH,
   MANIFEST_SIGNATURE_ALGORITHM,
+  resolveManifestSigningKey,
+  verifyManifestSignature,
 } from '../financeDemoManifestSignature.js';
 
 const SECRET = 'fin005-manifest-signing-key-for-unit-tests';
@@ -68,9 +68,9 @@ describe('resolveManifestSigningKey', () => {
     expect(() => resolveManifestSigningKey(env({ [MANIFEST_HMAC_KEY_ID_ENV]: undefined }))).toThrow(
       new RegExp(`${MANIFEST_HMAC_KEY_ID_ENV} is not set`)
     );
-    expect(() => resolveManifestSigningKey(env({ [MANIFEST_HMAC_KEY_ID_ENV]: 'has spaces' }))).toThrow(
-      /must match/
-    );
+    expect(() =>
+      resolveManifestSigningKey(env({ [MANIFEST_HMAC_KEY_ID_ENV]: 'has spaces' }))
+    ).toThrow(/must match/);
   });
 
   it('refuses a key id that contains the key material', () => {

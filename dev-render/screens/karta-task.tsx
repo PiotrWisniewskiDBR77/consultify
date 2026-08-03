@@ -49,7 +49,12 @@ const MOCK_USERS = [
     email: 'piotr.wisniewski@dbr77.com',
   },
   { id: 'user-anna', firstName: 'Anna', lastName: 'Kowalska', email: 'anna.kowalska@dbr77.com' },
-  { id: 'user-marek', firstName: 'Marek', lastName: 'Zieliński', email: 'marek.zielinski@dbr77.com' },
+  {
+    id: 'user-marek',
+    firstName: 'Marek',
+    lastName: 'Zieliński',
+    email: 'marek.zielinski@dbr77.com',
+  },
   {
     id: 'user-kasia',
     firstName: 'Katarzyna',
@@ -148,9 +153,21 @@ const MOCK_TASK = {
       text: 'Policzyć lead time i czas oczekiwania per krok (mediana, nie średnia)',
       completed: true,
     },
-    { id: 'chk-4', text: 'Narysować mapę AS-IS w Process Flow + oznaczyć wąskie gardła', completed: false },
-    { id: 'chk-5', text: 'Walidacja mapy z Markiem (partner prowadzący) przed warsztatem', completed: false },
-    { id: 'chk-6', text: 'Wysłać pre-read do uczestników warsztatu na 48h przed', completed: false },
+    {
+      id: 'chk-4',
+      text: 'Narysować mapę AS-IS w Process Flow + oznaczyć wąskie gardła',
+      completed: false,
+    },
+    {
+      id: 'chk-5',
+      text: 'Walidacja mapy z Markiem (partner prowadzący) przed warsztatem',
+      completed: false,
+    },
+    {
+      id: 'chk-6',
+      text: 'Wysłać pre-read do uczestników warsztatu na 48h przed',
+      completed: false,
+    },
   ],
 
   comments: [
@@ -378,7 +395,8 @@ if (__aiTryb === 'ok' || __aiTryb === 'down') {
       alternatives: [
         {
           title: 'Mapa na danych z eksportu (mediany)',
-          description: 'Lead time liczony z timestampów, wywiady tylko jako weryfikacja spornych kroków.',
+          description:
+            'Lead time liczony z timestampów, wywiady tylko jako weryfikacja spornych kroków.',
           pros: ['Odporna na „jak powinno być"', 'Krótsza o ~2 dni'],
           cons: ['Braki w projektach bez kompletnych timestampów'],
           isRecommended: true,

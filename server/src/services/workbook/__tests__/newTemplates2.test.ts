@@ -33,17 +33,17 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
+import { type BreakEvenParams, buildBreakEvenSchema } from '../templates/breakEven.js';
+import { buildCashflow12mSchema, type Cashflow12mParams } from '../templates/cashflow12m.js';
+import {
+  buildFromTemplate,
+  buildFromTemplateFlat,
+  listWorkbookTemplates,
+  WORKBOOK_TEMPLATES,
+} from '../templates/index.js';
 import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
 import { critiqueWorkbook } from '../workbookQualityGate.js';
 import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
-import { buildBreakEvenSchema, type BreakEvenParams } from '../templates/breakEven.js';
-import { buildCashflow12mSchema, type Cashflow12mParams } from '../templates/cashflow12m.js';
-import {
-  WORKBOOK_TEMPLATES,
-  listWorkbookTemplates,
-  buildFromTemplate,
-  buildFromTemplateFlat,
-} from '../templates/index.js';
 
 async function load(buf: Buffer): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
@@ -59,7 +59,9 @@ function formulaOf(ws: ExcelJS.Worksheet, addr: string): string | null {
 }
 
 /** Every populated cell (any row) across the whole workbook schema. */
-function allCells(schema: ReturnType<typeof buildBreakEvenSchema>): Array<{ formula?: string; value?: unknown }> {
+function allCells(
+  schema: ReturnType<typeof buildBreakEvenSchema>
+): Array<{ formula?: string; value?: unknown }> {
   const out: Array<{ formula?: string; value?: unknown }> = [];
   for (const sheet of schema.sheets) {
     for (const row of sheet.rows) {
@@ -320,7 +322,9 @@ describe('registry — breakEven + cashflow12m are registered', () => {
     const schema = buildFromTemplateFlat('breakEven', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -328,7 +332,9 @@ describe('registry — breakEven + cashflow12m are registered', () => {
     const schema = buildFromTemplateFlat('cashflow12m', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -342,7 +348,11 @@ describe('registry — breakEven + cashflow12m are registered', () => {
     const cf = buildCashflow12mSchema();
     expect(WorkbookSchemaValidator.safeParse(bep).success).toBe(true);
     expect(WorkbookSchemaValidator.safeParse(cf).success).toBe(true);
-    expect(bep.sheets.map((s) => s.name)).toEqual(['Założenia', 'Próg rentowności', 'Analiza wrażliwości']);
+    expect(bep.sheets.map((s) => s.name)).toEqual([
+      'Założenia',
+      'Próg rentowności',
+      'Analiza wrażliwości',
+    ]);
     expect(cf.sheets.map((s) => s.name)).toEqual(['Założenia', 'Przepływy', 'Podsumowanie']);
   });
 });
@@ -386,11 +396,20 @@ function referenceBreakEven(p: Required<BreakEvenParams>) {
   return { margin, bepVolume, bepRevenue, safetyUnits, safetyPct, levels };
 }
 
-const BEP_ROW = { margin: 2, volume: 3, revenue: 4, plannedVolume: 5, safetyUnits: 6, safetyPct: 7 };
+const BEP_ROW = {
+  margin: 2,
+  volume: 3,
+  revenue: 4,
+  plannedVolume: 5,
+  safetyUnits: 6,
+  safetyPct: 7,
+};
 
 describe('breakEven — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every "Próg rentowności" metric cell is a FORMULA', async () => {
-    const buf = await buildWorkbookBuffer(buildBreakEvenSchema(BEP_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildBreakEvenSchema(BEP_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Próg rentowności')!;
     for (let r = 2; r <= 7; r++) {
       expect(formulaOf(ws, `B${r}`), `B${r} should be a formula`).toBeTruthy();
@@ -409,8 +428,12 @@ describe('breakEven — (a) read-back — formulas, chained, cross-sheet', () =>
     const buf = await buildWorkbookBuffer(buildBreakEvenSchema(BEP_PARAMS_A));
     const ws = (await load(buf)).getWorksheet('Próg rentowności')!;
     expect(formulaOf(ws, `B${BEP_ROW.plannedVolume}`)).toBe("'Założenia'!$B$5");
-    expect(formulaOf(ws, `B${BEP_ROW.safetyUnits}`)).toBe(`B${BEP_ROW.plannedVolume}-B${BEP_ROW.volume}`);
-    expect(formulaOf(ws, `B${BEP_ROW.safetyPct}`)).toBe(`B${BEP_ROW.safetyUnits}/B${BEP_ROW.plannedVolume}`);
+    expect(formulaOf(ws, `B${BEP_ROW.safetyUnits}`)).toBe(
+      `B${BEP_ROW.plannedVolume}-B${BEP_ROW.volume}`
+    );
+    expect(formulaOf(ws, `B${BEP_ROW.safetyPct}`)).toBe(
+      `B${BEP_ROW.safetyUnits}/B${BEP_ROW.plannedVolume}`
+    );
   });
 
   it('Analiza wrażliwości sheet: every row is a formula chain off the BEP volume', async () => {
@@ -449,9 +472,18 @@ describe('breakEven — (b) math verification — evaluated workbook == independ
       const ref = referenceBreakEven(full);
       expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.margin}`)).toBeCloseTo(ref.margin, 6);
       expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.volume}`)).toBeCloseTo(ref.bepVolume, 6);
-      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.revenue}`)).toBeCloseTo(ref.bepRevenue, 4);
-      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.safetyUnits}`)).toBeCloseTo(ref.safetyUnits, 6);
-      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.safetyPct}`)).toBeCloseTo(ref.safetyPct, 8);
+      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.revenue}`)).toBeCloseTo(
+        ref.bepRevenue,
+        4
+      );
+      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.safetyUnits}`)).toBeCloseTo(
+        ref.safetyUnits,
+        6
+      );
+      expect(ev.cellValue('Próg rentowności', `B${BEP_ROW.safetyPct}`)).toBeCloseTo(
+        ref.safetyPct,
+        8
+      );
     }
   });
 
@@ -568,7 +600,9 @@ const CF_ROW = { revenue: 2, inflow: 3, costs: 4, net: 5, balance: 6 };
 
 describe('cashflow12m — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every Przepływy line item cell (12 months + RAZEM) is a FORMULA', async () => {
-    const buf = await buildWorkbookBuffer(buildCashflow12mSchema(CF_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildCashflow12mSchema(CF_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Przepływy')!;
     for (const col of [...MONTH_COLS, 'N']) {
       for (let r = 2; r <= 6; r++) {
@@ -593,7 +627,7 @@ describe('cashflow12m — (a) read-back — formulas, chained, cross-sheet', () 
     expect(formulaOf(ws, 'D3')).toBe('C2');
   });
 
-  it('paymentDelayMonths = 0 collects the SAME month\'s revenue immediately', async () => {
+  it("paymentDelayMonths = 0 collects the SAME month's revenue immediately", async () => {
     const buf = await buildWorkbookBuffer(buildCashflow12mSchema(CF_PARAMS_C));
     const ws = (await load(buf)).getWorksheet('Przepływy')!;
     expect(formulaOf(ws, 'B3')).toBe('B2');

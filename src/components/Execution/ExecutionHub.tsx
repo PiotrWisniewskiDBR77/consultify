@@ -108,7 +108,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -120,6 +119,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';

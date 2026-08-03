@@ -29,8 +29,8 @@ import {
   IDEA_BOTTOM_BAR_SWITCHER_SLOT_ID,
   isIdeaBottomBarUnifiedEnabled,
 } from '../../../utils/ideaBottomBarUnifiedFlag';
-import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 import type { CanvasToolType } from '../ideaSelectionTypes';
+import { getIdeaWorkspaceToolLabel, TOOL_CONFIG } from '../IdeaWorkspaceToolbar';
 
 interface IdeaViewSwitcherProps {
   activeTool: CanvasToolType;
@@ -165,7 +165,13 @@ export function IdeaViewSwitcher({
 
         const miesciSieWPlotnie = obokLewa >= r.left + 8;
         const wchodziNaKogos = przeszkody.some(
-          (p) => !(obokPrawa <= p.left || obokLewa >= p.right || obokDol <= p.top || obokGora >= p.bottom)
+          (p) =>
+            !(
+              obokPrawa <= p.left ||
+              obokLewa >= p.right ||
+              obokDol <= p.top ||
+              obokGora >= p.bottom
+            )
         );
 
         if (miesciSieWPlotnie && !wchodziNaKogos) {
@@ -239,11 +245,7 @@ export function IdeaViewSwitcher({
   if (doGniazda) {
     if (!gniazdo) return null;
     return createPortal(
-      <div
-        ref={anchorRef}
-        data-testid="idea-view-switcher"
-        className="flex items-center gap-0.5"
-      >
+      <div ref={anchorRef} data-testid="idea-view-switcher" className="flex items-center gap-0.5">
         {przyciski}
         {/* Separator po naszej stronie, nie po stronie gniazda — puste gniazdo
             nie zostawia wtedy sierocej kreski przy samym „−". */}

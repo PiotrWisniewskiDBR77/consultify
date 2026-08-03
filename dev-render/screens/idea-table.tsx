@@ -24,14 +24,17 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { IdeasTableContent } from '@/components/MyWork/IdeasTableContent';
 import type { MyIdea, SortDir, SortField } from '@/components/MyWork/myIdeasTypes';
-import { type TopBarChipDescriptor, TopBar } from '@/components/shared/ExecutiveModuleShell';
+import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import {
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewMetaCard,
   PreviewRelations,
 } from '@/components/shared/PreviewPane';
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import type { ColumnWidths, FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 
 const DEFAULT_COLUMN_WIDTHS: ColumnWidths = {
@@ -201,7 +204,11 @@ export function IdeaTableScreen(): React.ReactElement {
               { label: isPl ? 'Wiersze' : 'Rows', value: String(ideas.length) },
               { label: isPl ? 'Folder' : 'Folder', value: isPl ? 'Bez folderu' : 'No folder' },
               { label: isPl ? 'Właściciel' : 'Owner', value: 'Piotr W.' },
-              { label: isPl ? 'Widoczność' : 'Visibility', value: isPl ? 'Zespół' : 'Team', tone: 'info' },
+              {
+                label: isPl ? 'Widoczność' : 'Visibility',
+                value: isPl ? 'Zespół' : 'Team',
+                tone: 'info',
+              },
             ]}
           />
         ),
@@ -258,69 +265,72 @@ export function IdeaTableScreen(): React.ReactElement {
     // dev-render never actually navigates (pattern from
     // dev-render/screens/assessment-initiatives-table.tsx).
     <MemoryRouter initialEntries={['/']}>
-    <div className="flex h-screen w-full flex-col bg-c-bg">
-      <TopBar
-        moduleLabel={isPl ? 'Moja praca · Pomysły' : 'My Work · Ideas'}
-        title={isPl ? 'Tabela pomysłów' : 'Idea table'}
-        chips={chips}
-        backLabel={isPl ? 'Wróć do pomysłów' : 'Back to ideas'}
-        onBack={() => {}}
-      />
-      <div className="flex min-h-0 flex-1">
-        <IdeasTableContent
-          ideas={ideas}
-          isPolish={isPl}
-          tableFilters={tableFilters}
-          availableStageOptions={STAGE_OPTIONS}
-          availableTagOptions={TAG_OPTIONS}
-          availableToolOptions={TOOL_OPTIONS}
-          columnWidths={columnWidths}
-          selectedIds={selectedIds}
-          allSelected={allSelected}
-          someSelected={someSelected}
-          focusedIndex={focusedIndex}
-          sortField={sortField}
-          sortDir={sortDir}
-          onSort={(field) => {
-            if (field === sortField) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-            else {
-              setSortField(field);
-              setSortDir('asc');
+      <div className="flex h-screen w-full flex-col bg-c-bg">
+        <TopBar
+          moduleLabel={isPl ? 'Moja praca · Pomysły' : 'My Work · Ideas'}
+          title={isPl ? 'Tabela pomysłów' : 'Idea table'}
+          chips={chips}
+          backLabel={isPl ? 'Wróć do pomysłów' : 'Back to ideas'}
+          onBack={() => {}}
+        />
+        <div className="flex min-h-0 flex-1">
+          <IdeasTableContent
+            ideas={ideas}
+            isPolish={isPl}
+            tableFilters={tableFilters}
+            availableStageOptions={STAGE_OPTIONS}
+            availableTagOptions={TAG_OPTIONS}
+            availableToolOptions={TOOL_OPTIONS}
+            columnWidths={columnWidths}
+            selectedIds={selectedIds}
+            allSelected={allSelected}
+            someSelected={someSelected}
+            focusedIndex={focusedIndex}
+            sortField={sortField}
+            sortDir={sortDir}
+            onSort={(field) => {
+              if (field === sortField) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+              else {
+                setSortField(field);
+                setSortDir('asc');
+              }
+            }}
+            onFocusIndexChange={setFocusedIndex}
+            onToggleSelect={toggleSelect}
+            onSelectAllVisible={() =>
+              setSelectedIds(allSelected ? new Set() : new Set(ideas.map((i) => i.id)))
             }
-          }}
-          onFocusIndexChange={setFocusedIndex}
-          onToggleSelect={toggleSelect}
-          onSelectAllVisible={() =>
-            setSelectedIds(allSelected ? new Set() : new Set(ideas.map((i) => i.id)))
-          }
-          onClearSelection={() => setSelectedIds(new Set())}
-          onColumnResize={(columnId, width) =>
-            setColumnWidths((prev) => ({ ...prev, [columnId]: width }))
-          }
-          onTableFilterChange={(columnId, value) =>
-            setTableFilters((prev) => ({ ...prev, [columnId]: value.length > 0 ? value : undefined }))
-          }
-          onOpenIdea={() => {}}
-          isFavorite={(id) => favorites.has(id)}
-          onToggleFavorite={(id) =>
-            setFavorites((prev) => {
-              const next = new Set(prev);
-              if (next.has(id)) next.delete(id);
-              else next.add(id);
-              return next;
-            })
-          }
-          onOpenIdeaInProcessFlow={() => {}}
-          onStartConvert={() => {}}
-          onDeleteIdea={() => {}}
-          onRefresh={() => {}}
-        />
-        <ArtifactRightPanel
-          sections={rightSections}
-          ariaLabel={isPl ? 'Szczegóły tabeli pomysłów' : 'Idea table details'}
-        />
+            onClearSelection={() => setSelectedIds(new Set())}
+            onColumnResize={(columnId, width) =>
+              setColumnWidths((prev) => ({ ...prev, [columnId]: width }))
+            }
+            onTableFilterChange={(columnId, value) =>
+              setTableFilters((prev) => ({
+                ...prev,
+                [columnId]: value.length > 0 ? value : undefined,
+              }))
+            }
+            onOpenIdea={() => {}}
+            isFavorite={(id) => favorites.has(id)}
+            onToggleFavorite={(id) =>
+              setFavorites((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              })
+            }
+            onOpenIdeaInProcessFlow={() => {}}
+            onStartConvert={() => {}}
+            onDeleteIdea={() => {}}
+            onRefresh={() => {}}
+          />
+          <ArtifactRightPanel
+            sections={rightSections}
+            ariaLabel={isPl ? 'Szczegóły tabeli pomysłów' : 'Idea table details'}
+          />
+        </div>
       </div>
-    </div>
     </MemoryRouter>
   );
 }

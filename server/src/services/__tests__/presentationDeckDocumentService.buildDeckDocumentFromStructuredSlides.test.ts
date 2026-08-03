@@ -26,7 +26,10 @@ import {
 describe('presentationDeckDocumentService.buildDeckDocumentFromStructuredSlides', () => {
   it('produces exactly one canonical card per input slide (11-slide MAT-006B repro shape)', () => {
     const slides = [
-      { type: 'title', content: { title: 'Line 3 Digital Twin — Steering Committee Deck', subtitle: 'Proof' } },
+      {
+        type: 'title',
+        content: { title: 'Line 3 Digital Twin — Steering Committee Deck', subtitle: 'Proof' },
+      },
       ...Array.from({ length: 9 }, (_, i) => ({
         type: 'content',
         content: { title: `Section ${i + 1}`, body: `Body ${i + 1}`, items: ['a', 'b'] },

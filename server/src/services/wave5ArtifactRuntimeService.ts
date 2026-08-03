@@ -301,7 +301,7 @@ function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any
   const contentEnvelope: ArtifactContentEnvelope = createArtifactContentEnvelope({
     artifactType: row.artifact_type,
     canonicalFormat: row.canonical_format || undefined,
-    contentMd: quarantinedMirror ? '' : row.content_md ?? row.content,
+    contentMd: quarantinedMirror ? '' : (row.content_md ?? row.content),
     contentJson: safeJsonParse(row.content_json_native, undefined),
     contentSchemaVersion: row.content_schema_version || undefined,
   });

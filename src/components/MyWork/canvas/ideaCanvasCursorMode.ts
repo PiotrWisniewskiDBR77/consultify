@@ -76,7 +76,5 @@ export function publishIdeaCanvasCursorMode(
   mode: IdeaCanvasCursorMode
 ): void {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    new CustomEvent(IDEA_CANVAS_CURSOR_MODE_EVENT, { detail: { tool, mode } })
-  );
+  window.dispatchEvent(new CustomEvent(IDEA_CANVAS_CURSOR_MODE_EVENT, { detail: { tool, mode } }));
 }

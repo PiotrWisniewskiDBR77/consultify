@@ -109,7 +109,11 @@ router.put(
       res.status(400).json({ error: p.error.message });
       return;
     }
-    const updated = await initiativeGovernanceService.updateGoal(id.orgId, req.params.goalId, p.data);
+    const updated = await initiativeGovernanceService.updateGoal(
+      id.orgId,
+      req.params.goalId,
+      p.data
+    );
     res.json({ ...updated, ownerDomain: INITIATIVE_GOALS_OWNER_DOMAIN });
   })
 );

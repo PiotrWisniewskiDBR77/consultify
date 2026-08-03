@@ -9,7 +9,6 @@
 // (found the hard way in MAT-006). That latent bug is out of MAT-010's
 // boundary and is left untouched — but not repeated here.
 import { createHash } from 'crypto';
-
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
@@ -21,7 +20,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
 
 import { verifyToken } from '../middleware/auth.middleware.js';
-import { exportsDir } from '../utils/storagePaths.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
@@ -36,22 +34,22 @@ import {
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
-import {
-  isTemplateResolveError,
-  resolvePresentationTemplateForCreation,
-  type TemplateResolveErrorCode,
-} from '../services/materials/creationIntent.js';
 // MAT-010 — canonical artifact lineage. `created` (below) and `public_open`
 // hooks stay on the fail-open `...Safe` variant — see their own comments for
 // why. Every OTHER event type uses `...Tracked` (Codex review, second round)
 // — see `respondIfLineageLost` below for why those sites CAN'T stay fire-open.
 import {
-  deriveCreatedEventIdempotencyKey,
   cancelPendingLineageIntent,
+  deriveCreatedEventIdempotencyKey,
   preflightStreamingExportIntent,
   recordLineageEventSafe,
   recordLineageEventTracked,
 } from '../services/lineage/artifactLineageService.js';
+import {
+  isTemplateResolveError,
+  resolvePresentationTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import { send as sendNotification } from '../services/notificationService.js';
 import { uploadMedia as uploadOrganizationMedia } from '../services/organizationMediaService.js';
 import { OrgPoliciesError, requireNoLegalHold } from '../services/OrgPoliciesService.js';
@@ -202,6 +200,7 @@ import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();

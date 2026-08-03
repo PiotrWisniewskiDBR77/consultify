@@ -3495,7 +3495,9 @@ async function upsertAtelierRoiFinancialModel(
        currency=excluded.currency,
        status=excluded.status,
        horizon_months=excluded.horizon_months${
-         hasModelSourcePackCol ? ',\n       source_statement_pack_id=excluded.source_statement_pack_id' : ''
+         hasModelSourcePackCol
+           ? ',\n       source_statement_pack_id=excluded.source_statement_pack_id'
+           : ''
        }${hasModelAssumptionsCol ? ',\n       assumptions_json=excluded.assumptions_json' : ''}`,
     modelVals,
     { fallback: false }
@@ -4190,11 +4192,14 @@ export async function seedAtelierToysDemoDataset(
     financeGoldenFlow.status
   );
   if (!financeGoldenFlowCompleteness.goldenFlowComplete) {
-    logger.warn('[demo-seed] Atelier Finance golden flow fixture is complete but NOT compute-complete', {
-      organizationId,
-      fixtureComplete: financeGoldenFlowCompleteness.fixtureComplete,
-      reason: financeGoldenFlowCompleteness.reason,
-    });
+    logger.warn(
+      '[demo-seed] Atelier Finance golden flow fixture is complete but NOT compute-complete',
+      {
+        organizationId,
+        fixtureComplete: financeGoldenFlowCompleteness.fixtureComplete,
+        reason: financeGoldenFlowCompleteness.reason,
+      }
+    );
   }
   // Spine stage 07: Results / KPIs (realized numbers reconcile with ROI + context).
   await upsertAtelierResultsKpis(organizationId, userMap, projectMap);

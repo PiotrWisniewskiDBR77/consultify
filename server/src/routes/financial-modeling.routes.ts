@@ -31,6 +31,7 @@ import {
   logFinanceError,
   logFinanceEvent,
 } from '../services/financeDiagnosticsService.js';
+import { serializeRowPeriodFields } from '../services/financePeriodFormat.js';
 import {
   addEvent,
   approveModel,
@@ -48,7 +49,6 @@ import {
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
-import { serializeRowPeriodFields } from '../services/financePeriodFormat.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet } from '../utils/DbPromise.js';
 import { run as dbRun } from '../utils/DbPromise.js';

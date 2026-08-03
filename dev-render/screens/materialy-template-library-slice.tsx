@@ -150,9 +150,9 @@ export default function MaterialyTemplateLibrarySliceScreen(): React.ReactElemen
             </div>
             <div className="mt-0.5 text-xs text-c-text-muted">
               1) kanoniczny dokument · 2) LEGACY (report_builder_templates) · 3) OSIEROCONY (bez
-              źródła, „Użyj wzorca" wyłączone) · 4) bez statusu/zakresu/daty · 5) ARKUSZ (bez
-              danych struktury → sylwetka neutralna). Dopisz{' '}
-              <code>&amp;ff_galeria_szablonow=1</code> do URL, żeby zobaczyć Galerię (N4).
+              źródła, „Użyj wzorca" wyłączone) · 4) bez statusu/zakresu/daty · 5) ARKUSZ (bez danych
+              struktury → sylwetka neutralna). Dopisz <code>&amp;ff_galeria_szablonow=1</code> do
+              URL, żeby zobaczyć Galerię (N4).
             </div>
           </div>
           <div className="h-[calc(100%-64px)]">

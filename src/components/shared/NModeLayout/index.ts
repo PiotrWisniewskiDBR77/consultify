@@ -51,11 +51,11 @@ export { Menu2AIButton, Menu2HowToButton, Menu2ModeToggle, NModeMenu2 } from './
 // w `src/services/cardAnalysis` — powłoka go tylko konsumuje.
 export type { NCardAIAnalysisPanelProps } from './NCardAIAnalysisPanel';
 export { NCardAIAnalysisPanel } from './NCardAIAnalysisPanel';
-export type { UseCardAIAnalysisOptions, UseCardAIAnalysisResult } from './useCardAIAnalysis';
-export { useCardAIAnalysis } from './useCardAIAnalysis';
 export { NModePropertiesStrip } from './NModePropertiesStrip';
 export type { QuoteRequirementLevel } from './NModeSectionWrapper';
 export { EvidenceBadge, NModeSectionWrapper } from './NModeSectionWrapper';
+export type { UseCardAIAnalysisOptions, UseCardAIAnalysisResult } from './useCardAIAnalysis';
+export { useCardAIAnalysis } from './useCardAIAnalysis';
 // ── Card management (wzorzec N §3.5) ────────────────────────────────────────
 export type { ArtifactCardSpec, CardCatalogEntry, CardSet, NModeArtifactType } from './cardSets';
 export { DEFAULT_CARD_SETS, getCardSpec } from './cardSets';

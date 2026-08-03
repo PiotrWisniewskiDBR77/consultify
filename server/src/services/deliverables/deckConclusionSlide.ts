@@ -121,7 +121,12 @@ export function buildDeckConclusionFacts(params: {
   artifactData: Record<string, unknown>;
   contextPack?: {
     key_points?: string[];
-    data_points?: ReadonlyArray<{ label?: unknown; value?: unknown; unit?: unknown; trend?: unknown }>;
+    data_points?: ReadonlyArray<{
+      label?: unknown;
+      value?: unknown;
+      unit?: unknown;
+      trend?: unknown;
+    }>;
   } | null;
 }): DeckConclusionFacts {
   const a = params.artifactData || {};
@@ -130,7 +135,7 @@ export function buildDeckConclusionFacts(params: {
   const keyFindings: string[] = [];
   if (Array.isArray(a._keyFindings)) {
     for (const f of a._keyFindings) {
-      const s = nonEmpty(typeof f === 'string' ? f : (f as any)?.text ?? (f as any)?.title);
+      const s = nonEmpty(typeof f === 'string' ? f : ((f as any)?.text ?? (f as any)?.title));
       if (s) keyFindings.push(s);
     }
   }
@@ -242,7 +247,9 @@ export function buildDeterministicDeckConclusion(facts: DeckConclusionFacts): De
   const topKpi = facts.kpis[0] || null;
 
   // Hedge phrase required by `confidence_honest` when confidence is weak.
-  const hedge = isPl ? ' Wnioski wg deklaracji, do potwierdzenia warsztatem.' : ' Findings are declared, to be confirmed in a workshop.';
+  const hedge = isPl
+    ? ' Wnioski wg deklaracji, do potwierdzenia warsztatem.'
+    : ' Findings are declared, to be confirmed in a workshop.';
 
   const scorePart =
     facts.overallScore !== null && facts.maxScore !== null
@@ -486,7 +493,9 @@ function llmJsonToConclusion(
     k2Text: k2,
     k3Actions,
     k4Text: k4,
-    k4Horizon: nonEmpty(parsed.k4Horizon) || (facts.language === 'pl' ? 'Fala 1 — do 6 miesięcy' : 'Wave 1 — within 6 months'),
+    k4Horizon:
+      nonEmpty(parsed.k4Horizon) ||
+      (facts.language === 'pl' ? 'Fala 1 — do 6 miesięcy' : 'Wave 1 — within 6 months'),
     confidence: normalizeConfidence(parsed.confidence),
     factRefs: factRefs(facts),
     source: 'llm',
@@ -574,14 +583,22 @@ export interface BuildDeckConclusionSlideParams {
   artifactData: Record<string, unknown>;
   contextPack?: {
     key_points?: string[];
-    data_points?: ReadonlyArray<{ label?: unknown; value?: unknown; unit?: unknown; trend?: unknown }>;
+    data_points?: ReadonlyArray<{
+      label?: unknown;
+      value?: unknown;
+      unit?: unknown;
+      trend?: unknown;
+    }>;
   } | null;
   /** Optional injected LLM client. When omitted, only the deterministic path runs. */
   llm?: DeckConclusionLlm | null;
   modelConfig?: { id?: string; provider?: string; [k: string]: unknown };
   timeoutMs?: number;
   temperature?: number;
-  logger?: { info?: (m: string, meta?: unknown) => void; warn?: (m: string, meta?: unknown) => void };
+  logger?: {
+    info?: (m: string, meta?: unknown) => void;
+    warn?: (m: string, meta?: unknown) => void;
+  };
 }
 
 export interface BuildDeckConclusionSlideResult {
@@ -633,7 +650,9 @@ export async function buildDeckConclusionSlide(
         chosen = llmConclusion;
         params.logger?.info?.(`${LOG_PREFIX} LLM conclusion accepted (validated K1-K4)`);
       } else {
-        params.logger?.warn?.(`${LOG_PREFIX} LLM conclusion rejected — using deterministic fallback`);
+        params.logger?.warn?.(
+          `${LOG_PREFIX} LLM conclusion rejected — using deterministic fallback`
+        );
       }
     } catch (err) {
       params.logger?.warn?.(`${LOG_PREFIX} LLM error — using deterministic fallback`, {

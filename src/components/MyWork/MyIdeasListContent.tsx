@@ -3,9 +3,9 @@ import {
   Bot,
   CheckCircle2,
   ChevronDown,
-  Copy,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Edit2,
   ExternalLink,
   Flower2,
@@ -72,8 +72,8 @@ import {
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
-import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { IdeasTableContent } from './IdeasTableContent';
+import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import type {
   IdeasBulkBarPayload,
   IdeasHomeShellPayload,
@@ -517,12 +517,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       setIdeas((prev) => prev.map((i) => (i.id === idea.id ? ({ ...i, stage } as MyIdea) : i)));
       try {
         await Api.updateMyIdea(idea.id, { stage });
-        toast.success(t('myWork.ideasList.stageChanged', isPolish ? 'Etap zmieniony' : 'Stage updated'), {
-          duration: 800,
-        });
+        toast.success(
+          t('myWork.ideasList.stageChanged', isPolish ? 'Etap zmieniony' : 'Stage updated'),
+          {
+            duration: 800,
+          }
+        );
       } catch {
         toast.error(
-          t('myWork.ideasList.stageChangeFailed', isPolish ? 'Nie udało się zmienić etapu' : 'Failed to update stage')
+          t(
+            'myWork.ideasList.stageChangeFailed',
+            isPolish ? 'Nie udało się zmienić etapu' : 'Failed to update stage'
+          )
         );
         fetchIdeas();
       }
@@ -683,9 +689,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       .filter((stage) => seen.has(stage))
       .map((stage) => ({
         value: stage,
-        label: isPolish
-          ? IDEA_STAGE_BUCKET_LABELS[stage].pl
-          : IDEA_STAGE_BUCKET_LABELS[stage].en,
+        label: isPolish ? IDEA_STAGE_BUCKET_LABELS[stage].pl : IDEA_STAGE_BUCKET_LABELS[stage].en,
       }));
   }, [baseFilteredIdeas, isPolish]);
 

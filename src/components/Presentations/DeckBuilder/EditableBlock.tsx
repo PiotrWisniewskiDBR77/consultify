@@ -158,86 +158,86 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             style={{ position: 'fixed', top: toolbarPos.top, left: toolbarPos.left, zIndex: 9999 }}
             className="flex items-center gap-1 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-lg px-1 py-0.5"
           >
-          <button
-            className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary"
-            title={t('presentations.builder.block.drag', 'Drag to reorder')}
-          >
-            <GripVertical size={12} />
-          </button>
-          {(onMoveUp || onMoveDown) && (
-            <>
+            <button
+              className="p-1 text-c-text-secondary cursor-grab hover:text-c-text-secondary"
+              title={t('presentations.builder.block.drag', 'Drag to reorder')}
+            >
+              <GripVertical size={12} />
+            </button>
+            {(onMoveUp || onMoveDown) && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveUp?.();
+                  }}
+                  disabled={!canMoveUp}
+                  className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+                  title={t('presentations.builder.block.moveUp', 'Move up')}
+                >
+                  <ChevronUp size={12} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveDown?.();
+                  }}
+                  disabled={!canMoveDown}
+                  className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
+                  title={t('presentations.builder.block.moveDown', 'Move down')}
+                >
+                  <ChevronDown size={12} />
+                </button>
+              </>
+            )}
+            {block.is_refreshable && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onMoveUp?.();
+                  onRefresh?.();
                 }}
-                disabled={!canMoveUp}
-                className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
-                title={t('presentations.builder.block.moveUp', 'Move up')}
+                className="p-1 text-blue-400 hover:text-blue-600"
+                title={t('presentations.builder.block.refresh', 'Refresh from source')}
               >
-                <ChevronUp size={12} />
+                <RefreshCw size={12} />
               </button>
+            )}
+            {block.type === 'image' && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMoveDown?.();
-                }}
-                disabled={!canMoveDown}
-                className="p-1 text-c-text-secondary hover:text-c-text-secondary disabled:opacity-30 disabled:cursor-not-allowed"
-                title={t('presentations.builder.block.moveDown', 'Move down')}
+                className="p-1 text-c-text-secondary hover:text-c-text-secondary"
+                title={t('presentations.builder.block.replaceImage', 'Replace image')}
               >
-                <ChevronDown size={12} />
+                <Image size={12} />
               </button>
-            </>
-          )}
-          {block.is_refreshable && (
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRefresh?.();
+                onDuplicate();
               }}
-              className="p-1 text-blue-400 hover:text-blue-600"
-              title={t('presentations.builder.block.refresh', 'Refresh from source')}
-            >
-              <RefreshCw size={12} />
-            </button>
-          )}
-          {block.type === 'image' && (
-            <button
               className="p-1 text-c-text-secondary hover:text-c-text-secondary"
-              title={t('presentations.builder.block.replaceImage', 'Replace image')}
+              title={t('presentations.builder.block.duplicate', 'Duplicate block')}
             >
-              <Image size={12} />
+              <Copy size={12} />
             </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate();
-            }}
-            className="p-1 text-c-text-secondary hover:text-c-text-secondary"
-            title={t('presentations.builder.block.duplicate', 'Duplicate block')}
-          >
-            <Copy size={12} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            // U2 (odbiór nadzorcy) — usuwanie jest akcją destrukcyjną, więc
-            // czerwień jest tu uprawniona (CLAUDE.md §UI.3), ale MUSI iść z
-            // tokenu semantyki krytycznej `danger-*` (skala oddzielna od
-            // `primary` = crimson), nie z `primary-*`. Ten sam token co
-            // istniejący przycisk usuwania w `SlideSorter.tsx`.
-            className="p-1 text-danger-400 hover:text-danger-600"
-            title={t('presentations.builder.block.delete', 'Delete block')}
-          >
-            <Trash2 size={12} />
-          </button>
-        </div>,
-        document.body
-      )
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              // U2 (odbiór nadzorcy) — usuwanie jest akcją destrukcyjną, więc
+              // czerwień jest tu uprawniona (CLAUDE.md §UI.3), ale MUSI iść z
+              // tokenu semantyki krytycznej `danger-*` (skala oddzielna od
+              // `primary` = crimson), nie z `primary-*`. Ten sam token co
+              // istniejący przycisk usuwania w `SlideSorter.tsx`.
+              className="p-1 text-danger-400 hover:text-danger-600"
+              title={t('presentations.builder.block.delete', 'Delete block')}
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>,
+          document.body
+        )
       : null;
 
   return (

@@ -15,9 +15,9 @@
  */
 import React, { useMemo, useState } from 'react';
 
-import { PlatformGridView } from '@/components/MyWork/table/ViewRouter';
 import type { FormatRule } from '@/components/MyWork/table/ConditionalFormatting';
 import type { ColumnDef, TableNode } from '@/components/MyWork/table/tableTypes';
+import { PlatformGridView } from '@/components/MyWork/table/ViewRouter';
 import type { FieldType } from '@/types/tablePlatform';
 
 const isPl = (new URLSearchParams(window.location.search).get('lang') || 'pl') !== 'en';
@@ -30,7 +30,12 @@ const FIELDS: {
   isComputed: boolean;
 }[] = [
   { id: 'label', name: isPl ? 'Nazwa' : 'Label', fieldType: 'singleLineText', isComputed: false },
-  { id: 'owner', name: isPl ? 'Właściciel' : 'Owner', fieldType: 'singleLineText', isComputed: false },
+  {
+    id: 'owner',
+    name: isPl ? 'Właściciel' : 'Owner',
+    fieldType: 'singleLineText',
+    isComputed: false,
+  },
   { id: 'status', name: 'Status', fieldType: 'singleSelect', isComputed: false },
   { id: 'notes', name: isPl ? 'Notatki' : 'Notes', fieldType: 'longText', isComputed: false },
 ];

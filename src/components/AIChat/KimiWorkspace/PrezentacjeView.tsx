@@ -162,7 +162,6 @@ export const PrezentacjeView: React.FC = () => {
   // reasoning as `!templatePrompt` right below.
   const hasPendingKickoff = Boolean(chatKickoffMessage && chatKickoffMessage.trim());
 
-
   // Eksport raportu Execution → prezentacja (2026-07-27): „Export as presentation"
   // (ReportCompactPanel.tsx / ReportDocumentView.tsx) nawiguje tu z
   // `?sourceType=execution_report&sourceName=…&content=…` (markdown raportu).
@@ -280,7 +279,6 @@ export const PrezentacjeView: React.FC = () => {
     pipeline.isGenerating,
     clearChatKickoffMessage,
   ]);
-
 
   // Auto-trigger z eksportu raportu Execution (`?sourceType=execution_report`).
   // Ref guard: fire-once, jak `promptTriggered` wyżej.

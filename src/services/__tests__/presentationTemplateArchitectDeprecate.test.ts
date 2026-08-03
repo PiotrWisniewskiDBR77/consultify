@@ -32,7 +32,9 @@ describe('deprecatePresentationTemplate', () => {
   });
 
   it('POSTs to the governance/deprecate endpoint with the trimmed reason', async () => {
-    post.mockResolvedValue({ data: { data: { record: { id: 'tpl_1', lifecycle_state: 'deprecated' } } } });
+    post.mockResolvedValue({
+      data: { data: { record: { id: 'tpl_1', lifecycle_state: 'deprecated' } } },
+    });
 
     const result = await deprecatePresentationTemplate('tpl_1', 'Superseded by v2 template');
 

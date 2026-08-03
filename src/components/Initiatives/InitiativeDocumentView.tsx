@@ -81,13 +81,16 @@ import {
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
-import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { LoadingState } from '@/components/ui/primitives';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api, API_URL, getHeaders } from '@/services/api';
+import { fetchEvidenceEnvelope } from '@/services/api/evidence.api';
 import { V8PlanningApi } from '@/services/api/v8/planning';
 import { V8ResultsApi } from '@/services/api/v8/results';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
 import {
   getContextActions,
   getFilteredStatusActions,
@@ -121,11 +124,11 @@ import {
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { buildArtifactCode, buildArtifactPermalink, getArtifactPath } from '@/utils/artifactLinks';
 import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailureToPresentation';
-import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 import {
   getWorkflowStatusForInitiative,
   hasInitiativeStatusReadDrift,
 } from '@/utils/initiativeWorkflowStatus';
+import { isVf1InitSpecAEnabled } from '@/utils/vf1InitSpecAFlag';
 
 import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types/initiative';
 import {
@@ -139,6 +142,7 @@ import {
   type WarningThresholds,
 } from '../MyWork/shared';
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { HubWorkAreaLoadError, HubWorkAreaLoading } from '../shared/ModuleHub';
 import {
   NModeCanvas,
@@ -158,12 +162,8 @@ import {
   type AIConsultantAction,
   AIConsultantPanel,
 } from '../shared/NModeLayout/AIConsultantPanel';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
-import { AutoFitTextarea } from '../shared/AutoFitTextarea';
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
-import { mergeChangeValue } from '@/services/cardAnalysis';
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import type { EscalationRuleWithConfig, ReminderRuleWithDelivery } from '../shared/NModeSections';
 import {
@@ -3699,7 +3699,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             )
           );
         } else {
-          toast.error(e?.message || t('initiatives.failedToUpdateResource', 'Failed to update resource'));
+          toast.error(
+            e?.message || t('initiatives.failedToUpdateResource', 'Failed to update resource')
+          );
         }
       }
     },
@@ -8970,7 +8972,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     suggestedChanges,
     suggestedChangesLoading,
     handleResolveSuggestedChange,
-    ,
     /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
   ]);
 
@@ -11252,7 +11253,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                   onPresentationModeChange={setDensityMode}
                   // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
                   showModeSwitcher={false}
-                  buildArtifactCode={(type: string, id: string) => buildArtifactCode(type as any, id)}
+                  buildArtifactCode={(type: string, id: string) =>
+                    buildArtifactCode(type as any, id)
+                  }
                   /* Pozycje zwinięte tu z kebaba Menu 2 — uzasadnienie przy
                      `menu1ExtraOverflowItems`. Jeden kebab na ekranie. */
                   extraOverflowItems={menu1ExtraOverflowItems}
@@ -11449,7 +11452,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                                 new Set(
                                                   nModeSectionsWithContent
                                                     .map((s) => s.id)
-                                                    .filter((id) => !initiativeCoreBoardIdSet.has(id))
+                                                    .filter(
+                                                      (id) => !initiativeCoreBoardIdSet.has(id)
+                                                    )
                                                 )
                                               );
                                             const applyFull = () => setHiddenSectionIds(new Set());
@@ -11498,7 +11503,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                                               const isCore =
                                                 initiativeCardContractEnabled &&
                                                 INITIATIVE_CORE_BOARD_IDS.has(s.id);
-                                              const isVisible = isCore || !hiddenSectionIds.has(s.id);
+                                              const isVisible =
+                                                isCore || !hiddenSectionIds.has(s.id);
                                               const SectionIcon = s.icon;
                                               return (
                                                 <button

@@ -16,12 +16,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NodeProps } from 'reactflow';
 
-import {
-  canvasObjectTextStyle,
-  readCanvasObjectStyle,
-} from '../canvas/canvasObjectStyle';
-
-import { MM_MIN_FRAME_HEIGHT, MM_MIN_FRAME_WIDTH, MindMapNodeResizer } from './MindMapNodeResizer';
+import { canvasObjectTextStyle, readCanvasObjectStyle } from '../canvas/canvasObjectStyle';
+import { MindMapNodeResizer, MM_MIN_FRAME_HEIGHT, MM_MIN_FRAME_WIDTH } from './MindMapNodeResizer';
 
 export const MindMapFrameNode: React.FC<NodeProps> = React.memo(({ data, selected }) => {
   const { t } = useTranslation();

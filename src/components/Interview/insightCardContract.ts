@@ -88,11 +88,7 @@
  *   (default OFF) — jak POC Decision/Task. Zero regresji na demo.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,7 +111,8 @@ const ARTIFACT_ACTIONS = definiujKarteKanoniczna({
   ikona: 'Rocket',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zaproponuj dalsze działania wynikające z wniosku: co, kto, po co — gotowe do konwersji na inicjatywę/zadanie.',
+    szablon:
+      'Zaproponuj dalsze działania wynikające z wniosku: co, kto, po co — gotowe do konwersji na inicjatywę/zadanie.',
     kluczPromptu: 'insight.artifact-actions',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
@@ -130,7 +127,8 @@ const EXECUTIVE_SUMMARY = definiujKarteKanoniczna({
   ikona: 'Star',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Napisz podsumowanie wykonawcze wniosku: główna teza, dowody, największa dostępna dźwignia — językiem zarządu.',
+    szablon:
+      'Napisz podsumowanie wykonawcze wniosku: główna teza, dowody, największa dostępna dźwignia — językiem zarządu.',
     kluczPromptu: 'insight.executive-summary',
   },
   prog: { rodzaj: 'scoring-calosci', prog: 90, dowod: 'cardContentFormulaValidator.ts:59' },
@@ -147,11 +145,14 @@ const CONSULTING_READOUT = definiujKarteKanoniczna({
   ikona: 'Sparkles',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zsyntetyzuj odczyt konsultingowy: narracja od problemu do rekomendacji, w tonie doradcy strategicznego.',
+    szablon:
+      'Zsyntetyzuj odczyt konsultingowy: narracja od problemu do rekomendacji, w tonie doradcy strategicznego.',
     kluczPromptu: 'insight.consulting-readout',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -162,11 +163,14 @@ const THEMES = definiujKarteKanoniczna({
   ikona: 'Layers',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Wyodrębnij powtarzające się tematy z materiału źródłowego, z siłą i dowodami; oznacz wzorce między sesjami.',
+    szablon:
+      'Wyodrębnij powtarzające się tematy z materiału źródłowego, z siłą i dowodami; oznacz wzorce między sesjami.',
     kluczPromptu: 'insight.themes',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -177,11 +181,14 @@ const ISSUES_RISKS = definiujKarteKanoniczna({
   ikona: 'ShieldAlert',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zidentyfikuj problemy i ryzyka z materiału: waga, dowód, pewność; osadź każde na cytacie źródłowym.',
+    szablon:
+      'Zidentyfikuj problemy i ryzyka z materiału: waga, dowód, pewność; osadź każde na cytacie źródłowym.',
     kluczPromptu: 'insight.issues-risks',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 4 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 4 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -192,11 +199,14 @@ const OPPORTUNITIES = definiujKarteKanoniczna({
   ikona: 'TrendingUp',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Wskaż przestrzenie szans wynikające z materiału: wpływ, wykonalność, dowód; preferuj dźwignie bez CAPEX.',
+    szablon:
+      'Wskaż przestrzenie szans wynikające z materiału: wpływ, wykonalność, dowód; preferuj dźwignie bez CAPEX.',
     kluczPromptu: 'insight.opportunities',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 5 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 5 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -209,11 +219,14 @@ const PEOPLE = definiujKarteKanoniczna({
   ikona: 'Users',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zestaw perspektywy poszczególnych ról/osób: co każda strona widzi inaczej i dlaczego.',
+    szablon:
+      'Zestaw perspektywy poszczególnych ról/osób: co każda strona widzi inaczej i dlaczego.',
     kluczPromptu: 'insight.people',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 6 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 6 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -224,11 +237,14 @@ const SIGNALS = definiujKarteKanoniczna({
   ikona: 'Radio',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Wychwyć słabe sygnały: napięcia, luki, sprzeczności, wschodzące wzorce — z typem i uzasadnieniem.',
+    szablon:
+      'Wychwyć słabe sygnały: napięcia, luki, sprzeczności, wschodzące wzorce — z typem i uzasadnieniem.',
     kluczPromptu: 'insight.signals',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -239,11 +255,14 @@ const ANALYSIS_MATRIX = definiujKarteKanoniczna({
   ikona: 'BarChart3',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zbuduj macierz analityczną (np. wpływ×wykonalność) pozycjonującą ustalenia względem siebie.',
+    szablon:
+      'Zbuduj macierz analityczną (np. wpływ×wykonalność) pozycjonującą ustalenia względem siebie.',
     kluczPromptu: 'insight.analysis-matrix',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 8 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 8 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -254,11 +273,14 @@ const CONSENSUS_DIVERGENCE = definiujKarteKanoniczna({
   ikona: 'GitCompare',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Rozdziel to, co rozmówcy widzą zgodnie, od tego, w czym się rozchodzą; rozbieżność sama jest ustaleniem.',
+    szablon:
+      'Rozdziel to, co rozmówcy widzą zgodnie, od tego, w czym się rozchodzą; rozbieżność sama jest ustaleniem.',
     kluczPromptu: 'insight.consensus-divergence',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 9 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 9 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -269,11 +291,14 @@ const IMPLICIT_ASSUMPTIONS = definiujKarteKanoniczna({
   ikona: 'Brain',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Ujawnij założenia przyjmowane milcząco przez rozmówców — to, co uznają za oczywiste, a nie jest.',
+    szablon:
+      'Ujawnij założenia przyjmowane milcząco przez rozmówców — to, co uznają za oczywiste, a nie jest.',
     kluczPromptu: 'insight.implicit-assumptions',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 10 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 10 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -284,11 +309,14 @@ const SILENCES = definiujKarteKanoniczna({
   ikona: 'EyeOff',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Nazwij to, czego w materiale NIE ma, a być powinno — tematy pominięte, role nieobjęte, pytania niezadane.',
+    szablon:
+      'Nazwij to, czego w materiale NIE ma, a być powinno — tematy pominięte, role nieobjęte, pytania niezadane.',
     kluczPromptu: 'insight.silences',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 11 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 11 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -303,11 +331,14 @@ const QUOTE_COMPARISON = definiujKarteKanoniczna({
   ikona: 'MessageSquare',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zestaw cytaty mówiące o tym samym z różnych sesji — pokaż zbieżność lub kontrast sformułowań.',
+    szablon:
+      'Zestaw cytaty mówiące o tym samym z różnych sesji — pokaż zbieżność lub kontrast sformułowań.',
     kluczPromptu: 'insight.quote-comparison',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 12 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 12 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -318,11 +349,14 @@ const SENTIMENT_TONE = definiujKarteKanoniczna({
   ikona: 'Heart',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Opisz sentyment i ton wypowiedzi per temat/rola — gdzie emocje różnią się od treści deklaracji.',
+    szablon:
+      'Opisz sentyment i ton wypowiedzi per temat/rola — gdzie emocje różnią się od treści deklaracji.',
     kluczPromptu: 'insight.sentiment-tone',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 13 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 13 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -333,11 +367,14 @@ const POWER_DYNAMICS = definiujKarteKanoniczna({
   ikona: 'Scale',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zmapuj układ wpływu i decyzyjności między rolami — kto realnie przesądza, a kto tylko wykonuje.',
+    szablon:
+      'Zmapuj układ wpływu i decyzyjności między rolami — kto realnie przesądza, a kto tylko wykonuje.',
     kluczPromptu: 'insight.power-dynamics',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 14 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 14 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -348,11 +385,14 @@ const HYPOTHESIS_BOARD = definiujKarteKanoniczna({
   ikona: 'Target',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Sformułuj hipotezy do weryfikacji wynikające z materiału — z proponowanym sprawdzianem dla każdej.',
+    szablon:
+      'Sformułuj hipotezy do weryfikacji wynikające z materiału — z proponowanym sprawdzianem dla każdej.',
     kluczPromptu: 'insight.hypothesis-board',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 15 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 15 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -365,11 +405,14 @@ const EVIDENCE_MAP = definiujKarteKanoniczna({
   ikona: 'MapIcon',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zbuduj mapę dowodów: powiąż odpowiedzi źródłowe z tematami i problemami, z cytatem-fragmentem.',
+    szablon:
+      'Zbuduj mapę dowodów: powiąż odpowiedzi źródłowe z tematami i problemami, z cytatem-fragmentem.',
     kluczPromptu: 'insight.evidence-map',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 16 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 16 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -381,11 +424,14 @@ const CANDIDATE_TRIAGE = definiujKarteKanoniczna({
   ikona: 'Eye',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zbierz wnioski-kandydatów wraz z dowodami i śladem pochodzenia; oznacz gotowość do przekazania.',
+    szablon:
+      'Zbierz wnioski-kandydatów wraz z dowodami i śladem pochodzenia; oznacz gotowość do przekazania.',
     kluczPromptu: 'insight.candidate-triage',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 17 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 17 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'label „Findings & Evidence" ≠ DOC „Triage kandydatów"; wchłania traceability (R6). Relacja do key-findings (§1D grupa 3) do dedupu z Piotrem.',
@@ -402,10 +448,13 @@ const SOURCE_PACK = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: {
     none: true,
-    reason: 'źródła i sesje wskazuje materiał/użytkownik — karta zestawia referencje, nie generuje prozy (wchłania source-sessions, InsightViewer.tsx:756,663)',
+    reason:
+      'źródła i sesje wskazuje materiał/użytkownik — karta zestawia referencje, nie generuje prozy (wchłania source-sessions, InsightViewer.tsx:756,663)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 18 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 18 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'wchłania source-sessions (merge treści); ★ DO POTWIERDZENIA: rola dane vs asystuje (jeśli AI kuratoruje pakiet źródeł)',
@@ -420,11 +469,14 @@ const REPORT_PACK = definiujKarteKanoniczna({
   ikona: 'FileText',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Złóż pakiet raportu z sekcji wniosku — kompletny, gotowy do eksportu materiał dla klienta.',
+    szablon:
+      'Złóż pakiet raportu z sekcji wniosku — kompletny, gotowy do eksportu materiał dla klienta.',
     kluczPromptu: 'insight.report-pack',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 19 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 19 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -440,10 +492,13 @@ const MATERIAL_QUALITY = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: {
     none: true,
-    reason: 'metryki jakości i zaufania materiału są liczone/oceniane z danych źródłowych, nie generowane jako proza (wchłania truth-review-summary, InsightViewer.tsx:771,3581)',
+    reason:
+      'metryki jakości i zaufania materiału są liczone/oceniane z danych źródłowych, nie generowane jako proza (wchłania truth-review-summary, InsightViewer.tsx:771,3581)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 20 }],
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 20 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'KANON §2.3 błędnie: „w kodzie NIE ISTNIEJE" — ISTNIEJE (nav :771, case :3581), DOC oznacza WYMAGANĄ; wchłania truth-review-summary. Admit do katalogu.',
@@ -473,8 +528,13 @@ const KEY_FINDINGS = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Kluczowe wnioski (Phase-D).', kluczPromptu: 'insight.key-findings' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 21 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje candidate-triage „Findings & Evidence" (InsightViewer.tsx:785 vs :750)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 21 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje candidate-triage „Findings & Evidence" (InsightViewer.tsx:785 vs :750)',
+  },
 });
 
 // USUNIĘTE (Faza 0, DEDUP): `recommendations` dublowało ARTIFACT_ACTIONS (rdzeń)
@@ -491,8 +551,13 @@ const TENSIONS = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Napięcia (Phase-D).', kluczPromptu: 'insight.tensions' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 23 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje consensus-divergence (InsightViewer.tsx:791 vs :713)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 23 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje consensus-divergence (InsightViewer.tsx:791 vs :713)',
+  },
 });
 
 const PATTERNS = definiujKarteKanoniczna({
@@ -503,8 +568,13 @@ const PATTERNS = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Wzorce (Phase-D).', kluczPromptu: 'insight.patterns' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 24 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje themes (InsightViewer.tsx:792 vs :690)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 24 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje themes (InsightViewer.tsx:792 vs :690)',
+  },
 });
 
 const MENTAL_MODELS = definiujKarteKanoniczna({
@@ -515,8 +585,13 @@ const MENTAL_MODELS = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Modele myślowe (Phase-D).', kluczPromptu: 'insight.mental-models' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 25 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'częściowo dubluje implicit-assumptions (InsightViewer.tsx:793)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 25 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'częściowo dubluje implicit-assumptions (InsightViewer.tsx:793)',
+  },
 });
 
 const MOMENTS = definiujKarteKanoniczna({
@@ -527,8 +602,13 @@ const MOMENTS = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Momenty (Phase-D).', kluczPromptu: 'insight.moments' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 26 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje evidence/quotes (InsightViewer.tsx:794)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 26 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje evidence/quotes (InsightViewer.tsx:794)',
+  },
 });
 
 const QUOTE_BANK = definiujKarteKanoniczna({
@@ -539,8 +619,13 @@ const QUOTE_BANK = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Bank cytatów (Phase-D).', kluczPromptu: 'insight.quote-bank' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 27 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje evidence-map/quotes (InsightViewer.tsx:796 vs :743)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 27 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje evidence-map/quotes (InsightViewer.tsx:796 vs :743)',
+  },
 });
 
 const STAKEHOLDER_MAP = definiujKarteKanoniczna({
@@ -551,8 +636,13 @@ const STAKEHOLDER_MAP = definiujKarteKanoniczna({
   rolaAI: 'pisze',
   aiPrompt: { szablon: 'Mapa interesariuszy (Phase-D).', kluczPromptu: 'insight.stakeholder-map' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 28 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje people (InsightViewer.tsx:803 vs :704)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 28 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje people (InsightViewer.tsx:803 vs :704)',
+  },
 });
 
 const SOURCE_CREDIBILITY = definiujKarteKanoniczna({
@@ -561,10 +651,18 @@ const SOURCE_CREDIBILITY = definiujKarteKanoniczna({
   grupa: 'EVIDENCE',
   ikona: 'Eye',
   rolaAI: 'pisze',
-  aiPrompt: { szablon: 'Wiarygodność źródeł (Phase-D).', kluczPromptu: 'insight.source-credibility' },
+  aiPrompt: {
+    szablon: 'Wiarygodność źródeł (Phase-D).',
+    kluczPromptu: 'insight.source-credibility',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 29 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje source-pack (InsightViewer.tsx:809 vs :756)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 29 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje source-pack (InsightViewer.tsx:809 vs :756)',
+  },
 });
 
 const CONSULTING_NARRATIVE = definiujKarteKanoniczna({
@@ -573,10 +671,18 @@ const CONSULTING_NARRATIVE = definiujKarteKanoniczna({
   grupa: 'DELIVERABLES',
   ikona: 'FileText',
   rolaAI: 'pisze',
-  aiPrompt: { szablon: 'Narracja konsultingowa (Phase-D).', kluczPromptu: 'insight.consulting-narrative' },
+  aiPrompt: {
+    szablon: 'Narracja konsultingowa (Phase-D).',
+    kluczPromptu: 'insight.consulting-narrative',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 30 }],
-  statusKanonu: { stan: 'do-decyzji-piotra', opis: 'dubluje consulting-readout (InsightViewer.tsx:814 vs :685)' },
+  kompozycja: [
+    { artefakt: 'insight', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 30 },
+  ],
+  statusKanonu: {
+    stan: 'do-decyzji-piotra',
+    opis: 'dubluje consulting-readout (InsightViewer.tsx:814 vs :685)',
+  },
 });
 
 // USUNIĘTE (Faza 0, DEDUP): `executive-memo` dublowało EXECUTIVE_SUMMARY (rdzeń!)

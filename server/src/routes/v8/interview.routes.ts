@@ -716,15 +716,17 @@ router.patch(
     // CZĘŚCIOWE (patrz `mergeInsightSectionOverrides`), żeby dwie osoby
     // redagujące różne sekcje nie kasowały sobie nawzajem zmian.
     if (sectionOverrides !== undefined) {
-      const merged = mergeInsightSectionOverrides(insight.sectionOverrides, sectionOverrides, userId);
+      const merged = mergeInsightSectionOverrides(
+        insight.sectionOverrides,
+        sectionOverrides,
+        userId
+      );
       if (!merged.ok) {
         return res.status(400).json({ data: null, error: merged.error, code: merged.code });
       }
       await ensureInsightSectionOverridesColumn();
       updates.push('section_overrides = ?');
-      values.push(
-        Object.keys(merged.value).length === 0 ? null : JSON.stringify(merged.value)
-      );
+      values.push(Object.keys(merged.value).length === 0 ? null : JSON.stringify(merged.value));
     }
 
     if (updates.length === 0) {

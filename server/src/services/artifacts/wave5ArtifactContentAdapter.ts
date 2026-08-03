@@ -7,8 +7,11 @@ import { sheetArtifactContentAdapter } from './sheetArtifactContentAdapter.js';
 
 function json<T>(raw: unknown, fallback: T): T {
   if (raw && typeof raw === 'object') return raw as T;
-  try { return raw == null ? fallback : JSON.parse(String(raw)) as T; }
-  catch { return fallback; }
+  try {
+    return raw == null ? fallback : (JSON.parse(String(raw)) as T);
+  } catch {
+    return fallback;
+  }
 }
 
 const originAdapters: Record<string, ArtifactContentAdapter> = {
@@ -27,12 +30,13 @@ export const wave5ArtifactContentAdapter: ArtifactContentAdapter = {
          FROM wave5_artifacts
         WHERE artifact_id = ? AND organization_id = ?`,
       [params.originRecordId, params.organizationId],
-      { fallback: false },
+      { fallback: false }
     );
     if (!row) return null;
     const provenance = json<Record<string, any>>(row.provenance_json, {});
     const refs = json<any[]>(row.source_refs_json, []);
-    const mirror = provenance?.metadata?.contentAuthority === 'origin_runtime' ||
+    const mirror =
+      provenance?.metadata?.contentAuthority === 'origin_runtime' ||
       provenance?.metadata?.mirroredFrom === 'v8_output_artifacts' ||
       refs.some((ref) => ref?.sourceClass === 'legacy_artifact');
     if (mirror) {
@@ -45,24 +49,44 @@ export const wave5ArtifactContentAdapter: ArtifactContentAdapter = {
     }
 
     const format = row.canonical_format === 'json' ? 'json' : 'markdown';
-    const contentMd = row.content_md !== null && row.content_md !== undefined
-      ? String(row.content_md)
-      : format === 'markdown' ? String(row.content || '') : '';
+    const contentMd =
+      row.content_md !== null && row.content_md !== undefined
+        ? String(row.content_md)
+        : format === 'markdown'
+          ? String(row.content || '')
+          : '';
     const contentJson = format === 'json' ? json(row.content_json_native, undefined) : undefined;
     const status = contentMd ? 'synced' : 'missing';
     const originRevision = `wave5:${Number(row.current_version || 1)}:${row.updated_at || 'legacy'}`;
     const envelope: ArtifactContentEnvelopeV1 = {
-      envelopeVersion: 'artifact-content/v1', canonicalFormat: format,
-      canonicalKind: row.artifact_type === 'slide_deck' ? 'presentation' : row.artifact_type === 'spreadsheet' ? 'sheet' : 'document',
-      contentSchemaVersion: row.content_schema_version || 'wave5/v1', contentMd,
+      envelopeVersion: 'artifact-content/v1',
+      canonicalFormat: format,
+      canonicalKind:
+        row.artifact_type === 'slide_deck'
+          ? 'presentation'
+          : row.artifact_type === 'spreadsheet'
+            ? 'sheet'
+            : 'document',
+      contentSchemaVersion: row.content_schema_version || 'wave5/v1',
+      contentMd,
       ...(contentJson !== undefined ? { contentJson } : {}),
       projection: {
-        status, projectedAt: row.markdown_projected_at || null, error: null,
-        completeness: 'full', projectedFromRevision: originRevision, projectedFromHash: null,
+        status,
+        projectedAt: row.markdown_projected_at || null,
+        error: null,
+        completeness: 'full',
+        projectedFromRevision: originRevision,
+        projectedFromHash: null,
       },
-      provenance: { originRuntime: 'native_artifact', originRecordId: row.artifact_id, originRevision },
-      artifactType: row.artifact_type || 'native_artifact', markdownProjectionStatus: status,
-      markdownProjectedAt: row.markdown_projected_at || null, projectionError: null,
+      provenance: {
+        originRuntime: 'native_artifact',
+        originRecordId: row.artifact_id,
+        originRevision,
+      },
+      artifactType: row.artifact_type || 'native_artifact',
+      markdownProjectionStatus: status,
+      markdownProjectedAt: row.markdown_projected_at || null,
+      projectionError: null,
     };
     return { envelope, originRevision };
   },

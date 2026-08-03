@@ -20,18 +20,18 @@ vi.mock('../../utils/DbPromise.js', () => ({
   all: vi.fn(async (sql: string, params: unknown[]) => {
     if (!sql.includes('FROM report_builder_sections')) return [];
     return [...(state.sections.get(`${params[1]}:${params[0]}`) || [])].sort(
-      (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0) || a.id.localeCompare(b.id),
+      (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0) || a.id.localeCompare(b.id)
     );
   }),
 }));
 
-import { presentationArtifactContentAdapter } from '../artifacts/presentationArtifactContentAdapter.js';
-import { reportArtifactContentAdapter } from '../artifacts/reportArtifactContentAdapter.js';
 import {
   clearArtifactContentAdaptersForTests,
   registerArtifactContentAdapter,
   resolveArtifactContent,
 } from '../artifacts/artifactContentResolverService.js';
+import { presentationArtifactContentAdapter } from '../artifacts/presentationArtifactContentAdapter.js';
+import { reportArtifactContentAdapter } from '../artifacts/reportArtifactContentAdapter.js';
 
 function reportSection(overrides: Record<string, unknown> = {}) {
   return {
@@ -79,7 +79,7 @@ describe('report/presentation artifact content adapters', () => {
         organizationId: 'org-b',
         originRuntime: 'report',
         originRecordId: 'report-1',
-      }),
+      })
     ).resolves.toBeNull();
   });
 
@@ -121,10 +121,14 @@ describe('report/presentation artifact content adapters', () => {
     });
     const sections = (resolved?.envelope.contentJson as any).sections;
     expect(sections.map((section: any) => section.title)).toEqual(['Intro', 'Data', 'Rich text']);
-    expect(sections[1]).toMatchObject({ format: 'json', content: { edited: true }, source: 'edited' });
+    expect(sections[1]).toMatchObject({
+      format: 'json',
+      content: { edited: true },
+      source: 'edited',
+    });
     expect(sections[2]).toMatchObject({ format: 'tiptap', content: { type: 'doc', content: [] } });
     expect(resolved?.envelope.contentMd.indexOf('## Intro')).toBeLessThan(
-      resolved!.envelope.contentMd.indexOf('## Data'),
+      resolved!.envelope.contentMd.indexOf('## Data')
     );
     expect(resolved?.envelope.contentMd).not.toContain('"generated": true');
   });
@@ -156,16 +160,32 @@ describe('report/presentation artifact content adapters', () => {
 
   it('distinguishes empty presentation content from malformed JSON without placeholders', async () => {
     state.decks.set('org-a:empty', {
-      id: 'empty', deck_json: '', content_json_native: null, outline_json: null, version: 1, updated_at: null,
+      id: 'empty',
+      deck_json: '',
+      content_json_native: null,
+      outline_json: null,
+      version: 1,
+      updated_at: null,
     });
     state.decks.set('org-a:broken', {
-      id: 'broken', deck_json: '{broken', content_json_native: null, outline_json: null, version: 1, updated_at: null,
+      id: 'broken',
+      deck_json: '{broken',
+      content_json_native: null,
+      outline_json: null,
+      version: 1,
+      updated_at: null,
     });
     const empty = await presentationArtifactContentAdapter.resolve({
-      artifactId: 'a', organizationId: 'org-a', originRuntime: 'presentation', originRecordId: 'empty',
+      artifactId: 'a',
+      organizationId: 'org-a',
+      originRuntime: 'presentation',
+      originRecordId: 'empty',
     });
     const broken = await presentationArtifactContentAdapter.resolve({
-      artifactId: 'a', organizationId: 'org-a', originRuntime: 'presentation', originRecordId: 'broken',
+      artifactId: 'a',
+      organizationId: 'org-a',
+      originRuntime: 'presentation',
+      originRecordId: 'broken',
     });
     expect(empty?.envelope.projection.status).toBe('missing');
     expect(empty?.envelope.contentMd).toBe('');
@@ -176,22 +196,36 @@ describe('report/presentation artifact content adapters', () => {
 
   it('keeps read-back hash/ETag stable and changes them after report edit', async () => {
     state.artifacts.set('org-a:artifact-1', { artifact_id: 'artifact-1' });
-    state.origins.set('org-a:artifact-1', { origin_runtime: 'report', origin_record_id: 'report-1' });
+    state.origins.set('org-a:artifact-1', {
+      origin_runtime: 'report',
+      origin_record_id: 'report-1',
+    });
     state.reports.set('org-a:report-1', {
-      id: 'report-1', title: 'Report', updated_at: '2026-07-31T10:00:00.000Z',
+      id: 'report-1',
+      title: 'Report',
+      updated_at: '2026-07-31T10:00:00.000Z',
     });
     const section = reportSection();
     state.sections.set('org-a:report-1', [section]);
     registerArtifactContentAdapter('report', reportArtifactContentAdapter);
 
-    const first = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
-    const second = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    const first = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
+    const second = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
     expect(second.contentHash).toBe(first.contentHash);
     expect(second.etag).toBe(first.etag);
 
     section.edited_content = 'Edited content';
     section.updated_at = '2026-07-31T11:00:00.000Z';
-    const edited = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    const edited = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
     expect(edited.originRevision).not.toBe(first.originRevision);
     expect(edited.contentHash).not.toBe(first.contentHash);
     expect(edited.etag).not.toBe(first.etag);
@@ -216,11 +250,17 @@ describe('report/presentation artifact content adapters', () => {
     state.decks.set('org-a:deck-1', deck);
     registerArtifactContentAdapter('presentation', presentationArtifactContentAdapter);
 
-    const before = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    const before = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
     deck.deck_json = JSON.stringify({ title: 'Deck', slides: [{ title: 'After' }] });
     deck.version = 2;
     deck.updated_at = '2026-07-31T11:00:00.000Z';
-    const after = await resolveArtifactContent({ artifactId: 'artifact-1', organizationId: 'org-a' });
+    const after = await resolveArtifactContent({
+      artifactId: 'artifact-1',
+      organizationId: 'org-a',
+    });
 
     expect(after.originRevision).not.toBe(before.originRevision);
     expect(after.contentHash).not.toBe(before.contentHash);

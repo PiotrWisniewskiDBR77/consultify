@@ -11,7 +11,10 @@ import { AlertTriangle, Lock, Pencil, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import decisionWorkspaceApi, { type CreateRiskInput, readDecisionApiError } from './decisionWorkspaceApi';
+import decisionWorkspaceApi, {
+  type CreateRiskInput,
+  readDecisionApiError,
+} from './decisionWorkspaceApi';
 import type { DecisionRiskDTO, WorkspaceUserRef } from './types';
 import { resolveUserName } from './workspaceHelpers';
 
@@ -156,7 +159,10 @@ export const DecisionRisksSection: React.FC<DecisionRisksSectionProps> = ({
         } else {
           setRowError({
             id,
-            message: t('myWork.decisionWorkspace.risks.updateFailed', 'Could not save your changes.'),
+            message: t(
+              'myWork.decisionWorkspace.risks.updateFailed',
+              'Could not save your changes.'
+            ),
           });
         }
       } finally {
@@ -223,7 +229,10 @@ export const DecisionRisksSection: React.FC<DecisionRisksSectionProps> = ({
       ) : (
         <ul className="space-y-2">
           {risks.map((risk) => (
-            <li key={risk.id} className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2">
+            <li
+              key={risk.id}
+              className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2"
+            >
               {editingId === risk.id ? (
                 <div className="space-y-1.5">
                   <textarea
@@ -305,10 +314,12 @@ export const DecisionRisksSection: React.FC<DecisionRisksSectionProps> = ({
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]">
                     <span className={severityTone[risk.severity] || 'text-c-text-secondary'}>
-                      {t('myWork.decisionWorkspace.risks.severityLabel', 'Severity')}: {risk.severity}
+                      {t('myWork.decisionWorkspace.risks.severityLabel', 'Severity')}:{' '}
+                      {risk.severity}
                     </span>
                     <span className="text-c-text-secondary">
-                      {t('myWork.decisionWorkspace.risks.likelihoodLabel', 'Likelihood')}: {risk.likelihood}
+                      {t('myWork.decisionWorkspace.risks.likelihoodLabel', 'Likelihood')}:{' '}
+                      {risk.likelihood}
                     </span>
                     {risk.ownerId ? (
                       <span className="text-c-text-secondary">
@@ -348,7 +359,10 @@ export const DecisionRisksSection: React.FC<DecisionRisksSectionProps> = ({
             <textarea
               value={draft.description}
               onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-              placeholder={t('myWork.decisionWorkspace.risks.descriptionPlaceholder', 'Risk description')}
+              placeholder={t(
+                'myWork.decisionWorkspace.risks.descriptionPlaceholder',
+                'Risk description'
+              )}
               rows={2}
               className="w-full resize-none rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             />
@@ -381,7 +395,9 @@ export const DecisionRisksSection: React.FC<DecisionRisksSectionProps> = ({
                   onChange={(e) => setDraft((d) => ({ ...d, ownerId: e.target.value || null }))}
                   className="flex-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-[11px] text-c-text focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <option value="">{t('myWork.decisionWorkspace.risks.noOwner', 'No owner')}</option>
+                  <option value="">
+                    {t('myWork.decisionWorkspace.risks.noOwner', 'No owner')}
+                  </option>
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name}

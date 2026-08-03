@@ -191,7 +191,9 @@ export const AITableFieldProposal: React.FC<AITableFieldProposalProps> = ({
                       key={cell.key}
                       className="rounded-lg bg-c-surface-raised px-2 py-1.5 text-[10px]"
                     >
-                      <div className="font-semibold text-c-text-secondary mb-0.5">{cell.header}</div>
+                      <div className="font-semibold text-c-text-secondary mb-0.5">
+                        {cell.header}
+                      </div>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-c-text-muted line-through decoration-c-text-muted/50">
                           {formatValue(cell.before, emptyLabel)}

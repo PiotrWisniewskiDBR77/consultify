@@ -21,11 +21,19 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
   const [activeTab, setActiveTab] = useState('list');
 
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div
+      style={{
+        maxWidth: 1180,
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+      }}
+    >
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          A — StandardModuleBar Z children (nowa ścieżka, wysokość ograniczona
-          do 420px żeby pokazać wewnętrzny scroll)
+          A — StandardModuleBar Z children (nowa ścieżka, wysokość ograniczona do 420px żeby pokazać
+          wewnętrzny scroll)
         </p>
         <div style={{ height: 420, border: '1px dashed #888', overflow: 'hidden' }}>
           <StandardModuleBar
@@ -60,7 +68,10 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
                 }}
               >
                 <CheckCircle2 size={14} style={{ opacity: 0.5 }} />
-                <span>Wiersz treści #{i + 1} — jeśli to się scrolluje wewnątrz zielonej ramki, layout dziedziczony po ModuleHub działa poprawnie.</span>
+                <span>
+                  Wiersz treści #{i + 1} — jeśli to się scrolluje wewnątrz zielonej ramki, layout
+                  dziedziczony po ModuleHub działa poprawnie.
+                </span>
               </div>
             ))}
           </StandardModuleBar>
@@ -69,9 +80,9 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          B — StandardModuleBar BEZ children (stara ścieżka, peryferyjni
-          konsumenci: MyProjects/AssessmentTable/vault/AgentHubShell) — musi
-          wyglądać tak jak przed zmianą, tylko pasek, bez dodatkowego wrappera
+          B — StandardModuleBar BEZ children (stara ścieżka, peryferyjni konsumenci:
+          MyProjects/AssessmentTable/vault/AgentHubShell) — musi wyglądać tak jak przed zmianą,
+          tylko pasek, bez dodatkowego wrappera
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -85,9 +96,9 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          C — primaryCta locked (pilot-lock, dodane 2026-07-26 dla Initiatives)
-          — wyszarzone, tooltip z wyjaśnieniem, ale NADAL KLIKALNE (onClick ma
-          dispatchować komunikat, nie ginie pod natywnym disabled)
+          C — primaryCta locked (pilot-lock, dodane 2026-07-26 dla Initiatives) — wyszarzone,
+          tooltip z wyjaśnieniem, ale NADAL KLIKALNE (onClick ma dispatchować komunikat, nie ginie
+          pod natywnym disabled)
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -107,9 +118,8 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          D — statusFilters passthrough (Execution/Audits-style, dodane
-          2026-07-26) — czysty przekaz propsów do ModuleNavBar, zero nowej
-          logiki w fasadzie
+          D — statusFilters passthrough (Execution/Audits-style, dodane 2026-07-26) — czysty przekaz
+          propsów do ModuleNavBar, zero nowej logiki w fasadzie
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -129,9 +139,9 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          E — primaryCtaContent (Interview-style, dodane 2026-07-26) — DWA
-          przyciski naraz w slocie CTA (per-tab CTA + flag-gated „+ Nowy"),
-          luk ucieczkowy bo StandardPrimaryCta obsługuje tylko jeden
+          E — primaryCtaContent (Interview-style, dodane 2026-07-26) — DWA przyciski naraz w slocie
+          CTA (per-tab CTA + flag-gated „+ Nowy"), luk ucieczkowy bo StandardPrimaryCta obsługuje
+          tylko jeden
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -160,9 +170,8 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
 
       <div>
         <p style={{ fontSize: 12, opacity: 0.6, marginBottom: 8 }}>
-          F — categoryButtons passthrough (Benefits-style, dodane 2026-07-26)
-          — czysty przekaz do ModuleNavBar, pierwsze realne uzycie znalezione
-          przy migracji Fali 2
+          F — categoryButtons passthrough (Benefits-style, dodane 2026-07-26) — czysty przekaz do
+          ModuleNavBar, pierwsze realne uzycie znalezione przy migracji Fali 2
         </p>
         <div style={{ border: '1px dashed #888' }}>
           <StandardModuleBar
@@ -170,8 +179,20 @@ export function StandardModuleBarChildrenScreen(): React.ReactElement {
             activeTab=""
             onTabChange={() => {}}
             categoryButtons={[
-              { id: 'cost', label: 'Cost', icon: <CheckCircle2 size={14} />, count: 5, onClick: () => {} },
-              { id: 'time', label: 'Time', icon: <CheckCircle2 size={14} />, count: 2, onClick: () => {} },
+              {
+                id: 'cost',
+                label: 'Cost',
+                icon: <CheckCircle2 size={14} />,
+                count: 5,
+                onClick: () => {},
+              },
+              {
+                id: 'time',
+                label: 'Time',
+                icon: <CheckCircle2 size={14} />,
+                count: 2,
+                onClick: () => {},
+              },
             ]}
           />
         </div>

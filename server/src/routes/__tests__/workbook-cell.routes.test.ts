@@ -79,7 +79,11 @@ const SCHEMA = {
         {
           cells: {
             driver: { value: 'Stopa dyskontowa' },
-            wartosc: { value: 0.1, style: { bgColor: 'FFF6DF', border: 'thin' }, comment: 'wejście' },
+            wartosc: {
+              value: 0.1,
+              style: { bgColor: 'FFF6DF', border: 'thin' },
+              comment: 'wejście',
+            },
           },
         },
       ],
@@ -90,7 +94,9 @@ const SCHEMA = {
         { key: 'metryka', header: 'Metryka' },
         { key: 'wartosc', header: 'Wartość' },
       ],
-      rows: [{ cells: { metryka: { value: 'NPV' }, wartosc: { formula: "'Założenia'!$B$2*100" } } }],
+      rows: [
+        { cells: { metryka: { value: 'NPV' }, wartosc: { formula: "'Założenia'!$B$2*100" } } },
+      ],
     },
   ],
 };
@@ -105,7 +111,11 @@ beforeEach(() => {
   mockQueryRun.mockResolvedValue({ changes: 1 });
 
   mockQueryOne.mockImplementation(async (sql: string, params: unknown[]) => {
-    if (typeof sql === 'string' && sql.includes('FROM generated_workbooks') && sql.includes('schema_json')) {
+    if (
+      typeof sql === 'string' &&
+      sql.includes('FROM generated_workbooks') &&
+      sql.includes('schema_json')
+    ) {
       const [id, orgId] = params as [string, string];
       if (id === WB_ID && orgId === ORG) {
         return { schema_json: JSON.stringify(SCHEMA) };
@@ -150,7 +160,9 @@ describe('PATCH /api/workbook/:id/cell', () => {
   ])('400 for invalid body: %s', async (body) => {
     const app = createApp();
     asUser(ORG);
-    const res = await request(app).patch(`/api/workbook/${WB_ID}/cell`).send(body as any);
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/cell`)
+      .send(body as any);
     expect(res.status).toBe(400);
   });
 
@@ -208,9 +220,13 @@ describe('PATCH /api/workbook/:id/cell', () => {
   it('a formula wins over a simultaneously-provided value, and strips a leading "="', async () => {
     const app = createApp();
     asUser(ORG);
-    const res = await request(app)
-      .patch(`/api/workbook/${WB_ID}/cell`)
-      .send({ sheetIndex: 0, rowIndex: 0, columnKey: 'wartosc', value: 999, formula: "=SUM(A1:A2)" });
+    const res = await request(app).patch(`/api/workbook/${WB_ID}/cell`).send({
+      sheetIndex: 0,
+      rowIndex: 0,
+      columnKey: 'wartosc',
+      value: 999,
+      formula: '=SUM(A1:A2)',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.cell.formula).toBe('SUM(A1:A2)');

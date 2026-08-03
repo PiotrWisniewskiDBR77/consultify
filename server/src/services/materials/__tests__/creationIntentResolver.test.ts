@@ -27,11 +27,11 @@ vi.mock('../../documentStudio/documentTemplateService.js', () => ({
 }));
 
 import {
-  TemplateResolveError,
   isTemplateResolveError,
   resolveDocumentTemplateForCreation,
   resolvePresentationTemplateForCreation,
   type TemplateRef,
+  TemplateResolveError,
 } from '../creationIntent.js';
 
 const ORG = 'org-alpha';
@@ -468,7 +468,11 @@ describe('resolvePresentationTemplateForCreation — canonical presentation temp
     });
 
     const resolved = await resolvePresentationTemplateForCreation(
-      { kind: 'internal', canonicalTemplateId: 'pt-custom-1', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-custom-1',
+        originRuntime: 'presentation_template',
+      },
       { organizationId: ORG }
     );
 
@@ -480,7 +484,11 @@ describe('resolvePresentationTemplateForCreation — canonical presentation temp
     routeDb({ presentationTemplate: presentationTemplateRow() });
 
     await resolvePresentationTemplateForCreation(
-      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
       { organizationId: ORG }
     );
 
@@ -521,7 +529,11 @@ describe('resolvePresentationTemplateForCreation — rejection paths', () => {
     });
 
     await expectPresentationResolveError(
-      { kind: 'internal', canonicalTemplateId: 'pt-foreign', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-foreign',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_FORBIDDEN'
     );
   });
@@ -532,18 +544,29 @@ describe('resolvePresentationTemplateForCreation — rejection paths', () => {
     });
 
     await expectPresentationResolveError(
-      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_DEPRECATED'
     );
   });
 
   it('TEMPLATE_DEPRECATED when is_active is false even if lifecycle_state says approved', async () => {
     routeDb({
-      presentationTemplate: presentationTemplateRow({ is_active: false, lifecycle_state: 'approved' }),
+      presentationTemplate: presentationTemplateRow({
+        is_active: false,
+        lifecycle_state: 'approved',
+      }),
     });
 
     await expectPresentationResolveError(
-      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_DEPRECATED'
     );
   });
@@ -568,7 +591,11 @@ describe('resolvePresentationTemplateForCreation — rejection paths', () => {
 
   it('TEMPLATE_FORBIDDEN when no organization context is supplied', async () => {
     await expectPresentationResolveError(
-      { kind: 'internal', canonicalTemplateId: 'pt-steering', originRuntime: 'presentation_template' },
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
       'TEMPLATE_FORBIDDEN',
       ''
     );

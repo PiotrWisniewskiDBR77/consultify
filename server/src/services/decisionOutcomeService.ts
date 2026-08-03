@@ -94,7 +94,11 @@ export function validateDecideTransition(input: {
   const { currentStatus, targetStatus, rationaleText } = input;
 
   if (!isValidDecideTarget(targetStatus)) {
-    return { allowed: false, code: 'INVALID_TARGET', reason: `Invalid decision target: ${targetStatus}` };
+    return {
+      allowed: false,
+      code: 'INVALID_TARGET',
+      reason: `Invalid decision target: ${targetStatus}`,
+    };
   }
 
   // Hard rule (non-negotiable per mission brief): a decision already at a
@@ -128,7 +132,9 @@ export function validateDecideTransition(input: {
  * subject to this guard — see that file's freeze rule for alternatives/
  * risks specifically (comments remain postable after finalization).
  */
-export function assertNotFinalized(currentStatus: string | null | undefined): OutcomeTransitionResult {
+export function assertNotFinalized(
+  currentStatus: string | null | undefined
+): OutcomeTransitionResult {
   if (isTerminalDecisionOutcome(currentStatus)) {
     return {
       allowed: false,

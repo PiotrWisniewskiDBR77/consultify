@@ -34,7 +34,11 @@
  */
 
 import type { ComputeResult, PeriodOutput } from './financialModelingService.js';
-import { appraise, type AppraisalInput, type AppraisalResult } from './investmentAppraisalService.js';
+import {
+  type AppraisalInput,
+  type AppraisalResult,
+  appraise,
+} from './investmentAppraisalService.js';
 
 export interface ModelAppraisalRates {
   /** Discount rate / WACC in percent. Required — never defaulted (see module doc). */

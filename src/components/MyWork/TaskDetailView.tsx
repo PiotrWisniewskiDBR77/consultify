@@ -56,18 +56,21 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Callout } from '@/components/shared/NModeBlocks';
+import { ErrorState, SkeletonState } from '@/components/shared/states';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_STICKY,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-import { ErrorState, SkeletonState } from '@/components/shared/states';
 import { LoadingState } from '@/components/ui/primitives';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { InitiativeService } from '@/services/initiativeService';
 import { useAppStore } from '@/store/useAppStore';
@@ -77,32 +80,26 @@ import { buildArtifactCode } from '@/utils/artifactLinks';
 
 // ── AI Field Enhancer (shared) ───────────────────────────────────────────────
 import { AIFieldEnhancer } from '../shared/AIFieldEnhancer';
-import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { CapabilityGate } from '../shared/CapabilityGate';
-import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
-import { mergeChangeValue } from '@/services/cardAnalysis';
 import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
-import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
+import { NModeCanvas } from '../shared/NModeLayout/NModeCanvas';
 // #52 — card-management primitive (show/hide + reorder), same wiring as
 // InsightViewer.tsx (nakładka, see comment at `taskCardLayout` below).
 // ETAP 1.2: pasek niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte z menu 2
 // (karty są predefiniowane, widocznością steruje Sekcje), więc zamiast
 // `NModeCardManager` (Sekcje + Nowa karta) importujemy `SectionsManagerMenu`.
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // ── N-Mode Layout (shared) ──────────────────────────────────────────────────
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 import { NModeSectionWrapper } from '../shared/NModeLayout/NModeSectionWrapper';
 import type { NModeSection } from '../shared/NModeLayout/types';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
-// MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
-// (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
-import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
 // ── N-Mode Sections (shared, reusable across artifacts) ─────────────────────
 import {
   ActivityLogCanvas,
@@ -148,15 +145,18 @@ import {
 } from './shared';
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
-// Wspólny wzór listy powiązań (Zadanie „Wynika z" = Decyzja „Dotyczy").
-// Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
-// równolegle edytowany przez inne fronty.
-import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsList';
 // ETAP 1.1 n-Type: `PresentationModeSwitcher` NIE jest importowany — karta N ma
 // JEDEN widok, przelacznik N/C znika z naglowka (`showModeSwitcher={false}`).
 // `ReadEditToggle` tez nie wprost — przelacznik Edycja|Podglad renderuje wspolny
 // `NModeMenu2` (strefa srodkowa), karmiony `readMode` / `onReadModeChange`.
 import { RelatedContext } from './shared/RelatedContext';
+// Wspólny wzór listy powiązań (Zadanie „Wynika z" = Decyzja „Dotyczy").
+// Import wprost z pliku, nie przez `./shared/index.ts` — barrel jest dziś
+// równolegle edytowany przez inne fronty.
+import { type RelatedItemEntry, RelatedItemsList } from './shared/RelatedItemsList';
+// MIGRACJA (D-8): kompozycja kart Task wyprowadzona z WIĄŻĄCEGO kontraktu karty
+// (cardContract.types.ts) zamiast z luźnego TASK_SPEC — patrz taskCardContract.ts.
+import { TASK_CARD_RENDER_IDS, TASK_CARD_SPEC } from './taskCardContract';
 
 interface TaskDetailViewProps {
   taskId: string | null;
@@ -1695,9 +1695,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
       try {
         await V8MyWorkApi.closeInboxTaskItem(id);
         setAcceptFlowState('idle');
-        toast.success(
-          t('myWork.taskDetail.acceptFlowSuccess', 'Task started — Inbox updated')
-        );
+        toast.success(t('myWork.taskDetail.acceptFlowSuccess', 'Task started — Inbox updated'));
         emitMyWorkEvent({ type: 'item:triaged', entityType: 'inbox', entityId: id });
         emitMyWorkEvent({ type: 'item:updated', entityType: 'task', entityId: id });
       } catch (error: any) {
@@ -2057,9 +2055,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
               ? probability
               : 'medium') as RiskItem['probability'],
             impact: (levels.includes(impact) ? impact : 'medium') as RiskItem['impact'],
-            category: (categories.includes(category)
-              ? category
-              : 'other') as RiskItem['category'],
+            category: (categories.includes(category) ? category : 'other') as RiskItem['category'],
             mitigation: String(r?.mitigation ?? '')
               .trim()
               .slice(0, 600),
@@ -2644,9 +2640,7 @@ Return ONLY the final comment text.`;
     if (!escalationDraft) return;
     setIsFillingEscalationAI(true);
     try {
-      const roster = users
-        .map((u) => `${u.id}: ${u.firstName} ${u.lastName}`)
-        .join('\n');
+      const roster = users.map((u) => `${u.id}: ${u.firstName} ${u.lastName}`).join('\n');
       const message = isPolish
         ? `Zaproponuj ustawienia reguły eskalacji dla zadania projektowego. Zwróć WYŁĄCZNIE JSON:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId z listy lub pusty string>","message":"<treść eskalacji, max 300 znaków, po polsku>"}\n\nZadanie: ${title || 'bez tytułu'}\nOpis: ${description || 'brak'}\nStatus: ${status}\nPriorytet: ${priority}\nTermin: ${dueDate || 'brak'}\n\nDostępne osoby:\n${roster || 'brak'}`
         : `Propose escalation rule settings for a project task. Return JSON ONLY:\n{"warningDays":<0-60>,"criticalDays":<0-60>,"afterDays":<1-60>,"escalationMode":"notify_only|manager_review|executive_alert","escalateTo":"<userId from the list or empty string>","message":"<escalation text, max 300 chars, in English>"}\n\nTask: ${title || 'untitled'}\nDescription: ${description || 'none'}\nStatus: ${status}\nPriority: ${priority}\nDue date: ${dueDate || 'none'}\n\nAvailable people:\n${roster || 'none'}`;
@@ -3395,10 +3389,7 @@ Return ONLY the final comment text.`;
               {/* Items */}
               {totalCount === 0 ? (
                 <div className="py-10 text-center">
-                  <CheckSquare
-                    size={28}
-                    className="mx-auto mb-2 text-c-text"
-                  />
+                  <CheckSquare size={28} className="mx-auto mb-2 text-c-text" />
                   <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">
                     {t(
                       'myWork.taskDetail.noItemsYetGenerate',
@@ -3414,9 +3405,7 @@ Return ONLY the final comment text.`;
                       <div
                         key={item.id}
                         className={`group flex items-start gap-3 px-3 py-2.5 rounded-lg transition duration-200 ${
-                          done
-                            ? 'opacity-50 hover:opacity-70'
-                            : 'hover:bg-c-surface-raised/60'
+                          done ? 'opacity-50 hover:opacity-70' : 'hover:bg-c-surface-raised/60'
                         }`}
                       >
                         {/* Checkbox */}
@@ -3566,10 +3555,7 @@ Return ONLY the final comment text.`;
 
                 {sortedIdeas.length === 0 ? (
                   <div className="py-8 text-center">
-                    <Lightbulb
-                      size={28}
-                      className="mx-auto mb-2 text-c-text"
-                    />
+                    <Lightbulb size={28} className="mx-auto mb-2 text-c-text" />
                     <p className="text-sm text-c-text-secondary dark:text-c-text-secondary">
                       {t(
                         'myWork.taskDetail.noIdeasYetGenerate',
@@ -3987,9 +3973,7 @@ Return ONLY the final comment text.`;
                         ) : (
                           stakeholders.map((s) => (
                             <tr key={s.id}>
-                              <td className="py-2 pr-2 text-c-text">
-                                {s.userName || s.userId}
-                              </td>
+                              <td className="py-2 pr-2 text-c-text">{s.userName || s.userId}</td>
                               <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {stakeholderRoleLabel(s.role)}
                               </td>
@@ -4110,9 +4094,7 @@ Return ONLY the final comment text.`;
                                   ? t('myWork.taskDetail.beforeDue', 'Before due')
                                   : t('myWork.taskDetail.afterDue', 'After due')}
                               </td>
-                              <td className="py-2 pr-2 text-xs text-c-text-secondary">
-                                {r.days}
-                              </td>
+                              <td className="py-2 pr-2 text-xs text-c-text-secondary">{r.days}</td>
                               <td className="py-2 pr-2 text-xs text-c-text-secondary">
                                 {r.recipients}
                               </td>
@@ -4791,7 +4773,9 @@ Return ONLY the final comment text.`;
       `${isPolish ? 'Priorytet' : 'Priority'}: ${priority}`,
       dueDate ? `${isPolish ? 'Termin' : 'Due date'}: ${dueDate}` : '',
       blockedReason ? `${isPolish ? 'Powód blokady' : 'Blocked reason'}: ${blockedReason}` : '',
-      initiativeName ? `${isPolish ? 'Inicjatywa nadrzędna' : 'Parent initiative'}: ${initiativeName}` : '',
+      initiativeName
+        ? `${isPolish ? 'Inicjatywa nadrzędna' : 'Parent initiative'}: ${initiativeName}`
+        : '',
       // Kryterium „spójność z decyzją źródłową" wymaga decyzji w kontekście —
       // bez tego AI nie ma czego porównać i kryterium byłoby martwe.
       relatedDecisions.length
@@ -4880,7 +4864,12 @@ Return ONLY the final comment text.`;
                   ...incoming
                     .filter(
                       (line) =>
-                        !prev.some((p) => String(p.text || '').trim().toLowerCase() === line.toLowerCase())
+                        !prev.some(
+                          (p) =>
+                            String(p.text || '')
+                              .trim()
+                              .toLowerCase() === line.toLowerCase()
+                        )
                     )
                     .map((text) => ({ id: newId(), text, completed: false })),
                 ]
@@ -4904,9 +4893,7 @@ Return ONLY the final comment text.`;
             contingency: '',
           });
           setRisks((prev) =>
-            change.mode === 'append'
-              ? [...prev, ...incoming.map(toRisk)]
-              : incoming.map(toRisk)
+            change.mode === 'append' ? [...prev, ...incoming.map(toRisk)] : incoming.map(toRisk)
           );
           return true;
         }
@@ -4927,9 +4914,7 @@ Return ONLY the final comment text.`;
             };
           };
           setImplementationIdeas((prev) =>
-            change.mode === 'append'
-              ? [...prev, ...incoming.map(toIdea)]
-              : incoming.map(toIdea)
+            change.mode === 'append' ? [...prev, ...incoming.map(toIdea)] : incoming.map(toIdea)
           );
           return true;
         }
@@ -5492,9 +5477,7 @@ Return ONLY the final comment text.`;
                     predefiniowane, widocznością steruje Sekcje. */}
                 <NModeMenu2
                   isPolish={isPolish}
-                  sectionsMenu={
-                    <SectionsManagerMenu layout={taskCardLayout} isPolish={isPolish} />
-                  }
+                  sectionsMenu={<SectionsManagerMenu layout={taskCardLayout} isPolish={isPolish} />}
                   readMode={readMode}
                   onReadModeChange={setReadMode}
                   aiButton={
@@ -6753,7 +6736,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('description') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -6838,7 +6824,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('expectedOutcome') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -6945,7 +6934,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('relatedDecisions') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -7592,7 +7584,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('checklist') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </div>
@@ -7685,7 +7680,10 @@ Return ONLY the final comment text.`;
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-xl bg-gradient-to-br from-c-text-muted/10 to-gray-500/10 dark:from-c-text-muted/20 dark:to-gray-500/20">
-                    <History size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <History
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </div>
                   <span className="text-sm font-semibold text-c-text dark:text-c-text">
                     {t('myWork.taskDetail.activityLog', 'Activity Log')}
@@ -7701,7 +7699,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('activityLog') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </motion.button>
@@ -7869,7 +7870,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('control') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </motion.button>
@@ -7906,7 +7910,10 @@ Return ONLY the final comment text.`;
                             ) : (
                               <>
                                 <div className="p-1 rounded bg-c-surface-raised dark:bg-c-surface-raised">
-                                  <Minus size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
+                                  <Minus
+                                    size={12}
+                                    className="text-c-text-secondary dark:text-c-text-secondary"
+                                  />
                                 </div>
                                 <span className="text-sm text-c-text-secondary dark:text-c-text-secondary dark:text-c-text-secondary">
                                   {t('myWork.taskDetail.standaloneTask', 'Standalone task')}
@@ -7914,7 +7921,10 @@ Return ONLY the final comment text.`;
                               </>
                             )}
                           </div>
-                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
+                          <ChevronDown
+                            size={16}
+                            className="text-c-text-secondary dark:text-c-text-secondary"
+                          />
                         </button>
                         <AnimatePresence>
                           {showInitiativeDropdown && (
@@ -7935,7 +7945,10 @@ Return ONLY the final comment text.`;
                                 }`}
                               >
                                 <div className="p-1 rounded bg-c-surface-raised dark:bg-c-surface-raised">
-                                  <Minus size={12} className="text-c-text-secondary dark:text-c-text-secondary" />
+                                  <Minus
+                                    size={12}
+                                    className="text-c-text-secondary dark:text-c-text-secondary"
+                                  />
                                 </div>
                                 <span className="text-c-text-secondary dark:text-c-text-secondary">
                                   {t('myWork.taskDetail.standaloneTask2', 'Standalone task')}
@@ -7957,9 +7970,7 @@ Return ONLY the final comment text.`;
                                   <div className="p-1 rounded bg-blue-500/10">
                                     <Layers size={12} className="text-blue-500" />
                                   </div>
-                                  <span className="text-c-text dark:text-c-text">
-                                    {init.name}
-                                  </span>
+                                  <span className="text-c-text dark:text-c-text">{init.name}</span>
                                 </button>
                               ))}
                             </motion.div>
@@ -7982,7 +7993,10 @@ Return ONLY the final comment text.`;
                               {isPolish ? statusConfig.label.pl : statusConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
+                          <ChevronDown
+                            size={16}
+                            className="text-c-text-secondary dark:text-c-text-secondary"
+                          />
                         </button>
                         <AnimatePresence>
                           {showStatusDropdown && (
@@ -8029,7 +8043,10 @@ Return ONLY the final comment text.`;
                               {isPolish ? priorityConfig.label.pl : priorityConfig.label.en}
                             </span>
                           </div>
-                          <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-secondary" />
+                          <ChevronDown
+                            size={16}
+                            className="text-c-text-secondary dark:text-c-text-secondary"
+                          />
                         </button>
                         <AnimatePresence>
                           {showPriorityDropdown && (
@@ -8067,7 +8084,10 @@ Return ONLY the final comment text.`;
                           {t('myWork.taskDetail.dueDate2', 'Due Date')}
                         </label>
                         <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-c-surface dark:bg-c-surface border border-c-border dark:border-c-border">
-                          <Calendar size={14} className="text-c-text-secondary dark:text-c-text-secondary" />
+                          <Calendar
+                            size={14}
+                            className="text-c-text-secondary dark:text-c-text-secondary"
+                          />
                           <input
                             type="date"
                             value={dueDate}
@@ -8252,7 +8272,10 @@ Return ONLY the final comment text.`;
                     animate={{ rotate: expandedSections.has('tags') ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                    <ChevronDown
+                      size={18}
+                      className="text-c-text-secondary dark:text-c-text-secondary"
+                    />
                   </motion.div>
                 </div>
               </motion.button>
@@ -8390,7 +8413,10 @@ Return ONLY the final comment text.`;
                       animate={{ rotate: expandedSections.has('relatedNotes') ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <ChevronDown size={18} className="text-c-text-secondary dark:text-c-text-secondary" />
+                      <ChevronDown
+                        size={18}
+                        className="text-c-text-secondary dark:text-c-text-secondary"
+                      />
                     </motion.div>
                   </div>
                 </div>

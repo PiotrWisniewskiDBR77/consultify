@@ -35,10 +35,8 @@ import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
-import {
-  IDEA_TOP_BAR_SLOT_ID,
-  isIdeaTopBarOneLineEnabled,
-} from '@/utils/ideaTopBarOneLineFlag';
+import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
+import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { isMelsCanvasEnabled } from '@/utils/melsCanvasFlag';
 import { isVf1CanvasSpecAEnabled } from '@/utils/vf1CanvasSpecAFlag';
 
@@ -85,7 +83,6 @@ import {
 import { IdeaExportMenu } from './IdeaExportMenu';
 import { IdeaGhostCards } from './IdeaGhostCards';
 import { ideaMapToMarkdown } from './ideaMapToMarkdown';
-import { subscribeIdeaUndoState } from './ideaUndoStateBus';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
@@ -104,26 +101,25 @@ import {
 import { IdeaTableTool } from './IdeaTableTool';
 import { applyIdeaTemplate, findIdeaTemplate, IdeaTemplateGallery } from './IdeaTemplateGallery';
 import { IdeaTeresaSection } from './IdeaTeresaSection';
+import { subscribeIdeaUndoState } from './ideaUndoStateBus';
 import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { getIdeaWorkspaceToolLabel, IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import {
-  IdeaWorkspaceTools,
   IDEA_PANEL_SECTIONS,
   type IdeaPanelSection,
+  IdeaWorkspaceTools,
 } from './IdeaWorkspaceTools';
 import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { IdeaViewSwitcher } from './mindmap/IdeaViewSwitcher';
-import { isIdeaDetailsInPanelEnabled } from '@/utils/ideaDetailsInPanelFlag';
-
-import { buildIdeaPanel6RailTools } from './panel/ideaPanel6Sections';
-import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { stabilizeMindmapInteractionMode } from './mindmap/mindmapInteractionGrammar';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type UnifiedNodeData, UnifiedNodeDetailDrawer } from './mindmap/UnifiedNodeDetailDrawer';
 import type { MyIdea } from './myIdeasTypes';
+import { buildIdeaPanel6RailTools } from './panel/ideaPanel6Sections';
+import { isIdeaPanel6SectionsEnabled } from './panel/ideaPanel6SectionsFlag';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
@@ -3571,9 +3567,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             // Sterujemy sekcją TYLKO gdy IDE-025 jest włączone — inaczej
             // `undefined` zostawia powłokę w jej dotychczasowym trybie
             // niesterowanym (zero zmiany zachowania przy fladze OFF).
-            activeRightRailToolId={
-              detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined
-            }
+            activeRightRailToolId={detaleWPanelu && panel6Enabled ? sekcjaPrawegoPaska : undefined}
             onActiveRightRailToolChange={setSekcjaPrawegoPaska}
             renderRightRailPanel={renderMelsCanvasRightRailPanel}
             // Układ 6 sekcji: pasek ikon zawsze widoczny (decyzja właściciela).

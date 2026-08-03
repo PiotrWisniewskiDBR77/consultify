@@ -236,9 +236,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       {showAddType === 'file' && (
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-            isDragging
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-c-border-strong'
+            isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-c-border-strong'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}

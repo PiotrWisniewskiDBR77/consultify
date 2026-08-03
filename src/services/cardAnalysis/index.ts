@@ -15,17 +15,22 @@ export type {
 export {
   ARTIFACT_CRITERIA,
   buildCardStandard,
-  completenessBandsFor,
   COMPLETENESS_BANDS,
+  completenessBandsFor,
   criteriaFor,
-  doctrineFor,
   DOCTRINE_RULES,
+  doctrineFor,
   findCanonicalCard,
-  severityAnchorsFor,
   SEVERITY_ANCHORS,
+  severityAnchorsFor,
 } from './cardAnalysisRubric';
 export type { CardAnalysisErrorCode } from './cardAnalysisService';
-export { analyzeCard, buildAnalysisPrompt, CardAnalysisError, mergeChangeValue } from './cardAnalysisService';
+export {
+  analyzeCard,
+  buildAnalysisPrompt,
+  CardAnalysisError,
+  mergeChangeValue,
+} from './cardAnalysisService';
 export type {
   CardAnalysisApply,
   CardAnalysisArtifactType,

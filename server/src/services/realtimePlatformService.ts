@@ -15,11 +15,10 @@ import {
   emitFacilitationTimer,
 } from '../realtime/facilitationRealtime.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-
 import {
   canTransition,
-  isKnownPhase,
   InvalidPhaseTransitionError,
+  isKnownPhase,
   UnknownPhaseError,
 } from './facilitationPhaseMachine.js';
 

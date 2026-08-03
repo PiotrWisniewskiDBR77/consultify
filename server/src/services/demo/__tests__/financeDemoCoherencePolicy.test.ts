@@ -9,11 +9,11 @@
  * actually produced, plus the near-misses that would make a naive rule unsafe.
  */
 
+import { createHash } from 'node:crypto';
+
 import { describe, expect, it } from 'vitest';
 
 import { getAtelierFinanceCanonicalIds } from '../atelierFinanceSeed.js';
-import { createHash } from 'node:crypto';
-
 import {
   assertApprovedDemoTarget,
   assertCanonicalFixtureMaterialized,
@@ -27,35 +27,35 @@ import {
   assertStatementPackRestorable,
   buildQuarantineOrgId,
   buildQuarantineOrgName,
+  CANONICAL_FIXTURE_READY_STATE,
+  type CanonicalFixtureReadback,
   canonicalJson,
   classifyFinanceDemoRows,
+  type CleanupManifest,
   computeCanonicalFixtureDigest,
   computeRowFingerprint,
+  type DependencyGraph,
   describeDemoMarkerProblem,
+  FIN005_APPROVED_DEMO_TARGETS,
   financeDemoNameFlags,
   findCrossOrgDependencyViolations,
   isCanonicalDemoRowId,
+  MANIFEST_VERSION,
+  type ManifestEntry,
   manifestSignaturePayload,
   projectQuarantinedRow,
+  QUARANTINE_ORG_MARKER,
+  type QuarantineOrganizationRow,
   resolveRollbackEntries,
   signManifest,
   verifyCanonicalFixture,
-  CANONICAL_FIXTURE_READY_STATE,
-  FIN005_APPROVED_DEMO_TARGETS,
-  MANIFEST_VERSION,
-  QUARANTINE_ORG_MARKER,
-  type CanonicalFixtureReadback,
-  type CleanupManifest,
-  type DependencyGraph,
-  type ManifestEntry,
-  type QuarantineOrganizationRow,
 } from '../financeDemoCoherencePolicy.js';
 import {
   computeManifestHmac,
-  resolveManifestSigningKey,
   MANIFEST_HMAC_KEY_ENV,
   MANIFEST_HMAC_KEY_ID_ENV,
   type ManifestSigningKey,
+  resolveManifestSigningKey,
 } from '../financeDemoManifestSignature.js';
 
 /** A key for the tests. Never a real one, and never printed by the code. */
@@ -110,11 +110,13 @@ describe('isCanonicalDemoRowId — exact whitelist, never a prefix', () => {
   });
 
   it('does not treat another tenant’s seeded row as canonical here', () => {
-    expect(isCanonicalDemoRowId('dbr77--financial-model--transformation-2015-roi', ORG)).toBe(false);
+    expect(isCanonicalDemoRowId('dbr77--financial-model--transformation-2015-roi', ORG)).toBe(
+      false
+    );
     // …and the same id IS canonical for its own tenant.
-    expect(
-      isCanonicalDemoRowId(getAtelierFinanceCanonicalIds('dbr77').modelId, 'dbr77')
-    ).toBe(true);
+    expect(isCanonicalDemoRowId(getAtelierFinanceCanonicalIds('dbr77').modelId, 'dbr77')).toBe(
+      true
+    );
   });
 
   it('is safe on empty input instead of matching everything', () => {
@@ -455,9 +457,9 @@ describe('demo organization marker', () => {
   });
 
   it('refuses a missing observation altogether', () => {
-    expect(() =>
-      assertDemoOrganizationMarker({ organizationId: ORG, observed: null })
-    ).toThrow(/no organization_type column/i);
+    expect(() => assertDemoOrganizationMarker({ organizationId: ORG, observed: null })).toThrow(
+      /no organization_type column/i
+    );
   });
 });
 
@@ -484,7 +486,9 @@ describe('quarantine organization', () => {
     ).toBe('create');
   });
 
-  const okRow = (overrides: Partial<QuarantineOrganizationRow> = {}): QuarantineOrganizationRow => ({
+  const okRow = (
+    overrides: Partial<QuarantineOrganizationRow> = {}
+  ): QuarantineOrganizationRow => ({
     id: `${ORG}-fin005-quarantine-r1`,
     name: buildQuarantineOrgName('r1'),
     organizationTypeColumnPresent: true,
@@ -552,9 +556,9 @@ describe('quarantine organization', () => {
     expect(() => assertQuarantineOrganizationReusable(okRow({ isActive: true }), expected)).toThrow(
       /is_active is true/
     );
-    expect(() => assertQuarantineOrganizationReusable(okRow({ status: 'active' }), expected)).toThrow(
-      /status is "active"/
-    );
+    expect(() =>
+      assertQuarantineOrganizationReusable(okRow({ status: 'active' }), expected)
+    ).toThrow(/status is "active"/);
     expect(() =>
       assertQuarantineOrganizationReusable(okRow({ name: 'Some other org' }), expected)
     ).toThrow(/expected the run marker/);
@@ -644,7 +648,9 @@ describe('seed-before-quarantine precondition', () => {
     expect(() => assertCanonicalFixtureMaterialized(crashed, ORG)).toThrow(
       /the seed did not finish/
     );
-    expect(() => assertCanonicalFixtureMaterialized(crashed, ORG)).toThrow(/materialized and READY/);
+    expect(() => assertCanonicalFixtureMaterialized(crashed, ORG)).toThrow(
+      /materialized and READY/
+    );
     const { violations } = verifyCanonicalFixture(crashed, ORG);
     // Pack (2) + 3 statements × 2 + analysis (1).
     expect(violations).toHaveLength(9);
@@ -746,7 +752,9 @@ describe('seed-before-quarantine precondition', () => {
   it('refuses a canonical row that sits in the wrong organization', () => {
     const fixture = completeFixture();
     fixture.models[0].organizationId = 'someone-else';
-    expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(/belongs to "someone-else"/);
+    expect(() => assertCanonicalFixtureMaterialized(fixture, ORG)).toThrow(
+      /belongs to "someone-else"/
+    );
   });
 });
 
@@ -866,9 +874,7 @@ function coherentGraph(): DependencyGraph {
       statementPackId: CANONICAL.packId,
     })),
     values: [{ id: 'v1', statementId: CANONICAL.statementIds[0] }],
-    ingestRuns: [
-      { id: 'run-1', organizationId: ORG, statementId: CANONICAL.statementIds[0] },
-    ],
+    ingestRuns: [{ id: 'run-1', organizationId: ORG, statementId: CANONICAL.statementIds[0] }],
     analyses: [
       {
         id: CANONICAL.analysisId,

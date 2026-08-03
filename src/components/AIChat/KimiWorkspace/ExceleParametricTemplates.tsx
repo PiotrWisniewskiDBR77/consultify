@@ -70,16 +70,16 @@
  */
 
 import {
-  FileSpreadsheet,
-  Loader2,
-  Download,
-  ChevronLeft,
-  ChevronDown,
-  CheckCircle2,
-  Sparkles,
   AlertTriangle,
   Bookmark,
   BookmarkPlus,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  Sparkles,
   Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -90,13 +90,13 @@ import { Api } from '@/services/api';
 import { isExceleEditEnabled } from '@/utils/exceleEditFlag';
 import {
   deleteTemplatePreset,
+  type ExceleTemplatePreset,
   readTemplatePresets,
   saveTemplatePreset,
-  type ExceleTemplatePreset,
 } from '@/utils/exceleTemplatePresets';
 import type { FormulaSheet } from '@/utils/workbookFormulaEngine';
-import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
+import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
 
 import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
 import { findBarChartSeries, MiniBarChart } from './MiniBarChart';
@@ -229,10 +229,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   const [savingPresetOpen, setSavingPresetOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
 
-  const t = useCallback(
-    (pl: string, en: string) => (isPolish ? pl : en),
-    [isPolish]
-  );
+  const t = useCallback((pl: string, en: string) => (isPolish ? pl : en), [isPolish]);
 
   useEffect(() => {
     let alive = true;
@@ -278,10 +275,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
   // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od
   // aktywnej zakładki (activeSheet). Graceful: null gdy żaden wiersz nie ma
   // ≥2 liczbowych komórek wartości (same formuły/tekst) — patrz MiniBarChart.tsx.
-  const chartSeries = useMemo(
-    () => findBarChartSeries(gridSheets?.[0] ?? null),
-    [gridSheets]
-  );
+  const chartSeries = useMemo(() => findBarChartSeries(gridSheets?.[0] ?? null), [gridSheets]);
 
   const groups = useMemo(() => {
     if (!selected) return [];
@@ -346,12 +340,13 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     toast.success(t('Zapisano zestaw parametrów', 'Parameter set saved'));
   }, [selected, presetName, values, t]);
 
-  const handleLoadPreset = useCallback((preset: ExceleTemplatePreset) => {
-    setValues({ ...preset.values });
-    toast.success(
-      t(`Wczytano zestaw „${preset.name}"`, `Loaded parameter set "${preset.name}"`)
-    );
-  }, [t]);
+  const handleLoadPreset = useCallback(
+    (preset: ExceleTemplatePreset) => {
+      setValues({ ...preset.values });
+      toast.success(t(`Wczytano zestaw „${preset.name}"`, `Loaded parameter set "${preset.name}"`));
+    },
+    [t]
+  );
 
   const handleDeletePreset = useCallback(
     (preset: ExceleTemplatePreset, e: React.MouseEvent) => {
@@ -651,7 +646,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                     return (
                       <>
                         <div className="overflow-x-auto max-h-[360px] overflow-y-auto">
-                          <table className="w-full text-xs" /* §27-exempt: podgląd arkusza Excel (kill-switch/brak kolumn fallback), nie lista rekordów — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
+                          <table
+                            className="w-full text-xs" /* §27-exempt: podgląd arkusza Excel (kill-switch/brak kolumn fallback), nie lista rekordów — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */
+                          >
                             <thead className="sticky top-0 z-10">
                               <tr className="bg-c-surface-raised">
                                 {sheetData.columns.map((col, ci) => (
@@ -696,10 +693,10 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
                           <div className="px-3 py-2 flex items-center justify-center gap-3 text-[11px] text-c-text-secondary border-t border-c-border-subtle">
                             <span>
                               {showAllRows
-                                ? t('Pokazano wszystkie {{n}} wierszy', 'Showing all {{n}} rows').replace(
-                                    '{{n}}',
-                                    String(sheetData.rows.length)
-                                  )
+                                ? t(
+                                    'Pokazano wszystkie {{n}} wierszy',
+                                    'Showing all {{n}} rows'
+                                  ).replace('{{n}}', String(sheetData.rows.length))
                                 : t(
                                     'Pokazano pierwsze {{cap}} z {{n}} wierszy',
                                     'Showing first {{cap}} of {{n}} rows'

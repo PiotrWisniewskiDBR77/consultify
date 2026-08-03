@@ -123,9 +123,9 @@ import {
   type ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
@@ -4445,9 +4445,7 @@ export const InterviewHub: React.FC = () => {
           row.submittedAt ? new Date(row.submittedAt).getTime() : 0,
         render: (row: InterviewSession) =>
           row.submittedAt ? (
-            <span className="text-xs text-c-text-secondary">
-              {formatListDate(row.submittedAt)}
-            </span>
+            <span className="text-xs text-c-text-secondary">{formatListDate(row.submittedAt)}</span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
           ),
@@ -5333,9 +5331,7 @@ export const InterviewHub: React.FC = () => {
           row.createdAt ? new Date(row.createdAt).getTime() : 0,
         render: (row: (typeof rows)[number]) =>
           row.createdAt ? (
-            <span className="text-xs text-c-text-muted">
-              {formatListDate(row.createdAt)}
-            </span>
+            <span className="text-xs text-c-text-muted">{formatListDate(row.createdAt)}</span>
           ) : (
             <span className="text-xs text-c-text-muted">—</span>
           ),
@@ -6864,9 +6860,7 @@ Return ONLY the answer text (no markdown fences).`;
                   label={dtd.label}
                   risk={dtd.days < 0 ? 'overdue' : dtd.days <= 3 ? 'soon' : 'none'}
                   showIcon
-                  title={
-                    assignment.dueAt ? formatListDate(assignment.dueAt) : undefined
-                  }
+                  title={assignment.dueAt ? formatListDate(assignment.dueAt) : undefined}
                 />
               ) : (
                 <span className="text-xs text-slate-600 dark:text-slate-400">—</span>
@@ -8882,7 +8876,9 @@ Return ONLY the answer text (no markdown fences).`;
                       {insight.createdAt && (
                         <span className="flex items-center gap-1">
                           <Clock size={12} />
-                          {new Date(insight.createdAt).toLocaleDateString(t('interview.hub.enUs', 'en-US'))}
+                          {new Date(insight.createdAt).toLocaleDateString(
+                            t('interview.hub.enUs', 'en-US')
+                          )}
                         </span>
                       )}
                       {findingsCount > 0 && (
@@ -10004,7 +10000,6 @@ Return ONLY the answer text (no markdown fences).`;
           setInsights(Array.isArray(insightsRes) ? insightsRes : []);
         }}
       />
-
     </div>
   );
 };

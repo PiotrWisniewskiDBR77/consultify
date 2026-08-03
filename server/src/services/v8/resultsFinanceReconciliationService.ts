@@ -403,7 +403,7 @@ export async function pullAndReconcileInitiative(
     // Realized actual: prefer the summed realized ROI entries; fall back to the
     // KPI's own current_value. Then normalise to the finance basis.
     const realizedSum = realizedByKpi.has(kpi.kpi_id)
-      ? realizedByKpi.get(kpi.kpi_id) ?? null
+      ? (realizedByKpi.get(kpi.kpi_id) ?? null)
       : null;
     const kpiActual = isFiniteNumber(realizedSum)
       ? Number(realizedSum)

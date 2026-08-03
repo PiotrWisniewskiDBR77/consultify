@@ -38,12 +38,12 @@ import type {
   TemplateStatus,
 } from '../materials/templateContract.js';
 import {
-  SYSTEM_TEMPLATE_ORG_ID as DOC_STUDIO_SYSTEM_ORG_ID,
-  TEMPLATE_ORIGIN_RUNTIMES,
   deriveTemplateScope,
   isTemplateOriginRuntime,
   normalizeTemplateScope,
   normalizeTemplateStatus,
+  SYSTEM_TEMPLATE_ORG_ID as DOC_STUDIO_SYSTEM_ORG_ID,
+  TEMPLATE_ORIGIN_RUNTIMES,
   templateSourceForRuntime,
   toBool,
 } from '../materials/templateContract.js';
@@ -51,8 +51,8 @@ import {
   buildWave5LineDiffForPreview,
   mirrorLegacyArtifactIntoWave5,
 } from '../wave5ArtifactRuntimeService.js';
-import * as chatExecutionService from './chatExecutionService.js';
 import { mapCanonicalArtifactType, mapExplicitArtifactRunType } from './artifactTypeMapper.js';
+import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
 import { isV8Enabled } from './featureFlagService.js';
@@ -1307,10 +1307,10 @@ export async function registerArtifactOrigin(
     );
     // Best-effort cleanup of our own losing rows. Never touches the winner's data.
     await dbRun(`DELETE FROM v8_artifact_origin_links WHERE artifact_id = ?`, [artifactId]);
-    await dbRun(
-      `DELETE FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
-      [artifactId, validated.organizationId]
-    );
+    await dbRun(`DELETE FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`, [
+      artifactId,
+      validated.organizationId,
+    ]);
     return adoptExistingArtifactForLink(canonicalLink, validated);
   }
 
@@ -1833,7 +1833,8 @@ async function backfillNativeArtifactsForOrg(organizationId: string): Promise<nu
       try {
         const provenance = row.provenance_json ? JSON.parse(row.provenance_json) : null;
         const meta = provenance && typeof provenance === 'object' ? provenance.metadata : null;
-        const rawTemplateId = meta && typeof meta === 'object' ? meta.documentStudioTemplateId : null;
+        const rawTemplateId =
+          meta && typeof meta === 'object' ? meta.documentStudioTemplateId : null;
         templateId = typeof rawTemplateId === 'string' && rawTemplateId ? rawTemplateId : null;
       } catch {
         templateId = null;
@@ -2120,7 +2121,8 @@ async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise
             category: row.category || 'custom',
             structureBlueprint: {
               sections: blueprint.map((section: any) => ({
-                key: section?.key || section?.sectionKey || section?.section_key || section?.id || '',
+                key:
+                  section?.key || section?.sectionKey || section?.section_key || section?.id || '',
                 title: section?.title || section?.name || '',
               })),
             },
@@ -2136,7 +2138,9 @@ async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise
       });
       if (result) inserted++;
     } catch (err: any) {
-      logger.warn(`${LOG_PREFIX} Failed to backfill document template ${row.template_id}: ${err?.message}`);
+      logger.warn(
+        `${LOG_PREFIX} Failed to backfill document template ${row.template_id}: ${err?.message}`
+      );
     }
   }
   return inserted;
@@ -2150,7 +2154,12 @@ async function backfillDocStudioTemplatesForOrg(organizationId: string): Promise
  */
 const TEMPLATE_CANONICAL_REGISTRY: Record<
   TemplateOriginRuntime,
-  { table: string; idColumn: string; statusColumn: string | null; activeColumn: string | null } | null
+  {
+    table: string;
+    idColumn: string;
+    statusColumn: string | null;
+    activeColumn: string | null;
+  } | null
 > = {
   document_template: {
     table: 'document_studio_templates',
@@ -2489,9 +2498,7 @@ export async function ensureBackfilledOutputsForOrg(organizationId: string): Pro
       logger.warn(
         `${LOG_PREFIX} Orphaned template links for org ${organizationId}: ${orphans.total} ` +
           `(${TEMPLATE_ORIGIN_RUNTIMES.map((rt) => `${rt}=${orphans.byRuntime[rt]}`).join(', ')})` +
-          (orphans.unverifiable.length
-            ? ` · unverifiable: ${orphans.unverifiable.join(', ')}`
-            : '')
+          (orphans.unverifiable.length ? ` · unverifiable: ${orphans.unverifiable.join(', ')}` : '')
       );
     }
   } catch (err) {
@@ -3125,11 +3132,7 @@ function inferArtifactPlan(
     };
   }
 
-  if (
-    goal.includes('sheet') ||
-    goal.includes('spreadsheet') ||
-    goal.includes('excel')
-  ) {
+  if (goal.includes('sheet') || goal.includes('spreadsheet') || goal.includes('excel')) {
     const inferred = mapCanonicalArtifactType({ artifactFamily: 'sheet', outputType: 'sheet' });
     return {
       artifactFamily: inferred.artifactFamily,
@@ -3851,10 +3854,7 @@ export async function retryArtifactRun(params: {
       return existingChild;
     }
 
-    if (
-      lockedCurrent.persistedRunStatus === 'failed' &&
-      lockedCurrent.materializationOrigin
-    ) {
+    if (lockedCurrent.persistedRunStatus === 'failed' && lockedCurrent.materializationOrigin) {
       await cleanupGhostOutputsByOrigin({
         organizationId: params.organizationId,
         originRuntime: lockedCurrent.materializationOrigin.originRuntime,
@@ -4292,14 +4292,19 @@ export async function materializeArtifactRun(
 
     // Surface a controlled operational error to the API layer so the UI
     // gets a meaningful materialization message instead of a generic 500.
-    throw new AppError(failureReason, operationalError?.statusCode || 409, operationalError?.code || 'ARTIFACT_MATERIALIZE_FAILED', {
-      runId: validated.runId,
-      outputType: current.plan.outputType,
-      executionRunId: current.executionRunId,
-      stage: failureStage,
-      ghostArtifactsCleanedUp,
-      cleanupNotes,
-      ...(operationalError?.details || {}),
-    });
+    throw new AppError(
+      failureReason,
+      operationalError?.statusCode || 409,
+      operationalError?.code || 'ARTIFACT_MATERIALIZE_FAILED',
+      {
+        runId: validated.runId,
+        outputType: current.plan.outputType,
+        executionRunId: current.executionRunId,
+        stage: failureStage,
+        ghostArtifactsCleanedUp,
+        cleanupNotes,
+        ...(operationalError?.details || {}),
+      }
+    );
   }
 }

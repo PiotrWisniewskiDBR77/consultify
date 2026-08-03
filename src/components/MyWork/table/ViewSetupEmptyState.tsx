@@ -25,16 +25,7 @@
  * automatic light/dark, zero crimson (crimson is reserved for critical
  * semantics — CLAUDE.md UI pkt 3/6).
  */
-import {
-  CalendarPlus,
-  CalendarRange,
-  Eye,
-  Gauge,
-  Plus,
-  Scale,
-  Table2,
-  Trophy,
-} from 'lucide-react';
+import { CalendarPlus, CalendarRange, Eye, Gauge, Plus, Scale, Table2, Trophy } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -291,9 +282,9 @@ export function buildDateColumnSeedPlan(opts: {
  * Rows already scored by the model light up instantly; otherwise the view lands
  * on the `no-values` state, whose action opens the scoring model.
  */
-export function buildScoreColumnSeedPlan(opts: {
-  t: (key: string, fallback?: string) => string;
-}): { columns: { key: string; header: string; type: 'number'; visible: true; width: number }[] } {
+export function buildScoreColumnSeedPlan(opts: { t: (key: string, fallback?: string) => string }): {
+  columns: { key: string; header: string; type: 'number'; visible: true; width: number }[];
+} {
   return {
     columns: [
       {
@@ -399,7 +390,10 @@ const FALLBACK: Record<SetupDrivenView, Record<ViewSetupReason, [string, string]
       'Column "{{column}}" has no dates filled in',
       'The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates.',
     ],
-    'no-rows': ['This table has no rows yet', 'Add the first row in the Table view and come back here.'],
+    'no-rows': [
+      'This table has no rows yet',
+      'Add the first row in the Table view and come back here.',
+    ],
   },
   calendar: {
     'no-column': [
@@ -414,7 +408,10 @@ const FALLBACK: Record<SetupDrivenView, Record<ViewSetupReason, [string, string]
       'Column "{{column}}" has no dates filled in',
       'The date column exists, but no row has a value in it — that is why this view is empty. Go back to the table and fill in the dates.',
     ],
-    'no-rows': ['This table has no rows yet', 'Add the first row in the Table view and come back here.'],
+    'no-rows': [
+      'This table has no rows yet',
+      'Add the first row in the Table view and come back here.',
+    ],
   },
   scoring: {
     'no-column': [
@@ -429,7 +426,10 @@ const FALLBACK: Record<SetupDrivenView, Record<ViewSetupReason, [string, string]
       'Column "{{column}}" has no scores yet',
       'The column exists, but no row has been scored — so there is nothing to rank. Run the scoring model, or type the scores in the Table view.',
     ],
-    'no-rows': ['This table has no rows yet', 'Add the first row in the Table view and come back here.'],
+    'no-rows': [
+      'This table has no rows yet',
+      'Add the first row in the Table view and come back here.',
+    ],
   },
   decisionLog: {
     'no-column': [
@@ -444,7 +444,10 @@ const FALLBACK: Record<SetupDrivenView, Record<ViewSetupReason, [string, string]
       'Column "{{column}}" has no decisions filled in',
       'The column exists, but no row has a decision recorded — so the log has nothing to group. Go back to the table and set the decisions.',
     ],
-    'no-rows': ['This table has no rows yet', 'Add the first row in the Table view and come back here.'],
+    'no-rows': [
+      'This table has no rows yet',
+      'Add the first row in the Table view and come back here.',
+    ],
   },
 };
 

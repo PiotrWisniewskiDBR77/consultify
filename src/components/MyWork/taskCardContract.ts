@@ -91,11 +91,7 @@
  * cardContentValidator.ts:21-22). D-1/D-3 otwarte.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,7 +108,8 @@ const DESCRIPTION_SCOPE = definiujKarteKanoniczna({
   ikona: 'FileText',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Napisz kartę STRATEGIA: zadanie jako REZULTAT + why (link do celu inicjatywy) + mierzalny outcome.',
+    szablon:
+      'Napisz kartę STRATEGIA: zadanie jako REZULTAT + why (link do celu inicjatywy) + mierzalny outcome.',
     kluczPromptu: 'task.strategy', // CARD_BACKEND_KEY['description-scope']='strategy' → TASK_SECTION_PROMPTS.strategy
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
@@ -173,7 +170,8 @@ const CHECKLIST = definiujKarteKanoniczna({
   ikona: 'CheckSquare',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Napisz kartę WYKONANIE: kryteria akceptacji (definition of done) jako sprawdzalne kroki.',
+    szablon:
+      'Napisz kartę WYKONANIE: kryteria akceptacji (definition of done) jako sprawdzalne kroki.',
     kluczPromptu: 'task.execution', // CARD_BACKEND_KEY['checklist']='execution'
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
@@ -192,7 +190,8 @@ const DEPENDENCIES = definiujKarteKanoniczna({
   ikona: 'Link2',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Napisz kartę ZALEŻNOŚCI: co musi być gotowe zanim zadanie ruszy/skończy się (co/od kogo/dlaczego blokuje).',
+    szablon:
+      'Napisz kartę ZALEŻNOŚCI: co musi być gotowe zanim zadanie ruszy/skończy się (co/od kogo/dlaczego blokuje).',
     kluczPromptu: 'task.dependencies', // CARD_BACKEND_KEY['dependencies']='dependencies'
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
@@ -249,11 +248,19 @@ const ATTACHMENTS = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: {
     none: true,
-    reason: 'Załączniki i powiązania to fakty (pliki, linki do obiektów) — AI ich nie pisze (TaskDetailView:281-283)',
+    reason:
+      'Załączniki i powiązania to fakty (pliki, linki do obiektów) — AI ich nie pisze (TaskDetailView:281-283)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'task', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7, idWArtefakcie: 'attachments-links' },
+    {
+      artefakt: 'task',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 7,
+      idWArtefakcie: 'attachments-links',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });

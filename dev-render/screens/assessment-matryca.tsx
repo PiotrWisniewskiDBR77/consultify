@@ -17,25 +17,22 @@
  * right-panel accordion collapse/expand, light+dark tokens (zero crimson —
  * dotTone/status uses `c-info`, never `primary-*`/`c-accent`).
  */
-import {
-  CheckCircle2,
-  FileBarChart,
-  History as HistoryIcon,
-  Link2,
-  Sparkles,
-} from 'lucide-react';
+import { CheckCircle2, FileBarChart, History as HistoryIcon, Link2, Sparkles } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import type { DRDEditorAnswers } from '@/components/assessment/drd/DRDAssessmentEditor';
 import { DRDMatrixSession } from '@/components/assessment/drd/DRDMatrixSession';
-import { type TopBarChipDescriptor, TopBar } from '@/components/shared/ExecutiveModuleShell';
+import { TopBar, type TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell';
 import {
   PreviewActionBar,
   PreviewAIHintStrip,
   PreviewMetaCard,
   PreviewRelations,
 } from '@/components/shared/PreviewPane';
-import { ArtifactRightPanel, type ArtifactRightPanelSection } from '@/components/standard/ArtifactRightPanel';
+import {
+  ArtifactRightPanel,
+  type ArtifactRightPanelSection,
+} from '@/components/standard/ArtifactRightPanel';
 import { getQuestionsForAxis } from '@/services/drdStructure';
 
 // ── Mock session answers (realistic partial progress across 3 axes) ───────

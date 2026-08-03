@@ -53,7 +53,12 @@ export interface AppraisalRequest {
 }
 
 export interface ModelAppraisalResponse {
-  input: { cashflows: number[]; initialInvestment: number; discountRatePct: number; hurdleRatePct: number };
+  input: {
+    cashflows: number[];
+    initialInvestment: number;
+    discountRatePct: number;
+    hurdleRatePct: number;
+  };
   result: AppraisalResult;
   periodLabels: string[];
 }
@@ -72,7 +77,10 @@ interface Props {
    */
   modelId?: string;
   /** Allow tests to inject the model-bound fetcher without hitting `Api`. */
-  modelFetcher?: (modelId: string, rates: { discountRatePct: number; hurdleRatePct: number }) => Promise<ModelAppraisalResponse>;
+  modelFetcher?: (
+    modelId: string,
+    rates: { discountRatePct: number; hurdleRatePct: number }
+  ) => Promise<ModelAppraisalResponse>;
 }
 
 const DEFAULT_CASHFLOWS = [-1000, 400, 400, 400, 400];
@@ -97,7 +105,9 @@ const defaultModelFetcher = async (
     discountRatePct: String(rates.discountRatePct),
     hurdleRatePct: String(rates.hurdleRatePct),
   });
-  const res: any = await Api.get(`/v8/finance/models/${encodeURIComponent(modelId)}/appraisal?${query}`);
+  const res: any = await Api.get(
+    `/v8/finance/models/${encodeURIComponent(modelId)}/appraisal?${query}`
+  );
   const body = res?.data ?? res;
   return (body?.data ?? body) as ModelAppraisalResponse;
 };

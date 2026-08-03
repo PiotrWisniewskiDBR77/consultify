@@ -97,10 +97,7 @@ export const IDEA_STAGE_BUCKET_LABELS: Record<IdeaStageListBucket, { en: string;
   promoted: { en: 'Promoted', pl: 'Promowany' },
 };
 
-export function getIdeaStageBucketLabel(
-  bucket: IdeaStageListBucket,
-  isPolish: boolean
-): string {
+export function getIdeaStageBucketLabel(bucket: IdeaStageListBucket, isPolish: boolean): string {
   const entry = IDEA_STAGE_BUCKET_LABELS[bucket];
   return isPolish ? entry.pl : entry.en;
 }

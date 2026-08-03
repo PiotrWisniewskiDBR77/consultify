@@ -9,7 +9,11 @@ vi.mock('../../../utils/DbPromise.js', () => ({
   run: (...args: unknown[]) => mockDbRun(...args),
 }));
 vi.mock('../../../utils/queryHelpers.js', () => ({
-  withPgTransaction: async (fn: (client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }> }) => Promise<unknown>) =>
+  withPgTransaction: async (
+    fn: (client: {
+      query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[]; rowCount: number }>;
+    }) => Promise<unknown>
+  ) =>
     fn({
       query: async (sql: string, params: unknown[] = []) => {
         if (/^\s*SELECT/i.test(sql)) {

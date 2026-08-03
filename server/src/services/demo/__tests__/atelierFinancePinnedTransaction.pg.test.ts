@@ -81,18 +81,18 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 
 import logger from '../../../utils/Logger.js';
 import {
-  getAtelierFinanceCanonicalIds,
-  upsertAtelierFinanceGoldenFlow,
-  type AtelierCanonicalIds,
-} from '../atelierFinanceSeed.js';
-import {
   identifyNonPostgresSeam,
-  probePinnedTransactionSupport,
-  runPinnedPromotionTransaction,
   type PinnedReader,
   type PinnedReconciliation,
   type PinnedWrite,
+  probePinnedTransactionSupport,
+  runPinnedPromotionTransaction,
 } from '../atelierFinancePromotionTransaction.js';
+import {
+  type AtelierCanonicalIds,
+  getAtelierFinanceCanonicalIds,
+  upsertAtelierFinanceGoldenFlow,
+} from '../atelierFinanceSeed.js';
 
 // The schema is already migrated in the target database; re-running `initDb()`
 // on every worker is slow and pointless here.
@@ -229,75 +229,63 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
     expect(probe.database).toBeTruthy();
   }, 60_000);
 
-  it(
-    'does NOT recognise a non-PostgreSQL seam here — so the fallback is unreachable (FIN-005 P1-1)',
-    async () => {
-      // NODE_ENV is 'test' in this very process. If that were evidence of a mock
-      // the seam would be "recognised" and the non-atomic path would open on a
-      // REAL database. It is not evidence, and this is where that is proved.
-      expect(process.env.NODE_ENV).toBe('test');
-      const seam = await identifyNonPostgresSeam();
-      expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
-      expect(seam.signal).toMatch(/DbPromise get\/all\/run are real functions/);
-    },
-    60_000
-  );
+  it('does NOT recognise a non-PostgreSQL seam here — so the fallback is unreachable (FIN-005 P1-1)', async () => {
+    // NODE_ENV is 'test' in this very process. If that were evidence of a mock
+    // the seam would be "recognised" and the non-atomic path would open on a
+    // REAL database. It is not evidence, and this is where that is proved.
+    expect(process.env.NODE_ENV).toBe('test');
+    const seam = await identifyNonPostgresSeam();
+    expect(seam.recognised, `seam said: ${seam.signal}`).toBe(false);
+    expect(seam.signal).toMatch(/DbPromise get\/all\/run are real functions/);
+  }, 60_000);
 
-  it(
-    'promotes all five rows and commits them ON THE PINNED PATH',
-    async () => {
-      const ids = idsFor('happy');
-      await resetFixture(ids);
+  it('promotes all five rows and commits them ON THE PINNED PATH', async () => {
+    const ids = idsFor('happy');
+    await resetFixture(ids);
 
-      // TEETH. Without this the whole suite would still pass if the seed
-      // silently fell back to verify-then-promote — the compensating rollback
-      // also leaves "zero partial READY" behind. The log line is the only place
-      // the two paths are distinguishable from the outside.
-      const info = vi.spyOn(logger, 'info');
-      const warn = vi.spyOn(logger, 'warn');
-      try {
-        const result = await seed('happy');
-        expect(result.status, result.reason ?? '').toBe('complete');
-        await expectFixtureFullyReady(ids);
-
-        expect(
-          info.mock.calls
-            .map((call) => String(call[0]))
-            .some((line) => line.includes('COMPLETE via the PINNED transaction path'))
-        ).toBe(true);
-        expect(
-          warn.mock.calls
-            .map((call) => String(call[0]))
-            .some((line) => line.includes('WITHOUT a pinned transaction')),
-          'the seed must NOT have used the compensating fallback here'
-        ).toBe(false);
-      } finally {
-        info.mockRestore();
-        warn.mockRestore();
-      }
-    },
-    120_000
-  );
-
-  it(
-    'is byte-identical on a second run: zero rows touched, zero timestamps moved',
-    async () => {
-      const ids = idsFor('second-run');
-      await resetFixture(ids);
-
-      const first = await seed('second-run');
-      expect(first.status, first.reason ?? '').toBe('complete');
-      const before = await fixtureSnapshot(ids);
-
-      const second = await seed('second-run');
-      expect(second.status, second.reason ?? '').toBe('complete');
-      const after = await fixtureSnapshot(ids);
-
-      expect(after).toEqual(before);
+    // TEETH. Without this the whole suite would still pass if the seed
+    // silently fell back to verify-then-promote — the compensating rollback
+    // also leaves "zero partial READY" behind. The log line is the only place
+    // the two paths are distinguishable from the outside.
+    const info = vi.spyOn(logger, 'info');
+    const warn = vi.spyOn(logger, 'warn');
+    try {
+      const result = await seed('happy');
+      expect(result.status, result.reason ?? '').toBe('complete');
       await expectFixtureFullyReady(ids);
-    },
-    120_000
-  );
+
+      expect(
+        info.mock.calls
+          .map((call) => String(call[0]))
+          .some((line) => line.includes('COMPLETE via the PINNED transaction path'))
+      ).toBe(true);
+      expect(
+        warn.mock.calls
+          .map((call) => String(call[0]))
+          .some((line) => line.includes('WITHOUT a pinned transaction')),
+        'the seed must NOT have used the compensating fallback here'
+      ).toBe(false);
+    } finally {
+      info.mockRestore();
+      warn.mockRestore();
+    }
+  }, 120_000);
+
+  it('is byte-identical on a second run: zero rows touched, zero timestamps moved', async () => {
+    const ids = idsFor('second-run');
+    await resetFixture(ids);
+
+    const first = await seed('second-run');
+    expect(first.status, first.reason ?? '').toBe('complete');
+    const before = await fixtureSnapshot(ids);
+
+    const second = await seed('second-run');
+    expect(second.status, second.reason ?? '').toBe('complete');
+    const after = await fixtureSnapshot(ids);
+
+    expect(after).toEqual(before);
+    await expectFixtureFullyReady(ids);
+  }, 120_000);
 
   // -------------------------------------------------------------------------
   // Faults injected IN THE DATABASE, through the real seed.
@@ -307,53 +295,72 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   // demotions are untouched — the fault lands exactly where the name says.
   // -------------------------------------------------------------------------
 
-  const triggerFaults: Array<{ name: string; key: OrgKey; target: (ids: AtelierCanonicalIds) => string }> =
-    [
-      { name: 'before the first UPDATE', key: 'fault-before-first', target: (ids) => ids.statementIds[0] },
-      { name: 'after statement promotion 1', key: 'fault-after-stmt-1', target: (ids) => ids.statementIds[1] },
-      { name: 'after statement promotion 2', key: 'fault-after-stmt-2', target: (ids) => ids.statementIds[2] },
-      { name: 'after statement promotion 3', key: 'fault-after-stmt-3', target: (ids) => ids.analysisId },
-      { name: 'after the analysis promotion', key: 'fault-after-analysis', target: (ids) => ids.packId },
-    ];
+  const triggerFaults: Array<{
+    name: string;
+    key: OrgKey;
+    target: (ids: AtelierCanonicalIds) => string;
+  }> = [
+    {
+      name: 'before the first UPDATE',
+      key: 'fault-before-first',
+      target: (ids) => ids.statementIds[0],
+    },
+    {
+      name: 'after statement promotion 1',
+      key: 'fault-after-stmt-1',
+      target: (ids) => ids.statementIds[1],
+    },
+    {
+      name: 'after statement promotion 2',
+      key: 'fault-after-stmt-2',
+      target: (ids) => ids.statementIds[2],
+    },
+    {
+      name: 'after statement promotion 3',
+      key: 'fault-after-stmt-3',
+      target: (ids) => ids.analysisId,
+    },
+    {
+      name: 'after the analysis promotion',
+      key: 'fault-after-analysis',
+      target: (ids) => ids.packId,
+    },
+  ];
 
   for (const fault of triggerFaults) {
-    it(
-      `leaves ZERO partial READY when the promotion fails ${fault.name}`,
-      async () => {
-        const ids = idsFor(fault.key);
-        await resetFixture(ids);
+    it(`leaves ZERO partial READY when the promotion fails ${fault.name}`, async () => {
+      const ids = idsFor(fault.key);
+      await resetFixture(ids);
 
-        let result: Awaited<ReturnType<typeof seed>>;
-        const startedAt = Date.now();
-        try {
-          await armFault(control, fault.target(ids));
-          result = await seed(fault.key);
-        } finally {
-          await disarmFault(control, fault.target(ids));
-        }
-        const elapsed = Date.now() - startedAt;
+      let result: Awaited<ReturnType<typeof seed>>;
+      const startedAt = Date.now();
+      try {
+        await armFault(control, fault.target(ids));
+        result = await seed(fault.key);
+      } finally {
+        await disarmFault(control, fault.target(ids));
+      }
+      const elapsed = Date.now() - startedAt;
 
-        expect(result.status).toBe('incomplete');
-        // TEETH: this exact prefix is produced ONLY by the pinned path, so a
-        // silent fall back to verify-then-promote reddens the test.
-        expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
-        expect(result.reason).toMatch(/FIN005_INJECTED_FAULT/);
-        expect(result.statementIds).toEqual([]);
-        expect(elapsed, 'the faulted call must return in bounded time').toBeLessThan(60_000);
+      expect(result.status).toBe('incomplete');
+      // TEETH: this exact prefix is produced ONLY by the pinned path, so a
+      // silent fall back to verify-then-promote reddens the test.
+      expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
+      expect(result.reason).toMatch(/FIN005_INJECTED_FAULT/);
+      expect(result.statementIds).toEqual([]);
+      expect(elapsed, 'the faulted call must return in bounded time').toBeLessThan(60_000);
 
-        await expectNoPartialReady(ids);
+      await expectNoPartialReady(ids);
 
-        // The rollback is Postgres's, but the seed still verifies it rather
-        // than asserting it.
-        expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
+      // The rollback is Postgres's, but the seed still verifies it rather
+      // than asserting it.
+      expect(result.promotion?.rowsStillClaimingReady ?? []).toEqual([]);
 
-        // ...and the fixture recovers on the next run.
-        const recovery = await seed(fault.key);
-        expect(recovery.status, recovery.reason ?? '').toBe('complete');
-        await expectFixtureFullyReady(ids);
-      },
-      180_000
-    );
+      // ...and the fixture recovers on the next run.
+      const recovery = await seed(fault.key);
+      expect(recovery.status, recovery.reason ?? '').toBe('complete');
+      await expectFixtureFullyReady(ids);
+    }, 180_000);
   }
 
   // -------------------------------------------------------------------------
@@ -363,173 +370,153 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   // hook has to be added to production code.
   // -------------------------------------------------------------------------
 
-  it(
-    'leaves ZERO partial READY when the pre-COMMIT read-back refuses (after the pack promotion)',
-    async () => {
-      const ids = await seedThenDemote('fault-pre-commit');
+  it('leaves ZERO partial READY when the pre-COMMIT read-back refuses (after the pack promotion)', async () => {
+    const ids = await seedThenDemote('fault-pre-commit');
 
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
-        verify: async () => ({ ok: false, reason: 'injected pre-COMMIT refusal' }),
-        reconcile: reconcileFor(ids),
-      });
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
+      verify: async () => ({ ok: false, reason: 'injected pre-COMMIT refusal' }),
+      reconcile: reconcileFor(ids),
+    });
 
-      expect(outcome.mode).toBe('pinned');
-      expect(outcome).toMatchObject({ status: 'rolled-back' });
-      if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
-        expect(outcome.applied).toHaveLength(5); // all five DID execute…
-        expect(outcome.reason).toMatch(/injected pre-COMMIT refusal/);
-      }
-      await expectNoPartialReady(ids); // …and none of them survived.
+    expect(outcome.mode).toBe('pinned');
+    expect(outcome).toMatchObject({ status: 'rolled-back' });
+    if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
+      expect(outcome.applied).toHaveLength(5); // all five DID execute…
+      expect(outcome.reason).toMatch(/injected pre-COMMIT refusal/);
+    }
+    await expectNoPartialReady(ids); // …and none of them survived.
 
-      const recovery = await seed('fault-pre-commit');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('fault-pre-commit');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
-  it(
-    'leaves ZERO partial READY when the pinned backend is TERMINATED mid-transaction (before the writes)',
-    async () => {
-      const ids = await seedThenDemote('fault-terminate');
+  it('leaves ZERO partial READY when the pinned backend is TERMINATED mid-transaction (before the writes)', async () => {
+    const ids = await seedThenDemote('fault-terminate');
 
-      const startedAt = Date.now();
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          await terminateBackend(await backendPid(read));
-          // The next statement on a terminated backend fails; that is the fault.
-          await read('SELECT 1');
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async () => ({ ok: true }),
-        reconcile: reconcileFor(ids),
-      });
-      const elapsed = Date.now() - startedAt;
+    const startedAt = Date.now();
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        await terminateBackend(await backendPid(read));
+        // The next statement on a terminated backend fails; that is the fault.
+        await read('SELECT 1');
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async () => ({ ok: true }),
+      reconcile: reconcileFor(ids),
+    });
+    const elapsed = Date.now() - startedAt;
 
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      expect(elapsed, 'a terminated backend must not hang the call').toBeLessThan(60_000);
-      await expectNoPartialReady(ids);
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+    expect(elapsed, 'a terminated backend must not hang the call').toBeLessThan(60_000);
+    await expectNoPartialReady(ids);
 
-      const recovery = await seed('fault-terminate');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('fault-terminate');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
-  it(
-    'leaves ZERO partial READY on a statement TIMEOUT mid-transaction',
-    async () => {
-      const ids = await seedThenDemote('fault-timeout');
+  it('leaves ZERO partial READY on a statement TIMEOUT mid-transaction', async () => {
+    const ids = await seedThenDemote('fault-timeout');
 
-      const startedAt = Date.now();
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          await read(`SET LOCAL statement_timeout = 250`);
-          await read(`SELECT pg_sleep(5)`); // exceeds the timeout -> 57014
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async () => ({ ok: true }),
-        reconcile: reconcileFor(ids),
-        statementTimeoutMs: 5_000,
-      });
-      const elapsed = Date.now() - startedAt;
+    const startedAt = Date.now();
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        await read(`SET LOCAL statement_timeout = 250`);
+        await read(`SELECT pg_sleep(5)`); // exceeds the timeout -> 57014
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async () => ({ ok: true }),
+      reconcile: reconcileFor(ids),
+      statementTimeoutMs: 5_000,
+    });
+    const elapsed = Date.now() - startedAt;
 
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
-        expect(outcome.reason).toMatch(/statement timeout|canceling statement/i);
-        expect(outcome.applied).toEqual([]);
-      }
-      expect(elapsed, 'the timeout must bound the call').toBeLessThan(60_000);
-      await expectNoPartialReady(ids);
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+    if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
+      expect(outcome.reason).toMatch(/statement timeout|canceling statement/i);
+      expect(outcome.applied).toEqual([]);
+    }
+    expect(elapsed, 'the timeout must bound the call').toBeLessThan(60_000);
+    await expectNoPartialReady(ids);
 
-      const recovery = await seed('fault-timeout');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('fault-timeout');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
-  it(
-    'leaves ZERO partial READY on a SIGTERM-equivalent: backend killed after all five writes, before COMMIT',
-    async () => {
-      const ids = await seedThenDemote('fault-sigterm');
+  it('leaves ZERO partial READY on a SIGTERM-equivalent: backend killed after all five writes, before COMMIT', async () => {
+    const ids = await seedThenDemote('fault-sigterm');
 
-      let appliedInsideTx = 0;
-      const startedAt = Date.now();
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
-        verify: async (read) => {
-          // All five promotion UPDATEs have executed and are visible INSIDE the
-          // transaction at this point — prove it, then kill the backend without
-          // any chance of a clean ROLLBACK.
-          const rows = await read(
-            `SELECT count(*)::int AS ready FROM financial_statements
+    let appliedInsideTx = 0;
+    const startedAt = Date.now();
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async () => ({ ok: true, writes: promotionWrites(ids) }),
+      verify: async (read) => {
+        // All five promotion UPDATEs have executed and are visible INSIDE the
+        // transaction at this point — prove it, then kill the backend without
+        // any chance of a clean ROLLBACK.
+        const rows = await read(
+          `SELECT count(*)::int AS ready FROM financial_statements
               WHERE id = ANY($1::text[]) AND readiness_status = 'ready'`,
-            [ids.statementIds]
-          );
-          appliedInsideTx = Number(rows[0]?.ready ?? 0);
-          await terminateBackend(await backendPid(read));
-          return { ok: true }; // the COMMIT that follows can never succeed
-        },
-        reconcile: reconcileFor(ids),
-      });
-      const elapsed = Date.now() - startedAt;
+          [ids.statementIds]
+        );
+        appliedInsideTx = Number(rows[0]?.ready ?? 0);
+        await terminateBackend(await backendPid(read));
+        return { ok: true }; // the COMMIT that follows can never succeed
+      },
+      reconcile: reconcileFor(ids),
+    });
+    const elapsed = Date.now() - startedAt;
 
-      expect(appliedInsideTx, 'the writes really were applied inside the transaction').toBe(3);
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      expect(elapsed, 'a killed backend must not hang the call').toBeLessThan(60_000);
+    expect(appliedInsideTx, 'the writes really were applied inside the transaction').toBe(3);
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+    expect(elapsed, 'a killed backend must not hang the call').toBeLessThan(60_000);
 
-      // FIN-005 P1-3: "rolled back" here is not a guess. The COMMIT threw, so
-      // the adapter opened a FRESH connection, read the five records and only
-      // then said so.
-      if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
-        expect(outcome.rollbackIssued, 'no ROLLBACK could be sent on a dead socket').toBe(false);
-        expect(outcome.reconciliation?.verdict).toBe('not-committed');
-        expect(outcome.reason).toMatch(/reconciliation proved it did NOT/);
-      }
+    // FIN-005 P1-3: "rolled back" here is not a guess. The COMMIT threw, so
+    // the adapter opened a FRESH connection, read the five records and only
+    // then said so.
+    if (outcome.mode === 'pinned' && outcome.status === 'rolled-back') {
+      expect(outcome.rollbackIssued, 'no ROLLBACK could be sent on a dead socket').toBe(false);
+      expect(outcome.reconciliation?.verdict).toBe('not-committed');
+      expect(outcome.reason).toMatch(/reconciliation proved it did NOT/);
+    }
 
-      // The whole point: uncommitted work dies with the connection.
-      await expectNoPartialReady(ids);
+    // The whole point: uncommitted work dies with the connection.
+    await expectNoPartialReady(ids);
 
-      const recovery = await seed('fault-sigterm');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    const recovery = await seed('fault-sigterm');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // The locks are real, not decorative.
   // -------------------------------------------------------------------------
 
-  it(
-    'holds a FOR UPDATE lock on the canonical rows for the life of the transaction',
-    async () => {
-      const ids = await seedThenDemote('lock-probe');
+  it('holds a FOR UPDATE lock on the canonical rows for the life of the transaction', async () => {
+    const ids = await seedThenDemote('lock-probe');
 
-      let blockedWhileHeld: boolean | null = null;
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async () => {
-          blockedWhileHeld = await competingUpdateBlocks(ids.packId);
-          return { ok: false, reason: 'lock probe only' };
-        },
-        verify: async () => ({ ok: true }),
-        reconcile: reconcileFor(ids),
-      });
+    let blockedWhileHeld: boolean | null = null;
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async () => {
+        blockedWhileHeld = await competingUpdateBlocks(ids.packId);
+        return { ok: false, reason: 'lock probe only' };
+      },
+      verify: async () => ({ ok: true }),
+      reconcile: reconcileFor(ids),
+    });
 
-      expect(blockedWhileHeld, 'a competing writer must block on the locked pack row').toBe(true);
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      await expectNoPartialReady(ids);
-    },
-    180_000
-  );
+    expect(blockedWhileHeld, 'a competing writer must block on the locked pack row').toBe(true);
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+    await expectNoPartialReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // A LOST COMMIT ACK — FIN-005 P1-3.
@@ -540,123 +527,111 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   // Nothing about that is simulated — it is the exact in-doubt case.
   // -------------------------------------------------------------------------
 
-  it(
-    'a lost COMMIT ACK over a transaction that DID commit is reported COMMITTED, on evidence',
-    async () => {
-      const ids = await seedThenDemote('commit-ack-committed');
+  it('a lost COMMIT ACK over a transaction that DID commit is reported COMMITTED, on evidence', async () => {
+    const ids = await seedThenDemote('commit-ack-committed');
 
-      let pinnedPid = 0;
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          pinnedPid = await backendPid(read);
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async (read) => {
-          await read('COMMIT'); // the transaction really lands…
-          await terminateBackend(pinnedPid); // …and the answer never gets home
-          return { ok: true };
-        },
-        reconcile: reconcileFor(ids),
-      });
+    let pinnedPid = 0;
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        pinnedPid = await backendPid(read);
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async (read) => {
+        await read('COMMIT'); // the transaction really lands…
+        await terminateBackend(pinnedPid); // …and the answer never gets home
+        return { ok: true };
+      },
+      reconcile: reconcileFor(ids),
+    });
 
-      expect(outcome).toMatchObject({
-        mode: 'pinned',
-        status: 'committed',
-        commitAck: 'lost-then-confirmed',
-      });
-      if (outcome.mode === 'pinned' && outcome.status === 'committed') {
-        expect(outcome.reconciliation?.verdict).toBe('committed');
-      }
-      // The evidence has to match the database, not just the verdict.
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+    expect(outcome).toMatchObject({
+      mode: 'pinned',
+      status: 'committed',
+      commitAck: 'lost-then-confirmed',
+    });
+    if (outcome.mode === 'pinned' && outcome.status === 'committed') {
+      expect(outcome.reconciliation?.verdict).toBe('committed');
+    }
+    // The evidence has to match the database, not just the verdict.
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
-  it(
-    'a lost COMMIT ACK over a MIXED result is INDETERMINATE / NEEDS_OPERATOR — never rolled back, never complete',
-    async () => {
-      const ids = await seedThenDemote('commit-ack-mixed');
+  it('a lost COMMIT ACK over a MIXED result is INDETERMINATE / NEEDS_OPERATOR — never rolled back, never complete', async () => {
+    const ids = await seedThenDemote('commit-ack-mixed');
 
-      let pinnedPid = 0;
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          pinnedPid = await backendPid(read);
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async (read) => {
-          // Commit a deliberately incoherent result: four records promoted, one
-          // left behind. Exactly the state nobody may classify.
-          await read(
-            `UPDATE financial_statements
+    let pinnedPid = 0;
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        pinnedPid = await backendPid(read);
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async (read) => {
+        // Commit a deliberately incoherent result: four records promoted, one
+        // left behind. Exactly the state nobody may classify.
+        await read(
+          `UPDATE financial_statements
                 SET status = 'imported', validation_status = 'pending', readiness_status = 'pending'
               WHERE id = $1`,
-            [ids.statementIds[0]]
-          );
-          await read('COMMIT');
-          await terminateBackend(pinnedPid);
-          return { ok: true };
-        },
-        reconcile: reconcileFor(ids),
-      });
-
-      expect(outcome).toMatchObject({
-        mode: 'pinned',
-        status: 'commit-indeterminate',
-        operatorAction: 'NEEDS_OPERATOR',
-      });
-      if (outcome.mode === 'pinned' && outcome.status === 'commit-indeterminate') {
-        expect(outcome.reconciliation.verdict).toBe('indeterminate');
-        expect(outcome.reconciliation.detail).toMatch(/MIXED: 4\/5/);
-      }
-
-      // The next run heals the residue rather than inheriting it.
-      const recovery = await seed('commit-ack-mixed');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
-
-  it(
-    'a lost COMMIT ACK whose reconciliation READ fails is INDETERMINATE, not rolled back',
-    async () => {
-      const ids = await seedThenDemote('commit-ack-unreadable');
-
-      let pinnedPid = 0;
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          pinnedPid = await backendPid(read);
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async (read) => {
-          await read('COMMIT');
-          await terminateBackend(pinnedPid);
-          return { ok: true };
-        },
-        reconcile: async () => {
-          throw new Error('injected reconciliation read failure');
-        },
-      });
-
-      expect(outcome).toMatchObject({
-        mode: 'pinned',
-        status: 'commit-indeterminate',
-        operatorAction: 'NEEDS_OPERATOR',
-      });
-      if (outcome.mode === 'pinned' && outcome.status === 'commit-indeterminate') {
-        expect(outcome.reconciliation.detail).toMatch(
-          /the reconciliation read itself failed: injected reconciliation read failure/
+          [ids.statementIds[0]]
         );
-      }
-      // The commit really did land; the adapter simply refused to claim it.
-      await expectFixtureFullyReady(ids);
-    },
-    180_000
-  );
+        await read('COMMIT');
+        await terminateBackend(pinnedPid);
+        return { ok: true };
+      },
+      reconcile: reconcileFor(ids),
+    });
+
+    expect(outcome).toMatchObject({
+      mode: 'pinned',
+      status: 'commit-indeterminate',
+      operatorAction: 'NEEDS_OPERATOR',
+    });
+    if (outcome.mode === 'pinned' && outcome.status === 'commit-indeterminate') {
+      expect(outcome.reconciliation.verdict).toBe('indeterminate');
+      expect(outcome.reconciliation.detail).toMatch(/MIXED: 4\/5/);
+    }
+
+    // The next run heals the residue rather than inheriting it.
+    const recovery = await seed('commit-ack-mixed');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
+
+  it('a lost COMMIT ACK whose reconciliation READ fails is INDETERMINATE, not rolled back', async () => {
+    const ids = await seedThenDemote('commit-ack-unreadable');
+
+    let pinnedPid = 0;
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        pinnedPid = await backendPid(read);
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async (read) => {
+        await read('COMMIT');
+        await terminateBackend(pinnedPid);
+        return { ok: true };
+      },
+      reconcile: async () => {
+        throw new Error('injected reconciliation read failure');
+      },
+    });
+
+    expect(outcome).toMatchObject({
+      mode: 'pinned',
+      status: 'commit-indeterminate',
+      operatorAction: 'NEEDS_OPERATOR',
+    });
+    if (outcome.mode === 'pinned' && outcome.status === 'commit-indeterminate') {
+      expect(outcome.reconciliation.detail).toMatch(
+        /the reconciliation read itself failed: injected reconciliation read failure/
+      );
+    }
+    // The commit really did land; the adapter simply refused to claim it.
+    await expectFixtureFullyReady(ids);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // SESSION STATE MUST NOT ESCAPE ONTO A POOLED CONNECTION.
@@ -668,118 +643,111 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   // `BEGIN READ ONLY` with `SET LOCAL`, which dies with the transaction.
   // -------------------------------------------------------------------------
 
-  it(
-    'the reconciliation bounds itself with SET LOCAL inside a READ ONLY transaction, and leaks nothing to the pool',
-    async () => {
-      const ids = await seedThenDemote('timeout-scope');
+  it('the reconciliation bounds itself with SET LOCAL inside a READ ONLY transaction, and leaks nothing to the pool', async () => {
+    const ids = await seedThenDemote('timeout-scope');
 
-      const { getPoolClientForPinnedTransaction } = await import(
-        '../../../database/PostgresDatabase.js'
-      );
+    const { getPoolClientForPinnedTransaction } =
+      await import('../../../database/PostgresDatabase.js');
 
-      // What a clean pooled connection looks like, measured rather than assumed.
-      const baselineClient = await getPoolClientForPinnedTransaction();
-      const baseline = String(
-        (await baselineClient.query('SHOW statement_timeout')).rows[0].statement_timeout
-      );
-      baselineClient.release();
+    // What a clean pooled connection looks like, measured rather than assumed.
+    const baselineClient = await getPoolClientForPinnedTransaction();
+    const baseline = String(
+      (await baselineClient.query('SHOW statement_timeout')).rows[0].statement_timeout
+    );
+    baselineClient.release();
 
-      const DISTINCTIVE_MS = 7_777;
-      let insideReadOnly = '';
-      let insideTimeout = '';
-      let reconcilePid = 0;
+    const DISTINCTIVE_MS = 7_777;
+    let insideReadOnly = '';
+    let insideTimeout = '';
+    let reconcilePid = 0;
 
-      let pinnedPid = 0;
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          pinnedPid = await backendPid(read);
-          return { ok: true, writes: promotionWrites(ids) };
-        },
-        verify: async (read) => {
-          await read('COMMIT');
-          await terminateBackend(pinnedPid);
-          return { ok: true };
-        },
-        reconcile: async (read) => {
-          insideReadOnly = String((await read('SHOW transaction_read_only'))[0].transaction_read_only);
-          insideTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
-          reconcilePid = await backendPid(read);
-          return { verdict: 'committed', detail: 'scope probe' };
-        },
-        statementTimeoutMs: DISTINCTIVE_MS,
-      });
+    let pinnedPid = 0;
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        pinnedPid = await backendPid(read);
+        return { ok: true, writes: promotionWrites(ids) };
+      },
+      verify: async (read) => {
+        await read('COMMIT');
+        await terminateBackend(pinnedPid);
+        return { ok: true };
+      },
+      reconcile: async (read) => {
+        insideReadOnly = String(
+          (await read('SHOW transaction_read_only'))[0].transaction_read_only
+        );
+        insideTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
+        reconcilePid = await backendPid(read);
+        return { verdict: 'committed', detail: 'scope probe' };
+      },
+      statementTimeoutMs: DISTINCTIVE_MS,
+    });
 
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'committed' });
-      // The bound really was applied, and it was applied inside a READ ONLY
-      // transaction — which is what makes `SET LOCAL` the correct form.
-      expect(insideReadOnly, 'the reconciliation must run READ ONLY').toBe('on');
-      expect(insideTimeout).toBe(`${DISTINCTIVE_MS}ms`);
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'committed' });
+    // The bound really was applied, and it was applied inside a READ ONLY
+    // transaction — which is what makes `SET LOCAL` the correct form.
+    expect(insideReadOnly, 'the reconciliation must run READ ONLY').toBe('on');
+    expect(insideTimeout).toBe(`${DISTINCTIVE_MS}ms`);
 
-      // Now take connections back out of the pool and prove none of them
-      // inherited it. `pg` hands back the most recently released client first,
-      // so the very first checkout is normally the one the reconciliation used;
-      // the loop covers the pool regardless of which one that is.
-      const seen: string[] = [];
-      const held: Array<{ release: () => void }> = [];
-      let sawReconcileBackend = false;
-      try {
-        for (let i = 0; i < 5; i++) {
-          const client = await getPoolClientForPinnedTransaction();
-          held.push(client);
-          const pid = Number((await client.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
-          if (pid === reconcilePid) sawReconcileBackend = true;
-          seen.push(String((await client.query('SHOW statement_timeout')).rows[0].statement_timeout));
-        }
-      } finally {
-        for (const client of held) client.release();
+    // Now take connections back out of the pool and prove none of them
+    // inherited it. `pg` hands back the most recently released client first,
+    // so the very first checkout is normally the one the reconciliation used;
+    // the loop covers the pool regardless of which one that is.
+    const seen: string[] = [];
+    const held: Array<{ release: () => void }> = [];
+    let sawReconcileBackend = false;
+    try {
+      for (let i = 0; i < 5; i++) {
+        const client = await getPoolClientForPinnedTransaction();
+        held.push(client);
+        const pid = Number((await client.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
+        if (pid === reconcilePid) sawReconcileBackend = true;
+        seen.push(String((await client.query('SHOW statement_timeout')).rows[0].statement_timeout));
       }
+    } finally {
+      for (const client of held) client.release();
+    }
 
-      expect(
-        sawReconcileBackend,
-        'the reconciliation backend must be back in the pool to be checked'
-      ).toBe(true);
-      expect(
-        seen.every((value) => value === baseline),
-        `a pooled connection inherited the reconciliation's statement_timeout: ${JSON.stringify(seen)} (baseline ${baseline})`
-      ).toBe(true);
-    },
-    180_000
-  );
+    expect(
+      sawReconcileBackend,
+      'the reconciliation backend must be back in the pool to be checked'
+    ).toBe(true);
+    expect(
+      seen.every((value) => value === baseline),
+      `a pooled connection inherited the reconciliation's statement_timeout: ${JSON.stringify(seen)} (baseline ${baseline})`
+    ).toBe(true);
+  }, 180_000);
 
-  it(
-    'idle_in_transaction_session_timeout gets its OWN budget, not a share of statement_timeout',
-    async () => {
-      const ids = await seedThenDemote('idle-budget');
+  it('idle_in_transaction_session_timeout gets its OWN budget, not a share of statement_timeout', async () => {
+    const ids = await seedThenDemote('idle-budget');
 
-      let statementTimeout = '';
-      let idleTimeout = '';
-      const outcome = await runPinnedPromotionTransaction({
-        lock: lockRequest(ids),
-        plan: async (read) => {
-          statementTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
-          idleTimeout = String(
-            (await read('SHOW idle_in_transaction_session_timeout'))[0]
-              .idle_in_transaction_session_timeout
-          );
-          return { ok: false, reason: 'timeout budget probe only' };
-        },
-        verify: async () => ({ ok: true }),
-        reconcile: reconcileFor(ids),
-        statementTimeoutMs: 3_000,
-        idleInTransactionTimeoutMs: 41_000,
-      });
+    let statementTimeout = '';
+    let idleTimeout = '';
+    const outcome = await runPinnedPromotionTransaction({
+      lock: lockRequest(ids),
+      plan: async (read) => {
+        statementTimeout = String((await read('SHOW statement_timeout'))[0].statement_timeout);
+        idleTimeout = String(
+          (await read('SHOW idle_in_transaction_session_timeout'))[0]
+            .idle_in_transaction_session_timeout
+        );
+        return { ok: false, reason: 'timeout budget probe only' };
+      },
+      verify: async () => ({ ok: true }),
+      reconcile: reconcileFor(ids),
+      statementTimeoutMs: 3_000,
+      idleInTransactionTimeoutMs: 41_000,
+    });
 
-      expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
-      expect(statementTimeout).toBe('3s');
-      // The defect this replaces: both were set from `statementTimeoutMs`, so a
-      // JS pause between two queries killed the backend on the per-query budget
-      // and a slow-but-legitimate run became a spurious `incomplete`.
-      expect(idleTimeout).toBe('41s');
-      expect(idleTimeout).not.toBe(statementTimeout);
-    },
-    180_000
-  );
+    expect(outcome).toMatchObject({ mode: 'pinned', status: 'rolled-back' });
+    expect(statementTimeout).toBe('3s');
+    // The defect this replaces: both were set from `statementTimeoutMs`, so a
+    // JS pause between two queries killed the backend on the per-query budget
+    // and a slow-but-legitimate run became a spurious `incomplete`.
+    expect(idleTimeout).toBe('41s');
+    expect(idleTimeout).not.toBe(statementTimeout);
+  }, 180_000);
 
   // -------------------------------------------------------------------------
   // Helpers
@@ -915,9 +883,7 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
       return false;
     } catch (error) {
       await client?.query('ROLLBACK').catch(() => undefined);
-      return /lock timeout|canceling statement due to lock timeout/i.test(
-        (error as Error).message
-      );
+      return /lock timeout|canceling statement due to lock timeout/i.test((error as Error).message);
     } finally {
       client?.release();
     }
@@ -930,10 +896,9 @@ suite('FIN-005 — pinned promotion transaction against a real PostgreSQL', () =
   async function fixtureSnapshot(ids: AtelierCanonicalIds): Promise<unknown> {
     const [packs, statements, values, analyses] = await Promise.all([
       control.query(`SELECT * FROM financial_statement_packs WHERE id = $1`, [ids.packId]),
-      control.query(
-        `SELECT * FROM financial_statements WHERE id = ANY($1::text[]) ORDER BY id`,
-        [ids.statementIds]
-      ),
+      control.query(`SELECT * FROM financial_statements WHERE id = ANY($1::text[]) ORDER BY id`, [
+        ids.statementIds,
+      ]),
       control.query(
         `SELECT * FROM financial_statement_values WHERE statement_id = ANY($1::text[]) ORDER BY id`,
         [ids.statementIds]
@@ -1046,38 +1011,34 @@ driftSuite('FIN-005 — schema drift gate on a real, drifted PostgreSQL', () => 
     await (db as unknown as { close: () => Promise<void> }).close().catch(() => undefined);
   }, 120_000);
 
-  it(
-    'refuses the fixture and produces ZERO false READY',
-    async () => {
-      const result = await upsertAtelierFinanceGoldenFlow({ organizationId: orgFor('drift') });
+  it('refuses the fixture and produces ZERO false READY', async () => {
+    const result = await upsertAtelierFinanceGoldenFlow({ organizationId: orgFor('drift') });
 
-      expect(result.status).toBe('incomplete');
-      expect(result.missing ?? []).toContain('financial_statements.readiness_status');
-      expect(result.statementIds).toEqual([]);
+    expect(result.status).toBe('incomplete');
+    expect(result.missing ?? []).toContain('financial_statements.readiness_status');
+    expect(result.statementIds).toEqual([]);
 
-      // Nothing was promoted — and, on this schema, nothing could even be written.
-      const packs = await driftPool.query(
-        `SELECT pack_readiness_status FROM financial_statement_packs WHERE id = $1`,
-        [ids.packId]
-      );
-      for (const row of packs.rows) expect(row.pack_readiness_status).not.toBe('ready');
+    // Nothing was promoted — and, on this schema, nothing could even be written.
+    const packs = await driftPool.query(
+      `SELECT pack_readiness_status FROM financial_statement_packs WHERE id = $1`,
+      [ids.packId]
+    );
+    for (const row of packs.rows) expect(row.pack_readiness_status).not.toBe('ready');
 
-      const analyses = await driftPool.query(`SELECT status FROM financial_analyses WHERE id = $1`, [
-        ids.analysisId,
-      ]);
-      for (const row of analyses.rows) expect(row.status).not.toBe('APPROVED');
+    const analyses = await driftPool.query(`SELECT status FROM financial_analyses WHERE id = $1`, [
+      ids.analysisId,
+    ]);
+    for (const row of analyses.rows) expect(row.status).not.toBe('APPROVED');
 
-      const statements = await driftPool.query(
-        `SELECT status, validation_status FROM financial_statements WHERE id = ANY($1::text[])`,
-        [ids.statementIds]
-      );
-      for (const row of statements.rows) {
-        expect(row.status).not.toBe('confirmed');
-        expect(row.validation_status).not.toBe('pass');
-      }
-    },
-    120_000
-  );
+    const statements = await driftPool.query(
+      `SELECT status, validation_status FROM financial_statements WHERE id = ANY($1::text[])`,
+      [ids.statementIds]
+    );
+    for (const row of statements.rows) {
+      expect(row.status).not.toBe('confirmed');
+      expect(row.validation_status).not.toBe('pass');
+    }
+  }, 120_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -1096,7 +1057,9 @@ async function createOrganizations(pool: Pool): Promise<void> {
 async function dropOrganizations(pool: Pool): Promise<void> {
   for (const key of ORG_KEYS) {
     await deleteFixture(pool, idsFor(key)).catch(() => undefined);
-    await pool.query(`DELETE FROM organizations WHERE id = $1`, [orgFor(key)]).catch(() => undefined);
+    await pool
+      .query(`DELETE FROM organizations WHERE id = $1`, [orgFor(key)])
+      .catch(() => undefined);
   }
 }
 
@@ -1120,7 +1083,9 @@ async function demoteFixture(pool: Pool, ids: AtelierCanonicalIds): Promise<void
       WHERE id = ANY($1::text[])`,
     [ids.statementIds]
   );
-  await pool.query(`UPDATE financial_analyses SET status = 'DRAFT' WHERE id = $1`, [ids.analysisId]);
+  await pool.query(`UPDATE financial_analyses SET status = 'DRAFT' WHERE id = $1`, [
+    ids.analysisId,
+  ]);
   await pool.query(
     `UPDATE financial_statement_packs
         SET pack_status = 'draft', pack_readiness_status = 'pending', pack_readiness_score = 0
@@ -1152,7 +1117,11 @@ const FAULT_TABLE = 'fin005_pinned_fault_control';
  * masqueraded as an injected fault in the first run of this suite.
  */
 const FAULT_TRIGGERS: Array<{ table: string; predicate: string; label: string }> = [
-  { table: 'financial_statements', predicate: `NEW.readiness_status = 'ready'`, label: 'statement' },
+  {
+    table: 'financial_statements',
+    predicate: `NEW.readiness_status = 'ready'`,
+    label: 'statement',
+  },
   { table: 'financial_analyses', predicate: `NEW.status = 'APPROVED'`, label: 'analysis' },
   {
     table: 'financial_statement_packs',
@@ -1164,9 +1133,7 @@ const FAULT_TRIGGERS: Array<{ table: string; predicate: string; label: string }>
 const faultFunctionName = (table: string): string => `fin005_pinned_fault_${table}`;
 
 async function installFaultTriggers(pool: Pool): Promise<void> {
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS ${FAULT_TABLE} (target_id text PRIMARY KEY)`
-  );
+  await pool.query(`CREATE TABLE IF NOT EXISTS ${FAULT_TABLE} (target_id text PRIMARY KEY)`);
   // Migrate away from the earlier single-slot shape if it is still around.
   const shape = await pool.query(
     `SELECT column_name FROM information_schema.columns

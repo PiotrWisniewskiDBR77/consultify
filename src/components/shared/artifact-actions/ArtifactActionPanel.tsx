@@ -722,7 +722,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               : setProposalTarget(target)
         }
         disabled={loading || isActionDisabled || !!blocked}
-        title={blocked || t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)}
+        title={
+          blocked || t(`sharedComponents.artifactActionPanel.targetMeta.${target}.description`)
+        }
         className={`inline-flex h-8 min-w-0 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${CHIP_SURFACE}`}
       >
         {loading ? (
@@ -872,7 +874,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-              <div className={MODAL_KICKER}>{t('sharedComponents.artifactActionPanel.context')}</div>
+              <div className={MODAL_KICKER}>
+                {t('sharedComponents.artifactActionPanel.context')}
+              </div>
               <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
               <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-300">
                 <div>
@@ -992,7 +996,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
             <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
               <div>
-                <div className={MODAL_KICKER}>{t('sharedComponents.artifactActionPanel.source')}</div>
+                <div className={MODAL_KICKER}>
+                  {t('sharedComponents.artifactActionPanel.source')}
+                </div>
                 <div className="mt-1 font-medium text-white">{source.title}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 text-xs text-slate-300">

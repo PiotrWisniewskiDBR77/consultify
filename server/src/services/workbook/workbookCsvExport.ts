@@ -27,8 +27,8 @@
  * spreadsheet application.
  */
 
-import type { WorkbookSchema } from './WorkbookSchema.js';
 import { sanitizeSpreadsheetCellText } from './workbookExportSanitizer.js';
+import type { WorkbookSchema } from './WorkbookSchema.js';
 
 export class WorkbookCsvExportError extends Error {
   code: 'SHEET_INDEX_OUT_OF_RANGE' | 'NO_SHEETS';

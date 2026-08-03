@@ -72,7 +72,8 @@ const TEMPLATES: TemplateItem[] = [
     legacy: false,
     orphaned: false,
     title: 'Raport diagnostyczny — wzorzec zatwierdzony',
-    description: 'Dla porównania: wzorzec już zatwierdzony (approved) — to jedyny stan, który dawniej się pokazywał.',
+    description:
+      'Dla porównania: wzorzec już zatwierdzony (approved) — to jedyny stan, który dawniej się pokazywał.',
     type: 'report',
     category: 'R3',
     scope: 'organization',
@@ -114,8 +115,8 @@ export default function MaterialyDraftTemplateVisibilityFixScreen(): React.React
             </div>
             <div className="mt-0.5 text-xs text-c-text-muted">
               Wiersz 1 (Draft, klikalny wiersz) to stan NOWY po naprawie backfillu — wcześniej ten
-              wiersz był całkowicie nieobecny w tej tabeli. Kliknij go, żeby zobaczyć status
-              „Draft" w preview i akcję „Submit for review" w menu wiersza (widoczna tylko dla
+              wiersz był całkowicie nieobecny w tej tabeli. Kliknij go, żeby zobaczyć status „Draft"
+              w preview i akcję „Submit for review" w menu wiersza (widoczna tylko dla
               draft+organization).
             </div>
           </div>

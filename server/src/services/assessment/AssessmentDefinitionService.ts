@@ -195,7 +195,8 @@ export async function getPublishedDefinition(
 ): Promise<AssessmentDefinitionRecord | null> {
   await ensureSchema();
   const normalizedMethodologyId = normalizeMethodologyId(methodologyId);
-  const normalizedVersion = version === undefined || version === null ? undefined : String(version).trim();
+  const normalizedVersion =
+    version === undefined || version === null ? undefined : String(version).trim();
 
   if (normalizedVersion) {
     const row = await queryHelpers.queryOne(

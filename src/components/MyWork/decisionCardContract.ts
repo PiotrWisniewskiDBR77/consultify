@@ -47,11 +47,7 @@
  *     kodzie; reguły treści Decision są MARTWE — bez callera, §3.3). D-1 otwarte.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -68,7 +64,8 @@ const CONTEXT_PROBLEM = definiujKarteKanoniczna({
   ikona: 'FileText',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Opisz zakres i problem decyzji: kontekst, granice, co jest przedmiotem rozstrzygnięcia.',
+    szablon:
+      'Opisz zakres i problem decyzji: kontekst, granice, co jest przedmiotem rozstrzygnięcia.',
     kluczPromptu: 'decision.context-problem',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
@@ -87,7 +84,9 @@ const OPTIONS_TRADEOFFS = definiujKarteKanoniczna({
     kluczPromptu: 'decision.options', // handler 'options' → generateAlternativesAI
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 1 }],
+  kompozycja: [
+    { artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 1 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -102,7 +101,9 @@ const RISK_IMPACT = definiujKarteKanoniczna({
     kluczPromptu: 'decision.risk', // handler 'risk' → generateRisksAI
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 }],
+  kompozycja: [
+    { artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -113,11 +114,14 @@ const CONSEQUENCES = definiujKarteKanoniczna({
   ikona: 'Clock',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Konsekwencje braku decyzji w 3 scenariuszach (pesymistyczny/neutralny/optymistyczny), horyzont d7/d30/d90.',
+    szablon:
+      'Konsekwencje braku decyzji w 3 scenariuszach (pesymistyczny/neutralny/optymistyczny), horyzont d7/d30/d90.',
     kluczPromptu: 'decision.consequences', // handler 'consequences' → generateConsequenceScenariosAI
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 }],
+  kompozycja: [
+    { artefakt: 'decision', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -134,7 +138,14 @@ const GOVERNANCE = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 4, idWArtefakcie: 'governance-escalation' },
+    {
+      artefakt: 'decision',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 4,
+      idWArtefakcie: 'governance-escalation',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -148,11 +159,19 @@ const ATTACHMENTS = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: {
     none: true,
-    reason: 'pliki i powiązania wskazuje użytkownik — AI nie ma czego wygenerować (DecisionDetailView:1284)',
+    reason:
+      'pliki i powiązania wskazuje użytkownik — AI nie ma czego wygenerować (DecisionDetailView:1284)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 5, idWArtefakcie: 'resources-links' },
+    {
+      artefakt: 'decision',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 5,
+      idWArtefakcie: 'resources-links',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -169,7 +188,9 @@ const COMMENTS = definiujKarteKanoniczna({
     reason: 'strumień komentarzy użytkowników — nie generacja treści',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 6 }],
+  kompozycja: [
+    { artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 6 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -182,10 +203,13 @@ const ACTIVITY_LOG = definiujKarteKanoniczna({
   rolaAI: 'systemowa',
   aiPrompt: {
     none: true,
-    reason: 'log zdarzeń jest zapisem faktów, treść generowana byłaby fałszem (DecisionDetailView:1290)',
+    reason:
+      'log zdarzeń jest zapisem faktów, treść generowana byłaby fałszem (DecisionDetailView:1290)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 7 }],
+  kompozycja: [
+    { artefakt: 'decision', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 7 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 

@@ -43,10 +43,6 @@ import {
 } from '../services/financeAggregateScopeService.js';
 import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import {
-  serializeRowPeriodFields,
-  serializeRowsPeriodFields,
-} from '../services/financePeriodFormat.js';
-import {
   getFinanceTraceId,
   logFinanceError,
   logFinanceEvent,
@@ -58,6 +54,10 @@ import {
   isLikelySubtotalOrAggregate,
   isNonFinancialByPolicy,
 } from '../services/financeMappingPolicy.js';
+import {
+  serializeRowPeriodFields,
+  serializeRowsPeriodFields,
+} from '../services/financePeriodFormat.js';
 import {
   FinanceReportReconcileBlockedError,
   loadFinanceReportLineageForPack,
@@ -76,8 +76,8 @@ import {
 import type { DetectionResult } from '../services/financialStatementService.js';
 import {
   autoMapLines,
-  cleanupUnpersistedUpload,
   classifyStatementDocument,
+  cleanupUnpersistedUpload,
   confirmStatement,
   createStatement,
   detectContainedStatementTypes,
@@ -622,7 +622,9 @@ router.post(
 
       // Backward-compatible DB constraint (older DBs allow only 3 values).
       // Keep the real parse method inside notes for traceability.
-      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+      const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod)
+        ? parseMethod
+        : 'manual';
       const notesPrefix =
         parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
       const textSummary = summarizeTextPayload(text);
@@ -873,138 +875,143 @@ router.post(
       orgId,
       key,
       async (): Promise<LockOutcome> => {
-      const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
+        const reservation = await reserveIdempotentUpload(orgId, key, requestHash, userId);
 
-      if (reservation.kind === 'recover_result') {
-        // Codex round-5: a prior attempt for this key recorded a COMPLETE
-        // response and every Statement it names is still present and
-        // pack-synced. `/upload` itself only ever creates one Statement, so
-        // this is normally reached only when the SAME key was first used
-        // against an upload-and-analyze endpoint; either way the honest
-        // answer is the recorded receipt verbatim, never a re-derived one.
-        const finalized = await finalizeIdempotentUpload({
-          reservationId: reservation.reservationId,
-          statementId: reservation.statementIds[0] || '',
-          statusCode: reservation.statusCode,
-          responseJson: JSON.stringify(reservation.body),
-        });
-        if (!finalized) {
-          await failIdempotentUpload(reservation.reservationId, reservation.statementIds, {
+        if (reservation.kind === 'recover_result') {
+          // Codex round-5: a prior attempt for this key recorded a COMPLETE
+          // response and every Statement it names is still present and
+          // pack-synced. `/upload` itself only ever creates one Statement, so
+          // this is normally reached only when the SAME key was first used
+          // against an upload-and-analyze endpoint; either way the honest
+          // answer is the recorded receipt verbatim, never a re-derived one.
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementIds[0] || '',
+            statusCode: reservation.statusCode,
+            responseJson: JSON.stringify(reservation.body),
+          });
+          if (!finalized) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementIds, {
+              statusCode: reservation.statusCode,
+              body: reservation.body,
+            });
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return {
+            kind: 'recover' as const,
             statusCode: reservation.statusCode,
             body: reservation.body,
-          });
-          return { kind: 'finalize_failed' as const, recovered: true };
+          };
         }
-        return {
-          kind: 'recover' as const,
-          statusCode: reservation.statusCode,
-          body: reservation.body,
-        };
-      }
 
-      if (reservation.kind === 'recover') {
-        // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
-        // already durably completed a real, fully-synced Statement+Pack —
-        // reuse it. No re-extraction, no performUpload() call at all: the
-        // CURRENT request's uploaded file is not this Statement's source
-        // (an earlier, different upload is), so it is never touched here —
-        // only cleaned up by the caller, same as a replay.
-        const body = await buildUploadRecoveryResponseBody(reservation.statementId, orgId);
-        if (!body) {
-          // Defensive: the recovered statement vanished between
-          // reserveIdempotentUpload's lookup and here. Never fabricate a
-          // 201 for a Statement that cannot actually be read back.
-          await failIdempotentUpload(reservation.reservationId, reservation.statementId);
-          return { kind: 'finalize_failed' as const, recovered: true };
+        if (reservation.kind === 'recover') {
+          // FIN-005 Codex round-4 Blocker 1: a prior attempt for this key
+          // already durably completed a real, fully-synced Statement+Pack —
+          // reuse it. No re-extraction, no performUpload() call at all: the
+          // CURRENT request's uploaded file is not this Statement's source
+          // (an earlier, different upload is), so it is never touched here —
+          // only cleaned up by the caller, same as a replay.
+          const body = await buildUploadRecoveryResponseBody(reservation.statementId, orgId);
+          if (!body) {
+            // Defensive: the recovered statement vanished between
+            // reserveIdempotentUpload's lookup and here. Never fabricate a
+            // 201 for a Statement that cannot actually be read back.
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          const finalized = await finalizeIdempotentUpload({
+            reservationId: reservation.reservationId,
+            statementId: reservation.statementId,
+            statusCode: 201,
+            responseJson: JSON.stringify(body),
+          });
+          if (!finalized) {
+            await failIdempotentUpload(reservation.reservationId, reservation.statementId);
+            return { kind: 'finalize_failed' as const, recovered: true };
+          }
+          return { kind: 'recover' as const, statusCode: 201, body };
         }
+
+        if (reservation.kind !== 'owner') {
+          if (reservation.kind === 'replay') {
+            logFinanceEvent('statement.upload.idempotent_replay', {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+            });
+          }
+          return reservation;
+        }
+
+        let result: { statusCode: number; body: Record<string, unknown> };
+        try {
+          result = await performUpload();
+        } catch (error) {
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload threw');
+          }
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          throw error;
+        }
+
+        if (result.statusCode >= 400) {
+          // A controlled negative outcome (signature mismatch, extraction
+          // failure, persist failure, ...) — not a thrown exception, but
+          // still a failure for idempotency purposes: the reservation must
+          // not be left 'in_progress' forever, and must never be finalized as
+          // 'completed'. The route still returns performUpload's OWN status
+          // code/body to the client unchanged.
+          //
+          // FIN-005 Blocker 2: this used to derive the statementId for
+          // failIdempotentUpload from `result.body.statementId` — which the
+          // notes-persist-failure branch inside performUpload() never sets
+          // (its controlled-failure body is `{ error, detail }`, no
+          // statementId) — so a Statement that WAS durably created before that
+          // later step failed was passed to failIdempotentUpload with no id at
+          // all: not "orphaned and tracked" (Fix 1's `orphaned_statement_ids`)
+          // but not tracked in any way. `primaryStatementId` is set the
+          // instant createStatement() succeeds, independent of what ends up in
+          // the response body, so it survives every failure shape.
+          if (!anyStatementPersisted) {
+            await cleanupUnpersistedUpload(file.path, 'upload controlled failure');
+          }
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
+        }
+
         const finalized = await finalizeIdempotentUpload({
           reservationId: reservation.reservationId,
-          statementId: reservation.statementId,
-          statusCode: 201,
-          responseJson: JSON.stringify(body),
+          statementId: primaryStatementId || '',
+          statusCode: result.statusCode,
+          responseJson: JSON.stringify(result.body),
         });
         if (!finalized) {
-          await failIdempotentUpload(reservation.reservationId, reservation.statementId);
-          return { kind: 'finalize_failed' as const, recovered: true };
+          // Defensive — should not normally happen since we own the
+          // reservation. Do NOT return 201 on an unconfirmed finalize: the
+          // caller maps this to a 500-class error. Best-effort mark the row
+          // failed so a retry can reclaim promptly instead of waiting out the
+          // staleness window; if even that fails, the safety net (staleness
+          // reclaim) still applies.
+          logFinanceError(
+            'statement.upload.finalize_unconfirmed',
+            new Error('finalize UPDATE did not affect the owned reservation row'),
+            {
+              traceId,
+              organizationId: orgId,
+              idempotencyKey: key,
+              reservationId: reservation.reservationId,
+            }
+          );
+          // Fix 1: performUpload() DID already durably create+persist a real
+          // Statement (result.body.statementId) — it is the finalize UPDATE
+          // that failed to land, not the business write. Recording that id
+          // here (instead of leaving it implicit) is what lets a later
+          // reclaim of this same row move it into `orphaned_statement_ids`
+          // instead of silently losing the reference the moment the reclaim
+          // nulls `statement_id` for the next attempt.
+          await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
+          return { kind: 'finalize_failed' as const };
         }
-        return { kind: 'recover' as const, statusCode: 201, body };
-      }
-
-      if (reservation.kind !== 'owner') {
-        if (reservation.kind === 'replay') {
-          logFinanceEvent('statement.upload.idempotent_replay', {
-            traceId,
-            organizationId: orgId,
-            idempotencyKey: key,
-          });
-        }
-        return reservation;
-      }
-
-      let result: { statusCode: number; body: Record<string, unknown> };
-      try {
-        result = await performUpload();
-      } catch (error) {
-        if (!anyStatementPersisted) {
-          await cleanupUnpersistedUpload(file.path, 'upload threw');
-        }
-        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
-        throw error;
-      }
-
-      if (result.statusCode >= 400) {
-        // A controlled negative outcome (signature mismatch, extraction
-        // failure, persist failure, ...) — not a thrown exception, but
-        // still a failure for idempotency purposes: the reservation must
-        // not be left 'in_progress' forever, and must never be finalized as
-        // 'completed'. The route still returns performUpload's OWN status
-        // code/body to the client unchanged.
-        //
-        // FIN-005 Blocker 2: this used to derive the statementId for
-        // failIdempotentUpload from `result.body.statementId` — which the
-        // notes-persist-failure branch inside performUpload() never sets
-        // (its controlled-failure body is `{ error, detail }`, no
-        // statementId) — so a Statement that WAS durably created before that
-        // later step failed was passed to failIdempotentUpload with no id at
-        // all: not "orphaned and tracked" (Fix 1's `orphaned_statement_ids`)
-        // but not tracked in any way. `primaryStatementId` is set the
-        // instant createStatement() succeeds, independent of what ends up in
-        // the response body, so it survives every failure shape.
-        if (!anyStatementPersisted) {
-          await cleanupUnpersistedUpload(file.path, 'upload controlled failure');
-        }
-        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
-        return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
-      }
-
-      const finalized = await finalizeIdempotentUpload({
-        reservationId: reservation.reservationId,
-        statementId: primaryStatementId || '',
-        statusCode: result.statusCode,
-        responseJson: JSON.stringify(result.body),
-      });
-      if (!finalized) {
-        // Defensive — should not normally happen since we own the
-        // reservation. Do NOT return 201 on an unconfirmed finalize: the
-        // caller maps this to a 500-class error. Best-effort mark the row
-        // failed so a retry can reclaim promptly instead of waiting out the
-        // staleness window; if even that fails, the safety net (staleness
-        // reclaim) still applies.
-        logFinanceError(
-          'statement.upload.finalize_unconfirmed',
-          new Error('finalize UPDATE did not affect the owned reservation row'),
-          { traceId, organizationId: orgId, idempotencyKey: key, reservationId: reservation.reservationId }
-        );
-        // Fix 1: performUpload() DID already durably create+persist a real
-        // Statement (result.body.statementId) — it is the finalize UPDATE
-        // that failed to land, not the business write. Recording that id
-        // here (instead of leaving it implicit) is what lets a later
-        // reclaim of this same row move it into `orphaned_statement_ids`
-        // instead of silently losing the reference the moment the reclaim
-        // nulls `statement_id` for the next attempt.
-        await failIdempotentUpload(reservation.reservationId, primaryStatementId || undefined);
-        return { kind: 'finalize_failed' as const };
-      }
 
         return { kind: 'fresh' as const, statusCode: result.statusCode, body: result.body };
       }
@@ -1018,14 +1025,20 @@ router.post(
           code: 'IDEMPOTENCY_KEY_REUSED',
         });
       case 'in_progress':
-        await cleanupUnpersistedUpload(file.path, 'genuinely concurrent in-flight upload for this key');
+        await cleanupUnpersistedUpload(
+          file.path,
+          'genuinely concurrent in-flight upload for this key'
+        );
         res.setHeader('Retry-After', '5');
         return res.status(409).json({
           error: 'Another upload for this Idempotency-Key is already in progress — retry shortly',
           code: 'UPLOAD_IN_PROGRESS',
         });
       case 'schema_missing':
-        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotency schema unavailable for a keyed upload'
+        );
         return res.status(503).json({
           error:
             'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',
@@ -1048,7 +1061,10 @@ router.post(
           code: 'STATEMENT_UPLOAD_FINALIZE_FAILED',
         });
       case 'replay':
-        await cleanupUnpersistedUpload(file.path, 'idempotent replay of a previously completed upload');
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotent replay of a previously completed upload'
+        );
         res.setHeader('Idempotency-Replayed', 'true');
         return res.status(outcome.statusCode).json(outcome.body);
       case 'recover':
@@ -1213,7 +1229,8 @@ router.post(
             statementPackId,
             statementIds: [statementId],
             analysis: null,
-            message: 'LLM analysis unavailable — created single statement with heuristic detection.',
+            message:
+              'LLM analysis unavailable — created single statement with heuristic detection.',
           },
         };
       }
@@ -1598,7 +1615,10 @@ router.post(
           code: 'UPLOAD_IN_PROGRESS',
         });
       case 'schema_missing':
-        await cleanupUnpersistedUpload(file.path, 'idempotency schema unavailable for a keyed upload');
+        await cleanupUnpersistedUpload(
+          file.path,
+          'idempotency schema unavailable for a keyed upload'
+        );
         return res.status(503).json({
           error:
             'Idempotency-Key support is temporarily unavailable on this server — retry without the header, or contact support',

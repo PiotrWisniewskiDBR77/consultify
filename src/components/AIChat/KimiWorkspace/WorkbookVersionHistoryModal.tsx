@@ -35,7 +35,12 @@ export interface WorkbookVersionHistoryModalProps {
 }
 
 type LoadState = 'loading' | 'ready' | 'error';
-type RestoreState = { status: 'idle' } | { status: 'confirming'; versionId: string; version: number } | { status: 'restoring' } | { status: 'conflict'; serverVersion: number } | { status: 'error'; message: string };
+type RestoreState =
+  | { status: 'idle' }
+  | { status: 'confirming'; versionId: string; version: number }
+  | { status: 'restoring' }
+  | { status: 'conflict'; serverVersion: number }
+  | { status: 'error'; message: string };
 
 export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalProps> = ({
   workbookId,
@@ -123,7 +128,9 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
         </div>
 
         {loadState === 'loading' && (
-          <p className="text-xs text-c-text-muted">{t('excele.versionHistory.loading', 'Ładowanie...')}</p>
+          <p className="text-xs text-c-text-muted">
+            {t('excele.versionHistory.loading', 'Ładowanie...')}
+          </p>
         )}
         {loadState === 'error' && (
           <p className="text-xs text-c-danger">
@@ -132,7 +139,10 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
         )}
         {loadState === 'ready' && versions.length === 0 && (
           <p className="text-xs text-c-text-muted">
-            {t('excele.versionHistory.empty', 'Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.')}
+            {t(
+              'excele.versionHistory.empty',
+              'Brak zapisanej historii — edytuj komórkę, aby utworzyć pierwszą wersję.'
+            )}
           </p>
         )}
 

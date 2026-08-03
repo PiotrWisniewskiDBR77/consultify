@@ -26,7 +26,10 @@ import { useTranslation } from 'react-i18next';
 
 import { actionPillClass } from '@/components/shared/PreviewPane/previewStyles';
 
-import decisionWorkspaceApi, { type DecideInput, readDecisionApiError } from './decisionWorkspaceApi';
+import decisionWorkspaceApi, {
+  type DecideInput,
+  readDecisionApiError,
+} from './decisionWorkspaceApi';
 import type { DecideTargetStatus, DecisionDetailDTO, WorkspaceUserRef } from './types';
 import { formatDateTime, resolveUserName } from './workspaceHelpers';
 
@@ -159,9 +162,13 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
           );
         } else {
           setSubmitError(
-            t('myWork.decisionWorkspace.decide.genericFailure', 'Could not record this decision. {{msg}}', {
-              msg: apiErr.data?.error || apiErr.message || '',
-            })
+            t(
+              'myWork.decisionWorkspace.decide.genericFailure',
+              'Could not record this decision. {{msg}}',
+              {
+                msg: apiErr.data?.error || apiErr.message || '',
+              }
+            )
           );
         }
         // Rationale/notes drafts intentionally kept so the user can retry.
@@ -253,7 +260,10 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
         <button
           onClick={() => void submit('APPROVED')}
           disabled={submittingStatus !== null}
-          className={actionPillClass('emerald', 'flex-1 disabled:opacity-50 disabled:cursor-not-allowed')}
+          className={actionPillClass(
+            'emerald',
+            'flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
         >
           <Check size={13} />
           {t('myWork.decisionWorkspace.decide.approve', 'Approve')}
@@ -261,7 +271,10 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
         <button
           onClick={() => void submit('REJECTED')}
           disabled={submittingStatus !== null}
-          className={actionPillClass('red', 'flex-1 disabled:opacity-50 disabled:cursor-not-allowed')}
+          className={actionPillClass(
+            'red',
+            'flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
         >
           <X size={13} />
           {t('myWork.decisionWorkspace.decide.reject', 'Reject')}
@@ -269,7 +282,10 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
         <button
           onClick={() => void submit('RETURNED_FOR_CLARIFICATION')}
           disabled={submittingStatus !== null}
-          className={actionPillClass('neutral', 'flex-1 disabled:opacity-50 disabled:cursor-not-allowed')}
+          className={actionPillClass(
+            'neutral',
+            'flex-1 disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
         >
           <MessageCircleQuestion size={13} />
           {t('myWork.decisionWorkspace.decide.returnForClarification', 'Return for clarification')}

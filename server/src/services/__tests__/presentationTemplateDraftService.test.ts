@@ -20,10 +20,10 @@ vi.mock('../aiService.js', () => ({
 
 import { generateChatResponse } from '../aiService.js';
 import {
-  draftPresentationTemplate,
-  refinePresentationTemplateWithLlm,
   type DraftedPresentationTemplate,
+  draftPresentationTemplate,
   type PresentationTemplateDraftInput,
+  refinePresentationTemplateWithLlm,
 } from '../presentationTemplateDraftService.js';
 
 const generateChatResponseMock = vi.mocked(generateChatResponse);
@@ -123,7 +123,10 @@ describe('refinePresentationTemplateWithLlm — content hints (additive, 2026-07
   it('omits contentHints (undefined) when the LLM does not supply any — never fails the refinement', async () => {
     const { template, input } = deterministicTemplate();
     const payload = {
-      slides: template.outlineJson.map((s) => ({ intent: s.intent, title: `${s.title} (refined)` })),
+      slides: template.outlineJson.map((s) => ({
+        intent: s.intent,
+        title: `${s.title} (refined)`,
+      })),
     };
     mockLlmContent(JSON.stringify(payload));
     const refined = await refinePresentationTemplateWithLlm(template, input);
@@ -211,7 +214,10 @@ describe('refinePresentationTemplateWithLlm — structural briefing fields (addi
   it('omits keyMessage/dataNeeded/suggestedVisual (undefined) when the LLM does not supply them', async () => {
     const { template, input } = deterministicTemplate();
     const payload = {
-      slides: template.outlineJson.map((s) => ({ intent: s.intent, title: `${s.title} (refined)` })),
+      slides: template.outlineJson.map((s) => ({
+        intent: s.intent,
+        title: `${s.title} (refined)`,
+      })),
     };
     mockLlmContent(JSON.stringify(payload));
     const refined = await refinePresentationTemplateWithLlm(template, input);

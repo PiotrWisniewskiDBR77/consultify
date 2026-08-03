@@ -21,27 +21,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { getAtelierFinanceCanonicalIds } from '../../services/demo/atelierFinanceSeed.js';
-import {
-  assertApprovedDemoTarget,
-  assertManifestIntegrity,
-  computeRowFingerprint,
-  resolveRollbackEntries,
-  signManifest,
-  FIN005_APPROVED_DEMO_TARGETS,
-  type CanonicalFixtureReadback,
-  type CleanupManifest,
-  type DependencyGraph,
-  type FinanceDemoClassification,
-  type QuarantineOrganizationRow,
-} from '../../services/demo/financeDemoCoherencePolicy.js';
-import {
-  resolveManifestSigningKey,
-  MANIFEST_HMAC_KEY_ENV,
-  MANIFEST_HMAC_KEY_ID_ENV,
-} from '../../services/demo/financeDemoManifestSignature.js';
 import {
   buildReport,
+  type CleanupGateway,
+  type CleanupTransaction,
   escapeLike,
   executeQuarantineRun,
   executeRollbackRun,
@@ -50,12 +33,29 @@ import {
   parseConnectionFingerprint,
   readManifest,
   resolveDeclaredTarget,
+  SCOPED_TABLE_NAMES,
   sqlLiteral,
   writeJsonFileAtomically,
-  SCOPED_TABLE_NAMES,
-  type CleanupGateway,
-  type CleanupTransaction,
 } from '../../../scripts/finance-demo-coherence-cleanup.js';
+import { getAtelierFinanceCanonicalIds } from '../../services/demo/atelierFinanceSeed.js';
+import {
+  assertApprovedDemoTarget,
+  assertManifestIntegrity,
+  type CanonicalFixtureReadback,
+  type CleanupManifest,
+  computeRowFingerprint,
+  type DependencyGraph,
+  FIN005_APPROVED_DEMO_TARGETS,
+  type FinanceDemoClassification,
+  type QuarantineOrganizationRow,
+  resolveRollbackEntries,
+  signManifest,
+} from '../../services/demo/financeDemoCoherencePolicy.js';
+import {
+  MANIFEST_HMAC_KEY_ENV,
+  MANIFEST_HMAC_KEY_ID_ENV,
+  resolveManifestSigningKey,
+} from '../../services/demo/financeDemoManifestSignature.js';
 
 const ORG = 'demo-org';
 const CANONICAL = getAtelierFinanceCanonicalIds(ORG);
@@ -641,7 +641,9 @@ describe('executeQuarantineRun', () => {
   it('refuses when the tenant changed since the dry run', async () => {
     const db = seedDb();
     db.table('financial_models').delete('uuid-copy-1');
-    await expect(executeQuarantineRun(runParams(db))).rejects.toThrow(/expected to lock 2 row\(s\)/);
+    await expect(executeQuarantineRun(runParams(db))).rejects.toThrow(
+      /expected to lock 2 row\(s\)/
+    );
   });
 
   // -------------------------------------------------------------------------
@@ -665,9 +667,9 @@ describe('executeQuarantineRun', () => {
         const preconditionFixture = preconditionSnapshot(db); // complete, verified
         mutate(db);
 
-        await expect(
-          executeQuarantineRun(runParams(db, { preconditionFixture }))
-        ).rejects.toThrow(expected);
+        await expect(executeQuarantineRun(runParams(db, { preconditionFixture }))).rejects.toThrow(
+          expected
+        );
 
         // NOTHING moved…
         expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(ORG);
@@ -750,8 +752,9 @@ describe('executeQuarantineRun', () => {
       // Rolled back: nothing moved, and the demotion is undone with it.
       expect(db.table('financial_statements').get('uuid-dbr77-pl')!.organization_id).toBe(ORG);
       expect(db.table('financial_models').get('uuid-copy-1')!.organization_id).toBe(ORG);
-      expect(db.table('financial_models').get(`${ORG}--financial-model--m16-seed`)!.organization_id)
-        .toBe(ORG);
+      expect(
+        db.table('financial_models').get(`${ORG}--financial-model--m16-seed`)!.organization_id
+      ).toBe(ORG);
       expect(db.table('financial_statements').get(statementId)!.readiness_status).toBe('ready');
       expect(readManifest(manifestPath).status).toBe('PREPARED');
     });
@@ -1121,7 +1124,9 @@ describe('CLI surface', () => {
     expect(() =>
       assertApprovedDemoTarget({
         declared: { ...approved },
-        actual: parseConnectionFingerprint(`postgresql://u:p@${approved.host}/${approved.database}`),
+        actual: parseConnectionFingerprint(
+          `postgresql://u:p@${approved.host}/${approved.database}`
+        ),
       })
     ).toThrow(/carries no port/i);
 

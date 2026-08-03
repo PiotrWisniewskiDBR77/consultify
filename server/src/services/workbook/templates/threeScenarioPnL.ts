@@ -235,11 +235,7 @@ function buildAssumptionsSheet(
   const inputFill = 'FFF6DF'; // soft amber — classic "input" convention
   const pctFmt = '0.0%';
   const curFmt =
-    currencyLabel === 'PLN'
-      ? '# ##0" zł"'
-      : currencyLabel === 'EUR'
-        ? '€#,##0'
-        : '$#,##0';
+    currencyLabel === 'PLN' ? '# ##0" zł"' : currencyLabel === 'EUR' ? '€#,##0' : '$#,##0';
 
   const percentValidation: DataValidation = {
     type: 'decimal',
@@ -397,9 +393,7 @@ function scenFromCol(col: string): ScenKey {
 function buildPnLSheet(startYear: number, currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
   const yearLabels = [startYear, startYear + 1, startYear + 2];
 
-  const columns: ColumnDef[] = [
-    { key: 'pozycja', header: 'Pozycja', type: 'text', width: 32 },
-  ];
+  const columns: ColumnDef[] = [{ key: 'pozycja', header: 'Pozycja', type: 'text', width: 32 }];
   for (const scen of SCEN_ORDER) {
     yearLabels.forEach((yr, yi) => {
       columns.push({
@@ -605,9 +599,7 @@ function buildComparisonSheet(startYear: number, currencyHint: 'pln' | 'eur' | '
 // Top-level builder
 // ---------------------------------------------------------------------------
 
-export function buildThreeScenarioPnLSchema(
-  params: ThreeScenarioPnLParams = {}
-): WorkbookSchema {
+export function buildThreeScenarioPnLSchema(params: ThreeScenarioPnLParams = {}): WorkbookSchema {
   const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
   const startYear =
     Number.isFinite(params.startYear) && (params.startYear as number) > 0

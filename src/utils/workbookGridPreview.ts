@@ -62,9 +62,7 @@ export function buildWorkbookGridSheets(sheets: unknown): WorkbookGridSheet[] {
   return (sheets as RawSheet[]).map((sheet, sheetIndex) => {
     const name = sheet?.name?.trim() || `Sheet ${sheetIndex + 1}`;
     const cols = Array.isArray(sheet?.columns) ? sheet.columns : [];
-    const headers = cols.map(
-      (c, i) => c?.header?.trim() || c?.key?.trim() || `Col ${i + 1}`
-    );
+    const headers = cols.map((c, i) => c?.header?.trim() || c?.key?.trim() || `Col ${i + 1}`);
 
     const rows = Array.isArray(sheet?.rows)
       ? sheet.rows.map((row) => {

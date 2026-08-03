@@ -179,23 +179,23 @@ export const DEFAULT_FLAGS: FeatureFlag[] = [
     description:
       'ASM-001A: expands AssessmentHub from 3 tab ids (list/reports/initiatives) to 5 stable, ' +
       'URL-synced tab ids — library (new: published-definition picker + Start), processes ' +
-      "(renamed from list, identical content/columns/preview), outputs (new placeholder with " +
-      "EmptyState), reports (unchanged), initiatives (unchanged). Library becomes the default " +
-      "tab and `?tab=` becomes the source of truth for the active tab (survives refresh/back/" +
-      "forward, deep-linkable); legacy/unknown `?tab=` values (including the old `list`) " +
-      "resolve to processes. defaultValue flipped true 2026-08-01 (ASM-001A fix round): " +
-      "screenshot acceptance gate cleared, so this is now the live default for every " +
-      "authenticated user. Kill-switch is redeploy-based — flip defaultValue back to false " +
+      '(renamed from list, identical content/columns/preview), outputs (new placeholder with ' +
+      'EmptyState), reports (unchanged), initiatives (unchanged). Library becomes the default ' +
+      'tab and `?tab=` becomes the source of truth for the active tab (survives refresh/back/' +
+      'forward, deep-linkable); legacy/unknown `?tab=` values (including the old `list`) ' +
+      'resolve to processes. defaultValue flipped true 2026-08-01 (ASM-001A fix round): ' +
+      'screenshot acceptance gate cleared, so this is now the live default for every ' +
+      'authenticated user. Kill-switch is redeploy-based — flip defaultValue back to false ' +
       "and redeploy (Harvard/wdrozenie-100/_RUNBOOK_COFANIA.md, 'dramat wizualny → flaga OFF'). " +
-      "A live remote override also exists and takes priority over defaultValue without a " +
-      "redeploy: GET {API_URL}/feature-flags/runtime (server/src/routes/featureFlags.routes.ts) " +
-      "is already called by every authenticated session (useFeatureFlags.tsx fetchRemoteFlags) " +
+      'A live remote override also exists and takes priority over defaultValue without a ' +
+      'redeploy: GET {API_URL}/feature-flags/runtime (server/src/routes/featureFlags.routes.ts) ' +
+      'is already called by every authenticated session (useFeatureFlags.tsx fetchRemoteFlags) ' +
       "and, if a `feature_flags` row with flag_key='assessmentFiveSurfacesV1' exists, its " +
-      "`enabled` value overrides defaultValue — but that row must be created via a direct " +
-      "POST to /api/feature-flags (exact camelCase flag_key), NOT via the SuperAdmin " +
-      "EnterpriseFeatureFlags UI, which lowercases/underscores the Flag Key input and would " +
+      '`enabled` value overrides defaultValue — but that row must be created via a direct ' +
+      'POST to /api/feature-flags (exact camelCase flag_key), NOT via the SuperAdmin ' +
+      'EnterpriseFeatureFlags UI, which lowercases/underscores the Flag Key input and would ' +
       "create a non-matching key. OFF (legacy path, still fully supported) = today's exact " +
-      "behavior — 3 tabs, `list` default, zero `?tab=` reads/writes.",
+      'behavior — 3 tabs, `list` default, zero `?tab=` reads/writes.',
     defaultValue: true,
     category: 'experimental',
     allowLocalOverride: true,

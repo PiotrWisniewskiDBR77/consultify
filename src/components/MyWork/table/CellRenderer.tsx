@@ -408,12 +408,30 @@ const WrappedRollupCell: React.FC<CellProps> = ({ value, onChange, locked }) => 
   <RollupCell value={value} onChange={onChange} locked={locked} />
 );
 const WrappedEmojiCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
-  <EmojiCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
+  <EmojiCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    column={column}
+    rowLabel={rowLabel}
+  />
 );
 const WrappedColorCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
-  <ColorCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
+  <ColorCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    column={column}
+    rowLabel={rowLabel}
+  />
 );
-const WrappedCurrencyCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
+const WrappedCurrencyCell: React.FC<CellProps> = ({
+  column,
+  value,
+  onChange,
+  locked,
+  rowLabel,
+}) => (
   <CurrencyCell
     value={value}
     onChange={onChange}
@@ -423,10 +441,22 @@ const WrappedCurrencyCell: React.FC<CellProps> = ({ column, value, onChange, loc
   />
 );
 const WrappedPhoneCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
-  <PhoneCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
+  <PhoneCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    column={column}
+    rowLabel={rowLabel}
+  />
 );
 const WrappedEmailCell: React.FC<CellProps> = ({ column, value, onChange, locked, rowLabel }) => (
-  <EmailCell value={value} onChange={onChange} locked={locked} column={column} rowLabel={rowLabel} />
+  <EmailCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    column={column}
+    rowLabel={rowLabel}
+  />
 );
 
 // ── Status Cell (semantic status with fixed states) ─────────────────────────

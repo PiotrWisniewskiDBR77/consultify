@@ -59,7 +59,12 @@ vi.mock('../../../utils/Logger.js', () => ({
 // ---------------------------------------------------------------------------
 
 const PLAN_JSON = JSON.stringify({ domain: 'finance', sheets: [], total_complexity: 'low' });
-const CONFIRM_JSON = JSON.stringify({ approved: true, confidence: 0.9, issues: [], missing_elements: [] });
+const CONFIRM_JSON = JSON.stringify({
+  approved: true,
+  confidence: 0.9,
+  issues: [],
+  missing_elements: [],
+});
 const REVIEW_JSON = JSON.stringify({
   scores: {},
   overall_score: 4.5,
@@ -87,7 +92,8 @@ function routeByPrompt(sys: string, opts: { templateMatch: string }): string {
   if (sys.includes('PLAN the structure')) return PLAN_JSON;
   if (sys.includes('quality assurance reviewer for spreadsheet plans')) return CONFIRM_JSON;
   if (sys.includes('senior Excel quality reviewer')) return REVIEW_JSON;
-  if (sys.includes('You receive a PLAN and must produce')) return JSON.stringify(TRIVIAL_FREE_FORM_SCHEMA);
+  if (sys.includes('You receive a PLAN and must produce'))
+    return JSON.stringify(TRIVIAL_FREE_FORM_SCHEMA);
   return '{}';
 }
 
@@ -99,20 +105,40 @@ const baseParams = { userId: 'u1', organizationId: 'org1' };
 
 const POSITIVE_CASES: Array<{ templateId: string; lang: 'pl' | 'en'; prompt: string }> = [
   // threeScenarioPnL
-  { templateId: 'threeScenarioPnL', lang: 'pl', prompt: 'Zrób model 3 scenariuszy dla mojej spółki' },
-  { templateId: 'threeScenarioPnL', lang: 'pl', prompt: 'Potrzebuję rachunku wyników w wariancie Base/Bull/Bear' },
+  {
+    templateId: 'threeScenarioPnL',
+    lang: 'pl',
+    prompt: 'Zrób model 3 scenariuszy dla mojej spółki',
+  },
+  {
+    templateId: 'threeScenarioPnL',
+    lang: 'pl',
+    prompt: 'Potrzebuję rachunku wyników w wariancie Base/Bull/Bear',
+  },
   { templateId: 'threeScenarioPnL', lang: 'en', prompt: 'Build a 3 scenario financial model' },
-  { templateId: 'threeScenarioPnL', lang: 'en', prompt: 'I need a P&L with Base Bull Bear scenarios' },
+  {
+    templateId: 'threeScenarioPnL',
+    lang: 'en',
+    prompt: 'I need a P&L with Base Bull Bear scenarios',
+  },
 
   // operatingBudget
-  { templateId: 'operatingBudget', lang: 'pl', prompt: 'Przygotuj budżet operacyjny na przyszły rok' },
+  {
+    templateId: 'operatingBudget',
+    lang: 'pl',
+    prompt: 'Przygotuj budżet operacyjny na przyszły rok',
+  },
   { templateId: 'operatingBudget', lang: 'pl', prompt: 'Chcę roczny budżet operacyjny firmy' },
   { templateId: 'operatingBudget', lang: 'en', prompt: 'Create an operating budget for next year' },
   { templateId: 'operatingBudget', lang: 'en', prompt: 'I need a 12-month operating budget' },
 
   // dcfValuation
   { templateId: 'dcfValuation', lang: 'pl', prompt: 'Zrób wycenę DCF spółki' },
-  { templateId: 'dcfValuation', lang: 'pl', prompt: 'Potrzebuję wyceny metodą zdyskontowanych przepływów pieniężnych' },
+  {
+    templateId: 'dcfValuation',
+    lang: 'pl',
+    prompt: 'Potrzebuję wyceny metodą zdyskontowanych przepływów pieniężnych',
+  },
   { templateId: 'dcfValuation', lang: 'en', prompt: 'Build a DCF valuation model' },
   { templateId: 'dcfValuation', lang: 'en', prompt: 'I need a discounted cash flow valuation' },
 
@@ -123,7 +149,11 @@ const POSITIVE_CASES: Array<{ templateId: string; lang: 'pl' | 'en'; prompt: str
   { templateId: 'breakEven', lang: 'en', prompt: 'I need a BEP analysis' },
 
   // cashflow12m
-  { templateId: 'cashflow12m', lang: 'pl', prompt: 'Zrób prognozę przepływów pieniężnych na 12 miesięcy' },
+  {
+    templateId: 'cashflow12m',
+    lang: 'pl',
+    prompt: 'Zrób prognozę przepływów pieniężnych na 12 miesięcy',
+  },
   { templateId: 'cashflow12m', lang: 'pl', prompt: 'Potrzebuję cashflow na najbliższy rok' },
   { templateId: 'cashflow12m', lang: 'en', prompt: 'Build a 12-month cash flow forecast' },
   { templateId: 'cashflow12m', lang: 'en', prompt: 'I need a cashflow projection for the year' },
@@ -136,7 +166,11 @@ const POSITIVE_CASES: Array<{ templateId: string; lang: 'pl' | 'en'; prompt: str
 
   // loanAmortization
   { templateId: 'loanAmortization', lang: 'pl', prompt: 'Zrób harmonogram spłaty kredytu' },
-  { templateId: 'loanAmortization', lang: 'pl', prompt: 'Potrzebuję amortyzacji kredytu inwestycyjnego' },
+  {
+    templateId: 'loanAmortization',
+    lang: 'pl',
+    prompt: 'Potrzebuję amortyzacji kredytu inwestycyjnego',
+  },
   { templateId: 'loanAmortization', lang: 'en', prompt: 'Build a loan amortization table' },
   { templateId: 'loanAmortization', lang: 'en', prompt: 'I need a loan amortization schedule' },
 ];

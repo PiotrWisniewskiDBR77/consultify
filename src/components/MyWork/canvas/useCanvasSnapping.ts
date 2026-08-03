@@ -237,9 +237,7 @@ function applySnap(
  * Only runs work during a drag; reads live nodes from the ReactFlow store
  * (already the current viewport's graph) and corrects only the dragged node.
  */
-export function useCanvasSnapping(
-  opts: UseCanvasSnappingOptions = {}
-): UseCanvasSnappingResult {
+export function useCanvasSnapping(opts: UseCanvasSnappingOptions = {}): UseCanvasSnappingResult {
   const { grid = 8, threshold = 6, enabled = true, gridEnabled = true } = opts;
   const rf = useReactFlow();
 

@@ -280,7 +280,8 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       const attempt = (retriesLeft: number) => {
         let done = false;
         try {
-          done = fitView({ nodes: fitNodes, padding: REVEAL_PADDING, duration: 300, maxZoom }) === true;
+          done =
+            fitView({ nodes: fitNodes, padding: REVEAL_PADDING, duration: 300, maxZoom }) === true;
         } catch {
           // Płótno w trakcie demontażu — nie ponawiaj.
           done = true;

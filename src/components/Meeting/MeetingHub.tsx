@@ -16,15 +16,10 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  type FilterChip,
-  type ModuleTab,
-  type ViewMode,
-} from '@/components/shared/ModuleHub';
+import { type FilterChip, type ModuleTab, type ViewMode } from '@/components/shared/ModuleHub';
 import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { Menu3Row } from '@/components/shared/ModuleHub/Menu3Row';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -40,6 +35,7 @@ import {
   StandardTable,
   type TableColumn as StandardTableColumn,
 } from '@/components/standard';
+import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip, StatusChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';

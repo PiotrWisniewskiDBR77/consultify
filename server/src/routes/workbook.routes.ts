@@ -9,7 +9,6 @@
  */
 
 import { createHash } from 'crypto';
-
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import { v4 as uuidv4 } from 'uuid';
@@ -190,13 +189,17 @@ function buildWorkbookGrounding(input: {
 
   if (Array.isArray(evidenceRefs) && evidenceRefs.length) {
     const refs = evidenceRefs
-      .map((e) => (typeof e === 'string' ? e : (() => {
-        try {
-          return JSON.stringify(e);
-        } catch {
-          return '';
-        }
-      })()))
+      .map((e) =>
+        typeof e === 'string'
+          ? e
+          : (() => {
+              try {
+                return JSON.stringify(e);
+              } catch {
+                return '';
+              }
+            })()
+      )
       .filter(Boolean);
     if (refs.length) parts.push(`Dowody: ${refs.join('; ')}`);
   }
@@ -283,8 +286,7 @@ async function hydrateGroundingFromRun(params: {
     const goal = typeof executionRun?.goal === 'string' ? executionRun.goal.trim() : '';
     if (!goal) return undefined;
 
-    const titleHint =
-      typeof run.plan?.titleHint === 'string' ? run.plan.titleHint.trim() : '';
+    const titleHint = typeof run.plan?.titleHint === 'string' ? run.plan.titleHint.trim() : '';
     const heading = titleHint
       ? `Brief z sesji (${titleHint}) — podstawa liczb, nie zaprzeczaj mu:`
       : 'Brief z sesji — podstawa liczb, nie zaprzeczaj mu:';
@@ -627,18 +629,19 @@ async function finalizeGeneratedWorkbook(params: {
       );
       artifactId = registered?.artifactId ?? null;
       if (artifactId) {
-        logger.info(
-          `[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`
-        );
+        logger.info(`[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`);
       }
     }
   } catch (err) {
-    logger.error('[WorkbookRoutes] Failed to register workbook in artifact registry after retries', {
-      workbookId: result.id,
-      organizationId: user.organizationId,
-      artifactId,
-      message: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[WorkbookRoutes] Failed to register workbook in artifact registry after retries',
+      {
+        workbookId: result.id,
+        organizationId: user.organizationId,
+        artifactId,
+        message: err instanceof Error ? err.message : String(err),
+      }
+    );
   }
 
   // MAT-010 lineage hook (fail-open) — head of the lineage chain. Placed in
@@ -864,12 +867,7 @@ router.post(
     }
 
     const { id } = req.params;
-    const {
-      params: rawParams,
-      projectId,
-      sourceInitiativeId,
-      conversationId,
-    } = req.body || {};
+    const { params: rawParams, projectId, sourceInitiativeId, conversationId } = req.body || {};
 
     const { getWorkbookTemplate, buildTemplateParamsSchema } =
       await import('../services/workbook/templates/index.js');
@@ -885,9 +883,7 @@ router.post(
     // Validate the flat param map against the template's descriptor-derived zod
     // schema (unknown keys stripped, out-of-range/typed values rejected at the edge).
     const schemaZod = buildTemplateParamsSchema(entry);
-    const parsed = schemaZod.safeParse(
-      rawParams && typeof rawParams === 'object' ? rawParams : {}
-    );
+    const parsed = schemaZod.safeParse(rawParams && typeof rawParams === 'object' ? rawParams : {});
     if (!parsed.success) {
       res.status(400).json({
         error: 'Invalid template parameters',
@@ -922,7 +918,10 @@ router.post(
       logger.error('[WorkbookRoutes] Template build failed:', err);
       res.status(500).json({
         error: 'Failed to build workbook from template',
-        classified: createP23Error('export_failed', err instanceof Error ? err.message : String(err)),
+        classified: createP23Error(
+          'export_failed',
+          err instanceof Error ? err.message : String(err)
+        ),
       });
       return;
     }
@@ -1054,9 +1053,7 @@ router.post(
     // Register in V8 artifact registry (Outputs Library), jak w `/generate`.
     let artifactId: string | null = null;
     try {
-      const { registerArtifactOrigin } = await import(
-        '../services/v8/artifactRegistryService.js'
-      );
+      const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
       const registered = await registerArtifactOrigin({
         organizationId: user.organizationId,
         outputType: 'sheet',
@@ -1094,7 +1091,10 @@ router.post(
       eventType: 'created',
       actorUserId: user.id,
       titleSnapshot: title,
-      idempotencyKey: deriveCreatedEventIdempotencyKey({ artifactKind: 'workbook', sourceRecordId: id }),
+      idempotencyKey: deriveCreatedEventIdempotencyKey({
+        artifactKind: 'workbook',
+        sourceRecordId: id,
+      }),
       sourceContext: { source: 'workbook_blank_manual', sheetCount: schema.sheets.length },
       detail: { artifactId },
     });
@@ -1402,8 +1402,7 @@ router.post(
     }
 
     const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
-    const title =
-      rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
+    const title = rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
     const schema: WorkbookSchema = { ...sourceSchema, title };
 
     const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
@@ -1563,7 +1562,10 @@ router.patch(
     if (!row?.schema_json) {
       res.status(404).json({
         error: 'Workbook not found or expired',
-        classified: createP23Error('access_denied', `Workbook ${id} not found for this organization`),
+        classified: createP23Error(
+          'access_denied',
+          `Workbook ${id} not found for this organization`
+        ),
       });
       return;
     }
@@ -1948,7 +1950,11 @@ router.post(
       action: 'checkpoint',
       resourceType: 'generated_workbook',
       resourceId: id,
-      metadata: { organizationId: user.organizationId, checkpointedFromVersion: currentVersion, newVersion: nextVersion },
+      metadata: {
+        organizationId: user.organizationId,
+        checkpointedFromVersion: currentVersion,
+        newVersion: nextVersion,
+      },
     });
 
     // MAT-010 lineage hook. `...Tracked` + `respondIfLineageLost` (Codex
@@ -2147,7 +2153,11 @@ router.post(
     });
     if (respondIfLineageLost(res, restoreOutcome)) return;
 
-    res.json({ ok: true, version: outcome.newVersion, restoredFromVersion: outcome.restoredFromVersion });
+    res.json({
+      ok: true,
+      version: outcome.newVersion,
+      restoredFromVersion: outcome.restoredFromVersion,
+    });
   })
 );
 
@@ -2177,7 +2187,11 @@ router.post(
         : 7;
     await ensureWorkbookSchema();
 
-    const before = await queryHelpers.queryOne<{ id: string; title: string; share_token: string | null }>(
+    const before = await queryHelpers.queryOne<{
+      id: string;
+      title: string;
+      share_token: string | null;
+    }>(
       `SELECT id, title, share_token FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -2253,7 +2267,11 @@ router.delete(
     const { id } = req.params;
     await ensureWorkbookSchema();
 
-    const before = await queryHelpers.queryOne<{ id: string; title: string; share_token: string | null }>(
+    const before = await queryHelpers.queryOne<{
+      id: string;
+      title: string;
+      share_token: string | null;
+    }>(
       `SELECT id, title, share_token FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );

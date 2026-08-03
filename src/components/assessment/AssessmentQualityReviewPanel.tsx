@@ -7,16 +7,16 @@
 import { AlertTriangle, CheckCircle2, Loader2, RotateCcw, ShieldCheck } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { V8AssessmentApi } from '@/services/api/v8/assessment';
+import type { TableColumn, TableRow } from '@/components/standard/StandardTable';
+import { StandardTable } from '@/components/standard/StandardTable';
 import type {
   V8AssessmentAcceptedReport,
   V8AssessmentDerivedScoring,
   V8AssessmentEvidence,
   V8AssessmentReviewRecord,
 } from '@/services/api/v8/assessment';
+import { V8AssessmentApi } from '@/services/api/v8/assessment';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
-import { StandardTable } from '@/components/standard/StandardTable';
-import type { TableColumn, TableRow } from '@/components/standard/StandardTable';
 
 interface AssessmentQualityReviewPanelProps {
   assessmentId: string;

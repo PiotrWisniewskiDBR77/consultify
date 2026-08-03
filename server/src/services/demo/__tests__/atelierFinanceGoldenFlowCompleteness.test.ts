@@ -200,7 +200,9 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     // A rate that deliberately differs from ATELIER_CANONICAL_DISCOUNT_RATE_PCT
     // (10) — if the appraisal used the constant instead of assumptions_json,
     // input.discountRatePct below would read 10, not 7.
-    dbGet.mockResolvedValue(atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: 7, hurdleRatePct: 6 }));
+    dbGet.mockResolvedValue(
+      atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: 7, hurdleRatePct: 6 })
+    );
     dbAll.mockResolvedValue(ATELIER_EVENTS);
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -243,7 +245,9 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
 
       const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
 
-      expect(result.goldenFlowComplete, `discountRatePct = ${JSON.stringify(badValue)}`).toBe(false);
+      expect(result.goldenFlowComplete, `discountRatePct = ${JSON.stringify(badValue)}`).toBe(
+        false
+      );
       expect(result.reason, `discountRatePct = ${JSON.stringify(badValue)}`).toMatch(
         /discountRatePct is missing or not a finite number/
       );
@@ -256,7 +260,9 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     // "computeModel() failed" branch instead of exercising rate resolution),
     // then again by resolveAtelierAppraisalRates()'s getModel() — THAT second
     // call is the one this test fails.
-    dbGet.mockResolvedValueOnce(atelierModelRow()).mockRejectedValueOnce(new Error('pool exhausted'));
+    dbGet
+      .mockResolvedValueOnce(atelierModelRow())
+      .mockRejectedValueOnce(new Error('pool exhausted'));
     dbAll.mockResolvedValue(ATELIER_EVENTS);
 
     const result = await verifyAtelierFinanceGoldenFlowComplete(ORG_ID, 'complete');
@@ -294,7 +300,11 @@ describe('verifyAtelierFinanceGoldenFlowComplete', () => {
     // się jawnie odczytanemu discountRatePct" — only discountRatePct itself
     // must never be defaulted/invented.
     dbGet.mockResolvedValue(
-      atelierModelRow({ ...ATELIER_MODEL_ASSUMPTIONS, discountRatePct: 9, hurdleRatePct: undefined })
+      atelierModelRow({
+        ...ATELIER_MODEL_ASSUMPTIONS,
+        discountRatePct: 9,
+        hurdleRatePct: undefined,
+      })
     );
     dbAll.mockResolvedValue(ATELIER_EVENTS);
 

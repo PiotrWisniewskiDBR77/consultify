@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 
 import type { ArtifactContentEnvelopeV1 } from '../../types/artifactContent.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
-import { projectArtifactToMarkdown } from './contentProjectionService.js';
 import type { ArtifactContentAdapter } from './artifactContentResolverService.js';
+import { projectArtifactToMarkdown } from './contentProjectionService.js';
 
 interface PresentationRow {
   id: string;
@@ -24,11 +24,13 @@ export const presentationArtifactContentAdapter: ArtifactContentAdapter = {
     const deck = await dbGet<PresentationRow>(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [params.originRecordId, params.organizationId],
-      { fallback: true },
+      { fallback: true }
     );
     if (!deck) return null;
 
-    const raw = String(deck.content_json_native || deck.deck_json || deck.outline_json || '').trim();
+    const raw = String(
+      deck.content_json_native || deck.deck_json || deck.outline_json || ''
+    ).trim();
     const revisionBase = `${deck.version ?? 'legacy'}:${deck.updated_at || 'legacy'}`;
     if (!raw) {
       const originRevision = `presentation:${revisionBase}:empty`;

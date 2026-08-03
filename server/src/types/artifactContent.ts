@@ -15,8 +15,7 @@ export const ArtifactProjectionCompletenessValues = ['full', 'truncated'] as con
 export type ArtifactCanonicalFormat = (typeof ArtifactCanonicalFormatValues)[number];
 export type ArtifactCanonicalKind = (typeof ArtifactCanonicalKindValues)[number];
 export type ArtifactProjectionStatus = (typeof ArtifactProjectionStatusValues)[number];
-export type ArtifactProjectionCompleteness =
-  (typeof ArtifactProjectionCompletenessValues)[number];
+export type ArtifactProjectionCompleteness = (typeof ArtifactProjectionCompletenessValues)[number];
 
 export const ArtifactContentProjectionV1Schema = z.object({
   status: z.enum(ArtifactProjectionStatusValues),
@@ -66,11 +65,19 @@ function optionalString(value: unknown): string | null {
 function inferCanonicalKind(value: unknown): ArtifactCanonicalKind {
   const normalized = String(value || '').toLowerCase();
   if (normalized.includes('presentation') || normalized.includes('deck')) return 'presentation';
-  if (normalized.includes('sheet') || normalized.includes('table') || normalized.includes('workbook')) {
+  if (
+    normalized.includes('sheet') ||
+    normalized.includes('table') ||
+    normalized.includes('workbook')
+  ) {
     return 'sheet';
   }
   if (normalized.includes('canvas') || normalized.includes('whiteboard')) return 'canvas';
-  if (normalized.includes('document') || normalized.includes('report') || normalized.includes('markdown')) {
+  if (
+    normalized.includes('document') ||
+    normalized.includes('report') ||
+    normalized.includes('markdown')
+  ) {
     return 'document';
   }
   return 'unknown';
@@ -89,25 +96,22 @@ export function normalizeArtifactContentEnvelope(input: unknown): ArtifactConten
   const canonicalFormat: ArtifactCanonicalFormat =
     source.canonicalFormat === 'json' || source.contentJson !== undefined ? 'json' : 'markdown';
   const canonicalKind = ArtifactCanonicalKindValues.includes(
-    source.canonicalKind as ArtifactCanonicalKind,
+    source.canonicalKind as ArtifactCanonicalKind
   )
     ? (source.canonicalKind as ArtifactCanonicalKind)
     : inferCanonicalKind(source.artifactType);
 
-  const originRevision = optionalString(
-    provenanceSource.originRevision ?? source.originRevision,
-  );
+  const originRevision = optionalString(provenanceSource.originRevision ?? source.originRevision);
   const originHash = optionalString(provenanceSource.originHash ?? source.originHash);
   const projectedFromRevision = optionalString(
-    projectionSource.projectedFromRevision ?? source.projectedFromRevision,
+    projectionSource.projectedFromRevision ?? source.projectedFromRevision
   );
   const projectedFromHash = optionalString(
-    projectionSource.projectedFromHash ?? source.projectedFromHash,
+    projectionSource.projectedFromHash ?? source.projectedFromHash
   );
   const revisionMatches = Boolean(originRevision && projectedFromRevision === originRevision);
   const hashMatches = Boolean(originHash && projectedFromHash === originHash);
-  const requestedStatus =
-    projectionSource.status ?? source.markdownProjectionStatus;
+  const requestedStatus = projectionSource.status ?? source.markdownProjectionStatus;
 
   let status: ArtifactProjectionStatus;
   if (!contentMd.trim()) {
@@ -120,15 +124,13 @@ export function normalizeArtifactContentEnvelope(input: unknown): ArtifactConten
     status = 'synced';
   }
 
-  const projectedAt = optionalString(
-    projectionSource.projectedAt ?? source.markdownProjectedAt,
-  );
-  const error = status === 'failed'
-    ? optionalString(projectionSource.error ?? source.projectionError) || 'Projection failed'
-    : null;
+  const projectedAt = optionalString(projectionSource.projectedAt ?? source.markdownProjectedAt);
+  const error =
+    status === 'failed'
+      ? optionalString(projectionSource.error ?? source.projectionError) || 'Projection failed'
+      : null;
   const completeness = normalizeCompleteness(projectionSource.completeness, contentMd);
-  const artifactType =
-    optionalString(source.artifactType) || canonicalKind;
+  const artifactType = optionalString(source.artifactType) || canonicalKind;
 
   return ArtifactContentEnvelopeV1Schema.parse({
     envelopeVersion: ArtifactContentEnvelopeVersion,
@@ -160,7 +162,7 @@ export function normalizeArtifactContentEnvelope(input: unknown): ArtifactConten
 }
 
 export function serializeArtifactContentEnvelope(
-  envelope: ArtifactContentEnvelopeV1,
+  envelope: ArtifactContentEnvelopeV1
 ): ArtifactContentEnvelopeV1 {
   return ArtifactContentEnvelopeV1Schema.parse(envelope);
 }

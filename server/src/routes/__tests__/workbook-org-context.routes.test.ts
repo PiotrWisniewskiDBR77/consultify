@@ -166,10 +166,7 @@ describe('POST /api/workbook/generate — org-context grounding', () => {
     });
     dbAllMock.mockImplementation((sql: string) => {
       if (sql.includes('FROM projects')) {
-        return Promise.resolve([
-          { name: 'Transformacja AI 2026' },
-          { name: 'Program Vegas' },
-        ]);
+        return Promise.resolve([{ name: 'Transformacja AI 2026' }, { name: 'Program Vegas' }]);
       }
       if (sql.includes('FROM initiatives')) {
         return Promise.resolve([{ name: 'Automatyzacja raportowania' }]);
@@ -203,12 +200,10 @@ describe('POST /api/workbook/generate — org-context grounding', () => {
 
     asUser(ORG);
     const app = createApp();
-    const res = await request(app)
-      .post('/api/workbook/generate')
-      .send({
-        prompt: 'Zrób model DCF dla spółki X',
-        researchContext: 'Spółka X: przychód 2025 = 12 mln PLN.',
-      });
+    const res = await request(app).post('/api/workbook/generate').send({
+      prompt: 'Zrób model DCF dla spółki X',
+      researchContext: 'Spółka X: przychód 2025 = 12 mln PLN.',
+    });
 
     expect(res.status).toBe(200);
     const call = mockGenerate.mock.calls[0][0];

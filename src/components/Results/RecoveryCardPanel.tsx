@@ -411,9 +411,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const [showCloseForm, setShowCloseForm] = useState(false);
   const [closeEvidenceText, setCloseEvidenceText] = useState('');
   const [closeEvidenceRef, setCloseEvidenceRef] = useState('');
-  const [closeRating, setCloseRating] = useState<V8ResultsRecoveryEffectivenessRating | null>(
-    null
-  );
+  const [closeRating, setCloseRating] = useState<V8ResultsRecoveryEffectivenessRating | null>(null);
   const [closeValidationError, setCloseValidationError] = useState<string | null>(null);
   const [closeConflict, setCloseConflict] = useState<V8ResultsCloseRecoveryCardConflict | null>(
     null
@@ -568,7 +566,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (error?.status === 409) {
         await fetchCard({ background: true });
         toast.error(
-          t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.')
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
         );
         return;
       }
@@ -576,7 +577,17 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     } finally {
       setAddingAction(false);
     }
-  }, [card, newActionTitle, newActionDescription, newActionType, newActionOwner, newActionDue, fetchCard, onChanged, t]);
+  }, [
+    card,
+    newActionTitle,
+    newActionDescription,
+    newActionType,
+    newActionOwner,
+    newActionDue,
+    fetchCard,
+    onChanged,
+    t,
+  ]);
 
   const handleToggleActionStatus = useCallback(
     async (action: V8ResultsKpiRecoveryAction) => {
@@ -666,7 +677,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (error?.status === 409) {
         await fetchCard({ background: true });
         toast.error(
-          t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.')
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
         );
         return;
       }
@@ -707,7 +721,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     setCloseConflict(null);
     if (!closeRating) {
       setCloseValidationError(
-        t('results.recoveryCard.effectivenessRatingRequired', 'Select an effectiveness rating before closing the card.')
+        t(
+          'results.recoveryCard.effectivenessRatingRequired',
+          'Select an effectiveness rating before closing the card.'
+        )
       );
       return;
     }
@@ -715,7 +732,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       setCloseValidationError(
         t(
           'results.recoveryCard.closeBlocked.MISSING_EVIDENCE',
-          "Add evidence before closing the card."
+          'Add evidence before closing the card.'
         )
       );
       return;
@@ -773,7 +790,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (error?.status === 409) {
         await fetchCard({ background: true });
         toast.error(
-          t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.')
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
         );
         return;
       }
@@ -801,7 +821,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       if (error?.status === 409) {
         await fetchCard({ background: true });
         toast.error(
-          t('results.recoveryCard.versionConflict', 'This card changed — reloaded the latest state.')
+          t(
+            'results.recoveryCard.versionConflict',
+            'This card changed — reloaded the latest state.'
+          )
         );
         return;
       }
@@ -832,7 +855,11 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const ratingOptions = useMemo(
     () =>
       (
-        ['EFFECTIVE', 'PARTIALLY_EFFECTIVE', 'INEFFECTIVE'] as V8ResultsRecoveryEffectivenessRating[]
+        [
+          'EFFECTIVE',
+          'PARTIALLY_EFFECTIVE',
+          'INEFFECTIVE',
+        ] as V8ResultsRecoveryEffectivenessRating[]
       ).map((value) => ({
         value,
         label: t(`results.recoveryCard.effectivenessRating.${value}`, value),
@@ -862,7 +889,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       >
         <ShieldAlert size={20} className="mx-auto mb-2 text-c-text-muted" />
         <p className="text-sm text-c-text-secondary">
-          {t('results.recoveryCard.forbidden', "You don't have permission to view this recovery card.")}
+          {t(
+            'results.recoveryCard.forbidden',
+            "You don't have permission to view this recovery card."
+          )}
         </p>
       </div>
     );
@@ -877,7 +907,8 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       >
         <div className="flex items-center gap-2 text-sm text-danger-500">
           <AlertTriangle size={16} />
-          {errorMessage || t('results.recoveryCard.errorGeneric', 'Could not load the recovery card.')}
+          {errorMessage ||
+            t('results.recoveryCard.errorGeneric', 'Could not load the recovery card.')}
         </div>
         <button type="button" className={secondaryPillCls} onClick={() => void fetchCard()}>
           <span className="inline-flex items-center gap-1.5">
@@ -972,7 +1003,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
             onClick={() => void handleCreate()}
             className={primaryPillCls}
           >
-            {creating ? t('common.saving', 'Saving...') : t('results.recoveryCard.createCta', 'Create recovery card')}
+            {creating
+              ? t('common.saving', 'Saving...')
+              : t('results.recoveryCard.createCta', 'Create recovery card')}
           </button>
         </div>
       </div>
@@ -995,7 +1028,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${lifecycleBadgeCls(card.lifecycleStatus)}`}
             >
-              {t(`results.recoveryCard.lifecycleStatus.${card.lifecycleStatus}`, card.lifecycleStatus)}
+              {t(
+                `results.recoveryCard.lifecycleStatus.${card.lifecycleStatus}`,
+                card.lifecycleStatus
+              )}
             </span>
             <span
               className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${priorityBadgeCls(card.priority)}`}
@@ -1046,9 +1082,7 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
               className={textareaCls}
               value={draft.hypothesis}
               disabled={!editMode}
-              onChange={(e) =>
-                setEditDraft((d) => (d ? { ...d, hypothesis: e.target.value } : d))
-              }
+              onChange={(e) => setEditDraft((d) => (d ? { ...d, hypothesis: e.target.value } : d))}
               placeholder={t(
                 'results.recoveryCard.hypothesisPlaceholder',
                 'What do you think is causing this deviation?'
@@ -1133,7 +1167,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
               values={draft.dependencies}
               disabled={!editMode}
               onChange={(next) => setEditDraft((d) => (d ? { ...d, dependencies: next } : d))}
-              placeholder={t('results.recoveryCard.dependenciesPlaceholder', 'Add a dependency and press Enter')}
+              placeholder={t(
+                'results.recoveryCard.dependenciesPlaceholder',
+                'Add a dependency and press Enter'
+              )}
             />
           </div>
           <div>
@@ -1173,7 +1210,11 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
             </span>
             {card.effectivenessRating ? (
               <span>
-                · {t(`results.recoveryCard.effectivenessRating.${card.effectivenessRating}`, card.effectivenessRating)}
+                ·{' '}
+                {t(
+                  `results.recoveryCard.effectivenessRating.${card.effectivenessRating}`,
+                  card.effectivenessRating
+                )}
               </span>
             ) : null}
           </div>
@@ -1228,7 +1269,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                     ) : null}
                     <div className="flex items-center gap-2 mt-1 text-[11px] text-c-text-muted">
                       <span className="inline-flex items-center px-1.5 py-0.5 rounded border border-c-border">
-                        {t(`results.recoveryCard.actionType.${action.actionType}`, action.actionType)}
+                        {t(
+                          `results.recoveryCard.actionType.${action.actionType}`,
+                          action.actionType
+                        )}
                       </span>
                       {action.ownerUserId ? <span>{action.ownerUserId}</span> : null}
                       {action.dueDate ? <span>{action.dueDate.slice(0, 10)}</span> : null}
@@ -1257,7 +1301,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                     >
                       <span className="inline-flex items-center gap-1.5">
                         <Check size={12} />
-                        {action.status === 'DONE' ? t('common.edit', 'Edit') : t('results.recoveryCard.markMet', 'Met')}
+                        {action.status === 'DONE'
+                          ? t('common.edit', 'Edit')
+                          : t('results.recoveryCard.markMet', 'Met')}
                       </span>
                     </button>
                   ) : null}
@@ -1289,7 +1335,11 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                   {action.taskLinkStatus === 'LINKED' && action.linkedTaskId ? (
                     <button
                       type="button"
-                      onClick={() => navigate(`${ROUTES.MY_WORK}?taskId=${encodeURIComponent(action.linkedTaskId as string)}`)}
+                      onClick={() =>
+                        navigate(
+                          `${ROUTES.MY_WORK}?taskId=${encodeURIComponent(action.linkedTaskId as string)}`
+                        )
+                      }
                       className={secondaryPillCls}
                     >
                       {t('results.recoveryCard.taskLink.linked', 'Linked to task')}
@@ -1317,9 +1367,16 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
               className={inputCls}
               value={newActionDescription}
               onChange={(e) => setNewActionDescription(e.target.value)}
-              placeholder={t('results.recoveryCard.actionDescriptionPlaceholder', 'Action description (optional)')}
+              placeholder={t(
+                'results.recoveryCard.actionDescriptionPlaceholder',
+                'Action description (optional)'
+              )}
             />
-            <Segmented options={actionTypeOptions} value={newActionType} onChange={setNewActionType} />
+            <Segmented
+              options={actionTypeOptions}
+              value={newActionType}
+              onChange={setNewActionType}
+            />
             <div className="grid grid-cols-2 gap-2">
               <input
                 className={inputCls}
@@ -1367,11 +1424,16 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                     {checkpoint.checkpointDate.slice(0, 10)}
                   </div>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border border-c-border bg-c-surface-raised text-c-text-secondary">
-                    {t(`results.recoveryCard.checkpointStatus.${checkpoint.status}`, checkpoint.status)}
+                    {t(
+                      `results.recoveryCard.checkpointStatus.${checkpoint.status}`,
+                      checkpoint.status
+                    )}
                   </span>
                 </div>
                 {checkpoint.notes ? (
-                  <div className="text-xs text-slate-500 dark:text-slate-400">{checkpoint.notes}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {checkpoint.notes}
+                  </div>
                 ) : null}
                 {checkpoint.status === 'PENDING' && !isClosed ? (
                   <div className="space-y-2">
@@ -1448,7 +1510,11 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
       {!isClosed ? (
         <div className={cardShellCls}>
           <div className="flex items-center gap-2 flex-wrap">
-            <button type="button" onClick={() => setShowCloseForm((v) => !v)} className={primaryPillCls}>
+            <button
+              type="button"
+              onClick={() => setShowCloseForm((v) => !v)}
+              className={primaryPillCls}
+            >
               {t('results.recoveryCard.close', 'Close card')}
             </button>
             <button
@@ -1457,7 +1523,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
               onClick={() => void handleContinue()}
               className={secondaryPillCls}
             >
-              {continuing ? t('common.saving', 'Saving...') : t('results.recoveryCard.continue', 'Continue')}
+              {continuing
+                ? t('common.saving', 'Saving...')
+                : t('results.recoveryCard.continue', 'Continue')}
             </button>
             <button
               type="button"
@@ -1465,7 +1533,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
               onClick={() => void handleEscalate()}
               className={secondaryPillCls}
             >
-              {escalating ? t('common.saving', 'Saving...') : t('results.recoveryCard.escalate', 'Escalate')}
+              {escalating
+                ? t('common.saving', 'Saving...')
+                : t('results.recoveryCard.escalate', 'Escalate')}
             </button>
           </div>
 
@@ -1496,7 +1566,10 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                 className={inputCls}
                 value={closeEvidenceRef}
                 onChange={(e) => setCloseEvidenceRef(e.target.value)}
-                placeholder={t('results.recoveryCard.evidenceRef', 'Evidence link (task, report, attachment)')}
+                placeholder={t(
+                  'results.recoveryCard.evidenceRef',
+                  'Evidence link (task, report, attachment)'
+                )}
               />
               <Segmented options={ratingOptions} value={closeRating} onChange={setCloseRating} />
 
@@ -1521,7 +1594,9 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
                 onClick={() => void handleSubmitClose()}
                 className={primaryPillCls}
               >
-                {closing ? t('common.saving', 'Saving...') : t('results.recoveryCard.close', 'Close card')}
+                {closing
+                  ? t('common.saving', 'Saving...')
+                  : t('results.recoveryCard.close', 'Close card')}
               </button>
             </div>
           ) : null}
@@ -1536,19 +1611,22 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
         <div className="space-y-1 text-xs text-c-text-secondary">
           {card.createdAt ? (
             <div>
-              {t('results.recoveryCard.historyCreated', 'Created')}: {new Date(card.createdAt).toLocaleString()}
+              {t('results.recoveryCard.historyCreated', 'Created')}:{' '}
+              {new Date(card.createdAt).toLocaleString()}
               {card.createdBy ? ` · ${card.createdBy}` : ''}
             </div>
           ) : null}
           {card.updatedAt ? (
             <div>
-              {t('results.recoveryCard.historyUpdated', 'Updated')}: {new Date(card.updatedAt).toLocaleString()}
+              {t('results.recoveryCard.historyUpdated', 'Updated')}:{' '}
+              {new Date(card.updatedAt).toLocaleString()}
               {card.updatedBy ? ` · ${card.updatedBy}` : ''}
             </div>
           ) : null}
           {card.closedAt ? (
             <div>
-              {t('results.recoveryCard.historyClosed', 'Closed')}: {new Date(card.closedAt).toLocaleString()}
+              {t('results.recoveryCard.historyClosed', 'Closed')}:{' '}
+              {new Date(card.closedAt).toLocaleString()}
               {card.closedBy ? ` · ${card.closedBy}` : ''}
             </div>
           ) : null}

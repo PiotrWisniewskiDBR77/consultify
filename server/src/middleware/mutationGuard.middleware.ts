@@ -92,7 +92,11 @@ const isResponseSettled = (res: Response): boolean =>
   safeRead(() => (res as any).writableEnded, false) ||
   safeRead(() => (res as any).finished, false);
 
-const registerListener = (res: Response, event: 'finish' | 'close', handler: () => void): boolean => {
+const registerListener = (
+  res: Response,
+  event: 'finish' | 'close',
+  handler: () => void
+): boolean => {
   const onceFn = (res as any).once;
   if (isCallable(onceFn)) {
     try {

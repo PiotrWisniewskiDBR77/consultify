@@ -179,10 +179,7 @@ describe('reportBuilderService — contract tests', () => {
       expect(result.report.templateId).toBe('rbt-canonical-42');
       expect(result.sections).toHaveLength(2);
       expect(result.sections.map((s) => s.sectionKey)).toEqual(['exec_summary', 'findings']);
-      expect(result.sections.map((s) => s.title)).toEqual([
-        'Podsumowanie zarządcze',
-        'Ustalenia',
-      ]);
+      expect(result.sections.map((s) => s.title)).toEqual(['Podsumowanie zarządcze', 'Ustalenia']);
       expect(result.sections.every((s) => s.required === true)).toBe(true);
     });
   });

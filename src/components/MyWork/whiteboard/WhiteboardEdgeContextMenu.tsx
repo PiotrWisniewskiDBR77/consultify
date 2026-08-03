@@ -149,10 +149,7 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
                   : 'text-c-text hover:bg-c-surface-raised'
               }`}
             >
-              <Icon
-                size={14}
-                className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'}
-              />
+              <Icon size={14} className={item.danger ? 'shrink-0' : 'text-c-text-muted shrink-0'} />
               <span>{isPl ? item.labelPl : item.labelEn}</span>
             </button>
           </React.Fragment>

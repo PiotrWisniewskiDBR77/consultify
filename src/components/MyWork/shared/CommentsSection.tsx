@@ -424,10 +424,7 @@ export const CommentsSection: React.FC<CommentsSectionProps> = ({
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
                     className="inline-block mb-3 p-4 rounded-2xl bg-gradient-to-br from-c-info/10 to-c-info/5 dark:from-c-info/20 dark:to-c-info/10"
                   >
-                    <MessageCircle
-                      size={40}
-                      className="text-c-info opacity-60"
-                    />
+                    <MessageCircle size={40} className="text-c-info opacity-60" />
                   </motion.div>
                   <p className="text-sm font-medium">
                     {t('myWork.comments.noCommentsYet', 'No comments yet')}

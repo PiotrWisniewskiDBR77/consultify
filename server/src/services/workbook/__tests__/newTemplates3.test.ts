@@ -35,17 +35,20 @@ import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
 
+import {
+  buildFromTemplate,
+  buildFromTemplateFlat,
+  listWorkbookTemplates,
+  WORKBOOK_TEMPLATES,
+} from '../templates/index.js';
+import {
+  buildLoanAmortizationSchema,
+  type LoanAmortizationParams,
+} from '../templates/loanAmortization.js';
+import { buildUnitEconomicsSchema, type UnitEconomicsParams } from '../templates/unitEconomics.js';
 import { buildWorkbookBuffer } from '../WorkbookBuilder.js';
 import { critiqueWorkbook } from '../workbookQualityGate.js';
 import { WorkbookSchemaValidator } from '../WorkbookSchema.js';
-import { buildUnitEconomicsSchema, type UnitEconomicsParams } from '../templates/unitEconomics.js';
-import { buildLoanAmortizationSchema, type LoanAmortizationParams } from '../templates/loanAmortization.js';
-import {
-  WORKBOOK_TEMPLATES,
-  listWorkbookTemplates,
-  buildFromTemplate,
-  buildFromTemplateFlat,
-} from '../templates/index.js';
 
 async function load(buf: Buffer): Promise<ExcelJS.Workbook> {
   const wb = new ExcelJS.Workbook();
@@ -61,7 +64,9 @@ function formulaOf(ws: ExcelJS.Worksheet, addr: string): string | null {
 }
 
 /** Every populated cell (any row) across the whole workbook schema. */
-function allCells(schema: ReturnType<typeof buildUnitEconomicsSchema>): Array<{ formula?: string; value?: unknown }> {
+function allCells(
+  schema: ReturnType<typeof buildUnitEconomicsSchema>
+): Array<{ formula?: string; value?: unknown }> {
   const out: Array<{ formula?: string; value?: unknown }> = [];
   for (const sheet of schema.sheets) {
     for (const row of sheet.rows) {
@@ -338,7 +343,9 @@ describe('registry — unitEconomics + loanAmortization are registered', () => {
     const schema = buildFromTemplateFlat('unitEconomics', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -346,7 +353,9 @@ describe('registry — unitEconomics + loanAmortization are registered', () => {
     const schema = buildFromTemplateFlat('loanAmortization', {});
     expect(schema).not.toBeNull();
     const cells = allCells(schema!);
-    const formulaCells = cells.filter((c) => typeof c.formula === 'string' && c.formula.trim().length > 0);
+    const formulaCells = cells.filter(
+      (c) => typeof c.formula === 'string' && c.formula.trim().length > 0
+    );
     expect(formulaCells.length).toBeGreaterThan(0);
   });
 
@@ -413,7 +422,9 @@ const MONTH_COLS = ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
 
 describe('unitEconomics — (a) read-back — formulas, chained, cross-sheet', () => {
   it('every "Metryki" cell is a FORMULA', async () => {
-    const buf = await buildWorkbookBuffer(buildUnitEconomicsSchema(UE_PARAMS_A), { applyConsultantStyling: true });
+    const buf = await buildWorkbookBuffer(buildUnitEconomicsSchema(UE_PARAMS_A), {
+      applyConsultantStyling: true,
+    });
     const ws = (await load(buf)).getWorksheet('Metryki')!;
     for (let r = 2; r <= 5; r++) {
       expect(formulaOf(ws, `B${r}`), `B${r} should be a formula`).toBeTruthy();
@@ -423,9 +434,13 @@ describe('unitEconomics — (a) read-back — formulas, chained, cross-sheet', (
   it('LTV / LTV-CAC / payback / NRR reference Assumptions correctly', async () => {
     const buf = await buildWorkbookBuffer(buildUnitEconomicsSchema(UE_PARAMS_A));
     const ws = (await load(buf)).getWorksheet('Metryki')!;
-    expect(formulaOf(ws, `B${MET_ROW.ltv}`)).toBe("'Założenia'!$B$6*'Założenia'!$B$5/'Założenia'!$B$3");
+    expect(formulaOf(ws, `B${MET_ROW.ltv}`)).toBe(
+      "'Założenia'!$B$6*'Założenia'!$B$5/'Założenia'!$B$3"
+    );
     expect(formulaOf(ws, `B${MET_ROW.ltvCac}`)).toBe(`B${MET_ROW.ltv}/'Założenia'!$B$4`);
-    expect(formulaOf(ws, `B${MET_ROW.payback}`)).toBe("'Założenia'!$B$4/('Założenia'!$B$6*'Założenia'!$B$5)");
+    expect(formulaOf(ws, `B${MET_ROW.payback}`)).toBe(
+      "'Założenia'!$B$4/('Założenia'!$B$6*'Założenia'!$B$5)"
+    );
     expect(formulaOf(ws, `B${MET_ROW.nrr}`)).toBe("1-'Założenia'!$B$3");
   });
 
@@ -489,16 +504,27 @@ describe('unitEconomics — (b) math verification — evaluated workbook == inde
       const ref = referenceUnitEconomics(full);
       for (let m = 0; m < 12; m++) {
         const col = MONTH_COLS[m];
-        expect(ev.cellValue('Projekcja 12m', `${col}${PROJ_ROW.customers}`)).toBeCloseTo(ref.customers[m], 4);
+        expect(ev.cellValue('Projekcja 12m', `${col}${PROJ_ROW.customers}`)).toBeCloseTo(
+          ref.customers[m],
+          4
+        );
         expect(ev.cellValue('Projekcja 12m', `${col}${PROJ_ROW.mrr}`)).toBeCloseTo(ref.mrr[m], 2);
       }
-      expect(ev.cellValue('Projekcja 12m', `N${PROJ_ROW.customers}`)).toBeCloseTo(ref.customers[11], 4);
+      expect(ev.cellValue('Projekcja 12m', `N${PROJ_ROW.customers}`)).toBeCloseTo(
+        ref.customers[11],
+        4
+      );
       expect(ev.cellValue('Projekcja 12m', `N${PROJ_ROW.mrr}`)).toBeCloseTo(ref.mrr[11], 2);
     }
   });
 
   it('defensive nudges: churn/margin/CAC/ARPU are never shipped as 0 (would #DIV/0!)', () => {
-    const degenerate = buildUnitEconomicsSchema({ churnPctMonthly: 0, grossMarginPct: 0, cac: 0, arpu: 0 });
+    const degenerate = buildUnitEconomicsSchema({
+      churnPctMonthly: 0,
+      grossMarginPct: 0,
+      cac: 0,
+      arpu: 0,
+    });
     const zws = degenerate.sheets.find((s) => s.name === 'Założenia')!;
     const churn = zws.rows[1].cells.wartosc.value as number;
     const cac = zws.rows[2].cells.wartosc.value as number;

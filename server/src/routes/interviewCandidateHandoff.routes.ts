@@ -24,9 +24,9 @@ import { Router } from 'express';
 
 import { requirePermission } from '../middleware/permission.middleware.js';
 import {
-  InterviewCandidateHandoffError,
   approveInterviewCandidateHandoff,
   getInterviewCandidateHandoff,
+  InterviewCandidateHandoffError,
   previewInterviewCandidate,
 } from '../services/interview/interviewCandidateHandoff.js';
 import type { AuthenticatedRequest } from '../types/index.js';

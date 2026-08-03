@@ -22,7 +22,10 @@ interface CellProps {
 function cellA11yName(t: any, column?: ColumnDef, rowLabel?: string): string {
   if (!column) return rowLabel || '';
   return rowLabel
-    ? t('ideas.table.a11y.editCellFor', '{{column}} — {{row}}', { column: column.header, row: rowLabel })
+    ? t('ideas.table.a11y.editCellFor', '{{column}} — {{row}}', {
+        column: column.header,
+        row: rowLabel,
+      })
     : column.header;
 }
 
@@ -228,7 +231,13 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked, column
   );
 };
 
-export const CurrencyCell: React.FC<CellProps> = ({ value, onChange, locked, column, rowLabel }) => {
+export const CurrencyCell: React.FC<CellProps> = ({
+  value,
+  onChange,
+  locked,
+  column,
+  rowLabel,
+}) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-1">

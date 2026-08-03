@@ -224,7 +224,7 @@ router.post(
     if (field === 'status') {
       return res.status(400).json({
         error:
-          "Status changes are not allowed via /timeline-update. Use PATCH /api/initiatives/:id/status (or /approve, /start-execution, /unblock) instead.",
+          'Status changes are not allowed via /timeline-update. Use PATCH /api/initiatives/:id/status (or /approve, /start-execution, /unblock) instead.',
         code: 'TIMELINE_UPDATE_STATUS_FORBIDDEN',
       });
     }

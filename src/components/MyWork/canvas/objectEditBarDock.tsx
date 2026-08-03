@@ -15,14 +15,14 @@
  *    samej kolejności. Narzędzie podaje tylko bieżący styl, callback zapisu i
  *    to, które grupy mają dla niego sens (`shape`, `border` itd.).
  */
-import { Bold, Palette, PaintBucket, Shapes, Square, Type, Underline } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { Bold, PaintBucket, Palette, Shapes, Square, Type, Underline } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { TFunction } from 'i18next';
 
 import { CANVAS_OBJECT_EDIT_BAR_SLOT_ID } from '@/utils/canvasObjectEditBarFlag';
 
-import type { CanvasObjectStyle, CanvasFontFamilyKey, CanvasShapeKey } from './canvasObjectStyle';
+import type { CanvasFontFamilyKey, CanvasObjectStyle, CanvasShapeKey } from './canvasObjectStyle';
 import type { ObjectEditBarGroup } from './ObjectEditBar';
 import {
   ColorPalettePopover,
@@ -68,9 +68,7 @@ export function useObjectEditBarSlotHasContent(
 /** Reaktywne wyszukiwanie slotu paska edycji w DOM. */
 export function useObjectEditBarSlot(): HTMLElement | null {
   const [node, setNode] = useState<HTMLElement | null>(() =>
-    typeof document === 'undefined'
-      ? null
-      : document.getElementById(CANVAS_OBJECT_EDIT_BAR_SLOT_ID)
+    typeof document === 'undefined' ? null : document.getElementById(CANVAS_OBJECT_EDIT_BAR_SLOT_ID)
   );
 
   useEffect(() => {
@@ -89,8 +87,10 @@ export function useObjectEditBarSlot(): HTMLElement | null {
 }
 
 /** Portal do slotu; `null` gdy slotu nie ma (wywołujący robi wtedy fallback). */
-export const ObjectEditBarDock: React.FC<{ slot: HTMLElement | null; children: React.ReactNode }> =
-  ({ slot, children }) => (slot ? createPortal(children, slot) : null);
+export const ObjectEditBarDock: React.FC<{
+  slot: HTMLElement | null;
+  children: React.ReactNode;
+}> = ({ slot, children }) => (slot ? createPortal(children, slot) : null);
 
 export interface StyleGroupsOptions {
   style: CanvasObjectStyle;
@@ -168,8 +168,7 @@ export function buildStyleGroups({
         disabled,
         // Piszemy OBA klucze: `bold` (Mapa Myśli) i `fontWeight` (Tablica) —
         // renderery obu narzędzi zostają nietknięte, a pasek jest jeden.
-        onClick: () =>
-          onPatch({ bold: !style.bold, fontWeight: style.bold ? 'normal' : 'bold' }),
+        onClick: () => onPatch({ bold: !style.bold, fontWeight: style.bold ? 'normal' : 'bold' }),
       },
       {
         kind: 'button',

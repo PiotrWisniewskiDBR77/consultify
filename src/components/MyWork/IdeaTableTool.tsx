@@ -157,12 +157,10 @@ import { SharingManager } from './table/sharing/SharingManager';
 import { StatusBar } from './table/StatusBar';
 import { StickyNoteView } from './table/StickyNoteView';
 import { SyncManager } from './table/sync/SyncManager';
-import {
-  TableBarOverflowMenu,
-  type TableBarOverflowSection,
-} from './table/TableBarOverflowMenu';
+import { TableBarOverflowMenu, type TableBarOverflowSection } from './table/TableBarOverflowMenu';
 // P15 Table Platform – extracted components
 import { TableDataProvider } from './table/TableDataProvider';
+import { TableStartEmptyState } from './table/TableStartEmptyState';
 import { TableTabStrip } from './table/TableTabStrip';
 import { TableToolbar as P15TableToolbar } from './table/TableToolbar';
 import type {
@@ -174,20 +172,8 @@ import type {
   TableNode,
 } from './table/tableTypes';
 import { computeAggregation } from './table/tableTypes';
-import { TableStartEmptyState } from './table/TableStartEmptyState';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
-import {
-  buildDateColumnSeedPlan,
-  buildDecisionColumnSeedPlan,
-  buildScoreColumnSeedPlan,
-  DECISION_COLUMN_KEY,
-  resolveDecisionViewSetup,
-  resolveScoringViewSetup,
-  SCORE_COLUMN_KEY,
-  type SetupDrivenView,
-  ViewSetupEmptyState,
-} from './table/ViewSetupEmptyState';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTableKeyboard } from './table/useTableKeyboard';
@@ -202,6 +188,17 @@ import { useUndoRedo } from './table/useUndoRedo';
 import { ViewRouter as P15ViewRouter } from './table/ViewRouter';
 import type { ViewConfigState } from './table/views/ViewConfigPanel';
 import { ViewRouter as LegacyViewRouter } from './table/views/ViewRouter';
+import {
+  buildDateColumnSeedPlan,
+  buildDecisionColumnSeedPlan,
+  buildScoreColumnSeedPlan,
+  DECISION_COLUMN_KEY,
+  resolveDecisionViewSetup,
+  resolveScoringViewSetup,
+  SCORE_COLUMN_KEY,
+  type SetupDrivenView,
+  ViewSetupEmptyState,
+} from './table/ViewSetupEmptyState';
 import { VoiceImageInput } from './table/VoiceImageInput';
 import { WorkflowDashboard } from './table/WorkflowDashboard';
 
@@ -1457,7 +1454,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     const toggle = usePlatform ? platformIntegration.toggleColumn : toggleColumn;
 
     const starters: ColumnDef[] = [
-      { key: 'label', header: t('ideas.table.column.label', 'Label'), type: 'text', visible: true, width: 240 },
+      {
+        key: 'label',
+        header: t('ideas.table.column.label', 'Label'),
+        type: 'text',
+        visible: true,
+        width: 240,
+      },
       {
         key: 'status',
         header: t('ideas.table.column.status', 'Status'),
@@ -1481,7 +1484,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         options: ['Low', 'Medium', 'High', 'Critical'],
         optionColors: { Low: '#d1fae5', Medium: '#fef3c7', High: '#fce7f3', Critical: '#fee2e2' },
       },
-      { key: 'owner', header: t('ideas.table.column.owner', 'Owner'), type: 'person', visible: true, width: 140 },
+      {
+        key: 'owner',
+        header: t('ideas.table.column.owner', 'Owner'),
+        type: 'person',
+        visible: true,
+        width: 140,
+      },
     ] as ColumnDef[];
 
     for (const starter of starters) {
@@ -1629,8 +1638,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [detailNodeId, effectiveNodes]
   );
 
-  if (!open) return null;
-
   // ── Render row ─────────────────────────────────────────────────────────────
   const renderRow = (row: TableNode, rowIdx: number) => {
     const isSelected = _selIds.has(row.id);
@@ -1712,7 +1719,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   col.type === 'formula' && formulaResults
                     ? (formulaResults.get(row.id)?.[col.key] ?? row?.data?.[col.key])
                     : col.key === 'type'
-                      ? (row.data?.nodeType || row.type || 'idea')
+                      ? row.data?.nodeType || row.type || 'idea'
                       : row?.data?.[col.key];
                 setCellContextMenu({
                   rowId: row.id,
@@ -2079,6 +2086,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       usePlatform,
     ]
   );
+
+  if (!open) return null;
 
   return (
     <div
@@ -2517,83 +2526,83 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <div className="hidden md:contents">
                 {!guidedBar && (
                   <>
-                {/* AI Categorize */}
-                {!locked && (
-                  <button
-                    onClick={() => setShowAICategorize(true)}
-                    className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={t('ideas.table.aiCategorize', 'AI Categorize')}
-                  >
-                    <Layers size={12} />
-                  </button>
-                )}
+                    {/* AI Categorize */}
+                    {!locked && (
+                      <button
+                        onClick={() => setShowAICategorize(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={t('ideas.table.aiCategorize', 'AI Categorize')}
+                      >
+                        <Layers size={12} />
+                      </button>
+                    )}
 
-                {/* Scoring Model */}
-                <button
-                  onClick={() => setShowScoringModel(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.scoringModel', 'Scoring Model')}
-                >
-                  <Trophy size={12} />
-                </button>
+                    {/* Scoring Model */}
+                    <button
+                      onClick={() => setShowScoringModel(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.scoringModel', 'Scoring Model')}
+                    >
+                      <Trophy size={12} />
+                    </button>
 
-                {/* Export to Presentation */}
-                <button
-                  onClick={() => setShowExportPresentation(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.exportToPresentation', 'Export to Presentation')}
-                >
-                  <Presentation size={12} />
-                </button>
+                    {/* Export to Presentation */}
+                    <button
+                      onClick={() => setShowExportPresentation(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.exportToPresentation', 'Export to Presentation')}
+                    >
+                      <Presentation size={12} />
+                    </button>
 
-                {/* Pipeline */}
-                <button
-                  onClick={() => setShowPipeline(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.ideaPipeline', 'Idea Pipeline')}
-                >
-                  <Rocket size={12} />
-                </button>
+                    {/* Pipeline */}
+                    <button
+                      onClick={() => setShowPipeline(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.ideaPipeline', 'Idea Pipeline')}
+                    >
+                      <Rocket size={12} />
+                    </button>
 
-                {/* AI Copilot */}
-                <button
-                  onClick={() => setShowCopilot(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.aiCopilot.label', 'AI Copilot')}
-                >
-                  <Brain size={12} />
-                </button>
+                    {/* AI Copilot */}
+                    <button
+                      onClick={() => setShowCopilot(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.aiCopilot.label', 'AI Copilot')}
+                    >
+                      <Brain size={12} />
+                    </button>
 
-                {/* Voice / Image Input */}
-                <button
-                  onClick={() => setShowVoiceInput(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.voiceImage', 'Voice / Image')}
-                >
-                  <Mic size={12} />
-                </button>
+                    {/* Voice / Image Input */}
+                    <button
+                      onClick={() => setShowVoiceInput(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.voiceImage', 'Voice / Image')}
+                    >
+                      <Mic size={12} />
+                    </button>
 
-                {/* Cross-table Relations */}
-                <button
-                  onClick={() => setShowCrossRelations(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.crossTableRelations', 'Cross-table Relations')}
-                >
-                  <Network size={12} />
-                </button>
+                    {/* Cross-table Relations */}
+                    <button
+                      onClick={() => setShowCrossRelations(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.crossTableRelations', 'Cross-table Relations')}
+                    >
+                      <Network size={12} />
+                    </button>
                   </>
                 )}
 
                 {/* Heatmap — panel zostaje zamontowany zawsze (kebab go otwiera) */}
                 <div className="relative">
                   {!guidedBar && (
-                  <button
-                    onClick={() => setShowHeatmap(!showHeatmap)}
-                    className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-c-warning bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)]' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={t('ideas.table.heatmap', 'Heatmap')}
-                  >
-                    <Flame size={12} />
-                  </button>
+                    <button
+                      onClick={() => setShowHeatmap(!showHeatmap)}
+                      className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-c-warning bg-[color-mix(in_srgb,var(--c-warning)_12%,transparent)]' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                      title={t('ideas.table.heatmap', 'Heatmap')}
+                    >
+                      <Flame size={12} />
+                    </button>
                   )}
                   <HeatmapControls
                     open={showHeatmap}
@@ -2608,55 +2617,54 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
                 {!guidedBar && (
                   <>
-                {/* History / Audit */}
-                <button
-                  onClick={() => setShowAuditTrail((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={t('ideas.table.history', 'History')}
-                >
-                  <History size={12} />
-                </button>
+                    {/* History / Audit */}
+                    <button
+                      onClick={() => setShowAuditTrail((p) => !p)}
+                      className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                      title={t('ideas.table.history', 'History')}
+                    >
+                      <History size={12} />
+                    </button>
 
-                {/* Activity Feed */}
-                <button
-                  onClick={() => setShowActivityFeed((p) => !p)}
-                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={t('ideas.table.activity', 'Activity')}
-                >
-                  <Activity size={12} />
-                </button>
+                    {/* Activity Feed */}
+                    <button
+                      onClick={() => setShowActivityFeed((p) => !p)}
+                      className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                      title={t('ideas.table.activity', 'Activity')}
+                    >
+                      <Activity size={12} />
+                    </button>
 
-                {/* Keyboard shortcuts */}
-                <button
-                  onClick={() => setShowKeyboardShortcuts(true)}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.keyboardShortcuts', 'Keyboard shortcuts (?)')}
-                >
-                  <Keyboard size={12} />
-                </button>
+                    {/* Keyboard shortcuts */}
+                    <button
+                      onClick={() => setShowKeyboardShortcuts(true)}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.keyboardShortcuts', 'Keyboard shortcuts (?)')}
+                    >
+                      <Keyboard size={12} />
+                    </button>
 
-                {/* Templates */}
-                {!locked && (
-                  <button
-                    onClick={() => setShowTemplateGallery(true)}
-                    className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={t('ideas.table.templates', 'Templates')}
-                  >
-                    <LayoutTemplate size={12} />
-                  </button>
-                )}
+                    {/* Templates */}
+                    {!locked && (
+                      <button
+                        onClick={() => setShowTemplateGallery(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={t('ideas.table.templates', 'Templates')}
+                      >
+                        <LayoutTemplate size={12} />
+                      </button>
+                    )}
 
-                {/* Distribute */}
-                {!locked && (
-                  <button
-                    onClick={() => setShowDistributionBuilder(true)}
-                    className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                    title={t('ideas.table.distribute', 'Distribute')}
-                  >
-                    <Send size={12} />
-                  </button>
-                )}
-
+                    {/* Distribute */}
+                    {!locked && (
+                      <button
+                        onClick={() => setShowDistributionBuilder(true)}
+                        className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                        title={t('ideas.table.distribute', 'Distribute')}
+                      >
+                        <Send size={12} />
+                      </button>
+                    )}
                   </>
                 )}
 
@@ -2680,25 +2688,25 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
                 {/* Conditional formatting */}
                 {!guidedBar && (
-                <button
-                  onClick={() => setShowConditionalFmt(true)}
-                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                  title={t('ideas.table.conditionalFormatting', 'Conditional Formatting')}
-                >
-                  <Paintbrush size={12} />
-                </button>
+                  <button
+                    onClick={() => setShowConditionalFmt(true)}
+                    className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                    title={t('ideas.table.conditionalFormatting', 'Conditional Formatting')}
+                  >
+                    <Paintbrush size={12} />
+                  </button>
                 )}
 
                 {/* Color palette — panel zostaje zamontowany zawsze (kebab go otwiera) */}
                 <div className="relative">
                   {!guidedBar && (
-                  <button
-                    onClick={() => setShowColorPalette(!showColorPalette)}
-                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
-                    title={t('ideas.table.colorPalette', 'Color Palette')}
-                  >
-                    <Palette size={12} />
-                  </button>
+                    <button
+                      onClick={() => setShowColorPalette(!showColorPalette)}
+                      className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:text-c-text-secondary'}`}
+                      title={t('ideas.table.colorPalette', 'Color Palette')}
+                    >
+                      <Palette size={12} />
+                    </button>
                   )}
                   <ColorPalette
                     open={showColorPalette}
@@ -3071,26 +3079,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
                 {!guidedBar && (
                   <>
-                <button
-                  onClick={() => {
-                    const csv = exportToCSV(_cols, effectiveNodes);
-                    downloadCSV(csv, `idea-${ideaId}.csv`);
-                  }}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.exportCsv', 'Export CSV')}
-                >
-                  <Download size={12} />
-                </button>
-                <button
-                  onClick={() => {
-                    copyTableToClipboard(_cols, effectiveNodes);
-                    toast.success(t('ideas.table.copied', 'Copied'));
-                  }}
-                  className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
-                  title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
-                >
-                  <ClipboardCopy size={12} />
-                </button>
+                    <button
+                      onClick={() => {
+                        const csv = exportToCSV(_cols, effectiveNodes);
+                        downloadCSV(csv, `idea-${ideaId}.csv`);
+                      }}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.exportCsv', 'Export CSV')}
+                    >
+                      <Download size={12} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        copyTableToClipboard(_cols, effectiveNodes);
+                        toast.success(t('ideas.table.copied', 'Copied'));
+                      }}
+                      className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
+                      title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
+                    >
+                      <ClipboardCopy size={12} />
+                    </button>
                   </>
                 )}
               </div>
@@ -3707,9 +3715,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               <input
                                 autoFocus
                                 defaultValue={col.header}
-                                aria-label={t('ideas.table.a11y.renameColumnFor', 'New column name: {{column}}', {
-                                  column: col.header,
-                                })}
+                                aria-label={t(
+                                  'ideas.table.a11y.renameColumnFor',
+                                  'New column name: {{column}}',
+                                  {
+                                    column: col.header,
+                                  }
+                                )}
                                 className="w-full bg-c-surface border border-c-border-subtle rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-c-text-secondary outline-none"
                                 onBlur={(e) => {
                                   renameColumn(col.key, e.target.value);
@@ -4083,11 +4095,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   onClick={() => {
                     const v = cellContextMenu.value;
                     const text =
-                      v == null
-                        ? ''
-                        : typeof v === 'object'
-                          ? JSON.stringify(v)
-                          : String(v);
+                      v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
                     void navigator.clipboard
                       ?.writeText(text)
                       .then(() => toast.success(t('ideas.table.copied', 'Copied')))
@@ -4107,9 +4115,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           const text = await navigator.clipboard?.readText();
                           if (text != null) _fieldChange(rowId, colKey, text);
                         } catch {
-                          toast.error(
-                            t('ideas.table.pasteFailed', 'Could not read clipboard')
-                          );
+                          toast.error(t('ideas.table.pasteFailed', 'Could not read clipboard'));
                         }
                       })();
                       setCellContextMenu(null);
@@ -4138,9 +4144,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <div className="h-px bg-c-surface-raised my-1" />
                     <button
                       className="w-full px-3 py-1.5 text-xs text-left hover:bg-[color-mix(in_srgb,var(--c-danger)_12%,transparent)] text-c-danger disabled:opacity-40"
-                      disabled={
-                        cellContextMenu.value == null || cellContextMenu.value === ''
-                      }
+                      disabled={cellContextMenu.value == null || cellContextMenu.value === ''}
                       onClick={() => {
                         _fieldChange(cellContextMenu.rowId, cellContextMenu.colKey, '');
                         toast.success(t('ideas.table.cellCleared', 'Cell cleared'));
@@ -4424,7 +4428,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </h3>
               <button
                 onClick={() => setShowInterfaceDesigner(false)}
-                aria-label={t('ideas.table.a11y.closeInterfaceDesigner', 'Close Interface Designer')}
+                aria-label={t(
+                  'ideas.table.a11y.closeInterfaceDesigner',
+                  'Close Interface Designer'
+                )}
                 className="p-1 rounded-lg hover:bg-c-surface-raised"
               >
                 <X size={14} className="text-c-text-muted" aria-hidden="true" />

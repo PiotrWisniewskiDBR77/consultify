@@ -827,8 +827,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <ExceleEdytowalnaSiatkaScreen />,
   },
   'excele-prawy-panel-standard': {
-    label:
-      'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
+    label: 'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
     render: () => <ExcelePrawyPanelStandardScreen />,
   },
 };

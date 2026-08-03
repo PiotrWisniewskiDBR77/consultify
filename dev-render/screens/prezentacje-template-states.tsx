@@ -79,7 +79,11 @@ if (tenEkran && !g.__PREZ_TPL_STATES_FETCH__) {
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url =
-      typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
     if (url.includes('/api/')) {
       return new Response(JSON.stringify({ data: [], items: [] }), {

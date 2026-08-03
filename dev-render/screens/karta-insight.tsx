@@ -205,7 +205,6 @@ const MOCK_INSIGHT = {
     'Zakład nie jest ograniczony maszynowo — jest ograniczony obiegiem informacji między ' +
     'planowaniem, produkcją i utrzymaniem ruchu. Rozbudowa czwartej linii bez naprawy tego ' +
     'obiegu powieli istniejące straty na większej skali.\n\n' +
-
     '## Podsumowanie\n\n' +
     'Wniosek: pieniądze leżą w organizacji, nie w maszynach. Trzy niezależne wywiady wskazały ' +
     'ten sam mechanizm — decyzje operacyjne zapadają na danych z wczoraj, bo sygnał o awarii ' +
@@ -217,7 +216,6 @@ const MOCK_INSIGHT = {
     '(konfiguracja w istniejącym CMMS). Szacowany odzysk 6-9 punktów OEE w dwa kwartały — ' +
     'to OSZACOWANIE MODELOWE z benchmarku, nie pomiar u tego klienta; do biznes case wchodzi ' +
     'dopiero po pomiarze bazowym.\n\n' +
-
     '## Odczyt konsultingowy\n\n' +
     'Co mówią rozmówcy (deklaracje) — i co z tego wynika (interpretacja):\n\n' +
     '• Dyrektor Produkcji: „Dostępność maszyn to nie jest mój wskaźnik". Utrzymanie Ruchu: ' +
@@ -232,7 +230,6 @@ const MOCK_INSIGHT = {
     'zamówienia pilnego spór jest nierozstrzygalny, więc wraca co tydzień.\n\n' +
     'Czego NIE mówi ten odczyt: nie wiemy, ile realnie kosztuje godzina przestoju — żaden ' +
     'z rozmówców nie podał tej liczby, a bez niej nie da się uszeregować działań po zwrocie.\n\n' +
-
     '## Narracja konsultingowa\n\n' +
     'Mechanizm, który tłumaczy wszystkie trzy wywiady naraz, wygląda tak: sygnał o zdarzeniu ' +
     'powstaje na hali, ale trafia do CMMS, a nie do planowania. Planista dowiaduje się na ' +
@@ -249,7 +246,6 @@ const MOCK_INSIGHT = {
     'liczba zmian planu w tygodniu nie spadła w ciągu dwóch miesięcy, znaczy to, że źródłem ' +
     'rozjazdu jest sprzedaż, a nie obieg informacji — wtedy priorytetem staje się umowa ' +
     'z handlowcami o definicji zamówienia pilnego, nie integracja systemów.\n\n' +
-
     /*
      * Ta sekcja domyka trzecią kolumnę „Odczytu konsultingowego" (Sygnały
      * i szanse). `opportunityReadout` (InsightViewer.tsx:1903-1912) zbiera
@@ -269,7 +265,6 @@ const MOCK_INSIGHT = {
     'na dostawę, dziś 11 dni roboczych.\n\n' +
     'Oddolny sygnał, na którym można oprzeć wdrożenie: mistrzowie prowadzą już własne arkusze ' +
     'dostępności maszyn poza systemem. Potrzeba jest realna, brakuje wspólnego narzędzia.\n\n' +
-
     '## Memo zarządcze\n\n' +
     'Do decyzji zarządu na najbliższym posiedzeniu: wstrzymać decyzję o czwartej linii ' +
     'na jeden kwartał i uruchomić w tym czasie dwa działania bez nakładów inwestycyjnych — ' +
@@ -539,8 +534,7 @@ const MOCK_INSIGHT = {
     {
       answer_id: 'ans-plan-02',
       question_text: 'Jak długo plan pozostaje zamrożony?',
-      answer_snippet:
-        'Formalnie pięć dni. W praktyce zmieniam go dwa, trzy razy w tygodniu.',
+      answer_snippet: 'Formalnie pięć dni. W praktyce zmieniam go dwa, trzy razy w tygodniu.',
       linked_themes: [],
       linked_issues: ['Harmonogram zamrażany na 5 dni, zmieniany 3 razy w tygodniu'],
     },
@@ -580,8 +574,7 @@ const wskaznikDowodu = (answerId: string, i: number) => ({
   sourceRef: answerId,
   capturedAt: daysAgoIso(12),
   sourceFingerprint: `fp-${answerId}`,
-  capturedExcerpt:
-    MOCK_INSIGHT.evidenceMap[i]?.answer_snippet?.slice(0, 160) ?? null,
+  capturedExcerpt: MOCK_INSIGHT.evidenceMap[i]?.answer_snippet?.slice(0, 160) ?? null,
   removalReason: null,
   isTombstone: false,
 });

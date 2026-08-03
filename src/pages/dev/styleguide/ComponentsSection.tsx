@@ -7,7 +7,15 @@
  * `standard-kanban-card.tsx`) so this page stays consistent with the
  * established no-login harness convention.
  */
-import { Calendar, DollarSign, Download, ExternalLink, Flag, Layers, TrendingUp } from 'lucide-react';
+import {
+  Calendar,
+  DollarSign,
+  Download,
+  ExternalLink,
+  Flag,
+  Layers,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -82,7 +90,8 @@ const ModuleBarDemo: React.FC = () => {
         }
       />
       <div className="flex items-center gap-2 px-4 py-2 text-[11px] text-c-text-muted">
-        Demo: <button
+        Demo:{' '}
+        <button
           type="button"
           className="rounded-token-xs border border-c-border px-2 py-0.5 hover:bg-c-surface-raised"
           onClick={() => setSelected((s) => (s.size ? new Set() : new Set(['r1', 'r2'])))}
@@ -170,17 +179,37 @@ const TableAndPreviewDemo: React.FC = () => {
                   { label: 'Status', value: String(selectedRow.status), tone: 'info' },
                   { label: 'Właściciel', value: String(selectedRow.owner) },
                 ],
-                trailing: <span className="text-xs text-c-text-muted">{String(selectedRow.updated)}</span>,
+                trailing: (
+                  <span className="text-xs text-c-text-muted">{String(selectedRow.updated)}</span>
+                ),
               }}
               details={{ text: 'Krótki opis rekordu z tabeli — treść details sekcji.' }}
               relations={[]}
               actions={{
                 resolutions: [
-                  { id: 'approve', variant: 'positive', label: 'Zatwierdź', shortcut: 'A', onClick: () => {} },
-                  { id: 'reject', variant: 'destructive', label: 'Odrzuć', shortcut: 'R', onClick: () => {} },
+                  {
+                    id: 'approve',
+                    variant: 'positive',
+                    label: 'Zatwierdź',
+                    shortcut: 'A',
+                    onClick: () => {},
+                  },
+                  {
+                    id: 'reject',
+                    variant: 'destructive',
+                    label: 'Odrzuć',
+                    shortcut: 'R',
+                    onClick: () => {},
+                  },
                 ],
                 informational: [
-                  { id: 'info', variant: 'neutral', label: 'Więcej informacji', shortcut: 'I', onClick: () => {} },
+                  {
+                    id: 'info',
+                    variant: 'neutral',
+                    label: 'Więcej informacji',
+                    shortcut: 'I',
+                    onClick: () => {},
+                  },
                 ],
               }}
             />
@@ -255,10 +284,16 @@ const GRID_CARDS: StandardGridCardData[] = [
     footerRight: '5 h temu',
     customFooterActions: (
       <div className="flex items-center gap-1">
-        <button className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text" title="Export">
+        <button
+          className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+          title="Export"
+        >
           <Download size={12} />
         </button>
-        <button className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text" title="Otwórz źródło">
+        <button
+          className="rounded p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+          title="Otwórz źródło"
+        >
           <ExternalLink size={12} />
         </button>
       </div>
@@ -385,7 +420,9 @@ const ArtifactRightPanelDemo: React.FC = () => (
           id: 'history',
           label: 'Historia',
           defaultOpen: false,
-          children: <p className="text-xs text-c-text-muted">Utworzono przez Teresę · 2 dni temu</p>,
+          children: (
+            <p className="text-xs text-c-text-muted">Utworzono przez Teresę · 2 dni temu</p>
+          ),
         },
       ]}
     />
@@ -404,8 +441,12 @@ const IdeaRightPanelDemo: React.FC = () => (
           <div>Widoczność: Zespół</div>
         </div>
       }
-      relationsContent={<p className="text-xs text-c-text-muted">3 powiązane notatki, 1 initiative.</p>}
-      teresaContent={<p className="text-xs text-c-text-muted">Komendy + strumień sugestii Teresy.</p>}
+      relationsContent={
+        <p className="text-xs text-c-text-muted">3 powiązane notatki, 1 initiative.</p>
+      }
+      teresaContent={
+        <p className="text-xs text-c-text-muted">Komendy + strumień sugestii Teresy.</p>
+      }
       onExport={() => {}}
       onConvert={() => {}}
     />

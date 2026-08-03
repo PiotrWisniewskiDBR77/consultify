@@ -700,8 +700,7 @@ router.put(
       )
         return;
       if (rejectIfEnded(res, session)) return;
-      const currentPhase =
-        (session as { current_phase?: string | null }).current_phase ?? null;
+      const currentPhase = (session as { current_phase?: string | null }).current_phase ?? null;
       res.json(
         await realtimePlatformService.updatePhase(req.params.sessionId, p.data.phase, currentPhase)
       );

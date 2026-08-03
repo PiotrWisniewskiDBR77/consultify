@@ -54,6 +54,11 @@ import {
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { resolveInitiativeProjectId } from '../services/initiativeProjectPolicyService.js';
 import { buildKnowledgeMap } from '../services/knowledgeMapService.js';
+import {
+  isTemplateResolveError,
+  resolveDocumentTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import notificationService from '../services/notificationService.js';
 import { computeRagForReport } from '../services/ragLogicService.js';
 import ReportContract from '../services/report/reportContract.js';
@@ -62,11 +67,6 @@ import {
   getAgentMessages,
   processAgentMessage,
 } from '../services/reportAgentService.js';
-import {
-  isTemplateResolveError,
-  resolveDocumentTemplateForCreation,
-  type TemplateResolveErrorCode,
-} from '../services/materials/creationIntent.js';
 import ReportBuilderCommentsService from '../services/reportBuilderCommentsService.js';
 import ReportBuilderService from '../services/reportBuilderService.js';
 import {

@@ -22,7 +22,10 @@ export interface ChartLegendChipsProps {
 export const ChartLegendChips: React.FC<ChartLegendChipsProps> = ({ payload }) => {
   if (!payload || payload.length === 0) return null;
   return (
-    <ul className="mt-2 flex flex-wrap items-center justify-end gap-1.5" data-testid="chart-legend-chips">
+    <ul
+      className="mt-2 flex flex-wrap items-center justify-end gap-1.5"
+      data-testid="chart-legend-chips"
+    >
       {payload.map((entry, i) => (
         <li
           key={`${entry.dataKey ?? entry.value ?? i}`}

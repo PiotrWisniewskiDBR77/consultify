@@ -104,7 +104,11 @@ beforeEach(() => {
   mockRegisterArtifactOrigin.mockResolvedValue({ artifactId: 'artifact-999' });
 
   mockQueryOne.mockImplementation(async (sql: string, params: unknown[]) => {
-    if (typeof sql === 'string' && sql.includes('FROM generated_workbooks') && sql.includes('schema_json')) {
+    if (
+      typeof sql === 'string' &&
+      sql.includes('FROM generated_workbooks') &&
+      sql.includes('schema_json')
+    ) {
       const [id, orgId] = params as [string, string];
       if (id === SOURCE_ID && orgId === ORG) {
         return {

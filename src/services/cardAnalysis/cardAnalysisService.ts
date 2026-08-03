@@ -153,11 +153,7 @@ function renderFields(fields: CardAnalysisField[], isPolish: boolean): string {
   return fields
     .map((f) => {
       const value = clip(String(f.value ?? '').trim(), MAX_FIELD_CHARS, isPolish);
-      const emptyMark = value
-        ? ''
-        : isPolish
-          ? '  <<< PUSTE'
-          : '  <<< EMPTY';
+      const emptyMark = value ? '' : isPolish ? '  <<< PUSTE' : '  <<< EMPTY';
       const writeMark = f.writable
         ? ''
         : isPolish
@@ -541,11 +537,7 @@ function clampCompleteness(raw: unknown): number {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Kody błędów, które panel tłumaczy na komunikat dla człowieka. */
-export type CardAnalysisErrorCode =
-  | 'EMPTY_RESPONSE'
-  | 'NO_JSON'
-  | 'BAD_JSON'
-  | 'REQUEST_FAILED';
+export type CardAnalysisErrorCode = 'EMPTY_RESPONSE' | 'NO_JSON' | 'BAD_JSON' | 'REQUEST_FAILED';
 
 export class CardAnalysisError extends Error {
   readonly code: CardAnalysisErrorCode;

@@ -87,7 +87,10 @@ export const SharedWorkbookView: React.FC = () => {
           </h1>
           <p className="mt-2 text-sm text-c-text-muted" data-testid="shared-workbook-error">
             {error ||
-              t('excele.shared.unavailableBody', 'The shared link is invalid, revoked, or expired.')}
+              t(
+                'excele.shared.unavailableBody',
+                'The shared link is invalid, revoked, or expired.'
+              )}
           </p>
         </div>
       </div>
@@ -125,6 +128,7 @@ export const SharedWorkbookView: React.FC = () => {
 
       <div className="mx-auto max-w-5xl overflow-x-auto px-6 py-8">
         {/* §27-exempt — archetyp Excel (docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md): plain read-only spreadsheet grid, not a module list screen. */}
+        {/* prettier-ignore */}
         <table className="min-w-full border-collapse text-sm" data-testid="shared-workbook-table">{/* §27-exempt */}
           <thead>
             <tr>
@@ -150,7 +154,10 @@ export const SharedWorkbookView: React.FC = () => {
                         ? ''
                         : String(cell.value);
                   return (
-                    <td key={col.key} className="border border-c-border-subtle px-2 py-1 text-c-text">
+                    <td
+                      key={col.key}
+                      className="border border-c-border-subtle px-2 py-1 text-c-text"
+                    >
                       {display}
                     </td>
                   );

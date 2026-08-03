@@ -54,12 +54,10 @@ export default function StyleGuidePage(): React.ReactElement {
       <header className="sticky top-0 z-10 border-b border-c-border-subtle bg-c-bg/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
-            <h1 className="text-base font-semibold text-c-text">
-              Consultify — Living Style Guide
-            </h1>
+            <h1 className="text-base font-semibold text-c-text">Consultify — Living Style Guide</h1>
             <p className="text-xs text-c-text-muted">
-              VF0-11 · dev-only, za flagą <code>VITE_ENABLE_STYLEGUIDE</code> · bez logowania.
-              Zero re-implementacji — wszystko importowane z żywego systemu.
+              VF0-11 · dev-only, za flagą <code>VITE_ENABLE_STYLEGUIDE</code> · bez logowania. Zero
+              re-implementacji — wszystko importowane z żywego systemu.
             </p>
           </div>
           <button

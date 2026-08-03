@@ -45,7 +45,7 @@ export const reportArtifactContentAdapter: ArtifactContentAdapter = {
          FROM report_builder_reports
         WHERE id = ? AND organization_id = ?`,
       [params.originRecordId, params.organizationId],
-      { fallback: true },
+      { fallback: true }
     );
     if (!report) return null;
 
@@ -57,19 +57,20 @@ export const reportArtifactContentAdapter: ArtifactContentAdapter = {
         WHERE s.report_id = ? AND r.organization_id = ?
         ORDER BY s.order_index ASC, s.id ASC`,
       [params.originRecordId, params.organizationId],
-      { fallback: true },
+      { fallback: true }
     );
 
     try {
       const normalizedSections = sections.map((section, index) => {
         const format = ['markdown', 'json', 'tiptap'].includes(
-          String(section.content_format || '').toLowerCase(),
+          String(section.content_format || '').toLowerCase()
         )
           ? String(section.content_format).toLowerCase()
           : 'markdown';
-        const effectiveContent = section.edited_content !== null
-          ? section.edited_content
-          : section.generated_content || '';
+        const effectiveContent =
+          section.edited_content !== null
+            ? section.edited_content
+            : section.generated_content || '';
         const title = String(section.title || section.section_key || `Section ${index + 1}`);
         return {
           id: section.id,

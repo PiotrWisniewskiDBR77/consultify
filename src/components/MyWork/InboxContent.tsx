@@ -2600,9 +2600,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           const item = (row as unknown as InboxStandardRow).__item;
           return (
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
-              <span className="truncate">
-                {inboxTypeLabel(item.type)}
-              </span>
+              <span className="truncate">{inboxTypeLabel(item.type)}</span>
             </span>
           );
         },
@@ -3270,9 +3268,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         {!hiddenSet.has('type') && (
           <td className="px-3 py-2 text-left" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-c-text-secondary">
-              <span className="truncate">
-                {inboxTypeLabel(item.type)}
-              </span>
+              <span className="truncate">{inboxTypeLabel(item.type)}</span>
             </span>
           </td>
         )}

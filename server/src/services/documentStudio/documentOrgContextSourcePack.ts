@@ -154,7 +154,9 @@ export async function buildOrgContextSourcePack(
     `Organizacja: ${organizationName || 'nieznana'}${industry ? ` (branża: ${industry})` : ''}.`
   );
   if (activeProjectNames.length > 0) {
-    lines.push(`Aktywne projekty (${activeProjectNames.length}): ${activeProjectNames.join('; ')}.`);
+    lines.push(
+      `Aktywne projekty (${activeProjectNames.length}): ${activeProjectNames.join('; ')}.`
+    );
   }
   if (activeInitiativeNames.length > 0) {
     lines.push(
@@ -171,7 +173,13 @@ export async function buildOrgContextSourcePack(
       : 'Kontekst organizacji (automatyczny)',
   };
 
-  return { sourceRef, contextSummaryPl, organizationName, activeProjectNames, activeInitiativeNames };
+  return {
+    sourceRef,
+    contextSummaryPl,
+    organizationName,
+    activeProjectNames,
+    activeInitiativeNames,
+  };
 }
 
 /**

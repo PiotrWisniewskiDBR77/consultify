@@ -35,11 +35,11 @@ import type {
   TemplateStatus,
 } from './templateContract.js';
 import {
-  DOCUMENT_ORIGIN_RUNTIMES,
-  PRESENTATION_ORIGIN_RUNTIMES,
   deriveTemplateScope,
+  DOCUMENT_ORIGIN_RUNTIMES,
   isTemplateOriginRuntime,
   normalizeTemplateStatus,
+  PRESENTATION_ORIGIN_RUNTIMES,
   toBool,
 } from './templateContract.js';
 
@@ -53,13 +53,13 @@ export type {
   TemplateStatus,
 } from './templateContract.js';
 export {
-  DOCUMENT_ORIGIN_RUNTIMES,
-  PRESENTATION_ORIGIN_RUNTIMES,
-  TEMPLATE_ORIGIN_RUNTIMES,
   deriveTemplateScope,
+  DOCUMENT_ORIGIN_RUNTIMES,
   isTemplateOriginRuntime,
   normalizeTemplateScope,
   normalizeTemplateStatus,
+  PRESENTATION_ORIGIN_RUNTIMES,
+  TEMPLATE_ORIGIN_RUNTIMES,
   templateSourceForRuntime,
 } from './templateContract.js';
 

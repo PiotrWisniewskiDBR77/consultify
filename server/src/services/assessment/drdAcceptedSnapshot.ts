@@ -19,8 +19,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import * as queryHelpers from '../../utils/queryHelpers.js';
+
 import type { PinnedTransactionClient } from '../../database/PostgresDatabase.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface SnapshotRecord {
   id: string;

@@ -117,10 +117,14 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 animationsEnabled={animationsEnabled}
                 editable
                 selectedBlockId={selectedBlockId}
-                onBlockUpdate={(blockId, updates) => onBlockUpdate?.(card.card_id, blockId, updates)}
+                onBlockUpdate={(blockId, updates) =>
+                  onBlockUpdate?.(card.card_id, blockId, updates)
+                }
                 onBlockDelete={(blockId) => onBlockDelete?.(card.card_id, blockId)}
                 onBlockDuplicate={(blockId) => onBlockDuplicate?.(card.card_id, blockId)}
-                onBlockMove={(blockId, direction) => onBlockMove?.(card.card_id, blockId, direction)}
+                onBlockMove={(blockId, direction) =>
+                  onBlockMove?.(card.card_id, blockId, direction)
+                }
                 onBlockRefresh={(blockId) => onBlockRefresh?.(card.card_id, blockId)}
               />
               {onRewriteCard && (

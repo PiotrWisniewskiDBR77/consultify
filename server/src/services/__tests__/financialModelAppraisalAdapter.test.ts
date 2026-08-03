@@ -16,11 +16,11 @@ vi.mock('../../utils/DbPromise.js', () => ({
   run: vi.fn(),
 }));
 
-import { computeModel } from '../financialModelingService.js';
 import {
   appraiseComputeResult,
   deriveAppraisalInputFromComputeResult,
 } from '../financialModelAppraisalAdapter.js';
+import { computeModel } from '../financialModelingService.js';
 import { appraise } from '../investmentAppraisalService.js';
 
 /** Field-for-field identical to `upsertAtelierRoiFinancialModel` (demoSeedService.ts:3442-3490). */
@@ -92,8 +92,20 @@ describe('financialModelAppraisalAdapter — pure reshape', () => {
   it('derives cashflows and initialInvestment from ComputeResult.periods with no new arithmetic', () => {
     const synthetic = {
       periods: [
-        { date: '2015-01-01', label: '2015', pl: {}, bs: {}, cf: { OPERATING_CF: 1_000, INVESTING_CF: -300, FINANCING_CF: 0 } },
-        { date: '2016-01-01', label: '2016', pl: {}, bs: {}, cf: { OPERATING_CF: 1_200, INVESTING_CF: 0, FINANCING_CF: 0 } },
+        {
+          date: '2015-01-01',
+          label: '2015',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 1_000, INVESTING_CF: -300, FINANCING_CF: 0 },
+        },
+        {
+          date: '2016-01-01',
+          label: '2016',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 1_200, INVESTING_CF: 0, FINANCING_CF: 0 },
+        },
       ],
     } as any;
 
@@ -108,8 +120,20 @@ describe('financialModelAppraisalAdapter — pure reshape', () => {
   it('does NOT pull a LATER period investing cash flow forward to t=0 — it stays in its own period', () => {
     const synthetic = {
       periods: [
-        { date: '2015-01-01', label: '2015', pl: {}, bs: {}, cf: { OPERATING_CF: 500, INVESTING_CF: -200, FINANCING_CF: 0 } },
-        { date: '2016-01-01', label: '2016', pl: {}, bs: {}, cf: { OPERATING_CF: 900, INVESTING_CF: -100, FINANCING_CF: 0 } },
+        {
+          date: '2015-01-01',
+          label: '2015',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 500, INVESTING_CF: -200, FINANCING_CF: 0 },
+        },
+        {
+          date: '2016-01-01',
+          label: '2016',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 900, INVESTING_CF: -100, FINANCING_CF: 0 },
+        },
       ],
     } as any;
 
@@ -123,7 +147,15 @@ describe('financialModelAppraisalAdapter — pure reshape', () => {
 
   it('floors initialInvestment at 0 when the first period has no net outflow', () => {
     const synthetic = {
-      periods: [{ date: '2015-01-01', label: '2015', pl: {}, bs: {}, cf: { OPERATING_CF: 100, INVESTING_CF: 50, FINANCING_CF: 0 } }],
+      periods: [
+        {
+          date: '2015-01-01',
+          label: '2015',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 100, INVESTING_CF: 50, FINANCING_CF: 0 },
+        },
+      ],
     } as any;
     const input = deriveAppraisalInputFromComputeResult(synthetic, { discountRatePct: 10 });
     expect(input.initialInvestment).toBe(0);
@@ -132,15 +164,34 @@ describe('financialModelAppraisalAdapter — pure reshape', () => {
   });
 
   it('handles zero periods without throwing', () => {
-    const input = deriveAppraisalInputFromComputeResult({ periods: [] } as any, { discountRatePct: 10 });
-    expect(input).toEqual({ cashflows: [], initialInvestment: 0, discountRatePct: 10, hurdleRatePct: 10 });
+    const input = deriveAppraisalInputFromComputeResult({ periods: [] } as any, {
+      discountRatePct: 10,
+    });
+    expect(input).toEqual({
+      cashflows: [],
+      initialInvestment: 0,
+      discountRatePct: 10,
+      hurdleRatePct: 10,
+    });
   });
 
   it('appraiseComputeResult(input) === appraise(derive(input)) — composition, not a second engine', () => {
     const synthetic = {
       periods: [
-        { date: '2015-01-01', label: '2015', pl: {}, bs: {}, cf: { OPERATING_CF: 1_000, INVESTING_CF: -300, FINANCING_CF: 0 } },
-        { date: '2016-01-01', label: '2016', pl: {}, bs: {}, cf: { OPERATING_CF: 1_200, INVESTING_CF: 0, FINANCING_CF: 0 } },
+        {
+          date: '2015-01-01',
+          label: '2015',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 1_000, INVESTING_CF: -300, FINANCING_CF: 0 },
+        },
+        {
+          date: '2016-01-01',
+          label: '2016',
+          pl: {},
+          bs: {},
+          cf: { OPERATING_CF: 1_200, INVESTING_CF: 0, FINANCING_CF: 0 },
+        },
       ],
     } as any;
     const rates = { discountRatePct: 8, hurdleRatePct: 12 };
@@ -157,7 +208,10 @@ describe('financialModelAppraisalAdapter — end to end on the REAL canonical At
     const computeResult = await computeModel('model-atelier');
     expect(computeResult.periods).toHaveLength(3); // 36 months, annual granularity -> 2015/2016/2017
 
-    const appraisal = appraiseComputeResult(computeResult, { discountRatePct: 10, hurdleRatePct: 10 });
+    const appraisal = appraiseComputeResult(computeResult, {
+      discountRatePct: 10,
+      hurdleRatePct: 10,
+    });
 
     // Lineage: the derived input must come from computeModel()'s own CF lines,
     // not from the raw event amounts (2_400_000 / 800_000 / -400_000) directly —
@@ -175,20 +229,28 @@ describe('financialModelAppraisalAdapter — end to end on the REAL canonical At
   });
 
   it('changing an input event amount changes the output (proves it is not a stored/hardcoded constant)', async () => {
-    const base = appraiseComputeResult(await computeModel('model-atelier'), { discountRatePct: 10 });
+    const base = appraiseComputeResult(await computeModel('model-atelier'), {
+      discountRatePct: 10,
+    });
 
     dbAll.mockResolvedValue(
       ATELIER_EVENTS.map((e) => (e.id === 'e-revenue-uplift' ? { ...e, amount: 4_800_000 } : e))
     );
-    const doubled = appraiseComputeResult(await computeModel('model-atelier'), { discountRatePct: 10 });
+    const doubled = appraiseComputeResult(await computeModel('model-atelier'), {
+      discountRatePct: 10,
+    });
 
     expect(doubled.result.npv).not.toBeCloseTo(base.result.npv, 0);
     expect(doubled.result.npv).toBeGreaterThan(base.result.npv);
   });
 
   it('reopen determinism: recomputing from the same stored events twice gives byte-identical results', async () => {
-    const first = appraiseComputeResult(await computeModel('model-atelier'), { discountRatePct: 10 });
-    const second = appraiseComputeResult(await computeModel('model-atelier'), { discountRatePct: 10 });
+    const first = appraiseComputeResult(await computeModel('model-atelier'), {
+      discountRatePct: 10,
+    });
+    const second = appraiseComputeResult(await computeModel('model-atelier'), {
+      discountRatePct: 10,
+    });
     expect(second).toEqual(first);
   });
 
@@ -201,7 +263,10 @@ describe('financialModelAppraisalAdapter — end to end on the REAL canonical At
 
   it('pins the NEW (fixed opex-sign) canonical Atelier appraisal, and proves it differs from the OLD (buggy Math.abs()) numbers in the round-8 report (§17.3)', async () => {
     const computeResult = await computeModel('model-atelier');
-    const appraisal = appraiseComputeResult(computeResult, { discountRatePct: 10, hurdleRatePct: 10 });
+    const appraisal = appraiseComputeResult(computeResult, {
+      discountRatePct: 10,
+      hurdleRatePct: 10,
+    });
 
     // NEW (fixed sign) — pinned to the values this fix produces.
     expect(appraisal.result.npv).toBeCloseTo(5_804_022.19, 1);

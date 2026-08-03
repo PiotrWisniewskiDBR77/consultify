@@ -28,7 +28,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -259,25 +266,40 @@ function buildMetrykiSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
   ): Row => ({
     cells: {
       metryka: { value: label, style: opts.summary ? { bold: true } : undefined },
-      wartosc: { formula, style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary } },
+      wartosc: {
+        formula,
+        style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary },
+      },
     },
     isSummary: opts.summary,
   });
 
   const rows: Row[] = [
-    metricRow('LTV (wartość życiowa klienta)', `${aRef(AR.arpu)}*${aRef(AR.margin)}/${aRef(AR.churn)}`, {
+    metricRow(
+      'LTV (wartość życiowa klienta)',
+      `${aRef(AR.arpu)}*${aRef(AR.margin)}/${aRef(AR.churn)}`,
+      {
+        summary: true,
+      }
+    ),
+    metricRow('LTV / CAC', `B${MET.ltv}/${aRef(AR.cac)}`, {
       summary: true,
+      numberFormat: '0.00"x"',
     }),
-    metricRow('LTV / CAC', `B${MET.ltv}/${aRef(AR.cac)}`, { summary: true, numberFormat: '0.00"x"' }),
-    metricRow('Okres zwrotu CAC (miesiące)', `${aRef(AR.cac)}/(${aRef(AR.arpu)}*${aRef(AR.margin)})`, {
-      numberFormat: '0.0',
-    }),
+    metricRow(
+      'Okres zwrotu CAC (miesiące)',
+      `${aRef(AR.cac)}/(${aRef(AR.arpu)}*${aRef(AR.margin)})`,
+      {
+        numberFormat: '0.0',
+      }
+    ),
     metricRow('NRR (Net Revenue Retention, m/m)', `1-${aRef(AR.churn)}`, { numberFormat: '0.0%' }),
   ];
 
   return {
     name: METRYKI_SHEET,
-    purpose: 'Kluczowe metryki ekonomii jednostkowej (LTV, LTV/CAC, payback, NRR) — każda pozycja = formuła.',
+    purpose:
+      'Kluczowe metryki ekonomii jednostkowej (LTV, LTV/CAC, payback, NRR) — każda pozycja = formuła.',
     columns,
     rows,
     freezeRow: 1,
@@ -322,7 +344,10 @@ function buildProjekcjaSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
           : `${MONTH_COLS[i - 1]}${PROJ.customers}*(1-${aRef(AR.churn)})`;
       cells[monthKey(i)] = { formula, style: { numberFormat: '# ##0.0' } };
     });
-    cells.razem = { formula: `${MONTH_COLS[11]}${PROJ.customers}`, style: { numberFormat: '# ##0.0' } };
+    cells.razem = {
+      formula: `${MONTH_COLS[11]}${PROJ.customers}`,
+      style: { numberFormat: '# ##0.0' },
+    };
     return { cells };
   })();
 
@@ -365,9 +390,15 @@ export function buildUnitEconomicsSchema(params: UnitEconomicsParams = {}): Work
   const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
 
   const startingMrr = safeAmount(params.startingMrr, UNIT_ECONOMICS_GENERAL_DEFAULTS.startingMrr);
-  const churnPctMonthly = safeFraction(params.churnPctMonthly, UNIT_ECONOMICS_DRIVER_DEFAULTS.churnPctMonthly);
+  const churnPctMonthly = safeFraction(
+    params.churnPctMonthly,
+    UNIT_ECONOMICS_DRIVER_DEFAULTS.churnPctMonthly
+  );
   const cac = safePositive(params.cac, UNIT_ECONOMICS_DRIVER_DEFAULTS.cac);
-  const grossMarginPct = safeFraction(params.grossMarginPct, UNIT_ECONOMICS_DRIVER_DEFAULTS.grossMarginPct);
+  const grossMarginPct = safeFraction(
+    params.grossMarginPct,
+    UNIT_ECONOMICS_DRIVER_DEFAULTS.grossMarginPct
+  );
   const arpu = safePositive(params.arpu, UNIT_ECONOMICS_DRIVER_DEFAULTS.arpu);
 
   const { hint, label } = currencyMeta(params.currencyCode);

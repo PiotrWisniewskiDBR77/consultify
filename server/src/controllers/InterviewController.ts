@@ -17,6 +17,11 @@ import { z } from 'zod';
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import {
+  getPublishedInterviewTemplateSnapshot,
+  publishInterviewTemplate,
+  TemplatePublicationError,
+} from '../services/interview/interviewTemplatePublicationService.js';
+import {
   INSIGHT_GATED_STATUSES,
   INSIGHT_PATCH_SETTABLE_STATUSES,
 } from '../services/InterviewInsightService.js';
@@ -27,11 +32,6 @@ import {
   isOrgWideInterviewManagerRole,
   resolveInterviewManagerScope,
 } from '../services/interviewManagerScope.js';
-import {
-  getPublishedInterviewTemplateSnapshot,
-  publishInterviewTemplate,
-  TemplatePublicationError,
-} from '../services/interview/interviewTemplatePublicationService.js';
 import notificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';

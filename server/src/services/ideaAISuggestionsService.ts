@@ -198,9 +198,7 @@ export async function generateSuggestions(
     .slice(0, 50);
 
   // Język odpowiedzi z TREŚCI (tytuł/opis/etykiety), flaga UI tylko jako fallback.
-  const { resolveResponseLanguage, languageInstruction } = await import(
-    './ai/responseLanguage.js'
-  );
+  const { resolveResponseLanguage, languageInstruction } = await import('./ai/responseLanguage.js');
   const respLang = resolveResponseLanguage({
     requested: language,
     samples: [context.title, context.seedText, ...existingLabels],
@@ -402,9 +400,7 @@ export async function generateTableAction(
 ): Promise<{ type: string; [key: string]: any }> {
   // Język odpowiedzi z TREŚCI komendy i nagłówków tabeli (akcje `summarize` / `add_rows`
   // zwracają tekst dla użytkownika), flaga UI jako fallback.
-  const { resolveResponseLanguage, languageInstruction } = await import(
-    './ai/responseLanguage.js'
-  );
+  const { resolveResponseLanguage, languageInstruction } = await import('./ai/responseLanguage.js');
   const respLang = resolveResponseLanguage({
     requested: language,
     samples: [naturalLanguage, ...tableSchema.map((c) => String(c?.header || ''))],
@@ -498,9 +494,7 @@ export async function generateAIFill(
   const companyCtx = await buildCompanyContext(userId, orgId, queryHelpers);
 
   // Język odpowiedzi z TREŚCI (polecenie kolumny + dane wierszy), flaga UI jako fallback.
-  const { resolveResponseLanguage, languageInstruction } = await import(
-    './ai/responseLanguage.js'
-  );
+  const { resolveResponseLanguage, languageInstruction } = await import('./ai/responseLanguage.js');
   const respLang = resolveResponseLanguage({
     requested: language,
     samples: [columnPrompt, ...rows.slice(0, 20).map((r) => JSON.stringify(r?.data || {}))],

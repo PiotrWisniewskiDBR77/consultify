@@ -53,11 +53,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from './initiativeAccessResolver.js';
 import { executeInitiativeTransition } from './initiativeTransitionService.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
-import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
-import logger from '../../utils/Logger.js';
 
 // Mirrors GATE_PERMISSIONS[GateType.COMPLETE] in constants/initiativeStatuses.ts
 // exactly (read there, not re-exported — that module only exports gate-to-role
@@ -90,7 +90,12 @@ export class ClosureGateFailure extends Error {
   }
 }
 
-function fail(code: string, message: string, httpStatus: number, details?: Record<string, unknown>): never {
+function fail(
+  code: string,
+  message: string,
+  httpStatus: number,
+  details?: Record<string, unknown>
+): never {
   throw new ClosureGateFailure({ code, message, httpStatus, details });
 }
 
@@ -392,8 +397,10 @@ export async function getReadinessChecklist(
   const incompleteMilestoneCount = Number(incompleteMilestonesRow?.count || 0);
   const hasIncompleteItems = incompleteTaskCount + incompleteMilestoneCount > 0;
   const hasExceptionsWaivers = Boolean(
-    request.exceptionsWaivers && String(request.exceptionsWaivers).trim() !== '' &&
-      String(request.exceptionsWaivers).trim() !== '[]' && String(request.exceptionsWaivers).trim() !== '{}'
+    request.exceptionsWaivers &&
+    String(request.exceptionsWaivers).trim() !== '' &&
+    String(request.exceptionsWaivers).trim() !== '[]' &&
+    String(request.exceptionsWaivers).trim() !== '{}'
   );
 
   const items: ReadinessChecklistItem[] = [
@@ -479,7 +486,11 @@ export async function submitClosureRequest(input: SubmitClosureRequestInput) {
     );
   }
 
-  const readiness = await getReadinessChecklist(input.orgId, input.initiativeId, input.closureRequestId);
+  const readiness = await getReadinessChecklist(
+    input.orgId,
+    input.initiativeId,
+    input.closureRequestId
+  );
   if (!readiness.ready) {
     fail('CLOSURE_NOT_READY', 'Closure request is not ready to submit', 422, {
       checklist: readiness.items,
@@ -551,13 +562,21 @@ export interface ReturnClosureRequestInput {
 export async function returnClosureRequest(input: ReturnClosureRequestInput) {
   await assertInitiativeInOrg(input.orgId, input.initiativeId);
   if (!input.reviewRationale || !input.reviewRationale.trim()) {
-    fail('RETURN_RATIONALE_REQUIRED', 'A review rationale is required to return a closure request', 400);
+    fail(
+      'RETURN_RATIONALE_REQUIRED',
+      'A review rationale is required to return a closure request',
+      400
+    );
   }
   await assertActorCanApprove(input.orgId, input.initiativeId, input.actorId);
 
   const request = await loadClosureRequest(input.orgId, input.initiativeId, input.closureRequestId);
   if (request.status !== 'submitted') {
-    fail('CLOSURE_REQUEST_NOT_SUBMITTED', `Only a submitted request can be returned (current: ${request.status})`, 409);
+    fail(
+      'CLOSURE_REQUEST_NOT_SUBMITTED',
+      `Only a submitted request can be returned (current: ${request.status})`,
+      409
+    );
   }
 
   await queryHelpers.queryRun(
@@ -565,7 +584,14 @@ export async function returnClosureRequest(input: ReturnClosureRequestInput) {
      SET status = 'returned', approval_status = 'returned', approver_id = ?,
          returned_at = ?, review_rationale = ?, updated_at = ?, version = version + 1
      WHERE id = ? AND organization_id = ? AND status = 'submitted'`,
-    [input.actorId, new Date().toISOString(), input.reviewRationale, new Date().toISOString(), input.closureRequestId, input.orgId]
+    [
+      input.actorId,
+      new Date().toISOString(),
+      input.reviewRationale,
+      new Date().toISOString(),
+      input.closureRequestId,
+      input.orgId,
+    ]
   );
 
   await writeInitiativeHistory({
@@ -696,7 +722,12 @@ export async function approveClosureRequest(
   });
 
   if (unit1.kind === 'already_done') {
-    return { ok: true, idempotent: true, status: 'done', initiativeHistoryId: unit1.initiativeHistoryId };
+    return {
+      ok: true,
+      idempotent: true,
+      status: 'done',
+      initiativeHistoryId: unit1.initiativeHistoryId,
+    };
   }
   if (unit1.kind === 'already_pending') {
     // A concurrent/retried call already committed unit 1 and either is mid
@@ -823,12 +854,18 @@ async function approveUnit1OnClient(
   // match even when both denote the same instant — compare `.getTime()` instead.
   if (
     request.expectedInitiativeVersion &&
-    new Date(initiative.updatedAt).getTime() !== new Date(request.expectedInitiativeVersion).getTime()
+    new Date(initiative.updatedAt).getTime() !==
+      new Date(request.expectedInitiativeVersion).getTime()
   ) {
-    fail('STALE_VERSION', 'The initiative has changed since this closure request was submitted', 409, {
-      expected: request.expectedInitiativeVersion,
-      actual: initiative.updatedAt,
-    });
+    fail(
+      'STALE_VERSION',
+      'The initiative has changed since this closure request was submitted',
+      409,
+      {
+        expected: request.expectedInitiativeVersion,
+        actual: initiative.updatedAt,
+      }
+    );
   }
 
   if (input.__testFailBeforeUnit1Commit) {
@@ -884,10 +921,13 @@ async function markTransitionFailed(closureRequestId: string, orgId: string, err
       error: updateErr instanceof Error ? updateErr.message : String(updateErr),
     });
   }
-  logger.error('[initiativeClosureService] canonical transition rejected/failed during closure approval', {
-    closureRequestId,
-    error: err instanceof Error ? err.message : JSON.stringify(err),
-  });
+  logger.error(
+    '[initiativeClosureService] canonical transition rejected/failed during closure approval',
+    {
+      closureRequestId,
+      error: err instanceof Error ? err.message : JSON.stringify(err),
+    }
+  );
 }
 
 async function finalizeClosureRequestDone(
@@ -972,7 +1012,8 @@ export async function reconcileClosureRequestStatus(orgId: string, closureReques
     [closureRequestId, orgId]
   );
   if (!request) return;
-  if (request.status !== 'approved_pending_transition' && request.status !== 'transition_failed') return;
+  if (request.status !== 'approved_pending_transition' && request.status !== 'transition_failed')
+    return;
 
   const initiative = await queryHelpers.queryOne<{ status: string }>(
     `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,

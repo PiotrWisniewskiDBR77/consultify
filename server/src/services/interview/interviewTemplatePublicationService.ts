@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { withPgTransaction, type PgTransactionClient } from '../../utils/queryHelpers.js';
+import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
 export class TemplatePublicationError extends Error {
   constructor(

@@ -62,44 +62,44 @@ import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  getAtelierFinanceCanonicalIds,
-  ATELIER_CANONICAL_MODEL_NAME_EN,
-  ATELIER_FINANCE_CURRENCY,
-} from '../../services/demo/atelierFinanceSeed.js';
-import {
-  verifyCanonicalFixture,
-  FIN005_APPROVED_DEMO_TARGETS,
-  type CanonicalFixtureReadback,
-  type DemoTargetFingerprint,
-} from '../../services/demo/financeDemoCoherencePolicy.js';
-import {
   buildCanonicalModelEventUpsert,
   buildCanonicalModelUpsert,
   buildPriorStateQuery,
   buildRecoveryManifest,
   buildSeedPreflight,
-  canonicalModelEventId,
-  canonicalModelEventIds,
-  compareConnectionIdentity,
-  main,
-  probePinnedCapability,
-  probePoolIdentity,
-  probeWritePathIdentity,
-  runFin005AtelierFinanceSeed,
   CANONICAL_MODEL_EVENTS,
   CANONICAL_TABLES,
+  canonicalModelEventId,
+  canonicalModelEventIds,
   CLEANUP_IMPORTS,
   COLUMNS_QUERY,
+  compareConnectionIdentity,
   CONFIRM_ENV,
   CONFIRM_VALUE,
   CONNECTION_IDENTITY_SQL,
   CONNECTION_SYSTEM_IDENTIFIER_SQL,
+  type ConnectionIdentity,
   GATEWAY_METHODS_USED,
+  main,
+  probePinnedCapability,
+  probePoolIdentity,
+  probeWritePathIdentity,
   READ_PATH_IDENTITY_FIELDS,
+  runFin005AtelierFinanceSeed,
   SNAPSHOT_TABLES,
   WRITE_PATH_IDENTITY_FIELDS,
-  type ConnectionIdentity,
 } from '../../../scripts/fin005-seed-atelier-finance.js';
+import {
+  ATELIER_CANONICAL_MODEL_NAME_EN,
+  ATELIER_FINANCE_CURRENCY,
+  getAtelierFinanceCanonicalIds,
+} from '../../services/demo/atelierFinanceSeed.js';
+import {
+  type CanonicalFixtureReadback,
+  type DemoTargetFingerprint,
+  FIN005_APPROVED_DEMO_TARGETS,
+  verifyCanonicalFixture,
+} from '../../services/demo/financeDemoCoherencePolicy.js';
 
 process.env.DB_MANAGED_SCHEMA = process.env.DB_MANAGED_SCHEMA ?? 'false';
 
@@ -291,7 +291,13 @@ describe('FIN-005 seed — target authority', () => {
   });
 
   it('1d. has no escape hatch', async () => {
-    for (const flag of ['--force', '--force-org', '--force-target', '--skip-preflight', '--rebuild']) {
+    for (const flag of [
+      '--force',
+      '--force-org',
+      '--force-target',
+      '--skip-preflight',
+      '--rebuild',
+    ]) {
       await expect(
         runFin005AtelierFinanceSeed({ argv: ['--locale', 'en', flag], log: silent })
       ).rejects.toThrow(/does not exist. This command has no override/);
@@ -321,10 +327,14 @@ describe('FIN-005 seed — target authority', () => {
     // The connection resolves somewhere else than the declaration claims.
     await expect(
       withDatabaseUrl('postgresql://u:p@evil.example.com:28146/railway', () => main(declared))
-    ).rejects.toThrow(/declared host "trolley\.proxy\.rlwy\.net" but the connection resolves to "evil\.example\.com"/);
+    ).rejects.toThrow(
+      /declared host "trolley\.proxy\.rlwy\.net" but the connection resolves to "evil\.example\.com"/
+    );
 
     await expect(
-      withDatabaseUrl('postgresql://u:p@trolley.proxy.rlwy.net:28146/other_db', () => main(declared))
+      withDatabaseUrl('postgresql://u:p@trolley.proxy.rlwy.net:28146/other_db', () =>
+        main(declared)
+      )
     ).rejects.toThrow(/declared database "railway" but the connection resolves to "other_db"/);
 
     // No port in the URL is a refusal, never "the default port".
@@ -387,7 +397,9 @@ describe('FIN-005 seed — target authority', () => {
     // test. Nothing reads it from argv or the environment.
     expect(MODULE_SOURCE).not.toMatch(/args\[['"]allowlist['"]\]/);
     expect(MODULE_SOURCE).not.toMatch(/FIN005_[A-Z_]*ALLOWLIST/);
-    expect(MODULE_SOURCE).toMatch(/export async function main\([^)]*\)[^{]*\{\s*await runFin005AtelierFinanceSeed\(\{ argv \}\);/);
+    expect(MODULE_SOURCE).toMatch(
+      /export async function main\([^)]*\)[^{]*\{\s*await runFin005AtelierFinanceSeed\(\{ argv \}\);/
+    );
     // The real allowlist is the module-level constant, used by default.
     expect(FIN005_APPROVED_DEMO_TARGETS.length).toBeGreaterThan(0);
   });
@@ -549,7 +561,9 @@ describe('FIN-005 seed — structural non-destructiveness', () => {
     for (const table of SNAPSHOT_TABLES) {
       expect(buildPriorStateQuery(table)).toMatch(/^SELECT \* FROM "/);
     }
-    expect(() => buildPriorStateQuery('organizations')).toThrow(/not a canonical FIN-005 Finance table/);
+    expect(() => buildPriorStateQuery('organizations')).toThrow(
+      /not a canonical FIN-005 Finance table/
+    );
     expect(COLUMNS_QUERY).toMatch(/^SELECT column_name FROM information_schema\.columns/);
     expect(CONNECTION_IDENTITY_SQL).toMatch(/^SELECT current_database\(\)/);
     expect(CONNECTION_SYSTEM_IDENTIFIER_SQL).toMatch(/^SELECT system_identifier/);
@@ -593,7 +607,9 @@ describe('FIN-005 seed — structural non-destructiveness', () => {
         /fin005-seed-atelier-finance/
       );
     }
-    const packageJson = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')) as {
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')
+    ) as {
       scripts?: Record<string, string>;
     };
     const scripts = packageJson.scripts || {};
@@ -632,7 +648,9 @@ describe('FIN-005 seed — the ROI model economics are transcribed, not invented
       'utf8'
     );
     const start = source.indexOf('async function upsertAtelierRoiFinancialModel(');
-    expect(start, 'upsertAtelierRoiFinancialModel must exist in demoSeedService').toBeGreaterThan(-1);
+    expect(start, 'upsertAtelierRoiFinancialModel must exist in demoSeedService').toBeGreaterThan(
+      -1
+    );
     const end = source.indexOf('\nasync function ', start + 1);
     return source.slice(start, end === -1 ? undefined : end);
   })();
@@ -674,14 +692,16 @@ describe('FIN-005 seed — the ROI model economics are transcribed, not invented
 
   it('uses the same currency and the same id convention as the full dataset', () => {
     expect(roiSeederSource).toContain('ATELIER_FINANCE_CURRENCY');
-    expect(roiSeederSource).toContain("makeId(organizationId, 'financial-model-event', event.slug)");
+    expect(roiSeederSource).toContain(
+      "makeId(organizationId, 'financial-model-event', event.slug)"
+    );
     // `makeId` is `${orgId}--${entity}--${slug}`, so the ids must line up.
     expect(canonicalModelEventId('org-x', 'revenue-uplift')).toBe(
       'org-x--financial-model-event--revenue-uplift'
     );
   });
 
-  it('FIN-005 round 9: assumptions_json now carries ONLY Piotr\'s explicitly-decided keys — nothing else invented', () => {
+  it("FIN-005 round 9: assumptions_json now carries ONLY Piotr's explicitly-decided keys — nothing else invented", () => {
     // Superseded premise (rounds 5-8): "the canonical fixture has no
     // assumptions_json, so writing one would be an invention." Piotr's round-9
     // decision explicitly asked for the opposite: the discount/hurdle rate and
@@ -815,7 +835,9 @@ describe('FIN-005 seed — preflight and manifest shape', () => {
         currency: ATELIER_FINANCE_CURRENCY,
         isActive: true,
       }));
-      expect(buildSeedPreflight(emptyReadback, DEMO_ORG, canonicalEvents).economicsReady).toBe(true);
+      expect(buildSeedPreflight(emptyReadback, DEMO_ORG, canonicalEvents).economicsReady).toBe(
+        true
+      );
     }
   });
 
@@ -1326,8 +1348,12 @@ dbSuite('FIN-005 seed — against a real local PostgreSQL', () => {
       expect(afterSecond).toEqual(afterFirst);
       // Belt and braces: the timestamps specifically.
       for (const table of SNAPSHOT_TABLES) {
-        const before = (afterFirst[table] as Array<Record<string, unknown>>).map((row) => row.updated_at);
-        const after = (afterSecond[table] as Array<Record<string, unknown>>).map((row) => row.updated_at);
+        const before = (afterFirst[table] as Array<Record<string, unknown>>).map(
+          (row) => row.updated_at
+        );
+        const after = (afterSecond[table] as Array<Record<string, unknown>>).map(
+          (row) => row.updated_at
+        );
         expect(after, `${table}.updated_at churned on a no-op re-run`).toEqual(before);
       }
 
@@ -1432,12 +1458,17 @@ identitySuite('FIN-005 seed — the write connection must be the authorised conn
     // change only.
     const identity = await probeWritePathIdentity();
     expect(identity.database).toBe(new URL(CONNECTION_STRING).pathname.replace(/^\/+/, ''));
-    expect(identity.systemIdentifier, 'pg_control_system() must be readable on the scratch cluster').toMatch(
-      /^\d+$/
-    );
+    expect(
+      identity.systemIdentifier,
+      'pg_control_system() must be readable on the scratch cluster'
+    ).toMatch(/^\d+$/);
   }, 60_000);
 
-  function fingerprintOf(connectionString: string): { host: string; port: number; database: string } {
+  function fingerprintOf(connectionString: string): {
+    host: string;
+    port: number;
+    database: string;
+  } {
     const url = new URL(connectionString);
     return {
       host: url.hostname,

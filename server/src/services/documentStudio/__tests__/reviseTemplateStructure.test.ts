@@ -10,6 +10,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import type { TemplateSectionBlueprint } from '../documentStudioTypes.js';
 import {
   __resetTemplateRegistryForTests,
   approveTemplate,
@@ -18,10 +19,15 @@ import {
   listTemplateAuditEntries,
   reviseTemplateStructure,
 } from '../documentTemplateService.js';
-import type { TemplateSectionBlueprint } from '../documentStudioTypes.js';
 
 function section(title: string): TemplateSectionBlueprint {
-  return { title, level: 1, purpose: `${title} purpose`, required: false, expectedLengthHint: 'medium' };
+  return {
+    title,
+    level: 1,
+    purpose: `${title} purpose`,
+    required: false,
+    expectedLengthHint: 'medium',
+  };
 }
 
 describe('reviseTemplateStructure — author manual structure editor', () => {
@@ -45,9 +51,9 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
 
     expect(next.sectionBlueprint.map((s) => s.title)).toEqual(['Intro', 'Body', 'Close']);
     // Persisted to the registry.
-    expect(
-      getTemplate(template.templateId, 'org-A')?.sectionBlueprint.map((s) => s.title)
-    ).toEqual(['Intro', 'Body', 'Close']);
+    expect(getTemplate(template.templateId, 'org-A')?.sectionBlueprint.map((s) => s.title)).toEqual(
+      ['Intro', 'Body', 'Close']
+    );
 
     const audit = listTemplateAuditEntries(template.templateId, 'org-A');
     expect(audit.map((e) => e.action)).toEqual(['template_drafted', 'template_updated']);
@@ -77,7 +83,13 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
       organizationId: 'org-A',
       userId: 'user-1',
       sections: [
-        { title: '  Trimmed  ', level: 9 as 1, purpose: '', required: true, expectedLengthHint: 'x' as 'short' },
+        {
+          title: '  Trimmed  ',
+          level: 9 as 1,
+          purpose: '',
+          required: true,
+          expectedLengthHint: 'x' as 'short',
+        },
       ],
     });
     expect(next.sectionBlueprint[0].title).toBe('Trimmed');
@@ -189,7 +201,12 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
       organizationId: 'org-A',
       userId: 'user-1',
       sections: [
-        { ...section('Intro'), keyMessage: 'Some thesis', dataNeeded: ['x'], suggestedEvidence: 'Some proof' },
+        {
+          ...section('Intro'),
+          keyMessage: 'Some thesis',
+          dataNeeded: ['x'],
+          suggestedEvidence: 'Some proof',
+        },
       ],
     });
 

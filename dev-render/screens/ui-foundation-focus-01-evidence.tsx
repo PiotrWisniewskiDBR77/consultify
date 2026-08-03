@@ -54,7 +54,7 @@ export default function UiFoundationFocus01EvidenceScreen() {
         </button>
       </Swatch>
 
-      <Swatch title="Results/KpiOverviewView.tsx — &quot;Open&quot; button (class swatch, exact className)">
+      <Swatch title='Results/KpiOverviewView.tsx — "Open" button (class swatch, exact className)'>
         <button
           type="button"
           className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -72,7 +72,7 @@ export default function UiFoundationFocus01EvidenceScreen() {
         </button>
       </Swatch>
 
-      <Swatch title="Results/PortfolioInsightsPanel.tsx — &quot;Go to Outputs&quot; (class swatch, exact className)">
+      <Swatch title='Results/PortfolioInsightsPanel.tsx — "Go to Outputs" (class swatch, exact className)'>
         <button
           type="button"
           className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"

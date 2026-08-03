@@ -24,8 +24,8 @@ import { useParams } from 'react-router-dom';
 
 import {
   ClientReaderApiError,
-  type GetSharedDocumentResult,
   getSharedDocument,
+  type GetSharedDocumentResult,
 } from './clientReaderApi';
 import { ReaderBlockRenderer } from './ReaderBlockRenderer';
 import { ReaderCommentsPanel } from './ReaderCommentsPanel';
@@ -115,7 +115,11 @@ export function SharedDocumentReaderPage(): React.ReactElement {
 
       <article data-testid="reader-body">
         {sortedSections.map((section) => (
-          <section key={section.sectionId} className="mb-8" data-testid={`reader-section-${section.sectionId}`}>
+          <section
+            key={section.sectionId}
+            className="mb-8"
+            data-testid={`reader-section-${section.sectionId}`}
+          >
             <h2 className="mb-3 text-lg font-semibold text-c-text">{section.title}</h2>
             {section.blocks.map((block) => (
               <ReaderBlockRenderer key={block.blockId} block={block} />

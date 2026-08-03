@@ -116,7 +116,13 @@ export function uniqueCopyTitle(
   existingTitles: string[]
 ): string {
   const taken = new Set(
-    existingTitles.map((title) => String(title ?? '').trim().toLowerCase()).filter(Boolean)
+    existingTitles
+      .map((title) =>
+        String(title ?? '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
   );
   const base = String(baseTitle ?? '').trim();
   const suffix = String(copySuffix ?? '').trim();

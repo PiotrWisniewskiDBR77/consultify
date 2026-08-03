@@ -16,10 +16,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  adaptQuery,
-  replacePositionalPlaceholders,
-} from '../../src/database/PostgresDatabase.js';
+import { adaptQuery, replacePositionalPlaceholders } from '../../src/database/PostgresDatabase.js';
 
 /** The exact pre-fix behaviour, reproduced verbatim as the regression oracle. */
 function naiveReplace(sql: string): string {
@@ -70,41 +67,34 @@ describe('replacePositionalPlaceholders — (A) regression vs. naive oracle', ()
     for (const q of REAL_QUERIES) expect(q).toContain('?');
   });
 
-  it.each(REAL_QUERIES)(
-    'is byte-identical to the old naive replacement: %s',
-    (sql) => {
-      expect(replacePositionalPlaceholders(sql)).toBe(naiveReplace(sql));
-    }
-  );
+  it.each(REAL_QUERIES)('is byte-identical to the old naive replacement: %s', (sql) => {
+    expect(replacePositionalPlaceholders(sql)).toBe(naiveReplace(sql));
+  });
 
   it('preserves exact sequential numbering for a normal query', () => {
-    expect(
-      replacePositionalPlaceholders(
-        'INSERT INTO t (a, b, c) VALUES (?, ?, ?)'
-      )
-    ).toBe('INSERT INTO t (a, b, c) VALUES ($1, $2, $3)');
+    expect(replacePositionalPlaceholders('INSERT INTO t (a, b, c) VALUES (?, ?, ?)')).toBe(
+      'INSERT INTO t (a, b, c) VALUES ($1, $2, $3)'
+    );
   });
 
   it('numbers an IN (...) list left-to-right', () => {
-    expect(
-      replacePositionalPlaceholders(
-        'SELECT * FROM t WHERE id IN (?, ?, ?) AND org = ?'
-      )
-    ).toBe('SELECT * FROM t WHERE id IN ($1, $2, $3) AND org = $4');
+    expect(replacePositionalPlaceholders('SELECT * FROM t WHERE id IN (?, ?, ?) AND org = ?')).toBe(
+      'SELECT * FROM t WHERE id IN ($1, $2, $3) AND org = $4'
+    );
   });
 });
 
 describe('replacePositionalPlaceholders — (B) new context-aware behaviour', () => {
   it('leaves ? inside a single-quoted string literal untouched', () => {
-    expect(
-      replacePositionalPlaceholders("SELECT * FROM t WHERE name ~ '.*?'")
-    ).toBe("SELECT * FROM t WHERE name ~ '.*?'");
+    expect(replacePositionalPlaceholders("SELECT * FROM t WHERE name ~ '.*?'")).toBe(
+      "SELECT * FROM t WHERE name ~ '.*?'"
+    );
   });
 
   it('leaves ? inside a double-quoted identifier untouched', () => {
-    expect(
-      replacePositionalPlaceholders('SELECT col AS "weird?name" FROM t')
-    ).toBe('SELECT col AS "weird?name" FROM t');
+    expect(replacePositionalPlaceholders('SELECT col AS "weird?name" FROM t')).toBe(
+      'SELECT col AS "weird?name" FROM t'
+    );
   });
 
   it('leaves ? inside a -- line comment untouched', () => {
@@ -144,16 +134,12 @@ describe('replacePositionalPlaceholders — (B) new context-aware behaviour', ()
 
   it('handles JSON-ish / operator literals containing ?', () => {
     const sql = "SELECT data->>'q?' AS x FROM t WHERE id = ?";
-    expect(replacePositionalPlaceholders(sql)).toBe(
-      "SELECT data->>'q?' AS x FROM t WHERE id = $1"
-    );
+    expect(replacePositionalPlaceholders(sql)).toBe("SELECT data->>'q?' AS x FROM t WHERE id = $1");
   });
 
   it('handles multiple string literals with ? between real placeholders', () => {
     const sql = "SELECT ? , '?a', ? , '?b', ?";
-    expect(replacePositionalPlaceholders(sql)).toBe(
-      "SELECT $1 , '?a', $2 , '?b', $3"
-    );
+    expect(replacePositionalPlaceholders(sql)).toBe("SELECT $1 , '?a', $2 , '?b', $3");
   });
 
   it('empty single-quoted string does not swallow a following placeholder', () => {
@@ -164,18 +150,14 @@ describe('replacePositionalPlaceholders — (B) new context-aware behaviour', ()
 
 describe('adaptQuery — end-to-end integration (placeholders + transforms)', () => {
   it('still adapts a normal parametrised query', () => {
-    expect(
-      adaptQuery('SELECT * FROM users WHERE id = ? AND org = ?')
-    ).toBe('SELECT * FROM users WHERE id = $1 AND org = $2');
+    expect(adaptQuery('SELECT * FROM users WHERE id = ? AND org = ?')).toBe(
+      'SELECT * FROM users WHERE id = $1 AND org = $2'
+    );
   });
 
   it('adapts placeholders together with datetime("now") without miscounting', () => {
-    const out = adaptQuery(
-      'INSERT INTO permissions (key, created_at) VALUES (?, datetime("now"))'
-    );
-    expect(out).toBe(
-      "INSERT INTO permissions (key, created_at) VALUES ($1, NOW())"
-    );
+    const out = adaptQuery('INSERT INTO permissions (key, created_at) VALUES (?, datetime("now"))');
+    expect(out).toBe('INSERT INTO permissions (key, created_at) VALUES ($1, NOW())');
   });
 
   it('does not treat a ? inside a string literal as a placeholder', () => {

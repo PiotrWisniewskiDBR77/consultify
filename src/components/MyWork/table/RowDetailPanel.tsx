@@ -1867,7 +1867,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         className="rounded-xl border border-c-border bg-c-surface-raised p-3"
                       >
                         <div className="flex items-start gap-2">
-                          <Sparkles size={12} className="text-c-text-secondary mt-0.5 flex-shrink-0" />
+                          <Sparkles
+                            size={12}
+                            className="text-c-text-secondary mt-0.5 flex-shrink-0"
+                          />
                           <p className="text-[11px] text-c-text-secondary leading-relaxed">
                             {insight}
                           </p>

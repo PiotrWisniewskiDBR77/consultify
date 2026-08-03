@@ -118,7 +118,8 @@ const L = {
   },
 } as const;
 
-const pick = (pair: { en: string; pl: string }, isPolish: boolean) => (isPolish ? pair.pl : pair.en);
+const pick = (pair: { en: string; pl: string }, isPolish: boolean) =>
+  isPolish ? pair.pl : pair.en;
 
 // ── Waga → kropka koloru. Sygnał krytyczny (`c-danger`) TYLKO dla „high". ────
 const SEVERITY_DOT: Record<CardAnalysisSeverity, string> = {

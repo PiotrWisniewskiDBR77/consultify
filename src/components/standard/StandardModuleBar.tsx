@@ -481,7 +481,9 @@ export const StandardModuleBar: React.FC<StandardModuleBarProps> = ({
 
   // Z `children`: pełny layout 1:1 z `ModuleHub` (flex-col h-full + scrollowalny content area).
   return (
-    <div className={['flex flex-col h-full bg-c-bg text-c-text', className].filter(Boolean).join(' ')}>
+    <div
+      className={['flex flex-col h-full bg-c-bg text-c-text', className].filter(Boolean).join(' ')}
+    >
       {barContent}
       <div className="flex-1 min-h-0 overflow-auto">{children}</div>
     </div>

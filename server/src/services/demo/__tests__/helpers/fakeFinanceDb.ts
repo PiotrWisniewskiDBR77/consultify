@@ -196,7 +196,10 @@ export class FakeFinanceDb {
 
   async execRun(sql: string, params: unknown[]): Promise<{ success: boolean; changes: number }> {
     const insert = sql.match(
-      new RegExp(`INSERT\\s+INTO\\s+(${IDENTIFIER})\\s*\\(([^)]*)\\)\\s*VALUES\\s*\\(([^)]*)\\)`, 'i')
+      new RegExp(
+        `INSERT\\s+INTO\\s+(${IDENTIFIER})\\s*\\(([^)]*)\\)\\s*VALUES\\s*\\(([^)]*)\\)`,
+        'i'
+      )
     );
     if (insert) {
       const table = insert[1];

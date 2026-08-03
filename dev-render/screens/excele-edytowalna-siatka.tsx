@@ -45,8 +45,14 @@ const ZALOZENIA = {
     wiersz({ driver: { value: 'Nakład początkowy (inwestycja)' }, wartosc: { value: 500000 } }),
     wiersz({ driver: { value: 'Przepływ operacyjny brutto — rok 1' }, wartosc: { value: 220000 } }),
     wiersz({ driver: { value: 'Wzrost przepływów % rocznie' }, wartosc: { value: 0.06 } }),
-    wiersz({ driver: { value: 'Stopa dyskontowa (wymagana stopa zwrotu)' }, wartosc: { value: 0.1 } }),
-    wiersz({ driver: { value: 'Wartość rezydualna (koniec horyzontu)' }, wartosc: { value: 50000 } }),
+    wiersz({
+      driver: { value: 'Stopa dyskontowa (wymagana stopa zwrotu)' },
+      wartosc: { value: 0.1 },
+    }),
+    wiersz({
+      driver: { value: 'Wartość rezydualna (koniec horyzontu)' },
+      wartosc: { value: 50000 },
+    }),
     wiersz({ driver: { value: 'Stopa podatkowa' }, wartosc: { value: 0.19 } }),
   ],
 };
@@ -59,7 +65,13 @@ const aRef = (row: number) => `'Założenia'!$B$${row}`;
 // discountFactor/discounted), skrócona do horyzontu 3 lat.
 const PRZEPLYWY = {
   name: 'Przepływy',
-  columns: [kol('pozycja', 'Pozycja'), kol('rok0', 'Rok 0'), kol('rok1', 'Rok 1'), kol('rok2', 'Rok 2'), kol('rok3', 'Rok 3')],
+  columns: [
+    kol('pozycja', 'Pozycja'),
+    kol('rok0', 'Rok 0'),
+    kol('rok1', 'Rok 1'),
+    kol('rok2', 'Rok 2'),
+    kol('rok3', 'Rok 3'),
+  ],
   rows: [
     wiersz({
       pozycja: { value: 'Przepływ operacyjny brutto' },
@@ -140,7 +152,13 @@ Api.get = (async (url: string, ...reszta: unknown[]) => {
 // już zapisaną wartość — realny dowód trwałości kontraktu PATCH.
 Api.updateWorkbookCell = (async (
   workbookId: string,
-  payload: { sheetIndex: number; rowIndex: number; columnKey: string; value?: unknown; formula?: string }
+  payload: {
+    sheetIndex: number;
+    rowIndex: number;
+    columnKey: string;
+    value?: unknown;
+    formula?: string;
+  }
 ) => {
   if (workbookId !== ID) throw new Error('unknown workbook in dev-render stub');
   const sheet = WORKBOOK.schema_json.sheets[payload.sheetIndex] as {
@@ -152,7 +170,13 @@ Api.updateWorkbookCell = (async (
       ? { formula: payload.formula.trim() }
       : { value: payload.value ?? null };
   row.cells[payload.columnKey] = nextCell;
-  return { ok: true, sheetIndex: payload.sheetIndex, rowIndex: payload.rowIndex, columnKey: payload.columnKey, cell: nextCell };
+  return {
+    ok: true,
+    sheetIndex: payload.sheetIndex,
+    rowIndex: payload.rowIndex,
+    columnKey: payload.columnKey,
+    cell: nextCell,
+  };
 }) as typeof Api.updateWorkbookCell;
 
 const queryClient = new QueryClient({

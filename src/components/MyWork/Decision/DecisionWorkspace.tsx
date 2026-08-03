@@ -45,16 +45,16 @@ import {
 } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { getArtifactPath, type ArtifactType } from '@/utils/artifactLinks';
+import { type ArtifactType, getArtifactPath } from '@/utils/artifactLinks';
 
+import { useConfirmDialog } from '../shared/ConfirmDialog';
 import { DecisionAlternativesSection } from './DecisionAlternativesSection';
 import { DecisionAuditTrail } from './DecisionAuditTrail';
 import { DecisionCommentsSection } from './DecisionCommentsSection';
 import { DecisionDecideBar } from './DecisionDecideBar';
-import decisionWorkspaceApi, { readDecisionApiError } from './decisionWorkspaceApi';
 import { DecisionRisksSection } from './DecisionRisksSection';
+import decisionWorkspaceApi, { readDecisionApiError } from './decisionWorkspaceApi';
 import type { DecisionDetailDTO, WorkspaceUserRef } from './types';
-import { useConfirmDialog } from '../shared/ConfirmDialog';
 import {
   buildUserNameMap,
   formatDate,
@@ -184,9 +184,13 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
         } else {
           setLoadError({
             kind: 'network',
-            message: t('myWork.decisionWorkspace.loadFailed', 'Could not load this decision. {{msg}}', {
-              msg: apiErr.data?.error || apiErr.message || '',
-            }),
+            message: t(
+              'myWork.decisionWorkspace.loadFailed',
+              'Could not load this decision. {{msg}}',
+              {
+                msg: apiErr.data?.error || apiErr.message || '',
+              }
+            ),
           });
         }
         setDetail(null);
@@ -361,7 +365,10 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
               <input
                 value={createDraft.title}
                 onChange={(e) => setCreateDraft((d) => ({ ...d, title: e.target.value }))}
-                placeholder={t('myWork.decisionWorkspace.create.titlePlaceholder', 'Decision title')}
+                placeholder={t(
+                  'myWork.decisionWorkspace.create.titlePlaceholder',
+                  'Decision title'
+                )}
                 disabled={createSubmitting}
                 className="w-full rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs font-medium text-c-text placeholder:text-c-text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:opacity-60"
               />
@@ -474,7 +481,10 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <LoadingState variant="spinner" label={t('myWork.decisionWorkspace.loading', 'Loading decision…')} />
+        <LoadingState
+          variant="spinner"
+          label={t('myWork.decisionWorkspace.loading', 'Loading decision…')}
+        />
       </div>
     );
   }
@@ -532,7 +542,9 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
               {refreshing ? <Loader2 size={13} className="animate-spin text-c-text-muted" /> : null}
             </div>
             {detail.description ? (
-              <p className="mt-1 text-xs text-c-text-secondary line-clamp-2">{detail.description}</p>
+              <p className="mt-1 text-xs text-c-text-secondary line-clamp-2">
+                {detail.description}
+              </p>
             ) : null}
           </div>
           <button
@@ -546,9 +558,7 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
 
         <div className="flex flex-wrap items-center gap-1.5">
           <EntityStatusChip status={detail.status} />
-          {detail.priority ? (
-            <PriorityChip level={priorityLevel(detail.priority)} />
-          ) : null}
+          {detail.priority ? <PriorityChip level={priorityLevel(detail.priority)} /> : null}
           {detail.dueDate ? (
             <DueChip
               label={formatDate(detail.dueDate, dateLocale)}
@@ -584,7 +594,8 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
           {detail.consequencesOfInaction ? (
             <p className="mt-1.5 text-xs text-c-text-secondary leading-relaxed">
               <span className="font-medium text-c-text-muted">
-                {t('myWork.decisionWorkspace.section.consequences', 'Consequences of inaction')}:{' '}
+                {t('myWork.decisionWorkspace.section.consequences', 'Consequences of inaction')}
+                :{' '}
               </span>
               {detail.consequencesOfInaction}
             </p>

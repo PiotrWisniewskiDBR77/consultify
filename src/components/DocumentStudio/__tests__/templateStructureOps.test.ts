@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { TemplateSectionBlueprint } from '../types';
 import {
   insertSection,
   makeBlankSection,
@@ -8,6 +7,7 @@ import {
   renameSection,
   reorderSection,
 } from '../templateStructureOps';
+import type { TemplateSectionBlueprint } from '../types';
 
 function section(title: string): TemplateSectionBlueprint {
   return {

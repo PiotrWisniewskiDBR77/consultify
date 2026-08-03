@@ -36,15 +36,12 @@ function isAreaAnswered(state: DrdAreaAnswerState | null | undefined): boolean {
   );
 
   const hasNotes = Boolean(
-    state.levelNotes &&
-      Object.values(state.levelNotes || {}).some((v) => String(v || '').trim())
+    state.levelNotes && Object.values(state.levelNotes || {}).some((v) => String(v || '').trim())
   );
 
   const hasLinks = Boolean(
     state.levelLinks &&
-      Object.values(state.levelLinks || {}).some(
-        (arr) => Array.isArray(arr) && arr.length > 0
-      )
+    Object.values(state.levelLinks || {}).some((arr) => Array.isArray(arr) && arr.length > 0)
   );
 
   return hasAchieved || hasTarget || hasDecisions || hasNotes || hasLinks;

@@ -109,13 +109,10 @@ if (!g.__INITIATIVE_RECORD_FETCH__) {
       // result — without this key it falls through to the envelope object
       // itself, which has no `.find`, throwing inside OrgContext's own catch
       // (non-fatal, but noisy in the console).
-      return new Response(
-        JSON.stringify({ data: [], items: [], events: [], organizations: [] }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ data: [], items: [], events: [], organizations: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
     return realFetch(input as RequestInfo, init);
   };
@@ -125,10 +122,7 @@ export function InitiativeRecordScreen(): React.ReactElement {
   return (
     <AppProviders>
       <FeatureFlagsProvider showDevTools={false}>
-        <div
-          style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}
-          className="bg-c-bg"
-        >
+        <div style={{ height: '100vh', width: '100vw', overflow: 'hidden' }} className="bg-c-bg">
           <InitiativeDocumentView
             key={`initiative-record-${INITIATIVE_ID}`}
             initiativeId={INITIATIVE_ID}

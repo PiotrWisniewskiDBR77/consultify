@@ -17,13 +17,13 @@
  * bramkę bez CRITICAL (nowe reguły nie mogą zabić działającej biblioteki).
  */
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { buildFromTemplateFlat, listWorkbookTemplates } from '../templates/index.js';
 import { critiqueWorkbook } from '../workbookQualityGate.js';
-import { listWorkbookTemplates, buildFromTemplateFlat } from '../templates/index.js';
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -66,7 +66,7 @@ describe('doktryna treści Excela — (a) kontrakt promptu: zero zachęty do fab
       for (const re of FABRICATION_INVITATIONS) {
         expect(p, `prompt ${name} zawiera zachętę do fabrykacji: ${re}`).not.toMatch(re);
       }
-    },
+    }
   );
 
   it('PLANNING prompt narzuca 3 dozwolone źródła liczby i zakaz fabrykacji', () => {
@@ -208,7 +208,7 @@ describe('doktryna treści Excela — (b) DX-01 brak warstwy Założeń', () => 
     const wb = modelWithoutAssumptions();
     wb.sheets[0].name = 'Założenia';
     expect(
-      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER'),
+      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER')
     ).toBeUndefined();
   });
 
@@ -216,7 +216,7 @@ describe('doktryna treści Excela — (b) DX-01 brak warstwy Założeń', () => 
     const wb = modelWithoutAssumptions();
     wb.sheets[0].isAssumptions = true;
     expect(
-      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER'),
+      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER')
     ).toBeUndefined();
   });
 
@@ -250,7 +250,7 @@ describe('doktryna treści Excela — (b) DX-01 brak warstwy Założeń', () => 
     const wb = modelWithoutAssumptions();
     wb.sheets[1].rows[0].cells.v = { value: 40000 };
     expect(
-      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER'),
+      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER')
     ).toBeUndefined();
   });
 
@@ -323,7 +323,7 @@ describe('doktryna treści Excela — (c) DX-02 odwołania cykliczne', () => {
 
   it('cykl zgłoszony JEDEN raz (deduplikacja po zbiorze węzłów)', () => {
     const found = critiqueWorkbook(cyclicWorkbook()).issues.filter(
-      (i) => i.code === 'DX-02-FORMULA-CYCLE',
+      (i) => i.code === 'DX-02-FORMULA-CYCLE'
     );
     expect(found).toHaveLength(1);
   });
@@ -434,7 +434,7 @@ describe('doktryna treści Excela — (c) DX-02 odwołania cykliczne', () => {
       ],
     };
     expect(
-      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-02-FORMULA-CYCLE'),
+      critiqueWorkbook(wb).issues.find((i) => i.code === 'DX-02-FORMULA-CYCLE')
     ).toBeUndefined();
   });
 });
@@ -466,20 +466,21 @@ describe('doktryna treści Excela — (d) 7 zarejestrowanych szablonów przechod
 
       expect(
         critical.map((i) => `${i.code}: ${i.message}`),
-        `szablon ${id} ma CRITICAL`,
+        `szablon ${id} ma CRITICAL`
       ).toEqual([]);
       expect(report.issues.find((i) => i.code === 'DX-01-NO-ASSUMPTIONS-LAYER')).toBeUndefined();
       expect(report.issues.find((i) => i.code === 'DX-02-FORMULA-CYCLE')).toBeUndefined();
       expect(report.passed).toBe(true);
       expect(report.score).toBe(100);
-    },
+    }
   );
 
   it('każdy szablon ma jawną warstwę Założeń (A1) — dowód, że DX-01 nie jest martwy', () => {
     for (const t of templates) {
       const schema = buildFromTemplateFlat(t.id, {}) as WorkbookSchema;
       const hasAssumptions = schema.sheets.some(
-        (s) => s.isAssumptions === true || /assumption|założen|zalozen|inputs|parametry/i.test(s.name),
+        (s) =>
+          s.isAssumptions === true || /assumption|założen|zalozen|inputs|parametry/i.test(s.name)
       );
       expect(hasAssumptions, `szablon ${t.id} nie ma warstwy Założeń`).toBe(true);
     }

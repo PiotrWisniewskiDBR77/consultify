@@ -30,14 +30,9 @@
 
 import { randomUUID } from 'crypto';
 
-import { getStorage } from './storage/index.js';
-import {
-  all as dbAll,
-  columnExists,
-  run as dbRun,
-  tableExists,
-} from '../utils/DbPromise.js';
+import { all as dbAll, columnExists, run as dbRun, tableExists } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { getStorage } from './storage/index.js';
 
 // ==========================================
 // CONFIG
@@ -367,23 +362,17 @@ class BackupService {
   }
 
   /** List backup records, newest first. Excludes expired unless asked. */
-  async listBackups(
-    opts: { includeExpired?: boolean } = {}
-  ): Promise<BackupRecord[]> {
+  async listBackups(opts: { includeExpired?: boolean } = {}): Promise<BackupRecord[]> {
     await ensureTable();
-    const rows = await dbAll<any>(
-      `SELECT * FROM backup_manifests ORDER BY created_at DESC`,
-      [],
-      { fallback: true }
-    );
+    const rows = await dbAll<any>(`SELECT * FROM backup_manifests ORDER BY created_at DESC`, [], {
+      fallback: true,
+    });
     const now = Date.now();
-    return rows
-      .map(rowToRecord)
-      .filter((r) => {
-        if (opts.includeExpired) return true;
-        if (!r.expiresAt) return true;
-        return new Date(r.expiresAt).getTime() > now;
-      });
+    return rows.map(rowToRecord).filter((r) => {
+      if (opts.includeExpired) return true;
+      if (!r.expiresAt) return true;
+      return new Date(r.expiresAt).getTime() > now;
+    });
   }
 
   /** System status/metrics consumed by the admin status endpoint + cron. */

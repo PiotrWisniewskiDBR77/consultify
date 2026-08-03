@@ -208,7 +208,9 @@ export function walidujKontrakt(w: WejscieWalidacjiKontraktu): string[] {
   }
   (w.headerActions ?? []).forEach((a) => zanotuj(a.id, 'pasek akcji'));
   (w.toolAIActions ?? []).forEach((a) => zanotuj(a.id, 'akcje AI narzędzia'));
-  (w.aiContextActions ?? []).forEach((a) => zanotuj(a.action?.id, `akcje AI sekcji ${a.sectionId}`));
+  (w.aiContextActions ?? []).forEach((a) =>
+    zanotuj(a.action?.id, `akcje AI sekcji ${a.sectionId}`)
+  );
   KOLEJNOSC_SEKCJI_PANELU.forEach((id) => {
     const slot = w.rightPanel?.[id];
     if (!slot || czyPominietaSekcjaPanelu(slot)) return;

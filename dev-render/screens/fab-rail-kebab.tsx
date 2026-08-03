@@ -22,8 +22,8 @@ import { DocumentToggleButton } from '../../src/components/documents/DocumentTog
 import { FeedbackToggleButton } from '../../src/components/Feedback/FeedbackToggleButton';
 import { HelpToggleButton } from '../../src/components/Help/HelpToggleButton';
 import { PreviewActionBar } from '../../src/components/shared/PreviewPane/PreviewActionBar';
-import { StandardTable } from '../../src/components/standard/StandardTable';
 import type { TableColumn, TableRow } from '../../src/components/standard/StandardTable';
+import { StandardTable } from '../../src/components/standard/StandardTable';
 
 const COLUMNS: TableColumn[] = [
   { id: 'title', label: 'Nazwa', type: 'text', width: '40%' },
@@ -70,7 +70,9 @@ const FabRailKebabScreen: React.FC = () => {
         className={`flex-1 flex flex-col overflow-hidden relative min-w-0 h-full min-h-0 ${mainReserve}`}
       >
         <div className="h-12 shrink-0 border-b border-c-border-subtle flex items-center px-3 text-sm text-c-text-secondary">
-          {fixOff ? 'PRZED naprawą — rail na right-4 nad tabelą' : 'PO naprawie — rail we własnym pasie'}
+          {fixOff
+            ? 'PRZED naprawą — rail na right-4 nad tabelą'
+            : 'PO naprawie — rail we własnym pasie'}
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto">
           <StandardTable
@@ -96,16 +98,31 @@ const FabRailKebabScreen: React.FC = () => {
             rows={[
               {
                 buttons: [
-                  { label: 'Zatwierdź', onClick: () => undefined, colorScheme: 'emerald', flex: true },
+                  {
+                    label: 'Zatwierdź',
+                    onClick: () => undefined,
+                    colorScheme: 'emerald',
+                    flex: true,
+                  },
                   { label: 'Odrzuć', onClick: () => undefined, colorScheme: 'neutral', flex: true },
                 ],
               },
             ]}
             overflowLabel="Więcej akcji"
             overflowActions={[
-              { label: 'Delegate', icon: UserPlus, onClick: () => undefined, colorScheme: 'neutral' },
+              {
+                label: 'Delegate',
+                icon: UserPlus,
+                onClick: () => undefined,
+                colorScheme: 'neutral',
+              },
               { label: 'Remind', icon: Bell, onClick: () => undefined, colorScheme: 'neutral' },
-              { label: 'Escalate', icon: TrendingUp, onClick: () => undefined, colorScheme: 'amber' },
+              {
+                label: 'Escalate',
+                icon: TrendingUp,
+                onClick: () => undefined,
+                colorScheme: 'amber',
+              },
             ]}
           />
         </div>

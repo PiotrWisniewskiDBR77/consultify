@@ -44,7 +44,6 @@ import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailur
 import { Banner } from '../shared/Banner';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -57,6 +56,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import AIInsightsPanel from './AIInsightsPanel';
 import { KPICreateModal } from './KPICreateModal';
 import {

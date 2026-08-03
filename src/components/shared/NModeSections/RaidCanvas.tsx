@@ -507,9 +507,7 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
         </div>
         {/* Open */}
         <div className="p-2.5 rounded-xl text-center border border-c-border/50 dark:border-c-border/50 bg-c-surface/30 dark:bg-c-surface/30">
-          <div className="text-xl font-bold text-c-text dark:text-c-text">
-            {openItems.length}
-          </div>
+          <div className="text-xl font-bold text-c-text dark:text-c-text">{openItems.length}</div>
           <div className="text-[9px] uppercase tracking-wider text-c-text-secondary dark:text-c-text-secondary">
             {t('sharedComponents.raidCanvas.open')}
           </div>
@@ -715,7 +713,10 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
       {/* ── Empty state ─────────────────────────────────────────────────── */}
       {items.length === 0 && (
         <div className="py-6 text-center rounded-xl border border-dashed border-c-border-strong/50 dark:border-c-border-strong/50 bg-c-surface/10 dark:bg-c-surface/10">
-          <AlertTriangle size={20} className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary" />
+          <AlertTriangle
+            size={20}
+            className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary"
+          />
           <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-1">
             {t('sharedComponents.raidCanvas.noRaidItemsYet')}
           </p>

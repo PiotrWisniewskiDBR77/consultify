@@ -212,10 +212,7 @@ export const AIWhatIfScenarios: React.FC<AIWhatIfScenariosProps> = ({
                 const cfg = typeConfig[scenario.type];
                 const Icon = cfg.icon;
                 return (
-                  <div
-                    key={scenario.id}
-                    className={`p-3 rounded-xl border ${cfg.bg}`}
-                  >
+                  <div key={scenario.id} className={`p-3 rounded-xl border ${cfg.bg}`}>
                     <div className="flex items-start gap-2">
                       <Icon size={14} className={`mt-0.5 shrink-0 ${cfg.color}`} />
                       <div className="min-w-0 flex-1">

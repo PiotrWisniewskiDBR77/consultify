@@ -21,9 +21,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { PortfolioInitiative } from '@/types';
 
 import {
+  type AiMockMode,
   callLog,
   installPortfolioAnalysisApiMock,
-  type AiMockMode,
 } from '../mocks/portfolioAnalysisMocks';
 
 const PortfolioAnalysisView = React.lazy(() =>
@@ -180,7 +180,8 @@ export default function InitiativesPortfolioAnalysisScreen(): React.ReactElement
             ai={aiMode}
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            wywołania: {callLog.entries.filter((e) => e.includes('/ai/generate')).length}× /ai/generate
+            wywołania: {callLog.entries.filter((e) => e.includes('/ai/generate')).length}×
+            /ai/generate
           </span>
         </div>
       </div>

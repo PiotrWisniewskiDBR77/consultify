@@ -19,12 +19,16 @@ import { TriModeChooser } from '@/components/shared/TriModeChooser';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import { buildArtifactCode, buildArtifactPermalink, buildMyWorkSheetTableOpenPath } from '@/utils/artifactLinks';
+import {
+  buildArtifactCode,
+  buildArtifactPermalink,
+  buildMyWorkSheetTableOpenPath,
+} from '@/utils/artifactLinks';
+import { isExceleRightRailEnabled } from '@/utils/exceleRightRailFlag';
 import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
-import { isExceleRightRailEnabled } from '@/utils/exceleRightRailFlag';
 import { isTriModeEnabled } from '@/utils/triModeFlag';
 import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
@@ -32,7 +36,7 @@ import { ArtifactModuleHome } from './ArtifactModuleHome';
 import { ExceleRightPanel } from './ExceleRightPanel';
 import { ExceleRightRail } from './ExceleRightRail';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
-import { KimiWorkspaceShell, type KimiHeaderKebabItem } from './KimiWorkspaceShell';
+import { type KimiHeaderKebabItem, KimiWorkspaceShell } from './KimiWorkspaceShell';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
 import { WorkbookVersionHistoryModal } from './WorkbookVersionHistoryModal';
 

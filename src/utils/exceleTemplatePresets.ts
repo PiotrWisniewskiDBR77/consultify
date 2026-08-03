@@ -61,7 +61,8 @@ function normalizePresetsByTemplate(raw: unknown): PresetsByTemplate {
         id: e.id,
         name: e.name,
         values,
-        createdAt: typeof e.createdAt === 'number' && Number.isFinite(e.createdAt) ? e.createdAt : 0,
+        createdAt:
+          typeof e.createdAt === 'number' && Number.isFinite(e.createdAt) ? e.createdAt : 0,
       });
     }
     if (normalized.length > 0) out[templateId] = normalized;

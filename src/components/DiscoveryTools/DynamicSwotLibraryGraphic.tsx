@@ -228,9 +228,7 @@ export function DynamicSwotLibraryGraphic({
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary">
                 {labels.stagesTitle}
               </div>
-              <div className="mt-1 text-sm text-c-text-secondary">
-                {labels.stagesSubtitle}
-              </div>
+              <div className="mt-1 text-sm text-c-text-secondary">{labels.stagesSubtitle}</div>
             </div>
             <span className="inline-flex shrink-0 rounded-full border border-c-border-strong bg-white/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-c-text-secondary dark:bg-white/[0.05]">
               {pick(CHIP.process)}
@@ -313,9 +311,7 @@ export function DynamicSwotLibraryGraphic({
                 {pick(CHIP.matrix)}
               </span>
             </div>
-            <div className="mt-1 text-sm text-c-text-secondary">
-              {labels.matrixLead}
-            </div>
+            <div className="mt-1 text-sm text-c-text-secondary">{labels.matrixLead}</div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -347,9 +343,7 @@ export function DynamicSwotLibraryGraphic({
           </div>
 
           <div className="mt-4 rounded-[22px] border border-c-border-subtle bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="text-xs leading-relaxed text-c-text-secondary">
-              {labels.matrixNote}
-            </div>
+            <div className="text-xs leading-relaxed text-c-text-secondary">{labels.matrixNote}</div>
           </div>
         </div>
 

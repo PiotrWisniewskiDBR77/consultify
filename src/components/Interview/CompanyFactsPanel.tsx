@@ -360,10 +360,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
               {stakeholders.length > 0 ? (
                 <div className="space-y-2">
                   {stakeholders.map((person) => (
-                    <div
-                      key={person.id}
-                      className="flex items-center gap-2 p-2 bg-c-bg rounded-lg"
-                    >
+                    <div key={person.id} className="flex items-center gap-2 p-2 bg-c-bg rounded-lg">
                       <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                         <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
                           {person.name.charAt(0).toUpperCase()}
@@ -373,9 +370,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                         <p className="text-sm font-medium text-c-text dark:text-white truncate">
                           {person.name}
                         </p>
-                        <p className="text-xs text-c-text-muted truncate">
-                          {person.role}
-                        </p>
+                        <p className="text-xs text-c-text-muted truncate">{person.role}</p>
                       </div>
                       {person.influence && (
                         <span
@@ -436,9 +431,7 @@ export const CompanyFactsPanel: React.FC<CompanyFactsPanelProps> = ({
                             : 'bg-c-bg border-c-border-strong'
                       }`}
                     >
-                      <p className="text-xs font-medium text-c-text-muted mb-1">
-                        {gap.category}
-                      </p>
+                      <p className="text-xs font-medium text-c-text-muted mb-1">{gap.category}</p>
                       <p className="text-sm text-c-text dark:text-white">{gap.description}</p>
                     </div>
                   ))}

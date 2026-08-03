@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 
 import {
-  ArtifactContentEnvelopeV1Schema,
   type ArtifactContentEnvelopeV1,
+  ArtifactContentEnvelopeV1Schema,
 } from '../../types/artifactContent.js';
 import { get as dbGet } from '../../utils/DbPromise.js';
 import { AppError } from '../../utils/ErrorHandler.js';
@@ -51,7 +51,7 @@ adapters.set('native_artifact', wave5ArtifactContentAdapter);
 
 export function registerArtifactContentAdapter(
   originRuntime: string,
-  adapter: ArtifactContentAdapter,
+  adapter: ArtifactContentAdapter
 ): () => void {
   const key = originRuntime.trim();
   if (!key) throw new Error('originRuntime is required');
@@ -87,7 +87,7 @@ export function computeArtifactContentHash(envelope: ArtifactContentEnvelopeV1):
         contentMd: envelope.contentMd,
         contentJson: envelope.contentJson,
         blocks: envelope.blocks,
-      }),
+      })
     )
     .digest('hex');
 }
@@ -110,7 +110,7 @@ export async function resolveArtifactContent(params: {
     `SELECT artifact_id FROM v8_output_artifacts
      WHERE artifact_id = ? AND organization_id = ?`,
     [params.artifactId, params.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!artifact) {
     throw new AppError('Artifact not found', 404, ARTIFACT_CONTENT_ERROR_CODES.ARTIFACT_NOT_FOUND, {
@@ -128,14 +128,14 @@ export async function resolveArtifactContent(params: {
       ORDER BY created_at ASC
       LIMIT 1`,
     [params.artifactId, params.organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!origin?.origin_runtime || !origin.origin_record_id) {
     throw new AppError(
       'Primary artifact origin is missing',
       409,
       ARTIFACT_CONTENT_ERROR_CODES.ORIGIN_MISSING,
-      { artifactId: params.artifactId },
+      { artifactId: params.artifactId }
     );
   }
 
@@ -145,7 +145,7 @@ export async function resolveArtifactContent(params: {
       `Artifact content runtime ${origin.origin_runtime} is unsupported`,
       422,
       ARTIFACT_CONTENT_ERROR_CODES.RUNTIME_UNSUPPORTED,
-      { artifactId: params.artifactId, originRuntime: origin.origin_runtime },
+      { artifactId: params.artifactId, originRuntime: origin.origin_runtime }
     );
   }
 
@@ -160,7 +160,7 @@ export async function resolveArtifactContent(params: {
       'Artifact origin content was not found',
       404,
       ARTIFACT_CONTENT_ERROR_CODES.ORIGIN_NOT_FOUND,
-      { artifactId: params.artifactId, originRecordId: origin.origin_record_id },
+      { artifactId: params.artifactId, originRecordId: origin.origin_record_id }
     );
   }
 
@@ -170,12 +170,11 @@ export async function resolveArtifactContent(params: {
       'Artifact content adapter returned an invalid V1 envelope',
       502,
       ARTIFACT_CONTENT_ERROR_CODES.INVALID_ENVELOPE,
-      { artifactId: params.artifactId },
+      { artifactId: params.artifactId }
     );
   }
   const envelope = parsed.data;
-  const originRevision =
-    resolved.originRevision || envelope.provenance.originRevision || null;
+  const originRevision = resolved.originRevision || envelope.provenance.originRevision || null;
   const contentHash = computeArtifactContentHash(envelope);
   const etag = computeArtifactContentEtag({ originRevision, contentHash });
 

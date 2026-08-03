@@ -2110,7 +2110,8 @@ router.post(
 
       // CREATE path: new decision linked to this initiative, mirroring apply-template's
       // INSERT INTO decisions shape above.
-      if (!title) return res.status(400).json({ error: 'title is required to create a change/decision' });
+      if (!title)
+        return res.status(400).json({ error: 'title is required to create a change/decision' });
 
       if (idempotencyKey) {
         const existingDecision = (await queryHelpers.queryOne(
@@ -2197,7 +2198,12 @@ router.post(
 
       return res.status(201).json({ success: true, decisionId: decId });
     } catch (err: any) {
-      return failInitiative500(res, 'Failed to create/link change', 'INITIATIVE_CHANGE_FAILED', err);
+      return failInitiative500(
+        res,
+        'Failed to create/link change',
+        'INITIATIVE_CHANGE_FAILED',
+        err
+      );
     }
   }
 );

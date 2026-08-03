@@ -8,8 +8,8 @@
  */
 import {
   BookOpen,
-  BringToFront,
   Brain,
+  BringToFront,
   Clipboard,
   Copy,
   GitBranch,

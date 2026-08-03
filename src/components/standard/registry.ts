@@ -156,9 +156,7 @@ export const REJESTR_KART_N: Record<KartaNKey, KartaNWpis> = {
 export const KLUCZE_KART_N = Object.keys(REJESTR_KART_N) as KartaNKey[];
 
 /** Wpisy jako tablica, w kolejności migracji M1…M7. */
-export const WPISY_KART_N: readonly KartaNWpis[] = KLUCZE_KART_N.map(
-  (k) => REJESTR_KART_N[k]
-);
+export const WPISY_KART_N: readonly KartaNWpis[] = KLUCZE_KART_N.map((k) => REJESTR_KART_N[k]);
 
 /**
  * Zwraca wpis rejestru dla klucza. Brak wpisu jest niewyrażalny typem
@@ -174,7 +172,5 @@ export function wpisKartyN(klucz: KartaNKey): KartaNWpis {
  */
 export function czyKartaN(sciezkaPliku: string): boolean {
   const znorm = sciezkaPliku.replace(/^\.\//, '');
-  return WPISY_KART_N.some(
-    (w) => znorm === w.komponent || znorm.endsWith(`/${w.komponent}`)
-  );
+  return WPISY_KART_N.some((w) => znorm === w.komponent || znorm.endsWith(`/${w.komponent}`));
 }

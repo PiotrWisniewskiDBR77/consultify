@@ -118,8 +118,14 @@ async function requireAssessmentFlag(req: any, res: any, flag: keyof any): Promi
     }
     return true;
   } catch (e: any) {
-    logger.error('[ASSESSMENT_WORKFLOW_V2] evaluate permissions failed', { err: e, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się ocenić uprawnień', code: 'ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED' });
+    logger.error('[ASSESSMENT_WORKFLOW_V2] evaluate permissions failed', {
+      err: e,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się ocenić uprawnień',
+      code: 'ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED',
+    });
     return false;
   }
 }
@@ -155,8 +161,14 @@ async function requireAssessmentPermission(
     }
     return true;
   } catch (e: any) {
-    logger.error('[ASSESSMENT_WORKFLOW_V2] evaluate permissions failed', { err: e, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się ocenić uprawnień', code: 'ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED' });
+    logger.error('[ASSESSMENT_WORKFLOW_V2] evaluate permissions failed', {
+      err: e,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się ocenić uprawnień',
+      code: 'ASSESSMENT_WORKFLOW_V2_EVALUATE_PERMISSIONS_FAILED',
+    });
     return false;
   }
 }
@@ -213,8 +225,14 @@ router.get('/:assessmentId/users', async (req, res) => {
 
     return res.json({ users });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error searching users', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się wyszukać użytkowników', code: 'ASSESSMENT_WORKFLOW_V2_SEARCH_USERS_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error searching users', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się wyszukać użytkowników',
+      code: 'ASSESSMENT_WORKFLOW_V2_SEARCH_USERS_FAILED',
+    });
   }
 });
 
@@ -377,8 +395,14 @@ router.get('/:assessmentId/report/versions', async (req, res) => {
 
     return res.json({ versions });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error listing report versions', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać listy wersji raportu', code: 'ASSESSMENT_WORKFLOW_V2_LIST_REPORT_VERSIONS_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error listing report versions', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać listy wersji raportu',
+      code: 'ASSESSMENT_WORKFLOW_V2_LIST_REPORT_VERSIONS_FAILED',
+    });
   }
 });
 router.post(
@@ -426,8 +450,14 @@ router.get('/:assessmentId/my-role', async (req, res) => {
     );
     return res.json(roleInfo);
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error getting user role', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać roli użytkownika', code: 'ASSESSMENT_WORKFLOW_V2_GET_USER_ROLE_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error getting user role', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać roli użytkownika',
+      code: 'ASSESSMENT_WORKFLOW_V2_GET_USER_ROLE_FAILED',
+    });
   }
 });
 
@@ -457,8 +487,13 @@ router.get('/:assessmentId/roles', async (req, res) => {
     );
     return res.json({ roles });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error getting assessment roles', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać ról', code: 'ASSESSMENT_WORKFLOW_V2_GET_ROLES_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error getting assessment roles', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res
+      .status(500)
+      .json({ error: 'Nie udało się pobrać ról', code: 'ASSESSMENT_WORKFLOW_V2_GET_ROLES_FAILED' });
   }
 });
 
@@ -598,8 +633,14 @@ router.get('/:assessmentId/eligibility', async (req, res) => {
       actions,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error building eligibility', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się obliczyć kwalifikowalności', code: 'ASSESSMENT_WORKFLOW_V2_BUILD_ELIGIBILITY_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error building eligibility', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się obliczyć kwalifikowalności',
+      code: 'ASSESSMENT_WORKFLOW_V2_BUILD_ELIGIBILITY_FAILED',
+    });
   }
 });
 
@@ -696,8 +737,14 @@ router.get('/:assessmentId/access-requests', async (req, res) => {
     );
     return res.json({ requests });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error getting access requests', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać wniosków o dostęp', code: 'ASSESSMENT_WORKFLOW_V2_GET_ACCESS_REQUESTS_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error getting access requests', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać wniosków o dostęp',
+      code: 'ASSESSMENT_WORKFLOW_V2_GET_ACCESS_REQUESTS_FAILED',
+    });
   }
 });
 
@@ -1060,7 +1107,10 @@ router.post(
         });
       }
       logger.error('[AssessmentWorkflowV2] Error creating initiative generation run:', err);
-      res.status(500).json({ error: 'Nie udało się utworzyć przebiegu', code: 'ASSESSMENT_WORKFLOW_V2_CREATE_RUN_FAILED' });
+      res.status(500).json({
+        error: 'Nie udało się utworzyć przebiegu',
+        code: 'ASSESSMENT_WORKFLOW_V2_CREATE_RUN_FAILED',
+      });
     }
   }
 );
@@ -1086,8 +1136,14 @@ router.get('/:assessmentId/initiative-generation-runs', async (req, res) => {
     );
     return res.json({ runs });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error listing initiative generation runs', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać listy przebiegów', code: 'ASSESSMENT_WORKFLOW_V2_LIST_RUNS_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error listing initiative generation runs', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać listy przebiegów',
+      code: 'ASSESSMENT_WORKFLOW_V2_LIST_RUNS_FAILED',
+    });
   }
 });
 
@@ -1116,8 +1172,14 @@ router.get('/:assessmentId/initiative-generation-runs/:runId', async (req, res) 
     }
     return res.json({ run: progress });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error fetching initiative generation run', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać przebiegu', code: 'ASSESSMENT_WORKFLOW_V2_FETCH_RUN_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error fetching initiative generation run', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać przebiegu',
+      code: 'ASSESSMENT_WORKFLOW_V2_FETCH_RUN_FAILED',
+    });
   }
 });
 
@@ -1152,8 +1214,14 @@ router.get('/:assessmentId/initiative-generation-runs/:runId/initiatives', async
     );
     return res.json({ initiatives });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error listing run initiatives', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać listy inicjatyw przebiegu', code: 'ASSESSMENT_WORKFLOW_V2_LIST_RUN_INITIATIVES_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error listing run initiatives', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać listy inicjatyw przebiegu',
+      code: 'ASSESSMENT_WORKFLOW_V2_LIST_RUN_INITIATIVES_FAILED',
+    });
   }
 });
 
@@ -1179,8 +1247,14 @@ router.post(
       });
       return res.json({ success: true, updated: result.updated });
     } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error submitting run drafts for review', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się przesłać szkiców', code: 'ASSESSMENT_WORKFLOW_V2_SUBMIT_DRAFTS_FAILED' });
+      logger.error('[AssessmentWorkflowV2] Error submitting run drafts for review', {
+        err: err,
+        correlationId: (req as any).correlationId,
+      });
+      res.status(500).json({
+        error: 'Nie udało się przesłać szkiców',
+        code: 'ASSESSMENT_WORKFLOW_V2_SUBMIT_DRAFTS_FAILED',
+      });
     }
   }
 );
@@ -1231,8 +1305,14 @@ router.get('/:assessmentId/initiative-batches', async (req, res) => {
 
     return res.json({ batches });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error listing initiative batches', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać listy partii', code: 'ASSESSMENT_WORKFLOW_V2_LIST_BATCHES_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error listing initiative batches', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać listy partii',
+      code: 'ASSESSMENT_WORKFLOW_V2_LIST_BATCHES_FAILED',
+    });
   }
 });
 
@@ -1457,8 +1537,14 @@ router.get('/:assessmentId/gate-decisions', async (req, res) => {
 
     return res.json({ decisions });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error fetching gate decisions', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać decyzji bramkowych', code: 'ASSESSMENT_WORKFLOW_V2_FETCH_GATE_DECISIONS_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error fetching gate decisions', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać decyzji bramkowych',
+      code: 'ASSESSMENT_WORKFLOW_V2_FETCH_GATE_DECISIONS_FAILED',
+    });
   }
 });
 
@@ -1572,8 +1658,14 @@ router.put('/:assessmentId/gate-decisions/:gateType', async (req, res) => {
 
     return res.json({ ok: true });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error updating gate decision', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się zaktualizować decyzji bramkowej', code: 'ASSESSMENT_WORKFLOW_V2_UPDATE_GATE_DECISION_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error updating gate decision', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się zaktualizować decyzji bramkowej',
+      code: 'ASSESSMENT_WORKFLOW_V2_UPDATE_GATE_DECISION_FAILED',
+    });
   }
 });
 
@@ -1737,8 +1829,14 @@ router.get('/:assessmentId/benchmark-comparison', async (req, res) => {
       categoryComparison,
     });
   } catch (err: any) {
-    logger.error('[AssessmentWorkflowV2] Error fetching benchmark comparison', { err: err, correlationId: (req as any).correlationId });
-    res.status(500).json({ error: 'Nie udało się pobrać porównania benchmarkowego', code: 'ASSESSMENT_WORKFLOW_V2_FETCH_BENCHMARK_COMPARISON_FAILED' });
+    logger.error('[AssessmentWorkflowV2] Error fetching benchmark comparison', {
+      err: err,
+      correlationId: (req as any).correlationId,
+    });
+    res.status(500).json({
+      error: 'Nie udało się pobrać porównania benchmarkowego',
+      code: 'ASSESSMENT_WORKFLOW_V2_FETCH_BENCHMARK_COMPARISON_FAILED',
+    });
   }
 });
 

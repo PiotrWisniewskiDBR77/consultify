@@ -71,23 +71,31 @@ const OVERVIEW = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.overview',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'rdzen', klasa: 'L', kolumna: 'left', kolejnosc: 0 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'rdzen', klasa: 'L', kolumna: 'left', kolejnosc: 0 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
 const PROBLEM_DEFINITION = definiujKarteKanoniczna({
   id: 'problemDefinition',
   label: { en: 'Problem Definition', pl: 'Definicja problemu' },
-  opis: { en: 'Symptom, root cause, cost of inaction.', pl: 'Symptom, przyczyna źródłowa, koszt zaniechania.' },
+  opis: {
+    en: 'Symptom, root cause, cost of inaction.',
+    pl: 'Symptom, przyczyna źródłowa, koszt zaniechania.',
+  },
   grupa: 'CONTENT',
   ikona: 'AlertCircle',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zdefiniuj problem: symptom, przyczyna źródłowa, koszt zaniechania (cost of inaction).',
+    szablon:
+      'Zdefiniuj problem: symptom, przyczyna źródłowa, koszt zaniechania (cost of inaction).',
     kluczPromptu: 'initiative.problemDefinition',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 1 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 1 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -103,14 +111,19 @@ const TARGET_STATE = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.targetState',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 2 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
 const SCOPE = definiujKarteKanoniczna({
   id: 'scope',
   label: { en: 'Scope', pl: 'Zakres' },
-  opis: { en: 'In-scope / out-of-scope, kill criteria.', pl: 'W zakresie / poza zakresem, kryteria zatrzymania.' },
+  opis: {
+    en: 'In-scope / out-of-scope, kill criteria.',
+    pl: 'W zakresie / poza zakresem, kryteria zatrzymania.',
+  },
   grupa: 'CONTENT',
   ikona: 'ListChecks',
   rolaAI: 'pisze',
@@ -119,7 +132,9 @@ const SCOPE = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.scope',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 3 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -130,11 +145,14 @@ const TASKS = definiujKarteKanoniczna({
   ikona: 'CheckSquare',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zaproponuj zadania i kamienie milowe realizujące stan docelowy, z sekwencją i właścicielami.',
+    szablon:
+      'Zaproponuj zadania i kamienie milowe realizujące stan docelowy, z sekwencją i właścicielami.',
     kluczPromptu: 'initiative.tasks',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 4 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 4 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -149,24 +167,32 @@ const DECISIONS = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.decisions',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 5 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 5 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
 const RAID = definiujKarteKanoniczna({
   id: 'raid',
   label: { en: 'RAID', pl: 'RAID' },
-  opis: { en: 'Risks, assumptions, issues, dependencies.', pl: 'Ryzyka, założenia, problemy, zależności.' },
+  opis: {
+    en: 'Risks, assumptions, issues, dependencies.',
+    pl: 'Ryzyka, założenia, problemy, zależności.',
+  },
   grupa: 'EXECUTION',
   ikona: 'ShieldAlert',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zbuduj rejestr RAID: ryzyka/założenia/problemy/zależności z oceną i planem mitygacji.',
+    szablon:
+      'Zbuduj rejestr RAID: ryzyka/założenia/problemy/zależności z oceną i planem mitygacji.',
     kluczPromptu: 'initiative.raid',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   // Silnik renderuje `raid` na boardzie jako `risk-raid` (nModeMap, InitiativeDocumentView.tsx:1645).
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 6 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 6 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -177,13 +203,16 @@ const GATES = definiujKarteKanoniczna({
   ikona: 'Flag',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Opisz gotowość bramek fazowych (G0-G5): kryteria wejścia/wyjścia i status listy kontrolnej.',
+    szablon:
+      'Opisz gotowość bramek fazowych (G0-G5): kryteria wejścia/wyjścia i status listy kontrolnej.',
     kluczPromptu: 'initiative.gates',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   // ★ Centrum karty `gates` niesie 13 crimson (InitiativeGatesWorkflowTable.tsx) — INNA fala,
   //   baseline nietknięty (przepis §4, decyzja 07-08). To nie rozjazd kontraktu → statusKanonu czysta.
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 7 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -198,7 +227,9 @@ const FINANCIAL_ANALYSIS = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.financialAnalysis',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 8 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 8 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'DB aktywna, ale komentarz kodu „enum is dead per F0" — do rozstrzygnięcia żywy/martwy (DO POTWIERDZENIA PIOTRA).',
@@ -217,7 +248,9 @@ const FINANCIAL_IMPACT = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.financialImpact',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 9 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 9 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -229,11 +262,14 @@ const KPIS = definiujKarteKanoniczna({
   ikona: 'Gauge',
   rolaAI: 'pisze',
   aiPrompt: {
-    szablon: 'Zdefiniuj KPI i korzyści: wartość bazowa, cel, częstotliwość pomiaru, kierunek alertu.',
+    szablon:
+      'Zdefiniuj KPI i korzyści: wartość bazowa, cel, częstotliwość pomiaru, kierunek alertu.',
     kluczPromptu: 'initiative.kpis',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 10 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 10 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -250,7 +286,9 @@ const COMPETENCY_REQUIREMENTS = definiujKarteKanoniczna({
     szablon: 'Podpowiedz wymagane kompetencje do realizacji; człowiek zatwierdza listę i poziomy.',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 11 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 11 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'Klucz w registry, ale BRAK wiersza w seedzie DB (529). Zaseedować czy fallback-only — DO POTWIERDZENIA PIOTRA.',
@@ -265,10 +303,13 @@ const SKILLS_GAP = definiujKarteKanoniczna({
   ikona: 'UserMinus',
   rolaAI: 'asystuje',
   aiPrompt: {
-    szablon: 'Wskaż lukę kompetencyjną (posiadane vs wymagane) i propozycje jej domknięcia; człowiek decyduje.',
+    szablon:
+      'Wskaż lukę kompetencyjną (posiadane vs wymagane) i propozycje jej domknięcia; człowiek decyduje.',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 12 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 12 },
+  ],
   statusKanonu: {
     stan: 'rozjazd',
     opis: 'Klucz w registry, brak wiersza w seedzie DB (529); istnieje tabela skills_gap — spójność DO POTWIERDZENIA PIOTRA.',
@@ -288,7 +329,9 @@ const PILOT = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.pilot',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'ukryta-domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 13 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'ukryta-domyslna', klasa: 'L', kolumna: 'left', kolejnosc: 13 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -301,7 +344,9 @@ const COMMENTS = definiujKarteKanoniczna({
   rolaAI: 'transakcyjna',
   aiPrompt: { none: true, reason: 'strumień komentarzy użytkowników — nie generacja treści' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 14 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 14 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -312,11 +357,21 @@ const ACTIVITY_LOG = definiujKarteKanoniczna({
   grupa: 'AUDIT',
   ikona: 'History',
   rolaAI: 'systemowa',
-  aiPrompt: { none: true, reason: 'log zdarzeń jest zapisem faktów — generowana treść byłaby fałszem' },
+  aiPrompt: {
+    none: true,
+    reason: 'log zdarzeń jest zapisem faktów — generowana treść byłaby fałszem',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
   // Silnik renderuje pod `history` (registry key) / board `activity-log` (nModeMap:1651).
   kompozycja: [
-    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'left', kolejnosc: 15, idWArtefakcie: 'history' },
+    {
+      artefakt: 'initiative',
+      rola: 'dodawalna',
+      klasa: 'L',
+      kolumna: 'left',
+      kolejnosc: 15,
+      idWArtefakcie: 'history',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -327,7 +382,10 @@ const ACTIVITY_LOG = definiujKarteKanoniczna({
 const CONTROL = definiujKarteKanoniczna({
   id: 'control',
   label: { en: 'Control', pl: 'Sterowanie' },
-  opis: { en: 'Status, priority, owner, dates, gate readiness.', pl: 'Status, priorytet, właściciel, daty, gotowość bramki.' },
+  opis: {
+    en: 'Status, priority, owner, dates, gate readiness.',
+    pl: 'Status, priorytet, właściciel, daty, gotowość bramki.',
+  },
   grupa: 'CONTROL',
   ikona: 'SlidersHorizontal',
   // Kontrakt: rola `pisze`/`asystuje` wymaga promptu. Przepis §1.2 dopuszcza „pisze/asystuje";
@@ -335,11 +393,14 @@ const CONTROL = definiujKarteKanoniczna({
   // (alternatywa: `dane`, gdyby control miał być czysto metadanymi bez asysty AI).
   rolaAI: 'asystuje',
   aiPrompt: {
-    szablon: 'Podpowiedz gotowość bramki i rekomendację statusu na podstawie stanu inicjatywy; człowiek decyduje.',
+    szablon:
+      'Podpowiedz gotowość bramki i rekomendację statusu na podstawie stanu inicjatywy; człowiek decyduje.',
     kluczPromptu: 'initiative.control',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'rdzen', klasa: 'L', kolumna: 'right', kolejnosc: 0 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'rdzen', klasa: 'L', kolumna: 'right', kolejnosc: 0 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -349,9 +410,14 @@ const TEAM = definiujKarteKanoniczna({
   grupa: 'CONTROL',
   ikona: 'Users',
   rolaAI: 'dane',
-  aiPrompt: { none: true, reason: 'obsada zespołu pochodzi z danych/przypisań — nie z generacji AI' },
+  aiPrompt: {
+    none: true,
+    reason: 'obsada zespołu pochodzi z danych/przypisań — nie z generacji AI',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 1 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 1 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -371,7 +437,14 @@ const GOVERNANCE = definiujKarteKanoniczna({
   // Kanon = `governance`; render pod `raciEscalation`. Adapter re-derywujący klucze POWTÓRZYŁBY
   // footgun migracji 542 (snake vs camel) — dlatego id renderu podane jawnie, nie liczone.
   kompozycja: [
-    { artefakt: 'initiative', rola: 'ukryta-domyslna', klasa: 'L', kolumna: 'right', kolejnosc: 2, idWArtefakcie: 'raciEscalation' },
+    {
+      artefakt: 'initiative',
+      rola: 'ukryta-domyslna',
+      klasa: 'L',
+      kolumna: 'right',
+      kolejnosc: 2,
+      idWArtefakcie: 'raciEscalation',
+    },
   ],
   statusKanonu: {
     stan: 'rozjazd',
@@ -388,7 +461,9 @@ const TIMELINE = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: { none: true, reason: 'harmonogram wynika z dat kamieni/zadań — dane, nie generacja' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 3 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 3 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -403,7 +478,9 @@ const RESOURCES = definiujKarteKanoniczna({
     kluczPromptu: 'initiative.resources',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 4 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 4 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -415,7 +492,9 @@ const STAKEHOLDERS = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: { none: true, reason: 'lista interesariuszy/RACI pochodzi z przypisań — dane' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 5 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 5 },
+  ],
   // Uwaga (R7): nakłada się pojęciowo z `governance`(raci) — obie dotyczą RACI. Do przeglądu przy odbiorze.
   statusKanonu: { stan: 'czysta' },
 });
@@ -427,9 +506,14 @@ const DEPENDENCIES = definiujKarteKanoniczna({
   grupa: 'META',
   ikona: 'Link',
   rolaAI: 'dane',
-  aiPrompt: { none: true, reason: 'zależności między inicjatywami/zadaniami to relacje danych — nie generacja' },
+  aiPrompt: {
+    none: true,
+    reason: 'zależności między inicjatywami/zadaniami to relacje danych — nie generacja',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 6 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 6 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -440,9 +524,14 @@ const ATTACHMENTS = definiujKarteKanoniczna({
   grupa: 'META',
   ikona: 'Paperclip',
   rolaAI: 'dane',
-  aiPrompt: { none: true, reason: 'pliki i powiązania wskazuje użytkownik — AI nie ma czego wygenerować' },
+  aiPrompt: {
+    none: true,
+    reason: 'pliki i powiązania wskazuje użytkownik — AI nie ma czego wygenerować',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 7 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 7 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -454,7 +543,9 @@ const TAGS = definiujKarteKanoniczna({
   rolaAI: 'dane',
   aiPrompt: { none: true, reason: 'etykiety nadaje użytkownik/klasyfikacja — dane' },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 8 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 8 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -464,9 +555,14 @@ const REMINDERS = definiujKarteKanoniczna({
   grupa: 'META',
   ikona: 'Bell',
   rolaAI: 'dane',
-  aiPrompt: { none: true, reason: 'przypomnienia to reguły/terminy ustawiane przez użytkownika — nie generacja treści' },
+  aiPrompt: {
+    none: true,
+    reason: 'przypomnienia to reguły/terminy ustawiane przez użytkownika — nie generacja treści',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 9 }],
+  kompozycja: [
+    { artefakt: 'initiative', rola: 'dodawalna', klasa: 'L', kolumna: 'right', kolejnosc: 9 },
+  ],
   statusKanonu: { stan: 'czysta' },
 });
 
@@ -481,9 +577,20 @@ const WATCHERS = definiujKarteKanoniczna({
   grupa: 'META',
   ikona: 'Eye',
   rolaAI: 'dane',
-  aiPrompt: { none: true, reason: 'lista obserwujących pochodzi z subskrypcji użytkowników — dane' },
+  aiPrompt: {
+    none: true,
+    reason: 'lista obserwujących pochodzi z subskrypcji użytkowników — dane',
+  },
   prog: { rodzaj: 'do-decyzji-piotra' },
-  kompozycja: [{ artefakt: 'initiative', rola: 'ukryta-domyslna', klasa: 'L', kolumna: 'right', kolejnosc: 10 }],
+  kompozycja: [
+    {
+      artefakt: 'initiative',
+      rola: 'ukryta-domyslna',
+      klasa: 'L',
+      kolumna: 'right',
+      kolejnosc: 10,
+    },
+  ],
   statusKanonu: {
     stan: 'do-decyzji-piotra',
     opis: 'Placeholder: registry mapuje `watchers` na OverviewSection (registry.ts:82). Własny UI czy skreślić?',
@@ -552,7 +659,8 @@ function initiativeRenderId(karta: KanonicznaKarta): string {
 /** Rola kompozycyjna karty w Initiative (dokładnie jedna na kartę tego deskryptora). */
 function initiativeRola(karta: KanonicznaKarta): string {
   const m = karta.kompozycja.find((p) => p.artefakt === 'initiative');
-  if (!m) throw new Error(`initiativeCardContract: karta ${karta.id} bez przynależności 'initiative'`);
+  if (!m)
+    throw new Error(`initiativeCardContract: karta ${karta.id} bez przynależności 'initiative'`);
   return m.rola;
 }
 
@@ -590,10 +698,35 @@ export const INITIATIVE_MINIMAL_VISIBLE: Readonly<Record<string, boolean>> = (()
   );
   // Wszystkie 29 kluczy registry → false, oprócz minimal-7 → true.
   const allRegistryKeys = [
-    'overview', 'problemDefinition', 'targetState', 'scope', 'tasks', 'decisions', 'raid', 'gates',
-    'financialAnalysis', 'financialImpact', 'kpis', 'competencyRequirements', 'skillsGap', 'pilot',
-    'comments', 'history', 'control', 'team', 'initiativeTeam', 'raciEscalation', 'timeline',
-    'resources', 'stakeholders', 'dependencies', 'attachments', 'linkedItems', 'tags', 'reminders', 'watchers',
+    'overview',
+    'problemDefinition',
+    'targetState',
+    'scope',
+    'tasks',
+    'decisions',
+    'raid',
+    'gates',
+    'financialAnalysis',
+    'financialImpact',
+    'kpis',
+    'competencyRequirements',
+    'skillsGap',
+    'pilot',
+    'comments',
+    'history',
+    'control',
+    'team',
+    'initiativeTeam',
+    'raciEscalation',
+    'timeline',
+    'resources',
+    'stakeholders',
+    'dependencies',
+    'attachments',
+    'linkedItems',
+    'tags',
+    'reminders',
+    'watchers',
   ];
   const out: Record<string, boolean> = {};
   for (const k of allRegistryKeys) out[k] = defaultKeys.has(k);
@@ -616,7 +749,8 @@ export const INITIATIVE_MINIMAL_BOARD_VISIBLE_IDS: readonly string[] = [
 ];
 
 /** Render-idy w kolejności deklaracji — do lekkiej asercji zgodności (R2). */
-export const INITIATIVE_CARD_RENDER_IDS: readonly string[] = INITIATIVE_CANONICAL_CARDS.map(initiativeRenderId);
+export const INITIATIVE_CARD_RENDER_IDS: readonly string[] =
+  INITIATIVE_CANONICAL_CARDS.map(initiativeRenderId);
 
 /** Zestawy pickera „Rdzeń/Pełny" (dane; wpięcie w menu „Sekcje" = krok silnika). */
 export function buildInitiativeCardSets(): {
@@ -627,9 +761,9 @@ export function buildInitiativeCardSets(): {
     const r = initiativeRola(k);
     return r === 'rdzen' || r === 'domyslna';
   }).map(initiativeRenderId);
-  const full = INITIATIVE_CANONICAL_CARDS.filter((k) => initiativeRola(k) !== 'ukryta-domyslna').map(
-    initiativeRenderId
-  );
+  const full = INITIATIVE_CANONICAL_CARDS.filter(
+    (k) => initiativeRola(k) !== 'ukryta-domyslna'
+  ).map(initiativeRenderId);
   return { default: def, full };
 }
 
@@ -642,7 +776,10 @@ export function buildInitiativeCardSets(): {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Dopasuj wiersz DB do karty kanonicznej po id renderu / kluczu / component_key / martwym aliasie. */
-function matchDbRow(karta: KanonicznaKarta, rows: readonly SectionTypeInfo[]): SectionTypeInfo | undefined {
+function matchDbRow(
+  karta: KanonicznaKarta,
+  rows: readonly SectionTypeInfo[]
+): SectionTypeInfo | undefined {
   const renderId = initiativeRenderId(karta);
   return rows.find(
     (r) =>
@@ -670,7 +807,10 @@ export function buildInitiativeCanonicalCards(dbRows: SectionTypeInfo[]): Kanoni
     };
     const opis =
       row.description || row.descriptionPl
-        ? { en: row.description || karta.opis?.en || '', pl: row.descriptionPl || karta.opis?.pl || '' }
+        ? {
+            en: row.description || karta.opis?.en || '',
+            pl: row.descriptionPl || karta.opis?.pl || '',
+          }
         : karta.opis;
     // Nakładka etykiet/opisu jest addytywna; rolaAI/aiPrompt/kompozycja/statusKanonu bez zmian,
     // więc typ `KanonicznaKarta` (dyskryminowana unia rola↔prompt) pozostaje spełniony.

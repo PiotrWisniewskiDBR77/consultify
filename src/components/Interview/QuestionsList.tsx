@@ -1323,7 +1323,10 @@ Rules:
               </div>
 
               <div className="flex items-center justify-between">
-                <button onClick={closeChat} className="text-sm text-c-text-muted hover:text-c-text-muted">
+                <button
+                  onClick={closeChat}
+                  className="text-sm text-c-text-muted hover:text-c-text-muted"
+                >
                   {t('interview.questionsList.close')}
                 </button>
                 <button

@@ -39,8 +39,8 @@ vi.mock('../../utils/DbPromise.js', () => ({
   run: vi.fn(),
 }));
 
-import { computeModel } from '../financialModelingService.js';
 import { appraiseComputeResult } from '../financialModelAppraisalAdapter.js';
+import { computeModel } from '../financialModelingService.js';
 
 beforeEach(() => {
   dbAll.mockReset();

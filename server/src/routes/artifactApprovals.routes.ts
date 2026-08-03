@@ -68,7 +68,9 @@ function respondWithServiceError(res: Response, err: unknown): void {
   // wycieku wnętrza (docs/standards/ERROR_HANDLING_STANDARD.md §1/§3): log
   // the real detail server-side, never forward err.message to the client.
   logger.error('[ArtifactApprovals] Unexpected service error', { err });
-  res.status(500).json({ error: 'Wystąpił błąd serwera', code: 'ARTIFACT_APPROVALS_UNEXPECTED_FAILED' });
+  res
+    .status(500)
+    .json({ error: 'Wystąpił błąd serwera', code: 'ARTIFACT_APPROVALS_UNEXPECTED_FAILED' });
 }
 
 function requireOrgId(req: AuthRequest, res: Response): string | null {

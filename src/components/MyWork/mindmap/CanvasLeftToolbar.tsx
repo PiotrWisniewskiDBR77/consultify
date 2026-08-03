@@ -814,11 +814,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect';
     // D2: pstryczek pokazuje stan włączenia (siatka/przyciąganie Przepływu).
     const toggleOn =
-      slot.toggle == null
-        ? null
-        : slot.toggle === 'grid'
-          ? gridState.showGrid
-          : gridState.snap;
+      slot.toggle == null ? null : slot.toggle === 'grid' ? gridState.showGrid : gridState.snap;
     const baseTitle = t(slot.tkey, slot.labelEn);
     const slotTitle =
       activeTool === 'mindmap' && slot.id === 'connect' && interactionMode === 'connect'
@@ -885,7 +881,11 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         );
       case 'importExport':
         return (
-          <ImportExportPopover isPl={!!isPl} onAction={handlePopoverAction} onClose={closePopover} />
+          <ImportExportPopover
+            isPl={!!isPl}
+            onAction={handlePopoverAction}
+            onClose={closePopover}
+          />
         );
       case 'ai':
         return (

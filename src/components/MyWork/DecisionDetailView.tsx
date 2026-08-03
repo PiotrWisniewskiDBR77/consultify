@@ -79,6 +79,9 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { ROUTES } from '@/routes/routeConfig';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
+import { mergeChangeValue } from '@/services/cardAnalysis';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
@@ -93,22 +96,19 @@ import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 // pamięć ręcznej wysokości + tryb Podgląd). Jedna droga budowy pola karty.
 import { AutoFitTextarea } from '../shared/AutoFitTextarea';
 import { CapabilityGate } from '../shared/CapabilityGate';
+import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
 // #52 — card-management primitive (show/hide + reorder), same "nakładka"
 // wiring as InsightViewer.tsx / TaskDetailView.tsx (see `decisionCardLayout`).
 // ETAP 1.2: menu 2 niesie SAM picker „Sekcje" — „+ Nowa karta" zdjęte.
 import { SectionsManagerMenu } from '../shared/NModeLayout/NModeCardManager';
-import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
-import { mergeChangeValue } from '@/services/cardAnalysis';
-import { NCardAIAnalysisPanel } from '../shared/NModeLayout/NCardAIAnalysisPanel';
-import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { NModeCardState, type NModeCardStatus } from '../shared/NModeLayout/NModeCardState';
 import { NModeHeader } from '../shared/NModeLayout/NModeHeader';
 import { NModeLeftNav } from '../shared/NModeLayout/NModeLeftNav';
+import { Menu2AIButton, NModeMenu2 } from '../shared/NModeLayout/NModeMenu2';
 // SPEC-N §2.4: jedyna dozwolona droga budowy toolbara karty.
 import { NModeToolbar, type NModeToolbarAction } from '../shared/NModeLayout/NModeToolbar';
 import type { NModeSection } from '../shared/NModeLayout/types';
+import { useCardAIAnalysis } from '../shared/NModeLayout/useCardAIAnalysis';
 import { type CardLayout, useCardLayout } from '../shared/NModeLayout/useCardLayout';
 import type {
   ActivityLogEntry as NModeActivityLogEntry,
@@ -1766,33 +1766,25 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
           <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.entriesTab', 'Entries')}
           </p>
-          <p className="text-sm font-semibold text-c-text">
-            {activityStats.total}
-          </p>
+          <p className="text-sm font-semibold text-c-text">{activityStats.total}</p>
         </div>
         <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.changesTab', 'Changes')}
           </p>
-          <p className="text-sm font-semibold text-c-text">
-            {activityStats.edited}
-          </p>
+          <p className="text-sm font-semibold text-c-text">{activityStats.edited}</p>
         </div>
         <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.escalationsTab', 'Escalations')}
           </p>
-          <p className="text-sm font-semibold text-c-text">
-            {activityStats.escalations}
-          </p>
+          <p className="text-sm font-semibold text-c-text">{activityStats.escalations}</p>
         </div>
         <div className="rounded-xl border border-c-border-subtle/60 bg-c-surface/70 px-3 py-2">
           <p className="text-[11px] uppercase tracking-wide text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
             {t('decisions.detail.activityLog.collaborationTab', 'Collaboration')}
           </p>
-          <p className="text-sm font-semibold text-c-text">
-            {activityStats.collaboration}
-          </p>
+          <p className="text-sm font-semibold text-c-text">{activityStats.collaboration}</p>
         </div>
       </div>
 
@@ -1816,9 +1808,7 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
                     {meta.icon}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm text-c-text">
-                      {entry.description}
-                    </p>
+                    <p className="text-sm text-c-text">{entry.description}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary">
                       <span>{new Date(entry.timestamp).toLocaleString()}</span>
                       {entry.userName && <span>{`· ${entry.userName}`}</span>}
@@ -1954,7 +1944,9 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
       const apiAlternatives = decision.alternatives || [];
       // Bez dosypywania zaszytych plusów/minusów: pusta lista argumentów jest
       // uczciwym stanem opcji, wymyślony argument decyzyjny nie jest.
-      setAlternatives(apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []);
+      setAlternatives(
+        apiAlternatives.length > 0 ? apiAlternatives : isDemo ? DEMO_ALTERNATIVES : []
+      );
       setSelectedAlternativeId(decision.selectedAlternativeId || '');
       if (decision.impact) {
         setImpact(decision.impact);
@@ -3081,34 +3073,36 @@ Consider priority {{priority}}, due date {{dueDate}} and status {{status}}.`,
         roleName: 'Reminder Rules Advisor',
       });
       const next = (Array.isArray(parsed?.reminders) ? parsed.reminders : [])
-        .map((r: any, idx: number): ReminderRuleWithDelivery => ({
-          id: `ai-rem-${Date.now()}-${idx}`,
-          type: r?.type === 'after_due' ? 'after_due' : 'before_due',
-          days: Math.max(0, Number(r?.days ?? 0)),
-          recipients: ['requester', 'decider', 'both', 'stakeholders'].includes(r?.recipients)
-            ? r.recipients
-            : 'both',
-          inAppNotification: r?.inAppNotification !== false,
-          emailNotification: !!r?.emailNotification,
-          delivery: ensureDeliveryConfig({
-            coreChannels: [
-              ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
-              ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
-            ],
-            integrationChannels: Array.isArray(r?.integrationChannels)
-              ? r.integrationChannels
-              : Array.isArray(r?.delivery?.integrationChannels)
-                ? r.delivery.integrationChannels
-                : [],
-            syncTargets: Array.isArray(r?.syncTargets)
-              ? r.syncTargets
-              : Array.isArray(r?.delivery?.syncTargets)
-                ? r.delivery.syncTargets
-                : [],
-          }),
-          message: String(r?.message || ''),
-          enabled: r?.enabled !== false,
-        }))
+        .map(
+          (r: any, idx: number): ReminderRuleWithDelivery => ({
+            id: `ai-rem-${Date.now()}-${idx}`,
+            type: r?.type === 'after_due' ? 'after_due' : 'before_due',
+            days: Math.max(0, Number(r?.days ?? 0)),
+            recipients: ['requester', 'decider', 'both', 'stakeholders'].includes(r?.recipients)
+              ? r.recipients
+              : 'both',
+            inAppNotification: r?.inAppNotification !== false,
+            emailNotification: !!r?.emailNotification,
+            delivery: ensureDeliveryConfig({
+              coreChannels: [
+                ...(r?.inAppNotification !== false ? (['in_app'] as CoreDeliveryChannel[]) : []),
+                ...(r?.emailNotification ? (['email'] as CoreDeliveryChannel[]) : []),
+              ],
+              integrationChannels: Array.isArray(r?.integrationChannels)
+                ? r.integrationChannels
+                : Array.isArray(r?.delivery?.integrationChannels)
+                  ? r.delivery.integrationChannels
+                  : [],
+              syncTargets: Array.isArray(r?.syncTargets)
+                ? r.syncTargets
+                : Array.isArray(r?.delivery?.syncTargets)
+                  ? r.delivery.syncTargets
+                  : [],
+            }),
+            message: String(r?.message || ''),
+            enabled: r?.enabled !== false,
+          })
+        )
         .slice(0, 6);
       if (next.length === 0) throw emptyAiResult('No reminders returned by AI');
       setReminders(next.map((rule: ReminderRuleWithDelivery) => normalizeReminderRule(rule)));
@@ -3229,9 +3223,12 @@ Context: priority={{priority}}, status={{status}}, deadline={{dueDate}}`,
         message: prompt,
         roleName: 'RACI Person Form Assistant',
       });
-      const role: StakeholderRole = ['accountable', 'responsible', 'consulted', 'informed'].includes(
-        String(parsed?.role)
-      )
+      const role: StakeholderRole = [
+        'accountable',
+        'responsible',
+        'consulted',
+        'informed',
+      ].includes(String(parsed?.role))
         ? (String(parsed.role) as StakeholderRole)
         : stakeholderDraft.role;
       const notifications = parsed?.notifications || {};
@@ -3934,8 +3931,7 @@ Use userId only from this list:
           : 'border-c-border/60';
   const dueDateAlertBorderClass = useMemo(() => {
     if (!dueDate) return 'border-c-border/60';
-    if (status === 'approved' || status === 'rejected')
-      return 'border-c-border/60';
+    if (status === 'approved' || status === 'rejected') return 'border-c-border/60';
     const due = new Date(dueDate);
     if (Number.isNaN(due.getTime())) return 'border-c-border/60';
     const now = new Date();
@@ -4784,8 +4780,8 @@ Use userId only from this list:
                 <span className={rpPill}>
                   {t(
                     `decisions.detail.workflowStage.${workflowStatus}`,
-                    (WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed).label
-                      .en
+                    (WORKFLOW_STATUS_CONFIG[workflowStatus] || WORKFLOW_STATUS_CONFIG.proposed)
+                      .label.en
                   )}
                 </span>
               ),
@@ -5328,7 +5324,12 @@ Use userId only from this list:
       const linesOf = (text: string) =>
         String(text || '')
           .split('\n')
-          .map((l) => l.trim().replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '').trim())
+          .map((l) =>
+            l
+              .trim()
+              .replace(/^(?:[-*•]\s+|\d+[.)]\s+)/, '')
+              .trim()
+          )
           .filter(Boolean);
 
       switch (change.fieldId) {
@@ -5623,7 +5624,9 @@ Use userId only from this list:
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
                     {sourceType === 'idea' && <Lightbulb size={14} className="text-amber-500" />}
                     {sourceType === 'notebook' && <FileText size={14} className="text-blue-500" />}
-                    {sourceType === 'task' && <Settings size={14} className="text-c-text-secondary" />}
+                    {sourceType === 'task' && (
+                      <Settings size={14} className="text-c-text-secondary" />
+                    )}
                     <span className="text-c-text-secondary">
                       {sourceType === 'idea'
                         ? t('decisions.detail.source.createdFromIdea', 'Created from Idea')
@@ -5886,10 +5889,7 @@ Use userId only from this list:
                               {alternatives.length === 0 ? (
                                 /* EmptyStateInline */
                                 <div className="py-10 text-center">
-                                  <Lightbulb
-                                    size={28}
-                                    className="mx-auto mb-3 text-c-text-muted"
-                                  />
+                                  <Lightbulb size={28} className="mx-auto mb-3 text-c-text-muted" />
                                   <p className="text-sm text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary mb-3">
                                     {t(
                                       'decisions.detail.options.noOptions',
@@ -8976,9 +8976,7 @@ Use userId only from this list:
                           <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
                             {t('decisions.detail.activityLog.deadline', 'Deadline')}
                           </span>
-                          <span className="text-c-text">
-                            {dueDate || '—'}
-                          </span>
+                          <span className="text-c-text">{dueDate || '—'}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-c-text-secondary dark:text-c-text-muted dark:text-c-text-secondary text-xs uppercase tracking-wide">
@@ -9027,7 +9025,10 @@ Use userId only from this list:
                           className="w-full flex items-center justify-between px-4 py-3 hover:bg-c-surface/80 dark:hover:bg-c-surface-raised/50 transition-colors duration-200"
                         >
                           <div className="flex items-center gap-2.5 text-c-text">
-                            <BookOpen size={16} className="text-c-text-secondary dark:text-c-text-muted" />
+                            <BookOpen
+                              size={16}
+                              className="text-c-text-secondary dark:text-c-text-muted"
+                            />
                             <span className="text-sm font-semibold">
                               {t('myWork.decisions.relatedNotes', 'Related Notes')}
                             </span>
@@ -9036,7 +9037,10 @@ Use userId only from this list:
                             animate={{ rotate: relatedNotesExpanded ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            <ChevronDown size={16} className="text-c-text-secondary dark:text-c-text-muted" />
+                            <ChevronDown
+                              size={16}
+                              className="text-c-text-secondary dark:text-c-text-muted"
+                            />
                           </motion.div>
                         </motion.button>
                         <AnimatePresence>

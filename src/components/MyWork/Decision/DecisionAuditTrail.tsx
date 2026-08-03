@@ -36,24 +36,25 @@ export const DecisionAuditTrail: React.FC<DecisionAuditTrailProps> = ({ entries 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
               <span className="font-medium text-c-text">
-                {entry.userName ||
-                  t('myWork.decisionWorkspace.audit.unknownActor', 'Unknown user')}
+                {entry.userName || t('myWork.decisionWorkspace.audit.unknownActor', 'Unknown user')}
               </span>
               <span className="text-c-text-muted">
                 {entry.oldStatus && entry.newStatus && entry.oldStatus !== entry.newStatus
-                  ? t('myWork.decisionWorkspace.audit.statusChange', '{{action}}: {{from}} → {{to}}', {
-                      action: entry.action,
-                      from: entry.oldStatus,
-                      to: entry.newStatus,
-                    })
+                  ? t(
+                      'myWork.decisionWorkspace.audit.statusChange',
+                      '{{action}}: {{from}} → {{to}}',
+                      {
+                        action: entry.action,
+                        from: entry.oldStatus,
+                        to: entry.newStatus,
+                      }
+                    )
                   : entry.action}
               </span>
               <span className="text-c-text-muted">·</span>
               <span className="text-c-text-muted">{formatDateTime(entry.at)}</span>
             </div>
-            {entry.notes ? (
-              <div className="mt-0.5 text-c-text-secondary">{entry.notes}</div>
-            ) : null}
+            {entry.notes ? <div className="mt-0.5 text-c-text-secondary">{entry.notes}</div> : null}
           </div>
         </li>
       ))}

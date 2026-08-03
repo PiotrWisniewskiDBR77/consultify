@@ -32,7 +32,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -74,7 +81,11 @@ export const CASHFLOW_GENERAL_DEFAULTS = {
 export const CASHFLOW_DRIVER_DEFAULTS: Required<
   Pick<
     Cashflow12mParams,
-    'baseMonthlyRevenue' | 'monthlyRevenueGrowthPct' | 'paymentDelayMonths' | 'monthlyCosts' | 'costGrowthPct'
+    | 'baseMonthlyRevenue'
+    | 'monthlyRevenueGrowthPct'
+    | 'paymentDelayMonths'
+    | 'monthlyCosts'
+    | 'costGrowthPct'
   >
 > = {
   baseMonthlyRevenue: 150_000,
@@ -303,7 +314,9 @@ function buildCashflowSheet(
     const cells: Record<string, Cell> = {
       pozycja: { value: label, style: opts.summary ? { bold: true } : undefined },
     };
-    const style = opts.summary ? { numberFormat: currencyFmt, bold: true } : { numberFormat: currencyFmt };
+    const style = opts.summary
+      ? { numberFormat: currencyFmt, bold: true }
+      : { numberFormat: currencyFmt };
     MONTH_COLS.forEach((col, i) => {
       cells[monthKey(i)] = { formula: formulaFor(col, i), style };
     });
@@ -315,7 +328,10 @@ function buildCashflowSheet(
     // Row 2 — Przychód (memoriałowo): m1 = Assumptions revenue; m>1 chains off prior month.
     fRow(
       'Przychód (memoriałowo)',
-      (col, i) => (i === 0 ? aRef(AR.revenue) : `${MONTH_COLS[i - 1]}${CF.revenue}*(1+${aRef(AR.revenueGrowth)})`),
+      (col, i) =>
+        i === 0
+          ? aRef(AR.revenue)
+          : `${MONTH_COLS[i - 1]}${CF.revenue}*(1+${aRef(AR.revenueGrowth)})`,
       () => `SUM(B${CF.revenue}:M${CF.revenue})`
     ),
     // Row 3 — Wpływy (kasowo): revenue booked `paymentDelayMonths` earlier; 0 when
@@ -333,7 +349,8 @@ function buildCashflowSheet(
     // Row 4 — Koszty (wypływy): m1 = Assumptions costs; m>1 chains off prior month.
     fRow(
       'Koszty',
-      (col, i) => (i === 0 ? aRef(AR.costs) : `${MONTH_COLS[i - 1]}${CF.costs}*(1+${aRef(AR.costGrowth)})`),
+      (col, i) =>
+        i === 0 ? aRef(AR.costs) : `${MONTH_COLS[i - 1]}${CF.costs}*(1+${aRef(AR.costGrowth)})`,
       () => `SUM(B${CF.costs}:M${CF.costs})`
     ),
     // Row 5 — Przepływ netto = Wpływy - Koszty (arithmetic, not SUM — a plain
@@ -351,7 +368,9 @@ function buildCashflowSheet(
     fRow(
       'Saldo narastające',
       (col, i) =>
-        i === 0 ? `${aRef(AR.openingBalance)}+${col}${CF.net}` : `${MONTH_COLS[i - 1]}${CF.balance}+${col}${CF.net}`,
+        i === 0
+          ? `${aRef(AR.openingBalance)}+${col}${CF.net}`
+          : `${MONTH_COLS[i - 1]}${CF.balance}+${col}${CF.net}`,
       () => `M${CF.balance}`,
       { summary: true }
     ),
@@ -359,7 +378,8 @@ function buildCashflowSheet(
 
   return {
     name: 'Przepływy',
-    purpose: 'Prognoza przepływów pieniężnych 12-miesięczna (każda pozycja = formuła; RAZEM = suma roczna).',
+    purpose:
+      'Prognoza przepływów pieniężnych 12-miesięczna (każda pozycja = formuła; RAZEM = suma roczna).',
     columns,
     rows,
     freezeRow: 1,
@@ -418,8 +438,14 @@ export function buildCashflow12mSchema(params: Cashflow12mParams = {}): Workbook
       ? Math.floor(params.startYear as number)
       : new Date().getFullYear();
 
-  const openingBalance = safeBalance(params.openingBalance, CASHFLOW_GENERAL_DEFAULTS.openingBalance);
-  const baseMonthlyRevenue = safeAmount(params.baseMonthlyRevenue, CASHFLOW_DRIVER_DEFAULTS.baseMonthlyRevenue);
+  const openingBalance = safeBalance(
+    params.openingBalance,
+    CASHFLOW_GENERAL_DEFAULTS.openingBalance
+  );
+  const baseMonthlyRevenue = safeAmount(
+    params.baseMonthlyRevenue,
+    CASHFLOW_DRIVER_DEFAULTS.baseMonthlyRevenue
+  );
   const monthlyRevenueGrowthPct = safeFraction(
     params.monthlyRevenueGrowthPct,
     CASHFLOW_DRIVER_DEFAULTS.monthlyRevenueGrowthPct

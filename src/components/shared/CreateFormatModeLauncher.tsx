@@ -183,23 +183,25 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
               <p className="px-4 pt-3 text-xs text-c-text-secondary">{stepTwoHint(format)}</p>
             ) : null}
             <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
-              {resolvedModeTiles.map(({ id, icon: Icon, title: modeTitle, desc, testId: modeTestId }) => (
-                <button
-                  key={id}
-                  type="button"
-                  data-testid={modeTestId ?? `${testId}-mode-${id}`}
-                  onClick={() => onSelect(format, id)}
-                  className="group flex h-full flex-col items-start gap-3 rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left transition-all hover:border-c-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-secondary transition-colors group-hover:text-c-text">
-                    <Icon size={20} aria-hidden />
-                  </span>
-                  <span className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-c-text">{modeTitle}</span>
-                    <span className="text-xs leading-relaxed text-c-text-secondary">{desc}</span>
-                  </span>
-                </button>
-              ))}
+              {resolvedModeTiles.map(
+                ({ id, icon: Icon, title: modeTitle, desc, testId: modeTestId }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    data-testid={modeTestId ?? `${testId}-mode-${id}`}
+                    onClick={() => onSelect(format, id)}
+                    className="group flex h-full flex-col items-start gap-3 rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left transition-all hover:border-c-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-c-surface-raised text-c-text-secondary transition-colors group-hover:text-c-text">
+                      <Icon size={20} aria-hidden />
+                    </span>
+                    <span className="flex flex-col gap-1">
+                      <span className="text-sm font-semibold text-c-text">{modeTitle}</span>
+                      <span className="text-xs leading-relaxed text-c-text-secondary">{desc}</span>
+                    </span>
+                  </button>
+                )
+              )}
             </div>
           </>
         )}

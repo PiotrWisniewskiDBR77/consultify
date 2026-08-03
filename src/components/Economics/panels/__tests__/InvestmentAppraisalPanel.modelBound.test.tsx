@@ -15,7 +15,12 @@ import { describe, expect, it, vi } from 'vitest';
 import { InvestmentAppraisalPanel, type ModelAppraisalResponse } from '../InvestmentAppraisalPanel';
 
 const REAL_RESPONSE: ModelAppraisalResponse = {
-  input: { cashflows: [2_400_000, 2_001_920, 2_003_841.54], initialInvestment: 800_000, discountRatePct: 10, hurdleRatePct: 10 },
+  input: {
+    cashflows: [2_400_000, 2_001_920, 2_003_841.54],
+    initialInvestment: 800_000,
+    discountRatePct: 10,
+    hurdleRatePct: 10,
+  },
   result: {
     npv: 4_541_813.33,
     irr: 282.53,
@@ -31,9 +36,18 @@ const REAL_RESPONSE: ModelAppraisalResponse = {
 describe('InvestmentAppraisalPanel — model-bound mode', () => {
   it('fetches automatically on mount, with no "Oblicz" button to click', async () => {
     const modelFetcher = vi.fn().mockResolvedValue(REAL_RESPONSE);
-    render(<InvestmentAppraisalPanel modelId="model-atelier" discountRatePct={10} modelFetcher={modelFetcher} />);
+    render(
+      <InvestmentAppraisalPanel
+        modelId="model-atelier"
+        discountRatePct={10}
+        modelFetcher={modelFetcher}
+      />
+    );
 
-    expect(modelFetcher).toHaveBeenCalledWith('model-atelier', { discountRatePct: 10, hurdleRatePct: 10 });
+    expect(modelFetcher).toHaveBeenCalledWith('model-atelier', {
+      discountRatePct: 10,
+      hurdleRatePct: 10,
+    });
     expect(screen.queryByTestId('appraise-compute')).not.toBeInTheDocument();
     expect(screen.queryByTestId('appraise-cashflows')).not.toBeInTheDocument();
 
@@ -53,13 +67,23 @@ describe('InvestmentAppraisalPanel — model-bound mode', () => {
   it('reopen determinism: re-mounting with the same modelId+rates renders the same result', async () => {
     const modelFetcher = vi.fn().mockResolvedValue(REAL_RESPONSE);
     const { unmount } = render(
-      <InvestmentAppraisalPanel modelId="model-atelier" discountRatePct={10} modelFetcher={modelFetcher} />
+      <InvestmentAppraisalPanel
+        modelId="model-atelier"
+        discountRatePct={10}
+        modelFetcher={modelFetcher}
+      />
     );
     await waitFor(() => expect(screen.getByTestId('appraise-verdict')).toBeInTheDocument());
     const firstNpvText = screen.getByTestId('appraise-npv').textContent;
     unmount();
 
-    render(<InvestmentAppraisalPanel modelId="model-atelier" discountRatePct={10} modelFetcher={modelFetcher} />);
+    render(
+      <InvestmentAppraisalPanel
+        modelId="model-atelier"
+        discountRatePct={10}
+        modelFetcher={modelFetcher}
+      />
+    );
     await waitFor(() => expect(screen.getByTestId('appraise-verdict')).toBeInTheDocument());
     expect(screen.getByTestId('appraise-npv').textContent).toBe(firstNpvText);
     expect(modelFetcher).toHaveBeenCalledTimes(2);

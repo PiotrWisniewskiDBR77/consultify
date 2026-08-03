@@ -48,7 +48,7 @@ vi.mock('../../database/Database.js', () => {
   return { __esModule: true, default: proxy, getDatabase: () => proxy };
 });
 
-import { all, get, run, type Database } from '../DbPromise.js';
+import { all, type Database, get, run } from '../DbPromise.js';
 
 // ==========================================
 // HELPERS
@@ -238,9 +238,7 @@ describe('run() late callback', () => {
     expect(state.value).toEqual({ success: false, error: 'timeout' });
     expect(recordQueryPerformance).toHaveBeenCalledTimes(1);
 
-    expect(() =>
-      captured.run?.call({ changes: 0 }, new Error('connection reset'))
-    ).not.toThrow();
+    expect(() => captured.run?.call({ changes: 0 }, new Error('connection reset'))).not.toThrow();
     await flush();
 
     expect(state.value).toEqual({ success: false, error: 'timeout' });
@@ -319,7 +317,9 @@ describe('run() normal paths', () => {
   it('5 — a callback error with fallback=true resolves to the failure result', async () => {
     const { db, captured } = makeDeferredDriver();
 
-    const state = track(run(db, 'INSERT INTO t VALUES (?)', [1], { timeout: 5000, fallback: true }));
+    const state = track(
+      run(db, 'INSERT INTO t VALUES (?)', [1], { timeout: 5000, fallback: true })
+    );
     captured.run?.call({ changes: 0 }, new Error('UNIQUE constraint failed'));
     await flush();
 

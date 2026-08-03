@@ -48,25 +48,22 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
       .catch(() => undefined);
   }, [ekran]);
 
-  const wyslij = React.useCallback(
-    async (nowy: Zapis) => {
-      setStan('zapisuję');
-      try {
-        const r = await fetch('/__uwagi', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(nowy),
-        });
-        if (!r.ok) throw new Error(String(r.status));
-        setZapis(nowy);
-        setStan('zapisano');
-        setTimeout(() => setStan(''), 1500);
-      } catch {
-        setStan('błąd');
-      }
-    },
-    [],
-  );
+  const wyslij = React.useCallback(async (nowy: Zapis) => {
+    setStan('zapisuję');
+    try {
+      const r = await fetch('/__uwagi', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(nowy),
+      });
+      if (!r.ok) throw new Error(String(r.status));
+      setZapis(nowy);
+      setStan('zapisano');
+      setTimeout(() => setStan(''), 1500);
+    } catch {
+      setStan('błąd');
+    }
+  }, []);
 
   const dodaj = () => {
     const t = tekst.trim();
@@ -119,7 +116,11 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
   // Powrót do listy obiektów. Uwagi lecą na dysk przy każdym dodaniu, więc
   // wyjście z ekranu (ani odświeżenie) niczego nie gubi.
   const powrot = (
-    <a href="/odbior.html" style={{ ...stylPigulki, background: '#334155' }} title="Wróć do listy obiektów">
+    <a
+      href="/odbior.html"
+      style={{ ...stylPigulki, background: '#334155' }}
+      title="Wróć do listy obiektów"
+    >
       ← Lista
     </a>
   );
@@ -238,7 +239,9 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
                 alignItems: 'flex-start',
               }}
             >
-              <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5, paddingTop: 2 }}>{i + 1}.</span>
+              <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5, paddingTop: 2 }}>
+                {i + 1}.
+              </span>
               <span style={{ flex: 1 }}>{u.tekst}</span>
               <button
                 onClick={() =>
@@ -303,9 +306,10 @@ export default function PanelUwag({ ekran }: { ekran: string }): React.ReactElem
             {zapis.uwagi.length ? 'Dodaj kolejną' : 'Dodaj uwagę'}
           </button>
           <span style={{ color: KOLOR.tekstMuted, fontSize: 11.5 }}>
-            {stan || (zapis.uwagi.length
-              ? `${zapis.uwagi.length} ${zapis.uwagi.length === 1 ? 'uwaga' : 'uwagi'} · zapisane na dysku`
-              : 'Cmd+Enter dodaje')}
+            {stan ||
+              (zapis.uwagi.length
+                ? `${zapis.uwagi.length} ${zapis.uwagi.length === 1 ? 'uwaga' : 'uwagi'} · zapisane na dysku`
+                : 'Cmd+Enter dodaje')}
           </span>
         </div>
       </div>

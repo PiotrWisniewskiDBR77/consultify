@@ -152,103 +152,103 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
       style={{ top, height, background: `${lane.color}15` }}
     >
       {showHeader && (
-      <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
-        {onToggleCollapse && (
-          <button
-            onClick={() => onToggleCollapse(lane.id)}
-            className="p-0.5 rounded hover:bg-c-surface-raised"
-            title={
-              collapsed
-                ? t('processFlow.laneSystem.expandLane', 'Expand lane')
-                : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
-            }
-            aria-label={
-              collapsed
-                ? t('processFlow.laneSystem.expandLane', 'Expand lane')
-                : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
-            }
-          >
-            {collapsed ? (
-              <ChevronRight size={11} className="text-slate-600 dark:text-slate-400" />
-            ) : (
-              <ChevronDown size={11} className="text-slate-600 dark:text-slate-400" />
-            )}
-          </button>
-        )}
-        {editing ? (
-          <input
-            ref={inputRef}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commit();
-              if (e.key === 'Escape') setEditing(false);
-            }}
-            className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-focus"
-          />
-        ) : (
-          <div
-            className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
-            onDoubleClick={() => {
-              if (!locked) {
-                setValue(lane.label);
-                setEditing(true);
-              }
-            }}
-          >
-            {lane.label}
-          </div>
-        )}
-
-        {!locked && (
-          <div
-            className="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity"
-            style={{ opacity: undefined }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '1';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.opacity = '0';
-            }}
-          >
-            {!isFirst && (
-              <button
-                onClick={() => onMoveUp?.(lane.id)}
-                className="p-0.5 rounded hover:bg-c-surface"
-                title="Move up"
-              >
-                <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
-              </button>
-            )}
-            {!isLast && (
-              <button
-                onClick={() => onMoveDown?.(lane.id)}
-                className="p-0.5 rounded hover:bg-c-surface"
-                title="Move down"
-              >
-                <ArrowDownUp size={9} className="text-c-text-secondary" />
-              </button>
-            )}
+        <div className="absolute left-2 top-1 z-10 flex items-center gap-1">
+          {onToggleCollapse && (
             <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="p-0.5 rounded hover:bg-c-surface"
-              title="Change color"
+              onClick={() => onToggleCollapse(lane.id)}
+              className="p-0.5 rounded hover:bg-c-surface-raised"
+              title={
+                collapsed
+                  ? t('processFlow.laneSystem.expandLane', 'Expand lane')
+                  : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
+              }
+              aria-label={
+                collapsed
+                  ? t('processFlow.laneSystem.expandLane', 'Expand lane')
+                  : t('processFlow.laneSystem.collapseLane', 'Collapse lane')
+              }
             >
-              <Palette size={9} className="text-c-text-secondary" />
+              {collapsed ? (
+                <ChevronRight size={11} className="text-slate-600 dark:text-slate-400" />
+              ) : (
+                <ChevronDown size={11} className="text-slate-600 dark:text-slate-400" />
+              )}
             </button>
-            {laneCount > 1 && (
+          )}
+          {editing ? (
+            <input
+              ref={inputRef}
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onBlur={commit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit();
+                if (e.key === 'Escape') setEditing(false);
+              }}
+              className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-focus"
+            />
+          ) : (
+            <div
+              className="text-[10px] font-semibold text-c-text-muted select-none cursor-pointer hover:text-c-text-secondary"
+              onDoubleClick={() => {
+                if (!locked) {
+                  setValue(lane.label);
+                  setEditing(true);
+                }
+              }}
+            >
+              {lane.label}
+            </div>
+          )}
+
+          {!locked && (
+            <div
+              className="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity"
+              style={{ opacity: undefined }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = '1';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.opacity = '0';
+              }}
+            >
+              {!isFirst && (
+                <button
+                  onClick={() => onMoveUp?.(lane.id)}
+                  className="p-0.5 rounded hover:bg-c-surface"
+                  title="Move up"
+                >
+                  <ArrowDownUp size={9} className="text-c-text-secondary rotate-180" />
+                </button>
+              )}
+              {!isLast && (
+                <button
+                  onClick={() => onMoveDown?.(lane.id)}
+                  className="p-0.5 rounded hover:bg-c-surface"
+                  title="Move down"
+                >
+                  <ArrowDownUp size={9} className="text-c-text-secondary" />
+                </button>
+              )}
               <button
-                onClick={() => onDelete?.(lane.id)}
-                className="p-0.5 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20"
-                title="Delete lane"
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="p-0.5 rounded hover:bg-c-surface"
+                title="Change color"
               >
-                <X size={9} className="text-danger-400" />
+                <Palette size={9} className="text-c-text-secondary" />
               </button>
-            )}
-          </div>
-        )}
-      </div>
+              {laneCount > 1 && (
+                <button
+                  onClick={() => onDelete?.(lane.id)}
+                  className="p-0.5 rounded hover:bg-danger-50 dark:hover:bg-danger-900/20"
+                  title="Delete lane"
+                >
+                  <X size={9} className="text-danger-400" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {showColorPicker && !locked && (

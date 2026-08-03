@@ -546,17 +546,14 @@ export async function persistPendingLineageEvent(
     });
     return idempotencyKey;
   } catch (err) {
-    logger.error(
-      '[ArtifactLineage] LINEAGE EVENT LOST — the durable pending write ALSO failed',
-      {
-        organizationId: params.organizationId,
-        artifactKind: params.artifactKind,
-        sourceRecordId: params.sourceRecordId,
-        eventType: params.eventType,
-        pendingWriteError: err instanceof Error ? err.message : String(err),
-        originalError: cause instanceof Error ? cause.message : String(cause),
-      }
-    );
+    logger.error('[ArtifactLineage] LINEAGE EVENT LOST — the durable pending write ALSO failed', {
+      organizationId: params.organizationId,
+      artifactKind: params.artifactKind,
+      sourceRecordId: params.sourceRecordId,
+      eventType: params.eventType,
+      pendingWriteError: err instanceof Error ? err.message : String(err),
+      originalError: cause instanceof Error ? cause.message : String(cause),
+    });
     return null;
   }
 }
@@ -658,7 +655,10 @@ export async function reconcilePendingLineageEvents(params?: {
             `UPDATE artifact_lineage_pending_events
                 SET attempts = attempts + 1, last_error = $2
               WHERE pending_id = $1`,
-            [pendingId, err instanceof Error ? err.message.slice(0, 500) : String(err).slice(0, 500)]
+            [
+              pendingId,
+              err instanceof Error ? err.message.slice(0, 500) : String(err).slice(0, 500),
+            ]
           );
         });
       } catch {
@@ -1009,10 +1009,7 @@ export async function recordLineageEvent(
     // operation. Proves the event INSERT above is rolled back too — the
     // "applied, then errored" case that status-code-only assertions miss.
     if (params.__testFaultAfterEventInsert && process.env.NODE_ENV === 'test') {
-      throw new ArtifactLineageError(
-        'injected fault after event insert',
-        'INJECTED_FAULT'
-      );
+      throw new ArtifactLineageError('injected fault after event insert', 'INJECTED_FAULT');
     }
 
     // (5) Roll the receipt forward, and lazily backfill the canonical artifact

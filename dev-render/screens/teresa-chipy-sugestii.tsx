@@ -28,14 +28,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
+import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
+import { useAppStore } from '@/store/useAppStore';
+import type { ChatMessage } from '@/types/core';
+import type { WorkspaceContext } from '@/types/workspace';
+
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { seedRealisticSession } from '../mocks/seedStore';
-
-import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
-import type { ChatMessage } from '@/types/core';
-import type { WorkspaceContext } from '@/types/workspace';
-import { useAppStore } from '@/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);
 const isPl = params.get('lang') !== 'en';

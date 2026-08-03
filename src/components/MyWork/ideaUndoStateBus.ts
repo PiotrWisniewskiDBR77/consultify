@@ -39,11 +39,7 @@ const LEGACY_EVENTS: Record<string, CanvasToolType> = {
 };
 
 /** Nadaj stan Cofnij/Ponów swojego narzędzia. Wołaj przy KAŻDEJ zmianie stosu undo. */
-export function emitIdeaUndoState(
-  tool: CanvasToolType,
-  canUndo: boolean,
-  canRedo: boolean
-): void {
+export function emitIdeaUndoState(tool: CanvasToolType, canUndo: boolean, canRedo: boolean): void {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(
     new CustomEvent<IdeaUndoState>(IDEA_UNDO_STATE_EVENT, {

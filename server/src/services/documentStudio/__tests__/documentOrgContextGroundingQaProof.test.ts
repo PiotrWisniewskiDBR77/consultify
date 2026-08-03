@@ -33,8 +33,11 @@ vi.mock('../../aiContextBuilder.js', () => ({
 }));
 
 import { buildDocumentSchema } from '../documentContentGenerator.js';
-import { applyOrgContextGrounding, buildOrgContextSourcePack } from '../documentOrgContextSourcePack.js';
 import { planDocumentOutline } from '../documentNarrativePlanner.js';
+import {
+  applyOrgContextGrounding,
+  buildOrgContextSourcePack,
+} from '../documentOrgContextSourcePack.js';
 import { runDocumentQa } from '../documentQaService.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 

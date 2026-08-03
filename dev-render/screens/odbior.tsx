@@ -90,17 +90,20 @@ export default function OdbiorScreen(): React.ReactElement {
     })();
   }, []);
 
-  const ustaw = useCallback((id: string, patch: Partial<{ werdykt: Werdykt; komentarz: string }>) => {
-    setStan((prev) => {
-      const next = { ...prev, [id]: { werdykt: null, komentarz: '', ...prev[id], ...patch } };
-      try {
-        localStorage.setItem(LS, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  }, []);
+  const ustaw = useCallback(
+    (id: string, patch: Partial<{ werdykt: Werdykt; komentarz: string }>) => {
+      setStan((prev) => {
+        const next = { ...prev, [id]: { werdykt: null, komentarz: '', ...prev[id], ...patch } };
+        try {
+          localStorage.setItem(LS, JSON.stringify(next));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const obszary = useMemo(() => {
     const m = new Map<string, number>();
@@ -173,10 +176,10 @@ export default function OdbiorScreen(): React.ReactElement {
             Odbiór — {pozycje.length} pozycji z {obszary.length} obszarów
           </h1>
           <p className="mt-2 max-w-4xl text-sm text-c-text-secondary">
-            Pozycje czytane wprost z <code className="text-c-text">rejestr/3-DO-ODBIORU/</code> — każdy agent
-            dopisuje swoje i pojawiają się tutaj. Gdzie da się kliknąć,{' '}
-            <strong className="text-c-text">osadzam żywy ekran</strong> (nie zrzut) — możesz w nim pisać i
-            klikać. Werdykty zapisują się prosto do repo.
+            Pozycje czytane wprost z <code className="text-c-text">rejestr/3-DO-ODBIORU/</code> —
+            każdy agent dopisuje swoje i pojawiają się tutaj. Gdzie da się kliknąć,{' '}
+            <strong className="text-c-text">osadzam żywy ekran</strong> (nie zrzut) — możesz w nim
+            pisać i klikać. Werdykty zapisują się prosto do repo.
           </p>
         </header>
 
@@ -255,7 +258,9 @@ export default function OdbiorScreen(): React.ReactElement {
                     </span>
                   )}
                   {!p.ekran && (
-                    <span className="text-[10px] text-c-text-muted">bez ekranu — ocena z opisu</span>
+                    <span className="text-[10px] text-c-text-muted">
+                      bez ekranu — ocena z opisu
+                    </span>
                   )}
                 </div>
               </header>
@@ -353,9 +358,7 @@ export default function OdbiorScreen(): React.ReactElement {
                     placeholder={`Komentarz do ${p.id} — co poprawić, co przeszkadza…`}
                     className="mt-3 w-full rounded-lg border border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
                   />
-                  {p.plik && (
-                    <div className="mt-1.5 text-[10px] text-c-text-muted">{p.plik}</div>
-                  )}
+                  {p.plik && <div className="mt-1.5 text-[10px] text-c-text-muted">{p.plik}</div>}
                 </div>
               </div>
             </section>

@@ -5148,9 +5148,8 @@ router.post(
 
     // Język odpowiedzi z TREŚCI mapy (isPl wyżej steruje SZKIELETEM domyślnej mapy —
     // to osobna decyzja, zostaje na fladze UI; tu chodzi tylko o język od modelu).
-    const { resolveResponseLanguage, languageInstruction } = await import(
-      '../services/ai/responseLanguage.js'
-    );
+    const { resolveResponseLanguage, languageInstruction } =
+      await import('../services/ai/responseLanguage.js');
     const respLang = resolveResponseLanguage({
       requested: language,
       // `expansion` (ai_expansion) pomijamy — to WYNIK AI, więc mógł już powstać w złym
@@ -5341,9 +5340,8 @@ router.post(
     // Język odpowiedzi z TREŚCI mapy (nakładki AIAutoClustering / AIDependencyDetector /
     // AIPriorityRecommender / AISentimentOverlay / AIWhatIfScenarios / AICompetitiveLandscape
     // wysyłają tu `i18n.language`, który przy polskiej mapie bywa `en`).
-    const { resolveResponseLanguage, languageInstruction } = await import(
-      '../services/ai/responseLanguage.js'
-    );
+    const { resolveResponseLanguage, languageInstruction } =
+      await import('../services/ai/responseLanguage.js');
     const respLang = resolveResponseLanguage({
       requested: language,
       // Bez `req.body.seedText`: nakładki (AIAutoClustering, AIWhatIfScenarios, …) wpisują
@@ -5455,9 +5453,8 @@ router.post(
     // Próbkujemy WYŁĄCZNIE materiał użytkownika (tytuł/seed z bazy + etykiety węzłów).
     // `req.body.seedText` celowo pomijamy — nakładki AI potrafią wstawić tam angielski
     // szablon polecenia, który przechyliłby detekcję na EN przy polskiej mapie.
-    const { resolveResponseLanguage, languageInstruction } = await import(
-      '../services/ai/responseLanguage.js'
-    );
+    const { resolveResponseLanguage, languageInstruction } =
+      await import('../services/ai/responseLanguage.js');
     const respLang = resolveResponseLanguage({
       requested: language,
       samples: [idea?.title, idea?.seedText, ...existingLabels],
@@ -6634,7 +6631,6 @@ router.post(
     });
   })
 );
-
 
 // ============================================================================
 // T009 Enhancement — My Ideas Convert/Promote

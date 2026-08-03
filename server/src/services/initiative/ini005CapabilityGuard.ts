@@ -16,11 +16,11 @@
  * contract, so this is the "właściwa capability" the INI-05 brief asks for
  * (task text: "canEdit; canManageTeam lub właściwa capability").
  */
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
   computeInitiativeCapabilities,
   resolveInitiativeCapabilityContext,
 } from './initiativeCapabilityMatrix.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface Ini005CapabilityDenial {
   status: number;
@@ -65,10 +65,12 @@ export async function assertCanEditInitiative(params: {
   }
 
   const statusRow = await queryHelpers
-    .queryOne<{ status?: string }>(
-      `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
-      [initiativeId, organizationId]
-    )
+    .queryOne<{
+      status?: string;
+    }>(`SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`, [
+      initiativeId,
+      organizationId,
+    ])
     .catch(() => null);
   if (!statusRow) {
     return {
@@ -102,9 +104,7 @@ export async function assertCanEditInitiative(params: {
           error: decision.isTerminal
             ? 'Initiative is in a terminal status and cannot be edited'
             : 'Your role does not have edit capability on this initiative',
-          code: decision.isTerminal
-            ? 'INITIATIVE_TERMINAL_STATUS_FROZEN'
-            : 'CAPABILITY_REQUIRED',
+          code: decision.isTerminal ? 'INITIATIVE_TERMINAL_STATUS_FROZEN' : 'CAPABILITY_REQUIRED',
           currentStatus: String(statusRow.status || 'DRAFT').toUpperCase(),
           roles: ctx.effectiveRoles,
         },

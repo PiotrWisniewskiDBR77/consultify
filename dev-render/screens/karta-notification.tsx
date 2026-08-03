@@ -69,8 +69,7 @@ const MOCK_NOTIFICATION = {
     aiGenerated: true,
     riskLevel: 'high',
     confidence: 0.82,
-    impact:
-      'Poślizg bramki G2 o ~12 dni roboczych; ryzyko kar umownych u 2 klientów enterprise.',
+    impact: 'Poślizg bramki G2 o ~12 dni roboczych; ryzyko kar umownych u 2 klientów enterprise.',
     recommendation:
       'Zwołać 45-minutową sesję decyzyjną z właścicielem programu jeszcze w tym tygodniu ' +
       'i zamknąć wybór na modelu hybrydowym (AI + recenzja konsultanta) — POC potwierdził ' +
@@ -258,7 +257,8 @@ const g = window as unknown as { __KARTA_NOTIFICATION_FETCH__?: boolean };
 // routerow podmienia window.fetch jeden po drugim; ostatni jest najbardziej
 // zewnetrzny i odpowiada WLASNYM fallbackiem zamiast oddac sterowanie dalej.
 // Skutek przed poprawka: karta-initiative dostawala koperte obcego ekranu.
-const __tenEkran = new URLSearchParams(window.location.search).get('screen') === 'karta-notification';
+const __tenEkran =
+  new URLSearchParams(window.location.search).get('screen') === 'karta-notification';
 if (__tenEkran && !g.__KARTA_NOTIFICATION_FETCH__) {
   g.__KARTA_NOTIFICATION_FETCH__ = true;
   const realFetch = window.fetch.bind(window);

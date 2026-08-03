@@ -84,9 +84,7 @@ export const TriModeChooser: React.FC<TriModeChooserProps> = ({
       className={`flex h-full min-h-0 flex-col overflow-y-auto bg-c-surface-raised px-6 py-8 ${className ?? ''}`}
     >
       <div className="mx-auto w-full max-w-3xl">
-        <h2 className="text-lg font-semibold text-c-text">
-          {heading ?? 'Jak chcesz zacząć?'}
-        </h2>
+        <h2 className="text-lg font-semibold text-c-text">{heading ?? 'Jak chcesz zacząć?'}</h2>
         <p className="mt-1 text-sm text-c-text-secondary">
           {subheading ?? 'Wybierz tryb pracy — wszystkie trzy są równorzędne.'}
         </p>

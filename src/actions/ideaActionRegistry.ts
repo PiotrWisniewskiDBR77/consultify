@@ -31,9 +31,11 @@
  *   (rozdz. 02, „Kolejność wdrożenia rdzenia", punkty 2–3 i 6).
  */
 
+import type {
+  CanvasToolType,
+  IdeaWorkspaceSelection,
+} from '@/components/MyWork/ideaSelectionTypes';
 import { Api } from '@/services/api';
-
-import type { CanvasToolType, IdeaWorkspaceSelection } from '@/components/MyWork/ideaSelectionTypes';
 
 // ───────────────────────────── TYPY KONTRAKTU ─────────────────────────────
 
@@ -186,9 +188,7 @@ function dispatchQuickAction(action: string, ctx: ActionContext, extra?: Record<
  * nikt jej nie słucha, co było źródłem martwego „Auto-układu" w Przepływie.
  */
 function dispatchMindmapPaneAction(action: string) {
-  window.dispatchEvent(
-    new CustomEvent('idea-mindmap-node-quick-action', { detail: { action } })
-  );
+  window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', { detail: { action } }));
 }
 
 /** Wysyła string właściwy dla AKTYWNEJ reprezentacji; brak wpisu = akcja tam nie istnieje. */
@@ -315,7 +315,8 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
     },
     runtime: RUNTIME_ADD_ELEMENT,
-    source: 'src/components/MyWork/IdeaMapWorkspace.tsx MENU3_ADD_ACTION_PER_TOOL (commit f5d0271992)',
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx MENU3_ADD_ACTION_PER_TOOL (commit f5d0271992)',
   },
   {
     id: 'idea.view.auto_layout',
@@ -332,7 +333,11 @@ const IDEA_ACTIONS: ActionDef[] = [
       // Dokładnie ten rozjazd był przyczyną martwego „Auto-układu" poza Mapą.
       if (ctx.tool === 'mindmap') {
         dispatchMindmapPaneAction('pane_auto_layout');
-        return { ok: true, actionId: 'idea.view.auto_layout', data: { runtime: 'pane_auto_layout' } };
+        return {
+          ok: true,
+          actionId: 'idea.view.auto_layout',
+          data: { runtime: 'pane_auto_layout' },
+        };
       }
       return runByTool('idea.view.auto_layout', RUNTIME_AUTO_LAYOUT, ctx);
     },
@@ -340,7 +345,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'IdeaProcessFlowTool.handleAutoLayout (autoLayout + undo + broadcast); Mapa: mm-undo-state',
+      evidence:
+        'IdeaProcessFlowTool.handleAutoLayout (autoLayout + undo + broadcast); Mapa: mm-undo-state',
     },
     teresa: {
       description:
@@ -375,7 +381,8 @@ const IDEA_ACTIONS: ActionDef[] = [
         ? null
         : 'Tryb kursora to stan Mapy myśli. W tej reprezentacji zaznaczasz i przesuwasz bezpośrednio na płótnie.',
     runtime: RUNTIME_CURSOR_SELECT,
-    source: 'src/components/MyWork/IdeaMapWorkspace.tsx:1060 (mm_select_mode) + CanvasLeftToolbar.tsx (f5d0271992)',
+    source:
+      'src/components/MyWork/IdeaMapWorkspace.tsx:1060 (mm_select_mode) + CanvasLeftToolbar.tsx (f5d0271992)',
   },
   {
     id: 'idea.ai.expand_map',
@@ -401,7 +408,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: true,
     undo: {
       kind: 'proposal',
-      evidence: 'POST /my-ideas/:id/map/expand → AIProposalDiffModal (checkbox per węzeł, Apply/Reject)',
+      evidence:
+        'POST /my-ideas/:id/map/expand → AIProposalDiffModal (checkbox per węzeł, Apply/Reject)',
     },
     teresa: {
       description:
@@ -438,7 +446,11 @@ const IDEA_ACTIONS: ActionDef[] = [
       // przez tę samą szynę co reszta akcji — string `open_template_gallery`
       // ma odbiornik w IdeaMapWorkspace.handleQuickAction (setTemplateGalleryOpen).
       dispatchQuickAction('open_template_gallery', ctx);
-      return { ok: true, actionId: 'idea.templates.open', data: { runtime: 'open_template_gallery' } };
+      return {
+        ok: true,
+        actionId: 'idea.templates.open',
+        data: { runtime: 'open_template_gallery' },
+      };
     },
     mutates: false,
     requiresPreview: false,
@@ -512,7 +524,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: true,
     undo: {
       kind: 'proposal',
-      evidence: 'POST /my-ideas/:id/ai-generate (wb_find_themes) → IdeaProposalReview (accept/reject per pozycja)',
+      evidence:
+        'POST /my-ideas/:id/ai-generate (wb_find_themes) → IdeaProposalReview (accept/reject per pozycja)',
     },
     teresa: {
       description:
@@ -540,7 +553,8 @@ const IDEA_ACTIONS: ActionDef[] = [
     requiresPreview: true,
     undo: {
       kind: 'proposal',
-      evidence: 'POST /my-ideas/:id/ai-generate (wb_name_clusters) → IdeaProposalReview (patch.updateNodes)',
+      evidence:
+        'POST /my-ideas/:id/ai-generate (wb_name_clusters) → IdeaProposalReview (patch.updateNodes)',
     },
     teresa: {
       description:
@@ -591,7 +605,8 @@ const IDEA_ACTIONS: ActionDef[] = [
         'Sprawdza Przepływ pod kątem wąskich gardeł i luk. Wynik dostajesz jako listę spostrzeżeń — sam proces zostaje bez zmian.',
     },
     runtime: RUNTIME_AI_PROCESS_ANALYSIS,
-    source: 'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:144 (pf_analyze → runProcessCoach)',
+    source:
+      'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:144 (pf_analyze → runProcessCoach)',
   },
   {
     id: 'idea.ai.table_assistant',
@@ -719,7 +734,8 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
       confirmBeforeRun: true,
     },
-    source: 'src/services/api.ts:5138 (convertMyIdea) + IdeaMapWorkspace.tsx handleConvert (audyt 02 §A m1_convert)',
+    source:
+      'src/services/api.ts:5138 (convertMyIdea) + IdeaMapWorkspace.tsx handleConvert (audyt 02 §A m1_convert)',
   },
   {
     id: 'idea.workspace.duplicate',
@@ -795,7 +811,11 @@ export function getActionsForSurface(
     if (!def.surfaces.includes(surface)) continue;
     const inTool = isActionAvailableInTool(def, ctx.tool);
     if (!inTool && !def.showsDisabled) continue;
-    const reason = def.disabledReason ? def.disabledReason(full) : inTool ? null : 'Niedostępne tutaj.';
+    const reason = def.disabledReason
+      ? def.disabledReason(full)
+      : inTool
+        ? null
+        : 'Niedostępne tutaj.';
     out.push({ def, disabledReason: reason });
   }
   return out;

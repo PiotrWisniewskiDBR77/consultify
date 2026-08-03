@@ -14,7 +14,7 @@
  *
  * Tokeny wyłącznie `c-*`; zero crimson poza `danger` (semantyka krytyczna).
  */
-import { MoreHorizontal, type LucideIcon } from 'lucide-react';
+import { type LucideIcon, MoreHorizontal } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 export interface TableBarOverflowItem {

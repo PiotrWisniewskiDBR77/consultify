@@ -6,6 +6,7 @@ import { ROUTES } from '@/routes/routeConfig';
 import type { CardBlock, CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
 import { AnimatedBlock, AnimatedCard } from './AnimatedBlock';
+import { canMoveBlock } from './blockOps';
 import { ArtifactEmbedBlock } from './blocks/ArtifactEmbedBlock';
 import type { BlockDensity } from './blocks/blockDensity';
 import { BulletListBlock } from './blocks/BulletListBlock';
@@ -21,7 +22,6 @@ import { SmartDiagramBlock } from './blocks/SmartDiagramBlock';
 import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
-import { canMoveBlock } from './blockOps';
 import { sanitizeDeckBlock, sanitizeDeckDisplayText } from './deckTextSanitizer';
 import { EditableBlock } from './EditableBlock';
 import {
@@ -373,7 +373,11 @@ function justifyFor(mode: VerticalFillMode): React.CSSProperties['justifyContent
  * ────────────────────────────────────────────────────────────────────────── */
 
 /** Tekst dla ciemnej powierzchni slajdu — stałe (nie `c-*`: slajd nie zmienia się z motywem apki). */
-const SLIDE_TEXT_ON_DARK = { primary: '#F8FAFC', secondary: '#CBD5E1', heading: '#FFFFFF' } as const;
+const SLIDE_TEXT_ON_DARK = {
+  primary: '#F8FAFC',
+  secondary: '#CBD5E1',
+  heading: '#FFFFFF',
+} as const;
 
 /** Względna luminancja WCAG dla #rgb / #rrggbb. Zwraca null dla nierozpoznanego zapisu. */
 function relativeLuminance(hex: string): number | null {

@@ -118,13 +118,41 @@ const FULL_REPORT = {
   projectName: 'Elkomtech — transformacja cyfrowa',
   organizationName: 'Elkomtech Sp. z o.o.',
   axisData: {
-    strategy: { actual: 2.4, target: 4.0, justification: 'Strategia cyfrowa nieformalna, brak mierzalnych KPI.' },
-    process: { actual: 3.1, target: 4.0, justification: 'Część procesów zautomatyzowana (ERP), integracje ręczne.' },
-    data: { actual: 2.0, target: 3.5, justification: 'Dane rozproszone w 5 systemach, brak jednego źródła prawdy.' },
-    technology: { actual: 3.4, target: 4.5, justification: 'Infrastruktura chmurowa wdrożona, legacy w produkcji.' },
-    people: { actual: 2.7, target: 4.0, justification: 'Kompetencje cyfrowe skoncentrowane w jednym zespole.' },
-    customer: { actual: 3.0, target: 4.0, justification: 'Portal klienta działa, brak personalizacji.' },
-    governance: { actual: 2.2, target: 3.5, justification: 'Brak formalnego komitetu sterującego IT.' },
+    strategy: {
+      actual: 2.4,
+      target: 4.0,
+      justification: 'Strategia cyfrowa nieformalna, brak mierzalnych KPI.',
+    },
+    process: {
+      actual: 3.1,
+      target: 4.0,
+      justification: 'Część procesów zautomatyzowana (ERP), integracje ręczne.',
+    },
+    data: {
+      actual: 2.0,
+      target: 3.5,
+      justification: 'Dane rozproszone w 5 systemach, brak jednego źródła prawdy.',
+    },
+    technology: {
+      actual: 3.4,
+      target: 4.5,
+      justification: 'Infrastruktura chmurowa wdrożona, legacy w produkcji.',
+    },
+    people: {
+      actual: 2.7,
+      target: 4.0,
+      justification: 'Kompetencje cyfrowe skoncentrowane w jednym zespole.',
+    },
+    customer: {
+      actual: 3.0,
+      target: 4.0,
+      justification: 'Portal klienta działa, brak personalizacji.',
+    },
+    governance: {
+      actual: 2.2,
+      target: 3.5,
+      justification: 'Brak formalnego komitetu sterującego IT.',
+    },
   },
   sections: [
     {
@@ -207,7 +235,11 @@ if (tenEkran && !g.__AUDYTY_DRD_FETCH__) {
   const realFetch = window.fetch.bind(window);
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const url =
-      typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     if (url.includes('/locales/')) return realFetch(input as RequestInfo, init);
     if (url.includes('/api/')) {
       return new Response(JSON.stringify({ data: [], items: [] }), {

@@ -352,7 +352,8 @@ const KPIS = [
     id: 'kpi-1',
     initiativeId: INITIATIVE_ID,
     name: 'Średni czas przezbrojenia L3',
-    description: 'Mediana z wszystkich przezbrojeń formatowych i smakowych w tygodniu, źródło: MES.',
+    description:
+      'Mediana z wszystkich przezbrojeń formatowych i smakowych w tygodniu, źródło: MES.',
     category: 'operational',
     unit: 'min',
     baselineValue: 96,
@@ -1039,7 +1040,8 @@ const STATUS_HISTORY = [
     changedBy: 'user-piotr-demo',
     changedByFirstName: 'Piotr',
     changedByLastName: 'Wiśniewski',
-    reason: 'Wstępna kwalifikacja jako quick win po przeglądzie OEE (L3 najniższe OEE z czterech linii).',
+    reason:
+      'Wstępna kwalifikacja jako quick win po przeglądzie OEE (L3 najniższe OEE z czterech linii).',
     gateType: null,
     createdAt: dniTemuOGodz(-48, 10, 15),
   },
@@ -1119,7 +1121,12 @@ const GATE_READINESS = {
   readiness: [
     { key: 'owner_assigned', label: 'Właściciel przypisany', pass: true, severity: 'blocking' },
     { key: 'sponsor_assigned', label: 'Sponsor przypisany', pass: true, severity: 'blocking' },
-    { key: 'kpi_defined', label: 'KPI zdefiniowane z wartością bazową', pass: true, severity: 'blocking' },
+    {
+      key: 'kpi_defined',
+      label: 'KPI zdefiniowane z wartością bazową',
+      pass: true,
+      severity: 'blocking',
+    },
     { key: 'budget_approved', label: 'Budżet zatwierdzony', pass: true, severity: 'blocking' },
     {
       key: 'raid_reviewed',

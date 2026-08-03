@@ -113,7 +113,8 @@ function persist() {
   }
 }
 
-const syncLog: Array<{ at: string; n: number; first?: string; base?: number; reason?: string }> = [];
+const syncLog: Array<{ at: string; n: number; first?: string; base?: number; reason?: string }> =
+  [];
 (window as any).__B2_LOG__ = () => syncLog;
 
 function mergeMapPayload(payload: any) {
@@ -152,7 +153,11 @@ Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) => {
     const err: any = new Error('Idea map conflict');
     err.status = 409;
     err.data = { code: 'IDEA_MAP_CONFLICT', currentVersion: currentMap.version };
-    syncLog.push({ at: new Date().toISOString().slice(11, 23), n: -409, base: payload.baseVersion });
+    syncLog.push({
+      at: new Date().toISOString().slice(11, 23),
+      n: -409,
+      base: payload.baseVersion,
+    });
     throw err;
   }
   return mergeMapPayload(payload);

@@ -26,6 +26,7 @@ import {
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
+import { assertCanEditInitiative } from '../services/initiative/ini005CapabilityGuard.js';
 import {
   assertUsersInOrganization,
   buildInitiativeCapabilityContract,
@@ -38,7 +39,6 @@ import {
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
-import { assertCanEditInitiative } from '../services/initiative/ini005CapabilityGuard.js';
 import {
   evaluateInitiativeGateAccess,
   evaluateInitiativeWriteAccess,
@@ -3763,8 +3763,17 @@ export class InitiativeController {
       const orgId = req.user?.organizationId;
       const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
-      const { userId, name, role, allocationPercentage, startDate, endDate, notes, source, idempotencyKey } =
-        req.body;
+      const {
+        userId,
+        name,
+        role,
+        allocationPercentage,
+        startDate,
+        endDate,
+        notes,
+        source,
+        idempotencyKey,
+      } = req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });

@@ -38,7 +38,12 @@ const WORKBOOK = {
     sheets: [
       {
         name: 'Założenia',
-        columns: [kol('poz', 'Pozycja'), kol('wart', 'Wartość'), kol('jedn', 'Jednostka'), kol('zrodlo', 'Źródło')],
+        columns: [
+          kol('poz', 'Pozycja'),
+          kol('wart', 'Wartość'),
+          kol('jedn', 'Jednostka'),
+          kol('zrodlo', 'Źródło'),
+        ],
         rows: [
           wiersz({
             poz: { value: 'Stawka dzienna konsultanta' },
@@ -115,7 +120,12 @@ const WORKBOOK = {
       },
       {
         name: 'Wrażliwość',
-        columns: [kol('scen', 'Scenariusz'), kol('stawka', 'Stawka'), kol('marza', 'Marża'), kol('proc', 'Marża %')],
+        columns: [
+          kol('scen', 'Scenariusz'),
+          kol('stawka', 'Stawka'),
+          kol('marza', 'Marża'),
+          kol('proc', 'Marża %'),
+        ],
         rows: [
           wiersz({
             scen: { value: 'Presja cenowa −10%' },

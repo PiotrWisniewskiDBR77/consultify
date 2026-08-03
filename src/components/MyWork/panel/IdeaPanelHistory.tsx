@@ -54,11 +54,7 @@ export interface IdeaPanelHistoryProps {
    * Przywrócenie migawki na płótno. Podaje host (IdeaMapWorkspace) — ten sam
    * handler, którym karmi modal `SnapshotHistory`. Brak → brak przycisku.
    */
-  onRestoreSnapshot?: (
-    nodes: any[],
-    edges: any[],
-    extensions?: Record<string, unknown>
-  ) => void;
+  onRestoreSnapshot?: (nodes: any[], edges: any[], extensions?: Record<string, unknown>) => void;
 }
 
 const ACTIVITY_LS_PREFIX = 'mm-activity-';
@@ -325,7 +321,11 @@ export const IdeaPanelHistory: React.FC<IdeaPanelHistoryProps> = ({
                   <button
                     type="button"
                     onClick={() =>
-                      onRestoreSnapshot(w.snapshot!.nodes, w.snapshot!.edges, w.snapshot!.extensions)
+                      onRestoreSnapshot(
+                        w.snapshot!.nodes,
+                        w.snapshot!.edges,
+                        w.snapshot!.extensions
+                      )
                     }
                     className="mt-1.5 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-semibold text-c-focus-solid hover:bg-c-focus/10 transition-colors"
                     data-testid="idea-panel-history-restore"

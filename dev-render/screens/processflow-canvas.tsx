@@ -145,8 +145,13 @@ const MOCK_MAP = {
 // „znika" po zapisie, bo serwer-atrapa oddaje stara wersje. Tutaj jedna
 // mutowalna zmienna modulu jest zrodlem prawdy: sync/save ja NADPISUJA
 // (podbijajac version), a get czyta ja SWIEZO przy kazdym wywolaniu.
-let mapState: { version: number; nodes: any[]; edges: any[]; extensions: any; preferredTool: string } =
-  JSON.parse(JSON.stringify(MOCK_MAP.map));
+let mapState: {
+  version: number;
+  nodes: any[];
+  edges: any[];
+  extensions: any;
+  preferredTool: string;
+} = JSON.parse(JSON.stringify(MOCK_MAP.map));
 
 function persist(payload: { nodes?: any[]; edges?: any[]; extensions?: any; preferredTool?: any }) {
   mapState = {
@@ -168,8 +173,10 @@ function persist(payload: { nodes?: any[]; edges?: any[]; extensions?: any; pref
 
 Api.getMyIdea = (async () => MOCK_IDEA) as typeof Api.getMyIdea;
 Api.getMyIdeaMap = (async () => ({ map: mapState })) as typeof Api.getMyIdeaMap;
-Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.syncMyIdeaMap;
-Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) => persist(payload || {})) as typeof Api.saveMyIdeaMap;
+Api.syncMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  persist(payload || {})) as typeof Api.syncMyIdeaMap;
+Api.saveMyIdeaMap = (async (_ideaId: string, payload: any) =>
+  persist(payload || {})) as typeof Api.saveMyIdeaMap;
 // Alias zgodnosci dla audytu raila — ten sam stan, druga nazwa.
 (window as unknown as { __RAIL_DEBUG_MAP__?: () => unknown }).__RAIL_DEBUG_MAP__ = () => mapState;
 Api.updateMyIdea = (async () => MOCK_IDEA) as typeof Api.updateMyIdea;

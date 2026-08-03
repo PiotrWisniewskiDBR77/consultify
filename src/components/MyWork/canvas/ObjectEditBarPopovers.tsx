@@ -251,7 +251,12 @@ export const ARROW_OPTIONS: Array<{
   { id: 'none', icon: Ban, labelKey: 'canvasEditBar.arrow.none', fallback: 'Bez strzałki' },
   { id: 'end', icon: ArrowRight, labelKey: 'canvasEditBar.arrow.end', fallback: 'W przód' },
   { id: 'start', icon: ArrowLeft, labelKey: 'canvasEditBar.arrow.start', fallback: 'W tył' },
-  { id: 'both', icon: ArrowLeftRight, labelKey: 'canvasEditBar.arrow.both', fallback: 'Obustronna' },
+  {
+    id: 'both',
+    icon: ArrowLeftRight,
+    labelKey: 'canvasEditBar.arrow.both',
+    fallback: 'Obustronna',
+  },
 ];
 
 export const ArrowDirectionPopover: React.FC<{
@@ -263,9 +268,7 @@ export const ArrowDirectionPopover: React.FC<{
   const { t } = useTranslation();
   return (
     <div className={`${PANEL} w-[176px]`}>
-      <div className={CAPTION}>
-        {title ?? t('canvasEditBar.arrowTitle', 'Strzałki i kierunek')}
-      </div>
+      <div className={CAPTION}>{title ?? t('canvasEditBar.arrowTitle', 'Strzałki i kierunek')}</div>
       {ARROW_OPTIONS.map((opt) => (
         <button
           key={opt.id}

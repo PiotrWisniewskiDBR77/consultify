@@ -32,12 +32,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
+import { DocumentStudioView } from '@/components/DocumentStudio/DocumentStudioView';
+import { useAppStore } from '@/store/useAppStore';
+
 import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
 import { AppProviders } from '../../src/providers/AppProviders';
 import { seedRealisticSession } from '../mocks/seedStore';
-
-import { DocumentStudioView } from '@/components/DocumentStudio/DocumentStudioView';
-import { useAppStore } from '@/store/useAppStore';
 
 const params = new URLSearchParams(window.location.search);
 const simFail = params.get('simFail') === '1';

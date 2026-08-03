@@ -37,7 +37,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -269,10 +276,22 @@ function buildHarmonogramSheet(termMonths: number, currencyHint: 'pln' | 'eur' |
   rows.push({
     cells: {
       miesiac: { value: 'RAZEM', style: { bold: true } },
-      rata: { formula: `SUM(C2:C${lastDataRow})`, style: { numberFormat: currencyFmt, bold: true } },
-      odsetki: { formula: `SUM(D2:D${lastDataRow})`, style: { numberFormat: currencyFmt, bold: true } },
-      kapital: { formula: `SUM(E2:E${lastDataRow})`, style: { numberFormat: currencyFmt, bold: true } },
-      saldoKoncowe: { formula: `F${lastDataRow}`, style: { numberFormat: currencyFmt, bold: true } },
+      rata: {
+        formula: `SUM(C2:C${lastDataRow})`,
+        style: { numberFormat: currencyFmt, bold: true },
+      },
+      odsetki: {
+        formula: `SUM(D2:D${lastDataRow})`,
+        style: { numberFormat: currencyFmt, bold: true },
+      },
+      kapital: {
+        formula: `SUM(E2:E${lastDataRow})`,
+        style: { numberFormat: currencyFmt, bold: true },
+      },
+      saldoKoncowe: {
+        formula: `F${lastDataRow}`,
+        style: { numberFormat: currencyFmt, bold: true },
+      },
     },
     isSummary: true,
   });

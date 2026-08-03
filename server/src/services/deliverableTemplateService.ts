@@ -10,7 +10,10 @@
 
 import logger from '../utils/Logger.js';
 import { queryAll, queryOne, queryRun } from '../utils/queryHelpers.js';
-import type { DocumentTemplate, TemplateSectionBlueprint } from './documentStudio/documentStudioTypes.js';
+import type {
+  DocumentTemplate,
+  TemplateSectionBlueprint,
+} from './documentStudio/documentStudioTypes.js';
 import { persistTemplate as persistDocStudioTemplate } from './documentStudio/documentTemplateRegistryDao.js';
 import {
   approveTemplate as approveDocStudioTemplate,
@@ -1017,7 +1020,9 @@ export async function updateDeliverableTemplate(
     // approveTemplate use) — NOT a new SQL UPDATE against that table.
     await ensureTemplateRegistryHydrated(orgId);
     const sections =
-      metaObj.sections_json !== undefined ? docSectionsJsonToBlueprint(metaObj.sections_json) : undefined;
+      metaObj.sections_json !== undefined
+        ? docSectionsJsonToBlueprint(metaObj.sections_json)
+        : undefined;
     let updatedTemplate: DocumentTemplate;
     try {
       updatedTemplate = updateDocStudioTemplateContent({

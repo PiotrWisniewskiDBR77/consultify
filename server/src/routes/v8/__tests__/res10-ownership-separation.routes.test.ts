@@ -52,9 +52,9 @@ const mockAddKpiToScorecard = vi.fn();
 const mockRemoveKpiFromScorecard = vi.fn();
 
 vi.mock('../../../services/results/kpiScorecardService.js', async () => {
-  const actual = await vi.importActual<typeof import('../../../services/results/kpiScorecardService.js')>(
-    '../../../services/results/kpiScorecardService.js'
-  );
+  const actual = await vi.importActual<
+    typeof import('../../../services/results/kpiScorecardService.js')
+  >('../../../services/results/kpiScorecardService.js');
   return {
     ...actual,
     listScorecards: (...args: unknown[]) => mockListScorecards(...args),
@@ -113,12 +113,12 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
   isAuthenticated: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-import { INITIATIVE_GOALS_OWNER_DOMAIN } from '../../initiative-governance.routes.js';
-import initiativeGovernanceRoutes from '../../initiative-governance.routes.js';
-import { RESULTS_SCORECARD_OWNER_DOMAIN } from '../../../services/results/kpiScorecardService.js';
-import resultsRoutes from '../results.routes.js';
 import verifyToken from '../../../middleware/auth.middleware.js';
 import { attachV8Context } from '../../../middleware/v8Auth.middleware.js';
+import { RESULTS_SCORECARD_OWNER_DOMAIN } from '../../../services/results/kpiScorecardService.js';
+import { INITIATIVE_GOALS_OWNER_DOMAIN } from '../../initiative-governance.routes.js';
+import initiativeGovernanceRoutes from '../../initiative-governance.routes.js';
+import resultsRoutes from '../results.routes.js';
 
 function createCombinedApp(): Express {
   const app = express();
@@ -201,7 +201,9 @@ describe('RES-10 — Initiatives Goals vs Results Scorecards ownership separatio
     expect(createGoalRes.body).toMatchObject({ id: 'goal-flow-1', ownerDomain: 'initiatives' });
     expect(mockCreateScorecard).not.toHaveBeenCalled();
 
-    mockGetGoals.mockResolvedValue([{ id: 'goal-flow-1', goal_type: 'objective', title: 'Reduce churn' }]);
+    mockGetGoals.mockResolvedValue([
+      { id: 'goal-flow-1', goal_type: 'objective', title: 'Reduce churn' },
+    ]);
     const listGoalsRes = await request(app).get('/api/initiatives-v4/goals');
     expect(listGoalsRes.body.ownerDomain).toBe('initiatives');
     expect(listGoalsRes.body.goals.map((g: any) => g.id)).toEqual(['goal-flow-1']);

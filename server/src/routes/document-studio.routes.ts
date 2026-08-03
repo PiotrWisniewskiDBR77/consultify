@@ -237,6 +237,12 @@ import {
   listDocumentContentBlocks,
   updateDocumentContentBlock,
 } from '../services/documentStudio/documentContentBlockService.js';
+// MAT-010 (Codex final review) — durable DB point-lookups for idempotent
+// replay + durability confirmation, used instead of the in-memory
+// snapshotStore/registryStore/lifecycleStore getters at those specific
+// call sites (see the checkpoint/restore/share_minted routes below).
+import { loadSchemaOverlay } from '../services/documentStudio/documentEditorStateRegistryDao.js';
+import { loadLifecycleStateForArtifact } from '../services/documentStudio/documentLifecycleRegistryDao.js';
 import {
   applyOrgContextGrounding,
   buildOrgContextSourcePack,
@@ -245,6 +251,7 @@ import {
   computeDocumentSchemaDiff,
   summarizeDocumentSchemaDiff,
 } from '../services/documentStudio/documentSchemaDiffService.js';
+import { loadShareLinkById } from '../services/documentStudio/documentShareLinkRegistryDao.js';
 import {
   authorizeShareLinkEditSession,
   consumeShareLink,
@@ -372,11 +379,7 @@ import {
   recordTemplateUsage,
   reviseTemplateStructure,
 } from '../services/documentStudio/documentTemplateService.js';
-import {
-  isTemplateResolveError,
-  resolveDocumentTemplateForCreation,
-  type TemplateResolveErrorCode,
-} from '../services/materials/creationIntent.js';
+import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
 // MAT-010 — canonical artifact lineage (fail-open hooks only).
 import {
   deriveCreatedEventIdempotencyKey,
@@ -392,14 +395,11 @@ import {
   finalizeOperationClaim,
   startClaimHeartbeat,
 } from '../services/lineage/operationClaimService.js';
-// MAT-010 (Codex final review) — durable DB point-lookups for idempotent
-// replay + durability confirmation, used instead of the in-memory
-// snapshotStore/registryStore/lifecycleStore getters at those specific
-// call sites (see the checkpoint/restore/share_minted routes below).
-import { loadSchemaOverlay } from '../services/documentStudio/documentEditorStateRegistryDao.js';
-import { loadLifecycleStateForArtifact } from '../services/documentStudio/documentLifecycleRegistryDao.js';
-import { loadShareLinkById } from '../services/documentStudio/documentShareLinkRegistryDao.js';
-import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
+import {
+  isTemplateResolveError,
+  resolveDocumentTemplateForCreation,
+  type TemplateResolveErrorCode,
+} from '../services/materials/creationIntent.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -3592,7 +3592,8 @@ router.post(
       if (checkpointHeartbeat?.isFenced()) {
         res.status(409).json({
           success: false,
-          error: 'This operation was reclaimed by another request before it could be finalized; retry',
+          error:
+            'This operation was reclaimed by another request before it could be finalized; retry',
           code: 'IDEMPOTENCY_STALE_CLAIM',
         });
         return;
@@ -3864,7 +3865,8 @@ router.post(
       if (restoreHeartbeat?.isFenced()) {
         res.status(409).json({
           success: false,
-          error: 'This operation was reclaimed by another request before it could be finalized; retry',
+          error:
+            'This operation was reclaimed by another request before it could be finalized; retry',
           code: 'IDEMPOTENCY_STALE_CLAIM',
         });
         return;
@@ -5383,7 +5385,8 @@ router.post(
         if (shareHeartbeat?.isFenced()) {
           res.status(409).json({
             success: false,
-            error: 'This operation was reclaimed by another request before it could be finalized; retry',
+            error:
+              'This operation was reclaimed by another request before it could be finalized; retry',
             code: 'IDEMPOTENCY_STALE_CLAIM',
           });
           return;

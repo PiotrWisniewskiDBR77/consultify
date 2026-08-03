@@ -186,7 +186,9 @@ export const RaidSection: React.FC<InitiativeSectionProps> = ({
         })
         .catch((e: any) => {
           removedWhilePendingRef.current.delete(tempId);
-          toast.error(e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item'));
+          toast.error(
+            e?.message || t('initiatives.toast.createRaidError', 'Failed to add RAID item')
+          );
           // Roll back the optimistic local item — the UI must not claim
           // something was saved when it wasn't.
           setRaidItems((prev) => prev.filter((item) => item.id !== tempId));

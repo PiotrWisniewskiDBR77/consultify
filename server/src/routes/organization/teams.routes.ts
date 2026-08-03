@@ -98,37 +98,37 @@ router.get(
       const members = membersByTeam.get(t.id) || [];
 
       return {
-          id: t.id,
-          organizationId: t.organization_id,
-          name: t.name,
-          description: t.description,
-          leadId: t.lead_id,
-          lead: t.lead_id
-            ? {
-                id: t.lead_id,
-                firstName: t.lead_first_name,
-                lastName: t.lead_last_name,
-                avatarUrl: t.lead_avatar,
-              }
-            : null,
-          memberCount: t.member_count,
-          members: members.map((m) => ({
-            userId: m.user_id,
-            role: m.role,
-            user: {
-              id: m.user_id,
-              firstName: m.first_name,
-              lastName: m.last_name,
-              email: m.email,
-              avatarUrl: m.avatar_url,
-            },
-          })),
-          color: t.color || 'violet',
-          defaultProjectRole: t.default_project_role || 'TEAM_MEMBER',
-          teamType: t.team_type || 'standard',
-          isActive: t.is_active !== 0,
-          createdAt: t.created_at,
-        };
+        id: t.id,
+        organizationId: t.organization_id,
+        name: t.name,
+        description: t.description,
+        leadId: t.lead_id,
+        lead: t.lead_id
+          ? {
+              id: t.lead_id,
+              firstName: t.lead_first_name,
+              lastName: t.lead_last_name,
+              avatarUrl: t.lead_avatar,
+            }
+          : null,
+        memberCount: t.member_count,
+        members: members.map((m) => ({
+          userId: m.user_id,
+          role: m.role,
+          user: {
+            id: m.user_id,
+            firstName: m.first_name,
+            lastName: m.last_name,
+            email: m.email,
+            avatarUrl: m.avatar_url,
+          },
+        })),
+        color: t.color || 'violet',
+        defaultProjectRole: t.default_project_role || 'TEAM_MEMBER',
+        teamType: t.team_type || 'standard',
+        isActive: t.is_active !== 0,
+        createdAt: t.created_at,
+      };
     });
 
     return res.json(teamsWithMembers);

@@ -685,8 +685,8 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   // upstream of this component, so none of these branches fire until wired.
   const hasActiveIdeaFilter = Boolean(
     (tableFilters.stage as string[] | undefined)?.length ||
-      (tableFilters.tags as string[] | undefined)?.length ||
-      (tableFilters.tool as string[] | undefined)?.length
+    (tableFilters.tags as string[] | undefined)?.length ||
+    (tableFilters.tool as string[] | undefined)?.length
   );
   const clearIdeaTableFilters = useCallback(() => {
     onTableFilterChange('stage', []);

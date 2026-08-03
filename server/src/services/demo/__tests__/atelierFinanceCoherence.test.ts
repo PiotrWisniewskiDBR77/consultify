@@ -48,10 +48,7 @@ vi.mock('../../organizationContext/OrganizationContextService.js', () => ({
   },
 }));
 
-import {
-  evaluateStatementReadiness,
-  validateStatement,
-} from '../../financialStatementService.js';
+import { evaluateStatementReadiness, validateStatement } from '../../financialStatementService.js';
 import {
   assertAtelierFy2014Coherent,
   ATELIER_CANONICAL_MODEL_NAME_EN,
@@ -64,10 +61,10 @@ import {
   ATELIER_FY2014_BS,
   ATELIER_FY2014_CF,
   ATELIER_FY2014_PL,
+  type AtelierFinanceSeedResult,
   buildAtelierAnalysisStatementData,
   getAtelierExpectedValueCounts,
   upsertAtelierFinanceGoldenFlow,
-  type AtelierFinanceSeedResult,
 } from '../atelierFinanceSeed.js';
 import { seedAtelierToysDemoDataset } from '../demoSeedService.js';
 
@@ -277,7 +274,10 @@ describe('FIN-005 — statements earn READY through production code', () => {
 
   it('no raw JS Date value reaches the period columns', () => {
     const rawDate = /^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}\s+\d{4}\b/;
-    const periodRows = [...rowsFor('financial_statement_packs'), ...rowsFor('financial_statements')];
+    const periodRows = [
+      ...rowsFor('financial_statement_packs'),
+      ...rowsFor('financial_statements'),
+    ];
     expect(periodRows.length).toBeGreaterThan(0);
     for (const row of periodRows) {
       expect(str(row.period_start)).toBe(ATELIER_FINANCE_PERIOD_START);

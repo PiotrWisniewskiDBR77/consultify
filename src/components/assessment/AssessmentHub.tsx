@@ -78,7 +78,6 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_INNER_CLASS,
@@ -86,11 +85,12 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
+import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { AssessmentLibraryTab } from './library/AssessmentLibraryTab';
-import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
 import { NewAssessmentData, NewAssessmentModal } from './NewAssessmentModal';
 
@@ -1640,10 +1640,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 onClick: () => setShowInitiativesWizard(true),
               },
             ],
-            note: t(
-              'assessment.whatsNext.note',
-              'Uses this assessment as the source.'
-            ),
+            note: t('assessment.whatsNext.note', 'Uses this assessment as the source.'),
           }
         : undefined,
     [selectedListRow, t]
@@ -2086,9 +2083,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                       id: 'type',
                       label: t('assessment.table.type', 'Type'),
                       value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
+                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                        selectedRow.framework ||
+                        '—',
                     },
                     {
                       id: 'progress',
@@ -2114,7 +2111,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                 relations={[]}
                 actions={previewActions}
                 whatsNext={
-                  activeTab === 'list' || activeTab === 'processes' ? listPreviewWhatsNext : undefined
+                  activeTab === 'list' || activeTab === 'processes'
+                    ? listPreviewWhatsNext
+                    : undefined
                 }
               />
             </aside>
@@ -2225,9 +2224,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                       id: 'type',
                       label: t('assessment.table.type', 'Type'),
                       value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
+                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                        selectedRow.framework ||
+                        '—',
                     },
                     ...(selectedRow.assessmentName
                       ? [
@@ -2358,9 +2357,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
                       id: 'type',
                       label: t('assessment.table.type', 'Type'),
                       value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
+                        FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
+                        selectedRow.framework ||
+                        '—',
                     },
                     ...(selectedRow.sourceReport
                       ? [
@@ -2535,9 +2534,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={
-          activeTab === 'library' || activeTab === 'outputs' ? undefined : handleNewItem
-        }
+        onNewItem={activeTab === 'library' || activeTab === 'outputs' ? undefined : handleNewItem}
         newItemLabel={getNewItemLabel()}
         filterControls={
           activeTab === 'library' || activeTab === 'outputs' ? undefined : statusDropdownControl

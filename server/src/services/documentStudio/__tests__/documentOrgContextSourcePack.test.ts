@@ -100,7 +100,10 @@ describe('buildOrgContextSourcePack', () => {
   });
 
   it('degrades to a name-only pack when the org has no projects/initiatives yet', async () => {
-    buildOrganizationContextMock.mockResolvedValue({ organizationName: 'Acme Sp. z o.o.', industry: null });
+    buildOrganizationContextMock.mockResolvedValue({
+      organizationName: 'Acme Sp. z o.o.',
+      industry: null,
+    });
     dbAllMock.mockResolvedValue([]);
 
     const pack = await buildOrgContextSourcePack('org-acme');

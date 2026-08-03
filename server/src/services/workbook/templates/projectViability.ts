@@ -42,7 +42,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -86,7 +93,12 @@ export const PROJECT_VIABILITY_GENERAL_DEFAULTS = {
 export const PROJECT_VIABILITY_DRIVER_DEFAULTS: Required<
   Pick<
     ProjectViabilityParams,
-    'baseCashFlow' | 'cashFlowGrowthPct' | 'discountRatePct' | 'residualValue' | 'taxRatePct' | 'horizonYears'
+    | 'baseCashFlow'
+    | 'cashFlowGrowthPct'
+    | 'discountRatePct'
+    | 'residualValue'
+    | 'taxRatePct'
+    | 'horizonYears'
   >
 > = {
   baseCashFlow: 350_000,
@@ -254,11 +266,24 @@ function buildAssumptionsSheet(
 
   const rows: Row[] = [
     row('Nakład początkowy (inwestycja)', investment, curFmt, amountValidation),
-    row('Przepływ operacyjny brutto — rok 1 (przed podatkiem)', baseCashFlow, curFmt, signedAmountValidation),
+    row(
+      'Przepływ operacyjny brutto — rok 1 (przed podatkiem)',
+      baseCashFlow,
+      curFmt,
+      signedAmountValidation
+    ),
     row('Wzrost przepływów % rocznie', cashFlowGrowthPct, pctFmt, percentValidation),
-    row('Stopa dyskontowa (wymagana stopa zwrotu)', discountRatePct, pctFmt, { ...percentValidation, min: 0.001, max: 1 }),
+    row('Stopa dyskontowa (wymagana stopa zwrotu)', discountRatePct, pctFmt, {
+      ...percentValidation,
+      min: 0.001,
+      max: 1,
+    }),
     row('Wartość rezydualna (koniec horyzontu)', residualValue, curFmt, signedAmountValidation),
-    row('Stopa podatkowa (od przepływu operacyjnego)', taxRatePct, pctFmt, { ...percentValidation, min: 0, max: 1 }),
+    row('Stopa podatkowa (od przepływu operacyjnego)', taxRatePct, pctFmt, {
+      ...percentValidation,
+      min: 0,
+      max: 1,
+    }),
     row('Horyzont projektu (lata)', horizonYears, '0', horizonValidation),
   ];
 
@@ -300,7 +325,11 @@ const ENGINE_ROW = {
   cumDiscounted: 8,
 } as const;
 
-function buildPrzeplywySheet(startYear: number, horizonYears: number, currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
+function buildPrzeplywySheet(
+  startYear: number,
+  horizonYears: number,
+  currencyHint: 'pln' | 'eur' | 'usd'
+): Sheet {
   const columns: ColumnDef[] = [{ key: 'pozycja', header: 'Pozycja', type: 'text', width: 40 }];
   for (let n = 0; n <= horizonYears; n++) {
     columns.push({
@@ -352,14 +381,22 @@ function buildPrzeplywySheet(startYear: number, horizonYears: number, currencyHi
     // Row 5 — discount factor = 1/(1+rate)^n (n=0 → factor 1).
     buildRow('Współczynnik dyskontowy', '0.000', (n) => `1/(1+${aRef(AR.discountRate)})^${n}`),
     // Row 6 — discounted net cash flow.
-    buildRow('Zdyskontowany przepływ netto', currencyFmt, (n, col) => `${col}${ENGINE_ROW.net}*${col}${ENGINE_ROW.discountFactor}`),
+    buildRow(
+      'Zdyskontowany przepływ netto',
+      currencyFmt,
+      (n, col) => `${col}${ENGINE_ROW.net}*${col}${ENGINE_ROW.discountFactor}`
+    ),
     // Row 7 — cumulative NOMINAL net cash flow (→ simple payback).
     buildRow('Skumulowany przepływ netto (niezdyskontowany)', currencyFmt, (n, col, prevCol) =>
-      n === 0 ? `${col}${ENGINE_ROW.net}` : `${prevCol}${ENGINE_ROW.cumUndiscounted}+${col}${ENGINE_ROW.net}`
+      n === 0
+        ? `${col}${ENGINE_ROW.net}`
+        : `${prevCol}${ENGINE_ROW.cumUndiscounted}+${col}${ENGINE_ROW.net}`
     ),
     // Row 8 — cumulative DISCOUNTED net cash flow (→ discounted payback).
     buildRow('Skumulowany przepływ zdyskontowany', currencyFmt, (n, col, prevCol) =>
-      n === 0 ? `${col}${ENGINE_ROW.discounted}` : `${prevCol}${ENGINE_ROW.cumDiscounted}+${col}${ENGINE_ROW.discounted}`
+      n === 0
+        ? `${col}${ENGINE_ROW.discounted}`
+        : `${prevCol}${ENGINE_ROW.cumDiscounted}+${col}${ENGINE_ROW.discounted}`
     ),
   ];
 
@@ -390,7 +427,14 @@ function buildPrzeplywySheet(startYear: number, horizonYears: number, currencyHi
 // ---------------------------------------------------------------------------
 
 const WYNIKI_SHEET = 'Wyniki';
-const WR = { npv: 2, irr: 3, sumPvOperating: 4, pi: 5, paybackSimple: 6, paybackDiscounted: 7 } as const;
+const WR = {
+  npv: 2,
+  irr: 3,
+  sumPvOperating: 4,
+  pi: 5,
+  paybackSimple: 6,
+  paybackDiscounted: 7,
+} as const;
 
 function buildWynikiSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
   const columns: ColumnDef[] = [
@@ -408,7 +452,10 @@ function buildWynikiSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'u
   ): Row => ({
     cells: {
       metryka: { value: label, style: opts.summary ? { bold: true } : undefined },
-      wartosc: { formula, style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary } },
+      wartosc: {
+        formula,
+        style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary },
+      },
     },
     isSummary: opts.summary,
   });
@@ -420,16 +467,32 @@ function buildWynikiSheet(horizonYears: number, currencyHint: 'pln' | 'eur' | 'u
   const cumDiscRange = `'${PRZEPLYWY_SHEET}'!${firstOperatingCol}${ENGINE_ROW.cumDiscounted}:${lastCol}${ENGINE_ROW.cumDiscounted}`;
 
   const rows: Row[] = [
-    metricRow('NPV (wartość bieżąca netto)', `NPV(${aRef(AR.discountRate)},${netRange})+'${PRZEPLYWY_SHEET}'!B${ENGINE_ROW.net}`, {
+    metricRow(
+      'NPV (wartość bieżąca netto)',
+      `NPV(${aRef(AR.discountRate)},${netRange})+'${PRZEPLYWY_SHEET}'!B${ENGINE_ROW.net}`,
+      {
+        summary: true,
+      }
+    ),
+    metricRow('IRR (wewnętrzna stopa zwrotu)', `IRR(${netRangeFull})`, {
       summary: true,
+      numberFormat: '0.0%',
     }),
-    metricRow('IRR (wewnętrzna stopa zwrotu)', `IRR(${netRangeFull})`, { summary: true, numberFormat: '0.0%' }),
-    metricRow('Suma zdyskontowanych przepływów operacyjnych (lata 1–' + horizonYears + ')', `SUM(${discRange})`),
-    metricRow('Wskaźnik rentowności (PI = suma PV / nakład)', `B${WR.sumPvOperating}/${aRef(AR.investment)}`, {
-      summary: true,
-      numberFormat: '0.00',
+    metricRow(
+      'Suma zdyskontowanych przepływów operacyjnych (lata 1–' + horizonYears + ')',
+      `SUM(${discRange})`
+    ),
+    metricRow(
+      'Wskaźnik rentowności (PI = suma PV / nakład)',
+      `B${WR.sumPvOperating}/${aRef(AR.investment)}`,
+      {
+        summary: true,
+        numberFormat: '0.00',
+      }
+    ),
+    metricRow('Okres zwrotu prosty (lata, przybliżenie)', `COUNTIF(${cumRange},"<0")`, {
+      numberFormat: '0" lat"',
     }),
-    metricRow('Okres zwrotu prosty (lata, przybliżenie)', `COUNTIF(${cumRange},"<0")`, { numberFormat: '0" lat"' }),
     metricRow('Okres zwrotu zdyskontowany (lata, przybliżenie)', `COUNTIF(${cumDiscRange},"<0")`, {
       numberFormat: '0" lat"',
     }),
@@ -467,7 +530,9 @@ function buildWrazliwoscSheet(
   residualRef: string,
   currencyHint: 'pln' | 'eur' | 'usd'
 ): Sheet {
-  const columns: ColumnDef[] = [{ key: 'info', header: 'Analiza wrażliwości NPV', type: 'text', width: 70 }];
+  const columns: ColumnDef[] = [
+    { key: 'info', header: 'Analiza wrażliwości NPV', type: 'text', width: 70 },
+  ];
   const rows: Row[] = [
     {
       cells: {
@@ -494,14 +559,18 @@ function buildWrazliwoscSheet(
   for (let n = 1; n <= horizonYears; n++) {
     const grossExpr = `(${cf1Ref}*(1+${growthRef})^${n - 1})`;
     const scaledExpr = `(${grossExpr}*{row})`;
-    const netExpr = n === horizonYears ? `(${scaledExpr}*(1-${taxRef})+${residualRef})` : `(${scaledExpr}*(1-${taxRef}))`;
+    const netExpr =
+      n === horizonYears
+        ? `(${scaledExpr}*(1-${taxRef})+${residualRef})`
+        : `(${scaledExpr}*(1-${taxRef}))`;
     terms.push(`${netExpr}/(1+{col})^${n}`);
   }
   const outputFormulaTemplate = `-${investmentRef}+${terms.join('+')}`;
 
   return {
     name: WRAZLIWOSC_SHEET,
-    purpose: 'NPV w funkcji stopy dyskontowej i poziomu przepływów pieniężnych — siatka formuł, nie odczyt statyczny.',
+    purpose:
+      'NPV w funkcji stopy dyskontowej i poziomu przepływów pieniężnych — siatka formuł, nie odczyt statyczny.',
     columns,
     rows,
     freezeRow: 1,
@@ -526,27 +595,61 @@ function buildWrazliwoscSheet(
 // ---------------------------------------------------------------------------
 
 export function buildProjectViabilitySchema(params: ProjectViabilityParams = {}): WorkbookSchema {
-  const projectName = (params.projectName ?? 'Projekt inwestycyjny').trim() || 'Projekt inwestycyjny';
+  const projectName =
+    (params.projectName ?? 'Projekt inwestycyjny').trim() || 'Projekt inwestycyjny';
   const startYear =
     Number.isFinite(params.startYear) && (params.startYear as number) > 0
       ? Math.floor(params.startYear as number)
       : new Date().getFullYear() + 1;
 
   const investment = safePositive(params.investment, PROJECT_VIABILITY_GENERAL_DEFAULTS.investment);
-  const baseCashFlow = safeAmount(params.baseCashFlow, PROJECT_VIABILITY_DRIVER_DEFAULTS.baseCashFlow);
-  const cashFlowGrowthPct = safeFraction(params.cashFlowGrowthPct, PROJECT_VIABILITY_DRIVER_DEFAULTS.cashFlowGrowthPct);
-  const discountRatePct = safeFraction(params.discountRatePct, PROJECT_VIABILITY_DRIVER_DEFAULTS.discountRatePct, 0.001, 1);
-  const residualValue = safeAmount(params.residualValue, PROJECT_VIABILITY_DRIVER_DEFAULTS.residualValue);
-  const taxRatePct = safeFraction(params.taxRatePct, PROJECT_VIABILITY_DRIVER_DEFAULTS.taxRatePct, 0, 1);
+  const baseCashFlow = safeAmount(
+    params.baseCashFlow,
+    PROJECT_VIABILITY_DRIVER_DEFAULTS.baseCashFlow
+  );
+  const cashFlowGrowthPct = safeFraction(
+    params.cashFlowGrowthPct,
+    PROJECT_VIABILITY_DRIVER_DEFAULTS.cashFlowGrowthPct
+  );
+  const discountRatePct = safeFraction(
+    params.discountRatePct,
+    PROJECT_VIABILITY_DRIVER_DEFAULTS.discountRatePct,
+    0.001,
+    1
+  );
+  const residualValue = safeAmount(
+    params.residualValue,
+    PROJECT_VIABILITY_DRIVER_DEFAULTS.residualValue
+  );
+  const taxRatePct = safeFraction(
+    params.taxRatePct,
+    PROJECT_VIABILITY_DRIVER_DEFAULTS.taxRatePct,
+    0,
+    1
+  );
   const horizonYears = Math.min(
     15,
-    Math.max(3, Number.isFinite(params.horizonYears) ? Math.round(params.horizonYears as number) : PROJECT_VIABILITY_DRIVER_DEFAULTS.horizonYears)
+    Math.max(
+      3,
+      Number.isFinite(params.horizonYears)
+        ? Math.round(params.horizonYears as number)
+        : PROJECT_VIABILITY_DRIVER_DEFAULTS.horizonYears
+    )
   );
 
   const { hint, label } = currencyMeta(params.currencyCode);
 
   const sheets: Sheet[] = [
-    buildAssumptionsSheet(investment, baseCashFlow, cashFlowGrowthPct, discountRatePct, residualValue, taxRatePct, horizonYears, label),
+    buildAssumptionsSheet(
+      investment,
+      baseCashFlow,
+      cashFlowGrowthPct,
+      discountRatePct,
+      residualValue,
+      taxRatePct,
+      horizonYears,
+      label
+    ),
     buildPrzeplywySheet(startYear, horizonYears, hint),
     buildWynikiSheet(horizonYears, hint),
     buildWrazliwoscSheet(

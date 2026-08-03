@@ -41,7 +41,9 @@ describe('detectFabricatedNumbersInText', () => {
   });
 
   it('NIE flaguje precyzyjnej liczby gdy w pobliżu jest znacznik „(założenie)"', () => {
-    const r = detectFabricatedNumbersInText('Marża rośnie o 27,4% (założenie: przy stałym miksie).');
+    const r = detectFabricatedNumbersInText(
+      'Marża rośnie o 27,4% (założenie: przy stałym miksie).'
+    );
     expect(r.count).toBe(0);
   });
 

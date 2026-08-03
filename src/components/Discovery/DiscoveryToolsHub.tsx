@@ -116,7 +116,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -127,6 +126,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
 
@@ -2340,14 +2340,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       next.delete('docId');
     }
     setSearchParams(next, { replace: true });
-  }, [
-    hydrated,
-    activeDocumentId,
-    docIdParam,
-    searchParams,
-    setSearchParams,
-    urlOpenAttemptEpoch,
-  ]);
+  }, [hydrated, activeDocumentId, docIdParam, searchParams, setSearchParams, urlOpenAttemptEpoch]);
 
   useEffect(() => {
     if (!hydrated) return;

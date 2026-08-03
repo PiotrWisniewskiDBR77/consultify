@@ -102,7 +102,10 @@ export type AcquireClaimOutcome =
   | { outcome: 'completed'; completedResultId: string | null }
   | { outcome: 'failed' };
 
-export type FinalizeClaimOutcome = { outcome: 'finalized' } | { outcome: 'fenced' } | { outcome: 'failed' };
+export type FinalizeClaimOutcome =
+  | { outcome: 'finalized' }
+  | { outcome: 'fenced' }
+  | { outcome: 'failed' };
 
 interface ClaimRow {
   claim_id: string;
@@ -204,7 +207,10 @@ async function tryReclaimExpiredClaim(
  * (those are always atomic INSERT/UPDATE statements above), only to report
  * an honest outcome to the caller.
  */
-async function readClaimRow(organizationId: string, operationKey: string): Promise<ClaimRow | null> {
+async function readClaimRow(
+  organizationId: string,
+  operationKey: string
+): Promise<ClaimRow | null> {
   const row = await queryHelpers.queryOne<ClaimRow>(
     `SELECT claim_id, organization_id, operation_key, owner_token, fencing_token,
             lease_expires_at, state, completed_result_id
@@ -358,11 +364,14 @@ export async function finalizeOperationClaim(params: {
     });
     return won ? { outcome: 'finalized' } : { outcome: 'fenced' };
   } catch (err) {
-    logger.error('[OperationClaim] failed to finalize operation claim (DB error, not a fencing loss)', {
-      organizationId: params.organizationId,
-      operationKey: params.operationKey,
-      message: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[OperationClaim] failed to finalize operation claim (DB error, not a fencing loss)',
+      {
+        organizationId: params.organizationId,
+        operationKey: params.operationKey,
+        message: err instanceof Error ? err.message : String(err),
+      }
+    );
     return { outcome: 'failed' };
   }
 }
@@ -380,7 +389,10 @@ export function __setOperationClaimRenewalNoOpForTests(enabled: boolean): void {
   __testForceRenewalNoOp = enabled;
 }
 
-export type RenewClaimOutcome = { outcome: 'renewed' } | { outcome: 'fenced' } | { outcome: 'failed' };
+export type RenewClaimOutcome =
+  | { outcome: 'renewed' }
+  | { outcome: 'fenced' }
+  | { outcome: 'failed' };
 
 /**
  * G22 fix — the heartbeat/renewal half of lease-based fencing. A claim's
@@ -427,17 +439,26 @@ export async function renewOperationClaimLease(params: {
                 updated_at = NOW()
           WHERE organization_id = $2 AND operation_key = $3
             AND owner_token = $4 AND fencing_token = $5 AND state = 'active'`,
-        [String(leaseMs), params.organizationId, params.operationKey, params.ownerToken, params.fencingToken]
+        [
+          String(leaseMs),
+          params.organizationId,
+          params.operationKey,
+          params.ownerToken,
+          params.fencingToken,
+        ]
       );
       return (result.rowCount ?? 0) > 0;
     });
     return renewed ? { outcome: 'renewed' } : { outcome: 'fenced' };
   } catch (err) {
-    logger.error('[OperationClaim] failed to renew operation claim lease (DB error, not a fencing loss)', {
-      organizationId: params.organizationId,
-      operationKey: params.operationKey,
-      message: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[OperationClaim] failed to renew operation claim lease (DB error, not a fencing loss)',
+      {
+        organizationId: params.organizationId,
+        operationKey: params.operationKey,
+        message: err instanceof Error ? err.message : String(err),
+      }
+    );
     return { outcome: 'failed' };
   }
 }

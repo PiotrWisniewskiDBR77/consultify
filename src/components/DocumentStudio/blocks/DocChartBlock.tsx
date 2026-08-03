@@ -164,7 +164,12 @@ export const DocChartBlock: React.FC<DocChartBlockProps> = ({ content, height, o
           className="doc-chart-block__empty"
           // `--c-text-muted` = dokładnie #64748b w jasnym motywie (jasny bez zmian),
           // a w ciemnym #8a99b0 — czytelne na navy.
-          style={{ padding: '24px 0', textAlign: 'center', color: 'var(--c-text-muted)', fontSize: 13 }}
+          style={{
+            padding: '24px 0',
+            textAlign: 'center',
+            color: 'var(--c-text-muted)',
+            fontSize: 13,
+          }}
         >
           {t('documentStudio.blocks.noChartData', 'No chart data available')}
         </div>

@@ -11,8 +11,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  type FormulaSheet,
   formatComputedForDisplay,
+  type FormulaSheet,
   parseCellInput,
   rawCellToEditText,
   recalcWorkbook,
@@ -23,7 +23,10 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'Arkusz1',
-        columns: [{ key: 'a', header: 'A' }, { key: 'b', header: 'B' }],
+        columns: [
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ],
         rows: [
           { cells: { a: { value: 10 }, b: { value: 20 } } },
           { cells: { a: { value: 5 }, b: { formula: 'SUM(A2:A3)' } } },
@@ -39,12 +42,18 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'Założenia',
-        columns: [{ key: 'driver', header: 'Driver' }, { key: 'wartosc', header: 'Wartość' }],
+        columns: [
+          { key: 'driver', header: 'Driver' },
+          { key: 'wartosc', header: 'Wartość' },
+        ],
         rows: [{ cells: { driver: { value: 'Stopa' }, wartosc: { value: 0.1 } } }],
       },
       {
         name: 'Wyniki',
-        columns: [{ key: 'm', header: 'Metryka' }, { key: 'w', header: 'Wartość' }],
+        columns: [
+          { key: 'm', header: 'Metryka' },
+          { key: 'w', header: 'Wartość' },
+        ],
         rows: [{ cells: { m: { value: 'x' }, w: { formula: "'Założenia'!$B$2*100" } } }],
       },
     ];
@@ -56,7 +65,10 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'S',
-        columns: [{ key: 'a', header: 'A' }, { key: 'b', header: 'B' }],
+        columns: [
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ],
         rows: [{ cells: { a: { value: -5 }, b: { formula: 'IF(A2>0,A2,0)' } } }],
       },
     ];
@@ -68,7 +80,10 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'S',
-        columns: [{ key: 'a', header: 'A' }, { key: 'b', header: 'B' }],
+        columns: [
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ],
         rows: [{ cells: { a: { value: -100 }, b: { formula: 'MAX(A2,0)' } } }],
       },
     ];
@@ -87,7 +102,14 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
           { key: 'y2', header: 'Y2' },
         ],
         rows: [
-          { cells: { lbl: { value: 'cum' }, y0: { value: -100 }, y1: { value: -20 }, y2: { value: 30 } } },
+          {
+            cells: {
+              lbl: { value: 'cum' },
+              y0: { value: -100 },
+              y1: { value: -20 },
+              y2: { value: 30 },
+            },
+          },
           { cells: { lbl: { value: 'wynik' }, y0: { formula: 'COUNTIF(B2:D2,"<0")' } } },
         ],
       },
@@ -100,7 +122,10 @@ describe('recalcWorkbook — arytmetyka i referencje', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'S',
-        columns: [{ key: 'a', header: 'A' }, { key: 'b', header: 'B' }],
+        columns: [
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ],
         rows: [{ cells: { a: { formula: 'B2' }, b: { formula: 'A2' } } }],
       },
     ];
@@ -116,14 +141,36 @@ describe('recalcWorkbook — funkcje finansowe (NPV/IRR/PV/PMT)', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'Przepływy',
-        columns: [{ key: 'p', header: 'P' }, { key: 'y0', header: 'Y0' }, { key: 'y1', header: 'Y1' }, { key: 'y2', header: 'Y2' }],
-        rows: [{ cells: { p: { value: 'net' }, y0: { value: -200 }, y1: { value: 110 }, y2: { value: 121 } } }],
+        columns: [
+          { key: 'p', header: 'P' },
+          { key: 'y0', header: 'Y0' },
+          { key: 'y1', header: 'Y1' },
+          { key: 'y2', header: 'Y2' },
+        ],
+        rows: [
+          {
+            cells: {
+              p: { value: 'net' },
+              y0: { value: -200 },
+              y1: { value: 110 },
+              y2: { value: 121 },
+            },
+          },
+        ],
       },
       {
         name: 'Wyniki',
-        columns: [{ key: 'm', header: 'M' }, { key: 'w', header: 'W' }],
+        columns: [
+          { key: 'm', header: 'M' },
+          { key: 'w', header: 'W' },
+        ],
         rows: [
-          { cells: { m: { value: 'NPV' }, w: { formula: "NPV(0.1,'Przepływy'!C2:D2)+'Przepływy'!B2" } } },
+          {
+            cells: {
+              m: { value: 'NPV' },
+              w: { formula: "NPV(0.1,'Przepływy'!C2:D2)+'Przepływy'!B2" },
+            },
+          },
         ],
       },
     ];
@@ -136,12 +183,29 @@ describe('recalcWorkbook — funkcje finansowe (NPV/IRR/PV/PMT)', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'Przepływy',
-        columns: [{ key: 'p', header: 'P' }, { key: 'y0', header: 'Y0' }, { key: 'y1', header: 'Y1' }, { key: 'y2', header: 'Y2' }],
-        rows: [{ cells: { p: { value: 'net' }, y0: { value: -200 }, y1: { value: 110 }, y2: { value: 121 } } }],
+        columns: [
+          { key: 'p', header: 'P' },
+          { key: 'y0', header: 'Y0' },
+          { key: 'y1', header: 'Y1' },
+          { key: 'y2', header: 'Y2' },
+        ],
+        rows: [
+          {
+            cells: {
+              p: { value: 'net' },
+              y0: { value: -200 },
+              y1: { value: 110 },
+              y2: { value: 121 },
+            },
+          },
+        ],
       },
       {
         name: 'Wyniki',
-        columns: [{ key: 'm', header: 'M' }, { key: 'w', header: 'W' }],
+        columns: [
+          { key: 'm', header: 'M' },
+          { key: 'w', header: 'W' },
+        ],
         rows: [{ cells: { m: { value: 'IRR' }, w: { formula: "IRR('Przepływy'!B2:D2)" } } }],
       },
     ];
@@ -154,7 +218,10 @@ describe('recalcWorkbook — funkcje finansowe (NPV/IRR/PV/PMT)', () => {
     const sheets: FormulaSheet[] = [
       {
         name: 'S',
-        columns: [{ key: 'a', header: 'A' }, { key: 'b', header: 'B' }],
+        columns: [
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ],
         rows: [{ cells: { a: { value: 0 }, b: { formula: 'PMT(0.01,12,-1000)' } } }],
       },
     ];
@@ -168,12 +235,18 @@ describe('recalcWorkbook — funkcje finansowe (NPV/IRR/PV/PMT)', () => {
     const baseSheets: FormulaSheet[] = [
       {
         name: 'Założenia',
-        columns: [{ key: 'driver', header: 'D' }, { key: 'wartosc', header: 'W' }],
+        columns: [
+          { key: 'driver', header: 'D' },
+          { key: 'wartosc', header: 'W' },
+        ],
         rows: [{ cells: { driver: { value: 'Stopa' }, wartosc: { value: 0.1 } } }],
       },
       {
         name: 'Wyniki',
-        columns: [{ key: 'm', header: 'M' }, { key: 'w', header: 'W' }],
+        columns: [
+          { key: 'm', header: 'M' },
+          { key: 'w', header: 'W' },
+        ],
         rows: [{ cells: { m: { value: 'NPV' }, w: { formula: "'Założenia'!$B$2*1000" } } }],
       },
     ];

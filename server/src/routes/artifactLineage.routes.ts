@@ -26,8 +26,8 @@ import rateLimit from 'express-rate-limit';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import {
-  type ArtifactKind,
   artifactBelongsToOrganization,
+  type ArtifactKind,
   ArtifactLineageError,
   getLineageReceipt,
   getLineageReceiptByCanonicalArtifactId,
@@ -35,8 +35,8 @@ import {
   isLineageEventType,
   listLineageReceipts,
   listPendingLineageEvents,
-  recordLineageEvent,
   reconcilePendingLineageEvents,
+  recordLineageEvent,
 } from '../services/lineage/artifactLineageService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -294,8 +294,7 @@ router.post(
         titleSnapshot: typeof body.title === 'string' ? body.title : null,
         sourceContext: body.sourceContext,
         detail: body.detail,
-        idempotencyKey:
-          typeof body.idempotencyKey === 'string' ? body.idempotencyKey : null,
+        idempotencyKey: typeof body.idempotencyKey === 'string' ? body.idempotencyKey : null,
       });
 
       await req.emitAuditEvent?.({

@@ -94,11 +94,9 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
-import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 // ModuleHub components
 import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -111,6 +109,7 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
 import { type AcceptCandidatePayload, CandidatesPanel } from './CandidatesPanel';
@@ -130,6 +129,7 @@ import {
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import PortfolioHealthView from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 

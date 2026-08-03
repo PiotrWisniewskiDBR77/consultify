@@ -91,10 +91,7 @@ import crypto from 'crypto';
 import * as DbPromise from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import { ensureCanonicalRegistryInDatabase } from '../financeCanonicalRegistrySyncService.js';
-import {
-  appraiseComputeResult,
-  type ModelAppraisal,
-} from '../financialModelAppraisalAdapter.js';
+import { appraiseComputeResult, type ModelAppraisal } from '../financialModelAppraisalAdapter.js';
 import { computeModel, getModel } from '../financialModelingService.js';
 import {
   evaluateStatementReadiness,
@@ -330,9 +327,21 @@ export const ATELIER_FY2014_CF: AtelierStatementLine[] = [
 ];
 
 export const ATELIER_FY2014_STATEMENTS = [
-  { statementType: 'P&L' as const, slug: ATELIER_FINANCE_SLUGS.statementPl, lines: ATELIER_FY2014_PL },
-  { statementType: 'BS' as const, slug: ATELIER_FINANCE_SLUGS.statementBs, lines: ATELIER_FY2014_BS },
-  { statementType: 'CF' as const, slug: ATELIER_FINANCE_SLUGS.statementCf, lines: ATELIER_FY2014_CF },
+  {
+    statementType: 'P&L' as const,
+    slug: ATELIER_FINANCE_SLUGS.statementPl,
+    lines: ATELIER_FY2014_PL,
+  },
+  {
+    statementType: 'BS' as const,
+    slug: ATELIER_FINANCE_SLUGS.statementBs,
+    lines: ATELIER_FY2014_BS,
+  },
+  {
+    statementType: 'CF' as const,
+    slug: ATELIER_FINANCE_SLUGS.statementCf,
+    lines: ATELIER_FY2014_CF,
+  },
 ];
 
 function valueOf(lines: AtelierStatementLine[], code: string): number {
@@ -624,13 +633,7 @@ const REQUIRED_SCHEMA: Record<string, readonly string[]> = {
     'readiness_score',
   ],
   financial_statement_values: ['id', 'statement_id', 'canonical_line_id', 'value'],
-  financial_analyses: [
-    'id',
-    'organization_id',
-    'title',
-    'status',
-    'source_statement_pack_id',
-  ],
+  financial_analyses: ['id', 'organization_id', 'title', 'status', 'source_statement_pack_id'],
 };
 
 interface SchemaProbe {
@@ -816,9 +819,7 @@ function buildPromotionUpdate(params: PromotionRowSpec): { sql: string; params: 
     ...applicableLiterals.map(([column, literal]) => `${column}=${literal}`),
     ...(hasUpdatedAt ? ['updated_at=CURRENT_TIMESTAMP'] : []),
   ].join(', ');
-  const guard = applicable
-    .map(([column]) => `${column} IS DISTINCT FROM ?`)
-    .join(' OR ');
+  const guard = applicable.map(([column]) => `${column} IS DISTINCT FROM ?`).join(' OR ');
 
   return {
     sql: `UPDATE ${params.table}
@@ -1201,7 +1202,10 @@ async function verifyStatementReadBack(params: {
   }
 
   if (statementRows.length !== 1) {
-    return { ok: false, reason: `read-back returned ${statementRows.length} statement rows, expected 1` };
+    return {
+      ok: false,
+      reason: `read-back returned ${statementRows.length} statement rows, expected 1`,
+    };
   }
   const row = statementRows[0];
 
@@ -1226,9 +1230,14 @@ async function verifyStatementReadBack(params: {
   }
 
   // Single resolved currency, matching the canonical fixture.
-  const currency = String(row.currency ?? '').trim().toUpperCase();
+  const currency = String(row.currency ?? '')
+    .trim()
+    .toUpperCase();
   if (currency !== ATELIER_FINANCE_CURRENCY) {
-    return { ok: false, reason: `currency mismatch: ${currency || 'null'} != ${ATELIER_FINANCE_CURRENCY}` };
+    return {
+      ok: false,
+      reason: `currency mismatch: ${currency || 'null'} != ${ATELIER_FINANCE_CURRENCY}`,
+    };
   }
 
   // Exact expected value count — a truncated write must never read as READY.
@@ -1242,7 +1251,10 @@ async function verifyStatementReadBack(params: {
   // 100% canonical mapping coverage, verified on the persisted rows.
   const unmapped = valueRows.filter((value) => !String(value.canonical_line_id ?? '').trim());
   if (unmapped.length > 0) {
-    return { ok: false, reason: `${unmapped.length} persisted value(s) carry a null canonical_line_id` };
+    return {
+      ok: false,
+      reason: `${unmapped.length} persisted value(s) carry a null canonical_line_id`,
+    };
   }
 
   // Recompute the verdict with PRODUCTION code against the READ-BACK rows.
@@ -1392,9 +1404,12 @@ async function seedAtelierFinanceOnPrimary(
     // Not fatal (see projectUpsert): the write itself runs with fallback:false
     // and the phase-2 read-back names every readiness column, so an actually
     // missing column still fails closed instead of producing a false READY.
-    logger.warn('[atelier-finance-seed] schema introspection unavailable; relying on write+read-back gates', {
-      tables: schema.unverified,
-    });
+    logger.warn(
+      '[atelier-finance-seed] schema introspection unavailable; relying on write+read-back gates',
+      {
+        tables: schema.unverified,
+      }
+    );
   }
 
   // Guard the numbers before writing any of them.
@@ -1476,9 +1491,13 @@ async function seedAtelierFinanceOnPrimary(
   );
 
   try {
-    await DbPromise.run(buildUpsertSql('financial_statement_packs', packUpsert), packUpsert.values, {
-      fallback: false,
-    });
+    await DbPromise.run(
+      buildUpsertSql('financial_statement_packs', packUpsert),
+      packUpsert.values,
+      {
+        fallback: false,
+      }
+    );
   } catch (error) {
     return incomplete(`pack write failed: ${(error as Error).message}`);
   }
@@ -1547,14 +1566,21 @@ async function seedAtelierFinanceOnPrimary(
     );
 
     try {
-      await DbPromise.run(buildUpsertSql('financial_statements', statementUpsert), statementUpsert.values, {
-        fallback: false,
-      });
+      await DbPromise.run(
+        buildUpsertSql('financial_statements', statementUpsert),
+        statementUpsert.values,
+        {
+          fallback: false,
+        }
+      );
     } catch (error) {
-      return incomplete(`statement ${statement.statementType} write failed: ${(error as Error).message}`, {
-        packId,
-        unpromotedStatementIds: [...writtenStatementIds, statementId],
-      });
+      return incomplete(
+        `statement ${statement.statementType} write failed: ${(error as Error).message}`,
+        {
+          packId,
+          unpromotedStatementIds: [...writtenStatementIds, statementId],
+        }
+      );
     }
     writtenStatementIds.push(statementId);
 
@@ -1603,7 +1629,11 @@ async function seedAtelierFinanceOnPrimary(
         [
           [
             'id',
-            makeId(organizationId, 'statement-value', `${statement.slug}--${line.code.toLowerCase()}`),
+            makeId(
+              organizationId,
+              'statement-value',
+              `${statement.slug}--${line.code.toLowerCase()}`
+            ),
           ],
           ['statement_id', statementId],
           ['canonical_line_id', line.lineId],
@@ -2352,9 +2382,7 @@ interface PlannedPromotionWrite {
   spec: PromotionRowSpec;
 }
 
-type PromotionPlan =
-  | { ok: false; reason: string }
-  | { ok: true; writes: PlannedPromotionWrite[] };
+type PromotionPlan = { ok: false; reason: string } | { ok: true; writes: PlannedPromotionWrite[] };
 
 /**
  * Read every row back, run the PRODUCTION verdict over it, and return the five
@@ -3056,10 +3084,14 @@ async function verifyAnalysisReadBack(params: {
     return { ok: false, reason: `query failed: ${(error as Error).message}` };
   }
 
-  if (rows.length !== 1) return { ok: false, reason: `expected 1 analysis row, got ${rows.length}` };
+  if (rows.length !== 1)
+    return { ok: false, reason: `expected 1 analysis row, got ${rows.length}` };
   const row = rows[0];
   if (String(row.organization_id ?? '') !== params.organizationId) {
-    return { ok: false, reason: `organization_id mismatch: ${String(row.organization_id ?? 'null')}` };
+    return {
+      ok: false,
+      reason: `organization_id mismatch: ${String(row.organization_id ?? 'null')}`,
+    };
   }
   if (String(row.source_statement_pack_id ?? '') !== params.packId) {
     return {
@@ -3067,7 +3099,9 @@ async function verifyAnalysisReadBack(params: {
       reason: `source_statement_pack_id mismatch: ${String(row.source_statement_pack_id ?? 'null')}`,
     };
   }
-  const currency = String(row.currency ?? '').trim().toUpperCase();
+  const currency = String(row.currency ?? '')
+    .trim()
+    .toUpperCase();
   if (currency && currency !== ATELIER_FINANCE_CURRENCY) {
     return { ok: false, reason: `currency mismatch: ${currency} != ${ATELIER_FINANCE_CURRENCY}` };
   }
@@ -3108,16 +3142,25 @@ async function verifyPackReadBack(params: {
     return { ok: false, reason: `query failed: ${(error as Error).message}` };
   }
 
-  if (packRows.length !== 1) return { ok: false, reason: `expected 1 pack row, got ${packRows.length}` };
+  if (packRows.length !== 1)
+    return { ok: false, reason: `expected 1 pack row, got ${packRows.length}` };
   const pack = packRows[0];
   if (String(pack.organization_id ?? '') !== params.organizationId) {
-    return { ok: false, reason: `organization_id mismatch: ${String(pack.organization_id ?? 'null')}` };
+    return {
+      ok: false,
+      reason: `organization_id mismatch: ${String(pack.organization_id ?? 'null')}`,
+    };
   }
 
-  const expectedTypes = ATELIER_FY2014_STATEMENTS.map((statement) => statement.statementType).sort();
+  const expectedTypes = ATELIER_FY2014_STATEMENTS.map(
+    (statement) => statement.statementType
+  ).sort();
   const actualTypes = statementRows.map((row) => String(row.statement_type ?? '')).sort();
   if (actualTypes.join('|') !== expectedTypes.join('|')) {
-    return { ok: false, reason: `pack holds [${actualTypes.join(', ')}], expected [${expectedTypes.join(', ')}]` };
+    return {
+      ok: false,
+      reason: `pack holds [${actualTypes.join(', ')}], expected [${expectedTypes.join(', ')}]`,
+    };
   }
 
   const unverified = statementRows.filter(
@@ -3134,7 +3177,11 @@ async function verifyPackReadBack(params: {
 
   // One single currency across the pack and every statement under it.
   const currencies = new Set(
-    [pack, ...statementRows].map((row) => String(row.currency ?? '').trim().toUpperCase())
+    [pack, ...statementRows].map((row) =>
+      String(row.currency ?? '')
+        .trim()
+        .toUpperCase()
+    )
   );
   if (currencies.size !== 1 || !currencies.has(ATELIER_FINANCE_CURRENCY)) {
     return { ok: false, reason: `pack currency set is [${[...currencies].join(', ')}]` };
@@ -3216,7 +3263,9 @@ async function upsertAtelierFinanceAnalysis(params: {
       { fallback: false }
     );
   } catch (error) {
-    logger.warn('[atelier-finance-seed] analysis write failed', { error: (error as Error).message });
+    logger.warn('[atelier-finance-seed] analysis write failed', {
+      error: (error as Error).message,
+    });
     return null;
   }
 
@@ -3344,7 +3393,8 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
     return {
       fixtureComplete: false,
       goldenFlowComplete: false,
-      reason: 'the statement/analysis fixture is not complete — golden flow cannot be evaluated on top of it',
+      reason:
+        'the statement/analysis fixture is not complete — golden flow cannot be evaluated on top of it',
     };
   }
 

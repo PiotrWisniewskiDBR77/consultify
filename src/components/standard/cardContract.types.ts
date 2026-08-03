@@ -169,10 +169,7 @@ export interface PrzynaleznoscArtefaktu {
  * ≥1 artefaktu z określoną rolą kompozycyjną. Pusta lista (karta „bez kompozycji")
  * = błąd kompilacji — dokładnie stan, przed którym broni kontrakt (D-4/D-5/D-6).
  */
-export type KompozycjaKarty = readonly [
-  PrzynaleznoscArtefaktu,
-  ...PrzynaleznoscArtefaktu[]
-];
+export type KompozycjaKarty = readonly [PrzynaleznoscArtefaktu, ...PrzynaleznoscArtefaktu[]];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // (6) STATUS ROZJAZDU — uczciwa flaga z audytu (KONTRAKT §3, ROZJAZD, DWA_SYSTEMY §3)

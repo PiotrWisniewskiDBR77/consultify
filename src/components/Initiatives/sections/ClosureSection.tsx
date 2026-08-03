@@ -219,9 +219,7 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     try {
       const res = await Api.post(`/initiatives/${initiativeId}/closure-receipt/retry`, {});
       setReceipt(res?.receipt ?? null);
-      toast.success(
-        t('initiatives.closureSection.receipt.retryTriggered', 'Retry triggered')
-      );
+      toast.success(t('initiatives.closureSection.receipt.retryTriggered', 'Retry triggered'));
     } catch (e: any) {
       toast.error(
         e?.data?.error ||
@@ -267,7 +265,10 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
           } catch {
             if (!cancelled) {
               toast.error(
-                t('initiatives.closureSection.toast.loadDetailError', 'Failed to load closure request')
+                t(
+                  'initiatives.closureSection.toast.loadDetailError',
+                  'Failed to load closure request'
+                )
               );
             }
           } finally {
@@ -305,7 +306,8 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     setExceptions(detail.exceptionsWaivers || '');
   }, [detail]);
 
-  const canEditFields = !readonly && !!detail && (detail.status === 'draft' || detail.status === 'returned');
+  const canEditFields =
+    !readonly && !!detail && (detail.status === 'draft' || detail.status === 'returned');
 
   const exceptionsRequired = useMemo(
     () => !!readiness && readiness.incompleteTaskCount + readiness.incompleteMilestoneCount > 0,
@@ -321,13 +323,18 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
       const res = await Api.post(`/initiatives/${initiativeId}/closure-requests`, {
         idempotencyKey: generateClientRequestId(),
       });
-      toast.success(t('initiatives.closureSection.toast.requestCreated', 'Closure request created'));
+      toast.success(
+        t('initiatives.closureSection.toast.requestCreated', 'Closure request created')
+      );
       await refreshAfterAction(res?.id || null);
     } catch (e: any) {
       toast.error(
         e?.data?.error ||
           e?.message ||
-          t('initiatives.closureSection.toast.requestCreateError', 'Failed to create closure request')
+          t(
+            'initiatives.closureSection.toast.requestCreateError',
+            'Failed to create closure request'
+          )
       );
     } finally {
       setCreating(false);
@@ -464,9 +471,12 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     if (!initiativeId || !activeId || approving) return;
     setApproving(true);
     try {
-      const res = await Api.post(`/initiatives/${initiativeId}/closure-requests/${activeId}/approve`, {
-        idempotencyKey: generateClientRequestId(),
-      });
+      const res = await Api.post(
+        `/initiatives/${initiativeId}/closure-requests/${activeId}/approve`,
+        {
+          idempotencyKey: generateClientRequestId(),
+        }
+      );
       const mutationStatus = res?.status;
       if (mutationStatus === 'done') {
         // No premature success — read back from the server before telling
@@ -481,7 +491,10 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
           setProcessing(true);
           pollUntilDone(activeId, 0);
         }
-      } else if (mutationStatus === 'approved_pending_transition' || mutationStatus === 'transition_failed') {
+      } else if (
+        mutationStatus === 'approved_pending_transition' ||
+        mutationStatus === 'transition_failed'
+      ) {
         setProcessing(true);
         pollUntilDone(activeId, 0);
       } else {
@@ -520,7 +533,16 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     } finally {
       setApproving(false);
     }
-  }, [initiativeId, activeId, approving, fetchDetail, fetchList, pollUntilDone, refreshAfterAction, t]);
+  }, [
+    initiativeId,
+    activeId,
+    approving,
+    fetchDetail,
+    fetchList,
+    pollUntilDone,
+    refreshAfterAction,
+    t,
+  ]);
 
   const handleReload = useCallback(() => {
     if (activeId) void refreshAfterAction(activeId);
@@ -570,9 +592,12 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
   // requires BOTH legs terminal-success; NEEDS_DECISION on Finance alone
   // (Results delivered) is its own distinct state, not folded into either
   // "delivered" or "failed" — it is neither: nothing to retry, but not done.
-  const receiptSummary = useMemo(():
-    | { label: string; badgeClass: string; icon: 'check' | 'spinner' | 'alert' | 'circle'; canRetry: boolean }
-    | null => {
+  const receiptSummary = useMemo((): {
+    label: string;
+    badgeClass: string;
+    icon: 'check' | 'spinner' | 'alert' | 'circle';
+    canRetry: boolean;
+  } | null => {
     if (!receipt) return null;
     const { resultsStatus, financeStatus } = receipt;
     const anyDelivering = resultsStatus === 'DELIVERING' || financeStatus === 'DELIVERING';
@@ -600,7 +625,10 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
     }
     if (anyDelivering || anyPending) {
       return {
-        label: t('initiatives.closureSection.receipt.delivering', 'Delivering to Results & Finance…'),
+        label: t(
+          'initiatives.closureSection.receipt.delivering',
+          'Delivering to Results & Finance…'
+        ),
         badgeClass: 'bg-c-info/15 text-c-info',
         icon: 'spinner',
         canRetry: false,
@@ -854,7 +882,10 @@ export const ClosureSection: React.FC<InitiativeSectionProps> = ({
                   <input
                     value={evNotes}
                     onChange={(e) => setEvNotes(e.target.value)}
-                    placeholder={t('initiatives.closureSection.evidenceNotesPlaceholder', 'Notes (optional)')}
+                    placeholder={t(
+                      'initiatives.closureSection.evidenceNotesPlaceholder',
+                      'Notes (optional)'
+                    )}
                     className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700/60 bg-white dark:bg-navy-900 text-xs"
                   />
                   <button

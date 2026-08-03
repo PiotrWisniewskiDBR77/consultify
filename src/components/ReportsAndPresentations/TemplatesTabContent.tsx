@@ -143,7 +143,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
   // ★ Jedno miejsce, w którym wiersz biblioteki zamienia się w trasę użycia —
   // z JAWNYM rozdziałem id indeksu i kanonicznego id szablonu. `null` = wzorca
   // nie da się uczciwie użyć (sierota / brak kanonicznego rekordu dokumentu).
-  const usePathFor = useCallback(
+  const resolveUsePath = useCallback(
     (row: TemplateItem): string | null =>
       resolveTemplateUsePath({
         artifactIndexId: row.artifactIndexId ?? row.id,
@@ -347,7 +347,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       // gotowy do użycia — pozycja disabled z jawnym powodem, zamiast trasy,
       // która po kliknięciu i tak nie miałaby czego wygenerować.
       (() => {
-        const usePath = usePathFor(row);
+        const usePath = resolveUsePath(row);
         return {
           id: 'use',
           label: t('rap.actions.useTemplate', 'Użyj wzorca'),
@@ -450,9 +450,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 icon: Play,
                 shortcut: 'O',
                 // Sierota → akcja wyłączona (bez cichego fallbacku).
-                disabled: !usePathFor(selectedItem),
+                disabled: !resolveUsePath(selectedItem),
                 onClick: () => {
-                  const usePath = usePathFor(selectedItem);
+                  const usePath = resolveUsePath(selectedItem);
                   if (usePath) navigate(usePath);
                 },
               },
@@ -487,7 +487,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ],
           }
         : undefined,
-    [selectedItem, t, navigate, openChat, usePathFor]
+    [selectedItem, t, navigate, openChat, resolveUsePath]
   );
 
   // Esc closes preview; single-key shortcut (O) active while preview open (kanon B.24/B.31).
@@ -630,7 +630,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           const tpl = filteredData.find((t) => t.id === item.id);
           if (!tpl) return;
           if (actionId === 'open') {
-            const usePath = usePathFor(tpl);
+            const usePath = resolveUsePath(tpl);
             if (usePath) navigate(usePath);
           }
           if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
@@ -661,7 +661,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       onRowClick={(row) => setSelectedId(String((row as unknown as TemplateItem).id))}
       onRowDoubleClick={(row) => {
         const item = row as unknown as TemplateItem;
-        const usePath = usePathFor(item);
+        const usePath = resolveUsePath(item);
         if (usePath) navigate(usePath);
       }}
       rowDescription={(row) => (row as unknown as TemplateItem).description ?? null}
@@ -687,9 +687,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       activeFilters={activeFilters}
       onFilterChange={onFilterChange}
       scopeLabel={scopeLabel}
-      usePathFor={usePathFor}
+      resolveUsePath={resolveUsePath}
       onUse={(item) => {
-        const usePath = usePathFor(item);
+        const usePath = resolveUsePath(item);
         if (usePath) navigate(usePath);
       }}
       onPreview={(item) => setSelectedId(item.id)}
@@ -698,107 +698,106 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
 
   const previewAside = selectedItem ? (
     <aside className="w-[400px] shrink-0 bg-slate-50 dark:bg-navy-950 p-3 overflow-hidden">
-          <StandardPreview
-            title={selectedItem.title}
-            onClose={() => setSelectedId(null)}
-            onOpenFull={() => {
-              const usePath = usePathFor(selectedItem);
-              if (usePath) navigate(usePath);
-            }}
-            openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
-            meta={{
-              pills: [
-                ...(typeMeta
-                  ? [
-                      {
-                        label: isPolish ? typeMeta.labelPl : typeMeta.label,
-                        tone: 'neutral' as const,
-                      },
-                    ]
-                  : []),
-                ...(statusMeta
-                  ? [
-                      {
-                        label: isPolish ? statusMeta.labelPl : statusMeta.label,
-                        tone: statusMeta.tone,
-                      },
-                    ]
-                  : []),
-              ] as MetaPill[],
-              trailing: (
-                <span className="text-[11px] font-semibold text-c-text-secondary">
-                  {selectedItem.updatedAt &&
-                  !Number.isNaN(new Date(selectedItem.updatedAt).getTime())
-                    ? new Date(selectedItem.updatedAt).toLocaleDateString(
-                        isPolish ? 'pl-PL' : 'en-US',
-                        {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        }
-                      )
-                    : '—'}
-                </span>
-              ),
-            }}
-            details={{
-              text: [
-                `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
-                // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
-                // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
-                // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
-                // rekord leży w bazie.
-                ...(selectedItem.source === 'legacy' || selectedItem.legacy
-                  ? [
-                      `${t('rap.preview.source', 'Źródło')}: ${t(
-                        'rap.templates.legacySourceLine',
-                        'Starszy rejestr wzorców — działa bez zmian'
-                      )}`,
-                    ]
-                  : []),
-                ...(selectedItem.orphaned
-                  ? [
-                      t(
-                        'rap.templates.orphanedHint',
-                        'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
-                      ),
-                    ]
-                  : []),
-                `${t('rap.preview.category', 'Kategoria')}: ${selectedItem.category}`,
-                ...(selectedItem.sectionCount != null
-                  ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
-                  : []),
-                ...(selectedItem.slideCount != null
-                  ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
-                  : []),
-                '',
-                selectedItem.description?.trim() || t('common.noDescription', 'No description'),
-              ].join('\n'),
-              onCopy: () => {
-                void navigator.clipboard?.writeText(
-                  `${selectedItem.title} — ${selectedItem.category} (${selectedItem.status})`
-                );
-              },
-            }}
-            ai={{
-              hints: [
-                t('rap.preview.ai.improve', 'Suggest improvements'),
-                t('rap.preview.ai.summary', 'Summarize sections'),
-              ],
-              disabled: true,
-              disabledTooltip: t('common.comingSoon', 'Coming soon'),
-            }}
-            relations={
-              selectedItem.replacedByArtifactId
-                ? [
+      <StandardPreview
+        title={selectedItem.title}
+        onClose={() => setSelectedId(null)}
+        onOpenFull={() => {
+          const usePath = resolveUsePath(selectedItem);
+          if (usePath) navigate(usePath);
+        }}
+        openLabel={t('rap.actions.useTemplate', 'Użyj wzorca')}
+        meta={{
+          pills: [
+            ...(typeMeta
+              ? [
+                  {
+                    label: isPolish ? typeMeta.labelPl : typeMeta.label,
+                    tone: 'neutral' as const,
+                  },
+                ]
+              : []),
+            ...(statusMeta
+              ? [
+                  {
+                    label: isPolish ? statusMeta.labelPl : statusMeta.label,
+                    tone: statusMeta.tone,
+                  },
+                ]
+              : []),
+          ] as MetaPill[],
+          trailing: (
+            <span className="text-[11px] font-semibold text-c-text-secondary">
+              {selectedItem.updatedAt && !Number.isNaN(new Date(selectedItem.updatedAt).getTime())
+                ? new Date(selectedItem.updatedAt).toLocaleDateString(
+                    isPolish ? 'pl-PL' : 'en-US',
                     {
-                      label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
-                    },
-                  ]
-                : []
-            }
-            actions={previewActions}
-          />
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }
+                  )
+                : '—'}
+            </span>
+          ),
+        }}
+        details={{
+          text: [
+            `${t('rap.preview.scope', 'Zakres')}: ${scopeLabel(selectedItem.scope)}`,
+            // FALA 1 / „surowe identyfikatory w UI" (2026-07-27): tu wisiała
+            // NAZWA TABELI BAZY DANYCH („Legacy (report_builder_templates)").
+            // Użytkownik ma wiedzieć, co to dla niego znaczy — nie gdzie
+            // rekord leży w bazie.
+            ...(selectedItem.source === 'legacy' || selectedItem.legacy
+              ? [
+                  `${t('rap.preview.source', 'Źródło')}: ${t(
+                    'rap.templates.legacySourceLine',
+                    'Starszy rejestr wzorców — działa bez zmian'
+                  )}`,
+                ]
+              : []),
+            ...(selectedItem.orphaned
+              ? [
+                  t(
+                    'rap.templates.orphanedHint',
+                    'Brak kanonicznego rekordu wzorca — nie można go użyć do generacji.'
+                  ),
+                ]
+              : []),
+            `${t('rap.preview.category', 'Kategoria')}: ${selectedItem.category}`,
+            ...(selectedItem.sectionCount != null
+              ? [`${t('rap.preview.sections', 'Sekcje')}: ${selectedItem.sectionCount}`]
+              : []),
+            ...(selectedItem.slideCount != null
+              ? [`${t('rap.preview.slides', 'Slajdy')}: ${selectedItem.slideCount}`]
+              : []),
+            '',
+            selectedItem.description?.trim() || t('common.noDescription', 'No description'),
+          ].join('\n'),
+          onCopy: () => {
+            void navigator.clipboard?.writeText(
+              `${selectedItem.title} — ${selectedItem.category} (${selectedItem.status})`
+            );
+          },
+        }}
+        ai={{
+          hints: [
+            t('rap.preview.ai.improve', 'Suggest improvements'),
+            t('rap.preview.ai.summary', 'Summarize sections'),
+          ],
+          disabled: true,
+          disabledTooltip: t('common.comingSoon', 'Coming soon'),
+        }}
+        relations={
+          selectedItem.replacedByArtifactId
+            ? [
+                {
+                  label: `${t('rap.preview.replacedBy', 'Nowy wzorzec')}: ${selectedItem.replacedByArtifactId.slice(0, 8)}…`,
+                },
+              ]
+            : []
+        }
+        actions={previewActions}
+      />
     </aside>
   ) : null;
 

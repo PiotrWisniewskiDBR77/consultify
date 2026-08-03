@@ -118,9 +118,7 @@ export const StatesSection: React.FC = () => {
                       ? 'Poproś administratora o dostęp do tego modułu.'
                       : 'Sprawdź połączenie i spróbuj ponownie.'
               }
-              primaryAction={
-                variant === 'new' ? { label: 'Utwórz', onClick: () => {} } : undefined
-              }
+              primaryAction={variant === 'new' ? { label: 'Utwórz', onClick: () => {} } : undefined}
               onRetry={variant === 'error' ? () => {} : undefined}
               compact
             />

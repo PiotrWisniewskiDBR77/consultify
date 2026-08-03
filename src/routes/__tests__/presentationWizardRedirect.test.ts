@@ -14,9 +14,7 @@ import { resolvePresentationWizardRedirectTarget } from '../presentationWizardRe
 
 describe('resolvePresentationWizardRedirectTarget', () => {
   it('templateArtifactId + edit=true -> Template Architect (edit an existing template)', () => {
-    const result = resolvePresentationWizardRedirectTarget(
-      '?templateArtifactId=abc-123&edit=true'
-    );
+    const result = resolvePresentationWizardRedirectTarget('?templateArtifactId=abc-123&edit=true');
     expect(result.target).toBe('/presentations?tab=template_architect');
   });
 

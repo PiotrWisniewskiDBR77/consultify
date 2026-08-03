@@ -52,9 +52,9 @@ describe('uniqueCopyTitle', () => {
   });
 
   it('ignores empty and nullish names in the existing list', () => {
-    expect(
-      uniqueCopyTitle('Model A', SUFFIX_EN, ['', '   ', null as unknown as string])
-    ).toBe('Model A (copy)');
+    expect(uniqueCopyTitle('Model A', SUFFIX_EN, ['', '   ', null as unknown as string])).toBe(
+      'Model A (copy)'
+    );
   });
 
   it('trims the source title instead of baking whitespace into the copy', () => {

@@ -137,7 +137,12 @@ const defaultPortfolioFetcher = async (
  */
 function isDemoReadOnlyError(error: unknown): boolean {
   const candidate = error as
-    | { code?: unknown; status?: unknown; message?: unknown; response?: { status?: unknown; data?: { code?: unknown } } }
+    | {
+        code?: unknown;
+        status?: unknown;
+        message?: unknown;
+        response?: { status?: unknown; data?: { code?: unknown } };
+      }
     | null
     | undefined;
   if (!candidate) return false;
@@ -266,9 +271,7 @@ export const ValueOfficePanel: React.FC<Props> = ({
         </h3>
         <div
           className="rounded-lg border border-dashed border-c-border bg-c-surface-raised p-4"
-          data-testid={
-            blockedByDemoGuard ? 'value-office-demo-blocked' : 'value-office-failed'
-          }
+          data-testid={blockedByDemoGuard ? 'value-office-demo-blocked' : 'value-office-failed'}
         >
           {/*
             FIN-005: the old single line read "Value engine temporarily

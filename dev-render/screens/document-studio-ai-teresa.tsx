@@ -28,13 +28,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
-import { AppProviders } from '../../src/providers/AppProviders';
-import { seedRealisticSession } from '../mocks/seedStore';
-
 import { DocumentStudioView } from '@/components/DocumentStudio/DocumentStudioView';
 import { useAppStore } from '@/store/useAppStore';
 import { ZAI_TERESA_FLAG_KEYS } from '@/utils/zaiTeresaFlag';
+
+import { FeatureFlagsProvider } from '../../src/contexts/FeatureFlagsContext';
+import { AppProviders } from '../../src/providers/AppProviders';
+import { seedRealisticSession } from '../mocks/seedStore';
 
 const params = new URLSearchParams(window.location.search);
 
@@ -52,7 +52,8 @@ useAppStore.setState({
 
 /** Zbuduj ciało odpowiedzi SSE dla /generate/stream — plan + 2 sekcje + done. */
 function buildSseStreamResponse(): Response {
-  const frame = (event: string, data: unknown) => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  const frame = (event: string, data: unknown) =>
+    `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   const outline = {
     documentType: 'executive_memo',
     title: 'Raport dla zarządu — audyt Q3',
@@ -141,23 +142,23 @@ export default function DocumentStudioAiTeresaScreen(): React.ReactElement {
   return (
     <QueryClientProvider client={queryClient}>
       <AppProviders>
-      <FeatureFlagsProvider showDevTools={false}>
-        <div className="min-h-screen w-full bg-c-bg">
-          <div className="border-b border-c-border px-6 py-3">
-            <div className="text-sm font-semibold text-c-text">
-              Document Studio — "Z AI" bez formularza, Teresa z boku (FAZA B1)
+        <FeatureFlagsProvider showDevTools={false}>
+          <div className="min-h-screen w-full bg-c-bg">
+            <div className="border-b border-c-border px-6 py-3">
+              <div className="text-sm font-semibold text-c-text">
+                Document Studio — "Z AI" bez formularza, Teresa z boku (FAZA B1)
+              </div>
+              <div className="text-xs text-c-text-secondary">
+                oczekiwane: brak pól Description/Type/Density/Goal/Audience, dokument-placeholder w
+                środku + czat Teresy po prawej. Wpisz w polu czatu wiadomość (≥10 znaków) i wyślij,
+                żeby zobaczyć przejście generating→document.
+              </div>
             </div>
-            <div className="text-xs text-c-text-secondary">
-              oczekiwane: brak pól Description/Type/Density/Goal/Audience, dokument-placeholder w
-              środku + czat Teresy po prawej. Wpisz w polu czatu wiadomość (≥10 znaków) i wyślij,
-              żeby zobaczyć przejście generating→document.
+            <div className="h-[calc(100vh-64px)]">
+              <DocumentStudioView />
             </div>
           </div>
-          <div className="h-[calc(100vh-64px)]">
-            <DocumentStudioView />
-          </div>
-        </div>
-      </FeatureFlagsProvider>
+        </FeatureFlagsProvider>
       </AppProviders>
     </QueryClientProvider>
   );

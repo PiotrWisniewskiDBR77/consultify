@@ -70,7 +70,9 @@ function pluginUwag() {
                 try {
                   const d = JSON.parse(fs.readFileSync(path.join(katalog, f), 'utf8'));
                   if (d && d.ekran) out[d.ekran] = d;
-                } catch { /* pomijamy uszkodzony plik */ }
+                } catch {
+                  /* pomijamy uszkodzony plik */
+                }
               }
             }
             res.end(JSON.stringify(out));
@@ -79,7 +81,11 @@ function pluginUwag() {
           if (req.method === 'GET') {
             const ekran = new URL(req.url, 'http://x').searchParams.get('ekran') || '';
             const f = plik(ekran);
-            res.end(fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : JSON.stringify({ ekran, werdykt: null, uwagi: [] }));
+            res.end(
+              fs.existsSync(f)
+                ? fs.readFileSync(f, 'utf8')
+                : JSON.stringify({ ekran, werdykt: null, uwagi: [] })
+            );
             return;
           }
           if (req.method === 'POST') {
@@ -87,7 +93,11 @@ function pluginUwag() {
             req.on('data', (c: any) => (body += c));
             req.on('end', () => {
               const dane = JSON.parse(body || '{}');
-              if (!dane.ekran) { res.statusCode = 400; res.end('{"blad":"brak ekranu"}'); return; }
+              if (!dane.ekran) {
+                res.statusCode = 400;
+                res.end('{"blad":"brak ekranu"}');
+                return;
+              }
               fs.mkdirSync(katalog, { recursive: true });
               fs.writeFileSync(plik(dane.ekran), JSON.stringify(dane, null, 2), 'utf8');
               res.end(JSON.stringify({ ok: true }));
@@ -104,7 +114,6 @@ function pluginUwag() {
     },
   };
 }
-
 
 /**
  * Endpoint odbioru (2026-07-23) — panel `?screen=odbior` zapisuje werdykty
@@ -168,7 +177,11 @@ function odbiorPlugin() {
             if (m) {
               m[1].split('\n').forEach((linia) => {
                 const i = linia.indexOf(':');
-                if (i > 0) fm[linia.slice(0, i).trim()] = linia.slice(i + 1).trim().replace(/^["']|["']$/g, '');
+                if (i > 0)
+                  fm[linia.slice(0, i).trim()] = linia
+                    .slice(i + 1)
+                    .trim()
+                    .replace(/^["']|["']$/g, '');
               });
             }
             const sekcja = (nazwa: RegExp) => {

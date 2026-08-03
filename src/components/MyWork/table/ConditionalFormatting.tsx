@@ -314,9 +314,7 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
                     key={c}
                     onClick={() => updateStyle(rule.id, { color: c })}
                     className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
-                      rule.style.color === c
-                        ? 'border-c-focus scale-110'
-                        : 'border-c-border-subtle'
+                      rule.style.color === c ? 'border-c-focus scale-110' : 'border-c-border-subtle'
                     }`}
                     style={{ backgroundColor: c }}
                   />

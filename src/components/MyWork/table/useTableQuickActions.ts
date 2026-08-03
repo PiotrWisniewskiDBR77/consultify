@@ -28,8 +28,7 @@ function buildFieldFillProposal(
   columns: ColumnDef[],
   mappings: Array<{ nodeId?: string; rowId?: string; fields?: Record<string, unknown> }>
 ): FieldFillProposal {
-  const headerFor = (key: string): string =>
-    columns.find((c) => c.key === key)?.header ?? key;
+  const headerFor = (key: string): string => columns.find((c) => c.key === key)?.header ?? key;
 
   const rows: FieldFillRowChange[] = [];
   for (const node of nodes) {
@@ -230,10 +229,9 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
             if (isTableFieldProposalEnabled() && handlers.onFieldFillProposal) {
               const proposal = buildFieldFillProposal('autofill', nodes, columns, mappings);
               if (proposal.rows.length === 0) {
-                toast(
-                  i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'),
-                  { icon: 'ℹ️' }
-                );
+                toast(i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'), {
+                  icon: 'ℹ️',
+                });
               } else {
                 handlers.onFieldFillProposal(proposal);
               }
@@ -327,12 +325,7 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
             if (Array.isArray(refreshMappings) && refreshMappings.length > 0) {
               // P1-6: gdy flaga ON — podgląd propozycji zamiast nadpisania komórek.
               if (isTableFieldProposalEnabled() && handlers.onFieldFillProposal) {
-                const proposal = buildFieldFillProposal(
-                  'refresh',
-                  nodes,
-                  columns,
-                  refreshMappings
-                );
+                const proposal = buildFieldFillProposal('refresh', nodes, columns, refreshMappings);
                 if (proposal.rows.length === 0) {
                   toast(
                     i18n.t('ideas.table.quickActions.noChangesToApply', 'No changes to apply'),

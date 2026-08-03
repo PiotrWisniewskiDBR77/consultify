@@ -79,7 +79,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ACTION_DANGER,
@@ -94,6 +93,7 @@ import {
   Menu3Chip,
 } from '../shared/ModuleMenu3';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
 import { isFinanceFlagEnabled } from './financeFeatureFlags';

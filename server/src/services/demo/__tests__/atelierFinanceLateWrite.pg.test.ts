@@ -89,9 +89,9 @@ vi.hoisted(() => {
 
 import logger from '../../../utils/Logger.js';
 import {
+  type AtelierCanonicalIds,
   getAtelierFinanceCanonicalIds,
   upsertAtelierFinanceGoldenFlow,
-  type AtelierCanonicalIds,
 } from '../atelierFinanceSeed.js';
 
 const JS_TIMEOUT_MS = 1_500;
@@ -215,114 +215,105 @@ suite('FIN-005 — a late UPDATE after a JS timeout cannot resurrect READY', () 
   // be a green light with no red light behind it.
   // -------------------------------------------------------------------------
 
-  it(
-    'MOCK_DB=true can no longer open the non-atomic path: the pinned transaction still runs, and nothing lands late',
-    async () => {
-      const ids = await seedThenDemote('red-fallback');
-      const victim = ids.statementIds[0];
-      await armFault(victim, 'slow-promotion');
+  it('MOCK_DB=true can no longer open the non-atomic path: the pinned transaction still runs, and nothing lands late', async () => {
+    const ids = await seedThenDemote('red-fallback');
+    const victim = ids.statementIds[0];
+    await armFault(victim, 'slow-promotion');
 
-      const previousMockDb = process.env.MOCK_DB;
-      const warn = vi.spyOn(logger, 'warn');
-      let result: Awaited<ReturnType<typeof seed>>;
-      let warnLines: string[];
-      const startedAt = Date.now();
-      try {
-        process.env.MOCK_DB = 'true';
-        result = await seed('red-fallback');
-      } finally {
-        process.env.MOCK_DB = previousMockDb;
-        // Read the calls BEFORE restoring: `mockRestore` clears the history, and
-        // an assertion made after it is an assertion against an empty array.
-        warnLines = warn.mock.calls.map((call) => String(call[0]));
-        warn.mockRestore();
-      }
-      const elapsed = Date.now() - startedAt;
+    const previousMockDb = process.env.MOCK_DB;
+    const warn = vi.spyOn(logger, 'warn');
+    let result: Awaited<ReturnType<typeof seed>>;
+    let warnLines: string[];
+    const startedAt = Date.now();
+    try {
+      process.env.MOCK_DB = 'true';
+      result = await seed('red-fallback');
+    } finally {
+      process.env.MOCK_DB = previousMockDb;
+      // Read the calls BEFORE restoring: `mockRestore` clears the history, and
+      // an assertion made after it is an assertion against an empty array.
+      warnLines = warn.mock.calls.map((call) => String(call[0]));
+      warn.mockRestore();
+    }
+    const elapsed = Date.now() - startedAt;
 
-      // TEETH. This single line is the whole regression: before the fix it was
-      // present, and the fixture was promoted by five autocommitted UPDATEs on a
-      // real database.
-      expect(warnLines.length, 'the spy must actually have observed the run').toBeGreaterThan(0);
-      expect(
-        warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
-        'a stray MOCK_DB=true must not degrade a real PostgreSQL to the non-atomic path'
-      ).toBe(false);
+    // TEETH. This single line is the whole regression: before the fix it was
+    // present, and the fixture was promoted by five autocommitted UPDATEs on a
+    // real database.
+    expect(warnLines.length, 'the spy must actually have observed the run').toBeGreaterThan(0);
+    expect(
+      warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
+      'a stray MOCK_DB=true must not degrade a real PostgreSQL to the non-atomic path'
+    ).toBe(false);
 
-      // The slow promotion is cancelled by the server INSIDE the transaction,
-      // exactly as on the ordinary path — produced only by the pinned path.
-      expect(result.status).toBe('incomplete');
-      expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
-      expect(result.reason).toMatch(/canceling statement|statement timeout/i);
-      expect(elapsed, 'the server-side timeout must bound the call').toBeLessThan(60_000);
+    // The slow promotion is cancelled by the server INSIDE the transaction,
+    // exactly as on the ordinary path — produced only by the pinned path.
+    expect(result.status).toBe('incomplete');
+    expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
+    expect(result.reason).toMatch(/canceling statement|statement timeout/i);
+    expect(elapsed, 'the server-side timeout must bound the call').toBeLessThan(60_000);
 
-      // And no write appears afterwards — waited out past the trigger's ENTIRE
-      // sleep, the window in which the old behaviour resurrected the row.
-      const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 5) * 1_000);
-      expect(
-        resurrected,
-        'no late write may appear: the UPDATE was cancelled inside a transaction that rolled back'
-      ).toBe(false);
-      await expectNoPartialReady(ids);
-    },
-    240_000
-  );
+    // And no write appears afterwards — waited out past the trigger's ENTIRE
+    // sleep, the window in which the old behaviour resurrected the row.
+    const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 5) * 1_000);
+    expect(
+      resurrected,
+      'no late write may appear: the UPDATE was cancelled inside a transaction that rolled back'
+    ).toBe(false);
+    await expectNoPartialReady(ids);
+  }, 240_000);
 
   // -------------------------------------------------------------------------
   // GREEN — the ordinary PostgreSQL path. Same fault, same database.
   // -------------------------------------------------------------------------
 
-  it(
-    'GREEN: on PostgreSQL the promotion goes through the pinned transaction and no late write can appear',
-    async () => {
-      const ids = await seedThenDemote('green-pinned');
-      const victim = ids.statementIds[0];
-      await armFault(victim, 'slow-promotion');
+  it('GREEN: on PostgreSQL the promotion goes through the pinned transaction and no late write can appear', async () => {
+    const ids = await seedThenDemote('green-pinned');
+    const victim = ids.statementIds[0];
+    await armFault(victim, 'slow-promotion');
 
-      const warn = vi.spyOn(logger, 'warn');
-      let result: Awaited<ReturnType<typeof seed>>;
-      let warnLines: string[];
-      const startedAt = Date.now();
-      try {
-        result = await seed('green-pinned');
-      } finally {
-        warnLines = warn.mock.calls.map((call) => String(call[0]));
-        warn.mockRestore();
-      }
-      const elapsed = Date.now() - startedAt;
+    const warn = vi.spyOn(logger, 'warn');
+    let result: Awaited<ReturnType<typeof seed>>;
+    let warnLines: string[];
+    const startedAt = Date.now();
+    try {
+      result = await seed('green-pinned');
+    } finally {
+      warnLines = warn.mock.calls.map((call) => String(call[0]));
+      warn.mockRestore();
+    }
+    const elapsed = Date.now() - startedAt;
 
-      // TEETH: the fallback must not even have been considered here. Read from
-      // the captured lines, not from a restored spy — see the RED test.
-      expect(warnLines.length, 'the spy must actually have observed the run').toBeGreaterThan(0);
-      expect(
-        warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
-        'PostgreSQL must never take the compensating path'
-      ).toBe(false);
+    // TEETH: the fallback must not even have been considered here. Read from
+    // the captured lines, not from a restored spy — see the RED test.
+    expect(warnLines.length, 'the spy must actually have observed the run').toBeGreaterThan(0);
+    expect(
+      warnLines.some((line) => line.includes('WITHOUT a pinned transaction')),
+      'PostgreSQL must never take the compensating path'
+    ).toBe(false);
 
-      expect(result.status).toBe('incomplete');
-      // Produced ONLY by the pinned path.
-      expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
-      expect(result.reason).toMatch(/canceling statement|statement timeout/i);
-      expect(result.statementIds).toEqual([]);
-      expect(elapsed, 'the server-side timeout must bound the call').toBeLessThan(60_000);
+    expect(result.status).toBe('incomplete');
+    // Produced ONLY by the pinned path.
+    expect(result.reason).toMatch(/^pinned promotion transaction rolled back: /);
+    expect(result.reason).toMatch(/canceling statement|statement timeout/i);
+    expect(result.statementIds).toEqual([]);
+    expect(elapsed, 'the server-side timeout must bound the call').toBeLessThan(60_000);
 
-      // The write was cancelled INSIDE a transaction that then rolled back, so
-      // there is nothing left to land. Wait past the trigger's ENTIRE sleep
-      // before believing it — a statement that had survived would have finished
-      // and landed well inside this budget.
-      const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 5) * 1_000);
-      expect(
-        resurrected,
-        'GREEN PROOF: no write may appear after the operation returned'
-      ).toBe(false);
-      await expectNoPartialReady(ids);
+    // The write was cancelled INSIDE a transaction that then rolled back, so
+    // there is nothing left to land. Wait past the trigger's ENTIRE sleep
+    // before believing it — a statement that had survived would have finished
+    // and landed well inside this budget.
+    const resurrected = await waitForStatementReady(victim, (TRIGGER_SLEEP_SECONDS + 5) * 1_000);
+    expect(resurrected, 'GREEN PROOF: no write may appear after the operation returned').toBe(
+      false
+    );
+    await expectNoPartialReady(ids);
 
-      // ...and once the fault is gone the fixture recovers normally.
-      await control.query(`DELETE FROM ${FAULT_TABLE}`);
-      const recovery = await seed('green-pinned');
-      expect(recovery.status, recovery.reason ?? '').toBe('complete');
-    },
-    240_000
-  );
+    // ...and once the fault is gone the fixture recovers normally.
+    await control.query(`DELETE FROM ${FAULT_TABLE}`);
+    const recovery = await seed('green-pinned');
+    expect(recovery.status, recovery.reason ?? '').toBe('complete');
+  }, 240_000);
 
   // -------------------------------------------------------------------------
   // Helpers
@@ -461,9 +452,7 @@ async function installSlowPromotionTrigger(): Promise<void> {
     END;
     $fn$ LANGUAGE plpgsql;
   `);
-  await control.query(
-    `DROP TRIGGER IF EXISTS fin005_late_write_slow_trg ON financial_statements`
-  );
+  await control.query(`DROP TRIGGER IF EXISTS fin005_late_write_slow_trg ON financial_statements`);
   await control.query(
     `CREATE TRIGGER fin005_late_write_slow_trg BEFORE UPDATE ON financial_statements
        FOR EACH ROW EXECUTE FUNCTION fin005_late_write_slow_promotion()`
@@ -471,9 +460,7 @@ async function installSlowPromotionTrigger(): Promise<void> {
 }
 
 async function removeSlowPromotionTrigger(): Promise<void> {
-  await control.query(
-    `DROP TRIGGER IF EXISTS fin005_late_write_slow_trg ON financial_statements`
-  );
+  await control.query(`DROP TRIGGER IF EXISTS fin005_late_write_slow_trg ON financial_statements`);
   await control.query(`DROP FUNCTION IF EXISTS fin005_late_write_slow_promotion()`);
   await control.query(`DROP TABLE IF EXISTS ${FAULT_TABLE}`);
 }

@@ -46,7 +46,11 @@ const TONES: Record<PriorityTone, PriorityToneStyle> = {
  * wierszach (N-59, N-79), więc normalizacja jest częścią kontraktu.
  */
 export function priorityTone(value?: string | null): PriorityTone {
-  switch (String(value ?? '').toLowerCase().trim()) {
+  switch (
+    String(value ?? '')
+      .toLowerCase()
+      .trim()
+  ) {
     case 'urgent':
     case 'critical':
     case 'p0':

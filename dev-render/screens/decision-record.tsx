@@ -76,10 +76,25 @@ const MOCK_DECISION = {
 };
 
 const MOCK_USERS = [
-  { id: 'user-piotr-demo', firstName: 'Piotr', lastName: 'Wiśniewski', email: 'piotr.wisniewski@dbr77.com' },
+  {
+    id: 'user-piotr-demo',
+    firstName: 'Piotr',
+    lastName: 'Wiśniewski',
+    email: 'piotr.wisniewski@dbr77.com',
+  },
   { id: 'user-anna', firstName: 'Anna', lastName: 'Kowalska', email: 'anna.kowalska@dbr77.com' },
-  { id: 'user-marek', firstName: 'Marek', lastName: 'Zieliński', email: 'marek.zielinski@dbr77.com' },
-  { id: 'user-kasia', firstName: 'Katarzyna', lastName: 'Nowak', email: 'katarzyna.nowak@dbr77.com' },
+  {
+    id: 'user-marek',
+    firstName: 'Marek',
+    lastName: 'Zieliński',
+    email: 'marek.zielinski@dbr77.com',
+  },
+  {
+    id: 'user-kasia',
+    firstName: 'Katarzyna',
+    lastName: 'Nowak',
+    email: 'katarzyna.nowak@dbr77.com',
+  },
 ];
 
 Api.getDecision = (async () => MOCK_DECISION) as typeof Api.getDecision;

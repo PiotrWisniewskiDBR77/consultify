@@ -77,7 +77,12 @@ describe('getExecutionManagementSnapshot', () => {
       .mockResolvedValueOnce([])
       .mockRejectedValueOnce(new Error('tasks table unavailable'))
       .mockResolvedValueOnce([{ id: 'decision-1' }]);
-    const snapshot = await getExecutionManagementSnapshot(ORG, INITIATIVE, undefined, deps({ all }));
+    const snapshot = await getExecutionManagementSnapshot(
+      ORG,
+      INITIATIVE,
+      undefined,
+      deps({ all })
+    );
     expect(snapshot?.tasks).toEqual([]);
     expect(snapshot?.decisions).toEqual([{ id: 'decision-1' }]);
     expect(snapshot?.provenance.tasks).toEqual({
@@ -97,7 +102,9 @@ describe('getExecutionManagementSnapshot', () => {
       deps({ get })
     );
     expect(snapshot).toBeNull();
-    expect(get.mock.calls[0][0]).toContain('i.id = ? AND i.organization_id = ? AND i.project_id = ?');
+    expect(get.mock.calls[0][0]).toContain(
+      'i.id = ? AND i.organization_id = ? AND i.project_id = ?'
+    );
     expect(get.mock.calls[0][1]).toEqual([INITIATIVE, ORG, 'foreign-project']);
   });
 });

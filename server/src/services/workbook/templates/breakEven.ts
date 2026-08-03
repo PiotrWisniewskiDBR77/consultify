@@ -24,7 +24,14 @@
  * comment for why — the builder writes the string verbatim into `<f>`).
  */
 
-import type { Cell, ColumnDef, DataValidation, Row, Sheet, WorkbookSchema } from '../WorkbookSchema.js';
+import type {
+  Cell,
+  ColumnDef,
+  DataValidation,
+  Row,
+  Sheet,
+  WorkbookSchema,
+} from '../WorkbookSchema.js';
 
 // ---------------------------------------------------------------------------
 // Parameters
@@ -243,7 +250,10 @@ function buildBepSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
   ): Row => ({
     cells: {
       metryka: { value: label, style: opts.summary ? { bold: true } : undefined },
-      wartosc: { formula, style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary } },
+      wartosc: {
+        formula,
+        style: { numberFormat: opts.numberFormat ?? currencyFmt, bold: opts.summary },
+      },
     },
     isSummary: opts.summary,
   });
@@ -254,8 +264,12 @@ function buildBepSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
       summary: true,
       numberFormat: '# ##0',
     }),
-    metricRow('Przychód progu rentowności (BEP)', `B${BEP.volume}*${aRef(AR.price)}`, { summary: true }),
-    metricRow('Planowany wolumen sprzedaży (szt.)', aRef(AR.plannedVolume), { numberFormat: '# ##0' }),
+    metricRow('Przychód progu rentowności (BEP)', `B${BEP.volume}*${aRef(AR.price)}`, {
+      summary: true,
+    }),
+    metricRow('Planowany wolumen sprzedaży (szt.)', aRef(AR.plannedVolume), {
+      numberFormat: '# ##0',
+    }),
     metricRow('Margines bezpieczeństwa (szt.)', `B${BEP.plannedVolume}-B${BEP.volume}`, {
       numberFormat: '# ##0',
     }),
@@ -266,7 +280,8 @@ function buildBepSheet(currencyHint: 'pln' | 'eur' | 'usd'): Sheet {
 
   return {
     name: BEP_SHEET,
-    purpose: 'Próg rentowności (BEP): wolumen, przychód i margines bezpieczeństwa — każda pozycja = formuła.',
+    purpose:
+      'Próg rentowności (BEP): wolumen, przychód i margines bezpieczeństwa — każda pozycja = formuła.',
     columns,
     rows,
     freezeRow: 1,
@@ -344,7 +359,10 @@ export function buildBreakEvenSchema(params: BreakEvenParams = {}): WorkbookSche
   const companyName = (params.companyName ?? 'Spółka').trim() || 'Spółka';
 
   const unitPrice = safePositive(params.unitPrice, BREAK_EVEN_GENERAL_DEFAULTS.unitPrice);
-  let variableCostPerUnit = safeAmount(params.variableCostPerUnit, BREAK_EVEN_DRIVER_DEFAULTS.variableCostPerUnit);
+  let variableCostPerUnit = safeAmount(
+    params.variableCostPerUnit,
+    BREAK_EVEN_DRIVER_DEFAULTS.variableCostPerUnit
+  );
   // Defensive: contribution margin (price - variable cost) must be strictly
   // positive, else BEP volume = fixed / margin divides by ≤0. If the caller
   // passed a variable cost ≥ price, nudge it below price so the default
@@ -355,7 +373,9 @@ export function buildBreakEvenSchema(params: BreakEvenParams = {}): WorkbookSche
     variableCostPerUnit = unitPrice * 0.5;
   }
   const fixedCosts = safeAmount(params.fixedCosts, BREAK_EVEN_DRIVER_DEFAULTS.fixedCosts);
-  const plannedVolume = Math.round(safeAmount(params.plannedVolume, BREAK_EVEN_DRIVER_DEFAULTS.plannedVolume));
+  const plannedVolume = Math.round(
+    safeAmount(params.plannedVolume, BREAK_EVEN_DRIVER_DEFAULTS.plannedVolume)
+  );
 
   const { hint, label } = currencyMeta(params.currencyCode);
 

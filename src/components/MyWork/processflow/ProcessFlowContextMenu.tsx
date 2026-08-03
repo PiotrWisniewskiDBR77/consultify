@@ -9,8 +9,8 @@ import {
   Plus,
   Rocket,
   Settings,
-  Split,
   Sparkles,
+  Split,
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';

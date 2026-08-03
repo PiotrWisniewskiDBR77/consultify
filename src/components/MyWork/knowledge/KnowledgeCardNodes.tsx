@@ -13,9 +13,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, type NodeProps, Position } from 'reactflow';
 
 import {
+  MindMapNodeResizer,
   MM_MIN_NODE_HEIGHT,
   MM_MIN_NODE_WIDTH,
-  MindMapNodeResizer,
   useNodeHasExplicitSize,
 } from '../mindmap/MindMapNodeResizer';
 

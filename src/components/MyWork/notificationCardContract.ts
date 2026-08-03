@@ -57,11 +57,7 @@
  * to SKRÓT intencji; pełne template'y generacji żyją w handlerach FE.
  */
 
-import type {
-  ArtifactCardSpec,
-  CardCatalogEntry,
-  CardSet,
-} from '../shared/NModeLayout/cardSets';
+import type { ArtifactCardSpec, CardCatalogEntry, CardSet } from '../shared/NModeLayout/cardSets';
 import { definiujKarteKanoniczna, type KanonicznaKarta } from '../standard/cardContract.types';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,7 +83,14 @@ const WHATS_HAPPENING = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'notification', rola: 'rdzen', klasa: 'S', kolumna: 'left', kolejnosc: 0, idWArtefakcie: 'whats-happening' },
+    {
+      artefakt: 'notification',
+      rola: 'rdzen',
+      klasa: 'S',
+      kolumna: 'left',
+      kolejnosc: 0,
+      idWArtefakcie: 'whats-happening',
+    },
   ],
   // Rozjazd: kanon wskazuje 'pisze', tu 'asystuje' bo brak realnego generatora treści bazowej.
   statusKanonu: {
@@ -114,7 +117,14 @@ const AI_ANALYSIS = definiujKarteKanoniczna({
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'notification', rola: 'dodawalna', klasa: 'S', kolumna: 'left', kolejnosc: 1, idWArtefakcie: 'ai-analysis' },
+    {
+      artefakt: 'notification',
+      rola: 'dodawalna',
+      klasa: 'S',
+      kolumna: 'left',
+      kolejnosc: 1,
+      idWArtefakcie: 'ai-analysis',
+    },
   ],
   // ★ DO POTWIERDZENIA PIOTRA: sekcja renderowana (:1368-1373) bez wpisu w katalogu 51.
   statusKanonu: {
@@ -133,12 +143,20 @@ const EXPECTED_ACTION = definiujKarteKanoniczna({
   // człowiek wykonuje/edytuje ⇒ 'asystuje'.
   rolaAI: 'asystuje',
   aiPrompt: {
-    szablon: 'Zaproponuj checklistę oczekiwanych akcji na podstawie treści powiadomienia; człowiek odhacza/edytuje.',
+    szablon:
+      'Zaproponuj checklistę oczekiwanych akcji na podstawie treści powiadomienia; człowiek odhacza/edytuje.',
     kluczPromptu: 'notification.expected-action', // handler generateActionChecklist :462
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'notification', rola: 'rdzen', klasa: 'S', kolumna: 'left', kolejnosc: 2, idWArtefakcie: 'expected-action' },
+    {
+      artefakt: 'notification',
+      rola: 'rdzen',
+      klasa: 'S',
+      kolumna: 'left',
+      kolejnosc: 2,
+      idWArtefakcie: 'expected-action',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -157,11 +175,19 @@ export const ACTIVITY_LOG = definiujKarteKanoniczna({
   rolaAI: 'systemowa',
   aiPrompt: {
     none: true,
-    reason: 'log zdarzeń to zapis faktów — treść generowana byłaby fałszem (BrakAiPrompt, przepis §1b)',
+    reason:
+      'log zdarzeń to zapis faktów — treść generowana byłaby fałszem (BrakAiPrompt, przepis §1b)',
   },
   prog: { rodzaj: 'do-decyzji-piotra' },
   kompozycja: [
-    { artefakt: 'notification', rola: 'domyslna', klasa: 'S', kolumna: 'right', kolejnosc: 0, idWArtefakcie: 'history' },
+    {
+      artefakt: 'notification',
+      rola: 'domyslna',
+      klasa: 'S',
+      kolumna: 'right',
+      kolejnosc: 0,
+      idWArtefakcie: 'history',
+    },
   ],
   statusKanonu: { stan: 'czysta' },
 });
@@ -192,7 +218,9 @@ export const NOTIFICATION_CARDS: readonly KanonicznaKarta[] = [
 function notificationMembership(karta: KanonicznaKarta) {
   const m = karta.kompozycja.find((p) => p.artefakt === 'notification');
   if (!m) {
-    throw new Error(`notificationCardContract: karta ${karta.id} bez przynależności 'notification'`);
+    throw new Error(
+      `notificationCardContract: karta ${karta.id} bez przynależności 'notification'`
+    );
   }
   return m;
 }
@@ -229,7 +257,11 @@ export function buildNotificationCardSpec(): ArtifactCardSpec {
   const allCards = NOTIFICATION_CARDS.map(renderId);
 
   const sets: CardSet[] = [
-    { id: 'default', label: { en: 'Core notification', pl: 'Rdzeń powiadomienia' }, cards: defaultCards },
+    {
+      id: 'default',
+      label: { en: 'Core notification', pl: 'Rdzeń powiadomienia' },
+      cards: defaultCards,
+    },
     { id: 'full', label: { en: 'Full', pl: 'Pełny' }, cards: allCards },
   ];
 

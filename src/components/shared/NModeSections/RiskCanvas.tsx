@@ -188,7 +188,10 @@ export const RiskCanvas: React.FC<RiskCanvasProps> = ({
       {/* Empty state */}
       {risks.length === 0 ? (
         <div className="py-8 text-center">
-          <AlertTriangle size={24} className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary" />
+          <AlertTriangle
+            size={24}
+            className="mx-auto mb-2 text-c-text-secondary dark:text-c-text-secondary"
+          />
           <p className="text-sm text-c-text-secondary dark:text-c-text-muted mb-3">
             {t('sharedComponents.riskCanvas.noRisksIdentified')}
           </p>

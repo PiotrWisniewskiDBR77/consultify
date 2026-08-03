@@ -18,40 +18,39 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+// `PreviewActionBar` USUNIETY z importow (2026-07-24, fala 2) — jedynym jego
+// konsumentem byla sekcja ① AKCJE prawego panelu, zdjeta przez anty-duplikacje
+// SPEC-N §2.6 (obie akcje maja swoj kanoniczny dom w Menu 1 / Menu 2).
+import { PreviewRelations } from '@/components/shared/PreviewPane/PreviewRelations';
+import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
 import {
   ARTIFACT_PANEL_CARD_CLASS_DOCKED,
   ArtifactRightPanel,
   type ArtifactRightPanelSection,
 } from '@/components/standard/ArtifactRightPanel';
-import { ArtifactPropertiesTable } from '@/components/standard/ArtifactPropertiesTable';
-// `PreviewActionBar` USUNIETY z importow (2026-07-24, fala 2) — jedynym jego
-// konsumentem byla sekcja ① AKCJE prawego panelu, zdjeta przez anty-duplikacje
-// SPEC-N §2.6 (obie akcje maja swoj kanoniczny dom w Menu 1 / Menu 2).
-import { PreviewRelations } from '@/components/shared/PreviewPane/PreviewRelations';
 // PRZELACZNIK Edycja|Podglad — SWIADOMIE NIE RENDEROWANY (2026-07-23).
 // `NModeMenu2` pokazuje go tylko gdy dostanie `onReadModeChange`; karta
 // biblioteczna go NIE podaje, bo nie ma czym przelaczac (patrz `renderActionBar`).
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
+// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
+import type { CardAnalysisField } from '@/services/cardAnalysis';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 import { humanizeEnum } from '@/utils/enumLabels';
 
-// ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
-import type { CardAnalysisField } from '@/services/cardAnalysis';
-
 import {
   type CardLayout,
-  type NModeArtifactType,
-  type NModePropertyField,
-  type NModeSection,
   Menu2AIButton,
   Menu2HowToButton,
   NCardAIAnalysisPanel,
+  type NModeArtifactType,
   NModeContentBlock,
   NModeMenu2,
+  type NModePropertyField,
+  type NModeSection,
   NModeShell,
   SectionsManagerMenu,
   useCardAIAnalysis,
@@ -343,12 +342,7 @@ export function KnownToolDetailView(props: {
         ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
         : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive');
 
-    const row = (
-      id: string,
-      en: string,
-      pl: string,
-      value: string
-    ): NModePropertyField => ({
+    const row = (id: string, en: string, pl: string, value: string): NModePropertyField => ({
       id,
       label: { en, pl },
       type: 'text',
@@ -558,9 +552,7 @@ export function KnownToolDetailView(props: {
             className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
           >
             <div className={TEXT_L1}>{t('discoveryToolsMain.knownToolDetailView.case')}</div>
-            <h3 className="mt-2 text-sm font-semibold text-c-text">
-              {item.title}
-            </h3>
+            <h3 className="mt-2 text-sm font-semibold text-c-text">{item.title}</h3>
             <div className="mt-3 space-y-2 text-xs leading-relaxed max-w-prose text-c-text-secondary">
               <div>
                 <span className="font-semibold text-c-text">
@@ -754,13 +746,9 @@ export function KnownToolDetailView(props: {
                     {step.id}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-c-text">
-                      {step.title}
-                    </div>
+                    <div className="text-sm font-semibold text-c-text">{step.title}</div>
                     {!isOpen && (
-                      <div className="mt-0.5 text-xs text-c-text-muted">
-                        {step.oneLiner}
-                      </div>
+                      <div className="mt-0.5 text-xs text-c-text-muted">{step.oneLiner}</div>
                     )}
                   </div>
                   <span className={`mr-1 h-2 w-2 shrink-0 rounded-full ${step.accent}`} />
@@ -935,8 +923,16 @@ export function KnownToolDetailView(props: {
     // „Evidence", „Tensions", „Moves", „Execution") widoczne w polskiej wersji
     // karty — zgłoszenie sędziego merytoryki (mieszanka językowa).
     const dynamicSwotOutcomeMeta = [
-      { id: 'decision-frame', badge: chip({ en: 'Decision', pl: 'Decyzja' }), color: 'violet' as const },
-      { id: 'evidence-picture', badge: chip({ en: 'Evidence', pl: 'Dowody' }), color: 'sky' as const },
+      {
+        id: 'decision-frame',
+        badge: chip({ en: 'Decision', pl: 'Decyzja' }),
+        color: 'violet' as const,
+      },
+      {
+        id: 'evidence-picture',
+        badge: chip({ en: 'Evidence', pl: 'Dowody' }),
+        color: 'sky' as const,
+      },
       { id: 'tensions', badge: chip({ en: 'Tensions', pl: 'Napięcia' }), color: 'amber' as const },
       { id: 'moves', badge: chip({ en: 'Moves', pl: 'Ruchy' }), color: 'emerald' as const },
       {
@@ -1254,10 +1250,7 @@ export function KnownToolDetailView(props: {
               returnObjects: true,
             }) as Array<{ title: string; text: string }>
           ).map(({ title, text }, index) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
-            >
+            <div key={title} className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
               <div className="flex items-start gap-3">
                 {/* stonowane: bylo `bg-blue-600 text-white` (solid, bez wariantu dark) — konkurowalo
                     wizualnie ze slotem primary. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
@@ -1265,9 +1258,7 @@ export function KnownToolDetailView(props: {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-c-text">
-                    {title}
-                  </div>
+                  <div className="text-sm font-semibold text-c-text">{title}</div>
                   <div className="mt-1 text-sm text-c-text-secondary">{text}</div>
                 </div>
               </div>
@@ -1364,10 +1355,7 @@ export function KnownToolDetailView(props: {
               returnObjects: true,
             }) as Array<{ title: string; text: string }>
           ).map(({ title, text }, index) => (
-            <div
-              key={title}
-              className="rounded-2xl border border-c-border-subtle bg-c-surface p-4"
-            >
+            <div key={title} className="rounded-2xl border border-c-border-subtle bg-c-surface p-4">
               <div className="flex items-start gap-3">
                 {/* stonowane: bylo bg (slate/navy) + text-white bez wariantu dark — numerator ginal
                     na ciemnym tle. Wyrownane do wzorca numeratora z L437. (2026-07-21) */}
@@ -1375,9 +1363,7 @@ export function KnownToolDetailView(props: {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-c-text">
-                    {title}
-                  </div>
+                  <div className="text-sm font-semibold text-c-text">{title}</div>
                   <div className="mt-1 text-sm text-c-text-secondary">{text}</div>
                 </div>
               </div>
@@ -1478,10 +1464,7 @@ export function KnownToolDetailView(props: {
             t('discoveryToolsMain.knownToolDetail.portfolioPriority.process.outputsText'),
           ],
         ].map(([title, text]) => (
-          <div
-            key={title}
-            className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
-          >
+          <div key={title} className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
             <div className="font-semibold text-c-text">{title}</div>
             <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
               {text}
@@ -1565,10 +1548,7 @@ export function KnownToolDetailView(props: {
             t('discoveryToolsMain.knownToolDetail.riskUncertainty.process.outputsText'),
           ],
         ].map(([title, text]) => (
-          <div
-            key={title}
-            className="rounded-2xl border border-c-border-subtle bg-c-surface p-5"
-          >
+          <div key={title} className="rounded-2xl border border-c-border-subtle bg-c-surface p-5">
             <div className="font-semibold text-c-text">{title}</div>
             <div className="mt-2 text-sm leading-relaxed max-w-prose text-c-text-secondary">
               {text}
@@ -1869,7 +1849,13 @@ export function KnownToolDetailView(props: {
         component: exampleSection,
       },
     ]);
-  }, [tool, isPolish, toolType, readMode, /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t]);
+  }, [
+    tool,
+    isPolish,
+    toolType,
+    readMode,
+    /* + t: tlumaczenia ladowane async — bez tego memo zwraca surowy klucz na stale (2026-07-21) */ t,
+  ]);
 
   // ── MIGRACJA (D-8): layout kart centrum z WIĄŻĄCEGO kontraktu karty ────────
   // Za flagą (default OFF). Gdy ON: katalog + zestawy płyną z TOOL_CARD_SPEC
@@ -2393,10 +2379,7 @@ export function KnownToolDetailView(props: {
       <div className="h-full min-h-0 flex flex-col items-center justify-center gap-3 px-6 text-center bg-c-bg">
         <AlertTriangle size={28} className="text-c-warning" aria-hidden="true" />
         <h2 className="text-base font-semibold text-c-text">
-          {t(
-            'discoveryToolsMain.knownToolDetailView.errorTitle',
-            'Could not load this tool'
-          )}
+          {t('discoveryToolsMain.knownToolDetailView.errorTitle', 'Could not load this tool')}
         </h2>
         <p className="max-w-sm text-sm text-c-text-secondary">
           {t(
@@ -2428,134 +2411,134 @@ export function KnownToolDetailView(props: {
   return (
     <>
       <NModeShell
-      loading={loading}
-      presentationMode={mode}
-      onPresentationModeChange={setMode}
-      // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
-      showModeSwitcher={false}
-      header={{
-        title: tool?.name || toolType,
-        onTitleChange: () => {},
-        titleReadOnly: true,
-        artifactId: tool?.toolType || toolType,
-        artifactType: 'tool',
-        onSave: () => {},
-        saving: false,
-        isDirty: false,
-        onClose,
-        // D-B (2026-07-22) — status = ETYKIETA-PIGUŁKA z tekstem, nie naga kropka.
-        // Karta lokalizuje sama; ton mapuje na c-*. Stan domenowy narzędzia:
-        //   coming-soon → „Wkrótce" (neutral)  ·  aktywne → „Aktywne" (approved =
-        //   bg-c-success, przeniesione z byłego statusDotColor:1630)  ·  reszta →
-        //   „Nieaktywne" (neutral). Czerwień (rejected) nie występuje — status
-        //   biblioteczny to nie awaria (CLAUDE.md pułapka nr 1).
-        statusLabel: tool?.isComingSoon
-          ? t('discoveryToolsMain.knownToolDetailView.statusComingSoon', 'Coming soon')
-          : tool?.isActive
-            ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
-            : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
-        statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
-        primaryAction,
-      }}
-      sections={orderedToolSections}
-      /* ETAP 1.2: `actions`/`actionsVisible` USUNIETE — przy podanym
+        loading={loading}
+        presentationMode={mode}
+        onPresentationModeChange={setMode}
+        // ETAP 1.1 n-Type: karta N ma JEDEN widok — bez przełącznika N/C.
+        showModeSwitcher={false}
+        header={{
+          title: tool?.name || toolType,
+          onTitleChange: () => {},
+          titleReadOnly: true,
+          artifactId: tool?.toolType || toolType,
+          artifactType: 'tool',
+          onSave: () => {},
+          saving: false,
+          isDirty: false,
+          onClose,
+          // D-B (2026-07-22) — status = ETYKIETA-PIGUŁKA z tekstem, nie naga kropka.
+          // Karta lokalizuje sama; ton mapuje na c-*. Stan domenowy narzędzia:
+          //   coming-soon → „Wkrótce" (neutral)  ·  aktywne → „Aktywne" (approved =
+          //   bg-c-success, przeniesione z byłego statusDotColor:1630)  ·  reszta →
+          //   „Nieaktywne" (neutral). Czerwień (rejected) nie występuje — status
+          //   biblioteczny to nie awaria (CLAUDE.md pułapka nr 1).
+          statusLabel: tool?.isComingSoon
+            ? t('discoveryToolsMain.knownToolDetailView.statusComingSoon', 'Coming soon')
+            : tool?.isActive
+              ? t('discoveryToolsMain.knownToolDetailView.statusActive', 'Active')
+              : t('discoveryToolsMain.knownToolDetailView.statusInactive', 'Inactive'),
+          statusTone: tool?.isActive && !tool?.isComingSoon ? 'approved' : 'neutral',
+          primaryAction,
+        }}
+        sections={orderedToolSections}
+        /* ETAP 1.2: `actions`/`actionsVisible` USUNIETE — przy podanym
          `renderActionBar` powloka i tak ich nie czyta (NModeShell.tsx), a
          jedyna akcja („How to / Baza wiedzy") ma teraz wlasny slot w menu 2. */
-      // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`.
-      // Zgloszenie wlasciciela pkt 4: picker "Sekcje" byl doklejony po PRAWEJ
-      // (`ml-auto`) — teraz jest po LEWEJ, nad lista kart. "+ Nowa karta"
-      // zdjete: karty sa predefiniowane, widocznoscia steruje Sekcje.
-      // "How to / Baza wiedzy" idzie do prawej strefy jako wlasny slot
-      // (przestaje byc anonimowa pozycja `NModeActionBar`).
-      //
-      // ── NAPRAWA 2026-07-23 (a): PRZELACZNIK Edycja|Podglad ZDJETY ──────────
-      // Poprzedni komentarz uzasadnial go tak: „fala narzedzia dala centrum
-      // bloki NModeContentBlock z auto-fit i uchwytem, wiec przelacznik MA co
-      // przelaczac". Zmierzone w runtime — NIE MA: w OBU trybach 0 pol
-      // edytowalnych, 0 przyciskow AI przy polach i 0 uchwytow. Powod jest
-      // strukturalny i udokumentowany kilkaset linii wyzej (`withGroup`):
-      // `/api/known-tools` wystawia WYLACZNIE `GET /` i `GET /:toolType`, wiec
-      // `onAI`/`onEdit` swiadomie nie sa podawane — nie ma dokad zapisac.
-      // Wlasciciel potwierdzil (2026-07-23), ze Narzedzie to biblioteka
-      // referencyjna READ-ONLY. Kontrolka bez skutku to atrapa, wiec pomijamy
-      // `onReadModeChange` — `NModeMenu2` renderuje przelacznik TYLKO wtedy,
-      // gdy dostanie handler (`showToggle = typeof onReadModeChange === 'function'`).
-      // Stan `readMode` zostaje (stale `true` = Podglad) i dalej karmi
-      // `NModeContentBlock`, wiec bloki wiedza, ze sa w trybie czytania.
-      //
-      // ── ROZSTRZYGNIECIE 2026-07-24 (fala 2), WARIANT A ────────────────────
-      // Pytanie postawione tej fali brzmialo: (A) dodac „Sekcje" i zostawic bez
-      // trybow, czy (B) przywrocic tryby i nadac im skutek. Sprawdzone jeszcze
-      // raz w runtime: w centrum jest 0 pol edytowalnych i 0 przyciskow AI przy
-      // polach, a `/api/known-tools` nadal wystawia wylacznie `GET /` i
-      // `GET /:toolType` (zero POST/PUT/PATCH — `knownTools.routes.ts:18-19`).
-      // „Podglad" nie mialby wiec czego schowac — wariant B odtworzylby dokladnie
-      // te atrape, ktora poprzednia fala slusznie zdjela. WYBRANO A: lewy slot
-      // wypelnia picker „Sekcje" (realny skutek), a brak trybow zostaje jawna,
-      // uzasadniona konsekwencja charakteru read-only. Srodkowy slot paska
-      // pozostaje pusty zgodnie z kontraktem `NModeMenu2` (srodek nalezy WYLACZNIE
-      // do przelacznika trybu — dokladanie tam czegokolwiek innego zlamaloby
-      // wspolny standard szesciu kart N).
-      //
-      // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWIONE W POWLOCE ───────────
-      // HISTORYCZNE: Menu 2 bywalo wezsze od Menu 1 o 2×24 px, bo w `NModeShell`
-      // padding `px-6` Menu 2 siedzial WEWNATRZ limitu `max-w-6xl` (a Menu 1
-      // mial go NA ZEWNATRZ). Naprawione 2026-07-24 po stronie powloki: wszystkie
-      // trzy segmenty (Menu 1 · Menu 2 · Sekcje) maja teraz `px-6` na zewnatrz
-      // limitu i wspolna os lewej krawedzi — patrz NModeShell.tsx (komentarz przy
-      // segmencie Menu 2). Ta karta nie musi juz nic kompensowac; probowany tu
-      // kiedys workaround `-mx-6 w-auto` zostal zdjety (tworzyl nowa rozjezdzke
-      // przy waskim oknie).
-      //
-      // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
-      // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
-      // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
-      // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
-      renderActionBar={() => (
-        <NModeMenu2
-          isPolish={isPolish}
-          // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
-          // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
-          // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
-          // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
-          // nie zapis danych, więc charakter read-only karty go nie unieważnia
-          // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
-          // lewej nawigacji i w centrum (patrz `orderedToolSections`).
-          sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
-          readMode={readMode}
-          howToButton={
-            <Menu2HowToButton
-              variant="knowledge"
-              isPolish={isPolish}
-              label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
-              onClick={openKb}
-              disabled={!tool}
-            />
-          }
-          aiButton={
-            <Menu2AIButton
-              isPolish={isPolish}
-              busy={toolCardAnalysis.loading}
-              aria-expanded={toolCardAnalysis.open}
-              disabled={!tool}
-              onClick={toolCardAnalysis.run}
-            />
-          }
-        />
-      )}
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-      rightPanel={
-        // ETAP 1.4 — bylo `border-l ... h-full`, czyli techniczny sidebar
-        // doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa: jasna
-        // zaokraglona karta odsunieta od brzegu (wariant _DOCKED, bo slot
-        // `rightPanel` w NModeShell jest pelnowysokosciowy).
-        <ArtifactRightPanel
-          sections={rightPanelSections}
-          className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
-          ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
-        />
-      }
+        // ETAP 1.2 standardu n-Type — MENU 2 = wspolny `NModeMenu2`.
+        // Zgloszenie wlasciciela pkt 4: picker "Sekcje" byl doklejony po PRAWEJ
+        // (`ml-auto`) — teraz jest po LEWEJ, nad lista kart. "+ Nowa karta"
+        // zdjete: karty sa predefiniowane, widocznoscia steruje Sekcje.
+        // "How to / Baza wiedzy" idzie do prawej strefy jako wlasny slot
+        // (przestaje byc anonimowa pozycja `NModeActionBar`).
+        //
+        // ── NAPRAWA 2026-07-23 (a): PRZELACZNIK Edycja|Podglad ZDJETY ──────────
+        // Poprzedni komentarz uzasadnial go tak: „fala narzedzia dala centrum
+        // bloki NModeContentBlock z auto-fit i uchwytem, wiec przelacznik MA co
+        // przelaczac". Zmierzone w runtime — NIE MA: w OBU trybach 0 pol
+        // edytowalnych, 0 przyciskow AI przy polach i 0 uchwytow. Powod jest
+        // strukturalny i udokumentowany kilkaset linii wyzej (`withGroup`):
+        // `/api/known-tools` wystawia WYLACZNIE `GET /` i `GET /:toolType`, wiec
+        // `onAI`/`onEdit` swiadomie nie sa podawane — nie ma dokad zapisac.
+        // Wlasciciel potwierdzil (2026-07-23), ze Narzedzie to biblioteka
+        // referencyjna READ-ONLY. Kontrolka bez skutku to atrapa, wiec pomijamy
+        // `onReadModeChange` — `NModeMenu2` renderuje przelacznik TYLKO wtedy,
+        // gdy dostanie handler (`showToggle = typeof onReadModeChange === 'function'`).
+        // Stan `readMode` zostaje (stale `true` = Podglad) i dalej karmi
+        // `NModeContentBlock`, wiec bloki wiedza, ze sa w trybie czytania.
+        //
+        // ── ROZSTRZYGNIECIE 2026-07-24 (fala 2), WARIANT A ────────────────────
+        // Pytanie postawione tej fali brzmialo: (A) dodac „Sekcje" i zostawic bez
+        // trybow, czy (B) przywrocic tryby i nadac im skutek. Sprawdzone jeszcze
+        // raz w runtime: w centrum jest 0 pol edytowalnych i 0 przyciskow AI przy
+        // polach, a `/api/known-tools` nadal wystawia wylacznie `GET /` i
+        // `GET /:toolType` (zero POST/PUT/PATCH — `knownTools.routes.ts:18-19`).
+        // „Podglad" nie mialby wiec czego schowac — wariant B odtworzylby dokladnie
+        // te atrape, ktora poprzednia fala slusznie zdjela. WYBRANO A: lewy slot
+        // wypelnia picker „Sekcje" (realny skutek), a brak trybow zostaje jawna,
+        // uzasadniona konsekwencja charakteru read-only. Srodkowy slot paska
+        // pozostaje pusty zgodnie z kontraktem `NModeMenu2` (srodek nalezy WYLACZNIE
+        // do przelacznika trybu — dokladanie tam czegokolwiek innego zlamaloby
+        // wspolny standard szesciu kart N).
+        //
+        // ── ZGLOSZENIE (b): SZEROKOSC MENU 2 — NAPRAWIONE W POWLOCE ───────────
+        // HISTORYCZNE: Menu 2 bywalo wezsze od Menu 1 o 2×24 px, bo w `NModeShell`
+        // padding `px-6` Menu 2 siedzial WEWNATRZ limitu `max-w-6xl` (a Menu 1
+        // mial go NA ZEWNATRZ). Naprawione 2026-07-24 po stronie powloki: wszystkie
+        // trzy segmenty (Menu 1 · Menu 2 · Sekcje) maja teraz `px-6` na zewnatrz
+        // limitu i wspolna os lewej krawedzi — patrz NModeShell.tsx (komentarz przy
+        // segmencie Menu 2). Ta karta nie musi juz nic kompensowac; probowany tu
+        // kiedys workaround `-mx-6 w-auto` zostal zdjety (tworzyl nowa rozjezdzke
+        // przy waskim oknie).
+        //
+        // ETAP 3: slot "Analizuj z AI" JEST juz wypelniony. Wczesniejsza uwaga
+        // ("karta nie ma zadnej akcji AI") byla prawdziwa dla AI-ktore-PISZE.
+        // Analiza niczego nie pisze — ocenia gotowosc karty przed sesja, a
+        // wlasciciel wylicza dla Narzedzia szesc kryteriow tej oceny.
+        renderActionBar={() => (
+          <NModeMenu2
+            isPolish={isPolish}
+            // ── LEWA STREFA — „Sekcje" ZAWSZE (naprawa 2026-07-24, fala 2) ────
+            // Było: tylko przy `?cardContract=1`, więc domyślnie lewe 2/3 paska
+            // świeciło pustką (zgłoszenie sędziego grafiki, największy brak tej
+            // karty). Picker steruje WIDOCZNOŚCIĄ sekcji — to preferencja widoku,
+            // nie zapis danych, więc charakter read-only karty go nie unieważnia
+            // i nie jest to atrapa: kliknięcie realnie chowa/pokazuje sekcję w
+            // lewej nawigacji i w centrum (patrz `orderedToolSections`).
+            sectionsMenu={<SectionsManagerMenu layout={toolCardLayout} isPolish={isPolish} />}
+            readMode={readMode}
+            howToButton={
+              <Menu2HowToButton
+                variant="knowledge"
+                isPolish={isPolish}
+                label={isPolish ? 'How to / Baza wiedzy' : 'How to / Knowledge base'}
+                onClick={openKb}
+                disabled={!tool}
+              />
+            }
+            aiButton={
+              <Menu2AIButton
+                isPolish={isPolish}
+                busy={toolCardAnalysis.loading}
+                aria-expanded={toolCardAnalysis.open}
+                disabled={!tool}
+                onClick={toolCardAnalysis.run}
+              />
+            }
+          />
+        )}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        rightPanel={
+          // ETAP 1.4 — bylo `border-l ... h-full`, czyli techniczny sidebar
+          // doklejony do krawedzi. Teraz ten sam wyglad co Inicjatywa: jasna
+          // zaokraglona karta odsunieta od brzegu (wariant _DOCKED, bo slot
+          // `rightPanel` w NModeShell jest pelnowysokosciowy).
+          <ArtifactRightPanel
+            sections={rightPanelSections}
+            className={ARTIFACT_PANEL_CARD_CLASS_DOCKED}
+            ariaLabel={t('discoveryToolsMain.knownToolDetailView.panelAriaLabel', 'Tool details')}
+          />
+        }
       />
 
       {/* ── ETAP 3: panel wyników „Analizuj z AI" ─────────────────────────────

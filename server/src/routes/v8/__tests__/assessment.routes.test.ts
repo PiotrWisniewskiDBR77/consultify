@@ -2,12 +2,12 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DRD_STRUCTURE } from '../../../data/drdStructure.js';
+import { computeDrdCompletion } from '../../../services/assessment/drdCompletion.js';
 import {
   V8_ASSESSMENT_MUTATION_CONTRACT,
   V8_ASSESSMENT_READ_CONTRACT,
 } from '../assessment.routes.js';
-import { DRD_STRUCTURE } from '../../../data/drdStructure.js';
-import { computeDrdCompletion } from '../../../services/assessment/drdCompletion.js';
 
 const mockQueryAll = vi.fn();
 const mockQueryOne = vi.fn();

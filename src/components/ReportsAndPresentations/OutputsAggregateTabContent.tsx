@@ -54,8 +54,8 @@ import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
 import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
-import { SHEET_ORIGIN_META } from './types';
 import type { ArtifactGovernanceSummary, SheetOrigin, UnifiedOutputRow } from './types';
+import { SHEET_ORIGIN_META } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
 

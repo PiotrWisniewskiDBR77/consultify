@@ -89,11 +89,6 @@ export function decodeDisplayFields<T>(row: T, fields: readonly string[]): T {
 }
 
 /** Pola, które użytkownik czyta na liście/karcie inicjatywy. */
-export const POLA_TEKSTOWE_INICJATYWY = [
-  'name',
-  'title',
-  'description',
-  'summary',
-] as const;
+export const POLA_TEKSTOWE_INICJATYWY = ['name', 'title', 'description', 'summary'] as const;
 
 export default decodeHtmlEntities;

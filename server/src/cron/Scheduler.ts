@@ -749,12 +749,14 @@ export const Scheduler = {
     const job39 = cron.schedule('*/5 * * * *', async () => {
       if (process.env.ARTIFACT_LINEAGE_RECONCILE_CRON_ENABLED === 'false') return;
       try {
-        const { runArtifactLineageReconciliationTick } = await import(
-          '../jobs/artifactLineageReconciliationJob.js'
-        );
+        const { runArtifactLineageReconciliationTick } =
+          await import('../jobs/artifactLineageReconciliationJob.js');
         await runArtifactLineageReconciliationTick();
       } catch (err: any) {
-        logger.error('[Scheduler] Artifact lineage reconciliation tick failed:', err?.message || err);
+        logger.error(
+          '[Scheduler] Artifact lineage reconciliation tick failed:',
+          err?.message || err
+        );
       }
     });
     this.jobs.push(job39);

@@ -35,11 +35,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import {
-  type ComputedCell,
-  type FormulaSheet,
   colIndexToLetter,
+  type ComputedCell,
   excelRowForDataRowIndex,
   formatComputedForDisplay,
+  type FormulaSheet,
   parseCellInput,
   rawCellToEditText,
   recalcWorkbook,
@@ -262,7 +262,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     if (!selected || editingValue !== null) return undefined;
     const onDocKeyDown = (e: KeyboardEvent) => {
       const active = document.activeElement;
-      const safeTarget = active === containerRef.current || active === document.body || active === null;
+      const safeTarget =
+        active === containerRef.current || active === document.body || active === null;
       if (!safeTarget) return;
       const handled = handleNavigationKey(e.key, {
         ctrlKey: e.ctrlKey,
@@ -361,7 +362,10 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           placeholder={t('kimi.excele.formulaBarEmpty', 'Zaznacz komórkę, aby zobaczyć jej treść')}
           className="flex-1 min-w-0 bg-transparent text-xs font-mono text-c-text focus:outline-none"
         />
-        <span className="shrink-0 flex items-center gap-1 text-[11px] text-c-text-secondary" aria-live="polite">
+        <span
+          className="shrink-0 flex items-center gap-1 text-[11px] text-c-text-secondary"
+          aria-live="polite"
+        >
           {saveState === 'saving' && (
             <>
               <Loader2 size={11} className="animate-spin" />
@@ -389,6 +393,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         onKeyDown={handleContainerKeyDown}
         tabIndex={0}
       >
+        {/* prettier-ignore */}
         <table className="w-full text-xs" /* §27-exempt: edytor komorkowy/arkusz, edycja cell-by-cell — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
           <thead className="sticky top-0 z-10">
             <tr className="bg-c-surface-raised">

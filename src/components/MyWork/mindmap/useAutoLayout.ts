@@ -87,7 +87,9 @@ function domNodeHeight(nodeId: string): number | undefined {
   if (typeof document === 'undefined') return undefined;
   try {
     const escaped = (window as any).CSS?.escape ? CSS.escape(nodeId) : nodeId;
-    const el = document.querySelector(`.react-flow__node[data-id="${escaped}"]`) as HTMLElement | null;
+    const el = document.querySelector(
+      `.react-flow__node[data-id="${escaped}"]`
+    ) as HTMLElement | null;
     const h = el?.offsetHeight;
     return typeof h === 'number' && h > 0 ? h : undefined;
   } catch {

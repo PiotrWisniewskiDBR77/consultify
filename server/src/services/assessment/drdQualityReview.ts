@@ -31,9 +31,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { computeDrdCompletion } from './drdCompletion.js';
 import type { SnapshotRecord } from './drdAcceptedSnapshot.js';
 import { createAcceptedSnapshot } from './drdAcceptedSnapshot.js';
+import { computeDrdCompletion } from './drdCompletion.js';
 import type { DrdAreasMap } from './drdEvidenceScoring.js';
 import { computeDrdScoring, listEvidence } from './drdEvidenceScoring.js';
 

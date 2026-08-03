@@ -51,11 +51,6 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-
-import {
-  IDEA_ELEMENT_DETAILS_SLOT_ID,
-  isIdeaDetailsInPanelEnabled,
-} from '@/utils/ideaDetailsInPanelFlag';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -64,6 +59,10 @@ import { Api, getMapVersionFromPayload } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 import { getArtifactLabel } from '@/utils/artifactLinks';
+import {
+  IDEA_ELEMENT_DETAILS_SLOT_ID,
+  isIdeaDetailsInPanelEnabled,
+} from '@/utils/ideaDetailsInPanelFlag';
 
 import TeresaMark from '../../shared/TeresaMark';
 import type { AIProposalBatch, CanvasToolType } from '../ideaSelectionTypes';
@@ -323,7 +322,6 @@ function simpleMarkdown(text: string): string {
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
-
 
 /**
  * IDE-025 — reaktywne wyszukiwanie slotu „Właściwości" w prawym panelu.

@@ -248,11 +248,13 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     >
                       {card.is_locked ? (
                         <>
-                          <Unlock size={12} /> {t('presentations.builder.unlockSlideAction', 'Unlock slide')}
+                          <Unlock size={12} />{' '}
+                          {t('presentations.builder.unlockSlideAction', 'Unlock slide')}
                         </>
                       ) : (
                         <>
-                          <Lock size={12} /> {t('presentations.builder.lockSlideAction', 'Lock slide')}
+                          <Lock size={12} />{' '}
+                          {t('presentations.builder.lockSlideAction', 'Lock slide')}
                         </>
                       )}
                     </button>

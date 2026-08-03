@@ -21,14 +21,14 @@ import { acquirePgClient } from '../database/PostgresDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
-import { normalizeApplicationRole } from '../utils/roleNormalization.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import NotificationOutboxService from './notificationOutboxService.js';
+import { normalizeApplicationRole } from '../utils/roleNormalization.js';
 import {
   isTerminalDecisionOutcome,
   requiresRationale,
   validateDecideTransition,
 } from './decisionOutcomeService.js';
+import NotificationOutboxService from './notificationOutboxService.js';
 
 // ==========================================
 // ERRORS (mapped to HTTP status by DecisionController)
@@ -231,7 +231,10 @@ export async function updateDecisionComment(input: {
   if (!existing) throw new DecisionSubResourceNotFoundError('Comment not found');
 
   if (existing.author_id !== actorId && !isPrivilegedRole(input.actorRole)) {
-    throw new DecisionConflictError('Only the comment author or an admin can edit this comment', 'FORBIDDEN');
+    throw new DecisionConflictError(
+      'Only the comment author or an admin can edit this comment',
+      'FORBIDDEN'
+    );
   }
 
   const nextBody = requireNonEmptyText(body, 'body', 4000);
@@ -265,7 +268,10 @@ export async function deleteDecisionComment(input: {
   if (!existing) throw new DecisionSubResourceNotFoundError('Comment not found');
 
   if (existing.author_id !== actorId && !isPrivilegedRole(input.actorRole)) {
-    throw new DecisionConflictError('Only the comment author or an admin can delete this comment', 'FORBIDDEN');
+    throw new DecisionConflictError(
+      'Only the comment author or an admin can delete this comment',
+      'FORBIDDEN'
+    );
   }
 
   await queryHelpers.queryRun(
@@ -450,7 +456,8 @@ export async function deleteDecisionAlternative(input: {
     `DELETE FROM decision_alternatives WHERE id = ? AND organization_id = ? AND decision_id = ?`,
     [alternativeId, organizationId, decisionId]
   );
-  if (!result || result.changes === 0) throw new DecisionSubResourceNotFoundError('Alternative not found');
+  if (!result || result.changes === 0)
+    throw new DecisionSubResourceNotFoundError('Alternative not found');
 }
 
 // ==========================================
@@ -592,7 +599,10 @@ export async function updateDecisionRisk(input: {
   if (updates.length > 0) {
     updates.push('updated_at = CURRENT_TIMESTAMP');
     params.push(riskId);
-    await queryHelpers.queryRun(`UPDATE decision_risks SET ${updates.join(', ')} WHERE id = ?`, params);
+    await queryHelpers.queryRun(
+      `UPDATE decision_risks SET ${updates.join(', ')} WHERE id = ?`,
+      params
+    );
   }
 
   const row = await queryHelpers.queryOne(
@@ -726,8 +736,15 @@ export interface FinalizeDecisionResult {
 export async function finalizeDecisionTransition(
   input: FinalizeDecisionInput
 ): Promise<FinalizeDecisionResult> {
-  const { decisionId, organizationId, actorId, targetStatus, rationaleText, notes, expectedVersion } =
-    input;
+  const {
+    decisionId,
+    organizationId,
+    actorId,
+    targetStatus,
+    rationaleText,
+    notes,
+    expectedVersion,
+  } = input;
 
   const cols = await getTableColumns('decisions');
   const hasVersionCol = cols.has('version');
@@ -775,7 +792,10 @@ export async function finalizeDecisionTransition(
     if (!validation.allowed) {
       await client.query('ROLLBACK');
       if (validation.code === 'ALREADY_FINALIZED') {
-        throw new DecisionConflictError(validation.reason || 'Decision already finalized', validation.code);
+        throw new DecisionConflictError(
+          validation.reason || 'Decision already finalized',
+          validation.code
+        );
       }
       throw new DecisionValidationError(validation.reason || 'Invalid decision transition');
     }
