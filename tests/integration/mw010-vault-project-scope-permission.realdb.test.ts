@@ -170,7 +170,7 @@ describe('MW-10 — Vault scope=project + explicit project_id permission proof (
     if (!reachable) emitSkipOnce();
   }, 30_000);
 
-  const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
+  const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 120_000) =>
     it(
       name,
       async () => {

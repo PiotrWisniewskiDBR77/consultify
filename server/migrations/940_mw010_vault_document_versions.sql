@@ -82,17 +82,37 @@ ALTER TABLE knowledge_docs ADD COLUMN IF NOT EXISTS file_size_bytes BIGINT;
 -- `scope`, `chunk_count`, `deleted_at` na `knowledge_docs` NIE pochodzą z
 -- plików migracji — dokłada je RUNTIME przy starcie aplikacji (i osobno
 -- `KnowledgeService.ensureKnowledgeSchema` dla `owner_id`/`scope`/`folder_id`).
--- Na ZUPEŁNIE świeżej bazie ten plik (`db:migrate`) może więc przejść PRZED
--- pierwszym bootem serwera — `knowledge_docs.organization_id` jeszcze nie
--- istnieje. Backfill niżej jest dlatego opakowany w sprawdzenie
--- `information_schema.columns`: na świeżej bazie to no-op (i tak zero
--- wierszy do backfillu), na realnej bazie demo/staging (gdzie serwer już
--- chodził i te kolumny są) wykonuje się normalnie.
+-- Te DWIE ścieżki bootstrapują NIEZALEŻNIE od siebie (`initDb()` uruchamia się
+-- raz przy starcie procesu; `KnowledgeService.ensureKnowledgeSchema` dopiero
+-- przy PIERWSZYM wywołaniu metody KnowledgeService — np. pierwszym uploadzie
+-- do Vault), więc mogą być rozjechane w czasie: środowisko może mieć
+-- `organization_id` (z `initDb()`) a JESZCZE NIE mieć `owner_id`/`deleted_at`
+-- (z `KnowledgeService`, jeśli Vault nigdy nie był użyty). Zaobserwowane
+-- realnie: pierwsze uruchomienie tej migracji na Railway DEV padło z
+-- „column d.owner_id does not exist" — świeża baza `knowledge_docs` miała już
+-- `organization_id`/`chunk_count`, ale NIE `owner_id`/`deleted_at`. Backfill
+-- niżej musi więc sprawdzić WSZYSTKIE kolumny, których faktycznie używa
+-- (nie tylko `organization_id`) — inaczej bramka daje fałszywe poczucie
+-- bezpieczeństwa i migracja pada na dokładnie tej samej klasie luki, przed
+-- którą sama ostrzega. Brak KTÓREJKOLWIEK z nich = backfill jest bezpiecznym
+-- no-opem (te kolumny nie istnieją same z siebie, migracja ich nie tworzy —
+-- to świadomie poza zakresem tego pliku, patrz akapit wyżej), ale DDL POWYŻEJ
+-- (CREATE TABLE knowledge_doc_versions, ALTER version/deleted_at/file_size_bytes)
+-- i tak przechodzi bezwarunkowo.
 DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_name = 'knowledge_docs' AND column_name = 'organization_id'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'knowledge_docs' AND column_name = 'owner_id'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'knowledge_docs' AND column_name = 'chunk_count'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'knowledge_docs' AND column_name = 'deleted_at'
   ) THEN
     -- Dokumenty sprzed MW-10 nie mają wiersza wersji. Backfill nadaje im
     -- wersję 1 z ich własnych kolumn (origin='upload'), żeby „lista wersji"

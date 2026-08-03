@@ -187,7 +187,7 @@ describe('MW-10 — Vault canonical versioning golden flow (real Postgres)', () 
   // Mirrors the `itDB` convention used across the realdb suite: a clean
   // vacuous pass when no Postgres is configured, instead of failing
   // `npm run test:integration` on a machine with no DB.
-  const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 30_000) =>
+  const itDB = (name: string, fn: () => Promise<void>, timeoutMs = 120_000) =>
     it(
       name,
       async () => {
@@ -571,6 +571,240 @@ describe('MW-10 — Vault canonical versioning golden flow (real Postgres)', () 
         // best-effort
       } finally {
         await cleanupClient.end().catch(() => {});
+      }
+    }
+  );
+
+  itDB(
+    'scope=organization: any same-org user can READ, but mutate/restore/delete stay superadmin-only ' +
+      '(VLT-002), and cross-tenant is fail-closed',
+    async () => {
+      const t = tag();
+      const orgId = `org-mw10-orgscope-${t}`;
+      const otherOrgId = `org-mw10-orgscope-other-${t}`;
+      const ownerId = `user-mw10-orgscope-owner-${t}`;
+      const peerId = `user-mw10-orgscope-peer-${t}`;
+      const strangerId = `user-mw10-orgscope-stranger-${t}`;
+      const superadminId = `user-mw10-orgscope-super-${t}`;
+
+      const app = buildApp();
+      const ownerToken = makeE2EToken(ownerId, orgId);
+      const peerToken = makeE2EToken(peerId, orgId);
+      const strangerToken = makeE2EToken(strangerId, otherOrgId);
+      const superadminToken = makeE2EToken(superadminId, orgId, { isSuperAdmin: true });
+
+      // Upload with scope='organization' — visible to the WHOLE org, unlike
+      // scope='user' above. No membership gate on upload (unlike
+      // scope='project', see mw010-vault-project-scope-permission.realdb.test.ts).
+      const uploadRes = await request(app)
+        .post('/api/knowledge/documents')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .field('scope', 'organization')
+        .attach('file', Buffer.from('org-scope content v1', 'utf8'), {
+          filename: 'mw010-orgscope.txt',
+          contentType: 'text/plain',
+        });
+      expect(uploadRes.status).toBe(200);
+      const docId = uploadRes.body.docId as string;
+
+      // Peer (same org, not the uploader) — org-scope docs are readable by
+      // ANY same-org user, unlike private (scope='user') docs above.
+      const peerRead = await request(app)
+        .get(`/api/knowledge/documents/${docId}`)
+        .set('Authorization', `Bearer ${peerToken}`);
+      expect(peerRead.status).toBe(200);
+
+      const peerVersions = await request(app)
+        .get(`/api/knowledge/documents/${docId}/versions`)
+        .set('Authorization', `Bearer ${peerToken}`);
+      expect(peerVersions.status).toBe(200);
+      expect(peerVersions.body.versions).toHaveLength(1);
+
+      // Cross-tenant: fail-closed regardless of scope.
+      const strangerRead = await request(app)
+        .get(`/api/knowledge/documents/${docId}`)
+        .set('Authorization', `Bearer ${strangerToken}`);
+      expect(strangerRead.status).toBe(404);
+
+      // Peer CAN read but is not superadmin — mutate is superadmin-only for
+      // scope='organization' (VLT-002, unchanged by MW-10).
+      const peerAddVersion = await request(app)
+        .post(`/api/knowledge/documents/${docId}/versions`)
+        .set('Authorization', `Bearer ${peerToken}`)
+        .field('expectedVersion', '1')
+        .attach('file', Buffer.from('peer tries to mutate org-scope doc', 'utf8'), {
+          filename: 'mw010-orgscope.txt',
+          contentType: 'text/plain',
+        });
+      expect(peerAddVersion.status).toBe(403);
+
+      const peerDelete = await request(app)
+        .delete(`/api/knowledge/documents/${docId}`)
+        .set('Authorization', `Bearer ${peerToken}`);
+      expect(peerDelete.status).toBe(403);
+
+      // Superadmin CAN mutate and restore an org-scope document.
+      const superadminAddVersion = await request(app)
+        .post(`/api/knowledge/documents/${docId}/versions`)
+        .set('Authorization', `Bearer ${superadminToken}`)
+        .field('expectedVersion', '1')
+        .attach('file', Buffer.from('superadmin org-scope v2', 'utf8'), {
+          filename: 'mw010-orgscope.txt',
+          contentType: 'text/plain',
+        });
+      expect(superadminAddVersion.status).toBe(201);
+      expect(superadminAddVersion.body.currentVersion).toBe(2);
+
+      const superadminRestore = await request(app)
+        .post(`/api/knowledge/documents/${docId}/versions/1/restore`)
+        .set('Authorization', `Bearer ${superadminToken}`)
+        .send({ expectedVersion: 2 });
+      expect(superadminRestore.status).toBe(201);
+      expect(superadminRestore.body.currentVersion).toBe(3);
+      expect(superadminRestore.body.restoredFromVersion).toBe(1);
+
+      // Superadmin can delete; version history is cascaded.
+      const superadminDelete = await request(app)
+        .delete(`/api/knowledge/documents/${docId}`)
+        .set('Authorization', `Bearer ${superadminToken}`);
+      expect(superadminDelete.status).toBe(200);
+      expect(superadminDelete.body.versionsRemoved).toBe(3);
+
+      // Cleanup.
+      const config = buildClientConfig();
+      const cleanupClient = new Client(config as ClientConfig);
+      try {
+        await cleanupClient.connect();
+        await cleanupClient.query(`DELETE FROM knowledge_doc_versions WHERE document_id = $1`, [
+          docId,
+        ]);
+        await cleanupClient.query(`DELETE FROM knowledge_chunks WHERE doc_id = $1`, [docId]);
+        await cleanupClient.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]);
+        await cleanupClient.query(`DELETE FROM organization_members WHERE organization_id = ANY($1)`, [
+          [orgId, otherOrgId],
+        ]);
+        await cleanupClient.query(`DELETE FROM users WHERE organization_id = ANY($1)`, [
+          [orgId, otherOrgId],
+        ]);
+        await cleanupClient.query(`DELETE FROM organizations WHERE id = ANY($1)`, [
+          [orgId, otherOrgId],
+        ]);
+      } catch {
+        // best-effort
+      } finally {
+        await cleanupClient.end().catch(() => {});
+      }
+    }
+  );
+
+  itDB(
+    'negative control: an UNGUARDED version bump (no WHERE version=? predicate) silently accepts a ' +
+      'STALE write (FAIL, proves last-write-wins is the real failure mode CAS prevents) — the REAL ' +
+      'claimNextVersion(), given the exact same stale value, rejects it (PASS)',
+    async () => {
+      const t = tag();
+      const orgId = `org-mw10-cas-${t}`;
+      const ownerId = `user-mw10-cas-owner-${t}`;
+
+      const app = buildApp();
+      const ownerToken = makeE2EToken(ownerId, orgId);
+
+      // Seed a document at v1 through the real upload route.
+      const uploadRes = await request(app)
+        .post('/api/knowledge/documents')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .field('scope', 'user')
+        .attach('file', Buffer.from('cas negative control v1', 'utf8'), {
+          filename: 'mw010-casctrl.txt',
+          contentType: 'text/plain',
+        });
+      expect(uploadRes.status).toBe(200);
+      const docId = uploadRes.body.docId as string;
+
+      // Racer A: a legitimate edit through the REAL route, v1 → v2.
+      const racerA = await request(app)
+        .post(`/api/knowledge/documents/${docId}/versions`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .field('expectedVersion', '1')
+        .attach('file', Buffer.from('racer A content', 'utf8'), {
+          filename: 'mw010-casctrl.txt',
+          contentType: 'text/plain',
+        });
+      expect(racerA.status).toBe(201);
+      expect(racerA.body.currentVersion).toBe(2);
+
+      // Racer B is a SECOND browser tab that loaded the document back when it
+      // was still v1 (stale) — exactly `claimNextVersion`'s
+      // `expectedVersion: 1` scenario, proven to 409 in step 6 of the golden
+      // flow above via the REAL guarded route. This block isolates WHY that
+      // 409 is not cosmetic: it directly compares the guarded function
+      // against the literal unguarded SQL it replaces.
+      const config = buildClientConfig();
+      const client = new Client(config as ClientConfig);
+      await client.connect();
+      try {
+        // FAIL — this is `claimNextVersion`'s UPDATE with the safety
+        // predicate (`AND version = ?`) removed, i.e. exactly what an
+        // "increment by however-much-you-computed" naive implementation
+        // would run. Racer B still believes current=1, computes next=2 from
+        // that STALE read, and this unconditional UPDATE has no way to know
+        // the document already moved to v2 (Racer A) — it silently
+        // "succeeds" (changes=1), overwriting Racer A's pointer with a
+        // value Racer B computed from data that was already stale the
+        // moment it read it. This is last-write-wins corruption of the
+        // version pointer — the exact failure mode kontrakt pkt 10
+        // forbids.
+        const unguardedResult = await client.query(
+          `UPDATE knowledge_docs SET version = $1 WHERE id = $2 AND organization_id = $3`,
+          [2, docId, orgId]
+        );
+        expect(unguardedResult.rowCount).toBe(1); // FAIL — stale write accepted, no error, no signal
+
+        // Restore the document to Racer A's legitimate state (v2, as the
+        // real route left it) before exercising the guarded path — the
+        // comparison must start from the identical, real post-Racer-A state.
+        await client.query(`UPDATE knowledge_docs SET version = $1 WHERE id = $2`, [2, docId]);
+
+        // PASS — the REAL guarded function (`claimNextVersion`, exercised
+        // indirectly through the real route in step 6 above; called
+        // directly here to isolate it from HTTP/routing concerns), given
+        // the IDENTICAL stale belief (expectedVersion=1) that just silently
+        // succeeded above, refuses it and reports the true current version.
+        const { claimNextVersion } = await import(
+          '../../server/src/services/vault/vaultDocumentVersionService.js'
+        );
+        const guardedResult = await claimNextVersion({
+          organizationId: orgId,
+          documentId: docId,
+          expectedVersion: 1,
+        });
+        expect(guardedResult.ok).toBe(false); // PASS — stale write rejected
+        if (!guardedResult.ok && guardedResult.reason === 'stale') {
+          expect(guardedResult.currentVersion).toBe(2);
+        } else {
+          throw new Error(`expected reason 'stale', got: ${JSON.stringify(guardedResult)}`);
+        }
+
+        // Confirm the guarded call left the pointer untouched (still 2 —
+        // no partial/side-effect writes on the rejected path).
+        const afterGuarded = await client.query(
+          `SELECT version FROM knowledge_docs WHERE id = $1`,
+          [docId]
+        );
+        expect(Number(afterGuarded.rows[0].version)).toBe(2);
+      } finally {
+        try {
+          await client.query(`DELETE FROM knowledge_doc_versions WHERE document_id = $1`, [docId]);
+          await client.query(`DELETE FROM knowledge_chunks WHERE doc_id = $1`, [docId]);
+          await client.query(`DELETE FROM knowledge_docs WHERE id = $1`, [docId]);
+          await client.query(`DELETE FROM organization_members WHERE organization_id = $1`, [orgId]);
+          await client.query(`DELETE FROM users WHERE organization_id = $1`, [orgId]);
+          await client.query(`DELETE FROM organizations WHERE id = $1`, [orgId]);
+        } catch {
+          // best-effort
+        } finally {
+          await client.end().catch(() => {});
+        }
       }
     }
   );

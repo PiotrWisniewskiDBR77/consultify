@@ -25,6 +25,22 @@
  * (`document_version_snapshots`, 776_document_studio_wave5_persistence.sql) ani
  * MAT-10 — tamte klucze to `artifact_id` i `schema_json`, inna encja. MW-10 nie
  * duplikuje ani nie przejmuje tamtych tabel.
+ *
+ * ★ SCHEMAT MA JEDNEGO WŁAŚCICIELA (poprawka po recenzji CTO 2026-08-03,
+ * kontrakt pkt 7 „brak runtime ALTER TABLE"): tabela `knowledge_doc_versions`,
+ * jej indeksy oraz `knowledge_docs.version`/`file_size_bytes` pochodzą
+ * WYŁĄCZNIE z `server/migrations/940_mw010_vault_document_versions.sql`. Ten
+ * moduł wcześniej niósł RÓWNOLEGŁY, runtime'owy `ensureVaultVersionSchema()`
+ * (CREATE TABLE IF NOT EXISTS + ALTER, ten sam wzorzec co
+ * `KnowledgeService.ensureKnowledgeSchema`) — usunięty. Dwóch właścicieli tej
+ * samej kolumny (migracja + runtime patch) to dokładnie ten wzorzec dryfu
+ * schematu, który już raz ukrył prawdziwą awarię w tym repo (patrz DZIENNIK
+ * `939_mw010...` → `940_mw010...`: `file_size_bytes` miała identyczny problem
+ * i została naprawiona tym samym sposobem — jeden właściciel, migracja).
+ * Środowisko, na którym migracja 940 nie przeszła, ma zepsuty Vault w OGÓLE
+ * (upload/edit padają wcześniej, w `KnowledgeService.addDocument`) — runtime
+ * fallback tutaj nie naprawiał tego, tylko maskował objaw dla samej tabeli
+ * wersji, nie dla reszty ścieżki.
  */
 
 import { createHash, randomUUID } from 'crypto';
@@ -100,61 +116,6 @@ const mapRow = (row: VersionRow): VaultDocumentVersion => ({
   createdAt: asIso(row.created_at),
 });
 
-let schemaReady = false;
-
-/**
- * Runtime-owy odpowiednik migracji 940 — ten sam wzorzec co
- * `KnowledgeService.ensureKnowledgeSchema` (`CREATE TABLE IF NOT EXISTS` +
- * idempotentne `ALTER`). Dzięki temu ścieżka wersji działa niezależnie od tego,
- * czy runner migracji przeszedł po tym pliku (repo ma udokumentowane luki w
- * kolejności migracji), a `npm run db:migrate` na czystej bazie i tak tworzy
- * dokładnie ten sam kształt.
- */
-export async function ensureVaultVersionSchema(): Promise<void> {
-  if (schemaReady) return;
-  try {
-    await DbPromise.run(
-      `CREATE TABLE IF NOT EXISTS knowledge_doc_versions (
-        version_id TEXT PRIMARY KEY,
-        document_id TEXT NOT NULL,
-        organization_id TEXT NOT NULL,
-        version_number INTEGER NOT NULL,
-        filename TEXT NOT NULL,
-        filepath TEXT,
-        file_size_bytes BIGINT,
-        content_hash TEXT,
-        chunk_count INTEGER NOT NULL DEFAULT 0,
-        origin TEXT NOT NULL DEFAULT 'upload',
-        restored_from_version INTEGER,
-        note TEXT,
-        created_by TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        deleted_at TIMESTAMP
-      )`,
-      [],
-      { fallback: true } as any
-    );
-    await DbPromise.run(
-      `CREATE UNIQUE INDEX IF NOT EXISTS idx_kdv_document_version
-         ON knowledge_doc_versions (document_id, version_number)`,
-      [],
-      { fallback: true } as any
-    );
-    await DbPromise.run(
-      `CREATE INDEX IF NOT EXISTS idx_kdv_document_created
-         ON knowledge_doc_versions (document_id, created_at DESC)`,
-      [],
-      { fallback: true } as any
-    );
-    await DbPromise.run(`ALTER TABLE knowledge_docs ADD COLUMN version INTEGER DEFAULT 1`, [], {
-      fallback: true,
-    } as any);
-    schemaReady = true;
-  } catch (e: any) {
-    logger.warn('[VaultVersions] ensureVaultVersionSchema failed', { error: e?.message || e });
-  }
-}
-
 /** SHA-256 zawartości pliku — odcisk snapshotu (do porównań i audytu). */
 export function hashFile(filepath: string): string | null {
   try {
@@ -197,7 +158,6 @@ export async function claimNextVersion(params: {
   documentId: string;
   expectedVersion: number | null;
 }): Promise<ClaimResult> {
-  await ensureVaultVersionSchema();
   const { organizationId, documentId, expectedVersion } = params;
 
   const current = await DbPromise.get<{ version: number | string | null }>(
@@ -272,7 +232,6 @@ export async function commitVersion(params: {
   /** `false` dla wersji 1 zakładanej razem z dokumentem (INSERT już to ustawił). */
   syncDocumentRow?: boolean;
 }): Promise<VaultDocumentVersion> {
-  await ensureVaultVersionSchema();
   const versionId = randomUUID();
 
   await DbPromise.run(
@@ -363,7 +322,6 @@ export async function listVersions(
   organizationId: string,
   documentId: string
 ): Promise<VaultDocumentVersion[]> {
-  await ensureVaultVersionSchema();
   const rows = await DbPromise.all<VersionRow>(
     `SELECT * FROM knowledge_doc_versions
       WHERE document_id = ? AND (organization_id = ? OR organization_id = '') AND deleted_at IS NULL
@@ -379,7 +337,6 @@ export async function getVersion(
   documentId: string,
   versionNumber: number
 ): Promise<VaultDocumentVersion | null> {
-  await ensureVaultVersionSchema();
   const row = await DbPromise.get<VersionRow>(
     `SELECT * FROM knowledge_doc_versions
       WHERE document_id = ? AND (organization_id = ? OR organization_id = '')
@@ -399,7 +356,6 @@ export async function softDeleteVersionsForDocument(
   organizationId: string,
   documentId: string
 ): Promise<number> {
-  await ensureVaultVersionSchema();
   const result = await DbPromise.run(
     `UPDATE knowledge_doc_versions
         SET deleted_at = CURRENT_TIMESTAMP
@@ -429,7 +385,6 @@ export function copySnapshotFile(
 }
 
 const vaultDocumentVersionService = {
-  ensureVaultVersionSchema,
   claimNextVersion,
   releaseVersionClaim,
   commitVersion,
