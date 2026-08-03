@@ -223,7 +223,7 @@ describe('FinanceCandidateHandoffModal', () => {
           resolvePreview = resolve;
         })
     );
-    const confirm = vi.fn<[], Promise<FinanceCandidateConfirmResult>>();
+    const confirm = vi.fn<() => Promise<FinanceCandidateConfirmResult>>();
     renderModal({ preview, confirm });
 
     // While still previewing, there is no Confirm button to click at all.

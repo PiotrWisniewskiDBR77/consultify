@@ -272,6 +272,7 @@ export type FunnelEventName =
   | 'finance_analysis_approved'
   | 'finance_export_clicked'
   | 'finance_export_created'
+  | 'finance_export_investment_case_candidate_confirmed'
   | 'finance_insight_converted_to_initiative'
   | 'budget_created'
   | 'budget_scenario_updated'

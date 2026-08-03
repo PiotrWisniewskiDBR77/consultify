@@ -125,6 +125,9 @@ export const ExportToOutputDialog: React.FC<ExportToOutputDialogProps> = ({
   }, [open, useTemplate, fetchTemplates]);
 
   const handleConfirm = async () => {
+    // Initiative Candidate handoff has its own governed confirm flow below;
+    // this handler is only for report/presentation exports.
+    if (outputType === 'initiatives') return;
     setSubmitting(true);
     const hasTemplate = useTemplate && !!templateId;
     try {
