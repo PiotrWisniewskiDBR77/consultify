@@ -377,6 +377,29 @@ import {
   resolveDocumentTemplateForCreation,
   type TemplateResolveErrorCode,
 } from '../services/materials/creationIntent.js';
+// MAT-010 — canonical artifact lineage (fail-open hooks only).
+import {
+  deriveCreatedEventIdempotencyKey,
+  deriveRequestBoundIdempotencyKey,
+  recordLineageEventSafe,
+  recordLineageEventTracked,
+} from '../services/lineage/artifactLineageService.js';
+// MAT-010 (round-5 redesign) — the dedicated operation-claim mechanism,
+// structurally separate from the lineage outbox above. See
+// `operationClaimService.ts`'s own doc comment for the full state machine.
+import {
+  acquireOrReclaimOperationClaim,
+  finalizeOperationClaim,
+  startClaimHeartbeat,
+} from '../services/lineage/operationClaimService.js';
+// MAT-010 (Codex final review) — durable DB point-lookups for idempotent
+// replay + durability confirmation, used instead of the in-memory
+// snapshotStore/registryStore/lifecycleStore getters at those specific
+// call sites (see the checkpoint/restore/share_minted routes below).
+import { loadSchemaOverlay } from '../services/documentStudio/documentEditorStateRegistryDao.js';
+import { loadLifecycleStateForArtifact } from '../services/documentStudio/documentLifecycleRegistryDao.js';
+import { loadShareLinkById } from '../services/documentStudio/documentShareLinkRegistryDao.js';
+import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -412,6 +435,96 @@ const GENERIC_5XX_MESSAGE = 'An unexpected error occurred. Please try again late
  */
 function isSafeErrorCode(message: string): boolean {
   return /^[a-z][a-z0-9_]{0,63}$/.test(message);
+}
+
+/**
+ * MAT-010 (Codex review, second round) — the closing half of the durability
+ * fix, mirroring `workbook.routes.ts`'s helper of the same name.
+ * `recordLineageEventTracked` tells the truth about whether an event's
+ * intent survived ANYWHERE (direct write or the durable pending/outbox
+ * fallback). When it did not — a genuine double failure — the calling route
+ * must not report unconditional success (the business mutation already
+ * committed and is NOT rolled back; only the HTTP response is honest about
+ * the audit trail). Returns `true` when the caller should send this 500 and
+ * stop; `false` when the caller should proceed with its normal response.
+ *
+ * Client-retry safety after this 500 is verified per event type at each call
+ * site's own comment, not assumed uniformly — see
+ * `recordLineageEventTracked`'s doc comment in artifactLineageService.ts for
+ * the general reasoning. Unlike Workbook, this file's `checkpoint` and
+ * `restore` sites do NOT have a version/CAS guard on the underlying mutation
+ * (verified against `documentStudioService.ts`: `createDocumentSnapshot` and
+ * `rollbackDocumentToVersion` both apply unconditionally, no
+ * `expectedVersion` check) — those two call sites' own comments say so
+ * plainly rather than borrowing Workbook's CAS story.
+ */
+function respondIfLineageLost(
+  res: import('express').Response,
+  outcome: { durable: boolean }
+): boolean {
+  if (outcome.durable) return false;
+  res.status(500).json({
+    success: false,
+    error: 'Lineage could not be durably recorded for this operation',
+    code: 'LINEAGE_RECOVERY_REQUIRED',
+  });
+  return true;
+}
+
+/**
+ * The narrow, honest residual of lease-based claim fencing: this caller's
+ * lease expired WHILE its mutation was still genuinely running (not
+ * crashed, just slower than the lease), a different caller already
+ * reclaimed the operation claim, and `finalizeOperationClaim`'s token+
+ * fencing-token CAS correctly refused to transition the claim under this
+ * caller's now-stale credentials (see `operationClaimService.ts`'s state
+ * machine — this is the `{outcome:'fenced'}` case). This process already
+ * ran the business mutation — that cannot be undone — but it is no longer
+ * the authority on the canonical result, so it must NOT report its own
+ * outcome as success, and must NOT write a lineage event for it either. The
+ * client is told to retry: a retry's `acquireOrReclaimOperationClaim` fast
+ * path will find the claim already `completed` (by whichever caller DID win
+ * the reclaim and finalize) and replay that canonical result.
+ */
+function respondIfClaimFenced(
+  res: import('express').Response,
+  outcome: { outcome: 'finalized' | 'fenced' | 'failed' }
+): boolean {
+  if (outcome.outcome !== 'fenced') return false;
+  res.status(409).json({
+    success: false,
+    error: 'This operation was reclaimed by another request before it could be finalized; retry',
+    code: 'IDEMPOTENCY_STALE_CLAIM',
+  });
+  return true;
+}
+
+/**
+ * Codex final review, Blocker 2 (restart recovery) — checkpoint, restore,
+ * and share_minted each write their business-mutation side effect through a
+ * synchronous, frozen service function that persists to Postgres
+ * fire-and-forget (`void persistX(...).catch(() => undefined)`), because
+ * changing those functions to `async`/awaited would ripple into ~27
+ * unrelated pre-existing unit tests across three files that call them
+ * synchronously today — rebuilding that contract is explicitly out of this
+ * package's authorization. Instead, THIS polls the read side (existing DAO
+ * point-lookups, already tenant-scoped) until the write is confirmed
+ * present, bounded by a short timeout. Only engaged for idempotency-tracked
+ * requests — a caller with no `Idempotency-Key` gets the exact pre-existing
+ * fire-and-forget behavior, unchanged.
+ */
+async function pollForDurability<T>(
+  read: () => Promise<T | null>,
+  timeoutMs = 8000,
+  intervalMs = 50
+): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const found = await read();
+    if (found) return true;
+    if (Date.now() >= deadline) return false;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
 }
 
 const logoUpload = multer({
@@ -600,6 +713,32 @@ function registerGeneratedDocumentOrigin(args: {
   templateId: string | null;
 }): void {
   const { organizationId, userId, artifactId, title, projectId, templateId } = args;
+
+  // MAT-010 lineage hook (fail-open) — head of the lineage chain for documents.
+  // `artifactId` here is the `wave5_artifacts` row id, i.e. exactly the
+  // `origin_record_id` the registration below uses, so both point at the same
+  // record. Fire-and-forget to match this function's existing `void` posture:
+  // it is deliberately synchronous-looking and must not delay the response.
+  // `recordLineageEventSafe` never throws, so no unhandled rejection is
+  // possible, but `.catch` is kept explicit for the reader.
+  void recordLineageEventSafe({
+    organizationId,
+    artifactKind: 'document',
+    sourceRecordId: artifactId,
+    eventType: 'created',
+    actorUserId: userId,
+    titleSnapshot: title,
+    idempotencyKey: deriveCreatedEventIdempotencyKey({
+      artifactKind: 'document',
+      sourceRecordId: artifactId,
+    }),
+    sourceContext: {
+      sourceType: 'document_studio',
+      projectId: projectId ?? null,
+      templateId: templateId ? String(templateId) : null,
+    },
+  }).catch(() => null);
+
   // G5 — canonical origin registration (Outputs Library).
   void retryWithBackoff(
     () =>
@@ -3343,6 +3482,96 @@ router.post(
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
     await ensureDocumentLifecycleHydrated(organizationId);
     await ensureDocumentVersionSnapshotsHydrated(organizationId);
+
+    // Blocker B (Codex, third round) — request-bound idempotency.
+    // `createDocumentSnapshot` has no CAS guard (see the comment below), so a
+    // client retry of the SAME request (network timeout, disconnect before
+    // the response arrived, etc.) must not be allowed to call it a second
+    // time. Opt-in: a caller that sends no `Idempotency-Key` gets the exact
+    // pre-existing behavior. A caller that does gets the SAME snapshot back
+    // on any retry, reconstructed from the durable lineage event rather than
+    // by re-running the capture.
+    const idempotencyHeader = req.headers['idempotency-key'];
+    const requestKey =
+      typeof idempotencyHeader === 'string' && idempotencyHeader.trim() !== ''
+        ? idempotencyHeader.trim()
+        : null;
+    const checkpointIdempotencyKey = requestKey
+      ? deriveRequestBoundIdempotencyKey({
+          artifactKind: 'document',
+          sourceRecordId: artifactId,
+          eventType: 'checkpoint',
+          requestKey,
+        })
+      : null;
+
+    async function replayCheckpointFromResultId(versionId: string | null): Promise<void> {
+      // round-5 redesign — reads the CANONICAL result directly via the
+      // claim's own `completedResultId` (an owner-table id), independent of
+      // whether a lineage event was ever durably recorded for it. Durable DB
+      // read, not the in-memory `getDocumentVersionSnapshot` getter, so the
+      // replay is correct even on a process that never hydrated this org's
+      // cache.
+      const snapshot = versionId ? await loadSnapshotById(versionId, organizationId) : null;
+      res.status(201).json({ snapshot: snapshot ?? { versionId }, idempotentReplay: true });
+    }
+
+    // round-5 redesign — set only when this request won (fresh acquire) or
+    // reclaimed (expired lease) the operation claim below. Gates whether
+    // `finalizeOperationClaim` runs after the mutation; a request with no
+    // Idempotency-Key never claims anything and keeps the exact pre-existing
+    // fire-and-forget behavior.
+    let checkpointClaim: { ownerToken: string; fencingToken: number } | null = null;
+    // G22 fix — periodic lease renewal for the duration of the (potentially
+    // slow) mutation below, so a normal-but-slower-than-30s checkpoint does
+    // not lose its claim to a reclaim while genuinely still in progress.
+    // Started right after acquiring, stopped in the `finally` below.
+    let checkpointHeartbeat: ReturnType<typeof startClaimHeartbeat> | null = null;
+
+    if (checkpointIdempotencyKey) {
+      // round-5 redesign — durable, cross-instance, lease-fenced claim
+      // BEFORE the business mutation, via the DEDICATED
+      // `artifact_lineage_operation_claims` table (see
+      // `operationClaimService.ts`). This table is structurally incapable of
+      // being confused with a lineage outbox row — it is not the same table.
+      const claim = await acquireOrReclaimOperationClaim({
+        organizationId,
+        operationKey: checkpointIdempotencyKey,
+      });
+      if (claim.outcome === 'completed') {
+        await replayCheckpointFromResultId(claim.completedResultId);
+        return;
+      }
+      if (claim.outcome === 'active_elsewhere') {
+        res.status(409).json({
+          success: false,
+          error: 'Another request is currently completing this checkpoint',
+          code: 'IDEMPOTENCY_IN_PROGRESS',
+        });
+        return;
+      }
+      if (claim.outcome === 'failed') {
+        // The durable claim write itself failed: abort BEFORE
+        // `createDocumentSnapshot` ever runs — a genuine double lineage-
+        // write failure can no longer produce a duplicate mutation, because
+        // no mutation runs without first holding a claim.
+        res.status(500).json({
+          success: false,
+          error: 'The operation could not be durably claimed before this request',
+          code: 'CLAIM_ACQUIRE_FAILED',
+        });
+        return;
+      }
+      // claim.outcome === 'acquired' — this caller alone proceeds below.
+      checkpointClaim = { ownerToken: claim.ownerToken, fencingToken: claim.fencingToken };
+      checkpointHeartbeat = startClaimHeartbeat({
+        organizationId,
+        operationKey: checkpointIdempotencyKey,
+        ownerToken: claim.ownerToken,
+        fencingToken: claim.fencingToken,
+      });
+    }
+
     try {
       const snapshot = await createDocumentSnapshot({
         organizationId,
@@ -3354,6 +3583,90 @@ router.post(
         // the rollback orchestrator and (future) auto-status-change
         // hooks set it.
       });
+      const versionId = (snapshot as { versionId?: string } | null)?.versionId ?? null;
+
+      // G22 fix — if the heartbeat already lost ownership (a newer owner
+      // reclaimed while this mutation was still running), this worker must
+      // not report success, write a lineage event, or attempt to finalize —
+      // it is no longer the authority on the durable result.
+      if (checkpointHeartbeat?.isFenced()) {
+        res.status(409).json({
+          success: false,
+          error: 'This operation was reclaimed by another request before it could be finalized; retry',
+          code: 'IDEMPOTENCY_STALE_CLAIM',
+        });
+        return;
+      }
+
+      // Codex final review, Blocker 2 — confirm the fire-and-forget
+      // `persistSnapshot` write inside `createDocumentSnapshot` actually
+      // landed in Postgres BEFORE telling the client it succeeded. Without
+      // this, a process killed between the HTTP response and that async
+      // write completing would lose data the client was told was saved,
+      // and a fresh process's retry-replay (above) would find nothing.
+      const durableSnapshot = checkpointIdempotencyKey
+        ? await pollForDurability(() => loadSnapshotById(versionId as string, organizationId))
+        : true;
+      if (checkpointIdempotencyKey && !durableSnapshot) {
+        logger.error('[DocumentStudio] checkpoint snapshot did not durably persist in time', {
+          artifactId,
+          organizationId,
+          versionId,
+        });
+        // The claim is deliberately left ACTIVE (not finalized) here: we
+        // cannot yet prove the mutation's own durability, so we must not
+        // record a canonical result for it either. It remains reclaimable
+        // once its lease expires, same as any claim whose winner never
+        // finalizes.
+        res.status(500).json({
+          success: false,
+          error: 'Snapshot could not be confirmed durable',
+          code: 'SNAPSHOT_PERSIST_UNCONFIRMED',
+        });
+        return;
+      }
+
+      // MAT-010 lineage hook (fail-safe). This is the Document type's explicit
+      // CHECKPOINT: a user-initiated, labelled snapshot — the direct analogue
+      // of Workbook's `POST /:id/checkpoint`. Recorded only after
+      // `createDocumentSnapshot` resolved AND (when idempotency-tracked) its
+      // durability was confirmed, so a failed/unconfirmed capture never
+      // appears in the lineage.
+      const checkpointOutcome = await recordLineageEventTracked({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: artifactId,
+        eventType: 'checkpoint',
+        actorUserId: userId,
+        idempotencyKey: checkpointIdempotencyKey ?? undefined,
+        detail: { versionId, label: label ?? null, reason: reason ?? null },
+      });
+
+      // round-5 redesign — finalize the CLAIM regardless of whether the
+      // lineage event above landed durably: the claim's job is "exactly one
+      // canonical result per operation_key", a fact already true the moment
+      // `pollForDurability` confirmed the snapshot — independent of the
+      // outbox's own (separately handled, separately reported) durability.
+      if (checkpointClaim) {
+        const finalizeResult = await finalizeOperationClaim({
+          organizationId,
+          operationKey: checkpointIdempotencyKey as string,
+          ownerToken: checkpointClaim.ownerToken,
+          fencingToken: checkpointClaim.fencingToken,
+          completedResultId: versionId as string,
+        });
+        if (respondIfClaimFenced(res, finalizeResult)) return;
+        if (finalizeResult.outcome === 'failed') {
+          res.status(500).json({
+            success: false,
+            error: 'The operation completed but its claim could not be finalized',
+            code: 'CLAIM_FINALIZE_FAILED',
+          });
+          return;
+        }
+      }
+      if (respondIfLineageLost(res, checkpointOutcome)) return;
+
       res.status(201).json({ snapshot });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -3363,6 +3676,10 @@ router.post(
       }
       logger.warn('[DocumentStudio] snapshot capture failed', { message });
       res.status(500).json({ error: 'snapshot_failed', message: GENERIC_5XX_MESSAGE });
+    } finally {
+      // G22 fix — the heartbeat must never outlive this request, success or
+      // failure alike.
+      checkpointHeartbeat?.stop();
     }
   })
 );
@@ -3453,6 +3770,86 @@ router.post(
     const reason = typeof req.body?.reason === 'string' ? req.body.reason : undefined;
     await ensureDocumentLifecycleHydrated(organizationId);
     await ensureDocumentVersionSnapshotsHydrated(organizationId);
+
+    // Blocker B (Codex, third round) — the same request-bound idempotency as
+    // the checkpoint route above: `rollbackDocumentToVersion` has no CAS
+    // guard, so a retried request must not re-run the rollback. Opt-in via
+    // `Idempotency-Key`; no header means no behavior change.
+    const idempotencyHeader = req.headers['idempotency-key'];
+    const requestKey =
+      typeof idempotencyHeader === 'string' && idempotencyHeader.trim() !== ''
+        ? idempotencyHeader.trim()
+        : null;
+    const restoreIdempotencyKey = requestKey
+      ? deriveRequestBoundIdempotencyKey({
+          artifactKind: 'document',
+          sourceRecordId: artifactId,
+          eventType: 'restore',
+          requestKey,
+        })
+      : null;
+
+    async function replayRestoreFromResultId(revertVersionId: string | null): Promise<void> {
+      // round-5 redesign — `restoredFrom` is the request's OWN `versionId`
+      // path param, already known without needing anything stored on the
+      // claim. `revertSnapshot` is read via the claim's `completedResultId`
+      // (the NEW snapshot the rollback itself created) — an owner-table id,
+      // read through the durable DAO function, not the in-memory
+      // `getDocumentVersionSnapshot` getter. `getDocumentArtifact`/
+      // `getDocumentLifecycleState` hydrate-from-DB-on-first-access per
+      // artifact/org regardless of process history — verified by the
+      // restart-recovery test, not assumed.
+      const restoredFrom = await loadSnapshotById(versionId, organizationId);
+      const revertSnapshot = revertVersionId
+        ? await loadSnapshotById(revertVersionId, organizationId)
+        : null;
+      const schema = await getDocumentArtifact(artifactId, organizationId);
+      const lifecycle = getDocumentLifecycleState(artifactId, organizationId);
+      res.json({ schema, revertSnapshot, restoredFrom, lifecycle, idempotentReplay: true });
+    }
+
+    // See the checkpoint route's `checkpointClaim` for what this gates.
+    let restoreClaim: { ownerToken: string; fencingToken: number } | null = null;
+    // G22 fix — see the checkpoint route's identical `checkpointHeartbeat`.
+    let restoreHeartbeat: ReturnType<typeof startClaimHeartbeat> | null = null;
+
+    if (restoreIdempotencyKey) {
+      // round-5 redesign — see the checkpoint route above and
+      // `operationClaimService.ts`'s doc comment for the full mechanism.
+      const claim = await acquireOrReclaimOperationClaim({
+        organizationId,
+        operationKey: restoreIdempotencyKey,
+      });
+      if (claim.outcome === 'completed') {
+        await replayRestoreFromResultId(claim.completedResultId);
+        return;
+      }
+      if (claim.outcome === 'active_elsewhere') {
+        res.status(409).json({
+          success: false,
+          error: 'Another request is currently completing this restore',
+          code: 'IDEMPOTENCY_IN_PROGRESS',
+        });
+        return;
+      }
+      if (claim.outcome === 'failed') {
+        res.status(500).json({
+          success: false,
+          error: 'The operation could not be durably claimed before this request',
+          code: 'CLAIM_ACQUIRE_FAILED',
+        });
+        return;
+      }
+      // claim.outcome === 'acquired' — this caller alone proceeds below.
+      restoreClaim = { ownerToken: claim.ownerToken, fencingToken: claim.fencingToken };
+      restoreHeartbeat = startClaimHeartbeat({
+        organizationId,
+        operationKey: restoreIdempotencyKey,
+        ownerToken: claim.ownerToken,
+        fencingToken: claim.fencingToken,
+      });
+    }
+
     try {
       const result = await rollbackDocumentToVersion({
         organizationId,
@@ -3461,6 +3858,103 @@ router.post(
         versionId,
         reason,
       });
+      const revertVersionId = result.revertSnapshot?.versionId ?? null;
+
+      // G22 fix — see the checkpoint route's identical check.
+      if (restoreHeartbeat?.isFenced()) {
+        res.status(409).json({
+          success: false,
+          error: 'This operation was reclaimed by another request before it could be finalized; retry',
+          code: 'IDEMPOTENCY_STALE_CLAIM',
+        });
+        return;
+      }
+
+      // Codex final review, Blocker 2 — confirm all three durable side
+      // effects of the rollback (revert snapshot, schema overlay, lifecycle
+      // transition) actually landed before responding success. See
+      // `pollForDurability`'s doc comment above.
+      if (restoreIdempotencyKey) {
+        const targetUpdatedAt = result.schema?.updatedAt;
+        const targetStatusChangedAt = result.lifecycle?.statusChangedAt;
+        const allDurable =
+          (revertVersionId
+            ? await pollForDurability(() => loadSnapshotById(revertVersionId, organizationId))
+            : true) &&
+          (targetUpdatedAt
+            ? await pollForDurability(async () => {
+                const overlay = await loadSchemaOverlay(artifactId, organizationId);
+                return overlay && overlay.updatedAt === targetUpdatedAt ? overlay : null;
+              })
+            : true) &&
+          (targetStatusChangedAt
+            ? await pollForDurability(async () => {
+                const state = await loadLifecycleStateForArtifact(artifactId, organizationId);
+                return state && state.statusChangedAt === targetStatusChangedAt ? state : null;
+              })
+            : true);
+        if (!allDurable) {
+          logger.error('[DocumentStudio] rollback side effects did not durably persist in time', {
+            artifactId,
+            organizationId,
+            revertVersionId,
+          });
+          // Claim deliberately left ACTIVE — see the checkpoint route's
+          // identical comment on the SNAPSHOT_PERSIST_UNCONFIRMED branch.
+          res.status(500).json({
+            success: false,
+            error: 'Rollback could not be confirmed durable',
+            code: 'ROLLBACK_PERSIST_UNCONFIRMED',
+          });
+          return;
+        }
+      }
+
+      // MAT-010 lineage hook (fail-safe). Only past a successful rollback —
+      // `DocumentRollbackError` (400/403/404, see `mapRollbackErrorToStatus`
+      // — no version-conflict code exists here) is handled below and never
+      // reaches here, so a losing rollback stays out of the lineage. The
+      // claim above is what now prevents a client retry from re-running
+      // `rollbackDocumentToVersion` a second time. `revertSnapshotVersionId`
+      // is recorded here (not just `restoredFromVersionId`) so a later
+      // replay via the lineage event can reconstruct the FULL result too.
+      const restoreOutcome = await recordLineageEventTracked({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: artifactId,
+        eventType: 'restore',
+        actorUserId: userId,
+        idempotencyKey: restoreIdempotencyKey ?? undefined,
+        detail: {
+          restoredFromVersionId: versionId,
+          revertSnapshotVersionId: revertVersionId,
+          reason: reason ?? null,
+        },
+      });
+
+      // round-5 redesign — see the checkpoint route's identical comment:
+      // finalize the CLAIM (canonical result = the revert snapshot's own
+      // id) regardless of the outbox's own durability outcome.
+      if (restoreClaim) {
+        const finalizeResult = await finalizeOperationClaim({
+          organizationId,
+          operationKey: restoreIdempotencyKey as string,
+          ownerToken: restoreClaim.ownerToken,
+          fencingToken: restoreClaim.fencingToken,
+          completedResultId: revertVersionId as string,
+        });
+        if (respondIfClaimFenced(res, finalizeResult)) return;
+        if (finalizeResult.outcome === 'failed') {
+          res.status(500).json({
+            success: false,
+            error: 'The operation completed but its claim could not be finalized',
+            code: 'CLAIM_FINALIZE_FAILED',
+          });
+          return;
+        }
+      }
+      if (respondIfLineageLost(res, restoreOutcome)) return;
+
       res.json(result);
     } catch (err) {
       if (err instanceof DocumentRollbackError) {
@@ -3471,6 +3965,8 @@ router.post(
       const message = err instanceof Error ? err.message : String(err);
       logger.warn('[DocumentStudio] rollback failed', { message });
       res.status(500).json({ error: 'rollback_failed', message: GENERIC_5XX_MESSAGE });
+    } finally {
+      restoreHeartbeat?.stop();
     }
   })
 );
@@ -4007,6 +4503,31 @@ router.put(
         expectedVersion: body.expectedVersion,
         title: typeof body.title === 'string' ? body.title : undefined,
       });
+
+      // MAT-010 lineage hook (fail-safe). The Document type's real
+      // version-producing route (durable content save with a compare-and-swap
+      // on `expectedVersion`). Recorded only past that guard —
+      // `DocumentManualSaveConflictError` (409) is handled below and never
+      // reaches here, so a losing writer stays out of the lineage.
+      // `...Tracked` + `respondIfLineageLost` (Codex review, second round):
+      // retry-safe — confirmed against `updateDocumentManualContent`
+      // (documentStudioService.ts), which rejects a stale `expectedVersion`
+      // with `DocumentManualSaveConflictError` (409) BEFORE writing, so a
+      // retry of an already-applied save can never double-apply.
+      const versionOutcome = await recordLineageEventTracked({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: artifactId,
+        eventType: 'version',
+        actorUserId: userId,
+        titleSnapshot: typeof body.title === 'string' ? body.title : null,
+        detail: {
+          previousVersion: body.expectedVersion,
+          sectionCount: Array.isArray(body.sections) ? body.sections.length : null,
+        },
+      });
+      if (respondIfLineageLost(res, versionOutcome)) return;
+
       res.json({ schema: result.schema });
     } catch (err) {
       if (err instanceof DocumentManualSaveNotFoundError) {
@@ -4064,6 +4585,26 @@ router.get(
           .recordCompletedExport(artifactId, organizationId, format, userId)
           .catch(() => null);
       }
+
+      // MAT-010 lineage hook (fail-safe). Only a genuinely completed export
+      // becomes a lineage entry — the QA-blocked (403) and failure paths are
+      // handled in the catch below and never reach here. Covers all three
+      // formats, unlike `recordCompletedExport` above which is docx/pdf only:
+      // before MAT-010, Document markdown exports were recorded NOWHERE.
+      // `...Tracked` + `respondIfLineageLost` (Codex review, second round):
+      // re-running an export has no exactly-once side effect to duplicate —
+      // it regenerates the same file and appends another (legitimate) export
+      // record, same reasoning as Workbook's export hook.
+      const exportOutcome = await recordLineageEventTracked({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: artifactId,
+        eventType: 'export',
+        actorUserId: userId,
+        detail: { format, qaOverride },
+      });
+      if (respondIfLineageLost(res, exportOutcome)) return;
+
       res.json(result);
     } catch (err) {
       if (err instanceof QaOverrideUnauthorizedError) {
@@ -4753,25 +5294,180 @@ router.post(
     }
     const expiresAt = typeof req.body?.expiresAt === 'string' ? req.body.expiresAt : undefined;
     const label = typeof req.body?.label === 'string' ? req.body.label : undefined;
-    try {
-      const link = createShareLink({
-        artifactId,
-        organizationId,
-        userId,
-        accessScope: accessScopeRaw as DocumentShareLinkAccessScope,
-        expiresAt,
-        label,
-      });
-      res.status(201).json({ shareLink: link });
-    } catch (err) {
-      const rawMessage = err instanceof Error ? err.message : 'share_link_create_failed';
-      const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_create_failed';
-      logger.warn('[DocumentStudio] share-link create failed', {
-        err,
-        correlationId: (req as any).correlationId,
-      });
-      res.status(400).json({ error: 'share_link_create_failed', message });
+
+    // Blocker C (Codex, third round) — the same request-bound idempotency as
+    // checkpoint/restore. `createShareLink` mints a brand-new, independent,
+    // live token on every call with no dedup, so a retried request must be
+    // caught here rather than by the mutation itself. Opt-in via
+    // `Idempotency-Key`; no header means no behavior change.
+    const idempotencyHeader = req.headers['idempotency-key'];
+    const requestKey =
+      typeof idempotencyHeader === 'string' && idempotencyHeader.trim() !== ''
+        ? idempotencyHeader.trim()
+        : null;
+    const shareIdempotencyKey = requestKey
+      ? deriveRequestBoundIdempotencyKey({
+          artifactKind: 'document',
+          sourceRecordId: artifactId,
+          eventType: 'share_minted',
+          requestKey,
+        })
+      : null;
+
+    async function replayShareMintFromResultId(shareLinkId: string | null): Promise<void> {
+      // round-5 redesign — durable DB read via the claim's own
+      // `completedResultId` (the minted link's own id), not the in-memory
+      // `getShareLink` getter. `document_share_links.token` already stores
+      // the raw token in plaintext (pre-existing design, confirmed against
+      // `documentShareLinkRegistryDao.ts` — not something this round
+      // introduces or downgrades), so a replay after a restart returns the
+      // SAME usable token without ever writing a NEW plaintext credential.
+      const shareLink = shareLinkId ? await loadShareLinkById(shareLinkId, organizationId) : null;
+      res.status(201).json({ shareLink: shareLink ?? { shareLinkId }, idempotentReplay: true });
     }
+
+    const runShareMint = async (): Promise<void> => {
+      // See the checkpoint route's `checkpointClaim` for what this gates.
+      let shareClaim: { ownerToken: string; fencingToken: number } | null = null;
+      // G22 fix — see the checkpoint route's identical `checkpointHeartbeat`.
+      let shareHeartbeat: ReturnType<typeof startClaimHeartbeat> | null = null;
+
+      if (shareIdempotencyKey) {
+        // round-5 redesign — see the checkpoint route above and
+        // `operationClaimService.ts`'s doc comment for the full mechanism.
+        const claim = await acquireOrReclaimOperationClaim({
+          organizationId,
+          operationKey: shareIdempotencyKey,
+        });
+        if (claim.outcome === 'completed') {
+          await replayShareMintFromResultId(claim.completedResultId);
+          return;
+        }
+        if (claim.outcome === 'active_elsewhere') {
+          res.status(409).json({
+            success: false,
+            error: 'Another request is currently completing this share mint',
+            code: 'IDEMPOTENCY_IN_PROGRESS',
+          });
+          return;
+        }
+        if (claim.outcome === 'failed') {
+          res.status(500).json({
+            success: false,
+            error: 'The operation could not be durably claimed before this request',
+            code: 'CLAIM_ACQUIRE_FAILED',
+          });
+          return;
+        }
+        // claim.outcome === 'acquired' — this caller alone proceeds below.
+        shareClaim = { ownerToken: claim.ownerToken, fencingToken: claim.fencingToken };
+        shareHeartbeat = startClaimHeartbeat({
+          organizationId,
+          operationKey: shareIdempotencyKey,
+          ownerToken: claim.ownerToken,
+          fencingToken: claim.fencingToken,
+        });
+      }
+
+      try {
+        const link = createShareLink({
+          artifactId,
+          organizationId,
+          userId,
+          accessScope: accessScopeRaw as DocumentShareLinkAccessScope,
+          expiresAt,
+          label,
+        });
+
+        // G22 fix — see the checkpoint route's identical check.
+        if (shareHeartbeat?.isFenced()) {
+          res.status(409).json({
+            success: false,
+            error: 'This operation was reclaimed by another request before it could be finalized; retry',
+            code: 'IDEMPOTENCY_STALE_CLAIM',
+          });
+          return;
+        }
+
+        // Codex final review, Blocker 2 — confirm the fire-and-forget
+        // `persistShareLink` write actually landed before responding.
+        const durable = shareIdempotencyKey
+          ? await pollForDurability(() => loadShareLinkById(link.shareLinkId, organizationId))
+          : true;
+        if (shareIdempotencyKey && !durable) {
+          logger.error('[DocumentStudio] share link did not durably persist in time', {
+            artifactId,
+            organizationId,
+            shareLinkId: link.shareLinkId,
+          });
+          // Claim deliberately left ACTIVE — see the checkpoint route's
+          // identical comment on the SNAPSHOT_PERSIST_UNCONFIRMED branch.
+          res.status(500).json({
+            success: false,
+            error: 'Share link could not be confirmed durable',
+            code: 'SHARE_LINK_PERSIST_UNCONFIRMED',
+          });
+          return;
+        }
+
+        // MAT-010 lineage hook (fail-safe). Records the non-secret
+        // `shareLinkId` and scope ONLY — never `link.token` or `link.tokenHash`.
+        // `shareLinkId` is what the revoke route keys on, so mint and revoke
+        // correlate exactly without putting any token material in the lineage.
+        // The claim above is what now prevents a client retry from
+        // re-running `createShareLink` a second time.
+        const shareOutcome = await recordLineageEventTracked({
+          organizationId,
+          artifactKind: 'document',
+          sourceRecordId: artifactId,
+          eventType: 'share_minted',
+          actorUserId: userId,
+          idempotencyKey: shareIdempotencyKey ?? undefined,
+          detail: {
+            shareLinkId: link.shareLinkId,
+            accessScope: link.accessScope,
+            expiresAt: link.expiresAt ?? null,
+          },
+        });
+
+        // round-5 redesign — see the checkpoint route's identical comment:
+        // finalize the CLAIM (canonical result = the minted link's own id)
+        // regardless of the outbox's own durability outcome.
+        if (shareClaim) {
+          const finalizeResult = await finalizeOperationClaim({
+            organizationId,
+            operationKey: shareIdempotencyKey as string,
+            ownerToken: shareClaim.ownerToken,
+            fencingToken: shareClaim.fencingToken,
+            completedResultId: link.shareLinkId,
+          });
+          if (respondIfClaimFenced(res, finalizeResult)) return;
+          if (finalizeResult.outcome === 'failed') {
+            res.status(500).json({
+              success: false,
+              error: 'The operation completed but its claim could not be finalized',
+              code: 'CLAIM_FINALIZE_FAILED',
+            });
+            return;
+          }
+        }
+        if (respondIfLineageLost(res, shareOutcome)) return;
+
+        res.status(201).json({ shareLink: link });
+      } catch (err) {
+        const rawMessage = err instanceof Error ? err.message : 'share_link_create_failed';
+        const message = isSafeErrorCode(rawMessage) ? rawMessage : 'share_link_create_failed';
+        logger.warn('[DocumentStudio] share-link create failed', {
+          err,
+          correlationId: (req as any).correlationId,
+        });
+        res.status(400).json({ error: 'share_link_create_failed', message });
+      } finally {
+        shareHeartbeat?.stop();
+      }
+    };
+
+    await runShareMint();
   })
 );
 
@@ -4859,6 +5555,28 @@ router.post(
         userId,
         reason,
       });
+
+      // MAT-010 lineage hook (fail-safe). The artifact comes from the REVOKED
+      // RECORD (`revoked.artifactId`), not from the request — this route is
+      // keyed by `shareLinkId` alone and never receives an artifact id, so
+      // trusting the caller for it would be unsound. `revokeShareLink` is
+      // already org-scoped and throws `share_link_not_found` (404 below) for
+      // another tenant's link, so a cross-tenant revoke never reaches here.
+      // `...Tracked` + `respondIfLineageLost` (Codex review, second round):
+      // retry-safe — confirmed against `revokeShareLink`
+      // (documentShareLinkService.ts), which explicitly treats an
+      // already-revoked link as a no-op and returns it unchanged, so a
+      // retried revoke cannot double-apply anything.
+      const revokeOutcome = await recordLineageEventTracked({
+        organizationId,
+        artifactKind: 'document',
+        sourceRecordId: revoked.artifactId,
+        eventType: 'share_revoked',
+        actorUserId: userId,
+        detail: { shareLinkId: revoked.shareLinkId, reason: reason ?? null },
+      });
+      if (respondIfLineageLost(res, revokeOutcome)) return;
+
       res.json({ shareLink: revoked });
     } catch (err) {
       const rawMessage = err instanceof Error ? err.message : 'share_link_revoke_failed';
@@ -5070,6 +5788,26 @@ documentShareLinkPublicRoutes.post(
       res.status(404).json({ error: 'document_not_found' });
       return;
     }
+
+    // MAT-010 lineage hook (fail-safe). The Document type's genuine
+    // UNAUTHENTICATED public reader (this router is mounted OUTSIDE
+    // `router.use(verifyToken)`), so it is the true counterpart of
+    // `GET /api/workbook/shared/:token` and `GET /api/presentations/shared/:token`.
+    //
+    // The tenant comes from the RESOLVED LINK (`result.organizationId`),
+    // server-side — never from the requester, who is anonymous. There is no
+    // actor, hence `actorUserId: null`. Placed after `consumeShareLink`
+    // matched AND the document resolved, so an unknown / revoked / expired
+    // token (404'd above) can never manufacture a `public_open`.
+    await recordLineageEventSafe({
+      organizationId: result.organizationId,
+      artifactKind: 'document',
+      sourceRecordId: result.artifactId,
+      eventType: 'public_open',
+      actorUserId: null,
+      detail: { via: 'public_share_link', shareLinkId: result.shareLinkId },
+    });
+
     res.json({
       shareLinkId: result.shareLinkId,
       accessScope: result.accessScope,

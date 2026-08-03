@@ -739,8 +739,28 @@ export const Scheduler = {
     });
     this.jobs.push(job38);
 
+    // 39. MAT-010 Artifact Lineage Reconciliation — Run every 5 minutes.
+    // Production recovery trigger for the durable lineage outbox: replays
+    // durable PENDING markers (single-write-failure case) and runs the
+    // deterministic backfill scan (double-failure case on `created`).
+    // Default ON — this is a data-durability safety net, not a behavioral
+    // change to any live surface. Set ARTIFACT_LINEAGE_RECONCILE_CRON_ENABLED=false
+    // to disable. See server/src/jobs/artifactLineageReconciliationJob.ts.
+    const job39 = cron.schedule('*/5 * * * *', async () => {
+      if (process.env.ARTIFACT_LINEAGE_RECONCILE_CRON_ENABLED === 'false') return;
+      try {
+        const { runArtifactLineageReconciliationTick } = await import(
+          '../jobs/artifactLineageReconciliationJob.js'
+        );
+        await runArtifactLineageReconciliationTick();
+      } catch (err: any) {
+        logger.error('[Scheduler] Artifact lineage reconciliation tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job39);
+
     logger.info(
-      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min)'
+      '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min)'
     );
   },
   stop(): void {

@@ -55,6 +55,7 @@ import apiKeysRoutes from './routes/apiKeys.routes.js';
 import artifactConversionsRoutes from './routes/artifact-conversions.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactApprovalsRoutes from './routes/artifactApprovals.routes.js';
+import artifactLineageRoutes from './routes/artifactLineage.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
 import assessmentAIRoutes from './routes/assessment/assessment-ai.routes.js';
@@ -488,6 +489,13 @@ export class ApiGateway {
       app.use('/api/tools', toolsRoutes);
       logger.info('[ApiGateway] Mounting /api/workbook');
       app.use('/api/workbook', workbookRoutes);
+      // MAT-010 — canonical artifact lineage receipts (Documents / Workbooks /
+      // Presentations). Mounted on a SCOPED path and registered here, ahead of
+      // every bare-`/api` router below, so no later router's pathless
+      // `router.use(verifyToken)` can shadow it (the bug class MAT-007/009
+      // found and fixed for `workstreams.routes.ts`).
+      logger.info('[ApiGateway] Mounting /api/artifact-lineage');
+      app.use('/api/artifact-lineage', artifactLineageRoutes);
       logger.info('[ApiGateway] Mounting /api/known-tools');
       app.use('/api/known-tools', knownToolsRoutes);
       logger.info('[ApiGateway] Mounting /api/tool-assets');

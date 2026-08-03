@@ -717,7 +717,20 @@ export async function materializeDocumentArtifact(
     externalArtifactId: provisionalArtifactId,
   });
 
-  const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
+  // MAT-010 fix (same bug class as G8) — `createWave5Artifact` returns
+  // `getWave5Artifact(...)`, a fresh SELECT, so it is `null` whenever the
+  // underlying `dbRun` INSERT silently failed (DbPromise's default
+  // `fallback:true` resolves `{success:false}` instead of throwing). Falling
+  // back to `provisionalArtifactId` here would let this route report success
+  // with an artifactId pointing at a row that was never written — MAT-010's
+  // own tracked Document owner table (`wave5_artifacts`), so this directly
+  // undermines the lineage contract, not just document creation. Fail
+  // honestly instead: the caller (`POST /api/document-studio/generate`)
+  // already wraps this in a try/catch that turns a thrown error into a 500.
+  if (!artifact) {
+    throw new Error('Failed to persist document artifact (wave5_artifacts write did not succeed)');
+  }
+  const artifactId = String(artifact.artifactId ?? artifact.artifact_id ?? provisionalArtifactId);
   const finalSchema: DocumentSchema = { ...provisionalSchema, artifactId };
 
   // HP-17 bridge — persist the inline EvidenceContract (`buildDocumentEvidenceContract`,
