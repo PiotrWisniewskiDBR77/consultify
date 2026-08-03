@@ -722,6 +722,33 @@ describe('V8 results read-only routes', () => {
     expect(mockDbRun).not.toHaveBeenCalled();
   });
 
+  it('RES-11: POST /api/v8/results/kpis rejects an unrecognized visibility value — 400, zero mutation', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .post('/api/v8/results/kpis')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({ name: 'Revenue Growth', visibility: 'literally_anyone' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('RESULTS_KPI_INVALID_VISIBILITY');
+    expect(mockCreateKpiDefinition).not.toHaveBeenCalled();
+  });
+
+  it('RES-11: PUT /api/v8/results/kpis/:kpiId rejects an unrecognized visibility value — 400, zero mutation, no lock taken', async () => {
+    const app = createApp();
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-1')
+      .set('x-kpi-role', 'kpi_owner')
+      .send({ name: 'KPI Alpha', visibility: 'literally_anyone' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('RESULTS_KPI_INVALID_VISIBILITY');
+    // Fail-closed BEFORE any lookup/lock — not just before the final write.
+    expect(mockDbGet).not.toHaveBeenCalled();
+    expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+    expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
+  });
+
   it('PUT /api/v8/results/kpis/:kpiId saves governed KPI settings', async () => {
     mockDbGet.mockResolvedValueOnce({ id: 'kpi-1' });
     mockGetCurrentKpiDefinition.mockResolvedValueOnce({ id: 'kpi-1', currentDefinitionVersion: 1 });
