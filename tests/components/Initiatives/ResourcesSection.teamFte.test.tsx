@@ -3,19 +3,20 @@
  *
  * ResourcesSection (Team/FTE table) — INI-05 active UI/component test.
  *
- * Covers what is ACTUALLY wired today: add and delete both call the context
- * handlers with the right arguments, and the version-carrying resource item
- * (the CAS field this packet's backend now enforces) renders correctly.
+ * Covers add, edit, and delete — all three call the context handlers
+ * (ResourcesSection -> InitiativeDocumentView.handleAddResource/
+ * handleUpdateResource/handleDeleteResource, the CAS/tenant/capability-gated
+ * backend this packet hardened) with the right arguments, and the
+ * version-carrying resource item renders correctly.
  *
- * NOT covered here, because it doesn't exist yet: an "edit" interaction.
- * `TeamTable` (and the sibling Budget/Tools/IntangibleAsset tables in this
- * SAME file) declare `onUpdate` in their props interface and the parent
- * passes `handleUpdateResource` in, but the destructured render function
- * never reads `onUpdate` — the kebab menu offers only Delete. This is a
- * pre-existing gap discovered while wiring the INI-05 CAS backend
- * (`expectedVersion`/409), not something this packet introduced or attempts
- * to fix (building a 4-table inline-edit UI is out of this pass's
- * small-integration scope) — flagged in the INI-05 report instead.
+ * "Edit" used to have no UI path at all: `TeamTable` (and the sibling
+ * Budget/Tools/IntangibleAsset tables in this same file) declared `onUpdate`
+ * in their props interface and the parent passed `handleUpdateResource` in,
+ * but the destructured render function never read it — only Add/Delete were
+ * wired. Fixed for TeamTable (this packet's Resources scope) by adding an
+ * inline edit row via the kebab menu, mirroring the existing "add row"
+ * pattern. The sibling tables (Budget/Tools/IntangibleAsset) are out of this
+ * pass's scope and still have the same gap — noted in the INI-05 report.
  */
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -141,5 +142,45 @@ describe('ResourcesSection — Team/FTE table (INI-05)', () => {
     fireEvent.click(deleteButton);
 
     await vi.waitFor(() => expect(handleDeleteResource).toHaveBeenCalledWith('res-1'));
+  });
+
+  it('editing a resource opens an inline edit row prefilled with its data, and Save calls handleUpdateResource (INI-05: the previously-missing edit path)', async () => {
+    render(<ResourcesSection />);
+
+    const kebabButtons = screen.getAllByRole('button').filter((btn) =>
+      btn.querySelector('svg.lucide-ellipsis-vertical, svg.lucide-more-vertical')
+    );
+    fireEvent.click(kebabButtons[0]);
+
+    const editButton = screen.getByText('Edit');
+    fireEvent.click(editButton);
+
+    // Prefilled with the existing row's data.
+    const nameInput = screen.getByDisplayValue('Ada Lovelace') as HTMLInputElement;
+    expect(nameInput).toBeInTheDocument();
+
+    fireEvent.change(nameInput, { target: { value: 'Ada Lovelace-Byron' } });
+    fireEvent.click(screen.getByTitle('initiatives.resourcesSection.save'));
+
+    await vi.waitFor(() => expect(handleUpdateResource).toHaveBeenCalledWith('res-1', expect.objectContaining({ name: 'Ada Lovelace-Byron' })));
+  });
+
+  it('Cancel on an edit row discards changes without calling handleUpdateResource', async () => {
+    render(<ResourcesSection />);
+
+    const kebabButtons = screen.getAllByRole('button').filter((btn) =>
+      btn.querySelector('svg.lucide-ellipsis-vertical, svg.lucide-more-vertical')
+    );
+    fireEvent.click(kebabButtons[0]);
+    fireEvent.click(screen.getByText('Edit'));
+
+    const nameInput = screen.getByDisplayValue('Ada Lovelace') as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'Should not save' } });
+    fireEvent.click(screen.getByTitle('initiatives.resourcesSection.cancel'));
+
+    expect(handleUpdateResource).not.toHaveBeenCalled();
+    // Edit row closed — original value shown again, not the discarded draft.
+    expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Should not save')).not.toBeInTheDocument();
   });
 });

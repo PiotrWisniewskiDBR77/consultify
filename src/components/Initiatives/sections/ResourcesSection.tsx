@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Loader2,
   MoreVertical,
+  Pencil,
   Plus,
   Sparkles,
   Trash2,
@@ -2141,6 +2142,7 @@ const TeamTable: React.FC<TeamTableProps> = ({
   onAiAddOne,
   onAiAnalyze,
   onAdd,
+  onUpdate,
   onDelete,
 }) => {
   const { t } = useTranslation();
@@ -2153,6 +2155,20 @@ const TeamTable: React.FC<TeamTableProps> = ({
   const [newStart, setNewStart] = useState('');
   const [newEnd, setNewEnd] = useState('');
   const [newNotes, setNewNotes] = useState('');
+
+  // INI-05: `onUpdate` was declared in this table's props and passed by the
+  // parent (ResourcesSection -> handleUpdateResource, the CAS/version-aware
+  // handler this packet hardened) but never read here — editing an existing
+  // resource had no UI path at all, only add + delete. Mirrors the existing
+  // "add row" inline-edit pattern below.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState('member');
+  const [editAlloc, setEditAlloc] = useState('100');
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const totalFTE = items.reduce((acc, r) => acc + (r.allocationPercentage || 0), 0) / 100;
 
@@ -2174,6 +2190,36 @@ const TeamTable: React.FC<TeamTableProps> = ({
     setNewNotes('');
     setShowAdd(false);
   }, [newName, newRole, newAlloc, newStart, newEnd, newNotes, onAdd]);
+
+  const handleStartEdit = useCallback((item: ResourceItem) => {
+    setEditingId(item.id);
+    setEditName(item.name || '');
+    setEditRole(item.role || 'member');
+    setEditAlloc(String(item.allocationPercentage ?? 100));
+    setEditStart(item.startDate || '');
+    setEditEnd(item.endDate || '');
+    setEditNotes(item.notes || '');
+  }, []);
+
+  const handleCancelEdit = useCallback(() => setEditingId(null), []);
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingId || !editName.trim()) return;
+    setIsSavingEdit(true);
+    try {
+      await onUpdate(editingId, {
+        name: editName.trim(),
+        role: editRole,
+        allocationPercentage: parseInt(editAlloc) || 100,
+        startDate: editStart || undefined,
+        endDate: editEnd || undefined,
+        notes: editNotes || undefined,
+      });
+      setEditingId(null);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }, [editingId, editName, editRole, editAlloc, editStart, editEnd, editNotes, onUpdate]);
 
   return (
     <div>
@@ -2253,73 +2299,182 @@ const TeamTable: React.FC<TeamTableProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-200/40 dark:divide-navy-700/40">
             <AnimatePresence mode="popLayout">
-              {items.map((item, idx) => (
-                <motion.tr
-                  key={item.id}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
-                >
-                  <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
-                    {idx + 1}
-                  </td>
-                  <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
-                    {item.name ||
-                      (item.firstName ? `${item.firstName} ${item.lastName || ''}`.trim() : '—')}
-                  </td>
-                  <td className="py-2.5 pr-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">
-                      {ROLE_OPTIONS.find((r) => r.value === item.role)?.[
-                        isPolish ? 'labelPl' : 'labelEn'
-                      ] ||
-                        item.role ||
-                        '—'}
-                    </span>
-                  </td>
-                  <td className="py-2.5 pr-2 text-xs">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-c-surface-raised text-c-text-secondary font-medium">
-                      {item.allocationPercentage || 0}%
-                    </span>
-                  </td>
-                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                    {item.startDate ? new Date(item.startDate).toLocaleDateString() : '—'}
-                  </td>
-                  <td className="py-2.5 pr-2 text-xs text-c-text-muted">
-                    {item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'}
-                  </td>
-                  <td
-                    className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
-                    title={item.notes || ''}
+              {items.map((item, idx) =>
+                editingId === item.id ? (
+                  <motion.tr
+                    key={item.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-blue-50/30 dark:bg-blue-500/5"
                   >
-                    {item.notes || '—'}
-                  </td>
-                  <td className="py-2.5 pr-3 text-right relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuId((p) => (p === item.id ? null : item.id));
-                      }}
-                      className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
-                    >
-                      <MoreVertical size={14} />
-                    </button>
-                    {menuId === item.id && (
-                      <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                    <td className="py-2 pl-3 pr-2 text-xs text-right text-c-text-secondary">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2 pl-3 pr-2">
+                      <input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className={INLINE_INPUT_CLS}
+                        autoFocus
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <select
+                        value={editRole}
+                        onChange={(e) => setEditRole(e.target.value)}
+                        className={INLINE_SELECT_CLS}
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {isPolish ? r.labelPl : r.labelEn}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        type="number"
+                        value={editAlloc}
+                        onChange={(e) => setEditAlloc(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        min="0"
+                        max="100"
+                        className={INLINE_INPUT_CLS + ' text-center'}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        type="date"
+                        value={editStart}
+                        onChange={(e) => setEditStart(e.target.value)}
+                        className={INLINE_INPUT_CLS}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        type="date"
+                        value={editEnd}
+                        onChange={(e) => setEditEnd(e.target.value)}
+                        className={INLINE_INPUT_CLS}
+                      />
+                    </td>
+                    <td className="py-2 pr-2">
+                      <input
+                        value={editNotes}
+                        onChange={(e) => setEditNotes(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        className={INLINE_INPUT_CLS}
+                      />
+                    </td>
+                    <td className="py-2 pr-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => {
-                            setMenuId(null);
-                            void onDelete(item.id);
-                          }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
+                          onClick={handleSaveEdit}
+                          disabled={!editName.trim() || isSavingEdit}
+                          className="p-1 rounded-md text-blue-500 hover:bg-blue-500/10 disabled:opacity-30 transition-colors"
+                          title={t('initiatives.resourcesSection.save')}
                         >
-                          <Trash2 size={13} />
-                          {t('initiatives.resourcesSection.delete')}
+                          <Check size={14} />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          disabled={isSavingEdit}
+                          className="p-1 rounded-md text-c-text-secondary hover:bg-slate-500/10 transition-colors"
+                          title={t('initiatives.resourcesSection.cancel')}
+                        >
+                          <X size={14} />
                         </button>
                       </div>
-                    )}
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                  </motion.tr>
+                ) : (
+                  <motion.tr
+                    key={item.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group hover:bg-slate-50/50 dark:hover:bg-navy-800/20 transition-colors"
+                  >
+                    <td className="py-2.5 pl-3 pr-2 text-xs text-right text-c-text-muted">
+                      {idx + 1}
+                    </td>
+                    <td className="py-2.5 pl-3 pr-2 text-c-text truncate">
+                      {item.name ||
+                        (item.firstName ? `${item.firstName} ${item.lastName || ''}`.trim() : '—')}
+                    </td>
+                    <td className="py-2.5 pr-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                        {ROLE_OPTIONS.find((r) => r.value === item.role)?.[
+                          isPolish ? 'labelPl' : 'labelEn'
+                        ] ||
+                          item.role ||
+                          '—'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-c-surface-raised text-c-text-secondary font-medium">
+                        {item.allocationPercentage || 0}%
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-c-text-muted">
+                      {item.startDate ? new Date(item.startDate).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="py-2.5 pr-2 text-xs text-c-text-muted">
+                      {item.endDate ? new Date(item.endDate).toLocaleDateString() : '—'}
+                    </td>
+                    <td
+                      className="py-2.5 pr-2 text-xs text-c-text-muted truncate"
+                      title={item.notes || ''}
+                    >
+                      {item.notes || '—'}
+                    </td>
+                    <td className="py-2.5 pr-3 text-right relative">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuId((p) => (p === item.id ? null : item.id));
+                        }}
+                        className="p-1 rounded-md text-c-text-secondary hover:text-c-text transition-colors"
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                      {menuId === item.id && (
+                        <div className="absolute right-0 top-8 z-20 w-36 rounded-xl border border-slate-200/60 dark:border-white/[0.03] dark:border-navy-700/70 bg-c-surface p-1.5 shadow-xl">
+                          <button
+                            onClick={() => {
+                              setMenuId(null);
+                              handleStartEdit(item);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-c-text hover:bg-c-surface-raised"
+                          >
+                            <Pencil size={13} />
+                            {t('initiatives.resourcesSection.edit', 'Edit')}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMenuId(null);
+                              void onDelete(item.id);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10"
+                          >
+                            <Trash2 size={13} />
+                            {t('initiatives.resourcesSection.delete')}
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </motion.tr>
+                )
+              )}
             </AnimatePresence>
             {showAdd && (
               <motion.tr
