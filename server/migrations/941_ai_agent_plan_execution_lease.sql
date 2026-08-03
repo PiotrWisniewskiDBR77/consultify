@@ -1,4 +1,6 @@
 -- MW-11: durable execution lease and fencing.
+-- Integration sequencing: renumbered from 939 to 941 because FIN-07 owns
+-- 939 and MW-10 owns 940 in the final MVP integration manifest.
 -- Additive and replay-safe for existing plans. A legacy `executing` row with
 -- no lease is intentionally reclaimable by the first post-migration worker.
 ALTER TABLE ai_agent_plans
