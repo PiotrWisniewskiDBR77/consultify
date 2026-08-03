@@ -7,7 +7,15 @@
  * POST /api/evidence/:artifactType/:artifactId/sources   → dopisz jedno źródło
  *
  * Org-scoped: envelope zawsze czytany/pisany w organizacji z tokena
- * (req.organizationId) — brak cross-org leak nawet gdy artifactId trafiony.
+ * (req.organizationId). RES-011 (2026-08-03): PUT/POST used to reach the
+ * evidence service's `getEnvelope`/`upsertEnvelope` with NO organization
+ * filter at all — a caller from org B could silently overwrite (and, via the
+ * merge-forward of omitted fields, partially read back) org A's evidence
+ * envelope just by guessing/observing a KPI id. `evidenceEnvelopeService.ts`
+ * now enforces the org scope itself (getEnvelope takes organizationId,
+ * upsertEnvelope throws EvidenceEnvelopeForeignOrgError on a cross-org
+ * collision) — this file's job is only to map that error to 404, the same
+ * "don't confirm a foreign-org artifact exists" convention used elsewhere.
  */
 import type { Response } from 'express';
 import { Router } from 'express';
@@ -16,7 +24,9 @@ import { z } from 'zod';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import type { EvidenceArtifactType } from '../services/evidence/evidenceEnvelopeService.js';
-import evidenceEnvelopeService from '../services/evidence/evidenceEnvelopeService.js';
+import evidenceEnvelopeService, {
+  EvidenceEnvelopeForeignOrgError,
+} from '../services/evidence/evidenceEnvelopeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -124,8 +134,11 @@ router.get(
     if (!parsed) return;
     const envelope = await evidenceEnvelopeService.getEnvelope(
       parsed.artifactType,
-      parsed.artifactId
+      parsed.artifactId,
+      parsed.orgId
     );
+    // getEnvelope is now org-scoped at the query level (RES-011) — this
+    // re-check is redundant defense-in-depth, not the primary guard.
     if (envelope && envelope.organizationId !== parsed.orgId) {
       res.status(404).json({ envelope: null });
       return;
@@ -149,17 +162,26 @@ router.put(
       res.status(400).json({ error: 'Invalid envelope body', details: bodyResult.error.flatten() });
       return;
     }
-    const envelope = await evidenceEnvelopeService.upsertEnvelope({
-      organizationId: parsed.orgId,
-      artifactType: parsed.artifactType,
-      artifactId: parsed.artifactId,
-      sources: bodyResult.data.sources,
-      assumptions: bodyResult.data.assumptions,
-      confidence: bodyResult.data.confidence,
-      toVerify: bodyResult.data.toVerify,
-      computedBy: bodyResult.data.computedBy,
-      createdBy: req.userId ?? null,
-    });
+    let envelope;
+    try {
+      envelope = await evidenceEnvelopeService.upsertEnvelope({
+        organizationId: parsed.orgId,
+        artifactType: parsed.artifactType,
+        artifactId: parsed.artifactId,
+        sources: bodyResult.data.sources,
+        assumptions: bodyResult.data.assumptions,
+        confidence: bodyResult.data.confidence,
+        toVerify: bodyResult.data.toVerify,
+        computedBy: bodyResult.data.computedBy,
+        createdBy: req.userId ?? null,
+      });
+    } catch (error) {
+      if (error instanceof EvidenceEnvelopeForeignOrgError) {
+        res.status(404).json({ error: 'Artifact not found' });
+        return;
+      }
+      throw error;
+    }
     res.json({ envelope });
   })
 );
@@ -178,13 +200,22 @@ router.post(
       res.status(400).json({ error: 'Invalid source body', details: bodyResult.error.flatten() });
       return;
     }
-    const envelope = await evidenceEnvelopeService.attachSource({
-      organizationId: parsed.orgId,
-      artifactType: parsed.artifactType,
-      artifactId: parsed.artifactId,
-      source: bodyResult.data.source,
-      createdBy: req.userId ?? null,
-    });
+    let envelope;
+    try {
+      envelope = await evidenceEnvelopeService.attachSource({
+        organizationId: parsed.orgId,
+        artifactType: parsed.artifactType,
+        artifactId: parsed.artifactId,
+        source: bodyResult.data.source,
+        createdBy: req.userId ?? null,
+      });
+    } catch (error) {
+      if (error instanceof EvidenceEnvelopeForeignOrgError) {
+        res.status(404).json({ error: 'Artifact not found' });
+        return;
+      }
+      throw error;
+    }
     res.json({ envelope });
   })
 );

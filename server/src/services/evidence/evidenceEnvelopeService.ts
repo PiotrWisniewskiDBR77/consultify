@@ -135,6 +135,27 @@ export interface AttachSourceInput {
   createdBy?: string | null;
 }
 
+/**
+ * RES-011: thrown by upsertEnvelope/attachSource when an envelope already
+ * exists for this (artifactType, artifactId) under a DIFFERENT organization.
+ * `artifact_evidence`'s only uniqueness constraint is on
+ * (artifact_type, artifact_id) — organization is not part of the key — so a
+ * caller in org B upserting against org A's artifactId cannot simply "create
+ * its own row"; without this check it would silently take the UPDATE branch
+ * against org A's row instead (the cross-tenant write/poisoning bug this
+ * error exists to close). Routes should map this to 404, matching this
+ * codebase's existing convention for cross-tenant artifact access (never
+ * confirm to the caller that the artifact exists under another org).
+ */
+export class EvidenceEnvelopeForeignOrgError extends Error {
+  constructor(artifactType: EvidenceArtifactType, artifactId: string) {
+    super(
+      `Evidence envelope for ${artifactType}/${artifactId} belongs to a different organization`
+    );
+    this.name = 'EvidenceEnvelopeForeignOrgError';
+  }
+}
+
 // ==========================================
 // HELPERS
 // ==========================================
@@ -193,20 +214,46 @@ function rowToEnvelope(row: any): EvidenceEnvelope {
 // ==========================================
 
 /**
- * Pobiera envelope dla artefaktu. Zwraca `null` gdy brak (BRAK envelope ≠
- * błąd — artefakt może jeszcze nie przejść przez bramę F14/computed_by).
+ * Pobiera envelope dla artefaktu, org-scoped. Zwraca `null` gdy brak (BRAK
+ * envelope ≠ błąd — artefakt może jeszcze nie przejść przez bramę
+ * F14/computed_by) — ale też `null` gdy envelope istnieje pod INNĄ
+ * organizacją (RES-011: to była realna cross-tenant luka odczytu/zapisu —
+ * ta funkcja jest jedynym miejscem czytającym `artifact_evidence`, więc
+ * dodanie filtra tutaj zamyka ją dla wszystkich callerów naraz).
  */
 export async function getEnvelope(
   artifactType: EvidenceArtifactType,
-  artifactId: string
+  artifactId: string,
+  organizationId: string
 ): Promise<EvidenceEnvelope | null> {
   const db = await getDatabase();
   const result = await db.query<any>(
-    `SELECT * FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? LIMIT 1`,
-    [artifactType, artifactId]
+    `SELECT * FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? AND organization_id = ? LIMIT 1`,
+    [artifactType, artifactId, organizationId]
   );
   const row = result.rows?.[0];
   return row ? rowToEnvelope(row) : null;
+}
+
+/**
+ * True when a row exists for this (artifactType, artifactId) under ANY
+ * organization — used only to distinguish "genuinely new artifact, safe to
+ * INSERT" from "exists, but owned by a different org" before upsertEnvelope
+ * decides which branch to take. `artifact_evidence`'s only uniqueness
+ * constraint is (artifact_type, artifact_id) with no organization_id in the
+ * key, so blindly INSERTing in the latter case would hit a raw 23505
+ * constraint violation instead of a clean, typed rejection.
+ */
+async function envelopeExistsForAnyOrg(
+  artifactType: EvidenceArtifactType,
+  artifactId: string
+): Promise<boolean> {
+  const db = await getDatabase();
+  const result = await db.query<{ id: string }>(
+    `SELECT id FROM artifact_evidence WHERE artifact_type = ? AND artifact_id = ? LIMIT 1`,
+    [artifactType, artifactId]
+  );
+  return Boolean(result.rows?.[0]);
 }
 
 /**
@@ -214,10 +261,13 @@ export async function getEnvelope(
  * §3.1 "jeden obiekt lineage"). Pola nie podane w `input` NIE są nadpisywane
  * pustymi wartościami przy update — merge na poziomie wołającego (serwis
  * bierze to, co dostał; caller odpowiada za pełny stan, jak przy PUT).
+ *
+ * @throws EvidenceEnvelopeForeignOrgError gdy envelope dla tego artefaktu
+ *   już istnieje, ale pod inną organizacją (RES-011 fail-closed guard).
  */
 export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<EvidenceEnvelope> {
   const db = await getDatabase();
-  const existing = await getEnvelope(input.artifactType, input.artifactId);
+  const existing = await getEnvelope(input.artifactType, input.artifactId, input.organizationId);
   const now = new Date().toISOString();
 
   const sources = input.sources ?? existing?.sources ?? [];
@@ -232,7 +282,7 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
     await db.run(
       `UPDATE artifact_evidence
        SET sources = ?, assumptions = ?, confidence = ?, to_verify = ?, computed_by = ?, updated_at = ?
-       WHERE id = ?`,
+       WHERE id = ? AND organization_id = ?`,
       [
         JSON.stringify(sources),
         JSON.stringify(assumptions),
@@ -241,13 +291,18 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
         computedBy ? JSON.stringify(computedBy) : null,
         now,
         existing.id,
+        input.organizationId,
       ]
     );
     logger.info(
       `[EvidenceEnvelope] Updated envelope ${existing.id} (${input.artifactType}/${input.artifactId})`
     );
-    const updated = await getEnvelope(input.artifactType, input.artifactId);
+    const updated = await getEnvelope(input.artifactType, input.artifactId, input.organizationId);
     return updated as EvidenceEnvelope;
+  }
+
+  if (await envelopeExistsForAnyOrg(input.artifactType, input.artifactId)) {
+    throw new EvidenceEnvelopeForeignOrgError(input.artifactType, input.artifactId);
   }
 
   const id = uuidv4();
@@ -274,7 +329,7 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
   logger.info(
     `[EvidenceEnvelope] Created envelope ${id} (${input.artifactType}/${input.artifactId})`
   );
-  const created = await getEnvelope(input.artifactType, input.artifactId);
+  const created = await getEnvelope(input.artifactType, input.artifactId, input.organizationId);
   return created as EvidenceEnvelope;
 }
 
@@ -287,9 +342,13 @@ export async function upsertEnvelope(input: UpsertEnvelopeInput): Promise<Eviden
  * prawdy; graf to wtórny indeks nawigacyjny).
  */
 export async function attachSource(input: AttachSourceInput): Promise<EvidenceEnvelope> {
-  const existing = await getEnvelope(input.artifactType, input.artifactId);
+  const existing = await getEnvelope(input.artifactType, input.artifactId, input.organizationId);
   const nextSources = [...(existing?.sources ?? []), input.source];
 
+  // upsertEnvelope re-derives `existing` itself (org-scoped) and throws
+  // EvidenceEnvelopeForeignOrgError if a foreign-org envelope already
+  // exists for this artifact — attachSource does not need its own check,
+  // it inherits the guard.
   const envelope = await upsertEnvelope({
     organizationId: input.organizationId,
     artifactType: input.artifactType,
