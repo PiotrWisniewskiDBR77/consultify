@@ -764,6 +764,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Live mirror of `pages` for use inside stable callbacks (e.g. autosave) that
   // must read the latest optimistic-lock version without re-subscribing.
   const pagesRef = useRef<NotebookPage[]>([]);
+  // Guards fetchPages() against out-of-order responses when overlapping calls
+  // are in flight (explicit call-site + the dependency-driven effect) — see
+  // fetchPages' own comment for the real defect this closes.
+  const fetchPagesGenerationRef = useRef(0);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [pagesError, setPagesError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -1157,6 +1161,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   const fetchPages = useMemo(
     () => async () => {
+      // Real defect, reproduced against Railway DEV (real network latency —
+      // essentially never triggered on a near-zero-latency local backend):
+      // `handleNewPage` calls `await fetchPages()` explicitly right after
+      // creating a page, but the effect below ALSO calls `fetchPages()` on
+      // its own dependency changes. With two overlapping calls in flight,
+      // responses can arrive OUT OF ORDER — an earlier-dispatched request
+      // (issued before the new page existed) resolving AFTER a later one
+      // (issued after) silently overwrote `pages` with the STALE list,
+      // dropping the just-created page entirely. `activePage` then never
+      // pointed at the new page, and every keystroke into its title/content
+      // silently no-op'd or (worse) mutated a DIFFERENT page's row — with
+      // zero error, zero indication of data loss. A monotonic generation
+      // counter, applied only when this call's response is still the latest
+      // one issued, closes it.
+      const generation = ++fetchPagesGenerationRef.current;
       try {
         const q = String(searchQuery || '').trim();
         if (q) trackFunnelEvent('notebook_search_used', { query: q });
@@ -1167,17 +1186,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           q: q || undefined,
           limit: 50,
         });
+        if (generation !== fetchPagesGenerationRef.current) return;
         const arr = list || [];
         setPages(arr);
         setHasMore(arr.length >= 50);
         setActiveId((prev) => prev || arr?.[0]?.id || null);
         setPagesError(false);
       } catch (e) {
+        if (generation !== fetchPagesGenerationRef.current) return;
         console.error('Failed to load notebook pages', e);
         setPagesError(true);
         toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
       } finally {
-        setPagesLoading(false);
+        if (generation === fetchPagesGenerationRef.current) setPagesLoading(false);
       }
     },
     [projectId, notebookId, searchQuery, t]
@@ -1729,8 +1750,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           trackFunnelEvent('notebook_template_used', { template: template.id });
         }
 
-        await fetchPages();
-        if (created?.id) setActiveId(created.id);
+        // Real defect, reproduced against Railway DEV (real network latency —
+        // near-invisible on a near-zero-latency local backend, where the gap
+        // below is ~1-5ms instead of the ~100-200ms measured against a real
+        // remote Postgres): `await fetchPages()` used to run BEFORE
+        // `setActiveId(created.id)`, so for the full round-trip of that list
+        // refetch, `activePage` still pointed at the PREVIOUSLY open page —
+        // typing during that window (a fast typist, or any programmatic
+        // client) silently landed on and mutated the WRONG page's row, not
+        // the one just created. `created` is already the server's own
+        // confirmed row from the POST above, the same shape `fetchPages()`
+        // itself would return for this row — insert it directly and switch
+        // immediately, no second round-trip required before it's safe to
+        // type. A separate `fetchPages()` call here was ALSO found to race
+        // an immediately-following rename: its full-list-replace could land
+        // between the rename's optimistic local update and its PUT
+        // response, overwriting the sidebar with the pre-rename snapshot.
+        // Not calling it removes that race entirely rather than reordering
+        // around it — nothing else in this flow needs a second read of a
+        // row we already have in full from the write that just created it.
+        if (created?.id) {
+          setPages((prev) =>
+            prev.some((p) => p.id === created.id) ? prev : [created, ...prev]
+          );
+          setActiveId(created.id);
+        }
         toast.success(t('notebook.notebookContent.toastSuccess2', 'Page created'));
       } catch (e) {
         // eslint-disable-next-line no-console
