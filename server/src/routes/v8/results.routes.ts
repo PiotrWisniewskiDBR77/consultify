@@ -366,8 +366,11 @@ export async function findKpiEditLockViolation(params: {
 router.get(
   '/scorecards',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const scorecards = await listScorecards(organizationId);
+    const { organizationId, userId } = getV8Context(req);
+    // RES-11: isAdmin deliberately false here — the packet flags "does admin
+    // see private_to_owner KPIs" as an open policy decision (§10), not yet
+    // resolved by Piotr. Fail-closed default until that decision lands.
+    const scorecards = await listScorecards(organizationId, { userId, isAdmin: false });
     return res.json({
       data: { scorecards, count: scorecards.length, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
       meta: resultsMeta(),
@@ -379,9 +382,9 @@ router.get(
 router.get(
   '/scorecards/:scorecardId/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const scorecardId = String(req.params.scorecardId || '').trim();
-    const result = await getScorecardKpis(organizationId, scorecardId);
+    const result = await getScorecardKpis(organizationId, scorecardId, { userId, isAdmin: false });
     if (!result) {
       return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
     }
@@ -425,17 +428,22 @@ router.post(
 router.put(
   '/scorecards/:scorecardId',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const scorecardId = String(req.params.scorecardId || '').trim();
     const { name, department, periodLabel, periodStart, periodEnd, status } = req.body || {};
-    const updated = await updateScorecard(organizationId, scorecardId, {
-      ...(name !== undefined ? { name } : {}),
-      ...(department !== undefined ? { department } : {}),
-      ...(periodLabel !== undefined ? { periodLabel } : {}),
-      ...(periodStart !== undefined ? { periodStart } : {}),
-      ...(periodEnd !== undefined ? { periodEnd } : {}),
-      ...(status !== undefined ? { status } : {}),
-    });
+    const updated = await updateScorecard(
+      organizationId,
+      scorecardId,
+      {
+        ...(name !== undefined ? { name } : {}),
+        ...(department !== undefined ? { department } : {}),
+        ...(periodLabel !== undefined ? { periodLabel } : {}),
+        ...(periodStart !== undefined ? { periodStart } : {}),
+        ...(periodEnd !== undefined ? { periodEnd } : {}),
+        ...(status !== undefined ? { status } : {}),
+      },
+      { userId, isAdmin: false }
+    );
     if (!updated) {
       return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
     }

@@ -48,8 +48,17 @@
  * organization_id at all, which is exactly what let an unscoped read leak
  * cross-tenant rows. Belt-and-suspenders here: the join columns are also
  * always validated against the caller's org before a write.
+ *
+ * VISIBILITY (RES-11): `listScorecards`/`getScorecardKpis` apply
+ * `kpiVisibilitySql` to the `initiative_kpis` join — a card's kpi_count/
+ * on_target_count and its KPI list only ever include KPIs the viewer may
+ * see. The visibility predicate lives in the JOIN's ON clause (not a
+ * trailing WHERE) so an invisible KPI makes the joined row NULL and is
+ * excluded from COUNT(k.id) too, not just hidden from the returned list —
+ * no double standard between "shown" and "counted".
  */
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { type KpiVisibilityContext, kpiVisibilitySql } from './kpiVisibilityService.js';
 
 export const RESULTS_SCORECARD_OWNER_DOMAIN = 'results' as const;
 
@@ -100,29 +109,40 @@ function toScorecardRow(r: any): KpiScorecardRow {
   };
 }
 
-const SCORECARD_COUNTS_SQL = `
-  SELECT COUNT(i.id) AS kpi_count,
+function scorecardCountsSql(visibility: { sql: string; params: unknown[] }): string {
+  return `
+  SELECT COUNT(k.id) AS kpi_count,
          COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
     FROM kpi_scorecard_items i
-    LEFT JOIN initiative_kpis k ON k.id = i.kpi_id AND k.organization_id = i.organization_id
+    LEFT JOIN initiative_kpis k
+      ON k.id = i.kpi_id AND k.organization_id = i.organization_id AND ${visibility.sql}
    WHERE i.scorecard_id = ? AND i.organization_id = ?
 `;
+}
 
-/** All scorecards for the org, with KPI/on-target counts. Fail-closed: org-scoped in the query. */
-export async function listScorecards(organizationId: string): Promise<KpiScorecardRow[]> {
+/**
+ * All scorecards for the org, with KPI/on-target counts. Fail-closed:
+ * org-scoped in the query; counts exclude KPIs the viewer cannot see.
+ */
+export async function listScorecards(
+  organizationId: string,
+  viewer: KpiVisibilityContext
+): Promise<KpiScorecardRow[]> {
+  const visibility = kpiVisibilitySql('k', viewer);
   const rows = await dbAll<any>(
     `SELECT s.id, s.organization_id, s.name, s.department, s.period_label, s.period_start,
             s.period_end, s.status, s.created_at, s.updated_at,
-            COUNT(i.id) AS kpi_count,
+            COUNT(k.id) AS kpi_count,
             COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
        FROM kpi_scorecards s
        LEFT JOIN kpi_scorecard_items i ON i.scorecard_id = s.id AND i.organization_id = s.organization_id
-       LEFT JOIN initiative_kpis k ON k.id = i.kpi_id AND k.organization_id = s.organization_id
+       LEFT JOIN initiative_kpis k
+         ON k.id = i.kpi_id AND k.organization_id = s.organization_id AND ${visibility.sql}
       WHERE s.organization_id = ?
       GROUP BY s.id, s.organization_id, s.name, s.department, s.period_label, s.period_start,
                s.period_end, s.status, s.created_at, s.updated_at
       ORDER BY s.department NULLS LAST, s.period_start DESC NULLS LAST`,
-    [organizationId],
+    [...visibility.params, organizationId],
     { fallback: false }
   );
   return (rows || []).map(toScorecardRow);
@@ -145,23 +165,28 @@ export async function getScorecard(
  * KPIs on one card. Fail-closed: the ownership lookup (getScorecard) MUST run
  * first and short-circuit on null — same guard shape as
  * initiativeGovernanceService.getGoalRollup post RES-10 tenant-leak fix.
+ * Visibility (RES-11): the JOIN itself excludes KPIs the viewer cannot see —
+ * a hidden KPI never appears in the list, not even as a placeholder row.
  */
 export async function getScorecardKpis(
   organizationId: string,
-  scorecardId: string
+  scorecardId: string,
+  viewer: KpiVisibilityContext
 ): Promise<{ scorecard: { id: string; name: string }; kpis: KpiScorecardItemRow[] } | null> {
   const card = await getScorecard(organizationId, scorecardId);
   if (!card) return null;
 
+  const visibility = kpiVisibilitySql('k', viewer);
   const rows = await dbAll<any>(
     `SELECT k.id, k.name, k.baseline_value, k.current_value, k.target_value, k.unit,
             k.direction, k.progress_percentage, k.is_on_target, k.category, k.initiative_id,
             i.sort_order
        FROM kpi_scorecard_items i
-       JOIN initiative_kpis k ON k.id = i.kpi_id AND k.organization_id = i.organization_id
+       JOIN initiative_kpis k
+         ON k.id = i.kpi_id AND k.organization_id = i.organization_id AND ${visibility.sql}
       WHERE i.scorecard_id = ? AND i.organization_id = ?
       ORDER BY i.sort_order ASC, k.name ASC`,
-    [scorecardId, organizationId],
+    [...visibility.params, scorecardId, organizationId],
     { fallback: false }
   );
 
@@ -239,7 +264,8 @@ const UPDATABLE_SCORECARD_COLUMNS: Record<keyof UpdateScorecardInput, string> = 
 export async function updateScorecard(
   organizationId: string,
   scorecardId: string,
-  data: UpdateScorecardInput
+  data: UpdateScorecardInput,
+  viewer: KpiVisibilityContext
 ): Promise<KpiScorecardRow | null> {
   const existing = await getScorecard(organizationId, scorecardId);
   if (!existing) return null;
@@ -263,9 +289,10 @@ export async function updateScorecard(
   );
   if (!rows[0]) return null;
 
+  const visibility = kpiVisibilitySql('k', viewer);
   const counts = await dbGet<{ kpi_count: number; on_target_count: number }>(
-    SCORECARD_COUNTS_SQL,
-    [scorecardId, organizationId],
+    scorecardCountsSql(visibility),
+    [...visibility.params, scorecardId, organizationId],
     { fallback: false }
   );
   return toScorecardRow({ ...rows[0], ...(counts || { kpi_count: 0, on_target_count: 0 }) });

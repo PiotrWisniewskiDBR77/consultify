@@ -1629,7 +1629,12 @@ router.get(
       firstQueryValue(req.query.periodStart) ||
       new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
     const periodEnd = firstQueryValue(req.query.periodEnd) || new Date().toISOString().slice(0, 10);
-    const result = await computeAttribution(kpiId, orgId, periodStart, periodEnd);
+    // RES-11: isAdmin deliberately false — packet §10 leaves "does admin see
+    // private_to_owner" as an open policy decision; fail-closed until resolved.
+    const result = await computeAttribution(kpiId, orgId, periodStart, periodEnd, {
+      userId: getUserId(req),
+      isAdmin: false,
+    });
     res.json({ success: true, data: result });
   })
 );
@@ -1669,7 +1674,10 @@ router.post(
         code: 'RESULTS_KPI_NOT_FOUND',
       });
     }
-    const result = await computeAttribution(kpiId, orgId, safePeriodStart, safePeriodEnd);
+    const result = await computeAttribution(kpiId, orgId, safePeriodStart, safePeriodEnd, {
+      userId: getUserId(req),
+      isAdmin: false,
+    });
     const id = uuidv4().replace(/-/g, '');
     await dbRun(
       `INSERT INTO kpi_attribution_snapshots (id, kpi_id, organization_id, period_start, period_end, kpi_delta, contributions, unexplained_remainder, unexplained_percent, overall_confidence, confidence_reasons, assumptions, algorithm_version, computed_by)

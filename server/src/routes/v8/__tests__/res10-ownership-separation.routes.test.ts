@@ -182,7 +182,7 @@ describe('RES-10 — Initiatives Goals vs Results Scorecards ownership separatio
     expect(res.body.data.ownerDomain).toBe(RESULTS_SCORECARD_OWNER_DOMAIN);
     expect(res.body.data.scorecards).toHaveLength(1);
     expect(res.body.data.scorecards[0].name).toBe('Finance Q1');
-    expect(mockListScorecards).toHaveBeenCalledWith(ORG_A);
+    expect(mockListScorecards).toHaveBeenCalledWith(ORG_A, { userId: UID, isAdmin: false });
     // Ownership parity: the Initiatives goals service was never touched.
     expect(mockGetGoals).not.toHaveBeenCalled();
     expect(mockGetGoal).not.toHaveBeenCalled();
