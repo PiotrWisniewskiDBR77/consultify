@@ -389,7 +389,10 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             >
                               <div className="w-4 shrink-0 flex items-center justify-center">
                                 {isSwitching ? (
-                                  <Loader2 size={14} className="animate-spin text-c-text-secondary" />
+                                  <Loader2
+                                    size={14}
+                                    className="animate-spin text-c-text-secondary"
+                                  />
                                 ) : isCurrent ? (
                                   <Check size={14} className="text-c-text-secondary" />
                                 ) : null}
