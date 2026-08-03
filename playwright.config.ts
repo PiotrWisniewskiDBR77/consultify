@@ -10,7 +10,12 @@ const useWebServer = process.env.E2E_USE_WEB_SERVER === 'true';
 const enableGlobalTestSupport = process.env.E2E_REQUIRE_TEST_SUPPORT === 'true' || useWebServer;
 const backendRunner = process.env.E2E_BACKEND_RUNNER || 'tsx'; // 'tsx' | 'build'
 const testSupportKey = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
-const e2eTmpDir = path.resolve(process.cwd(), '.tmp', 'e2e');
+// tsx's IPC pipe is a unix socket under TMPDIR; on deep worktree paths (e.g. long
+// scratchpad dirs) the default `<cwd>/.tmp/e2e` path exceeds the OS socket-path
+// length limit (EINVAL). Allow overriding with a short path via E2E_TMP_DIR.
+const e2eTmpDir = process.env.E2E_TMP_DIR
+  ? path.resolve(process.env.E2E_TMP_DIR)
+  : path.resolve(process.cwd(), '.tmp', 'e2e');
 const allowLocalhostRemote = process.env.E2E_ALLOW_LOCALHOST_REMOTE === 'true';
 const e2eDatabaseUrl =
   process.env.DATABASE_URL || 'postgresql://user:pass@127.0.0.1:5432/consultify';
