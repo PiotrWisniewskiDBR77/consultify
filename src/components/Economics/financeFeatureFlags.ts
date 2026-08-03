@@ -67,6 +67,16 @@ const FLAGS = {
     localStorage: 'ff.fin_m16_value_suite',
     env: 'VITE_FIN_M16_VALUE_SUITE_ENABLED',
   },
+  // FIN-007 — post-investment actuals round trip (record a baseline-bound
+  // actual + create/read the durable review receipt in ROIDetailDrawer).
+  // Its OWN flag, not m16ValueSuite: that suite is already DEFAULT_ON, and
+  // this feature has not been pixel-verified by Piotr yet — bundling it
+  // under an already-on flag would ship it live by accident (CLAUDE.md §7).
+  fin007PostInvestmentReview: {
+    query: 'ff_fin007PostInvestmentReview',
+    localStorage: 'ff.fin007_post_investment_review',
+    env: 'VITE_FIN007_POST_INVESTMENT_REVIEW_ENABLED',
+  },
 } as const satisfies Record<string, FlagKeys>;
 
 export type FinanceFlag = keyof typeof FLAGS;

@@ -87,7 +87,7 @@ import {
   getLedger,
 } from '../../services/valueLedgerService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { get as dbGet } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const router = Router();
@@ -596,6 +596,56 @@ router.post(
 //    receipt (approved baseline vs. Execution-recorded actuals). References
 //    the canonical roi_realized_values rows by id; never a second ledger.
 // ---------------------------------------------------------------------------
+
+/**
+ * GET /approved-baselines?initiativeId=...
+ *
+ * Read-only lookup so the UI can offer "which approved baseline" as a picker
+ * instead of requiring a hand-typed model id — every approved
+ * `financial_models` row for this initiative, newest version first. Does NOT
+ * read `financial_model_versions.snapshot_data` (no line-level detail here);
+ * `resolveApprovedBaselineLine` inside `createPostInvestmentReview` is the
+ * ONLY place that resolves a specific statementType/lineCode/periodDate, and
+ * it always re-checks approved+version itself — this endpoint is a
+ * convenience list, never a trust boundary.
+ */
+router.get(
+  '/approved-baselines',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    if (!organizationId) return res.status(401).json({ error: 'Unauthorized' });
+    const initiativeId = String(req.query.initiativeId || '').trim();
+    if (!initiativeId) {
+      return res.status(400).json({
+        error: 'initiativeId is required',
+        code: 'APPROVED_BASELINES_BAD_INPUT',
+      });
+    }
+    const rows = await dbAll<{
+      id: string;
+      name: string;
+      version: number;
+      approved_at: string | null;
+      start_date: string;
+    }>(
+      `SELECT id, name, version, approved_at, start_date FROM financial_models
+        WHERE initiative_id = ? AND organization_id = ? AND status = 'approved'
+        ORDER BY version DESC`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    return res.json({
+      data: (rows || []).map((row) => ({
+        modelId: row.id,
+        name: row.name,
+        version: Number(row.version),
+        approvedAt: row.approved_at,
+        startDate: row.start_date,
+      })),
+      meta: meta(),
+    });
+  })
+);
 
 /**
  * POST /post-investment-reviews

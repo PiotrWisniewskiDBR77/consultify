@@ -375,6 +375,23 @@ export interface PostInvestmentReview {
   completedAt: string | null;
 }
 
+export interface ApprovedBaselineOption {
+  modelId: string;
+  name: string;
+  version: number;
+  approvedAt: string | null;
+  startDate: string;
+}
+
+/** Every APPROVED financial model for this initiative, newest version first
+ * — a convenience list for a baseline picker. Never a trust boundary:
+ * createPostInvestmentReview re-validates approved+version itself. */
+export async function getApprovedBaselines(
+  initiativeId: string
+): Promise<ApprovedBaselineOption[]> {
+  return v8Get<ApprovedBaselineOption[]>(`${BASE}/approved-baselines`, { initiativeId });
+}
+
 export interface CreatePostInvestmentReviewPayload {
   initiativeId: string;
   actualIds: string[];
