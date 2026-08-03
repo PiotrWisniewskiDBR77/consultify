@@ -1770,9 +1770,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         // around it — nothing else in this flow needs a second read of a
         // row we already have in full from the write that just created it.
         if (created?.id) {
-          setPages((prev) =>
-            prev.some((p) => p.id === created.id) ? prev : [created, ...prev]
-          );
+          setPages((prev) => (prev.some((p) => p.id === created.id) ? prev : [created, ...prev]));
           setActiveId(created.id);
         }
         toast.success(t('notebook.notebookContent.toastSuccess2', 'Page created'));
