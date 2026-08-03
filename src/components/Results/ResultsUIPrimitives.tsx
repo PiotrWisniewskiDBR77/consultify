@@ -164,7 +164,7 @@ export const DriverTreeNode: React.FC<DriverTreeNodeProps> = ({
     type="button"
     data-testid="driver-tree-node"
     onClick={onClick}
-    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer ${NODE_STYLE[type]}`}
+    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${NODE_STYLE[type]}`}
   >
     <span className="font-semibold truncate max-w-[160px]">{label}</span>
     {value && <span className="opacity-60 text-xs">{value}</span>}
@@ -436,7 +436,7 @@ export const ValueDrawer: React.FC<ValueDrawerProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-c-text-muted hover:text-c-text text-xs"
+            className="text-c-text-muted hover:text-c-text text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             ✕
           </button>
@@ -448,7 +448,7 @@ export const ValueDrawer: React.FC<ValueDrawerProps> = ({
             key={s.id}
             type="button"
             onClick={() => onSectionChange?.(s.id)}
-            className={`px-4 py-2.5 text-sm shrink-0 border-b-2 transition-colors ${
+            className={`px-4 py-2.5 text-sm shrink-0 border-b-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
               s.id === active
                 ? 'border-c-info text-c-info font-medium'
                 : 'border-transparent text-c-text-muted hover:text-c-text'

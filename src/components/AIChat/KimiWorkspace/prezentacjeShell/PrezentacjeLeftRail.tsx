@@ -72,7 +72,7 @@ export const PrezentacjeLeftRail: React.FC<PrezentacjeLeftRailProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelect?.(slide.slideId)}
-                  className={`w-full flex items-start gap-2 rounded-hig-sm border px-2 py-2 text-left transition-colors ${
+                  className={`w-full flex items-start gap-2 rounded-hig-sm border px-2 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                     active
                       ? 'border-c-focus bg-c-surface-raised'
                       : 'border-transparent hover:bg-c-surface-raised'

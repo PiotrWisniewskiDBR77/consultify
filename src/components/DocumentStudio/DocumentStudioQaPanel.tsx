@@ -76,7 +76,7 @@ function FabricationBadge({
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center justify-between gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <span className="flex items-center gap-1.5 font-medium text-c-text">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />

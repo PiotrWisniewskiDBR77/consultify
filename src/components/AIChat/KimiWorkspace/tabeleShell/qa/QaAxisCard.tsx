@@ -54,7 +54,7 @@ export const QaAxisCard: React.FC<QaAxisCardProps> = ({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         aria-expanded={open}
       >
         <div className="flex items-center gap-2">

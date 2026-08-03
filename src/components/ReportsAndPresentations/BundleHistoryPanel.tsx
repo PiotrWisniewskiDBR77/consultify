@@ -116,7 +116,7 @@ function BundleDetailModal({ bundle, onClose }: BundleDetailModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+            className="rounded-lg p-1 text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             aria-label={t('common.close', 'Close')}
           >
             <XCircle className="h-5 w-5" />
@@ -233,7 +233,7 @@ export function BundleHistoryPanel({ refreshSignal }: BundleHistoryPanelProps = 
             <li key={bundle.id}>
               <button
                 onClick={() => setSelected(bundle)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-c-surface-raised"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {/* Title + date */}
                 <div className="min-w-0 flex-1">

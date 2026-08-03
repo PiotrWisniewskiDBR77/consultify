@@ -135,7 +135,7 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
             <button
               onClick={onClose}
               disabled={isSubmitting}
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50"
+              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <X size={20} />
             </button>
@@ -242,7 +242,7 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 hover:text-slate-900 dark:hover:text-white text-sm font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {isPolish ? 'Anuluj' : 'Cancel'}
             </button>
@@ -250,7 +250,7 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !name.trim()}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-c-text hover:bg-c-text-secondary text-c-bg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
               {isPolish ? 'Utwórz' : 'Create'}

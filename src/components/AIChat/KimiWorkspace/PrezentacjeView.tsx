@@ -779,7 +779,7 @@ export const PrezentacjeView: React.FC = () => {
         <button
           type="button"
           onClick={handleAllFiles}
-          className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover"
+          className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
         </button>

@@ -174,7 +174,7 @@ export const DataSourcesTabContent: React.FC = () => {
                   onClick={() => void runPreview()}
                   disabled={connectorBusy || !selectedType}
                   data-testid="rap-data-preview-btn"
-                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {connectorBusy ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -219,7 +219,7 @@ export const DataSourcesTabContent: React.FC = () => {
               onClick={() => void runForm()}
               disabled={formBusy || !formId.trim()}
               data-testid="rap-data-form-btn"
-              className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {formBusy ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
               Pobierz zgłoszenia

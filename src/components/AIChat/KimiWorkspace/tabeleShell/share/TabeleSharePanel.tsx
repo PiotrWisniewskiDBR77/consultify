@@ -272,7 +272,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
             void refreshPacks();
           }}
           disabled={submitting || conversionsLoading || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="share-panel-refresh"
           aria-label={t('kimi.tabeleShell.share.refreshAriaLabel', 'Refresh share panel')}
         >
@@ -304,7 +304,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
                 aria-checked={checked}
                 onClick={() => setTarget(opt.value)}
                 data-testid={`share-target-${opt.value}`}
-                className={`flex items-start gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition ${
+                className={`flex items-start gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                   checked
                     ? 'border-sky-500 bg-sky-50 text-sky-900 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-100'
                     : 'border-c-border-subtle bg-c-surface text-c-text hover:bg-c-surface-raised'
@@ -409,7 +409,7 @@ export const TabeleSharePanel: React.FC<TabeleSharePanelProps> = ({
         type="button"
         onClick={() => void handleConvert()}
         disabled={submitting || !tableId}
-        className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-c-text shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-c-border dark:disabled:bg-c-surface-raised"
+        className="inline-flex items-center justify-center gap-2 rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-c-text shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-c-border dark:disabled:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         data-testid="share-convert-submit"
         aria-label={t('kimi.tabeleShell.share.convertAriaLabel', 'Convert table')}
       >

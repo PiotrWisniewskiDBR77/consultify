@@ -121,7 +121,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
         type="button"
         onClick={onNewTemplate}
         data-testid="outputs-new-btn"
-        className={`${ctaBase} rounded-lg`}
+        className={`${ctaBase} rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
       >
         <span>{label}</span>
       </button>
@@ -130,7 +130,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
 
   return (
     <div ref={ref} className="relative flex items-center">
-      <button type="button" onClick={onNewTemplate} data-testid="outputs-new-btn" className={`${ctaBase} rounded-l-lg`}>
+      <button type="button" onClick={onNewTemplate} data-testid="outputs-new-btn" className={`${ctaBase} rounded-l-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}>
         <span>{label}</span>
       </button>
       <button
@@ -139,7 +139,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
         aria-label={t('rap.templatesLauncher.moreOptions', 'Więcej opcji tworzenia szablonów')}
         aria-expanded={isOpen}
         data-testid="templates-new-split-toggle"
-        className={`${ctaBase} rounded-r-lg border-l border-white/20 px-2 dark:border-navy-950/10`}
+        className={`${ctaBase} rounded-r-lg border-l border-white/20 px-2 dark:border-navy-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
       >
         <ChevronDown
           size={16}
@@ -160,7 +160,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
                 onOpenDeckArchitect();
               }}
               data-testid="templates-open-deck-architect"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <Wand2 size={14} className="shrink-0 text-c-text-muted" />
               <span>
@@ -179,7 +179,7 @@ const TemplatesNewSplitButton: React.FC<TemplatesNewSplitButtonProps> = ({
                 onOpenWorkbookTemplates();
               }}
               data-testid="templates-open-workbook-templates"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-c-text transition-colors duration-150 hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <FileSpreadsheet size={14} className="shrink-0 text-c-text-muted" />
               <span>
@@ -660,7 +660,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           showDrafts
             ? 'bg-c-accent-soft text-c-text border-c-border'
             : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-        }`}
+        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
         title={t('rap.filters.showDrafts', 'Pokaż robocze')}
         aria-pressed={showDrafts}
       >
@@ -703,7 +703,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   sheetsSubView === z.id
                     ? 'bg-c-accent-soft text-c-text'
                     : 'text-c-text-secondary hover:bg-c-surface-raised'
-                }`}
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
               >
                 {z.label}
               </button>
@@ -901,7 +901,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   checked
                     ? 'bg-c-accent-soft text-c-text border-c-border'
                     : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                }`}
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                 title={label}
               >
                 <span className="font-semibold">{code}</span>
@@ -923,7 +923,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             activeCount > 0
               ? 'bg-c-accent-soft text-c-text border-c-border'
               : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
           title={t('common.filters', 'Filters')}
         >
           <Filter size={16} />
@@ -935,7 +935,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           <>
             <button
               type="button"
-              className="fixed inset-0 z-40 cursor-default"
+              className="fixed inset-0 z-40 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               onClick={() => setFiltersOpen(false)}
               aria-label={t('common.close', 'Close')}
             />
@@ -969,7 +969,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                               checked
                                 ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            }`}
+                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                           >
                             <span className={`w-2 h-2 rounded-full ${o.dotColor}`} />
                             <span className="truncate">{o.label}</span>
@@ -997,7 +997,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             )
                               ? 'bg-c-accent-soft text-c-text border-c-border'
                               : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                          }`}
+                          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                         >
                           <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
                         </button>
@@ -1027,7 +1027,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                               checked
                                 ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            }`}
+                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                           >
                             <span className="truncate">{o.label}</span>
                           </button>
@@ -1058,7 +1058,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                               checked
                                 ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            }`}
+                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                           >
                             <span className="truncate">{o.label}</span>
                           </button>
@@ -1087,7 +1087,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                               checked
                                 ? 'bg-c-accent-soft text-c-text border-c-border'
                                 : 'bg-c-surface text-c-text-secondary border-c-border-subtle hover:bg-c-surface-raised'
-                            }`}
+                            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus`}
                           >
                             <span className={`text-[11px] font-semibold ${o.color}`}>
                               {o.label}
@@ -1104,14 +1104,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveFilters([])}
-                  className="text-[11px] text-c-text-muted hover:text-c-text transition-colors"
+                  className="text-[11px] text-c-text-muted hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {t('common.clearAll', 'Clear all')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(false)}
-                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity"
+                  className="h-8 px-3 rounded-full text-[11px] font-medium bg-c-text text-c-surface hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {t('common.done', 'Done')}
                 </button>
@@ -1382,7 +1382,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       <button
         type="button"
         onClick={handleBackToTemplatesLibrary}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         data-testid={testId}
       >
         <ArrowLeft size={14} />
@@ -1636,7 +1636,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           {/* Section header with collapse toggle */}
           <button
             onClick={() => setBundleHistoryOpen((v) => !v)}
-            className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text"
+            className="flex w-full items-center gap-2 rounded-lg px-1 py-2 text-left text-sm font-semibold text-c-text-secondary transition-colors hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             aria-expanded={bundleHistoryOpen}
             data-testid="bundle-history-toggle"
           >

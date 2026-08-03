@@ -1096,7 +1096,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                             <button
                               type="button"
                               onClick={() => void openGovernedSheetRow(originRecordId)}
-                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
+                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
                               {t('rap.outputs.preview.download', 'Download')}
                             </button>
@@ -1104,7 +1104,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
                             <button
                               type="button"
                               onClick={() => navigate(openPath)}
-                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised"
+                              className="rounded-md border border-c-border bg-c-surface px-2 py-0.5 text-[10px] font-medium text-c-text-secondary hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                             >
                               {t('rap.outputs.preview.open', 'Open')}
                             </button>

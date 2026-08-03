@@ -428,7 +428,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
               type="button"
               onClick={handlePull}
               disabled={!canPull || pulling}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-c-border px-2.5 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               title={
                 canPull
                   ? t(
@@ -448,7 +448,7 @@ export const ReconciliationPanel: React.FC<ReconciliationPanelProps> = ({
           <button
             type="button"
             onClick={fetchData}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-c-border px-2 py-1 text-xs text-slate-500 dark:text-c-text-muted hover:bg-slate-100 dark:hover:bg-c-surface-raised hover:text-slate-700 dark:hover:text-c-text-secondary"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-c-border px-2 py-1 text-xs text-slate-500 dark:text-c-text-muted hover:bg-slate-100 dark:hover:bg-c-surface-raised hover:text-slate-700 dark:hover:text-c-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             title={t('common.refresh', 'Refresh')}
           >
             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />

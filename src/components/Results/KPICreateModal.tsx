@@ -147,7 +147,7 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
   );
 
   const inputCls =
-    'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
+    'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
   const selectCls = `${inputCls} appearance-none`;
   const labelCls = 'block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1';
 

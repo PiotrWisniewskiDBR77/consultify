@@ -115,7 +115,7 @@ export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromo
           {error}
           <button
             type="button"
-            className="ml-3 underline"
+            className="ml-3 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             onClick={() => {
               void load();
             }}
@@ -164,7 +164,7 @@ export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromo
                   onClick={() => {
                     void handlePromote(benefit);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-c-text px-3 py-1.5 text-xs font-medium text-c-surface hover:opacity-90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {busyId === benefit.id ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -179,7 +179,7 @@ export const M14HandoffInbox: React.FC<{ onPromoted?: () => void }> = ({ onPromo
                   onClick={() => {
                     void handleDismiss(benefit);
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-c-border px-3 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <X size={13} />
                   {t('results.handoffInbox.dismiss', 'Dismiss')}

@@ -112,7 +112,7 @@ export const PrezentacjePreviewLayout: React.FC<PrezentacjePreviewLayoutProps> =
                 type="button"
                 onClick={onOpenBuilder}
                 data-testid="prezentacje-mels-open-in-builder-empty"
-                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors"
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <LayoutGrid size={14} />
                 {t('kimi.openInBuilder', 'Open in Builder')}
@@ -128,7 +128,7 @@ export const PrezentacjePreviewLayout: React.FC<PrezentacjePreviewLayoutProps> =
             type="button"
             onClick={onOpenBuilder}
             data-testid="prezentacje-mels-open-in-builder-populated"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-c-info/10 text-c-info hover:bg-c-info/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <LayoutGrid size={14} />
             {t('kimi.openInBuilder', 'Open in Builder')}

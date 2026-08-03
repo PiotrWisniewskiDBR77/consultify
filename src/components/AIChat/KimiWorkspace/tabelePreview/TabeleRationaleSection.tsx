@@ -73,7 +73,7 @@ export function TabeleRationaleSection({
             <button
               type="button"
               onClick={() => setIsExpanded((value) => !value)}
-              className="mt-3 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+              className="mt-3 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {isExpanded
                 ? t('kimi.tabele.rationale.showLess', { defaultValue: 'Show less' })
@@ -117,7 +117,7 @@ export function TabeleRationaleSection({
               <button
                 type="button"
                 onClick={onOpenProposalQueue}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-c-text-secondary underline decoration-c-border underline-offset-4 hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 {t('kimi.tabele.rationale.reviewProposals', {
                   defaultValue: 'Review proposals',

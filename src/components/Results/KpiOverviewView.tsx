@@ -121,7 +121,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                   },
                 ])
               }
-              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <AlertTriangle size={16} />
               {t('results.kpi.overview.cta.review', 'Open data / signals')}
@@ -129,7 +129,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             <button
               type="button"
               onClick={onOpenScorecards}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <ClipboardList size={16} />
               {t('results.kpi.overview.cta.scorecards', 'Open scorecards')}
@@ -222,7 +222,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
             <button
               type="button"
               onClick={() => onOpenQueue()}
-              className="text-xs font-medium text-primary-500 hover:text-primary-400 transition-colors"
+              className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {t('common.open', 'Open')}
             </button>
@@ -239,7 +239,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                   key={kpi.id}
                   type="button"
                   onClick={() => onOpenKpi(kpi.id)}
-                  className="w-full rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] px-4 py-3 text-left hover:bg-white dark:hover:bg-white/[0.04] transition-colors"
+                  className="w-full rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02] px-4 py-3 text-left hover:bg-white dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -291,7 +291,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     { id: 'status:below', column: 'status', value: 'below', label: 'Below target' },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <span>{t('results.kpi.overview.healthBelow', 'Below target')}</span>
                 <span className="font-semibold text-danger-500">{metrics.below}</span>
@@ -303,7 +303,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     { id: 'status:no-data', column: 'status', value: 'no-data', label: 'No data' },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <span>{t('results.kpi.overview.healthNoData', 'No fresh signal')}</span>
                 <span className="font-semibold text-slate-600 dark:text-slate-300">
@@ -322,7 +322,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     },
                   ])
                 }
-                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <span>{t('results.kpi.overview.healthNeedsEntry', 'Needs entry')}</span>
                 <span className="font-semibold text-amber-500">{metrics.needsEntry}</span>
@@ -349,7 +349,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     key={pack.packId}
                     type="button"
                     onClick={onOpenReports}
-                    className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                    className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     <div>
                       <div className="text-sm font-medium text-slate-900 dark:text-white">

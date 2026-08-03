@@ -277,7 +277,7 @@ const OkrKeyResultRow: React.FC<{
               isManualMetric,
             })
           }
-          className="p-1 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-1 rounded-md text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <MessageSquare size={11} />
         </button>
@@ -302,7 +302,7 @@ const OkrKeyResultRow: React.FC<{
               },
             })
           }
-          className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Pencil size={11} />
         </button>
@@ -310,7 +310,7 @@ const OkrKeyResultRow: React.FC<{
           type="button"
           title={t('common.delete', 'Delete')}
           onClick={() => onDelete(kr.id, kr.label)}
-          className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+          className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Trash2 size={11} />
         </button>
@@ -835,7 +835,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           <button
             type="button"
             onClick={() => setOkrModal({ kind: 'objective', mode: 'create' })}
-            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+            className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 dark:border-navy-600 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Plus size={12} />
             {t('results.okr.addObjective', 'Objective')}
@@ -864,7 +864,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                   type="button"
                   onClick={() => handleCloseCycle(cycle.id, cycle.name)}
                   disabled={closingCycleId === cycle.id}
-                  className="ml-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-40"
+                  className="ml-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   title={t('results.okr.closeCycle', 'Close cycle')}
                 >
                   ×
@@ -876,7 +876,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
             type="button"
             onClick={handleCreateCycle}
             disabled={creatingCycle}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-600 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 dark:border-navy-600 px-2 py-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Plus size={10} />
             {t('results.okr.addCycle', 'Cycle')}
@@ -917,7 +917,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                         onClick={() =>
                           setOkrModal({ kind: 'keyResult', mode: 'create', objectiveId: parent.id })
                         }
-                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <Plus size={13} />
                       </button>
@@ -937,7 +937,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                             },
                           })
                         }
-                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <Pencil size={12} />
                       </button>
@@ -945,7 +945,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                         type="button"
                         title={t('common.delete', 'Delete')}
                         onClick={() => handleDeleteObjective(parent.id, parent.label)}
-                        className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -981,7 +981,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                                     objectiveId: child.id,
                                   })
                                 }
-                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <Plus size={12} />
                               </button>
@@ -1001,7 +1001,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                                     },
                                   })
                                 }
-                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <Pencil size={11} />
                               </button>
@@ -1009,7 +1009,7 @@ const StrategicLayerPanel: React.FC<Props> = ({ projectId = 'all' }) => {
                                 type="button"
                                 title={t('common.delete', 'Delete')}
                                 onClick={() => handleDeleteObjective(child.id, child.label)}
-                                className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                                className="p-1 rounded-md text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                               >
                                 <Trash2 size={11} />
                               </button>

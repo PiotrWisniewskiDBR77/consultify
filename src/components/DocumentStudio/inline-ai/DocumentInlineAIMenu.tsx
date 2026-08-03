@@ -167,14 +167,14 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={handleApprove}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text bg-emerald-500 hover:bg-emerald-600 transition-colors"
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text bg-emerald-500 hover:bg-emerald-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Check size={12} />
             {t('documentStudio.inlineAi.approve', 'Zatwierdź')}
           </button>
           <button
             onClick={handleReject}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors"
+            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary bg-c-surface-raised/[0.06] hover:bg-c-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={12} />
             {t('documentStudio.inlineAi.reject', 'Odrzuć')}
@@ -190,7 +190,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
           </p>
           <button
             onClick={() => rejectProposal()}
-            className="text-xs text-c-text-secondary underline hover:text-c-text"
+            className="text-xs text-c-text-secondary underline hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             {t('documentStudio.inlineAi.close', 'Zamknij')}
           </button>
@@ -203,7 +203,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
           {!showActions ? (
             <button
               onClick={() => setShowActions(true)}
-              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-accent hover:bg-c-accent-soft transition-colors w-full"
+              className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised/[0.06] transition-colors w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <span>{t('documentStudio.inlineAi.trigger', 'Popraw z Teresa')}</span>
               <ChevronDown size={12} />
@@ -215,7 +215,7 @@ export const DocumentInlineAIMenu: React.FC<DocumentInlineAIMenuProps> = ({
                   key={action.id}
                   data-testid={`doc-inline-ai-${action.id}`}
                   onClick={() => handleAction(action.id)}
-                  className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors"
+                  className="w-full rounded px-2 py-1 text-left text-xs text-c-text hover:bg-c-surface-raised/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
                   {isPolish ? action.labelPl : action.labelEn}
                 </button>

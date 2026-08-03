@@ -536,7 +536,7 @@ const PortfolioInsightsPanel: React.FC<Props> = ({ projectId = 'all' }) => {
           </div>
           <button
             type="button"
-            className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-primary-200 dark:border-primary-700 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="shrink-0 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             onClick={() => window.open('/outputs', '_blank')}
           >
             {t('results.portfolio.boardPackGo', 'Go to Outputs →')}

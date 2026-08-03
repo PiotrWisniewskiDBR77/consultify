@@ -58,7 +58,7 @@ function SectionHeader({
           aria-expanded={!isCollapsed}
           aria-controls={`${id}-content`}
           onClick={onToggle}
-          className="inline-flex items-center gap-1.5 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-border-subtle focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075]/[0.11]"
+          className="inline-flex items-center gap-1.5 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-2.5 py-1 text-xs font-medium text-c-text hover:bg-c-border-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           {isCollapsed ? (
             <ChevronDown size={14} aria-hidden="true" />
@@ -170,7 +170,7 @@ export function TabelePreviewLayout({
                   type="button"
                   onClick={onOpenBuilder}
                   data-testid="tabele-preview-open-grid"
-                  className="inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                  className="inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:bg-sky-500 dark:hover:bg-sky-400"
                 >
                   <Pencil size={14} aria-hidden="true" />
                   {t('kimi.tabele.preview.openGrid', { defaultValue: 'Open grid editor' })}
@@ -322,7 +322,7 @@ export function TabelePreviewLayout({
                   type="button"
                   onClick={onOpenBuilder}
                   data-testid="tabele-preview-open-grid-empty"
-                  className="mt-4 inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40 dark:bg-sky-500 dark:hover:bg-sky-400"
+                  className="mt-4 inline-flex items-center gap-2 rounded-hig-full bg-sky-600 px-4 py-1.5 text-xs font-semibold text-c-text shadow-sm transition-colors hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:bg-sky-500 dark:hover:bg-sky-400"
                 >
                   <Pencil size={14} aria-hidden="true" />
                   {t('kimi.tabele.preview.openGridEmpty', {

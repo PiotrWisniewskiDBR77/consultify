@@ -136,7 +136,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenInAiEditor(s)}
-                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     data-testid="qa-suggestion-open-ai"
                   >
                     <Sparkles className="h-3 w-3" />{' '}
@@ -147,7 +147,7 @@ export const QaSuggestionList: React.FC<QaSuggestionListProps> = ({
                   <button
                     type="button"
                     onClick={() => onDismiss(s)}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:text-c-text"
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-c-text-secondary hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     data-testid="qa-suggestion-dismiss"
                   >
                     <X className="h-3 w-3" />{' '}

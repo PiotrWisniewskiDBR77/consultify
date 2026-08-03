@@ -506,7 +506,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
                     })
               }
               className={[
-                'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
+                'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
                 active
                   ? 'bg-c-surface-raised text-c-text border border-c-border-strong'
                   : 'text-c-text-secondary border border-c-border hover:bg-c-surface-raised',
@@ -526,7 +526,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
           <button
             type="button"
             onClick={() => setSortCol(null)}
-            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-c-text-muted hover:text-c-text transition-colors"
+            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-c-text-muted hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             aria-label={t('results.sort.clear', 'Clear sort')}
           >
             {t('results.sort.clear', 'Clear sort')}
@@ -634,7 +634,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                         e.stopPropagation();
                         setMenuCardId((prev) => (prev === kpi.id ? null : kpi.id));
                       }}
-                      className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-c-text transition-colors"
+                      className="p-1.5 rounded hover:bg-c-surface-raised text-c-text-muted hover:text-c-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                       aria-label={t('common.more', 'More')}
                     >
                       <MoreVertical size={14} />
@@ -656,7 +656,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('open', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Maximize2 size={14} />
                             {t('results.actions.openDetail', 'Open detail')}
@@ -668,7 +668,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('record', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Target size={14} />
                             {t('results.actions.recordValue', 'Record value')}
@@ -680,7 +680,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('edit', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Pencil size={14} />
                             {t('results.drawer.definitionTitle', 'Definition')}
@@ -692,7 +692,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('links', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06]"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-c-text-secondary hover:bg-black/5 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Link2 size={14} />
                             {t('results.drawer.lineageTitle', 'Lineage')}
@@ -704,7 +704,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
                               onItemAction?.('delete', kpi);
                               setMenuCardId(null);
                             }}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger-600 dark:text-danger-300 hover:bg-danger-500/10"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-danger-600 dark:text-danger-300 hover:bg-danger-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                           >
                             <Trash2 size={14} />
                             {t('common.delete', 'Delete')}
@@ -767,7 +767,7 @@ export const ResultsGridView: React.FC<ResultsGridViewProps> = ({
       {onNewItem && (
         <button
           onClick={onNewItem}
-          className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-c-border text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-all"
+          className="flex flex-col items-center justify-center gap-2 min-h-[180px] rounded-xl border-2 border-dashed border-c-border text-c-text-muted hover:text-c-text hover:border-c-border-strong transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Plus size={24} />
           <span className="text-sm font-medium">{t('results.addKpi', '+ Add KPI')}</span>
