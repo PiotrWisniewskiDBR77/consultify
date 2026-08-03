@@ -10,9 +10,9 @@ Scope: all Consultify product UI, existing refactors and every new screen/module
 
 ## 1. Purpose
 
-This document is the highest-level UI/UX source of truth for Consultify.
+Ten dokument jest materiałem migracyjnym. Jedynym źródłem rozstrzygającym autorytet jest `CANON.md`.
 
-Its job is to remove ambiguity. If a screen, component or older document conflicts with this file, this file wins and the other artifact becomes migration debt until updated.
+Jego zadaniem jest zachowanie wartościowych reguł do czasu przeniesienia ich do kart rodzin komponentów. W konflikcie ten plik nie wygrywa z `CANON.md` ani aktywną kartą rodziny.
 
 Core rule:
 

@@ -34,13 +34,33 @@ Lewa: breadcrumb „Moduł › Zakładka". Prawa: Data · Model · ikony systemo
 ## A5. PSTRYCZEK TABELI (prawy górny róg) — OBOWIĄZKOWY
 Ikona Settings2 → popover „VISIBLE COLUMNS": checkboxy kolumn (Task/Actions = LOCKED z dopiskiem), na dole wiersz **„Show row description"** z przełącznikiem. Jeden i ten sam popover w każdej tabeli aplikacji. To niezbędny element sterowania — sprawdzany przy KAŻDYM odbiorze.
 
-## A6. KEBAB WIERSZA — 5 bloków w niezmiennej kolejności (separatory między blokami, każda pozycja z ikoną)
+## A6. KEBAB WIERSZA — 5 bloków w niezmiennej kolejności (3 strefy wizualne = 2 separatory; każda pozycja z ikoną)
 1. **Wejście+domknięcie** (zawsze): View/Open + Complete/Done/Approve.
 2. **Przejścia stanu** (wg encji): Task = To do/In progress/Blocked · Decyzja = Approve/Reject · Inbox = Focus → Today/This week/Later.
 3. **Czas** (encje z terminami): Delay › / Snooze-presety (2h · jutro rano · 3 dni · pon.).
 4. **Uniwersalny** (ZAWSZE, identyczny app-wide): Open preview · Edit · Archive — niegotowe pokazujemy disabled z dopiskiem, nigdy nie ukrywamy.
 5. **Destrukcyjny** (zawsze ostatni, oddzielony): Delete/Reject — czerwony; jedyna czerwień menu.
-Moduł deklaruje bloki 1–3; bloki 4–5 dokłada komponent automatycznie.
+
+**Moduł deklaruje WSZYSTKIE 5 bloków, we właściwej kolejności — komponent nic z tego nie egzekwuje ani
+nie dokłada automatycznie.** Zweryfikowano w `src/components/shared/RowActionsMenu.tsx`: `visibleSections`
+renderuje dokładnie to, co dostanie w propie `sections` (i `actions` w trybie legacy), **w kolejności
+podanej przez wołający ekran** — komponent nie sortuje po `kind` (typ `RowActionSectionKind`, 7 wartości,
+jest czysto opisową etykietą bez żadnej logiki rozmieszczenia). Jedyne, co komponent robi sam: filtruje
+`hidden` i atrapy (`czyAtrapa()`) i usuwa sekcję, jeśli po filtrze jest pusta. Jeśli ekran poda bloki
+4–5 w złej kolejności albo w ogóle je pominie, komponent to wyrenderuje bez ostrzeżenia — to jest
+**odwrotność** zasady „moduł deklaruje treść, komponent narzuca wygląd" obowiązującej w tym projekcie,
+i jest **znanym długiem** (kandydat do `_DOC_CODE_DELTA_REGISTER.md`), nie stanem docelowym.
+`03-modules/TABLE_AND_PREVIEW_CANON.md` §9.1a opisuje to samo zjawisko od strony mechaniki komponentu
+(3 strefy GÓRA/DÓŁ/DANGER) i już wcześniej to poprawnie przyznawał — ta sekcja była tym, co się
+z nim rozjeżdżało.
+
+**Separatory — realnie 2, nie 4.** Komponent renderuje separator (`border-t`) między KOLEJNYMI
+elementami tablicy `sections`, nie między każdą parą bloków TRIADY z osobna. W standardowym mapowaniu
+§9.1a bloki 1+2 („Wejście+domknięcie" + „Przejścia stanu") żyją w jednej sekcji GÓRA — bez separatora
+między nimi; bloki 3+4 („Czas" + „Uniwersalny") żyją razem w sekcji DÓŁ — też bez separatora między
+nimi. Separator jest więc TYLKO między GÓRA/DÓŁ i między DÓŁ/DANGER — czyli 2 separatory, 3 strefy.
+Odbiór wzrokowy (Część B, pkt 19) ma to sprawdzać jako „separator między strefami", nie szukać
+separatora między każdym z 5 bloków.
 
 ## A7. PREVIEW — 6 bloków od góry do dołu
 1. **Nagłówek:** tytuł (truncate) · pinezka · **Open** (jedyne w preview) · ×.
@@ -95,7 +115,8 @@ Czerwień = wyłącznie semantyka krytyczna (overdue/error/blocked/delete). Akty
 - [ ] 18. Popover: „Show row description" na dole, działa
 
 **KEBAB (5)**
-- [ ] 19. Otwiera się przy każdym wierszu; separatory między blokami; ikony przy pozycjach
+- [ ] 19. Otwiera się przy każdym wierszu; separator między GÓRA/DÓŁ i między DÓŁ/DANGER (2 separatory,
+      3 strefy — NIE między każdym z 5 bloków, patrz A6); ikony przy pozycjach
 - [ ] 20. Blok 1: View/Open + akcja domykająca
 - [ ] 21. Blok 2: przejścia stanu właściwe dla encji
 - [ ] 22. Blok 4: Open preview · Edit · Archive (niegotowe = disabled z dopiskiem, nie ukryte)
@@ -230,17 +251,39 @@ Przycisk akcji: `h-9 rounded-full border` + ikona + etykieta + badge skrótu; wa
 Kolumna: bez tła/obrysu, stała szerokość, przewijanie poziome deski. Karta: `bg-c-surface` `rounded-lg/xl` + hairline + cień minimalny; **lewy pasek akcentu ~3px** (bursztyn=oczekujące, czerwony=krytyczne); CRITICAL + delikatny tint tła.
 
 ---
-# CZĘŚĆ D — REFERENCJE WIZUALNE (żywe My Work, demo)
-> Wzorce zdjęte z produkcji (demo.consultify.ai, `de37ea03e2`). Każdy nowy ekran musi być NIEODRÓŻNIALNY od tych obrazów w kształtach, ramkach, liniach, odstępach i kolorach.
+# CZĘŚĆ D — REFERENCJE WIZUALNE — **BRAK PLIKÓW W REPO** (zweryfikowano 2026-08-02)
+> **Stan faktyczny:** katalog `docs/ui-standards/assets/triada/` **nie istnieje**, i żaden z czterech
+> plików niżej nie istnieje nigdzie w repo. Zweryfikowano: `find docs/ui-standards/assets -maxdepth 3`
+> (katalog `triada/` brak) oraz `find . -name "01-tabela-dark.png"` (i analogicznie dla pozostałych
+> trzech nazw) → zero trafień w całym drzewie. Poprzednia wersja tej sekcji osadzała `![...]` na te
+> ścieżki i twierdziła „każdy nowy ekran musi być NIEODRÓŻNIALNY od tych obrazów" — to była referencja
+> do niczego, gorsza niż brak sekcji, bo dawała złudzenie posiadanego wzorca odbioru. Panel adwersaryjny
+> 2026-08-02, pozycja K-02 (`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`).
+>
+> Obrazy MIAŁY pochodzić z produkcji: **demo.consultify.ai, commit `de37ea03e2`** — cztery zrzuty:
+> tabela (dark), tabela (light), preview (dark), kanban (dark). To jest wskazówka do odtworzenia, nie
+> dowód, że coś istnieje dziś.
+>
+> **Do uzupełnienia:** nowe zrzuty z żywego demo, ten sam kadr co opis niżej, zapisane do
+> `docs/ui-standards/assets/triada/` pod tymi samymi nazwami, dopiero wtedy osadzić `![...]`. Do tego
+> czasu odbiór wzrokowy (Część B) opiera się WYŁĄCZNIE na opisie słownym w Części A — nie ma obrazu do
+> porównania 1:1.
 
 **Tabela (dark) — Menu 1/2/3 + wiersze + statusy/priorytety + pstryczek:**
-![Tabela dark](assets/triada/01-tabela-dark.png)
+`assets/triada/01-tabela-dark.png` — **BRAK PLIKU**
 
 **Tabela (light) — te same reguły w jasnym trybie:**
-![Tabela light](assets/triada/04-tabela-light.png)
+`assets/triada/04-tabela-light.png` — **BRAK PLIKU**
 
 **Preview (dark) — 6 bloków + przyciski akcji (4 warianty, skróty):**
-![Preview dark](assets/triada/02-preview-dark.png)
+`assets/triada/02-preview-dark.png` — **BRAK PLIKU**
 
 **Kanban (dark) — kolumny-strefy, puste widoczne, karty z paskiem akcentu:**
-![Kanban dark](assets/triada/03-kanban-dark.png)
+`assets/triada/03-kanban-dark.png` — **BRAK PLIKU**
+
+---
+# CHANGELOG
+
+| Data | Zmiana |
+|---|---|
+| 2026-08-02 | **Korekta po panelu adwersaryjnym** (`_KOREKTY_PO_PANELU_ADWERSARYJNYM_2026-08-02.md`, pozycje K-02/K-03/K-03b): (a) Część D — 4 obrazy referencyjne `assets/triada/*.png` NIE istnieją w repo (katalog `assets/triada/` brak, zero trafień w całym drzewie); zastąpiono osadzenia jawnym `BRAK PLIKU` + notą o źródle (demo.consultify.ai, commit `de37ea03e2`) do odtworzenia. (b) §A6 — zdanie „bloki 4–5 dokłada komponent automatycznie" było fałszywe: `RowActionsMenu.tsx` renderuje dokładnie to, co dostanie w propie `sections`, w kolejności wołającego, bez sortowania po `kind`; poprawiono na „moduł deklaruje wszystkie 5 bloków, komponent nic nie egzekwuje" + oznaczono jako znany dług. (c) §A6/pkt 19 — „separatory między blokami" (sugerujące 4) poprawiono na realny model: 3 strefy (GÓRA/DÓŁ/DANGER) = 2 separatory; bloki 1+2 i bloki 3+4 żyją parami bez separatora wewnątrz strefy. Zero podniesionych statusów; korekta czysto faktograficzna. |

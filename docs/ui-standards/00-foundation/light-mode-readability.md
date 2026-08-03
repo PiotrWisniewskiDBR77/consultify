@@ -1,6 +1,6 @@
 # Light Mode Readability Standard
 
-> **Status:** Canonical (v3.2, 2026-04-20)
+> **Status:** Canonical (v3.4, 2026-08-02)
 > **Scope:** Wszystkie ekrany light mode w Consultify, ze szczególnym naciskiem na ekrany operacyjne: listy, tabele, badge'e statusów, metadata, helper surfaces, preview pane, chrome aplikacji.
 > **Priorytet:** Light mode dla ekranów data-dense jest **token-first** i **contrast-first**. Estetyka "soft pastel" jest zakazana.
 
@@ -69,7 +69,7 @@ Light mode używa **czterech warstw surface**, nie trzech. Każda warstwa ma jaw
 
 ### Zasady
 
-- Każdy ważny kontener musi mieć **co najmniej dwa** środki separacji: tło + border, albo tło + shadow `hig-sm`, albo border + inset shadow.
+- Każdy ważny kontener musi być jednoznacznie odróżnialny przez co najmniej jeden mocny albo dwa subtelne sygnały: kontrast powierzchni, spacing, hairline lub elevation. Content card domyślnie używa powierzchni + spacingu bez cienia; overlay może łączyć hairline z elevation zgodnie z `FOUNDATION_TOKEN_CONTRACT.md`.
 - Hover ma zmieniać tło **lub** border (nie sam kolor tekstu).
 - Selected state musi być widoczny bez zgadywania — neutralne `bg` (slate-100) + `ring` + niebieski (info) accent bar razem. **Selekcja NIE używa primary/crimson** — crimson to sygnał „alarm/destructive", nie „aktywny". Kanoniczne klasy: `src/components/shared/selectionTokens.ts`.
 - Focus-visible (§7) jest dodatkiem do selected, nie zastępstwem.
@@ -85,6 +85,8 @@ Light mode używa **czterech warstw surface**, nie trzech. Każda warstwa ma jaw
 
 ## 4. Semantic surfaces
 
+> **Uwaga CENTRAL REMAP (K-P1-06):** klasy `blue-*`/`red-*`/`emerald-*`/`amber-*`/`violet-*`/`indigo-*`/`purple-*` w tabeli niżej i w całym dokumencie **nie** renderują domyślnych kolorów Tailwinda — `tailwind.config.js` (blok „CENTRAL REMAP", ok. l. 418–660) przepina te rodziny na paletę HBS. Kanoniczny opis: `FOUNDATION_TOKEN_CONTRACT.md` §7.
+
 Semantic UI w light mode budujemy **wyłącznie** na zatwierdzonych parach. Żadnych wariacji z `*-400/500` tekstu.
 
 | Semantyka | Tło | Border | Tekst | Ikona | Dot |
@@ -97,6 +99,8 @@ Semantic UI w light mode budujemy **wyłącznie** na zatwierdzonych parach. Żad
 | **neutral** | `bg-slate-100` | `border-slate-200` | `text-slate-800` | `text-slate-600` | `bg-slate-500` |
 
 > **Uwaga o amber:** `text-amber-700` jest graniczne kontrastowo na `bg-amber-50`. Dla badge statusu zawsze używać `text-amber-900`. To jest świadome odstępstwo od pozostałych semantyk, wymuszone fizyką koloru.
+
+> **Uwaga o primary:** wiersz `primary` to marka/crimson — służy WYŁĄCZNIE momentowi marki (Talk-to-Teresa) i semantyce destrukcyjnej (delete/reject/error/blocked/overdue), zgodnie z `TRIADA_KANON.md`. Nie wolno go użyć jako stan aktywny, zaznaczenie ani fokus — te mają być neutralne/info (§3, §10).
 
 ### Zakazy
 
@@ -129,7 +133,7 @@ Każdy badge statusu w light mode musi mieć:
 | review / pending / warning | `bg-amber-100 border-amber-300 text-amber-900` |
 | rejected / error / danger | `bg-red-100 border-red-200 text-red-800` |
 | approved / completed / success | `bg-emerald-100 border-emerald-200 text-emerald-800` |
-| primary / highlighted | `bg-primary-100 border-primary-200 text-primary-800` |
+| primary / highlighted | `bg-primary-100 border-primary-200 text-primary-800` — **tylko marka/destrukcja** (delete/reject/error/blocked/overdue), NIGDY jako oznaczenie „aktywny"/„wybrany" |
 
 ### Implementation rules
 
@@ -159,10 +163,12 @@ Każdy badge statusu w light mode musi mieć:
 | Stan | Klasy |
 | --- | --- |
 | Default | `bg-white` |
-| Hover | `bg-slate-50` (nie `bg-slate-100` — zbyt mocne przy szybkim mouse-over) |
+| Hover | `hover:bg-state-hover` (token; light: `color-mix(in srgb, var(--c-text) 6%, transparent)` ≈ `rgba(15,23,42,.06)`, `src/index.css:222` — wzorzec: wiersz tabeli w `src/components/shared/ModuleHub/FilterableTable.tsx:799`, renderer pod `StandardTable`) |
 | Active / Selected | `bg-slate-100 ring-1 ring-inset ring-slate-300/60 shadow-[inset_4px_0_0_var(--c-info)]` (neutral + info accent bar — `selectionTokens.ts`) |
-| Current focus (keyboard) | `outline outline-2 outline-primary-500 outline-offset-[-2px]` |
+| Current focus (keyboard) | `outline outline-2 outline-c-focus outline-offset-[-2px]` |
 | Grouped section | `bg-slate-50` z `text-slate-600` na headerze grupy |
+
+> **K-19 rozstrzygnięcie kodem (2026-08-02):** ten dokument wcześniej podawał hover = `bg-slate-50`, a `color-system.md` §2.6b podaje `hover:bg-slate-100/80` — obie wartości to **dług**. Realny renderer wiersza (`FilterableTable.tsx`, którego używa `StandardTable`) stosuje trzeci, obliczany token `hover:bg-state-hover` (patrz tabela wyżej), nie statyczny `slate-*`. `TableWithPreviewLayout.tsx` nie renderuje wierszy tabeli (to layout split tabela+preview) — jego `hover:bg-slate-100/70` dotyczy przycisków paginacji/pin, nie wierszy. `color-system.md` §2.6b jest poprawiany równolegle inną sesją tą samą metodą i nie jest tu edytowany.
 
 ### Separatory
 
@@ -174,11 +180,11 @@ Każdy badge statusu w light mode musi mieć:
 ### Dodatkowe reguły
 
 - Nie opieramy rozpoznania statusu wyłącznie na kolorze (zobacz §8).
-- Progress track nie może zlewać się z tłem: `bg-slate-200` dla pustego, `bg-primary-500` dla wypełnionego.
+- Progress track nie może zlewać się z tłem: `bg-slate-200` dla pustego, `bg-c-info` dla wypełnionego (progres to stan informacyjny, nie marka/alarm — spójne z `InitiativeDetailModal.tsx`).
 - Count chips i filter chips muszą mieć wyraźny **active vs inactive**:
   - inactive: `bg-white border-slate-200 text-slate-700`
-  - active: `bg-primary-50 border-primary-300 text-primary-800`
-- Bulk action bar po zaznaczeniu: `bg-primary-600 text-white` z mocnym shadow — ma być dominujący.
+  - active: `bg-blue-50 border-blue-300 text-blue-800` (info, nie crimson — aktywny filtr to stan wyboru, nie marka/alarm)
+- Bulk action bar po zaznaczeniu: `bg-navy-900 text-white` z mocnym shadow — ma być dominujący (neutralny wysoki kontrast, ta sama logika co Primary CTA §11/§18.3 — nie crimson, zaznaczenie masowe ≠ alarm).
 
 ### Data density
 
@@ -203,7 +209,7 @@ Moduły operacyjne domyślnie: `compact`. Moduły narracyjne domyślnie: `comfor
 | Helper text | `text-slate-600` |
 | Additional context | `text-slate-600` |
 | Input (default) | `bg-white border-slate-300 text-slate-900 placeholder-slate-400` |
-| Input (focus) | `ring-2 ring-primary-300 border-primary-500` |
+| Input (focus) | `ring-2 ring-c-focus border-c-focus-solid` |
 | Input (error) | `border-red-300 ring-red-100 text-slate-900` |
 | Input (disabled) | `bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed` |
 | Label (required) | inline `<span class="text-red-600">*</span>` |
@@ -292,16 +298,16 @@ Każdy nowy lub refaktorowany komponent musi jawnie zdefiniować:
 ### Focus ring — kanon
 
 - **Szerokość:** 2 CSS px (WCAG 2.2 AAA 2.4.13 minimum).
-- **Kolor:** `ring-primary-500` (na jasnych surface), `ring-primary-400` (na tintowanych).
+- **Kolor:** `ring-c-focus` — jeden token niebieski dla wszystkich surface (jasnych i tintowanych); nie różnicujemy per-surface, bo `--c-focus` ma wbudowaną alpha (light: `rgba(37,99,235,.4)` / `#2563eb` solid).
 - **Offset:** `ring-offset-2 ring-offset-white` (dla surface-default), `ring-offset-slate-50` (dla surface-subtle).
 - **Widoczność:** focus-visible musi być widoczny bez polegania na systemowym fokusie przeglądarki.
-- **Zakazane:** `outline: none` bez zastąpienia; `ring-offset-transparent` w light mode; focus ring < 2 px.
+- **Zakazane:** `outline: none` bez zastąpienia; `ring-offset-transparent` w light mode; focus ring < 2 px; `ring-primary-*`/crimson jako kolor fokusa (fokus ≠ marka/alarm).
 
 ### Implementacja
 
 ```tsx
 // Kanoniczny wzorzec focus-visible dla komponentów klikalnych
-'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus focus-visible:ring-offset-2 focus-visible:ring-offset-white'
 ```
 
 ---
@@ -312,12 +318,12 @@ Każdy nowy lub refaktorowany komponent musi jawnie zdefiniować:
 
 | Stan | Klasy |
 | --- | --- |
-| Container | `bg-white border-r border-slate-200` |
-| Item (default) | `text-slate-700` |
-| Item (hover) | `bg-slate-100 text-slate-900` |
-| Item (active) | `bg-primary-50 text-primary-700 font-medium` + accent line `border-l-2 border-primary-600` |
+| Container | `bg-slate-50` (Layer 0), **bez** `border-r` — separacja wyłącznie przez `boxShadow: '0 10px 40px rgba(0,0,0,0.08)'` (zweryfikowane `src/components/navigation/Sidebar/Sidebar.tsx:489`; `border-white` claim i `bg-white`/`bg-slate-100` z wcześniejszych wersji były długiem, patrz `visual-language.md` §3.1/§4.2 — reguła „brak border-right" jest tam poprawna) |
+| Item (default) | `text-c-text-secondary` (≈ `text-slate-700`) |
+| Item (hover) | `hover:bg-slate-100 hover:text-c-text` |
+| Item (active) | `bg-slate-200/60 text-c-text font-medium` + 2px accent bar `bg-[var(--c-info)]` jako osobny `motion.div` (`absolute left-0 ... w-[2px] h-5 bg-[var(--c-info)] rounded-r-full`), **nie** klasa `border-l-2 border-c-info` — wzorzec: `src/components/navigation/Sidebar/NavItem.tsx:109` (tło) i `:181` (pasek). K-21: wcześniejsza wersja tego wiersza cytowała `NavItem.tsx` jako źródło `border-l-2 border-c-info`, ale ta klasa nie istnieje w pliku (`grep` zero trafień) — pasek akcentu istnieje faktycznie, tylko jako osobny element, nie jako border. |
 | Icon (default) | `text-slate-500` |
-| Icon (active) | `text-primary-600` |
+| Icon (active) | `text-slate-700` |
 | Section label | `text-slate-500 uppercase text-xs tracking-wide font-semibold` |
 | Collapsed tooltip | `bg-slate-900 text-white` (inverted, ma się wyróżniać) |
 
@@ -325,7 +331,7 @@ Każdy nowy lub refaktorowany komponent musi jawnie zdefiniować:
 
 - Tło: `bg-white border-b border-slate-200`.
 - Akcje: ikony w `text-slate-600` z hover `text-slate-900 bg-slate-100`.
-- Primary CTA: `bg-primary-600 text-white` (maksymalnie jeden na topbarze).
+- Primary CTA: `bg-navy-900 text-white hover:bg-navy-800` — navy token, nie crimson (§18.3 VIS-006; wzorzec: `variant="primary"` w `src/components/ui/primitives/Button.tsx`). Crimson (`variant="brand"`) tylko dla Talk-to-Teresa/destructive (maksymalnie jeden CTA na topbarze).
 - Breadcrumbs: `text-slate-600` / `text-slate-900` dla aktywnego segmentu.
 
 ### Module Topbar
@@ -373,7 +379,7 @@ Ten rozdział jest **obowiązkowy** dla każdego ekranu operacyjnego (inbox, bac
 
 ### Bulk action bar
 
-- Po selection: `bg-primary-600 text-white border-t border-primary-700`.
+- Po selection: `bg-navy-900 text-white border-t border-navy-800` (neutralny wysoki kontrast — nie crimson; zaznaczenie masowe to stan roboczy, nie marka/alarm, zob. §6).
 - Kontrast min 7:1 — to jest strefa "uwaga, masz kilka zaznaczonych".
 - Przycisk deselect: `text-white/80 hover:text-white`.
 
@@ -474,7 +480,7 @@ Od v3.2 light mode operuje **tokenami semantycznymi**, nie bezpośrednimi utilit
 
 ### Stany interaktywne
 
-- `focus-ring` → `ring-primary-500` + `ring-offset-2 ring-offset-white`
+- `focus-ring` → `ring-c-focus` + `ring-offset-2 ring-offset-white`
 - `hover-surface` → `slate-50`
 - `active-surface` → `slate-100` + info accent (selekcja = neutral/blue, nie crimson)
 
@@ -497,10 +503,36 @@ Każdy nowy komponent musi konsumować te tokeny; każdy istniejący komponent r
 > **Egzekwowanie koloru ≠ grep-lint.** W przeciwieństwie do motion (`transition-all` ~zawsze błąd, lintowalny), kolor jest w 99% legalny statycznie (green/slate-400/hex = poprawne warianty). Lint byłby cry-wolf. **Ratchetem koloru jest VISUAL SWEEP** (re-run katalogu) + istniejący `scripts/audit-ui-compliance.js` (dark-variant, deprecated patterns). Nie budujemy `lint:colors`.
 
 ### 18.1 Zakaz kolorów „dark-only" (VIS-002)
-Każda klasa koloru tekstu/tła MUSI mieć poprawny odpowiednik light — nie wolno polegać na fallbacku. **Metadata (daty, timestampy, liczniki) NIGDY `text-primary-*`/crimson** — w light wygląda jak alarm. Metadata = `text-slate-500/600` (§2). Wykryte: 187 komórek dat `rgb(145,10,40)` w light.
+Każda klasa koloru tekstu/tła MUSI mieć poprawny odpowiednik light — nie wolno polegać na fallbacku. **Metadata (daty, timestampy, liczniki) NIGDY `text-primary-*`/crimson** — w light wygląda jak alarm. Metadata = `text-slate-500/600` (§2).
+
+> **K-36 korekta (2026-08-02):** poprzednia wersja tego punktu podawała jako dowód „187 komórek dat `rgb(145,10,40)` w light" jako crimson-leak. Źródło (`docs/qa/MASTER_VISUAL_QA_CATALOG.md`, wpis VIS-002) **explicite odrzuca ten wniosek po zbadaniu**: to nie `text-primary`/crimson leak, tylko intencjonalny sygnał wieku (`AGING_STYLES`, `InboxContent.tsx:676`: fresh→emerald, warm/hot→amber, critical >3 dni→`rose-700`). `rgb(145,10,40)` to skonfigurowany kolor `aging-critical`, nie fallback. Demo dane były stare → prawie wszystko „critical" → prawie wszystko czerwone, stąd pozorne „187 leak" z samego pomiaru koloru bez sprawdzenia źródła. Jedyna realna naprawa z tego wpisu: usunięto `animate-pulse` z `critical` (pulsowanie rozpraszało), kolor rose został jako celowy sygnał. Reguła wyżej (metadata nigdy `text-primary`/crimson) zostaje w mocy — to był fałszywy alarm konkretnego przykładu, nie unieważnienie reguły.
 
 ### 18.2 Badge danger MUSI mieć fill w light (VIS-001)
 Współdzielony komponent badge: wariant light **obowiązkowo** tło(100)+border(200)+tekst-danger(800) (§5). Zakaz dark-only wariantu z fallbackiem do `transparent`+`slate`. Wykryte: „Critical"/„overdue" = transparent bg + slate text w light (nie czyta się jako danger).
 
 ### 18.3 Primary-CTA = navy token (VIS-006)
 Główny CTA modułu = navy token (po T2). Crimson **tylko** Talk-to-Teresa / destructive (budżet §0 CANON). Ujednolicić: Tools „Add", Initiatives „New initiative" (crimson) → navy, jak My Work / Results.
+
+---
+
+### Changelog v3.3 (2026-08-02)
+
+Po zmianie palety Tailwind (`primary-*` = crimson `#85182F`, `tailwind.config.js:204`) dokument w kilku miejscach dalej kazał używać `primary-*` tam, gdzie po recolorze znaczyło to „crimson" — czyli naruszenie TRIADA_KANON pkt 38/39/43 (crimson zakazany jako fokus/aktywny/zaznaczenie/zwykłe CTA). Naprawiono:
+
+- **Fokus** (§6, §7, §10, §16): `outline-primary-500` / `ring-primary-500` / `ring-primary-300` / `border-primary-500` → ujednolicone na token `--c-focus` / `--c-focus-solid` (`ring-c-focus`, `outline-c-focus`, `border-c-focus-solid`).
+- **Stan aktywny/zaznaczenie** (§6 wiersz tabeli, §11 sidebar): chipy filtrów i item sidebar `active` → neutral/info (`bg-blue-50 border-blue-300 text-blue-800`, `bg-slate-100 text-slate-900` + `border-c-info`), nie crimson.
+- **Bulk action bar** (§6, §12) i **Primary CTA topbara** (§11): `bg-primary-600` → `bg-navy-900` (navy token, zgodnie z §18.3 VIS-006 i realnym `variant="primary"` w `src/components/ui/primitives/Button.tsx`).
+- **Progress fill** (§6): `bg-primary-500` → `bg-c-info` (progres = informacyjny, nie marka/alarm).
+- Wiersze `primary` w §4/§5 zostały — to legalna semantyka brandowa (marka/destrukcja) — dopisano zastrzeżenie, że nie oznaczają „aktywny/wybrany".
+
+### Changelog v3.4 (2026-08-02, panel adwersaryjny)
+
+Naprawa naprawy — panel adwersaryjny wykrył, że sweep v3.3 wprowadził nowe sprzeczności (z `visual-language.md`) i cytowania niezgodne z kodem. Zweryfikowano kodem i naprawiono:
+
+- **K-18 (sidebar container, §11):** dokument i `visual-language.md` podawały dwa różne, oba błędne hexy tła sidebaru (`bg-white` tu, `bg-slate-100` tam) i sprzeczne polecenia co do `border-r`. Realny kod (`Sidebar.tsx:489`): `bg-slate-50`, zero `border-r`, separacja przez `boxShadow`. Oba dokumenty ujednolicone na ten stan.
+- **K-21 (sidebar item active, §11):** dokument cytował `NavItem.tsx` jako wzorzec klasy `border-l-2 border-c-info`, której w pliku nie ma. Poprawiono na realną implementację: tło `bg-slate-200/60 text-c-text`, akcent-pasek jako osobny `motion.div` z `bg-[var(--c-info)]` (linie 109, 181), nie border-klasa.
+- **K-36 (VIS-002, §18.1):** „187 komórek dat crimson-leak" był odrzuconym wnioskiem w źródle (`MASTER_VISUAL_QA_CATALOG.md`) — to intencjonalny aging config, nie leak. Przykład poprawiony zgodnie ze źródłem, reguła nadrzędna (metadata nigdy crimson) zostaje.
+- **K-19 (hover wiersza, §6):** rozstrzygnięte kodem — realny hover to token `hover:bg-state-hover` (`FilterableTable.tsx:799`, `color-mix` w `src/index.css:222`), różny od obu wcześniejszych propozycji (`bg-slate-50` tu, `bg-slate-100/80` w `color-system.md`). Wpisano wartość z kodu, oznaczono dług.
+- **K-P1-06 (CENTRAL REMAP):** dopisano ostrzeżenie przy §4 (pierwsza tabela z klasami `blue-*`/`amber-*`/itd.) o przepięciu tych rodzin na paletę HBS w `tailwind.config.js`, z odesłaniem do `FOUNDATION_TOKEN_CONTRACT.md` §7.
+
+Sekcje §8, §9, §10, §13 nie były ruszane — panel potwierdził, że są poprawne.

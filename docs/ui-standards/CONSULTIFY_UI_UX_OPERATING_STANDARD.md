@@ -11,9 +11,9 @@ Remote: `https://github.com/PiotrWisniewskiDBR77/consultify.git`
 
 ## 1. Po co jest ten dokument
 
-Ten dokument jest operacyjnym źródłem prawdy dla stabilizacji UI/UX Consultify.
+Ten dokument jest materiałem migracyjnym dotyczącym historycznego sposobu stabilizacji UI/UX Consultify.
 
-Nadrzędnym źródłem prawdy dla decyzji produktowo-wizualnych jest `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`. Ten dokument mówi, jak Cursor i developerzy mają ten standard egzekwować w pracy.
+Nadrzędnym źródłem prawdy jest `docs/ui-standards/CANON.md`. Aktualne zasady implementacyjne prowadzi `UI_UX_IMPLEMENTATION_STANDARD.md`; ten dokument nie ustanawia już osobnej hierarchii.
 
 Istniejące dokumenty w `docs/ui-standards/` są wartościowe, ale rozproszone. Ten plik nie zastępuje ich szczegółów. Konsoliduje je w jeden praktyczny kontrakt dla:
 

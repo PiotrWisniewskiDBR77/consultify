@@ -355,11 +355,11 @@ Legenda: **M1** = Menu 1 artefaktu · **M2** = Menu 2 (listwa edycji) · **M3** 
 ## 6. Katalog elementów — jeden alfabet dla całej aplikacji
 
 **Zasada:** jedna ikona = jedno znaczenie, wszędzie. Jedno miejsce kanoniczne dla każdej akcji.
-**Biblioteka ikon:** do potwierdzenia w kodzie (prawdopodobnie lucide-react) — nazwy poniżej jako propozycja, zweryfikować przed wdrożeniem.
+**Biblioteka ikon:** `lucide-react`, zgodnie z `docs/ui-standards/00-foundation/ICONOGRAPHY_AND_ACTION_STANDARD.md`. Nazwy poniżej są mapowaniem kanonicznym; odstępstwo wymaga zmiany centralnego rejestru akcji.
 
 ### 6.1 Akcje na obiekcie (globalne)
 
-| Akcja | Ikona (propozycja) | Miejsce kanoniczne | Też w |
+| Akcja | Ikona kanoniczna | Miejsce kanoniczne | Też w |
 |-------|-----|-------------------|-------|
 | Otwórz | `maximize-2` / `arrow-up-right` | klik w wiersz | PPM (1) |
 | Podgląd | `eye` | kebab | PPM (1) |
@@ -432,7 +432,11 @@ Piotr prosił o wzbogacenie inwentaryzacji. Rzeczy których jeszcze nie dotknęl
 
 7. **Klasa wielkości może się zmieniać.** Prosty rekord (S) który urośnie (dodasz zadania, finanse) → awansuje do L i dostaje M3. Jeden komponent, próg przełączania — nie dwa osobne ekrany.
 
-8. **Skróty klawiszowe = przewidziane teraz, wdrożone później.** Model akcji (§6) już ma sloty. Dodanie skrótów = podłączenie do istniejących akcji, nie przebudowa. Zarezerwować w architekturze: Cmd+S zapis, Cmd+K command palette, Cmd+Enter primary.
+8. **Skróty klawiszowe = przewidziane teraz, wdrożone później — z WYJĄTKIEM canvasu.** Model akcji (§6)
+   już ma sloty; dodanie skrótów globalnych (Cmd+S zapis, Cmd+K paleta, Cmd+Enter primary) = podłączenie
+   do istniejących akcji, nie przebudowa. **Dla Archetypu A (Canvas) to NIE jest odłożone bez
+   konsekwencji** — patrz §13.3c: brak minimalnego zestawu klawiaturowego canvasu jest zapisany jako
+   świadoma luka runtime (CANON §3.2), blokuje `runtime_status` > `PARTIAL` i odbiór DoD §18.1.
 
 9. **Command palette (Cmd+K).** Skoro model akcji jest jednolity, „szukaj akcji" staje się trywialny i daje poczucie aplikacji za miliard $. Warto zaplanować jako naturalną konsekwencję §6.
 
@@ -500,6 +504,65 @@ Font: **Inter** (UI). Playfair Display TYLKO brand/editorial — nie w produkcie
 
 ---
 
+### 9.1a Nota rozstrzygająca — szerokość prawego panelu / preview (SYS-2, KOREKTA 2026-08-02)
+
+**Ta nota była błędna w poprzedniej redakcji (patrz CHANGELOG 2026-08-02, wpis 1) i jest tu poprawiona.**
+Poprzednia wersja sprowadzała pięć niezgodnych liczb do jednej wartości (420px dla preview listowego),
+na błędnej przesłance że preview listowy i prawy panel artefaktu to jedna powierzchnia. Weryfikacja w
+kodzie (`grep -rn "clamp(340px" src/components/`, `grep -rln "TableWithPreviewLayout" src/ | wc -l`) oraz
+w `docs/ui-standards/00-foundation/FOUNDATION_TOKEN_CONTRACT.md` §4 (który niezależnie doszedł do tego
+samego rozstrzygnięcia) pokazuje, że to są **DWIE RÓŻNE powierzchnie**, którym wolno mieć różne wartości:
+
+**Uzupełnienie K-22 (panel adwersaryjny, 2026-08-02): ta korekta NIE była kompletna.** Ten sam dokument
+miał jeszcze DWA wystąpienia szerokości nieobjęte powyższą redakcją — §9.2b ⑯ Drawer/Sheet i §15.2
+prawy panel instrumentu. Poniższa numeracja (1-4) to niezmieniony tekst korekty SYS-2; punkty 5-6 to
+domknięcie tych dwóch pominiętych wystąpień.
+
+**1. Preview listowy** (SPEC-L, panel podglądu przy tabeli — §9.2⑬, §11.1, §14.5): **`clamp(340px, 28%,
+480px)`**. To NIE jest dług do zamknięcia — to zaimplementowany i wdrożony kanon. SSOT kodu:
+`shared/TableWithPreviewLayout.tsx:437,455` (kanoniczny orkiestrator preview, **18 konsumentów JSX** —
+`grep -rl "<TableWithPreviewLayout" src/`, metoda K-28, 2026-08-02: MyTasksListContent,
+DecisionsPanelContent, IdeasTableContent, MyIdeasListContent, DiscoveryToolsHub, InitiativesHub,
+PortfolioAnalysisView, AgentHubShell, Results*, InterviewHub, QuestionsList, BenefitsHub, ReportsHub i
+in. — surowa wzmianka stringa `TableWithPreviewLayout`, licząc import+typy+komentarze, daje 28, patrz
+§14.0. Osobno, POWTÓRZONA NIEZALEŻNIE jako skopiowana wartość liczbowa — nie import komponentu — w
+`InboxContent.tsx:3977`, `DecisionPreviewPanel.tsx:813,830`, `FocusView.tsx:1847,1856`). Wartość
+identyczna z `TRIADA_KANON.md` §C9 — kanon list i kod **już się zgadzają**.
+
+**2. Prawy panel właściwości / drawer formularzowy** (SPEC-A, powierzchnia artefaktu — §9.2⑪, §11.2):
+domyślnie **360 px**, dozwolony zakres **320–420 px**, drawer formularzowy szeroki **420 px** — zgodnie
+z FOUNDATION_TOKEN_CONTRACT §4. To inna strefa (prawy panel artefaktu ⑪, nie preview ⑬) — wolno jej mieć
+własną wartość, niezależną od preview listowego.
+
+**3. Wycofane jako kanon** (bez implementacji w kodzie — były wewnętrznymi sprzecznościami tego
+dokumentu, nie realnymi wariantami): **320–380** (dawne §9.2⑪ sprzed korekty SYS-2), **400–480** (dawne
+§9.2⑬ sprzed korekty SYS-2). FOUNDATION_TOKEN_CONTRACT §4 ich nie zna, kod ich nie implementuje.
+
+**4. Zarejestrowany dług** (poza zakresem tej redakcji, nie kanon):
+`src/components/MyWork/MyProjects.tsx:864,1084` (`w-[420px] shrink-0`) — bespoke `<aside>` omijający
+`TableWithPreviewLayout` (poza SSOT §14.0). MyProjects to LISTA, więc powinien używać preview listowego
+(`clamp(340px,28%,480px)`), nie własnej stałej 420px. `src/components/MyWork/IdeaTableTool.tsx` używa
+**460 i 480 px** — poza zakresem obu powierzchni, dług do zamknięcia, nie dozwolony wariant.
+
+**5. Drawer/Sheet ogólny (⑯, §9.2b)** — INNA powierzchnia niż preview listowy (pkt 1) i prawy panel
+artefaktu (pkt 2): komponent nakładkowy ogólnego przeznaczenia (formularze, ustawienia, dowolna treść
+boczna wywołana z dowolnego miejsca), nie tylko artefakt. Realny kod
+(`src/components/ui/primitives/Drawer.tsx` `sizeStyles`, l.48-59) ma **cztery dyskretne warianty, nie
+zakres ciągły**: `sm`=256px · `md`=320px · `lg`=384px · `xl`=480px (+`full`=100vw). Poprzedni zapis w
+§9.2b („360–480") nie odpowiada żadnej z tych granic — **poprawiony na 256–480px, warianty sm/md/lg/xl**,
+z jawną adnotacją, że to cztery ustalone wartości `Drawer.tsx`, nie `clamp()`. Zbieżność z „drawerem
+formularzowym szerokim = 420px" (pkt 2) jest **przybliżeniowa** — 420px leży między `lg`(384) i
+`xl`(480), nie jest żadnym z czterech wariantów kodu; to zarejestrowany dług, nie kanon zamknięty.
+
+**6. Prawy panel instrumentu (§15.2)** — TA SAMA powierzchnia co prawy panel artefaktu ⑪ (pkt 2), nie
+osobna, i nie miała powodu mieć własnej wartości. Poprzedni zapis „320–360" był węższym, nieuzasadnionym
+podzbiorem kanonu 320–420: `grep` po komponentach instrumentów (Kanban/Gantt/Dashboard/Matrix) nie
+znalazł żadnej odrębnej stałej szerokości panelu instrumentu w kodzie — nie ma tam nic do
+zaimplementowania osobno. **Poprawiony na 360 (zakres 320–420), zgodnie z ⑪** — patrz też §11.3 „panel
+360" (Reguła twarda SPEC-I), który już zgadzał się z tą wartością.
+
+---
+
 ### 9.2 ELEMENTY — anatomia + light/dark
 
 Każdy element referuje 9.1. Podane tylko odchylenia od foundation.
@@ -517,7 +580,7 @@ Każdy element referuje 9.1. Podane tylko odchylenia od foundation.
 **② Chip akcji (Menu 3)** — problem z walkthrough „bez ramek":
 - struktura: ikona 16 + label, radius pill, border `c.border`, bg `c.surface`
 - hover: bg `c.surface-raised`, border `c.border-strong`
-- active/selected: bg `c.accent-soft`, text `c.text` (NIE crimson text)
+- active/selected: bg `bg-state-selected` (neutralne, token `--state-selected`), text `c.text` — **NIE `c.accent-soft`** (SYS-1, rozszerzone §14.2)
 - **fix A-3:** każdy chip Menu 3 dostaje `border c.border` (dziś brak)
 
 **③ Tab Menu 2 (pill)** — regresja z walkthrough „plain text zamiast pill":
@@ -566,11 +629,11 @@ Każdy element referuje 9.1. Podane tylko odchylenia od foundation.
 
 **⑩ Lewy rail (narzędzia canvasu)** — wzorzec z Ideas do rozniesienia:
 - kontener: bg `c.surface`, border-right `c.border-subtle`, szer. ~56 (ikony) lub ~200 (z label)
-- narzędzie: ikona 20, h-10, radius md, tooltip; active bg `c.accent-soft`
+- narzędzie: ikona 20, h-10, radius md, tooltip; active bg `bg-state-selected` (neutralne — **NIE `c.accent-soft`**, SYS-1)
 - **znika całkowicie gdy pusty** (nie rezerwuje miejsca)
 
 **⑪ Prawy panel (sekcje rozwijane)**
-- kontener: bg `c.surface`, border-left `c.border-subtle`, szer. 320–380
+- kontener: bg `c.surface`, border-left `c.border-subtle`, szer. **360 (zakres 320–420)** — SYS-2 §9.1a
 - sekcja accordion: nagłówek L1 + chevron 16; treść padding 16
 - pole właściwości: label L4 `c.text-muted` + wartość L3; dzielnik `c.border-subtle`
 
@@ -581,7 +644,7 @@ Każdy element referuje 9.1. Podane tylko odchylenia od foundation.
 
 **⑬ Preview pane** (= skrócony Artefakt, A-5):
 - struktura: Menu 1 artefaktu (read-only) + centrum read-only + stopka „Otwórz pełny" (primary)
-- ten sam język co pełny artefakt, mniej stref; szer. 400–480, border-left `c.border`
+- ten sam język co pełny artefakt, mniej stref; szer. **`clamp(340px, 28%, 480px)`** (preview listowy — INNA powierzchnia niż prawy panel artefaktu), border-left `c.border` — SYS-2 §9.1a
 
 **⑭ Stany empty / loading / error** (część każdej powierzchni):
 - empty: ikona 24 `c.text-muted` + L2 tytuł + L4 opis + primary „co zrobić" (NIE „No data")
@@ -599,7 +662,7 @@ Skan realnych komponentów (src/components/ui/**) wykrył 26 typów poza pierwsz
 | # | Element | Struktura + light/dark | Uwaga |
 |---|---------|------------------------|-------|
 | ⑮ | Modal / Dialog | bg `c.surface`, radius xl, shadow hig-2xl, backdrop `rgba(0,0,0,.4)`+blur; nagłówek L2 + ×; stopka = przyciski; rozmiary sm/md/lg/xl/full | ≠ preview (⑬); focus-trap+Esc |
-| ⑯ | Drawer / Sheet | bg `c.surface`, border `c.border`, slide 200ms; szer. 360–480; nagłówek L2 + × | boczny panel akcji |
+| ⑯ | Drawer / Sheet | bg `c.surface`, border `c.border`, slide 200ms; szer. **256–480** (warianty dyskretne sm/md/lg/xl `Drawer.tsx`, NIE zakres ciągły — SYS-2 §9.1a pkt 5); nagłówek L2 + × | boczny panel akcji |
 | ⑰ | Popover | bg `c.surface-raised`, border `c.border`, radius md, shadow hig-lg | edycja inline w komórce |
 | ⑱ | Tooltip | bg `c.text` / text `c.bg` (odwrócone), radius sm, L5, delay 300ms | krótka podpowiedź hover |
 | ⑲ | Toast / snackbar | bg `c.surface`, border-left 3px semantyczny (success/danger/warn/info), radius md, shadow hig-lg, auto-dismiss | wariant = kolor semantyczny, NIE crimson |
@@ -609,20 +672,20 @@ Skan realnych komponentów (src/components/ui/**) wykrył 26 typów poza pierwsz
 
 | # | Element | Struktura + light/dark | Uwaga |
 |---|---------|------------------------|-------|
-| ㉑ | Checkbox | 16, border `c.border`, radius xs, checked bg `c.accent` + check biały; indeterminate = myślnik | rdzeń multi-select (A-1) |
-| ㉒ | Radio | 16, border `c.border`, selected kropka `c.accent` | grupy wyboru |
-| ㉓ | Toggle / Switch | tor 36×20 radius pill; off bg `c.border`, on bg `c.success` lub `c.accent`; gałka biała | ustawienia binarne |
-| ㉔ | Slider | tor `c.border` h-1, wypełnienie `c.accent`, gałka 16 biała border `c.border` | parametry AI/workload |
+| ㉑ | Checkbox | 16, border `c.border`, radius xs, checked bg `c.info` + check biały (**NIE `c.accent`** — SYS-1; zgodne z realną implementacją `bg-c-focus-solid` w `src/components/ui/checkbox.tsx`, ta sama niebieska rodzina); indeterminate = myślnik | rdzeń multi-select (A-1) |
+| ㉒ | Radio | 16, border `c.border`, selected kropka `c.info` (**NIE `c.accent`** — SYS-1, sama rodzina co checkbox ㉑ `bg-c-focus-solid`) | grupy wyboru |
+| ㉓ | Toggle / Switch | tor 36×20 radius pill; off bg `c.border`, on bg `c.success` (**NIE `c.accent`** — usunięto dwuznaczność „lub", SYS-1); gałka biała | ustawienia binarne |
+| ㉔ | Slider | tor `c.border` h-1, wypełnienie `c.info` (**NIE `c.accent`** — SYS-1, sygnał kierunkowy jak progress), gałka 16 biała border `c.border` | parametry AI/workload |
 | ㉕ | Textarea / Input / Label | jak ⑤; Label = L4 `c.text-secondary` nad polem | spójne z input |
 
 **C) Sprzężenie zwrotne (feedback)**
 
 | # | Element | Struktura + light/dark | Uwaga |
 |---|---------|------------------------|-------|
-| ㉖ | Progress bar | tor `c.surface-raised` h-1.5 radius pill, wypełnienie `c.accent` (lub semantyczny); label N/L5 | 235 użyć — ujednolicić |
-| ㉗ | Progress ring | okrąg `c.border`, łuk `c.accent`; środek = N | KPI/gate readiness |
+| ㉖ | Progress bar | tor `c.surface-raised` h-1.5 radius pill, wypełnienie `c.info` (@100% `c.success`) — **NIE `c.accent`** (SYS-1; zgodne z §14.2: „wypełnienie `bg-c-info`, @100% `bg-c-success`"); label N/L5 | 235 użyć — ujednolicić |
+| ㉗ | Progress ring | okrąg `c.border`, łuk `c.info` (@100% `c.success`) — **NIE `c.accent`** (SYS-1, ten sam wzorzec co ㉖); środek = N | KPI/gate readiness |
 | ㉘ | Skeleton | bg `c.surface-raised`, puls higSkeleton; kształt = docelowy layout | wariant per powierzchnia |
-| ㉙ | Spinner | okrąg 16–24, `c.accent`, higSpin | inline loading |
+| ㉙ | Spinner | okrąg 16–24, `c.info` (**NIE `c.accent`** — SYS-1, spójne z progress ㉖㉗), higSpin | inline loading |
 | ㉚ | Alert / Banner inline | bg semantyczny-soft, border-left 3px, ikona 16 + L2 tytuł + L3 opis | info/warn/error w treści |
 
 **D) Nawigacja / struktura**
@@ -630,10 +693,10 @@ Skan realnych komponentów (src/components/ui/**) wykrył 26 typów poza pierwsz
 | # | Element | Struktura + light/dark | Uwaga |
 |---|---------|------------------------|-------|
 | ㉛ | Breadcrumb | L4 `c.text-muted`, separator „/" `c.border-strong`, ostatni `c.text` | ścieżka powrotu (Menu 1) |
-| ㉜ | Tabs underline | NIE mylić z pill ③; underline `c.accent` 2px, tab `c.text-secondary`→`c.text` | **decyzja: pill=Menu 2 modułu, underline=wewnątrz artefaktu** |
+| ㉜ | Tabs underline | NIE mylić z pill ③; underline `c.info` 2px (**NIE `c.accent`** — SYS-1, sygnał kierunkowy „która zakładka aktywna", ta sama rola co checkbox/stepper), tab `c.text-secondary`→`c.text` | **decyzja: pill=Menu 2 modułu, underline=wewnątrz artefaktu** |
 | ㉝ | Accordion / Collapsible | nagłówek L2 + chevron 16 obrót 200ms; body padding 16 | poza prawym panelem |
-| ㉞ | Stepper / Wizard | krok = kółko 24 (aktywny bg `c.accent`, zrobiony `c.success`✓, przyszły `c.border`) + L4; łącznik `c.border` | generatory/onboarding |
-| ㉟ | Pagination | przyciski ghost 32, aktywny bg `c.accent-soft` text `c.text` | listy z paginacją |
+| ㉞ | Stepper / Wizard | krok = kółko 24 (aktywny bg `c.info` — **NIE `c.accent`**, SYS-1, sygnał kierunkowy; zrobiony `c.success`✓, przyszły `c.border`) + L4; łącznik `c.border` | generatory/onboarding — zachowanie: §13.7 |
+| ㉟ | Pagination | przyciski ghost 32, aktywny bg `bg-state-selected` (neutralne — **NIE `c.accent-soft`**, SYS-1) text `c.text` | listy z paginacją |
 | ㊱ | Divider / Separator | `c.border-subtle` 1px | sekcje |
 
 **E) Tożsamość / dane**
@@ -754,7 +817,7 @@ Napisz powłokę raz (Menu 1/3 + kebab + prawy panel + preview + stany + overlay
 |--------|-----:|----------:|-----|---------------|
 | Menu 1 modułu | 56 | 24 | `c.surface` | `c.border-subtle` |
 | Menu 2 pill | 44 | 24 | `c.bg` | — |
-| Menu 3 | 48 | 24 | `c.bg` | `c.border-subtle` |
+| Menu 3 | 44 | 24 | `c.bg` | `c.border-subtle` |
 | Nagłówek tabeli | 40 | 16 | `c.surface` (sticky) | `c.border-subtle` |
 | Wiersz | 44 | 16 | `c.surface` | `c.border-subtle` |
 | Paginacja | 48 | 24 | `c.surface` | — |
@@ -775,7 +838,7 @@ Napisz powłokę raz (Menu 1/3 + kebab + prawy panel + preview + stany + overlay
 | focus (klawiatura) | `c.surface-raised` | ring `0 0 0 2px c.focus` inset |
 | disabled/locked | `c.surface` | ikona-lock 12 `c.text-muted`, opacity-60 |
 
-**Prawy panel (preview):** szer. 420, border-left `c.border`. `⑬` = Menu1 read-only + centrum read-only + stopka `①`„Otwórz pełny". Pojawia się przy zaznaczeniu 1 wiersza; przy multi → zamiast preview „N zaznaczonych" + akcje zbiorcze.
+**Prawy panel (preview):** szer. `clamp(340px, 28%, 480px)` (preview listowy, SYS-2 §9.1a), border-left `c.border`. `⑬` = Menu1 read-only + centrum read-only + stopka `①`„Otwórz pełny". Pojawia się przy zaznaczeniu 1 wiersza; przy multi → zamiast preview „N zaznaczonych" + akcje zbiorcze.
 
 **Zachowania:**
 - Klik w wiersz → preview. Klik w tytuł → pełny artefakt. `㉑`checkbox → multi-select.
@@ -793,12 +856,12 @@ Napisz powłokę raz (Menu 1/3 + kebab + prawy panel + preview + stany + overlay
 **Wymiary powłoki:**
 | Strefa | Wys./Szer. | Padding | Tło | Krawędź |
 |--------|-----------:|--------:|-----|---------|
-| Menu 1 artefaktu | 48 | px-16 | `c.surface` | dół `c.border-subtle` |
-| Menu 2 (archetyp) | 40 | px-16 | `c.bg` | dół `c.border-subtle` |
+| Menu 1 artefaktu | 60 | px-16 | `c.surface` | dół `c.border-subtle` |
+| Menu 2 (archetyp) | 48 | px-16 | `c.bg` | dół `c.border-subtle` |
 | Menu 3 | 44 | px-16 | `c.bg` | dół `c.border-subtle` |
 | Lewy rail (A) | szer. 56 / 240 | — | `c.surface` | prawo `c.border-subtle` |
 | Centrum | wypełnia | wg archetypu | `c.bg`/`c.surface` | — |
-| Prawy panel | szer. 360 (320–420) | — | `c.surface` | lewo `c.border-subtle` |
+| Prawy panel | szer. 360 (320–420) — SYS-2 §9.1a | — | `c.surface` | lewo `c.border-subtle` |
 
 **Menu 1 `⑫` (dokł., lewa→prawa):** `←`back ikon-20 h-32 · `㊱`divider · ikona-typ 16 `c.text-secondary` · tytuł inline L2 (klik→`⑤`input) · `④`status-lifecycle · „Zapisano •" L5 `c.text-muted` ‖ (prawa) `[indeks]` ghost h-32 · `①`primary h-36.
 
@@ -837,10 +900,13 @@ Napisz powłokę raz (Menu 1/3 + kebab + prawy panel + preview + stany + overlay
 > **EDYCJI** (gotowa do pisania); karta ZATWIERDZONA/gotowa → **PODGLĄD** (czysta prezentacja klientowi).
 > Wyjątki twarde: **Tool** = tylko-do-odczytu z założenia; **Notification** = arkusz do wypełnienia (Edycja);
 > **Interview** = aktywny warsztat (Edycja). Reszta (Task·Decision·Insight·Initiative) wg reguły stanu.
-> *(Mapowanie stanów pośrednich „W recenzji"/„W realizacji" → do potwierdzenia — RAPORT §7 pkt 3.)*
+> Mapowanie stanów pośrednich: „W recenzji” i inne stany decyzyjne otwierają widok podglądu z akcjami decyzji; „W realizacji” otwiera workspace wykonawczy w trybie edycji zgodnym z capabilities.
 >
-> **Wysokość paska:** cel „bliżej 48-62" spełniony (chip zszedł do kebaba, 77px zniknęło); realnie 60-62px
-> (`py-3`) — zejście do kanonicznych 48px zmienia wszystkie 7 kart naraz i wymaga osobnego akceptu na zrzutach.
+> **Wysokość paska:** Menu 1 artefaktu ma kanoniczne 60px. Menu 2 ma 48px, a kontekstowe Menu 3 ma 44px. Nie obniżamy Menu 1 do 48px.
+> **Dług doc↔kod (2026-08-02):** realna wysokość Menu 3 w kodzie (`MENU_3_ROW_CLASS` w
+> `src/components/shared/ModuleMenu3.tsx`: `py-2` + `min-h-8` ⇒ ≈48px) przekracza wartość docelową 44px
+> zapisaną tutaj — dług do rozstrzygnięcia osobno (albo kod zejdzie do 44px, albo dokument podniesie
+> cel do 48px); do czasu decyzji dokument utrzymuje **44px jako wartość docelową**.
 
 **Menu 3:** nawigacja wewn. (klasa L) — `③`pill gdy sekcje równorzędne / `㉜`underline gdy pod-widoki; + view-local ‖ `①`[AI] (skraj prawy). **Klasa S: Menu 2+3 nie istnieją** — artefakt otwiera się jako `⑯`drawer/`⑮`modal, treść w prawym-panelu-jako-centrum.
 
@@ -880,7 +946,7 @@ Nagłówek sekcji h-44 L1 + chevron-16 (obrót 200ms).
 | **Gantt/Timeline** | wiersz h-40; `㊷`belka h-24 radius-sm | „dziś" linia 2px `c.accent` | belka = `c.tag-n` per workstream |
 | **Tabela sterująca** | `㊴`DataTable wiersz h-40 | `⑰`inline-edit popover w komórce | wartości semantyczne (over/under) |
 | **Dashboard** | `㊳`tile min-w-200 grid gap-16 | N-metryka + trend + `㊸`wykres | serie = `c.tag-*` |
-| **Wizard** | `㊞`stepper góra h-56; treść max-w-720 wyśr.; stopka h-64 | kontrolki `⑤㉑㉒㉓㉔` | krok✓=`c.success`, aktywny=`c.accent` |
+| **Wizard** | `㊞`stepper góra h-56; treść max-w-720 wyśr.; stopka h-64 | kontrolki `⑤㉑㉒㉓㉔` | krok✓=`c.success`, aktywny=`c.info` (**NIE `c.accent`** — SYS-1, spójne z ㉞) |
 
 **Reguła palety (krytyczna):** serie/kategorie=`c.tag-1…12` · stany=semantyczne · akcent/„teraz"=`c.accent`. **Crimson NIGDY jako dana** (fix lime/pomarańcz z M15).
 
@@ -946,7 +1012,7 @@ Nowy ekran = wybierz powierzchnię (L/A/I) → weź jej powłokę z §11 bez zmi
 
 ## 13. INSTANCJACJA PER ARTEFAKT — porównywalne wypełnienie szablonu
 
-> Cel: każdy artefakt tego samego archetypu ma **tę samą strukturę**, różni się tylko treścią. Ikony = propozycja lucide (do potwierdzenia z ikonografią). To definiuje STAN DOCELOWY — zastępuje dzisiejsze niespójne implementacje.
+> Cel: każdy artefakt tego samego archetypu ma **tę samą strukturę**, różni się tylko treścią. Ikony pochodzą z Lucide i podlegają kanonowi ikonografii. To definiuje STAN DOCELOWY — zastępuje dzisiejsze niespójne implementacje.
 
 ### 13.1 Archetyp C — REKORD (bazowa nawigacja = **Przegląd · Powiązania · Aktywność**; klasa S bez zakładek)
 
@@ -990,6 +1056,134 @@ Nowy ekran = wybierz powierzchnię (L/A/I) → weź jej powłokę z §11 bez zmi
 | Studio Diagram | `git-branch` | „Powiąż z artefaktem" | węzeł·połącz·layout |
 | Playbook | `route` | „Uruchom test" | node·warunek·połącz |
 
+### 13.3a Kontrakt zakresu AI na canvasie (Archetyp A) — normatywny, zakres bramki SKORYGOWANY 2026-08-02 (K-44)
+
+`UI_UX_IMPLEMENTATION_STANDARD.md` §7.4 obiecuje: „AI działa na zaznaczonym węźle, gałęzi albo całej
+mapie — zakres jest jawny." Ten dokument, SSOT anatomii canvasu, dotąd opisywał wyłącznie **miejsce**
+slotu AI (§5 M3 `[AI: podpowiedz]`, §2 `▸Historia/AI`) — nie **zakres** jego działania. Uzupełnienie:
+
+**Nazewnictwo zestrojone z N-mode (K-44) — nie trzecia, niepowiązana taksonomia.** N-mode ma już
+udokumentowaną i wdrożoną taksonomię trzech poziomów AI — **tool → section → field**
+(`src/components/shared/NModeLayout/types.ts`, `NModeShellProps.toolAIActions`/`aiContextActions`
+l.291-302 „3-level AI model: tool / section / field"; `FieldAIButton.tsx` = poziom field). Trzy poziomy
+zakresu canvasu poniżej to TA SAMA drabina field<section<tool, zastosowana do centrum-canvas zamiast
+centrum-formularza — nie osobne pojęcie:
+
+1. **Trzy poziomy zakresu — MUST, wybieralne z UI:**
+   - **Węzeł zaznaczony** (poziom **field**) — pojedynczy element z zaznaczenia; odpowiednik
+     `FieldAIButton` przy pojedynczym polu formularza.
+   - **Gałąź/poddrzewo** (poziom **section**) — zaznaczony węzeł + wszyscy potomkowie; odpowiednik AI
+     sekcyjnego (`aiContextActions`) w N-mode.
+   - **Cały canvas** (poziom **tool**) — wszystkie węzły bieżącego widoku; odpowiednik `toolAIActions`
+     w `NModeShellProps`.
+2. **Zakres MUSI być nazwany w UI PRZED uruchomieniem.** Etykieta/chip obok akcji AI pokazuje na czym
+   AI zadziała i ile elementów obejmuje, np. „AI: podpowiedz · gałąź/section (12 węzłów)". **ZAKAZ**
+   uruchamiania akcji AI bez widocznej etykiety zakresu.
+3. **Brak zaznaczenia → zakres domyślny jawny, nie domyślany po cichu.** Gdy nic nie jest zaznaczone,
+   domyślny zakres (typowo „cały canvas"/tool) jest **napisany** w chipie/etykiecie — użytkownik widzi,
+   na czym AI zadziała, zanim kliknie.
+4. **Wynik AI = propozycja/diff — NIGDY natychmiastowa mutacja grafu.** Nowe/zmienione węzły wchodzą
+   jako warstwa „do zatwierdzenia" (wizualnie odróżnialna: obrys/badge „proponowane"), z akcjami
+   approve/reject/edit **per-węzeł** ORAZ **zbiorczo** („Zatwierdź wszystko" / „Odrzuć wszystko").
+5. **Undo = jedna jednostka.** Cofnięcie operacji AI cofa **całą** operację jednym Cmd+Z — nie N
+   osobnych cofnięć per zmieniony/dodany węzeł.
+6. **Anulowanie streamu = zero efektu ubocznego.** Przerwanie generowania (Stop) w trakcie streamingu
+   propozycji zostawia graf **w stanie sprzed operacji** — żaden częściowo wygenerowany węzeł nie zostaje
+   na płótnie bez akceptacji.
+
+**Realny stan dziś (punkt wyjścia, NIE kontrakt spełniony — K-44).** System powyżej nie istnieje w
+żadnym canvasie. `src/components/MyWork/mindmap/aiSidekickContext.ts` (`detectMindmapIntent`) to
+HEURYSTYKA: wnioskuje intencję (`blank_canvas`/`editing_node`/`expanding_branch`/`gap_analysis`/…) z
+zaznaczenia i stanu mapy, ale nie pokazuje użytkownikowi chipa/etykiety zakresu przed uruchomieniem (pkt
+2 złamany wszędzie) i nie ma jawnego trybu „cały canvas" jako wyboru użytkownika — zakres jest zawsze
+domyślany po cichu. `src/components/MyWork/mindmap/AIProposalDiffModal.tsx`
+(`onApply: (selectedNodeIndices: Record<number, boolean>) => void`) implementuje CZĘŚCIOWO pkt 4 —
+approve/reject per-węzeł po fakcie — ale bez poprzedzającego wyboru zakresu i bez jednego miejsca na
+zbiorcze „Zatwierdź/Odrzuć wszystko" opisane w pkt 4.
+
+**Status DoD — SKORYGOWANY (K-44, 2026-08-02).** Wcześniejsza redakcja wpisywała ten kontrakt jako
+DoD-blocking MUST w §18.1 dla WSZYSTKICH sześciu artefaktów archetypu A jednocześnie (Mind Map,
+Whiteboard, Process Flow, Discovery Tool, Studio, Playbook), mimo że system nie istnieje w ŻADNYM z
+nich. Wymóg blokujący odbiór 6 artefaktów bez planu wdrożenia, kosztu i właściciela jest martwym
+zapisem, nie egzekwowalną bramką. Korekta:
+- `spec_status` kontraktu = `APPROVED_SPEC` — bez zmian, to WCIĄŻ jest właściwy cel docelowy.
+- **DoD §18.1, punkt „zakres AI na canvasie" przestaje być bramką bezwarunkową.** Blokuje odbiór
+  KONKRETNEGO canvasu dopiero od momentu, gdy ten canvas w ogóle ma UI wyboru zakresu AI (czyli chroni
+  przed REGRESJĄ wobec już wdrożonego wyboru) — nie blokuje canvasów, które (jak dziś wszystkie sześć)
+  nie mają żadnego wyboru zakresu, bo tam nie ma czego regresować. Dopóki żaden canvas nie implementuje
+  pkt 1-3, ten punkt DoD jest **nieaktywny** dla danego canvasu (nie liczy się do przechodzi/nie
+  przechodzi), a nie cicho-niespełniony.
+- Podniesienie z powrotem do bezwarunkowego MUST dla wszystkich sześciu wymaga: (1) referencyjnej
+  implementacji na JEDNYM canvasie (kandydat naturalny: Mind Map — ma już
+  `aiSidekickContext.ts`+`AIProposalDiffModal.tsx` jako częściowy fundament), (2) daty i właściciela dla
+  pozostałych pięciu.
+
+Weryfikowane per canvas przy odbiorze DoD §18.1 (dopisany punkt, patrz warunek wyżej); nie podnosi
+automatycznie `runtime_status` istniejących implementacji.
+
+### 13.3b Limity wydajności canvasu (Archetyp A) — cel vs. realny kod (KOREKTA 2026-08-02, K-43)
+
+Próg **docelowy** mieszka WYŁĄCZNIE w
+`docs/ui-standards/02-components/COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md` — ten SSOT anatomii go nie
+niósł. Wpisany tu przez odwołanie (liczby stamtąd, nie nowe). Panel adwersaryjny (K-43, 2026-08-02)
+zweryfikował trzy pliki: próg docelowy **nie jest mierzony automatycznie**, a realny kod ma WŁASNE, inne
+progi — trzy niezależne liczby, żadna nie zgadza się z appendixem:
+
+- **Próg docelowy (COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md, aspiracyjny, nieodbierany dziś):** ≤500
+  węzłów / ≤750 krawędzi, pan/zoom bez zadań renderu >50ms.
+- **Realne progi w kodzie (rozjechane, żaden nie mierzy 50ms):**
+  - `src/components/MyWork/mindmap/virtualization.ts:18` — `VIRTUALIZATION_NODE_THRESHOLD = 300`
+    (viewport culling ReactFlow włącza się od 300 węzłów, nie od 500).
+  - `src/components/MyWork/mindmap/LargeMapOptimizer.tsx:10-14` — własna trójstopniowa skala:
+    `WARNING=150` (ostrzeżenie) · `CRITICAL=300` · `AUTO_SIMPLIFY=500` (wymuszony tryb uproszczony).
+  - Żadna z tych liczb nie pochodzi z appendixu ani nie jest z nim uzgodniona.
+- **Brak automatycznej metody pomiaru.** `tests/e2e/m06/m06-21-large-maps.spec.ts` (21.1 „Simplified
+  mode", 21.2 „Performance na dużej mapie") to `test.skip(true, '[MANUAL]')` — nikt nie mierzy progu w
+  CI. Kod przyznaje to wprost we własnym komentarzu testu 21.2: „no occlusion culling above ~300 nodes →
+  P2 delta (deferred)" — czyli powyżej ~300 węzłów płynność **sam kod deklaruje, że nie jest** dotrzymana,
+  mimo że appendix zapisuje 500 jako twardy próg.
+- **Ten dokument NIE udaje, że próg 500/750/50ms jest dziś odbieralnym MUST-em.** Dopóki nie istnieje
+  automatyczny test wydajności w CI zastępujący `[MANUAL]` skip, punkt „limity wydajności canvasu"
+  **NIE jest bramką DoD §18.1** — jest zapisanym celem architektonicznym, nie wymogiem egzekwowalnym na
+  odbiorze. Podniesienie z powrotem do bramki wymaga: (1) automatycznego testu w CI mierzącego realny
+  czas renderu na syntetycznym grafie 500/750 węzłów, zastępującego dzisiejszy `[MANUAL]` skip, (2)
+  uzgodnienia trzech rozjechanych progów kodu (150/300/500 vs 300 vs 500/750) w jedną liczbę.
+- **Po przekroczeniu progu (cel, bez zmian) — MUST przynajmniej jedno z:**
+  1. **Ostrzeżenie + degradacja świadoma:** baner `㉚` „Duży graf (>500 węzłów) — nawigacja może
+     zwolnić" + automatyczne wyłączenie kosztownych efektów (cienie węzłów, animacje krawędzi, live
+     minimapa) na rzecz płynności pan/zoom.
+  2. **Wirtualizacja:** renderuj tylko węzły w viewport + bufor, reszta poza DOM. Preferowane dla
+     narzędzi, gdzie przekroczenie progu jest regularne (np. Discovery Tool na dużych projektach), nie
+     wyjątkowe.
+- **Obowiązek alternatywnego widoku.** Graf, którego rozmiar realnie uniemożliwia sensowną nawigację
+  przestrzenną, MUSI mieć alternatywny **widok listy/detail** (tabela węzłów z filtrem/szukajką, SPEC-L)
+  — canvas przestaje być jedynym sposobem dotarcia do węzła.
+
+### 13.3c Klawiatura na canvasie — świadoma luka runtime, bramka (CANON §3.2)
+
+`UI_UX_IMPLEMENTATION_STANDARD.md` §13 wymaga WCAG 2.2 AA („wszystkie funkcje dostępne bez myszy"), DoD
+§18.1 wymaga pełnego cyklu Tab. §7 pkt 8 tego dokumentu dotąd mówił „skróty przewidziane teraz, wdrożone
+później" — bez terminu i bez bramki. To nieuczciwe wobec obu wymogów. Korekta — nie obietnica
+implementacji, tylko jawne nazwanie luki i jej konsekwencji:
+
+**Minimalny wymagany zestaw klawiaturowy dla canvasu (kontrakt docelowy, każde bez myszy):**
+1. **Utworzenie węzła** — skrót (np. `N`, lub `Enter` na zaznaczonym węźle = nowy sąsiad).
+2. **Nawigacja między węzłami** — strzałki/Tab przechodzą po grafie w spójnej kolejności (wg struktury
+   drzewa, nie wg przypadkowego DOM-order).
+3. **Przesunięcie węzła** — strzałki + modyfikator (np. Shift+strzałki) przesuwają zaznaczony węzeł.
+4. **Połączenie węzłów** — skrót wchodzi w „tryb połącz" z zaznaczonego węzła; strzałki/Tab wybierają
+   cel; Enter zatwierdza.
+5. **Usunięcie** — `Delete`/`Backspace` na zaznaczonym węźle/krawędzi (z potwierdzeniem, gdy ma dzieci).
+6. **Wyjście z canvasu** — `Esc` zwraca fokus poza płótno (rail/panel/back), zgodnie z §12.4.
+
+**Status: świadoma luka runtime (CANON §3.2), NIE przypis.** Dopóki powyższy zestaw nie jest wdrożony i
+zweryfikowany klawiaturą (bez myszy, oba motywy) na danym canvasie:
+- Ten canvas **NIE MOŻE** otrzymać `runtime_status` wyższego niż `PARTIAL`.
+- Ten canvas **NIE przechodzi** DoD §18.1 — pozycja „Pełny cykl Tab/Shift+Tab" §18.1 rozszerza się o
+  punkty 1–6 powyżej dla archetypu A, nie ogranicza do przejścia fokusa między elementami chrome.
+- To jest **bramka odbioru**, nie deklaracja intencji — audytor sprawdza WZROKIEM + klawiaturą (złota
+  reguła CLAUDE.md: realny runtime, nie flaga/doc).
+
 ### 13.4 Archetyp D — MATRYCA (bazowa: Menu 3 = **Dane · Mapa/Wizualizacja · Raporty**)
 
 | Artefakt | Ikona | Menu 1 primary | Menu 3 specyfika | Rail |
@@ -1010,6 +1204,84 @@ Nowy ekran = wybierz powierzchnię (L/A/I) → weź jej powłokę z §11 bez zmi
 - **Template** `layout-template` (meta) — dziedziczy powłokę archetypu docelowego + tryb „edycja slotów".
 - **Chat** `message-circle` — jedyna KONWERSACJA; osobny SPEC-K (Q: 4. typ potwierdzony).
 
+### 13.7 Kontrakt generatora / wizarda (SPEC-W) — zachowanie, nie tylko wygląd
+
+> Wymagany przez `CANON.md` §8 i `UI_UX_IMPLEMENTATION_STANDARD.md` §8. Ten dokument dotąd opisywał
+> Stepper (㉞, §9.2b) wyłącznie jako atom wizualny — „krok = kółko 24 + L4" — czyli jak wizard WYGLĄDA,
+> nie jak się ZACHOWUJE. Dotyczy każdego ekranu wieloetapowego tworzącego/mutującego artefakt:
+> generatory (inicjatyw/raportów), Onboarding, Audit Orchestrator, Context Builder, Stage Gate checklist
+> (§0C Typ 4 „Kreatory"). Zapisy poniżej są **normatywne i mierzalne** (MUST/ZAKAZ), egzekwowalne na
+> odbiorze — patrz powiązanie z DoD §18.1 na końcu.
+
+1. **Postęp — MUST.** „Krok N z M" widoczny **tekstowo** obok kółek stepper (nie same kółka bez liczby —
+   L4 tuż nad/pod stepperem). Aktywny krok ma `aria-current="step"`. Zmiana kroku ogłaszana czytnikowi
+   (region `aria-live="polite"` z tekstem „Krok N z M: {nazwa kroku}").
+2. **Back — MUST.** Przycisk „Wstecz" dostępny na **każdym** kroku poza pierwszym i poza krokiem
+   wykonania mutacji (submit/generowanie w toku). Powrót **NIE czyści** pól już wypełnionych na
+   wcześniejszych krokach — stan trzymany w pamięci wizarda przez cały cykl, nie per-krok.
+3. **Save draft.** Jasno zdefiniowane: kiedy szkic powstaje (automatycznie przy zmianie kroku, albo
+   jawnym przyciskiem „Zapisz szkic" — jedno z dwóch, nie domyślanie), gdzie żyje (rekord z lifecycle
+   `draft`, §6.3, widoczny w liście modułu macierzystego), jak długo (minimum do końca sesji; TTL dłuższy
+   = decyzja per narzędzie, ale MUSI być udokumentowana przy implementacji).
+4. **Cancel — MUST, ZAKAZ dwuznaczności.** Przycisk „Anuluj" niesie **jawną informację o skutku**: albo
+   „Anuluj i zachowaj szkic", albo „Anuluj i odrzuć zmiany". **Goły „Anuluj" bez etykiety skutku jest
+   zakazany.** Gdy skutkiem jest odrzucenie danych → potwierdzenie `⑮`modal (guard niezapisanych zmian,
+   §12.4), nie natychmiastowe zamknięcie.
+5. **Resume po odświeżeniu/utracie sesji.** Wizard z istniejącym szkicem (pkt 3) odtwarza się na tym
+   samym kroku po powrocie na jego URL/route. Krok wykonania mutacji (generowanie w toku) **nie jest**
+   krokiem, do którego wraca się przez proste odświeżenie — patrz pkt 10 (recovery generowania).
+6. **Walidacja — MUST.** Błąd pola pokazany **inline przy polu** (L4, `c.danger`), nie tylko zbiorczo na
+   końcu. Próba „Dalej" z błędem → fokus przenosi się na **pierwsze** niepoprawne pole. Blokada „Dalej"
+   TYLKO na realnej walidacji (nie: puste opcjonalne pole, nie: obowiązkowe-ale-jeszcze-nietknięte przy
+   pierwszym renderze kroku).
+7. **Review przed mutacją — MUST.** Ostatni krok przed nieodwracalną akcją (submit/generuj) pokazuje
+   **zakres skutków** (co powstanie/zmieni się — liczba obiektów, zasięg, koszt jeśli dotyczy), zanim
+   użytkownik kliknie. Zakaz „kliknij i zobacz co się stanie".
+8. **Idempotency — MUST, mechanizm (KOREKTA 2026-08-02, K-42 — nie tylko zakres).** Poprzednia redakcja
+   nazywała zakres („klucz per sesja × krok wykonania") bez odpowiedzi na kto/gdzie/TTL/kolizja —
+   niesprawdzalne na odbiorze. Konkretny kontrakt:
+   - **Kto generuje:** klient, w momencie wejścia na krok wykonania (nie na starcie wizarda) — jeden
+     klucz per (sesja wizarda × krok wykonania), np. `${wizardSessionId}:${stepId}` (UUID v4 lub
+     równoważnie unikalny).
+   - **Gdzie żyje:** nagłówek HTTP `Idempotency-Key` na żądaniu mutującym (POST/PUT) — NIE pole
+     payloadu. Payload może się nieznacznie różnić przy ręcznym retry (np. drobna korekta pola przed
+     ponowieniem); klucz musi to przetrwać niezmieniony.
+   - **TTL backendu:** serwer pamięta klucz→wynik minimum 24h (typowy czas między nieudaną próbą a
+     ręcznym powrotem użytkownika, który zamknął kartę). Dłuższy TTL = decyzja per endpoint,
+     udokumentowana przy implementacji.
+   - **Kolizja (ten sam klucz, drugie żądanie):** backend **NIE tworzy drugiego rekordu** — zwraca
+     albo `200`/`201` z odpowiedzią z cache (ten sam obiekt co przy pierwszym sukcesie), albo `409` z
+     odsyłaczem do istniejącego zasobu (gdy endpoint nie cache'uje odpowiedzi). Jedna z tych dwóch
+     opcji jest wymagana per endpoint; ciche utworzenie duplikatu jest zakazane w obu wariantach.
+   Ponów po nieudanej próbie = **ten sam klucz**, nie nowy request.
+
+   **Kontrprzykład w kodzie, nie wzorzec (K-42).** `src/components/Audit/AuditOrchestratorWizard.tsx`
+   (`handleCreate`, ok. l.167–193) ŁAMIE ten kontrakt: `createProgram({...})` nie niesie żadnego klucza
+   idempotency. Jedyna ochrona jest `disabled={submitting || !name.trim()}` na przycisku (l.474) — to
+   chroni przed podwójnym kliknięciem w trakcie żądania, NIE przed timeout+ręczny retry (`submitting`
+   wraca na `false` w `finally` po błędzie; użytkownik klika ponownie → drugi POST → drugi rekord
+   programu). Pole `surveysGenerated: false` (l.183, ten sam plik) to **INNY, niepowiązany** mechanizm —
+   flaga run-once dla późniejszego, osobnego fan-outu ankiet z poziomu strony programu
+   (`generateSurveys`), nie ochrona `createProgram` przed duplikatem. Ten plik referuje się tu jako
+   **kontrprzykład do naprawy**, nie jako implementacja wzorcowa.
+9. **Partial failure — MUST, własny UI.** Wynik „wygenerowano X z Y, Z nieudanych" ma **dedykowany
+   ekran stanu**: lista sukcesów (✓ `c.success`) i porażek (✗ `c.danger` + powód) osobno. „Ponów"
+   działa **tylko na nieudanych elementach**, nie ponawia całości. **Zakaz** cichego udawania pełnego
+   sukcesu (sam toast „Gotowe" gdy część się nie powiodła). **Relacja do pkt 8 (K-42):** retry
+   per-element używa **NOWEGO klucza idempotency na element** (`${wizardSessionId}:${stepId}:${elementId}`),
+   nie klucza z pkt 8 — ten jest zdefiniowany per sesja×krok całościowy i nie ma znaczenia dla
+   pojedynczego elementu partial-failure; ponawianie jednego elementu nie może kolidować z kluczem,
+   który już oznacza sukces (lub porażkę) całego kroku.
+10. **Stan generowania.** Widoczny postęp (pasek/spinner `c.info` — §14.2 SYS-1) · przycisk Stop/Anuluj
+    bezpieczny w trakcie (nie zawiesza UI, nie gubi już wykonanej pracy) · bezpieczne wyjście (zamknięcie
+    karty w trakcie generowania nie gubi wyniku — recovery: po powrocie wizard pokazuje wynik albo stan
+    „generowanie przerwane, wznów/odrzuć"). Sukces prowadzi do **workspace nowo utworzonego artefaktu**
+    (`①`„Otwórz"), nie do samego `⑲`toast.
+
+**Powiązanie z DoD:** wizard/generator, który nie spełnia punktów 1–10, **nie przechodzi odbioru DoD
+§18.1** — patrz dopisany punkt w §18.1 DoD Artefaktu. `spec_status` tego kontraktu = `APPROVED_SPEC`;
+nie podnosi automatycznie `runtime_status` istniejących wizardów — każdy weryfikowany osobno.
+
 ---
 
 ## 14. SPEC-L PRECYZYJNIE — jak budujemy tabelę (zgodne z kanonem + referencją MyWork)
@@ -1017,13 +1289,24 @@ Nowy ekran = wybierz powierzchnię (L/A/I) → weź jej powłokę z §11 bez zmi
 > **To nie jest nowy standard — to konsolidacja istniejącego.** SSOT = `docs/ui-standards/03-modules/TABLE_AND_PREVIEW_CANON.md`. Referencja działająca = MyWork. Gdzie §11.1 podał inne liczby → **§14 wygrywa** (zgodny z kodem). Wartości podane jak SĄ + docelowy token; migracja `slate-*`→`c.*` = robota re-skinu (nie przeprojektowanie).
 
 ### 14.0 SSOT — kod
+
+**Metodologia liczenia „Użyć" (K-27/K-28, 2026-08-02) — obowiązuje cały §14:**
+- **import** — `grep -rln "import.*<Nazwa>" src/` (lub, gdy import jest rozbity na wiele linii,
+  `grep -rlE "from ['\"].*<Nazwa>['\"]" src/`, żeby złapać zamykającą linię destrukturyzacji)
+- **JSX** — `grep -rl "<Nazwa" src/` (realni konsumenci renderujący komponent — domyślna miara „ile
+  ekranów faktycznie go używa")
+- **wzmianka** — `grep -rln "Nazwa" src/` (najmniej wiarygodne — łapie importy typów, komentarze, nazwy
+  testów; NIE liczba konsumentów)
+Każda liczba niżej podana z metodą i datą. Kolizje nazw (dwa różne komponenty o tej samej nazwie w
+różnych katalogach) sprawdzone ręcznie przed policzeniem.
+
 | Rola | Plik | Użyć |
 |------|------|-----:|
-| Orkiestracja tabela+preview (J/K, historia, pin) | `shared/TableWithPreviewLayout.tsx` | 25 |
-| Tabela (nagłówki, resize, filtry, row-actions, persistKey) | `shared/ModuleHub/FilterableTable.tsx` | 24 |
-| Menu 3 klasy | `shared/ModuleMenu3.tsx` | 1 |
+| Orkiestracja tabela+preview (J/K, historia, pin) | `shared/TableWithPreviewLayout.tsx` | **18** (JSX, 2026-08-02; surowa wzmianka stringa = 28 — import + typy + komentarze, K-28) |
+| Tabela (nagłówki, resize, filtry, row-actions, persistKey) | `shared/ModuleHub/FilterableTable.tsx` | **26** (JSX, 2026-08-02) |
+| Menu 3 klasy | `shared/ModuleMenu3.tsx` | **27** (import, 2026-08-02; wcześniej „1" — K-27, drastycznie zaniżone) |
 | Kebab | `shared/RowActionsMenu.tsx` | — |
-| Widok kart (alt) | `shared/ModuleHub/GridView.tsx` | 8 |
+| Widok kart (alt) | `shared/ModuleHub/GridView.tsx` | **8** (JSX, 2026-08-02; wyklucza kolizję nazwy z niepowiązanym `MyWork/table/GridView.tsx`, który ma własnych 4 konsumentów pod inną nazwą importu — nie mylić) |
 
 Referencja wzorcowa: `MyTasksListContent`, `IdeasTableContent`, `DecisionsPanelContent`.
 
@@ -1057,6 +1340,24 @@ Kolejność: **tytuł (left) → metadane → akcje (right)**. Wyrównanie:
 
 **Stany wiersza (KOREKTA vs §9.2⑦/§11.1):** zaznaczenie = **neutralne/niebieskie**, `bg-slate-50 dark:bg-white/[0.06]` + 4px lewy akcent neutralny. **NIE `c.accent-soft` (crimson)** — commit SYS-1 „selection token = neutral/blue, not crimson". hover = `bg-slate-50/70 dark:bg-white/[0.03]`.
 
+**Zakres korekty SYS-1 (rozszerzony 2026-08-02, uzupełniony 2026-08-02 o kolejne pięć pozycji):** ta
+poprawka obejmuje **CAŁE §9.2 i §11.3**, nie tylko wiersz tabeli. Poprawione: chip Menu 3 (②,
+active/selected → `bg-state-selected`), lewy rail (⑩, active → `bg-state-selected`), checkbox (㉑,
+checked → `c.info`), toggle/switch (㉓, on → wyłącznie `c.success`, usunięta dwuznaczność z `c.accent`),
+slider (㉔, wypełnienie → `c.info`), progress bar/ring (㉖㉗, wypełnienie/łuk → `c.info`, @100%
+`c.success`), pagination (㉟, aktywny → `bg-state-selected`), **radio (㉒, selected kropka → `c.info`,
+sama rodzina co checkbox), spinner (㉙, → `c.info`, spójne z progress), tabs underline (㉜, aktywna
+zakładka → `c.info`), stepper/wizard (㉞ i duplikat w §11.3, aktywny krok → `c.info`), highlight
+zaznaczenia w Instrumencie (§15.3, → `bg-state-selected`)**. Reguła: **neutralne (`--state-selected`)
+dla zaznaczenia/wyboru bez kierunku; `c.info` (niebieski) tam, gdzie potrzebny sygnał
+kierunkowy/wypełnienia.** Crimson (`c.accent`) zostaje wyłącznie jako moment marki (M1 primary CTA,
+streaming ramka czatu) lub tam, gdzie dokument jawnie wskazuje semantykę destrukcyjną — a i tam
+docelowo `c.danger`, nie `c.accent` (§9.3 reguła 2-3). Po tej redakcji jedyne pozostałe `c.accent` w
+dokumencie to: definicja roli w §9.1, marker „dziś/teraz" na osi czasu (㊷ Gantt, §11.3, §15.4 — akcent
+brandu na linii, nie na danych), reguła palety wizualizacji (§9.2b, §10.3, §15.1 pkt 4 — wszystkie
+definicyjne, nie stan kontrolki) i ramka streamingu czatu (§16) — wszystkie zgodne z regułą „TYLKO
+moment marki/destrukcja", nie „stan aktywny/wybrany".
+
 ### 14.3 Multi-select (dokł.)
 - checkbox **h-3.5 w-3.5** (body), **h-4 w-4** (select-all); wyciszony, reveal-on-hover, zaznaczony zawsze widoczny.
 - API: `selectedIds · onToggleRow · onToggleAll · isAllSelected · isIndeterminate`.
@@ -1070,15 +1371,28 @@ Kolejność: **tytuł (left) → metadane → akcje (right)**. Wyrównanie:
 - **Fix A-4 (Edit Columns):** ikony eye NIE czerwone (`c.text-muted`), label NIE UPPERCASE (L3), instrukcja „drag to reorder" → `title`/tooltip nie body.
 
 ### 14.5 Preview pane — żelazny układ (§7.3b)
-Szer. **`clamp(340px, 28%, 480px)`**, separacja `gap-1.5` **bez `border-l`**.
-**Kolejność (MUST):**
+Szer. **`clamp(340px, 28%, 480px)`** (SYS-2 §9.1a — preview listowy, powierzchnia SPEC-L; RÓŻNA od
+prawego panelu artefaktu 360px/320–420px, §9.1a pkt 2), separacja `gap-1.5` **bez `border-l`**. SSOT
+kodu i implementacja **zgodne**: `shared/TableWithPreviewLayout.tsx:437,455` (orkiestracja §14.0, **18
+konsumentów JSX** — `grep -rl "<TableWithPreviewLayout" src/`, 2026-08-02; surowa wzmianka stringa daje
+28, patrz §14.0) implementuje dokładnie tę wartość — zero długu na tym wymiarze. Zgodne też z
+`TRIADA_KANON.md` §C9.
+
+**Kolejność (MUST, KOREKTA 2026-08-02 — K-16).** Poprzednia redakcja tego paragrafu stawiała „Co dalej"
+jako blok 6 i „Actions" jako blok 7 — sprzeczne z kodem (`StandardPreview.tsx` ok. l.309–370 renderuje
+`whatsNext` bezwarunkowo PO `actionRows`) i z siostrzanym `TABLE_AND_PREVIEW_CANON.md` §7.3/§A7, który tę
+samą sprzeczność już nazwał i naprawił tego samego dnia. Poprawione tutaj, zgodnie z kodem:
 1. **Header sticky:** kicker + tytuł (1 linia truncate) + [pin/link] + **Open** + ×
 2. **Meta bar:** status · typ · data (`p-4 rounded-lg`)
 3. **Details (⋮ Copy/Export/Download):** bogaty szablon (cel/zakres/kontekst) + word-count + scroll
 4. **AI:** chipy Summarize/Suggest
 5. **Relations:** (jeśli są) klikalne pills
-6. **Co dalej (create-strip):** `h-8 rounded-full` pills (Raport/Deck/Tabela/Idea/Note/Initiative)
-7. **Actions:** OPCJONALNE
+6. **Actions:** OPCJONALNE — pełny blok akcji (`ActionGridRow`), renderowany tylko gdy po odjęciu
+   duplikatów (Open już w headerze, Export/Download już w ⋮ Details) zostaje sensowna akcja
+**Poza numeracją TRIADY, zawsze na końcu, PO bloku 6:** **„Co dalej" (create-strip):** `h-8
+rounded-full` pills (Raport/Deck/Tabela/Idea/Note/Initiative) — opcjonalny, renderowany bezwarunkowo po
+`actionRows` w `StandardPreview.tsx`, nigdy przed akcjami.
+
 Stopka **`space-y-2.5`, BEZ dividerów**. **Anty-duplikacja:** dokładnie 1 „Open" (w headerze); Export/Download **tylko** w ⋮ Details.
 
 ### 14.6 Kebab (RowActionsMenu) — 3 strefy
@@ -1124,11 +1438,11 @@ Każdy instrument, cokolwiek w środku, ma tę samą ramę:
 | Kontrolki widoku | zoom/dopasuj (spatial) · zakres czasu (timeline) · filtr `⑰` · grupowanie | w pasku tytułu lub pod nim h-40 |
 | **Centrum** | **wolne** (podtyp §15.4) | `c.bg`/`c.surface` |
 | Legenda | gdy >1 seria: kropka `c.tag-n` + etykieta L5 | dół lub róg, `c.surface-raised` |
-| Prawy panel `⑪` | szczegół zaznaczonego elementu (progresywne ujawnianie) | szer. 320–360 |
+| Prawy panel `⑪` | szczegół zaznaczonego elementu (progresywne ujawnianie) | szer. **360 (zakres 320–420)** — ta sama powierzchnia co ⑪ prawy panel artefaktu, SYS-2 §9.1a pkt 6 |
 | Stany | `⑭`empty/`㉘`loading/error; `⑱`tooltip; `⑧`kebab elementu | wg §9 |
 
 ### 15.3 Niezmienniki interakcji (te same we WSZYSTKICH instrumentach)
-- **Zaznaczenie:** klik element → highlight (`c.accent-soft`) + szczegół w prawym panelu. Klik tła = odznacz.
+- **Zaznaczenie:** klik element → highlight `bg-state-selected` (neutralne — **NIE `c.accent-soft`**, SYS-1, ta sama reguła co wiersz tabeli §14.2) + szczegół w prawym panelu. Klik tła = odznacz.
 - **Hover:** ujawnia akcje elementu (`⋮`) + `⑱`tooltip po 300ms.
 - **Edycja inline:** `⑰`popover w miejscu (nie osobny ekran) — tam gdzie edytowalne.
 - **Drag:** feedback = shadow-hig-lg + opacity-70; upuszczenie = `⑲`toast potwierdzenia.
@@ -1229,6 +1543,19 @@ Rama §15.2 · niezmienniki §15.3 · atomy tylko z puli 40 · paleta §15.1.4 �
 - [ ] Streaming Teresy (czat/panel AI, karty `generating`) w kontenerze
       `role="log"` + `aria-live="polite"` + `aria-relevant="additions text"`
       (wzór: `UnifiedChatPanel.tsx`)
+- [ ] Jeśli ekran to generator/wizard (§0C Typ 4 „Kreatory"): kontrakt §13.7 spełniony w całości
+      (postęp N/M ogłaszany · back bez utraty danych · save draft jawny · cancel jednoznaczny ·
+      resume po odświeżeniu · walidacja inline+fokus · review przed mutacją · klucz idempotency ·
+      partial-failure UI · stan generowania z bezpiecznym wyjściem)
+- [ ] Jeśli archetyp to A/Canvas: zakres akcji AI jawny przed uruchomieniem (§13.3a — węzeł[field]/
+      gałąź[section]/canvas[tool] nazwany + policzalny), wynik = propozycja z approve/reject (nie
+      natychmiastowa mutacja), undo operacji AI jako jedna jednostka. **Warunkowe (K-44, 2026-08-02)** —
+      patrz §13.3a „Status DoD — SKORYGOWANY": nieaktywne dla canvasów bez ŻADNEGO wyboru zakresu z UI
+      (dziś wszystkie sześć); aktywne jako bramka od momentu, gdy dany canvas wdroży pierwszy wybór
+      zakresu — od tej chwili chroni przed regresją
+- [ ] Jeśli archetyp to A/Canvas: minimalny zestaw klawiaturowy (§13.3c — utwórz/nawiguj/przesuń/
+      połącz/usuń/wyjdź) zweryfikowany bez myszy; **brak = ten canvas nie przechodzi DoD niezależnie od
+      pozostałych punktów** i nie może mieć `runtime_status` > `PARTIAL`
 
 ### 18.2 DoD Instrumentu (czerwone MUST)
 - [ ] Rama §15.2 (pasek tytułu + licznik + akcje + legenda + panel szczegółu)
@@ -1305,3 +1632,130 @@ Reguła: mobile = przegląd i lekkie akcje, nie budowa artefaktów. Nie udajemy 
 **Jedyny checkpoint przy budowie (nie blokuje planu):** §13 (ikony lucide + zakładki/pola per artefakt) to STAN DOCELOWY zaprojektowany — przy kodowaniu każdego artefaktu potwierdzić realne pola encji (agent read-only per archetyp). Nie wymaga zmian w kodzie teraz.
 
 **Następny krok (decyzja Piotra):** spiąć §14.8/§18/§19 z falami RESKIN_AUDIT i wydać zadania Cloud → wtedy otworzyć gate rundy 1 (dziś zamknięty). Rekomendacja startu: **tabele** (§14 uziemiony, referencja MyWork istnieje = najniższe ryzyko).
+
+---
+
+## CHANGELOG
+
+**2026-08-02 — redakcja: usunięcie trzech klas sprzeczności wewnętrznych** (bez zmian numeracji sekcji,
+bez nowej treści merytorycznej poza notami rozstrzygającymi):
+
+1. **Szerokość prawego panelu / preview (SYS-2, nowe §9.1a). SKORYGOWANE — patrz wpis 4.** Wpis
+   poniżej opisuje przesłankę, którą wpis 4 tego samego dnia unieważnił jako błędną (preview listowy i
+   prawy panel artefaktu to DWIE różne powierzchnie, nie jedna) — czytaj oba, nie sam ten wpis. Pięć niezgodnych wartości (§9.2⑪
+   320–380 · §9.2⑬ 400–480 · §11.1 420 · §11.2 360(320–420) · §14.5 `clamp(340px,28%,480px)`)
+   sprowadzone do jednej: prawy panel/drawer ogólny = domyślnie 360, zakres 320–420; preview listowy
+   SPEC-L = 420 (górna granica); drawer formularzowy szeroki = 420 — zgodnie z
+   `FOUNDATION_TOKEN_CONTRACT.md` §4. Udokumentowany, nie ukryty, dług realnego kodu:
+   `shared/TableWithPreviewLayout.tsx` (SSOT preview, ~18 callerów) dziś przekracza 420 (`clamp(340px,
+   28%, 480px)`) — do sprowadzenia do kanonu; `IdeaTableTool.tsx` używa 460/480 (poza zakresem).
+2. **Wysokość Menu 2 w §11.2 (40 → 48).** Wiersz tabeli build-ready poprawiony na 48px, zgodnie z prozą
+   tego samego paragrafu i z `FOUNDATION_TOKEN_CONTRACT.md` §4. Dopisany jawny dług doc↔kod: realna
+   wysokość Menu 3 (`MENU_3_ROW_CLASS`, `src/components/shared/ModuleMenu3.tsx`) ≈48px wobec
+   dokumentowego celu 44px — do rozstrzygnięcia osobno.
+3. **Crimson jako stan aktywny/zaznaczony w §9.2 (rozszerzenie SYS-1).** Poprawka „selection = neutral/
+   blue, not crimson", wcześniej udokumentowana tylko przy wierszu tabeli (§14.2), rozszerzona na
+   wszystkie kontrolki §9.2, które nadal wskazywały `c.accent`/`c.accent-soft` jako stan aktywny: chip
+   Menu 3 (②) i lewy rail (⑩) → `bg-state-selected` (neutralne); checkbox (㉑) → `c.info`; toggle/switch
+   (㉓) → wyłącznie `c.success` (usunięta dwuznaczność „lub `c.accent`"); slider (㉔) i progress bar/ring
+   (㉖㉗) → `c.info` (@100% `c.success` dla progress, spójnie z §14.2); pagination (㉟) →
+   `bg-state-selected`. Nota SYS-1 w §14.2 rozszerzona, żeby jawnie obejmować całe §9.2. Wszystkie
+   użyte tokeny (`--state-selected`, `--c-info`, `--c-focus`) zweryfikowane w `src/index.css` i
+   `tailwind.config.js`.
+
+4. **Korekta błędnej przesłanki w §9.1a (SYS-2) — przesłanka Piotra była nietrafna, poprzedni agent miał
+   rację.** Wpis 1 powyżej sprowadzał 5 wartości do jednej (420px dla preview listowego) na błędnym
+   założeniu, że preview listowy i prawy panel artefaktu to jedna powierzchnia. Weryfikacja w kodzie
+   (`grep -rn "clamp(340px" src/components/`, `grep -rln "TableWithPreviewLayout" src/ | wc -l` → 28
+   callerów) i w `FOUNDATION_TOKEN_CONTRACT.md` §4 potwierdza: to są DWIE różne powierzchnie. **Preview
+   listowy** (§9.2⑬, §11.1, §14.5) = `clamp(340px, 28%, 480px)` — już zaimplementowane w
+   `TableWithPreviewLayout.tsx:437,455`, zero długu, zgodne z `TRIADA_KANON.md` §C9. **Prawy panel
+   artefaktu / drawer formularzowy** (§9.2⑪, §11.2) = 360px domyślnie / 320–420px zakres / 420px drawer
+   szeroki — bez zmian, to była poprawna wartość. Dług przeniesiony z powrotem tam gdzie faktycznie jest:
+   `MyProjects.tsx:864,1084` (bespoke `w-[420px]` omijający SSOT) i `IdeaTableTool.tsx` (460/480px).
+5. **Dokończenie SYS-1 — pięć kontrolek poza mandatem poprzedniej redakcji.** Ten sam błąd (crimson jako
+   stan aktywny/zaznaczony) naprawiony w: radio (㉒, selected → `c.info`), spinner (㉙, → `c.info`), tabs
+   underline (㉜, aktywna zakładka → `c.info`), stepper/wizard (㉞ w §9.2b i duplikat w §11.3, aktywny
+   krok → `c.info`), highlight zaznaczenia w Instrumencie (§15.3, → `bg-state-selected`). Nota SYS-1 w
+   §14.2 rozszerzona po raz drugi, żeby jawnie wymieniać te pięć pozycji.
+6. **Nowy §13.7 „Kontrakt generatora / wizarda".** Stepper był dotąd opisany wyłącznie jako atom
+   wizualny (kółko 24 + L4) — bez zachowania. Dodano normatywny, mierzalny kontrakt (postęp ogłaszany
+   `aria-current="step"` · back bez utraty danych · save draft · cancel jednoznaczny co do skutku ·
+   resume po odświeżeniu · walidacja inline z przeniesieniem fokusa · review przed mutacją · klucz
+   idempotency · dedykowany UI partial-failure · stan generowania z bezpiecznym wyjściem), zgodnie z
+   `CANON.md` §8 i `UI_UX_IMPLEMENTATION_STANDARD.md` §8, powiązany z dopisanym punktem w DoD §18.1.
+7. **Nowy §13.3a „Kontrakt zakresu AI na canvasie".** `UI_UX_IMPLEMENTATION_STANDARD.md` §7.4 obiecuje
+   jawny zakres AI (węzeł/gałąź/cała mapa) — ten SSOT anatomii Canvasu dotąd opisywał tylko miejsce slotu
+   AI, nie zakres. Dodano trzy poziomy zakresu, wymóg nazwania zakresu przed uruchomieniem, propozycję/
+   diff zamiast natychmiastowej mutacji, undo jako jedna jednostka, bezpieczne anulowanie streamu.
+8. **Nowy §13.3b „Limity wydajności canvasu".** Próg 500 węzłów / 750 krawędzi / pan-zoom bez zadań
+   >50ms (SSOT liczb: `COMPONENT_FAMILY_ACCEPTANCE_APPENDIX.md`, dotąd nieobecny w tym dokumencie)
+   wpisany do SSOT anatomii przez odwołanie, wraz z wymaganą reakcją po przekroczeniu (ostrzeżenie +
+   degradacja świadoma, lub wirtualizacja) i obowiązkiem alternatywnego widoku listy/detail.
+9. **Nowy §13.3c „Klawiatura na canvasie — bramka" + korekta §7 pkt 8.** Dotychczasowe „przewidziane
+   teraz, wdrożone później" bez terminu i bez bramki zastąpione jawnym kontraktem minimalnego zestawu
+   (utwórz/nawiguj/przesuń/połącz/usuń/wyjdź — każde bez myszy) i jawnym oznaczeniem jako świadomej luki
+   runtime (CANON §3.2): dopóki niewdrożone, dany canvas nie może mieć `runtime_status` > `PARTIAL` i nie
+   przechodzi DoD §18.1 — dopisane jako punkt bramkujący w §18.1, nie jako przypis.
+
+---
+
+**2026-08-02 — redakcja: panel adwersaryjny, naprawa defektów po dwóch poprzednich redakcjach tego samego
+dnia (K-16/K-22/K-27/K-28/K-42/K-43/K-44/K-45).** Każde twierdzenie o kodzie zweryfikowane realnym
+poleceniem przed wpisaniem (patrz treść przy każdym punkcie). Statusy nigdzie nie podniesione —
+poprawki idą w kierunku uczciwości, nie optymizmu.
+
+1. **K-16 (P0) — §14.5 kolejność bloków preview sprzeczna z kodem i z `TABLE_AND_PREVIEW_CANON.md`.**
+   Poprzedni zapis miał „6. Co dalej" przed „7. Actions" — sprzecznie z `StandardPreview.tsx` (ok.
+   l.309–370, `whatsNext` renderowany bezwarunkowo PO `actionRows`) i z siostrzanym dokumentem, który tę
+   samą sprzeczność już nazwał i naprawił tego samego dnia. Poprawione: Actions = blok 6 (numerowany,
+   opcjonalny), „Co dalej" = poza numeracją, zawsze PO bloku 6.
+2. **K-22 (P1) — nota SYS-2 (§9.1a) pominęła dwa kolejne niezgodne wystąpienia szerokości.** §9.2b ⑯
+   Drawer/Sheet („360–480") i §15.2 prawy panel instrumentu („320–360") nie były objęte pierwotną
+   korektą mimo że ta twierdziła, że sprowadza „pięć niezgodnych wartości do dwóch". Rozstrzygnięcie po
+   weryfikacji w kodzie: Drawer/Sheet to osobna powierzchnia z REALNĄ, ale błędnie opisaną wartością —
+   `src/components/ui/primitives/Drawer.tsx` ma cztery dyskretne warianty 256/320/384/480px, nie zakres
+   ciągły „360–480" — poprawione na 256–480 z adnotacją o dyskretności. Panel instrumentu w §15.2 to NIE
+   osobna powierzchnia — to ten sam prawy panel ⑪ (320–420, domyślnie 360) bez uzasadnienia dla własnej,
+   węższej wartości — poprawione na zgodność z ⑪. Nota SYS-2 rozszerzona o pkt 5-6, żeby nie twierdzić
+   nieprawdy o kompletności.
+3. **K-27 (P1) — §14.0 drastycznie zaniżona liczba użyć `ModuleMenu3.tsx` („1").** `grep -rlE "from
+   ['\"].*ModuleMenu3['\"]" src/ | grep -v ModuleMenu3.tsx | wc -l` (2026-08-02, metoda uwzględniająca
+   wieloliniowe importy destrukturyzowane) → **27**. Poprawione, z jawną metodą i datą.
+4. **K-28 (P1) — trzy różne liczby dla `TableWithPreviewLayout.tsx` w trzech miejscach (§14.0 „25",
+   §9.1a „28 realnych callerów", §14.5 „28 callerów").** Zdefiniowana i zastosowana metodologia dla
+   całego §14: import (`grep -rln "import.*<Nazwa>"` / wariant wieloliniowy) · JSX (`grep -rl "<Nazwa"`,
+   domyślna miara konsumenta) · wzmianka (`grep -rln "Nazwa"`, najmniej wiarygodne). Realni konsumenci
+   JSX `TableWithPreviewLayout` = **18** (2026-08-02); surowa wzmianka stringa (import+typy+komentarze)
+   = 28 — obie liczby teraz podane z etykietą metody, nie sprzeczne ze sobą. Ujednolicone we wszystkich
+   trzech miejscach. Przy okazji przejrzane inne liczby adopcji w §14.0: `FilterableTable.tsx` „24" →
+   **26** (JSX, kod się zmienił od poprzedniego pomiaru); `GridView.tsx` „8" zweryfikowane jako
+   POPRAWNE po wykryciu kolizji nazwy z niepowiązanym `MyWork/table/GridView.tsx` (bez rozróżnienia JSX
+   „<GridView" dałby fałszywe 14).
+5. **K-42 (P1) — §13.7 pkt 8 nazywał idempotency, nie projektował jej.** Dopisany konkretny mechanizm:
+   kto generuje klucz (klient, na wejściu w krok wykonania) · gdzie żyje (nagłówek HTTP
+   `Idempotency-Key`, nie payload) · TTL backendu (min. 24h) · zachowanie przy kolizji (200/201 z cache
+   albo 409 z odsyłaczem — nigdy cichy duplikat). `AuditOrchestratorWizard.tsx` przywołany dotąd jako
+   przykład opisany uczciwie jako **kontrprzykład**: `handleCreate` (l.167–193) nie niesie żadnego
+   klucza idempotency, `disabled={submitting}` nie chroni przed retry po timeout; `surveysGenerated:
+   false` (l.183) to inny, niepowiązany mechanizm run-once dla osobnego fan-outu ankiet. Domknięta luka
+   między pkt 8 i pkt 9: retry partial-failure używa NOWEGO klucza per element, nie klucza sesja×krok.
+6. **K-43 (P1) — §13.3b próg wydajności canvasu bez metody pomiaru.** Dopisane realne progi z kodu obok
+   progu docelowego: `virtualization.ts` (`VIRTUALIZATION_NODE_THRESHOLD=300`), `LargeMapOptimizer.tsx`
+   (`WARNING=150/CRITICAL=300/AUTO_SIMPLIFY=500`) — żaden nie zgadza się z appendixem (500/750/50ms) ani
+   ze sobą nawzajem. Jawnie stwierdzone: `tests/e2e/m06/m06-21-large-maps.spec.ts` jest
+   `test.skip(true,'[MANUAL]')`, brak automatycznego pomiaru w CI; kod sam przyznaje „no occlusion
+   culling above ~300 nodes" — próg nie jest dziś dotrzymywany ani mierzalny. Punkt zdegradowany z
+   „odbieralny MUST" do „cel architektoniczny bez bramki", z warunkiem podniesienia (test CI + jedna
+   uzgodniona liczba).
+7. **K-44 (P1) — §13.3a zakres AI na canvasie jako DoD-blocking MUST dla systemu, który nie istnieje.**
+   Status DoD skorygowany: punkt bramkujący §18.1 przestaje blokować bezwarunkowo wszystkie sześć
+   artefaktów archetypu A — jest nieaktywny dla canvasu bez ŻADNEGO wyboru zakresu z UI (dziś
+   wszystkie sześć), aktywny (chroni przed regresją) od pierwszej implementacji referencyjnej.
+   Nazewnictwo trzech poziomów (węzeł/gałąź/canvas) powiązane z istniejącą taksonomią N-mode
+   tool→section→field (`NModeLayout/types.ts`, `FieldAIButton.tsx`) zamiast tworzyć trzecią. Opisany
+   realny punkt wyjścia: `aiSidekickContext.ts` (`detectMindmapIntent`, heurystyka bez UI zakresu) i
+   `AIProposalDiffModal.tsx` (`selectedNodeIndices`, częściowe approve/reject per-węzeł).
+8. **K-45 (P3) — changelog sam sobie przeczył.** Wpis 1 (2026-08-02, powyżej) opisywał przesłankę, którą
+   wpis 4 tego samego dnia unieważnił jako błędną, bez wzajemnej adnotacji — czytelnik idący od góry
+   przyjąłby nieaktualną wersję. Dopisane do wpisu 1: „SKORYGOWANE — patrz wpis 4".

@@ -18,7 +18,7 @@
 - Przed utworzeniem nowego komponentu — **ZAWSZE** sprawdź czy istnieje w katalogu poniżej.
 - Przed zmianą stylu/układu — **ZAWSZE** przeczytaj odpowiedni standard.
 - Jeśli standard nie opisuje przypadku — **ZAPYTAJ** zamiast wymyślać. Aktualizacja standardu wymaga świadomej decyzji.
-- `README.md` i `FROZEN_LAYOUTS.md` sa autoratywne dla nawigacji po tym pakiecie.
+- `README.md` jest wyłącznie indeksem; `FROZEN_LAYOUTS.md` jest obowiązującym aneksem podporządkowanym `CANON.md`.
 - Lokalne kopie z sufiksami typu ` 2.md` albo ` 3.md` nie sa autorytatywne i powinny byc traktowane jako snapshot duplicates.
 
 ---
@@ -46,7 +46,9 @@ docs/ui-standards/
 
 | Obszar                               | Dokument                                                                                                     | Zakres                                                                                                                                       |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Golden Standard**                  | [CONSULTIFY_UI_UX_GOLDEN_STANDARD.md](CONSULTIFY_UI_UX_GOLDEN_STANDARD.md)                                   | Najwyższy SSOT UI/UX: DBR77 Tech Sexy 2027, komponenty, Menu 2/3, N-mode, tabele, timeline                                                   |
+| **Kompletny standard implementacyjny** | [UI_UX_IMPLEMENTATION_STANDARD.md](UI_UX_IMPLEMENTATION_STANDARD.md)                                         | Pełny kontrakt shelli, list, preview, detail, artefaktów, wizardów, stanów, AI, a11y, responsive, evidence i odbioru                         |
+| **Macierz zgodności modułów**        | [MODULE_UI_UX_COMPLIANCE_MATRIX.md](MODULE_UI_UX_COMPLIANCE_MATRIX.md)                                       | 19 modułów: bramki SPEC/LIST/PREVIEW/INSIDE/STATES/EVIDENCE oraz status odbioru                                                              |
+| **Golden Standard — materiał migracyjny** | [CONSULTIFY_UI_UX_GOLDEN_STANDARD.md](CONSULTIFY_UI_UX_GOLDEN_STANDARD.md)                              | Historyczny pakiet wartościowej treści, podporządkowany `CANON.md`; nie rozstrzyga konfliktów                                                |
 | **Operating Standard**               | [CONSULTIFY_UI_UX_OPERATING_STANDARD.md](CONSULTIFY_UI_UX_OPERATING_STANDARD.md)                             | Operacyjna brama dla Cursor, audytu, refactorów i zatwierdzania wyjątków                                                                     |
 | **Documentation audit**              | [UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md](_archive/UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md)                       | Audyt kompletności, spójności i egzekwowalności dokumentacji UI/UX                                                                           |
 | **Enforcement plan**                 | [UI_UX_ENFORCEMENT_PLAN.md](_archive/UI_UX_ENFORCEMENT_PLAN.md)                                                       | Plan bramek Cursor/CI/review, aby egzekwować Golden Standard                                                                                 |

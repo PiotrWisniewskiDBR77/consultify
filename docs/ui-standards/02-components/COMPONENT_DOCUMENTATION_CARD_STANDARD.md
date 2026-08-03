@@ -18,7 +18,8 @@ Każda ważna rodzina komponentów otrzymuje kartę według poniższego szablonu
 component_id: UI-...
 name: ...
 family: ...
-status: CANONICAL | DOMAIN_CANONICAL | PARTIAL | DUPLICATE | LEGACY | MISSING
+spec_status: DRAFT | NEEDS_OWNER_DECISION | APPROVED_SPEC | DEPRECATED | ARCHIVED
+runtime_status: MISSING | PARTIAL | IMPLEMENTED | REFERENCE_READY | CANONICAL | DOMAIN_CANONICAL | DUPLICATE | LEGACY
 contract_version: 1.0
 product_owner: ...
 code_owner: ...
@@ -27,6 +28,8 @@ reference_implementations: []
 known_consumers: []
 last_runtime_audit: YYYY-MM-DD
 ```
+
+`spec_status` opisuje wyłącznie dojrzałość kontraktu projektowego. `runtime_status` opisuje wyłącznie stan produktu. Nie wolno wyciągać wniosku o jakości implementacji z faktu zatwierdzenia dokumentu ani odwrotnie.
 
 ## 3. Obowiązkowe sekcje karty
 
@@ -51,13 +54,35 @@ last_runtime_audit: YYYY-MM-DD
 19. **Evidence** — screenshoty referencyjne, testy, story/fixture i data ostatniego odbioru.
 20. **Change log** — kompatybilność i migracja konsumentów.
 
+## 3a. Wspólna podstawa sekcji 10, 12, 13 i 15 (ustanowione 2026-08-02)
+
+Cztery sekcje karty mają **uniwersalną część wspólną**, identyczną dla każdej rodziny. Dotąd była kopiowana do wszystkich 26 kart, przez co karta wyglądała na kompletną, nie niosąc informacji specyficznej — panel adwersaryjny wykrył, że w tych sekcjach 60–100% słów było tym samym tekstem powielonym 26 razy.
+
+**Reguła:** poniższa podstawa obowiązuje każdą rodzinę z mocy tego dokumentu. Karta **nie powtarza jej treści** — odwołuje się do niej jednym zdaniem i dopisuje **wyłącznie to, co dla tej rodziny jest inne**. Jeśli rodzina nie ma nic specyficznego do dodania w danej sekcji, karta pisze to wprost („poza podstawą z §3a brak wymagań specyficznych") zamiast wypełniać miejsce ogólnikami.
+
+### Podstawa §10 — Responsive i zoom
+Viewporty odbiorowe 1920 / 1600 / 1440 / 1280 px; 1024 px w trybie compact. 125% — obowiązkowa visual regression. 200% — pełny reflow funkcjonalny bez utraty funkcji. Przy 400% złożona powierzchnia może scrollować w dwóch osiach, ale musi oferować alternatywny widok list/detail. Żadna krytyczna akcja nie znika bez alternatywnego wejścia.
+
+### Podstawa §12 — Visual tokens
+Wyłącznie wartości z [`../00-foundation/FOUNDATION_TOKEN_CONTRACT.md`](../00-foundation/FOUNDATION_TOKEN_CONTRACT.md): Inter, skala spacingu 4 px, zdefiniowane wysokości kontrolek, radiusy, elevation, ikony Lucide i kolory semantyczne. Zero magic values. Informacja nigdy nie opiera się wyłącznie na kolorze. Crimson (`primary-*` = `#85182F`) tylko jako znak marki, Teresa albo semantyka destrukcyjna — **nigdy** fokus, stan aktywny, zaznaczenie ani CTA zwykłego modułu; fokus zawsze `--c-focus`. Uwaga interpretacyjna: nazwy rodzin kolorów Tailwinda w tym projekcie są zremapowane — patrz `FOUNDATION_TOKEN_CONTRACT.md` §7.1 (CENTRAL REMAP).
+
+### Podstawa §13 — Security i privacy
+Capability i tenant scope są egzekwowane **po stronie serwera**; UI nigdy nie jest jedyną bramką. UI nie ujawnia nazw ani istnienia obiektów, do których użytkownik nie ma dostępu. Logi i telemetryka nie przechowują sekretów ani treści klienta bez jawnej polityki.
+
+### Podstawa §15 — Telemetry
+Mierzymy: load, error, retry, completion, abandonment, undo, validation failure i latency. Event niesie component ID i action ID — **nigdy** treść klienta. Zakazane: vanity metrics oraz jakiekolwiek mierzenie produktywności pracowników.
+
+**Co należy do karty, a nie tutaj:** progi liczbowe właściwe rodzinie (np. próg wirtualizacji, limit węzłów), konkretne role ARIA i skróty klawiszowe, nazwy zdarzeń telemetrycznych tej rodziny, dane wrażliwe, które akurat ta rodzina wyświetla, oraz zachowanie przy zoomie, jeśli różni się od podstawy.
+
+---
+
 ## 4. Definition of Ready
 
 Komponent może trafić do zadania, jeśli ma określony job, stan danych, capabilities, wszystkie istotne stany, istniejący wzorzec lub świadomie zatwierdzony brak oraz kryteria odbioru. Sformułowanie „ma wyglądać ładnie” nie jest wymaganiem.
 
 ## 5. Definition of Done
 
-Komponent jest `CANONICAL`, gdy:
+Komponent otrzymuje `runtime_status: CANONICAL`, gdy:
 
 - ma jedno publiczne API i jedną implementację referencyjną;
 - istnieje fixture/story dla wariantów i stanów;

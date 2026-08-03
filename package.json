@@ -260,7 +260,9 @@
     "docs:parity": "tsx server/scripts/check-doc-changelog-parity.ts",
     "docs:links": "tsx server/scripts/check-ui-standards-links.ts",
     "lint:motion": "tsx server/scripts/check-motion-compliance.ts --top 15",
-    "lint:motion:ci": "tsx server/scripts/check-motion-compliance.ts --budget docs/ui-standards/.motion-baseline.json"
+    "lint:motion:ci": "tsx server/scripts/check-motion-compliance.ts --budget docs/ui-standards/.motion-baseline.json",
+    "lint:focus": "bash scripts/check-focus-canon.sh",
+    "lint:focus:ci": "bash scripts/check-focus-canon.sh --ci"
   },
   "overrides": {
     "react-is": "^19.0.0"
