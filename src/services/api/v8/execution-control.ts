@@ -252,6 +252,32 @@ export interface V8ExecutionRealizationEntry {
   recordedBy: string;
 }
 
+// FIN-007: keyed, baseline-bound realization write — stamps WHICH approved
+// Finance baseline (model + version) this actual was recorded against, at
+// write time, so later reconciliation reads that frozen pointer rather than
+// "whatever is currently approved". Same canonical `roi_realized_values`
+// table as V8ExecutionRealizationPayload above — never a second ledger.
+export interface V8ExecutionBaselineRealizationPayload {
+  initiativeId: string;
+  /** ISO date (YYYY-MM-DD) for the realization period. */
+  periodMonth: string;
+  realizedRevenueDelta?: number | null;
+  realizedCostDelta?: number | null;
+  realizedSavings?: number | null;
+  varianceNotes?: string;
+  baselineModelId: string;
+  /** The model's `version` as observed by the caller — a stale value is a
+   * 409 BASELINE_VERSION_CONFLICT, never silently rebound to the new one. */
+  baselineExpectedVersion: number;
+  evidenceRef?: string | null;
+}
+
+export interface V8ExecutionBaselineRealizationEntry extends V8ExecutionRealizationEntry {
+  baselineModelId: string;
+  baselineVersion: number;
+  evidenceRef: string | null;
+}
+
 export interface V8ExecutionRaidMitigationPayload {
   raidItemId: string;
   mitigationPlan?: string;
@@ -441,6 +467,19 @@ export const V8ExecutionControlApi = {
     v8Post<{ success: boolean; entry: V8ExecutionRealizationEntry }>(
       '/execution-control/realizations',
       payload
+    ),
+
+  // FIN-007: requires an Idempotency-Key — a retry with the same key + same
+  // payload returns the SAME entry (never a duplicate); a different payload
+  // under the same key is a 409.
+  recordBaselineRealization: (
+    payload: V8ExecutionBaselineRealizationPayload,
+    idempotencyKey: string
+  ) =>
+    v8Post<{ success: boolean; entry: V8ExecutionBaselineRealizationEntry }>(
+      '/execution-control/realizations/baseline',
+      payload,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
     ),
 
   // ── Manager Lane Analysis (6-Lane Cockpit) ──────────────────────────────

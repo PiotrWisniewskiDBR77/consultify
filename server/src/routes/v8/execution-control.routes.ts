@@ -28,7 +28,13 @@ import {
   getPortfolioBudgetSummary,
 } from '../../services/executionBudgetService.js';
 import { getTimelineWarningsSnapshot } from '../../services/executionControlReadService.js';
-import { recordExecutionRealization } from '../../services/executionRealizationService.js';
+import {
+  BaselineNotApprovedError,
+  BaselineVersionConflictError,
+  RealizationKeyConflictError,
+  recordExecutionRealization,
+  recordExecutionRealizationForBaseline,
+} from '../../services/executionRealizationService.js';
 import { detectRiskSignals } from '../../services/riskDetectionService.js';
 import {
   applyManagerSuggestion,
@@ -145,6 +151,38 @@ const RecordRealizationSchema = z
     realizedCostDelta: z.number().finite().nullable().optional(),
     realizedSavings: z.number().finite().nullable().optional(),
     varianceNotes: z.string().max(2000).optional(),
+  })
+  .refine(
+    (b) =>
+      typeof b.realizedRevenueDelta === 'number' ||
+      typeof b.realizedCostDelta === 'number' ||
+      typeof b.realizedSavings === 'number',
+    {
+      message:
+        'Provide at least one realized value (realizedRevenueDelta, realizedCostDelta, or realizedSavings)',
+      path: ['realizedRevenueDelta'],
+    }
+  );
+
+// FIN-007: keyed, baseline-bound realization write — a SECOND entrypoint
+// into the SAME roi_realized_values table above, never a second ledger.
+// Requires the Idempotency-Key header AND a baseline reference so the actual
+// can later be reconciled against the EXACT approved Finance baseline the
+// caller saw when recording it (see executionRealizationService.ts,
+// recordExecutionRealizationForBaseline, for the full contract).
+const RecordBaselineRealizationSchema = z
+  .object({
+    initiativeId: z.string().min(1),
+    periodMonth: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'periodMonth must be an ISO date (YYYY-MM-DD)'),
+    realizedRevenueDelta: z.number().finite().nullable().optional(),
+    realizedCostDelta: z.number().finite().nullable().optional(),
+    realizedSavings: z.number().finite().nullable().optional(),
+    varianceNotes: z.string().max(2000).optional(),
+    baselineModelId: z.string().min(1),
+    baselineExpectedVersion: z.number().int().min(1),
+    evidenceRef: z.string().max(2000).optional(),
   })
   .refine(
     (b) =>
@@ -765,6 +803,111 @@ router.post(
   })
 );
 
+/**
+ * POST /api/v8/execution-control/realizations/baseline
+ * FIN-007: keyed, baseline-bound realization write. Same permission gate and
+ * org/initiative ownership check as /realizations above; additionally
+ * requires an Idempotency-Key header and rejects (fail-closed) when the
+ * named baseline is not approved or has moved version since the caller
+ * observed it.
+ */
+router.post(
+  '/realizations/baseline',
+  validateBody(RecordBaselineRealizationSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const perm = checkInterventionPermission(req);
+    if (!perm.allowed) {
+      return res.status(403).json({
+        error: 'Write denied',
+        code: 'EXECUTION_WRITE_DENIED',
+        reason: perm.reason,
+      });
+    }
+    const { organizationId, userId } = getV8Context(req);
+    const body = req.body as z.infer<typeof RecordBaselineRealizationSchema>;
+    const initiativeId = body.initiativeId.trim();
+
+    const operationKey =
+      (typeof req.headers['idempotency-key'] === 'string' && req.headers['idempotency-key']) || '';
+    if (!operationKey) {
+      return res.status(400).json({
+        error: 'Idempotency-Key header is required for a baseline-bound realization write',
+        code: 'IDEMPOTENCY_KEY_REQUIRED',
+      });
+    }
+
+    const initiative = await dbGet<{ id: string }>(
+      `SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`,
+      [initiativeId, organizationId],
+      { fallback: true }
+    );
+    if (!initiative?.id) {
+      return res.status(404).json({
+        error: `Initiative ${initiativeId} not found`,
+        code: 'INITIATIVE_NOT_FOUND',
+      });
+    }
+
+    try {
+      const entry = await recordExecutionRealizationForBaseline({
+        organizationId,
+        initiativeId,
+        periodMonth: body.periodMonth,
+        realizedRevenueDelta: body.realizedRevenueDelta ?? null,
+        realizedCostDelta: body.realizedCostDelta ?? null,
+        realizedSavings: body.realizedSavings ?? null,
+        varianceNotes: body.varianceNotes ?? null,
+        recordedBy: userId,
+        baselineModelId: body.baselineModelId,
+        baselineExpectedVersion: body.baselineExpectedVersion,
+        evidenceRef: body.evidenceRef ?? null,
+        operationKey,
+      });
+
+      await auditLog(
+        organizationId,
+        initiativeId,
+        'realization_recorded_baseline',
+        null,
+        JSON.stringify({
+          id: entry.id,
+          periodMonth: entry.periodMonth,
+          baselineModelId: entry.baselineModelId,
+          baselineVersion: entry.baselineVersion,
+        }),
+        'Baseline-bound realization recorded from execution context',
+        userId
+      );
+
+      return res.status(201).json({
+        data: { success: true, entry },
+        meta: executionControlMutationMeta(),
+      });
+    } catch (error) {
+      if (error instanceof BaselineNotApprovedError) {
+        return res.status(400).json({
+          error: error.message,
+          code: 'BASELINE_NOT_APPROVED',
+        });
+      }
+      if (error instanceof BaselineVersionConflictError) {
+        return res.status(409).json({
+          error: error.message,
+          code: 'BASELINE_VERSION_CONFLICT',
+          serverVersion: error.serverVersion,
+        });
+      }
+      if (error instanceof RealizationKeyConflictError) {
+        return res.status(409).json({
+          error: error.message,
+          code: 'IDEMPOTENCY_KEY_REUSED',
+        });
+      }
+      throw error;
+    }
+  })
+);
+
 router.post(
   '/timeline-update',
   validateBody(TimelineUpdateSchema),
@@ -775,7 +918,7 @@ router.post(
     if (field === 'status') {
       return res.status(400).json({
         error:
-          "Status changes are not allowed via /timeline-update. Use PATCH /api/initiatives/:id/status (or /approve, /start-execution, /unblock) instead.",
+          'Status changes are not allowed via /timeline-update. Use PATCH /api/initiatives/:id/status (or /approve, /start-execution, /unblock) instead.',
         code: 'TIMELINE_UPDATE_STATUS_FORBIDDEN',
       });
     }

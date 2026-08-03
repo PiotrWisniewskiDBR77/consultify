@@ -24,11 +24,11 @@ export async function v8Get<T>(path: string, params?: Record<string, string>): P
 export async function v8Post<T>(
   path: string,
   body?: unknown,
-  options?: { timeoutMs?: number }
+  options?: { timeoutMs?: number; extraHeaders?: Record<string, string> }
 ): Promise<T> {
   const res = await fetchWithRetry(`${V8_BASE}${path}`, {
     method: 'POST',
-    headers: getHeaders(),
+    headers: options?.extraHeaders ? { ...getHeaders(), ...options.extraHeaders } : getHeaders(),
     body: body ? JSON.stringify(body) : undefined,
     // Some V8 endpoints (e.g. advisory/business-case) run a multi-phase LLM
     // pipeline server-side and legitimately take longer than the 20s default

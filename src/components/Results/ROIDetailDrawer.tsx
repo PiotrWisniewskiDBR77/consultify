@@ -8,6 +8,7 @@ import { BarChart3, Calendar, DollarSign, Lock, Plus, TrendingUp, X } from 'luci
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { isFinanceFlagEnabled } from '@/components/Economics/financeFeatureFlags';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
@@ -15,6 +16,8 @@ import {
   type V8ResultsRoiInitiativeDetail,
 } from '@/services/api/v8/results';
 
+import { PostInvestmentActualForm } from './PostInvestmentActualForm';
+import { PostInvestmentReviewPanel } from './PostInvestmentReviewPanel';
 import type { ROILockState } from './ROIAnalysisView';
 import { ROIAssumptionEditor, ROIAssumptionsData } from './ROIAssumptionEditor';
 
@@ -91,6 +94,11 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   const [newAmount, setNewAmount] = useState('');
   const [newNotes, setNewNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // FIN-007: bumped after a post-investment review is created so the
+  // read-only panel below refetches — it has no other way to learn a new
+  // review exists (no shared cache, no websocket push).
+  const [postInvestmentRefreshNonce, setPostInvestmentRefreshNonce] = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -570,6 +578,24 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* FIN-007: record a baseline-bound actual + create/read the
+                  durable post-investment review — approved Finance baseline
+                  vs. Execution-recorded actual(s), reconciled and persisted.
+                  Behind `fin007PostInvestmentReview` (default OFF, CLAUDE.md
+                  §7) until Piotr accepts a clean dev-render screenshot. */}
+              {isFinanceFlagEnabled('fin007PostInvestmentReview') && (
+                <div className="mt-4 space-y-4">
+                  <PostInvestmentActualForm
+                    initiativeId={initiativeId}
+                    onReviewCreated={() => setPostInvestmentRefreshNonce((n) => n + 1)}
+                  />
+                  <PostInvestmentReviewPanel
+                    initiativeId={initiativeId}
+                    refreshNonce={postInvestmentRefreshNonce}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

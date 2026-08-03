@@ -344,3 +344,83 @@ export async function postBenchmarkStatus(
 ): Promise<BenchmarkComparison> {
   return v8Post<BenchmarkComparison>(`${BASE}/ratios/benchmark`, { value, benchmark });
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// 6. Post-investment review (FIN-007) — approved Finance baseline vs.
+//    Execution-recorded actual(s), reconciled into a durable receipt.
+//    References the canonical roi_realized_values rows by id; never a
+//    second actuals ledger.
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface PostInvestmentReview {
+  id: string;
+  organizationId: string;
+  initiativeId: string;
+  baselineModelId: string;
+  baselineVersion: number;
+  baselineStatementType: string;
+  baselineLineCode: string;
+  baselinePeriodDate: string;
+  projectedValue: number;
+  actualIds: string[];
+  actualPeriodMonth: string;
+  realizedValue: number;
+  variance: number;
+  variancePct: number;
+  reconciliationStatus: 'matched' | 'variance';
+  evidence: Record<string, unknown> | null;
+  status: 'in_progress' | 'completed' | 'failed';
+  createdBy: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface ApprovedBaselineOption {
+  modelId: string;
+  name: string;
+  version: number;
+  approvedAt: string | null;
+  startDate: string;
+}
+
+/** Every APPROVED financial model for this initiative, newest version first
+ * — a convenience list for a baseline picker. Never a trust boundary:
+ * createPostInvestmentReview re-validates approved+version itself. */
+export async function getApprovedBaselines(
+  initiativeId: string
+): Promise<ApprovedBaselineOption[]> {
+  return v8Get<ApprovedBaselineOption[]>(`${BASE}/approved-baselines`, { initiativeId });
+}
+
+export interface CreatePostInvestmentReviewPayload {
+  initiativeId: string;
+  actualIds: string[];
+  baselineModelId: string;
+  baselineExpectedVersion: number;
+  baselineStatementType: 'P&L' | 'BS' | 'CF';
+  baselineLineCode: string;
+  baselinePeriodDate: string;
+  tolerancePct?: number;
+}
+
+/** Requires an Idempotency-Key — a retry with the same key + same payload
+ * returns the SAME review; a different payload under the same key is a 409. */
+export async function createPostInvestmentReview(
+  payload: CreatePostInvestmentReviewPayload,
+  idempotencyKey: string
+): Promise<PostInvestmentReview> {
+  return v8Post<PostInvestmentReview>(`${BASE}/post-investment-reviews`, payload, {
+    extraHeaders: { 'Idempotency-Key': idempotencyKey },
+  });
+}
+
+export async function getPostInvestmentReview(id: string): Promise<PostInvestmentReview> {
+  return v8Get<PostInvestmentReview>(`${BASE}/post-investment-reviews/${encodeURIComponent(id)}`);
+}
+
+/** Completed reviews for an initiative, newest first. */
+export async function listPostInvestmentReviews(
+  initiativeId: string
+): Promise<PostInvestmentReview[]> {
+  return v8Get<PostInvestmentReview[]>(`${BASE}/post-investment-reviews`, { initiativeId });
+}
