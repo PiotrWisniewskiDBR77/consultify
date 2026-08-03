@@ -98,3 +98,24 @@ bypassed. No credentials were invented or extracted from browser storage.
 ## Current integration status
 
 `CODE_INTEGRATED_DEV_HEALTHY_AUTHENTICATED_ACCEPTANCE_PENDING`
+
+## Demo promotion addendum
+
+After the original DEV-only report was written, the user explicitly authorized promotion
+of the complete integration to demo. `origin/demo` was fast-forwarded to
+`c4166ef942fded38b0e7a2a5f518bf03caa7bd15` and Railway demo deployed that exact Git
+revision. The deployment passed `/ping` and `/api/health`; PostgreSQL and Redis reported
+connected.
+
+The first visibility audit found two accepted MVP surfaces still hidden by default-off
+frontend flags: FIN-07 post-investment review and the Results KPI Recovery Card. Demo was
+therefore configured to build with the two explicit activations recorded in
+`FINAL_DEMO_RUNTIME_BASELINE_2026-08-03.md`. Experimental Execution change signals and
+post-MVP scopes remain disabled.
+
+Current release sequence is now:
+
+1. verify the rebuilt demo and exact SHA;
+2. run one authenticated whole-product UI/UX correction pass against that baseline;
+3. redeploy accepted UI/UX blockers;
+4. compare all 16 module contracts against the resulting final revision.
