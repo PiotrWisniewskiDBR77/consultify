@@ -11,31 +11,35 @@
  * from here.
  *
  * SCOPES (see server/migrations/20260803_res011_kpi_visibility.sql):
+ * The OWNER of a KPI (`initiative_kpis.owner_user_id`) always sees it,
+ * independent of scope — a scope restricts OTHER viewers, it never locks
+ * the owner out of their own object.
+ *
  *   org_visible            — any authenticated member of the KPI's own org.
  *                            Default; MUST reproduce today's de facto
  *                            behavior for every existing query.
- *   initiative_restricted  — org admins, plus members of the KPI's own
+ *   initiative_restricted  — the owner, plus members of the KPI's own
  *                            initiative per the REAL existing team model —
  *                            `initiative_resources` (see
  *                            `getInitiativeResourcesRead` in
  *                            planningPortfolioReadService.ts). No second
  *                            membership concept invented for RES-11.
- *   private_to_owner       — org admins, plus `initiative_kpis.owner_user_id`
- *                            only.
+ *   private_to_owner       — the owner only.
  *
  * FAIL-CLOSED: a missing/unknown userId, or a visibility value outside the
  * three known scopes, is never treated as "visible" — the SQL fragment
- * below only grants access through one of the three explicit branches, and
+ * below only grants access through one of the explicit branches, and
  * `isKpiVisible` mirrors that exactly. Tenant (organization_id) scoping is
  * NOT this module's job — every call site already scopes by org before this
  * filter is ever applied; visibility narrows further, it never widens past
  * the org boundary.
  *
- * ADMIN OVERRIDE: per the packet's policy matrix (§10), admin/super_admin
- * always sees every scope, including private_to_owner — this was an open
- * "decision required" cell in the packet; resolved here as "yes, admins see
- * everything" (matches how every other admin surface in this codebase
- * already behaves — RBAC is scoped by org, not further narrowed for admins).
+ * ADMIN OVERRIDE: the packet's policy matrix (§10) leaves "does admin see
+ * private_to_owner" as an OPEN decision for Piotr — this module supports an
+ * `isAdmin` override (bypasses every scope, including private_to_owner) so
+ * that decision can be wired in later without touching call sites again,
+ * but every current call site in this codebase passes `isAdmin: false`
+ * deliberately — fail-closed until the decision is made, per instruction.
  */
 
 export type KpiVisibilityScope = 'org_visible' | 'initiative_restricted' | 'private_to_owner';
@@ -80,9 +84,13 @@ export function kpiVisibilitySql(
   options?: { nullableJoinIdColumn?: string }
 ): { sql: string; params: unknown[] } {
   const userId = ctx.userId || UNREACHABLE_USER_ID;
+  // The owner can always see their own KPI, independent of its scope — a
+  // scope restricts OTHER viewers, it never locks the owner out of their
+  // own object. Checked first so private_to_owner and initiative_restricted
+  // both benefit without duplicating the owner check per branch.
   const visibilityClause = `(
-    COALESCE(${alias}.visibility, 'org_visible') = 'org_visible'
-    OR (COALESCE(${alias}.visibility, 'org_visible') = 'private_to_owner' AND ${alias}.owner_user_id = ?)
+    ${alias}.owner_user_id = ?
+    OR COALESCE(${alias}.visibility, 'org_visible') = 'org_visible'
     OR (COALESCE(${alias}.visibility, 'org_visible') = 'initiative_restricted' AND EXISTS (
       SELECT 1 FROM initiative_resources ir
       WHERE ir.initiative_id = ${alias}.initiative_id AND ir.user_id = ?
@@ -115,9 +123,12 @@ export function isKpiVisible(
   isInitiativeMember: boolean
 ): boolean {
   if (ctx.isAdmin) return true;
+  // The owner always sees their own KPI, independent of scope — mirrors
+  // kpiVisibilitySql's owner_user_id short-circuit.
+  if (Boolean(ctx.userId) && kpi.ownerUserId === ctx.userId) return true;
   const scope = (kpi.visibility || 'org_visible') as KpiVisibilityScope;
   if (scope === 'org_visible') return true;
-  if (scope === 'private_to_owner') return Boolean(ctx.userId) && kpi.ownerUserId === ctx.userId;
+  if (scope === 'private_to_owner') return false;
   if (scope === 'initiative_restricted') return Boolean(ctx.userId) && isInitiativeMember;
   // Unknown value (should be impossible under the DB CHECK constraint) — fail closed.
   return false;
