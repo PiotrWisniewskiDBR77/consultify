@@ -378,8 +378,10 @@ describe('W1 — POST /benefits/kpis/:kpiId/time-series cannot mutate a foreign 
 
     expect(res.status).toBe(200);
 
+    // RES-003: the upsert needs its RETURNING clause (id, was_new_row), so the
+    // writer issues it via dbGet, not dbRun (see kpiMeasurementWriterService.ts).
     // INSERT writes the caller's org (3rd positional in the VALUES list).
-    const insertCall = mockDbRun.mock.calls.find((c) =>
+    const insertCall = mockDbGet.mock.calls.find((c) =>
       /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
     );
     expect(insertCall).toBeTruthy();
@@ -900,13 +902,21 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
 
   it('connector ingest current_value UPDATE is org-scoped when the connector is owned', async () => {
     mockQueryFirst.mockResolvedValue({ id: 'conn-owned' });
+    // RES-003: the kpi_time_series write and current_value UPDATE now go through
+    // kpiMeasurementWriterService, which uses DbPromise (mockDbGet/mockDbRun), not
+    // queryHelpers (mockQueryFirst/mockQueryRun) — only the connector-ownership
+    // check above still goes through queryHelpers. The writer's own ownership
+    // precheck on kpiId needs an owned-KPI response here (this connector test
+    // previously never exercised a per-kpiId check at all — closing that real
+    // gap is exactly what RES-003's consolidation did, see kpiMeasurementWriterService.ts).
+    mockDbGet.mockResolvedValue({ id: 'kpi-x', measurement_frequency: 'MONTHLY' });
     const app = await buildResultsEnterpriseApp();
     const res = await request(app)
       .post('/api/results-v4/kpi-connectors/conn-owned/ingest')
       .send({ kpiId: 'kpi-x', value: 5, period: '2026-01' });
 
     expect(res.status).toBe(201);
-    const kpiUpdate = mockQueryRun.mock.calls.find((c) =>
+    const kpiUpdate = mockDbRun.mock.calls.find((c) =>
       /UPDATE\s+initiative_kpis\s+SET\s+current_value/i.test(String(c?.[0]))
     );
     expect(kpiUpdate).toBeTruthy();
@@ -1064,12 +1074,18 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
   // ── HOLE-5: benefits IRIS refresh current_value UPDATE org-scope (static guard) ──
 
   it('benefits IRIS refresh current_value UPDATE carries an org filter (source guard)', async () => {
-    // Static guarantee: the only current_value UPDATE in benefits.routes is org-scoped.
+    // Static guarantee: the only current_value UPDATE reachable from the IRIS refresh
+    // path is org-scoped. RES-003 moved this UPDATE (and the kpi_time_series write it
+    // used to sit next to) out of benefits.routes.ts and into the single canonical
+    // writer both routes now share — scan that file instead of the route file.
     const fs = await import('node:fs');
     const nodePath = await import('node:path');
     // Resolve from repo root (cwd) — `new URL(..., import.meta.url)` is unreliable under the
     // vitest transform ("not a valid instance of Location") and crashed before this assertion ran.
-    const path = nodePath.resolve(process.cwd(), 'server/src/routes/benefits.routes.ts');
+    const path = nodePath.resolve(
+      process.cwd(),
+      'server/src/services/results/kpiMeasurementWriterService.ts'
+    );
     const src = fs.readFileSync(path, 'utf8');
     const updates = src.match(/UPDATE initiative_kpis SET current_value[\s\S]*?WHERE[^\n]*/g) || [];
     expect(updates.length).toBeGreaterThan(0);
@@ -1792,11 +1808,22 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
   // ── 403 for viewer (JWT role 'user') on every one of the 21 gated routes ──
 
-  describe.each(RES003A_BENEFITS_ROUTES)(
-    '$method /benefits$path (action=$action)',
-    (route) => {
-      it('→ 403 for viewer role; no dbGet/dbAll/dbRun call happens (gate is the first line)', async () => {
-        mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+  describe.each(RES003A_BENEFITS_ROUTES)('$method /benefits$path (action=$action)', (route) => {
+    it('→ 403 for viewer role; no dbGet/dbAll/dbRun call happens (gate is the first line)', async () => {
+      mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+      const app = await buildBenefitsApp();
+      const res = await sendBenefitsRequest(app, route);
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+      expect(mockDbGet).not.toHaveBeenCalled();
+      expect(mockDbAll).not.toHaveBeenCalled();
+      expect(mockDbRun).not.toHaveBeenCalled();
+    });
+
+    if (route.kpiOwnerOnly) {
+      it('→ 403 for finance_owner (JWT role "manager"); action is kpi_owner-only', async () => {
+        mockUser = { id: USER_A, role: 'manager', organizationId: ORG_A, isSuperAdmin: false };
         const app = await buildBenefitsApp();
         const res = await sendBenefitsRequest(app, route);
 
@@ -1806,22 +1833,8 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
         expect(mockDbAll).not.toHaveBeenCalled();
         expect(mockDbRun).not.toHaveBeenCalled();
       });
-
-      if (route.kpiOwnerOnly) {
-        it('→ 403 for finance_owner (JWT role "manager"); action is kpi_owner-only', async () => {
-          mockUser = { id: USER_A, role: 'manager', organizationId: ORG_A, isSuperAdmin: false };
-          const app = await buildBenefitsApp();
-          const res = await sendBenefitsRequest(app, route);
-
-          expect(res.status).toBe(403);
-          expect(res.body.code).toBe('P04_PERMISSION_DENIED');
-          expect(mockDbGet).not.toHaveBeenCalled();
-          expect(mockDbAll).not.toHaveBeenCalled();
-          expect(mockDbRun).not.toHaveBeenCalled();
-        });
-      }
     }
-  );
+  });
 
   // ── Regression shield: admin (kpi_owner) is NOT blocked by the new gate on ──
   // ── the 9 of the 21 routes that had zero prior test coverage. ──
@@ -1833,7 +1846,9 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     it('POST /benefits/deviation-cases/:caseId/acknowledge → not 403 (200, existing logic runs)', async () => {
       const app = await buildBenefitsApp();
-      const res = await request(app).post('/api/benefits/deviation-cases/case-x/acknowledge').send({});
+      const res = await request(app)
+        .post('/api/benefits/deviation-cases/case-x/acknowledge')
+        .send({});
 
       expect(res.status).not.toBe(403);
       expect(res.status).toBe(200);
@@ -1901,9 +1916,7 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     it('POST /benefits/iris/assets/search → not 403 (404, provider not configured — existing logic runs)', async () => {
       const app = await buildBenefitsApp();
-      const res = await request(app)
-        .post('/api/benefits/iris/assets/search')
-        .send({ q: 'engine' });
+      const res = await request(app).post('/api/benefits/iris/assets/search').send({ q: 'engine' });
 
       expect(res.status).not.toBe(403);
       expect(res.status).toBe(404);

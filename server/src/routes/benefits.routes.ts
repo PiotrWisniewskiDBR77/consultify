@@ -28,13 +28,16 @@ import {
   archiveDefinition as archiveKpiDefinition,
   createDefinition as createKpiDefinition,
   getCurrentDefinition as getCurrentKpiDefinition,
-  getCurrentDefinitionVersionId,
   KpiDefinitionArchivedError,
   KpiDefinitionNotFoundError,
   KpiDefinitionVersionConflictError,
   updateDefinition as updateKpiDefinition,
 } from '../services/results/kpiDefinitionService.js';
-import { handleTimeSeriesRecorded } from '../services/results/kpiDeviationService.js';
+import {
+  deriveKpiPeriodKey,
+  KpiMeasurementKpiNotFoundError,
+  recordKpiMeasurement,
+} from '../services/results/kpiMeasurementWriterService.js';
 import { assertKpiPermission } from '../services/results/kpiPermissions.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -68,22 +71,9 @@ const BENEFITS_LOCKED_KPI_STATUSES: readonly string[] = [
   'locked',
 ];
 
-function deriveKpiPeriodKey(
-  periodStart?: string | null,
-  measurementFrequency?: string | null
-): string | null {
-  const start = String(periodStart || '').slice(0, 10);
-  if (!start) return null;
-  const [year, month = '01', day = '01'] = start.split('-');
-  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
-
-  if (frequency === 'DAILY') return start;
-  if (frequency === 'WEEKLY')
-    return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
-  if (frequency === 'QUARTERLY')
-    return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
-  return `${year}-${month}`;
-}
+// deriveKpiPeriodKey moved to kpiMeasurementWriterService.js (RES-003) — this
+// file's copy and the one in v8/results.routes.ts were byte-identical
+// duplicates; both now import the single shared implementation.
 
 // ============================================================
 // V3-H01: KPI LIST + CREATE (global KPI)
@@ -524,95 +514,50 @@ router.post(
         .json({ success: false, error: 'periodStart (or measuredAt) is required' });
     }
 
-    // SEC-3 (L-04): the INSERT below attaches a measurement to this kpiId and then runs
-    // deviation logic against it. Org-scoping only the inserted organization_id column is
-    // not enough — a foreign-org kpiId would still get a time-series row (and a deviation
-    // case) recorded under the caller's org against a KPI it cannot see. Verify the parent
-    // KPI belongs to the caller's org first (mirrors the attribution-snapshot route). This
-    // SELECT also supplies measurement_frequency, replacing the prior unscoped lookup.
-    const parentKpi = await dbGet<{
-      id: string;
-      measurement_frequency?: string | null;
-      definition_version_id?: string | null;
-    }>(
-      `SELECT k.id, k.measurement_frequency, v.id AS definition_version_id
-       FROM initiative_kpis k
-       LEFT JOIN initiatives i ON i.id = k.initiative_id
-       LEFT JOIN kpi_definition_versions v
-         ON v.kpi_id = k.id AND v.version_no = k.current_definition_version
-       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
-      [kpiId, orgId]
-    );
-    if (!parentKpi?.id) {
-      return res.status(404).json({
-        success: false,
-        error: 'KPI not found',
-        code: 'RESULTS_KPI_NOT_FOUND',
-      });
-    }
-    const periodKey = deriveKpiPeriodKey(periodStart, parentKpi.measurement_frequency);
-
-    // RES-02 additive pin: which definition version was current when this
-    // measurement was recorded. No other RES-03 behavior here is touched.
-    const id = uuidv4().replace(/-/g, '');
-    await dbRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by, definition_version_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        kpiId,
-        orgId,
-        Number(value),
-        periodStart,
-        periodEnd,
-        source || 'manual',
-        notes ? String(notes) : null,
-        (req as any).user?.id,
-        parentKpi.definition_version_id || null,
-      ]
-    );
-
-    // Best-effort: update current_value if column exists (older DBs may not have it).
-    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
-      () => []
-    );
-    const hasCurrentValue = (kpiCols || []).some((c) => c?.name === 'current_value');
-    if (hasCurrentValue) {
-      await dbRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [Number(value), kpiId, orgId]
-      ).catch(() => null);
-    }
-
-    // R1 Deviation Management: evaluate + create/reopen case + notify owner
+    // RES-003: recordKpiMeasurement performs the org-ownership precheck on
+    // kpiId itself (mirrors the SEC-3 (L-04) SELECT this route used to
+    // inline), upserts on (kpiId, periodStart, source) instead of a bare
+    // INSERT, and resolves the RES-02 definition_version_id pin via the
+    // canonical owner's own getCurrentDefinitionVersionId. It also now
+    // writes kpi_metric_audit_log, which this deprecated fallback route
+    // previously skipped (the canonical v8 route always wrote it — a real
+    // behavioural divergence between the two "same" endpoints, closed by
+    // routing both through one writer).
+    let result;
     try {
-      await handleTimeSeriesRecorded({
-        db: {
-          get: (sql: string, params: any[]) => dbGet(sql, params),
-          all: (sql: string, params: any[]) => dbAll(sql, params),
-          run: (sql: string, params: any[]) => dbRun(sql, params),
-        } as any,
-        orgId,
+      result = await recordKpiMeasurement({
+        organizationId: orgId,
         kpiId: String(kpiId),
         value: Number(value),
         periodStart,
         periodEnd,
-        recordedByUserId: (req as any).user?.id || null,
+        source,
+        notes,
+        actorUserId: (req as any).user?.id || null,
       });
-    } catch {
-      // do not fail write on deviation logic
+    } catch (error) {
+      if (error instanceof KpiMeasurementKpiNotFoundError) {
+        return res.status(404).json({
+          success: false,
+          error: 'KPI not found',
+          code: 'RESULTS_KPI_NOT_FOUND',
+        });
+      }
+      throw error;
     }
 
     res.json({
       success: true,
       data: {
-        id,
-        kpiId,
-        value: Number(value),
-        measuredAt: periodStart,
-        periodStart,
-        periodEnd,
-        periodKey,
+        id: result.id,
+        kpiId: result.kpiId,
+        value: result.value,
+        measuredAt: result.periodStart,
+        periodStart: result.periodStart,
+        periodEnd: result.periodEnd,
+        periodKey: result.periodKey,
+        wasNewRow: result.wasNewRow,
+        definitionVersionId: result.definitionVersionId,
       },
     });
   })
@@ -1145,45 +1090,45 @@ router.post(
         });
       }
 
-      // RES-02 additive pin: resolve once, reuse for every bulk-inserted point
-      // (all recorded "now", under the SAME current definition version).
-      const definitionVersionId = await getCurrentDefinitionVersionId(String(kpiId), orgId);
-
-      // Insert points (best-effort, no hard dedupe). Source marked for traceability.
+      // RES-003: route through the canonical measurement writer — upsert on
+      // (kpiId, periodStart, source) instead of the prior bare INSERT (which
+      // had "no hard dedupe" by its own comment), a real per-org ownership
+      // check on kpiId (this route previously had none — the current_value
+      // UPDATE below was org-scoped, but the INSERT above it was not, so a
+      // foreign-org kpiId could get an IRIS-sourced row written under the
+      // caller's org), and the RES-02 definition_version_id pin resolved
+      // once per point (each point still gets the version current AT THE
+      // TIME OF ITS OWN WRITE — the writer resolves it fresh per call, not
+      // once for the whole batch; all points land "now" in quick succession
+      // so this is the same version in practice, just resolved correctly
+      // instead of assumed). `runDeviationCheck: false` keeps this loop's
+      // existing behaviour of not firing a deviation evaluation (and
+      // possible owner notification) per point — with up to 500 points per
+      // call that would be a notification storm nobody asked for here.
       let inserted = 0;
       for (const p of points.slice(0, 500)) {
-        const id = uuidv4().replace(/-/g, '');
-        await dbRun(
-          `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by, definition_version_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            id,
-            kpiId,
-            orgId,
-            p.value,
-            p.periodStart,
-            null,
-            'mcp_iris',
-            `ref:provider=${provider.id}`,
-            (req as any).user?.id,
-            definitionVersionId,
-          ]
-        ).catch(() => null);
-        inserted += 1;
-      }
-
-      // Update current_value to the newest point if initiative_kpis table exists.
-      const ikCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
-        () => []
-      );
-      if (ikCols?.length) {
-        const last = points[points.length - 1];
-        // SEC-3: org-scope the current_value write so a foreign-org kpiId cannot have its
-        // current_value overwritten via an org-owned IRIS provider.
-        await dbRun(
-          `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-          [last.value, kpiId, orgId]
-        ).catch(() => null);
+        try {
+          await recordKpiMeasurement({
+            organizationId: orgId,
+            kpiId: String(kpiId),
+            value: p.value,
+            periodStart: p.periodStart,
+            source: 'mcp_iris',
+            notes: `ref:provider=${provider.id}`,
+            actorUserId: (req as any).user?.id || null,
+            auditEventType: 'connector_ingest',
+            auditSummary: `IRIS refresh ingested ${p.value} for ${p.periodStart}`,
+            runDeviationCheck: false,
+          });
+          inserted += 1;
+        } catch (pointError) {
+          if (pointError instanceof KpiMeasurementKpiNotFoundError) {
+            // Foreign-org or unknown kpiId — stop the loop, every remaining
+            // point would fail the same way (single kpiId per call).
+            return res.status(404).json({ success: false, error: 'KPI not found' });
+          }
+          // Preserve prior best-effort semantics for any other per-point failure.
+        }
       }
 
       return res.json({

@@ -1111,11 +1111,17 @@ describe('V8 results read-only routes', () => {
         periodKey: '2026-03',
       })
     );
+    // RES-003: the writer's ownership precheck fetches id + measurement_frequency
+    // in one merged query (replacing this route's separate, now-removed
+    // frequency-only SELECT — see kpiMeasurementWriterService.ts).
     expect(mockDbGet).toHaveBeenCalledWith(
-      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      ['kpi-1']
+      expect.stringContaining('SELECT k.id, k.measurement_frequency'),
+      ['kpi-1', ORG]
     );
-    expect(mockDbRun).toHaveBeenCalledWith(
+    // RES-003: the upsert needs its RETURNING clause (id, was_new_row), so the
+    // writer issues it via dbGet, not dbRun — dbRun in this codebase's DbPromise
+    // wrapper doesn't surface returned rows.
+    expect(mockDbGet).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO kpi_time_series'),
       expect.arrayContaining(['kpi-1', ORG, 24, '2026-03-01', 'manual', 'March value', UID])
     );

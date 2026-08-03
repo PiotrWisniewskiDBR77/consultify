@@ -29,13 +29,16 @@ import {
   KpiDefinitionVersionConflictError,
   updateDefinition as updateKpiDefinition,
 } from '../../services/results/kpiDefinitionService.js';
-import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
 import {
   type KpiDirection as KpiForecastDirection,
   leadingAlert,
   linearTrend,
   projectToTarget,
 } from '../../services/results/kpiForecastService.js';
+import {
+  KpiMeasurementKpiNotFoundError,
+  recordKpiMeasurement,
+} from '../../services/results/kpiMeasurementWriterService.js';
 import {
   buildRecoveryCardDTO,
   closeRecoveryCard,
@@ -326,23 +329,9 @@ export async function findKpiEditLockViolation(params: {
   return null;
 }
 
-function deriveKpiPeriodKey(
-  periodStart?: string | null,
-  measurementFrequency?: string | null
-): string | null {
-  const start = String(periodStart || '').slice(0, 10);
-  if (!start) return null;
-  const [year, month = '01', day = '01'] = start.split('-');
-  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
-
-  if (frequency === 'DAILY') return start;
-  if (frequency === 'WEEKLY') {
-    return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
-  }
-  if (frequency === 'QUARTERLY')
-    return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
-  return `${year}-${month}`;
-}
+// deriveKpiPeriodKey moved to kpiMeasurementWriterService.js (RES-003) — this
+// file's copy and the one in benefits.routes.ts were byte-identical
+// duplicates; both now import the single shared implementation.
 
 /**
  * GET /api/v8/results/dashboard
@@ -2414,111 +2403,47 @@ router.post(
       });
     }
 
-    // SEC-3 (L-04): p04AssertKpiPermission is a role gate only — it does NOT verify that
-    // this kpiId belongs to the caller's org. Without an ownership precheck a foreign-org
-    // kpiId would have a measurement row inserted under the caller's org. Verify the parent
-    // KPI is owned first (mirrors the org-scoped lookup in PUT/DELETE /kpis/:kpiId).
-    const ownedKpi = await dbGet<{ id: string; definition_version_id?: string | null }>(
-      `SELECT k.id, v.id AS definition_version_id
-       FROM initiative_kpis k
-       LEFT JOIN initiatives i ON i.id = k.initiative_id
-       LEFT JOIN kpi_definition_versions v
-         ON v.kpi_id = k.id AND v.version_no = k.current_definition_version
-       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
-      [kpiId, organizationId]
-    );
-    if (!ownedKpi?.id) {
-      return res.status(404).json({
-        error: 'KPI not found',
-        code: 'RESULTS_KPI_NOT_FOUND',
-      });
-    }
-
-    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
-      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      [kpiId]
-    ).catch(() => null);
-    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
-
-    // RES-02 additive pin: which definition version was current when this
-    // measurement was recorded. No other RES-03 behavior here is touched.
-    const id = uuidv4().replace(/-/g, '');
-    await dbRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by, definition_version_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        kpiId,
-        organizationId,
-        Number(value),
-        periodStart,
-        periodEnd,
-        source || 'manual',
-        notes ? String(notes) : null,
-        userId || null,
-        ownedKpi.definition_version_id || null,
-      ]
-    );
-
-    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
-      () => []
-    );
-    const hasCurrentValue = (kpiCols || []).some((column) => column?.name === 'current_value');
-    if (hasCurrentValue) {
-      // SEC-3: org-scope the current_value write so a foreign-org kpiId cannot have its
-      // current_value overwritten (mirrors the benefits sibling route).
-      await dbRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [Number(value), kpiId, organizationId]
-      ).catch(() => null);
-    }
-
+    // RES-003: recordKpiMeasurement performs the org-ownership precheck on
+    // kpiId itself (mirrors the SEC-3 (L-04) SELECT this route used to inline)
+    // before any write, upserts on (kpiId, periodStart, source) instead of a
+    // bare INSERT, and resolves the RES-02 definition_version_id pin via the
+    // canonical owner's own getCurrentDefinitionVersionId — this route no
+    // longer needs its own kpi_definition_versions join.
+    let result;
     try {
-      await handleTimeSeriesRecorded({
-        db: {
-          get: (sql: string, params: any[]) => dbGet(sql, params),
-          all: (sql: string, params: any[]) => dbAll(sql, params),
-          run: (sql: string, params: any[]) => dbRun(sql, params),
-        } as any,
-        orgId: organizationId,
-        kpiId: String(kpiId),
+      result = await recordKpiMeasurement({
+        organizationId,
+        kpiId,
         value: Number(value),
         periodStart,
         periodEnd,
-        recordedByUserId: userId || null,
-      });
-    } catch {
-      // Do not fail the write on deviation side effects.
-    }
-    await resultsEnterpriseService
-      .createMetricAuditEntry(organizationId, {
-        kpiId,
-        section: 'history',
-        eventType: 'measurement_recorded',
-        source: source ? String(source) : 'manual',
+        source,
+        notes,
         actorUserId: userId || null,
-        summary: `Measurement recorded for ${periodStart}`,
-        before: {},
-        after: {
-          value: Number(value),
-          periodStart,
-          periodEnd,
-          source: source || 'manual',
-        },
-      })
-      .catch(() => null);
+      });
+    } catch (error) {
+      if (error instanceof KpiMeasurementKpiNotFoundError) {
+        return res.status(404).json({
+          error: 'KPI not found',
+          code: 'RESULTS_KPI_NOT_FOUND',
+        });
+      }
+      throw error;
+    }
 
     return res.status(201).json({
       data: {
-        id,
-        kpiId,
-        value: Number(value),
-        measuredAt: periodStart,
-        periodStart,
-        periodEnd,
-        periodKey,
-        source: source || 'manual',
-        notes: notes || null,
+        id: result.id,
+        kpiId: result.kpiId,
+        value: result.value,
+        measuredAt: result.periodStart,
+        periodStart: result.periodStart,
+        periodEnd: result.periodEnd,
+        periodKey: result.periodKey,
+        source: result.source,
+        notes: result.notes,
+        wasNewRow: result.wasNewRow,
+        definitionVersionId: result.definitionVersionId,
       },
       meta: resultsWriteMeta(),
     });
