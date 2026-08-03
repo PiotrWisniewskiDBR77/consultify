@@ -34,6 +34,7 @@ import {
   type StrategicInitiativeToKpi,
   type StrategicKpi,
 } from '../services/results/resultsStrategicViewService.js';
+import { kpiVisibilitySql } from '../services/results/kpiVisibilityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 
@@ -134,7 +135,7 @@ async function ensureOkrTables(): Promise<void> {
 }
 
 interface AuthedRequest {
-  user?: { organizationId?: string };
+  user?: { id?: string; organizationId?: string };
   params: Record<string, string>;
 }
 
@@ -179,11 +180,19 @@ router.get(
         orgWide ? [orgId] : [projectId, orgId]
       )) as InitiativeRow[] | undefined) || [];
 
+    // RES-11 (Phase 1): the BSC/BDN composer is one of the packet's named
+    // aggregation points — a hidden KPI must never surface here, not even as
+    // a zero/placeholder row. isAdmin false: packet §10 leaves "does admin
+    // see private_to_owner" as an open policy decision, fail-closed for now.
+    const kpiVisibility = kpiVisibilitySql('initiative_kpis', {
+      userId: req.user?.id || null,
+      isAdmin: false,
+    });
     const kpiRows =
       ((await dbAll(
         `SELECT id, name, current_value, target_value, measurement_frequency
-       FROM initiative_kpis WHERE organization_id = ?`,
-        [orgId]
+       FROM initiative_kpis WHERE organization_id = ? AND ${kpiVisibility.sql}`,
+        [orgId, ...kpiVisibility.params]
       )) as KpiRow[] | undefined) || [];
 
     const mappingRows =

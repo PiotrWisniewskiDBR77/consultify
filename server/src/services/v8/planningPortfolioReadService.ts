@@ -10,6 +10,7 @@ import * as queryHelpers from '../../utils/queryHelpers.js';
 import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
+import { kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 import {
   hasInitiativeStatusSchemaDrift,
   mapDbStatusToP11Lifecycle,
@@ -1129,9 +1130,18 @@ export async function getInitiativeGateReadinessRead(
       'PMO / Sponsor'
     );
     try {
+      // RES-11 (Phase 1): gate readiness is one of the packet's named
+      // aggregation points — a KPI hidden from this caller must not count
+      // toward "KPIs defined"/"targets defined", even as a bare number.
+      // isAdmin false: packet §10 leaves admin-sees-private as an open
+      // policy decision, fail-closed until resolved.
+      const kpiVisibility = kpiVisibilitySql('initiative_kpis', {
+        userId: currentUserId || null,
+        isAdmin: false,
+      });
       const kpiCount = await queryHelpers.queryOne(
-        `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ?`,
-        [initiativeId]
+        `SELECT COUNT(*) as c FROM initiative_kpis WHERE initiative_id = ? AND ${kpiVisibility.sql}`,
+        [initiativeId, ...kpiVisibility.params]
       );
       const totalCount = Number((kpiCount as any)?.c || 0);
       addCheck(
@@ -1148,8 +1158,9 @@ export async function getInitiativeGateReadinessRead(
          FROM initiative_kpis
          WHERE initiative_id = ?
            AND target_value IS NOT NULL
-           AND unit IS NOT NULL`,
-        [initiativeId]
+           AND unit IS NOT NULL
+           AND ${kpiVisibility.sql}`,
+        [initiativeId, ...kpiVisibility.params]
       );
       const completedCount = Number((readyCount as any)?.c || 0);
       addCheck(
