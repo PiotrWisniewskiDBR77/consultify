@@ -30,7 +30,12 @@ import { randomBytes } from 'node:crypto';
 import express from 'express';
 import { Client, type ClientConfig } from 'pg';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+// This is a real multipart/router acceptance test. The global Vitest setup
+// replaces multer with a memory-only stand-in, which does not provide the
+// disk-backed `file.path` used by the production Vault route.
+vi.unmock('multer');
 
 // ---------------------------------------------------------------------------
 // Force the real Postgres target + E2E auth bypass, ONLY when a database is
