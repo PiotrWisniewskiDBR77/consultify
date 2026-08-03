@@ -254,6 +254,16 @@ export async function getPortfolioRead(
         : null,
       createdAt: initiative.created_at,
       updatedAt: initiative.updated_at,
+      // INI-05: canonical resource/capacity model for the portfolio view.
+      // Single source of truth is `syncInitiativeCapacity`
+      // (staffingPlanService.ts) — SUM(initiative_resources.allocation_percentage)
+      // — re-run after every resource add/update/delete this packet
+      // capability/tenant/CAS-gated. Previously computed but never exposed
+      // here, so the portfolio list/kanban had no way to show it even though
+      // the per-initiative drawer (InitiativeDrawer.tsx) already reads the
+      // same two columns.
+      allocatedCapacityFte: Number(initiative.allocated_capacity_fte) || 0,
+      requiredCapacityFte: Number(initiative.required_capacity_fte) || 0,
     };
   });
 

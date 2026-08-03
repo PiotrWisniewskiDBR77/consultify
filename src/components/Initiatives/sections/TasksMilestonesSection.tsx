@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 
 import { useInitiativeContext } from './InitiativeContext';
 import type { InitiativeSectionProps, TaskItem } from './types';
@@ -909,6 +910,9 @@ export const TasksMilestonesSection: React.FC<InitiativeSectionProps> = ({ reado
       setNewMilestoneName('');
       setNewMilestoneDate('');
       toast.success(t('initiatives.tasksMilestonesSection.milestoneCreated', 'Milestone created'));
+      // INI-05: the portfolio timeline/roadmap read models must see this
+      // milestone without a manual reload.
+      bumpInitiativeRefresh();
     } catch (e: any) {
       toast.error(
         t('initiatives.tasksMilestonesSection.failedToCreateMilestone', 'Failed to create milestone')

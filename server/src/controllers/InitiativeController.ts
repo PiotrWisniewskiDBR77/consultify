@@ -406,6 +406,11 @@ export class InitiativeController {
               avatarUrl: i.oe_avatar,
             }
           : null,
+        // INI-05: read parity with the v8 getPortfolioRead (this is its
+        // legacy fallback for the same UI) — same canonical
+        // syncInitiativeCapacity columns.
+        allocatedCapacityFte: Number((i as any).allocated_capacity_fte) || 0,
+        requiredCapacityFte: Number((i as any).required_capacity_fte) || 0,
       }));
 
       res.json(initiatives);

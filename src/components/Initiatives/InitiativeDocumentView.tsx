@@ -110,6 +110,7 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { AppView } from '@/types';
 import {
   type GateAiCheckResponse,
@@ -3647,6 +3648,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           { ...data, id: newItem.id || `res-${Date.now()}` },
         ]);
         toast.success(t('initiatives.resourceAdded2'));
+        // INI-05: any other open view reading this initiative's capacity
+        // (portfolio list, timeline) must not keep showing a pre-add snapshot.
+        bumpInitiativeRefresh();
       } catch (e: any) {
         toast.error(e?.message || t('initiatives.failedToAddResource2'));
       }
@@ -3682,6 +3686,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             prev.map((item) => (item.id === id ? { ...item, version: nextVersion } : item))
           );
         }
+        bumpInitiativeRefresh();
       } catch (e: any) {
         setApiResourceItems((prev) =>
           prev.map((item) => (item.id === id && previousItem ? previousItem : item))
@@ -3707,6 +3712,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.resourceRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
+        bumpInitiativeRefresh();
       } catch {
         // best-effort
       }

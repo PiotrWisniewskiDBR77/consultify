@@ -101,6 +101,7 @@ async function call(
 describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQL', () => {
   let pool: InstanceType<typeof import('pg').Pool>;
   let InitiativeController: typeof import('../InitiativeController.js').default;
+  let getPortfolioRead: typeof import('../../services/v8/planningPortfolioReadService.js').getPortfolioRead;
 
   const orgA = `org-a-${randomUUID()}`;
   const orgB = `org-b-${randomUUID()}`;
@@ -141,6 +142,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
         owner_business_id TEXT,
         owner_execution_id TEXT,
         sponsor_id TEXT,
+        allocated_capacity_fte NUMERIC DEFAULT 0,
+        required_capacity_fte NUMERIC DEFAULT 0,
         created_at TIMESTAMPTZ DEFAULT now(),
         updated_at TIMESTAMPTZ DEFAULT now()
       )`,
@@ -247,6 +250,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
     // Import the REAL app modules only after env + schema are ready —
     // Database.ts/DatabaseConfig.ts read process.env at first call.
     InitiativeController = (await import('../InitiativeController.js')).default;
+    getPortfolioRead = (await import('../../services/v8/planningPortfolioReadService.js'))
+      .getPortfolioRead;
   }, 60000);
 
   afterAll(async () => {
@@ -352,6 +357,28 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       });
       expect(res.statusCode).toBe(403);
       expect(res.body.code).toBe('INITIATIVE_TERMINAL_STATUS_FROZEN');
+    });
+
+    it('canonical resource/capacity rollup: the portfolio read model reflects the SAME allocation total the resource writer just committed', async () => {
+      const initiativeId = await seedInitiative({ project_id: projectA });
+
+      // Two resources, 60% + 90% — single canonical source is
+      // syncInitiativeCapacity (staffingPlanService.ts), fired by the same
+      // capability/tenant/CAS-gated addResource this packet hardened.
+      await call(InitiativeController.addResource, {
+        user: { id: ownerUserA, organizationId: orgA, role: 'user' },
+        params: { id: initiativeId },
+        body: { role: 'member', name: 'Ada', allocationPercentage: 60 },
+      });
+      await call(InitiativeController.addResource, {
+        user: { id: ownerUserA, organizationId: orgA, role: 'user' },
+        params: { id: initiativeId },
+        body: { role: 'member', name: 'Grace', allocationPercentage: 90 },
+      });
+
+      const { initiatives } = await getPortfolioRead(orgA, {});
+      const row = initiatives.find((i: any) => i.id === initiativeId) as any;
+      expect(row.allocatedCapacityFte).toBeCloseTo(1.5, 5);
     });
   });
 
