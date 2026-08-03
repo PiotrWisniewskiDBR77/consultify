@@ -329,6 +329,8 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
         redThresholdPct: 10,
         amberThresholdAbs: null,
         redThresholdAbs: null,
+        // RES-11: no visibility set on the fixture kpi -> drawer initializes to the default.
+        visibility: 'org_visible',
       });
     });
 
@@ -459,6 +461,8 @@ describe('KPITimeSeriesDrawer V8 KPI catalog seam', () => {
         redThresholdPct: 10,
         amberThresholdAbs: null,
         redThresholdAbs: null,
+        // RES-11: no visibility set on the fixture kpi -> drawer initializes to the default.
+        visibility: 'org_visible',
       });
     });
   });

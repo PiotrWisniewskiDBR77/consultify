@@ -188,6 +188,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   >('PERCENT_FROM_TARGET');
   const [settingsAmberThreshold, setSettingsAmberThreshold] = useState('');
   const [settingsRedThreshold, setSettingsRedThreshold] = useState('');
+  // RES-11: who may see this KPI.
+  const [settingsVisibility, setSettingsVisibility] = useState<
+    'org_visible' | 'initiative_restricted' | 'private_to_owner'
+  >('org_visible');
 
   const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
   const [initiativeSearch, setInitiativeSearch] = useState('');
@@ -354,6 +358,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
     setSettingsDirection((kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase');
     setSettingsThresholdMode(((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any);
+    setSettingsVisibility(((kpi as any)?.visibility || 'org_visible') as any);
     setSettingsAmberThreshold(
       (kpi as any)?.thresholdMode === 'ABSOLUTE'
         ? (kpi as any)?.amberThresholdAbs != null
@@ -440,6 +445,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
             ? Number(settingsRedThreshold)
             : null,
+        visibility: settingsVisibility,
         // RES-02: round-trip the version this drawer last read so the backend
         // can reject (409) a save based on stale data instead of silently
         // overwriting a concurrent edit.
@@ -492,6 +498,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     settingsTarget,
     settingsThresholdMode,
     settingsUnit,
+    settingsVisibility,
   ]);
 
   const handleDeleteKpi = useCallback(async () => {
@@ -2205,6 +2212,30 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         </div>
                       </div>
 
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.visibility', 'Visibility')}
+                          </div>
+                          <select
+                            className={`${inputCls} appearance-none`}
+                            value={settingsVisibility}
+                            onChange={(e) => setSettingsVisibility(e.target.value as any)}
+                            disabled={!editMode}
+                          >
+                            <option value="org_visible">
+                              {t('results.drawer.visibilityOrg', 'Organization')}
+                            </option>
+                            <option value="initiative_restricted">
+                              {t('results.drawer.visibilityTeam', 'Initiative team only')}
+                            </option>
+                            <option value="private_to_owner">
+                              {t('results.drawer.visibilityPrivate', 'Private (owner only)')}
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+
                       <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
                         <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           {t('results.drawer.targetHistory', 'Target change log')}
@@ -2276,6 +2307,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           setSettingsThresholdMode(
                             ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
                           );
+                          setSettingsVisibility(((kpi as any)?.visibility || 'org_visible') as any);
                           setSettingsAmberThreshold(
                             (kpi as any)?.thresholdMode === 'ABSOLUTE'
                               ? (kpi as any)?.amberThresholdAbs != null
