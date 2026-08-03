@@ -1,9 +1,12 @@
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, Loader2, SlidersHorizontal } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks/EmptyStateInline';
+import { Button } from '@/components/ui/primitives/Button';
+import { Drawer, DrawerContent, DrawerHeader } from '@/components/ui/primitives/Drawer';
+import { useIsMobile } from '@/hooks/useDeviceType';
 import Api from '@/services/api';
 
 import { CalendarCreateEventModal } from './CalendarCreateEventModal';
@@ -41,6 +44,7 @@ interface CalendarEventMovePayload {
   end?: string;
   allDay?: boolean;
   etag?: string;
+  expectedVersion?: string;
 }
 
 interface CalendarViewProps {
@@ -59,10 +63,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onInitiativeClick,
 }) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | undefined>();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [externalSourceStatus, setExternalSourceStatus] = useState<
     Record<'google' | 'outlook', ExternalCalendarSourceState>
   >({
@@ -407,16 +413,37 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   }, [createRequestId]);
 
   return (
-    <div className="flex flex-1 min-h-0 bg-white dark:bg-navy-950">
-      <CalendarSidebar
-        filter={filter}
-        onFilterChange={setFilter}
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        externalSourceStatus={externalSourceStatus}
-        workloadSummary={buildWorkloadSummary()}
-      />
+    <div className="flex flex-1 min-h-0 min-w-0 bg-white dark:bg-navy-950">
+      {/* Desktop: sidebar stays inline, unchanged. Below the useIsMobile
+          breakpoint (max-width: 767px, same as tailwind.config's `mobile`
+          alias) it would overlay the grid at fixed width (Codex
+          narrow-viewport finding) — driven by useIsMobile (JS, testable),
+          not a CSS-only hidden/md:block split, so mobile never even mounts
+          the inline sidebar's interactive elements into the tab order. */}
+      {!isMobile && (
+        <CalendarSidebar
+          filter={filter}
+          onFilterChange={setFilter}
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          externalSourceStatus={externalSourceStatus}
+          workloadSummary={buildWorkloadSummary()}
+        />
+      )}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+        {isMobile && (
+          <div className="shrink-0 flex items-center justify-end px-3 py-2 border-b border-slate-200 dark:border-navy-700">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<SlidersHorizontal size={14} />}
+              onClick={() => setMobileFiltersOpen(true)}
+              aria-label={t('myWork.calendarSidebar.mobileFiltersButton', 'Sources & filters')}
+            >
+              {t('myWork.calendarSidebar.mobileFiltersButton', 'Sources & filters')}
+            </Button>
+          </div>
+        )}
         {loading && (
           <div className="absolute inset-0 bg-white/50 dark:bg-navy-950/50 z-10 flex items-center justify-center">
             <Loader2 size={24} className="animate-spin text-primary-400" />
@@ -454,6 +481,28 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           onEventMove={handleEventMove}
         />
       </div>
+      {isMobile && (
+        <Drawer
+          open={mobileFiltersOpen}
+          onClose={() => setMobileFiltersOpen(false)}
+          position="left"
+          size="sm"
+        >
+          <DrawerHeader
+            title={t('myWork.calendarSidebar.mobileFiltersTitle', 'Sources & filters')}
+          />
+          <DrawerContent className="p-0">
+            <CalendarSidebar
+              filter={filter}
+              onFilterChange={setFilter}
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              externalSourceStatus={externalSourceStatus}
+              workloadSummary={buildWorkloadSummary()}
+            />
+          </DrawerContent>
+        </Drawer>
+      )}
       <CalendarCreateEventModal
         open={createModalOpen}
         defaultDate={currentDate}

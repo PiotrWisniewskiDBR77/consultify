@@ -225,6 +225,10 @@ export interface V8CalendarEvent {
   syncState?: 'in_sync' | 'pending' | 'conflict' | 'blocked' | 'stale';
   permissionGradient?: 'free_busy' | 'read' | 'write' | 'delegate';
   etag?: string;
+  projectId?: string | null;
+  projectName?: string | null;
+  provider?: 'internal' | 'google' | 'microsoft';
+  version?: string;
 }
 
 export interface V8CalendarConflictItem {
@@ -462,9 +466,17 @@ export const V8MyWorkApi = {
   updateCalendarEvent: (
     source: 'task' | 'initiative' | 'decision',
     sourceId: string,
-    body: { start: string; end?: string; allDay?: boolean }
+    body: { start: string; end?: string; allDay?: boolean; expectedVersion?: string }
   ) =>
-    v8Put<{ id: string; source: string; message: string }>(
+    v8Put<{
+      id: string;
+      source: string;
+      message: string;
+      dueDate?: string;
+      projectId?: string | null;
+      provider?: 'internal' | 'google' | 'microsoft';
+      version?: string;
+    }>(
       `/my-work/calendar/events/${encodeURIComponent(source)}/${encodeURIComponent(sourceId)}`,
       body
     ),

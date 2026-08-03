@@ -4785,7 +4785,11 @@
       "helperError": "{{providerLabel}} has an active error and should not be treated as a ready calendar source.",
       "helperComingSoon": "{{providerLabel}} integration is in preparation — two-way connection is not available yet.",
       "heavyLoadSuggestion": "You already have {{totalItems}} items here, including {{taskCount}} tasks and {{decisionCount}} decisions. Consider a reschedule or a planning adjustment.",
-      "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately."
+      "partialLoadSuggestion": "The selected day already has {{totalItems}} items. This is a good moment to place new work deliberately.",
+      "toastVersionConflict": "This task was changed by someone else — restoring the current state.",
+      "toastForbidden": "You can't reschedule this task.",
+      "toastNotFound": "This task no longer exists — refreshing the calendar.",
+      "toastRescheduleFailed": "Failed to reschedule the task."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Day-load preview is temporarily unavailable, but you can still create the task.",
@@ -4837,7 +4841,9 @@
         "Fr",
         "Sa",
         "Su"
-      ]
+      ],
+      "mobileFiltersButton": "Sources & filters",
+      "mobileFiltersTitle": "Sources & filters"
     },
     "calendarGrid": {
       "busy": "Busy",

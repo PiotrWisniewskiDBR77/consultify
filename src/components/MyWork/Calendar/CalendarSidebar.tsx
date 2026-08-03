@@ -93,7 +93,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   );
 
   return (
-    <div className="w-64 flex-shrink-0 border-r border-slate-200 dark:border-navy-700 p-4 space-y-6">
+    <div className="w-64 flex-shrink-0 md:border-r md:border-slate-200 md:dark:border-navy-700 p-4 space-y-6">
       {/* Mini calendar */}
       <div>
         <div className="flex items-center justify-between mb-3">

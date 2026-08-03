@@ -40,6 +40,7 @@ interface CalendarGridProps {
     end?: string;
     allDay?: boolean;
     etag?: string;
+    expectedVersion?: string;
   }) => Promise<boolean>;
 }
 
@@ -99,6 +100,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             permissionGradient: e.permissionGradient,
             visibilityClass: e.visibilityClass,
             etag: e.etag,
+            projectName: e.projectName,
+            provider: e.provider,
+            version: e.version,
           },
         };
       }),
@@ -126,6 +130,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
       const source = String(info?.event?.extendedProps?.source || '');
       const sourceId = String(info?.event?.extendedProps?.sourceId || info?.event?.id || '');
       const etag = info?.event?.extendedProps?.etag;
+      const version = info?.event?.extendedProps?.version;
       const start = info?.event?.start ? new Date(info.event.start).toISOString() : '';
       const end = info?.event?.end ? new Date(info.event.end).toISOString() : undefined;
       const allDay = Boolean(info?.event?.allDay);
@@ -137,6 +142,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         end,
         allDay,
         etag: typeof etag === 'string' ? etag : undefined,
+        expectedVersion: typeof version === 'string' ? version : undefined,
       });
       if (!ok) {
         info.revert();
@@ -150,15 +156,31 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     const iconUrl = source ? SOURCE_ICONS[source] : undefined;
     const isConsultify = source === 'consultify';
     const hasBadge = iconUrl || isConsultify;
+    const projectName: string | undefined = arg.event.extendedProps?.projectName || undefined;
+    const provider: string | undefined = arg.event.extendedProps?.provider || undefined;
+    // Explicit project/provider lineage (MW-07 gate): visible, not hover-only \u2014
+    // an honest 'internal' marker rather than a fabricated Google/Outlook badge.
+    const lineageText = [projectName, provider === 'internal' ? 'Internal' : provider]
+      .filter(Boolean)
+      .join(' \u00B7 ');
 
     return (
       <div
         className="fc-event-main-frame"
         style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}
+        title={lineageText || undefined}
       >
         {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
         <div className="fc-event-title-container">
           <div className="fc-event-title fc-sticky">{arg.event.title || '\u00A0'}</div>
+          {lineageText && (
+            <div
+              className="fc-event-lineage"
+              style={{ fontSize: '10px', opacity: 0.85, lineHeight: 1.2 }}
+            >
+              {lineageText}
+            </div>
+          )}
         </div>
         {hasBadge && (
           <span

@@ -6,19 +6,50 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    // Mirror i18next: t(key, fallbackString) OR t(key, { defaultValue }).
-    t: (key: string, opt?: unknown) => {
-      if (typeof opt === 'string') return opt;
-      if (opt && typeof opt === 'object' && 'defaultValue' in (opt as Record<string, unknown>)) {
-        return String((opt as { defaultValue: unknown }).defaultValue);
-      }
-      return key;
-    },
-    i18n: { language: 'en', changeLanguage: () => {} },
-  }),
-}));
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// CalendarSidebar renders its mini-calendar weekday header via
+// `t('myWork.calendarSidebar.weekdaysShort', { returnObjects: true })`
+// (src/components/MyWork/Calendar/CalendarSidebar.tsx) — a standard, real
+// react-i18next call shape for pulling an array out of a translation key.
+// The previous mock here only handled `t(key, fallbackString)` and
+// `t(key, { defaultValue })`; `{ returnObjects: true }` has neither, so it
+// fell through to `return key` (a string), and the component's `.map()` on
+// that string crashed every test that mounts CalendarSidebar. Fixed by
+// resolving dotted keys against the REAL en translation.json, same pattern
+// already established in
+// tests/components/AIChat/Wave5ArtifactRuntimePanel.mutations.test.tsx.
+vi.mock('react-i18next', () => {
+  const resolveKey = (key: string): unknown =>
+    key.split('.').reduce<any>((acc, part) => (acc == null ? undefined : acc[part]), enTranslation);
+
+  const t = (key: string, options?: any): any => {
+    if (typeof options === 'string') return options;
+    const resolved = resolveKey(key);
+    if (options?.returnObjects) {
+      return resolved ?? [];
+    }
+    let value = typeof resolved === 'string' ? resolved : options?.defaultValue ?? key;
+    if (options && typeof options === 'object') {
+      Object.keys(options).forEach((optKey) => {
+        if (optKey !== 'defaultValue' && optKey !== 'returnObjects') {
+          value = String(value).replace(
+            new RegExp(`\\{\\{?${optKey}\\}?\\}`, 'g'),
+            String(options[optKey])
+          );
+        }
+      });
+    }
+    return value;
+  };
+
+  return {
+    useTranslation: () => ({
+      t,
+      i18n: { language: 'en', changeLanguage: () => {} },
+    }),
+  };
+});
 
 const navigateMock = vi.fn();
 vi.mock('react-router-dom', async () => {

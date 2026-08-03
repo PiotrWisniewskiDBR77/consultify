@@ -1878,6 +1878,10 @@ router.get(
       syncState?: string;
       permissionGradient?: string;
       etag?: string;
+      projectId?: string | null;
+      projectName?: string | null;
+      provider?: 'internal' | 'google' | 'microsoft';
+      version?: string;
     }> = [];
 
     if (requestedSources.includes('task')) {
@@ -1943,12 +1947,21 @@ router.get(
       if (hasPlannedStart) select.push('t.planned_start_date as planned_start_date');
       if (hasPlannedEnd) select.push('t.planned_end_date as planned_end_date');
       if (taskCols.has('metadata')) select.push('t.metadata as metadata');
+      if (hasProjectId) select.push('t.project_id as project_id', 'p.name as project_name');
+      select.push('t.xmin::text as row_version');
+
+      const projectsCols = hasProjectId ? await getTableColumns('projects') : null;
+      const projectJoin =
+        hasProjectId && projectsCols?.has('id')
+          ? 'LEFT JOIN projects p ON p.id = t.project_id'
+          : '';
 
       const rows =
         (await queryHelpers.queryAll<any>(
           `
             SELECT ${select.join(', ')}
             FROM tasks t
+            ${projectJoin}
             WHERE ${where.join(' AND ')}
             ORDER BY ${primaryDateExpr ? `${primaryDateExpr} ASC` : 't.updated_at DESC'}
             LIMIT 800
@@ -1974,6 +1987,22 @@ router.get(
           status: row.status,
           priority: row.priority,
           description: row.description,
+          projectId: hasProjectId ? row.project_id || null : null,
+          projectName: hasProjectId ? row.project_name || null : null,
+          // Honest marker: this environment has no working OAuth/sync adapter for any
+          // external calendar provider (see MW-07 discovery gate) — every task-sourced
+          // event is genuinely internal, never fabricate 'google'/'microsoft' here.
+          provider: 'internal',
+          version: row.row_version != null ? String(row.row_version) : undefined,
+          // Codex browser-acceptance finding: without this, CalendarGrid's
+          // `editable: e.editAuthority !== 'none' && e.editAuthority !== undefined`
+          // evaluates false for every task event (editAuthority was never set
+          // here), silently disabling drag-reschedule for tasks entirely — the
+          // PUT .../events/task/:id endpoint this unified feed pairs with is
+          // real and working, but nothing could ever reach it via drag. Tasks
+          // ARE genuinely locally editable (not remote-owned), so this is
+          // accurate, not a new capability being granted.
+          editAuthority: 'local_only',
         });
 
         try {
@@ -2309,7 +2338,13 @@ router.get(
           } catch {
             agenda = {};
           }
-          const calendarSource = agenda.calendarSource || 'outlook';
+          // MW-07 provider-honesty fix: a meeting with no explicit
+          // `agenda.calendarSource` has no real Outlook/Google lineage at
+          // all — it was previously mislabeled 'outlook' unconditionally,
+          // fabricating a sync source that never existed. 'consultify'
+          // (native, unsynced) is the only honest default; a real Outlook
+          // or Google `calendarSource` value is passed through unchanged.
+          const calendarSource = agenda.calendarSource || 'consultify';
           if (calendarSource === 'outlook' && !wantOutlook) continue;
           if (calendarSource === 'google' && !wantGoogle) continue;
           if (calendarSource === 'consultify' && !wantConsultify) continue;
@@ -2554,6 +2589,12 @@ router.put(
       start: z.string().min(1),
       end: z.string().optional(),
       allDay: z.boolean().optional(),
+      // Postgres xmin (our version token) is always an unsigned integer
+      // literal — reject anything else with a clean 400 before it ever
+      // reaches `... AND xmin = ?::xid`, which otherwise throws a raw
+      // Postgres 22P02 (surfaced as an unhandled 500) for e.g. a stale/
+      // forged non-numeric value from a client.
+      expectedVersion: z.string().regex(/^\d+$/).optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) {
@@ -2569,21 +2610,71 @@ router.put(
       });
     }
 
-    const { start } = parsed.data;
+    const { start, expectedVersion } = parsed.data;
     const startDate = String(start).slice(0, 10);
 
     if (source === 'task') {
-      const result = await queryHelpers.queryRun(
+      if (!expectedVersion) {
+        return res.status(400).json({
+          error: 'expectedVersion is required to reschedule a task from calendar',
+          code: 'VERSION_REQUIRED',
+        });
+      }
+
+      const taskCols = await getTableColumns('tasks');
+      const hasProjectId = taskCols.has('project_id');
+
+      // Optimistic concurrency via Postgres' native row version (xmin) — no schema
+      // change needed and it changes on ANY concurrent write to the row, not just
+      // due_date, so a real conflicting edit is never silently overwritten.
+      const updatedRows = await queryHelpers.queryAll<any>(
         `UPDATE tasks
          SET due_date = ?, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND organization_id = ? AND assignee_id = ?`,
-        [startDate, sourceId, organizationId, userId]
+         WHERE id = ? AND organization_id = ? AND assignee_id = ? AND xmin = ?::xid
+         RETURNING id, due_date${hasProjectId ? ', project_id' : ''}, xmin::text as row_version`,
+        [startDate, sourceId, organizationId, userId, expectedVersion]
       );
-      if (!result.changes) {
-        return res.status(404).json({ error: 'Task event not found for user' });
+      const updated = updatedRows?.[0];
+
+      if (!updated) {
+        const freshRows = await queryHelpers.queryAll<any>(
+          `SELECT id, organization_id, assignee_id, due_date${hasProjectId ? ', project_id' : ''}, xmin::text as row_version
+           FROM tasks WHERE id = ? AND organization_id = ?`,
+          [sourceId, organizationId]
+        );
+        const fresh = freshRows?.[0];
+        if (!fresh) {
+          return res.status(404).json({ error: 'Task event not found for user' });
+        }
+        if (String(fresh.assignee_id) !== String(userId)) {
+          return res.status(403).json({
+            error: 'Not authorized to reschedule this task',
+            code: 'FORBIDDEN',
+          });
+        }
+        return res.status(409).json({
+          error: 'This task was changed by someone else since you loaded it — reload and retry',
+          code: 'VERSION_CONFLICT',
+          data: {
+            id: sourceId,
+            source: 'task',
+            dueDate: toDateOnly(fresh.due_date),
+            projectId: hasProjectId ? fresh.project_id || null : null,
+            version: fresh.row_version,
+          },
+        });
       }
+
       return res.json({
-        data: { id: sourceId, source: 'task', message: 'Task rescheduled from calendar' },
+        data: {
+          id: sourceId,
+          source: 'task',
+          message: 'Task rescheduled from calendar',
+          dueDate: toDateOnly(updated.due_date) || startDate,
+          projectId: hasProjectId ? updated.project_id || null : null,
+          provider: 'internal',
+          version: updated.row_version,
+        },
         meta: { version: 'v8', contract: V8_CALENDAR_CONTRACT },
       });
     }

@@ -4049,7 +4049,11 @@
       "helperError": "{{providerLabel}} ma aktywny błąd i nie powinno być traktowane jak gotowe źródło kalendarza.",
       "helperComingSoon": "Integracja {{providerLabel}} jest w przygotowaniu — dwukierunkowe łączenie nie jest jeszcze dostępne.",
       "heavyLoadSuggestion": "Masz tu {{totalItems}} pozycji, w tym {{taskCount}} zadań i {{decisionCount}} decyzji. Warto rozważyć przesunięcie lub korektę planu.",
-      "partialLoadSuggestion": "Wybrany dzień ma {{totalItems}} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań."
+      "partialLoadSuggestion": "Wybrany dzień ma {{totalItems}} pozycji. To dobry moment na świadome dopasowanie kolejnych zadań.",
+      "toastVersionConflict": "To zadanie zostało zmienione przez kogoś innego — przywracam aktualny stan.",
+      "toastForbidden": "Nie możesz przełożyć tego zadania.",
+      "toastNotFound": "To zadanie już nie istnieje — odświeżam kalendarz.",
+      "toastRescheduleFailed": "Nie udało się przełożyć zadania."
     },
     "calendarCreateEvent": {
       "dayLoadPreviewIs": "Podglad obciazenia dnia jest chwilowo niedostepny, ale nadal mozesz zapisac zadanie.",
@@ -4101,7 +4105,9 @@
         "Pt",
         "So",
         "Nd"
-      ]
+      ],
+      "mobileFiltersButton": "Źródła i filtry",
+      "mobileFiltersTitle": "Źródła i filtry"
     },
     "calendarGrid": {
       "busy": "Zajęte",
