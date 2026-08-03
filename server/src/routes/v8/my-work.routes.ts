@@ -1444,6 +1444,22 @@ router.put(
         : null;
     if (expectedUpdatedAt) {
       const expected = new Date(expectedUpdatedAt).getTime();
+      // Reproduced against real Postgres: a client-supplied expectedUpdatedAt
+      // that doesn't parse (e.g. a garbage string) used to silently skip this
+      // whole guard — `Number.isFinite(expected)` was false, so the mismatch
+      // branch below never ran, and by the time the atomic UPDATE's version
+      // predicate was reached (further down), that predicate is built from
+      // `existing.updated_at` (the server's OWN read), never from this raw
+      // client string on the Postgres path — so a malformed token bypassed
+      // CAS entirely and the write went through as HTTP 200 with the row
+      // mutated. Reject unparseable tokens outright instead of silently
+      // treating them as "no version supplied".
+      if (!Number.isFinite(expected)) {
+        return res.status(400).json({
+          error: 'expectedUpdatedAt must be a valid timestamp',
+          code: 'INVALID_EXPECTED_UPDATED_AT',
+        });
+      }
       // pg returns TIMESTAMPTZ as a Date. String(Date) drops milliseconds, so
       // reparsing that string turned a matching token such as `.726Z` into
       // `.000Z` and falsely rejected every first UI autosave as a conflict.

@@ -126,6 +126,28 @@ describe('MW-08 notebook tenant isolation', () => {
     expect(stored.rows[0].content_text).toBe(winner);
   });
 
+  it('rejects an unparseable expectedUpdatedAt with 400 and never writes — real regression, reproduced against real Postgres', async () => {
+    const before = await client.query(`SELECT content_text FROM notebook_pages WHERE id=$1`, [
+      NOTE_A,
+    ]);
+
+    const res = await request(app)
+      .put(`/api/v8/my-work/notebook/pages/${NOTE_A}`)
+      .set('Authorization', `Bearer ${tokenA}`)
+      .send({
+        contentText: 'this must never be written',
+        expectedUpdatedAt: 'not-a-real-timestamp-garbage',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('INVALID_EXPECTED_UPDATED_AT');
+
+    const after = await client.query(`SELECT content_text FROM notebook_pages WHERE id=$1`, [
+      NOTE_A,
+    ]);
+    expect(after.rows[0].content_text).toBe(before.rows[0].content_text);
+  });
+
   it('rejects foreign read without leaking title or body', async () => {
     const res = await request(app)
       .get(`/api/v8/my-work/notebook/pages/${NOTE_B}`)
