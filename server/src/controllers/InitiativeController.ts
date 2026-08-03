@@ -26,10 +26,19 @@ import {
 import { createInitiative as funnelCreateInitiative } from '../services/initiative/createInitiativeService.js';
 import { getGateReadiness } from '../services/initiative/gateAiReadinessService.js';
 import { getTimelineFlags } from '../services/initiative/gateTimelineService.js';
-import { resolveInitiativeAccessContext } from '../services/initiative/initiativeAccessResolver.js';
+import {
+  assertUsersInOrganization,
+  buildInitiativeCapabilityContract,
+  computeApprovalProfile,
+  computeInitiativeCapabilities,
+  crossTenantDenialBody,
+  getInitiativeTopBarCapabilities,
+  resolveInitiativeCapabilityContext,
+} from '../services/initiative/initiativeCapabilityMatrix.js';
 import { validateCardContent } from '../services/initiative/initiativeCardValidators.js';
 import { isInitiativeGateAiEnabled } from '../services/initiative/initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from '../services/initiative/initiativeGateReadinessService.js';
+import { assertCanEditInitiative } from '../services/initiative/ini005CapabilityGuard.js';
 import {
   evaluateInitiativeGateAccess,
   evaluateInitiativeWriteAccess,
@@ -112,22 +121,14 @@ const safeJsonParseObject = <T extends Record<string, unknown> = Record<string, 
   }
 };
 
-const getTopBarCapabilities = (status: string, userRoles: string[]) => {
-  const currentStatus = normalizeStatus(status);
-  const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-  const rolesUpper = (userRoles || []).map((r) => String(r || '').toUpperCase());
-  const isAdmin = rolesUpper.includes('ADMIN') || rolesUpper.includes('SUPERADMIN');
-  const hasEditRole =
-    isAdmin ||
-    rolesUpper.some((r) =>
-      ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(r)
-    );
-  return {
-    canEditPriority: hasEditRole && !isTerminal,
-    canEditOwner: hasEditRole && !isTerminal,
-    canEditTargetDate: hasEditRole && !isTerminal,
-  };
-};
+/**
+ * INI-04 — the write path reads the SAME matrix as the two read models.
+ * Previously this re-encoded the role/status rules inline, so a drift between
+ * "the UI was told it may edit the owner" and "the PUT answers 403" was
+ * invisible. Now both sides resolve through `initiativeCapabilityMatrix`.
+ */
+const getTopBarCapabilities = (status: string, userRoles: string[]) =>
+  getInitiativeTopBarCapabilities(normalizeStatus(status), userRoles);
 
 /**
  * Parse multilingual text and return translation for user's language
@@ -405,6 +406,11 @@ export class InitiativeController {
               avatarUrl: i.oe_avatar,
             }
           : null,
+        // INI-05: read parity with the v8 getPortfolioRead (this is its
+        // legacy fallback for the same UI) — same canonical
+        // syncInitiativeCapacity columns.
+        allocatedCapacityFte: Number((i as any).allocated_capacity_fte) || 0,
+        requiredCapacityFte: Number((i as any).required_capacity_fte) || 0,
       }));
 
       res.json(initiatives);
@@ -767,9 +773,10 @@ export class InitiativeController {
         return;
       }
 
-      // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities
+      // 2.1 Enforce top-bar edit rules (owner / target dates) based on backend capabilities.
+      // INI-04: role profile = owner/sponsor/project role/gate roles/steering board + RACI.
       const accessCtx = userId
-        ? await resolveInitiativeAccessContext(orgId, id, userId, req.user?.role)
+        ? await resolveInitiativeCapabilityContext(orgId, id, userId, req.user?.role)
         : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
@@ -822,6 +829,24 @@ export class InitiativeController {
           roles: effectiveRoles,
         });
         return;
+      }
+
+      // INI-04 tenant scope: owner/sponsor are INPUTS to the capability matrix
+      // (the resolver turns them into INITIATIVE_OWNER / BUSINESS_OWNER /
+      // PROJECT_SPONSOR effective roles). Accepting a foreign-org user id here
+      // would mint a capability for someone outside the tenant, so the write is
+      // denied before it can reach the row.
+      if (isOwnerUpdate) {
+        const scope = await assertUsersInOrganization(orgId, [
+          body.ownerId as string | undefined,
+          body.ownerBusinessId as string | undefined,
+          body.ownerExecutionId as string | undefined,
+          body.sponsorId as string | undefined,
+        ]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       // 3. Build update map — only include fields that are provided
@@ -1317,9 +1342,10 @@ export class InitiativeController {
       const initiativeName = String((current as any)?.name || 'Initiative');
       const currentStatus = normalizeStatus((current as any)?.status);
 
-      // Enforce top-bar edit rules for quick update endpoint
+      // Enforce top-bar edit rules for quick update endpoint (INI-04: same matrix
+      // as PUT /:id and as the two gate-readiness read models).
       const accessCtx = actorId
-        ? await resolveInitiativeAccessContext(orgId, id, actorId, req.user?.role)
+        ? await resolveInitiativeCapabilityContext(orgId, id, actorId, req.user?.role)
         : null;
       const effectiveRoles = accessCtx?.effectiveRoles || [];
       const topBarCaps = getTopBarCapabilities(currentStatus, effectiveRoles);
@@ -1356,6 +1382,15 @@ export class InitiativeController {
           roles: effectiveRoles,
         });
         return;
+      }
+
+      // INI-04 tenant scope — same rule as PUT /initiatives/:id.
+      if (ownerBusinessId !== undefined || ownerExecutionId !== undefined) {
+        const scope = await assertUsersInOrganization(orgId, [ownerBusinessId, ownerExecutionId]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       const existingStart = (current as Record<string, unknown>).planned_start_date as
@@ -1717,6 +1752,42 @@ export class InitiativeController {
         return;
       }
 
+      // INI-05: neither endpoint of the dependency was previously verified to
+      // belong to this org — the INSERT's own `organization_id` came from the
+      // caller, not from either referenced initiative, so a caller could wire
+      // a dependency edge to (or from) a foreign-org initiative id it merely
+      // guessed. Fail closed: both ids must resolve inside this tenant.
+      const [fromInOrg, toInOrg] = await Promise.all([
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          fromInitiativeId,
+          orgId,
+        ]),
+        queryHelpers.queryOne(`SELECT id FROM initiatives WHERE id = ? AND organization_id = ?`, [
+          toInitiativeId,
+          orgId,
+        ]),
+      ]);
+      if (!fromInOrg || !toInOrg) {
+        res.status(404).json({
+          error: 'fromInitiativeId and toInitiativeId must both belong to your organization',
+          code: 'CROSS_TENANT_DEPENDENCY_DENIED',
+        });
+        return;
+      }
+
+      // INI-04 capability gate on the initiative that owns this edge of the
+      // roadmap graph.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId: fromInitiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const existingDep = await queryHelpers.queryOne(
         `SELECT id FROM initiative_dependencies
          WHERE organization_id = ? AND from_initiative_id = ? AND to_initiative_id = ?`,
@@ -1880,6 +1951,27 @@ export class InitiativeController {
       }
 
       const { id } = req.params;
+      const dep = await queryHelpers.queryOne<{ from_initiative_id: string | null }>(
+        `SELECT from_initiative_id FROM initiative_dependencies WHERE id = ? AND organization_id = ?`,
+        [id, orgId]
+      );
+      if (!dep) {
+        res.json({ success: true });
+        return;
+      }
+      if (dep.from_initiative_id) {
+        const capVerdict = await assertCanEditInitiative({
+          organizationId: orgId,
+          initiativeId: dep.from_initiative_id,
+          actorId: req.user?.id,
+          actorRoleHint: req.user?.role,
+        });
+        if (!capVerdict.allowed) {
+          res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+          return;
+        }
+      }
+
       await queryHelpers.queryRun(
         `DELETE FROM initiative_dependencies WHERE id = ? AND organization_id = ?`,
         [id, orgId]
@@ -2478,11 +2570,26 @@ export class InitiativeController {
         return;
       }
 
+      // INI-05: portfolio-membership reassignment is a mutation like any
+      // other — must go through the INI-04 capability matrix (edit
+      // capability + terminal-status freeze), not just the shadow-mode-only
+      // `requireInitiativeCapability` middleware on this route.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: userId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const oldProjectId = initiative.project_id;
 
       // Move initiative
       await queryHelpers.queryRun(
-        `UPDATE initiatives SET 
+        `UPDATE initiatives SET
                 project_id = ?,
                 updated_at = CURRENT_TIMESTAMP
              WHERE id = ?`,
@@ -2578,6 +2685,25 @@ export class InitiativeController {
             results.push({ initiativeId, success: false, error: 'Initiative not found' });
             continue;
           }
+
+          // INI-05: same capability gate as the single-initiative `move` route
+          // (INI-04 matrix), applied per-initiative so one unauthorized id in
+          // the batch is rejected without blocking the rest.
+          const capVerdict = await assertCanEditInitiative({
+            organizationId: orgId,
+            initiativeId,
+            actorId: userId,
+            actorRoleHint: req.user?.role,
+          });
+          if (!capVerdict.allowed) {
+            results.push({
+              initiativeId,
+              success: false,
+              error: capVerdict.denial!.body.error,
+            });
+            continue;
+          }
+
           const oldProjectId = initiative.project_id;
 
           await queryHelpers.queryRun(
@@ -3169,6 +3295,17 @@ export class InitiativeController {
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       // EXE-02/03/04: map an existing row to the same JSON shape as the
       // normal create response, for both the pre-insert idempotency check
       // and the post-insert unique-violation race fallback below.
@@ -3259,6 +3396,25 @@ export class InitiativeController {
         throw err;
       }
 
+      // INI-05: milestone writes previously had NO audit trail at all
+      // (contrast with initiative status/owner changes). Best-effort, same
+      // convention as the rest of this controller.
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.created',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          after: { initiativeId, name, targetDate: targetDate || null, isGate: !!isGate },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
       res.status(201).json({
         success: true,
         milestone: {
@@ -3300,6 +3456,17 @@ export class InitiativeController {
 
       if (!milestone) {
         res.status(404).json({ error: 'Milestone not found' });
+        return;
+      }
+
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
         return;
       }
 
@@ -3349,6 +3516,22 @@ export class InitiativeController {
         params
       );
 
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.updated',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          after: { initiativeId, name, targetDate, actualDate, status, orderIndex, isGate },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
+
       res.json({ success: true, message: 'Milestone updated' });
     }
   );
@@ -3379,7 +3562,34 @@ export class InitiativeController {
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId: req.user?.id,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       await queryHelpers.queryRun('DELETE FROM initiative_milestones WHERE id = ?', [milestoneId]);
+
+      try {
+        await auditEventsService.log({
+          actorId: req.user?.id,
+          actorType: 'USER',
+          action: 'initiative.milestone.deleted',
+          resourceType: 'initiative_milestone',
+          resourceId: milestoneId,
+          before: { initiativeId },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
 
       res.json({ success: true });
     }
@@ -3520,7 +3730,7 @@ export class InitiativeController {
       }
 
       const resources = await queryHelpers.queryAll(
-        `SELECT 
+        `SELECT
           r.id,
           r.initiative_id as "initiativeId",
           r.user_id as "userId",
@@ -3531,11 +3741,12 @@ export class InitiativeController {
           r.end_date as "endDate",
           r.notes,
           r.source,
+          r.version,
           u.first_name as "firstName",
           u.last_name as "lastName",
           u.avatar_url as "avatarUrl"
         FROM initiative_resources r
-        LEFT JOIN users u ON r.user_id = u.id
+        LEFT JOIN users u ON r.user_id = u.id AND u.organization_id = r.organization_id
         WHERE r.initiative_id = ? AND r.organization_id = ?`,
         [initiativeId, orgId]
       );
@@ -3550,6 +3761,7 @@ export class InitiativeController {
   static addResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId } = req.params;
       const { userId, name, role, allocationPercentage, startDate, endDate, notes, source, idempotencyKey } =
         req.body;
@@ -3575,6 +3787,30 @@ export class InitiativeController {
       if (!initiative) {
         res.status(404).json({ error: 'Initiative not found' });
         return;
+      }
+
+      // INI-05: (1) INI-04 capability gate — real enforcement, not just the
+      // shadow-mode `requireInitiativeCapability` middleware on this route.
+      // (2) tenant scope for the RESOURCE itself: `userId` is a second
+      // foreign key this endpoint accepts from the client body — an
+      // assignable "resource/user" that must belong to this organization,
+      // same contract as INI-04's owner/sponsor cross-tenant guard.
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+      if (userId) {
+        const scope = await assertUsersInOrganization(orgId, [userId as string]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
       }
 
       // Map an existing row to the same JSON shape as the normal create
@@ -3696,9 +3932,21 @@ export class InitiativeController {
   static deleteResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId, resourceId } = req.params as any;
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
         return;
       }
 
@@ -3718,21 +3966,55 @@ export class InitiativeController {
   );
 
   /**
-   * Update resource in an initiative
+   * Update resource in an initiative.
+   *
+   * INI-05: optimistic-concurrency (CAS) contract. `expectedVersion` is
+   * OPTIONAL for backward compatibility with any caller that predates this
+   * packet: when present, the UPDATE only applies if the row's current
+   * `version` still matches, and a mismatch is reported as 409 CONFLICT
+   * (never a silent overwrite, never a 200 pretending the caller's edit won).
+   * When absent, the write proceeds unconditionally (legacy last-write-wins)
+   * — but the version counter is still bumped either way, so a client that
+   * DOES start sending `expectedVersion` becomes CAS-protected immediately.
    */
   static updateResource = asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const orgId = req.user?.organizationId;
+      const actorId = req.user?.id;
       const { id: initiativeId, resourceId } = req.params as any;
-      const { name, role, allocationPercentage, startDate, endDate, notes } = req.body;
+      const { name, role, allocationPercentage, startDate, endDate, notes, expectedVersion } =
+        req.body;
 
       if (!orgId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
 
+      const capVerdict = await assertCanEditInitiative({
+        organizationId: orgId,
+        initiativeId,
+        actorId,
+        actorRoleHint: req.user?.role,
+      });
+      if (!capVerdict.allowed) {
+        res.status(capVerdict.denial!.status).json(capVerdict.denial!.body);
+        return;
+      }
+
       const now = new Date().toISOString();
-      await queryHelpers.queryRun(
+      const hasExpectedVersion =
+        expectedVersion !== undefined && expectedVersion !== null && expectedVersion !== '';
+
+      // NOTE: deliberately `queryRun` (primary pool), not `queryOne`/`queryAll`
+      // with a `RETURNING` clause — `queryHelpers.queryOne` is wired to
+      // `getReadPool()`, which falls back to the primary today but would
+      // silently target a read replica the moment one is configured, and a
+      // replica rejects (or simply never sees) a write. The CAS predicate
+      // lives entirely in the UPDATE's WHERE clause; success/conflict is
+      // read from `changes` (rowCount), and the actual new/current state is
+      // fetched via a separate, ordinary read afterward.
+      const versionPredicate = hasExpectedVersion ? 'AND version = ?' : '';
+      const writeResult = await queryHelpers.queryRun(
         `UPDATE initiative_resources SET
           name = COALESCE(?, name),
           role = COALESCE(?, role),
@@ -3740,8 +4022,10 @@ export class InitiativeController {
           start_date = COALESCE(?, start_date),
           end_date = COALESCE(?, end_date),
           notes = COALESCE(?, notes),
-          updated_at = ?
-        WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+          updated_at = ?,
+          version = version + 1
+        WHERE id = ? AND initiative_id = ? AND organization_id = ?
+          ${versionPredicate}`,
         [
           name,
           role,
@@ -3753,8 +4037,30 @@ export class InitiativeController {
           resourceId,
           initiativeId,
           orgId,
+          ...(hasExpectedVersion ? [Number(expectedVersion)] : []),
         ]
       );
+
+      if (!writeResult.changes) {
+        // Distinguish "resource doesn't exist / not in this org" (404) from
+        // "it exists but the caller's version is stale" (409 CONFLICT) so the
+        // client can tell a typo'd id apart from a real concurrent edit.
+        const current = await queryHelpers.queryOne<{ id: string; version: number }>(
+          `SELECT id, version FROM initiative_resources
+           WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+          [resourceId, initiativeId, orgId]
+        );
+        if (!current) {
+          res.status(404).json({ error: 'Resource not found', code: 'RESOURCE_NOT_FOUND' });
+          return;
+        }
+        res.status(409).json({
+          error: 'Resource was modified by another update — refresh and retry',
+          code: 'RESOURCE_VERSION_CONFLICT',
+          currentVersion: current.version,
+        });
+        return;
+      }
 
       try {
         await syncInitiativeCapacity(initiativeId, orgId);
@@ -3762,7 +4068,11 @@ export class InitiativeController {
         /* best-effort */
       }
 
-      res.json({ success: true });
+      const updated = await queryHelpers.queryOne<{ version: number }>(
+        `SELECT version FROM initiative_resources WHERE id = ? AND initiative_id = ? AND organization_id = ?`,
+        [resourceId, initiativeId, orgId]
+      );
+      res.json({ success: true, version: updated?.version ?? null });
     }
   );
 
@@ -4366,6 +4676,18 @@ export class InitiativeController {
         return;
       }
 
+      // INI-04 tenant scope: a RACI row with `raci_type` A or R now grants EDIT
+      // capability through the canonical matrix, so an internal stakeholder must
+      // belong to this organization. (External stakeholders carry no user_id and
+      // therefore no capability at all — they are unaffected.)
+      if (userId) {
+        const scope = await assertUsersInOrganization(orgId, [userId as string]);
+        if (!scope.ok) {
+          res.status(403).json(crossTenantDenialBody(scope.offending));
+          return;
+        }
+      }
+
       const rawRole = String(role || '').trim();
       const rawRaci = String(raciType || '').trim();
 
@@ -4463,6 +4785,33 @@ export class InitiativeController {
           null,
         ]
       );
+
+      // INI-04 audit: RACI is now a capability input, so a RACI edit is a role
+      // profile change and is recorded as one (actor + change + what it grants).
+      try {
+        await auditEventsService.log({
+          actorId,
+          actorType: 'USER',
+          action: 'initiative.role_profile.changed',
+          resourceType: 'initiative',
+          resourceId: initiativeId,
+          after: {
+            raci: {
+              added: {
+                userId: userId || null,
+                externalName: userId ? null : externalName,
+                raciType: resolvedRaci,
+                role: resolvedDbRole,
+              },
+            },
+          },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
+      }
 
       res.status(201).json({ success: true, id });
     }
@@ -5021,6 +5370,32 @@ export class InitiativeController {
         return;
       }
 
+      // INI-04 tenant scope: an explicit gate-role row is the single most direct
+      // way to mint an initiative capability, so a foreign-org user id is refused
+      // BEFORE the destructive DELETE below — a rejected request must leave the
+      // existing approval profile intact.
+      const scope = await assertUsersInOrganization(
+        orgId,
+        (roles as Array<{ userId?: string }>).map((role) => role?.userId)
+      );
+      if (!scope.ok) {
+        res.status(403).json(crossTenantDenialBody(scope.offending));
+        return;
+      }
+
+      // Previous profile — captured for the audit record (requirement: the audit
+      // shows the actor, the profile CHANGE, and the resulting capability).
+      let previousRoles: any[] = [];
+      try {
+        previousRoles = await queryHelpers.queryAll(
+          `SELECT gate_role as "gateRole", user_id as "userId"
+             FROM initiative_gate_roles WHERE initiative_id = ?`,
+          [initiativeId]
+        );
+      } catch {
+        // Table may not exist yet
+      }
+
       // Delete all explicit roles and re-insert
       try {
         await queryHelpers.queryRun(`DELETE FROM initiative_gate_roles WHERE initiative_id = ?`, [
@@ -5046,15 +5421,66 @@ export class InitiativeController {
         }
       }
 
+      // Capability outcome AFTER the change, resolved through the canonical
+      // matrix — so the audit answers "what did this profile edit actually grant
+      // the actor", not just "which rows moved".
+      let capabilityOutcome: Record<string, unknown> | null = null;
+      try {
+        const ctx = await resolveInitiativeCapabilityContext(
+          orgId,
+          initiativeId,
+          actorId,
+          req.user?.role
+        );
+        const statusRow = await queryHelpers.queryOne(
+          `SELECT status FROM initiatives WHERE id = ? AND organization_id = ?`,
+          [initiativeId, orgId]
+        );
+        const decision = computeInitiativeCapabilities({
+          status: normalizeStatus((statusRow as any)?.status),
+          effectiveRoles: ctx.effectiveRoles,
+        });
+        capabilityOutcome = {
+          effectiveRoles: ctx.effectiveRoles,
+          canEditCards: decision.cards.canEditCards,
+          topBar: decision.topBar,
+        };
+      } catch {
+        capabilityOutcome = null;
+      }
+
       // Audit
       try {
         await queryHelpers.queryRun(
-          `INSERT INTO initiative_history (id, initiative_id, action, new_value, changed_by)
-           VALUES (?, ?, ?, ?, ?)`,
-          [uuidv4(), initiativeId, 'gate_roles_updated', JSON.stringify(inserted), actorId]
+          `INSERT INTO initiative_history (id, initiative_id, action, old_value, new_value, changed_by)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            initiativeId,
+            'gate_roles_updated',
+            JSON.stringify(previousRoles),
+            JSON.stringify(inserted),
+            actorId,
+          ]
         );
       } catch {
         // best-effort
+      }
+      try {
+        await auditEventsService.log({
+          actorId,
+          actorType: 'USER',
+          action: 'initiative.role_profile.changed',
+          resourceType: 'initiative',
+          resourceId: initiativeId,
+          before: { gateRoles: previousRoles },
+          after: { gateRoles: inserted, capabilityOutcome },
+          organizationId: orgId,
+          ip: (req as any).ip,
+          userAgent: (req as any).get?.('user-agent'),
+        });
+      } catch {
+        /* best-effort audit */
       }
 
       res.json({ success: true, roles: inserted });
@@ -5239,17 +5665,23 @@ export class InitiativeController {
       const ini = initiative as any;
       const currentStatus = String(ini.status || 'DRAFT').toUpperCase();
 
-      // Canonical role resolution (system role + project membership + gate roles + steering board)
+      // Canonical role resolution (system role + project membership + gate roles
+      // + steering board + RACI) — INI-04: identical profile to the writers.
       const accessCtx =
         orgId && currentUserId
-          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId, req.user?.role)
+          ? await resolveInitiativeCapabilityContext(
+              orgId,
+              initiativeId,
+              currentUserId,
+              req.user?.role
+            )
           : null;
-      const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
+      const steeringBoardEnabled = !!accessCtx?.steeringBoardEnabled;
       const userRoles = accessCtx?.effectiveRoles || [];
 
       // Expanded assignments include initiative gate roles + derived + project roles + steering board members
       const expandedAssignments: Array<{ gateRole: string; userId: string }> = [
-        ...(accessCtx?.roleAssignments || []),
+        ...(accessCtx?.access?.roleAssignments || []),
       ];
 
       const projectId = accessCtx?.projectId ? String(accessCtx.projectId) : null;
@@ -5318,37 +5750,15 @@ export class InitiativeController {
         }
       }
 
-      // Get valid next transitions and check which ones the user can execute
-      const validNext = VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [];
-      const availableTransitions: any[] = [];
-
-      for (const nextStatus of validNext) {
-        const gate = getGateForTransition(currentStatus as any, nextStatus as any);
-        const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
-        const effectiveRequiredRoles = steeringBoardEnabled
-          ? requiredRoles
-          : requiredRoles.flatMap((r: string) => {
-              if (r === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
-              return [r];
-            });
-        const canExecute =
-          userRoles.includes('ADMIN') ||
-          (gate ? effectiveRequiredRoles.some((r: string) => userRoles.includes(r)) : true);
-
-        // Get assigned users for the required roles
-        const assignedApprovers = effectiveRequiredRoles.flatMap((role: string) =>
-          expandedAssignments.filter((gr: any) => String(gr.gateRole).toUpperCase() === role)
-        );
-
-        availableTransitions.push({
-          targetStatus: nextStatus,
-          gate: gate || null,
-          requiredRoles: effectiveRequiredRoles,
-          assignedApprovers,
-          canCurrentUserExecute: canExecute,
-          hasAssignedApprover: assignedApprovers.length > 0,
-        });
-      }
+      // Approval profile — INI-04: computed by the canonical matrix, the same
+      // one `initiativeTransitionService` enforces on PATCH /:id/status, so the
+      // CTA the UI renders and the gate the writer applies cannot disagree.
+      const availableTransitions: any[] = computeApprovalProfile({
+        status: currentStatus,
+        effectiveRoles: userRoles,
+        steeringBoardEnabled,
+        assignments: expandedAssignments,
+      });
 
       // Readiness criteria for current stage
       const readiness: any[] = [];
@@ -5579,59 +5989,13 @@ export class InitiativeController {
         }
       }
 
-      // Capabilities contract (v1) — backend is source of truth for UI enablement
-      const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-      const isAdmin = userRoles.some((r: string) =>
-        ['ADMIN', 'SUPERADMIN'].includes(String(r || '').toUpperCase())
-      );
-      const hasEditRole =
-        isAdmin ||
-        userRoles.some((r: string) =>
-          [
-            'PMO',
-            'PROJECT_MANAGER',
-            'PROJECT_LEAD',
-            'INITIATIVE_OWNER',
-            'PROJECT_SPONSOR',
-          ].includes(String(r || '').toUpperCase())
-        );
-
-      const topBar = {
-        canEditPriority: hasEditRole && !isTerminal,
-        canEditOwner: hasEditRole && !isTerminal,
-        canEditTargetDate: hasEditRole && !isTerminal,
-      };
-
-      const contextCreateActions = (() => {
-        if (!hasEditRole || isTerminal) return [];
-        if (['PLANNING', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'BLOCKED'].includes(currentStatus)) {
-          return ['task', 'decision', 'raid'];
-        }
-        if (['REVIEW', 'PROMOTED', 'PENDING_REVIEW', 'DRAFT'].includes(currentStatus)) {
-          return ['decision', 'raid'];
-        }
-        return [];
-      })();
-
-      const cards = {
-        canEditCards:
-          topBar.canEditPriority ||
-          topBar.canEditOwner ||
-          topBar.canEditTargetDate ||
-          contextCreateActions.length > 0,
-        reasonCode:
-          topBar.canEditPriority ||
-          topBar.canEditOwner ||
-          topBar.canEditTargetDate ||
-          contextCreateActions.length > 0
-            ? null
-            : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE',
-      };
-
-      const ai = {
-        canUseAi: cards.canEditCards && !isTerminal,
-        allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
-      };
+      // Capabilities contract (v1) — backend is source of truth for UI enablement.
+      // INI-04: ONE matrix (`initiativeCapabilityMatrix`) shared with the v8 read
+      // model, PUT /:id, PATCH /:id/quick-update and the transition service.
+      const capabilityDecision = computeInitiativeCapabilities({
+        status: currentStatus,
+        effectiveRoles: userRoles,
+      });
 
       const blockingItems = await getBlockingReadinessItems(orgId, initiativeId);
 
@@ -5648,31 +6012,10 @@ export class InitiativeController {
           label: item.label,
           suggestedAction: item.suggestedAction,
         })),
-        capabilities: {
-          version: 1,
-          source: 'backend',
-          topBar,
-          cards,
-          reasonCodes: {
-            topBar: {
-              priority: topBar.canEditPriority ? null : 'TOP_BAR_PRIORITY_LOCKED_BY_ROLE_OR_STATUS',
-              owner: topBar.canEditOwner ? null : 'TOP_BAR_OWNER_LOCKED_BY_ROLE_OR_STATUS',
-              targetDate: topBar.canEditTargetDate
-                ? null
-                : 'TOP_BAR_TARGET_DATE_LOCKED_BY_ROLE_OR_STATUS',
-            },
-            cards: { edit: cards.canEditCards ? null : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE' },
-            ai: { use: ai.canUseAi ? null : 'AI_LOCKED_NO_EDIT_CAPABILITY' },
-          },
-          ctaBar: {
-            workflowActions: availableTransitions
-              .filter((t: any) => t.canCurrentUserExecute)
-              .map((t: any) => ({ targetStatus: t.targetStatus, gate: t.gate || null })),
-            contextCreateActions,
-            canUseAi: ai.canUseAi,
-            aiAllowedSectionKeys: ai.allowedSectionKeys,
-          },
-        },
+        capabilities: buildInitiativeCapabilityContract({
+          decision: capabilityDecision,
+          availableTransitions,
+        }),
         readiness,
         allBlocking: blockingItems.length === 0,
         allWarnings: readiness.filter((r: any) => r.severity === 'warning' && !r.pass).length === 0,

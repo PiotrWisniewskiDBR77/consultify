@@ -26,6 +26,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { bumpInitiativeRefresh } from '../../store/useInitiativeRefreshStore';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { FullInitiative, InitiativeStatus } from '../../types';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
@@ -854,6 +855,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
       setNewDepTo('');
       await loadDependencies();
       onDependenciesChanged?.();
+      bumpInitiativeRefresh();
     } catch (e: any) {
       toast.error(e?.message || t('execution.timeline.deps.createFailed', 'Failed to create'));
     }
@@ -867,6 +869,7 @@ export const ExecutionTimelineView: React.FC<ExecutionTimelineViewProps> = ({
         trackFunnelEvent('execution_dependency_deleted', { id });
         await loadDependencies();
         onDependenciesChanged?.();
+        bumpInitiativeRefresh();
       } catch (e: any) {
         toast.error(e?.message || t('execution.timeline.deps.deleteFailed', 'Failed to delete'));
       }

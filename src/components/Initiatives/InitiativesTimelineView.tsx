@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 
 import type { FullInitiative, PortfolioInitiative, RelatedInitiative } from '../../types';
 import { type CriticalPathInfo, ExecutionTimelineView } from '../Execution/ExecutionTimelineView';
@@ -223,6 +224,9 @@ export const InitiativesTimelineView: React.FC<InitiativesTimelineViewProps> = (
           plannedEndDate: nextEnd,
         });
         toast.success(t('initiatives.toast.scheduleUpdated', 'Harmonogram zaktualizowany'));
+        // INI-05: the portfolio list / detail view for this initiative must
+        // not keep showing the pre-drag dates.
+        bumpInitiativeRefresh();
       } catch (error: any) {
         if (previous) {
           setLocalInitiatives((prev) =>

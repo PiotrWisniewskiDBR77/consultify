@@ -1,0 +1,19 @@
+-- INI-05 — production defect found by testing against Railway `dev`'s real
+-- schema (not just a throwaway Docker copy): `initiatives.allocated_capacity_fte`
+-- has NEVER been migrated on `dev`. Its sibling column, `required_capacity_fte`,
+-- IS present there (added by 20260801_exe002004_idempotency_keys.sql's
+-- `ADD COLUMN IF NOT EXISTS`) — but the only migration that ever defined
+-- `allocated_capacity_fte` is the legacy, non-guarded
+-- `293_initiative_milestones.sql` (`ADD COLUMN` with no `IF NOT EXISTS`),
+-- which was never applied on `dev` at all (absent from `schema_migrations`).
+--
+-- `syncInitiativeCapacity` (server/src/services/staffingPlanService.ts,
+-- called after every add/update/delete on `initiative_resources` — the exact
+-- writer this INI-05 packet capability/tenant/CAS-gated) writes this column
+-- unconditionally, wrapped in try/catch by every caller, so the missing
+-- column was silently swallowing every capacity write on `dev` rather than
+-- erroring loudly. The INI-05 portfolio capacity rollup
+-- (getPortfolioRead/getInitiatives -> allocatedCapacityFte) depends on it.
+--
+-- Additive, replay-safe, matches the sibling column's own guard.
+ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS allocated_capacity_fte REAL DEFAULT 0;

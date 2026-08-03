@@ -110,6 +110,7 @@ import {
 import { exportReportToPDF } from '@/services/pdf/pdfExport';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
+import { bumpInitiativeRefresh } from '@/store/useInitiativeRefreshStore';
 import { AppView } from '@/types';
 import {
   type GateAiCheckResponse,
@@ -612,6 +613,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       lastName?: string;
       avatarUrl?: string;
       source?: 'manual' | 'ai';
+      version?: number;
     }>
   >([]);
   const [apiBudgetItems, setApiBudgetItems] = useState<
@@ -2788,6 +2790,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 firstName: item.firstName,
                 lastName: item.lastName,
                 avatarUrl: item.avatarUrl,
+                version: typeof item.version === 'number' ? item.version : undefined,
               }))
             );
           })
@@ -3645,6 +3648,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           { ...data, id: newItem.id || `res-${Date.now()}` },
         ]);
         toast.success(t('initiatives.resourceAdded2'));
+        // INI-05: any other open view reading this initiative's capacity
+        // (portfolio list, timeline) must not keep showing a pre-add snapshot.
+        bumpInitiativeRefresh();
       } catch (e: any) {
         toast.error(e?.message || t('initiatives.failedToAddResource2'));
       }
@@ -3652,18 +3658,52 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     [initiativeId, isPolish]
   );
 
+  // INI-05: was fire-and-forget (`catch { /* best-effort */ }`) — a failed
+  // PUT left the optimistic edit on screen showing false success, and a
+  // concurrent edit elsewhere could be silently overwritten with no signal
+  // to either user. Now: send the last-known `version` for CAS, and on
+  // ANY failure (network, 403, 404, or a real 409 version conflict) revert
+  // the optimistic change and surface it — never a silent/false success.
   const handleUpdateResource = useCallback(
     async (id: string, data: Partial<(typeof apiResourceItems)[0]>) => {
+      let previousItem: (typeof apiResourceItems)[0] | undefined;
       setApiResourceItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+        prev.map((item) => {
+          if (item.id !== id) return item;
+          previousItem = item;
+          return { ...item, ...data };
+        })
       );
       try {
-        await Api.put(`/initiatives/${initiativeId}/resources/${id}`, data);
-      } catch {
-        // best-effort
+        const expectedVersion = previousItem?.version;
+        const res = await Api.put(`/initiatives/${initiativeId}/resources/${id}`, {
+          ...data,
+          ...(expectedVersion !== undefined ? { expectedVersion } : {}),
+        });
+        const nextVersion = res?.version;
+        if (typeof nextVersion === 'number') {
+          setApiResourceItems((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, version: nextVersion } : item))
+          );
+        }
+        bumpInitiativeRefresh();
+      } catch (e: any) {
+        setApiResourceItems((prev) =>
+          prev.map((item) => (item.id === id && previousItem ? previousItem : item))
+        );
+        if (e?.status === 409) {
+          toast.error(
+            t(
+              'initiatives.resourceUpdateConflict',
+              'This resource was changed elsewhere — refresh and try again'
+            )
+          );
+        } else {
+          toast.error(e?.message || t('initiatives.failedToUpdateResource', 'Failed to update resource'));
+        }
       }
     },
-    [initiativeId]
+    [initiativeId, t]
   );
 
   const handleDeleteResource = useCallback(
@@ -3672,6 +3712,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       toast.success(t('initiatives.resourceRemoved2'));
       try {
         await Api.delete(`/initiatives/${initiativeId}/resources/${id}`);
+        bumpInitiativeRefresh();
       } catch {
         // best-effort
       }

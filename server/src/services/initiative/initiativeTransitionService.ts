@@ -33,7 +33,11 @@ import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { getGateReadiness } from './gateAiReadinessService.js';
 import { recordGateAiEvent } from './gateAiTelemetryService.js';
 import { getTimelineFlags } from './gateTimelineService.js';
-import { resolveInitiativeAccessContext } from './initiativeAccessResolver.js';
+import {
+  canExecuteGate,
+  resolveGateRequiredRoles,
+  resolveInitiativeCapabilityContext,
+} from './initiativeCapabilityMatrix.js';
 import { isInitiativeGateAiEnabled } from './initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from './initiativeGateReadinessService.js';
 import {
@@ -612,20 +616,19 @@ export async function executeInitiativeTransition(
       }
       // Authorized — fall through without a human accessCtx/role lookup.
     } else if (gate) {
-      const accessCtx = await resolveInitiativeAccessContext(orgId, id, actorId, actorRole);
-      const isAdmin = accessCtx.effectiveRoles.includes('ADMIN');
-      const steeringBoardEnabled = !!accessCtx.steeringBoard.enabled;
-      const requiredRoles = GATE_PERMISSIONS[gate] || [];
-      const effectiveRequiredRoles = steeringBoardEnabled
-        ? requiredRoles
-        : requiredRoles.flatMap((r: string) => {
-            if (r === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
-            return [r];
-          });
+      // INI-04: the approval decision comes from the SAME matrix the two
+      // gate-readiness read models use to render the CTA bar. Previously this
+      // was a fourth hand-rolled copy of the rule, so a drift would have shown
+      // the user a button that the writer then refused.
+      const accessCtx = await resolveInitiativeCapabilityContext(orgId, id, actorId, actorRole);
+      const steeringBoardEnabled = accessCtx.steeringBoardEnabled;
+      const effectiveRequiredRoles = resolveGateRequiredRoles(gate, steeringBoardEnabled);
 
-      const canExecute =
-        isAdmin ||
-        effectiveRequiredRoles.some((r: string) => accessCtx.effectiveRoles.includes(r));
+      const canExecute = canExecuteGate({
+        gate,
+        effectiveRoles: accessCtx.effectiveRoles,
+        steeringBoardEnabled,
+      });
 
       if (!canExecute) {
         return {

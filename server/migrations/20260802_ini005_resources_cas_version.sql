@@ -1,0 +1,12 @@
+-- INI-05 — optimistic-concurrency (CAS) support for initiative_resources.
+--
+-- `updateResource` was a blind UPDATE (COALESCE over whatever the client
+-- sent) with no way to detect a stale write: two concurrent PUTs would
+-- silently last-write-wins, and neither the caller nor a code reviewer could
+-- tell from the response. This column lets the write path require the
+-- caller's last-known version and return 409 CONFLICT on mismatch instead of
+-- overwriting silently.
+--
+-- Additive, replay-safe: default 1 so every existing row (and any DB that
+-- re-runs this migration) ends up in a valid state with no backfill pass.
+ALTER TABLE initiative_resources ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;

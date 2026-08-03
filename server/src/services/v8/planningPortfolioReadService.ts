@@ -1,13 +1,15 @@
-import {
-  GATE_PERMISSIONS,
-  getGateForTransition,
-  isScheduledOnward,
-  VALID_TRANSITIONS,
-} from '../../constants/initiativeStatuses.js';
+// INI-04: the gate/transition constants are no longer read here directly — the
+// approval profile comes from `initiativeCapabilityMatrix`, which owns them.
+import { isScheduledOnward } from '../../constants/initiativeStatuses.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { resolveInitiativeAccessContext } from '../initiative/initiativeAccessResolver.js';
+import {
+  buildInitiativeCapabilityContract,
+  computeApprovalProfile,
+  computeInitiativeCapabilities,
+  resolveInitiativeCapabilityContext,
+} from '../initiative/initiativeCapabilityMatrix.js';
 import { getBlockingReadinessItems } from '../initiative/initiativeGateReadinessService.js';
 import { listInitiativeKpiAssignments } from '../initiative/initiativeKpiAssignmentService.js';
 import {
@@ -252,6 +254,16 @@ export async function getPortfolioRead(
         : null,
       createdAt: initiative.created_at,
       updatedAt: initiative.updated_at,
+      // INI-05: canonical resource/capacity model for the portfolio view.
+      // Single source of truth is `syncInitiativeCapacity`
+      // (staffingPlanService.ts) — SUM(initiative_resources.allocation_percentage)
+      // — re-run after every resource add/update/delete this packet
+      // capability/tenant/CAS-gated. Previously computed but never exposed
+      // here, so the portfolio list/kanban had no way to show it even though
+      // the per-initiative drawer (InitiativeDrawer.tsx) already reads the
+      // same two columns.
+      allocatedCapacityFte: Number(initiative.allocated_capacity_fte) || 0,
+      requiredCapacityFte: Number(initiative.required_capacity_fte) || 0,
     };
   });
 
@@ -809,6 +821,12 @@ export async function getInitiativeResourcesRead(
   initiativeId: string,
   organizationId: string
 ): Promise<Record<string, unknown>[]> {
+  // INI-05: kept in sync with InitiativeController.getResources (the pmo
+  // fallback for the same UI) — this is the READ PATH THE UI PREFERS
+  // (`V8PlanningApi.getResources`, tried before the legacy fallback), so
+  // `version` must appear here or the CAS contract silently never reaches
+  // the client on the common path. `u.organization_id` join guard matches
+  // the tenant-scope fix on the legacy copy.
   return queryHelpers.queryAll(
     `SELECT
       r.id,
@@ -821,11 +839,12 @@ export async function getInitiativeResourcesRead(
       r.end_date as "endDate",
       r.notes,
       r.source,
+      r.version,
       u.first_name as "firstName",
       u.last_name as "lastName",
       u.avatar_url as "avatarUrl"
     FROM initiative_resources r
-    LEFT JOIN users u ON r.user_id = u.id
+    LEFT JOIN users u ON r.user_id = u.id AND u.organization_id = r.organization_id
     WHERE r.initiative_id = ? AND r.organization_id = ?`,
     [initiativeId, organizationId]
   );
@@ -846,20 +865,22 @@ export async function getInitiativeGateReadinessRead(
   const ini = initiative as any;
   const currentStatus = normalizeInitiativeDbStatusForRead(ini.status);
 
+  // INI-04: same role profile (owner · sponsor · project role · gate roles ·
+  // steering board · RACI) the writers resolve.
   const accessCtx =
     organizationId && currentUserId
-      ? await resolveInitiativeAccessContext(
+      ? await resolveInitiativeCapabilityContext(
           organizationId,
           initiativeId,
           currentUserId,
           currentUserRole
         )
       : null;
-  const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
+  const steeringBoardEnabled = !!accessCtx?.steeringBoardEnabled;
   const userRoles = accessCtx?.effectiveRoles || [];
 
   const expandedAssignments: Array<{ gateRole: string; userId: string }> = [
-    ...(accessCtx?.roleAssignments || []),
+    ...(accessCtx?.access?.roleAssignments || []),
   ];
 
   const projectId = accessCtx?.projectId ? String(accessCtx.projectId) : null;
@@ -928,35 +949,14 @@ export async function getInitiativeGateReadinessRead(
     }
   }
 
-  const validNext = VALID_TRANSITIONS[currentStatus as keyof typeof VALID_TRANSITIONS] || [];
-  const availableTransitions: Record<string, unknown>[] = [];
-
-  for (const nextStatus of validNext) {
-    const gate = getGateForTransition(currentStatus as any, nextStatus as any);
-    const requiredRoles = gate ? GATE_PERMISSIONS[gate] || [] : [];
-    const effectiveRequiredRoles = steeringBoardEnabled
-      ? requiredRoles
-      : requiredRoles.flatMap((role: string) => {
-          if (role === 'STEERING_COMMITTEE') return ['PROJECT_SPONSOR', 'PORTFOLIO_OWNER'];
-          return [role];
-        });
-    const canExecute =
-      userRoles.includes('ADMIN') ||
-      (gate ? effectiveRequiredRoles.some((role: string) => userRoles.includes(role)) : true);
-
-    const assignedApprovers = effectiveRequiredRoles.flatMap((role: string) =>
-      expandedAssignments.filter((assignment) => String(assignment.gateRole).toUpperCase() === role)
-    );
-
-    availableTransitions.push({
-      targetStatus: nextStatus,
-      gate: gate || null,
-      requiredRoles: effectiveRequiredRoles,
-      assignedApprovers,
-      canCurrentUserExecute: canExecute,
-      hasAssignedApprover: assignedApprovers.length > 0,
-    });
-  }
+  // INI-04: approval profile from the canonical matrix (shared with the pmo
+  // read model and with the transition writer).
+  const availableTransitions = computeApprovalProfile({
+    status: currentStatus,
+    effectiveRoles: userRoles,
+    steeringBoardEnabled,
+    assignments: expandedAssignments,
+  });
 
   const readiness: Record<string, unknown>[] = [];
   const addCheck = (
@@ -1187,54 +1187,10 @@ export async function getInitiativeGateReadinessRead(
     }
   }
 
-  const isTerminal = currentStatus === 'CANCELLED' || currentStatus === 'ARCHIVED';
-  const isAdmin = userRoles.some((role: string) =>
-    ['ADMIN', 'SUPERADMIN'].includes(String(role || '').toUpperCase())
-  );
-  const hasEditRole =
-    isAdmin ||
-    userRoles.some((role: string) =>
-      ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-        String(role || '').toUpperCase()
-      )
-    );
-
-  const topBar = {
-    canEditPriority: hasEditRole && !isTerminal,
-    canEditOwner: hasEditRole && !isTerminal,
-    canEditTargetDate: hasEditRole && !isTerminal,
-  };
-
-  const contextCreateActions = (() => {
-    if (!hasEditRole || isTerminal) return [];
-    if (['PLANNING', 'APPROVED', 'SCHEDULED', 'EXECUTING', 'BLOCKED'].includes(currentStatus)) {
-      return ['task', 'decision', 'raid'];
-    }
-    if (['REVIEW', 'PROMOTED', 'PENDING_REVIEW', 'DRAFT'].includes(currentStatus)) {
-      return ['decision', 'raid'];
-    }
-    return [];
-  })();
-
-  const cards = {
-    canEditCards:
-      topBar.canEditPriority ||
-      topBar.canEditOwner ||
-      topBar.canEditTargetDate ||
-      contextCreateActions.length > 0,
-    reasonCode:
-      topBar.canEditPriority ||
-      topBar.canEditOwner ||
-      topBar.canEditTargetDate ||
-      contextCreateActions.length > 0
-        ? null
-        : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE',
-  };
-
-  const ai = {
-    canUseAi: cards.canEditCards && !isTerminal,
-    allowedSectionKeys: cards.canEditCards && !isTerminal ? ['*'] : [],
-  };
+  const capabilityDecision = computeInitiativeCapabilities({
+    status: currentStatus,
+    effectiveRoles: userRoles,
+  });
 
   const blockingItems = await getBlockingReadinessItems(organizationId, initiativeId);
 
@@ -1251,34 +1207,10 @@ export async function getInitiativeGateReadinessRead(
       label: item.label,
       suggestedAction: item.suggestedAction,
     })),
-    capabilities: {
-      version: 1,
-      source: 'backend',
-      topBar,
-      cards,
-      reasonCodes: {
-        topBar: {
-          priority: topBar.canEditPriority ? null : 'TOP_BAR_PRIORITY_LOCKED_BY_ROLE_OR_STATUS',
-          owner: topBar.canEditOwner ? null : 'TOP_BAR_OWNER_LOCKED_BY_ROLE_OR_STATUS',
-          targetDate: topBar.canEditTargetDate
-            ? null
-            : 'TOP_BAR_TARGET_DATE_LOCKED_BY_ROLE_OR_STATUS',
-        },
-        cards: { edit: cards.canEditCards ? null : 'NO_EDIT_PERMISSION_FOR_STATUS_OR_ROLE' },
-        ai: { use: ai.canUseAi ? null : 'AI_LOCKED_NO_EDIT_CAPABILITY' },
-      },
-      ctaBar: {
-        workflowActions: availableTransitions
-          .filter((transition) => transition.canCurrentUserExecute)
-          .map((transition) => ({
-            targetStatus: transition.targetStatus,
-            gate: transition.gate || null,
-          })),
-        contextCreateActions,
-        canUseAi: ai.canUseAi,
-        aiAllowedSectionKeys: ai.allowedSectionKeys,
-      },
-    },
+    capabilities: buildInitiativeCapabilityContract({
+      decision: capabilityDecision,
+      availableTransitions,
+    }),
     readiness,
     allBlocking: blockingItems.length === 0,
     allWarnings: readiness.filter((item) => item.severity === 'warning' && !item.pass).length === 0,
