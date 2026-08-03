@@ -66,6 +66,9 @@ import './slowLocaleFetch';
 import i18n from '../src/i18n';
 import { useAppStore } from '../src/store/useAppStore';
 const AccentSoftTokenFixScreen = React.lazy(() => import('./screens/accent-soft-token-fix'));
+const UiFoundationFocus01EvidenceScreen = React.lazy(
+  () => import('./screens/ui-foundation-focus-01-evidence')
+);
 const AdminCommandCenterPanelScreen = React.lazy(
   () => import('./screens/admin-command-center-panel')
 );
@@ -445,6 +448,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'J23 — bg-c-accent-soft opacity bug fix (cTok): odznaka REKOMENDACJA tint vs pełny crimson',
     render: () => <AccentSoftTokenFixScreen />,
+  },
+  'ui-foundation-focus-01-evidence': {
+    label: 'UI-FOUNDATION-FOCUS-01 — Visual QA evidence (Etap 2, 2026-08-03)',
+    render: () => <UiFoundationFocus01EvidenceScreen />,
   },
   'admin-command-center-panel': {
     label:
