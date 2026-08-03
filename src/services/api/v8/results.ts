@@ -282,6 +282,8 @@ export interface V8ResultsKpiCatalogEntry {
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
+  /** RES-02: CAS pointer — send back as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
   latestValue?: number | null;
   latestMeasurementDate?: string | null;
   prevValue?: number | null;
@@ -476,10 +478,13 @@ export interface V8ResultsUpdateKpiPayload {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  /** RES-02: the version the client last saw — enforces optimistic concurrency. */
+  expectedVersion?: number;
 }
 
 export interface V8ResultsUpdateKpiResponse {
   success: boolean;
+  currentDefinitionVersion?: number;
 }
 
 export interface V8ResultsDeleteKpiResponse {

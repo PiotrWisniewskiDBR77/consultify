@@ -440,6 +440,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
             ? Number(settingsRedThreshold)
             : null,
+        // RES-02: round-trip the version this drawer last read so the backend
+        // can reject (409) a save based on stale data instead of silently
+        // overwriting a concurrent edit.
+        expectedVersion: kpi?.currentDefinitionVersion ?? undefined,
       };
       try {
         await V8ResultsApi.updateKpi(kpiId, payload);
@@ -454,12 +458,28 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       onValueRecorded?.();
       toast.success(t('results.drawer.saved', 'KPI settings saved'));
     } catch (error: any) {
+      // RES-02: a version conflict is not a generic failure — the save was
+      // correctly rejected because someone else changed this KPI first. Never
+      // treat this as success, and reload the current server state instead of
+      // leaving the user staring at a stale form that will just conflict again.
+      if (error?.status === 409 && error?.data?.code === 'RESULTS_KPI_VERSION_CONFLICT') {
+        toast.error(
+          t(
+            'results.drawer.saveConflict',
+            'This KPI was changed by someone else in the meantime. Reloading the latest version.'
+          )
+        );
+        setEditMode(false);
+        fetchData();
+        return;
+      }
       toast.error(error?.message || t('results.drawer.saveFailed', 'Failed to save KPI settings'));
     } finally {
       setSavingSettings(false);
     }
   }, [
     fetchData,
+    kpi,
     kpiId,
     onValueRecorded,
     settingsBaseline,

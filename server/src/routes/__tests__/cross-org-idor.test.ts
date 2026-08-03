@@ -1467,6 +1467,92 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
   });
 });
 
+describe('RES-02 — expectedVersion CAS fails closed on a garbage token', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+  });
+
+  it('PUT /benefits/kpis/:kpiId → a valid client expectedVersion is used as-is, not re-derived', async () => {
+    mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
+    // Self-read would report version 9 — the client's own value (5) must win.
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 9,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 6 });
+    const app = await buildBenefitsApp();
+
+    const res = await request(app)
+      .put('/api/benefits/kpis/kpi-active')
+      .send({ targetValue: 999, expectedVersion: 5 });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ kpiId: 'kpi-active', expectedVersion: 5 })
+    );
+  });
+
+  it.each([['not-a-number'], [0], [-1], [1.5], [null]])(
+    'PUT /benefits/kpis/:kpiId → expectedVersion %p is rejected with 400, no writer call',
+    async (badValue) => {
+      const app = await buildBenefitsApp();
+
+      const res = await request(app)
+        .put('/api/benefits/kpis/kpi-active')
+        .send({ targetValue: 999, expectedVersion: badValue });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('RESULTS_KPI_INVALID_EXPECTED_VERSION');
+      expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+      expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
+      // Validation fails closed before even the ownership lookup runs.
+      expect(mockDbGet).not.toHaveBeenCalled();
+    }
+  );
+
+  it('PUT /v8/results/kpis/:kpiId → a valid client expectedVersion is used as-is, not re-derived', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-active' }).mockResolvedValueOnce({
+      status: 'active',
+    });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 9,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 6 });
+    const app = await buildV8App();
+
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-active')
+      .send({ targetValue: 999, expectedVersion: 5 });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ kpiId: 'kpi-active', expectedVersion: 5 })
+    );
+  });
+
+  it.each([['not-a-number'], [0], [-1], [1.5], [null]])(
+    'PUT /v8/results/kpis/:kpiId → expectedVersion %p is rejected with 400, no writer call',
+    async (badValue) => {
+      const app = await buildV8App();
+
+      const res = await request(app)
+        .put('/api/v8/results/kpis/kpi-active')
+        .send({ targetValue: 999, expectedVersion: badValue });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('RESULTS_KPI_INVALID_EXPECTED_VERSION');
+      expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+      expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
+      // Validation fails closed before even the ownership lookup runs.
+      expect(mockDbGet).not.toHaveBeenCalled();
+    }
+  );
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // RES-003A — legacy /api/benefits router: real assertKpiPermission checks.
 //

@@ -530,6 +530,8 @@ export interface ResultsKpiCatalogEntry {
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
+  /** RES-02: CAS pointer — round-trip as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
   latestValue?: number | null;
   latestMeasurementDate?: string | null;
   prevValue?: number | null;

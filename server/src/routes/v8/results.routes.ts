@@ -767,7 +767,31 @@ router.put(
       redThresholdPct,
       amberThresholdAbs,
       redThresholdAbs,
+      expectedVersion,
     } = req.body || {};
+
+    // RES-02: a caller-supplied `expectedVersion` is the client's own last-seen
+    // pointer (round-tripped from the catalog read) — using it enforces real
+    // optimistic concurrency: a stale client loses the race with a 409 instead
+    // of silently overwriting a concurrent edit. Callers that don't send the
+    // key at all (older/other integrations) keep the previous self-read
+    // fallback below. A caller that DOES send the key but with a garbage
+    // value (non-integer, <= 0, or any non-numeric type) must fail closed with
+    // 400 — silently coercing it to "not sent" would let a stale/malicious
+    // client bypass CAS by sending an invalid token instead of omitting it.
+    let clientExpectedVersion: number | null = null;
+    if (expectedVersion !== undefined) {
+      const isNumericInput =
+        typeof expectedVersion === 'number' || typeof expectedVersion === 'string';
+      const parsed = isNumericInput ? Number(expectedVersion) : NaN;
+      if (!isNumericInput || !Number.isInteger(parsed) || parsed <= 0) {
+        return res.status(400).json({
+          error: 'expectedVersion must be a positive integer',
+          code: 'RESULTS_KPI_INVALID_EXPECTED_VERSION',
+        });
+      }
+      clientExpectedVersion = parsed;
+    }
 
     const row = await dbGet<any>(
       `
@@ -813,11 +837,12 @@ router.put(
         code: 'RESULTS_KPI_NOT_FOUND',
       });
     }
+    let updated;
     try {
-      await updateKpiDefinition({
+      updated = await updateKpiDefinition({
         organizationId,
         kpiId,
-        expectedVersion: current.currentDefinitionVersion,
+        expectedVersion: clientExpectedVersion ?? current.currentDefinitionVersion,
         actorUserId: userId || null,
         name: name != null && String(name).trim() ? String(name).trim() : undefined,
         description: description != null ? String(description).trim() : undefined,
@@ -867,7 +892,7 @@ router.put(
     }
 
     return res.json({
-      data: { success: true },
+      data: { success: true, currentDefinitionVersion: updated.currentDefinitionVersion },
       meta: resultsWriteMeta(),
     });
   })

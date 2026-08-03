@@ -1046,6 +1046,7 @@ interface LegacyResultsKpiRow {
   amber_threshold_abs: number | null;
   red_threshold_abs: number | null;
   current_value: number | null;
+  current_definition_version: number | null;
   latest_value: number | null;
   latest_period_start: string | null;
   prev_value: number | null;
@@ -1614,6 +1615,7 @@ export async function getResultsKpiCatalog(
        k.amber_threshold_abs,
        k.red_threshold_abs,
        k.current_value,
+       k.current_definition_version,
        ts.value AS latest_value,
        ts.period_start AS latest_period_start,
        ts_prev.value AS prev_value,
@@ -1728,6 +1730,11 @@ export async function getResultsKpiCatalog(
       alertDirection: row.alert_direction || 'BELOW',
       isPrimary: Boolean(row.is_primary),
       sortOrder: row.sort_order ?? 0,
+      // RES-02: the version this row's definition was at when read — the
+      // active KPI-edit UI must round-trip this back as `expectedVersion`
+      // on update so a stale client cannot silently overwrite a concurrent
+      // edit (see kpiDefinitionService's CAS contract).
+      currentDefinitionVersion: row.current_definition_version,
       latestValue,
       latestMeasurementDate: row.latest_period_start,
       prevValue: row.prev_value != null ? Number(row.prev_value) : null,

@@ -984,6 +984,8 @@ export interface InitiativeKPI {
   isOnTarget: boolean;
   createdAt: string;
   updatedAt?: string;
+  /** RES-02: CAS pointer — send back as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
   // Optional enrichment used by Results (R0/R1).
   baselineValue?: number | null;
   ownerUserId?: string | null;

@@ -285,7 +285,30 @@ router.put(
       redThresholdPct,
       amberThresholdAbs,
       redThresholdAbs,
+      expectedVersion,
     } = req.body || {};
+
+    // RES-02: same client-round-tripped CAS pointer as v8/results.routes.ts —
+    // this fallback receives the identical payload from the active Results UI
+    // when the primary v8 write 400/404/405/501s, so it must honor the same
+    // expectedVersion the client already sent rather than re-deriving its own.
+    // A key that's present but garbage (non-integer, <= 0, wrong type) fails
+    // closed with 400 instead of silently degrading to the self-read fallback
+    // below — that degrade path is for callers who never sent the key at all.
+    let clientExpectedVersion: number | null = null;
+    if (expectedVersion !== undefined) {
+      const isNumericInput =
+        typeof expectedVersion === 'number' || typeof expectedVersion === 'string';
+      const parsed = isNumericInput ? Number(expectedVersion) : NaN;
+      if (!isNumericInput || !Number.isInteger(parsed) || parsed <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'expectedVersion must be a positive integer',
+          code: 'RESULTS_KPI_INVALID_EXPECTED_VERSION',
+        });
+      }
+      clientExpectedVersion = parsed;
+    }
 
     const row = await dbGet<any>(
       `
@@ -317,11 +340,12 @@ router.put(
     // definition-versioning concern) and still runs first, before any write.
     const current = await getCurrentKpiDefinition(String(kpiId), orgId);
     if (!current) return res.status(404).json({ success: false, error: 'KPI not found' });
+    let updated;
     try {
-      await updateKpiDefinition({
+      updated = await updateKpiDefinition({
         organizationId: orgId,
         kpiId: String(kpiId),
-        expectedVersion: current.currentDefinitionVersion,
+        expectedVersion: clientExpectedVersion ?? current.currentDefinitionVersion,
         actorUserId: getUserId(req) || null,
         name: name != null && String(name).trim() ? String(name).trim() : undefined,
         description: description != null ? String(description).trim() : undefined,
@@ -372,7 +396,7 @@ router.put(
       throw error;
     }
 
-    res.json({ success: true });
+    res.json({ success: true, currentDefinitionVersion: updated.currentDefinitionVersion });
   })
 );
 
