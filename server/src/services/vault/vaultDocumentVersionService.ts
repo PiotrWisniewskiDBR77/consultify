@@ -8,7 +8,7 @@
  * (kategoria/tagi/folder/poziom), które nadpisywały wiersz w miejscu.
  *
  * CO ROBI TEN MODUŁ: trzyma historię w `knowledge_doc_versions`
- * (939_mw010_vault_document_versions.sql) i wystawia operacje, które NIGDY nie
+ * (940_mw010_vault_document_versions.sql) i wystawia operacje, które NIGDY nie
  * nadpisują historii:
  *   - `recordInitialVersion` — upload → wersja 1,
  *   - `claimNextVersion` + `commitVersion` — nowa treść → kolejna wersja,
@@ -103,7 +103,7 @@ const mapRow = (row: VersionRow): VaultDocumentVersion => ({
 let schemaReady = false;
 
 /**
- * Runtime-owy odpowiednik migracji 939 — ten sam wzorzec co
+ * Runtime-owy odpowiednik migracji 940 — ten sam wzorzec co
  * `KnowledgeService.ensureKnowledgeSchema` (`CREATE TABLE IF NOT EXISTS` +
  * idempotentne `ALTER`). Dzięki temu ścieżka wersji działa niezależnie od tego,
  * czy runner migracji przeszedł po tym pliku (repo ma udokumentowane luki w
