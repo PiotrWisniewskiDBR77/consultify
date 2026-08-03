@@ -282,11 +282,18 @@ export interface V8ResultsKpiCatalogEntry {
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
+  /** RES-02: CAS pointer — send back as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
+  /** RES-11: who may see this KPI — send back unchanged on update unless the
+   * caller is actually changing it. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
   latestValue?: number | null;
   latestMeasurementDate?: string | null;
   prevValue?: number | null;
   prevMeasurementDate?: string | null;
   isOnTarget: boolean;
+  /** RES-004: canonical band-evaluated status — see kpiDomain.ts's deriveStatus(). */
+  evalStatus?: 'GREEN' | 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
   createdAt: string;
   updatedAt?: string | null;
   ownerUserId?: string | null;
@@ -357,6 +364,68 @@ export interface V8ResultsKpiCatalog {
   kpis: V8ResultsKpiCatalogEntry[];
   mappings: V8ResultsKpiCatalogMapping[];
 }
+
+/**
+ * RES-10 — Results-owned scorecard ("karta KPI"): a department x period card
+ * grouping existing V8ResultsKpiCatalogEntry rows. Distinct from Initiatives'
+ * goals/OKR contract (src/services/api.ts `goals*` — Initiatives-owned).
+ * `ownerDomain` is always 'results' on these responses; a mismatch means the
+ * wrong backend contract answered the request.
+ */
+export interface V8ResultsScorecard {
+  id: string;
+  organizationId: string;
+  name: string;
+  department: string | null;
+  periodLabel: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  status: string;
+  kpiCount: number;
+  onTargetCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface V8ResultsScorecardKpi {
+  id: string;
+  name: string;
+  baselineValue: number | null;
+  currentValue: number | null;
+  targetValue: number | null;
+  unit: string | null;
+  direction: string | null;
+  progressPercentage: number | null;
+  isOnTarget: boolean | null;
+  category: string | null;
+  initiativeId: string | null;
+  sortOrder: number;
+}
+
+export interface V8ResultsScorecardListResponse {
+  scorecards: V8ResultsScorecard[];
+  count: number;
+  ownerDomain: 'results';
+}
+
+export interface V8ResultsScorecardKpisResponse {
+  scorecard: { id: string; name: string };
+  kpis: V8ResultsScorecardKpi[];
+  count: number;
+  ownerDomain: 'results';
+}
+
+export interface V8ResultsCreateScorecardPayload {
+  name: string;
+  department?: string | null;
+  periodLabel?: string | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+}
+
+export type V8ResultsUpdateScorecardPayload = Partial<V8ResultsCreateScorecardPayload> & {
+  status?: string;
+};
 
 export interface V8ResultsKpiDrawerDetail {
   organizationId: string;
@@ -454,6 +523,8 @@ export interface V8ResultsCreateKpiPayload {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  /** RES-11: who may see this KPI. Defaults to org_visible if omitted. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
 }
 
 export interface V8ResultsCreateKpiResponse {
@@ -476,10 +547,16 @@ export interface V8ResultsUpdateKpiPayload {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  /** RES-11: who may see this KPI. Backend validates fail-closed — an
+   * unrecognized value is rejected with 400, zero mutation. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
+  /** RES-02: the version the client last saw — enforces optimistic concurrency. */
+  expectedVersion?: number;
 }
 
 export interface V8ResultsUpdateKpiResponse {
   success: boolean;
+  currentDefinitionVersion?: number;
 }
 
 export interface V8ResultsDeleteKpiResponse {
@@ -891,6 +968,32 @@ export const V8ResultsApi = {
     v8Post<V8ResultsKpiRecoveryCard>(
       `/results/recovery-cards/${encodeURIComponent(cardId)}/escalate`,
       payload
+    ),
+  // RES-10 — Results-owned scorecards ("karty KPI"). Never confuse with the
+  // Initiatives goals contract (src/services/api.ts `goals*`).
+  getScorecards: () => v8Get<V8ResultsScorecardListResponse>('/results/scorecards'),
+  getScorecardKpis: (scorecardId: string) =>
+    v8Get<V8ResultsScorecardKpisResponse>(
+      `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis`
+    ),
+  createScorecard: (payload: V8ResultsCreateScorecardPayload) =>
+    v8Post<{ scorecard: V8ResultsScorecard; ownerDomain: 'results' }>(
+      '/results/scorecards',
+      payload
+    ),
+  updateScorecard: (scorecardId: string, payload: V8ResultsUpdateScorecardPayload) =>
+    v8Put<{ scorecard: V8ResultsScorecard; ownerDomain: 'results' }>(
+      `/results/scorecards/${encodeURIComponent(scorecardId)}`,
+      payload
+    ),
+  addKpiToScorecard: (scorecardId: string, kpiId: string, sortOrder?: number) =>
+    v8Post<{ ownerDomain: 'results' }>(
+      `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis`,
+      { kpiId, sortOrder }
+    ),
+  removeKpiFromScorecard: (scorecardId: string, kpiId: string) =>
+    v8Delete<{ ownerDomain: 'results' }>(
+      `/results/scorecards/${encodeURIComponent(scorecardId)}/kpis/${encodeURIComponent(kpiId)}`
     ),
 };
 

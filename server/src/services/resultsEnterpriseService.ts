@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import * as ReportBuilderService from './reportBuilderService.js';
-import { handleTimeSeriesRecorded } from './results/kpiDeviationService.js';
+import { recordKpiMeasurement } from './results/kpiMeasurementWriterService.js';
 import { createKpiReportSnapshot } from './results/kpiReportSnapshotService.js';
 
 type MetricAuditEntry = {
@@ -133,7 +133,6 @@ class ResultsEnterpriseService {
     }
   ) {
     const id = uuidv4();
-    const measurementId = uuidv4().replace(/-/g, '');
     const periodStart = String(data.period || '').slice(0, 10);
     const sourceLabel = `connector:${data.connectorId}`;
     // SEC-3 (L-04): verify the connector belongs to the caller's org before ingesting.
@@ -160,35 +159,40 @@ class ResultsEnterpriseService {
         data.qualityScore || 1.0,
       ]
     );
-    await queryHelpers.queryRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        measurementId,
-        data.kpiId,
-        orgId,
-        data.value,
-        periodStart,
-        null,
-        sourceLabel,
-        stringifyCompact({
-          connectorId: data.connectorId,
-          ingestionLogId: id,
-          provenance: data.provenance || {},
-          qualityScore: data.qualityScore ?? 1.0,
-          runSource: data.runSource,
-        }),
-        data.actorUserId || null,
-      ]
-    );
-    // SEC-3: org-scope the current_value write so an org-owned connector cannot overwrite
-    // a foreign-org KPI's current_value by pointing at its id.
-    await queryHelpers
-      .queryRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [data.value, data.kpiId, orgId]
-      )
-      .catch(() => null);
+    // RES-003: route through the canonical measurement writer. This also
+    // closes a real gap this function previously had — only the connector
+    // was org-verified (above); `data.kpiId` itself was never checked, so a
+    // connector could be configured (accidentally or not) to ingest against
+    // a foreign-org kpiId and still get a kpi_time_series row written under
+    // the caller's org (the current_value UPDATE below was org-scoped and
+    // would silently no-op, but the measurement row itself was not guarded).
+    // recordKpiMeasurement's ownership precheck now rejects that case before
+    // any write. It also upserts on (kpiId, periodStart, source) instead of
+    // the previous bare INSERT, resolves the RES-02 definition_version_id
+    // pin itself, and writes kpi_metric_audit_log itself.
+    await recordKpiMeasurement({
+      organizationId: orgId,
+      kpiId: data.kpiId,
+      value: data.value,
+      periodStart,
+      source: sourceLabel,
+      notes: stringifyCompact({
+        connectorId: data.connectorId,
+        ingestionLogId: id,
+        provenance: data.provenance || {},
+        qualityScore: data.qualityScore ?? 1.0,
+        runSource: data.runSource,
+      }),
+      actorUserId: data.actorUserId || null,
+      auditEventType: 'connector_ingest',
+      auditSourceLabel: sourceLabel,
+      auditSummary: `Connector ingested ${Number(data.value)} for ${periodStart}`,
+      auditAfterExtra: {
+        period: periodStart,
+        provenance: data.provenance || {},
+        qualityScore: data.qualityScore ?? 1.0,
+      },
+    });
     await queryHelpers.queryRun(
       `UPDATE kpi_connectors
        SET last_run_at = ?, last_run_status = 'success', last_run_message = ?, next_run_at = COALESCE(next_run_at, ?)
@@ -201,38 +205,6 @@ class ResultsEnterpriseService {
         orgId,
       ]
     );
-    await this.createMetricAuditEntry(orgId, {
-      kpiId: data.kpiId,
-      section: 'history',
-      eventType: 'connector_ingest',
-      source: sourceLabel,
-      actorUserId: data.actorUserId || null,
-      summary: `Connector ingested ${Number(data.value)} for ${periodStart}`,
-      before: {},
-      after: {
-        value: data.value,
-        period: periodStart,
-        provenance: data.provenance || {},
-        qualityScore: data.qualityScore ?? 1.0,
-      },
-    }).catch(() => null);
-    try {
-      await handleTimeSeriesRecorded({
-        db: {
-          get: (sql: string, params: any[]) => queryHelpers.queryOne(sql, params),
-          all: (sql: string, params: any[]) => queryHelpers.queryAll(sql, params),
-          run: (sql: string, params: any[]) => queryHelpers.queryRun(sql, params),
-        } as any,
-        orgId,
-        kpiId: String(data.kpiId),
-        value: Number(data.value),
-        periodStart,
-        periodEnd: null,
-        recordedByUserId: data.actorUserId || null,
-      });
-    } catch {
-      // Keep ingestion durable even if deviation workflow side effects fail.
-    }
     return { id };
   }
 

@@ -31,6 +31,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { createDefinition as createKpiDefinition } from './results/kpiDefinitionService.js';
 
 export const BENEFIT_HANDOFF_SOURCE = 'M14_CLOSURE_HANDOFF';
 
@@ -322,35 +323,33 @@ export async function promoteBenefitToKpi(
     return { kpiId: benefit.promoted_kpi_id, benefit, alreadyPromoted: true };
   }
 
-  const kpiId = uuidv4();
+  // RES-02: canonical write goes through kpiDefinitionService — no direct SQL
+  // against initiative_kpis here anymore (this was one of two independent
+  // benefit-promotion writers; the other lives in v8/results.routes.ts
+  // POST /benefits/:benefitId/promote — both create through the same
+  // canonical service now).
   const kpiName = (benefit.kpi_name || benefit.name || 'Benefit KPI').trim();
-  await dbRun(
-    `INSERT INTO initiative_kpis (
-       id, initiative_id, organization_id, name, description, unit,
-       baseline_value, target_value, measurement_frequency,
-       alert_threshold, alert_direction, owner_user_id, direction, threshold_mode,
-       amber_threshold_pct, red_threshold_pct, current_value, created_at, updated_at
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-    [
-      kpiId,
-      benefit.initiative_id,
-      organizationId,
-      kpiName,
-      `Przekazane z wdrożenia (M14) — ${benefit.name}`,
-      null,
-      benefit.baseline_value,
-      benefit.target_value,
-      cadenceToFrequency(benefit.cadence),
-      null,
-      'BELOW',
-      benefit.owner_id,
-      'HIGHER_IS_BETTER',
-      'PERCENT_FROM_TARGET',
-      0.1,
-      0.2,
-      benefit.current_value,
-    ]
-  );
+  const created = await createKpiDefinition({
+    organizationId,
+    initiativeId: benefit.initiative_id,
+    name: kpiName,
+    description: `Przekazane z wdrożenia (M14) — ${benefit.name}`,
+    unit: null,
+    baselineValue: benefit.baseline_value ?? null,
+    targetValue: benefit.target_value ?? null,
+    measurementFrequency: cadenceToFrequency(benefit.cadence),
+    alertThreshold: null,
+    alertDirection: 'BELOW',
+    ownerUserId: benefit.owner_id ?? null,
+    direction: 'HIGHER_IS_BETTER',
+    thresholdMode: 'PERCENT_FROM_TARGET',
+    amberThresholdPct: 0.1,
+    redThresholdPct: 0.2,
+    currentValue: benefit.current_value ?? null,
+    source: 'benefitsRegisterService',
+    reason: `m14-benefit-promotion:${benefitId}`,
+  });
+  const kpiId = created.id;
 
   await dbRun(
     `UPDATE benefits_register SET promoted_kpi_id = ?, status = 'promoted', updated_at = ? WHERE id = ? AND organization_id = ?`,

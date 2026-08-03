@@ -16,12 +16,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockDbRun = vi.fn();
 const mockDbGet = vi.fn();
 const mockDbAll = vi.fn();
+const mockCreateKpiDefinition = vi.fn();
 
 vi.mock('../../../utils/DbPromise.js', () => ({
   all: (...args: unknown[]) => mockDbAll(...args),
   get: (...args: unknown[]) => mockDbGet(...args),
   run: (...args: unknown[]) => mockDbRun(...args),
 }));
+
+// RES-02: promote now mints the sustainment KPI through kpiDefinitionService
+// (the canonical writer) instead of an inline INSERT INTO initiative_kpis in
+// this router.
+vi.mock('../../../services/results/kpiDefinitionService.js', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../../services/results/kpiDefinitionService.js')
+  >('../../../services/results/kpiDefinitionService.js');
+  return {
+    ...actual,
+    createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
+  };
+});
 
 vi.mock('../../../services/v8/featureFlagService.js', () => ({
   getV8Flags: vi.fn().mockResolvedValue({ v8_enabled: true }),
@@ -161,16 +175,25 @@ describe('V8 results — M14 closure-handoff benefits inbox', () => {
           source_tag: SOURCE,
         })
         .mockResolvedValueOnce(null);
+      mockCreateKpiDefinition.mockResolvedValueOnce({ id: 'new-sustainment-kpi' });
 
       const res = await request(app).post('/api/v8/results/benefits/ben-1/promote');
 
       expect(res.status).toBe(201);
       expect(res.body.data.alreadyPromoted).toBe(false);
-      expect(res.body.data.kpiId).toBeTruthy();
+      expect(res.body.data.kpiId).toBe('new-sustainment-kpi');
 
-      // Should have inserted a KPI and updated the benefit status.
+      // RES-02: minted through kpiDefinitionService, not an inline INSERT —
+      // no direct SQL against initiative_kpis in this router anymore.
+      expect(mockCreateKpiDefinition).toHaveBeenCalledWith(
+        expect.objectContaining({
+          organizationId: ORG,
+          initiativeId: 'init-1',
+          name: 'Annual savings',
+        })
+      );
       const runSqls = mockDbRun.mock.calls.map((c) => String(c[0]));
-      expect(runSqls.some((s) => s.includes('INSERT INTO initiative_kpis'))).toBe(true);
+      expect(runSqls.some((s) => s.includes('INSERT INTO initiative_kpis'))).toBe(false);
       expect(
         runSqls.some((s) => s.includes('UPDATE initiative_benefits') && s.includes('promoted'))
       ).toBe(true);
@@ -196,9 +219,8 @@ describe('V8 results — M14 closure-handoff benefits inbox', () => {
       expect(res.status).toBe(200);
       expect(res.body.data.alreadyPromoted).toBe(true);
       expect(res.body.data.kpiId).toBe('kpi-existing');
-      // No KPI insert on the idempotent path.
-      const runSqls = mockDbRun.mock.calls.map((c) => String(c[0]));
-      expect(runSqls.some((s) => s.includes('INSERT INTO initiative_kpis'))).toBe(false);
+      // No KPI creation on the idempotent path.
+      expect(mockCreateKpiDefinition).not.toHaveBeenCalled();
     });
 
     it('reuses an existing sustainment KPI (dedup) instead of creating a duplicate', async () => {
@@ -220,9 +242,9 @@ describe('V8 results — M14 closure-handoff benefits inbox', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.kpiId).toBe('kpi-dup');
+      // No new KPI creation; benefit is still marked promoted.
+      expect(mockCreateKpiDefinition).not.toHaveBeenCalled();
       const runSqls = mockDbRun.mock.calls.map((c) => String(c[0]));
-      // No new KPI insert; benefit is still marked promoted.
-      expect(runSqls.some((s) => s.includes('INSERT INTO initiative_kpis'))).toBe(false);
       expect(
         runSqls.some((s) => s.includes('UPDATE initiative_benefits') && s.includes('promoted'))
       ).toBe(true);

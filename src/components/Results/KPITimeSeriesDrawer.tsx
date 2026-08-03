@@ -188,6 +188,10 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   >('PERCENT_FROM_TARGET');
   const [settingsAmberThreshold, setSettingsAmberThreshold] = useState('');
   const [settingsRedThreshold, setSettingsRedThreshold] = useState('');
+  // RES-11: who may see this KPI.
+  const [settingsVisibility, setSettingsVisibility] = useState<
+    'org_visible' | 'initiative_restricted' | 'private_to_owner'
+  >('org_visible');
 
   const [initiatives, setInitiatives] = useState<InitiativeOption[]>([]);
   const [initiativeSearch, setInitiativeSearch] = useState('');
@@ -354,6 +358,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     setSettingsFrequency(((kpi as any)?.measurementFrequency || 'MONTHLY') as any);
     setSettingsDirection((kpi as any)?.direction === 'LOWER_IS_BETTER' ? 'decrease' : 'increase');
     setSettingsThresholdMode(((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any);
+    setSettingsVisibility(((kpi as any)?.visibility || 'org_visible') as any);
     setSettingsAmberThreshold(
       (kpi as any)?.thresholdMode === 'ABSOLUTE'
         ? (kpi as any)?.amberThresholdAbs != null
@@ -440,6 +445,11 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           settingsThresholdMode === 'ABSOLUTE' && settingsRedThreshold !== ''
             ? Number(settingsRedThreshold)
             : null,
+        visibility: settingsVisibility,
+        // RES-02: round-trip the version this drawer last read so the backend
+        // can reject (409) a save based on stale data instead of silently
+        // overwriting a concurrent edit.
+        expectedVersion: kpi?.currentDefinitionVersion ?? undefined,
       };
       try {
         await V8ResultsApi.updateKpi(kpiId, payload);
@@ -454,12 +464,28 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       onValueRecorded?.();
       toast.success(t('results.drawer.saved', 'KPI settings saved'));
     } catch (error: any) {
+      // RES-02: a version conflict is not a generic failure — the save was
+      // correctly rejected because someone else changed this KPI first. Never
+      // treat this as success, and reload the current server state instead of
+      // leaving the user staring at a stale form that will just conflict again.
+      if (error?.status === 409 && error?.data?.code === 'RESULTS_KPI_VERSION_CONFLICT') {
+        toast.error(
+          t(
+            'results.drawer.saveConflict',
+            'This KPI was changed by someone else in the meantime. Reloading the latest version.'
+          )
+        );
+        setEditMode(false);
+        fetchData();
+        return;
+      }
       toast.error(error?.message || t('results.drawer.saveFailed', 'Failed to save KPI settings'));
     } finally {
       setSavingSettings(false);
     }
   }, [
     fetchData,
+    kpi,
     kpiId,
     onValueRecorded,
     settingsBaseline,
@@ -472,6 +498,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     settingsTarget,
     settingsThresholdMode,
     settingsUnit,
+    settingsVisibility,
   ]);
 
   const handleDeleteKpi = useCallback(async () => {
@@ -2021,6 +2048,29 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             </select>
                           </div>
                         </div>
+
+                        <div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {t('results.drawer.visibility', 'Visibility')}
+                          </div>
+                          <select
+                            aria-label={t('results.drawer.visibility', 'Visibility')}
+                            className={`${inputCls} appearance-none`}
+                            value={settingsVisibility}
+                            onChange={(e) => setSettingsVisibility(e.target.value as any)}
+                            disabled={!editMode}
+                          >
+                            <option value="org_visible">
+                              {t('results.drawer.visibilityOrg', 'Organization')}
+                            </option>
+                            <option value="initiative_restricted">
+                              {t('results.drawer.visibilityTeam', 'Initiative team only')}
+                            </option>
+                            <option value="private_to_owner">
+                              {t('results.drawer.visibilityPrivate', 'Private (owner only)')}
+                            </option>
+                          </select>
+                        </div>
                       </div>
 
                       <div className="rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
@@ -2256,6 +2306,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           setSettingsThresholdMode(
                             ((kpi as any)?.thresholdMode || 'PERCENT_FROM_TARGET') as any
                           );
+                          setSettingsVisibility(((kpi as any)?.visibility || 'org_visible') as any);
                           setSettingsAmberThreshold(
                             (kpi as any)?.thresholdMode === 'ABSOLUTE'
                               ? (kpi as any)?.amberThresholdAbs != null

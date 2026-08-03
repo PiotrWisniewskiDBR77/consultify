@@ -64,6 +64,20 @@ vi.mock('../../../services/notificationService.js', () => ({
   send: vi.fn().mockResolvedValue(undefined),
 }));
 
+// RES-02: createKPI now mints its canonical initiative_kpis definition
+// through kpiDefinitionService.createDefinition instead of only writing
+// v8_kpi_definitions. That call uses a real pinned pg connection (not
+// mockable through the DbPromise mock above), so it must be mocked at the
+// module boundary — otherwise it would try to reach a real Postgres pool
+// and crash with "process.exit" from DatabaseConfig in this unit-test
+// environment.
+const mockCreateKpiDefinition = vi
+  .fn()
+  .mockResolvedValue({ id: '00000000-0000-4000-8000-eeeeeeeeeeee' });
+vi.mock('../../results/kpiDefinitionService.js', () => ({
+  createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
+}));
+
 import {
   createExecutiveReviewPack,
   createKPI,

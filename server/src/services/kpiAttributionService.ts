@@ -10,6 +10,7 @@
 
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { isKpiVisible, type KpiVisibilityContext } from './results/kpiVisibilityService.js';
 
 export interface ContributionEstimate {
   initiativeId: string;
@@ -41,24 +42,64 @@ export async function computeAttribution(
   kpiId: string,
   organizationId: string,
   periodStart: string,
-  periodEnd: string
+  periodEnd: string,
+  viewer?: KpiVisibilityContext
 ): Promise<AttributionResult> {
   const disclaimer =
     'This is a contribution estimate based on heuristics, not a causal proof. Actual attribution may differ.';
 
+  // RES-011: org-scoped by construction — no cross-tenant read. This used to
+  // be `WHERE ik.id = ?` with no organization predicate at all (the caller's
+  // `organizationId` param existed but was only applied to the later
+  // initiative_kpi_mappings join, §7 of the RES-011 packet). A foreign-org
+  // kpiId now falls into the exact same "Unknown" empty-result branch as a
+  // genuinely nonexistent kpiId — the caller cannot distinguish "not yours"
+  // from "doesn't exist", matching this codebase's existing convention for
+  // cross-tenant artifact access (mirrors the ownership precheck already
+  // used by the sibling POST /attribution/:kpiId/snapshot route).
   const kpiRows = await dbAll(
-    `SELECT ik.id, ik.name, ik.unit, ik.baseline_value, ik.target_value, ik.current_value
-     FROM initiative_kpis ik WHERE ik.id = ?`,
-    [kpiId]
+    `SELECT ik.id, ik.name, ik.unit, ik.baseline_value, ik.target_value, ik.current_value,
+            ik.visibility, ik.owner_user_id, ik.initiative_id
+     FROM initiative_kpis ik
+     LEFT JOIN initiatives i ON i.id = ik.initiative_id
+     WHERE ik.id = ? AND COALESCE(ik.organization_id, i.organization_id) = ?`,
+    [kpiId, organizationId]
   );
   const kpi = kpiRows?.[0] as any;
   if (!kpi) {
     return emptyResult(kpiId, 'Unknown', periodStart, periodEnd, disclaimer);
   }
 
+  // RES-11 (Phase 1): a KPI the caller cannot see falls into the identical
+  // "Unknown" branch as cross-tenant/nonexistent — attribution must never
+  // reveal a hidden KPI's real name or delta just because the ID was guessed.
+  if (viewer) {
+    const isMember = kpi.initiative_id
+      ? Boolean(
+          (
+            await dbAll(
+              `SELECT 1 FROM initiative_resources WHERE initiative_id = ? AND user_id = ? LIMIT 1`,
+              [kpi.initiative_id, viewer.userId || '']
+            )
+          )?.length
+        )
+      : false;
+    if (
+      !isKpiVisible(
+        { visibility: kpi.visibility, ownerUserId: kpi.owner_user_id, initiativeId: kpi.initiative_id },
+        viewer,
+        isMember
+      )
+    ) {
+      return emptyResult(kpiId, 'Unknown', periodStart, periodEnd, disclaimer);
+    }
+  }
+
   const tsRows = await dbAll(
-    `SELECT value, period_start FROM kpi_time_series WHERE kpi_id = ? AND period_start >= ? AND period_start <= ? ORDER BY period_start`,
-    [kpiId, periodStart, periodEnd]
+    `SELECT value, period_start FROM kpi_time_series
+     WHERE kpi_id = ? AND organization_id = ? AND period_start >= ? AND period_start <= ?
+     ORDER BY period_start`,
+    [kpiId, organizationId, periodStart, periodEnd]
   );
 
   const timeSeries = (tsRows || []) as any[];

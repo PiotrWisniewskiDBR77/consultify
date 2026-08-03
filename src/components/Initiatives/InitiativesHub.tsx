@@ -120,6 +120,7 @@ import {
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
+import { InitiativeGoalsView } from './InitiativeGoalsView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import {
   InitiativePreviewV3Body,
@@ -576,7 +577,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     activeTab === 'analysis' ||
     activeTab === 'observability' ||
     activeTab === 'candidates' ||
-    activeTab === 'portfolioHealth'
+    activeTab === 'portfolioHealth' ||
+    activeTab === 'goals'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
@@ -610,6 +612,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'portfolioHealth' as ModuleTab,
         label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
         icon: <Activity size={16} />,
+      },
+      {
+        // RES-10 — Initiatives-owned goals/OKR (goals table via initiativeGovernanceService).
+        // Distinct from Results' scorecards (kpi_scorecards) — see InitiativeGoalsView.tsx.
+        id: 'goals' as ModuleTab,
+        label: t('initiatives.tabs.goals', 'Goals'),
+        icon: <Target size={16} />,
       },
     ],
     [t]
@@ -1451,6 +1460,20 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
     if (activeTab === 'candidates') {
       return <CandidatesPanel onAccept={handleAcceptCandidate} />;
+    }
+    // RES-10: Initiatives-owned goals/OKR (goals table). Never Results' kpi_scorecards.
+    if (activeTab === 'goals') {
+      return (
+        <InitiativeGoalsView
+          activeFilters={activeFilters}
+          onFilterChange={setActiveFilters}
+          initiatives={initiatives.map((initiative) => ({
+            initiativeId: initiative.id,
+            initiativeName: initiative.name,
+            initiativeStatus: String(initiative.status),
+          }))}
+        />
+      );
     }
     // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
     if (activeTab === 'portfolioHealth') {

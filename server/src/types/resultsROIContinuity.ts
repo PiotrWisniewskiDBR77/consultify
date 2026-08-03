@@ -94,6 +94,16 @@ export interface KPIDefinition {
   status: KPIStatus;
   createdAt: string;
   updatedAt: string;
+  /**
+   * RES-02 adapter: the canonical `initiative_kpis.id` this v8_kpi_definitions
+   * row corresponds to. `v8_kpi_definitions` is NOT a second owner of KPI
+   * definitions — this is the explicit pointer to the one canonical identity.
+   * `null` means an explicit UNMAPPED state (a row created before RES-02, or
+   * whose canonical KPI could not be determined) — this is NEVER guessed by
+   * name-matching or any other heuristic; every row created going forward
+   * populates it via `kpiDefinitionService.createDefinition`.
+   */
+  canonicalKpiId: string | null;
 }
 
 export interface DeviationRecord {
@@ -520,11 +530,21 @@ export interface ResultsKpiCatalogEntry {
   alertDirection: 'BELOW' | 'ABOVE';
   isPrimary: boolean;
   sortOrder: number;
+  /** RES-02: CAS pointer — round-trip as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
   latestValue?: number | null;
   latestMeasurementDate?: string | null;
   prevValue?: number | null;
   prevMeasurementDate?: string | null;
   isOnTarget: boolean;
+  /**
+   * RES-004: the KPI's real band-evaluated status (evaluateKpiPoint, the
+   * SAME engine that drives deviation-case detection) — GREEN/AMBER/RED/
+   * UNCONFIGURED/NO_DATA. `isOnTarget` stays a boolean for older consumers
+   * (true iff evalStatus is GREEN); active Results UI must read evalStatus
+   * directly rather than re-deriving a status from raw value/target.
+   */
+  evalStatus: 'GREEN' | 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
   createdAt: string;
   updatedAt?: string | null;
   ownerUserId?: string | null;

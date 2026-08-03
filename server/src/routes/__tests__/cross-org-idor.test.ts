@@ -158,6 +158,27 @@ vi.mock('../../services/results/kpiReportSnapshotService.js', () => ({
   createKpiReportSnapshot: vi.fn(),
 }));
 
+// RES-02: canonical KPI definition writer — create/update/archive now
+// delegate here from both /api/benefits/kpis and /api/v8/results/kpis
+// instead of running inline SQL. Keep the real error classes (importActual)
+// so route `instanceof` checks against thrown errors still work.
+const mockCreateKpiDefinition = vi.fn();
+const mockUpdateKpiDefinition = vi.fn();
+const mockArchiveKpiDefinition = vi.fn();
+const mockGetCurrentKpiDefinition = vi.fn();
+vi.mock('../../services/results/kpiDefinitionService.js', async () => {
+  const actual = await vi.importActual<
+    typeof import('../../services/results/kpiDefinitionService.js')
+  >('../../services/results/kpiDefinitionService.js');
+  return {
+    ...actual,
+    createDefinition: (...args: unknown[]) => mockCreateKpiDefinition(...args),
+    updateDefinition: (...args: unknown[]) => mockUpdateKpiDefinition(...args),
+    archiveDefinition: (...args: unknown[]) => mockArchiveKpiDefinition(...args),
+    getCurrentDefinition: (...args: unknown[]) => mockGetCurrentKpiDefinition(...args),
+  };
+});
+
 vi.mock('../../services/results/kpiDeviationService.js', () => ({
   handleTimeSeriesRecorded: vi.fn(),
 }));
@@ -357,8 +378,10 @@ describe('W1 — POST /benefits/kpis/:kpiId/time-series cannot mutate a foreign 
 
     expect(res.status).toBe(200);
 
+    // RES-003: the upsert needs its RETURNING clause (id, was_new_row), so the
+    // writer issues it via dbGet, not dbRun (see kpiMeasurementWriterService.ts).
     // INSERT writes the caller's org (3rd positional in the VALUES list).
-    const insertCall = mockDbRun.mock.calls.find((c) =>
+    const insertCall = mockDbGet.mock.calls.find((c) =>
       /INSERT\s+INTO\s+kpi_time_series/i.test(String(c?.[0]))
     );
     expect(insertCall).toBeTruthy();
@@ -879,13 +902,21 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
 
   it('connector ingest current_value UPDATE is org-scoped when the connector is owned', async () => {
     mockQueryFirst.mockResolvedValue({ id: 'conn-owned' });
+    // RES-003: the kpi_time_series write and current_value UPDATE now go through
+    // kpiMeasurementWriterService, which uses DbPromise (mockDbGet/mockDbRun), not
+    // queryHelpers (mockQueryFirst/mockQueryRun) — only the connector-ownership
+    // check above still goes through queryHelpers. The writer's own ownership
+    // precheck on kpiId needs an owned-KPI response here (this connector test
+    // previously never exercised a per-kpiId check at all — closing that real
+    // gap is exactly what RES-003's consolidation did, see kpiMeasurementWriterService.ts).
+    mockDbGet.mockResolvedValue({ id: 'kpi-x', measurement_frequency: 'MONTHLY' });
     const app = await buildResultsEnterpriseApp();
     const res = await request(app)
       .post('/api/results-v4/kpi-connectors/conn-owned/ingest')
       .send({ kpiId: 'kpi-x', value: 5, period: '2026-01' });
 
     expect(res.status).toBe(201);
-    const kpiUpdate = mockQueryRun.mock.calls.find((c) =>
+    const kpiUpdate = mockDbRun.mock.calls.find((c) =>
       /UPDATE\s+initiative_kpis\s+SET\s+current_value/i.test(String(c?.[0]))
     );
     expect(kpiUpdate).toBeTruthy();
@@ -1043,12 +1074,18 @@ describe('SEC-3 wave 4 — M15 Results endpoints reject cross-org writes', () =>
   // ── HOLE-5: benefits IRIS refresh current_value UPDATE org-scope (static guard) ──
 
   it('benefits IRIS refresh current_value UPDATE carries an org filter (source guard)', async () => {
-    // Static guarantee: the only current_value UPDATE in benefits.routes is org-scoped.
+    // Static guarantee: the only current_value UPDATE reachable from the IRIS refresh
+    // path is org-scoped. RES-003 moved this UPDATE (and the kpi_time_series write it
+    // used to sit next to) out of benefits.routes.ts and into the single canonical
+    // writer both routes now share — scan that file instead of the route file.
     const fs = await import('node:fs');
     const nodePath = await import('node:path');
     // Resolve from repo root (cwd) — `new URL(..., import.meta.url)` is unreliable under the
     // vitest transform ("not a valid instance of Location") and crashed before this assertion ran.
-    const path = nodePath.resolve(process.cwd(), 'server/src/routes/benefits.routes.ts');
+    const path = nodePath.resolve(
+      process.cwd(),
+      'server/src/services/results/kpiMeasurementWriterService.ts'
+    );
     const src = fs.readFileSync(path, 'utf8');
     const updates = src.match(/UPDATE initiative_kpis SET current_value[\s\S]*?WHERE[^\n]*/g) || [];
     expect(updates.length).toBeGreaterThan(0);
@@ -1344,7 +1381,7 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
-  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is in benefits_realization; no UPDATE runs', async () => {
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is in benefits_realization; no update runs', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     // Ownership+status SELECT: owned by caller org, but locked.
     mockDbGet.mockResolvedValue({ id: 'kpi-locked', status: 'benefits_realization' });
@@ -1357,25 +1394,34 @@ describe('M15 — PUT /benefits/kpis/:kpiId is blocked on a locked KPI', () => {
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
 
-    // The locked guard must short-circuit before the UPDATE.
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(updateCall).toBeFalsy();
+    // The locked guard must short-circuit before kpiDefinitionService is
+    // ever reached (RES-02: the write moved from inline SQL to the
+    // canonical service, but the lock-status guard still runs first).
+    expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+    expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
   });
 
-  it('→ 200 and an UPDATE runs when the owned KPI is in an unlocked (active) status', async () => {
+  it('→ 200 and a canonical update runs when the owned KPI is in an unlocked (active) status', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 1,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildBenefitsApp();
 
     const res = await request(app).put('/api/benefits/kpis/kpi-active').send({ targetValue: 999 });
 
     expect(res.status).toBe(200);
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG_A,
+        kpiId: 'kpi-active',
+        expectedVersion: 1,
+        targetValue: 999,
+      })
     );
-    expect(updateCall).toBeTruthy();
   });
 });
 
@@ -1386,12 +1432,12 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
     mockDbRun.mockResolvedValue({ changes: 1 });
   });
 
-  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is locked; no UPDATE runs', async () => {
+  it('→ 409 RESULTS_KPI_EDIT_LOCKED when the owned KPI is locked; no canonical update runs', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     // 1st dbGet: PUT ownership lookup (owned). 2nd dbGet: findKpiEditLockViolation
     // status lookup (locked).
     mockDbGet
-      .mockResolvedValueOnce({ id: 'kpi-locked', name: 'Locked KPI' })
+      .mockResolvedValueOnce({ id: 'kpi-locked' })
       .mockResolvedValueOnce({ status: 'locked' });
     const app = await buildV8App();
 
@@ -1402,17 +1448,23 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('RESULTS_KPI_EDIT_LOCKED');
 
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(updateCall).toBeFalsy();
+    // The locked guard must short-circuit before kpiDefinitionService is
+    // ever reached (RES-02: the write moved from inline SQL to the
+    // canonical service, but the lock-status guard still runs first).
+    expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+    expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
   });
 
-  it('→ 200 and an UPDATE runs when the owned KPI is unlocked', async () => {
+  it('→ 200 and a canonical update runs when the owned KPI is unlocked', async () => {
     mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
     mockDbGet
-      .mockResolvedValueOnce({ id: 'kpi-active', name: 'Active KPI' })
+      .mockResolvedValueOnce({ id: 'kpi-active' })
       .mockResolvedValueOnce({ status: 'active' });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 1,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 2 });
     const app = await buildV8App();
 
     const res = await request(app)
@@ -1420,11 +1472,101 @@ describe('M15 — PUT /v8/results/kpis/:kpiId is blocked on a locked KPI', () =>
       .send({ targetValue: 999 });
 
     expect(res.status).toBe(200);
-    const updateCall = mockDbRun.mock.calls.find((c) =>
-      /UPDATE\s+initiative_kpis/i.test(String(c?.[0]))
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG_A,
+        kpiId: 'kpi-active',
+        expectedVersion: 1,
+        targetValue: 999,
+      })
     );
-    expect(updateCall).toBeTruthy();
   });
+});
+
+describe('RES-02 — expectedVersion CAS fails closed on a garbage token', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDbAll.mockResolvedValue([]);
+    mockDbRun.mockResolvedValue({ changes: 1 });
+    mockUser = { id: USER_A, role: 'admin', organizationId: ORG_A, isSuperAdmin: false };
+  });
+
+  it('PUT /benefits/kpis/:kpiId → a valid client expectedVersion is used as-is, not re-derived', async () => {
+    mockDbGet.mockResolvedValue({ id: 'kpi-active', status: 'active' });
+    // Self-read would report version 9 — the client's own value (5) must win.
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 9,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 6 });
+    const app = await buildBenefitsApp();
+
+    const res = await request(app)
+      .put('/api/benefits/kpis/kpi-active')
+      .send({ targetValue: 999, expectedVersion: 5 });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ kpiId: 'kpi-active', expectedVersion: 5 })
+    );
+  });
+
+  it.each([['not-a-number'], [0], [-1], [1.5], [null]])(
+    'PUT /benefits/kpis/:kpiId → expectedVersion %p is rejected with 400, no writer call',
+    async (badValue) => {
+      const app = await buildBenefitsApp();
+
+      const res = await request(app)
+        .put('/api/benefits/kpis/kpi-active')
+        .send({ targetValue: 999, expectedVersion: badValue });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('RESULTS_KPI_INVALID_EXPECTED_VERSION');
+      expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+      expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
+      // Validation fails closed before even the ownership lookup runs.
+      expect(mockDbGet).not.toHaveBeenCalled();
+    }
+  );
+
+  it('PUT /v8/results/kpis/:kpiId → a valid client expectedVersion is used as-is, not re-derived', async () => {
+    mockDbGet.mockResolvedValueOnce({ id: 'kpi-active' }).mockResolvedValueOnce({
+      status: 'active',
+    });
+    mockGetCurrentKpiDefinition.mockResolvedValue({
+      id: 'kpi-active',
+      currentDefinitionVersion: 9,
+    });
+    mockUpdateKpiDefinition.mockResolvedValue({ id: 'kpi-active', currentDefinitionVersion: 6 });
+    const app = await buildV8App();
+
+    const res = await request(app)
+      .put('/api/v8/results/kpis/kpi-active')
+      .send({ targetValue: 999, expectedVersion: 5 });
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({ kpiId: 'kpi-active', expectedVersion: 5 })
+    );
+  });
+
+  it.each([['not-a-number'], [0], [-1], [1.5], [null]])(
+    'PUT /v8/results/kpis/:kpiId → expectedVersion %p is rejected with 400, no writer call',
+    async (badValue) => {
+      const app = await buildV8App();
+
+      const res = await request(app)
+        .put('/api/v8/results/kpis/kpi-active')
+        .send({ targetValue: 999, expectedVersion: badValue });
+
+      expect(res.status).toBe(400);
+      expect(res.body.code).toBe('RESULTS_KPI_INVALID_EXPECTED_VERSION');
+      expect(mockGetCurrentKpiDefinition).not.toHaveBeenCalled();
+      expect(mockUpdateKpiDefinition).not.toHaveBeenCalled();
+      // Validation fails closed before even the ownership lookup runs.
+      expect(mockDbGet).not.toHaveBeenCalled();
+    }
+  );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1646,10 +1788,10 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('P04_PERMISSION_DENIED');
-    const insert = mockDbRun.mock.calls.find((c) =>
-      /INSERT\s+INTO\s+initiative_kpis/i.test(String(c?.[0]))
-    );
-    expect(insert).toBeFalsy();
+    // RES-02: the write moved from inline SQL to kpiDefinitionService — the
+    // permission gate must still block BEFORE the canonical service is ever
+    // reached.
+    expect(mockCreateKpiDefinition).not.toHaveBeenCalled();
   });
 
   // ── 401: no authenticated user on a representative route ──
@@ -1666,11 +1808,22 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
   // ── 403 for viewer (JWT role 'user') on every one of the 21 gated routes ──
 
-  describe.each(RES003A_BENEFITS_ROUTES)(
-    '$method /benefits$path (action=$action)',
-    (route) => {
-      it('→ 403 for viewer role; no dbGet/dbAll/dbRun call happens (gate is the first line)', async () => {
-        mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+  describe.each(RES003A_BENEFITS_ROUTES)('$method /benefits$path (action=$action)', (route) => {
+    it('→ 403 for viewer role; no dbGet/dbAll/dbRun call happens (gate is the first line)', async () => {
+      mockUser = { id: USER_A, role: 'user', organizationId: ORG_A, isSuperAdmin: false };
+      const app = await buildBenefitsApp();
+      const res = await sendBenefitsRequest(app, route);
+
+      expect(res.status).toBe(403);
+      expect(res.body.code).toBe('P04_PERMISSION_DENIED');
+      expect(mockDbGet).not.toHaveBeenCalled();
+      expect(mockDbAll).not.toHaveBeenCalled();
+      expect(mockDbRun).not.toHaveBeenCalled();
+    });
+
+    if (route.kpiOwnerOnly) {
+      it('→ 403 for finance_owner (JWT role "manager"); action is kpi_owner-only', async () => {
+        mockUser = { id: USER_A, role: 'manager', organizationId: ORG_A, isSuperAdmin: false };
         const app = await buildBenefitsApp();
         const res = await sendBenefitsRequest(app, route);
 
@@ -1680,22 +1833,8 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
         expect(mockDbAll).not.toHaveBeenCalled();
         expect(mockDbRun).not.toHaveBeenCalled();
       });
-
-      if (route.kpiOwnerOnly) {
-        it('→ 403 for finance_owner (JWT role "manager"); action is kpi_owner-only', async () => {
-          mockUser = { id: USER_A, role: 'manager', organizationId: ORG_A, isSuperAdmin: false };
-          const app = await buildBenefitsApp();
-          const res = await sendBenefitsRequest(app, route);
-
-          expect(res.status).toBe(403);
-          expect(res.body.code).toBe('P04_PERMISSION_DENIED');
-          expect(mockDbGet).not.toHaveBeenCalled();
-          expect(mockDbAll).not.toHaveBeenCalled();
-          expect(mockDbRun).not.toHaveBeenCalled();
-        });
-      }
     }
-  );
+  });
 
   // ── Regression shield: admin (kpi_owner) is NOT blocked by the new gate on ──
   // ── the 9 of the 21 routes that had zero prior test coverage. ──
@@ -1707,7 +1846,9 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     it('POST /benefits/deviation-cases/:caseId/acknowledge → not 403 (200, existing logic runs)', async () => {
       const app = await buildBenefitsApp();
-      const res = await request(app).post('/api/benefits/deviation-cases/case-x/acknowledge').send({});
+      const res = await request(app)
+        .post('/api/benefits/deviation-cases/case-x/acknowledge')
+        .send({});
 
       expect(res.status).not.toBe(403);
       expect(res.status).toBe(200);
@@ -1775,9 +1916,7 @@ describe('RES-003A — /api/benefits real permission checks (fail-closed)', () =
 
     it('POST /benefits/iris/assets/search → not 403 (404, provider not configured — existing logic runs)', async () => {
       const app = await buildBenefitsApp();
-      const res = await request(app)
-        .post('/api/benefits/iris/assets/search')
-        .send({ q: 'engine' });
+      const res = await request(app).post('/api/benefits/iris/assets/search').send({ q: 'engine' });
 
       expect(res.status).not.toBe(403);
       expect(res.status).toBe(404);

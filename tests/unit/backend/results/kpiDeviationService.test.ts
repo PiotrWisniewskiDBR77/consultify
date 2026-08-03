@@ -51,6 +51,135 @@ describe('kpiDeviationService', () => {
       expect(res.status).toBe('RED');
       expect(res.severity).toBe('RED');
     });
+
+    // RES-004 — fail-closed: none of these used to be a distinct status.
+    // Every one of them previously returned GREEN — a false "on track" for a
+    // KPI that cannot actually be evaluated.
+
+    it('RES-004: UNCONFIGURED (not GREEN) when no target is set', () => {
+      const res = evaluateKpiPoint(
+        { id: 'k1', organizationId: 'o1', name: 'No target KPI', targetValue: null },
+        50
+      );
+      expect(res.status).toBe('UNCONFIGURED');
+      expect(res.severity).toBeNull();
+    });
+
+    it('RES-004: UNCONFIGURED (not GREEN) when target=0 in percent mode with no absolute fallback', () => {
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Zero target KPI',
+          targetValue: 0,
+          thresholdMode: 'PERCENT_FROM_TARGET',
+        },
+        5
+      );
+      expect(res.status).toBe('UNCONFIGURED');
+    });
+
+    it('RES-004: target=0 in percent mode DOES evaluate when an absolute band is configured', () => {
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Zero target KPI with abs band',
+          targetValue: 0,
+          thresholdMode: 'PERCENT_FROM_TARGET', // mode is irrelevant here — classifyAbsolute is only reached via ABSOLUTE
+          amberThresholdAbs: 5,
+          redThresholdAbs: 10,
+        },
+        5
+      );
+      // thresholdMode stayed PERCENT_FROM_TARGET, so this still routes through
+      // classifyPercent and is still UNCONFIGURED — proves mode, not just
+      // "abs fields exist", controls which path runs.
+      expect(res.status).toBe('UNCONFIGURED');
+    });
+
+    it('RES-004: ABSOLUTE mode with target=0 and a configured absolute band evaluates normally', () => {
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Zero target KPI, absolute mode',
+          targetValue: 0,
+          thresholdMode: 'ABSOLUTE',
+          amberThresholdAbs: 5,
+          redThresholdAbs: 10,
+        },
+        12
+      );
+      expect(res.status).toBe('RED');
+    });
+
+    it('RES-004: UNCONFIGURED (not a wrong color) when redThresholdPct < amberThresholdPct', () => {
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Inverted band KPI',
+          targetValue: 100,
+          thresholdMode: 'PERCENT_FROM_TARGET',
+          amberThresholdPct: 0.2, // wider than red — nonsensical
+          redThresholdPct: 0.1,
+        },
+        70
+      );
+      expect(res.status).toBe('UNCONFIGURED');
+    });
+
+    it('RES-004: UNCONFIGURED when an absolute band is inverted (red < amber)', () => {
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Inverted absolute band KPI',
+          targetValue: 100,
+          thresholdMode: 'ABSOLUTE',
+          amberThresholdAbs: 20,
+          redThresholdAbs: 5,
+        },
+        70
+      );
+      expect(res.status).toBe('UNCONFIGURED');
+    });
+
+    it('RES-004: ABSOLUTE mode with only amberThresholdAbs set (no red bound) still evaluates AMBER correctly, not UNCONFIGURED', () => {
+      // Regression guard for the fail-closed check itself: `red` legitimately
+      // stays +Infinity when only amber is configured — that must NOT be
+      // treated as a misconfiguration.
+      const res = evaluateKpiPoint(
+        {
+          id: 'k1',
+          organizationId: 'o1',
+          name: 'Amber-only band KPI',
+          targetValue: 100,
+          thresholdMode: 'ABSOLUTE',
+          amberThresholdAbs: 5,
+          redThresholdAbs: null,
+        },
+        94
+      );
+      expect(res.status).toBe('AMBER');
+    });
+
+    it('RES-004: determinism — the same input always produces the same output', () => {
+      const def = {
+        id: 'k1',
+        organizationId: 'o1',
+        name: 'Determinism check',
+        targetValue: 100,
+        direction: 'HIGHER_IS_BETTER' as const,
+        thresholdMode: 'PERCENT_FROM_TARGET' as const,
+        amberThresholdPct: 0.1,
+        redThresholdPct: 0.2,
+      };
+      const a = evaluateKpiPoint(def, 85);
+      const b = evaluateKpiPoint(def, 85);
+      expect(a).toEqual(b);
+    });
   });
 
   describe('handleTimeSeriesRecorded', () => {

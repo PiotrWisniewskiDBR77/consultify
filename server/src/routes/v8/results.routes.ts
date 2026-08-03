@@ -19,13 +19,26 @@ import {
   suggestRca,
 } from '../../services/results/deviationRcaSuggestService.js';
 import { detectAnomalies } from '../../services/results/kpiAnomalyService.js';
-import { handleTimeSeriesRecorded } from '../../services/results/kpiDeviationService.js';
+import {
+  archiveDefinition as archiveKpiDefinition,
+  createDefinition as createKpiDefinition,
+  getCurrentDefinition as getCurrentKpiDefinition,
+  getCurrentDefinitionVersionId,
+  KpiDefinitionArchivedError,
+  KpiDefinitionNotFoundError,
+  KpiDefinitionVersionConflictError,
+  updateDefinition as updateKpiDefinition,
+} from '../../services/results/kpiDefinitionService.js';
 import {
   type KpiDirection as KpiForecastDirection,
   leadingAlert,
   linearTrend,
   projectToTarget,
 } from '../../services/results/kpiForecastService.js';
+import {
+  KpiMeasurementKpiNotFoundError,
+  recordKpiMeasurement,
+} from '../../services/results/kpiMeasurementWriterService.js';
 import {
   buildRecoveryCardDTO,
   closeRecoveryCard,
@@ -36,19 +49,31 @@ import {
   linkRecoveryActionTask,
   markRecoveryActionTaskLinkFailed,
   progressRecoveryCard,
+  type RecoveryActionRow,
+  type RecoveryCardRow,
   RecoveryCardServiceError,
   resolveRecoveryCheckpoint,
   toActionDTO,
   toCheckpointDTO,
   updateRecoveryCard,
-  type RecoveryActionRow,
-  type RecoveryCardRow,
 } from '../../services/results/kpiRecoveryCardService.js';
 import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
   ResultsKpiReportSnapshotError,
 } from '../../services/results/kpiReportSnapshotService.js';
+import {
+  addKpiToScorecard,
+  createScorecard,
+  getScorecard,
+  getScorecardKpis,
+  listScorecards,
+  removeKpiFromScorecard,
+  RESULTS_SCORECARD_OWNER_DOMAIN,
+  ScorecardKpiNotFoundError,
+  updateScorecard,
+} from '../../services/results/kpiScorecardService.js';
+import { KPI_VISIBILITY_SCOPES } from '../../services/results/kpiVisibilityService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
   type KpiDriverMapping,
@@ -192,8 +217,8 @@ async function createV8KpiReportArtifact(params: {
 // on why 'edit_finance_artifacts'/'manage_reconciliation_finance' are excluded.
 import {
   assertKpiPermission as p04AssertKpiPermission,
-  kpiRoleFromRequest as p04KpiRoleFromRequest,
   type KpiGuardedAction as P04KpiGuardedAction,
+  kpiRoleFromRequest as p04KpiRoleFromRequest,
 } from '../../services/results/kpiPermissions.js';
 
 /**
@@ -316,23 +341,9 @@ export async function findKpiEditLockViolation(params: {
   return null;
 }
 
-function deriveKpiPeriodKey(
-  periodStart?: string | null,
-  measurementFrequency?: string | null
-): string | null {
-  const start = String(periodStart || '').slice(0, 10);
-  if (!start) return null;
-  const [year, month = '01', day = '01'] = start.split('-');
-  const frequency = String(measurementFrequency || 'MONTHLY').toUpperCase();
-
-  if (frequency === 'DAILY') return start;
-  if (frequency === 'WEEKLY') {
-    return `${year}-W${String(Math.max(1, Math.ceil(Number(day) / 7))).padStart(2, '0')}`;
-  }
-  if (frequency === 'QUARTERLY')
-    return `${year}-Q${String(Math.max(1, Math.ceil(Number(month) / 3)))}`;
-  return `${year}-${month}`;
-}
+// deriveKpiPeriodKey moved to kpiMeasurementWriterService.js (RES-003) — this
+// file's copy and the one in benefits.routes.ts were byte-identical
+// duplicates; both now import the single shared implementation.
 
 /**
  * GET /api/v8/results/dashboard
@@ -356,43 +367,14 @@ function deriveKpiPeriodKey(
 router.get(
   '/scorecards',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
-    const rows = await dbAll<{
-      id: string;
-      name: string;
-      department: string | null;
-      period_label: string | null;
-      period_start: string | null;
-      period_end: string | null;
-      status: string | null;
-      kpi_count: number;
-      on_target_count: number;
-    }>(
-      `SELECT s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status,
-              COUNT(i.id) AS kpi_count,
-              COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
-         FROM kpi_scorecards s
-         LEFT JOIN kpi_scorecard_items i ON i.scorecard_id = s.id
-         LEFT JOIN initiative_kpis k ON k.id = i.kpi_id
-        WHERE s.organization_id = ?
-        GROUP BY s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status
-        ORDER BY s.department NULLS LAST, s.period_start DESC NULLS LAST`,
-      [organizationId],
-      { fallback: true }
-    );
+    const { organizationId, userId } = getV8Context(req);
+    // RES-11: isAdmin deliberately false here — the packet flags "does admin
+    // see private_to_owner KPIs" as an open policy decision (§10), not yet
+    // resolved by Piotr. Fail-closed default until that decision lands.
+    const scorecards = await listScorecards(organizationId, { userId, isAdmin: false });
     return res.json({
-      scorecards: (rows || []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        department: r.department,
-        periodLabel: r.period_label,
-        periodStart: r.period_start,
-        periodEnd: r.period_end,
-        status: r.status || 'active',
-        kpiCount: Number(r.kpi_count) || 0,
-        onTargetCount: Number(r.on_target_count) || 0,
-      })),
-      count: (rows || []).length,
+      data: { scorecards, count: scorecards.length, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsMeta(),
     });
   })
 );
@@ -401,34 +383,131 @@ router.get(
 router.get(
   '/scorecards/:scorecardId/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const scorecardId = String(req.params.scorecardId || '').trim();
-    const card = await dbGet<{ id: string; name: string }>(
-      `SELECT id, name FROM kpi_scorecards WHERE id = ? AND organization_id = ?`,
-      [scorecardId, organizationId],
-      { fallback: true }
-    );
-    if (!card?.id) {
+    const result = await getScorecardKpis(organizationId, scorecardId, { userId, isAdmin: false });
+    if (!result) {
       return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
     }
-    const kpis = await dbAll(
-      `SELECT k.id, k.name, k.baseline_value, k.current_value, k.target_value, k.unit,
-              k.direction, k.progress_percentage, k.is_on_target, k.category, k.initiative_id
-         FROM kpi_scorecard_items i
-         JOIN initiative_kpis k ON k.id = i.kpi_id
-        WHERE i.scorecard_id = ? AND k.organization_id = ?
-        ORDER BY i.sort_order ASC, k.name ASC`,
-      [scorecardId, organizationId],
-      { fallback: true }
+    return res.json({
+      data: {
+        scorecard: result.scorecard,
+        kpis: result.kpis,
+        count: result.kpis.length,
+        ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN,
+      },
+      meta: resultsMeta(),
+    });
+  })
+);
+
+/** Creates a new department × period card. Results-owned — never touches `goals`. */
+router.post(
+  '/scorecards',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { name, department, periodLabel, periodStart, periodEnd } = req.body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name is required', code: 'SCORECARD_NAME_REQUIRED' });
+    }
+    const scorecard = await createScorecard(organizationId, {
+      name: name.trim(),
+      department: department ?? null,
+      periodLabel: periodLabel ?? null,
+      periodStart: periodStart ?? null,
+      periodEnd: periodEnd ?? null,
+      createdBy: userId ?? null,
+    });
+    return res.status(201).json({
+      data: { scorecard, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Updates card metadata (name/department/period/status). Fail-closed on cross-tenant id. */
+router.put(
+  '/scorecards/:scorecardId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const { name, department, periodLabel, periodStart, periodEnd, status } = req.body || {};
+    const updated = await updateScorecard(
+      organizationId,
+      scorecardId,
+      {
+        ...(name !== undefined ? { name } : {}),
+        ...(department !== undefined ? { department } : {}),
+        ...(periodLabel !== undefined ? { periodLabel } : {}),
+        ...(periodStart !== undefined ? { periodStart } : {}),
+        ...(periodEnd !== undefined ? { periodEnd } : {}),
+        ...(status !== undefined ? { status } : {}),
+      },
+      { userId, isAdmin: false }
     );
-    return res.json({ scorecard: card, kpis: kpis || [], count: (kpis || []).length });
+    if (!updated) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    return res.json({
+      data: { scorecard: updated, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Attaches an existing `initiative_kpis` row to a card. Both ids are org-checked. */
+router.post(
+  '/scorecards/:scorecardId/kpis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const kpiId = typeof req.body?.kpiId === 'string' ? req.body.kpiId.trim() : '';
+    const sortOrder = Number.isFinite(req.body?.sortOrder) ? Number(req.body.sortOrder) : 0;
+    if (!kpiId) {
+      return res.status(400).json({ error: 'kpiId is required', code: 'SCORECARD_KPI_REQUIRED' });
+    }
+    const card = await getScorecard(organizationId, scorecardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    try {
+      await addKpiToScorecard(organizationId, scorecardId, kpiId, sortOrder);
+    } catch (err) {
+      if (err instanceof ScorecardKpiNotFoundError) {
+        return res.status(404).json({ error: err.message, code: 'SCORECARD_KPI_NOT_FOUND' });
+      }
+      throw err;
+    }
+    return res.status(201).json({
+      data: { ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Detaches a KPI from a card (the KPI definition itself is untouched). */
+router.delete(
+  '/scorecards/:scorecardId/kpis/:kpiId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const kpiId = String(req.params.kpiId || '').trim();
+    const card = await getScorecard(organizationId, scorecardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    await removeKpiFromScorecard(organizationId, scorecardId, kpiId);
+    return res.json({
+      data: { ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
   })
 );
 
 router.get(
   '/dashboard',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const initiativeId =
       typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
         ? req.query.initiativeId.trim()
@@ -448,7 +527,11 @@ router.get(
     }
     let snapshot;
     try {
-      snapshot = await getResultsDashboard(organizationId, { initiativeId });
+      // RES-11: isAdmin deliberately false — packet §10 open decision, fail-closed.
+      snapshot = await getResultsDashboard(organizationId, {
+        initiativeId,
+        viewer: { userId, isAdmin: false },
+      });
     } catch {
       return res.status(500).json({
         error: 'Failed to load results dashboard',
@@ -659,7 +742,7 @@ router.post(
   '/kpis',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const {
       name,
       description,
@@ -676,6 +759,7 @@ router.post(
       redThresholdPct,
       amberThresholdAbs,
       redThresholdAbs,
+      visibility,
     } = req.body || {};
 
     const safeName = String(name || '').trim();
@@ -686,44 +770,51 @@ router.post(
       });
     }
 
-    const id = uuidv4().replace(/-/g, '');
-    await dbRun(
-      `
-      INSERT INTO initiative_kpis (
-        id, initiative_id, organization_id,
-        name, description, unit,
-        baseline_value, target_value, measurement_frequency,
-        alert_threshold, alert_direction,
-        owner_user_id, direction, threshold_mode,
-        amber_threshold_pct, red_threshold_pct,
-        amber_threshold_abs, red_threshold_abs,
-        created_at, updated_at
-      )
-      VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `,
-      [
-        id,
-        organizationId,
-        safeName,
-        description ? String(description).trim() : null,
-        unit ? String(unit).trim() : null,
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
-        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
-        measurementFrequency || 'MONTHLY',
+    // RES-11: fail-closed enum validation BEFORE any write — an unrecognized
+    // value must never reach the DB (the CHECK constraint would also catch
+    // it, but that's defense-in-depth, not the primary gate; this must be a
+    // clean 400 with zero mutation, not a 500 from a constraint violation).
+    if (visibility !== undefined && !KPI_VISIBILITY_SCOPES.includes(visibility)) {
+      return res.status(400).json({
+        error: `visibility must be one of: ${KPI_VISIBILITY_SCOPES.join(', ')}`,
+        code: 'RESULTS_KPI_INVALID_VISIBILITY',
+      });
+    }
+
+    // RES-02: canonical write goes through kpiDefinitionService — no direct
+    // SQL against initiative_kpis here anymore (this used to be a second,
+    // forked copy of the exact same INSERT in benefits.routes.ts).
+    const created = await createKpiDefinition({
+      organizationId,
+      initiativeId: null,
+      actorUserId: userId || null,
+      name: safeName,
+      description: description ? String(description).trim() : null,
+      unit: unit ? String(unit).trim() : null,
+      baselineValue: baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
+      targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : null,
+      measurementFrequency: measurementFrequency || 'MONTHLY',
+      alertThreshold:
         alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
-        alertDirection || 'BELOW',
-        ownerUserId || null,
-        direction || 'HIGHER_IS_BETTER',
-        thresholdMode || 'PERCENT_FROM_TARGET',
+      alertDirection: alertDirection || 'BELOW',
+      ownerUserId: ownerUserId || null,
+      direction: direction || 'HIGHER_IS_BETTER',
+      thresholdMode: thresholdMode || 'PERCENT_FROM_TARGET',
+      amberThresholdPct:
         amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
+      redThresholdPct:
         redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
+      amberThresholdAbs:
         amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
+      redThresholdAbs:
         redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
-      ]
-    );
+      visibility: visibility || undefined,
+      source: 'v8_results_create',
+      reason: 'v8-results-kpi-create',
+    });
 
     return res.status(201).json({
-      data: { id },
+      data: { id: created.id },
       meta: resultsWriteMeta(),
     });
   })
@@ -762,13 +853,49 @@ router.put(
       redThresholdPct,
       amberThresholdAbs,
       redThresholdAbs,
+      expectedVersion,
+      visibility,
     } = req.body || {};
+
+    // RES-11: fail-closed enum validation BEFORE any write (no lock taken,
+    // no lookup done yet) — an unrecognized value must never reach the CAS
+    // transaction. The DB CHECK constraint would also reject it, but that's
+    // defense-in-depth, not the primary gate: this must be a clean 400 with
+    // zero mutation, not a 500 surfaced from a constraint violation deep
+    // inside the pinned transaction.
+    if (visibility !== undefined && !KPI_VISIBILITY_SCOPES.includes(visibility)) {
+      return res.status(400).json({
+        error: `visibility must be one of: ${KPI_VISIBILITY_SCOPES.join(', ')}`,
+        code: 'RESULTS_KPI_INVALID_VISIBILITY',
+      });
+    }
+
+    // RES-02: a caller-supplied `expectedVersion` is the client's own last-seen
+    // pointer (round-tripped from the catalog read) — using it enforces real
+    // optimistic concurrency: a stale client loses the race with a 409 instead
+    // of silently overwriting a concurrent edit. Callers that don't send the
+    // key at all (older/other integrations) keep the previous self-read
+    // fallback below. A caller that DOES send the key but with a garbage
+    // value (non-integer, <= 0, or any non-numeric type) must fail closed with
+    // 400 — silently coercing it to "not sent" would let a stale/malicious
+    // client bypass CAS by sending an invalid token instead of omitting it.
+    let clientExpectedVersion: number | null = null;
+    if (expectedVersion !== undefined) {
+      const isNumericInput =
+        typeof expectedVersion === 'number' || typeof expectedVersion === 'string';
+      const parsed = isNumericInput ? Number(expectedVersion) : NaN;
+      if (!isNumericInput || !Number.isInteger(parsed) || parsed <= 0) {
+        return res.status(400).json({
+          error: 'expectedVersion must be a positive integer',
+          code: 'RESULTS_KPI_INVALID_EXPECTED_VERSION',
+        });
+      }
+      clientExpectedVersion = parsed;
+    }
 
     const row = await dbGet<any>(
       `
-      SELECT k.id, k.name, k.description, k.unit, k.baseline_value, k.target_value,
-             k.measurement_frequency, k.direction, k.threshold_mode,
-             k.amber_threshold_pct, k.red_threshold_pct, k.amber_threshold_abs, k.red_threshold_abs
+      SELECT k.id
       FROM initiative_kpis k
       LEFT JOIN initiatives i ON i.id = k.initiative_id
       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?
@@ -785,7 +912,8 @@ router.put(
     // State-machine guard: block definition/target mass-assignment when the KPI
     // is in a finalized/locked lifecycle status (benefits_realization/review/
     // locked). The report-creation guard already blocks this path; the direct
-    // edit path must enforce the same lock or it is a hidden bypass.
+    // edit path must enforce the same lock or it is a hidden bypass. Unchanged
+    // by RES-02 — a lifecycle-state check, not a definition-versioning concern.
     const editLockViolation = await findKpiEditLockViolation({ organizationId, kpiId });
     if (editLockViolation) {
       return res.status(409).json({
@@ -795,139 +923,77 @@ router.put(
       });
     }
 
-    await dbRun(
-      `
-      UPDATE initiative_kpis
-      SET
-        name = COALESCE(?, name),
-        description = COALESCE(?, description),
-        unit = COALESCE(?, unit),
-        baseline_value = COALESCE(?, baseline_value),
-        target_value = COALESCE(?, target_value),
-        measurement_frequency = COALESCE(?, measurement_frequency),
-        alert_threshold = COALESCE(?, alert_threshold),
-        alert_direction = COALESCE(?, alert_direction),
-        owner_user_id = COALESCE(?, owner_user_id),
-        direction = COALESCE(?, direction),
-        threshold_mode = COALESCE(?, threshold_mode),
-        amber_threshold_pct = COALESCE(?, amber_threshold_pct),
-        red_threshold_pct = COALESCE(?, red_threshold_pct),
-        amber_threshold_abs = COALESCE(?, amber_threshold_abs),
-        red_threshold_abs = COALESCE(?, red_threshold_abs),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-      `,
-      [
-        name != null && String(name).trim() ? String(name).trim() : null,
-        description != null ? String(description).trim() : null,
-        unit != null ? String(unit).trim() : null,
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : null,
-        targetValue != null && targetValue !== '' ? Number(targetValue) : null,
-        measurementFrequency || null,
-        alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : null,
-        alertDirection || null,
-        ownerUserId || null,
-        direction || null,
-        thresholdMode || null,
-        amberThresholdPct != null && amberThresholdPct !== '' ? Number(amberThresholdPct) : null,
-        redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : null,
-        amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
-        redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
-        kpiId,
-      ]
-    );
-
-    const afterState = {
-      name: name != null && String(name).trim() ? String(name).trim() : row.name,
-      description: description != null ? String(description).trim() : row.description,
-      unit: unit != null ? String(unit).trim() : row.unit,
-      baselineValue:
-        baselineValue != null && baselineValue !== '' ? Number(baselineValue) : row.baseline_value,
-      targetValue:
-        targetValue != null && targetValue !== '' ? Number(targetValue) : row.target_value,
-      measurementFrequency: measurementFrequency || row.measurement_frequency,
-      direction: direction || row.direction,
-      thresholdMode: thresholdMode || row.threshold_mode,
-      amberThresholdPct:
-        amberThresholdPct != null && amberThresholdPct !== ''
-          ? Number(amberThresholdPct)
-          : row.amber_threshold_pct,
-      redThresholdPct:
-        redThresholdPct != null && redThresholdPct !== ''
-          ? Number(redThresholdPct)
-          : row.red_threshold_pct,
-      amberThresholdAbs:
-        amberThresholdAbs != null && amberThresholdAbs !== ''
-          ? Number(amberThresholdAbs)
-          : row.amber_threshold_abs,
-      redThresholdAbs:
-        redThresholdAbs != null && redThresholdAbs !== ''
-          ? Number(redThresholdAbs)
-          : row.red_threshold_abs,
-    };
-    const beforeDefinition = {
-      name: row.name,
-      description: row.description,
-      unit: row.unit,
-      measurementFrequency: row.measurement_frequency,
-      direction: row.direction,
-    };
-    const afterDefinition = {
-      name: afterState.name,
-      description: afterState.description,
-      unit: afterState.unit,
-      measurementFrequency: afterState.measurementFrequency,
-      direction: afterState.direction,
-    };
-    const beforeTargets = {
-      baselineValue: row.baseline_value,
-      targetValue: row.target_value,
-      thresholdMode: row.threshold_mode,
-      amberThresholdPct: row.amber_threshold_pct,
-      redThresholdPct: row.red_threshold_pct,
-      amberThresholdAbs: row.amber_threshold_abs,
-      redThresholdAbs: row.red_threshold_abs,
-    };
-    const afterTargets = {
-      baselineValue: afterState.baselineValue,
-      targetValue: afterState.targetValue,
-      thresholdMode: afterState.thresholdMode,
-      amberThresholdPct: afterState.amberThresholdPct,
-      redThresholdPct: afterState.redThresholdPct,
-      amberThresholdAbs: afterState.amberThresholdAbs,
-      redThresholdAbs: afterState.redThresholdAbs,
-    };
-    if (JSON.stringify(beforeDefinition) !== JSON.stringify(afterDefinition)) {
-      await resultsEnterpriseService
-        .createMetricAuditEntry(organizationId, {
-          kpiId,
-          section: 'definition',
-          eventType: 'definition_updated',
-          source: 'v8_results_update',
-          actorUserId: userId || null,
-          summary: `Definition updated for ${afterState.name || row.name || kpiId}`,
-          before: beforeDefinition,
-          after: afterDefinition,
-        })
-        .catch(() => null);
+    // RES-02: canonical CAS-versioned write. No direct SQL against
+    // initiative_kpis here anymore, and no `.catch(() => null)` audit
+    // side-effect either — kpiDefinitionService writes
+    // before/after to kpi_metric_audit_log in the SAME transaction as the
+    // version bump, so a failed audit insert now rolls back the whole write
+    // instead of silently leaving an unaudited definition change (this used
+    // to be the ONLY one of the 5 writers that audited at all).
+    const current = await getCurrentKpiDefinition(kpiId, organizationId);
+    if (!current) {
+      return res.status(404).json({
+        error: 'KPI not found',
+        code: 'RESULTS_KPI_NOT_FOUND',
+      });
     }
-    if (JSON.stringify(beforeTargets) !== JSON.stringify(afterTargets)) {
-      await resultsEnterpriseService
-        .createMetricAuditEntry(organizationId, {
-          kpiId,
-          section: 'targets',
-          eventType: 'targets_updated',
-          source: 'v8_results_update',
-          actorUserId: userId || null,
-          summary: `Targets updated for ${afterState.name || row.name || kpiId}`,
-          before: beforeTargets,
-          after: afterTargets,
-        })
-        .catch(() => null);
+    let updated;
+    try {
+      updated = await updateKpiDefinition({
+        organizationId,
+        kpiId,
+        expectedVersion: clientExpectedVersion ?? current.currentDefinitionVersion,
+        actorUserId: userId || null,
+        name: name != null && String(name).trim() ? String(name).trim() : undefined,
+        description: description != null ? String(description).trim() : undefined,
+        unit: unit != null ? String(unit).trim() : undefined,
+        baselineValue:
+          baselineValue != null && baselineValue !== '' ? Number(baselineValue) : undefined,
+        targetValue: targetValue != null && targetValue !== '' ? Number(targetValue) : undefined,
+        measurementFrequency: measurementFrequency || undefined,
+        alertThreshold:
+          alertThreshold != null && alertThreshold !== '' ? Number(alertThreshold) : undefined,
+        alertDirection: alertDirection || undefined,
+        ownerUserId: ownerUserId || undefined,
+        direction: direction || undefined,
+        thresholdMode: thresholdMode || undefined,
+        amberThresholdPct:
+          amberThresholdPct != null && amberThresholdPct !== ''
+            ? Number(amberThresholdPct)
+            : undefined,
+        redThresholdPct:
+          redThresholdPct != null && redThresholdPct !== '' ? Number(redThresholdPct) : undefined,
+        amberThresholdAbs:
+          amberThresholdAbs != null && amberThresholdAbs !== ''
+            ? Number(amberThresholdAbs)
+            : undefined,
+        redThresholdAbs:
+          redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : undefined,
+        visibility: visibility || undefined,
+        source: 'v8_results_update',
+        reason: 'v8-results-kpi-update',
+      });
+    } catch (error) {
+      if (error instanceof KpiDefinitionNotFoundError) {
+        return res.status(404).json({ error: 'KPI not found', code: 'RESULTS_KPI_NOT_FOUND' });
+      }
+      if (error instanceof KpiDefinitionArchivedError) {
+        return res.status(409).json({
+          error: 'Cannot edit an archived KPI',
+          code: 'RESULTS_KPI_ARCHIVED',
+        });
+      }
+      if (error instanceof KpiDefinitionVersionConflictError) {
+        return res.status(409).json({
+          error: 'KPI definition changed concurrently; reload and retry',
+          code: 'RESULTS_KPI_VERSION_CONFLICT',
+        });
+      }
+      throw error;
     }
 
     return res.json({
-      data: { success: true },
+      data: { success: true, currentDefinitionVersion: updated.currentDefinitionVersion },
       meta: resultsWriteMeta(),
     });
   })
@@ -966,34 +1032,23 @@ router.delete(
       });
     }
 
+    // RES-02: delete = archive. Every immutable definition version and every
+    // kpi_time_series/kpi_deviation_cases row is preserved — this used to
+    // hard-DELETE the KPI and cascade-delete its measurement and deviation
+    // history, exactly what the archive contract forbids. The mapping unlink
+    // still runs (a real, intended effect of "delete").
     await dbRun(`DELETE FROM initiative_kpi_mappings WHERE kpi_id = ? AND organization_id = ?`, [
       kpiId,
       organizationId,
     ]).catch(() => null);
 
-    await dbRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
-      kpiId,
-      organizationId,
-    ]).catch(() => null);
-
-    const cases = await dbAll<any>(
-      `SELECT id FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`,
-      [organizationId, kpiId]
-    ).catch(() => []);
-    const caseIds = (cases || []).map((c: any) => String(c.id)).filter(Boolean);
-    if (caseIds.length) {
-      await dbRun(
-        `DELETE FROM kpi_deviation_actions WHERE case_id IN (${caseIds.map(() => '?').join(',')})`,
-        caseIds
-      ).catch(() => null);
-    }
-
-    await dbRun(`DELETE FROM kpi_deviation_cases WHERE organization_id = ? AND kpi_id = ?`, [
+    const { userId: deletingUserId } = getV8Context(req);
+    await archiveKpiDefinition({
       organizationId,
       kpiId,
-    ]).catch(() => null);
-
-    await dbRun(`DELETE FROM initiative_kpis WHERE id = ?`, [kpiId]);
+      actorUserId: deletingUserId || null,
+      reason: 'v8-results-kpi-delete',
+    });
 
     return res.json({
       data: { success: true },
@@ -2460,106 +2515,47 @@ router.post(
       });
     }
 
-    // SEC-3 (L-04): p04AssertKpiPermission is a role gate only — it does NOT verify that
-    // this kpiId belongs to the caller's org. Without an ownership precheck a foreign-org
-    // kpiId would have a measurement row inserted under the caller's org. Verify the parent
-    // KPI is owned first (mirrors the org-scoped lookup in PUT/DELETE /kpis/:kpiId).
-    const ownedKpi = await dbGet<{ id: string }>(
-      `SELECT k.id
-       FROM initiative_kpis k
-       LEFT JOIN initiatives i ON i.id = k.initiative_id
-       WHERE k.id = ? AND COALESCE(k.organization_id, i.organization_id) = ?`,
-      [kpiId, organizationId]
-    );
-    if (!ownedKpi?.id) {
-      return res.status(404).json({
-        error: 'KPI not found',
-        code: 'RESULTS_KPI_NOT_FOUND',
-      });
-    }
-
-    const kpiMeta = await dbGet<{ measurement_frequency?: string | null }>(
-      `SELECT measurement_frequency FROM initiative_kpis WHERE id = ? LIMIT 1`,
-      [kpiId]
-    ).catch(() => null);
-    const periodKey = deriveKpiPeriodKey(periodStart, kpiMeta?.measurement_frequency);
-
-    const id = uuidv4().replace(/-/g, '');
-    await dbRun(
-      `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, period_end, source, notes, recorded_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        kpiId,
-        organizationId,
-        Number(value),
-        periodStart,
-        periodEnd,
-        source || 'manual',
-        notes ? String(notes) : null,
-        userId || null,
-      ]
-    );
-
-    const kpiCols = await dbAll<{ name: string }>('PRAGMA table_info(initiative_kpis)', []).catch(
-      () => []
-    );
-    const hasCurrentValue = (kpiCols || []).some((column) => column?.name === 'current_value');
-    if (hasCurrentValue) {
-      // SEC-3: org-scope the current_value write so a foreign-org kpiId cannot have its
-      // current_value overwritten (mirrors the benefits sibling route).
-      await dbRun(
-        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [Number(value), kpiId, organizationId]
-      ).catch(() => null);
-    }
-
+    // RES-003: recordKpiMeasurement performs the org-ownership precheck on
+    // kpiId itself (mirrors the SEC-3 (L-04) SELECT this route used to inline)
+    // before any write, upserts on (kpiId, periodStart, source) instead of a
+    // bare INSERT, and resolves the RES-02 definition_version_id pin via the
+    // canonical owner's own getCurrentDefinitionVersionId — this route no
+    // longer needs its own kpi_definition_versions join.
+    let result;
     try {
-      await handleTimeSeriesRecorded({
-        db: {
-          get: (sql: string, params: any[]) => dbGet(sql, params),
-          all: (sql: string, params: any[]) => dbAll(sql, params),
-          run: (sql: string, params: any[]) => dbRun(sql, params),
-        } as any,
-        orgId: organizationId,
-        kpiId: String(kpiId),
+      result = await recordKpiMeasurement({
+        organizationId,
+        kpiId,
         value: Number(value),
         periodStart,
         periodEnd,
-        recordedByUserId: userId || null,
-      });
-    } catch {
-      // Do not fail the write on deviation side effects.
-    }
-    await resultsEnterpriseService
-      .createMetricAuditEntry(organizationId, {
-        kpiId,
-        section: 'history',
-        eventType: 'measurement_recorded',
-        source: source ? String(source) : 'manual',
+        source,
+        notes,
         actorUserId: userId || null,
-        summary: `Measurement recorded for ${periodStart}`,
-        before: {},
-        after: {
-          value: Number(value),
-          periodStart,
-          periodEnd,
-          source: source || 'manual',
-        },
-      })
-      .catch(() => null);
+      });
+    } catch (error) {
+      if (error instanceof KpiMeasurementKpiNotFoundError) {
+        return res.status(404).json({
+          error: 'KPI not found',
+          code: 'RESULTS_KPI_NOT_FOUND',
+        });
+      }
+      throw error;
+    }
 
     return res.status(201).json({
       data: {
-        id,
-        kpiId,
-        value: Number(value),
-        measuredAt: periodStart,
-        periodStart,
-        periodEnd,
-        periodKey,
-        source: source || 'manual',
-        notes: notes || null,
+        id: result.id,
+        kpiId: result.kpiId,
+        value: result.value,
+        measuredAt: result.periodStart,
+        periodStart: result.periodStart,
+        periodEnd: result.periodEnd,
+        periodKey: result.periodKey,
+        source: result.source,
+        notes: result.notes,
+        wasNewRow: result.wasNewRow,
+        definitionVersionId: result.definitionVersionId,
       },
       meta: resultsWriteMeta(),
     });
@@ -3242,7 +3238,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -3560,7 +3559,10 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            'pending' | 'reconciled' | 'disputed' | 'escalated')
+            | 'pending'
+            | 'reconciled'
+            | 'disputed'
+            | 'escalated')
         : null,
     });
 
@@ -4025,7 +4027,7 @@ router.post(
   '/benefits/:benefitId/promote',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!(await p04AssertKpiPermission(req, res, 'edit_definition'))) return;
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const benefitId = typeof req.params.benefitId === 'string' ? req.params.benefitId.trim() : '';
     if (!benefitId) {
       return res.status(400).json({
@@ -4066,7 +4068,7 @@ router.post(
           WHERE organization_id = ? AND initiative_id = ? AND name = ?
           ORDER BY created_at DESC LIMIT 1`,
         [organizationId, benefit.initiative_id, benefit.name],
-        { fallback: true }
+        { fallback: false }
       );
       return res.status(200).json({
         data: { kpiId: existing?.id || null, alreadyPromoted: true },
@@ -4081,29 +4083,28 @@ router.post(
         WHERE organization_id = ? AND initiative_id = ? AND name = ?
         ORDER BY created_at DESC LIMIT 1`,
       [organizationId, benefit.initiative_id, benefit.name],
-      { fallback: true }
+      { fallback: false }
     );
 
+    // RES-02: canonical write goes through kpiDefinitionService — no direct
+    // SQL against initiative_kpis here anymore (this was the SECOND, forked
+    // benefit-promotion writer; benefitsRegisterService.promoteBenefitToKpi
+    // is the first — both create through the same canonical service now).
     let kpiId = dup?.id || null;
     if (!kpiId) {
-      kpiId = uuidv4().replace(/-/g, '');
-      await dbRun(
-        `INSERT INTO initiative_kpis (
-           id, initiative_id, organization_id,
-           name, description, target_value,
-           measurement_frequency, alert_direction,
-           created_at, updated_at
-         )
-         VALUES (?, ?, ?, ?, ?, ?, 'MONTHLY', 'BELOW', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [
-          kpiId,
-          benefit.initiative_id,
-          organizationId,
-          benefit.name,
-          benefit.description ?? null,
-          benefit.target_value ?? null,
-        ]
-      );
+      const promoted = await createKpiDefinition({
+        organizationId,
+        initiativeId: benefit.initiative_id,
+        actorUserId: userId || null,
+        name: benefit.name,
+        description: benefit.description ?? null,
+        targetValue: benefit.target_value ?? null,
+        measurementFrequency: 'MONTHLY',
+        alertDirection: 'BELOW',
+        source: 'v8_results_benefit_promotion',
+        reason: `closure-handoff-benefit-promotion:${benefitId}`,
+      });
+      kpiId = promoted.id;
     }
 
     await dbRun(

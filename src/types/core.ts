@@ -982,8 +982,16 @@ export interface InitiativeKPI {
   prevValue?: number;
   prevMeasurementDate?: string | null;
   isOnTarget: boolean;
+  /**
+   * RES-004: the KPI's real band-evaluated status from the backend's
+   * deviation engine. Prefer this over re-deriving a status from
+   * latestValue/isOnTarget — see kpiDomain.ts's deriveStatus().
+   */
+  evalStatus?: 'GREEN' | 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
   createdAt: string;
   updatedAt?: string;
+  /** RES-02: CAS pointer — send back as `expectedVersion` on update. */
+  currentDefinitionVersion?: number | null;
   // Optional enrichment used by Results (R0/R1).
   baselineValue?: number | null;
   ownerUserId?: string | null;

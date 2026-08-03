@@ -69,7 +69,26 @@ export interface KpiQueueGroups {
   requiresReview: ResultsKPI[];
 }
 
+/**
+ * RES-004: read the backend's real band-evaluated status (evalStatus —
+ * evaluateKpiPoint, the same fail-closed engine that drives deviation-case
+ * detection) rather than re-deriving a status from raw latestValue/isOnTarget.
+ * The old form recomputed "latest >= target" independently on the client,
+ * which could (and did) disagree with the server's own AMBER/RED bands, and
+ * had no way to represent UNCONFIGURED (a KPI with no/broken threshold
+ * config) — it silently read as "below", never distinguishing "misconfigured"
+ * from "genuinely off track", but at least never rendered as a green success.
+ * evalStatus is preferred when present; the raw-field fallback only serves
+ * payloads that predate this field (e.g. the deprecated legacy KPI endpoint).
+ */
 export function deriveStatus(kpi: InitiativeKPI): KPIStatus {
+  const evalStatus = kpi.evalStatus;
+  if (evalStatus) {
+    if (evalStatus === 'GREEN') return 'on-target';
+    if (evalStatus === 'NO_DATA') return 'no-data';
+    // AMBER | RED | UNCONFIGURED — never a green success.
+    return 'below';
+  }
   if (kpi.latestValue == null) return 'no-data';
   return kpi.isOnTarget ? 'on-target' : 'below';
 }

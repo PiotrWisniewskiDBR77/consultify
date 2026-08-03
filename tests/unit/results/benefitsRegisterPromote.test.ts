@@ -3,10 +3,11 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { dbAll, dbGet, dbRun } = vi.hoisted(() => ({
+const { dbAll, dbGet, dbRun, createKpiDefinition } = vi.hoisted(() => ({
   dbAll: vi.fn(),
   dbGet: vi.fn(),
   dbRun: vi.fn(),
+  createKpiDefinition: vi.fn(),
 }));
 
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
@@ -16,6 +17,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 }));
 vi.mock('../../../server/src/utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+// RES-02: promoteBenefitToKpi mints the KPI through kpiDefinitionService (the
+// canonical writer) instead of an inline INSERT INTO initiative_kpis.
+vi.mock('../../../server/src/services/results/kpiDefinitionService.js', () => ({
+  createDefinition: (...a: any[]) => createKpiDefinition(...a),
 }));
 
 import { promoteBenefitToKpi } from '../../../server/src/services/benefitsRegisterService.js';
@@ -40,31 +46,44 @@ const benefit = {
 beforeEach(() => {
   vi.clearAllMocks();
   dbRun.mockResolvedValue(undefined);
+  createKpiDefinition.mockResolvedValue({ id: 'new-kpi-id' });
 });
 
 describe('promoteBenefitToKpi', () => {
-  it('inserts an initiative_kpis row and marks the benefit promoted (org-scoped)', async () => {
+  it('creates the KPI definition (canonical service) and marks the benefit promoted (org-scoped)', async () => {
     dbGet.mockResolvedValueOnce({ ...benefit });
     const r = await promoteBenefitToKpi(ORG, 'b1');
     expect(r.alreadyPromoted).toBe(false);
-    expect(r.kpiId).toBeTruthy();
-    const insert = dbRun.mock.calls[0];
-    expect(String(insert[0])).toMatch(/INSERT INTO initiative_kpis/);
-    expect(insert[1]).toContain(ORG);
-    expect(insert[1]).toContain('Czas cyklu (dni)');
-    expect(insert[1]).toContain(10);
-    expect(insert[1]).toContain(6);
-    const update = dbRun.mock.calls[1];
-    expect(String(update[0])).toMatch(/UPDATE benefits_register SET promoted_kpi_id/);
-    expect(update[1]).toContain('b1');
-    expect(update[1]).toContain(ORG);
+    expect(r.kpiId).toBe('new-kpi-id');
+
+    // RES-02: canonical write goes through kpiDefinitionService — no direct
+    // INSERT INTO initiative_kpis in this service anymore.
+    expect(createKpiDefinition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        initiativeId: 'i1',
+        name: 'Czas cyklu (dni)',
+        baselineValue: 10,
+        targetValue: 6,
+      })
+    );
+    expect(dbRun.mock.calls.some((c) => /INSERT INTO initiative_kpis/.test(String(c[0])))).toBe(
+      false
+    );
+    const update = dbRun.mock.calls.find((c) =>
+      /UPDATE benefits_register SET promoted_kpi_id/.test(String(c[0]))
+    );
+    expect(update).toBeTruthy();
+    expect(update?.[1]).toContain('b1');
+    expect(update?.[1]).toContain(ORG);
   });
 
-  it('is idempotent — already-promoted benefit returns its existing KPI without insert', async () => {
+  it('is idempotent — already-promoted benefit returns its existing KPI without a new definition', async () => {
     dbGet.mockResolvedValueOnce({ ...benefit, promoted_kpi_id: 'kpi-existing' });
     const r = await promoteBenefitToKpi(ORG, 'b1');
     expect(r.alreadyPromoted).toBe(true);
     expect(r.kpiId).toBe('kpi-existing');
+    expect(createKpiDefinition).not.toHaveBeenCalled();
     expect(dbRun).not.toHaveBeenCalled();
   });
 
@@ -76,6 +95,8 @@ describe('promoteBenefitToKpi', () => {
   it('maps cadence to KPI measurement frequency', async () => {
     dbGet.mockResolvedValueOnce({ ...benefit, cadence: 'weekly' });
     await promoteBenefitToKpi(ORG, 'b1');
-    expect(dbRun.mock.calls[0][1]).toContain('WEEKLY');
+    expect(createKpiDefinition.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ measurementFrequency: 'WEEKLY' })
+    );
   });
 });

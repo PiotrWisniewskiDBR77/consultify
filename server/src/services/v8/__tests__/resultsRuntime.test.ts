@@ -90,7 +90,10 @@ describe('getKPIScorecard', () => {
     const sql = avgSqlCall![0] as string;
     expect(sql).not.toMatch(/MIN\s*\(\s*1\.0/i);
     expect(sql).toContain('THEN 1.0');
-    expect(sql).toContain('current_value * 1.0 / target_value');
+    // RES-11: qualified `d.current_value`/`d.target_value` since the
+    // visibility retrofit joins in `initiative_kpis ck` — same ratio logic,
+    // now disambiguated against the joined alias.
+    expect(sql).toContain('d.current_value * 1.0 / d.target_value');
   });
 });
 
@@ -388,8 +391,14 @@ describe('getResultsKpiCatalog', () => {
           owner_last_name: 'Lovelace',
           direction: 'HIGHER_IS_BETTER',
           threshold_mode: 'PERCENT_FROM_TARGET',
-          amber_threshold_pct: 10,
-          red_threshold_pct: 20,
+          // RES-004: these are FRACTIONS (0.1 = 10%), matching
+          // evaluateKpiPoint's convention — the pre-RES-004 naive isOnTarget
+          // computation never read these columns at all, so this fixture's
+          // old literal 10/20 values were silent dead data; now that a real
+          // engine reads them, they must be realistic (target=20, latest=18
+          // is 10% below target -> AMBER at these bands, not RED, not GREEN).
+          amber_threshold_pct: 0.1,
+          red_threshold_pct: 0.2,
           amber_threshold_abs: null,
           red_threshold_abs: null,
           current_value: 18,
@@ -425,6 +434,9 @@ describe('getResultsKpiCatalog', () => {
       initiativeName: 'Initiative Alpha',
       ownerName: 'Ada Lovelace',
       isOnTarget: false,
+      // RES-004: real band evaluation (18 is 10% below target=20, amber
+      // band starts at 10%) — AMBER, not a bare "not literally >= target".
+      evalStatus: 'AMBER',
     });
     expect(catalog.mappings).toHaveLength(1);
     expect(catalog.mappings[0]).toMatchObject({

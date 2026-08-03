@@ -1,11 +1,22 @@
-import type { IDatabase } from '../../database/IDatabase.js';
 import { v4 as uuidv4 } from 'uuid';
+
+import type { IDatabase } from '../../database/IDatabase.js';
 import notificationService from '../notificationService.js';
+import { getVersionById } from './kpiDefinitionService.js';
 import { ensureRecoveryCardForCase } from './kpiRecoveryCardService.js';
 
 export type KpiDirection = 'HIGHER_IS_BETTER' | 'LOWER_IS_BETTER';
 export type KpiThresholdMode = 'ABSOLUTE' | 'PERCENT_FROM_TARGET';
-export type KpiEvalStatus = 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA';
+/**
+ * RES-004: UNCONFIGURED is a distinct, deliberately non-green status for
+ * "cannot be deterministically evaluated" (no target set, target=0 with no
+ * absolute fallback, or an inverted/negative threshold band). It used to be
+ * silently folded into GREEN — a KPI with no target ever set, or with a
+ * broken threshold config, read as "on track" forever. Callers that gate an
+ * action on "is this KPI safe" (e.g. the recovery-card close gate) must
+ * treat UNCONFIGURED the same as AMBER/RED: fail closed, not open.
+ */
+export type KpiEvalStatus = 'GREEN' | 'AMBER' | 'RED' | 'NO_DATA' | 'UNCONFIGURED';
 
 export interface KpiDefinitionForEval {
   id: string;
@@ -34,8 +45,10 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
 
   const target = def.targetValue ?? null;
   if (target == null || !Number.isFinite(target)) {
-    // Without target we cannot deterministically evaluate bands; treat as GREEN but with note.
-    return { status: 'GREEN', severity: null, summary: 'No target configured' };
+    // RES-004: no target = cannot deterministically evaluate bands. This used
+    // to return GREEN (a false "on track") — a KPI nobody ever set a target
+    // on read as permanently healthy. Fail closed instead.
+    return { status: 'UNCONFIGURED', severity: null, summary: 'No target configured' };
   }
 
   const direction: KpiDirection = (def.direction || 'HIGHER_IS_BETTER') as KpiDirection;
@@ -46,10 +59,37 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
 
   const isLowerBetter = direction === 'LOWER_IS_BETTER';
 
+  // RES-004: a red band tighter than (or equal to) the amber band, or a
+  // negative/non-finite band, is not a configuration this engine can
+  // evaluate deterministically — it would either never fire RED or invert
+  // the green/red order. Checked lazily (only when the mode that actually
+  // uses these fields runs) so a KPI in ABSOLUTE mode with untouched
+  // (default-valid) percent columns is never wrongly flagged.
+  const pctBandIsMisconfigured =
+    !Number.isFinite(amberPct) ||
+    !Number.isFinite(redPct) ||
+    amberPct < 0 ||
+    redPct < 0 ||
+    redPct < amberPct;
+
   const classifyPercent = (): KpiEvalResult => {
+    if (pctBandIsMisconfigured) {
+      return {
+        status: 'UNCONFIGURED',
+        severity: null,
+        summary: `Misconfigured percent thresholds (amber=${amberPct}, red=${redPct})`,
+      };
+    }
     if (target === 0) {
-      // Avoid division by zero; fall back to GREEN unless ABS thresholds exist.
-      return { status: 'GREEN', severity: null, summary: 'Target=0; percent thresholds skipped' };
+      // RES-004: division by target=0 is undefined for a percent band, and
+      // there is no absolute fallback at this call site (classifyAbsolute
+      // already tried its own thresholds before falling back here) — this
+      // used to silently return GREEN. Fail closed instead.
+      return {
+        status: 'UNCONFIGURED',
+        severity: null,
+        summary: 'Target=0; percent thresholds cannot be evaluated without an absolute band',
+      };
     }
     const delta = (value - target) / Math.abs(target);
     const badness = isLowerBetter ? delta : -delta; // positive badness = worse than target
@@ -79,8 +119,21 @@ export function evaluateKpiPoint(def: KpiDefinitionForEval, value: number | null
 
     // For ABSOLUTE, thresholds are interpreted as allowed deviation magnitude from target.
     const gap = Math.abs(value - target);
+    // `red` staying +Infinity when only amber is configured is intentional
+    // (an explicit "no red bound"), not a misconfiguration — only reject
+    // truly invalid values (NaN, negative, or red tighter than amber) below.
     const red = redAbs != null ? Number(redAbs) : Number.POSITIVE_INFINITY;
     const amber = amberAbs != null ? Number(amberAbs) : red;
+    // RES-004: same fail-closed guard as the percent band — a negative or
+    // NaN bound, or a red bound tighter than amber, cannot be evaluated
+    // deterministically.
+    if (Number.isNaN(amber) || Number.isNaN(red) || amber < 0 || red < 0 || red < amber) {
+      return {
+        status: 'UNCONFIGURED',
+        severity: null,
+        summary: `Misconfigured absolute thresholds (amber=${amber}, red=${red})`,
+      };
+    }
     if (gap >= red) {
       return { status: 'RED', severity: 'RED', summary: `RED: gap ${gap} vs target ${target}` };
     }
@@ -150,6 +203,38 @@ async function getKpiDefinition(
   };
 }
 
+/**
+ * RES-004: overlay a KPI's PINNED threshold/target fields — as they read in
+ * the specific kpi_definition_versions row a measurement was recorded under
+ * — onto its otherwise-live definition. Without this, evaluating an old
+ * measurement (a Recovery Card close re-check, a historical report) always
+ * used whatever thresholds are CURRENT today, silently reinterpreting a past
+ * RED as GREEN (or vice versa) if the target was edited since. Falls back to
+ * `live` unchanged when no pin is given or it fails to resolve (a KPI
+ * created before RES-02's backfill, or a deleted version row) — evaluation
+ * must degrade to current config, never throw, on a missing pin.
+ */
+export async function withPinnedThresholds(
+  live: KpiDefinitionForEval,
+  organizationId: string,
+  definitionVersionId?: string | null
+): Promise<KpiDefinitionForEval> {
+  if (!definitionVersionId) return live;
+  const pinned = await getVersionById(definitionVersionId, organizationId);
+  if (!pinned) return live;
+  const d = pinned.definition;
+  return {
+    ...live,
+    targetValue: d.targetValue ?? null,
+    direction: (d.direction as KpiDirection | null) ?? null,
+    thresholdMode: (d.thresholdMode as KpiThresholdMode | null) ?? null,
+    amberThresholdPct: d.amberThresholdPct ?? null,
+    redThresholdPct: d.redThresholdPct ?? null,
+    amberThresholdAbs: d.amberThresholdAbs ?? null,
+    redThresholdAbs: d.redThresholdAbs ?? null,
+  };
+}
+
 export interface HandleTimeSeriesRecordedInput {
   db: IDatabase;
   orgId: string;
@@ -158,6 +243,10 @@ export interface HandleTimeSeriesRecordedInput {
   periodStart: string; // YYYY-MM-DD
   periodEnd?: string | null;
   recordedByUserId?: string | null;
+  // RES-004: the kpi_definition_versions.id the measurement was pinned to by
+  // the RES-003 writer (recordKpiMeasurement). Optional so pre-RES-04 callers
+  // keep working (evaluation falls back to live thresholds).
+  definitionVersionId?: string | null;
 }
 
 export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedInput): Promise<{
@@ -169,11 +258,13 @@ export async function handleTimeSeriesRecorded(input: HandleTimeSeriesRecordedIn
   recoveryCardId?: string;
   recoveryCardCreated?: boolean;
 }> {
-  const { db, orgId, kpiId, value, periodStart, periodEnd, recordedByUserId } = input;
-  const def = await getKpiDefinition(db, orgId, kpiId);
-  if (!def) {
+  const { db, orgId, kpiId, value, periodStart, periodEnd, recordedByUserId, definitionVersionId } =
+    input;
+  const live = await getKpiDefinition(db, orgId, kpiId);
+  if (!live) {
     return { eval: { status: 'NO_DATA', severity: null, summary: 'KPI not found' } };
   }
+  const def = await withPinnedThresholds(live, orgId, definitionVersionId);
 
   const evalRes = evaluateKpiPoint(def, value);
   if (evalRes.status !== 'AMBER' && evalRes.status !== 'RED') {

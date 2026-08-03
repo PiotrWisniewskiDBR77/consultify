@@ -19,6 +19,7 @@ import {
   createObjective,
   deleteKeyResult,
   deleteObjective,
+  getSuggestedValueForKeyResult,
   type KeyResult,
   listCheckIns,
   listCycles,
@@ -33,6 +34,7 @@ import {
   type StrategicInitiativeToKpi,
   type StrategicKpi,
 } from '../services/results/resultsStrategicViewService.js';
+import { kpiVisibilitySql } from '../services/results/kpiVisibilityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, exec as dbExec } from '../utils/DbPromise.js';
 
@@ -114,6 +116,9 @@ async function ensureOkrTables(): Promise<void> {
   );
   await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_id TEXT;`);
   await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_definition_version_id TEXT;`
+  );
+  await dbExec(
     `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kr_type TEXT NOT NULL DEFAULT 'metric';`
   );
   await dbExec(
@@ -130,7 +135,7 @@ async function ensureOkrTables(): Promise<void> {
 }
 
 interface AuthedRequest {
-  user?: { organizationId?: string };
+  user?: { id?: string; organizationId?: string };
   params: Record<string, string>;
 }
 
@@ -175,11 +180,19 @@ router.get(
         orgWide ? [orgId] : [projectId, orgId]
       )) as InitiativeRow[] | undefined) || [];
 
+    // RES-11 (Phase 1): the BSC/BDN composer is one of the packet's named
+    // aggregation points — a hidden KPI must never surface here, not even as
+    // a zero/placeholder row. isAdmin false: packet §10 leaves "does admin
+    // see private_to_owner" as an open policy decision, fail-closed for now.
+    const kpiVisibility = kpiVisibilitySql('initiative_kpis', {
+      userId: req.user?.id || null,
+      isAdmin: false,
+    });
     const kpiRows =
       ((await dbAll(
         `SELECT id, name, current_value, target_value, measurement_frequency
-       FROM initiative_kpis WHERE organization_id = ?`,
-        [orgId]
+       FROM initiative_kpis WHERE organization_id = ? AND ${kpiVisibility.sql}`,
+        [orgId, ...kpiVisibility.params]
       )) as KpiRow[] | undefined) || [];
 
     const mappingRows =
@@ -251,7 +264,7 @@ router.get(
     const krRows =
       ((await dbAll(
         `SELECT id, objective_id, label, baseline, target, current, weight,
-              kpi_id, kr_type, kind, owner_user_id, score
+              kpi_id, kpi_definition_version_id, kr_type, kind, owner_user_id, score
        FROM okr_key_results WHERE organization_id = ?`,
         [orgId]
       )) as Array<{
@@ -263,6 +276,7 @@ router.get(
         current: number | null;
         weight: number | null;
         kpi_id: string | null;
+        kpi_definition_version_id: string | null;
         kr_type: string | null;
         kind: string | null;
         owner_user_id: string | null;
@@ -280,6 +294,7 @@ router.get(
         current: k.current ?? undefined,
         weight: k.weight ?? undefined,
         kpiId: k.kpi_id ?? undefined,
+        kpiDefinitionVersionId: k.kpi_definition_version_id ?? undefined,
         krType: (k.kr_type as KeyResult['krType']) ?? undefined,
         kind: (k.kind as KeyResult['kind']) ?? undefined,
         // extra passthrough for FE edit forms (not part of the pure KeyResult
@@ -601,6 +616,24 @@ router.get(
     if (!orgId) return;
     const checkIns = await listCheckIns(req.params.id, orgId);
     res.json({ checkIns });
+  })
+);
+
+/**
+ * RES-009: read-only prefill lookup — "what did the linked KPI last measure"
+ * — for the check-in form. Never writes anything; D7 (manual-only scoring)
+ * stays intact regardless of what this returns. `{ suggestedValue: null }`
+ * covers every "nothing to suggest" case (no link, no measurement, KPI in
+ * another org) uniformly — the caller doesn't need to distinguish why.
+ */
+router.get(
+  '/:projectId/okr/key-results/:id/suggested-value',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const suggestedValue = await getSuggestedValueForKeyResult(req.params.id, orgId);
+    res.json({ suggestedValue });
   })
 );
 

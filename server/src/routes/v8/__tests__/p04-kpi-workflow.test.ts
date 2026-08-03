@@ -30,6 +30,25 @@ vi.mock('../../../services/results/kpiDeviationService.js', () => ({
   handleTimeSeriesRecorded: vi.fn(),
 }));
 
+// RES-02: create/update/delete on /kpis delegate to kpiDefinitionService,
+// which opens a REAL pinned pg connection — must be mocked here, otherwise
+// the /kpis create/update/delete requests exercised below try to reach a
+// real Postgres pool (crashing or hanging) and their unconsumed/misaligned
+// mockDbRun queue entries were bleeding into unrelated later tests in this
+// file (e.g. the report-creation test reading a stale `{success:false}`-ish
+// value off the shared mockDbRun queue).
+vi.mock('../../../services/results/kpiDefinitionService.js', () => ({
+  createDefinition: vi.fn().mockResolvedValue({ id: 'kpi-created' }),
+  updateDefinition: vi.fn().mockResolvedValue({ id: 'kpi-001', currentDefinitionVersion: 2 }),
+  archiveDefinition: vi.fn().mockResolvedValue({
+    id: 'kpi-001',
+    archivedAt: new Date().toISOString(),
+    alreadyArchived: false,
+  }),
+  getCurrentDefinition: vi.fn().mockResolvedValue({ id: 'kpi-001', currentDefinitionVersion: 1 }),
+  getCurrentDefinitionVersionId: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock('../../../services/reportBuilderService.js', () => ({
   createReport: vi.fn().mockResolvedValue({ id: 'rpt-1' }),
   updateSectionContent: vi.fn(),
@@ -273,7 +292,10 @@ describe('P04 KPI Workflow Canon', () => {
     });
 
     it('POST /kpis succeeds with kpi_owner role (admin)', async () => {
-      mockDbRun.mockResolvedValueOnce({ changes: 1 });
+      // RES-02: the write goes through the mocked kpiDefinitionService now,
+      // not dbRun — queuing a mockDbRun value here would sit unconsumed
+      // (vi.clearAllMocks() does not clear pending mockResolvedValueOnce
+      // entries) and leak into whichever LATER test calls dbRun next.
       const res = await request(app)
         .post('/api/v8/results/kpis')
         .send({ name: 'Test KPI', kpiType: 'STANDARD' });

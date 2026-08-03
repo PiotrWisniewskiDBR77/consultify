@@ -2,6 +2,52 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getTableColumns } from '../../utils/dbSchema.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
+import {
+  archiveDefinition,
+  createDefinition,
+  getCurrentDefinition,
+  type KpiDefinitionFields,
+  KpiDefinitionVersionConflictError,
+  updateDefinition,
+} from '../results/kpiDefinitionService.js';
+
+/**
+ * This route's public contract has no `expectedVersion` field (there was no
+ * version concept before RES-02). Fetch-current-then-CAS-write with a small
+ * bounded retry gives every caller the canonical service's atomicity and
+ * audit trail without forcing a breaking API change on this call site: on a
+ * genuine concurrent edit the retry re-reads the now-current version and
+ * applies the SAME requested fields on top of it, rather than silently
+ * losing the write or surfacing a conflict for an ordinary (non-racing) call.
+ */
+async function updateDefinitionWithRetry(
+  kpiId: string,
+  organizationId: string,
+  fields: Partial<KpiDefinitionFields> & {
+    actorUserId?: string | null;
+    reason?: string | null;
+    source?: string | null;
+  },
+  attempts = 3
+): Promise<Awaited<ReturnType<typeof updateDefinition>>> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    const current = await getCurrentDefinition(kpiId, organizationId);
+    if (!current) throw new Error('KPI not found');
+    try {
+      return await updateDefinition({
+        ...fields,
+        kpiId,
+        organizationId,
+        expectedVersion: current.currentDefinitionVersion,
+      });
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof KpiDefinitionVersionConflictError)) throw error;
+    }
+  }
+  throw lastError;
+}
 
 export type InitiativeKpiObservationPhase = 'realization' | 'post-implementation' | 'both';
 export type InitiativeKpiDefinitionSource = 'library' | 'initiative-custom';
@@ -505,7 +551,7 @@ export async function listInitiativeKpiAssignments(
        FROM initiative_kpi_mappings m
        JOIN initiative_kpis k ON k.id = m.kpi_id
        JOIN initiatives i ON i.id = m.initiative_id
-       WHERE m.organization_id = ? AND m.initiative_id = ?
+       WHERE m.organization_id = ? AND m.initiative_id = ? AND k.archived_at IS NULL
        ORDER BY k.created_at DESC`,
       [organizationId, organizationId, organizationId, initiativeId]
     );
@@ -561,6 +607,7 @@ export async function listInitiativeKpiAssignments(
      JOIN initiatives i ON i.id = k.initiative_id
      WHERE k.initiative_id = ?
        AND COALESCE(k.organization_id, i.organization_id) = ?
+       AND k.archived_at IS NULL
      ORDER BY k.created_at DESC`,
     [organizationId, organizationId, initiativeId, organizationId]
   );
@@ -626,44 +673,27 @@ export async function upsertInitiativeKpiAssignment(
       throw new Error('KPI name is required');
     }
 
-    kpiId = uuidv4();
-    const now = new Date().toISOString();
-    const insertCols = ['id', 'initiative_id', 'organization_id', 'name', 'description', 'unit'];
-    const placeholders = ['?', '?', '?', '?', '?', '?'];
-    const params: unknown[] = [
-      kpiId,
-      input.initiativeId,
-      input.organizationId,
+    // RES-02: initiative_kpis is written EXCLUSIVELY through kpiDefinitionService
+    // now — this used to build its own dynamic INSERT (a second, forked writer
+    // of the canonical owner object). No SQL against initiative_kpis lives here
+    // anymore; the definition + its immutable v1 version + audit entry are all
+    // created transactionally by the canonical service.
+    const created = await createDefinition({
+      organizationId: input.organizationId,
+      initiativeId: input.initiativeId,
+      actorUserId: input.userId || null,
       name,
-      input.description || null,
-      input.unit || null,
-    ];
-
-    const pushOptional = (column: string, value: unknown) => {
-      if (!kpiColumns.has(column)) return;
-      insertCols.push(column);
-      placeholders.push('?');
-      params.push(value);
-    };
-
-    pushOptional('category', input.category || 'benefits');
-    pushOptional('baseline_value', safeNumber(input.baselineValue));
-    pushOptional('target_value', safeNumber(input.targetValue));
-    pushOptional(
-      'current_value',
-      safeNumber(input.currentValue) ?? safeNumber(input.baselineValue)
-    );
-    pushOptional('progress_percentage', 0);
-    pushOptional('status', 'on_track');
-    pushOptional('measurement_frequency', baseFrequency);
-    pushOptional('trend_data', '[]');
-    pushOptional('created_at', now);
-    pushOptional('updated_at', now);
-
-    await queryHelpers.queryRun(
-      `INSERT INTO initiative_kpis (${insertCols.join(', ')}) VALUES (${placeholders.join(', ')})`,
-      params
-    );
+      description: input.description || null,
+      unit: input.unit || null,
+      category: input.category || 'benefits',
+      baselineValue: safeNumber(input.baselineValue) ?? null,
+      targetValue: safeNumber(input.targetValue) ?? null,
+      currentValue: safeNumber(input.currentValue) ?? safeNumber(input.baselineValue) ?? null,
+      measurementFrequency: baseFrequency,
+      source: 'initiativeKpiAssignmentService',
+      reason: 'initiative-kpi-assignment-create',
+    });
+    kpiId = created.id;
   }
 
   await upsertMapping(mappingColumns, {
@@ -724,6 +754,54 @@ export async function updateInitiativeKpiAssignment(
   await assertKpiBelongsToOrg(params.kpiId, params.organizationId);
 
   const kpiColumns = await getTableColumns('initiative_kpis');
+
+  // RES-02: DEFINITION fields (name/description/category/unit/baseline/target/
+  // measurement_frequency) go through the canonical, CAS-versioned service —
+  // no direct SQL against initiative_kpis here anymore. `current_value` and
+  // `progress_percentage` are measurement-derived, not definitional (contract
+  // point 9: no rebuild of measurement writes beyond the version pin), so
+  // they stay a separate, unversioned update below, unchanged in behavior.
+  // Matches the ORIGINAL semantics exactly: passing an explicit `null` for a
+  // definition field is a no-op (skip), same as before — only a real,
+  // non-null value ever changes it via this endpoint.
+  const definitionPatch: Record<string, unknown> = {};
+  let hasDefinitionChange = false;
+  const setDefinitionField = (key: string, value: unknown) => {
+    if (value === undefined) return;
+    definitionPatch[key] = value;
+    hasDefinitionChange = true;
+  };
+  setDefinitionField(
+    'name',
+    params.name != null ? String(params.name).trim() || undefined : undefined
+  );
+  setDefinitionField('description', params.description != null ? params.description : undefined);
+  setDefinitionField('category', params.category != null ? params.category : undefined);
+  setDefinitionField('unit', params.unit != null ? params.unit : undefined);
+  setDefinitionField(
+    'baselineValue',
+    params.baselineValue != null ? safeNumber(params.baselineValue) : undefined
+  );
+  setDefinitionField(
+    'targetValue',
+    params.targetValue != null ? safeNumber(params.targetValue) : undefined
+  );
+  setDefinitionField(
+    'measurementFrequency',
+    params.measurementFrequency != null
+      ? normalizeFrequency(params.measurementFrequency)
+      : undefined
+  );
+
+  if (hasDefinitionChange) {
+    await updateDefinitionWithRetry(params.kpiId, params.organizationId, {
+      ...(definitionPatch as Partial<KpiDefinitionFields>),
+      actorUserId: params.userId || null,
+      source: 'initiativeKpiAssignmentService',
+      reason: 'initiative-kpi-assignment-update',
+    });
+  }
+
   const updates: string[] = [];
   const updateParams: unknown[] = [];
   const pushKpiUpdate = (column: string, value: unknown) => {
@@ -731,28 +809,9 @@ export async function updateInitiativeKpiAssignment(
     updates.push(`${column} = ?`);
     updateParams.push(value);
   };
-
-  pushKpiUpdate('name', params.name != null ? String(params.name).trim() || null : undefined);
-  pushKpiUpdate('description', params.description ?? undefined);
-  pushKpiUpdate('category', params.category ?? undefined);
-  pushKpiUpdate('unit', params.unit ?? undefined);
-  pushKpiUpdate(
-    'baseline_value',
-    params.baselineValue != null ? safeNumber(params.baselineValue) : undefined
-  );
-  pushKpiUpdate(
-    'target_value',
-    params.targetValue != null ? safeNumber(params.targetValue) : undefined
-  );
   pushKpiUpdate(
     'current_value',
     params.currentValue != null ? safeNumber(params.currentValue) : undefined
-  );
-  pushKpiUpdate(
-    'measurement_frequency',
-    params.measurementFrequency != null
-      ? normalizeFrequency(params.measurementFrequency)
-      : undefined
   );
   const latestForProgress =
     params.currentValue != null
@@ -786,7 +845,7 @@ export async function updateInitiativeKpiAssignment(
       );
     }
   }
-  if (kpiColumns.has('updated_at')) {
+  if (!hasDefinitionChange && kpiColumns.has('updated_at') && updates.length > 0) {
     updates.push('updated_at = ?');
     updateParams.push(new Date().toISOString());
   }
@@ -965,19 +1024,16 @@ export async function deleteInitiativeKpiAssignment(params: {
   const shouldDeleteKpi =
     existing.definitionSource === 'initiative-custom' && Number(remainingMappings?.cnt || 0) === 0;
 
+  // RES-02: "delete" of the canonical definition is ARCHIVE, not a hard
+  // DELETE — history (every immutable version, every kpi_time_series row) is
+  // preserved and stays readable. This used to hard-delete initiative_kpis
+  // AND cascade-delete its kpi_time_series/kpi_deviation_cases, which is
+  // exactly the history loss the RES-02 contract forbids.
   if (shouldDeleteKpi) {
-    await queryHelpers
-      .queryRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
-        params.kpiId,
-        params.organizationId,
-      ])
-      .catch(() => null);
-    await queryHelpers
-      .queryRun(`DELETE FROM kpi_deviation_cases WHERE kpi_id = ? AND organization_id = ?`, [
-        params.kpiId,
-        params.organizationId,
-      ])
-      .catch(() => null);
-    await queryHelpers.queryRun(`DELETE FROM initiative_kpis WHERE id = ?`, [params.kpiId]);
+    await archiveDefinition({
+      organizationId: params.organizationId,
+      kpiId: params.kpiId,
+      reason: 'initiative-kpi-assignment-unassigned-and-orphaned',
+    });
   }
 }

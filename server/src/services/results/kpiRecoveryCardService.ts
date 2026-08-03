@@ -13,7 +13,11 @@
  * imports a concrete DB client directly — keeps it testable with a stub.
  */
 import type { IDatabase } from '../../database/IDatabase.js';
-import { evaluateKpiPoint, type KpiDefinitionForEval } from './kpiDeviationService.js';
+import {
+  evaluateKpiPoint,
+  type KpiDefinitionForEval,
+  withPinnedThresholds,
+} from './kpiDeviationService.js';
 
 export type RecoveryPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type RecoveryLifecycleStatus = 'DRAFT' | 'ACTIVE' | 'UNDER_REVIEW' | 'CLOSED';
@@ -579,7 +583,16 @@ export async function ensureRecoveryAction(
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING id
     `,
-    [orgId, recoveryCardId, actionType, safeTitle, description || null, ownerUserId || null, dueDate || null, actorUserId || null]
+    [
+      orgId,
+      recoveryCardId,
+      actionType,
+      safeTitle,
+      description || null,
+      ownerUserId || null,
+      dueDate || null,
+      actorUserId || null,
+    ]
   );
   if (!inserted[0]?.id) {
     throw serviceError('INSERT_FAILED', 'Failed to create recovery action');
@@ -636,7 +649,10 @@ export async function linkRecoveryActionTask(
     // DIFFERENT recovery action. Surface as a distinct code instead of a
     // generic 500.
     if ((err as { code?: string })?.code === '23505') {
-      throw serviceError('TASK_ALREADY_LINKED', 'Task is already linked to another recovery action');
+      throw serviceError(
+        'TASK_ALREADY_LINKED',
+        'Task is already linked to another recovery action'
+      );
     }
     throw err;
   }
@@ -699,7 +715,9 @@ export type CloseRecoveryCardFailureReason =
 export interface CloseRecoveryCardLatestMeasurement {
   value: number;
   createdAt: string;
-  status: 'AMBER' | 'RED';
+  // RES-004: widened from 'AMBER' | 'RED' — the close gate now also blocks
+  // (and surfaces) UNCONFIGURED and NO_DATA, not just an active breach.
+  status: 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
 }
 
 export type CloseRecoveryCardResult =
@@ -794,9 +812,13 @@ export async function closeRecoveryCard(
   // — the same representation `created_at` is stored in. This makes the
   // comparison correct independent of the Node process's TZ (dev machine,
   // CI, or Railway container).
-  const measurement = await db.get<{ value: number | string; created_at: string }>(
+  const measurement = await db.get<{
+    value: number | string;
+    created_at: string;
+    definition_version_id: string | null;
+  }>(
     `
-    SELECT value, created_at FROM kpi_time_series
+    SELECT value, created_at, definition_version_id FROM kpi_time_series
     WHERE kpi_id = ? AND organization_id = ?
       AND created_at > (?::timestamptz AT TIME ZONE 'UTC')
     ORDER BY created_at DESC LIMIT 1
@@ -809,8 +831,12 @@ export async function closeRecoveryCard(
 
   // Step 5: re-run the exact same band evaluation the deviation-detection
   // path uses, on the fresh measurement — never trust "no new AMBER/RED case
-  // was opened" as a proxy for "the KPI recovered".
-  const def: KpiDefinitionForEval = {
+  // was opened" as a proxy for "the KPI recovered". RES-004: overlay the
+  // PINNED threshold/target this specific measurement was recorded under
+  // (falls back to live config if the measurement predates RES-02/03's pin),
+  // so this re-check judges the measurement against what it was actually
+  // evaluated against, not whatever the target has since been edited to.
+  const liveDef: KpiDefinitionForEval = {
     id: row.k_id,
     organizationId: orgId,
     name: row.k_name || '',
@@ -822,8 +848,18 @@ export async function closeRecoveryCard(
     amberThresholdAbs: row.amber_threshold_abs != null ? Number(row.amber_threshold_abs) : null,
     redThresholdAbs: row.red_threshold_abs != null ? Number(row.red_threshold_abs) : null,
   };
+  const def = await withPinnedThresholds(liveDef, orgId, measurement.definition_version_id);
   const evalRes = evaluateKpiPoint(def, Number(measurement.value));
-  if (evalRes.status === 'AMBER' || evalRes.status === 'RED') {
+  // RES-004: fail closed by allow-list (only a confirmed GREEN may close),
+  // not by deny-list (only block AMBER/RED). The prior deny-list form let a
+  // recovery case close itself the moment the KPI's threshold config broke
+  // (target removed, thresholds zeroed out, etc.) — evaluateKpiPoint would
+  // return UNCONFIGURED, which isn't AMBER/RED, so the deny-list let it
+  // through as if the KPI had genuinely recovered. NO_DATA is included for
+  // the same reason even though the STALE_MEASUREMENT check above makes it
+  // unreachable in practice today (a fresh row was just found) — this stays
+  // correct even if that upstream guard is ever loosened.
+  if (evalRes.status !== 'GREEN') {
     return {
       closed: false,
       reason: 'STILL_BREACHING',
@@ -950,12 +986,17 @@ export async function updateRecoveryCard(
   const { db, orgId, recoveryCardId, expectedVersion, patch, actorUserId } = input;
 
   if (patch.priority !== undefined && !VALID_PRIORITIES.includes(patch.priority)) {
-    throw serviceError('VALIDATION_ERROR', `priority must be one of: ${VALID_PRIORITIES.join(', ')}`);
+    throw serviceError(
+      'VALIDATION_ERROR',
+      `priority must be one of: ${VALID_PRIORITIES.join(', ')}`
+    );
   }
   // Validation happens BEFORE any write (threat-model requirement) — both
   // branches throw on bad shape/size, so a rejected patch never reaches SQL.
   const dependencies =
-    patch.dependencies !== undefined ? validateReferenceList(patch.dependencies, 'dependencies') : undefined;
+    patch.dependencies !== undefined
+      ? validateReferenceList(patch.dependencies, 'dependencies')
+      : undefined;
   const risks = patch.risks !== undefined ? validateReferenceList(patch.risks, 'risks') : undefined;
 
   const updated = await db.all<RecoveryCardRow>(
@@ -1067,7 +1108,10 @@ export async function resolveRecoveryCheckpoint(
       [kpiTimeSeriesId, orgId]
     );
     if (!ownedMeasurement?.id) {
-      throw serviceError('KPI_TIME_SERIES_NOT_FOUND', 'KPI time series measurement not found for this organization');
+      throw serviceError(
+        'KPI_TIME_SERIES_NOT_FOUND',
+        'KPI time series measurement not found for this organization'
+      );
     }
   }
 

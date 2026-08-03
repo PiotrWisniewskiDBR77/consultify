@@ -25,6 +25,7 @@ import type {
   KPIStatus,
   KPISummary,
   KPITrendPoint,
+  MeasurementCadence,
   ReconciliationHealthSummary,
   ReconciliationStatus,
   ReconciliationVarianceItem,
@@ -57,6 +58,9 @@ import { getTableColumns } from '../../utils/dbSchema.js';
 import logger from '../../utils/Logger.js';
 import { eventBus } from '../event/EventBus.js';
 import { send as sendNotification } from '../notificationService.js';
+import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
+import { evaluateKpiPoint } from '../results/kpiDeviationService.js';
+import { type KpiVisibilityContext, kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 
 // ==========================================
 // HELPERS
@@ -92,6 +96,7 @@ interface KPIRow {
   status: string;
   created_at: string;
   updated_at: string;
+  canonical_kpi_id?: string | null;
 }
 
 interface DeviationRow {
@@ -164,6 +169,8 @@ function rowToKPI(row: KPIRow): KPIDefinition {
     status: row.status as KPIStatus,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // Explicit unmapped state — never guessed. See KPIDefinition.canonicalKpiId.
+    canonicalKpiId: row.canonical_kpi_id ?? null,
   };
 }
 
@@ -236,14 +243,65 @@ function rowToReconciliation(row: ReconciliationRow): KPIFinanceReconciliation {
 // ==========================================
 
 /**
+ * RES-02 adapter: v8_kpi_definitions.measurement_cadence has a wider enum
+ * (daily/weekly/biweekly/monthly/quarterly/annually) than the canonical
+ * definition's measurementFrequency (DAILY/WEEKLY/MONTHLY/QUARTERLY) — a
+ * best-effort, DETERMINISTIC mapping (never a guess about identity, only
+ * about which of four buckets a cadence label falls into).
+ */
+function cadenceToCanonicalFrequency(cadence: MeasurementCadence): string {
+  switch (cadence) {
+    case 'daily':
+      return 'DAILY';
+    case 'weekly':
+    case 'biweekly':
+      return 'WEEKLY';
+    case 'quarterly':
+    case 'annually':
+      return 'QUARTERLY';
+    case 'monthly':
+    default:
+      return 'MONTHLY';
+  }
+}
+
+/**
  * Create a KPI definition in dual-mode (initiative-linked or standalone).
  * Decision W6-6: standalone mode is first-class.
+ *
+ * RES-02: v8_kpi_definitions is NOT a second owner of KPI definitions. Every
+ * new row created here also mints (or, if `canonicalKpiId` is supplied,
+ * reuses) a canonical `initiative_kpis` definition through
+ * kpiDefinitionService, and stores that id as `canonical_kpi_id` — never
+ * left unmapped for a row this function creates. Pre-RES-02 rows keep
+ * `canonical_kpi_id = NULL` (see KPIDefinition.canonicalKpiId) rather than
+ * being heuristically backfilled by name-matching.
  */
-export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition> {
+export async function createKPI(
+  params: CreateKPIParams & { canonicalKpiId?: string | null }
+): Promise<KPIDefinition> {
   const validated = CreateKPIParamsSchema.parse(params);
 
   const kpiId = uuidv4();
   const now = new Date().toISOString();
+
+  let canonicalKpiId = params.canonicalKpiId || null;
+  if (!canonicalKpiId) {
+    const canonical = await createKpiDefinition({
+      organizationId: validated.organizationId,
+      initiativeId: validated.initiativeId ?? null,
+      name: validated.name,
+      description: `Created via v8 ROI/Results dual-mode KPI (mode=${validated.mode}, metricType=${validated.metricType})`,
+      category: 'roi_kpi',
+      baselineValue: validated.baselineValue ?? null,
+      targetValue: validated.targetValue ?? null,
+      currentValue: validated.currentValue ?? null,
+      measurementFrequency: cadenceToCanonicalFrequency(validated.measurementCadence),
+      source: 'resultsROIService',
+      reason: 'v8-roi-kpi-create',
+    });
+    canonicalKpiId = canonical.id;
+  }
 
   const kpi: KPIDefinition = {
     kpiId,
@@ -259,14 +317,15 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
     status: 'design',
     createdAt: now,
     updatedAt: now,
+    canonicalKpiId,
   };
 
   await dbRun(
     `INSERT INTO v8_kpi_definitions (
       kpi_id, organization_id, name, mode, initiative_id,
       metric_type, baseline_value, target_value, current_value,
-      measurement_cadence, status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      measurement_cadence, status, created_at, updated_at, canonical_kpi_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       kpi.kpiId,
       kpi.organizationId,
@@ -281,6 +340,7 @@ export async function createKPI(params: CreateKPIParams): Promise<KPIDefinition>
       kpi.status,
       kpi.createdAt,
       kpi.updatedAt,
+      kpi.canonicalKpiId,
     ]
   );
 
@@ -714,31 +774,53 @@ function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus,
 
 /**
  * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
+ *
+ * VISIBILITY (RES-11): `v8_kpi_definitions` is a separate table from the
+ * canonical `initiative_kpis` — a definition row only carries a visibility
+ * scope indirectly, via `canonical_kpi_id`. A definition with NO canonical
+ * link has nothing to hide (RES-11 does not retrofit a concept onto an
+ * object it isn't attached to) and stays visible — `kpiVisibilitySql`'s
+ * `nullableJoinIdColumn` option encodes exactly that: "no canonical KPI ->
+ * always visible; has one -> defer to its visibility". This is also what
+ * keeps pre-RES-11 behavior identical for every v8_kpi_definitions row that
+ * predates canonical linking.
  */
 export async function getKPIScorecard(
   organizationId: string,
-  initiativeId?: string
+  initiativeId?: string,
+  viewer?: KpiVisibilityContext
 ): Promise<KPIScorecardSummary> {
-  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  // Qualified `d.initiative_id`: the canonical join below adds `ck` (initiative_kpis),
+  // which also has an initiative_id column — unqualified would be ambiguous.
+  const initiativeClause = initiativeId ? ` AND d.initiative_id = ?` : '';
   const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
+  const visibility = kpiVisibilitySql('ck', viewer || { userId: null, isAdmin: false }, {
+    nullableJoinIdColumn: 'ck.id',
+  });
+  const canonicalJoin = `LEFT JOIN initiative_kpis ck ON ck.id = d.canonical_kpi_id`;
+
   const totalRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
-    [organizationId, ...initiativeParams],
+    `SELECT COUNT(*) AS total FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql}`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
   const totalKpis = Number(totalRow?.total ?? 0);
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
-    `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY status`,
-    [organizationId, ...initiativeParams],
+    `SELECT d.status, COUNT(*) AS cnt FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql} GROUP BY d.status`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
-    `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY metric_type`,
-    [organizationId, ...initiativeParams],
+    `SELECT d.metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql} GROUP BY d.metric_type`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
@@ -747,17 +829,19 @@ export async function getKPIScorecard(
   const avgRow = await dbGet<{ avg_rate: number | null }>(
     `SELECT AVG(
        CASE
-         WHEN target_value IS NOT NULL AND target_value != 0 AND current_value IS NOT NULL
+         WHEN d.target_value IS NOT NULL AND d.target_value != 0 AND d.current_value IS NOT NULL
          THEN
            CASE
-             WHEN (current_value * 1.0 / target_value) > 1 THEN 1.0
-             ELSE (current_value * 1.0 / target_value)
+             WHEN (d.current_value * 1.0 / d.target_value) > 1 THEN 1.0
+             ELSE (d.current_value * 1.0 / d.target_value)
            END
          ELSE NULL
        END
      ) AS avg_rate
-     FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
-    [organizationId, ...initiativeParams],
+     FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql}`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
@@ -988,6 +1072,8 @@ interface LegacyResultsKpiRow {
   amber_threshold_abs: number | null;
   red_threshold_abs: number | null;
   current_value: number | null;
+  current_definition_version: number | null;
+  visibility: string | null;
   latest_value: number | null;
   latest_period_start: string | null;
   prev_value: number | null;
@@ -1556,6 +1642,8 @@ export async function getResultsKpiCatalog(
        k.amber_threshold_abs,
        k.red_threshold_abs,
        k.current_value,
+       k.current_definition_version,
+       k.visibility,
        ts.value AS latest_value,
        ts.period_start AS latest_period_start,
        ts_prev.value AS prev_value,
@@ -1602,7 +1690,8 @@ export async function getResultsKpiCatalog(
        ORDER BY CASE WHEN severity = 'RED' THEN 0 ELSE 1 END, detected_at DESC
        LIMIT 1
      ) c ON TRUE
-     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?${kpiFilterSql}
+     WHERE COALESCE(k.organization_id, i.organization_id, m.organization_id) = ?
+       AND k.archived_at IS NULL${kpiFilterSql}
      ORDER BY k.updated_at DESC NULLS LAST, k.created_at DESC`,
     [organizationId, ...params],
     { fallback: true }
@@ -1645,12 +1734,28 @@ export async function getResultsKpiCatalog(
     const latestValue = row.latest_value ?? row.current_value ?? null;
     const targetValue = row.target_value ?? null;
     const direction = row.direction || 'HIGHER_IS_BETTER';
-    const isOnTarget =
-      latestValue == null || targetValue == null
-        ? false
-        : direction === 'LOWER_IS_BETTER'
-          ? Number(latestValue) <= Number(targetValue)
-          : Number(latestValue) >= Number(targetValue);
+    // RES-004: the canonical read model — the SAME fail-closed band engine
+    // that drives deviation-case detection, not a second, independent
+    // "latest >= target" boolean. A KPI with no target, or a broken
+    // threshold band, must read UNCONFIGURED here too, not silently "not on
+    // target" with no explanation (and never GREEN).
+    const evalResult = evaluateKpiPoint(
+      {
+        id: String(row.id),
+        organizationId,
+        name: row.name,
+        targetValue: targetValue != null ? Number(targetValue) : null,
+        direction,
+        thresholdMode: row.threshold_mode,
+        amberThresholdPct: row.amber_threshold_pct != null ? Number(row.amber_threshold_pct) : null,
+        redThresholdPct: row.red_threshold_pct != null ? Number(row.red_threshold_pct) : null,
+        amberThresholdAbs: row.amber_threshold_abs != null ? Number(row.amber_threshold_abs) : null,
+        redThresholdAbs: row.red_threshold_abs != null ? Number(row.red_threshold_abs) : null,
+      },
+      latestValue != null ? Number(latestValue) : null
+    );
+    const evalStatus = evalResult.status;
+    const isOnTarget = evalStatus === 'GREEN';
 
     return {
       id: row.id,
@@ -1669,11 +1774,20 @@ export async function getResultsKpiCatalog(
       alertDirection: row.alert_direction || 'BELOW',
       isPrimary: Boolean(row.is_primary),
       sortOrder: row.sort_order ?? 0,
+      // RES-02: the version this row's definition was at when read — the
+      // active KPI-edit UI must round-trip this back as `expectedVersion`
+      // on update so a stale client cannot silently overwrite a concurrent
+      // edit (see kpiDefinitionService's CAS contract).
+      currentDefinitionVersion: row.current_definition_version,
+      // RES-11: round-tripped so the active KPI-edit UI can show/init the
+      // current scope and the Results Scorecards KPI list can attribute it.
+      visibility: (row.visibility as string) || 'org_visible',
       latestValue,
       latestMeasurementDate: row.latest_period_start,
       prevValue: row.prev_value != null ? Number(row.prev_value) : null,
       prevMeasurementDate: row.prev_period_start,
       isOnTarget,
+      evalStatus,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       ownerUserId: row.owner_user_id,
@@ -2326,12 +2440,12 @@ export async function getReconciliationOverview(
  */
 export async function getResultsDashboard(
   organizationId: string,
-  options?: { initiativeId?: string }
+  options?: { initiativeId?: string; viewer?: KpiVisibilityContext }
 ): Promise<ResultsDashboardSnapshot> {
   const initiativeId = options?.initiativeId?.trim() || undefined;
   const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
     await Promise.all([
-      getKPIScorecard(organizationId, initiativeId),
+      getKPIScorecard(organizationId, initiativeId, options?.viewer),
       getActiveDeviations(organizationId, undefined, initiativeId),
       getROIDashboard(organizationId, initiativeId),
       getReconciliationHealth(organizationId),
