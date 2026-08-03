@@ -141,6 +141,21 @@ describe('MAT-006 workbook lifecycle (real Postgres)', () => {
     if (createdWorkbookIds.length) {
       await pool.query(`DELETE FROM generated_workbooks WHERE id = ANY($1)`, [createdWorkbookIds]);
     }
+    // MAT-010 G12 fix: this suite predates the MAT-010 lineage hooks now
+    // wired into workbook.routes.ts (frozen — not touched here). Every
+    // `createBlankWorkbook` call above, plus every checkpoint/restore/
+    // share/revoke/export exercised by the tests, also appends a lineage
+    // receipt/event under ORG_A/ORG_B, which nothing in this file used to
+    // clean up (confirmed as 20 receipts / 62 events left behind under
+    // org-mat006-* after a full run). Deleting by org scope rather than by
+    // workbook id keeps this correct even if a future test in this file
+    // creates a workbook the `createdWorkbookIds` array doesn't track.
+    await pool.query(`DELETE FROM artifact_lineage_events WHERE organization_id = ANY($1)`, [
+      [ORG_A, ORG_B],
+    ]);
+    await pool.query(`DELETE FROM artifact_lineage_receipts WHERE organization_id = ANY($1)`, [
+      [ORG_A, ORG_B],
+    ]);
     await pool.end();
   });
 
