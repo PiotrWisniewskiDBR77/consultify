@@ -1,4 +1,8 @@
 -- Agent Planner: Multi-step task execution with persisted plans
+-- Final MVP integration: promoted from never-ran because numeric MW-11
+-- migration 941 consumes ai_agent_plans before dated baseline migrations run.
+-- The definition is the repository's existing canonical producer, not a new
+-- inferred schema.
 -- Supports plan-execute-observe loops, checkpoints, and background agents
 
 CREATE TABLE IF NOT EXISTS ai_agent_plans (
