@@ -15,6 +15,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { getCurrentDefinitionVersionId } from './kpiDefinitionService.js';
 
 export type KrType = 'metric' | 'milestone';
 export type KrKind = 'committed' | 'aspirational';
@@ -36,6 +37,14 @@ export type KeyResult = {
    * here never feeds the score; see `recomputeKeyResultScore` below.
    */
   kpiId?: string | null;
+  /**
+   * RES-009: the kpi_definition_versions.id current when `kpiId` was last
+   * (re)linked — durable, informational-only, same non-scoring status as
+   * kpiId itself. Lets a reader know WHICH version of the KPI's target/
+   * thresholds/direction was in effect at link time, without making the
+   * Key Result's score depend on it.
+   */
+  kpiDefinitionVersionId?: string | null;
   krType?: KrType;
   kind?: KrKind;
 };
@@ -516,11 +525,17 @@ export async function createKeyResult(input: {
   ownerUserId?: string | null;
 }): Promise<{ id: string; score: number }> {
   const id = uuidv4();
+  // RES-009: durable version pin — resolved via RES-02's canonical owner,
+  // not a re-implementation of its join. null when kpiId is unset/unknown,
+  // never throws (informational link, must not block KR creation).
+  const kpiDefinitionVersionId = input.kpiId
+    ? await getCurrentDefinitionVersionId(input.kpiId, input.organizationId)
+    : null;
   await dbRun(
     `INSERT INTO okr_key_results
        (id, objective_id, organization_id, label, baseline, target, current, weight,
-        kpi_id, kr_type, kind, owner_user_id, score)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        kpi_id, kpi_definition_version_id, kr_type, kind, owner_user_id, score)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
     [
       id,
       input.objectiveId,
@@ -531,6 +546,7 @@ export async function createKeyResult(input: {
       input.current ?? null,
       input.weight ?? null,
       input.kpiId ?? null,
+      kpiDefinitionVersionId,
       input.krType ?? 'metric',
       input.kind ?? 'aspirational',
       input.ownerUserId ?? null,
@@ -580,6 +596,15 @@ export async function updateKeyResult(
   if (patch.kpiId !== undefined) {
     sets.push('kpi_id = ?');
     params.push(patch.kpiId);
+    // RES-009: re-pin (or clear, on unlink) the version alongside kpi_id —
+    // same "re-resolved on every write" semantics as RES-003's measurement
+    // pin, so a re-link always captures the definition current AT RE-LINK
+    // TIME, not whatever version was current the first time this KR was
+    // ever linked to a KPI.
+    sets.push('kpi_definition_version_id = ?');
+    params.push(
+      patch.kpiId ? await getCurrentDefinitionVersionId(patch.kpiId, organizationId) : null
+    );
   }
   if (patch.krType !== undefined) {
     sets.push('kr_type = ?');
@@ -746,4 +771,70 @@ export async function listCheckIns(
       [keyResultId]
     )) as CheckInRow[] | undefined) ?? [];
   return rows.map(mapCheckInRow);
+}
+
+// ─── Suggested value (RES-009 → RES-003 reference, read-only) ────────────
+
+export type SuggestedValue = {
+  value: number;
+  periodStart: string;
+  source: string;
+};
+
+/**
+ * RES-009 packet §5 (suggested-value endpoint): a read-only lookup of "the
+ * latest known measurement for this KR's linked KPI", by reference through
+ * RES-003's canonical `kpi_time_series` table — NOT a second copy of the
+ * value written anywhere on `okr_key_results`.
+ *
+ * D7 non-negotiable: this function is called ONLY from the suggested-value
+ * read endpoint below, to prefill a check-in form. It is never invoked from
+ * createCheckIn/updateKeyResult/recomputeKeyResultScore — a KPI measurement
+ * landing must never silently change a Key Result's `current`/`score`. If a
+ * future caller is tempted to call this during a write path, that would
+ * reverse D7 (Piotr, 2026-07-12) and needs a product decision first, not a
+ * refactor.
+ *
+ * Returns null when the KR has no linked kpiId, the KR doesn't belong to
+ * this org, the linked KPI doesn't belong to this org (defensive — kpi_id
+ * has no org-equality constraint of its own), or no measurement exists yet.
+ */
+export async function getSuggestedValueForKeyResult(
+  keyResultId: string,
+  organizationId: string
+): Promise<SuggestedValue | null> {
+  const kr = (await dbGet(
+    `SELECT id, kpi_id FROM okr_key_results WHERE id = ? AND organization_id = ?`,
+    [keyResultId, organizationId]
+  )) as { id: string; kpi_id: string | null } | undefined;
+  if (!kr?.kpi_id) return null;
+
+  const latest = (await dbGet(
+    `SELECT value, period_start, source
+     FROM kpi_time_series
+     WHERE kpi_id = ? AND organization_id = ?
+     ORDER BY period_start DESC, created_at DESC LIMIT 1`,
+    [kr.kpi_id, organizationId]
+  )) as { value: number | string; period_start: unknown; source: string } | undefined;
+  if (!latest) return null;
+
+  return {
+    value: Number(latest.value),
+    // period_start is a Postgres DATE column — node-pg hands back a JS Date,
+    // not a string (see kpiMeasurementWriterService.ts's toIsoDateString for
+    // why a naive String()/toISOString() would corrupt it).
+    periodStart: toIsoDateString(latest.period_start) ?? '',
+    source: latest.source,
+  };
+}
+
+function toIsoDateString(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  return String(value).slice(0, 10) || null;
 }

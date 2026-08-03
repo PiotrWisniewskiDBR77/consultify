@@ -19,6 +19,7 @@ import {
   createObjective,
   deleteKeyResult,
   deleteObjective,
+  getSuggestedValueForKeyResult,
   type KeyResult,
   listCheckIns,
   listCycles,
@@ -113,6 +114,9 @@ async function ensureOkrTables(): Promise<void> {
     `ALTER TABLE okr_objectives ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();`
   );
   await dbExec(`ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_id TEXT;`);
+  await dbExec(
+    `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kpi_definition_version_id TEXT;`
+  );
   await dbExec(
     `ALTER TABLE okr_key_results ADD COLUMN IF NOT EXISTS kr_type TEXT NOT NULL DEFAULT 'metric';`
   );
@@ -251,7 +255,7 @@ router.get(
     const krRows =
       ((await dbAll(
         `SELECT id, objective_id, label, baseline, target, current, weight,
-              kpi_id, kr_type, kind, owner_user_id, score
+              kpi_id, kpi_definition_version_id, kr_type, kind, owner_user_id, score
        FROM okr_key_results WHERE organization_id = ?`,
         [orgId]
       )) as Array<{
@@ -263,6 +267,7 @@ router.get(
         current: number | null;
         weight: number | null;
         kpi_id: string | null;
+        kpi_definition_version_id: string | null;
         kr_type: string | null;
         kind: string | null;
         owner_user_id: string | null;
@@ -280,6 +285,7 @@ router.get(
         current: k.current ?? undefined,
         weight: k.weight ?? undefined,
         kpiId: k.kpi_id ?? undefined,
+        kpiDefinitionVersionId: k.kpi_definition_version_id ?? undefined,
         krType: (k.kr_type as KeyResult['krType']) ?? undefined,
         kind: (k.kind as KeyResult['kind']) ?? undefined,
         // extra passthrough for FE edit forms (not part of the pure KeyResult
@@ -601,6 +607,24 @@ router.get(
     if (!orgId) return;
     const checkIns = await listCheckIns(req.params.id, orgId);
     res.json({ checkIns });
+  })
+);
+
+/**
+ * RES-009: read-only prefill lookup — "what did the linked KPI last measure"
+ * — for the check-in form. Never writes anything; D7 (manual-only scoring)
+ * stays intact regardless of what this returns. `{ suggestedValue: null }`
+ * covers every "nothing to suggest" case (no link, no measurement, KPI in
+ * another org) uniformly — the caller doesn't need to distinguish why.
+ */
+router.get(
+  '/:projectId/okr/key-results/:id/suggested-value',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOkrOrgId(req, res);
+    if (!orgId) return;
+    const suggestedValue = await getSuggestedValueForKeyResult(req.params.id, orgId);
+    res.json({ suggestedValue });
   })
 );
 
