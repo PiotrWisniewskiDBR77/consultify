@@ -143,17 +143,17 @@ oddzielną bramką wydania, a nie ponownym otwarciem dziewięciu odebranych zada
 
 ### ⏸ Wstrzymane do przekazania między planami taryfowymi
 
-- [x] `FIN-05` — Statement upload→extract→map — `CODE_GO_FROZEN`, branch
-  `feat/fin-005-statement-ingestion-golden-flow`, HEAD `784fd4d942`;
+- [x] `FIN-05` — Statement upload→extract→map — `CODE_GO_FROZEN_INTEGRATED`, branch
+  `codex/fin05-canonical-statement-ingestion`, HEAD `b6fe0a4a88`;
   keyed exactly-once, recovery kompletnego multi-section receipt, fresh read-back
-  i brak duplikacji; niezależny real-PG multi-section 6/6 PASS; integracja pending.
-- [x] `MAT-10` — Artifact Receipt/lineage — `CODE_GO_FROZEN`, branch
-  `feat/mat-010-canonical-artifact-receipt-lineage`, HEAD `9949337972`;
+  i brak duplikacji; niezależny real-PG multi-section 6/6 PASS; zintegrowane.
+- [x] `MAT-10` — Artifact Receipt/lineage — `CODE_GO_FROZEN_INTEGRATED`, branch
+  `codex/mat10-canonical-artifact-lineage`, HEAD `f0b8b3cb3a`;
   niezależny fresh pgvector/PostgreSQL: 8 plików, 84/84 PASS, w tym real routes,
-  durable recovery, concurrency, heartbeat i stale-owner fencing; integracja pending.
-- [x] `INT-08` — status kanoniczny pozostaje `CODE_GO_FROZEN`; osobny branch
-  `feat/int-008-canonical-candidate-handoff` / `1c4a430154` ma niezacommitowany
-  fix packet i wymaga najpierw audytu kolizji/supersession w nowym planie.
+  durable recovery, concurrency, heartbeat i stale-owner fencing; zintegrowane.
+- [x] `INT-08` — `CODE_GO_FROZEN_INTEGRATED`; zaakceptowany commit `692bbc855d`
+  jest w historii finalnej. Starszy fix packet `1c4a430154` i WIP `2bc65b8037`
+  są zastąpione i świadomie wyłączone z wydania.
 
 ## Snapshot wykonawczy
 
@@ -186,7 +186,7 @@ oddzielną bramką wydania, a nie ponownym otwarciem dziewięciu odebranych zada
 | Line 2 frozen | Teresa-assisted SWOT | `feat/tls-004-teresa-assisted-swot` / `d383ac7106` | `CODE_GO_FROZEN` — reviewed code `e9ee56a26a`; Codex independent 43/43 PASS; final docs-only correction clean |
 | Line 5 frozen | Assessment Candidate handoff | `feat/asm-008-candidate-pack-handoff` / `da06ad77a7` | `CODE_GO_FROZEN` — canonical writer, retry/concurrency/rollback, Codex real-PG 10/10 |
 | Line 4 frozen | Execution changes/progress | `feat/exe-005-006-change-progress-spine` / `fc0eb001a9` | `CODE_GO_FROZEN` — session-derived decision maker; Codex isolated real-PG 12/12 |
-| Line 1 paused | Statement ingestion | `feat/fin-005-statement-ingestion-golden-flow` / `03f01021ac` | `PAUSED_FOR_PLAN_HANDOFF` — keyed-upload marker nadal fail-open |
+| Line 1 frozen | Statement ingestion | `codex/fin05-canonical-statement-ingestion` / `b6fe0a4a88` | `CODE_GO_FROZEN_INTEGRATED` — exactly-once upload, kompletne multi-section recovery, tenant isolation i mounted UI zweryfikowane |
 | Line 3 frozen | Workbook version/share/export | `feat/mat-006-workbook-version-share-export` / `8fac42e85e` | `CODE_GO_FROZEN` — Codex isolated real-PG 11/11 |
 | Line 2 frozen | Teresa-assisted SWOT | `feat/tls-004-teresa-assisted-swot` / `d383ac7106` | `CODE_GO_FROZEN` — Codex independent 43/43 |
 | Line 4 frozen | Closure/evidence gate | `integrate/mvp-wave1-abc` / `0ff97ecc1b` | `CODE_GO_FROZEN` — pełny Execution real-PG 32/32, UI+closure 17/17, type-check PASS, migracja replay-safe |
@@ -317,10 +317,10 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | MW-05 | Decision creation | `CODE_GO_FROZEN` | `59360f9ec1`; create→GET→reopen, real-PG 6/6 | integracja i demo |
 | MW-06 | Decision live wiring | `CODE_GO_FROZEN` | DecisionWorkspace default ON z kill-switchem; test flagi 5/5 | integracja i demo |
 | MW-07 | Calendar/time/capacity | `CODE_GO_FROZEN` | source `c37123e6b5`, zintegrowane do `integrate/mvp-wave1-abc` @ `1421ae29dc`; real-PG 16/16 w Europe/Warsaw, America/Los_Angeles i UTC, provider/project 5/5, komponenty 28/28, tenant/capacity negative controls; po integracji 6/6 komponentów PASS | Railway authenticated browser smoke; React act warnings pozostają długiem test harnessu |
-| MW-08 | Notes — core lifecycle | `CODE_GO_FROZEN` | zadanie odebrane wcześniej; delta `codex/mw08-final-gate` jest `AWAITING_CODEX_REVIEW / RECONCILE_FIRST` z powodu równoległej implementacji agenta 2 | review wybiera wersję kanoniczną; nie doliczać ponownie |
+| MW-08 | Notes — core lifecycle | `CODE_GO_FROZEN` | kanoniczny `65e396cec3` jest przodkiem finalnego HEAD; CAS, tenant isolation, desktop/mobile reopen | authenticated demo smoke |
 | MW-09 | Ideas | `CODE_GO_FROZEN` | `86f5c4024b`; real-PG create→update→GET read-back→lista UI→hard reload→open preview; obcy tenant read/write 404 i brak nadpisania właściciela, Playwright 1/1, cleanup wykonany | integracja i Railway demo; odbiór dotyczy owner lifecycle, nie rozszerza zakresu czterech narzędzi Ideas |
 | MW-10 | Vault | `CODE_GO_FROZEN` | `a0185d9a7b`; wersjonowanie Vault, permission parity, trwały reopen i sprzątnięte dowody real-PG/Railway DEV | zintegrowane w finalnym kandydacie; Railway demo authenticated smoke |
-| MW-11 | Run Agent | `CODE_GO_FROZEN` | zadanie odebrane wcześniej; delta `codex/mw11-final-gate` @ `ab1d9e85cd8f598ec13d320ec235574251b60592` jest `AWAITING_CODEX_REVIEW`; niezależne unit/route 49/49 PASS | niezależnie odtworzyć real-PG, potem integration/Railway; nie doliczać ponownie |
+| MW-11 | Run Agent | `CODE_GO_FROZEN` | lease/fencing replayowane jako `64b3a2bda9` + `8f6c1e5d6a`; migracja bez kolizji jako `941`; zintegrowane | authenticated demo smoke |
 | MW-12 | Manager | `CODE_GO_FROZEN` | `0c28362f55`; mutacja owner-object i actor-owned audit na jednej transakcji, sugestie również audytowane, zero-row/stale/cross-tenant fail closed, powiadomienie dopiero po commit; real-PG 3/3, service/escalation/UI 12/12, routes 10/10, Closure regresja 11/11, pełny type-check PASS | Railway authenticated Manager action→refresh→audit smoke |
 
 ## Chat/Teresa
@@ -333,13 +333,14 @@ HEAD jest tylko snapshotem. Każdy tracker ma ponownie sprawdzić branch i drzew
 | CHAT-04 | Teresa action registry | `CODE_GO_FROZEN` | `5ab1b7781e`; registry generuje filtrowany manifest, klient wysyła dokładny server shape, SSE wraca do wspólnego `runIdeaAction`; registry default ON, regexy tylko jako jawny kill-switch, unknown tool fail closed i durable mutation wymaga confirm; registry/flags/guards 16/16, panel 30 PASS + 1 niezależny znany fail resize, type-check i build PASS | Railway authenticated tool-call smoke na czterech reprezentacjach i kontrola env flags |
 | CHAT-05 | Proposal/approval/audit | `CODE_GO_FROZEN` | `36aa6ffc40`; real-PG przez real auth/V8 HTTP: brak zapisu przed approval, approve→execute→fresh read-back, atomowy claim przy równoległym execute, dokładnie 1 durable receipt, idempotentny retry completed, pełna sekwencja audytu, terminal reject i cross-tenant 404; acceptance 2/2, regresje Teresa 71/71, type-check PASS | Railway authenticated smoke adapterów target-module; nie mylić z lokalnym odbiorem wspólnego lifecycle |
 | CHAT-06 | Canvas persistence | `CODE_GO_FROZEN` | `CORE-ART-006E/F` | domenowe E2E |
-| CHAT-07 | Canvas→Material/Note/Table | `CODE_GO_FROZEN` | zadanie odebrane wcześniej; delta `codex/chat070809-final-gate` @ `023b818ac6354dbbd5ac48b0514279e0c73ea8d3` wraca do `ACTIVE_BUILD/FIX`: niezależny component test 0/1 | naprawić aktywny handoff, potem authenticated browser/Railway; nie doliczać ponownie |
-| CHAT-08 | Chat→Initiative | `CODE_GO_FROZEN` | zadanie odebrane wcześniej; ta sama delta wraca do `ACTIVE_BUILD/FIX`; raportowane backend receipts nie kompensują czerwonego testu aktywnego frontendu | naprawa/reprodukcja i authenticated browser/Railway; nie doliczać ponownie |
-| CHAT-09 | Cross-module receipt/reopen | `CODE_GO_FROZEN` | zadanie odebrane wcześniej; ta sama delta wraca do `ACTIVE_BUILD/FIX`, ponieważ niezależny test nie potwierdził linku trwałego receipt po aktywnym handoff | naprawa/reprodukcja i authenticated browser/Railway; nie doliczać ponownie |
+| CHAT-07 | Canvas→Material/Note/Table | `CODE_GO_FROZEN` | aktywne delty replayowane na finalnym drzewie; readback, idempotency, Table deep link i owner handoff; dodatkowy kontrakt `e636453b3d` | authenticated demo smoke |
+| CHAT-08 | Chat→Initiative | `CODE_GO_FROZEN` | aktywny owner handoff i tenant-safe receipt są zintegrowane w finalnym HEAD | authenticated demo smoke |
+| CHAT-09 | Cross-module receipt/reopen | `CODE_GO_FROZEN` | trwały receipt/reopen i konflikt klucza idempotencji są zintegrowane | authenticated demo smoke |
 
 ## Kolejka operacyjna
 
-1. Domknąć aktywne A/B/C do `AWAITING_CODEX_REVIEW` i wykonać niezależny review.
+1. Wykonać authenticated UI/UX smoke na dokładnym finalnym SHA demo.
+2. Po poprawkach UI/UX przeprowadzić audyt 16 kontraktów modułów.
 2. Zintegrować zamrożone MW foundations z Initiative/Execution/Results spine.
 3. Uruchomić Materials `MAT-07..10`, bo blokuje uczciwy artifact output.
 4. Następne fale: Tools → Interview → pozostałe My Work → Chat.

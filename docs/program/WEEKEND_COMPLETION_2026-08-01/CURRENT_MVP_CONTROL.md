@@ -18,9 +18,10 @@ last_reviewed: 2026-08-03
 - Wszystkie 93 pozycje są więc rozstrzygnięte; `ASM-09` nie jest brakującą
   funkcją release'u i nie wolno sztucznie zmieniać go na `CODE_GO_FROZEN`.
 - Kod zaakceptowanych delt został zebrany na
-  `codex/integrate-mvp-final-20260803`. Integracja do `origin/demo` oraz
-  Railway `demo` pozostają oddzielnymi bramkami wydania do czasu zakończenia
-  buildów, migracji, push i authenticated smoke.
+  `codex/integrate-mvp-final-20260803`, wypchnięty do `origin/demo` i wdrożony
+  na Railway `demo`. GitHub, lokalny finalny branch i `/api/health` raportują
+  ten sam HEAD. Pozostałą bramką wydania jest authenticated UI/UX smoke oraz
+  późniejszy audyt 16 kontraktów, nie ponowna integracja pakietów.
 - FIN-05 został ponownie sprawdzony na izolowanym realnym PostgreSQL:
   **55/55 PASS**, bez retry. Zaakceptowany INT-08 (`692bbc855d`) jest przodkiem
   kandydata; nieodebrany WIP `2bc65b8037` nie jest częścią release'u.
@@ -39,11 +40,11 @@ Stan przekazania:
 
 | Linia | Stan | Branch / checkpoint | Co przejmuje nowy worker |
 | --- | --- | --- | --- |
-| 1 — FIN-05 | `CODE_GO_FROZEN` | `feat/fin-005-statement-ingestion-golden-flow` / `784fd4d942` | niezależnie odebrane multi-section recovery 6/6 real-PG; kontrolowana integracja pending |
+| 1 — FIN-05 | `CODE_GO_FROZEN / INTEGRATED` | `codex/fin05-canonical-statement-ingestion` / `b6fe0a4a88` | kanoniczny pakiet jest przodkiem finalnego HEAD; powtórzone 55/55 real-PG bez retry |
 | 2 — TLS-04 | `CODE_GO_FROZEN` | `feat/tls-004-teresa-assisted-swot` / `d383ac7106` | nic; nie otwierać ponownie przed integracją |
-| 3 — MAT-10 | `CODE_GO_FROZEN` | `feat/mat-010-canonical-artifact-receipt-lineage` / `9949337972` | niezależnie odebrane 84/84 real-PG; kontrolowana integracja i Railway pozostają oddzielnymi bramkami |
+| 3 — MAT-10 | `CODE_GO_FROZEN / INTEGRATED` | `codex/mat10-canonical-artifact-lineage` / `f0b8b3cb3a` | kanoniczny pakiet jest przodkiem finalnego HEAD; Railway demo wdrożone |
 | 4 — EXE-08 | `CODE_GO_FROZEN` | `feat/exe-008-closure-evidence-gate` / `b359a4edad` | nic; nie otwierać ponownie przed integracją |
-| 5 — INT-08 correction | `PAUSED_FOR_PLAN_HANDOFF / RECONCILE_FIRST` | `feat/int-008-canonical-candidate-handoff` / `1c4a430154` + dirty tree | zabezpieczyć diff, porównać z przyjętym `INT-08` na branchu integracyjnym i dopiero wtedy zdecydować, co zachować |
+| 5 — INT-08 correction | `SUPERSEDED_WIP / EXCLUDED` | zaakceptowany `692bbc855d`; WIP `2bc65b8037` | zaakceptowany INT-08 jest przodkiem finalnego HEAD; nieodebrany WIP został świadomie wykluczony jako regresyjny |
 
 Nowy worker zawsze zaczyna od `git status --short`, `rev-parse HEAD`, pełnego
 diffu oraz porównania z przyjętym branchem integracyjnym. Nie wolno mu przejąć
@@ -112,9 +113,10 @@ zamknięta; kolejna fala pięciu linii jest przygotowywana osobno.
   brak automatycznych ponowień dla access/budget/rate-limit, oraz **CHAT-07/08/09**
   (`3dab705084`) — wspólny Chat/Canvas→owner writer dla Material/Note/Table/Initiative,
   atomowy approval bez duplikacji, durable receipt z URL oraz fresh reopen na real-PG;
-- razem odebrane: **83/93 (89,2%)**;
-- niezamknięte w boardzie 93: **10/93**, w tym 9 pozycji w zakresie MVP i 1
-  znacznik `OUTSIDE_MVP` (`ASM-09`). Nie oznacza to jednego zadania poza MVP:
+- razem odebrane i zintegrowane: **92/93 (98,9%)**;
+- jedyna pozycja bez `CODE_GO_FROZEN` w boardzie 93 to świadomy znacznik
+  `OUTSIDE_MVP` (`ASM-09`); **nie ma otwartego zadania MVP**. Nie oznacza to
+  jednego zadania poza MVP:
   osobny `POST_MVP_WAVE_1.md` obejmuje SIRI, ADMA, około 30 pozostałych Tools,
   Audyty, Spotkania i Referral i nie wchodzi do mianownika 93.
 
@@ -264,12 +266,17 @@ Dokumentacja modułu jest zamknięta dopiero, gdy ma:
 - lokalnego testu jako dowodu stagingowego;
 - statusu `ACCEPTED` odziedziczonego z historycznego planu bez wskazania zakresu.
 
-## Korekta kontrolna 2026-08-02 — MW-08 / CHAT-07-09 / MW-11
+## Korekta kontrolna 2026-08-03 — MW-08 / CHAT-07-09 / MW-11
 
-Po ponownym odbiorze gałęzi `codex/fix-cto-delivery-gates-20260802` obowiązują:
+Po finalnej rekonsyliacji obowiązują:
 
-- MW-08 delta — `AWAITING_CODEX_REVIEW / RECONCILE_FIRST`; istnieje równoległa aktywna implementacja agenta 2 i wybór wersji kanonicznej należy do review;
-- CHAT-07/08/09 delta — `ACTIVE_BUILD/FIX`; niezależne powtórzenie testu aktywnego komponentu zakończyło się 0/1 (brak trwałego linku po handoff); nie zmienia to wcześniejszego `CODE_GO_FROZEN` zadań bazowych;
-- MW-11 delta — `AWAITING_CODEX_REVIEW`; niezależne unit/route 49/49 PASS, ale real-PG 9/9 wymaga jeszcze niezależnego odtworzenia; branch `codex/mw11-final-gate`, HEAD `ab1d9e85cd8f598ec13d320ec235574251b60592`.
+- MW-08 — kanoniczny branch `65e396cec3` jest przodkiem finalnego HEAD;
+- CHAT-07/08/09 — zaakceptowane delty zostały replayowane jako
+  `7251fef556`, `5938e23e7d`, `3e76d563c7`, `61bab91c18`, `fed34ea9c5`, a
+  dodatkowy aktywny kontrakt idempotencji domyka `e636453b3d`;
+- MW-11 — zaakceptowane delty zostały replayowane jako `64b3a2bda9` i
+  `8f6c1e5d6a`; migracja lease została przenumerowana bez kolizji na `941`.
 
-Licznik został zsynchronizowany po osobnych odbiorach `FIN-05`, `FIN-06`, `MAT-10`, `MW-07` i `INI-04`: **83/93**. Delty MW-08/MW-11/Chat oraz security fix RES-10 nie są doliczane ponownie.
+Te pozycje nie są już `AWAITING_CODEX_REVIEW`, `ACTIVE_BUILD/FIX` ani
+`RECONCILE_FIRST`. Task-level stan programu wynosi **92/92 MVP
+`CODE_GO_FROZEN`** plus `ASM-09 OUTSIDE_MVP`.

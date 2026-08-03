@@ -1,12 +1,20 @@
 ---
 doc_id: mvp-function-implementation-status-ledger
 truth_type: verified-as-is
-status: working-canonical
+status: historical-baseline-superseded
 owner: codex
 last_reviewed: 2026-08-01
 ---
 
 # Remanent funkcji względem kodu
+
+> **Uwaga:** tabela poniżej jest historycznym remanentem z 2026-08-01. Nie jest
+> bieżącym boardem wydania i nie może ponownie otwierać pakietów odebranych oraz
+> zintegrowanych 2026-08-03. Aktualny task-level status znajduje się w
+> `MVP_SUBMODULE_CONTROL_BOARD.md`, a runtime baseline w
+> `FINAL_DEMO_RUNTIME_BASELINE_2026-08-03.md`. Historyczne wpisy `BLOCKED`,
+> `CZĘŚCIOWA` i `BRAK` muszą zostać zweryfikowane od nowa dopiero w audycie 16
+> kontraktów na finalnym SHA.
 
 ## Statusy
 
