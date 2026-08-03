@@ -1,10 +1,10 @@
 ---
 uiux_doc_id: UIUX_TABLE_PREVIEW_CANON
 doc_kind: AUTHOR_CANON
-version: 1.0
+version: 1.1
 owner: user
 status: canonical
-last_updated: 2026-07-13
+last_updated: 2026-08-02
 supersedes_as_index:
   - docs/ui-standards/03-modules/app-table-standard.md
   - docs/ui-standards/03-modules/table-preview-pane-standard.md
@@ -16,11 +16,20 @@ supersedes_as_index:
 
 # Table + Preview Canon (app-wide) — KANON v1
 
-> **Status:** Canonical, single source of truth dla tabel listowych i preview pane w całej aplikacji. Podrzędny tylko wobec `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`.
-> **Rola:** Ten dokument **konsoliduje i rozstrzyga** 6 wcześniejszych, częściowo sprzecznych standardów tabel (patrz front‑matter `supersedes_as_index`). Te dokumenty pozostają jako materiał szczegółowy, ale **w razie konfliktu obowiązuje TEN plik.**
+> **Status (poprawione 2026-08-02 — hierarchia z `TRIADA_KANON.md`):** `TRIADA_KANON.md` jest
+> nadrzędny dla **anatomii i wyglądu** ekranu listowego — co, ile bloków/stref, w jakiej
+> kolejności (Menu, tabela, pstryczek, kebab, preview, kanban). Ten plik jest nadrzędny dla
+> **mechaniki i szczegółu implementacyjnego** — zachowań kolumn/resize/persystencji, wariantów
+> przycisków (§7.3b), kontraktów danych — czyli warstwy, której TRIADA nie opisuje. Przy
+> sprzeczności dotyczącej WYGLĄDU/ANATOMII wygrywa TRIADA; przy sprzeczności dotyczącej
+> MECHANIKI wygrywa ten plik. Najwyższy autorytet całości dokumentacji: `CANON.md` §2 (hierarchia
+> prawdy). Wcześniejsze odniesienie do `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` jako nadrzędnego
+> jest nieaktualne — `CANON.md` §0 klasyfikuje ten dokument jako treść przejściową rozdystrybuowaną
+> do warstw `00–03`, nie jako autorytet.
+> **Rola:** Ten dokument **konsoliduje i rozstrzyga** 6 wcześniejszych, częściowo sprzecznych standardów tabel (patrz front‑matter `supersedes_as_index`). Te dokumenty pozostają jako materiał szczegółowy, ale **w razie konfliktu między nimi obowiązuje TEN plik** (dla TRIADA_KANON.md obowiązuje odwrotna hierarchia — patrz Status wyżej).
 > **Siostra:** kanon menu — `13_MENU_2_MODULE_TOPBAR.md`, `14_MENU_3_COMMAND_ROW.md`, `module-hub-standard.md`. Tabela żyje POD Menu 2/3 i z nimi nie konkuruje.
 > **Złote referencje wizualne:** `docs/ui-standards/assets/app-table-golden-reference-{dark,light}-2026-05-02.png`.
-> **Skill:** przy pracy nad preview pane wołaj `consultify-preview` — punkt wejścia z checklistą, SSOT treści = §7 tego pliku (skrót 6 bloków: §7.0).
+> **Skill:** przy pracy nad preview pane wołaj `consultify-preview` — punkt wejścia z checklistą. Anatomia = `TRIADA_KANON.md` §A7 (nadrzędny); mechanika/implementacja/warianty przycisków = §7 tego pliku (skrót 6 bloków: §7.0).
 
 ---
 
@@ -32,7 +41,7 @@ supersedes_as_index:
 4. **Nagłówek**: `text-[11px] font-semibold uppercase tracking-wider`, kolor `text-slate-500 dark:text-slate-400`, **zawsze `sticky top-0 z-10`**, rodzic NIGDY `overflow-hidden`.
 5. **Wyrównanie kolumn (2026)**: tytuł = `text-left`; **tabliczki/chipy (tag/kategoria/typ/źródło + status) = `text-left` + wiodąca kropka**; **liczby = `text-right`**; assignee/due = left; akcje = `text-right`. Centrowane chipy/statusy = ZAKAZ. **Ta sama rola = to samo wyrównanie wszędzie.**
 6. **Gęstość**: `px-4 py-3` (comfortable, default) / `px-4 py-2` (compact, tylko kolejki admin). Wysokość wiersza **nie zmienia się** na hover.
-7. **Wiersz**: monochromatyczny, brak zebry, separatory `divide-y divide-slate-200/60 dark:divide-white/[0.03]`. Selected = `bg-primary-500/8` + 4px lewy akcent. **Nigdy** tła wiersza barwionego statusem.
+7. **Wiersz**: monochromatyczny, brak zebry, separatory `divide-y divide-slate-200/60 dark:divide-white/[0.03]`. Selected = neutralna powierzchnia (`bg-slate-100 dark:bg-white/[0.08]`) + 4px lewy akcent **`--c-info`** (niebieski) — **nigdy `primary`/crimson**, SSOT `src/components/shared/selectionTokens.ts`. **Nigdy** tła wiersza barwionego statusem.
 8. **Resize + persistencja**: `table-fixed`, resizer sąsiadujący (zero‑sum), szerokości i widoczność kolumn **persystowane do localStorage** przez `persistKey`.
 9. **Ustawienia kolumn**: portalowy `TableSettingsPopover` (NIE modal), ikona `Settings2` w prawym górnym rogu nagłówka.
 10. **Preview**: domyślnie ZAMKNIĘTY; single‑click → select+preview, double‑click/Enter → full view, Esc → zamknij. Szerokość `clamp(340px, 28%, 480px)`, separacja `gap-1.5` (BEZ `border-l`).
@@ -61,28 +70,38 @@ Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notification
 
 | Warstwa | Komponent (SSOT) | Rola | Adopcja |
 |---|---|---|---|
-| Orkiestracja | `src/components/shared/TableWithPreviewLayout.tsx` | layout tabela+preview, single/double‑click, J/K, Alt+←/→ historia, pin, mobile modal | 25 |
-| Tabela | `src/components/shared/ModuleHub/FilterableTable.tsx` | nagłówki, resize, filtry kolumnowe, row actions, widoczność kolumn, **persistKey→localStorage**, empty/loading | 24 |
-| Karty | `src/components/shared/ModuleHub/GridView.tsx` | alternatywny widok kart (border‑l accent typu) | 8 |
-| Chipy (status/priority/meta/tool/due) | `src/components/ui/primitives/chips/*` na tokenach `c.*` (`ChipBase`, `StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `DueChip`) + bridge `statusChipTone()` | jedyna rodzina chipów; HBS, token‑driven, light/dark za darmo | 2 (do podniesienia) |
-| Komórki tabeli | `src/components/ui/primitives/cells/*` (`ProgressCell`, `AssigneeCell`) na `c.*` | progres + asignee jako prymitywy | nowe (Faza 0) |
-| Ustawienia kolumn | `src/components/shared/ModuleHub/TableSettingsPopover.tsx` | portalowy popover widoczności kolumn + „pokaż opis" | 5 |
-| Prymitywy | `src/components/ui/ResizableTable/{TableHeader,index}.tsx`, `ColumnResizer`, `PreviewPaneShell.tsx` | niskopoziomowe: resizer, sticky header, shell preview | 19 |
+| Orkiestracja | `src/components/shared/TableWithPreviewLayout.tsx` | layout tabela+preview, single/double‑click, J/K, Alt+←/→ historia, pin, mobile modal | **18** (JSX, `grep -rlP "<TableWithPreviewLayout\b" src/`, wyklucza plik definicji i 1 import typu `PreviewableItem`, stan 2026-08-02) |
+| Tabela | `src/components/shared/ModuleHub/FilterableTable.tsx` | nagłówki, resize, filtry kolumnowe, row actions, widoczność kolumn, **persistKey→localStorage**, empty/loading | **24** (JSX, `grep -rlP "<FilterableTable\b(?!Props)" src/`, wyklucza plik definicji i 1 wzmiankę w JSDoc-komentarzu `useTableSelection.tsx`, stan 2026-08-02) |
+| Karty | `src/components/shared/ModuleHub/GridView.tsx` | alternatywny widok kart (border‑l accent typu) | **8** (import z `../shared/ModuleHub`, skrypt po AST-podobnym parserze importów wieloliniowych; **pułapka kolizji nazw**: istnieje niepowiązany `src/components/MyWork/table/GridView.tsx` — 4 dodatkowe pliki importują TEN plik, nie SSOT, i nie liczą się; stan 2026-08-02) |
+| Chipy (status/priority/meta/tool/due) | `src/components/ui/primitives/chips/*` na tokenach `c.*` (`ChipBase`, `StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `DueChip`, `EntityStatusChip`) + bridge `statusChipTone()` | jedyna rodzina chipów; HBS, token‑driven, light/dark za darmo | **51** (import — pliki spoza `primitives/chips/` importujące z dowolnej ścieżki zawierającej `primitives/chips`, stan 2026-08-02). **Znacząco zmienione względem poprzedniej wartości „2 (do podniesienia)" — patrz nota niżej.** |
+| Komórki tabeli | `src/components/ui/primitives/cells/*` (`ProgressCell`, `AssigneeCell`) na `c.*` | progres + asignee jako prymitywy | nowe (Faza 0) — bez liczby adopcji do przeliczenia |
+| Ustawienia kolumn | `src/components/shared/ModuleHub/TableSettingsPopover.tsx` | portalowy popover widoczności kolumn + „pokaż opis" | **5** (import, wyklucza plik definicji; obejmuje 1 plik testowy `__tests__/TableSettingsPopover.test.tsx`, stan 2026-08-02) |
+| Prymitywy | `src/components/ui/ResizableTable/{TableHeader,index}.tsx`, `ColumnResizer`, `PreviewPaneShell.tsx` | niskopoziomowe: resizer, sticky header, shell preview | **15** (import — pliki spoza `ui/ResizableTable/` importujące z dowolnej ścieżki zawierającej `ResizableTable` (barrel `index.tsx` re-eksportuje `TableHeader`/`ColumnResizer`/`PreviewPaneShell`/`FilterDropdown`), stan 2026-08-02) |
+
+> **Nota — rodzina chipów, zamknięcie ticketu 2026-08-02:** poprzednia wartość „2 (do podniesienia)"
+> była nieaktualna o rząd wielkości — realnie **51 plików** poza samym katalogem `primitives/chips/`
+> importuje coś z tej rodziny (licząc też węższy `EntityStatusChip` — komponent statusu wiersza
+> wymagany przez §4.1 MUST — którego samego używa **31 plików**, `grep -rlP "<EntityStatusChip\b"`).
+> Rodzina chipów **nie jest** dziś nisko-adoptowana — jest szeroko rozniesiona po My Work, Interview,
+> Execution, Results, Reports, Partner, SuperAdmin. Adnotacja „(do podniesienia)" usunięta jako
+> nieaktualna; **nie zmienia to statusu dokumentu** (§4.1 MUST pozostaje MUST — było MUST już wcześniej),
+> tylko koryguje błędny fakt o skali adopcji.
 
 **MUST:** nowa tabela listowa = `TableWithPreviewLayout` + `FilterableTable`. Nie pisać nowego `<table>` od zera.
 
 ### 2.1 Komponenty WYCOFANE (nie używać; do usunięcia w sprzątaniu)
-- `Admin/shared/EnhancedDataTable.tsx` (2 importery, 884 LOC) — zastąpione przez FilterableTable.
-- `Admin/shared/AdminTable.tsx` (2 importery) — j.w.
-- `shared/TablePresentationToggle.tsx` (0 importerów) — **martwy kod**, usunąć.
-- `ui/composed/DataTable.tsx` — 0 importerów (jeśli istnieje), usunąć.
+- `Admin/shared/EnhancedDataTable.tsx` — **komponent już nie istnieje w `src/`** (usunięty; sprawdzone `find src -iname "EnhancedDataTable*"` → 0 wyników, stan 2026-08-02). Zostaje wyłącznie jako martwa kopia w `.claude/worktrees/`, poza zakresem repo. Wpis historyczny — nic do zrobienia.
+- `src/views/superadmin/components/shared/AdminTable.tsx` (**1 importer: `LLMManagementView.tsx`**, metoda: import, stan 2026-08-02) — zastąpiony przez FilterableTable.
+- `shared/TablePresentationToggle.tsx` (**0 importerów**, metoda: import, stan 2026-08-02) — **martwy kod**, usunąć.
+- `ui/composed/DataTable.tsx` — plik **istnieje** (nie „jeśli istnieje"), ale **0 importerów** (metoda: import; nie ma go nawet w barrelu `ui/composed/index.ts`, tylko w nieaktualnym przykładzie JSDoc, stan 2026-08-02), usunąć.
 
 ### 2.1a Legacy do migracji (NIE nowy kod)
-- `src/components/shared/StatusPill.tsx` + `src/constants/statusColors.ts` (`getStatusStyle`/`getPriorityStyle`) — stary system na palecie sprzed rebrandingu HBS. **~34 callerów** do migracji na rodzinę chipów `c.*`. Nie usuwać, dopóki callerzy nie zmigrowani; nie używać w nowym kodzie.
+- `src/components/shared/StatusPill.tsx` — **0 realnych importerów** w `src/` (metoda: import; jedyne trafienia to plik sam siebie i przykład w `StatusPill.README.md`, stan 2026-08-02). Kandydat do usunięcia, nie tylko migracji — do potwierdzenia osobnym ticketem.
+- `src/constants/statusColors.ts` (`getStatusStyle`/`getPriorityStyle`/`getTypeStyle` i inne eksporty) — stary system na palecie sprzed rebrandingu HBS. **5 callerów** (metoda: import — pliki importujące cokolwiek z `constants/statusColors`, stan 2026-08-02): `RoadmapKanban.tsx`, `ResultsInitiativesView.tsx`, `InterviewHub.tsx`, `ExecutionInitiativesKanbanView.tsx`, `PortfolioKanbanView.tsx`. (Uwaga: kilka innych plików — np. `DecisionDetailModal.tsx`, `DecisionsTimelineView.tsx`, `RelatedObjectPreview.tsx` — definiują LOKALNE funkcje o tej samej nazwie `getStatusStyle`/`getPriorityStyle`, niepowiązane z tym plikiem; nie liczą się jako callerzy). Nie usuwać, dopóki callerzy nie zmigrowani; nie używać w nowym kodzie.
 
 ### 2.2 Dług do konsolidacji (osobny ticket)
-- `ui/ResizableTable` (19 adopcji, m.in. My Work, Interview) i `FilterableTable` re‑implementują ten sam rdzeń (resize + filter dropdown). **Cel docelowy:** `FilterableTable` = jedyna powłoka, `ResizableTable` zredukowany do prymitywów (TableHeader/ColumnResizer/PreviewPaneShell). Do czasu konsolidacji: tabele już na `ResizableTable` muszą spełniać reguły §3–§7 (wygląd), nawet jeśli pod spodem inny komponent.
-- **Interview** ma 5 ręcznych `<table>` (świadoma decyzja, plik 8.9k linii). Traktujemy jako tymczasowy wyjątek: muszą spełniać §3–§7 wizualnie; migracja na FilterableTable = ostatnia faza.
+- `ui/ResizableTable` (m.in. My Work, Interview) i `FilterableTable` re‑implementują ten sam rdzeń (resize + filter dropdown). **Cel docelowy:** `FilterableTable` = jedyna powłoka, `ResizableTable` zredukowany do prymitywów (TableHeader/ColumnResizer/PreviewPaneShell). Do czasu konsolidacji: tabele już na `ResizableTable` muszą spełniać reguły §3–§7 (wygląd), nawet jeśli pod spodem inny komponent.
+- **Interview** ma **2 pliki z ręcznym `<table`** (metoda: JSX/składnia, `grep -rl "<table" src/components/Interview/`, stan 2026-08-02): `InsightViewer.tsx`, `QuestionsList.tsx`. Największy plik modułu, `InterviewHub.tsx`, ma **10 015 linii** (`wc -l`, stan 2026-08-02) i sam **nie zawiera** `<table` — orkiestruje resztę modułu. Traktujemy jako tymczasowy wyjątek: muszą spełniać §3–§7 wizualnie; migracja na FilterableTable = ostatnia faza.
 
 ---
 
@@ -133,7 +152,7 @@ Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notification
 **MUST:**
 - Checkbox: body `h-3.5 w-3.5`, select‑all `h-4 w-4`, wyciszony; w „premium" odsłania się na hover/focus, zaznaczone zawsze widoczne.
 - Hover: `hover:bg-slate-50/70 dark:hover:bg-white/[0.03]` (subtelny).
-- Selected: `bg-primary-500/8 dark:bg-primary-500/10` + 4px lewy akcent `primary` + inset ring. Hover nie nadpisuje akcentu selekcji.
+- Selected: `bg-slate-100 dark:bg-white/[0.08]` (neutralna powierzchnia) + 4px lewy akcent **`--c-info`** (niebieski, `shadow-[inset_4px_0_0_var(--c-info)]`) + `ring-1 ring-slate-300/60 ring-inset`. **Nigdy `primary-*`/crimson** — czyta się jak alarm, nie jak „aktywny" (`light-mode-readability.md` §3, SSOT `src/components/shared/selectionTokens.ts` `SELECTED_ROW_CLASS`). Hover nie nadpisuje akcentu selekcji.
 - **MUST NOT:** tło wiersza barwione statusem/priorytetem/kategorią. Status wyłącznie w pill wewnątrz komórki.
 
 ---
@@ -150,13 +169,13 @@ Wszystkie listy/indeksy encji: My Work (Ideas/Tasks/Decisions/Inbox/Notification
 | **success** | `--c-success` (HBS green) | pozytyw / done / on‑track | approved/completed, progres 100%, KPI on‑track |
 | **warning** | `--c-warning` (HBS amber) | uwaga / wkrótce / at‑risk | pending/in‑review, due‑soon, progres at‑risk |
 | **danger** | `--c-danger` (HBS red) | **ALARM** | overdue, error, blocked, rejected, delete — **i nic poza tym** |
-| **accent** | `--c-accent` (HBS crimson) | MARKA | primary CTA, aktywna selekcja — **nie** status/dane |
+| **accent** | `--c-accent` (HBS crimson) | MARKA | wyłącznie moment marki (np. Talk-to-Teresa) — **nie** status/dane, **nie** aktywna selekcja/stan UI (poprawione 2026-08-02 — patrz §3.5, `light-mode-readability.md` §3/§4) |
 
 **MUST:**
 - Czerwień (`danger`) **wyłącznie** dla realnego alarmu. **Nigdy** dla progresu, neutralnych dat, „w toku".
 - **Pozytywny stan końcowy ≠ `danger`.** Etap/status oznaczający sukces lub awans (np. idea→inicjatywa „Promoted", „Approved", „Shipped") **MUST NOT** używać `danger` — to czyta się jak błąd. Użyj `success` (pozytyw) lub `accent` (jeśli to stan markowy/wyróżniony, spójny z kropką sygnału tego etapu). Częsty błąd: „Promoted" pomalowany na czerwono bo ikona rakiety „wygląda alarmowo".
 - **Progres NIE jest czerwony** — neutralny/`info`, `success` @100%, `warning` tylko gdy moduł jawnie liczy „at‑risk".
-- Crimson (`accent`) = marka/CTA/selekcja; **nie** jako kolor danych (czyta się jak alarm).
+- Crimson (`accent`) = wyłącznie moment marki; **nie** jako kolor danych, **nie** jako CTA/selekcja/stan aktywny (czyta się jak alarm — poprawione 2026-08-02, patrz §3.5).
 - Domyślny stan komórki = neutralny; kolor dokładamy tylko, gdy niesie znaczenie.
 - **Test ekranu:** jeśli widać dużo czerwieni naraz → nadużycie `danger`, przejść na neutral/info/warning.
 
@@ -210,20 +229,38 @@ Wspólny shell `ChipBase`: `rounded-full border-c-border bg-c-surface-raised tex
 ## 7) Preview pane
 
 ### 7.0 Kanon podglądu — skrót (6 bloków, MUST)
-> Ten podrozdział to **jedyne** źródło prawdy dla „jak wygląda preview" — reużywalny standard, nie
-> opis per-moduł. Skill `consultify-preview` woła TEN kanon. Sześć bloków, góra→dół, kolejność sztywna
-> (pełne wartości/klasy w §7.1–§7.3b niżej):
+> **Anatomia — 6 obowiązkowych bloków, góra→dół — jest własnością `TRIADA_KANON.md` §A7**
+> (nadrzędny dla anatomii/wyglądu; patrz Status na górze tego pliku). Ta sekcja jest jej
+> rozwinięciem: mechanika, dokładne klasy, kontrakt danych i warianty przycisków (§7.3b) —
+> czego TRIADA nie opisuje. Skill `consultify-preview` woła oba dokumenty. Zweryfikowane w kodzie
+> (`src/components/standard/StandardPreview.tsx`, komentarze „Blok 1…6"): kolejność poniżej jest
+> bajt-w-bajt zgodna z implementacją (pełne wartości/klasy w §7.1–§7.3b niżej):
 
 | # | Blok | Co to jest | Szczegóły |
 |---|---|---|---|
-| 1 | **Nagłówek** | sticky, tytuł + pin/kopiuj + „Open" (JEDYNE Open w całym preview) + „×" | §7.3 pkt 1 |
+| 1 | **Nagłówek** | sticky, tytuł + pin + „Open" (JEDYNE Open w całym preview) + „×" | §7.3 pkt 1 |
 | 2 | **Meta** | pasek statusu/typu/daty/sesji — stan, nie treść | §7.3 pkt 2 |
 | 3 | **Treść (Details)** | centrum, scrollowalne, bogaty domyślny szablon, licznik słów, **kebab lokalny** (Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·Export·Pobierz) | §7.3 pkt 3 |
-| 4 | **What's-next / „Co dalej"** (create-strip) | tylko gdy encja jest źródłem cross-module; zwarty pasek `Dokumenty` / `W aplikacji`, ikona+hue = moduł docelowy | §7.3a, §7.3 pkt 4.3 |
-| 5 | **Akcje = pill** | `h-9 rounded-full`, przez `PreviewActionBar`+`actionPillClass()`; anty-duplikacja (nie dubluj Open/eksport) — opcjonalny, pomiń jeśli nic nie zostaje | §7.3b, §7.3 pkt 4.4 |
-| 6 | **Kebab lokalny ≠ kebab wiersza** | kebab z bloku 3 (Details) jest osobnym kontraktem od `RowActionsMenu` wiersza tabeli/karty (§9) — nie mylić ani nie duplikować pozycji | §7.3 pkt 3 vs §9 |
+| 4 | **AI** | ramka z chipami akcji AI (Podsumuj/Zasugeruj) dopasowanymi do encji — opcjonalna karta stopki | §7.3 pkt 4.1 |
+| 5 | **Relations** | klikalne pigułki powiązań albo „Brak powiązań" — opcjonalna karta stopki | §7.3 pkt 4.2 |
+| 6 | **Akcje = pill** | siatka 2 kolumny, `h-9 rounded-full`, przez `PreviewActionBar`+`actionPillClass()`; anty-duplikacja (nie dubluj Open/eksport) — opcjonalny blok, pomiń jeśli nic nie zostaje (TRIADA A7 pkt 6) | §7.3b, §7.3 pkt 4.3 |
 
-**MUST:** AI (chipy Podsumuj/Zasuguj) i Relations to osobne, opcjonalne karty stopki MIĘDZY blokiem 3 i blokiem 4 — pełna kolejność stopki: AI → Relations → Co dalej → Akcje (§7.3 pkt 4). Blok bez danych = **ukryty**, nie pusty box; kolejność obecnych bloków się nie zmienia.
+**Blok opcjonalny, POZA numeracją — „Co dalej" / What's-next (create-strip, ANEKS #4):** renderowany
+**PO bloku 6 (Akcje)**, na samym dole, tylko gdy encja ma zaimplementowaną konwersję na artefakt
+innego modułu (§7.3c). Zwarty pasek `Dokumenty` / `W aplikacji`, ikona+hue = moduł docelowy (§7.3a).
+Nie jest jednym z sześciu bloków TRIADY — TRIADA A7 go nie wymienia — dlatego stoi poza ich
+numeracją i nie przesuwa kolejności 1–6.
+
+**Kebab lokalny ≠ kebab wiersza:** kebab z bloku 3 (Details) jest osobnym kontraktem od
+`RowActionsMenu` wiersza tabeli/karty (§9) — nie mylić ani nie duplikować pozycji. §7.3 pkt 3 vs §9.
+
+**MUST:** AI i Relations to osobne, opcjonalne karty stopki między blokiem 3 i blokiem 6 — pełna
+kolejność stopki: **AI → Relations → Akcje → Co dalej** (opcjonalny, poza numeracją, na końcu;
+§7.3 pkt 4). Blok bez danych = **ukryty**, nie pusty box; kolejność obecnych bloków się nie zmienia.
+> Poprawione 2026-08-02: wcześniejsza wersja tej sekcji liczyła „Co dalej" jako blok 4 i „Akcje"
+> jako blok 5, stawiając „Co dalej" PRZED akcjami — sprzeczne z samym sobą (TL;DR mówił „sześć
+> bloków", diagram niżej pokazywał siedem stref) i z kodem (`StandardPreview.tsx` renderuje
+> `whatsNext` bezwarunkowo PO `actionRows`). Naprawione tutaj i w diagramie/§7.3 poniżej.
 
 **Pułapka #36 (rozstrzygnięta, Piotr 07-12 — D21):** przyciski akcji w podglądzie = **pill** (`rounded-full`), „taki jak Google i Apple" — NIE `rounded-lg`. SSOT klas: `src/components/shared/PreviewPane/previewStyles.ts` (`PREVIEW_PILL_BASE`). Każda nowa/edytowana akcja w stopce podglądu **MUSI** iść przez `PreviewActionBar`/`actionPillClass()` — zero bespoke `bg-*`/`rounded-lg` inline (poprzedni `rounded-lg` tutaj był regresją względem już ustanowionego kanonu pill z TRIADA_KANON.md A8/C9).
 
@@ -248,22 +285,37 @@ znalazły się cztery różne sztywne szerokości (320/360/420/460 px). Inwentar
 nie wykrył, bo badał anatomię stref (§7.3), a nie wymiary (§7.2). **Wymiar bez jednego źródła
 rozjeżdża się zawsze — nie jest to kwestia staranności autora ekranu.**
 
+**Weryfikacja w kodzie (2026-08-02):** `clamp(340px, 28%, 480px)` **istnieje i jest wdrożona** —
+to wartość SSOT-owego `src/components/shared/TableWithPreviewLayout.tsx:437,455`, tego samego
+komponentu, który §2 tego kanonu wskazuje jako orkiestrację tabela+preview (18 adopcji, JSX, 2026-08-02), oraz
+`FocusView.tsx`, `InboxContent.tsx`, `DecisionPreviewPanel.tsx`. **Ta sama wartość** figuruje w
+`TRIADA_KANON.md` §C9 — dwa dokumenty i SSOT komponent są tu zgodne, nie sprzeczne. `w-[420px]`
+w `src/components/MyWork/MyProjects.tsx:864,1084` **nie jest drugą, legalną wartością** — to
+dokładnie ten typ naruszenia, który zakaz wyżej (linia „Zakaz sztywnej szerokości… `w-[420px]`…")
+już nazywa po imieniu: ekran omija komponent i twardo koduje szerokość. Traktuj jako otwarty dług
+migracyjny (MyProjects.tsx → `TableWithPreviewLayout`/`StandardPreview`), nie jako dowód, że
+udokumentowana wartość jest zła. (`preview/drawer default 360px, zakres 320–420px` w
+`FOUNDATION_TOKEN_CONTRACT.md` §4 opisuje INNY element — generyczny panel boczny/drawer, nie
+preview pane wiersza tabeli z tego rozdziału.)
+
 ### 7.3 Anatomia — ŻELAZNY UKŁAD (góra→dół, MUST; SSOT: `PreviewPaneShell`)
 > **WZORZEC ZATWIERDZONY przez ownera 2026-06-07** na podglądzie Insight — referencja dla wszystkich
 > tabel. Kolejność jest sztywna i identyczna wszędzie. Strefa bez treści = ukryta (nie pusty box),
 > ale **kolejność obecnych stref się nie zmienia**.
 
 ```
-┌─ 1 HEADER (sticky)  tytuł · [📌/🔗] · [Open] · [X] ┐
+┌─ 1 HEADER (sticky)  tytuł · [📌] · [Open] · [X]     ┐
 │  2 META BAR         status · typ · sesje · data      │
 │  3 DETAILS (⋮)  ~N słów   OPIS — centrum, scroll    │  ⋮ = Copy · Copy prompt · Export · Download
 │     · · · · · · · · · · · · · · · · · · · · · · · ·  │
 │  4 AI               Podsumuj · Zasugeruj             │  stopka, space-y-2.5, bez dividerów
 │  5 RELATIONS        (jeśli są)                       │
-│  6 CO DALEJ         Dokumenty: … / W aplikacji: …    │  (create-strip, §7.3a)
-│  7 ACTIONS          OPCJONALNE — patrz niżej         │
+│  6 ACTIONS          OPCJONALNE — patrz niżej         │
+│  · CO DALEJ (poza numeracją, opcjonalny, na końcu)   │  Dokumenty: … / W aplikacji: … (§7.3a)
 └──────────────────────────────────────────────────────┘
 ```
+(kolejność zweryfikowana w `StandardPreview.tsx`: blok 6 „Akcje" renderuje się przed opcjonalnym
+`whatsNext` — „Co dalej" nigdy nie jest jednym z sześciu ponumerowanych bloków TRIADY.)
 
 1. **Header (sticky `top-0 z-10`)**: opcjonalny kicker „Preview" (11px uppercase) + tytuł encji (1 linia, truncate+tooltip, semibold) + **akcje right (kolejność lewa→prawa):**
    - **Ikona `Pin`** (lucide), `size-4`, icon-only ghost button — **ZAWSZE, w każdym preview**. Pin = schowaj w skrótach.
@@ -281,10 +333,10 @@ rozjeżdża się zawsze — nie jest to kwestia staranności autora ekranu.**
 
 3. **Details (treść — wypełnia centrum)**: nagłówek sekcji „Details" (overline) + **licznik słów po prawej** (`~N słów`, `text-[10px] text-slate-400`; widoczny gdy treść > 0 słów; ukryty w empty state) + **⋮ (tu żyją: Rozwiń/Zwiń · Kopiuj · Kopiuj prompt · Export do Tools · Pobierz)**; body scrollowalne `whitespace-pre-wrap`, line‑height 1.6–1.8, `p-4`. **MUST — bogaty domyślny szablon**: nie jednolinijkowy opis. Z automatu pokazujemy kluczowe pola encji (cel/zakres, kontekst, właściciel, daty, powiązania, postęp) — tyle, ile encja ma sensownie wypełnione. Pusto → empty state, nie blank. **Details NIGDY nie ustępuje miejsca przyciskom** — opis zostaje w środku, akcje schodzą na dół.
 4. **Stopka — KOLEJNOŚĆ SZTYWNA (MUST), góra→dół; karty z ramką, `space-y-2.5`, BEZ dividerów między nimi:**
-   1. **AI**: label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści → jest **najwyżej** w stopce, **nad** akcjami tworzenia.
-   2. **Relations** (jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
-   3. **„Co dalej" / create-strip (opcjonalny, gdy encja jest źródłem cross-module)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a.
-   4. **Actions (sticky dół) — OPCJONALNE, anty-duplikacja (MUST):** pasek pokazujemy **tylko dla akcji, których nie ma już gdzie indziej**. **NIE dubluj „Open"** — jest w nagłówku. **NIE dubluj eksportu/pobierania** — te należą do menu ⋮ przy „Details". Jeśli po odjęciu duplikatów nie zostaje żadna sensowna akcja → **pomiń cały pasek** (stopka kończy się na „Co dalej"). Gdy zostaje: pille `h-9 rounded-full`, primary→secondary→ghost, parytet z full view, destrukcyjne = confirm, **+ dolny padding, by globalny FAB („Zgłoś błąd") nie zasłaniał**.
+   1. **AI** (blok 4 TRIADY): label „AI" + ikona; chipy outline (`Podsumuj`, `Zasugeruj działania`); rozwijane bullety. AI asystuje treści → jest **najwyżej** w stopce, **nad** akcjami.
+   2. **Relations** (blok 5 TRIADY, jeśli są): **2 wiersze stałej wysokości** (`min-h-[4.5rem]`), pills klikalne (kolor typu w tekście, nie tło), „+N more".
+   3. **Actions** (blok 6 TRIADY — sticky dół) — OPCJONALNE, anty-duplikacja (MUST): pasek pokazujemy **tylko dla akcji, których nie ma już gdzie indziej**. **NIE dubluj „Open"** — jest w nagłówku. **NIE dubluj eksportu/pobierania** — te należą do menu ⋮ przy „Details". Jeśli po odjęciu duplikatów nie zostaje żadna sensowna akcja → **pomiń cały pasek**. Gdy zostaje: siatka 2 kolumny (`ActionGridRow`), pille `h-9 rounded-full`, parytet z full view, destrukcyjne = confirm, **+ dolny padding, by globalny FAB („Zgłoś błąd") nie zasłaniał**.
+   4. **„Co dalej" / create-strip — POZA numeracją TRIADY, opcjonalny, ZAWSZE na końcu (po bloku 6), gdy encja ma zaimplementowaną konwersję na artefakt innego modułu (§7.3c)**: ZWARTY pasek małych przycisków (`h-8 rounded-full`, ikona+label), pogrupowany **„Dokumenty / W aplikacji"**. **NIGDY wielkie karty w body.** (Insight: `ArtifactActionPanel variant="compact"`; `variant="full"` tylko w pełnej karcie.) Ikony+kolory wg §7.3a. Renderowany bezwarunkowo po `actionRows` w `StandardPreview.tsx` — nigdy przed akcjami.
 
 **Odstępy w stopce (MUST):** sekcje to samodzielne karty z ramką → **bez ciężkich linii-dividerów między nimi**; jeden spójny, minimalny rytm (`space-y-2.5` ≈ 10px). Dzielnik tylko tam, gdzie realnie rozdziela dwie różne logiki, nie między każdą kartą.
 
@@ -368,7 +420,7 @@ zakładka jest zgodna z §7.3?" **nie ma twardej odpowiedzi**, bo kanon opisuje 
 ale nie mówi, które strefy dana zakładka ma deklarować. Każda zakładka **MUSI** mieć wiersz w
 tabeli poniżej. Nowy ekran z preview bez wpisu = zgłoszenie niekompletne.
 
-**Reguła strefy „Co dalej" (zamyka opcjonalność z §7.3 pkt 4.3):** strefa jest **obowiązkowa
+**Reguła strefy „Co dalej" (zamyka opcjonalność z §7.3 pkt 4.4):** strefa jest **obowiązkowa
 wtedy i tylko wtedy, gdy encja ma zaimplementowaną konwersję na artefakt innego modułu**
 (istnieje realny handler tworzący Raport / Deck / Tabelę / Ideę / Notatkę / Inicjatywę).
 Sama przynależność do „source→destination" (§7.1) **nie wystarczy** — kryterium jest kod, nie
@@ -378,17 +430,26 @@ klasyfikacja. Encja bez konwersji: strefa **nieobecna**, nie pusta.
 wszystkie cztery zakładki My Work, a strefę miała jedna. Reguła, której nie da się sprawdzić
 w kodzie, nie jest regułą.
 
-| Zakładka | 2 META | 3 DETAILS ⋮ | 4 AI | 5 RELATIONS | 6 CO DALEJ | 7 AKCJE |
-|---|:--:|:--:|:--:|:--:|:--:|---|
-| My Work · **Ideas** | ✔ | ✔ | ✔ | ✔ | **✔ konwersja jest** | Konwertuj · Otwórz Flow |
-| My Work · **Inbox** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | rozstrzygnięcia → informacyjne → czas |
-| My Work · **Tasks** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | Dziś · Odłóż · Zrobione |
-| My Work · **Decisions** | ✔ | ✔ | ✔ | ✔ | ✖ brak konwersji | Zatwierdź/Odrzuć · Info/Deleguj · Czas |
+| Zakładka | 2 META | 3 DETAILS ⋮ | 4 AI | 5 RELATIONS | 6 AKCJE | CO DALEJ (poza numeracją) |
+|---|:--:|:--:|:--:|:--:|---|:--:|
+| My Work · **Ideas** | ✔ | ✔ | ✔ | ✔ | Konwertuj · Otwórz Flow | **✔ konwersja jest** |
+| My Work · **Inbox** | ✔ | ✔ | ✔ | ✔ | rozstrzygnięcia → informacyjne → czas | ✖ brak konwersji |
+| My Work · **Tasks** | ✔ | ✔ | ✔ | ✔ | Dziś · Odłóż · Zrobione | ✖ brak konwersji |
+| My Work · **Decisions** | ✔ | ✔ | ✔ | ✔ | Zatwierdź/Odrzuć · Info/Deleguj · Czas | ✖ brak konwersji |
 
 **Kolejność stref jest niezmienna** także wtedy, gdy strefa jest nieobecna — obecne strefy nie
-zamieniają się miejscami. Wpadka referencyjna: `IdeasTableContent.tsx:646-663` renderował
-AI → Relations → **Akcje → Co dalej**, czyli 6 i 7 zamienione, mimo że dwie linie wyżej
-komentarz cytował ten kanon. **Dowód, że proza nie egzekwuje — egzekwuje komponent.**
+zamieniają się miejscami. **Historia tej reguły (poprawiona 2026-08-02):** wcześniejsza wersja
+tej sekcji dokumentowała kolejność AI → Relations → Co dalej → Akcje i cytowała
+`IdeasTableContent.tsx:646-663` jako „wpadkę referencyjną", bo renderował AI → Relations →
+Akcje → Co dalej — „6 i 7 zamienione". Weryfikacja w SSOT-owym `StandardPreview.tsx`
+(`src/components/standard/`, implementacja TRIADA_KANON.md) pokazała, że to WCZEŚNIEJSZA wersja
+tego kanonu była błędna: `StandardPreview.tsx` renderuje `whatsNext` bezwarunkowo PO
+`actionRows` — dokładnie tak, jak wtedy krytykowany `IdeasTableContent.tsx`, i dokładnie tak,
+jak wynika z TRIADA_KANON.md §A7 (Akcje = blok 6; „Co dalej" nie jest jednym z sześciu
+ponumerowanych bloków). Kolejność w tym pliku została odwrócona, żeby zgadzać się z komponentem
+i z TRIADĄ. **Dowód, że proza nie egzekwuje — egzekwuje komponent** pozostaje prawdziwy; tylko
+wniosek poprzedniej wersji był odwrotny — to nie kod złamał kanon, to kanon nie nadążał za
+komponentem.
 
 ---
 
@@ -423,7 +484,7 @@ komentarz cytował ten kanon. **Dowód, że proza nie egzekwuje — egzekwuje ko
 - Layout: `flex flex-wrap gap-1.5 items-center`
 - Kolejność odznak: `[Źródło (System/Organization)]` → `[Status (Draft/Published/…)]` → `[Specjalna (Default/Featured)]`
 - Styl: `rounded-full text-[11px] font-medium px-2 py-0.5 border`
-- Kolory: System=slate, Organization=indigo, Published=emerald, Draft=amber, In review=sky, Default/Featured=rose/crimson
+- Kolory: System=slate, Organization=indigo, Published=emerald, Draft=amber, In review=sky, Default/Featured=**neutralny chip + kropka `--c-tag-*`** (`categoryTone()`, §4.0a) — **nie** rose/crimson (poprawione 2026-08-02: crimson = wyłącznie marka, „Featured" nie jest alarmem ani marką; „rose" był surowym, niesankcjonowanym kolorem poza formułą §4.0)
 - Brak danych = cała strefa ukryta (zero pustego wiersza)
 
 **Strefa 2 — Title (MUST):**
@@ -492,6 +553,13 @@ komentarz cytował ten kanon. **Dowód, że proza nie egzekwuje — egzekwuje ko
 
 ## 9) Row actions menu (⋮) — 3 strefy (góra kontekst / dół stały / danger)
 
+> **Hierarchia (dopisane 2026-08-02):** anatomia kebaba = `TRIADA_KANON.md` §A6 — **5 bloków**
+> w niezmiennej kolejności (nadrzędny dla tego, CO i ILE bloków). Ten dokument opisuje, JAK to jest
+> zbudowane mechanicznie w komponencie: 3 STREFY renderowane przez `RowActionsMenu` (GÓRA/DÓŁ/DANGER),
+> z których każda mieści jeden lub więcej bloków TRIADY — patrz mapowanie §9.1a. To nie jest trzeci,
+> konkurencyjny model: te same pozycje, opisane raz od strony „co widzi Piotr" (TRIADA), raz od
+> strony „jak to renderuje kod" (tu).
+
 **Zasada nadrzędna (decyzja ownera 2026-06-06):** menu ma **stały DÓŁ identyczny w każdej tabeli/zakładce** i **GÓRĘ kontekstową** (typową dla obszaru/statusu). Ręka trafia w to samo miejsce w każdym oknie. To musi być zweryfikowane, nie pozostawione przypadkowi.
 
 ### 9.1 Anatomia 3 stref
@@ -503,6 +571,21 @@ komentarz cytował ten kanon. **Dowód, że proza nie egzekwuje — egzekwuje ko
 | **DÓŁ — FIXED BOTTOM MANIFEST** | patrz §9.2 — lista ścisła, identyczna wszędzie | niezmienny niezależnie od statusu/roli/zakładki |
 | separator | — | auto |
 | **DANGER** | `Usuń` | zawsze ostatni, ton danger, confirm; brak endpointu → `disabled` z opisem „Wkrótce (backend)" (slot widoczny, nie pomijać) |
+
+### 9.1a Mapowanie 3 stref (ten dokument) ↔ 5 bloków TRIADY (A6)
+
+| Blok TRIADA A6 | Treść bloku | Strefa w tym dokumencie | Uwaga |
+|---|---|---|---|
+| 1. Wejście+domknięcie (zawsze) | View/Open + Complete/Done/Approve | **GÓRA — kontekst** | akcja domykająca (Approve/Complete/Fix) jest specyficzna dla statusu/roli wiersza → żyje w GÓRZE, nie w dole stałym; przykłady per moduł w §9.3 |
+| 2. Przejścia stanu (wg encji) | Task=To do/In progress/Blocked · Decyzja=Approve/Reject · Inbox=Focus→Today/This week/Later | **GÓRA — kontekst** | j.w. — to jest dokładnie treść „GÓRY" z §9.3 |
+| 3. Czas (encje z terminami) | Delay ▸ / Snooze-presety | **DÓŁ — FIXED BOTTOM MANIFEST, pozycja 4** (`Delay ▸`, §9.2) | jedyny blok TRIADY, który ten dokument trzyma w DOLE zamiast w GÓRZE: etykieta/ikona/submenu (`+1/+3/+7 dni`) są **stałe app-wide**, nie encjo-specyficzne — dlatego geometrycznie żyje obok Open/Edit/Archive. Warunek identyczny jak w TRIADZIE: tylko encje z `due_date` (slot pominięty, gdy brak) |
+| 4. Uniwersalny (ZAWSZE, identyczny app-wide) | Open preview · Edit · Archive | **DÓŁ — FIXED BOTTOM MANIFEST, pozycje 1–3** (§9.2) | niegotowe = `disabled` z dopiskiem, nigdy ukryte — identyczna reguła w obu dokumentach |
+| 5. Destrukcyjny (zawsze ostatni, oddzielony) | Delete/Reject, czerwony | **DANGER** | jedyna czerwień menu w obu dokumentach |
+
+**Co faktycznie egzekwuje komponent (`src/components/shared/RowActionsMenu.tsx`):**
+- Typy `RowActionSectionKind` = `'context' | 'open' | 'ai' | 'convert' | 'output' | 'manage' | 'danger'` — etykiety semantyczne dla sekcji; renderowane **w kolejności, w jakiej caller poda tablicę `sections`** (komponent NIE sortuje po `kind`) — kolejność 1→5 z tabeli wyżej jest więc odpowiedzialnością ekranu, nie automatem komponentu.
+- `visibleSections` (memo) filtruje z każdej sekcji akcje `hidden` oraz **atrapy** (`czyAtrapa()`) i **usuwa całą sekcję, jeśli po filtrze jest pusta** — stąd „pusta GÓRA = ukryta, bez pustego separator-only bloku" (§9.3) jest realnym zachowaniem komponentu, nie tylko regułą na papierze.
+- `czyAtrapa(action)`: pozycja wyłączona (`disabled`) i jej `description`/`rightLabel` pasuje do wzorca `/coming soon|wkrótce|wkrotce/i` → **znika z menu całkowicie** (funkcja jeszcze nie zbudowana — „obiecywanie" jej nie pomaga). Pozycja wyłączona z INNEGO powodu (np. `"AI-generated — read-only"`, `"Archive first"`, `"Safes are automatic — cannot be deleted"`) **zostaje widoczna, wyszarzona, z opisem** — uczy reguły produktu zamiast kłamać. Gdy po odsianiu atrap sekcja jest pusta, znika w całości (patrz `CANON.md`/`TRIADA_KANON.md` §C3).
 
 ### 9.2 FIXED BOTTOM MANIFEST — dokładna lista (MUST, w tej kolejności)
 
@@ -580,7 +663,28 @@ const sections: RowActionSection[] = [
 
 **Tier 2 (~16 plików):** Results/Finance/Benefits, Interview, Partner, Governance — jeśli kanon pokrywa ≥80% wzorca.
 
-**Faza końcowa:** Interview 5 ręcznych tabel → FilterableTable; konsolidacja `ResizableTable`→prymitywy; usunięcie martwych komponentów (§2.1).
+> **Weryfikacja kafelków Tier 1/Tier 2 (2026-08-02) — nie do zmierzenia automatycznie jednym
+> poleceniem, wymaga przeglądu ręcznego.** W przeciwieństwie do liczb w §2 (import/JSX jednego
+> nazwanego komponentu), te kafelki to **inwentarz ekranów** kwalifikowanych ręcznie wg §1.1
+> („czy to przeglądalna lista encji z akcjami") i §1.2 (co jest wyłączone), plus subiektywny
+> ranking ROI/ruchu — żaden pojedynczy grep tego nie odtwarza. Próba mechanicznego proxy
+> (pliki zawierające `<FilterableTable`/`<TableWithPreviewLayout`/`<GridView`/`ResizableTable`/`<table`)
+> dała: My Work 12 (nie 14; obejmuje `DecisionDetailView.tsx`/`TaskDetailView.tsx`, które są
+> widokami szczegółu, nie listami — do wykluczenia ręcznie), Assessment 10 (nie 15; obejmuje pliki
+> spoza zakresu §1.2 — `reports/templates/*ReportTemplate.tsx` to read-only dokumenty, `*AssessmentEditor.tsx`
+> to edytor macierzowy), Admin core — rozpiętość od 15 do **39** w zależności od tego, czy „Admin core"
+> obejmuje tylko `src/components/Admin/` czy też `src/views/superadmin/**` (SuperAdmin ma odrębny,
+> dużo większy moduł AI Platform/Revenue/Compliance, prawdopodobnie poza „core"). Trzy niezależne
+> proxy rozjechały się o 30–160% — dowód, że to nie jest fakt odczytywalny z kodu jednym poleceniem.
+> **Wartości `~44`/`14`/`15`/`15`/`~16` pozostają nietknięte jako ORIENTACYJNE (już oznaczone `~`
+> w tekście źródłowym), nie jako zweryfikowany fakt** — domknięcie wymaga ręcznego audytu ekran-po-ekranie
+> wg kryterium §1.1/§1.2, nie kolejnej próby grep. Nie wpływa to na kolejność faz (Faza 0 → Tier 1 → Tier 2 →
+> Faza końcowa) — to ranking priorytetów, nie bramka liczbowa.
+
+**Faza końcowa:** Interview **2** ręczne tabele → FilterableTable (nie 5 — poprawione 2026-08-02,
+zgodnie z już zweryfikowanym faktem w §2.2: `InsightViewer.tsx`, `QuestionsList.tsx`, metoda JSX,
+`grep -rl "<table" src/components/Interview/`); konsolidacja `ResizableTable`→prymitywy; usunięcie
+martwych komponentów (§2.1).
 
 **Poza migracją:** ~24 pliki (raporty/dokumenty read‑only + macierze + artefakty AI) — §1.2.
 
@@ -595,7 +699,7 @@ const sections: RowActionSection[] = [
 - [ ] Nagłówek `sticky top-0 z-10`, `text-[11px] uppercase tracking-wider`, `text-slate-500 dark:text-slate-400`; rodzic bez `overflow-hidden`.
 - [ ] Wyrównanie wg roli identyczne na każdej zakładce (tytuł left / metryki center / akcje right).
 - [ ] Gęstość `px-4 py-3`; wysokość wiersza stała na hover.
-- [ ] Wiersz monochromatyczny, separatory hairline, selected = `bg-primary-500/8` + 4px akcent; brak tła barwionego statusem.
+- [ ] Wiersz monochromatyczny, separatory hairline, selected = neutralna powierzchnia + 4px akcent `--c-info` (**nie** `primary`/crimson); brak tła barwionego statusem.
 - [ ] Status = `EntityStatusChip`/`statusChipTone()` (rodzina chipów `c.*`); brak hardcodowanych kolorów statusu, brak `StatusPill` w nowym kodzie.
 - [ ] Termin = jedna kolumna `DueChip` (nie DUE+OVERDUE).
 - [ ] Resize zero‑sum; szerokości + widoczność kolumn persystowane (`persistKey`).
@@ -789,14 +893,14 @@ Cel: każda tabela w aplikacji wygląda tak samo. Lock przez klasy Tailwind + to
 | Komórka (gęstość) | `px-4 py-3` (comfortable) / `px-4 py-2` (compact) |
 | Avatar w `AssigneeCell` | `h-6 w-6 text-[10px]` (sm) |
 | Kropka‑sygnał (`ChipDot`) | `h-1.5 w-1.5` (sm) |
-| Pasek progresu (`ProgressCell`) | track `h-1` (sm), fill `bg-c-accent` → `bg-c-success` @100% |
+| Pasek progresu (`ProgressCell`) | track `h-1` (sm), fill `bg-c-info` (w toku) → `bg-c-success` @100% — **nie** `bg-c-accent`/crimson (zgodnie z §4.3; poprawione 2026-08-02, ta tabela dotąd zaprzeczała §4.3 w tym samym pliku) |
 | Kebab hit | `h-8 w-8`, ikona pionowa |
 | Preview pane | `clamp(340px, 28%, 480px)`, separacja `gap-1.5`, bez `border-l` |
 
 ### 19.2 Powierzchnie i kolory (tokeny `c.*`)
 - Tło modułu: `bg-c-bg`. Karta tabeli/preview: `bg-c-surface` (lub `bg-white/70 dark:bg-navy-900/70`), border `border-c-border`, hairliny `border-c-border-subtle`.
 - Chip shell: neutralny `bg-c-surface-raised border-c-border text-c-text-secondary`; kolor wyłącznie jako sygnał (kropka/ikona) z `--c-success/warning/danger/info/accent`.
-- Selected row: `bg-c-accent-soft` + 4px lewy akcent `--c-accent`. Hover: subtelny lift, bez tła barwionego statusem.
+- Selected row: neutralna powierzchnia (`bg-slate-100 dark:bg-white/[0.08]`) + 4px lewy akcent **`--c-info`** (**nie** `--c-accent`/crimson — czyta się jak alarm, §3.5). Hover: subtelny lift, bez tła barwionego statusem.
 
 ### 19.3 Układ stref (layout grafik) — stała kolejność
 - **Menu 2 (góra):** [search ▸ taby] ………………………… [Filters · Views · Tool · CTA · Area] (od prawej).
@@ -909,7 +1013,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - **Per-stan wiersza:** otwórz kebab i preview dla wiersza w KAŻDYM statusie (draft/in-progress/submitted/approved/sent-back/archived) — akcje kontekstowe różnią się per status.
 - **Policz pozycje kebaba:** nie tylko „czy menu otwiera się" — policz pozycje w KAŻDEJ strefie (kontekst/stały/danger). Jeśli strefa stała ma <2 pozycji → FAIL.
 - **Policz przyciski bulk:** nie tylko „czy pasek jest" — jeśli po Clear jest 0 innych przycisków → FAIL.
-- **Preview stopka:** weryfikuj KOLEJNOŚĆ sekcji (AI → Relations → Co dalej → Actions). Sprawdzaj czy „Co dalej" to compact strip `h-8` (nie wielkie karty). Sprawdzaj czy jest drugi „Open" (FAIL jeśli tak).
+- **Preview stopka:** weryfikuj KOLEJNOŚĆ sekcji (AI → Relations → Actions → Co dalej, ten ostatni opcjonalny i zawsze na końcu). Sprawdzaj czy „Co dalej" to compact strip `h-8` (nie wielkie karty). Sprawdzaj czy jest drugi „Open" (FAIL jeśli tak).
 - **Selekcja:** zaznacz 1 i ≥2 wiersze → sprawdź pasek bulk. Zaznacz „select all".
 - **Screenshot przed/po** + zrzut DOM (lista nagłówków, lista itemów kebab/bulk) jako dowód w raporcie.
 - **Świeżość kodu:** `curl -s localhost:3000/src/.../Plik.tsx | grep -c <token>` (pułapka stale-cache Vite na dużych plikach); hard-reload przed weryfikacją.
@@ -995,7 +1099,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Brak ad‑hoc `max-w-[…]` na komórce tytułu/opisu (RC‑8); brak sprzecznych/zdublowanych klas Tailwind (RC‑10). §20
 - [ ] Brak zebry; separatory `divide-y` hairline. §3.1
 - [ ] 🔴 Tło wiersza NIGDY barwione statusem; status tylko w pill. §3.5
-- [ ] Hover subtelny; selected = `bg-primary-500/8` + 4px lewy akcent + ring; hover nie nadpisuje selekcji. §3.5
+- [ ] Hover subtelny; selected = neutralna powierzchnia + 4px lewy akcent `--c-info` + ring (**nie** `primary`/crimson); hover nie nadpisuje selekcji. §3.5
 - [ ] Checkbox `h-3.5 w-3.5`, quiet/reveal‑on‑hover; checked zawsze widoczny. §3.5
 
 ### H. Kebab (⋮) — 3 strefy (góra kontekst / dół stały / danger)
@@ -1018,7 +1122,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 - [ ] Header sticky: kicker+tytuł(1 linia,truncate)+**„Open" (jedyne w preview)**+„X". §7.3
 - [ ] 🔴 Details — **bogaty domyślny szablon** (cel/zakres/kontekst/właściciel/daty/powiązania), nie jednolinijkowy; pusto=empty state; **opis wypełnia centrum, nie ustępuje przyciskom**. §7.3
 - [ ] 🔴 **⋮ przy Details** = Rozwiń/Zwiń·Kopiuj·Kopiuj prompt·**Export do Tools·Pobierz** (eksport/pobieranie żyją TU, nie w dolnym pasku). §7.3 → `jak:` klik ⋮ przy nagłówku „Details" → lista zawiera Export + Pobierz; NIE ma ich w dolnym pasku Actions.
-- [ ] 🔴 **Żelazna kolejność stopki góra→dół: AI → Relations(jeśli są) → „Co dalej"/create-strip → Actions(opcjonalne).** AI **nad** create-strip. §7.3 → `jak:` scroll stopkę — pierwsza karta = AI; poniżej Relations (jeśli są); poniżej Co dalej; Actions (jeśli w ogóle) ostatnie.
+- [ ] 🔴 **Żelazna kolejność stopki góra→dół: AI → Relations(jeśli są) → Actions(opcjonalne) → „Co dalej"/create-strip (opcjonalny, zawsze na końcu).** AI **nad** akcjami. §7.3 → `jak:` scroll stopkę — pierwsza karta = AI; poniżej Relations (jeśli są); poniżej Actions (jeśli w ogóle); Co dalej (jeśli w ogóle) ostatni.
 - [ ] 🔴 **Odstępy stopki = `space-y-2.5` (~10px), BEZ dividerów między kartami z ramką.** §7.3 → `jak:` brak `<hr>` / `border-t` między kartą AI a „Co dalej"; gap ~10px.
 - [ ] 🔴 **Anty-duplikacja „Open":** w całym preview dokładnie **1 przycisk Open/Otwórz** (w nagłówku). Zero w stopce/Actions. → `jak:` grep/inspect całe drzewo preview po tekście „Open" / „Otwórz" — ma być dokładnie 1 trafienie. §7.3
 - [ ] 🔴 **Anty-duplikacja Export/Copy:** Export do Tools i Pobierz żyją wyłącznie w ⋮ Details. NIE ma ich w dolnym pasku Actions. → `jak:` inspect sekcja Actions — brak „Export", „Download", „Pobierz". §7.3
@@ -1033,7 +1137,7 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 ### K. Kolory (formuła sygnałów)
 - [ ] 🔴 Czerwień (`danger`) tylko realny alarm (overdue/error/blocked/rejected/delete). §4.0
 - [ ] 🔴 Test ekranu: brak „biało‑czerwieni"; progres/neutralne daty/„w toku" nie są czerwone. §4.0
-- [ ] Crimson (`accent`) tylko marka/CTA/selekcja, nie dane. §4.0
+- [ ] Crimson (`accent`) tylko moment marki; **nie** CTA/selekcja/stan aktywny, nie dane. §4.0 / §3.5
 - [ ] Tony: neutral/info/success/warning/danger wg znaczenia. §4.0
 
 ### L. Stany
@@ -1085,6 +1189,15 @@ Kanon jest **częściowo egzekwowalny dziś**. Komponenty SSOT istnieją, ale wy
 
 ## 27a) Light mode — kontrast chipów i Menu 3 (MUST)
 
+> **Poprawione 2026-08-02:** ta sekcja wcześniej przepisywała ACTIVE na `border-primary-500/60
+> bg-primary-500/15 text-primary-800` + inset `rgba(168,85,247,0.18)`. `rgba(168,85,247,…)` to
+> Tailwind `purple-500` — **fiolet, którego w produkcie nie ma** (`tailwind.config.js` `primary`
+> był violet, ale „was violet" — dziś `primary-*` = crimson `#85182F`, `tailwind.config.js:204`).
+> Czyli ta wersja kazała jednocześnie pomalować aktywny stan na fiolet, który nie istnieje w
+> palecie, I na crimson, zakazany jako stan UI (`CLAUDE.md` pułapka nr 1, §3.5, §4.0 wyżej).
+> Zweryfikowane w kodzie: `MENU_3_CHIP_ACTIVE` w `src/components/shared/ModuleMenu3.tsx` **nie
+> używa `primary-*` w ogóle** — jest neutralny. Sekcja niżej opisuje faktyczne klasy.
+
 Kanon tabel był pierwotnie tonowany pod DARK; w LIGHT tony bywały zbyt blade.
 Poniższe reguły kodyfikują wzmocnienie kontrastu w trybie jasnym. DARK pozostaje
 bez zmian — nigdy nie modyfikuj wariantów `dark:` ani wartości `.dark { … }`.
@@ -1096,34 +1209,43 @@ bez zmian — nigdy nie modyfikuj wariantów `dark:` ani wartości `.dark { … 
 - `--c-surface-raised` ma lekki tint (`#f8fafc`), aby chip odróżniał się od białego
   wiersza (`--c-surface` = `#ffffff`).
 - `--c-border-subtle` = `#e6e9ed` (hairline nadal subtelny, ale nie „wyprany").
+- `--state-selected` (`src/index.css:224`) = `color-mix(in srgb, var(--c-text) 8%, transparent)`
+  — neutralny tint na bazie koloru tekstu, **nie** akcentu marki. Nośnik stanu aktywny/selected.
 - Tony sygnałów (`--c-success/warning/danger/info`) i tagi (`--c-tag-*`) — bez zmian
   (już AA na białym; patrz §4.0).
 
-### Menu 3 — chipy nawigacyjne (`ModuleMenu3.tsx`)
-- INACTIVE (light): `border-slate-300 bg-slate-100 text-slate-700`,
-  hover `bg-slate-200 text-slate-900`. Czytelny obrys i tekst (nie `slate-200/60` +
-  `slate-600`).
-- ACTIVE (light): JEDEN kolor PRIMARY — `border-primary-500/60 bg-primary-500/15
-  text-primary-800` + inset `rgba(168,85,247,0.18)`. Mocniejszy fill i ciemniejszy
-  tekst niż dawne `/40 + /10 + text-primary-700`.
-- BADGE counters (light): INACTIVE `bg-slate-300 text-slate-700`;
-  ACTIVE `bg-primary-500/25 text-primary-800` — czytelne liczniki.
+### Menu 3 — chipy nawigacyjne (`ModuleMenu3.tsx`) — SSOT, klasy zweryfikowane w kodzie
+- INACTIVE (light): `MENU_3_CHIP_INACTIVE` = `border-slate-200 bg-transparent text-c-text-muted`,
+  hover `bg-state-hover hover:text-slate-900`.
+- **ACTIVE (light): NEUTRALNY, nie crimson/fiolet.** `MENU_3_CHIP_ACTIVE` = `border-slate-300
+  bg-state-selected text-slate-900` (dark: `border-white/30 dark:text-white`). Fokus =
+  `focus-visible:ring-2 focus-visible:ring-c-focus` (niebieski) na obu wariantach.
+- BADGE counters: `MENU_3_BADGE_INACTIVE` = `bg-slate-300 text-slate-700`; `MENU_3_BADGE_ACTIVE`
+  = `bg-slate-900/10 text-slate-900` (dark: `bg-white/15 text-white`) — neutralne, bez crimson.
 
-### Menu 3 — przyciski AI (`ModuleHub/menu3ActionButtonStyles.ts`) — unifikacja
-- Przyciski AI dzielą TĘ SAMĄ skorupę i JEDEN kolor active co chipy nawigacyjne
-  (PRIMARY), nie własny BLUE. Active = `bg-primary-500/15 text-primary-800
-  border-primary-500/60` + ten sam inset; INACTIVE = skorupa jak `MENU_3_CHIP_INACTIVE`.
-- Ikony zachowują swoje zróżnicowane kolory — standaryzujemy tylko skorupę przycisku,
-  nie kolor ikon.
+### Menu 3 — przyciski AI (`ModuleHub/menu3ActionButtonStyles.ts`) — stan faktyczny (nie „unifikacja")
+- **Stan faktyczny w kodzie różni się od wcześniejszego opisu tego kanonu.** Przyciski AI/
+  deterministyczne (`getMenu3AiButtonClass`, `getMenu3DeterministicButtonClass`) mają active =
+  `bg-sky-50 text-sky-800 border-sky-300` (dark: `bg-sky-500/10 text-sky-300 border-sky-500/30`)
+  — **niebieski (`sky`, sygnał „info/AI"), nie crimson, nie identyczny z `MENU_3_CHIP_ACTIVE`**
+  (który jest neutralnym `bg-state-selected`). Komentarz w pliku źródłowym twierdzi „matches
+  MENU_3_CHIP_ACTIVE" — to nieaktualne/mylące w kodzie, nie tylko w tym dokumencie; oba warianty
+  są dziś bezpieczne (żaden nie jest crimson), ale nie są identyczne. INACTIVE = `bg-slate-100
+  dark:bg-navy-800 text-slate-700 border-slate-300`.
+- Ikony zachowują swoje zróżnicowane kolory — skorupa przycisku jest tym, co ujednolicone.
 
 ### Reguła ogólna
 Naprawiaj kontrast w WARSTWIE WSPÓLNEJ (tokeny `c.*`, `ChipBase`, klasy Menu 3),
 nie per‑konsument — wtedy wszystkie tabele poprawiają się naraz. Każda zmiana light
-MUST mieć zachowany odpowiednik `dark:` (lub brak zmiany w dark).
+MUST mieć zachowany odpowiednik `dark:` (lub brak zmiany w dark). **Stan aktywny/CTA = neutralny
+lub `--c-info`/`sky` (sygnał), NIGDY `primary-*`/crimson ani `purple`/`violet`** (§3.5, §4.0,
+`TRIADA_KANON.md` §A10).
 
 ---
 
 ## 28) Related sources
+- `docs/ui-standards/TRIADA_KANON.md` — **nadrzędny dla anatomii/wyglądu** ekranu listowego (patrz Status na górze tego pliku)
+- `docs/ui-standards/CANON.md` — najwyższy autorytet całości dokumentacji UI/UX (§2 hierarchia prawdy)
 - `docs/ui-standards/03-modules/app-table-standard.md` (szczegóły anatomii)
 - `docs/ui-standards/03-modules/table-preview-pane-standard.md` (preview)
 - `docs/ui-standards/03-modules/view-modes-standard.md` (widoki)
@@ -1132,6 +1254,132 @@ MUST mieć zachowany odpowiednik `dark:` (lub brak zmiany w dark).
 - `docs/design-system/TABLES.md` (design‑system enforcement)
 - `docs/audit/2026-06-03/TABLE_GRAPHICS_ROOTCAUSE.md` (root‑cause bugów graficznych)
 - `docs/audit/2026-06-05/_IV_VISUAL_TABLE_PATTERN.md` (audyt 5 ręcznych tabel Interview)
-- Komponenty SSOT: `src/components/shared/TableWithPreviewLayout.tsx`, `src/components/shared/ModuleHub/{FilterableTable,GridView,TableSettingsPopover}.tsx`, `src/components/ui/primitives/chips/*` (rodzina chipów `c.*`), `src/components/ui/primitives/cells/{ProgressCell,AssigneeCell}.tsx`, `src/components/ui/ResizableTable/{index,TableHeader,PreviewPaneShell}.tsx`
+- Komponenty SSOT: `src/components/shared/TableWithPreviewLayout.tsx`, `src/components/standard/StandardPreview.tsx` (implementacja TRIADA — anatomia preview, kolejność bloków), `src/components/shared/RowActionsMenu.tsx` (kebab — sekcje/atrapy), `src/components/shared/selectionTokens.ts` (selekcja wiersza — neutral + `--c-info`), `src/components/shared/ModuleMenu3.tsx` (Menu 3 — `MENU_3_CHIP_*`), `src/components/shared/ModuleHub/{FilterableTable,GridView,TableSettingsPopover}.tsx`, `src/components/ui/primitives/chips/*` (rodzina chipów `c.*`), `src/components/ui/primitives/cells/{ProgressCell,AssigneeCell}.tsx`, `src/components/ui/ResizableTable/{index,TableHeader,PreviewPaneShell}.tsx`
 - Tokeny: `src/index.css` (`--c-*`) + `tailwind.config.js` (namespace `c`)
 - Legacy (migracja): `src/components/shared/StatusPill.tsx`, `src/constants/statusColors.ts`
+
+---
+
+## 29) Changelog
+
+### 2026-08-02 — panel adwersaryjny: poprawa czterech błędnych faktów o kodzie (§2.1/§2.1a/§2.2)
+Weryfikacja realnymi poleceniami (`find`, `grep -rln`, `wc -l`) po tym, jak panel adwersaryjny
+znalazł nieaktualne/błędne liczby konsumentów w §2. Metodologia liczenia dopisana przy każdej
+liczbie (import/JSX/wzmianka) — patrz też uwaga w §2.1a o trzech niekompatybilnych metodach.
+- **K-12 (§2.1):** `Admin/shared/EnhancedDataTable.tsx` — wpis wskazywał plik jako istniejący
+  („2 importery, 884 LOC"). W realu plik **nie istnieje** w `src/` (`find src -iname
+  "EnhancedDataTable*"` → 0 wyników); żyje wyłącznie jako martwa kopia pod
+  `.claude/worktrees/`, poza repo. Zamieniono na notę historyczną.
+- **K-13 (§2.1):** `Admin/shared/AdminTable.tsx` — zła ścieżka i zła liczba. Realna ścieżka:
+  `src/views/superadmin/components/shared/AdminTable.tsx`; realnie **1** importer
+  (`LLMManagementView.tsx`), nie 2.
+- **K-29 (§2.1a):** „`StatusPill.tsx` + `statusColors.ts` — ~34 callerów" było przeszacowane
+  ~7×. Rozbito na dwa realne fakty (metoda: import): `StatusPill.tsx` ma **0** realnych
+  importerów w `src/` (tylko własny plik i przykład w README — kandydat do usunięcia, nie tylko
+  migracji); `statusColors.ts` ma **5** callerów (`RoadmapKanban.tsx`, `ResultsInitiativesView.tsx`,
+  `InterviewHub.tsx`, `ExecutionInitiativesKanbanView.tsx`, `PortfolioKanbanView.tsx`). Uwaga
+  dodana: kilka innych plików definiuje lokalne funkcje o tej samej nazwie
+  (`getStatusStyle`/`getPriorityStyle`), niepowiązane z tym modułem — nie liczą się.
+- **K-30 (§2.2):** „Interview ma 5 ręcznych `<table>` (plik 8,9k linii)" — dwie złe liczby w
+  jednym zdaniu. Realnie (metoda: JSX/składnia) tylko **2** pliki w
+  `src/components/Interview/` zawierają surowy `<table` (`InsightViewer.tsx`,
+  `QuestionsList.tsx`); `InterviewHub.tsx` ma **10 015** linii (`wc -l`), nie 8,9k, i sam nie
+  zawiera `<table`.
+- **Dodatkowo znalezione przy przeglądzie całej sekcji §2 (nie w zgłoszeniu panelu):**
+  `ui/composed/DataTable.tsx` — wpis miał hedge „(jeśli istnieje)"; plik **istnieje**, ale ma
+  **0** realnych importerów (nie jest nawet wyeksportowany z barrelu `ui/composed/index.ts`,
+  tylko wspomniany w nieaktualnym przykładzie JSDoc) — hedge usunięty, fakt potwierdzony.
+  `shared/TablePresentationToggle.tsx` sprawdzony niezależnie: „0 importerów" **potwierdzone**
+  jako poprawne, bez zmian.
+- **Bez zmian (weryfikacja negatywna — sprawdzone i uznane za poprawne, celowo nietknięte):**
+  wszystkie ścieżki plików podane w backtickach w §2 (`FilterableTable.tsx`, `GridView.tsx`,
+  `TableSettingsPopover.tsx`, `ResizableTable/{TableHeader,index}.tsx`,
+  `primitives/cells/{ProgressCell,AssigneeCell}.tsx`) istnieją w `src/`. Liczby adopcji w
+  tabeli SSOT §2 (`TableWithPreviewLayout` 25, `FilterableTable` 24, `GridView` 8,
+  `ResizableTable` 19 itd.) oraz kafelki Tier 1/2 w §12 (Plan migracji) **nie były częścią zgłoszenia
+  panelu i nie zostały przeliczane w tym przebiegu** — do weryfikacji osobnym ticketem, jeśli
+  potrzebne.
+
+### 2026-08-02 — uzgodnienie z `TRIADA_KANON.md` + czyszczenie fioletu/crimson jako stanu UI
+- **Hierarchia:** rozstrzygnięto konflikt „dwóch jedynych źródeł prawdy" z `TRIADA_KANON.md`.
+  TRIADA nadrzędna dla anatomii/wyglądu (co, ile bloków, kolejność); ten plik nadrzędny dla
+  mechaniki, resize/persystencji, kontraktu danych i wariantów przycisków (§7.3b). Usunięto
+  nieaktualne odniesienie do `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` jako nadrzędnego — zastąpione
+  przez `CANON.md` §2 (całość) i `TRIADA_KANON.md` (anatomia list).
+- **Anatomia preview (§7.0/§7.3):** TL;DR i diagram nie zgadzały się ze sobą (6 bloków vs 7 stref)
+  ani z kodem. Zweryfikowano w `StandardPreview.tsx`: 6 bloków obowiązkowych (Header, Meta,
+  Details, AI, Relations, Actions — zgodnie z `TRIADA_KANON.md` §A7), „Co dalej"/What's-next jest
+  blokiem OPCJONALNYM poza numeracją, renderowanym PO bloku 6 (Akcje), nie przed nim. Poprawiono
+  tabelę skrótu, diagram ASCII, §7.3 pkt 4, §7.3c (deskryptor per zakładka) i wszystkie odsyłacze
+  w checkliście §27. Historyczna „wpadka referencyjna" (`IdeasTableContent.tsx`) okazała się
+  opisywać zachowanie zgodne z poprawną kolejnością — to wcześniejsza wersja tego kanonu była
+  błędna, nie kod.
+- **Kebab (§9):** dodano §9.1a — jawne mapowanie 3 stref tego dokumentu (GÓRA/DÓŁ/DANGER) na 5
+  bloków `TRIADA_KANON.md` §A6, plus opis tego, co faktycznie egzekwuje `RowActionsMenu.tsx`
+  (`RowActionSectionKind`, filtr `czyAtrapa`, chowanie pustych sekcji).
+- **Fiolet/crimson jako stan aktywny — usunięte:** §27a (Menu 3 ACTIVE) używało
+  `rgba(168,85,247,…)` (Tailwind `purple-500`, kolor nieobecny w produkcie) ORAZ `primary-500`
+  (crimson, zakazany jako stan UI). Zweryfikowano w kodzie: `MENU_3_CHIP_ACTIVE`
+  (`ModuleMenu3.tsx`) jest neutralny (`bg-state-selected`); przyciski AI/deterministyczne
+  (`menu3ActionButtonStyles.ts`) używają `sky` (info), nie „tego samego PRIMARY" jak wcześniej
+  twierdzono. Poprawiono §27a na faktyczne klasy z kodu.
+- **Selekcja wiersza (§3.5, TL;DR #7, §4.0, §13, §19.2, §27 pkt G):** `bg-primary-500/8` + „4px
+  lewy akcent primary/--c-accent" zastąpione neutralną powierzchnią (`bg-slate-100`) + 4px akcent
+  `--c-info` (niebieski), zgodnie z `src/components/shared/selectionTokens.ts` i
+  `light-mode-readability.md` §3 (token `surface-selected`, korekta SYS-1). GridView badge
+  „Default/Featured = rose/crimson" (§8.1) zamieniony na neutralny chip + kropkę `--c-tag-*`.
+  Przy okazji przeglądu znaleziono i poprawiono jeszcze jedno miejsce tej samej rodziny błędu:
+  §19.1 kazało paskowi progresu wypełniać się `bg-c-accent` (crimson) — sprzeczne z własnym §4.3
+  tego pliku („fill = info→success, nigdy danger/crimson"); zmienione na `bg-c-info`.
+- **Szerokość preview (§7.2) — WERYFIKACJA, BEZ ZMIANY WARTOŚCI:** sprawdzono w kodzie —
+  `clamp(340px, 28%, 480px)` jest wdrożona w SSOT-owym `TableWithPreviewLayout.tsx` i zgadza się
+  z `TRIADA_KANON.md` §C9. `w-[420px]` w `MyProjects.tsx` to znany, już zakazany przez ten sam
+  paragraf dług migracyjny (ekran omija komponent), nie dowód błędnej wartości w dokumencie.
+
+### 2026-08-02 — zamknięcie ticketu: przeliczone liczby adopcji §2 + kafelki Tier 1/2 §12
+Poprzednia rewizja (patrz wpis „panel adwersaryjny" wyżej) świadomie zostawiła nieprzeliczone
+liczby adopcji w tabeli SSOT §2 oraz kafelki Tier 1/Tier 2 w §12, bo jej sondy dały wyniki bliskie
+ale niepewne. Ten wpis zamyka ten ticket. Metodologia (jak w §2.1/§2.1a): **import** =
+`grep -rlE "from ['"].*<Nazwa>['"]" src/ | wc -l` (i jego wariant AST-świadomy dla importów
+wieloliniowych), **JSX** = `grep -rlP "<Nazwa\b" src/` z wykluczeniem generyków (`<NazwaProps`) i
+komentarzy JSDoc, **wzmianka** = `grep -rl "Nazwa" src/`.
+- **§2 tabela SSOT:**
+  - `TableWithPreviewLayout`: **25 → 18** (JSX). Import naiwny dawał 19 — różnica to
+    `Economics/financeTypes.ts`, który importuje wyłącznie typ `PreviewableItem`, nie komponent
+    (plik nie renderuje layoutu) — klasyczna pułapka „import ≠ realny konsument JSX".
+  - `FilterableTable`: **24 → 24, bez zmiany**, ale metodologia teraz jawna. Naiwny
+    `grep "<FilterableTable"` bez granicy słowa dał **26** — złapał `<FilterableTableProps>`
+    (generyk TypeScript) w kilku plikach oraz wzmiankę w komentarzu JSDoc
+    `useTableSelection.tsx:15`. Z granicą słowa (`\b(?!Props)`) i po odjęciu komentarza: 24,
+    zgodne z dotychczasową wartością.
+  - `GridView`: **8 → 8, bez zmiany**, potwierdzone. **Kolizja nazw potwierdzona i policzona
+    osobno**: `src/components/MyWork/table/GridView.tsx` (niepowiązany plik) ma własnych 4
+    importerów (`IdeaTableTool.tsx`, `PublicViewPage.tsx`, `ViewRouter.tsx`, test), które naiwny
+    `grep -rl "GridView"` myliłby z SSOT-ową kartą.
+  - **Chipy (`primitives/chips/*`): „2 (do podniesienia)" → 51 (import).** Największa korekta w tym
+    przebiegu — poprzednia wartość była zaniżona ~25×. Rodzina chipów jest dziś szeroko
+    zaadoptowana (My Work, Interview, Execution, Results, Reports, Partner, SuperAdmin), nie
+    nisko-adoptowana. Adnotacja „(do podniesienia)" usunięta jako nieaktualna; nota z uzasadnieniem
+    dodana bezpośrednio w wierszu tabeli §2. Osobno zmierzono węższy `EntityStatusChip` (komponent
+    wymagany przez §4.1 MUST): **31** (JSX).
+  - `TableSettingsPopover`: **5 → 5, bez zmiany**, potwierdzone (import, wliczając 1 plik testowy).
+  - **Prymitywy `ResizableTable`: 19 → 15 (import).** Barrel `index.tsx` re-eksportuje
+    `TableHeader`/`ColumnResizer`/`PreviewPaneShell`/`FilterDropdown` — liczone jako import z
+    dowolnej ścieżki zawierającej `ResizableTable`. „Wzmianka" (dowolne wystąpienie stringa) dała
+    16 — jeden plik (`NotebookLibraryContent.tsx`) tylko *wspomina* `ResizableTable` w komentarzu
+    o migracji, nie importuje go — wykluczony.
+- **§12 Plan migracji — kafelki Tier 1/Tier 2 (My Work 14, Assessment 15, Admin core 15, `~44`,
+  `~16`): NIE przeliczone na twarde liczby — udokumentowano jako inwentarz wymagający ręcznej
+  klasyfikacji, nie jako fakt odczytywalny jednym poleceniem.** Trzy niezależne mechaniczne próby
+  (grep po komponentach listowych w katalogach modułów) dały rozjazdy 30–160% względem
+  udokumentowanych wartości, głównie z powodu (a) plików spoza zakresu §1.2 wliczonych przez naiwny
+  grep (raporty, edytory macierzowe), (b) niejasnej granicy „Admin core" (`Admin/` vs `Admin/` +
+  `views/superadmin/**`, różnica 15 vs 39), (c) widoków szczegółu (`*DetailView.tsx`) mylonych z
+  listami. Wartości `~44`/`14`/`15`/`15`/`~16` pozostają jako ORIENTACYJNE (już oznaczone `~` w
+  źródle), z jawną notą w §12 tłumaczącą, dlaczego nie są (i nie mogą być) potwierdzone pojedynczym
+  poleceniem — zgodnie z zasadą „nie zgaduj, napisz wprost gdy nie da się zmierzyć".
+  - **Poprawiono za to jawną wewnętrzną sprzeczność** w tej samej sekcji: „Faza końcowa: Interview
+    5 ręcznych tabel" stało w sprzeczności z już zweryfikowanym faktem w §2.2 (K-30, ta sama
+    rewizja co wyżej) — realnie **2** pliki (`InsightViewer.tsx`, `QuestionsList.tsx`). Poprawione
+    na 2, bez nowego grepu — ponowne użycie już ustalonego faktu.
+- **Weryfikacja:** `npm run docs:links` → 0 martwych linków (patrz raport uruchomienia).

@@ -67,11 +67,32 @@ Spójny system znaczeń — identyczny w canvas, PDF i PowerPoint.
 Każda wizualizacja używa **jednego koloru akcentu** poza neutralną paletą slate/navy. Wyjątek: macierze sentymentu (muszą rozróżniać ≥3 wartości). Nigdy dwa jasne kolory akcentu w jednym bloku.
 
 **SSOT implementacji:** `src/index.css` — CSS custom properties `--c-success`, `--c-warning`, `--c-danger`, `--c-info`, `--c-accent` są autorytatywne. Hex'y w tabelach powyżej służą do identyfikacji wizualnej; w razie rozbieżności token CSS wygrywa. Dostęp przez Tailwind: `text-c-info`, `bg-c-danger/10`, `border-c-success` itd.
-Runtime mapping statusów: `src/services/statusColors.ts` → `getStatusStyle(status)`.
+Runtime mapping statusów: `src/constants/statusColors.ts` → `getStatusStyle(status)`.
 
 ---
 
 ## 12 typów bloków
+
+> **To jest słownik projektowy (design vocabulary), nie lista literalnych komponentów React.**
+> Zweryfikowano `grep -rl "<Nazwa>" src` dla każdej z 12 nazw poniżej (2026-08-02): żadna nie istnieje
+> jako samodzielny, nazwany komponent w `src/`. Renderowanie sekcji w `src/components/Interview/InsightViewer.tsx`
+> i `src/components/Initiatives/InitiativeDocumentView.tsx` to dziś bespoke JSX w jednym dużym `switch (section.id)`
+> — każdy `case` układa Tailwind ręcznie, zgodnie ze specyfikacją danego typu poniżej, ale bez pośredniego
+> komponentu o tej nazwie. „Typ bloku" = nazwa wzorca wizualnego (anatomia + klasy + reguły eksportu), który
+> ma być odtworzony w JSX-ie sekcji, nie typ do zaimportowania.
+>
+> Dwie realne warstwy komponentowe istnieją równolegle i **nie są z tym słownikiem tożsame**:
+> - `src/components/shared/NModeBlocks/` — 6 generycznych, faktycznie importowanych prymitywów UI
+>   (`Callout`, `ChecklistBlock`, `EmbeddedView`, `EmptyStateInline`, `InlineTable`, `ToggleBlock`;
+>   patrz `NModeBlocks/index.ts`), używanych jako cegiełki WEWNĄTRZ sekcji (np. `InsightViewer.tsx`
+>   importuje `Callout`, `EmptyStateInline`, `InlineTable`) — nie jeden-do-jednego z 12 typami niżej.
+> - `src/components/Initiatives/cards/cardBlockSchema.ts` + `CardBlockRenderer.tsx` — osobny,
+>   realny, schema-driven renderer z własnym słownikiem typów (`heading`, `paragraph`, `kpi_strip`,
+>   `bullet_list`, `table`, `chart`, `callout`), używany tylko dla podzbioru kart inicjatyw (F3/D11,
+>   4–6 „core" kart). Nie mylić z 12 typami poniżej — inna warstwa, inne nazewnictwo, inny zakres.
+>
+> Rozbieżność między dawną checklistą w § BLOK B3 (inne nazwy dla tych samych 12 pojęć) i tą listą
+> ujednolicono 2026-08-02 na rzecz tej listy — patrz nota przy B3 i Changelog.
 
 ---
 
@@ -98,7 +119,7 @@ Runtime mapping statusów: `src/services/statusColors.ts` → `getStatusStyle(st
 - Treść: L3, `max-w-prose` (nie łamie się zbyt wcześnie)
 - Cytat inline: Q level, poprzedzony `border-l-2 border-slate-300 dark:border-slate-600 pl-3 my-2`
 - Atrybucja cytatu: L5, `— Rola (bez imienia)`, po prawej stronie cytatu lub pod nim
-- Spacing między sekcjami prose: `gap-y-5`
+- Spacing między sekcjami prose: `gap-y-6` (24px, patrz zasada spacingu w § Reguły kompozycji wewnątrz SectionCard)
 
 #### Export
 
@@ -127,7 +148,7 @@ Runtime mapping statusów: `src/services/statusColors.ts` → `getStatusStyle(st
 #### Specyfikacja
 
 - Karta: `bg-slate-50 dark:bg-navy-800/60 rounded-lg border border-slate-200/60 dark:border-navy-700/50 p-3.5`
-- Hover: `hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-sm transition-all`
+- Hover: `hover:border-slate-300 dark:hover:border-navy-600 hover:shadow-sm transition-[border-color,box-shadow] duration-base` (180ms, scoped — nie `transition-all`)
 - Badge severity: mała pigułka, kolor z semantyki severity; `text-[10px] font-medium px-1.5 py-0.5 rounded-full`
 - Tytuł: L2
 - Opis: L4, `line-clamp-2`
@@ -173,7 +194,7 @@ Runtime mapping statusów: `src/services/statusColors.ts` → `getStatusStyle(st
 #### Specyfikacja
 
 - Kontener: `bg-white dark:bg-navy-850 rounded-lg border border-slate-200/70 dark:border-navy-700/50 p-4`
-- Lewy akcent (opcjonalny dla top quotes ★): `border-l-3 border-primary-400`
+- Lewy akcent (opcjonalny dla top quotes ★): `border-l-3 border-c-border` (neutralny — crimson zakazany jako akcent dekoracyjny)
 - Guillemets `❝`: `text-[28px] text-slate-200 dark:text-navy-600 leading-none mb-1 font-serif` (dekoracyjne, nie w tekście cytatu)
 - Treść cytatu: Q level, `leading-[1.7]`
 - Separator pod cytatem: `border-t border-slate-100 dark:border-navy-700/40 mt-3 pt-2`
@@ -382,7 +403,7 @@ Coverage │  75%   │  50%   │  25%   │  75%
 
 - Linia pionowa: `border-l-2 border-slate-200 dark:border-navy-700 ml-2`
 - Dot: `w-2 h-2 rounded-full bg-slate-300 dark:bg-navy-600 -ml-[5px] mt-1.5 flex-shrink-0`
-- Dot dla AI akcji: `bg-primary-400`
+- Dot dla AI akcji: `bg-teal-500 dark:bg-teal-400` (AI = teal wyłącznie, zgodnie z regułą kolorystyczną w BLOK C — zakaz crimson na jakimkolwiek AI affordance)
 - Timestamp: L5, `text-slate-400`, `min-w-[120px]`
 - Opis akcji: L4, `text-slate-600 dark:text-slate-400`
 - Sub-akcja (→): L5, wcięcie `pl-4`, kolor `text-slate-400`
@@ -443,7 +464,7 @@ Coverage │  75%   │  50%   │  25%   │  75%
 - Tytuł: L3 (nie semibold — to lista, nie nagłówek)
 - Metadane: L5, `text-slate-400`, separator `·`
 - Status badge: `SessionRow` używa status z semantyki (Source=blue, Exported=emerald, Draft=slate)
-- Link `→`: L5, `text-primary-500`, pojawia się na hover
+- Link `→`: L5, `text-slate-500 dark:text-navy-400` (neutralny — nie crimson), pojawia się na hover
 
 #### Export
 
@@ -492,14 +513,16 @@ SectionCard
 │   └── [✓ Mark Complete] button
 ├── separator: border-b border-slate-100 mb-4
 ├── Block 1 (np. L1 "NAGŁÓWEK" + ProseBlock)
-├── gap-y-5 między blokami
+├── gap-y-6 między blokami
 ├── Block 2 (np. LabeledCardGrid)
-├── gap-y-5
+├── gap-y-6
 └── Footer (opcjonalny)
     └── [+ Dodaj element] — ghost link, L4
 ```
 
-**Spacing wewnątrz karty:** `p-5` (20px padding). Między blokami: `gap-y-5` (20px). Między sub-elementami w bloku: `gap-y-2` lub `gap-y-3`.
+**Spacing wewnątrz karty:** `p-6` (24px padding, default) — `p-4` (16px) wyłącznie w gęstym/compact widoku (density compact). Wartości i nazewnictwo zgodne z `FOUNDATION_TOKEN_CONTRACT.md` §2: „padding karty: 16 px compact, 24 px default" — identyczne z BLOK F § SPACING McKinsey "air". Między blokami: `gap-y-6` (24px). Między sub-elementami w bloku: `gap-y-2` lub `gap-y-3`.
+
+> Wcześniej ten dokument podawał tu `p-5`/`gap-y-5` (20px) — sprzeczne z BLOK F (`p-6`/`gap-6`/`space-y-6`, 24px) niżej w tym samym pliku. 20px jest technicznie w skali 4px z §2 kontraktu tokenów, ale nie jest wartością przypisaną do „padding karty" — ujednolicono na 24px default / 16px compact, zgodnie z rozstrzygnięciem z 2026-08-02 (patrz changelog).
 
 **Zasada powietrza McKinsey:** każdy blok treści ma co najmniej 16px przestrzeni od następnego. Zagęszczenie = trudność czytania = stracony klient.
 
@@ -643,14 +666,18 @@ Pola pozostają **w pełni edytowalne.** Zero readonly, zero banerów ostrzegawc
 
 ### Persystencja
 
-Baza danych — nie localStorage. Lazy ALTER pattern (`DB_MANAGED_SCHEMA=off`):
+Baza danych — nie localStorage. Lazy ALTER pattern (`DB_MANAGED_SCHEMA=off`). Realny kod (nie uogólniony DDL) różni się między dwoma artefaktami:
 
-```sql
-ALTER TABLE insights    ADD COLUMN IF NOT EXISTS section_completions JSONB DEFAULT '{}';
-ALTER TABLE initiatives ADD COLUMN IF NOT EXISTS section_completions JSONB DEFAULT '{}';
-```
+- **Insighty** (`server/src/controllers/InterviewController.ts`, `ensureInsightSectionCompletionsColumn()`): tabela **`interview_insights`** (nie `insights`), kolumna **`TEXT`** (nie `JSONB`, string JSON). Existence sprawdzane najpierw przez `pg_attribute` (bez lock tabeli), dopiero potem `ALTER TABLE` — bez `IF NOT EXISTS`, bez `DEFAULT`:
+  ```sql
+  ALTER TABLE interview_insights ADD COLUMN section_completions TEXT
+  ```
+- **Inicjatywy** (`server/src/controllers/InitiativeController.ts`): tabela `initiatives`, kolumna również **`TEXT`**. Existence sprawdzane przez `getTableColumns()`, dopiero potem `ALTER TABLE` — również bez `IF NOT EXISTS`, bez `DEFAULT`; błąd „already exists"/„duplicate column" jest połykany w `try/catch` jako fallback:
+  ```sql
+  ALTER TABLE initiatives ADD COLUMN section_completions TEXT
+  ```
 
-Format: `{ "themes": true, "issues-risks": true }` — mapa `section_id → boolean`.
+Format: `{ "themes": true, "issues-risks": true }` — mapa `section_id → boolean`, zapisywana jako `JSON.stringify(...)` do kolumny TEXT.
 
 Rozszerzenie w przyszłości: osobna tabela `section_completion_log` z `completed_by` i `completed_at` gdy potrzebny audit trail.
 
@@ -863,7 +890,7 @@ Otwierasz widok i weryfikujesz każdy podsystem jako całość.
 □ ✓ badge pojawia się na sekcjach z completed=true
 □ Pasek postępu na dole: "completedCount / completableSections" widoczny
 □ Pasek postępu pojawia się TYLKO gdy ≥ 1 sekcja ma completed=true (showProgress guard)
-□ Pasek animuje się płynnie (transition-all duration-500)
+□ Pasek animuje się płynnie (transition-[width] duration-slow — 220ms max, scoped — nie `transition-all`/`duration-500`)
 □ Sidebar collapse działa poprawnie na < 1024px
 ```
 
@@ -903,21 +930,36 @@ Otwierasz widok i weryfikujesz każdy podsystem jako całość.
 
 **B3 — Typ bloku (12-type vocabulary)**
 
+> **Naprawiono 2026-08-02:** ta checklista miała wcześniej WŁASNY zestaw 12 nazw (RichText, LabeledCard,
+> BlockQuote, TagCloud, FileAttachment, CommentThread, ProgressRing, ScoreCard, SourcePack, Timeline…),
+> sprzeczny z kanonicznym słownikiem w § 12 typów bloków (ProseBlock, LabeledCardGrid, QuoteItem…) — dwa
+> konkurujące „kanony" w jednym pliku. Ujednolicono na jedną listę: nazwy poniżej = dokładnie 12 typów
+> z § 12 typów bloków (przeczytaj tam pełną anatomię + spec Tailwind + eksport przed code review).
+
 ```
-□ RichText:       edytor TipTap, toolbar (B/I/U/Link/List), auto-save na blur
-□ LabeledCard:    układa się w LabeledCardGrid (2-kol), badge opcjonalny
-□ MetricCard:     wartość + trend + źródło + delta (kolor: zielony/czerwony/szary)
-□ Timeline:       elementy z datą + ikoną stanu + body, sortowane chronologicznie
-□ DataTable:      sortowalne kolumny, pusty wiersz z CTA "Dodaj", nagłówki bold
-□ BlockQuote:     cytat + autor + timestamp + źródło (sesja lub dokument)
-□ TagCloud:       klikalne tagi, wrap, max visible + "+N więcej" overflow
-□ FileAttachment: lista plików (ikona · nazwa · rozmiar · data), upload CTA
-□ CommentThread:  threading 1-poziomowy, avatar, timestamp, edit/delete własnych
-□ ProgressRing:   wartość 0–100, kolor: < 30 red, 30–70 amber, > 70 green
-□ ScoreCard:      score + label + trend, kolor semantyczny
-□ SourcePack:     lista sesji/dokumentów z linkiem, "Pokaż wszystkie"
+□ ProseBlock:     L1 nagłówek + separator, treść L3 max-w-prose, cytat inline (border-l-2 + Q level)
+□ LabeledCardGrid: karta 2-kol grid, badge severity/status opcjonalny, hover scoped (border-color,box-shadow)
+□ QuoteItem:      guillemets dekoracyjne, treść Q level, atrybucja L5, ★ dla top quote
+□ DataTable:      zero pionowych linii, separator wierszy dashed, komórki numeryczne text-right tabular-nums
+□ StatusList:     status dot/pill wg semantyki statusów, opis L4 wcięty pod tytułem L2
+□ ScoreBar:       N (duża liczba) + progress bar (gradient red→amber→emerald) + skale L5
+□ HeatmapMatrix:  komórki ●/○ z bg wg obecności/sentymentu, summary row (coverage) wyróżniony
+□ MetricCard:     N + L4 jednostka + trend opcjonalny (↑ emerald / ↓ red)
+□ TimelineItem:   linia pionowa + dot (AI = teal wyłącznie), timestamp L5, opis L4
+□ FileCard:       ikona typu pliku per format, metadane L5, przyciski akcji ghost h-7
+□ SessionRow:     ikona typu sesji, metadane L5 z separatorem „·", link „→" na hover
+□ EmptyState:     ikona 24px + komunikat L3 + opis L4 opcjonalny + CTA — nigdy pusty div
 □ ZAKAZ typów "custom" / "generic-text" gdy istnieje właściwy typ z listy 12
 ```
+
+**Otwarte pytanie — nazwy z poprzedniej (usuniętej) listy bez odpowiednika w 12-type vocabulary:**
+`TagCloud`, `CommentThread`, `ProgressRing`, `ScoreCard`. Zero wystąpień w `src/` (grep, 2026-08-02) i zero
+w § 12 typów bloków. Kandydaci na przyszłość: `TagCloud` (tagi klikalne z overflow — brak dziś odpowiednika),
+`ProgressRing` (wariant kołowy `ScoreBar` — dziś tylko liniowy pasek), `ScoreCard` (możliwy duplikat
+`MetricCard`/`ScoreBar` — do rozstrzygnięcia, który jest właściwy), `CommentThread` (kanon mapowania kart,
+wiersz `comments` w § Mapowanie kart do typów bloków, już przypisuje `StatusList (wątkowe)` — więc
+`CommentThread` mógł być tylko synonimem, nie brakującym typem). Nie rozstrzygnięto greppem który wariant
+jest zamierzony — decyzja należy do właściciela produktu, nie do tej rewizji.
 
 **B4 — FieldAIButton (poziom pola)**
 
@@ -965,6 +1007,17 @@ Import: `import { FieldAIButton } from '@/components/shared/NModeLayout';`
      Wypełniane automatycznie przy tworzeniu artefaktu
      AI genesis nie blokuje — użytkownik edytuje natychmiast po wygenerowaniu
      Spinner / skeleton widoczny podczas genesis (nie pusty ekran)
+
+     ⚠ **Świadoma luka (CANON.md §3.2):** ten dokument opisuje tylko widoczny
+     efekt genesis (spinner/skeleton, brak blokady edycji). NIE rozstrzyga:
+     idempotency retry (co jeśli użytkownik odświeży/dubluje request w trakcie
+     generowania), partial failure (część sekcji wygenerowana, część padła),
+     resume po odświeżeniu strony w trakcie genesis, ani Save draft/Cancel dla
+     samego kroku generowania. Pełny kontrakt wizarda/generatora — zgodnie z
+     `CANON.md` §8 i `UI_UX_IMPLEMENTATION_STANDARD.md` §8 — mieszka w
+     `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md` (kontrakt generatora).
+     Nie traktować milczenia w tym miejscu jako "brak wymogu" — temat jest
+     świadomie nierozstrzygnięty tutaj, nie pokryty.
 
 □ MARK COMPLETE (AI signal):
      Kliknięcie zapisuje section_completions w DB (nie tylko w stanie UI)
@@ -1049,11 +1102,11 @@ Import: `import { FieldAIButton } from '@/components/shared/NModeLayout';`
      Caption / meta:         text-xs text-slate-500 dark:text-slate-400
      Zakaz: text-xl, text-3xl, font-extrabold poza MetricCard value
 
-□ SPACING McKinsey "air":
+□ SPACING McKinsey "air" (jedyna skala — patrz też § Reguły kompozycji wewnątrz SectionCard):
      gap-6 między kartami w sekcji
      space-y-6 wewnątrz sekcji (NModeSectionWrapper default)
-     p-6 padding kart i paneli
-     Zakaz: gap-2, gap-4 tam gdzie spec mówi gap-6
+     p-6 padding kart i paneli (default 24px; p-4/16px wyłącznie w density compact)
+     Zakaz: gap-2, gap-4 tam gdzie spec mówi gap-6; zakaz p-5/gap-y-5 (20px) — nie jest wartością „padding karty" wg `FOUNDATION_TOKEN_CONTRACT.md` §2
 
 □ GRADIENTY:
      Dozwolony: bg-gradient-to-br na głównym kontenerze widoku (tło)
@@ -1091,3 +1144,15 @@ Import: `import { FieldAIButton } from '@/components/shared/NModeLayout';`
 - [Canon inicjatyw](./INITIATIVE_CANON.md) — mapowanie bloków do kart inicjatyw
 - [Canon insightów](./INSIGHT_CANON.md) — mapowanie bloków do kart insightów
 - [TABLE_AND_PREVIEW_CANON.md](./TABLE_AND_PREVIEW_CANON.md) — standard list i tabel w widokach hub
+
+---
+
+## Changelog
+
+| Data | Zmiana |
+|------|--------|
+| 2026-08-02 | **Panel adwersaryjny — 4 defekty naprawione (K-08…K-11).** K-08: zła ścieżka SSOT statusów `src/services/statusColors.ts` → poprawiona na realną `src/constants/statusColors.ts` (§ Fundament — Semantyka kolorów). K-09: DDL `section_completions` w § Persystencja poprawiony na zgodny z realnym kodem — tabela `interview_insights` (nie `insights`), kolumna `TEXT` (nie `JSONB`), bez `IF NOT EXISTS`/`DEFAULT`, osobno opisane `InterviewController.ts` i `InitiativeController.ts` (różne strategie sprawdzania istnienia kolumny). K-10: poprzedni wpis changelogu o naprawie motion Left Nav przeformułowany — kłamał, że zmieniono kod; naprawiono tylko specyfikację, `NModeLeftNav.tsx:470` nadal ma `transition-all duration-500` (otwarty dług, patrz wpis niżej). K-11: dwie sprzeczne listy „12 typów bloków" (§ 12 typów bloków vs BLOK B3) ujednolicone na jedną — § 12 typów bloków jako kanoniczna, z jawną notą że to słownik projektowy (żaden z 12 nie istnieje jako nazwany komponent w `src/`; realne warstwy komponentowe to `NModeBlocks/` i `cardBlockSchema.ts`/`CardBlockRenderer.tsx`, obie inne i nietożsame). BLOK B3 przepisany na te same 12 nazw; cztery nazwy z usuniętej listy (`TagCloud`, `CommentThread`, `ProgressRing`, `ScoreCard`) bez odpowiednika oznaczone jako otwarte pytanie z listą kandydatów, nie rozstrzygnięte. Weryfikacja: patrz zlecenie z panelu adwersaryjnego (K-08…K-11), każdy punkt sprawdzony poleceniem `grep`/odczytem kodu. |
+| 2026-08-02 | **Motion — poprzedni wpis poprawiony (nieprawdziwy: sugerował naprawę kodu).** Ta rewizja zmieniła wyłącznie **specyfikację w tym dokumencie** (agent miał zakaz dotykania `src/`): `LabeledCardGrid` hover-spec i pasek postępu Left Nav (A4) w tekście kanonu dostały docelowe klasy `transition-[border-color,box-shadow] duration-base` (180ms) / `transition-[width] duration-slow` (220ms max) zamiast `transition-all`/`duration-500`. **Runtime nie został tknięty**: `src/components/shared/NModeLayout/NModeLeftNav.tsx:470` nadal ma `transition-all duration-500` (zweryfikowano `grep -n "transition" NModeLeftNav.tsx`, 2026-08-02) — to jest **otwarty dług**, nie naprawiony bug. `LabeledCardGrid` jako taki nie ma literalnego odpowiednika w `src/` (patrz § 12 typów bloków — nota o realnym słowniku), więc dla niego zmiana też jest czysto specyfikacyjna. `npm run lint:motion:ci` (`server/scripts/check-motion-compliance.ts`) istnieje i liczy globalny dług (`docs/ui-standards/.motion-baseline.json`), ale nie potwierdza naprawy tego konkretnego miejsca. |
+| 2026-08-02 | **Ujednolicona skala odstępów.** Usunięto sprzeczność między § Reguły kompozycji wewnątrz SectionCard (dawniej `p-5`/`gap-y-5`, 20px) a BLOK F (`p-6`/`gap-6`/`space-y-6`, 24px). Rozstrzygnięcie: padding karty = 24px default (`p-6`) / 16px compact (`p-4`), zgodnie z `FOUNDATION_TOKEN_CONTRACT.md` §2. `ProseBlock` spacing między sekcjami: `gap-y-5` → `gap-y-6`. |
+| 2026-08-02 | **Usunięty crimson jako akcent.** Trzy wystąpienia `primary-*` w roli dekoracyjnej/stanu, nie marki: `QuoteItem` lewy akcent top quote `border-primary-400` → `border-c-border` (neutralny); `TimelineItem` dot AI akcji `bg-primary-400` → `bg-teal-500 dark:bg-teal-400` (AI = teal wyłącznie); `SessionRow` link `→` `text-primary-500` → `text-slate-500 dark:text-navy-400` (neutralny). `primary-*` = crimson `#85182F`, dozwolony wyłącznie jako znak marki / Talk-to-Teresa / semantyka destrukcyjna — nigdy jako fokus/stan aktywny/akcent. |
+| 2026-08-02 | **Oznaczona świadoma luka kontraktu generatora.** Sekcja GENESIS (BLOK C) uzupełniona notą: ten dokument nie rozstrzyga idempotency retry, partial failure, resume po odświeżeniu ani Save draft/Cancel dla kroku generowania — zgodnie z `CANON.md` §3.2 („Luka w standardzie = oznaczona jawnie… nie wypełniana nowym samowolnym plikiem"). Pełny kontrakt wizarda/generatora (`CANON.md` §8, `UI_UX_IMPLEMENTATION_STANDARD.md` §8) mieszka w `Harvard/wdrozenie-100/ARTIFACT_ANATOMY_STANDARD.md`. |

@@ -1,5 +1,5 @@
 # DOKTRYNA GĘSTOŚCI — kanon użycia przestrzeni UI (SSOT)
-**Status: DRAFT do akceptu Piotra (2026-07-11).** Po akcepcie → skill `consultify-gestosc` + hook `check-gestosc.sh`.
+**Status: APPROVED_SPEC (2026-08-02).** Doktryna jest kanoniczną podstawą oceny gęstości; automatyczne egzekwowanie wymaga osobnego zadania implementacyjnego.
 Siostra `TRIADA_KANON.md` (kolory/tabele) i `ARTIFACT_ANATOMY_STANDARD.md` (artefakty). Tamte mówią JAK ma wyglądać; ta mówi ILE i GDZIE — czyli jak nie zamienić bogatego programu w ścianę elementów.
 
 ---

@@ -1,7 +1,7 @@
 # ★★★ BRAND EXPORT CANON — jeden standard eksportów dokumentów-do-klienta (PPTX · DOCX · XLSX · PDF)
 
-> **Status: DRAFT do akceptu Piotra (bramka B-P5, Vegas Faza 3 / VF3-1).** Nie wdrożone w kodzie — to jest
-> SSOT-do-zatwierdzenia, tak jak `TRIADA_KANON.md` był dla list i `ARTIFACT_ANATOMY_STANDARD.md` dla artefaktów,
+> **Status: APPROVED_SPEC (bramka B-P5 zamknięta 2026-08-02).** Nie wdrożone jeszcze w pełni w kodzie — to jest
+> zatwierdzone SSOT, tak jak `TRIADA_KANON.md` dla list i `ARTIFACT_ANATOMY_STANDARD.md` dla artefaktów,
 > zanim je wdrożono. Kod generatorów (PptxPipelineService/DeckStyler/WorkbookStyler/documentDocxStyles/
 > documentPdfRenderer/reportPdfService) **nie zmienia się w tym kroku** — konwergencja do tego kanonu to
 > zadania VF3-2/3/4 (osobne kroki, osobne gałęzie).
@@ -362,30 +362,18 @@ lub nad wykresem (nie w rogu nachodząc na słupki).
 
 ---
 
-## §11. Decyzje wymagane od Piotra (bramka B-P5, przed VF3-2/3/4)
+## §11. Decyzje MVP — zatwierdzone 2026-08-02
 
-- **D1 — Fonty:** czy ryzykować 5 par z `FORMATTING_FONT_LIBRARY` (Google Fonts bez embeddingu, fallback
-  Office po cichu podstawi inny font) — czy (a) zawęzić domyślne motywy do fontów Office-native
-  (Calibri/Georgia/Arial/Times/Aptos — 0 ryzyka podstawienia), (b) zainwestować w font embedding w
-  pptxgenjs/docx (możliwe technicznie, koszt dodatkowy), albo (c) zaakceptować ryzyko świadomie (PowerPoint
-  substytuuje sensownie w 90% przypadków, degradacja kosmetyczna nie funkcjonalna).
-- **D2 — Dwa pipeline'y PPTX:** czy report/pptx (#2, starszy, Report Builder) i deliverables (#1, Materiały)
-  mają się scalić w JEDEN generator PPTX (rekomendowane — jeden kod, jeden wygląd, mniej długu), czy mają
-  zostać dwoma świadomie różnymi produktami (np. #2 = szybki wewnętrzny raport, #1 = deliverable klienta) —
-  jeśli to drugie, ten kanon musi jasno rozgraniczyć KIEDY którego użyć (dziś nie rozgranicza, oba wołane
-  z tego samego runtime `bundleExportRuntime.ts`/`spineToUnifiedReport.ts`, co wygląda na przypadkową
-  koegzystencję, nie świadomy podział).
-- **D3 — Status Report PDF (M14):** czy to ma dołączyć do wspólnego motywu (navy/teal + 5-motyw-registry),
-  czy zostaje świadomie odrębnym, „operacyjnym" wyglądem (argument za: to nie deliverable-do-klienta per se,
-  tylko wewnętrzny status raport — ale grep pokazuje, że trafia do audit trail, więc MOŻE być widziany przez
-  klienta/sponsora).
-- **D4 — Dokładne hexy statusu/RAG:** ujednolicić na `--c-success/--c-warning/--c-danger/--c-info` z UI
-  (`#026833`/`#ae6429`/`#e80538`/`#3b2883`) czy zostawić osobną, „bezpieczniejszą do druku" wersję (obecne
-  hexy w #1-4 są bliższe klasycznym web-safe RAG niż HBS-owe tokeny UI, które są dość ciemne/nasycone —
-  możliwe że do druku/projekcji potrzebna jaśniejsza wersja; do zdecydowania z próbką druku, nie zgadywania).
-- **D5 — Metadane pliku:** czy `creator` ma być zawsze „Consultify", czy ma nieść nazwisko konsultanta
-  prowadzącego projekt (dane osobowe w metadanych pliku wysyłanego do klienta — decyzja polityki, nie
-  techniczna).
+- **D1 — Fonty:** MVP używa par Office-native, w pierwszej kolejności Aptos/Arial/Georgia. Nie uzależniamy
+  poprawnego renderu od embeddingu Google Fonts. Rozbudowane fonty marki mogą wrócić po MVP.
+- **D2 — Pipeline PPTX:** oba pipeline'y konwergują do jednego generatora i jednego systemu motywów.
+  Starsza ścieżka może istnieć wyłącznie jako adapter migracyjny, nie drugi produkt wizualny.
+- **D3 — Status Report PDF:** dołącza do wspólnego motywu Consultify/DBR77. Różnica operacyjna może zmienić
+  gęstość i układ, ale nie markę, typografię ani semantykę statusów.
+- **D4 — Status/RAG:** używamy wspólnej semantyki tokenów UI oraz zatwierdzonych wariantów print-safe
+  wyprowadzonych z tych tokenów. Nie utrzymujemy niezależnych znaczeń kolorów w generatorach.
+- **D5 — Metadane:** `creator=Consultify`; bez nazwiska konsultanta i innych danych osobowych w metadanych.
+- **D6 — Branding:** w MVP wyłącznie Consultify/DBR77. Branding klienta i white-label pozostają poza MVP.
 
 ---
 
@@ -393,4 +381,5 @@ lub nad wykresem (nie w rogu nachodząc na słupki).
 
 | Data | Zmiana |
 |---|---|
+| 2026-08-02 | Bramka B-P5 zamknięta. Zatwierdzono branding Consultify/DBR77, fonty Office-native, jeden pipeline PPTX, wspólny motyw PDF, wspólną semantykę RAG i metadane bez danych osobowych. |
 | 2026-07-19 | Utworzony (VF3-1, worker-vf3-brand). Status: DRAFT do akceptu Piotra (bramka B-P5). Realny stan §0 zweryfikowany grepem 151 plików + czytaniem 5 systemów stylowania. |

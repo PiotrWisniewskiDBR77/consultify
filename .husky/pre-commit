@@ -94,4 +94,24 @@ if [ -n "$STAGED_AKCJE" ]; then
   fi
 fi
 
+# 8) Fokus crimson (CLAUDE.md "Pułapka nr 1": `primary` w tailwind = crimson
+#    #85182F, fokus MUSI iść przez `c-focus`; SSOT docs/ui-standards/TRIADA_KANON.md:167).
+#    Dług mierzy scripts/check-focus-canon.sh, ratchet względem
+#    docs/ui-standards/.focus-baseline.json — blokuje TYLKO wzrost długu
+#    ponad baseline, nigdy stan zastany. Do 2026-08-02 skrypt istniał, ale
+#    nie był wpięty NIGDZIE (panel adwersaryjny, finding K-23) — czysty
+#    teatr zgodności. Odpala się tylko gdy commit dotyka .ts/.tsx w src/.
+STAGED_FOCUS=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null | grep -E '^src/.*\.(ts|tsx)$')
+if [ -n "$STAGED_FOCUS" ]; then
+  if ! bash scripts/check-focus-canon.sh --ci; then
+    echo "" >&2
+    echo "  ⛔ Commit zablokowany: dlug fokusa crimson (ring-primary-*) wzrosl ponad baseline," >&2
+    echo "     albo naruszenie siedzi w pliku nieśledzonym (git add go, gdy naprawisz)." >&2
+    echo "     SSOT: CLAUDE.md UI pkt 1, docs/ui-standards/TRIADA_KANON.md:167. Zamien na" >&2
+    echo "     ring-c-focus/outline-c-focus, albo swiadomie zaktualizuj baseline:" >&2
+    echo "     bash scripts/check-focus-canon.sh --update-baseline" >&2
+    exit 1
+  fi
+fi
+
 exit 0

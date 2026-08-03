@@ -1,0 +1,6 @@
+{
+  "_comment": "Baseline dlugu focus-canon (ring-primary-*/outline-primary-* zamiast ring-c-focus). Ratchet: liczby moga tylko malec. Aktualizuj W DOL po kazdej naprawie. NIGDY w gore. Zob. docs/ui-standards/_DOC_CODE_DELTA_REGISTER.md D-01.",
+  "_generated": "2026-08-02",
+  "violation_files": 136,
+  "violation_occurrences": 269
+}

@@ -1,12 +1,16 @@
 # DBR77 Visual Language Standard (KANON)
 
-> **Wersja:** 2.1 — "DBR77 Tech Sexy 2027" Edition  
-> **Data:** 2026-05-01  
+> **Wersja:** 3.0 — "Crimson = marka, nie interakcja" Edition  
+> **Data:** 2026-08-02  
 > **Status:** OBOWIĄZUJĄCY  
 > **Cel:** Jedna, spójna "warstwa wizualna" dla całej aplikacji (kolory, tła, ramki, typografia, spacing, depth, motion) – niezależnie od modułu i niezależnie od trybu prezentacji detail view.  
 > **Lokalizacja:** `docs/ui-standards/00-foundation/visual-language.md`
 >
+> **Changelog v3.0 (naprawa po zmianie palety):** Po re-poincie `primary/*` na Harvard Crimson (`#85182F`) ten dokument w kilku miejscach nadal kazał używać `primary/*` jako koloru CTA/aktywnego stanu/focusa/selekcji — co dziś oznacza crimson tam, gdzie crimson jest zakazany (§2.1, §8.2, §8.3, §9.3, §10.2, §11.2). Naprawione: `primary/*` = wyłącznie akcent marki (Talk-to-Teresa) + destrukcja; CTA modułu = navy; **focus ma własny token `--c-focus`/`--c-focus-solid` (niebieski)**, nigdy crimson; stan aktywny/zaznaczony = neutralny (`bg-state-selected` / `selectionTokens.ts`), nigdy crimson. Motion §9.1 ujednolicone do ≤220ms (`slow` był 240–320ms — przekraczał twardy limit `FOUNDATION_TOKEN_CONTRACT.md` §9). Dopisano `FOUNDATION_TOKEN_CONTRACT.md` i `src/index.css` `--c-*` do §1 jako źródła prawdy. Skorygowano hex `navy-950` w §3.1 (był nieaktualny).
+>
 > **Changelog v2.1:** Konsolidacja kierunku "DBR77 Tech Sexy 2027" z Golden Standard: calm AI SaaS, mocniejsza dyscyplina Menu 2/3, pill controls, no-gradient operational chrome, segmented view controls, compact density for heavy work screens.
+>
+> **Changelog v3.1 (2026-08-02, panel adwersaryjny — K-18, K-P1-06):** Panel adwersaryjny wykrył sprzeczność między tym dokumentem a `light-mode-readability.md` co do tła sidebaru — oba podawały zły hex. Zweryfikowano realny kod (`src/components/navigation/Sidebar/Sidebar.tsx:489`): `bg-slate-50 dark:bg-navy-950`, zero `border-r`, separacja przez `boxShadow: '0 10px 40px rgba(0,0,0,0.08)'`. Naprawiono §3.1 (tabela warstw, Layer 0 light) i §3.2 (Sidebar/system chrome, light) z `bg-slate-100` na `bg-slate-50` — reguła „brak border-right" (§3.1, §4.2) była już zgodna z kodem i zostaje bez zmian. Dopisano do §2.2 ostrzeżenie o `tailwind.config.js` CENTRAL REMAP (K-P1-06) — rodziny `amber`/`blue` użyte niżej nie renderują domyślnych kolorów Tailwinda w tym repo.
 
 ---
 
@@ -40,8 +44,9 @@ Współczesne produkty top-tier (OpenAI/ChatGPT, Claude, Notion, ClickUp, Linear
 To są jedyne kanoniczne źródła tokenów i reguł:
 
 - **DBR77 colors & Apple HIG tokens:** `tailwind.config.js`
-- **Globalne style i wzorce kontenerów:** `src/index.css`
+- **Globalne style, wzorce kontenerów i tokeny semantyczne `--c-*`:** `src/index.css` — SSOT dla `--c-bg`/`--c-surface`/`--c-accent`/`--c-focus`/`--c-info`/`--state-selected`/`--motion-*` i ich wartości light/dark.
 - **Semantyka DBR77 color usage:** `docs/ui-standards/00-foundation/color-system.md`
+- **Twarde wartości liczbowe (kontrakt tokenów, rozstrzyga spory o hexy/ms):** `docs/ui-standards/00-foundation/FOUNDATION_TOKEN_CONTRACT.md`
 - **Uwaga (legacy):** `packages/shared/src/ui/theme.ts` nie jest źródłem prawdy dla DBR77 (nie jest używany przez core UI) i nie może nadpisywać tokenów z Tailwinda.
 
 > Jeśli standard mówi X, a komponent robi Y — komponent jest do poprawy (albo aktualizujemy standardy centralnie).
@@ -52,8 +57,11 @@ To są jedyne kanoniczne źródła tokenów i reguł:
 
 ### 2.1 DBR77: 4 kolory semantyczne + neutral (MUST)
 
-- **PRIMARY (`primary/*`)**: CTA, aktywny stan, focus, linki.
-- **SECONDARY (`secondary/*`) / NEUTRAL NAVY (`navy/*`)**: nawigacja, UI chrome, neutralne tła i tekst.
+- **PRIMARY (`primary/*` = Harvard Crimson `#85182F`, tożsamy z `--c-accent`)**: **WYŁĄCZNIE** znak marki (Talk-to-Teresa) i semantyka destrukcyjna (razem z `danger/*`). **NIGDY** jako CTA zwykłego modułu, aktywny stan, focus ani selekcja — to jest reguła nadrzędna po re-poincie palety (§0, `TRIADA_KANON.md` pkt 38/39/43).
+  - **CTA modułu** = navy (`secondary/*` / `bg-navy-*`), nie `primary/*` (patrz `light-mode-readability.md` §18.3, VIS-006).
+  - **Focus** ma własny, niezależny token: `--c-focus` / `--c-focus-solid` (niebieski `#2563eb` light / `#5b8def` dark), klasa `focus-visible:ring-c-focus`. Nigdy `primary/*`/crimson.
+  - **Stan aktywny / zaznaczony (selection)** jest **neutralny**: token `--state-selected` (`bg-state-selected`) lub wzorzec `src/components/shared/selectionTokens.ts` (neutralne tło + akcent `--c-info`, niebieski). Nigdy `primary/*`/crimson.
+- **SECONDARY (`secondary/*`) / NEUTRAL NAVY (`navy/*`)**: nawigacja, UI chrome, neutralne tła i tekst, oraz **CTA modułu**.
 - **DANGER (`danger/*`)**: błędy, destrukcja, alarm.
 - **SUCCESS (`success/*`)**: potwierdzenie, "healthy/up".
 - **NEUTRAL (`navy/*`, `slate/*`)**: tła, bordery, tekst, separatory.
@@ -68,6 +76,8 @@ DBR77 dopuszcza dwa kolory sygnałowe (nie‑brandowe), **wyłącznie** dla sygn
 **MUST:** ich użycie ograniczamy do `badge/dot/callout` (i ewentualnie tła typu surface).  
 **MUST NOT:** nie używamy ich dla CTA ani jako stałego koloru nawigacji/ramek paneli.
 
+> **Uwaga CENTRAL REMAP (K-P1-06):** `tailwind.config.js` (blok „CENTRAL REMAP", ok. l. 418–660) przepina domyślne rodziny Tailwinda — `blue`, `red`/`rose`, `emerald`/`green`, `amber`/`orange`, `violet`/`purple`/`indigo`, `yellow`, `pink`, `teal`/`cyan` — na paletę HBS (np. `amber-500 = #E87D1E`, `blue-700 = #3B2883`). Klasy typu `bg-amber-500`/`text-blue-800` w tym projekcie więc **nie** renderują standardowych kolorów Tailwinda. Kanoniczny opis remapu: `FOUNDATION_TOKEN_CONTRACT.md` §7.
+
 ---
 
 ## 3) Tła i surfaces (KANON)
@@ -78,14 +88,14 @@ Interfejs MUSI mieć **minimum 3 warstwy głębi** poprzez odcienie tła. Różn
 
 | Warstwa                | Rola                        | Dark mode        | Light mode                   |
 | ---------------------- | --------------------------- | ---------------- | ---------------------------- |
-| **Layer 0** (deepest)  | Sidebar, system chrome      | `bg-navy-950`    | `bg-slate-100`               |
+| **Layer 0** (deepest)  | Sidebar, system chrome      | `bg-navy-950`    | `bg-slate-50` (zweryfikowane `Sidebar.tsx:489`; separacja od Layer 1 przez `boxShadow`, nie przez różnicę tła — hexy Layer 0/1 są dziś prawie identyczne, `#f8fafc` vs `--c-bg` `#fafaf9`) |
 | **Layer 1** (base)     | Główna content area         | `bg-navy-900`    | `bg-slate-50`                |
 | **Layer 2** (elevated) | Karty, panele, sekcje       | `bg-navy-800/50` | `bg-white`                   |
 | **Layer 3** (floating) | Modale, dropdowny, tooltipy | `bg-navy-800`    | `bg-white` + `shadow-hig-xl` |
 
 **MUST:**
 
-- Nigdy `#000000` jako tło — zawsze ciepły dark gray (navy-950 = `#020617`)
+- Nigdy `#000000` jako tło — zawsze ciepły dark gray (navy-950 = `#0A0F1E`, zweryfikowane w `tailwind.config.js`; ten sam odcień jak `--c-bg` dark w `src/index.css`. Uwaga: `navy-*` to skala Tailwinda dla chrome/warstw — dla **powierzchni aplikacji** (bg/surface/surface-raised) rozstrzygające są tokeny `--c-bg`/`--c-surface`/`--c-surface-raised` w `src/index.css`, nie odczyt hexów wprost z `navy-*`)
 - Nigdy `#ffffff` jako tekst w dark mode — najjaśniejszy tekst = `text-slate-100` (`#f1f5f9`)
 - Sidebar jest **ciemniejszy** od content area (Layer 0 vs Layer 1)
 - Sidebar NIE MA `border-right` — separacja odbywa się wyłącznie przez zmianę tła
@@ -104,7 +114,7 @@ W light mode “za białe” surfaces powodują spadek czytelności (mało separ
 ### 3.2 Standardowe powierzchnie (MUST)
 
 - **Sidebar / system chrome:**
-  - light: `bg-slate-100`
+  - light: `bg-slate-50` (zweryfikowane `src/components/navigation/Sidebar/Sidebar.tsx:489`, bez `border-right`)
   - dark: `bg-navy-950`
 - **Panel (header/rail/top chrome):**
   - light: `bg-white`
@@ -291,7 +301,7 @@ MUST NOT:
 **MUST NOT:**
 
 - Nie używaj `shadow-sm` / `shadow-md` jako domyślnego stylu kart
-- Nie mieszaj shadow + border na tym samym elemencie — wybierz jedno
+- Nie mieszaj mocnego dekoracyjnego borderu z cieniem. Overlay może łączyć `border-subtle` z kanonicznym elevation; content card domyślnie pozostaje bez cienia.
 
 ---
 
@@ -340,13 +350,13 @@ Cel: jeden spójny system przycisków, który skaluje się od “top chrome” d
 
 ### Reguły nadrzędne (MUST)
 
-- **Na ekranie max 1 kolorowy element** (Primary CTA). Reszta monochromatyczna.
+- **Na ekranie max 1 kolorowy element** (Primary CTA). Reszta monochromatyczna. **Uwaga:** tym kolorowym elementem dla zwykłego CTA modułu jest **navy** (`secondary/*`), NIE crimson (`primary/*`) — crimson jest zarezerwowany dla marki/Talk-to-Teresa i destrukcji (§2.1).
 - **Rounding:** preferuj tokeny `rounded-hig-*`, a dla pill `rounded-hig-full`.
 - **Wysokość kontrolek w topbarze:** trzymaj `h-9` (spójność rytmu).
 
 ### 8.2 Inne interakcje
 
-- Focus jest zawsze widoczny i spójny (ring/shadow w semantyce `primary/*`).
+- Focus jest zawsze widoczny i spójny (ring/shadow w tokenie `--c-focus` / `--c-focus-solid`, klasa `focus-visible:ring-c-focus` — niebieski, NIGDY `primary/*`/crimson; patrz §2.1).
 - Active/press: krótki "press" (`active:scale-[0.98]`) tylko na buttonach, nie na tabelach.
 - Destrukcja zawsze `danger/*` + confirm.
 - Empty/loading/error są "quiet" i spójne (bez udawania danych).
@@ -364,10 +374,10 @@ Cel: jeden spójny system przycisków, który skaluje się od “top chrome” d
 
 **MUST:**
 
-- Czas trwania:
-  - `fast`: 120–160ms (hover/active, focus transitions)
-  - `base`: 160–220ms (otwieranie dropdown/tooltip/tab underline)
-  - `slow`: 240–320ms (drawer/panel/rail, layout shift)
+- Czas trwania (tokeny `--motion-*` w `src/index.css`; twardy limit `FOUNDATION_TOKEN_CONTRACT.md` §9 — `slow` max 220ms, nigdy 240–320ms jak w starszej wersji tego dokumentu):
+  - `fast` (`--motion-fast: 120ms`): hover/active, focus transitions
+  - `base` (`--motion-base: 180ms`): otwieranie dropdown/tooltip/tab underline
+  - `slow` (`--motion-slow: 220ms`, max): drawer/panel/rail, layout shift
 - Easing:
   - preferuj „soft" (ease-out / standard UI easing),
   - unikaj bounce/spring jako default (spring tylko dla "delight", bardzo subtelnie).
@@ -394,14 +404,14 @@ To są dozwolone „smaczki", które podnoszą premium feel bez krzykliwości.
 
 - Hover: delikatna zmiana tła (`bg-white/[0.03]` → `bg-white/[0.06]` w dark; `bg-slate-50` w light). **Bez border shift** — hover to TYLKO zmiana tła.
 - Active/press: krótki "press" (np. `active:scale-[0.98]`) tylko na buttonach/tiles, nie na tabelach.
-- Focus: ring/spójny z `primary/*` + brak "jumpingu" layoutu.
+- Focus: ring/spójny z tokenem `--c-focus` (niebieski, `focus-visible:ring-c-focus`) + brak "jumpingu" layoutu. NIGDY `primary/*`/crimson (§2.1).
 - Skeleton: płynny shimmer (Apple HIG) dla loading; bez migotania.
 
 **SHOULD (dla kluczowych ekranów: C mode, N mode, ModuleHub):**
 
 - "Sticky elevation": gdy sticky header/command bar zaczyna nachodzić na treść, pojawia się subtelny cień (`shadow-hig-sm`).
 - "Selection clarity": zaznaczony element listy ma:
-  - 1px border accent (`primary`) + bardzo subtelne tło (`primary/surface`),
+  - neutralne tło (`bg-state-selected` / `bg-slate-100` dark:`bg-white/[0.08]`) + ring (`ring-slate-300/60`) + 4px akcent-pasek w kolorze info (`shadow-[inset_4px_0_0_var(--c-info)]`) — wzorzec i SSOT klas: `src/components/shared/selectionTokens.ts`. **NIGDY** `primary`/crimson jako border ani tło selekcji (to jest wprost zakazane — crimson czyta się jako alarm, nie jako "aktywny"; patrz `light-mode-readability.md` §16 „surface-selected"),
   - animacja przejścia 160–220ms.
 - "Tab underline glide": underline taba przesuwa się płynnie (layoutId), bez skakania.
 
@@ -430,7 +440,7 @@ To są dozwolone „smaczki", które podnoszą premium feel bez krzykliwości.
 | Kontekst                       | Kolor ikony                     | Dozwolone? |
 | ------------------------------ | ------------------------------- | ---------- |
 | Nawigacja sidebar              | `text-muted` (szary jak tekst)  | MUST       |
-| Nawigacja aktywny item         | `text-primary` lub `text-white` | MUST       |
+| Nawigacja aktywny item         | neutralny: `text-white`/`text-slate-900` (wyższy kontrast) na neutralnym tle aktywnego stanu — **NIGDY** `text-primary`/crimson (§2.1) | MUST       |
 | Menu/dropdown                  | `text-muted` (jak tekst obok)   | MUST       |
 | Kolorowe badge/awatar          | Własny kolor (dane użytkownika) | Dozwolone  |
 | Ikona statusu (success/danger) | Kolor semantyczny               | Dozwolone  |
@@ -467,7 +477,7 @@ Wszystkie floating elementy (modale, dropdowny, popovers, tooltips) stosują tę
 
 - Ikona + label, wyrównane do lewej
 - Hover: `bg-white/[0.05]` + `rounded-md`
-- Aktywny/wybrany: intensywniejsze tło + primary accent (opcjonalnie)
+- Aktywny/wybrany: intensywniejsze neutralne tło (`bg-state-selected` / `bg-white/[0.08]`) — **NIE** primary/crimson accent (§2.1)
 - Chevron `>` po prawej dla sub-menus
 - Nigdy bold na menu items — regular weight
 
@@ -501,3 +511,5 @@ Przed merge każdego UI PR, sprawdź:
 - [ ] **Typography:** Semibold (nie bold), spłaszczona hierarchia rozmiarów?
 - [ ] **Pusta przestrzeń:** Czy jest celowy oddech, czy interfejs jest "upchany"?
 - [ ] **Dark mode:** Nigdy pure black/white, zawsze warm grays?
+- [ ] **Focus:** Czy fokus używa `--c-focus` (niebieski, `ring-c-focus`), nie `primary`/crimson?
+- [ ] **Selekcja:** Czy stan aktywny/zaznaczenie jest neutralny (`bg-state-selected` / `selectionTokens.ts`), nie crimson?
