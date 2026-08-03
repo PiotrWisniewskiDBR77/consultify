@@ -62,6 +62,17 @@ import {
   getKpiReportSnapshot,
   ResultsKpiReportSnapshotError,
 } from '../../services/results/kpiReportSnapshotService.js';
+import {
+  addKpiToScorecard,
+  createScorecard,
+  getScorecard,
+  getScorecardKpis,
+  listScorecards,
+  removeKpiFromScorecard,
+  RESULTS_SCORECARD_OWNER_DOMAIN,
+  ScorecardKpiNotFoundError,
+  updateScorecard,
+} from '../../services/results/kpiScorecardService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
   type KpiDriverMapping,
@@ -356,42 +367,10 @@ router.get(
   '/scorecards',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const rows = await dbAll<{
-      id: string;
-      name: string;
-      department: string | null;
-      period_label: string | null;
-      period_start: string | null;
-      period_end: string | null;
-      status: string | null;
-      kpi_count: number;
-      on_target_count: number;
-    }>(
-      `SELECT s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status,
-              COUNT(i.id) AS kpi_count,
-              COUNT(*) FILTER (WHERE COALESCE(k.is_on_target, 0) = 1) AS on_target_count
-         FROM kpi_scorecards s
-         LEFT JOIN kpi_scorecard_items i ON i.scorecard_id = s.id
-         LEFT JOIN initiative_kpis k ON k.id = i.kpi_id
-        WHERE s.organization_id = ?
-        GROUP BY s.id, s.name, s.department, s.period_label, s.period_start, s.period_end, s.status
-        ORDER BY s.department NULLS LAST, s.period_start DESC NULLS LAST`,
-      [organizationId],
-      { fallback: true }
-    );
+    const scorecards = await listScorecards(organizationId);
     return res.json({
-      scorecards: (rows || []).map((r) => ({
-        id: r.id,
-        name: r.name,
-        department: r.department,
-        periodLabel: r.period_label,
-        periodStart: r.period_start,
-        periodEnd: r.period_end,
-        status: r.status || 'active',
-        kpiCount: Number(r.kpi_count) || 0,
-        onTargetCount: Number(r.on_target_count) || 0,
-      })),
-      count: (rows || []).length,
+      data: { scorecards, count: scorecards.length, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsMeta(),
     });
   })
 );
@@ -402,25 +381,117 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const scorecardId = String(req.params.scorecardId || '').trim();
-    const card = await dbGet<{ id: string; name: string }>(
-      `SELECT id, name FROM kpi_scorecards WHERE id = ? AND organization_id = ?`,
-      [scorecardId, organizationId],
-      { fallback: true }
-    );
-    if (!card?.id) {
+    const result = await getScorecardKpis(organizationId, scorecardId);
+    if (!result) {
       return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
     }
-    const kpis = await dbAll(
-      `SELECT k.id, k.name, k.baseline_value, k.current_value, k.target_value, k.unit,
-              k.direction, k.progress_percentage, k.is_on_target, k.category, k.initiative_id
-         FROM kpi_scorecard_items i
-         JOIN initiative_kpis k ON k.id = i.kpi_id
-        WHERE i.scorecard_id = ? AND k.organization_id = ?
-        ORDER BY i.sort_order ASC, k.name ASC`,
-      [scorecardId, organizationId],
-      { fallback: true }
-    );
-    return res.json({ scorecard: card, kpis: kpis || [], count: (kpis || []).length });
+    return res.json({
+      data: {
+        scorecard: result.scorecard,
+        kpis: result.kpis,
+        count: result.kpis.length,
+        ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN,
+      },
+      meta: resultsMeta(),
+    });
+  })
+);
+
+/** Creates a new department × period card. Results-owned — never touches `goals`. */
+router.post(
+  '/scorecards',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { name, department, periodLabel, periodStart, periodEnd } = req.body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'name is required', code: 'SCORECARD_NAME_REQUIRED' });
+    }
+    const scorecard = await createScorecard(organizationId, {
+      name: name.trim(),
+      department: department ?? null,
+      periodLabel: periodLabel ?? null,
+      periodStart: periodStart ?? null,
+      periodEnd: periodEnd ?? null,
+      createdBy: userId ?? null,
+    });
+    return res.status(201).json({
+      data: { scorecard, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Updates card metadata (name/department/period/status). Fail-closed on cross-tenant id. */
+router.put(
+  '/scorecards/:scorecardId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const { name, department, periodLabel, periodStart, periodEnd, status } = req.body || {};
+    const updated = await updateScorecard(organizationId, scorecardId, {
+      ...(name !== undefined ? { name } : {}),
+      ...(department !== undefined ? { department } : {}),
+      ...(periodLabel !== undefined ? { periodLabel } : {}),
+      ...(periodStart !== undefined ? { periodStart } : {}),
+      ...(periodEnd !== undefined ? { periodEnd } : {}),
+      ...(status !== undefined ? { status } : {}),
+    });
+    if (!updated) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    return res.json({
+      data: { scorecard: updated, ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Attaches an existing `initiative_kpis` row to a card. Both ids are org-checked. */
+router.post(
+  '/scorecards/:scorecardId/kpis',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const kpiId = typeof req.body?.kpiId === 'string' ? req.body.kpiId.trim() : '';
+    const sortOrder = Number.isFinite(req.body?.sortOrder) ? Number(req.body.sortOrder) : 0;
+    if (!kpiId) {
+      return res.status(400).json({ error: 'kpiId is required', code: 'SCORECARD_KPI_REQUIRED' });
+    }
+    const card = await getScorecard(organizationId, scorecardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    try {
+      await addKpiToScorecard(organizationId, scorecardId, kpiId, sortOrder);
+    } catch (err) {
+      if (err instanceof ScorecardKpiNotFoundError) {
+        return res.status(404).json({ error: err.message, code: 'SCORECARD_KPI_NOT_FOUND' });
+      }
+      throw err;
+    }
+    return res.status(201).json({
+      data: { ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
+  })
+);
+
+/** Detaches a KPI from a card (the KPI definition itself is untouched). */
+router.delete(
+  '/scorecards/:scorecardId/kpis/:kpiId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const scorecardId = String(req.params.scorecardId || '').trim();
+    const kpiId = String(req.params.kpiId || '').trim();
+    const card = await getScorecard(organizationId, scorecardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Scorecard not found', code: 'SCORECARD_NOT_FOUND' });
+    }
+    await removeKpiFromScorecard(organizationId, scorecardId, kpiId);
+    return res.json({
+      data: { ownerDomain: RESULTS_SCORECARD_OWNER_DOMAIN },
+      meta: resultsWriteMeta(),
+    });
   })
 );
 
