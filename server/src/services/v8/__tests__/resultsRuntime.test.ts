@@ -90,7 +90,10 @@ describe('getKPIScorecard', () => {
     const sql = avgSqlCall![0] as string;
     expect(sql).not.toMatch(/MIN\s*\(\s*1\.0/i);
     expect(sql).toContain('THEN 1.0');
-    expect(sql).toContain('current_value * 1.0 / target_value');
+    // RES-11: qualified `d.current_value`/`d.target_value` since the
+    // visibility retrofit joins in `initiative_kpis ck` — same ratio logic,
+    // now disambiguated against the joined alias.
+    expect(sql).toContain('d.current_value * 1.0 / d.target_value');
   });
 });
 

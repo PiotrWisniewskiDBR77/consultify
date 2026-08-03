@@ -506,7 +506,7 @@ router.delete(
 router.get(
   '/dashboard',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId } = getV8Context(req);
+    const { organizationId, userId } = getV8Context(req);
     const initiativeId =
       typeof req.query.initiativeId === 'string' && req.query.initiativeId.trim()
         ? req.query.initiativeId.trim()
@@ -526,7 +526,11 @@ router.get(
     }
     let snapshot;
     try {
-      snapshot = await getResultsDashboard(organizationId, { initiativeId });
+      // RES-11: isAdmin deliberately false — packet §10 open decision, fail-closed.
+      snapshot = await getResultsDashboard(organizationId, {
+        initiativeId,
+        viewer: { userId, isAdmin: false },
+      });
     } catch {
       return res.status(500).json({
         error: 'Failed to load results dashboard',

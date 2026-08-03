@@ -366,7 +366,10 @@ describe('V8 results read-only routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.meta?.contract).toBe(V8_RESULTS_READ_CONTRACT);
     expect(res.body.data?.snapshot?.organizationId).toBe(ORG);
-    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, { initiativeId: undefined });
+    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, {
+      initiativeId: undefined,
+      viewer: { userId: UID, isAdmin: false },
+    });
   });
 
   it('GET /api/v8/results/dashboard forwards initiativeId scope when provided', async () => {
@@ -383,7 +386,10 @@ describe('V8 results read-only routes', () => {
       ['init-1', ORG],
       { fallback: true }
     );
-    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, { initiativeId: 'init-1' });
+    expect(mockGetResultsDashboard).toHaveBeenCalledWith(ORG, {
+      initiativeId: 'init-1',
+      viewer: { userId: UID, isAdmin: false },
+    });
   });
 
   it('GET /api/v8/results/dashboard returns 404 for invalid initiativeId scope', async () => {

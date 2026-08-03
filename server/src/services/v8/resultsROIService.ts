@@ -60,6 +60,7 @@ import { eventBus } from '../event/EventBus.js';
 import { send as sendNotification } from '../notificationService.js';
 import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
 import { evaluateKpiPoint } from '../results/kpiDeviationService.js';
+import { type KpiVisibilityContext, kpiVisibilitySql } from '../results/kpiVisibilityService.js';
 
 // ==========================================
 // HELPERS
@@ -773,31 +774,53 @@ function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus,
 
 /**
  * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
+ *
+ * VISIBILITY (RES-11): `v8_kpi_definitions` is a separate table from the
+ * canonical `initiative_kpis` — a definition row only carries a visibility
+ * scope indirectly, via `canonical_kpi_id`. A definition with NO canonical
+ * link has nothing to hide (RES-11 does not retrofit a concept onto an
+ * object it isn't attached to) and stays visible — `kpiVisibilitySql`'s
+ * `nullableJoinIdColumn` option encodes exactly that: "no canonical KPI ->
+ * always visible; has one -> defer to its visibility". This is also what
+ * keeps pre-RES-11 behavior identical for every v8_kpi_definitions row that
+ * predates canonical linking.
  */
 export async function getKPIScorecard(
   organizationId: string,
-  initiativeId?: string
+  initiativeId?: string,
+  viewer?: KpiVisibilityContext
 ): Promise<KPIScorecardSummary> {
-  const initiativeClause = initiativeId ? ` AND initiative_id = ?` : '';
+  // Qualified `d.initiative_id`: the canonical join below adds `ck` (initiative_kpis),
+  // which also has an initiative_id column — unqualified would be ambiguous.
+  const initiativeClause = initiativeId ? ` AND d.initiative_id = ?` : '';
   const initiativeParams: unknown[] = initiativeId ? [initiativeId] : [];
+  const visibility = kpiVisibilitySql('ck', viewer || { userId: null, isAdmin: false }, {
+    nullableJoinIdColumn: 'ck.id',
+  });
+  const canonicalJoin = `LEFT JOIN initiative_kpis ck ON ck.id = d.canonical_kpi_id`;
+
   const totalRow = await dbGet<{ total: number }>(
-    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
-    [organizationId, ...initiativeParams],
+    `SELECT COUNT(*) AS total FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql}`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
   const totalKpis = Number(totalRow?.total ?? 0);
 
   const statusRows = await dbAll<{ status: string; cnt: number }>(
-    `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY status`,
-    [organizationId, ...initiativeParams],
+    `SELECT d.status, COUNT(*) AS cnt FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql} GROUP BY d.status`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
   const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
-    `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
-     WHERE organization_id = ?${initiativeClause} GROUP BY metric_type`,
-    [organizationId, ...initiativeParams],
+    `SELECT d.metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql} GROUP BY d.metric_type`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
@@ -806,17 +829,19 @@ export async function getKPIScorecard(
   const avgRow = await dbGet<{ avg_rate: number | null }>(
     `SELECT AVG(
        CASE
-         WHEN target_value IS NOT NULL AND target_value != 0 AND current_value IS NOT NULL
+         WHEN d.target_value IS NOT NULL AND d.target_value != 0 AND d.current_value IS NOT NULL
          THEN
            CASE
-             WHEN (current_value * 1.0 / target_value) > 1 THEN 1.0
-             ELSE (current_value * 1.0 / target_value)
+             WHEN (d.current_value * 1.0 / d.target_value) > 1 THEN 1.0
+             ELSE (d.current_value * 1.0 / d.target_value)
            END
          ELSE NULL
        END
      ) AS avg_rate
-     FROM v8_kpi_definitions WHERE organization_id = ?${initiativeClause}`,
-    [organizationId, ...initiativeParams],
+     FROM v8_kpi_definitions d
+     ${canonicalJoin}
+     WHERE d.organization_id = ?${initiativeClause} AND ${visibility.sql}`,
+    [organizationId, ...initiativeParams, ...visibility.params],
     { fallback: true }
   );
 
@@ -2410,12 +2435,12 @@ export async function getReconciliationOverview(
  */
 export async function getResultsDashboard(
   organizationId: string,
-  options?: { initiativeId?: string }
+  options?: { initiativeId?: string; viewer?: KpiVisibilityContext }
 ): Promise<ResultsDashboardSnapshot> {
   const initiativeId = options?.initiativeId?.trim() || undefined;
   const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
     await Promise.all([
-      getKPIScorecard(organizationId, initiativeId),
+      getKPIScorecard(organizationId, initiativeId, options?.viewer),
       getActiveDeviations(organizationId, undefined, initiativeId),
       getROIDashboard(organizationId, initiativeId),
       getReconciliationHealth(organizationId),
