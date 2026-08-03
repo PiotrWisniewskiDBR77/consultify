@@ -401,9 +401,62 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
   const [teams, setTeams] = useState<TeamOption[]>([]);
   const [saving, setSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  // Stable ref so the escape/focus-trap effect only wires up once (mirrors
+  // src/components/ui/primitives/Modal.tsx) — otherwise an inline onClose
+  // (a fresh function every render) would re-run the effect on every
+  // keystroke and re-trigger the mount-only focus bookkeeping below.
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  // A11y: Escape-to-close, Tab focus trap, and focus-restore-to-trigger on
+  // close — same technique as Modal.tsx's previousActiveElement handling.
+  useEffect(() => {
+    previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+
+    const getFocusable = (): HTMLElement[] => {
+      const container = dialogRef.current;
+      if (!container) return [];
+      return Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el.offsetParent !== null);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCloseRef.current();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusable = getFocusable();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousActiveElementRef.current?.focus?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -467,10 +520,15 @@ const NotebookModal: React.FC<NotebookModalProps> = ({ pl, editing, onClose, onS
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="notebook-modal-heading"
+        tabIndex={-1}
         className="w-full max-w-md rounded-2xl bg-c-surface shadow-xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-c-text mb-4">
+        <h3 id="notebook-modal-heading" className="text-lg font-semibold text-c-text mb-4">
           {isEdit
             ? pl
               ? 'Edytuj notatnik'

@@ -28265,7 +28265,20 @@
       "pendingProposalsCount": "{{count}} propozycje czekają na review",
       "outlinePresentation": "- Kontekst i cel\n- Kluczowe obserwacje\n- Implikacje biznesowe\n- Kolejne kroki",
       "outlineAssessment": "- Zakres oceny\n- Kluczowe pytania\n- Dowody do zebrania\n- Obszary ryzyka",
-      "outlineDefault": "- Podsumowanie zarządcze\n- Analiza problemu\n- Opcje\n- Rekomendacje"
+      "outlineDefault": "- Podsumowanie zarządcze\n- Analiza problemu\n- Opcje\n- Rekomendacje",
+      "saveStateSaving": "Zapisywanie…",
+      "saveStateSaved": "Zapisano",
+      "saveStateError": "Zapis nie powiódł się",
+      "saveStateOffline": "Offline — Twoje zmiany są zachowane i zapiszą się po powrocie połączenia",
+      "ownerTooltip": "Kto jest właścicielem tej strony",
+      "ownerYou": "Ty",
+      "ownerOther": "Inny użytkownik",
+      "visibilityProject": "Udostępniona w projekcie",
+      "visibilityPrivate": "Prywatna",
+      "conflictBanner": "Ta strona została zmieniona gdzie indziej. Twoje zmiany nie zostały nadpisane.",
+      "conflictReload": "Odśwież",
+      "conflictRetry": "Zapisz mimo to",
+      "backToList": "Wszystkie notatki"
     },
     "mentionMenu": {
       "ariaLabel": "Wzmiankuj encję",

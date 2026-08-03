@@ -23,6 +23,7 @@ import {
   History,
   Layers,
   Lightbulb,
+  Lock,
   MoreHorizontal,
   Network,
   Paperclip,
@@ -37,6 +38,7 @@ import {
   Type,
   Unlink,
   Users,
+  WifiOff,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,7 +48,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/primitives/Button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
 import * as apiModule from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -740,6 +744,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
+  // MW-08: below this breakpoint the sidebar/editor/rail three-column layout
+  // no longer fits (measured live at 375px pre-fix: editor column collapsed
+  // to 25px, unusable). Same hook/threshold as MW-07's CalendarView fix.
+  const isMobile = useIsMobile();
   const {
     emitMyWorkEvent,
     setChatKickoffMessage,
@@ -832,6 +840,40 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const isSavingRef = useRef(false);
   const pendingDraftRef = useRef<NotebookPage | null>(null);
   const queuedSaveRef = useRef<NotebookPage | null>(null);
+
+  // MW-08: explicit save-state surfaced to the user (Codex acceptance gate —
+  // there was previously no visible autosave indicator at all, only a dead,
+  // never-applied `.nb-saving` CSS rule). `null` = no edit made yet this
+  // page-view. "saved" is set ONLY after the backend responds — never on
+  // schedule/optimistically — so this can't show a premature success.
+  const [saveState, setSaveState] = useState<
+    'saving' | 'saved' | 'error' | 'conflict' | 'offline' | null
+  >(null);
+  // Fresh server copy of the page returned by a 409 conflict response, kept
+  // so the "Reload" action can load it without a second round-trip.
+  const [conflictServerPage, setConflictServerPage] = useState<NotebookPage | null>(null);
+  // Same navigator.onLine + online/offline listener pattern as
+  // src/components/LLMSelector.tsx — no new hook, matches an existing
+  // convention already used elsewhere in this codebase.
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // MW-08: which panel is shown at <768px, where list+editor can no longer
+  // share the screen (see useIsMobile() below). Irrelevant on desktop, where
+  // both panels always render. Starts on the editor when a specific page was
+  // deep-linked (openPageId), otherwise on the list.
+  const [mobileShowList, setMobileShowList] = useState(!openPageId);
 
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
@@ -1332,7 +1374,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       while (queuedSaveRef.current) {
         const nextDraft = queuedSaveRef.current;
         queuedSaveRef.current = null;
+
+        // Don't even attempt the request while offline — it would just fail
+        // and read as a generic error. Keep the draft queued (not lost) so
+        // reconnecting resumes the save automatically (see the `isOnline`
+        // effect below), and tell the user plainly instead of guessing.
+        if (!navigator.onLine) {
+          queuedSaveRef.current = nextDraft;
+          setSaveState('offline');
+          return;
+        }
+
         isSavingRef.current = true;
+        // Visible from the moment the request actually starts, not from the
+        // debounce schedule — "Saving" means a save is in flight, not merely
+        // pending. setSaveState('saved') below only happens after `await`
+        // resolves, so this can never show a premature success.
+        setSaveState('saving');
 
         trackFunnelEvent('notebook_page_edited', { pageId: nextDraft.id });
 
@@ -1381,6 +1439,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               )
             );
           }
+          // Only reachable after the backend has actually responded — the
+          // golden-flow requirement this exists for ("sees Saving, and Saved
+          // only after the backend responds").
+          setSaveState('saved');
+          setConflictServerPage(null);
 
           const textLen = (persistedDraft.contentText || '').length;
           if (textLen > 200 && persistedDraft.id) {
@@ -1403,12 +1466,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             // edits remain in the editor until they choose to reload.
             const serverPage = err?.data ?? null;
             if (serverPage?.updatedAt) {
-              setPages((prev) =>
-                prev.map((p) =>
-                  p.id === persistedDraft.id ? { ...p, updatedAt: serverPage.updatedAt } : p
-                )
+              // Advance the optimistic-lock token in the ref mirror ONLY (not
+              // the rendered `pages` state) so a "Save mine anyway" retry can
+              // send the correct expectedUpdatedAt without prematurely
+              // changing activePage.updatedAt. If this used setPages here,
+              // activePage.updatedAt would already equal the server's value
+              // by the time handleReloadFromConflict merges the same row in —
+              // the "sync editor with fresher server content" effect (keyed
+              // on activePage.updatedAt) would see no change and never
+              // re-fire, so clicking Reload would silently do nothing.
+              pagesRef.current = pagesRef.current.map((p) =>
+                p.id === persistedDraft.id ? { ...p, updatedAt: serverPage.updatedAt } : p
               );
             }
+            // Persistent state (not just a toast, which fades) so the user
+            // can't miss it and always has an explicit way out — the
+            // acceptance gate this exists for: "UI never silently overwrites
+            // a conflict, shows Reload/retry."
+            setSaveState('conflict');
+            setConflictServerPage(serverPage);
             toast.error(
               t(
                 'notebook.notebookContent.toastError2',
@@ -1419,6 +1495,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } else {
             // eslint-disable-next-line no-console
             console.error('Failed to save notebook page', e);
+            setSaveState('error');
             toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
           }
         } finally {
@@ -1428,6 +1505,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
     [generateSummary, t, isPolish]
   );
+
+  // Resume a save that was held back by the offline guard above, the moment
+  // connectivity returns — the draft was never lost, only queued.
+  useEffect(() => {
+    if (isOnline && queuedSaveRef.current) {
+      void persistNotebookDraft(queuedSaveRef.current);
+    }
+  }, [isOnline, persistNotebookDraft]);
 
   const flushPendingSave = useCallback(async () => {
     if (saveTimer.current) {
@@ -1466,6 +1551,52 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
     [activePage, pages, persistNotebookDraft]
   );
+
+  // Conflict recovery (MW-08 acceptance gate: no silent overwrite, explicit
+  // Reload/retry). `conflictServerPage` is the fresh row the 409 response
+  // already carried — no second fetch needed. Merging it into `pages` is
+  // enough: the existing "sync editor when the active page gets fresher
+  // server content" effect (keyed on activePage.updatedAt) picks it up and
+  // resets the editor/title/tags for us.
+  const handleReloadFromConflict = useCallback(() => {
+    if (!activePage || !conflictServerPage) return;
+    setPages((prev) =>
+      prev.map((p) => (p.id === activePage.id ? { ...p, ...conflictServerPage } : p))
+    );
+    setSaveState(null);
+    setConflictServerPage(null);
+  }, [activePage, conflictServerPage]);
+
+  // Explicit, user-initiated overwrite of the server's newer content with
+  // what's currently in the editor — safe to retry because the conflict
+  // handler already advanced the local optimistic-lock token to match the
+  // server's latest `updatedAt`, so this attempt is not blind.
+  const handleRetryAfterConflict = useCallback(() => {
+    if (!activePage) return;
+    const current = pages.find((p) => p.id === activePage.id);
+    if (!current) return;
+    setSaveState(null);
+    setConflictServerPage(null);
+    void persistNotebookDraft(current);
+  }, [activePage, pages, persistNotebookDraft]);
+
+  // Reset the indicator when switching notes — a "Saved"/"Conflict" left
+  // over from the PREVIOUS page must never bleed into the newly opened one.
+  useEffect(() => {
+    setSaveState(null);
+    setConflictServerPage(null);
+  }, [activePage?.id]);
+
+  // MW-08 mobile view switch: whenever a DIFFERENT page becomes active (any
+  // selection path — page-list row, new-page creation, mention/backlink
+  // jump, hamburger convert — there are half a dozen call sites for
+  // `setActiveId`), show the editor instead of the list on mobile. Reactive
+  // on the id itself rather than patching every call site, so this can't
+  // miss one; tapping "back to list" doesn't change activeId, so it isn't
+  // fought by this effect.
+  useEffect(() => {
+    if (isMobile && activePage) setMobileShowList(false);
+  }, [isMobile, activePage?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
@@ -2382,8 +2513,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-c-bg">
       <style>{EDITOR_STYLES}</style>
 
-      {/* Sidebar */}
-      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
+      {/* Sidebar — on mobile this is the ONLY panel shown until a note is
+          opened (see mobileShowList); never mounted at all while the editor
+          is showing, so its controls never sit in the mobile tab order
+          (same convention as MW-07's CalendarSidebar). */}
+      {(!isMobile || mobileShowList) && (
+      <div
+        className={
+          isMobile
+            ? 'w-full flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface'
+            : 'w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col'
+        }
+      >
         {/* Sidebar header */}
         <div className="px-4 py-3 border-b border-c-border-subtle">
           <div className="flex items-center justify-between mb-2">
@@ -2590,7 +2731,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         await flushPendingSave();
                         setActiveId(p.id);
                       }}
-                      className="w-full text-left px-3 py-2.5"
+                      className="w-full text-left px-3 py-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
                       {/* S1-U2a: Ideas-list row anatomy — leading signal dot
                           ("szyna skanu" §14.2), L2 title, L5 meta, neutral
@@ -2782,10 +2923,31 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
       </div>
+      )}
 
-      {/* Editor + Ideas panel */}
+      {/* Editor + Ideas panel — on mobile, only when a note is open. */}
+      {(!isMobile || !mobileShowList) && (
       <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface-raised">
+          {isMobile && (
+            <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<ChevronLeft size={14} />}
+                onClick={() => {
+                  void flushPendingSave();
+                  setMobileShowList(true);
+                }}
+                aria-label={t('notebook.notebookContent.backToList', 'All notes')}
+              >
+                {t('notebook.notebookContent.backToList', 'All notes')}
+              </Button>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary">
+                {notebookTitle || t('myWork.notebook.title', 'Notebook')}
+              </span>
+            </div>
+          )}
           {!activePage && pagesLoading ? (
             /* Editor skeleton — avoids a blank "white" pane during first load. */
             <div className="flex-1 overflow-hidden">
@@ -2969,6 +3131,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   >
                     <Sparkles size={14} />
                   </button>
+                  {/* MW-08: the rail (Teresa/Powiązania) is a fixed-width
+                      third column with no mobile treatment of its own, and
+                      its content is explicitly out of this package's scope
+                      (Notes AI/handoffs). Rather than ship a broken overlay,
+                      the toggle — and the rail itself, see below — are
+                      simply not offered below the mobile breakpoint; this is
+                      a deliberate, documented scope decision, not an
+                      oversight. */}
+                  {!isMobile && (
                   <button
                     type="button"
                     onClick={() => setNotebookRailOpen(!notebookRailOpen)}
@@ -2988,6 +3159,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   >
                     <Layers size={12} />
                   </button>
+                  )}
                   {/* N1: hamburger ⋯ — all note actions in one menu */}
                   <button
                     type="button"
@@ -3213,6 +3385,106 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         />
                       </div>
                     </div>
+
+                    {/* MW-08 — explicit save state, owner, visibility. Header
+                        anatomy required by the Notes IA standard §6/§9: the
+                        user must always know whether the page saved, and
+                        who can see it. `aria-live="polite"` so a screen
+                        reader announces state changes without the developer
+                        needing to move focus. */}
+                    <div
+                      className="mt-2 flex items-center gap-3 flex-wrap text-[11px]"
+                      aria-live="polite"
+                      data-testid="notebook-save-state"
+                    >
+                      {saveState === 'saving' && (
+                        <span className="inline-flex items-center gap-1 text-c-text-muted">
+                          <RefreshCw size={11} className="animate-spin" />
+                          {t('notebook.notebookContent.saveStateSaving', 'Saving…')}
+                        </span>
+                      )}
+                      {saveState === 'saved' && (
+                        <span className="inline-flex items-center gap-1 text-c-success">
+                          <CheckCircle2 size={11} />
+                          {t('notebook.notebookContent.saveStateSaved', 'Saved')}
+                        </span>
+                      )}
+                      {saveState === 'error' && (
+                        <span className="inline-flex items-center gap-1 text-danger-500">
+                          <AlertTriangle size={11} />
+                          {t('notebook.notebookContent.saveStateError', 'Save failed')}
+                        </span>
+                      )}
+                      {saveState === 'offline' && (
+                        <span className="inline-flex items-center gap-1 text-c-text-muted">
+                          <WifiOff size={11} />
+                          {t(
+                            'notebook.notebookContent.saveStateOffline',
+                            'Offline — your edits are kept and will save when back online'
+                          )}
+                        </span>
+                      )}
+                      <span
+                        className="inline-flex items-center gap-1 text-c-text-muted"
+                        title={t(
+                          'notebook.notebookContent.ownerTooltip',
+                          'Who owns this page'
+                        )}
+                      >
+                        {(() => {
+                          const isOwnPage =
+                            !activePage.ownerUserId || activePage.ownerUserId === currentUserId;
+                          return isOwnPage
+                            ? t('notebook.notebookContent.ownerYou', 'You')
+                            : t('notebook.notebookContent.ownerOther', 'Another user');
+                        })()}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-c-text-muted">
+                        {activePage.visibility === 'project' ? (
+                          <Users size={11} />
+                        ) : (
+                          <Lock size={11} />
+                        )}
+                        {activePage.visibility === 'project'
+                          ? t('notebook.notebookContent.visibilityProject', 'Shared with project')
+                          : t('notebook.notebookContent.visibilityPrivate', 'Private')}
+                      </span>
+                    </div>
+
+                    {/* MW-08 — conflict recovery banner. Persistent (unlike
+                        the toast, which fades) so the user can't miss it,
+                        and never disappears until they explicitly choose an
+                        action — the local edit stays exactly as typed. */}
+                    {saveState === 'conflict' && (
+                      <div
+                        role="alert"
+                        className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-amber-900 dark:text-amber-200"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <AlertTriangle size={13} />
+                          {t(
+                            'notebook.notebookContent.conflictBanner',
+                            'This page was changed elsewhere. Your edits were not overwritten.'
+                          )}
+                        </span>
+                        <span className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={handleReloadFromConflict}
+                            className="rounded-md border border-amber-400 px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            {t('notebook.notebookContent.conflictReload', 'Reload')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRetryAfterConflict}
+                            className="rounded-md px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          >
+                            {t('notebook.notebookContent.conflictRetry', 'Save mine anyway')}
+                          </button>
+                        </span>
+                      </div>
+                    )}
 
                     {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
                     <div
@@ -3644,8 +3916,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           )}
         </div>
 
-        {/* Graph view — toggleable panel (topic+backlink connections) */}
-        {showGraphView && activePage && (
+        {/* Graph view — toggleable panel (topic+backlink connections). Same
+            fixed-width-third-column problem as the right rail below; not
+            offered on mobile for the same documented reason. */}
+        {!isMobile && showGraphView && activePage && (
           <div className="w-72 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
             <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary">
@@ -3663,7 +3937,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           </div>
         )}
 
-        {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context) */}
+        {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context).
+            Not offered on mobile — see the toggle button comment above. */}
+        {!isMobile && (
         <NotebookRightRail
           open={notebookRailOpen}
           activeTab={notebookRailTab}
@@ -3720,7 +3996,9 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           canConvertDeliverable={canConvertDeliverable}
           convertBlockedReason={deliverableGuardMessage}
         />
+        )}
       </div>
+      )}
 
       <NewPageModal
         open={templateModalOpen}

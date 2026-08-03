@@ -27201,7 +27201,20 @@
       "pendingProposalsCount": "{{count}} proposals waiting for review",
       "outlinePresentation": "- Context and goal\n- Key observations\n- Business implications\n- Next steps",
       "outlineAssessment": "- Assessment scope\n- Core questions\n- Evidence to collect\n- Risk areas",
-      "outlineDefault": "- Executive summary\n- Problem analysis\n- Options\n- Recommendations"
+      "outlineDefault": "- Executive summary\n- Problem analysis\n- Options\n- Recommendations",
+      "saveStateSaving": "Saving…",
+      "saveStateSaved": "Saved",
+      "saveStateError": "Save failed",
+      "saveStateOffline": "Offline — your edits are kept and will save when back online",
+      "ownerTooltip": "Who owns this page",
+      "ownerYou": "You",
+      "ownerOther": "Another user",
+      "visibilityProject": "Shared with project",
+      "visibilityPrivate": "Private",
+      "conflictBanner": "This page was changed elsewhere. Your edits were not overwritten.",
+      "conflictReload": "Reload",
+      "conflictRetry": "Save mine anyway",
+      "backToList": "All notes"
     },
     "mentionMenu": {
       "ariaLabel": "Mention an entity",
