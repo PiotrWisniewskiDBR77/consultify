@@ -840,6 +840,22 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const isSavingRef = useRef(false);
   const pendingDraftRef = useRef<NotebookPage | null>(null);
   const queuedSaveRef = useRef<NotebookPage | null>(null);
+  // MW-08 UX fix: every successful autosave bumps `pages[].updatedAt` to the
+  // server's fresh value (below, in persistNotebookDraft) purely to keep the
+  // NEXT save's optimistic-lock token correct. But the "sync editor" effect
+  // is keyed on that same `activePage.updatedAt` — without these markers,
+  // EVERY successful autosave would re-fire `editor.commands.setContent(...)`
+  // with content that's already live in the editor, resetting the
+  // ProseMirror selection (cursor jumps, e.g. to the start of the document)
+  // after every autosave round-trip. Two refs are needed, not one:
+  // `editorReflectsPageIdRef` — which page's content is CURRENTLY loaded in
+  // the live editor, so a genuine page switch (away and back) always
+  // resyncs even if `updatedAt` happens to match a stale self-save marker —
+  // and `selfSavedUpdatedAtRef` — the (pageId, updatedAt) our OWN last
+  // successful save just wrote, so that SPECIFIC bump can be told apart from
+  // a genuinely external one (conflict-reload, another session's write).
+  const editorReflectsPageIdRef = useRef<string | null>(null);
+  const selfSavedUpdatedAtRef = useRef<{ pageId: string; updatedAt: string } | null>(null);
 
   // MW-08: explicit save-state surfaced to the user (Codex acceptance gate —
   // there was previously no visible autosave indicator at all, only a dead,
@@ -1105,13 +1121,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
     };
     if (!activePage) {
+      editorReflectsPageIdRef.current = null;
       if (!safeSetContent({ type: 'doc', content: [] })) return;
       setTitle('');
       setPageProjectId('');
       setPageTags([]);
       return;
     }
+    // Skip re-running setContent (which resets the ProseMirror selection)
+    // ONLY when BOTH hold: (a) the editor already has THIS page loaded — a
+    // genuine switch away and back must always resync, regardless of
+    // updatedAt — and (b) this specific updatedAt is the one OUR OWN last
+    // successful save just wrote, i.e. content already matches what's live.
+    // An externally-sourced updatedAt (conflict-reload, "Save mine anyway"
+    // response, another session's write) never matches (b), so those still
+    // resync correctly.
+    const editorAlreadyHasThisPage = editorReflectsPageIdRef.current === activePage.id;
+    const isOwnAutosaveEcho =
+      selfSavedUpdatedAtRef.current?.pageId === activePage.id &&
+      selfSavedUpdatedAtRef.current?.updatedAt === activePage.updatedAt;
+    if (editorAlreadyHasThisPage && isOwnAutosaveEcho) return;
     if (!safeSetContent(activePage.contentJson || { type: 'doc', content: [] })) return;
+    editorReflectsPageIdRef.current = activePage.id;
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
@@ -1433,6 +1464,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           // the next autosave carries the correct expected version.
           const savedUpdatedAt = (saved as NotebookPage | undefined)?.updatedAt;
           if (savedUpdatedAt) {
+            // Mark this exact bump as OUR OWN save landing (see
+            // `selfSavedUpdatedAtRef`'s declaration) so the "sync editor"
+            // effect doesn't call setContent again and reset the cursor for
+            // content that's already correctly live in the editor.
+            selfSavedUpdatedAtRef.current = {
+              pageId: persistedDraft.id,
+              updatedAt: savedUpdatedAt,
+            };
             setPages((prev) =>
               prev.map((p) =>
                 p.id === persistedDraft.id ? { ...p, updatedAt: savedUpdatedAt } : p
@@ -1457,14 +1496,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             }, 3000);
           }
         } catch (e) {
-          const err = e as { status?: number; code?: string; data?: NotebookPage | null };
+          // `handleResponse` (src/services/api/baseClient.ts) sets `err.data` to
+          // the FULL parsed response body, not the fresh row directly. The v8
+          // conflict route (server/src/routes/v8/my-work.routes.ts) replies with
+          // `{ error, code, data: freshRow, meta }`, so the fresh row lives one
+          // level deeper at `err.data.data`. Confirmed against baseClient's
+          // `err.data = data` assignment and the route's 409 payload — reading
+          // `err.data` directly here would silently pick up the envelope
+          // instead of the page, leaving `conflictServerPage.updatedAt`/
+          // `.contentJson` always undefined (the token would never advance and
+          // Reload would merge garbage fields into `pages`).
+          const err = e as {
+            status?: number;
+            code?: string;
+            data?: { data?: NotebookPage | null };
+          };
           if (err?.status === 409 || err?.code === 'NOTEBOOK_PAGE_CONFLICT') {
             // Someone else (another tab/device/session) saved this page after we
             // loaded it. Do NOT silently overwrite their work. Sync our local
             // optimistic-lock token to the server's latest so the user can
             // reload/merge, and surface a non-destructive toast. Their unsaved
             // edits remain in the editor until they choose to reload.
-            const serverPage = err?.data ?? null;
+            const serverPage = err?.data?.data ?? null;
             if (serverPage?.updatedAt) {
               // Advance the optimistic-lock token in the ref mirror ONLY (not
               // the rendered `pages` state) so a "Save mine anyway" retry can
@@ -2730,6 +2783,18 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       onClick={async () => {
                         await flushPendingSave();
                         setActiveId(p.id);
+                        // MW-08 mobile fix: the isMobile+activePage.id effect
+                        // that hides the list only re-fires when the id
+                        // ACTUALLY changes. Re-opening the SAME note that was
+                        // just backed out of via "All notes" (id unchanged)
+                        // left the list showing with no way back into the
+                        // editor — reproduced live: click registers (DOM
+                        // screenshot confirms the list stays mounted), the
+                        // effect's dependency array never sees a diff, so it
+                        // never runs. Set it directly here too so opening a
+                        // note always switches to editor mode, changed id or
+                        // not.
+                        if (isMobile) setMobileShowList(false);
                       }}
                       className="w-full text-left px-3 py-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     >
