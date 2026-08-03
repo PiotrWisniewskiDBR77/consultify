@@ -7106,7 +7106,13 @@ export const Api = {
   getWorkbookVersions: async (
     workbookId: string
   ): Promise<{
-    data: Array<{ id: string; version: number; sheet_count: number; created_by: string; created_at: string }>;
+    data: Array<{
+      id: string;
+      version: number;
+      sheet_count: number;
+      created_by: string;
+      created_at: string;
+    }>;
     currentVersion: number;
   }> => {
     const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/versions`, {
@@ -12171,6 +12177,84 @@ export const Api = {
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((out as any)?.error || 'Failed to update document scope');
+    return out;
+  },
+  // ★ MW-10 — świeży odczyt pojedynczego dokumentu Vault (hard reload/deep-link,
+  // kontrakt pkt 5). Zwraca też `permissions.canEdit`/`canDelete` liczone tą
+  // samą regułą co backend, żeby UI nie zgadywało.
+  getKnowledgeDocument: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}`, {
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to fetch document');
+    return out;
+  },
+  // ★ MW-10 — historia wersji dokumentu Vault (stabilne ID, autor, timestamp).
+  getKnowledgeDocumentVersions: async (
+    id: string
+  ): Promise<{ documentId: string; currentVersion: number; versions: any[] }> => {
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}/versions`, {
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to fetch document versions');
+    return out;
+  },
+  // ★ MW-10 — nowa treść = nowa, niezmienna wersja. `expectedVersion` to token
+  // CAS: jeśli ktoś inny zapisał w międzyczasie, backend odpowiada 409
+  // (`VAULT_VERSION_CONFLICT`) zamiast cicho nadpisać (kontrakt pkt 10).
+  uploadKnowledgeDocumentVersion: async (
+    id: string,
+    file: File,
+    expectedVersion: number,
+    note?: string
+  ): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('expectedVersion', String(expectedVersion));
+    if (note) formData.append('note', note);
+
+    const headers = getHeaders();
+    delete (headers as any)['Content-Type'];
+
+    const res = await fetch(`${API_URL}/knowledge/documents/${id}/versions`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(out?.error || 'Failed to upload document version');
+      err.code = out?.code;
+      err.currentVersion = out?.currentVersion;
+      throw err;
+    }
+    return out;
+  },
+  // ★ MW-10 — restore NIE nadpisuje historii: tworzy kolejną wersję z
+  // `restoredFromVersion` (provenance), patrz kontrakt pkt 4.
+  restoreKnowledgeDocumentVersion: async (
+    id: string,
+    versionNumber: number,
+    expectedVersion: number,
+    note?: string
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/knowledge/documents/${id}/versions/${versionNumber}/restore`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ expectedVersion, note }),
+      }
+    );
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(out?.error || 'Failed to restore document version');
+      err.code = out?.code;
+      err.currentVersion = out?.currentVersion;
+      throw err;
+    }
     return out;
   },
   // Approval workflows

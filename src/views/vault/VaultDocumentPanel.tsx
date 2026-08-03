@@ -18,7 +18,17 @@
  * CTA neutralne (navy/inwers), NIGDY crimson (`primary-*`).
  */
 
-import { FileText, FolderKanban, Loader2, Plus, Save, Upload, X } from 'lucide-react';
+import {
+  FileText,
+  FolderKanban,
+  History,
+  Loader2,
+  Plus,
+  RotateCcw,
+  Save,
+  Upload,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +48,23 @@ import {
 } from './vaultDocuments';
 
 const ACCEPTED = '.pdf,.txt,.md,.csv,.docx,.xlsx,.xls,.pptx';
+
+// ★ MW-10 — kształt jednej wersji, tak jak wystawia `GET .../documents/:id/versions`
+// (`serializeVersion` w `knowledge.routes.ts`).
+interface DocumentVersionEntry {
+  versionId: string;
+  documentId: string;
+  versionNumber: number;
+  filename: string;
+  fileSizeBytes: number | null;
+  contentHash: string | null;
+  chunkCount: number;
+  origin: 'upload' | 'edit' | 'restore';
+  restoredFromVersion: number | null;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
+}
 
 const FIELD_CLASS =
   'w-full h-9 rounded-lg border border-c-border bg-c-surface px-3 text-sm text-c-text ' +
@@ -100,8 +127,34 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
     count: null,
   });
 
+  // ★ MW-10 — historia wersji (tryb edit). `currentVersion` to token CAS wysyłany
+  // z każdym zapisem nowej treści/restore — patrz `handleUploadVersion`/`handleRestore`.
+  const [versions, setVersions] = useState<DocumentVersionEntry[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+  const [newVersionFile, setNewVersionFile] = useState<File | null>(null);
+  const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
+  const versionFileInputRef = useRef<HTMLInputElement>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const loadVersions = useCallback(async () => {
+    if (!editedDocument) return;
+    setVersionsLoading(true);
+    try {
+      const res = await Api.getKnowledgeDocumentVersions(editedDocument.id);
+      setVersions(Array.isArray(res.versions) ? res.versions : []);
+      setCurrentVersion(
+        Number.isFinite(Number(res.currentVersion)) ? Number(res.currentVersion) : null
+      );
+    } catch (err: unknown) {
+      // Historia jest informacyjna — brak jej nie blokuje edycji metadanych.
+      setVersions([]);
+    } finally {
+      setVersionsLoading(false);
+    }
+  }, [editedDocument]);
 
   // Reset przy każdym otwarciu — panel nigdy nie wstaje z resztkami poprzedniej sesji.
   useEffect(() => {
@@ -114,14 +167,19 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
       setFile(null);
       setCategory('');
       setTags('');
+      setVersions([]);
+      setCurrentVersion(null);
     } else {
       setFile(null);
       setCategory(editedDocument?.category || '');
       setTags(editedDocument?.tags?.join(', ') || '');
       setNextScope(editedDocument?.scope || 'organization');
       setNextProjectId(editedDocument?.project_id || '');
+      setNewVersionFile(null);
+      setRestoringVersion(null);
+      void loadVersions();
     }
-  }, [open, mode, editedDocument]);
+  }, [open, mode, editedDocument, loadVersions]);
 
   // Kanon B.42 — Esc zamyka najbardziej lokalną warstwę (tu: panel).
   useEffect(() => {
@@ -226,6 +284,93 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
     }
   }, [editedDocument, tags, category, onSaved, onClose, t, isPolish]);
 
+  // ★ MW-10 — nowa treść = kolejna, niezmienna wersja. `currentVersion` (token
+  // CAS) idzie w każdym zapisie; 409 = ktoś inny zapisał w międzyczasie, więc
+  // odświeżamy historię i pokazujemy komunikat zamiast cicho nadpisać.
+  const handleUploadVersion = useCallback(async () => {
+    if (!editedDocument || !newVersionFile || currentVersion === null) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await Api.uploadKnowledgeDocumentVersion(editedDocument.id, newVersionFile, currentVersion);
+      toast.success(
+        t('vault.docs.versionSaved', isPolish ? 'Zapisano nową wersję' : 'New version saved')
+      );
+      setNewVersionFile(null);
+      await loadVersions();
+      onSaved();
+    } catch (err: any) {
+      if (err?.code === 'VAULT_VERSION_CONFLICT') {
+        setError(
+          t(
+            'vault.docs.versionConflict',
+            isPolish
+              ? 'Dokument zmienił się w międzyczasie — historia odświeżona, spróbuj ponownie.'
+              : 'The document changed in the meantime — history refreshed, try again.'
+          )
+        );
+        await loadVersions();
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : t(
+                'vault.docs.versionFailed',
+                isPolish ? 'Nie udało się zapisać wersji' : 'Failed to save version'
+              )
+        );
+      }
+    } finally {
+      setBusy(false);
+    }
+  }, [editedDocument, newVersionFile, currentVersion, loadVersions, onSaved, t, isPolish]);
+
+  // ★ MW-10 — restore NIE nadpisuje historii: tworzy kolejną wersję z
+  // `restoredFromVersion` (provenance). Ten sam token CAS chroni przed
+  // wyścigiem z równoległym edit/restore.
+  const handleRestore = useCallback(
+    async (versionNumber: number) => {
+      if (!editedDocument || currentVersion === null) return;
+      setRestoringVersion(versionNumber);
+      setError(null);
+      try {
+        await Api.restoreKnowledgeDocumentVersion(editedDocument.id, versionNumber, currentVersion);
+        toast.success(
+          t('vault.docs.versionRestored', {
+            defaultValue: isPolish ? 'Przywrócono wersję {{v}}' : 'Restored version {{v}}',
+            v: versionNumber,
+          })
+        );
+        await loadVersions();
+        onSaved();
+      } catch (err: any) {
+        if (err?.code === 'VAULT_VERSION_CONFLICT') {
+          setError(
+            t(
+              'vault.docs.versionConflict',
+              isPolish
+                ? 'Dokument zmienił się w międzyczasie — historia odświeżona, spróbuj ponownie.'
+                : 'The document changed in the meantime — history refreshed, try again.'
+            )
+          );
+          await loadVersions();
+        } else {
+          setError(
+            err instanceof Error
+              ? err.message
+              : t(
+                  'vault.docs.restoreFailed',
+                  isPolish ? 'Nie udało się przywrócić wersji' : 'Failed to restore version'
+                )
+          );
+        }
+      } finally {
+        setRestoringVersion(null);
+      }
+    },
+    [editedDocument, currentVersion, loadVersions, onSaved, t, isPolish]
+  );
+
   // VLT-002/003 — krok 1/2: dry-run „ile dokumentów zobaczy cała organizacja".
   const requestScopeChange = useCallback(
     async (scope: VaultScope, projectId: string) => {
@@ -290,11 +435,7 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
-      <SheetContent
-        side="right"
-        aria-label={title}
-        className="border-c-border bg-c-bg p-0"
-      >
+      <SheetContent side="right" aria-label={title} className="border-c-border bg-c-bg p-0">
         <div ref={panelRef} className="flex h-full flex-col">
           {/* Nagłówek panelu */}
           <div className="flex items-center justify-between gap-3 border-b border-c-border-subtle px-5 py-4">
@@ -473,6 +614,129 @@ export const VaultDocumentPanel: React.FC<VaultDocumentPanelProps> = ({
                       : 'The file is chunked, embedded and indexed for AI retrieval.'
                   )}
                 </p>
+              </div>
+            ) : null}
+
+            {/* ★ MW-10 — Wersje: historia + wgraj nową treść + przywróć. Widoczne
+                tylko gdy wołający ma prawo edycji (backend i tak odrzuci 403,
+                to tylko unika pokazywania martwych przycisków). */}
+            {mode === 'edit' && editedDocument ? (
+              <div className="rounded-xl border border-c-border-subtle bg-c-surface px-4 py-3">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                  <History size={12} />
+                  {t('vault.docs.versions', isPolish ? 'Wersje' : 'Versions')}
+                </div>
+
+                {canChangeScope ? (
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="vault-panel-new-version-pick"
+                      onClick={() => versionFileInputRef.current?.click()}
+                      className={`${GHOST_BUTTON_CLASS} h-8 px-3 text-[12px]`}
+                    >
+                      <Upload size={13} />
+                      {newVersionFile
+                        ? newVersionFile.name
+                        : t(
+                            'vault.docs.newVersionPick',
+                            isPolish ? 'Wybierz nowy plik…' : 'Choose new file…'
+                          )}
+                    </button>
+                    <input
+                      ref={versionFileInputRef}
+                      type="file"
+                      accept={ACCEPTED}
+                      className="sr-only"
+                      onChange={(e) => {
+                        const picked = e.target.files?.[0] || null;
+                        setNewVersionFile(picked);
+                        setError(null);
+                      }}
+                    />
+                    {newVersionFile ? (
+                      <button
+                        type="button"
+                        data-testid="vault-panel-new-version-submit"
+                        disabled={busy || currentVersion === null}
+                        onClick={() => void handleUploadVersion()}
+                        className={`${MENU_1_PRIMARY_CTA} h-8 px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-50`}
+                      >
+                        {busy ? (
+                          <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                          t(
+                            'vault.docs.newVersionSave',
+                            isPolish ? 'Zapisz wersję' : 'Save version'
+                          )
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <ul className="mt-3 space-y-1.5" data-testid="vault-panel-version-list">
+                  {versionsLoading ? (
+                    <li className="text-[12px] text-c-text-muted">
+                      {t('vault.docs.versionsLoading', isPolish ? 'Wczytuję…' : 'Loading…')}
+                    </li>
+                  ) : versions.length === 0 ? (
+                    <li className="text-[12px] text-c-text-muted">
+                      {t('vault.docs.versionsEmpty', isPolish ? 'Brak historii' : 'No history yet')}
+                    </li>
+                  ) : (
+                    versions.map((v) => {
+                      const isCurrent = v.versionNumber === currentVersion;
+                      const originLabel = isPolish
+                        ? v.origin === 'upload'
+                          ? 'Wgrano'
+                          : v.origin === 'restore'
+                            ? `Przywrócono z v${v.restoredFromVersion ?? '—'}`
+                            : 'Edytowano'
+                        : v.origin === 'upload'
+                          ? 'Uploaded'
+                          : v.origin === 'restore'
+                            ? `Restored from v${v.restoredFromVersion ?? '—'}`
+                            : 'Edited';
+                      return (
+                        <li
+                          key={v.versionId}
+                          data-testid={`vault-panel-version-row-${v.versionNumber}`}
+                          data-version-number={v.versionNumber}
+                          className={`flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-[12px] ${
+                            isCurrent ? 'bg-c-surface-raised' : ''
+                          }`}
+                        >
+                          <span className="min-w-0 truncate">
+                            <span className="font-medium text-c-text">v{v.versionNumber}</span>
+                            {isCurrent ? (
+                              <span className="ml-1.5 text-[10px] uppercase text-c-text-muted">
+                                {t('vault.docs.current', isPolish ? 'aktualna' : 'current')}
+                              </span>
+                            ) : null}
+                            <span className="ml-2 text-c-text-muted">{originLabel}</span>
+                          </span>
+                          {!isCurrent && canChangeScope ? (
+                            <button
+                              type="button"
+                              data-testid={`vault-panel-version-restore-${v.versionNumber}`}
+                              disabled={restoringVersion !== null || currentVersion === null}
+                              onClick={() => void handleRestore(v.versionNumber)}
+                              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-c-border px-2 text-[11px] text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {restoringVersion === v.versionNumber ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <RotateCcw size={12} />
+                              )}
+                              {t('vault.docs.restore', isPolish ? 'Przywróć' : 'Restore')}
+                            </button>
+                          ) : null}
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
               </div>
             ) : null}
 
