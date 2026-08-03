@@ -1,4 +1,20 @@
-import { Flag, Link2, MessageCircle, Milestone, Target } from 'lucide-react';
+/**
+ * ResultsKpiScorecardsView — RES-10 canonical Results scorecard screen.
+ *
+ * OWNERSHIP: reads/writes ONLY the Results-owned scorecard contract
+ * (`V8ResultsApi.*Scorecard*`, backed by `kpi_scorecards`/`kpi_scorecard_items` —
+ * see `server/src/services/results/kpiScorecardService.ts`). Before RES-10 this
+ * component was wired to `Api.goals*` — the Initiatives-owned goals/OKR
+ * contract — and merely relabeled as "Scorecards". That wiring is gone: this
+ * screen must never call `Api.goals*`, and Initiatives goals now have their
+ * own screen (`src/components/Initiatives/InitiativeGoalsView.tsx`).
+ *
+ * A scorecard is a department x period "card" (per Piotr's spec, see the
+ * KARTY KPI comment on the backend routes) that groups existing KPIs from the
+ * Results KPI catalog (`V8ResultsApi.getKpiCatalog`) — it does not define new
+ * KPIs, only curates which existing ones sit on which card.
+ */
+import { Link2, Target, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +29,12 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
-import { Api } from '@/services/api';
+import {
+  type V8ResultsKpiCatalogEntry,
+  type V8ResultsScorecard,
+  type V8ResultsScorecardKpi,
+  V8ResultsApi,
+} from '@/services/api/v8/results';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import {
@@ -23,7 +44,6 @@ import {
 } from '../shared/ModuleHub/FilterableTable';
 import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import type { ResultsTrackedInitiative } from './kpiDomain';
-import { createResultsShowcaseGoals, shouldUseResultsShowcaseData } from './resultsShowcaseData';
 
 interface ResultsKpiScorecardsViewProps {
   activeFilters: FilterChip[];
@@ -32,78 +52,15 @@ interface ResultsKpiScorecardsViewProps {
   initiatives?: ResultsTrackedInitiative[];
 }
 
-type GoalApiRow = {
-  id: string;
-  parent_goal_id?: string | null;
-  goal_type?: string | null;
-  title?: string | null;
-  description?: string | null;
-  owner_id?: string | null;
-  time_frame?: string | null;
-  start_date?: string | null;
-  end_date?: string | null;
-  status?: string | null;
-  progress?: number | null;
-  target_value?: number | null;
-  current_value?: number | null;
-  unit?: string | null;
-};
+type ScorecardItem = V8ResultsScorecard & PreviewableItem;
 
-type GoalRollup = {
-  linkedInitiatives?: number;
-  childGoals?: number;
-  initiativeProgressCount?: number;
-  rollupProgress?: number;
-};
-
-type GoalItem = PreviewableItem & {
-  goalType: string;
-  title: string;
-  description: string;
-  ownerId: string | null;
-  timeFrame: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: string;
-  progress: number;
-  targetValue: number | null;
-  currentValue: number | null;
-  unit: string | null;
-  parentGoalId: string | null;
-  linkedInitiativesCount: number;
-  rollupProgress: number;
-  childGoals: number;
-};
+const toScorecardItem = (scorecard: V8ResultsScorecard): ScorecardItem => ({
+  ...scorecard,
+  title: scorecard.name,
+});
 
 const INPUT_CLASS =
   'w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
-
-const normalizeGoal = (goal: GoalApiRow, rollup?: GoalRollup): GoalItem => ({
-  id: goal.id,
-  title: goal.title || 'Untitled scorecard',
-  goalType: String(goal.goal_type || 'objective'),
-  description: goal.description || '',
-  ownerId: goal.owner_id || null,
-  timeFrame: goal.time_frame || null,
-  startDate: goal.start_date || null,
-  endDate: goal.end_date || null,
-  status: String(goal.status || 'active'),
-  progress: Number(goal.progress || 0),
-  targetValue: goal.target_value != null ? Number(goal.target_value) : null,
-  currentValue: goal.current_value != null ? Number(goal.current_value) : null,
-  unit: goal.unit || null,
-  parentGoalId: goal.parent_goal_id || null,
-  linkedInitiativesCount: Number(rollup?.linkedInitiatives || 0),
-  rollupProgress: Number(rollup?.rollupProgress || 0),
-  childGoals: Number(rollup?.childGoals || 0),
-});
-
-const formatGoalType = (value: string) => {
-  const normalized = value.toLowerCase();
-  if (normalized === 'scorecard') return 'Scorecard';
-  if (normalized === 'key_result') return 'Key result';
-  return 'Objective';
-};
 
 const formatDate = (value?: string | null) => {
   if (!value) return '—';
@@ -116,100 +73,48 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   activeFilters,
   onFilterChange,
   createNonce,
-  initiatives = [],
 }) => {
   const { t } = useTranslation();
   const openChatWithContext = useOpenChatWithContext();
-  const [items, setItems] = useState<GoalItem[]>([]);
+  const [items, setItems] = useState<ScorecardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedLinkedInitiatives, setSelectedLinkedInitiatives] = useState<any[]>([]);
+  const [selectedKpis, setSelectedKpis] = useState<V8ResultsScorecardKpi[]>([]);
+  const [kpisLoading, setKpisLoading] = useState(false);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [department, setDepartment] = useState('');
+  const [periodLabel, setPeriodLabel] = useState('Q2 2026');
 
-  const [goalType, setGoalType] = useState('scorecard');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [timeFrame, setTimeFrame] = useState('Q2 2026');
-  const [targetValue, setTargetValue] = useState('');
-  const [unit, setUnit] = useState('%');
-  const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<string[]>([]);
+  const [catalog, setCatalog] = useState<V8ResultsKpiCatalogEntry[]>([]);
+  const [attachKpiId, setAttachKpiId] = useState('');
+  const [attaching, setAttaching] = useState(false);
+  const [detachingId, setDetachingId] = useState<string | null>(null);
 
-  const fetchGoals = useCallback(async () => {
+  const fetchScorecards = useCallback(async () => {
     setLoading(true);
     try {
-      const response: any = await Api.goalsGet();
-      const rawGoals = (response?.goals || []) as GoalApiRow[];
-      if (rawGoals.length === 0 && shouldUseResultsShowcaseData()) {
-        setItems(
-          createResultsShowcaseGoals().map((goal) => ({
-            id: goal.id,
-            title: goal.title,
-            goalType: goal.goalType,
-            description: goal.description || '',
-            ownerId: goal.ownerId || null,
-            timeFrame: goal.timeFrame || null,
-            startDate: goal.startDate || null,
-            endDate: goal.endDate || null,
-            status: goal.status,
-            progress: goal.progress,
-            targetValue: goal.targetValue || null,
-            currentValue: goal.currentValue || null,
-            unit: goal.unit || null,
-            parentGoalId: goal.parentGoalId || null,
-            linkedInitiativesCount: goal.linkedInitiativesCount,
-            rollupProgress: goal.rollupProgress,
-            childGoals: 0,
-          }))
-        );
-        return;
-      }
-
-      const withRollups = await Promise.all(
-        rawGoals.map(async (goal) => {
-          try {
-            const rollup = await Api.goalsGetRollup(goal.id);
-            return normalizeGoal(goal, rollup);
-          } catch {
-            return normalizeGoal(goal);
-          }
-        })
-      );
-
-      setItems(withRollups);
+      const response = await V8ResultsApi.getScorecards();
+      setItems(response.scorecards.map(toScorecardItem));
     } catch {
-      setItems(
-        shouldUseResultsShowcaseData()
-          ? createResultsShowcaseGoals().map((goal) => ({
-              id: goal.id,
-              title: goal.title,
-              goalType: goal.goalType,
-              description: goal.description || '',
-              ownerId: goal.ownerId || null,
-              timeFrame: goal.timeFrame || null,
-              startDate: goal.startDate || null,
-              endDate: goal.endDate || null,
-              status: goal.status,
-              progress: goal.progress,
-              targetValue: goal.targetValue || null,
-              currentValue: goal.currentValue || null,
-              unit: goal.unit || null,
-              parentGoalId: goal.parentGoalId || null,
-              linkedInitiativesCount: goal.linkedInitiativesCount,
-              rollupProgress: goal.rollupProgress,
-              childGoals: 0,
-            }))
-          : []
-      );
+      toast.error(t('results.kpiScorecards.loadError', 'Failed to load scorecards'));
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
-    void fetchGoals();
-  }, [fetchGoals]);
+    void fetchScorecards();
+  }, [fetchScorecards]);
+
+  useEffect(() => {
+    V8ResultsApi.getKpiCatalog()
+      .then((res) => setCatalog(res.kpis || []))
+      .catch(() => setCatalog([]));
+  }, []);
 
   useEffect(() => {
     if (!createNonce) return;
@@ -218,66 +123,50 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
 
   useEffect(() => {
     if (!createOpen) return;
-    setGoalType('scorecard');
-    setTitle('');
-    setDescription('');
-    setTimeFrame('Q2 2026');
-    setTargetValue('');
-    setUnit('%');
-    setSelectedInitiativeIds([]);
+    setName('');
+    setDepartment('');
+    setPeriodLabel('Q2 2026');
   }, [createOpen]);
+
+  const loadKpisForSelection = useCallback(async (scorecardId: string) => {
+    setKpisLoading(true);
+    try {
+      const response = await V8ResultsApi.getScorecardKpis(scorecardId);
+      setSelectedKpis(response.kpis);
+    } catch {
+      setSelectedKpis([]);
+    } finally {
+      setKpisLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
-      setSelectedLinkedInitiatives([]);
+      setSelectedKpis([]);
       return;
     }
-
-    const selected = items.find((item) => item.id === selectedId);
-    if (!selected) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const response: any = await Api.goalsGetInitiatives(selected.id);
-        if (!cancelled) {
-          setSelectedLinkedInitiatives(response?.initiatives || []);
-        }
-      } catch {
-        if (!cancelled) {
-          setSelectedLinkedInitiatives(
-            initiatives
-              .filter((initiative) => selected.linkedInitiativesCount > 0)
-              .slice(0, selected.linkedInitiativesCount)
-              .map((initiative) => ({
-                initiative_id: initiative.initiativeId,
-                initiative_name: initiative.initiativeName,
-                initiative_status: initiative.initiativeStatus,
-              }))
-          );
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [initiatives, items, selectedId]);
+    void loadKpisForSelection(selectedId);
+  }, [selectedId, loadKpisForSelection]);
 
   const selectedItem = useMemo(
     () => (selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
+  const attachableKpis = useMemo(
+    () => catalog.filter((kpi) => !selectedKpis.some((attached) => attached.id === kpi.id)),
+    [catalog, selectedKpis]
+  );
+
   const rows: TableRow[] = useMemo(
     () =>
       items.map((item) => ({
         id: item.id,
-        title: item.title,
-        type: item.goalType,
-        progress: item.progress,
-        rollup: item.rollupProgress,
-        linkedInitiatives: item.linkedInitiativesCount,
+        name: item.name,
+        department: item.department || '—',
+        period: item.periodLabel || '—',
+        kpiCount: item.kpiCount,
+        onTargetCount: item.onTargetCount,
         status: item.status,
         _raw: item,
       })),
@@ -287,130 +176,104 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   const columns: TableColumn[] = useMemo(
     () => [
       {
-        id: 'title',
-        label: t('results.kpi.scorecards.name', 'Scorecard'),
-        width: '38%',
+        id: 'name',
+        label: t('results.kpiScorecards.name', 'Scorecard'),
+        width: '32%',
         render: (row) => {
-          const item = row._raw as GoalItem;
+          const item = row._raw as ScorecardItem;
           return (
             <div>
-              <div className="text-sm font-medium text-slate-900 dark:text-white">{item.title}</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">{item.name}</div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {formatGoalType(item.goalType)}
-                {item.parentGoalId ? ' · child' : ''}
+                {item.department || t('common.none', 'No department')}
               </div>
             </div>
           );
         },
       },
+      { id: 'period', label: t('common.period', 'Period'), width: '18%' },
       {
-        id: 'progress',
-        label: t('common.progress', 'Progress'),
+        id: 'kpiCount',
+        label: t('results.kpiScorecards.kpiCount', 'KPIs'),
         width: '16%',
-        render: (row) => `${Math.round(Number(row.progress || 0))}%`,
-      },
-      {
-        id: 'rollup',
-        label: t('results.kpi.scorecards.rollup', 'Rollup'),
-        width: '16%',
-        render: (row) => `${Math.round(Number(row.rollup || 0))}%`,
-      },
-      {
-        id: 'linkedInitiatives',
-        label: t('results.tabs.initiatives', 'Initiatives'),
-        width: '14%',
+        render: (row) => `${row.onTargetCount ?? 0} / ${row.kpiCount ?? 0} ${t('results.kpiScorecards.onTarget', 'on target')}`,
       },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
     ],
     [t]
   );
 
-  const initiativeOptions = useMemo(
-    () =>
-      initiatives.map((initiative) => ({
-        id: initiative.initiativeId,
-        label: initiative.initiativeName,
-        sublabel: initiative.initiativeStatus,
-      })),
-    [initiatives]
-  );
-
   const stats = useMemo(
     () => ({
       total: items.length,
       active: items.filter((item) => item.status.toLowerCase() === 'active').length,
-      scorecards: items.filter((item) => item.goalType.toLowerCase() === 'scorecard').length,
+      totalKpis: items.reduce((sum, item) => sum + item.kpiCount, 0),
     }),
     [items]
   );
 
-  const toggleInitiative = (id: string) => {
-    setSelectedInitiativeIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
   const handleCreate = async () => {
-    if (!title.trim()) {
-      toast.error('Provide a scorecard title.');
+    if (!name.trim()) {
+      toast.error(t('results.kpiScorecards.nameRequired', 'Provide a scorecard name.'));
       return;
     }
     setCreating(true);
     try {
-      const created: any = await Api.goalsCreate({
-        goalType,
-        title: title.trim(),
-        description: description.trim() || undefined,
-        timeFrame: timeFrame.trim() || undefined,
-        targetValue: targetValue.trim() ? Number(targetValue) : undefined,
-        unit: unit.trim() || undefined,
+      await V8ResultsApi.createScorecard({
+        name: name.trim(),
+        department: department.trim() || undefined,
+        periodLabel: periodLabel.trim() || undefined,
       });
-
-      const goalId = created?.id;
-      if (goalId && selectedInitiativeIds.length > 0) {
-        await Promise.all(
-          selectedInitiativeIds.map((initiativeId) => Api.goalsLinkInitiative(goalId, initiativeId))
-        );
-      }
-
-      toast.success('Scorecard created');
+      toast.success(t('results.kpiScorecards.created', 'Scorecard created'));
       setCreateOpen(false);
-      await fetchGoals();
+      await fetchScorecards();
     } catch {
-      toast.error('Failed to create scorecard');
+      toast.error(t('results.kpiScorecards.createError', 'Failed to create scorecard'));
     } finally {
       setCreating(false);
     }
   };
 
-  const updateStatus = async (item: GoalItem, status: string, progress?: number) => {
-    setUpdatingId(item.id);
+  const handleAttachKpi = async () => {
+    if (!selectedId || !attachKpiId) return;
+    setAttaching(true);
     try {
-      await Api.goalsUpdate(item.id, {
-        status,
-        progress: progress ?? item.progress,
-      });
-      toast.success('Scorecard updated');
-      await fetchGoals();
+      await V8ResultsApi.addKpiToScorecard(selectedId, attachKpiId);
+      setAttachKpiId('');
+      await loadKpisForSelection(selectedId);
+      await fetchScorecards();
     } catch {
-      toast.error('Failed to update scorecard');
+      toast.error(t('results.kpiScorecards.attachError', 'Failed to attach KPI'));
     } finally {
-      setUpdatingId(null);
+      setAttaching(false);
     }
   };
 
-  const actions = (item: GoalItem): ActionRow[] => [
+  const handleDetachKpi = async (kpiId: string) => {
+    if (!selectedId) return;
+    setDetachingId(kpiId);
+    try {
+      await V8ResultsApi.removeKpiFromScorecard(selectedId, kpiId);
+      await loadKpisForSelection(selectedId);
+      await fetchScorecards();
+    } catch {
+      toast.error(t('results.kpiScorecards.detachError', 'Failed to remove KPI'));
+    } finally {
+      setDetachingId(null);
+    }
+  };
+
+  const actions = (item: ScorecardItem): ActionRow[] => [
     {
       id: 'discuss',
-      label: t('results.kpi.scorecards.discuss', 'Discuss goal'),
+      label: t('results.kpiScorecards.discuss', 'Discuss scorecard'),
       onClick: async () => {
         try {
           await openChatWithContext({
             entityType: 'kpi',
             entityId: item.id,
-            entityName: item.title,
+            entityName: item.name,
             contextData: item as unknown as Record<string, unknown>,
-            pmoContext: { kpiId: item.id },
           });
           toast.success(t('common.chatOpened', 'Chat opened'), { duration: 1500 });
         } catch {
@@ -419,63 +282,25 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
       },
       variant: 'secondary',
     },
-    {
-      id: 'activate',
-      label:
-        updatingId === item.id
-          ? t('common.loading', 'Loading...')
-          : t('results.kpi.scorecards.setActive', 'Set active'),
-      onClick: () => void updateStatus(item, 'active'),
-      variant: 'secondary',
-    },
-    {
-      id: 'complete',
-      label:
-        updatingId === item.id
-          ? t('common.loading', 'Loading...')
-          : t('results.kpi.scorecards.markDone', 'Mark done'),
-      onClick: () =>
-        void updateStatus(
-          item,
-          'done',
-          item.targetValue && item.currentValue != null && item.targetValue !== 0
-            ? Math.min(100, Math.round((item.currentValue / item.targetValue) * 100))
-            : 100
-        ),
-      variant: 'primary',
-    },
   ];
 
-  const metaPills = (item: GoalItem): MetaPill[] => [
-    { label: t('common.type', 'Type'), value: formatGoalType(item.goalType), tone: 'info' },
-    { label: t('common.status', 'Status'), value: item.status, tone: 'neutral' },
-    {
-      label: t('common.progress', 'Progress'),
-      value: `${Math.round(item.progress)}%`,
-      tone: 'success',
-    },
+  const metaPills = (item: ScorecardItem): MetaPill[] => [
+    { label: t('common.department', 'Department'), value: item.department || '—', tone: 'info' },
+    { label: t('common.period', 'Period'), value: item.periodLabel || '—', tone: 'neutral' },
+    { label: t('common.status', 'Status'), value: item.status, tone: 'success' },
   ];
 
-  const relationItems = (item: GoalItem): RelationItem[] => [
+  const relationItems = (item: ScorecardItem): RelationItem[] => [
     {
-      id: `${item.id}-initiatives`,
-      label: t('results.tabs.initiatives', 'Initiatives'),
-      value: String(item.linkedInitiativesCount),
+      id: `${item.id}-kpis`,
+      label: t('results.kpiScorecards.kpiCount', 'KPIs'),
+      value: String(item.kpiCount),
       icon: <Link2 size={14} />,
     },
     {
-      id: `${item.id}-children`,
-      label: t('results.kpi.scorecards.childGoals', 'Child goals'),
-      value: String(item.childGoals),
-      icon: <Milestone size={14} />,
-    },
-    {
-      id: `${item.id}-target`,
-      label: t('common.target', 'Target'),
-      value:
-        item.targetValue != null
-          ? `${item.targetValue}${item.unit ? ` ${item.unit}` : ''}`
-          : t('common.none', '—'),
+      id: `${item.id}-on-target`,
+      label: t('results.kpiScorecards.onTargetCount', 'On target'),
+      value: String(item.onTargetCount),
       icon: <Target size={14} />,
     },
   ];
@@ -485,16 +310,13 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
       <div className="grid gap-3 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {t('results.kpi.scorecards.total', 'Scorecards')}
+            {t('results.kpiScorecards.total', 'Scorecards')}
           </div>
           <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
             {stats.total}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t(
-              'results.kpi.scorecards.totalHint',
-              'Managed goal and scorecard artifacts in Results.'
-            )}
+            {t('results.kpiScorecards.totalHint', 'Department x period cards curated from the KPI catalog.')}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
@@ -505,24 +327,18 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             {stats.active}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t(
-              'results.kpi.scorecards.activeHint',
-              'Scorecards currently tracking delivery or benefits.'
-            )}
+            {t('results.kpiScorecards.activeHint', 'Scorecards currently tracking delivery or benefits.')}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {t('results.kpi.scorecards.scorecardsOnly', 'Formal scorecards')}
+            {t('results.kpiScorecards.totalKpis', 'KPIs on cards')}
           </div>
           <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
-            {stats.scorecards}
+            {stats.totalKpis}
           </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t(
-              'results.kpi.scorecards.scorecardsOnlyHint',
-              'Explicit operator scorecards backed by goals API.'
-            )}
+            {t('results.kpiScorecards.totalKpisHint', 'KPIs can appear on more than one card.')}
           </div>
         </div>
       </div>
@@ -532,12 +348,12 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-                {t('results.kpi.scorecards.createTitle', 'Create scorecard')}
+                {t('results.kpiScorecards.createTitle', 'Create scorecard')}
               </h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {t(
-                  'results.kpi.scorecards.createHint',
-                  'Goals and scorecards organize KPI truth into explicit business commitments.'
+                  'results.kpiScorecards.createHint',
+                  'A card groups existing KPIs by department and period.'
                 )}
               </p>
             </div>
@@ -553,103 +369,34 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('common.type', 'Type')}
-              </span>
-              <select
-                value={goalType}
-                onChange={(event) => setGoalType(event.target.value)}
-                className={INPUT_CLASS}
-              >
-                <option value="scorecard">Scorecard</option>
-                <option value="objective">Objective</option>
-                <option value="key_result">Key result</option>
-              </select>
-            </label>
-            <label className="space-y-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {t('common.name', 'Name')}
               </span>
               <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 className={INPUT_CLASS}
-              />
-            </label>
-            <label className="space-y-1.5 lg:col-span-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('common.description', 'Description')}
-              </span>
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                className={`${INPUT_CLASS} min-h-[92px]`}
               />
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('common.period', 'Time frame')}
+                {t('common.department', 'Department')}
               </span>
               <input
-                value={timeFrame}
-                onChange={(event) => setTimeFrame(event.target.value)}
+                value={department}
+                onChange={(event) => setDepartment(event.target.value)}
                 className={INPUT_CLASS}
               />
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('common.target', 'Target')}
+                {t('common.period', 'Period')}
               </span>
-              <div className="grid grid-cols-[1fr_110px] gap-2">
-                <input
-                  value={targetValue}
-                  onChange={(event) => setTargetValue(event.target.value)}
-                  className={INPUT_CLASS}
-                />
-                <input
-                  value={unit}
-                  onChange={(event) => setUnit(event.target.value)}
-                  className={INPUT_CLASS}
-                />
-              </div>
+              <input
+                value={periodLabel}
+                onChange={(event) => setPeriodLabel(event.target.value)}
+                className={INPUT_CLASS}
+              />
             </label>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t('results.tabs.initiatives', 'Initiatives')}
-            </div>
-            <div className="mt-2 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3 max-h-44 overflow-y-auto space-y-2">
-              {initiativeOptions.length === 0 ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t(
-                    'results.kpi.scorecards.noInitiatives',
-                    'No initiatives available in current scope.'
-                  )}
-                </div>
-              ) : (
-                initiativeOptions.map((initiative) => (
-                  <label
-                    key={initiative.id}
-                    className="flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedInitiativeIds.includes(initiative.id)}
-                      onChange={() => toggleInitiative(initiative.id)}
-                      className="mt-0.5 rounded border-slate-300 dark:border-white/[0.1]"
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm text-slate-700 dark:text-slate-200">
-                        {initiative.label}
-                      </span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400">
-                        {initiative.sublabel}
-                      </span>
-                    </span>
-                  </label>
-                ))
-              )}
-            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-end gap-2">
@@ -681,40 +428,94 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
         renderPreview={(item) => (
           <div className="space-y-4">
             <PreviewMetaCard
-              title={item.title}
-              subtitle={
-                item.description ||
-                t(
-                  'results.kpi.scorecards.previewSubtitle',
-                  'Governed scorecard built on KPI truth.'
-                )
-              }
+              title={item.name}
+              subtitle={t(
+                'results.kpiScorecards.previewSubtitle',
+                'Governed scorecard built on the Results KPI catalog.'
+              )}
               metaPills={metaPills(item)}
             />
             <PreviewDetailsSection
               title={t('common.details', 'Details')}
               detailsText={[
-                `Type: ${formatGoalType(item.goalType)}`,
-                `Time frame: ${item.timeFrame || '—'}`,
-                `Progress: ${Math.round(item.progress)}%`,
-                `Rollup: ${Math.round(item.rollupProgress)}%`,
-                `Target: ${item.targetValue != null ? `${item.targetValue}${item.unit ? ` ${item.unit}` : ''}` : '—'}`,
-                `Current: ${item.currentValue != null ? `${item.currentValue}${item.unit ? ` ${item.unit}` : ''}` : '—'}`,
-                `Start / End: ${formatDate(item.startDate)} → ${formatDate(item.endDate)}`,
+                `${t('common.department', 'Department')}: ${item.department || '—'}`,
+                `${t('common.period', 'Period')}: ${item.periodLabel || '—'}`,
+                `${t('common.period', 'Period')} (start/end): ${formatDate(item.periodStart)} → ${formatDate(item.periodEnd)}`,
               ]}
             />
             <PreviewRelations
               title={t('common.relations', 'Relations')}
-              items={[
-                ...relationItems(item),
-                ...selectedLinkedInitiatives.map((initiative: any) => ({
-                  id: `${item.id}-${initiative.initiative_id}`,
-                  label: initiative.initiative_status || 'initiative',
-                  value: initiative.initiative_name || initiative.initiative_id,
-                  icon: <Flag size={14} />,
-                })),
-              ]}
+              items={relationItems(item)}
             />
+
+            <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('results.kpiScorecards.kpisOnCard', 'KPIs on this card')}
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {kpisLoading ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('common.loading', 'Loading...')}
+                  </div>
+                ) : selectedKpis.length === 0 ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('results.kpiScorecards.noKpisYet', 'No KPIs attached yet.')}
+                  </div>
+                ) : (
+                  selectedKpis.map((kpi) => (
+                    <div
+                      key={kpi.id}
+                      className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+                    >
+                      <div className="min-w-0">
+                        <div className="truncate text-sm text-slate-700 dark:text-slate-200">
+                          {kpi.name}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {kpi.currentValue ?? '—'}
+                          {kpi.unit ? ` ${kpi.unit}` : ''} / {kpi.targetValue ?? '—'}
+                          {kpi.unit ? ` ${kpi.unit}` : ''}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleDetachKpi(kpi.id)}
+                        disabled={detachingId === kpi.id}
+                        className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] disabled:opacity-50"
+                        aria-label={t('common.remove', 'Remove')}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <select
+                  value={attachKpiId}
+                  onChange={(event) => setAttachKpiId(event.target.value)}
+                  className={INPUT_CLASS}
+                >
+                  <option value="">
+                    {t('results.kpiScorecards.pickKpi', 'Pick a KPI to attach…')}
+                  </option>
+                  {attachableKpis.map((kpi) => (
+                    <option key={kpi.id} value={kpi.id}>
+                      {kpi.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={!attachKpiId || attaching}
+                  onClick={() => void handleAttachKpi()}
+                  className="shrink-0 rounded-xl bg-navy-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-60 hover:bg-navy-800"
+                >
+                  {attaching ? t('common.loading', 'Loading...') : t('common.add', 'Add')}
+                </button>
+              </div>
+            </div>
           </div>
         )}
         renderPreviewFooter={(item) => <PreviewActionBar actions={actions(item)} />}
@@ -729,7 +530,7 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           emptyMessage={
             loading
               ? t('common.loading', 'Loading...')
-              : t('results.kpi.scorecards.empty', 'No scorecards yet.')
+              : t('results.kpiScorecards.empty', 'No scorecards yet.')
           }
           hideRowActions
         />

@@ -1373,7 +1373,7 @@ export const ResultsHub: React.FC = () => {
             kpiWorkspaceMode === 'overview'
           )}
           {actionButton(
-            t('results.kpi.workspace.scorecards', 'Goals'),
+            t('results.kpi.workspace.scorecards', 'Scorecards'),
             () => setKpiWorkspaceMode('scorecards'),
             kpiWorkspaceMode === 'scorecards'
           )}
