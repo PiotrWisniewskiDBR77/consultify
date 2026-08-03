@@ -465,7 +465,7 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 outline-none"
+        className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
           <h2 id={titleId} className="text-base font-semibold text-c-text">

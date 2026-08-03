@@ -95,7 +95,7 @@ const draftFromCard = (card: V8ResultsKpiRecoveryCard): EditDraft => ({
 // --- shared visual tokens (mirrors KPITimeSeriesDrawer's bespoke drawer style) ---
 
 const inputCls =
-  'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus/40 focus:border-c-focus transition-colors disabled:opacity-60 disabled:cursor-not-allowed';
+  'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus/40 focus-visible:border-c-focus transition-colors disabled:opacity-60 disabled:cursor-not-allowed';
 
 const textareaCls = `${inputCls} h-auto min-h-[72px] resize-none py-2`;
 
@@ -202,7 +202,7 @@ function Segmented<T extends string>({
 }
 
 const detailInputCls =
-  'h-7 px-2 text-xs rounded border border-c-border bg-transparent text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-1 focus:ring-c-focus/40 disabled:opacity-60 disabled:cursor-not-allowed';
+  'h-7 px-2 text-xs rounded border border-c-border bg-transparent text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-1 focus:ring-c-focus/40 disabled:opacity-60 disabled:cursor-not-allowed';
 
 /**
  * List editor for `dependencies` / `risks` — each entry is a

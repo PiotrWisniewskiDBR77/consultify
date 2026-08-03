@@ -245,7 +245,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           <select
             value={axisId}
             onChange={(e) => setAxisId(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {DRD_STRUCTURE.map((axis) => (
               <option key={axis.id} value={String(axis.id)}>
@@ -256,7 +256,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           <select
             value={areaId}
             onChange={(e) => setAreaId(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             {(selectedAxis?.areas || []).map((area) => (
               <option key={area.id} value={area.id}>
@@ -269,7 +269,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           <select
             value={evidenceType}
             onChange={(e) => setEvidenceType(e.target.value as EvidenceType)}
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           >
             <option value="note">Notatka</option>
             <option value="link">Link</option>
@@ -280,7 +280,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Tytuł dowodu"
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
           />
         </div>
         <textarea
@@ -288,13 +288,13 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Opis (opcjonalnie)"
           rows={2}
-          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="URL (opcjonalnie)"
-          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
         {evidenceError && (
           <div className="mb-3 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">
@@ -338,7 +338,7 @@ export const AssessmentQualityReviewPanel: React.FC<AssessmentQualityReviewPanel
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Uzasadnienie decyzji (wymagane)"
           rows={2}
-          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[color:var(--c-focus)]"
+          className="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-navy-900 dark:text-white placeholder-slate-400 resize-none focus-visible:outline-none focus-visible:ring-2 focus:ring-[color:var(--c-focus)]"
         />
         {reviewError && (
           <div className="mb-3 text-sm text-danger-600 dark:text-danger-400 flex items-center gap-2">

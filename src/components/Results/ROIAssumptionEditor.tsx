@@ -51,7 +51,7 @@ export const ROIAssumptionEditor: React.FC<ROIAssumptionEditorProps> = ({
   const [saving, setSaving] = useState(false);
 
   const inputCls =
-    'h-9 px-3 text-sm rounded-lg border border-navy-600 bg-navy-800 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors w-full';
+    'h-9 px-3 text-sm rounded-lg border border-navy-600 bg-navy-800 text-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus focus-visible:border-c-focus-solid transition-colors w-full';
 
   const updateField = useCallback(
     (field: keyof ROIAssumptionsData, value: number | string | undefined) => {

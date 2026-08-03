@@ -301,7 +301,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
                     type="number"
                     value={Number.isFinite(cf) ? cf : 0}
                     onChange={(e) => updateFlow(idx, e.target.value)}
-                    className="w-20 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                    className="w-20 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus"
                     aria-label={idx === 0 ? 'Nakład początkowy' : `Przepływ rok ${idx}`}
                   />
                   {cashflows.length > 2 && (
@@ -334,7 +334,7 @@ export const InvestmentAppraisalPanel: React.FC<Props> = ({
                 type="number"
                 value={discountRate}
                 onChange={(e) => setDiscountRate(Number(e.target.value) || 0)}
-                className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                className="w-24 rounded border border-c-border bg-c-surface px-1.5 py-1 text-xs text-c-text focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus"
                 aria-label="Stopa dyskontowa"
               />
             </label>

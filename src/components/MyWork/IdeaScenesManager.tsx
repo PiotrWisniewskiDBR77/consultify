@@ -242,7 +242,7 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                         if (e.key === 'Enter') handleRenameScene(scene.id);
                         if (e.key === 'Escape') setEditingId(null);
                       }}
-                      className="flex-1 text-[10px] bg-transparent border-b border-c-info outline-none text-slate-700 dark:text-slate-300"
+                      className="flex-1 text-[10px] bg-transparent border-b border-c-info outline-none focus-visible:ring-2 focus-visible:ring-c-focus text-slate-700 dark:text-slate-300"
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (

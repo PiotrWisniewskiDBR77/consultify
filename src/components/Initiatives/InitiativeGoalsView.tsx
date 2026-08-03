@@ -96,7 +96,7 @@ type GoalItem = PreviewableItem & {
 };
 
 const INPUT_CLASS =
-  'w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus';
+  'w-full rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2 text-sm text-c-text focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus';
 
 const normalizeGoal = (goal: GoalApiRow, rollup?: GoalRollup): GoalItem => ({
   id: goal.id,

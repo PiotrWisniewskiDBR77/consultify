@@ -185,7 +185,7 @@ const LaneBackground: React.FC<LaneBackgroundProps> = ({
                 if (e.key === 'Enter') commit();
                 if (e.key === 'Escape') setEditing(false);
               }}
-              className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none border border-c-focus"
+              className="text-[10px] font-semibold text-c-text-secondary bg-c-surface rounded px-1 outline-none focus-visible:ring-2 focus-visible:ring-c-focus border border-c-focus"
             />
           ) : (
             <div

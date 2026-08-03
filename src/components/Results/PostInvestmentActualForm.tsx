@@ -299,7 +299,7 @@ export const PostInvestmentActualForm: React.FC<PostInvestmentActualFormProps> =
   );
 
   const inputCls =
-    'h-9 px-3 text-sm rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus:outline-none focus:ring-2 focus:ring-c-focus/40 focus:border-c-focus transition-colors w-full';
+    'h-9 px-3 text-sm rounded-lg border border-c-border bg-c-surface text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus:ring-c-focus/40 focus-visible:border-c-focus transition-colors w-full';
   const labelCls = 'block text-xs text-c-text-muted mb-1';
 
   if (baselinesError) {

@@ -1046,7 +1046,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                           onKeyDown={(e) => e.key === 'Enter' && handleBranchBlur()}
                           placeholder={t('myWorkIdeas.workspaceTools.branch')}
                           autoFocus
-                          className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
+                          className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none focus-visible:ring-2 focus-visible:ring-c-focus w-28"
                         />
                       ) : (
                         <button
@@ -1068,7 +1068,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                           onKeyDown={(e) => e.key === 'Enter' && handleAreaBlur()}
                           placeholder={t('myWorkIdeas.workspaceTools.area')}
                           autoFocus
-                          className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none w-28"
+                          className="h-7 px-2.5 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-c-focus-solid text-slate-700 dark:text-slate-300 outline-none focus-visible:ring-2 focus-visible:ring-c-focus w-28"
                         />
                       ) : (
                         <button
