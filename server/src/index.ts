@@ -1849,7 +1849,10 @@ async function detectCrashLoop(): Promise<void> {
   if (isTest) return;
   try {
     const gitSha =
-      process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+      process.env.APP_BUILD_SHA ||
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.GIT_SHA;
     if (!gitSha) return; // local dev / unconfigured
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
@@ -1919,12 +1922,18 @@ async function announceDeploy(): Promise<void> {
   if (isTest) return;
   try {
     const gitSha =
-      process.env.RAILWAY_GIT_COMMIT_SHA || process.env.GITHUB_SHA || process.env.GIT_SHA;
+      process.env.APP_BUILD_SHA ||
+      process.env.RAILWAY_GIT_COMMIT_SHA ||
+      process.env.GITHUB_SHA ||
+      process.env.GIT_SHA;
     if (!gitSha) return; // local dev / unconfigured — nothing to announce
     const shortSha = gitSha.slice(0, 10);
     const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
     const branch =
-      process.env.RAILWAY_GIT_BRANCH || process.env.GITHUB_REF_NAME || process.env.GIT_BRANCH;
+      process.env.APP_BUILD_BRANCH ||
+      process.env.RAILWAY_GIT_BRANCH ||
+      process.env.GITHUB_REF_NAME ||
+      process.env.GIT_BRANCH;
     const commitMsg = (
       process.env.RAILWAY_GIT_COMMIT_MESSAGE ||
       process.env.GITHUB_HEAD_COMMIT_MESSAGE ||

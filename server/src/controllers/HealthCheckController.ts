@@ -11,12 +11,14 @@ import { getDatabase } from '../database/Database.js';
 export class HealthCheckController {
   private static getGitMeta(): { gitSha?: string; gitBranch?: string; gitSource?: string } {
     const gitShaFromEnv =
+      process.env.APP_BUILD_SHA ||
       process.env.RAILWAY_GIT_COMMIT_SHA ||
       process.env.GITHUB_SHA ||
       process.env.GIT_SHA ||
       undefined;
 
     const gitBranchFromEnv =
+      process.env.APP_BUILD_BRANCH ||
       process.env.RAILWAY_GIT_BRANCH ||
       process.env.GITHUB_REF_NAME ||
       process.env.GIT_BRANCH ||
