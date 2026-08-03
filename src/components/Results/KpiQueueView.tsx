@@ -623,7 +623,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
               <button
                 type="button"
                 onClick={() => setCreateOpen(false)}
-                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-700"
+                className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 dark:hover:bg-navy-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <X size={18} />
               </button>
@@ -667,7 +667,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
                     type="button"
                     onClick={() => void handleGenerateAi()}
                     disabled={generatingAi || selectedKpiIds.length === 0}
-                    className="inline-flex items-center gap-1 rounded-full border border-primary-500/30 bg-primary-500/10 px-3 py-1 text-xs font-medium text-primary-600 dark:text-primary-300 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     <Sparkles size={12} />
                     {generatingAi
@@ -746,7 +746,7 @@ export const KpiQueueView: React.FC<KpiQueueViewProps> = ({
                 type="button"
                 disabled={selectedKpiIds.length === 0}
                 onClick={handleCreateSheet}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
               >
                 <Plus size={14} />
                 {t('results.kpi.signals.createAction', 'Create sheet')}

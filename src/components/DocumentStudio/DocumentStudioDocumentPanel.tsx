@@ -161,7 +161,7 @@ export const DocumentGenerationWarningsChip: React.FC<{
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center justify-between gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <span className="flex items-center gap-1.5 font-medium text-c-text">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-c-warning" aria-hidden />
@@ -2510,7 +2510,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           key={tool.id}
           type="button"
           onClick={() => setOverflowSelection(tool.id)}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-c-text-secondary transition-colors hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid={`document-studio-rail-overflow-item-${tool.id}`}
         >
           <tool.icon size={14} aria-hidden="true" className="flex-shrink-0" />
@@ -2528,7 +2528,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       <button
         type="button"
         onClick={() => setOverflowSelection(null)}
-        className="flex items-center gap-1 px-3 pt-2 text-xs text-c-text-secondary hover:text-c-text"
+        className="flex items-center gap-1 px-3 pt-2 text-xs text-c-text-secondary hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         data-testid="document-studio-rail-overflow-back"
       >
         <ChevronDown size={12} className="rotate-90" aria-hidden="true" />

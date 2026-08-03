@@ -241,7 +241,7 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
                   lineagePaths: governance.lineagePaths || null,
                 })
               }
-              className="ml-1.5 inline-flex items-center rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+              className="ml-1.5 inline-flex items-center rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {t('rap.outputs.preview.trace', 'Trace')}
             </button>
@@ -303,7 +303,7 @@ const CopyIdButton: React.FC<{ id?: string | null; label: string }> = ({ id, lab
       onClick={() => {
         void navigator.clipboard?.writeText(id);
       }}
-      className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+      className="inline-flex items-center gap-1 rounded-full border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-2 py-0.5 text-[9px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
     >
       <Copy size={9} />
       {label}

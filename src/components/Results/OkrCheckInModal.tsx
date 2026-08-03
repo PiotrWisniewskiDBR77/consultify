@@ -95,7 +95,7 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors shrink-0"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <X size={18} />
           </button>
@@ -110,7 +110,7 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
                   key={opt.value}
                   type="button"
                   onClick={() => setConfidence(opt.value)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                     confidence === opt.value
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-slate-900 dark:text-white'
                       : 'border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
@@ -152,14 +152,14 @@ export const OkrCheckInModal: React.FC<OkrCheckInModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 text-sm font-medium rounded-full border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+              className="h-9 px-4 text-sm font-medium rounded-full border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {t('common.cancel', 'Cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="h-9 px-5 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="h-9 px-5 text-sm font-medium rounded-full bg-navy-900 dark:bg-[#F4F7FB] text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               {saving
                 ? t('common.saving', 'Saving...')

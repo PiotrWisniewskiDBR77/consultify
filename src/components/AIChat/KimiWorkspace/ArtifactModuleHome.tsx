@@ -180,7 +180,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
         {/* New button */}
         <button
           onClick={handleNewClick}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-c-text text-c-bg text-sm font-medium hover:opacity-90 transition-opacity mt-2"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-c-text text-c-bg text-sm font-medium hover:opacity-90 transition-opacity mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <Plus size={16} />
           {t('kimi.artifactHome.startNew', 'Start new')}
@@ -196,7 +196,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 isActive
                   ? 'bg-c-surface shadow-sm text-c-text/[0.12] dark:text-[var(--c-info)]'
                   : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-border-subtle'
@@ -488,7 +488,7 @@ function TemplatesGrid({
         <button
           key={card.id}
           onClick={() => onTemplateClick(card.id, card.isBuiltin ? card.builtinPrompt : undefined)}
-          className="group text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all"
+          className="group text-left p-4 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           <p className="text-sm font-medium text-c-text group-hover:text-brand transition-colors line-clamp-1">
             {card.title}
@@ -549,7 +549,7 @@ function ArtifactsList({
           <button
             key={safeId}
             onClick={() => onArtifactClick(safeId)}
-            className="w-full flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left"
+            className="w-full flex items-center justify-between p-3 rounded-xl border border-c-border-subtle bg-c-surface hover:border-brand/40 dark:hover:border-brand/30 hover:shadow-sm transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-c-text truncate">{item.title}</p>

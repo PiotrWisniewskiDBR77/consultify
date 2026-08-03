@@ -132,7 +132,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
           type="button"
           onClick={onReject}
           disabled={busyApply || busyReject}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="ai-proposal-reject"
         >
           {busyReject ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
@@ -142,7 +142,7 @@ export const ProposalDiffCard: React.FC<ProposalDiffCardProps> = ({
           type="button"
           onClick={onApply}
           disabled={busyApply || busyReject}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-bg disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-xs text-c-text hover:bg-c-bg disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="ai-proposal-apply"
         >
           {busyApply ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}

@@ -1014,7 +1014,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   }, [activeSection, loading]);
 
   const inputCls =
-    'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 transition-colors';
+    'w-full h-9 px-3 text-sm rounded-lg border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid transition-colors';
 
   const caseBadgeCls =
     openCase?.severity === 'RED'
@@ -1440,7 +1440,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         {t('results.deviation.rca', 'Root cause analysis')}
                       </div>
                       <textarea
-                        className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30`}
+                        className={`w-full min-h-[90px] px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/40 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-c-focus`}
                         value={rcaDraft}
                         onChange={(e) => setRcaDraft(e.target.value)}
                         placeholder={t(

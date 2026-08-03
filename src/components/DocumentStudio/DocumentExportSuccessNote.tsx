@@ -46,7 +46,7 @@ export const DocumentExportSuccessNote: React.FC<{
         type="button"
         onClick={onDismiss}
         aria-label={t('documentStudio.panel.dismiss', 'Dismiss')}
-        className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-c-text"
+        className="shrink-0 rounded p-0.5 text-c-text-muted transition-colors hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <X className="h-3.5 w-3.5" aria-hidden />
       </button>

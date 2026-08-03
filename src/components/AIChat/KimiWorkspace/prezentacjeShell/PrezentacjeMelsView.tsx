@@ -149,7 +149,7 @@ export const PrezentacjeMelsView: React.FC<PrezentacjeMelsViewProps> = ({
         type="button"
         onClick={onOpenBuilder}
         data-testid="prezentacje-mels-open-builder"
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-hig-sm text-xs font-medium bg-c-surface-raised text-c-text hover:bg-c-border-subtle transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-hig-sm text-xs font-medium bg-c-surface-raised text-c-text hover:bg-c-border-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         {t('prezentacje.leftRail.openBuilder', 'Otwórz w Builderze')}
       </button>

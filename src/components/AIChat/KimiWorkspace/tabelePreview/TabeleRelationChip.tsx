@@ -98,7 +98,7 @@ export function TabeleRelationChip({
         onMouseEnter={openTooltip}
         onMouseLeave={closeTooltip}
         onClick={openTooltip}
-        className="inline-flex items-center gap-2 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:border-sky-300 hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500/30/[0.11]/[0.075] dark:hover:border-sky-300/[0.35] dark:hover:bg-sky-300/[0.10]"
+        className="inline-flex items-center gap-2 rounded-hig-full border border-c-border-subtle bg-c-surface-raised px-3 py-1.5 text-xs font-medium text-c-text transition-colors hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus dark:hover:border-sky-300/[0.35] dark:hover:bg-sky-300/[0.10]"
       >
         <span className="font-mono">{relation.fieldName}</span>
         <span aria-hidden="true" className="text-c-text-secondary">

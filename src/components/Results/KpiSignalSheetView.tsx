@@ -127,7 +127,7 @@ export const KpiSignalSheetView: React.FC<KpiSignalSheetViewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-transparent px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-transparent px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <ArrowLeft size={16} />
               {t('common.back', 'Back')}
@@ -136,7 +136,7 @@ export const KpiSignalSheetView: React.FC<KpiSignalSheetViewProps> = ({
               type="button"
               onClick={handleSave}
               disabled={submitting}
-              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 dark:bg-[#F4F7FB] px-4 py-2 text-sm font-medium text-white dark:text-navy-950 hover:bg-navy-800 dark:hover:bg-[#DDE5EF] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             >
               <Save size={16} />
               {submitting ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
@@ -219,7 +219,7 @@ export const KpiSignalSheetView: React.FC<KpiSignalSheetViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenKpi?.(item.id, 'summary')}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 dark:border-white/[0.08] px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.04]"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 dark:border-white/[0.08] px-3 py-1 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                   >
                     <ExternalLink size={12} />
                     {t('common.open', 'Open')}

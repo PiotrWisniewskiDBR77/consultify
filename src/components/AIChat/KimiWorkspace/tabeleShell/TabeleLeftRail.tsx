@@ -134,7 +134,7 @@ export const TabeleLeftRail: React.FC<TabeleLeftRailProps> = ({
                   type="button"
                   onClick={() => !item.disabled && onSelect?.(item.id)}
                   disabled={item.disabled}
-                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors ${
+                  className={`w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                     active
                       ? 'bg-c-accent-soft text-c-accent'
                       : 'text-c-text hover:bg-c-surface-raised'

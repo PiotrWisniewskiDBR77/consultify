@@ -235,7 +235,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
           type="button"
           onClick={() => void refreshCandidates()}
           disabled={searching || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="source-pack-refresh"
           aria-label={t('kimi.tabeleShell.sourcePack.refreshAriaLabel', 'Refresh candidate search')}
         >
@@ -362,7 +362,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
             type="button"
             onClick={() => void handleSavePack()}
             disabled={savingPack || selectedCount === 0 || !packName.trim()}
-            className="inline-flex items-center justify-center gap-1 w-full rounded-md border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1 w-full rounded-md border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             data-testid="source-pack-save-button"
           >
             {savingPack ? (
@@ -415,7 +415,7 @@ export const TabeleSourcePackPanel: React.FC<TabeleSourcePackPanelProps> = ({
                   <button
                     type="button"
                     onClick={() => onUseInAiEditor(p)}
-                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised"
+                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-[11px] text-c-text hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                     data-testid="source-pack-use-in-ai"
                     aria-label={t(
                       'kimi.tabeleShell.sourcePack.useInAiEditorAriaLabel',

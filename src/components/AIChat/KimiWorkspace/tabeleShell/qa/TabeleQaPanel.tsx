@@ -146,7 +146,7 @@ export const TabeleQaPanel: React.FC<TabeleQaPanelProps> = ({
           type="button"
           onClick={handleRecompute}
           disabled={computing || !tableId}
-          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface-raised px-2 py-1 text-xs text-c-text hover:bg-c-surface-raised disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="qa-recompute-button"
           aria-label={t('kimi.tabeleShell.qa.recomputeAriaLabel', 'Recompute QA report')}
         >

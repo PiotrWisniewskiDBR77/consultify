@@ -150,6 +150,7 @@ export const SourceCandidateCard: React.FC<SourceCandidateCardProps> = ({
             selected
               ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
               : 'border-c-border-subtle bg-c-surface-raised text-c-text hover:bg-c-surface-raised disabled:opacity-50',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus',
           ].join(' ')}
           data-testid="candidate-toggle"
           aria-pressed={selected}
