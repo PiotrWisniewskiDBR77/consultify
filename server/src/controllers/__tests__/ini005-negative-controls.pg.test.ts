@@ -169,17 +169,19 @@ describe.skipIf(!REAL_PG)('INI-05 negative control — capability guard neutrali
       [initiativeId, orgA, 'negative control target']
     );
     // moveInitiative's own project-ownership check needs a real row too.
-    await pool.query(`INSERT INTO projects (id, organization_id) VALUES ($1,$2)`, [
+    await pool.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
       targetProjectId,
       orgA,
+      'Negative control project',
     ]).catch(async () => {
       // projects table may not exist in throwaway mode — create it once.
       await pool.query(
-        `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL)`
+        `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, name TEXT NOT NULL)`
       );
-      await pool.query(`INSERT INTO projects (id, organization_id) VALUES ($1,$2)`, [
+      await pool.query(`INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3)`, [
         targetProjectId,
         orgA,
+        'Negative control project',
       ]);
     });
 

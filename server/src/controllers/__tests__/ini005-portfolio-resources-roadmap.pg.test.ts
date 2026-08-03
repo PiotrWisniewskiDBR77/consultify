@@ -129,7 +129,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       )`,
       `CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
-        organization_id TEXT NOT NULL
+        organization_id TEXT NOT NULL,
+        name TEXT NOT NULL
       )`,
       `CREATE TABLE IF NOT EXISTS initiatives (
         id TEXT PRIMARY KEY,
@@ -271,8 +272,8 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
       [ownerUserA, orgA, 'user', noRoleUserA, orgA, 'user', userB, orgB, 'user']
     );
     await pool.query(
-      `INSERT INTO projects (id, organization_id) VALUES ($1,$2), ($3,$4), ($5,$6)`,
-      [projectA, orgA, projectA2, orgA, projectB, orgB]
+      `INSERT INTO projects (id, organization_id, name) VALUES ($1,$2,$3), ($4,$5,$6), ($7,$8,$9)`,
+      [projectA, orgA, 'Project A', projectA2, orgA, 'Project A2', projectB, orgB, 'Project B']
     );
 
     // Import the REAL app modules only after env + schema are ready —
