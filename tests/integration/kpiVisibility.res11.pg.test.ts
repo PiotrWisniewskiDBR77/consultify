@@ -10,7 +10,9 @@
  *   6. scorecard roll-up filters out invisible KPIs
  *   7. no double-counting (a KPI on two scorecards; a KPI mapped to two initiatives)
  *   8. fresh reopen preserves visibility (persisted in the DB, not session state)
- *   9. one mounted, active Results UI flow shows only allowed KPIs
+ *   9. one mounted, active HTTP route (Express router, not a React component
+ *      — see the real mounted-component test in
+ *      KPITimeSeriesDrawer.visibility.test.tsx for that) shows only allowed KPIs
  *
  * Uses kpiScorecardService (RES-10, Results-owned) as the primary vehicle —
  * it is the simplest, most complete real consumer of kpiVisibilityService —
@@ -387,7 +389,7 @@ describeIfPg('RES-11 — KPI visibility (real PostgreSQL)', () => {
     expect(asOwner.kpiDelta).toBe(10);
   });
 
-  it('9. one mounted, active Results UI flow shows only the KPIs allowed for the caller', async () => {
+  it('9. one mounted, active HTTP route (Express, not a React UI) shows only the KPIs allowed for the caller', async () => {
     const resultsRoutes = (await import('../../server/src/routes/v8/results.routes.js')).default;
     const { attachV8Context } = await import('../../server/src/middleware/v8Auth.middleware.js');
     const verifyToken = (await import('../../server/src/middleware/auth.middleware.js')).default;

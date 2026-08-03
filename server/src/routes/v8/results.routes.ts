@@ -73,6 +73,7 @@ import {
   ScorecardKpiNotFoundError,
   updateScorecard,
 } from '../../services/results/kpiScorecardService.js';
+import { KPI_VISIBILITY_SCOPES } from '../../services/results/kpiVisibilityService.js';
 import { resultsEnterpriseService } from '../../services/resultsEnterpriseService.js';
 import {
   type KpiDriverMapping,
@@ -758,6 +759,7 @@ router.post(
       redThresholdPct,
       amberThresholdAbs,
       redThresholdAbs,
+      visibility,
     } = req.body || {};
 
     const safeName = String(name || '').trim();
@@ -765,6 +767,17 @@ router.post(
       return res.status(400).json({
         error: 'name is required',
         code: 'RESULTS_KPI_NAME_REQUIRED',
+      });
+    }
+
+    // RES-11: fail-closed enum validation BEFORE any write — an unrecognized
+    // value must never reach the DB (the CHECK constraint would also catch
+    // it, but that's defense-in-depth, not the primary gate; this must be a
+    // clean 400 with zero mutation, not a 500 from a constraint violation).
+    if (visibility !== undefined && !KPI_VISIBILITY_SCOPES.includes(visibility)) {
+      return res.status(400).json({
+        error: `visibility must be one of: ${KPI_VISIBILITY_SCOPES.join(', ')}`,
+        code: 'RESULTS_KPI_INVALID_VISIBILITY',
       });
     }
 
@@ -795,6 +808,7 @@ router.post(
         amberThresholdAbs != null && amberThresholdAbs !== '' ? Number(amberThresholdAbs) : null,
       redThresholdAbs:
         redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : null,
+      visibility: visibility || undefined,
       source: 'v8_results_create',
       reason: 'v8-results-kpi-create',
     });
@@ -840,7 +854,21 @@ router.put(
       amberThresholdAbs,
       redThresholdAbs,
       expectedVersion,
+      visibility,
     } = req.body || {};
+
+    // RES-11: fail-closed enum validation BEFORE any write (no lock taken,
+    // no lookup done yet) — an unrecognized value must never reach the CAS
+    // transaction. The DB CHECK constraint would also reject it, but that's
+    // defense-in-depth, not the primary gate: this must be a clean 400 with
+    // zero mutation, not a 500 surfaced from a constraint violation deep
+    // inside the pinned transaction.
+    if (visibility !== undefined && !KPI_VISIBILITY_SCOPES.includes(visibility)) {
+      return res.status(400).json({
+        error: `visibility must be one of: ${KPI_VISIBILITY_SCOPES.join(', ')}`,
+        code: 'RESULTS_KPI_INVALID_VISIBILITY',
+      });
+    }
 
     // RES-02: a caller-supplied `expectedVersion` is the client's own last-seen
     // pointer (round-tripped from the catalog read) — using it enforces real
@@ -941,6 +969,7 @@ router.put(
             : undefined,
         redThresholdAbs:
           redThresholdAbs != null && redThresholdAbs !== '' ? Number(redThresholdAbs) : undefined,
+        visibility: visibility || undefined,
         source: 'v8_results_update',
         reason: 'v8-results-kpi-update',
       });

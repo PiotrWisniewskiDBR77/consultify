@@ -1073,6 +1073,7 @@ interface LegacyResultsKpiRow {
   red_threshold_abs: number | null;
   current_value: number | null;
   current_definition_version: number | null;
+  visibility: string | null;
   latest_value: number | null;
   latest_period_start: string | null;
   prev_value: number | null;
@@ -1642,6 +1643,7 @@ export async function getResultsKpiCatalog(
        k.red_threshold_abs,
        k.current_value,
        k.current_definition_version,
+       k.visibility,
        ts.value AS latest_value,
        ts.period_start AS latest_period_start,
        ts_prev.value AS prev_value,
@@ -1777,6 +1779,9 @@ export async function getResultsKpiCatalog(
       // on update so a stale client cannot silently overwrite a concurrent
       // edit (see kpiDefinitionService's CAS contract).
       currentDefinitionVersion: row.current_definition_version,
+      // RES-11: round-tripped so the active KPI-edit UI can show/init the
+      // current scope and the Results Scorecards KPI list can attribute it.
+      visibility: (row.visibility as string) || 'org_visible',
       latestValue,
       latestMeasurementDate: row.latest_period_start,
       prevValue: row.prev_value != null ? Number(row.prev_value) : null,

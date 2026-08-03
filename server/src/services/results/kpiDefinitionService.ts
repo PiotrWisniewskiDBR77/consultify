@@ -105,6 +105,10 @@ export interface KpiDefinitionFields {
   ownerUserId?: string | null;
   kpiKind?: string | null;
   leadsKpiId?: string | null;
+  /** RES-11: who may see this KPI. Enum enforced by DB CHECK
+   * (initiative_kpis_visibility_chk) and re-validated at the route before
+   * this service is ever called — see KPI_VISIBILITY_SCOPES. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner' | null;
 }
 
 const DEFINITION_FIELD_KEYS: Array<keyof KpiDefinitionFields> = [
@@ -126,6 +130,7 @@ const DEFINITION_FIELD_KEYS: Array<keyof KpiDefinitionFields> = [
   'ownerUserId',
   'kpiKind',
   'leadsKpiId',
+  'visibility',
 ];
 
 const COLUMN_BY_FIELD: Record<keyof KpiDefinitionFields, string> = {
@@ -147,7 +152,12 @@ const COLUMN_BY_FIELD: Record<keyof KpiDefinitionFields, string> = {
   ownerUserId: 'owner_user_id',
   kpiKind: 'kpi_kind',
   leadsKpiId: 'leads_kpi_id',
+  visibility: 'visibility',
 };
+
+/** initiative_kpis.visibility is NOT NULL DEFAULT 'org_visible' — unlike every
+ * other definition field, an absent value must default to this, never NULL. */
+const DEFAULT_VISIBILITY: NonNullable<KpiDefinitionFields['visibility']> = 'org_visible';
 
 export interface CreateKpiDefinitionInput extends KpiDefinitionFields {
   organizationId: string;
@@ -213,7 +223,9 @@ function toFields(row: Record<string, unknown>): KpiDefinitionFields {
 function definitionSnapshot(input: Partial<KpiDefinitionFields>): KpiDefinitionFields {
   const snapshot: Record<string, unknown> = {};
   for (const key of DEFINITION_FIELD_KEYS) {
-    snapshot[key] = input[key] ?? null;
+    // visibility is NOT NULL DEFAULT 'org_visible' at the DB — every other
+    // field here is genuinely nullable, so only this one needs a non-null default.
+    snapshot[key] = input[key] ?? (key === 'visibility' ? DEFAULT_VISIBILITY : null);
   }
   return snapshot as unknown as KpiDefinitionFields;
 }
@@ -334,14 +346,14 @@ export async function createDefinition(
          direction, measurement_frequency, baseline_value, target_value,
          threshold_mode, amber_threshold_pct, red_threshold_pct,
          amber_threshold_abs, red_threshold_abs, alert_threshold, alert_direction,
-         owner_user_id, kpi_kind, leads_kpi_id, current_value,
+         owner_user_id, kpi_kind, leads_kpi_id, current_value, visibility,
          created_at, updated_at
        ) VALUES (
          gen_random_uuid()::text, $1, $2, $3, $4, $5, $6,
          $7, $8, $9, $10,
          $11, $12, $13,
          $14, $15, $16, $17,
-         $18, $19, $20, $21,
+         $18, $19, $20, $21, $22,
          CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
        ) RETURNING id, created_at, updated_at`,
       [
@@ -366,6 +378,7 @@ export async function createDefinition(
         fields.kpiKind,
         fields.leadsKpiId,
         currentValue,
+        fields.visibility,
       ]
     );
     const kpiId = kpiRes.rows[0].id as string;
@@ -488,8 +501,9 @@ export async function updateDefinition(
          threshold_mode = $9, amber_threshold_pct = $10, red_threshold_pct = $11,
          amber_threshold_abs = $12, red_threshold_abs = $13, alert_threshold = $14,
          alert_direction = $15, owner_user_id = $16, kpi_kind = $17, leads_kpi_id = $18,
-         current_definition_version = $19, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $20 AND current_definition_version = $21
+         visibility = $19,
+         current_definition_version = $20, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $21 AND current_definition_version = $22
        RETURNING id, created_at, updated_at, current_value`,
       [
         after.name,
@@ -510,6 +524,7 @@ export async function updateDefinition(
         after.ownerUserId,
         after.kpiKind,
         after.leadsKpiId,
+        after.visibility,
         nextVersion,
         kpiId,
         input.expectedVersion,

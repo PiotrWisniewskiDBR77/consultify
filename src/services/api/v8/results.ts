@@ -284,6 +284,9 @@ export interface V8ResultsKpiCatalogEntry {
   sortOrder: number;
   /** RES-02: CAS pointer — send back as `expectedVersion` on update. */
   currentDefinitionVersion?: number | null;
+  /** RES-11: who may see this KPI — send back unchanged on update unless the
+   * caller is actually changing it. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
   latestValue?: number | null;
   latestMeasurementDate?: string | null;
   prevValue?: number | null;
@@ -520,6 +523,8 @@ export interface V8ResultsCreateKpiPayload {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  /** RES-11: who may see this KPI. Defaults to org_visible if omitted. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
 }
 
 export interface V8ResultsCreateKpiResponse {
@@ -542,6 +547,9 @@ export interface V8ResultsUpdateKpiPayload {
   redThresholdPct?: number | null;
   amberThresholdAbs?: number | null;
   redThresholdAbs?: number | null;
+  /** RES-11: who may see this KPI. Backend validates fail-closed — an
+   * unrecognized value is rejected with 400, zero mutation. */
+  visibility?: 'org_visible' | 'initiative_restricted' | 'private_to_owner';
   /** RES-02: the version the client last saw — enforces optimistic concurrency. */
   expectedVersion?: number;
 }
