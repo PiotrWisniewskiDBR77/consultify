@@ -228,14 +228,42 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
     }
   }
 
+  // INI-05 — Railway `dev` real-PG run. `dev` (thomas.proxy.rlwy.net:20221)
+  // has real, persistent data (orgs/initiatives/users belonging to actual
+  // accounts) — unlike the throwaway-Docker mode this file is normally run
+  // against, this suite must NEVER create/drop tables there. Set
+  // INI005_SHARED_DB=1 to: skip createSchema() entirely (the real schema
+  // already has everything — including this packet's own additive
+  // `version` migration, applied separately via
+  // `migrate.postgres.ts --only`), and in afterAll DELETE only the
+  // randomly-suffixed test rows this file itself created (cascades through
+  // initiatives -> resources/dependencies/milestones via the real FKs),
+  // never DROP TABLE.
+  const SHARED_DB = process.env.INI005_SHARED_DB === '1';
+
   beforeAll(async () => {
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
 
-    // "fresh migration + replay": run schema creation TWICE. If any statement
-    // were not additive/idempotent this would throw on the second pass.
-    await createSchema();
-    await createSchema();
+    if (SHARED_DB) {
+      // Prove the additive migration this run depends on was actually
+      // applied — fail loudly here rather than mysteriously later.
+      const versionCol = await pool.query(
+        `SELECT 1 FROM information_schema.columns WHERE table_name = 'initiative_resources' AND column_name = 'version'`
+      );
+      if (versionCol.rowCount === 0) {
+        throw new Error(
+          'INI005_SHARED_DB=1 but initiative_resources.version is missing — run ' +
+            'migrate.postgres.ts --only 20260802_ini005_resources_cas_version.sql against this DB first.'
+        );
+      }
+    } else {
+      // "fresh migration + replay": run schema creation TWICE. If any
+      // statement were not additive/idempotent this would throw on the
+      // second pass. Only meaningful (and only safe) on a throwaway DB.
+      await createSchema();
+      await createSchema();
+    }
 
     await pool.query(`INSERT INTO organizations (id) VALUES ($1), ($2)`, [orgA, orgB]);
     await pool.query(
@@ -256,19 +284,56 @@ describe.skipIf(!REAL_PG)('INI-05 Portfolio/Resources/Roadmap — real PostgreSQ
 
   afterAll(async () => {
     if (!pool) return;
-    for (const table of [
-      'tasks',
-      'audit_events',
-      'initiative_history',
-      'initiative_milestones',
-      'initiative_dependencies',
-      'initiative_resources',
-      'initiatives',
-      'projects',
-      'users',
-      'organizations',
-    ]) {
-      await pool.query(`DROP TABLE IF EXISTS ${table}`);
+    if (SHARED_DB) {
+      // Row-level cleanup only — NEVER touch schema on a shared, persistent
+      // database. Deleting `initiatives` cascades (ON DELETE CASCADE) through
+      // every child row this suite created (resources/dependencies/milestones);
+      // organizations/users/projects are deleted explicitly since nothing else
+      // in the real DB can reference these fresh random-UUID rows.
+      await pool.query(`DELETE FROM initiatives WHERE organization_id = ANY($1::text[])`, [
+        [orgA, orgB],
+      ]);
+      await pool.query(`DELETE FROM projects WHERE id = ANY($1::text[])`, [
+        [projectA, projectA2, projectB],
+      ]);
+      await pool.query(`DELETE FROM users WHERE id = ANY($1::text[])`, [
+        [ownerUserA, noRoleUserA, userB],
+      ]);
+      await pool.query(`DELETE FROM organizations WHERE id = ANY($1::text[])`, [[orgA, orgB]]);
+
+      // Direct DB count, per the "cleanup" gate requirement: prove zero
+      // residue, not just "the delete statements ran".
+      const residue = await pool.query(
+        `SELECT
+           (SELECT COUNT(*)::int FROM initiatives WHERE organization_id = ANY($1::text[])) AS inits,
+           (SELECT COUNT(*)::int FROM organizations WHERE id = ANY($1::text[])) AS orgs,
+           (SELECT COUNT(*)::int FROM users WHERE id = ANY($2::text[])) AS users`,
+        [[orgA, orgB], [ownerUserA, noRoleUserA, userB]]
+      );
+      if (
+        residue.rows[0].inits !== 0 ||
+        residue.rows[0].orgs !== 0 ||
+        residue.rows[0].users !== 0
+      ) {
+        throw new Error(
+          `INI005_SHARED_DB cleanup left residue: ${JSON.stringify(residue.rows[0])}`
+        );
+      }
+    } else {
+      for (const table of [
+        'tasks',
+        'audit_events',
+        'initiative_history',
+        'initiative_milestones',
+        'initiative_dependencies',
+        'initiative_resources',
+        'initiatives',
+        'projects',
+        'users',
+        'organizations',
+      ]) {
+        await pool.query(`DROP TABLE IF EXISTS ${table}`);
+      }
     }
     await pool.end();
   });
