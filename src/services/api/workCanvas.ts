@@ -117,13 +117,18 @@ export const WorkCanvasApi = {
   async createProposal(
     draftId: string,
     target: WorkCanvasTarget,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
+    idempotencyKey?: string | null
   ): Promise<WorkCanvasActionResult<WorkCanvasConversionProposal>> {
     const response = await request<Envelope<WorkCanvasConversionProposal>>(
       `/drafts/${encodeURIComponent(draftId)}/proposals`,
       {
         method: 'POST',
-        body: JSON.stringify({ target, payload }),
+        body: JSON.stringify({
+          target,
+          payload,
+          ...(idempotencyKey ? { idempotencyKey } : {}),
+        }),
       },
       'Failed to create Work Canvas proposal'
     );

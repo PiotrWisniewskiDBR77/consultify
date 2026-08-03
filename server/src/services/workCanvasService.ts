@@ -877,6 +877,10 @@ export async function createProposal(params: {
   const id = uuidv4();
   const now = nowIso();
   const label = params.target.replace(/_/g, ' ');
+  // Fingerprint only caller-owned fields. Derived draft fields can change
+  // between retries of the same logical operation and are intentionally
+  // excluded from idempotency-key reuse validation.
+  const callerFingerprint = stableJson(params.payload || {});
   const payload = {
     title: `${label}: ${draft.title}`,
     summary: `Proposal generated from canvas draft ${draft.id}.`,
@@ -886,6 +890,7 @@ export async function createProposal(params: {
     contentHash: contentHashForDraft(draft),
     provenance: draft.provenance || {},
     ...(params.payload || {}),
+    callerFingerprint,
   };
   const requiredCapability = requiredCapabilityForTarget(params.target);
   const clientIdempotencyKey =
@@ -965,6 +970,22 @@ export async function createProposal(params: {
     { fallback: false }
   );
   if (!proposal) throw new Error('Canvas proposal read-back failed');
+  if (proposal.target !== params.target) {
+    throw Object.assign(new Error('Idempotency key already used for a different target'), {
+      statusCode: 409,
+      code: 'IDEMPOTENCY_KEY_REUSED',
+    });
+  }
+  const existingPayload = parseJson<Record<string, unknown>>(proposal.payload_json, {});
+  if (
+    typeof existingPayload.callerFingerprint === 'string' &&
+    existingPayload.callerFingerprint !== callerFingerprint
+  ) {
+    throw Object.assign(new Error('Idempotency key already used for a different request payload'), {
+      statusCode: 409,
+      code: 'IDEMPOTENCY_KEY_REUSED',
+    });
+  }
   return mapProposal(proposal);
 }
 
