@@ -230,13 +230,24 @@ async function seedMeasurement(
 ): Promise<string> {
   const id = tsIdFor(tag);
   const createdAtSql = opts.createdAtSql ?? 'NOW()';
-  await c.query(
+  // RES-003 added a UNIQUE (kpi_id, period_start, source) index — the
+  // canonical writer upserts on it (a later measurement for the same
+  // period/source corrects the row, matching production semantics for "the
+  // KPI's value progressed"). This fixture bypasses the writer with a raw
+  // INSERT, so it needs the same conflict target: several scenarios in this
+  // suite seed a second, more-recent measurement at the same default
+  // periodStart/source to represent "measured again since the card opened",
+  // which used to silently create a second row before RES-003 and now
+  // correctly resolves to one, freshest-value row.
+  const row = await c.query(
     `INSERT INTO kpi_time_series (id, kpi_id, organization_id, value, period_start, created_at)
      VALUES ($1,$2,$3,$4,$5, ${createdAtSql})
-     ON CONFLICT (id) DO NOTHING`,
+     ON CONFLICT (kpi_id, period_start, source) DO UPDATE SET
+       value = EXCLUDED.value, created_at = EXCLUDED.created_at
+     RETURNING id`,
     [id, kpiId, orgId, opts.value, opts.periodStart ?? '2026-01-01']
   );
-  return id;
+  return row.rows[0]?.id ?? id;
 }
 
 function mintTokenFor(userId: string, orgId: string, email: string): string {

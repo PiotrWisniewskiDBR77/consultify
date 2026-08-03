@@ -297,6 +297,10 @@ export async function recordKpiMeasurement(
         periodStart,
         periodEnd,
         recordedByUserId: input.actorUserId || null,
+        // RES-004: evaluate against the SAME definition version this
+        // measurement was just pinned to above, not whatever is current by
+        // the time the deviation check runs.
+        definitionVersionId,
       });
     } catch {
       // Do not fail the measurement write on deviation-evaluation side effects

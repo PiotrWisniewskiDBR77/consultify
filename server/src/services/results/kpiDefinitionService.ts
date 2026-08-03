@@ -656,6 +656,21 @@ export async function getVersion(
   return rowToVersionRecord(row);
 }
 
+/** Org-scoped read of one specific immutable historical version, by its id. */
+export async function getVersionById(
+  definitionVersionId: string,
+  organizationId: string
+): Promise<KpiDefinitionVersionRecord | null> {
+  if (!definitionVersionId || !organizationId) return null;
+  const row = await dbGet<Record<string, unknown>>(
+    `SELECT * FROM kpi_definition_versions WHERE id = ? AND organization_id = ?`,
+    [definitionVersionId, organizationId],
+    { fallback: false }
+  );
+  if (!row) return null;
+  return rowToVersionRecord(row);
+}
+
 /** Org-scoped read of every immutable version for a KPI, oldest first. */
 export async function listVersions(
   kpiId: string,

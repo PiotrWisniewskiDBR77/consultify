@@ -59,6 +59,7 @@ import logger from '../../utils/Logger.js';
 import { eventBus } from '../event/EventBus.js';
 import { send as sendNotification } from '../notificationService.js';
 import { createDefinition as createKpiDefinition } from '../results/kpiDefinitionService.js';
+import { evaluateKpiPoint } from '../results/kpiDeviationService.js';
 
 // ==========================================
 // HELPERS
@@ -1706,12 +1707,28 @@ export async function getResultsKpiCatalog(
     const latestValue = row.latest_value ?? row.current_value ?? null;
     const targetValue = row.target_value ?? null;
     const direction = row.direction || 'HIGHER_IS_BETTER';
-    const isOnTarget =
-      latestValue == null || targetValue == null
-        ? false
-        : direction === 'LOWER_IS_BETTER'
-          ? Number(latestValue) <= Number(targetValue)
-          : Number(latestValue) >= Number(targetValue);
+    // RES-004: the canonical read model — the SAME fail-closed band engine
+    // that drives deviation-case detection, not a second, independent
+    // "latest >= target" boolean. A KPI with no target, or a broken
+    // threshold band, must read UNCONFIGURED here too, not silently "not on
+    // target" with no explanation (and never GREEN).
+    const evalResult = evaluateKpiPoint(
+      {
+        id: String(row.id),
+        organizationId,
+        name: row.name,
+        targetValue: targetValue != null ? Number(targetValue) : null,
+        direction,
+        thresholdMode: row.threshold_mode,
+        amberThresholdPct: row.amber_threshold_pct != null ? Number(row.amber_threshold_pct) : null,
+        redThresholdPct: row.red_threshold_pct != null ? Number(row.red_threshold_pct) : null,
+        amberThresholdAbs: row.amber_threshold_abs != null ? Number(row.amber_threshold_abs) : null,
+        redThresholdAbs: row.red_threshold_abs != null ? Number(row.red_threshold_abs) : null,
+      },
+      latestValue != null ? Number(latestValue) : null
+    );
+    const evalStatus = evalResult.status;
+    const isOnTarget = evalStatus === 'GREEN';
 
     return {
       id: row.id,
@@ -1740,6 +1757,7 @@ export async function getResultsKpiCatalog(
       prevValue: row.prev_value != null ? Number(row.prev_value) : null,
       prevMeasurementDate: row.prev_period_start,
       isOnTarget,
+      evalStatus,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       ownerUserId: row.owner_user_id,

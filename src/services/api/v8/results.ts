@@ -289,6 +289,8 @@ export interface V8ResultsKpiCatalogEntry {
   prevValue?: number | null;
   prevMeasurementDate?: string | null;
   isOnTarget: boolean;
+  /** RES-004: canonical band-evaluated status — see kpiDomain.ts's deriveStatus(). */
+  evalStatus?: 'GREEN' | 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
   createdAt: string;
   updatedAt?: string | null;
   ownerUserId?: string | null;

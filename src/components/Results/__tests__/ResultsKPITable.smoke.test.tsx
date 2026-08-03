@@ -29,7 +29,7 @@ vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
-import type { ResultsKPI } from '../kpiDomain';
+import { mapResultsKpis, type ResultsKPI } from '../kpiDomain';
 import { ResultsKPITable } from '../ResultsKPITable';
 
 // Minimal ResultsKPI factory — only the fields the table reads.
@@ -139,5 +139,40 @@ describe('ResultsKPITable smoke (canon §27)', () => {
     // Toggle same column → descending: order flips back.
     fireEvent.click(sortByName);
     expect(nameOrder()).toEqual(['On-time delivery', 'Defect rate']);
+  });
+});
+
+describe('ResultsKPITable badge — RES-004 backend status is the single source of truth', () => {
+  // Full pipeline: raw backend-shaped payload (as /results/kpis/catalog
+  // returns it) -> mapResultsKpis (real derivation, not a hand-set `status`)
+  // -> mounted table -> rendered badge. Catches a regression where the
+  // frontend goes back to recomputing its own status instead of reading
+  // evalStatus.
+  const rawKpi = (over: Record<string, unknown>) => ({
+    id: 'k1',
+    name: 'Backend-driven KPI',
+    latestValue: 70,
+    isOnTarget: true, // deliberately WRONG/stale — evalStatus must win, not this
+    ...over,
+  });
+
+  it('a GREEN backend status renders the On Target badge (green success)', () => {
+    const kpis = mapResultsKpis([rawKpi({ evalStatus: 'GREEN' })], []);
+    render(<Harness kpis={kpis} />);
+
+    const badgeText = screen.getByText('On Target');
+    expect(badgeText).toBeInTheDocument();
+    expect(badgeText.className).toContain('text-c-success');
+  });
+
+  it('UNCONFIGURED backend status never renders a green success badge', () => {
+    const kpis = mapResultsKpis([rawKpi({ evalStatus: 'UNCONFIGURED', isOnTarget: false })], []);
+    render(<Harness kpis={kpis} />);
+
+    // Fail-closed: UNCONFIGURED must read as "Below Target", not "On Target",
+    // and must never carry the success (text-c-success) styling.
+    expect(screen.getByText('Below Target')).toBeInTheDocument();
+    expect(screen.queryByText('On Target')).not.toBeInTheDocument();
+    expect(screen.getByText('Below Target').className).not.toContain('text-c-success');
   });
 });

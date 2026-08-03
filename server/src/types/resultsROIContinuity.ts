@@ -537,6 +537,14 @@ export interface ResultsKpiCatalogEntry {
   prevValue?: number | null;
   prevMeasurementDate?: string | null;
   isOnTarget: boolean;
+  /**
+   * RES-004: the KPI's real band-evaluated status (evaluateKpiPoint, the
+   * SAME engine that drives deviation-case detection) — GREEN/AMBER/RED/
+   * UNCONFIGURED/NO_DATA. `isOnTarget` stays a boolean for older consumers
+   * (true iff evalStatus is GREEN); active Results UI must read evalStatus
+   * directly rather than re-deriving a status from raw value/target.
+   */
+  evalStatus: 'GREEN' | 'AMBER' | 'RED' | 'UNCONFIGURED' | 'NO_DATA';
   createdAt: string;
   updatedAt?: string | null;
   ownerUserId?: string | null;
