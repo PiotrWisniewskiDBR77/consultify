@@ -86,25 +86,6 @@ CREATE TABLE IF NOT EXISTS login_history(
             );
 
 -- ---------------------------------------------------------------------------
--- security_settings
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS security_settings(
-                organization_id TEXT PRIMARY KEY,
-                require_2fa INTEGER DEFAULT 0,
-                password_min_length INTEGER DEFAULT 8,
-                password_require_uppercase INTEGER DEFAULT 1,
-                password_require_number INTEGER DEFAULT 1,
-                password_require_special INTEGER DEFAULT 0,
-                password_expiry_days INTEGER DEFAULT 0,
-                session_timeout_minutes INTEGER DEFAULT 30,
-                max_sessions_per_user INTEGER DEFAULT 5,
-                ip_whitelist TEXT DEFAULT '[]',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_by TEXT,
-                FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
-            );
-
--- ---------------------------------------------------------------------------
 -- user_sessions
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_sessions(
@@ -675,49 +656,6 @@ CREATE TABLE IF NOT EXISTS gdpr_requests(
 CREATE INDEX IF NOT EXISTS idx_gdpr_requests_user ON gdpr_requests(user_id);
 
 -- ---------------------------------------------------------------------------
--- user_consents
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS user_consents(
-            id VARCHAR(36) PRIMARY KEY,
-            user_id VARCHAR(36) NOT NULL REFERENCES users(id),
-            organization_id VARCHAR(36) NOT NULL REFERENCES organizations(id),
-            consent_type VARCHAR(100) NOT NULL,
-            consent_version VARCHAR(50),
-            consent_status VARCHAR(50) NOT NULL,
-            ip_address VARCHAR(45),
-            user_agent TEXT,
-            granted_at TIMESTAMP,
-            withdrawn_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, organization_id, consent_type)
-        );
-
-CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id);
-
--- ---------------------------------------------------------------------------
--- ai_ideas
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS ai_ideas(
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            title TEXT NOT NULL,
-            description TEXT,
-            status VARCHAR(50) DEFAULT 'new',
-            priority VARCHAR(50) DEFAULT 'medium',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
--- ---------------------------------------------------------------------------
--- ai_observations
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS ai_observations(
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            content TEXT NOT NULL,
-            category VARCHAR(50),
-            confidence_score REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-
--- ---------------------------------------------------------------------------
 -- approval_assignments
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS approval_assignments(
@@ -739,20 +677,6 @@ CREATE TABLE IF NOT EXISTS approval_assignments(
         );
 
 -- ---------------------------------------------------------------------------
--- mfa_attempts
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS mfa_attempts(
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            attempt_type TEXT NOT NULL CHECK(attempt_type IN('TOTP', 'BACKUP_CODE', 'SMS', 'EMAIL')),
-            success INTEGER NOT NULL DEFAULT 0,
-            ip_address TEXT,
-            user_agent TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        );
-
--- ---------------------------------------------------------------------------
 -- trusted_devices
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS trusted_devices(
@@ -768,17 +692,3 @@ CREATE TABLE IF NOT EXISTS trusted_devices(
         );
 
 CREATE INDEX IF NOT EXISTS idx_trusted_devices_user ON trusted_devices(user_id);
-
--- ---------------------------------------------------------------------------
--- scheduled_emails
--- ---------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS scheduled_emails(
-            id TEXT PRIMARY KEY,
-            report_id TEXT NOT NULL,
-            recipients TEXT NOT NULL,
-            scheduled_time TIMESTAMP NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN('PENDING', 'SENT', 'FAILED')),
-            sent_at TIMESTAMP,
-            error TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );

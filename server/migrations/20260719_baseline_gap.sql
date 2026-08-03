@@ -45,9 +45,6 @@ create sequence if not exists "public"."user_data_retention_id_seq";
 create table if not exists "public"."_migration_518_done" (
     "id" integer not null
 );
--- Strict-schema repair (2026-08, auto-generated): "_migration_518_done" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."_migration_518_done" add column if not exists "id" integer;
-
 
 create table if not exists "public"."_v8_flag_backup_20260710" (
     "id" integer not null default nextval('_v8_flag_backup_20260710_id_seq'::regclass),
@@ -81,14 +78,6 @@ create table if not exists "public"."account_deletion_requests" (
     "completed_at" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "account_deletion_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."account_deletion_requests" add column if not exists "id" text;
-alter table "public"."account_deletion_requests" add column if not exists "user_id" text;
-alter table "public"."account_deletion_requests" add column if not exists "reason" text;
-alter table "public"."account_deletion_requests" add column if not exists "status" text default 'pending'::text;
-alter table "public"."account_deletion_requests" add column if not exists "requested_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."account_deletion_requests" add column if not exists "processed_at" timestamp without time zone;
-alter table "public"."account_deletion_requests" add column if not exists "processed_by" text;
-alter table "public"."account_deletion_requests" add column if not exists "notes" text;
 alter table "public"."account_deletion_requests" add column if not exists "scheduled_for" text;
 alter table "public"."account_deletion_requests" add column if not exists "completed_at" text;
 
@@ -110,23 +99,6 @@ create table if not exists "public"."adkar_assessments" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "adkar_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."adkar_assessments" add column if not exists "id" text;
-alter table "public"."adkar_assessments" add column if not exists "organization_id" text;
-alter table "public"."adkar_assessments" add column if not exists "project_id" text;
-alter table "public"."adkar_assessments" add column if not exists "assessment_date" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."adkar_assessments" add column if not exists "awareness_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "desire_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "knowledge_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "ability_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "reinforcement_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "overall_score" real default 0;
-alter table "public"."adkar_assessments" add column if not exists "ai_recommendations" text default '[]'::text;
-alter table "public"."adkar_assessments" add column if not exists "questionnaire_responses" text default '{}'::text;
-alter table "public"."adkar_assessments" add column if not exists "created_by" text;
-alter table "public"."adkar_assessments" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."adkar_assessments" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."admin_approval_requests" (
     "id" text not null,
@@ -140,14 +112,9 @@ create table if not exists "public"."admin_approval_requests" (
     "updated_at" text default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "admin_approval_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_approval_requests" add column if not exists "id" text;
-alter table "public"."admin_approval_requests" add column if not exists "workflow_id" text;
-alter table "public"."admin_approval_requests" add column if not exists "requester_id" text;
-alter table "public"."admin_approval_requests" add column if not exists "status" text default 'pending'::text;
 alter table "public"."admin_approval_requests" add column if not exists "approvers_json" text default '[]'::text;
 alter table "public"."admin_approval_requests" add column if not exists "request_data_json" text default '{}'::text;
 alter table "public"."admin_approval_requests" add column if not exists "completed_at" text;
-alter table "public"."admin_approval_requests" add column if not exists "created_at" text default now();
 alter table "public"."admin_approval_requests" add column if not exists "updated_at" text default now();
 
 
@@ -164,7 +131,6 @@ create table if not exists "public"."admin_approval_workflows" (
     "updated_at" text default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "admin_approval_workflows" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_approval_workflows" add column if not exists "id" text;
 alter table "public"."admin_approval_workflows" add column if not exists "name" text;
 alter table "public"."admin_approval_workflows" add column if not exists "description" text;
 alter table "public"."admin_approval_workflows" add column if not exists "resource_type" text;
@@ -172,7 +138,6 @@ alter table "public"."admin_approval_workflows" add column if not exists "trigge
 alter table "public"."admin_approval_workflows" add column if not exists "approvers_json" text default '[]'::text;
 alter table "public"."admin_approval_workflows" add column if not exists "created_by" text;
 alter table "public"."admin_approval_workflows" add column if not exists "is_active" integer default 1;
-alter table "public"."admin_approval_workflows" add column if not exists "created_at" text default now();
 alter table "public"."admin_approval_workflows" add column if not exists "updated_at" text default now();
 
 
@@ -195,25 +160,6 @@ create table if not exists "public"."admin_audit_logs" (
     "reviewed_by" text,
     "review_notes" text
 );
--- Strict-schema repair (2026-08, auto-generated): "admin_audit_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_audit_logs" add column if not exists "id" text;
-alter table "public"."admin_audit_logs" add column if not exists "organization_id" text;
-alter table "public"."admin_audit_logs" add column if not exists "admin_id" text;
-alter table "public"."admin_audit_logs" add column if not exists "action_type" text;
-alter table "public"."admin_audit_logs" add column if not exists "resource_type" text;
-alter table "public"."admin_audit_logs" add column if not exists "resource_id" text;
-alter table "public"."admin_audit_logs" add column if not exists "resource_name" text;
-alter table "public"."admin_audit_logs" add column if not exists "ip_address" text;
-alter table "public"."admin_audit_logs" add column if not exists "user_agent" text;
-alter table "public"."admin_audit_logs" add column if not exists "location" text;
-alter table "public"."admin_audit_logs" add column if not exists "risk_score" integer default 0;
-alter table "public"."admin_audit_logs" add column if not exists "status" text default 'logged'::text;
-alter table "public"."admin_audit_logs" add column if not exists "metadata_json" text;
-alter table "public"."admin_audit_logs" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."admin_audit_logs" add column if not exists "reviewed_at" timestamp without time zone;
-alter table "public"."admin_audit_logs" add column if not exists "reviewed_by" text;
-alter table "public"."admin_audit_logs" add column if not exists "review_notes" text;
-
 
 create table if not exists "public"."admin_dashboards" (
     "id" text not null,
@@ -222,13 +168,6 @@ create table if not exists "public"."admin_dashboards" (
     "config" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "admin_dashboards" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_dashboards" add column if not exists "id" text;
-alter table "public"."admin_dashboards" add column if not exists "organization_id" text;
-alter table "public"."admin_dashboards" add column if not exists "dashboard_name" text;
-alter table "public"."admin_dashboards" add column if not exists "config" text default '{}'::text;
-alter table "public"."admin_dashboards" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."admin_report_executions" (
     "id" text not null,
@@ -238,14 +177,6 @@ create table if not exists "public"."admin_report_executions" (
     "executed_at" timestamp without time zone,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "admin_report_executions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_report_executions" add column if not exists "id" text;
-alter table "public"."admin_report_executions" add column if not exists "report_id" text;
-alter table "public"."admin_report_executions" add column if not exists "executed_by" text;
-alter table "public"."admin_report_executions" add column if not exists "status" text default 'pending'::text;
-alter table "public"."admin_report_executions" add column if not exists "executed_at" timestamp without time zone;
-alter table "public"."admin_report_executions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."admin_role_assignments" (
     "id" text not null,
@@ -268,14 +199,6 @@ create table if not exists "public"."admin_saved_reports" (
     "config" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "admin_saved_reports" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_saved_reports" add column if not exists "id" text;
-alter table "public"."admin_saved_reports" add column if not exists "organization_id" text;
-alter table "public"."admin_saved_reports" add column if not exists "report_name" text;
-alter table "public"."admin_saved_reports" add column if not exists "report_type" text;
-alter table "public"."admin_saved_reports" add column if not exists "config" text default '{}'::text;
-alter table "public"."admin_saved_reports" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."admin_sessions" (
     "id" text not null,
@@ -284,13 +207,6 @@ create table if not exists "public"."admin_sessions" (
     "expires_at" timestamp without time zone not null,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "admin_sessions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."admin_sessions" add column if not exists "id" text;
-alter table "public"."admin_sessions" add column if not exists "admin_user_id" text;
-alter table "public"."admin_sessions" add column if not exists "session_token" text;
-alter table "public"."admin_sessions" add column if not exists "expires_at" timestamp without time zone;
-alter table "public"."admin_sessions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."advisor_response_log" (
     "id" text not null default (gen_random_uuid())::text,
@@ -357,16 +273,6 @@ create table if not exists "public"."ai_agent_audit_metrics" (
     "payload_json" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_agent_audit_metrics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_agent_audit_metrics" add column if not exists "id" bigint default nextval('ai_agent_audit_metrics_id_seq'::regclass);
-alter table "public"."ai_agent_audit_metrics" add column if not exists "organization_id" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "user_id" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "run_id" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "conversation_id" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "event_type" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "payload_json" text;
-alter table "public"."ai_agent_audit_metrics" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_agent_audit_reviews" (
     "id" bigint not null default nextval('ai_agent_audit_reviews_id_seq'::regclass),
@@ -376,14 +282,6 @@ create table if not exists "public"."ai_agent_audit_reviews" (
     "review_json" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_agent_audit_reviews" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_agent_audit_reviews" add column if not exists "id" bigint default nextval('ai_agent_audit_reviews_id_seq'::regclass);
-alter table "public"."ai_agent_audit_reviews" add column if not exists "run_id" text;
-alter table "public"."ai_agent_audit_reviews" add column if not exists "agent_id" text;
-alter table "public"."ai_agent_audit_reviews" add column if not exists "overreach" text;
-alter table "public"."ai_agent_audit_reviews" add column if not exists "review_json" text;
-alter table "public"."ai_agent_audit_reviews" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_agent_audit_runs" (
     "id" text not null,
@@ -402,23 +300,6 @@ create table if not exists "public"."ai_agent_audit_runs" (
     "accepted_by_user_id" text,
     "accepted_note" text
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_agent_audit_runs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_agent_audit_runs" add column if not exists "id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "organization_id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "user_id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "conversation_id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "dt_session_id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "user_intent" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "loop_iteration" integer default 1;
-alter table "public"."ai_agent_audit_runs" add column if not exists "decision_context_json" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "selected_agent_ids_json" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "verdict_json" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_agent_audit_runs" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_agent_audit_runs" add column if not exists "accepted_at" timestamp with time zone;
-alter table "public"."ai_agent_audit_runs" add column if not exists "accepted_by_user_id" text;
-alter table "public"."ai_agent_audit_runs" add column if not exists "accepted_note" text;
-
 
 create table if not exists "public"."ai_agent_plan_steps" (
     "id" text not null,
@@ -524,14 +405,6 @@ create table if not exists "public"."ai_audit_logs" (
     "correlation_id" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_audit_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_audit_logs" add column if not exists "id" text;
-alter table "public"."ai_audit_logs" add column if not exists "timestamp" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_audit_logs" add column if not exists "user_id" text;
-alter table "public"."ai_audit_logs" add column if not exists "organization_id" text;
-alter table "public"."ai_audit_logs" add column if not exists "capability" text;
-alter table "public"."ai_audit_logs" add column if not exists "tokens_used" integer default 0;
-alter table "public"."ai_audit_logs" add column if not exists "cost_usd" real default 0;
-alter table "public"."ai_audit_logs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."ai_audit_logs" add column if not exists "project_id" text;
 alter table "public"."ai_audit_logs" add column if not exists "action_type" text;
 alter table "public"."ai_audit_logs" add column if not exists "action_description" text;
@@ -569,22 +442,6 @@ create table if not exists "public"."ai_authoring_audit" (
     "metadata" text,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_authoring_audit" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_authoring_audit" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ai_authoring_audit" add column if not exists "organization_id" text;
-alter table "public"."ai_authoring_audit" add column if not exists "project_id" text;
-alter table "public"."ai_authoring_audit" add column if not exists "user_id" text;
-alter table "public"."ai_authoring_audit" add column if not exists "artifact_type" text;
-alter table "public"."ai_authoring_audit" add column if not exists "artifact_id" text;
-alter table "public"."ai_authoring_audit" add column if not exists "action_type" text;
-alter table "public"."ai_authoring_audit" add column if not exists "field_key" text;
-alter table "public"."ai_authoring_audit" add column if not exists "input_text" text;
-alter table "public"."ai_authoring_audit" add column if not exists "output_text" text;
-alter table "public"."ai_authoring_audit" add column if not exists "was_applied" integer default 0;
-alter table "public"."ai_authoring_audit" add column if not exists "was_undone" integer default 0;
-alter table "public"."ai_authoring_audit" add column if not exists "metadata" text;
-alter table "public"."ai_authoring_audit" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_budgets" (
     "id" text not null,
@@ -597,17 +454,6 @@ create table if not exists "public"."ai_budgets" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_budgets" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_budgets" add column if not exists "id" text;
-alter table "public"."ai_budgets" add column if not exists "organization_id" text;
-alter table "public"."ai_budgets" add column if not exists "user_id" text;
-alter table "public"."ai_budgets" add column if not exists "budget_type" text;
-alter table "public"."ai_budgets" add column if not exists "budget_limit" real;
-alter table "public"."ai_budgets" add column if not exists "current_usage" real default 0;
-alter table "public"."ai_budgets" add column if not exists "is_active" integer default 1;
-alter table "public"."ai_budgets" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_budgets" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_chat_run_events" (
     "id" text not null,
@@ -661,17 +507,6 @@ create table if not exists "public"."ai_contexts" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_contexts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_contexts" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ai_contexts" add column if not exists "organization_id" text;
-alter table "public"."ai_contexts" add column if not exists "name" text;
-alter table "public"."ai_contexts" add column if not exists "type" text default 'general'::text;
-alter table "public"."ai_contexts" add column if not exists "content" text;
-alter table "public"."ai_contexts" add column if not exists "priority" integer default 0;
-alter table "public"."ai_contexts" add column if not exists "is_active" integer default 1;
-alter table "public"."ai_contexts" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_contexts" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_conversation_context" (
     "id" text not null,
@@ -697,17 +532,11 @@ create table if not exists "public"."ai_conversations" (
     "updated_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_conversations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_conversations" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ai_conversations" add column if not exists "user_id" text;
-alter table "public"."ai_conversations" add column if not exists "organization_id" text;
-alter table "public"."ai_conversations" add column if not exists "title" text;
 alter table "public"."ai_conversations" add column if not exists "model" text;
 alter table "public"."ai_conversations" add column if not exists "context_json" text;
 alter table "public"."ai_conversations" add column if not exists "status" text default 'active'::text;
 alter table "public"."ai_conversations" add column if not exists "message_count" integer default 0;
 alter table "public"."ai_conversations" add column if not exists "total_tokens" integer default 0;
-alter table "public"."ai_conversations" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."ai_conversations" add column if not exists "updated_at" timestamp with time zone default now();
 
 
 create table if not exists "public"."ai_cost_alerts_sent" (
@@ -727,15 +556,6 @@ create table if not exists "public"."ai_cost_tracking" (
     "budget_limit_usd" real,
     "last_updated" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_cost_tracking" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_cost_tracking" add column if not exists "id" text;
-alter table "public"."ai_cost_tracking" add column if not exists "organization_id" text;
-alter table "public"."ai_cost_tracking" add column if not exists "month" text;
-alter table "public"."ai_cost_tracking" add column if not exists "total_tokens" integer default 0;
-alter table "public"."ai_cost_tracking" add column if not exists "total_cost_usd" real default 0;
-alter table "public"."ai_cost_tracking" add column if not exists "budget_limit_usd" real;
-alter table "public"."ai_cost_tracking" add column if not exists "last_updated" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_cost_usage" (
     "id" text not null,
@@ -750,19 +570,6 @@ create table if not exists "public"."ai_cost_usage" (
     "cost_usd" real not null default 0,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_cost_usage" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_cost_usage" add column if not exists "id" text;
-alter table "public"."ai_cost_usage" add column if not exists "user_id" text;
-alter table "public"."ai_cost_usage" add column if not exists "organization_id" text;
-alter table "public"."ai_cost_usage" add column if not exists "tier" text;
-alter table "public"."ai_cost_usage" add column if not exists "provider" text;
-alter table "public"."ai_cost_usage" add column if not exists "model" text;
-alter table "public"."ai_cost_usage" add column if not exists "input_tokens" integer default 0;
-alter table "public"."ai_cost_usage" add column if not exists "output_tokens" integer default 0;
-alter table "public"."ai_cost_usage" add column if not exists "total_tokens" integer default 0;
-alter table "public"."ai_cost_usage" add column if not exists "cost_usd" real default 0;
-alter table "public"."ai_cost_usage" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_data_access_log" (
     "id" text not null,
@@ -801,21 +608,6 @@ create table if not exists "public"."ai_decision_audit_log" (
     "duration_ms" integer,
     "timestamp" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_decision_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_decision_audit_log" add column if not exists "id" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "organization_id" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "user_id" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "session_id" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "conversation_id" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "stage" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "payload_json" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "input_snapshot" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "output_snapshot" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "dod_check_result" text;
-alter table "public"."ai_decision_audit_log" add column if not exists "confidence_at_stage" real;
-alter table "public"."ai_decision_audit_log" add column if not exists "duration_ms" integer;
-alter table "public"."ai_decision_audit_log" add column if not exists "timestamp" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_decision_outcomes" (
     "id" text not null,
@@ -840,29 +632,6 @@ create table if not exists "public"."ai_decision_outcomes" (
     "resolved_at" timestamp with time zone,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_decision_outcomes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_decision_outcomes" add column if not exists "id" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "organization_id" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "user_id" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "session_id" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "conversation_id" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "decision_summary" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "problem_framing" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "options_considered" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "chosen_option" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "recommendation_text" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "confidence_score" real;
-alter table "public"."ai_decision_outcomes" add column if not exists "outcome_status" text default 'pending'::text;
-alter table "public"."ai_decision_outcomes" add column if not exists "outcome_notes" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "outcome_metrics" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "follow_up_date" date;
-alter table "public"."ai_decision_outcomes" add column if not exists "industry_context" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "tags" text;
-alter table "public"."ai_decision_outcomes" add column if not exists "embedding" bytea;
-alter table "public"."ai_decision_outcomes" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_decision_outcomes" add column if not exists "resolved_at" timestamp with time zone;
-alter table "public"."ai_decision_outcomes" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_deep_thinking_confirms" (
     "token" text not null,
@@ -886,27 +655,12 @@ create table if not exists "public"."ai_deep_thinking_metrics" (
     "payload_json" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_deep_thinking_metrics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "id" bigint default nextval('ai_deep_thinking_metrics_id_seq'::regclass);
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "organization_id" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "user_id" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "session_id" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "conversation_id" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "event_type" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "payload_json" text;
-alter table "public"."ai_deep_thinking_metrics" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_dismissed_nudges" (
     "nudge_id" text not null,
     "user_id" text not null,
     "dismissed_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_dismissed_nudges" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_dismissed_nudges" add column if not exists "nudge_id" text;
-alter table "public"."ai_dismissed_nudges" add column if not exists "user_id" text;
-alter table "public"."ai_dismissed_nudges" add column if not exists "dismissed_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_dlp_rules" (
     "id" text not null,
@@ -954,20 +708,6 @@ create table if not exists "public"."ai_drafts" (
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_drafts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_drafts" add column if not exists "id" text;
-alter table "public"."ai_drafts" add column if not exists "user_id" text;
-alter table "public"."ai_drafts" add column if not exists "organization_id" text;
-alter table "public"."ai_drafts" add column if not exists "title" text;
-alter table "public"."ai_drafts" add column if not exists "content" text;
-alter table "public"."ai_drafts" add column if not exists "type" text;
-alter table "public"."ai_drafts" add column if not exists "metadata" text;
-alter table "public"."ai_drafts" add column if not exists "conversation_id" text;
-alter table "public"."ai_drafts" add column if not exists "message_id" text;
-alter table "public"."ai_drafts" add column if not exists "status" text default 'draft'::text;
-alter table "public"."ai_drafts" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_drafts" add column if not exists "updated_at" timestamp with time zone;
-
 
 create table if not exists "public"."ai_eval_auto_triggers" (
     "id" text not null,
@@ -1049,13 +789,6 @@ create table if not exists "public"."ai_experiment_variants" (
     "variant_config" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_experiment_variants" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_experiment_variants" add column if not exists "id" text;
-alter table "public"."ai_experiment_variants" add column if not exists "experiment_id" text;
-alter table "public"."ai_experiment_variants" add column if not exists "variant_name" text;
-alter table "public"."ai_experiment_variants" add column if not exists "variant_config" text default '{}'::text;
-alter table "public"."ai_experiment_variants" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_experiments" (
     "id" text not null,
@@ -1065,14 +798,6 @@ create table if not exists "public"."ai_experiments" (
     "status" text default 'active'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_experiments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_experiments" add column if not exists "id" text;
-alter table "public"."ai_experiments" add column if not exists "organization_id" text;
-alter table "public"."ai_experiments" add column if not exists "experiment_name" text;
-alter table "public"."ai_experiments" add column if not exists "experiment_config" text default '{}'::text;
-alter table "public"."ai_experiments" add column if not exists "status" text default 'active'::text;
-alter table "public"."ai_experiments" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_feature_control" (
     "id" text not null default (gen_random_uuid())::text,
@@ -1083,10 +808,8 @@ create table if not exists "public"."ai_feature_control" (
     "created_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_feature_control" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_feature_control" add column if not exists "id" text default (gen_random_uuid())::text;
 alter table "public"."ai_feature_control" add column if not exists "organization_id" text;
 alter table "public"."ai_feature_control" add column if not exists "feature_name" text;
-alter table "public"."ai_feature_control" add column if not exists "is_enabled" boolean default true;
 alter table "public"."ai_feature_control" add column if not exists "config_json" text;
 alter table "public"."ai_feature_control" add column if not exists "created_at" timestamp with time zone default now();
 
@@ -1178,20 +901,7 @@ create table if not exists "public"."ai_industry_templates" (
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_industry_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_industry_templates" add column if not exists "id" text;
-alter table "public"."ai_industry_templates" add column if not exists "industry" text;
-alter table "public"."ai_industry_templates" add column if not exists "display_name" text;
-alter table "public"."ai_industry_templates" add column if not exists "description" text;
-alter table "public"."ai_industry_templates" add column if not exists "additional_sections" text;
-alter table "public"."ai_industry_templates" add column if not exists "extra_quality_checks" text;
-alter table "public"."ai_industry_templates" add column if not exists "terminology" text;
 alter table "public"."ai_industry_templates" add column if not exists "constraints" text;
-alter table "public"."ai_industry_templates" add column if not exists "typical_metrics" text;
-alter table "public"."ai_industry_templates" add column if not exists "prompt_addon" text;
-alter table "public"."ai_industry_templates" add column if not exists "report_template" text;
-alter table "public"."ai_industry_templates" add column if not exists "is_active" integer default 1;
-alter table "public"."ai_industry_templates" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_industry_templates" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
 
 
 create table if not exists "public"."ai_instruction_suggestions" (
@@ -1207,19 +917,6 @@ create table if not exists "public"."ai_instruction_suggestions" (
     "suggested_instruction" text,
     "confidence_score" real default 0.5
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_instruction_suggestions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_instruction_suggestions" add column if not exists "id" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "organization_id" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "instruction" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "reason" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "based_on_patterns" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "confidence" real default 0.5;
-alter table "public"."ai_instruction_suggestions" add column if not exists "status" text default 'pending'::text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_instruction_suggestions" add column if not exists "updated_at" timestamp with time zone;
-alter table "public"."ai_instruction_suggestions" add column if not exists "suggested_instruction" text;
-alter table "public"."ai_instruction_suggestions" add column if not exists "confidence_score" real default 0.5;
-
 
 create table if not exists "public"."ai_intent_routing_log" (
     "id" text not null default (gen_random_uuid())::text,
@@ -1308,16 +1005,6 @@ create table if not exists "public"."ai_market_inbox" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "reviewed_at" timestamp without time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_market_inbox" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_market_inbox" add column if not exists "id" text;
-alter table "public"."ai_market_inbox" add column if not exists "source" text;
-alter table "public"."ai_market_inbox" add column if not exists "change_type" text;
-alter table "public"."ai_market_inbox" add column if not exists "model_id" text;
-alter table "public"."ai_market_inbox" add column if not exists "diff" jsonb;
-alter table "public"."ai_market_inbox" add column if not exists "status" text default 'new'::text;
-alter table "public"."ai_market_inbox" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_market_inbox" add column if not exists "reviewed_at" timestamp without time zone;
-
 
 create table if not exists "public"."ai_market_snapshots" (
     "id" text not null,
@@ -1325,12 +1012,6 @@ create table if not exists "public"."ai_market_snapshots" (
     "payload" jsonb not null,
     "fetched_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_market_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_market_snapshots" add column if not exists "id" text;
-alter table "public"."ai_market_snapshots" add column if not exists "source" text;
-alter table "public"."ai_market_snapshots" add column if not exists "payload" jsonb;
-alter table "public"."ai_market_snapshots" add column if not exists "fetched_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_model_overrides" (
     "id" text not null,
@@ -1483,12 +1164,9 @@ create table if not exists "public"."ai_organization_memory" (
     "created_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_organization_memory" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_organization_memory" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ai_organization_memory" add column if not exists "organization_id" text;
 alter table "public"."ai_organization_memory" add column if not exists "memory_type" text;
 alter table "public"."ai_organization_memory" add column if not exists "content" text;
 alter table "public"."ai_organization_memory" add column if not exists "embedding" text;
-alter table "public"."ai_organization_memory" add column if not exists "created_at" timestamp with time zone default now();
 
 
 create table if not exists "public"."ai_organization_settings" (
@@ -1518,16 +1196,9 @@ create table if not exists "public"."ai_partial_responses" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_partial_responses" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_partial_responses" add column if not exists "id" text default (gen_random_uuid())::text;
 alter table "public"."ai_partial_responses" add column if not exists "conversation_id" text;
-alter table "public"."ai_partial_responses" add column if not exists "user_id" text;
-alter table "public"."ai_partial_responses" add column if not exists "organization_id" text;
 alter table "public"."ai_partial_responses" add column if not exists "partial_content" text;
 alter table "public"."ai_partial_responses" add column if not exists "status" text default 'pending'::text;
-alter table "public"."ai_partial_responses" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."ai_partial_responses" add column if not exists "session_id" text;
-alter table "public"."ai_partial_responses" add column if not exists "content" text default ''::text;
-alter table "public"."ai_partial_responses" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 
 
 create table if not exists "public"."ai_pattern_feedback" (
@@ -1568,21 +1239,6 @@ create table if not exists "public"."ai_playbook_runs" (
     "completed_at" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_playbook_runs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_playbook_runs" add column if not exists "id" text;
-alter table "public"."ai_playbook_runs" add column if not exists "template_id" text;
-alter table "public"."ai_playbook_runs" add column if not exists "organization_id" text;
-alter table "public"."ai_playbook_runs" add column if not exists "correlation_id" text;
-alter table "public"."ai_playbook_runs" add column if not exists "initiated_by" text;
-alter table "public"."ai_playbook_runs" add column if not exists "user_id" text;
-alter table "public"."ai_playbook_runs" add column if not exists "status" text default 'PENDING'::text;
-alter table "public"."ai_playbook_runs" add column if not exists "context_snapshot" text;
-alter table "public"."ai_playbook_runs" add column if not exists "result_snapshot" text;
-alter table "public"."ai_playbook_runs" add column if not exists "execution_data" text;
-alter table "public"."ai_playbook_runs" add column if not exists "started_at" text;
-alter table "public"."ai_playbook_runs" add column if not exists "completed_at" text;
-alter table "public"."ai_playbook_runs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_playbook_templates" (
     "id" text not null,
@@ -1600,22 +1256,6 @@ create table if not exists "public"."ai_playbook_templates" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_playbook_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_playbook_templates" add column if not exists "id" text;
-alter table "public"."ai_playbook_templates" add column if not exists "organization_id" text;
-alter table "public"."ai_playbook_templates" add column if not exists "key" text;
-alter table "public"."ai_playbook_templates" add column if not exists "title" text;
-alter table "public"."ai_playbook_templates" add column if not exists "description" text;
-alter table "public"."ai_playbook_templates" add column if not exists "trigger_signal" text;
-alter table "public"."ai_playbook_templates" add column if not exists "template_graph" text;
-alter table "public"."ai_playbook_templates" add column if not exists "estimated_duration_mins" integer;
-alter table "public"."ai_playbook_templates" add column if not exists "status" text default 'DRAFT'::text;
-alter table "public"."ai_playbook_templates" add column if not exists "version" integer default 1;
-alter table "public"."ai_playbook_templates" add column if not exists "usage_count" integer default 0;
-alter table "public"."ai_playbook_templates" add column if not exists "success_rate" real default 0;
-alter table "public"."ai_playbook_templates" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_playbook_templates" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_policies" (
     "id" text not null,
@@ -1634,23 +1274,6 @@ create table if not exists "public"."ai_policies" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_policies" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_policies" add column if not exists "id" text;
-alter table "public"."ai_policies" add column if not exists "organization_id" text;
-alter table "public"."ai_policies" add column if not exists "name" text;
-alter table "public"."ai_policies" add column if not exists "policy_type" text;
-alter table "public"."ai_policies" add column if not exists "config" text default '{}'::text;
-alter table "public"."ai_policies" add column if not exists "is_active" integer default 1;
-alter table "public"."ai_policies" add column if not exists "internet_enabled" integer default 1;
-alter table "public"."ai_policies" add column if not exists "policy_level" text default 'ADVISORY'::text;
-alter table "public"."ai_policies" add column if not exists "audit_required" integer default 1;
-alter table "public"."ai_policies" add column if not exists "active_roles" text default '["ADVISOR","PMO_MANAGER","EXECUTOR","EDUCATOR"]'::text;
-alter table "public"."ai_policies" add column if not exists "max_policy_level" text default 'ASSISTED'::text;
-alter table "public"."ai_policies" add column if not exists "default_ai_role" text default 'ADVISOR'::text;
-alter table "public"."ai_policies" add column if not exists "proactive_notifications" integer default 1;
-alter table "public"."ai_policies" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_policies" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_price_snapshots" (
     "id" text not null,
@@ -1664,18 +1287,6 @@ create table if not exists "public"."ai_price_snapshots" (
     "notes" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_price_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_price_snapshots" add column if not exists "id" text;
-alter table "public"."ai_price_snapshots" add column if not exists "provider" text;
-alter table "public"."ai_price_snapshots" add column if not exists "model_id" text;
-alter table "public"."ai_price_snapshots" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."ai_price_snapshots" add column if not exists "source" text default 'manual'::text;
-alter table "public"."ai_price_snapshots" add column if not exists "effective_from" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_price_snapshots" add column if not exists "effective_to" timestamp without time zone;
-alter table "public"."ai_price_snapshots" add column if not exists "units" jsonb default '{}'::jsonb;
-alter table "public"."ai_price_snapshots" add column if not exists "notes" text;
-alter table "public"."ai_price_snapshots" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_project_memory" (
     "id" text not null default (gen_random_uuid())::text,
@@ -1687,13 +1298,10 @@ create table if not exists "public"."ai_project_memory" (
     "created_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_project_memory" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_project_memory" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ai_project_memory" add column if not exists "project_id" text;
 alter table "public"."ai_project_memory" add column if not exists "organization_id" text;
 alter table "public"."ai_project_memory" add column if not exists "memory_type" text;
 alter table "public"."ai_project_memory" add column if not exists "content" text;
 alter table "public"."ai_project_memory" add column if not exists "embedding" text;
-alter table "public"."ai_project_memory" add column if not exists "created_at" timestamp with time zone default now();
 
 
 create table if not exists "public"."ai_prompt_blocks" (
@@ -1741,15 +1349,6 @@ create table if not exists "public"."ai_purpose_assignments" (
     "policy_version" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_purpose_assignments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_purpose_assignments" add column if not exists "id" text;
-alter table "public"."ai_purpose_assignments" add column if not exists "organization_id" text;
-alter table "public"."ai_purpose_assignments" add column if not exists "purpose" text;
-alter table "public"."ai_purpose_assignments" add column if not exists "provider_id" text;
-alter table "public"."ai_purpose_assignments" add column if not exists "model_id" text;
-alter table "public"."ai_purpose_assignments" add column if not exists "priority" integer default 0;
-alter table "public"."ai_purpose_assignments" add column if not exists "is_active" boolean default true;
-alter table "public"."ai_purpose_assignments" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_purpose_assignments" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."ai_purpose_assignments" add column if not exists "fallback_model_id" text;
 alter table "public"."ai_purpose_assignments" add column if not exists "release_bundle_id" text;
 alter table "public"."ai_purpose_assignments" add column if not exists "prompt_key" text;
@@ -1767,16 +1366,6 @@ create table if not exists "public"."ai_purposes" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_purposes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_purposes" add column if not exists "purpose" text;
-alter table "public"."ai_purposes" add column if not exists "kind" text;
-alter table "public"."ai_purposes" add column if not exists "default_tier" text;
-alter table "public"."ai_purposes" add column if not exists "requirements" jsonb;
-alter table "public"."ai_purposes" add column if not exists "description" text;
-alter table "public"."ai_purposes" add column if not exists "is_active" boolean default true;
-alter table "public"."ai_purposes" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_purposes" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_quality_metrics" (
     "id" bigint not null default nextval('ai_quality_metrics_id_seq'::regclass),
@@ -1792,20 +1381,6 @@ create table if not exists "public"."ai_quality_metrics" (
     "flags" text,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_quality_metrics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_quality_metrics" add column if not exists "id" bigint default nextval('ai_quality_metrics_id_seq'::regclass);
-alter table "public"."ai_quality_metrics" add column if not exists "conversation_id" text;
-alter table "public"."ai_quality_metrics" add column if not exists "message_id" text;
-alter table "public"."ai_quality_metrics" add column if not exists "user_id" text;
-alter table "public"."ai_quality_metrics" add column if not exists "organization_id" text;
-alter table "public"."ai_quality_metrics" add column if not exists "relevance" real;
-alter table "public"."ai_quality_metrics" add column if not exists "groundedness" real;
-alter table "public"."ai_quality_metrics" add column if not exists "completeness" real;
-alter table "public"."ai_quality_metrics" add column if not exists "coherence" real;
-alter table "public"."ai_quality_metrics" add column if not exists "overall_score" real;
-alter table "public"."ai_quality_metrics" add column if not exists "flags" text;
-alter table "public"."ai_quality_metrics" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_rate_limits" (
     "id" text not null,
@@ -1858,15 +1433,6 @@ create table if not exists "public"."ai_security_audit_log" (
     "severity" text not null,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_security_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_security_audit_log" add column if not exists "id" bigint default nextval('ai_security_audit_log_id_seq'::regclass);
-alter table "public"."ai_security_audit_log" add column if not exists "event_type" text;
-alter table "public"."ai_security_audit_log" add column if not exists "user_id" text;
-alter table "public"."ai_security_audit_log" add column if not exists "organization_id" text;
-alter table "public"."ai_security_audit_log" add column if not exists "details" text;
-alter table "public"."ai_security_audit_log" add column if not exists "severity" text;
-alter table "public"."ai_security_audit_log" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."ai_self_reflection_log" (
     "id" text not null,
@@ -1996,28 +1562,11 @@ create table if not exists "public"."ai_usage_logs" (
     "error_message" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "ai_usage_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_usage_logs" add column if not exists "id" text;
-alter table "public"."ai_usage_logs" add column if not exists "user_id" text;
-alter table "public"."ai_usage_logs" add column if not exists "organization_id" text;
-alter table "public"."ai_usage_logs" add column if not exists "provider" text;
-alter table "public"."ai_usage_logs" add column if not exists "model" text;
-alter table "public"."ai_usage_logs" add column if not exists "action" text;
-alter table "public"."ai_usage_logs" add column if not exists "prompt_tokens" integer;
-alter table "public"."ai_usage_logs" add column if not exists "completion_tokens" integer;
-alter table "public"."ai_usage_logs" add column if not exists "tokens_used" integer;
-alter table "public"."ai_usage_logs" add column if not exists "latency_ms" integer;
-alter table "public"."ai_usage_logs" add column if not exists "status" text;
-alter table "public"."ai_usage_logs" add column if not exists "metadata" text;
-alter table "public"."ai_usage_logs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ai_usage_logs" add column if not exists "purpose" text;
-alter table "public"."ai_usage_logs" add column if not exists "kind" text;
-alter table "public"."ai_usage_logs" add column if not exists "price_snapshot_id" text;
 alter table "public"."ai_usage_logs" add column if not exists "estimated_cost_usd" real;
 alter table "public"."ai_usage_logs" add column if not exists "error_class" text;
 alter table "public"."ai_usage_logs" add column if not exists "eval_score" real;
 alter table "public"."ai_usage_logs" add column if not exists "flagged" boolean default false;
 alter table "public"."ai_usage_logs" add column if not exists "flag_reason" text;
-alter table "public"."ai_usage_logs" add column if not exists "error_message" text;
 
 
 create table if not exists "public"."ai_user_memory" (
@@ -2086,29 +1635,6 @@ create table if not exists "public"."ai_user_style_profiles" (
     "created_at" text default (now())::text,
     "updated_at" text default (now())::text
 );
--- Strict-schema repair (2026-08, auto-generated): "ai_user_style_profiles" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ai_user_style_profiles" add column if not exists "id" text;
-alter table "public"."ai_user_style_profiles" add column if not exists "user_id" text;
-alter table "public"."ai_user_style_profiles" add column if not exists "organization_id" text;
-alter table "public"."ai_user_style_profiles" add column if not exists "preferred_depth" text default 'balanced'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "preferred_format" text default 'structured'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "technical_level" text default 'intermediate'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "response_length" text default 'medium'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "detected_expertise_areas" text default '[]'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "common_question_types" text default '[]'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "peak_activity_hours" text default '[]'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "preferred_focus_modes" text default '[]'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "context_preferences" text default '{}'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "total_interactions" integer default 0;
-alter table "public"."ai_user_style_profiles" add column if not exists "positive_feedback_count" integer default 0;
-alter table "public"."ai_user_style_profiles" add column if not exists "negative_feedback_count" integer default 0;
-alter table "public"."ai_user_style_profiles" add column if not exists "last_profile_update" text;
-alter table "public"."ai_user_style_profiles" add column if not exists "confidence_score" real default 0.5;
-alter table "public"."ai_user_style_profiles" add column if not exists "auto_adapt_enabled" integer default 1;
-alter table "public"."ai_user_style_profiles" add column if not exists "manual_overrides" text default '{}'::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "created_at" text default (now())::text;
-alter table "public"."ai_user_style_profiles" add column if not exists "updated_at" text default (now())::text;
-
 
 create table if not exists "public"."api_key_usage" (
     "id" text not null,
@@ -2173,20 +1699,6 @@ create table if not exists "public"."artifact_evidence" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "artifact_evidence" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."artifact_evidence" add column if not exists "id" text;
-alter table "public"."artifact_evidence" add column if not exists "organization_id" text;
-alter table "public"."artifact_evidence" add column if not exists "artifact_type" text;
-alter table "public"."artifact_evidence" add column if not exists "artifact_id" text;
-alter table "public"."artifact_evidence" add column if not exists "sources" jsonb default '[]'::jsonb;
-alter table "public"."artifact_evidence" add column if not exists "assumptions" jsonb default '[]'::jsonb;
-alter table "public"."artifact_evidence" add column if not exists "confidence" numeric;
-alter table "public"."artifact_evidence" add column if not exists "to_verify" jsonb default '[]'::jsonb;
-alter table "public"."artifact_evidence" add column if not exists "computed_by" text;
-alter table "public"."artifact_evidence" add column if not exists "created_by" text;
-alter table "public"."artifact_evidence" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."artifact_evidence" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."assessment_access_requests" (
     "id" text not null,
@@ -2207,25 +1719,6 @@ create table if not exists "public"."assessment_access_requests" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "assessment_access_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_access_requests" add column if not exists "id" text;
-alter table "public"."assessment_access_requests" add column if not exists "assessment_id" text;
-alter table "public"."assessment_access_requests" add column if not exists "organization_id" text;
-alter table "public"."assessment_access_requests" add column if not exists "requester_id" text;
-alter table "public"."assessment_access_requests" add column if not exists "requested_role" text;
-alter table "public"."assessment_access_requests" add column if not exists "requested_areas" text;
-alter table "public"."assessment_access_requests" add column if not exists "justification" text;
-alter table "public"."assessment_access_requests" add column if not exists "priority" text default 'NORMAL'::text;
-alter table "public"."assessment_access_requests" add column if not exists "status" text default 'PENDING'::text;
-alter table "public"."assessment_access_requests" add column if not exists "reviewed_by" text;
-alter table "public"."assessment_access_requests" add column if not exists "reviewed_at" timestamp with time zone;
-alter table "public"."assessment_access_requests" add column if not exists "review_notes" text;
-alter table "public"."assessment_access_requests" add column if not exists "granted_role" text;
-alter table "public"."assessment_access_requests" add column if not exists "granted_permissions" text;
-alter table "public"."assessment_access_requests" add column if not exists "granted_areas" text;
-alter table "public"."assessment_access_requests" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_access_requests" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."assessment_ai_scoring_proposals" (
     "id" text not null,
@@ -2300,19 +1793,6 @@ create table if not exists "public"."assessment_definitions" (
     "updated_at" text not null,
     "published_at" text
 );
--- Strict-schema repair (2026-08, auto-generated): "assessment_definitions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_definitions" add column if not exists "id" text;
-alter table "public"."assessment_definitions" add column if not exists "methodology_id" text;
-alter table "public"."assessment_definitions" add column if not exists "version" text;
-alter table "public"."assessment_definitions" add column if not exists "title" text;
-alter table "public"."assessment_definitions" add column if not exists "status" text default 'draft'::text;
-alter table "public"."assessment_definitions" add column if not exists "is_read_only" integer default 0;
-alter table "public"."assessment_definitions" add column if not exists "definition_json" text default '{}'::text;
-alter table "public"."assessment_definitions" add column if not exists "created_by" text;
-alter table "public"."assessment_definitions" add column if not exists "created_at" text;
-alter table "public"."assessment_definitions" add column if not exists "updated_at" text;
-alter table "public"."assessment_definitions" add column if not exists "published_at" text;
-
 
 create table if not exists "public"."assessment_eval_datasets" (
     "id" text not null,
@@ -2423,29 +1903,6 @@ create table if not exists "public"."assessment_gate_decisions" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "assessment_gate_decisions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_gate_decisions" add column if not exists "id" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "assessment_id" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "organization_id" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "gate_type" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "from_status" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "to_status" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "approver_role" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "assignee_id" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "status" text default 'NOT_STARTED'::text;
-alter table "public"."assessment_gate_decisions" add column if not exists "requested_at" timestamp with time zone;
-alter table "public"."assessment_gate_decisions" add column if not exists "requested_by" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "request_comment" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "decided_at" timestamp with time zone;
-alter table "public"."assessment_gate_decisions" add column if not exists "decided_by" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "decision_comment" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "notification_sent_at" timestamp with time zone;
-alter table "public"."assessment_gate_decisions" add column if not exists "reminder_count" integer default 0;
-alter table "public"."assessment_gate_decisions" add column if not exists "last_reminder_at" timestamp with time zone;
-alter table "public"."assessment_gate_decisions" add column if not exists "requirements_snapshot" text;
-alter table "public"."assessment_gate_decisions" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_gate_decisions" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."assessment_initiative_batches" (
     "id" text not null default (gen_random_uuid())::text,
@@ -2461,16 +1918,6 @@ create table if not exists "public"."assessment_initiative_batches" (
     "run_id" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "assessment_initiative_batches" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_initiative_batches" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."assessment_initiative_batches" add column if not exists "assessment_id" text;
-alter table "public"."assessment_initiative_batches" add column if not exists "organization_id" text;
-alter table "public"."assessment_initiative_batches" add column if not exists "batch_name" text;
-alter table "public"."assessment_initiative_batches" add column if not exists "status" text default 'pending'::text;
-alter table "public"."assessment_initiative_batches" add column if not exists "initiatives_count" integer default 0;
-alter table "public"."assessment_initiative_batches" add column if not exists "created_by" text;
-alter table "public"."assessment_initiative_batches" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_initiative_batches" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_initiative_batches" add column if not exists "report_id" text;
 alter table "public"."assessment_initiative_batches" add column if not exists "run_id" text;
 
 
@@ -2491,23 +1938,6 @@ create table if not exists "public"."assessment_initiative_generation_runs" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "assessment_initiative_generation_runs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "id" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "assessment_id" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "organization_id" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "report_id" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "mode" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "methodology_id" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "requested_count" integer;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "batch_size" integer default 7;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "status" text default 'RUNNING'::text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "created_by" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "inputs_json" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "stats_json" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "error" text;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_initiative_generation_runs" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."assessment_initiative_links" (
     "id" text not null,
@@ -2593,9 +2023,6 @@ create table if not exists "public"."assessment_reports" (
     "rejected_reason" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "assessment_reports" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_reports" add column if not exists "id" text;
-alter table "public"."assessment_reports" add column if not exists "assessment_id" text;
-alter table "public"."assessment_reports" add column if not exists "organization_id" text;
 alter table "public"."assessment_reports" add column if not exists "project_id" text;
 alter table "public"."assessment_reports" add column if not exists "name" text;
 alter table "public"."assessment_reports" add column if not exists "status" text default 'DRAFT'::text;
@@ -2610,8 +2037,6 @@ alter table "public"."assessment_reports" add column if not exists "created_by" 
 alter table "public"."assessment_reports" add column if not exists "updated_by" text;
 alter table "public"."assessment_reports" add column if not exists "approved_by" text;
 alter table "public"."assessment_reports" add column if not exists "approved_at" timestamp without time zone;
-alter table "public"."assessment_reports" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_reports" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."assessment_reports" add column if not exists "builder_report_id" text;
 alter table "public"."assessment_reports" add column if not exists "rejected_by" text;
 alter table "public"."assessment_reports" add column if not exists "rejected_at" timestamp without time zone;
@@ -2644,23 +2069,6 @@ create table if not exists "public"."assessment_roles" (
     "assigned_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "assessment_roles" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessment_roles" add column if not exists "id" text;
-alter table "public"."assessment_roles" add column if not exists "assessment_id" text;
-alter table "public"."assessment_roles" add column if not exists "user_id" text;
-alter table "public"."assessment_roles" add column if not exists "organization_id" text;
-alter table "public"."assessment_roles" add column if not exists "role" text;
-alter table "public"."assessment_roles" add column if not exists "can_edit" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "can_approve" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "can_manage_team" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "can_change_status" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "can_generate_report" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "can_generate_initiatives" boolean default false;
-alter table "public"."assessment_roles" add column if not exists "assigned_areas" text;
-alter table "public"."assessment_roles" add column if not exists "assigned_by" text;
-alter table "public"."assessment_roles" add column if not exists "assigned_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessment_roles" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."assessment_sessions" (
     "id" text not null,
@@ -2715,12 +2123,6 @@ create table if not exists "public"."assessments" (
     "p28_workbench_v1" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."assessments" add column if not exists "id" text;
-alter table "public"."assessments" add column if not exists "organization_id" text;
-alter table "public"."assessments" add column if not exists "project_id" text;
-alter table "public"."assessments" add column if not exists "status" text default 'pending'::text;
-alter table "public"."assessments" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."assessments" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."assessments" add column if not exists "name" text;
 alter table "public"."assessments" add column if not exists "assessment_type" text;
 alter table "public"."assessments" add column if not exists "answers_json" text;
@@ -2729,18 +2131,6 @@ alter table "public"."assessments" add column if not exists "context_snapshot" t
 alter table "public"."assessments" add column if not exists "completion_percent" text;
 alter table "public"."assessments" add column if not exists "approved_at" text;
 alter table "public"."assessments" add column if not exists "created_by" text;
-alter table "public"."assessments" add column if not exists "framework_type" text default 'DRD'::text;
-alter table "public"."assessments" add column if not exists "framework_data" jsonb default '{}'::jsonb;
-alter table "public"."assessments" add column if not exists "description" text;
-alter table "public"."assessments" add column if not exists "framework" text;
-alter table "public"."assessments" add column if not exists "overall_score" real;
-alter table "public"."assessments" add column if not exists "maturity_level" text;
-alter table "public"."assessments" add column if not exists "source_type" text;
-alter table "public"."assessments" add column if not exists "source_reference" text;
-alter table "public"."assessments" add column if not exists "started_at" timestamp with time zone;
-alter table "public"."assessments" add column if not exists "completed_at" timestamp with time zone;
-alter table "public"."assessments" add column if not exists "report_generated_at" timestamp with time zone;
-alter table "public"."assessments" add column if not exists "initiatives_generated" integer default 0;
 alter table "public"."assessments" add column if not exists "confidence_avg" real default 0;
 alter table "public"."assessments" add column if not exists "current_section_id" text;
 alter table "public"."assessments" add column if not exists "navigation_json" text default '{}'::text;
@@ -2749,7 +2139,6 @@ alter table "public"."assessments" add column if not exists "report_approved_at"
 alter table "public"."assessments" add column if not exists "updated_by" text;
 alter table "public"."assessments" add column if not exists "assessment_definition_id" text;
 alter table "public"."assessments" add column if not exists "assessment_definition_version" text;
-alter table "public"."assessments" add column if not exists "p28_workbench_v1" text;
 
 
 create table if not exists "public"."audit_events" (
@@ -2781,19 +2170,6 @@ create table if not exists "public"."audit_logs" (
     "user_agent" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "audit_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."audit_logs" add column if not exists "id" text;
-alter table "public"."audit_logs" add column if not exists "timestamp" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."audit_logs" add column if not exists "user_id" text;
-alter table "public"."audit_logs" add column if not exists "action_type" text;
-alter table "public"."audit_logs" add column if not exists "resource_type" text;
-alter table "public"."audit_logs" add column if not exists "resource_id" text;
-alter table "public"."audit_logs" add column if not exists "organization_id" text;
-alter table "public"."audit_logs" add column if not exists "details" text default '{}'::text;
-alter table "public"."audit_logs" add column if not exists "ip_address" text;
-alter table "public"."audit_logs" add column if not exists "user_agent" text;
-alter table "public"."audit_logs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."audit_programs" (
     "id" text not null,
@@ -2865,14 +2241,6 @@ create table if not exists "public"."backup_records" (
     "backup_size_bytes" integer,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "backup_records" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."backup_records" add column if not exists "id" text;
-alter table "public"."backup_records" add column if not exists "organization_id" text;
-alter table "public"."backup_records" add column if not exists "backup_type" text;
-alter table "public"."backup_records" add column if not exists "backup_status" text;
-alter table "public"."backup_records" add column if not exists "backup_size_bytes" integer;
-alter table "public"."backup_records" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."benchmark_cohort_policies" (
     "id" text not null,
@@ -3041,21 +2409,6 @@ create table if not exists "public"."billing_credits" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_credits" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_credits" add column if not exists "id" text;
-alter table "public"."billing_credits" add column if not exists "organization_id" text;
-alter table "public"."billing_credits" add column if not exists "amount" integer;
-alter table "public"."billing_credits" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."billing_credits" add column if not exists "reason" text;
-alter table "public"."billing_credits" add column if not exists "source" text;
-alter table "public"."billing_credits" add column if not exists "source_id" text;
-alter table "public"."billing_credits" add column if not exists "expires_at" timestamp without time zone;
-alter table "public"."billing_credits" add column if not exists "used_amount" integer default 0;
-alter table "public"."billing_credits" add column if not exists "status" text default 'active'::text;
-alter table "public"."billing_credits" add column if not exists "metadata" json;
-alter table "public"."billing_credits" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."billing_credits" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."billing_disputes" (
     "id" text not null,
@@ -3073,22 +2426,6 @@ create table if not exists "public"."billing_disputes" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_disputes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_disputes" add column if not exists "id" text;
-alter table "public"."billing_disputes" add column if not exists "organization_id" text;
-alter table "public"."billing_disputes" add column if not exists "stripe_dispute_id" text;
-alter table "public"."billing_disputes" add column if not exists "stripe_charge_id" text;
-alter table "public"."billing_disputes" add column if not exists "amount" integer;
-alter table "public"."billing_disputes" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."billing_disputes" add column if not exists "reason" text;
-alter table "public"."billing_disputes" add column if not exists "status" text default 'warning_needs_response'::text;
-alter table "public"."billing_disputes" add column if not exists "evidence_due_by" timestamp without time zone;
-alter table "public"."billing_disputes" add column if not exists "is_charge_refundable" boolean default false;
-alter table "public"."billing_disputes" add column if not exists "outcome" text;
-alter table "public"."billing_disputes" add column if not exists "metadata" json;
-alter table "public"."billing_disputes" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."billing_disputes" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."billing_email_queue" (
     "id" text not null,
@@ -3110,26 +2447,6 @@ create table if not exists "public"."billing_email_queue" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_email_queue" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_email_queue" add column if not exists "id" text;
-alter table "public"."billing_email_queue" add column if not exists "organization_id" text;
-alter table "public"."billing_email_queue" add column if not exists "email_type" text;
-alter table "public"."billing_email_queue" add column if not exists "recipient_email" text;
-alter table "public"."billing_email_queue" add column if not exists "recipient_name" text;
-alter table "public"."billing_email_queue" add column if not exists "subject" text;
-alter table "public"."billing_email_queue" add column if not exists "template_key" text;
-alter table "public"."billing_email_queue" add column if not exists "template_data" json;
-alter table "public"."billing_email_queue" add column if not exists "attachments" json;
-alter table "public"."billing_email_queue" add column if not exists "status" text default 'pending'::text;
-alter table "public"."billing_email_queue" add column if not exists "priority" integer default 5;
-alter table "public"."billing_email_queue" add column if not exists "scheduled_at" timestamp without time zone;
-alter table "public"."billing_email_queue" add column if not exists "sent_at" timestamp without time zone;
-alter table "public"."billing_email_queue" add column if not exists "error_message" text;
-alter table "public"."billing_email_queue" add column if not exists "retry_count" integer default 0;
-alter table "public"."billing_email_queue" add column if not exists "max_retries" integer default 3;
-alter table "public"."billing_email_queue" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."billing_email_queue" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."billing_notification_preferences" (
     "id" text not null,
@@ -3147,22 +2464,6 @@ create table if not exists "public"."billing_notification_preferences" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_notification_preferences" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_notification_preferences" add column if not exists "id" text;
-alter table "public"."billing_notification_preferences" add column if not exists "organization_id" text;
-alter table "public"."billing_notification_preferences" add column if not exists "invoice_created" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "invoice_paid" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "invoice_overdue" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "payment_failed" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "payment_method_expiring" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "subscription_renewed" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "subscription_canceled" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "credit_note_issued" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "usage_threshold_warning" boolean default true;
-alter table "public"."billing_notification_preferences" add column if not exists "additional_recipients" json;
-alter table "public"."billing_notification_preferences" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."billing_notification_preferences" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."billing_refunds" (
     "id" text not null,
@@ -3181,23 +2482,6 @@ create table if not exists "public"."billing_refunds" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_refunds" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_refunds" add column if not exists "id" text;
-alter table "public"."billing_refunds" add column if not exists "organization_id" text;
-alter table "public"."billing_refunds" add column if not exists "invoice_id" text;
-alter table "public"."billing_refunds" add column if not exists "payment_attempt_id" text;
-alter table "public"."billing_refunds" add column if not exists "stripe_refund_id" text;
-alter table "public"."billing_refunds" add column if not exists "stripe_charge_id" text;
-alter table "public"."billing_refunds" add column if not exists "amount" integer;
-alter table "public"."billing_refunds" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."billing_refunds" add column if not exists "reason" text;
-alter table "public"."billing_refunds" add column if not exists "status" text default 'pending'::text;
-alter table "public"."billing_refunds" add column if not exists "failure_reason" text;
-alter table "public"."billing_refunds" add column if not exists "receipt_number" text;
-alter table "public"."billing_refunds" add column if not exists "metadata" json;
-alter table "public"."billing_refunds" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."billing_refunds" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."billing_tax_settings" (
     "id" text not null,
@@ -3234,21 +2518,6 @@ create table if not exists "public"."billing_usage_events" (
     "metadata" json,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "billing_usage_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."billing_usage_events" add column if not exists "id" text;
-alter table "public"."billing_usage_events" add column if not exists "organization_id" text;
-alter table "public"."billing_usage_events" add column if not exists "subscription_id" text;
-alter table "public"."billing_usage_events" add column if not exists "metric_name" text;
-alter table "public"."billing_usage_events" add column if not exists "quantity" real;
-alter table "public"."billing_usage_events" add column if not exists "unit_price" real;
-alter table "public"."billing_usage_events" add column if not exists "total_amount" real;
-alter table "public"."billing_usage_events" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."billing_usage_events" add column if not exists "timestamp" timestamp without time zone;
-alter table "public"."billing_usage_events" add column if not exists "idempotency_key" text;
-alter table "public"."billing_usage_events" add column if not exists "stripe_usage_record_id" text;
-alter table "public"."billing_usage_events" add column if not exists "metadata" json;
-alter table "public"."billing_usage_events" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."blueprint_wbs_items" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3286,27 +2555,6 @@ create table if not exists "public"."brand_kits" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "brand_kits" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."brand_kits" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."brand_kits" add column if not exists "organization_id" text;
-alter table "public"."brand_kits" add column if not exists "name" text default 'Default'::text;
-alter table "public"."brand_kits" add column if not exists "logo_url" text;
-alter table "public"."brand_kits" add column if not exists "primary_color" text default '003A70'::text;
-alter table "public"."brand_kits" add column if not exists "secondary_color" text default '2C5F8A'::text;
-alter table "public"."brand_kits" add column if not exists "accent_color" text default '00AA55'::text;
-alter table "public"."brand_kits" add column if not exists "font_title" text default 'Calibri Light'::text;
-alter table "public"."brand_kits" add column if not exists "font_body" text default 'Calibri'::text;
-alter table "public"."brand_kits" add column if not exists "footer_text" text;
-alter table "public"."brand_kits" add column if not exists "header_text" text;
-alter table "public"."brand_kits" add column if not exists "show_page_numbers" boolean default true;
-alter table "public"."brand_kits" add column if not exists "show_confidentiality" boolean default true;
-alter table "public"."brand_kits" add column if not exists "confidentiality_default" text default 'internal'::text;
-alter table "public"."brand_kits" add column if not exists "disclaimer_text" text;
-alter table "public"."brand_kits" add column if not exists "watermark_text" text;
-alter table "public"."brand_kits" add column if not exists "created_by" text;
-alter table "public"."brand_kits" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."brand_kits" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."budget_alerts" (
     "id" text not null,
@@ -3340,24 +2588,6 @@ create table if not exists "public"."budget_entries" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_entries" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_entries" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_entries" add column if not exists "organization_id" text;
-alter table "public"."budget_entries" add column if not exists "initiative_id" text;
-alter table "public"."budget_entries" add column if not exists "project_id" text;
-alter table "public"."budget_entries" add column if not exists "entry_type" text;
-alter table "public"."budget_entries" add column if not exists "cost_type" text;
-alter table "public"."budget_entries" add column if not exists "category" text default 'General'::text;
-alter table "public"."budget_entries" add column if not exists "amount" numeric(15,2) default 0;
-alter table "public"."budget_entries" add column if not exists "currency" text default 'PLN'::text;
-alter table "public"."budget_entries" add column if not exists "description" text;
-alter table "public"."budget_entries" add column if not exists "period_month" integer;
-alter table "public"."budget_entries" add column if not exists "period_year" integer;
-alter table "public"."budget_entries" add column if not exists "source" text default 'manual'::text;
-alter table "public"."budget_entries" add column if not exists "created_by" text;
-alter table "public"."budget_entries" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."budget_entries" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_line_items" (
     "id" text not null,
@@ -3391,20 +2621,6 @@ create table if not exists "public"."budget_lines" (
     "display_order" integer default 0,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_lines" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_lines" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_lines" add column if not exists "budget_id" text;
-alter table "public"."budget_lines" add column if not exists "line_code" text;
-alter table "public"."budget_lines" add column if not exists "line_name" text;
-alter table "public"."budget_lines" add column if not exists "statement_type" text;
-alter table "public"."budget_lines" add column if not exists "source" text default 'manual'::text;
-alter table "public"."budget_lines" add column if not exists "driver_kpi_id" text;
-alter table "public"."budget_lines" add column if not exists "driver_formula" text;
-alter table "public"."budget_lines" add column if not exists "baseline_value" numeric default 0;
-alter table "public"."budget_lines" add column if not exists "is_locked" boolean default false;
-alter table "public"."budget_lines" add column if not exists "display_order" integer default 0;
-alter table "public"."budget_lines" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_overspend_signals" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3424,24 +2640,6 @@ create table if not exists "public"."budget_overspend_signals" (
     "dismissed_at" timestamp without time zone,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_overspend_signals" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_overspend_signals" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_overspend_signals" add column if not exists "organization_id" text;
-alter table "public"."budget_overspend_signals" add column if not exists "initiative_id" text;
-alter table "public"."budget_overspend_signals" add column if not exists "project_id" text;
-alter table "public"."budget_overspend_signals" add column if not exists "signal_type" text;
-alter table "public"."budget_overspend_signals" add column if not exists "severity" text;
-alter table "public"."budget_overspend_signals" add column if not exists "planned_amount" numeric(15,2);
-alter table "public"."budget_overspend_signals" add column if not exists "actual_amount" numeric(15,2);
-alter table "public"."budget_overspend_signals" add column if not exists "variance_percent" numeric(5,2);
-alter table "public"."budget_overspend_signals" add column if not exists "burn_rate_percent" numeric(5,2);
-alter table "public"."budget_overspend_signals" add column if not exists "forecast_total" numeric(15,2);
-alter table "public"."budget_overspend_signals" add column if not exists "message" text;
-alter table "public"."budget_overspend_signals" add column if not exists "is_dismissed" boolean default false;
-alter table "public"."budget_overspend_signals" add column if not exists "dismissed_by" text;
-alter table "public"."budget_overspend_signals" add column if not exists "dismissed_at" timestamp without time zone;
-alter table "public"."budget_overspend_signals" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_scenarios" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3456,19 +2654,6 @@ create table if not exists "public"."budget_scenarios" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_scenarios" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_scenarios" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_scenarios" add column if not exists "budget_id" text;
-alter table "public"."budget_scenarios" add column if not exists "scenario_type" text default 'base'::text;
-alter table "public"."budget_scenarios" add column if not exists "name" text;
-alter table "public"."budget_scenarios" add column if not exists "description" text;
-alter table "public"."budget_scenarios" add column if not exists "adjustments" jsonb default '{}'::jsonb;
-alter table "public"."budget_scenarios" add column if not exists "projections" jsonb default '{}'::jsonb;
-alter table "public"."budget_scenarios" add column if not exists "summary_metrics" jsonb default '{}'::jsonb;
-alter table "public"."budget_scenarios" add column if not exists "is_active" boolean default false;
-alter table "public"."budget_scenarios" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."budget_scenarios" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_snapshots" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3478,14 +2663,6 @@ create table if not exists "public"."budget_snapshots" (
     "approved_by" text,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_snapshots" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_snapshots" add column if not exists "budget_id" text;
-alter table "public"."budget_snapshots" add column if not exists "version" integer;
-alter table "public"."budget_snapshots" add column if not exists "snapshot_data" jsonb;
-alter table "public"."budget_snapshots" add column if not exists "approved_by" text;
-alter table "public"."budget_snapshots" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_thresholds" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3499,18 +2676,6 @@ create table if not exists "public"."budget_thresholds" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "budget_thresholds" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."budget_thresholds" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."budget_thresholds" add column if not exists "organization_id" text;
-alter table "public"."budget_thresholds" add column if not exists "scope_type" text;
-alter table "public"."budget_thresholds" add column if not exists "scope_id" text;
-alter table "public"."budget_thresholds" add column if not exists "warning_percent" integer default 80;
-alter table "public"."budget_thresholds" add column if not exists "critical_percent" integer default 90;
-alter table "public"."budget_thresholds" add column if not exists "hard_limit_percent" integer default 100;
-alter table "public"."budget_thresholds" add column if not exists "is_active" boolean default true;
-alter table "public"."budget_thresholds" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."budget_thresholds" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."budget_transactions" (
     "id" text not null,
@@ -3542,13 +2707,6 @@ create table if not exists "public"."builtin_role_permissions" (
     "description" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "builtin_role_permissions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."builtin_role_permissions" add column if not exists "id" text;
-alter table "public"."builtin_role_permissions" add column if not exists "role" text;
-alter table "public"."builtin_role_permissions" add column if not exists "permission_key" text;
-alter table "public"."builtin_role_permissions" add column if not exists "description" text;
-alter table "public"."builtin_role_permissions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."calendar_feed_log" (
     "id" text not null,
@@ -3585,29 +2743,6 @@ create table if not exists "public"."canonical_inbox_items" (
     "updated_at" timestamp with time zone default now(),
     "resolved_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "canonical_inbox_items" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."canonical_inbox_items" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."canonical_inbox_items" add column if not exists "user_id" text;
-alter table "public"."canonical_inbox_items" add column if not exists "organization_id" text;
-alter table "public"."canonical_inbox_items" add column if not exists "item_type" text;
-alter table "public"."canonical_inbox_items" add column if not exists "source_entity_type" text;
-alter table "public"."canonical_inbox_items" add column if not exists "source_entity_id" text;
-alter table "public"."canonical_inbox_items" add column if not exists "title" text;
-alter table "public"."canonical_inbox_items" add column if not exists "description" text;
-alter table "public"."canonical_inbox_items" add column if not exists "priority" text default 'normal'::text;
-alter table "public"."canonical_inbox_items" add column if not exists "section" text default 'assigned_tasks'::text;
-alter table "public"."canonical_inbox_items" add column if not exists "status" text default 'pending'::text;
-alter table "public"."canonical_inbox_items" add column if not exists "sla_deadline" timestamp with time zone;
-alter table "public"."canonical_inbox_items" add column if not exists "sla_status" text default 'on_track'::text;
-alter table "public"."canonical_inbox_items" add column if not exists "delegated_to" text;
-alter table "public"."canonical_inbox_items" add column if not exists "delegated_at" timestamp with time zone;
-alter table "public"."canonical_inbox_items" add column if not exists "delegated_by" text;
-alter table "public"."canonical_inbox_items" add column if not exists "delegation_notes" text;
-alter table "public"."canonical_inbox_items" add column if not exists "metadata_json" text default '{}'::text;
-alter table "public"."canonical_inbox_items" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."canonical_inbox_items" add column if not exists "updated_at" timestamp with time zone default now();
-alter table "public"."canonical_inbox_items" add column if not exists "resolved_at" timestamp with time zone;
-
 
 create table if not exists "public"."capability_assignments" (
     "id" uuid not null default gen_random_uuid(),
@@ -3624,21 +2759,6 @@ create table if not exists "public"."capability_assignments" (
     "ai_suggested" boolean not null default false,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "capability_assignments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."capability_assignments" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."capability_assignments" add column if not exists "organization_id" text;
-alter table "public"."capability_assignments" add column if not exists "initiative_id" text;
-alter table "public"."capability_assignments" add column if not exists "task_id" text;
-alter table "public"."capability_assignments" add column if not exists "user_id" text;
-alter table "public"."capability_assignments" add column if not exists "match_score" numeric(5,2);
-alter table "public"."capability_assignments" add column if not exists "gap_summary" jsonb default '{}'::jsonb;
-alter table "public"."capability_assignments" add column if not exists "decision" text default 'pending'::text;
-alter table "public"."capability_assignments" add column if not exists "decision_reason" text;
-alter table "public"."capability_assignments" add column if not exists "decided_by" text;
-alter table "public"."capability_assignments" add column if not exists "decided_at" timestamp with time zone;
-alter table "public"."capability_assignments" add column if not exists "ai_suggested" boolean default false;
-alter table "public"."capability_assignments" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."change_coaching_actions" (
     "id" uuid not null default gen_random_uuid(),
@@ -3650,16 +2770,6 @@ create table if not exists "public"."change_coaching_actions" (
     "is_global" boolean not null default false,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "change_coaching_actions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."change_coaching_actions" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."change_coaching_actions" add column if not exists "organization_id" text;
-alter table "public"."change_coaching_actions" add column if not exists "title" text;
-alter table "public"."change_coaching_actions" add column if not exists "description" text;
-alter table "public"."change_coaching_actions" add column if not exists "category" text;
-alter table "public"."change_coaching_actions" add column if not exists "trigger_signal" text;
-alter table "public"."change_coaching_actions" add column if not exists "is_global" boolean default false;
-alter table "public"."change_coaching_actions" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."change_feedback" (
     "id" uuid not null default gen_random_uuid(),
@@ -3675,20 +2785,6 @@ create table if not exists "public"."change_feedback" (
     "metadata" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "change_feedback" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."change_feedback" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."change_feedback" add column if not exists "organization_id" text;
-alter table "public"."change_feedback" add column if not exists "initiative_id" text;
-alter table "public"."change_feedback" add column if not exists "project_id" text;
-alter table "public"."change_feedback" add column if not exists "user_id" text;
-alter table "public"."change_feedback" add column if not exists "is_anonymous" boolean default false;
-alter table "public"."change_feedback" add column if not exists "content" text;
-alter table "public"."change_feedback" add column if not exists "sentiment" text;
-alter table "public"."change_feedback" add column if not exists "sentiment_score" numeric(4,3);
-alter table "public"."change_feedback" add column if not exists "categories" jsonb default '[]'::jsonb;
-alter table "public"."change_feedback" add column if not exists "metadata" jsonb default '{}'::jsonb;
-alter table "public"."change_feedback" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."change_pulse_checkins" (
     "id" uuid not null default gen_random_uuid(),
@@ -3703,19 +2799,6 @@ create table if not exists "public"."change_pulse_checkins" (
     "metadata" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "change_pulse_checkins" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."change_pulse_checkins" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."change_pulse_checkins" add column if not exists "organization_id" text;
-alter table "public"."change_pulse_checkins" add column if not exists "initiative_id" text;
-alter table "public"."change_pulse_checkins" add column if not exists "project_id" text;
-alter table "public"."change_pulse_checkins" add column if not exists "user_id" text;
-alter table "public"."change_pulse_checkins" add column if not exists "is_anonymous" boolean default false;
-alter table "public"."change_pulse_checkins" add column if not exists "rating" integer;
-alter table "public"."change_pulse_checkins" add column if not exists "comment" text;
-alter table "public"."change_pulse_checkins" add column if not exists "questions_json" jsonb default '[]'::jsonb;
-alter table "public"."change_pulse_checkins" add column if not exists "metadata" jsonb default '{}'::jsonb;
-alter table "public"."change_pulse_checkins" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."change_resistance_alerts" (
     "id" uuid not null default gen_random_uuid(),
@@ -3731,20 +2814,6 @@ create table if not exists "public"."change_resistance_alerts" (
     "acknowledged_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "change_resistance_alerts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."change_resistance_alerts" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."change_resistance_alerts" add column if not exists "organization_id" text;
-alter table "public"."change_resistance_alerts" add column if not exists "initiative_id" text;
-alter table "public"."change_resistance_alerts" add column if not exists "project_id" text;
-alter table "public"."change_resistance_alerts" add column if not exists "alert_type" text;
-alter table "public"."change_resistance_alerts" add column if not exists "severity" text default 'medium'::text;
-alter table "public"."change_resistance_alerts" add column if not exists "message" text;
-alter table "public"."change_resistance_alerts" add column if not exists "recommendations" jsonb default '[]'::jsonb;
-alter table "public"."change_resistance_alerts" add column if not exists "is_acknowledged" boolean default false;
-alter table "public"."change_resistance_alerts" add column if not exists "acknowledged_by" text;
-alter table "public"."change_resistance_alerts" add column if not exists "acknowledged_at" timestamp with time zone;
-alter table "public"."change_resistance_alerts" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."change_sentiment_snapshots" (
     "id" uuid not null default gen_random_uuid(),
@@ -3760,20 +2829,6 @@ create table if not exists "public"."change_sentiment_snapshots" (
     "distribution" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "change_sentiment_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."change_sentiment_snapshots" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."change_sentiment_snapshots" add column if not exists "organization_id" text;
-alter table "public"."change_sentiment_snapshots" add column if not exists "initiative_id" text;
-alter table "public"."change_sentiment_snapshots" add column if not exists "project_id" text;
-alter table "public"."change_sentiment_snapshots" add column if not exists "period_start" date;
-alter table "public"."change_sentiment_snapshots" add column if not exists "period_end" date;
-alter table "public"."change_sentiment_snapshots" add column if not exists "avg_rating" numeric(3,2);
-alter table "public"."change_sentiment_snapshots" add column if not exists "total_responses" integer default 0;
-alter table "public"."change_sentiment_snapshots" add column if not exists "trend" text;
-alter table "public"."change_sentiment_snapshots" add column if not exists "top_concerns" jsonb default '[]'::jsonb;
-alter table "public"."change_sentiment_snapshots" add column if not exists "distribution" jsonb default '{}'::jsonb;
-alter table "public"."change_sentiment_snapshots" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."checkout_sessions" (
     "id" text not null,
@@ -3793,24 +2848,6 @@ create table if not exists "public"."checkout_sessions" (
     "metadata" json,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "checkout_sessions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."checkout_sessions" add column if not exists "id" text;
-alter table "public"."checkout_sessions" add column if not exists "organization_id" text;
-alter table "public"."checkout_sessions" add column if not exists "user_id" text;
-alter table "public"."checkout_sessions" add column if not exists "stripe_session_id" text;
-alter table "public"."checkout_sessions" add column if not exists "plan_id" text;
-alter table "public"."checkout_sessions" add column if not exists "status" text default 'pending'::text;
-alter table "public"."checkout_sessions" add column if not exists "mode" text default 'subscription'::text;
-alter table "public"."checkout_sessions" add column if not exists "success_url" text;
-alter table "public"."checkout_sessions" add column if not exists "cancel_url" text;
-alter table "public"."checkout_sessions" add column if not exists "customer_email" text;
-alter table "public"."checkout_sessions" add column if not exists "amount_total" integer;
-alter table "public"."checkout_sessions" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."checkout_sessions" add column if not exists "expires_at" timestamp without time zone;
-alter table "public"."checkout_sessions" add column if not exists "completed_at" timestamp without time zone;
-alter table "public"."checkout_sessions" add column if not exists "metadata" json;
-alter table "public"."checkout_sessions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."circuit_breaker_state" (
     "id" text not null,
@@ -3825,19 +2862,6 @@ create table if not exists "public"."circuit_breaker_state" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "circuit_breaker_state" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."circuit_breaker_state" add column if not exists "id" text;
-alter table "public"."circuit_breaker_state" add column if not exists "service" text;
-alter table "public"."circuit_breaker_state" add column if not exists "breaker_key" text;
-alter table "public"."circuit_breaker_state" add column if not exists "state" text default 'CLOSED'::text;
-alter table "public"."circuit_breaker_state" add column if not exists "failures" integer default 0;
-alter table "public"."circuit_breaker_state" add column if not exists "last_failure" timestamp without time zone;
-alter table "public"."circuit_breaker_state" add column if not exists "failure_count" integer default 0;
-alter table "public"."circuit_breaker_state" add column if not exists "last_failure_at" timestamp without time zone;
-alter table "public"."circuit_breaker_state" add column if not exists "opened_at" timestamp without time zone;
-alter table "public"."circuit_breaker_state" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."circuit_breaker_state" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."citation_verification_logs" (
     "id" bigint not null default nextval('citation_verification_logs_id_seq'::regclass),
@@ -3851,18 +2875,6 @@ create table if not exists "public"."citation_verification_logs" (
     "results_json" text,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "citation_verification_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."citation_verification_logs" add column if not exists "id" bigint default nextval('citation_verification_logs_id_seq'::regclass);
-alter table "public"."citation_verification_logs" add column if not exists "conversation_id" text;
-alter table "public"."citation_verification_logs" add column if not exists "message_id" text;
-alter table "public"."citation_verification_logs" add column if not exists "total_citations" integer default 0;
-alter table "public"."citation_verification_logs" add column if not exists "verified_count" integer default 0;
-alter table "public"."citation_verification_logs" add column if not exists "unverified_count" integer default 0;
-alter table "public"."citation_verification_logs" add column if not exists "broken_count" integer default 0;
-alter table "public"."citation_verification_logs" add column if not exists "overall_score" real;
-alter table "public"."citation_verification_logs" add column if not exists "results_json" text;
-alter table "public"."citation_verification_logs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."client_context" (
     "id" text not null,
@@ -3872,14 +2884,6 @@ create table if not exists "public"."client_context" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "client_context" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."client_context" add column if not exists "id" text;
-alter table "public"."client_context" add column if not exists "organization_id" text;
-alter table "public"."client_context" add column if not exists "context_key" text;
-alter table "public"."client_context" add column if not exists "context_value" text;
-alter table "public"."client_context" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."client_context" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."client_error_events" (
     "id" text not null,
@@ -3924,22 +2928,6 @@ create table if not exists "public"."cloud_import_jobs" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "completed_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "cloud_import_jobs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."cloud_import_jobs" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."cloud_import_jobs" add column if not exists "cloud_source_id" text;
-alter table "public"."cloud_import_jobs" add column if not exists "organization_id" text;
-alter table "public"."cloud_import_jobs" add column if not exists "user_id" text;
-alter table "public"."cloud_import_jobs" add column if not exists "file_path" text;
-alter table "public"."cloud_import_jobs" add column if not exists "file_name" text;
-alter table "public"."cloud_import_jobs" add column if not exists "file_type" text;
-alter table "public"."cloud_import_jobs" add column if not exists "file_size" integer;
-alter table "public"."cloud_import_jobs" add column if not exists "status" text default 'pending'::text;
-alter table "public"."cloud_import_jobs" add column if not exists "progress" integer default 0;
-alter table "public"."cloud_import_jobs" add column if not exists "result" text;
-alter table "public"."cloud_import_jobs" add column if not exists "error" text;
-alter table "public"."cloud_import_jobs" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."cloud_import_jobs" add column if not exists "completed_at" timestamp with time zone;
-
 
 create table if not exists "public"."cloud_sources" (
     "id" text not null default (gen_random_uuid())::text,
@@ -3957,22 +2945,6 @@ create table if not exists "public"."cloud_sources" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "cloud_sources" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."cloud_sources" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."cloud_sources" add column if not exists "organization_id" text;
-alter table "public"."cloud_sources" add column if not exists "user_id" text;
-alter table "public"."cloud_sources" add column if not exists "provider" text;
-alter table "public"."cloud_sources" add column if not exists "name" text;
-alter table "public"."cloud_sources" add column if not exists "access_token" text;
-alter table "public"."cloud_sources" add column if not exists "refresh_token" text;
-alter table "public"."cloud_sources" add column if not exists "token_expires_at" timestamp with time zone;
-alter table "public"."cloud_sources" add column if not exists "root_folder_id" text;
-alter table "public"."cloud_sources" add column if not exists "settings" text default '{}'::text;
-alter table "public"."cloud_sources" add column if not exists "status" text default 'active'::text;
-alter table "public"."cloud_sources" add column if not exists "last_sync_at" timestamp with time zone;
-alter table "public"."cloud_sources" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."cloud_sources" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."cloud_sync_log" (
     "id" text not null,
@@ -4027,25 +2999,6 @@ create table if not exists "public"."communication_plan_items" (
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "communication_plan_items" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."communication_plan_items" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."communication_plan_items" add column if not exists "plan_id" uuid;
-alter table "public"."communication_plan_items" add column if not exists "comm_type" text;
-alter table "public"."communication_plan_items" add column if not exists "segment_ids" jsonb default '[]'::jsonb;
-alter table "public"."communication_plan_items" add column if not exists "subject" text;
-alter table "public"."communication_plan_items" add column if not exists "content" text;
-alter table "public"."communication_plan_items" add column if not exists "template_id" uuid;
-alter table "public"."communication_plan_items" add column if not exists "status" text default 'draft'::text;
-alter table "public"."communication_plan_items" add column if not exists "scheduled_at" timestamp with time zone;
-alter table "public"."communication_plan_items" add column if not exists "sent_at" timestamp with time zone;
-alter table "public"."communication_plan_items" add column if not exists "sent_by" text;
-alter table "public"."communication_plan_items" add column if not exists "approved_by" text;
-alter table "public"."communication_plan_items" add column if not exists "approved_at" timestamp with time zone;
-alter table "public"."communication_plan_items" add column if not exists "channel" text default 'email'::text;
-alter table "public"."communication_plan_items" add column if not exists "metadata" jsonb default '{}'::jsonb;
-alter table "public"."communication_plan_items" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."communication_plan_items" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."communication_plans" (
     "id" uuid not null default gen_random_uuid(),
@@ -4064,17 +3017,6 @@ create table if not exists "public"."communication_plans" (
     "governance_level" text default 'standard'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "communication_plans" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."communication_plans" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."communication_plans" add column if not exists "organization_id" text;
-alter table "public"."communication_plans" add column if not exists "initiative_id" text;
-alter table "public"."communication_plans" add column if not exists "cadence" text default 'weekly'::text;
-alter table "public"."communication_plans" add column if not exists "owner_user_id" text;
-alter table "public"."communication_plans" add column if not exists "description" text;
-alter table "public"."communication_plans" add column if not exists "is_active" boolean default true;
-alter table "public"."communication_plans" add column if not exists "next_due_at" timestamp with time zone;
-alter table "public"."communication_plans" add column if not exists "created_by" text;
-alter table "public"."communication_plans" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."communication_plans" add column if not exists "updated_at" timestamp with time zone default now();
 alter table "public"."communication_plans" add column if not exists "plan_type" text default 'general'::text;
 alter table "public"."communication_plans" add column if not exists "stakeholder_registry_json" text;
 alter table "public"."communication_plans" add column if not exists "governance_level" text default 'standard'::text;
@@ -4093,19 +3035,6 @@ create table if not exists "public"."communication_send_log" (
     "follow_up_task" text,
     "metadata" jsonb default '{}'::jsonb
 );
--- Strict-schema repair (2026-08, auto-generated): "communication_send_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."communication_send_log" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."communication_send_log" add column if not exists "plan_item_id" uuid;
-alter table "public"."communication_send_log" add column if not exists "organization_id" text;
-alter table "public"."communication_send_log" add column if not exists "initiative_id" text;
-alter table "public"."communication_send_log" add column if not exists "segment_id" uuid;
-alter table "public"."communication_send_log" add column if not exists "channel" text;
-alter table "public"."communication_send_log" add column if not exists "recipient_count" integer default 0;
-alter table "public"."communication_send_log" add column if not exists "sent_by" text;
-alter table "public"."communication_send_log" add column if not exists "sent_at" timestamp with time zone default now();
-alter table "public"."communication_send_log" add column if not exists "follow_up_task" text;
-alter table "public"."communication_send_log" add column if not exists "metadata" jsonb default '{}'::jsonb;
-
 
 create table if not exists "public"."communication_templates" (
     "id" uuid not null default gen_random_uuid(),
@@ -4119,18 +3048,6 @@ create table if not exists "public"."communication_templates" (
     "created_by" text,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "communication_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."communication_templates" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."communication_templates" add column if not exists "organization_id" text;
-alter table "public"."communication_templates" add column if not exists "name" text;
-alter table "public"."communication_templates" add column if not exists "comm_type" text;
-alter table "public"."communication_templates" add column if not exists "subject_template" text;
-alter table "public"."communication_templates" add column if not exists "body_template" text;
-alter table "public"."communication_templates" add column if not exists "fields_json" jsonb default '[]'::jsonb;
-alter table "public"."communication_templates" add column if not exists "is_global" boolean default false;
-alter table "public"."communication_templates" add column if not exists "created_by" text;
-alter table "public"."communication_templates" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."compliance_audits" (
     "id" text not null,
@@ -4166,14 +3083,6 @@ create table if not exists "public"."compliance_records" (
     "verified_at" timestamp without time zone,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "compliance_records" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."compliance_records" add column if not exists "id" text;
-alter table "public"."compliance_records" add column if not exists "organization_id" text;
-alter table "public"."compliance_records" add column if not exists "compliance_type" text;
-alter table "public"."compliance_records" add column if not exists "status" text;
-alter table "public"."compliance_records" add column if not exists "verified_at" timestamp without time zone;
-alter table "public"."compliance_records" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."compliance_settings" (
     "id" text not null,
@@ -4188,11 +3097,6 @@ create table if not exists "public"."compliance_settings" (
     "updated_by" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "compliance_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."compliance_settings" add column if not exists "id" text;
-alter table "public"."compliance_settings" add column if not exists "organization_id" text;
-alter table "public"."compliance_settings" add column if not exists "compliance_type" text;
-alter table "public"."compliance_settings" add column if not exists "settings" text default '{}'::text;
-alter table "public"."compliance_settings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."compliance_settings" add column if not exists "setting_type" text;
 alter table "public"."compliance_settings" add column if not exists "settings_data" text;
 alter table "public"."compliance_settings" add column if not exists "enabled" text;
@@ -4365,19 +3269,6 @@ create table if not exists "public"."conversation_message_attachments" (
     "provenance_pointer" character varying(500),
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "conversation_message_attachments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."conversation_message_attachments" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."conversation_message_attachments" add column if not exists "message_id" text;
-alter table "public"."conversation_message_attachments" add column if not exists "conversation_id" text;
-alter table "public"."conversation_message_attachments" add column if not exists "kind" character varying(20);
-alter table "public"."conversation_message_attachments" add column if not exists "target_id" character varying(500);
-alter table "public"."conversation_message_attachments" add column if not exists "target_url" character varying(2000);
-alter table "public"."conversation_message_attachments" add column if not exists "display_name" character varying(500);
-alter table "public"."conversation_message_attachments" add column if not exists "mime" character varying(200);
-alter table "public"."conversation_message_attachments" add column if not exists "size_bytes" bigint;
-alter table "public"."conversation_message_attachments" add column if not exists "provenance_pointer" character varying(500);
-alter table "public"."conversation_message_attachments" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."conversation_participants" (
     "id" text not null,
@@ -4397,15 +3288,6 @@ create table if not exists "public"."conversation_purge_audit" (
     "title_hash" character varying(64),
     "purged_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "conversation_purge_audit" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."conversation_purge_audit" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."conversation_purge_audit" add column if not exists "conversation_id" text;
-alter table "public"."conversation_purge_audit" add column if not exists "purged_by_user_id" text;
-alter table "public"."conversation_purge_audit" add column if not exists "organization_id" text;
-alter table "public"."conversation_purge_audit" add column if not exists "message_count" integer default 0;
-alter table "public"."conversation_purge_audit" add column if not exists "title_hash" character varying(64);
-alter table "public"."conversation_purge_audit" add column if not exists "purged_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."conversation_sessions" (
     "id" text not null default (gen_random_uuid())::text,
@@ -4419,18 +3301,6 @@ create table if not exists "public"."conversation_sessions" (
     "ended_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "conversation_sessions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."conversation_sessions" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."conversation_sessions" add column if not exists "conversation_id" text;
-alter table "public"."conversation_sessions" add column if not exists "model_id" character varying(100);
-alter table "public"."conversation_sessions" add column if not exists "preset_id" character varying(100);
-alter table "public"."conversation_sessions" add column if not exists "locale" character varying(10);
-alter table "public"."conversation_sessions" add column if not exists "tools_enabled" jsonb default '[]'::jsonb;
-alter table "public"."conversation_sessions" add column if not exists "retrieval_params" jsonb default '{}'::jsonb;
-alter table "public"."conversation_sessions" add column if not exists "started_at" timestamp with time zone default now();
-alter table "public"."conversation_sessions" add column if not exists "ended_at" timestamp with time zone;
-alter table "public"."conversation_sessions" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."conversation_share_views" (
     "id" text not null,
@@ -4521,15 +3391,6 @@ create table if not exists "public"."custom_trends" (
     "description" text,
     "ring" text not null
 );
--- Strict-schema repair (2026-08, auto-generated): "custom_trends" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."custom_trends" add column if not exists "id" text;
-alter table "public"."custom_trends" add column if not exists "company_id" text;
-alter table "public"."custom_trends" add column if not exists "industry" text;
-alter table "public"."custom_trends" add column if not exists "type" text;
-alter table "public"."custom_trends" add column if not exists "label" text;
-alter table "public"."custom_trends" add column if not exists "description" text;
-alter table "public"."custom_trends" add column if not exists "ring" text;
-
 
 create table if not exists "public"."data_deletion_log" (
     "id" text not null,
@@ -4577,28 +3438,6 @@ create table if not exists "public"."data_export_requests" (
     "completed_at" timestamp without time zone,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "data_export_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."data_export_requests" add column if not exists "id" text;
-alter table "public"."data_export_requests" add column if not exists "organization_id" text;
-alter table "public"."data_export_requests" add column if not exists "user_id" text;
-alter table "public"."data_export_requests" add column if not exists "export_type" text;
-alter table "public"."data_export_requests" add column if not exists "format" text default 'json'::text;
-alter table "public"."data_export_requests" add column if not exists "include_data_types" text;
-alter table "public"."data_export_requests" add column if not exists "status" text default 'pending'::text;
-alter table "public"."data_export_requests" add column if not exists "include_data" text;
-alter table "public"."data_export_requests" add column if not exists "exclude_data" text;
-alter table "public"."data_export_requests" add column if not exists "download_url" text;
-alter table "public"."data_export_requests" add column if not exists "file_url" text;
-alter table "public"."data_export_requests" add column if not exists "file_path" text;
-alter table "public"."data_export_requests" add column if not exists "file_size" integer;
-alter table "public"."data_export_requests" add column if not exists "expires_at" timestamp without time zone;
-alter table "public"."data_export_requests" add column if not exists "file_expires_at" timestamp without time zone;
-alter table "public"."data_export_requests" add column if not exists "error_message" text;
-alter table "public"."data_export_requests" add column if not exists "requested_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."data_export_requests" add column if not exists "started_at" timestamp without time zone;
-alter table "public"."data_export_requests" add column if not exists "completed_at" timestamp without time zone;
-alter table "public"."data_export_requests" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."data_residency" (
     "id" text not null,
@@ -4865,17 +3704,6 @@ create table if not exists "public"."delay_alert_log" (
     "recipient_id" text,
     "channel" text default 'in_app'::text
 );
--- Strict-schema repair (2026-08, auto-generated): "delay_alert_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."delay_alert_log" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."delay_alert_log" add column if not exists "organization_id" text;
-alter table "public"."delay_alert_log" add column if not exists "entity_type" text;
-alter table "public"."delay_alert_log" add column if not exists "entity_id" text;
-alter table "public"."delay_alert_log" add column if not exists "deviation_type" text;
-alter table "public"."delay_alert_log" add column if not exists "severity" text;
-alter table "public"."delay_alert_log" add column if not exists "sent_at" timestamp without time zone default now();
-alter table "public"."delay_alert_log" add column if not exists "recipient_id" text;
-alter table "public"."delay_alert_log" add column if not exists "channel" text default 'in_app'::text;
-
 
 create table if not exists "public"."delay_signals" (
     "id" text not null default (gen_random_uuid())::text,
@@ -4897,26 +3725,6 @@ create table if not exists "public"."delay_signals" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "delay_signals" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."delay_signals" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."delay_signals" add column if not exists "organization_id" text;
-alter table "public"."delay_signals" add column if not exists "project_id" text;
-alter table "public"."delay_signals" add column if not exists "entity_type" text;
-alter table "public"."delay_signals" add column if not exists "entity_id" text;
-alter table "public"."delay_signals" add column if not exists "entity_name" text;
-alter table "public"."delay_signals" add column if not exists "deviation_type" text;
-alter table "public"."delay_signals" add column if not exists "severity" text;
-alter table "public"."delay_signals" add column if not exists "days_deviation" integer default 0;
-alter table "public"."delay_signals" add column if not exists "planned_date" text;
-alter table "public"."delay_signals" add column if not exists "actual_or_current" text;
-alter table "public"."delay_signals" add column if not exists "why_slip_reasons" jsonb default '[]'::jsonb;
-alter table "public"."delay_signals" add column if not exists "is_dismissed" boolean default false;
-alter table "public"."delay_signals" add column if not exists "dismissed_by" text;
-alter table "public"."delay_signals" add column if not exists "dismissed_at" timestamp without time zone;
-alter table "public"."delay_signals" add column if not exists "alert_sent_at" timestamp without time zone;
-alter table "public"."delay_signals" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."delay_signals" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."deliverables_generation_events" (
     "id" text not null,
@@ -5022,22 +3830,6 @@ create table if not exists "public"."dunning_states" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "dunning_states" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."dunning_states" add column if not exists "id" text;
-alter table "public"."dunning_states" add column if not exists "organization_id" text;
-alter table "public"."dunning_states" add column if not exists "subscription_id" text;
-alter table "public"."dunning_states" add column if not exists "current_step" integer default 0;
-alter table "public"."dunning_states" add column if not exists "max_steps" integer default 4;
-alter table "public"."dunning_states" add column if not exists "last_attempt_at" timestamp without time zone;
-alter table "public"."dunning_states" add column if not exists "next_attempt_at" timestamp without time zone;
-alter table "public"."dunning_states" add column if not exists "status" text default 'active'::text;
-alter table "public"."dunning_states" add column if not exists "total_amount_due" integer default 0;
-alter table "public"."dunning_states" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."dunning_states" add column if not exists "emails_sent" integer default 0;
-alter table "public"."dunning_states" add column if not exists "last_email_sent_at" timestamp without time zone;
-alter table "public"."dunning_states" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."dunning_states" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."email_sender_verifications" (
     "id" text not null,
@@ -5081,28 +3873,6 @@ create table if not exists "public"."email_sends" (
     "metadata" text default '{}'::text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "email_sends" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."email_sends" add column if not exists "id" text;
-alter table "public"."email_sends" add column if not exists "template_id" text;
-alter table "public"."email_sends" add column if not exists "organization_id" text;
-alter table "public"."email_sends" add column if not exists "recipient_email" text;
-alter table "public"."email_sends" add column if not exists "recipient_user_id" text;
-alter table "public"."email_sends" add column if not exists "subject" text;
-alter table "public"."email_sends" add column if not exists "status" text default 'PENDING'::text;
-alter table "public"."email_sends" add column if not exists "sent_at" text;
-alter table "public"."email_sends" add column if not exists "delivered_at" text;
-alter table "public"."email_sends" add column if not exists "opened_at" text;
-alter table "public"."email_sends" add column if not exists "clicked_at" text;
-alter table "public"."email_sends" add column if not exists "bounced_at" text;
-alter table "public"."email_sends" add column if not exists "failed_at" text;
-alter table "public"."email_sends" add column if not exists "error_message" text;
-alter table "public"."email_sends" add column if not exists "retry_count" integer default 0;
-alter table "public"."email_sends" add column if not exists "open_count" integer default 0;
-alter table "public"."email_sends" add column if not exists "click_count" integer default 0;
-alter table "public"."email_sends" add column if not exists "first_click_url" text;
-alter table "public"."email_sends" add column if not exists "metadata" text default '{}'::text;
-alter table "public"."email_sends" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."email_signatures" (
     "id" text not null,
@@ -5134,26 +3904,6 @@ create table if not exists "public"."email_templates" (
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "created_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "email_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."email_templates" add column if not exists "id" text;
-alter table "public"."email_templates" add column if not exists "organization_id" text;
-alter table "public"."email_templates" add column if not exists "template_key" text;
-alter table "public"."email_templates" add column if not exists "name" text;
-alter table "public"."email_templates" add column if not exists "description" text;
-alter table "public"."email_templates" add column if not exists "subject" text;
-alter table "public"."email_templates" add column if not exists "html_content" text;
-alter table "public"."email_templates" add column if not exists "body_html" text default ''::text;
-alter table "public"."email_templates" add column if not exists "body_text" text;
-alter table "public"."email_templates" add column if not exists "variables" text default '[]'::text;
-alter table "public"."email_templates" add column if not exists "variables_json" text default '[]'::text;
-alter table "public"."email_templates" add column if not exists "available_variables" text default '[]'::text;
-alter table "public"."email_templates" add column if not exists "category" text;
-alter table "public"."email_templates" add column if not exists "is_default" integer default 0;
-alter table "public"."email_templates" add column if not exists "is_active" integer default 1;
-alter table "public"."email_templates" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."email_templates" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."email_templates" add column if not exists "created_by" text;
-
 
 create table if not exists "public"."enterprise_contracts" (
     "id" text not null,
@@ -5225,17 +3975,6 @@ create table if not exists "public"."execution_audit_log" (
     "changed_by" text not null,
     "changed_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "execution_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."execution_audit_log" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."execution_audit_log" add column if not exists "organization_id" text;
-alter table "public"."execution_audit_log" add column if not exists "initiative_id" text;
-alter table "public"."execution_audit_log" add column if not exists "field_changed" text;
-alter table "public"."execution_audit_log" add column if not exists "old_value" text;
-alter table "public"."execution_audit_log" add column if not exists "new_value" text;
-alter table "public"."execution_audit_log" add column if not exists "change_reason" text;
-alter table "public"."execution_audit_log" add column if not exists "changed_by" text;
-alter table "public"."execution_audit_log" add column if not exists "changed_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."executive_aggregate_cache" (
     "id" text not null,
@@ -5276,21 +4015,6 @@ create table if not exists "public"."external_digital_assessments" (
     "uploaded_by" text,
     "uploaded_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "external_digital_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."external_digital_assessments" add column if not exists "id" text;
-alter table "public"."external_digital_assessments" add column if not exists "organization_id" text;
-alter table "public"."external_digital_assessments" add column if not exists "project_id" text;
-alter table "public"."external_digital_assessments" add column if not exists "framework_type" text;
-alter table "public"."external_digital_assessments" add column if not exists "framework_version" text;
-alter table "public"."external_digital_assessments" add column if not exists "assessment_date" timestamp with time zone;
-alter table "public"."external_digital_assessments" add column if not exists "raw_scores_json" text default '{}'::text;
-alter table "public"."external_digital_assessments" add column if not exists "normalized_scores_json" text default '{}'::text;
-alter table "public"."external_digital_assessments" add column if not exists "mapping_confidence" real default 0;
-alter table "public"."external_digital_assessments" add column if not exists "drd_axis_mapping" text default '{}'::text;
-alter table "public"."external_digital_assessments" add column if not exists "processing_status" text default 'uploaded'::text;
-alter table "public"."external_digital_assessments" add column if not exists "uploaded_by" text;
-alter table "public"."external_digital_assessments" add column if not exists "uploaded_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."facility_users" (
     "facility_id" text not null,
@@ -5334,14 +4058,6 @@ create table if not exists "public"."feature_flags" (
     "variants" text default '[]'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "feature_flags" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."feature_flags" add column if not exists "id" text;
-alter table "public"."feature_flags" add column if not exists "flag_key" text;
-alter table "public"."feature_flags" add column if not exists "description" text;
-alter table "public"."feature_flags" add column if not exists "enabled" boolean default false;
-alter table "public"."feature_flags" add column if not exists "rules" text;
-alter table "public"."feature_flags" add column if not exists "created_by" text;
-alter table "public"."feature_flags" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."feature_flags" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."feature_flags" add column if not exists "name" text default ''::text;
 alter table "public"."feature_flags" add column if not exists "flag_type" text default 'boolean'::text;
 alter table "public"."feature_flags" add column if not exists "targeting_rules" text default '[]'::text;
@@ -5380,15 +4096,6 @@ create table if not exists "public"."feature_update_events" (
     "event_data" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "feature_update_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."feature_update_events" add column if not exists "id" text;
-alter table "public"."feature_update_events" add column if not exists "update_id" text;
-alter table "public"."feature_update_events" add column if not exists "user_id" text;
-alter table "public"."feature_update_events" add column if not exists "organization_id" text;
-alter table "public"."feature_update_events" add column if not exists "event_type" text;
-alter table "public"."feature_update_events" add column if not exists "event_data" text default '{}'::text;
-alter table "public"."feature_update_events" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."feature_update_reads" (
     "id" text not null,
@@ -5396,12 +4103,6 @@ create table if not exists "public"."feature_update_reads" (
     "user_id" text not null,
     "read_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "feature_update_reads" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."feature_update_reads" add column if not exists "id" text;
-alter table "public"."feature_update_reads" add column if not exists "update_id" text;
-alter table "public"."feature_update_reads" add column if not exists "user_id" text;
-alter table "public"."feature_update_reads" add column if not exists "read_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."feature_updates" (
     "id" text not null,
@@ -5417,20 +4118,6 @@ create table if not exists "public"."feature_updates" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "created_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "feature_updates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."feature_updates" add column if not exists "id" text;
-alter table "public"."feature_updates" add column if not exists "organization_id" text;
-alter table "public"."feature_updates" add column if not exists "title" text;
-alter table "public"."feature_updates" add column if not exists "body_md" text;
-alter table "public"."feature_updates" add column if not exists "tags" text default '[]'::text;
-alter table "public"."feature_updates" add column if not exists "importance" text default 'normal'::text;
-alter table "public"."feature_updates" add column if not exists "status" text default 'draft'::text;
-alter table "public"."feature_updates" add column if not exists "action_payload" text default '{}'::text;
-alter table "public"."feature_updates" add column if not exists "published_at" timestamp without time zone;
-alter table "public"."feature_updates" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."feature_updates" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."feature_updates" add column if not exists "created_by" text;
-
 
 create table if not exists "public"."feedback_pulse" (
     "id" text not null,
@@ -5452,15 +4139,6 @@ create table if not exists "public"."feedback_status_history" (
     "note" text,
     "created_at" text default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "feedback_status_history" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."feedback_status_history" add column if not exists "id" text;
-alter table "public"."feedback_status_history" add column if not exists "feedback_id" text;
-alter table "public"."feedback_status_history" add column if not exists "from_status" text;
-alter table "public"."feedback_status_history" add column if not exists "to_status" text;
-alter table "public"."feedback_status_history" add column if not exists "changed_by" text;
-alter table "public"."feedback_status_history" add column if not exists "note" text;
-alter table "public"."feedback_status_history" add column if not exists "created_at" text default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."financial_ai_assumptions" (
     "id" text not null,
@@ -5504,19 +4182,6 @@ create table if not exists "public"."financial_analysis_insights" (
     "status" text default 'DRAFT'::text,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "financial_analysis_insights" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_analysis_insights" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_analysis_insights" add column if not exists "analysis_id" text;
-alter table "public"."financial_analysis_insights" add column if not exists "insight_type" text;
-alter table "public"."financial_analysis_insights" add column if not exists "title" text;
-alter table "public"."financial_analysis_insights" add column if not exists "description" text;
-alter table "public"."financial_analysis_insights" add column if not exists "citations" jsonb default '[]'::jsonb;
-alter table "public"."financial_analysis_insights" add column if not exists "priority" integer default 0;
-alter table "public"."financial_analysis_insights" add column if not exists "linked_initiative_id" text;
-alter table "public"."financial_analysis_insights" add column if not exists "linked_kpi_id" text;
-alter table "public"."financial_analysis_insights" add column if not exists "status" text default 'DRAFT'::text;
-alter table "public"."financial_analysis_insights" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."financial_analysis_ratios" (
     "id" text not null default (gen_random_uuid())::text,
@@ -5530,18 +4195,6 @@ create table if not exists "public"."financial_analysis_ratios" (
     "interpretation" text,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "financial_analysis_ratios" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_analysis_ratios" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_analysis_ratios" add column if not exists "analysis_id" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "period" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "category" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "ratio_code" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "ratio_name" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "value" numeric;
-alter table "public"."financial_analysis_ratios" add column if not exists "benchmark_value" numeric;
-alter table "public"."financial_analysis_ratios" add column if not exists "interpretation" text;
-alter table "public"."financial_analysis_ratios" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."financial_budget_versions" (
     "id" text not null,
@@ -5631,27 +4284,6 @@ create table if not exists "public"."financial_model_events" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "financial_model_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_model_events" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_model_events" add column if not exists "model_id" text;
-alter table "public"."financial_model_events" add column if not exists "event_type" text;
-alter table "public"."financial_model_events" add column if not exists "name" text;
-alter table "public"."financial_model_events" add column if not exists "description" text;
-alter table "public"."financial_model_events" add column if not exists "amount" real default 0;
-alter table "public"."financial_model_events" add column if not exists "currency" text default 'PLN'::text;
-alter table "public"."financial_model_events" add column if not exists "period_start" date;
-alter table "public"."financial_model_events" add column if not exists "period_end" date;
-alter table "public"."financial_model_events" add column if not exists "recurrence" text default 'one_time'::text;
-alter table "public"."financial_model_events" add column if not exists "growth_rate" real default 0;
-alter table "public"."financial_model_events" add column if not exists "cf_classification" text;
-alter table "public"."financial_model_events" add column if not exists "posting_rules" text default '{}'::text;
-alter table "public"."financial_model_events" add column if not exists "parameters" text default '{}'::text;
-alter table "public"."financial_model_events" add column if not exists "sort_order" integer default 0;
-alter table "public"."financial_model_events" add column if not exists "is_active" boolean default true;
-alter table "public"."financial_model_events" add column if not exists "created_by" text;
-alter table "public"."financial_model_events" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."financial_model_events" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."financial_model_validations" (
     "id" text not null default (gen_random_uuid())::text,
@@ -5668,18 +4300,8 @@ create table if not exists "public"."financial_model_validations" (
     "computed_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
 -- Strict-schema repair (2026-08, auto-generated): "financial_model_validations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_model_validations" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_model_validations" add column if not exists "model_id" text;
-alter table "public"."financial_model_validations" add column if not exists "period_date" date;
 alter table "public"."financial_model_validations" add column if not exists "check_code" text;
 alter table "public"."financial_model_validations" add column if not exists "check_name" text;
-alter table "public"."financial_model_validations" add column if not exists "status" text default 'pass'::text;
-alter table "public"."financial_model_validations" add column if not exists "expected_value" real;
-alter table "public"."financial_model_validations" add column if not exists "actual_value" real;
-alter table "public"."financial_model_validations" add column if not exists "difference" real;
-alter table "public"."financial_model_validations" add column if not exists "message" text;
-alter table "public"."financial_model_validations" add column if not exists "details" text;
-alter table "public"."financial_model_validations" add column if not exists "computed_at" timestamp without time zone default CURRENT_TIMESTAMP;
 
 
 create table if not exists "public"."financial_model_version_diffs" (
@@ -5710,25 +4332,6 @@ create table if not exists "public"."financial_ratio_benchmarks" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "financial_ratio_benchmarks" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_ratio_benchmarks" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "organization_id" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "ratio_code" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "industry" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "region" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "company_size" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "period_year" integer;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "p25" real;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "median" real;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "p75" real;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "target_min" real;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "target_max" real;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "source_label" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "notes" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "created_by" text;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."financial_ratio_benchmarks" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."financial_ratio_snapshots" (
     "id" text not null default (gen_random_uuid())::text,
@@ -5741,17 +4344,6 @@ create table if not exists "public"."financial_ratio_snapshots" (
     "missing_lines" text,
     "computed_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "financial_ratio_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."financial_ratio_snapshots" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "organization_id" text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "statement_id" text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "ratio_code" text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "ratio_value" real;
-alter table "public"."financial_ratio_snapshots" add column if not exists "status" text default 'ok'::text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "coverage_pct" real default 100;
-alter table "public"."financial_ratio_snapshots" add column if not exists "missing_lines" text;
-alter table "public"."financial_ratio_snapshots" add column if not exists "computed_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."financial_roi_links" (
     "id" text not null,
@@ -5955,18 +4547,6 @@ create table if not exists "public"."framework_entitlements" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "framework_entitlements" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."framework_entitlements" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."framework_entitlements" add column if not exists "organization_id" text;
-alter table "public"."framework_entitlements" add column if not exists "framework_id" text;
-alter table "public"."framework_entitlements" add column if not exists "access_level" text default 'locked'::text;
-alter table "public"."framework_entitlements" add column if not exists "granted_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."framework_entitlements" add column if not exists "expires_at" timestamp without time zone;
-alter table "public"."framework_entitlements" add column if not exists "granted_by" text;
-alter table "public"."framework_entitlements" add column if not exists "notes" text;
-alter table "public"."framework_entitlements" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."framework_entitlements" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."framework_import_logs" (
     "id" text not null,
@@ -6015,25 +4595,6 @@ create table if not exists "public"."generated_workbooks" (
     "source_pack_json" text default '{}'::text,
     "evidence_refs_json" text default '[]'::text
 );
--- Strict-schema repair (2026-08, auto-generated): "generated_workbooks" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."generated_workbooks" add column if not exists "id" text;
-alter table "public"."generated_workbooks" add column if not exists "organization_id" text;
-alter table "public"."generated_workbooks" add column if not exists "title" text;
-alter table "public"."generated_workbooks" add column if not exists "description" text;
-alter table "public"."generated_workbooks" add column if not exists "prompt" text;
-alter table "public"."generated_workbooks" add column if not exists "schema_json" text;
-alter table "public"."generated_workbooks" add column if not exists "sheet_count" integer default 1;
-alter table "public"."generated_workbooks" add column if not exists "file_name" text;
-alter table "public"."generated_workbooks" add column if not exists "file_size" integer;
-alter table "public"."generated_workbooks" add column if not exists "validation_errors" text;
-alter table "public"."generated_workbooks" add column if not exists "quality_score" real;
-alter table "public"."generated_workbooks" add column if not exists "pipeline_log" text;
-alter table "public"."generated_workbooks" add column if not exists "created_by" text;
-alter table "public"."generated_workbooks" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."generated_workbooks" add column if not exists "action_contract_json" text default '{}'::text;
-alter table "public"."generated_workbooks" add column if not exists "source_pack_json" text default '{}'::text;
-alter table "public"."generated_workbooks" add column if not exists "evidence_refs_json" text default '[]'::text;
-
 
 create table if not exists "public"."generic_assessment_reports" (
     "id" text not null default (gen_random_uuid())::text,
@@ -6180,11 +4741,6 @@ create table if not exists "public"."help_events" (
     "route" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "help_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."help_events" add column if not exists "id" text;
-alter table "public"."help_events" add column if not exists "user_id" text;
-alter table "public"."help_events" add column if not exists "event_type" text;
-alter table "public"."help_events" add column if not exists "event_data" text default '{}'::text;
-alter table "public"."help_events" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."help_events" add column if not exists "organization_id" text;
 alter table "public"."help_events" add column if not exists "playbook_key" text;
 alter table "public"."help_events" add column if not exists "step_id" text;
@@ -6199,14 +4755,6 @@ create table if not exists "public"."help_micro_video_dismissals" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "help_micro_video_dismissals" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."help_micro_video_dismissals" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."help_micro_video_dismissals" add column if not exists "user_id" text;
-alter table "public"."help_micro_video_dismissals" add column if not exists "module_id" text;
-alter table "public"."help_micro_video_dismissals" add column if not exists "action" text;
-alter table "public"."help_micro_video_dismissals" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."help_micro_video_dismissals" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."help_playbook_steps" (
     "id" text not null,
@@ -6221,19 +4769,6 @@ create table if not exists "public"."help_playbook_steps" (
     "action_payload" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "help_playbook_steps" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."help_playbook_steps" add column if not exists "id" text;
-alter table "public"."help_playbook_steps" add column if not exists "playbook_key" text;
-alter table "public"."help_playbook_steps" add column if not exists "step_order" integer;
-alter table "public"."help_playbook_steps" add column if not exists "title_key" text;
-alter table "public"."help_playbook_steps" add column if not exists "content_key" text;
-alter table "public"."help_playbook_steps" add column if not exists "what_you_get_key" text;
-alter table "public"."help_playbook_steps" add column if not exists "expected_time_minutes" integer;
-alter table "public"."help_playbook_steps" add column if not exists "ui_target" text;
-alter table "public"."help_playbook_steps" add column if not exists "action_type" text default 'INFO'::text;
-alter table "public"."help_playbook_steps" add column if not exists "action_payload" text default '{}'::text;
-alter table "public"."help_playbook_steps" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."help_playbooks" (
     "id" text not null,
@@ -6247,18 +4782,6 @@ create table if not exists "public"."help_playbooks" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "help_playbooks" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."help_playbooks" add column if not exists "id" text;
-alter table "public"."help_playbooks" add column if not exists "key" text;
-alter table "public"."help_playbooks" add column if not exists "title_key" text;
-alter table "public"."help_playbooks" add column if not exists "description_key" text;
-alter table "public"."help_playbooks" add column if not exists "target_role" text;
-alter table "public"."help_playbooks" add column if not exists "target_org_type" text;
-alter table "public"."help_playbooks" add column if not exists "priority" integer default 0;
-alter table "public"."help_playbooks" add column if not exists "status" text default 'draft'::text;
-alter table "public"."help_playbooks" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."help_playbooks" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."idea_exports" (
     "id" text not null,
@@ -6290,19 +4813,6 @@ create table if not exists "public"."ideas" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "ideas" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."ideas" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."ideas" add column if not exists "organization_id" text;
-alter table "public"."ideas" add column if not exists "project_id" text;
-alter table "public"."ideas" add column if not exists "title" text;
-alter table "public"."ideas" add column if not exists "description" text;
-alter table "public"."ideas" add column if not exists "stage" text default 'draft'::text;
-alter table "public"."ideas" add column if not exists "category" text;
-alter table "public"."ideas" add column if not exists "source" text;
-alter table "public"."ideas" add column if not exists "created_by" text;
-alter table "public"."ideas" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."ideas" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."inbox_ai_eval_golden_set" (
     "id" text not null,
@@ -6444,14 +4954,6 @@ create table if not exists "public"."initiative_gate_roles" (
     "assigned_by" text,
     "assigned_at" text not null default '2026-03-03 18:30:00.011505+00'::timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "initiative_gate_roles" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."initiative_gate_roles" add column if not exists "id" text;
-alter table "public"."initiative_gate_roles" add column if not exists "initiative_id" text;
-alter table "public"."initiative_gate_roles" add column if not exists "gate_role" text;
-alter table "public"."initiative_gate_roles" add column if not exists "user_id" text;
-alter table "public"."initiative_gate_roles" add column if not exists "assigned_by" text;
-alter table "public"."initiative_gate_roles" add column if not exists "assigned_at" text default '2026-03-03 18:30:00.011505+00'::timestamp with time zone;
-
 
 create table if not exists "public"."initiative_governance_gates" (
     "id" text not null,
@@ -6488,21 +4990,6 @@ create table if not exists "public"."initiative_intangible_assets" (
     "cost_type" text default 'OPEX'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "initiative_intangible_assets" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."initiative_intangible_assets" add column if not exists "id" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "initiative_id" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "organization_id" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "asset_type" text default 'license'::text;
-alter table "public"."initiative_intangible_assets" add column if not exists "name" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "provider" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "cost" real default 0;
-alter table "public"."initiative_intangible_assets" add column if not exists "currency" text default 'PLN'::text;
-alter table "public"."initiative_intangible_assets" add column if not exists "valid_from" date;
-alter table "public"."initiative_intangible_assets" add column if not exists "valid_until" date;
-alter table "public"."initiative_intangible_assets" add column if not exists "status" text default 'planned'::text;
-alter table "public"."initiative_intangible_assets" add column if not exists "beneficiaries" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "notes" text;
-alter table "public"."initiative_intangible_assets" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."initiative_intangible_assets" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."initiative_intangible_assets" add column if not exists "source" text default 'manual'::text;
 alter table "public"."initiative_intangible_assets" add column if not exists "cost_type" text default 'OPEX'::text;
 
@@ -6535,20 +5022,6 @@ create table if not exists "public"."initiative_kpi_mappings" (
     "post_implementation_measurement_frequency" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "initiative_kpi_mappings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."initiative_kpi_mappings" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "initiative_id" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "kpi_id" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "organization_id" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "impact_weight" real default 1.0;
-alter table "public"."initiative_kpi_mappings" add column if not exists "impact_direction" text default 'increase'::text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "expected_delta" real;
-alter table "public"."initiative_kpi_mappings" add column if not exists "expected_delta_unit" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "lag_days" integer default 0;
-alter table "public"."initiative_kpi_mappings" add column if not exists "confidence" text default 'medium'::text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "notes" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "created_by" text;
-alter table "public"."initiative_kpi_mappings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."initiative_kpi_mappings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."initiative_kpi_mappings" add column if not exists "definition_source" text default 'initiative-custom'::text;
 alter table "public"."initiative_kpi_mappings" add column if not exists "observation_phase" text default 'post-implementation'::text;
 alter table "public"."initiative_kpi_mappings" add column if not exists "tracked_in_realization" integer default 0;
@@ -6595,18 +5068,6 @@ create table if not exists "public"."initiative_tools" (
     "cost_type" text default 'OPEX'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "initiative_tools" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."initiative_tools" add column if not exists "id" text;
-alter table "public"."initiative_tools" add column if not exists "initiative_id" text;
-alter table "public"."initiative_tools" add column if not exists "organization_id" text;
-alter table "public"."initiative_tools" add column if not exists "name" text;
-alter table "public"."initiative_tools" add column if not exists "category" text default 'software'::text;
-alter table "public"."initiative_tools" add column if not exists "vendor" text;
-alter table "public"."initiative_tools" add column if not exists "license_cost" real default 0;
-alter table "public"."initiative_tools" add column if not exists "license_type" text default 'subscription'::text;
-alter table "public"."initiative_tools" add column if not exists "status" text default 'planned'::text;
-alter table "public"."initiative_tools" add column if not exists "notes" text;
-alter table "public"."initiative_tools" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."initiative_tools" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."initiative_tools" add column if not exists "source" text default 'manual'::text;
 alter table "public"."initiative_tools" add column if not exists "cost_type" text default 'OPEX'::text;
 
@@ -6638,17 +5099,6 @@ create table if not exists "public"."integration_audit_log" (
     "ip_address" text,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "integration_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."integration_audit_log" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."integration_audit_log" add column if not exists "organization_id" text;
-alter table "public"."integration_audit_log" add column if not exists "integration_id" text;
-alter table "public"."integration_audit_log" add column if not exists "action" text;
-alter table "public"."integration_audit_log" add column if not exists "actor_id" text;
-alter table "public"."integration_audit_log" add column if not exists "actor_name" text;
-alter table "public"."integration_audit_log" add column if not exists "details" jsonb default '{}'::jsonb;
-alter table "public"."integration_audit_log" add column if not exists "ip_address" text;
-alter table "public"."integration_audit_log" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."integration_connection_events" (
     "id" text not null,
@@ -6737,16 +5187,6 @@ create table if not exists "public"."integration_sync_logs" (
     "sync_completed_at" timestamp without time zone,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "integration_sync_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."integration_sync_logs" add column if not exists "id" text;
-alter table "public"."integration_sync_logs" add column if not exists "organization_id" text;
-alter table "public"."integration_sync_logs" add column if not exists "integration_type" text;
-alter table "public"."integration_sync_logs" add column if not exists "sync_status" text;
-alter table "public"."integration_sync_logs" add column if not exists "records_synced" integer default 0;
-alter table "public"."integration_sync_logs" add column if not exists "sync_started_at" timestamp without time zone;
-alter table "public"."integration_sync_logs" add column if not exists "sync_completed_at" timestamp without time zone;
-alter table "public"."integration_sync_logs" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."integration_sync_runs" (
     "id" text not null default (gen_random_uuid())::text,
@@ -6766,24 +5206,6 @@ create table if not exists "public"."integration_sync_runs" (
     "completed_at" timestamp without time zone,
     "triggered_by" text default 'manual'::text
 );
--- Strict-schema repair (2026-08, auto-generated): "integration_sync_runs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."integration_sync_runs" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."integration_sync_runs" add column if not exists "organization_id" text;
-alter table "public"."integration_sync_runs" add column if not exists "integration_id" text;
-alter table "public"."integration_sync_runs" add column if not exists "provider" text;
-alter table "public"."integration_sync_runs" add column if not exists "direction" text default 'pull'::text;
-alter table "public"."integration_sync_runs" add column if not exists "status" text default 'running'::text;
-alter table "public"."integration_sync_runs" add column if not exists "items_processed" integer default 0;
-alter table "public"."integration_sync_runs" add column if not exists "items_created" integer default 0;
-alter table "public"."integration_sync_runs" add column if not exists "items_updated" integer default 0;
-alter table "public"."integration_sync_runs" add column if not exists "items_failed" integer default 0;
-alter table "public"."integration_sync_runs" add column if not exists "error_summary" text;
-alter table "public"."integration_sync_runs" add column if not exists "error_details" jsonb;
-alter table "public"."integration_sync_runs" add column if not exists "duration_ms" integer;
-alter table "public"."integration_sync_runs" add column if not exists "started_at" timestamp without time zone default now();
-alter table "public"."integration_sync_runs" add column if not exists "completed_at" timestamp without time zone;
-alter table "public"."integration_sync_runs" add column if not exists "triggered_by" text default 'manual'::text;
-
 
 create table if not exists "public"."interview_answer_history" (
     "id" text not null,
@@ -6796,17 +5218,6 @@ create table if not exists "public"."interview_answer_history" (
     "saved_at" timestamp with time zone not null default CURRENT_TIMESTAMP,
     "saved_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "interview_answer_history" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_answer_history" add column if not exists "id" text;
-alter table "public"."interview_answer_history" add column if not exists "organization_id" text;
-alter table "public"."interview_answer_history" add column if not exists "assignment_id" text;
-alter table "public"."interview_answer_history" add column if not exists "session_id" text;
-alter table "public"."interview_answer_history" add column if not exists "question_id" text;
-alter table "public"."interview_answer_history" add column if not exists "answer_text" text;
-alter table "public"."interview_answer_history" add column if not exists "reason" text default 'send_back'::text;
-alter table "public"."interview_answer_history" add column if not exists "saved_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."interview_answer_history" add column if not exists "saved_by" text;
-
 
 create table if not exists "public"."interview_assignment_events" (
     "id" text not null,
@@ -6909,18 +5320,6 @@ create table if not exists "public"."interview_insight_audit_log" (
     "detail_json" text default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "interview_insight_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_insight_audit_log" add column if not exists "id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "organization_id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "insight_id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "finding_id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "entity_type" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "entity_id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "action" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "actor_user_id" text;
-alter table "public"."interview_insight_audit_log" add column if not exists "detail_json" text default '{}'::text;
-alter table "public"."interview_insight_audit_log" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."interview_insight_evidence_pointers" (
     "id" text not null,
@@ -6941,25 +5340,6 @@ create table if not exists "public"."interview_insight_evidence_pointers" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "interview_insight_evidence_pointers" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "id" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "organization_id" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "insight_id" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "finding_id" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "pointer_type" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "source_ref" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "source_fingerprint" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "captured_excerpt" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "captured_at" timestamp without time zone;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "pointer_state" text default 'active'::text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "removal_reason" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "removed_at" timestamp without time zone;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "duplicate_observed_count" integer default 0;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "metadata_json" text default '{}'::text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "created_by" text;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."interview_insight_evidence_pointers" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."interview_insight_exports" (
     "id" text not null,
@@ -6995,26 +5375,9 @@ create table if not exists "public"."interview_insight_findings" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
 -- Strict-schema repair (2026-08, auto-generated): "interview_insight_findings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_insight_findings" add column if not exists "id" text;
-alter table "public"."interview_insight_findings" add column if not exists "organization_id" text;
-alter table "public"."interview_insight_findings" add column if not exists "insight_id" text;
-alter table "public"."interview_insight_findings" add column if not exists "source_section_type" text default 'manual'::text;
-alter table "public"."interview_insight_findings" add column if not exists "source_section_index" integer;
-alter table "public"."interview_insight_findings" add column if not exists "source_key" text;
-alter table "public"."interview_insight_findings" add column if not exists "finding_statement" text;
-alter table "public"."interview_insight_findings" add column if not exists "confidence_level" text default 'insufficient'::text;
-alter table "public"."interview_insight_findings" add column if not exists "limits_text" text;
-alter table "public"."interview_insight_findings" add column if not exists "limits_json" text default '[]'::text;
-alter table "public"."interview_insight_findings" add column if not exists "next_action_text" text;
-alter table "public"."interview_insight_findings" add column if not exists "next_action_json" text default '[]'::text;
-alter table "public"."interview_insight_findings" add column if not exists "review_status" text default 'draft'::text;
 alter table "public"."interview_insight_findings" add column if not exists "readback_status" text default 'draft_interpretation'::text;
 alter table "public"."interview_insight_findings" add column if not exists "readback_summary" text;
 alter table "public"."interview_insight_findings" add column if not exists "readback_updated_at" timestamp without time zone;
-alter table "public"."interview_insight_findings" add column if not exists "created_by" text;
-alter table "public"."interview_insight_findings" add column if not exists "updated_by" text;
-alter table "public"."interview_insight_findings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."interview_insight_findings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 
 
 create table if not exists "public"."interview_insight_handoffs" (
@@ -7032,21 +5395,6 @@ create table if not exists "public"."interview_insight_handoffs" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "interview_insight_handoffs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_insight_handoffs" add column if not exists "id" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "organization_id" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "insight_id" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "finding_id" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "target_kind" text default 'initiative'::text;
-alter table "public"."interview_insight_handoffs" add column if not exists "target_id" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "target_ref_type" text default 'handoff_request'::text;
-alter table "public"."interview_insight_handoffs" add column if not exists "status" text default 'pending'::text;
-alter table "public"."interview_insight_handoffs" add column if not exists "payload_json" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "operator_decision_json" text default '{}'::text;
-alter table "public"."interview_insight_handoffs" add column if not exists "created_by" text;
-alter table "public"."interview_insight_handoffs" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."interview_insight_handoffs" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."interview_messages" (
     "id" text not null,
@@ -7079,14 +5427,6 @@ create table if not exists "public"."interview_question_templates" (
     "is_required" integer default 0,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "interview_question_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."interview_question_templates" add column if not exists "id" text;
-alter table "public"."interview_question_templates" add column if not exists "category" text;
-alter table "public"."interview_question_templates" add column if not exists "question_text" text;
-alter table "public"."interview_question_templates" add column if not exists "sort_order" integer default 0;
-alter table "public"."interview_question_templates" add column if not exists "is_required" integer default 0;
-alter table "public"."interview_question_templates" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."interview_quotas" (
     "id" text not null,
@@ -7178,18 +5518,6 @@ create table if not exists "public"."knowledge_candidates" (
     "admin_comment" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "knowledge_candidates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."knowledge_candidates" add column if not exists "id" text;
-alter table "public"."knowledge_candidates" add column if not exists "content" text;
-alter table "public"."knowledge_candidates" add column if not exists "reasoning" text;
-alter table "public"."knowledge_candidates" add column if not exists "source" text;
-alter table "public"."knowledge_candidates" add column if not exists "origin_context" text;
-alter table "public"."knowledge_candidates" add column if not exists "related_axis" text;
-alter table "public"."knowledge_candidates" add column if not exists "priority" text default 'medium'::text;
-alter table "public"."knowledge_candidates" add column if not exists "status" text default 'pending'::text;
-alter table "public"."knowledge_candidates" add column if not exists "admin_comment" text;
-alter table "public"."knowledge_candidates" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."knowledge_graph_entities" (
     "id" text not null,
@@ -7247,23 +5575,6 @@ create table if not exists "public"."kpi_attribution_snapshots" (
     "computed_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "computed_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "kpi_attribution_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."kpi_attribution_snapshots" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "kpi_id" text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "organization_id" text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "period_start" date;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "period_end" date;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "kpi_delta" real;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "contributions" text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "unexplained_remainder" real;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "unexplained_percent" real;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "overall_confidence" text default 'low'::text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "confidence_reasons" text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "assumptions" text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "algorithm_version" text default 'v1_heuristic'::text;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "computed_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."kpi_attribution_snapshots" add column if not exists "computed_by" text;
-
 
 create table if not exists "public"."kpi_connectors" (
     "id" text not null,
@@ -7335,22 +5646,6 @@ create table if not exists "public"."kpi_financial_mappings" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "kpi_financial_mappings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."kpi_financial_mappings" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."kpi_financial_mappings" add column if not exists "kpi_id" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "statement_line_id" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "organization_id" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "direction" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "relationship_type" text default 'linear'::text;
-alter table "public"."kpi_financial_mappings" add column if not exists "multiplier" real default 1.0;
-alter table "public"."kpi_financial_mappings" add column if not exists "formula_params" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "confidence" text default 'medium'::text;
-alter table "public"."kpi_financial_mappings" add column if not exists "assumptions_text" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "assumptions_owner" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "created_by" text;
-alter table "public"."kpi_financial_mappings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."kpi_financial_mappings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."kpi_ingestion_log" (
     "id" text not null,
@@ -7378,19 +5673,6 @@ create table if not exists "public"."kpi_metric_audit_log" (
     "after_json" text not null default '{}'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "kpi_metric_audit_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."kpi_metric_audit_log" add column if not exists "id" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "organization_id" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "kpi_id" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "section" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "event_type" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "source" text default 'results_runtime'::text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "actor_user_id" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "summary" text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "before_json" text default '{}'::text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "after_json" text default '{}'::text;
-alter table "public"."kpi_metric_audit_log" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."kpi_report_delivery_log" (
     "id" text not null,
@@ -7438,19 +5720,6 @@ create table if not exists "public"."kpi_time_series" (
     "recorded_by" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "kpi_time_series" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."kpi_time_series" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."kpi_time_series" add column if not exists "kpi_id" text;
-alter table "public"."kpi_time_series" add column if not exists "initiative_id" text;
-alter table "public"."kpi_time_series" add column if not exists "organization_id" text;
-alter table "public"."kpi_time_series" add column if not exists "value" real;
-alter table "public"."kpi_time_series" add column if not exists "period_start" date;
-alter table "public"."kpi_time_series" add column if not exists "period_end" date;
-alter table "public"."kpi_time_series" add column if not exists "source" text default 'manual'::text;
-alter table "public"."kpi_time_series" add column if not exists "notes" text;
-alter table "public"."kpi_time_series" add column if not exists "recorded_by" text;
-alter table "public"."kpi_time_series" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."kpi_wallboard_alerts" (
     "id" text not null,
@@ -7520,14 +5789,6 @@ create table if not exists "public"."legal_document_acceptances" (
     "scope" text default 'USER'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "legal_document_acceptances" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."legal_document_acceptances" add column if not exists "id" text;
-alter table "public"."legal_document_acceptances" add column if not exists "user_id" text;
-alter table "public"."legal_document_acceptances" add column if not exists "document_id" text;
-alter table "public"."legal_document_acceptances" add column if not exists "document_type" text;
-alter table "public"."legal_document_acceptances" add column if not exists "document_version" text;
-alter table "public"."legal_document_acceptances" add column if not exists "accepted_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."legal_document_acceptances" add column if not exists "ip_address" text;
-alter table "public"."legal_document_acceptances" add column if not exists "user_agent" text;
 alter table "public"."legal_document_acceptances" add column if not exists "organization_id" text;
 alter table "public"."legal_document_acceptances" add column if not exists "scope" text default 'USER'::text;
 
@@ -7561,21 +5822,6 @@ create table if not exists "public"."legal_documents" (
     "requires_reaccept_from" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "legal_documents" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."legal_documents" add column if not exists "id" text;
-alter table "public"."legal_documents" add column if not exists "type" text;
-alter table "public"."legal_documents" add column if not exists "name" text;
-alter table "public"."legal_documents" add column if not exists "version" text;
-alter table "public"."legal_documents" add column if not exists "content" text;
-alter table "public"."legal_documents" add column if not exists "url" text;
-alter table "public"."legal_documents" add column if not exists "status" text default 'active'::text;
-alter table "public"."legal_documents" add column if not exists "effective_date" text;
-alter table "public"."legal_documents" add column if not exists "requires_acceptance" boolean default false;
-alter table "public"."legal_documents" add column if not exists "acceptance_required_for" text;
-alter table "public"."legal_documents" add column if not exists "created_by" text;
-alter table "public"."legal_documents" add column if not exists "published_by" text;
-alter table "public"."legal_documents" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."legal_documents" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."legal_documents" add column if not exists "published_at" timestamp without time zone;
 alter table "public"."legal_documents" add column if not exists "content_md" text;
 alter table "public"."legal_documents" add column if not exists "doc_type" text;
 alter table "public"."legal_documents" add column if not exists "effective_from" text;
@@ -7639,22 +5885,7 @@ create table if not exists "public"."llm_logs" (
     "tokens_used" integer
 );
 -- Strict-schema repair (2026-08, auto-generated): "llm_logs" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."llm_logs" add column if not exists "id" bigint default nextval('llm_logs_id_seq'::regclass);
 alter table "public"."llm_logs" add column if not exists "trace_id" text;
-alter table "public"."llm_logs" add column if not exists "provider" text;
-alter table "public"."llm_logs" add column if not exists "model" text;
-alter table "public"."llm_logs" add column if not exists "status" text;
-alter table "public"."llm_logs" add column if not exists "latency_ms" integer;
-alter table "public"."llm_logs" add column if not exists "tokens_in" integer;
-alter table "public"."llm_logs" add column if not exists "tokens_out" integer;
-alter table "public"."llm_logs" add column if not exists "cost" real;
-alter table "public"."llm_logs" add column if not exists "error_message" text;
-alter table "public"."llm_logs" add column if not exists "timestamp" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."llm_logs" add column if not exists "created_at" timestamp with time zone;
-alter table "public"."llm_logs" add column if not exists "total_tokens" integer;
-alter table "public"."llm_logs" add column if not exists "error" text;
-alter table "public"."llm_logs" add column if not exists "user_id" text;
-alter table "public"."llm_logs" add column if not exists "tokens_used" integer;
 
 
 create table if not exists "public"."llm_routing_rules" (
@@ -7681,15 +5912,6 @@ create table if not exists "public"."llm_tier_assignments" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "llm_tier_assignments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."llm_tier_assignments" add column if not exists "id" text;
-alter table "public"."llm_tier_assignments" add column if not exists "provider_id" text;
-alter table "public"."llm_tier_assignments" add column if not exists "tier" text;
-alter table "public"."llm_tier_assignments" add column if not exists "priority" integer default 0;
-alter table "public"."llm_tier_assignments" add column if not exists "is_active" integer default 1;
-alter table "public"."llm_tier_assignments" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."llm_tier_assignments" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."management_report_approvals" (
     "id" text not null,
@@ -7832,20 +6054,6 @@ create table if not exists "public"."maturity_assessments" (
     "updated_at" timestamp without time zone
 );
 -- Strict-schema repair (2026-08, auto-generated): "maturity_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."maturity_assessments" add column if not exists "id" text;
-alter table "public"."maturity_assessments" add column if not exists "project_id" text;
-alter table "public"."maturity_assessments" add column if not exists "axis_scores" text;
-alter table "public"."maturity_assessments" add column if not exists "completed_axes" text;
-alter table "public"."maturity_assessments" add column if not exists "overall_as_is" real;
-alter table "public"."maturity_assessments" add column if not exists "overall_to_be" real;
-alter table "public"."maturity_assessments" add column if not exists "overall_gap" real;
-alter table "public"."maturity_assessments" add column if not exists "is_complete" integer default 0;
-alter table "public"."maturity_assessments" add column if not exists "assessment_status" text;
-alter table "public"."maturity_assessments" add column if not exists "finalized_at" timestamp with time zone;
-alter table "public"."maturity_assessments" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."maturity_assessments" add column if not exists "initiatives_generated" integer default 0;
-alter table "public"."maturity_assessments" add column if not exists "initiatives_generated_at" timestamp with time zone;
-alter table "public"."maturity_assessments" add column if not exists "initiatives_count" integer default 0;
 alter table "public"."maturity_assessments" add column if not exists "updated_at" timestamp without time zone;
 
 
@@ -7856,13 +6064,6 @@ create table if not exists "public"."maturity_scores" (
     "score" real,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "maturity_scores" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."maturity_scores" add column if not exists "id" text;
-alter table "public"."maturity_scores" add column if not exists "assessment_id" text;
-alter table "public"."maturity_scores" add column if not exists "dimension" text;
-alter table "public"."maturity_scores" add column if not exists "score" real;
-alter table "public"."maturity_scores" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."mcp_provider_allowlist" (
     "id" text not null,
@@ -7918,15 +6119,6 @@ create table if not exists "public"."megatrends" (
     "base_impact_score" integer not null,
     "initial_ring" text not null
 );
--- Strict-schema repair (2026-08, auto-generated): "megatrends" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."megatrends" add column if not exists "id" text;
-alter table "public"."megatrends" add column if not exists "industry" text;
-alter table "public"."megatrends" add column if not exists "type" text;
-alter table "public"."megatrends" add column if not exists "label" text;
-alter table "public"."megatrends" add column if not exists "description" text;
-alter table "public"."megatrends" add column if not exists "base_impact_score" integer;
-alter table "public"."megatrends" add column if not exists "initial_ring" text;
-
 
 create table if not exists "public"."metrics_snapshots" (
     "id" integer not null default nextval('metrics_snapshots_id_seq'::regclass),
@@ -8146,11 +6338,6 @@ create table if not exists "public"."multi_framework_assessments" (
     "updated_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "multi_framework_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."multi_framework_assessments" add column if not exists "id" text;
-alter table "public"."multi_framework_assessments" add column if not exists "project_id" text;
-alter table "public"."multi_framework_assessments" add column if not exists "organization_id" text;
-alter table "public"."multi_framework_assessments" add column if not exists "name" text;
-alter table "public"."multi_framework_assessments" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."multi_framework_assessments" add column if not exists "framework" text default 'DRD'::text;
 alter table "public"."multi_framework_assessments" add column if not exists "status" text default 'DRAFT'::text;
 alter table "public"."multi_framework_assessments" add column if not exists "created_by" uuid;
@@ -8286,14 +6473,6 @@ create table if not exists "public"."notebook_page_topics" (
     "source" text not null default 'ai'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "notebook_page_topics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notebook_page_topics" add column if not exists "id" text;
-alter table "public"."notebook_page_topics" add column if not exists "page_id" text;
-alter table "public"."notebook_page_topics" add column if not exists "topic_id" text;
-alter table "public"."notebook_page_topics" add column if not exists "score" real default 0;
-alter table "public"."notebook_page_topics" add column if not exists "source" text default 'ai'::text;
-alter table "public"."notebook_page_topics" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."notebook_page_versions" (
     "id" text not null,
@@ -8305,16 +6484,6 @@ create table if not exists "public"."notebook_page_versions" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "created_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "notebook_page_versions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notebook_page_versions" add column if not exists "id" text;
-alter table "public"."notebook_page_versions" add column if not exists "page_id" text;
-alter table "public"."notebook_page_versions" add column if not exists "organization_id" text;
-alter table "public"."notebook_page_versions" add column if not exists "title" text;
-alter table "public"."notebook_page_versions" add column if not exists "content_json" text default '{}'::text;
-alter table "public"."notebook_page_versions" add column if not exists "content_text" text;
-alter table "public"."notebook_page_versions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."notebook_page_versions" add column if not exists "created_by" text;
-
 
 create table if not exists "public"."notebook_topics" (
     "id" text not null,
@@ -8323,13 +6492,6 @@ create table if not exists "public"."notebook_topics" (
     "slug" text not null,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "notebook_topics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notebook_topics" add column if not exists "id" text;
-alter table "public"."notebook_topics" add column if not exists "organization_id" text;
-alter table "public"."notebook_topics" add column if not exists "name" text;
-alter table "public"."notebook_topics" add column if not exists "slug" text;
-alter table "public"."notebook_topics" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."notification_activity_log" (
     "id" text not null,
@@ -8339,14 +6501,6 @@ create table if not exists "public"."notification_activity_log" (
     "description" text,
     "created_at" text not null default '2026-03-03 18:29:59.729241+00'::timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "notification_activity_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notification_activity_log" add column if not exists "id" text;
-alter table "public"."notification_activity_log" add column if not exists "notification_id" text;
-alter table "public"."notification_activity_log" add column if not exists "user_id" text;
-alter table "public"."notification_activity_log" add column if not exists "action" text;
-alter table "public"."notification_activity_log" add column if not exists "description" text;
-alter table "public"."notification_activity_log" add column if not exists "created_at" text default '2026-03-03 18:29:59.729241+00'::timestamp with time zone;
-
 
 create table if not exists "public"."notification_comments" (
     "id" text not null,
@@ -8357,15 +6511,6 @@ create table if not exists "public"."notification_comments" (
     "created_at" text not null default '2026-03-03 18:29:59.729241+00'::timestamp with time zone,
     "updated_at" text not null default '2026-03-03 18:29:59.729241+00'::timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "notification_comments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notification_comments" add column if not exists "id" text;
-alter table "public"."notification_comments" add column if not exists "notification_id" text;
-alter table "public"."notification_comments" add column if not exists "user_id" text;
-alter table "public"."notification_comments" add column if not exists "content" text;
-alter table "public"."notification_comments" add column if not exists "priority" text;
-alter table "public"."notification_comments" add column if not exists "created_at" text default '2026-03-03 18:29:59.729241+00'::timestamp with time zone;
-alter table "public"."notification_comments" add column if not exists "updated_at" text default '2026-03-03 18:29:59.729241+00'::timestamp with time zone;
-
 
 create table if not exists "public"."notification_dedup" (
     "dedupe_key" text not null,
@@ -8468,21 +6613,6 @@ create table if not exists "public"."notification_types" (
     "color" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "notification_types" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."notification_types" add column if not exists "id" text;
-alter table "public"."notification_types" add column if not exists "name" text;
-alter table "public"."notification_types" add column if not exists "category" text;
-alter table "public"."notification_types" add column if not exists "display_name" text;
-alter table "public"."notification_types" add column if not exists "description" text;
-alter table "public"."notification_types" add column if not exists "default_channels" text;
-alter table "public"."notification_types" add column if not exists "is_user_configurable" boolean default true;
-alter table "public"."notification_types" add column if not exists "is_critical" boolean default false;
-alter table "public"."notification_types" add column if not exists "template_subject" text;
-alter table "public"."notification_types" add column if not exists "template_body" text;
-alter table "public"."notification_types" add column if not exists "icon" text;
-alter table "public"."notification_types" add column if not exists "color" text;
-alter table "public"."notification_types" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."oauth_links" (
     "id" text not null,
@@ -8498,20 +6628,6 @@ create table if not exists "public"."oauth_links" (
     "display_name" text,
     "revoked_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "oauth_links" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."oauth_links" add column if not exists "id" text;
-alter table "public"."oauth_links" add column if not exists "user_id" text;
-alter table "public"."oauth_links" add column if not exists "provider" text;
-alter table "public"."oauth_links" add column if not exists "provider_user_id" text;
-alter table "public"."oauth_links" add column if not exists "provider_email" text;
-alter table "public"."oauth_links" add column if not exists "access_token_encrypted" text;
-alter table "public"."oauth_links" add column if not exists "refresh_token_encrypted" text;
-alter table "public"."oauth_links" add column if not exists "token_expires_at" timestamp with time zone;
-alter table "public"."oauth_links" add column if not exists "linked_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."oauth_links" add column if not exists "last_login_at" timestamp with time zone;
-alter table "public"."oauth_links" add column if not exists "display_name" text;
-alter table "public"."oauth_links" add column if not exists "revoked_at" timestamp with time zone;
-
 
 create table if not exists "public"."observability_dr_drills" (
     "id" text not null,
@@ -8595,16 +6711,8 @@ create table if not exists "public"."okr_check_ins" (
     "created_at" timestamp with time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "okr_check_ins" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."okr_check_ins" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."okr_check_ins" add column if not exists "key_result_id" text;
-alter table "public"."okr_check_ins" add column if not exists "organization_id" text;
-alter table "public"."okr_check_ins" add column if not exists "confidence" text;
-alter table "public"."okr_check_ins" add column if not exists "value" double precision;
-alter table "public"."okr_check_ins" add column if not exists "score" double precision;
-alter table "public"."okr_check_ins" add column if not exists "note" text;
 alter table "public"."okr_check_ins" add column if not exists "checked_at" timestamp with time zone default now();
 alter table "public"."okr_check_ins" add column if not exists "checked_by" text;
-alter table "public"."okr_check_ins" add column if not exists "created_at" timestamp with time zone default now();
 
 
 create table if not exists "public"."okr_cycles" (
@@ -8621,20 +6729,6 @@ create table if not exists "public"."okr_cycles" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "okr_cycles" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."okr_cycles" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."okr_cycles" add column if not exists "organization_id" text;
-alter table "public"."okr_cycles" add column if not exists "name" text;
-alter table "public"."okr_cycles" add column if not exists "period_quarter" integer;
-alter table "public"."okr_cycles" add column if not exists "period_year" integer;
-alter table "public"."okr_cycles" add column if not exists "status" text default 'draft'::text;
-alter table "public"."okr_cycles" add column if not exists "dept_id" text;
-alter table "public"."okr_cycles" add column if not exists "team_id" text;
-alter table "public"."okr_cycles" add column if not exists "closed_at" timestamp with time zone;
-alter table "public"."okr_cycles" add column if not exists "created_by" text;
-alter table "public"."okr_cycles" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."okr_cycles" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."okr_key_results" (
     "id" text not null,
@@ -8653,23 +6747,6 @@ create table if not exists "public"."okr_key_results" (
     "owner_user_id" text,
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "okr_key_results" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."okr_key_results" add column if not exists "id" text;
-alter table "public"."okr_key_results" add column if not exists "objective_id" text;
-alter table "public"."okr_key_results" add column if not exists "organization_id" text;
-alter table "public"."okr_key_results" add column if not exists "label" text;
-alter table "public"."okr_key_results" add column if not exists "baseline" double precision;
-alter table "public"."okr_key_results" add column if not exists "target" double precision;
-alter table "public"."okr_key_results" add column if not exists "current" double precision;
-alter table "public"."okr_key_results" add column if not exists "weight" double precision;
-alter table "public"."okr_key_results" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."okr_key_results" add column if not exists "kpi_id" text;
-alter table "public"."okr_key_results" add column if not exists "kr_type" text default 'metric'::text;
-alter table "public"."okr_key_results" add column if not exists "score" double precision default 0;
-alter table "public"."okr_key_results" add column if not exists "kind" text default 'aspirational'::text;
-alter table "public"."okr_key_results" add column if not exists "owner_user_id" text;
-alter table "public"."okr_key_results" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."okr_objectives" (
     "id" text not null,
@@ -8684,19 +6761,6 @@ create table if not exists "public"."okr_objectives" (
     "status" text not null default 'draft'::text,
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "okr_objectives" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."okr_objectives" add column if not exists "id" text;
-alter table "public"."okr_objectives" add column if not exists "organization_id" text;
-alter table "public"."okr_objectives" add column if not exists "project_id" text;
-alter table "public"."okr_objectives" add column if not exists "label" text;
-alter table "public"."okr_objectives" add column if not exists "parent_id" text;
-alter table "public"."okr_objectives" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."okr_objectives" add column if not exists "cycle_id" text;
-alter table "public"."okr_objectives" add column if not exists "owner_user_id" text;
-alter table "public"."okr_objectives" add column if not exists "description" text;
-alter table "public"."okr_objectives" add column if not exists "status" text default 'draft'::text;
-alter table "public"."okr_objectives" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."onboarding_achievements" (
     "id" text not null,
@@ -8771,15 +6835,6 @@ create table if not exists "public"."org_user_permissions" (
     "granted_by" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "org_user_permissions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."org_user_permissions" add column if not exists "id" text;
-alter table "public"."org_user_permissions" add column if not exists "user_id" text;
-alter table "public"."org_user_permissions" add column if not exists "organization_id" text;
-alter table "public"."org_user_permissions" add column if not exists "permission_key" text;
-alter table "public"."org_user_permissions" add column if not exists "grant_type" text;
-alter table "public"."org_user_permissions" add column if not exists "granted_by" text;
-alter table "public"."org_user_permissions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_ai_config" (
     "id" text not null,
@@ -8806,12 +6861,6 @@ create table if not exists "public"."organization_ai_policy" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_ai_policy" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_ai_policy" add column if not exists "organization_id" text;
-alter table "public"."organization_ai_policy" add column if not exists "policy" jsonb default '{}'::jsonb;
-alter table "public"."organization_ai_policy" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."organization_ai_policy" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_ai_settings" (
     "organization_id" text not null,
@@ -8838,31 +6887,6 @@ create table if not exists "public"."organization_ai_settings" (
     "updated_by" text,
     "context_policy_json" text
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_ai_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_ai_settings" add column if not exists "organization_id" text;
-alter table "public"."organization_ai_settings" add column if not exists "policy_level" text default 'ADVISORY'::text;
-alter table "public"."organization_ai_settings" add column if not exists "max_policy_level" text default 'ASSISTED'::text;
-alter table "public"."organization_ai_settings" add column if not exists "default_proactivity_mode" text default 'BALANCED'::text;
-alter table "public"."organization_ai_settings" add column if not exists "active_roles" text default '["ADVISOR"]'::text;
-alter table "public"."organization_ai_settings" add column if not exists "default_role" text default 'ADVISOR'::text;
-alter table "public"."organization_ai_settings" add column if not exists "enabled_model_ids" text default '[]'::text;
-alter table "public"."organization_ai_settings" add column if not exists "max_ai_calls_per_day" integer default 100;
-alter table "public"."organization_ai_settings" add column if not exists "max_tokens_per_month" integer default 500000;
-alter table "public"."organization_ai_settings" add column if not exists "monthly_budget_usd" real default 0;
-alter table "public"."organization_ai_settings" add column if not exists "hard_limit_usd" real default 0;
-alter table "public"."organization_ai_settings" add column if not exists "freeze_on_limit" integer default 0;
-alter table "public"."organization_ai_settings" add column if not exists "web_search_enabled" integer default 1;
-alter table "public"."organization_ai_settings" add column if not exists "artifacts_enabled" integer default 1;
-alter table "public"."organization_ai_settings" add column if not exists "thinking_steps_enabled" integer default 1;
-alter table "public"."organization_ai_settings" add column if not exists "focus_modes_enabled" integer default 1;
-alter table "public"."organization_ai_settings" add column if not exists "voice_enabled" integer default 0;
-alter table "public"."organization_ai_settings" add column if not exists "audit_all_requests" integer default 0;
-alter table "public"."organization_ai_settings" add column if not exists "audit_policy_changes" integer default 1;
-alter table "public"."organization_ai_settings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."organization_ai_settings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."organization_ai_settings" add column if not exists "updated_by" text;
-alter table "public"."organization_ai_settings" add column if not exists "context_policy_json" text;
-
 
 create table if not exists "public"."organization_context_claims" (
     "id" text not null,
@@ -8997,12 +7021,6 @@ create table if not exists "public"."organization_facilities" (
     "name" text not null,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_facilities" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_facilities" add column if not exists "id" text;
-alter table "public"."organization_facilities" add column if not exists "organization_id" text;
-alter table "public"."organization_facilities" add column if not exists "name" text;
-alter table "public"."organization_facilities" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_llm_settings" (
     "organization_id" text not null,
@@ -9070,17 +7088,6 @@ create table if not exists "public"."organization_metadata" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_metadata" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_metadata" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."organization_metadata" add column if not exists "organization_id" text;
-alter table "public"."organization_metadata" add column if not exists "key" text;
-alter table "public"."organization_metadata" add column if not exists "value" text;
-alter table "public"."organization_metadata" add column if not exists "value_type" text default 'text'::text;
-alter table "public"."organization_metadata" add column if not exists "category" text;
-alter table "public"."organization_metadata" add column if not exists "is_sensitive" integer default 0;
-alter table "public"."organization_metadata" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."organization_metadata" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_provider_settings" (
     "id" text not null,
@@ -9091,15 +7098,6 @@ create table if not exists "public"."organization_provider_settings" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_provider_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_provider_settings" add column if not exists "id" text;
-alter table "public"."organization_provider_settings" add column if not exists "organization_id" text;
-alter table "public"."organization_provider_settings" add column if not exists "provider_id" text;
-alter table "public"."organization_provider_settings" add column if not exists "is_enabled" integer default 1;
-alter table "public"."organization_provider_settings" add column if not exists "custom_priority" integer;
-alter table "public"."organization_provider_settings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."organization_provider_settings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_seats" (
     "id" text not null,
@@ -9109,14 +7107,6 @@ create table if not exists "public"."organization_seats" (
     "status" text default 'active'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "organization_seats" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."organization_seats" add column if not exists "id" text;
-alter table "public"."organization_seats" add column if not exists "organization_id" text;
-alter table "public"."organization_seats" add column if not exists "user_id" text;
-alter table "public"."organization_seats" add column if not exists "seat_type" text;
-alter table "public"."organization_seats" add column if not exists "status" text default 'active'::text;
-alter table "public"."organization_seats" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."organization_style_profiles" (
     "id" text not null default (gen_random_uuid())::text,
@@ -9169,17 +7159,6 @@ create table if not exists "public"."partner_activity_log" (
     "metadata" jsonb,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_activity_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_activity_log" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_activity_log" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_activity_log" add column if not exists "user_id" uuid;
-alter table "public"."partner_activity_log" add column if not exists "activity_type" character varying(50);
-alter table "public"."partner_activity_log" add column if not exists "entity_type" character varying(50);
-alter table "public"."partner_activity_log" add column if not exists "entity_id" uuid;
-alter table "public"."partner_activity_log" add column if not exists "description" text;
-alter table "public"."partner_activity_log" add column if not exists "metadata" jsonb;
-alter table "public"."partner_activity_log" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_attributions" (
     "id" uuid not null,
@@ -9238,18 +7217,6 @@ create table if not exists "public"."partner_client_organizations" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_client_organizations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_client_organizations" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_client_organizations" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_client_organizations" add column if not exists "organization_id" uuid;
-alter table "public"."partner_client_organizations" add column if not exists "relationship_type" character varying(50) default 'managed'::character varying;
-alter table "public"."partner_client_organizations" add column if not exists "status" character varying(50) default 'active'::character varying;
-alter table "public"."partner_client_organizations" add column if not exists "onboarded_at" timestamp with time zone;
-alter table "public"."partner_client_organizations" add column if not exists "contract_value_annual" numeric(12,2);
-alter table "public"."partner_client_organizations" add column if not exists "notes" text;
-alter table "public"."partner_client_organizations" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_client_organizations" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_commission_transactions" (
     "id" uuid not null,
@@ -9295,25 +7262,6 @@ create table if not exists "public"."partner_commissions" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_commissions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_commissions" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_commissions" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_commissions" add column if not exists "client_org_id" uuid;
-alter table "public"."partner_commissions" add column if not exists "license_id" uuid;
-alter table "public"."partner_commissions" add column if not exists "commission_type" character varying(50);
-alter table "public"."partner_commissions" add column if not exists "amount" numeric(12,2);
-alter table "public"."partner_commissions" add column if not exists "currency" character varying(3) default 'EUR'::character varying;
-alter table "public"."partner_commissions" add column if not exists "status" character varying(50) default 'pending'::character varying;
-alter table "public"."partner_commissions" add column if not exists "period_start" date;
-alter table "public"."partner_commissions" add column if not exists "period_end" date;
-alter table "public"."partner_commissions" add column if not exists "approved_at" timestamp with time zone;
-alter table "public"."partner_commissions" add column if not exists "approved_by" uuid;
-alter table "public"."partner_commissions" add column if not exists "paid_at" timestamp with time zone;
-alter table "public"."partner_commissions" add column if not exists "payment_reference" character varying(100);
-alter table "public"."partner_commissions" add column if not exists "notes" text;
-alter table "public"."partner_commissions" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_commissions" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_invoices" (
     "id" uuid not null default gen_random_uuid(),
@@ -9335,26 +7283,6 @@ create table if not exists "public"."partner_invoices" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_invoices" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_invoices" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_invoices" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_invoices" add column if not exists "invoice_number" character varying(50);
-alter table "public"."partner_invoices" add column if not exists "invoice_type" character varying(50);
-alter table "public"."partner_invoices" add column if not exists "amount" numeric(12,2);
-alter table "public"."partner_invoices" add column if not exists "tax_amount" numeric(12,2) default 0.00;
-alter table "public"."partner_invoices" add column if not exists "total_amount" numeric(12,2);
-alter table "public"."partner_invoices" add column if not exists "currency" character varying(3) default 'EUR'::character varying;
-alter table "public"."partner_invoices" add column if not exists "status" character varying(50) default 'draft'::character varying;
-alter table "public"."partner_invoices" add column if not exists "issue_date" date;
-alter table "public"."partner_invoices" add column if not exists "due_date" date;
-alter table "public"."partner_invoices" add column if not exists "paid_date" date;
-alter table "public"."partner_invoices" add column if not exists "payment_method" character varying(50);
-alter table "public"."partner_invoices" add column if not exists "payment_reference" character varying(100);
-alter table "public"."partner_invoices" add column if not exists "notes" text;
-alter table "public"."partner_invoices" add column if not exists "pdf_url" character varying(500);
-alter table "public"."partner_invoices" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_invoices" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_learning_progress" (
     "id" uuid not null default gen_random_uuid(),
@@ -9368,18 +7296,6 @@ create table if not exists "public"."partner_learning_progress" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_learning_progress" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_learning_progress" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_learning_progress" add column if not exists "certification_id" uuid;
-alter table "public"."partner_learning_progress" add column if not exists "module_id" uuid;
-alter table "public"."partner_learning_progress" add column if not exists "status" character varying(50) default 'not_started'::character varying;
-alter table "public"."partner_learning_progress" add column if not exists "progress_percent" integer default 0;
-alter table "public"."partner_learning_progress" add column if not exists "started_at" timestamp with time zone;
-alter table "public"."partner_learning_progress" add column if not exists "completed_at" timestamp with time zone;
-alter table "public"."partner_learning_progress" add column if not exists "score" integer;
-alter table "public"."partner_learning_progress" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_learning_progress" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_licenses" (
     "id" uuid not null default gen_random_uuid(),
@@ -9397,22 +7313,6 @@ create table if not exists "public"."partner_licenses" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_licenses" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_licenses" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_licenses" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_licenses" add column if not exists "client_org_id" uuid;
-alter table "public"."partner_licenses" add column if not exists "license_type" character varying(50);
-alter table "public"."partner_licenses" add column if not exists "quantity" integer default 1;
-alter table "public"."partner_licenses" add column if not exists "unit_price" numeric(10,2);
-alter table "public"."partner_licenses" add column if not exists "discount_percent" numeric(5,2) default 0.00;
-alter table "public"."partner_licenses" add column if not exists "final_price" numeric(10,2);
-alter table "public"."partner_licenses" add column if not exists "status" character varying(50) default 'active'::character varying;
-alter table "public"."partner_licenses" add column if not exists "valid_from" date;
-alter table "public"."partner_licenses" add column if not exists "valid_until" date;
-alter table "public"."partner_licenses" add column if not exists "auto_renew" boolean default true;
-alter table "public"."partner_licenses" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_licenses" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_outreach_campaigns" (
     "id" uuid not null default gen_random_uuid(),
@@ -9429,21 +7329,6 @@ create table if not exists "public"."partner_outreach_campaigns" (
     "throttle_policy" jsonb default '{}'::jsonb,
     "segment_query" jsonb default '{}'::jsonb
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_campaigns" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_campaigns" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_campaigns" add column if not exists "name" text;
-alter table "public"."partner_outreach_campaigns" add column if not exists "status" text default 'draft'::text;
-alter table "public"."partner_outreach_campaigns" add column if not exists "created_by" uuid;
-alter table "public"."partner_outreach_campaigns" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_outreach_campaigns" add column if not exists "started_at" timestamp with time zone;
-alter table "public"."partner_outreach_campaigns" add column if not exists "completed_at" timestamp with time zone;
-alter table "public"."partner_outreach_campaigns" add column if not exists "from_name" text;
-alter table "public"."partner_outreach_campaigns" add column if not exists "from_email" text;
-alter table "public"."partner_outreach_campaigns" add column if not exists "reply_to" text;
-alter table "public"."partner_outreach_campaigns" add column if not exists "sending_window" jsonb default '{}'::jsonb;
-alter table "public"."partner_outreach_campaigns" add column if not exists "throttle_policy" jsonb default '{}'::jsonb;
-alter table "public"."partner_outreach_campaigns" add column if not exists "segment_query" jsonb default '{}'::jsonb;
-
 
 create table if not exists "public"."partner_outreach_enrollments" (
     "id" uuid not null default gen_random_uuid(),
@@ -9454,15 +7339,6 @@ create table if not exists "public"."partner_outreach_enrollments" (
     "current_step" integer not null default 0,
     "next_send_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_enrollments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_enrollments" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_enrollments" add column if not exists "campaign_id" uuid;
-alter table "public"."partner_outreach_enrollments" add column if not exists "lead_id" uuid;
-alter table "public"."partner_outreach_enrollments" add column if not exists "enrolled_at" timestamp with time zone default now();
-alter table "public"."partner_outreach_enrollments" add column if not exists "status" text default 'active'::text;
-alter table "public"."partner_outreach_enrollments" add column if not exists "current_step" integer default 0;
-alter table "public"."partner_outreach_enrollments" add column if not exists "next_send_at" timestamp with time zone;
-
 
 create table if not exists "public"."partner_outreach_events" (
     "id" uuid not null default gen_random_uuid(),
@@ -9473,15 +7349,6 @@ create table if not exists "public"."partner_outreach_events" (
     "meta" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_events" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_events" add column if not exists "campaign_id" uuid;
-alter table "public"."partner_outreach_events" add column if not exists "lead_id" uuid;
-alter table "public"."partner_outreach_events" add column if not exists "message_instance_id" uuid;
-alter table "public"."partner_outreach_events" add column if not exists "type" text;
-alter table "public"."partner_outreach_events" add column if not exists "meta" jsonb default '{}'::jsonb;
-alter table "public"."partner_outreach_events" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_outreach_leads" (
     "id" uuid not null default gen_random_uuid(),
@@ -9497,20 +7364,6 @@ create table if not exists "public"."partner_outreach_leads" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_leads" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_leads" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_leads" add column if not exists "email" text;
-alter table "public"."partner_outreach_leads" add column if not exists "company" text;
-alter table "public"."partner_outreach_leads" add column if not exists "first_name" text;
-alter table "public"."partner_outreach_leads" add column if not exists "last_name" text;
-alter table "public"."partner_outreach_leads" add column if not exists "country" text;
-alter table "public"."partner_outreach_leads" add column if not exists "region" text;
-alter table "public"."partner_outreach_leads" add column if not exists "source" text;
-alter table "public"."partner_outreach_leads" add column if not exists "lawful_basis" text;
-alter table "public"."partner_outreach_leads" add column if not exists "status" text default 'active'::text;
-alter table "public"."partner_outreach_leads" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_outreach_leads" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_outreach_message_instances" (
     "id" uuid not null default gen_random_uuid(),
@@ -9525,19 +7378,6 @@ create table if not exists "public"."partner_outreach_message_instances" (
     "meta" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_message_instances" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_message_instances" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_message_instances" add column if not exists "campaign_id" uuid;
-alter table "public"."partner_outreach_message_instances" add column if not exists "step_id" uuid;
-alter table "public"."partner_outreach_message_instances" add column if not exists "enrollment_id" uuid;
-alter table "public"."partner_outreach_message_instances" add column if not exists "lead_id" uuid;
-alter table "public"."partner_outreach_message_instances" add column if not exists "to_email" text;
-alter table "public"."partner_outreach_message_instances" add column if not exists "sent_at" timestamp with time zone;
-alter table "public"."partner_outreach_message_instances" add column if not exists "tracking_token" text;
-alter table "public"."partner_outreach_message_instances" add column if not exists "unsubscribe_token" text;
-alter table "public"."partner_outreach_message_instances" add column if not exists "meta" jsonb default '{}'::jsonb;
-alter table "public"."partner_outreach_message_instances" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_outreach_steps" (
     "id" uuid not null default gen_random_uuid(),
@@ -9550,28 +7390,12 @@ create table if not exists "public"."partner_outreach_steps" (
     "template_version_hash" text not null,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_steps" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_steps" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_outreach_steps" add column if not exists "campaign_id" uuid;
-alter table "public"."partner_outreach_steps" add column if not exists "step_order" integer;
-alter table "public"."partner_outreach_steps" add column if not exists "delay_days" integer default 0;
-alter table "public"."partner_outreach_steps" add column if not exists "subject" text;
-alter table "public"."partner_outreach_steps" add column if not exists "body_html" text;
-alter table "public"."partner_outreach_steps" add column if not exists "body_text" text;
-alter table "public"."partner_outreach_steps" add column if not exists "template_version_hash" text;
-alter table "public"."partner_outreach_steps" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_outreach_unsubscribes" (
     "email" text not null,
     "reason" text,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_outreach_unsubscribes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_outreach_unsubscribes" add column if not exists "email" text;
-alter table "public"."partner_outreach_unsubscribes" add column if not exists "reason" text;
-alter table "public"."partner_outreach_unsubscribes" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_payout_accounts" (
     "id" text not null,
@@ -9631,23 +7455,6 @@ create table if not exists "public"."partner_program_ledger" (
     "note" text,
     "created_at" text not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_program_ledger" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_program_ledger" add column if not exists "id" text;
-alter table "public"."partner_program_ledger" add column if not exists "partner_org_id" text;
-alter table "public"."partner_program_ledger" add column if not exists "entry_type" text;
-alter table "public"."partner_program_ledger" add column if not exists "amount" real default 0;
-alter table "public"."partner_program_ledger" add column if not exists "currency" text default 'EUR'::text;
-alter table "public"."partner_program_ledger" add column if not exists "occurred_at" text;
-alter table "public"."partner_program_ledger" add column if not exists "recorded_at" text default now();
-alter table "public"."partner_program_ledger" add column if not exists "source_ref" text default '{}'::text;
-alter table "public"."partner_program_ledger" add column if not exists "actor" text;
-alter table "public"."partner_program_ledger" add column if not exists "actor_id" text;
-alter table "public"."partner_program_ledger" add column if not exists "correlation_id" text;
-alter table "public"."partner_program_ledger" add column if not exists "idempotency_key" text;
-alter table "public"."partner_program_ledger" add column if not exists "reason_code" text;
-alter table "public"."partner_program_ledger" add column if not exists "note" text;
-alter table "public"."partner_program_ledger" add column if not exists "created_at" text default now();
-
 
 create table if not exists "public"."partner_program_runtime" (
     "partner_org_id" text not null,
@@ -9659,16 +7466,6 @@ create table if not exists "public"."partner_program_runtime" (
     "last_transition_actor_id" text,
     "last_transition_note" text
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_program_runtime" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_program_runtime" add column if not exists "partner_org_id" text;
-alter table "public"."partner_program_runtime" add column if not exists "lifecycle_phase" text default 'onboard'::text;
-alter table "public"."partner_program_runtime" add column if not exists "onboard_checklist_json" text default '{}'::text;
-alter table "public"."partner_program_runtime" add column if not exists "updated_at" text default now();
-alter table "public"."partner_program_runtime" add column if not exists "last_transition_at" text;
-alter table "public"."partner_program_runtime" add column if not exists "last_transition_actor" text;
-alter table "public"."partner_program_runtime" add column if not exists "last_transition_actor_id" text;
-alter table "public"."partner_program_runtime" add column if not exists "last_transition_note" text;
-
 
 create table if not exists "public"."partner_projects" (
     "id" uuid not null default gen_random_uuid(),
@@ -9687,23 +7484,6 @@ create table if not exists "public"."partner_projects" (
     "created_at" timestamp with time zone default now(),
     "updated_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_projects" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_projects" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_projects" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_projects" add column if not exists "client_org_id" uuid;
-alter table "public"."partner_projects" add column if not exists "project_id" uuid;
-alter table "public"."partner_projects" add column if not exists "name" character varying(255);
-alter table "public"."partner_projects" add column if not exists "description" text;
-alter table "public"."partner_projects" add column if not exists "framework" character varying(50);
-alter table "public"."partner_projects" add column if not exists "status" character varying(50) default 'planning'::character varying;
-alter table "public"."partner_projects" add column if not exists "progress_percent" integer default 0;
-alter table "public"."partner_projects" add column if not exists "start_date" date;
-alter table "public"."partner_projects" add column if not exists "target_end_date" date;
-alter table "public"."partner_projects" add column if not exists "actual_end_date" date;
-alter table "public"."partner_projects" add column if not exists "project_value" numeric(12,2);
-alter table "public"."partner_projects" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_projects" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_referral_clicks" (
     "id" uuid not null,
@@ -9734,13 +7514,6 @@ create table if not exists "public"."partner_regions" (
     "is_primary" boolean default false,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_regions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_regions" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_regions" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_regions" add column if not exists "region" character varying(50);
-alter table "public"."partner_regions" add column if not exists "is_primary" boolean default false;
-alter table "public"."partner_regions" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."partner_resource_downloads" (
     "id" uuid not null default gen_random_uuid(),
@@ -9752,12 +7525,6 @@ create table if not exists "public"."partner_resource_downloads" (
     "user_agent" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "partner_resource_downloads" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_resource_downloads" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_resource_downloads" add column if not exists "resource_id" uuid;
-alter table "public"."partner_resource_downloads" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_resource_downloads" add column if not exists "user_id" uuid;
-alter table "public"."partner_resource_downloads" add column if not exists "downloaded_at" timestamp with time zone default now();
-alter table "public"."partner_resource_downloads" add column if not exists "ip_hash" text;
 alter table "public"."partner_resource_downloads" add column if not exists "user_agent" text;
 
 
@@ -9785,21 +7552,6 @@ create table if not exists "public"."partner_resources" (
     "size_bytes" bigint default 0
 );
 -- Strict-schema repair (2026-08, auto-generated): "partner_resources" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_resources" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_resources" add column if not exists "title" character varying(255);
-alter table "public"."partner_resources" add column if not exists "description" text;
-alter table "public"."partner_resources" add column if not exists "category" character varying(50);
-alter table "public"."partner_resources" add column if not exists "file_type" character varying(20);
-alter table "public"."partner_resources" add column if not exists "file_size_bytes" bigint;
-alter table "public"."partner_resources" add column if not exists "file_url" character varying(500);
-alter table "public"."partner_resources" add column if not exists "thumbnail_url" character varying(500);
-alter table "public"."partner_resources" add column if not exists "is_featured" boolean default false;
-alter table "public"."partner_resources" add column if not exists "min_partner_tier" character varying(50) default 'registered'::character varying;
-alter table "public"."partner_resources" add column if not exists "download_count" integer default 0;
-alter table "public"."partner_resources" add column if not exists "is_active" boolean default true;
-alter table "public"."partner_resources" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."partner_resources" add column if not exists "updated_at" timestamp with time zone default now();
-alter table "public"."partner_resources" add column if not exists "language" text default 'en'::text;
 alter table "public"."partner_resources" add column if not exists "version" text default 'v1'::text;
 alter table "public"."partner_resources" add column if not exists "status" text default 'active'::text;
 alter table "public"."partner_resources" add column if not exists "file_key" text;
@@ -9817,15 +7569,6 @@ create table if not exists "public"."partner_specializations" (
     "certification_expires_at" timestamp with time zone,
     "created_at" timestamp with time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "partner_specializations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."partner_specializations" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."partner_specializations" add column if not exists "partner_org_id" uuid;
-alter table "public"."partner_specializations" add column if not exists "framework" character varying(50);
-alter table "public"."partner_specializations" add column if not exists "certified" boolean default false;
-alter table "public"."partner_specializations" add column if not exists "certified_at" timestamp with time zone;
-alter table "public"."partner_specializations" add column if not exists "certification_expires_at" timestamp with time zone;
-alter table "public"."partner_specializations" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."payment_attempts" (
     "id" text not null,
@@ -9845,24 +7588,6 @@ create table if not exists "public"."payment_attempts" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "payment_attempts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."payment_attempts" add column if not exists "id" text;
-alter table "public"."payment_attempts" add column if not exists "organization_id" text;
-alter table "public"."payment_attempts" add column if not exists "invoice_id" text;
-alter table "public"."payment_attempts" add column if not exists "subscription_id" text;
-alter table "public"."payment_attempts" add column if not exists "amount" integer;
-alter table "public"."payment_attempts" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."payment_attempts" add column if not exists "status" text;
-alter table "public"."payment_attempts" add column if not exists "stripe_payment_intent_id" text;
-alter table "public"."payment_attempts" add column if not exists "stripe_charge_id" text;
-alter table "public"."payment_attempts" add column if not exists "failure_code" text;
-alter table "public"."payment_attempts" add column if not exists "failure_reason" text;
-alter table "public"."payment_attempts" add column if not exists "attempt_number" integer default 1;
-alter table "public"."payment_attempts" add column if not exists "payment_method_id" text;
-alter table "public"."payment_attempts" add column if not exists "metadata" json;
-alter table "public"."payment_attempts" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."payment_attempts" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."payment_failures" (
     "id" text not null,
@@ -9909,24 +7634,6 @@ create table if not exists "public"."pdf_imports" (
     "mapping_data" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "pdf_imports" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."pdf_imports" add column if not exists "id" text;
-alter table "public"."pdf_imports" add column if not exists "organization_id" text;
-alter table "public"."pdf_imports" add column if not exists "user_id" text;
-alter table "public"."pdf_imports" add column if not exists "filename" text;
-alter table "public"."pdf_imports" add column if not exists "target_type" text default 'assessment'::text;
-alter table "public"."pdf_imports" add column if not exists "project_id" text;
-alter table "public"."pdf_imports" add column if not exists "status" text default 'uploaded'::text;
-alter table "public"."pdf_imports" add column if not exists "page_count" integer;
-alter table "public"."pdf_imports" add column if not exists "error_message" text;
-alter table "public"."pdf_imports" add column if not exists "file_path" text;
-alter table "public"."pdf_imports" add column if not exists "detected_framework" text;
-alter table "public"."pdf_imports" add column if not exists "confidence" real default 0;
-alter table "public"."pdf_imports" add column if not exists "extracted_text" text;
-alter table "public"."pdf_imports" add column if not exists "parsed_data" text;
-alter table "public"."pdf_imports" add column if not exists "mapping_data" text;
-alter table "public"."pdf_imports" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."permission_definitions" (
     "id" text not null,
@@ -9948,14 +7655,6 @@ create table if not exists "public"."permissions" (
     "icon" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "permissions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."permissions" add column if not exists "key" text;
-alter table "public"."permissions" add column if not exists "name" text;
-alter table "public"."permissions" add column if not exists "description" text;
-alter table "public"."permissions" add column if not exists "category" text;
-alter table "public"."permissions" add column if not exists "icon" text;
-alter table "public"."permissions" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."pinned_insights" (
     "id" text not null,
@@ -10019,15 +7718,6 @@ create table if not exists "public"."presentation_deck_versions" (
     "created_by" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "presentation_deck_versions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."presentation_deck_versions" add column if not exists "id" text;
-alter table "public"."presentation_deck_versions" add column if not exists "deck_id" text;
-alter table "public"."presentation_deck_versions" add column if not exists "version" integer;
-alter table "public"."presentation_deck_versions" add column if not exists "deck_json_snapshot" text;
-alter table "public"."presentation_deck_versions" add column if not exists "slide_count" integer default 0;
-alter table "public"."presentation_deck_versions" add column if not exists "created_by" text;
-alter table "public"."presentation_deck_versions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."presentation_export_records" (
     "id" text not null default (gen_random_uuid())::text,
@@ -10060,19 +7750,6 @@ create table if not exists "public"."presentation_template_governance_events" (
     "metadata" jsonb default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "presentation_template_governance_events" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."presentation_template_governance_events" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."presentation_template_governance_events" add column if not exists "template_id" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "organization_id" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "event_type" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "from_state" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "to_state" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "actor_id" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "actor_role" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "reason" text;
-alter table "public"."presentation_template_governance_events" add column if not exists "metadata" jsonb default '{}'::jsonb;
-alter table "public"."presentation_template_governance_events" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."presentation_templates" (
     "id" text not null default (gen_random_uuid())::text,
@@ -10112,37 +7789,6 @@ create table if not exists "public"."presentation_templates" (
     "source_requirements_json" text default '[]'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "presentation_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."presentation_templates" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."presentation_templates" add column if not exists "organization_id" text;
-alter table "public"."presentation_templates" add column if not exists "name" text;
-alter table "public"."presentation_templates" add column if not exists "description" text;
-alter table "public"."presentation_templates" add column if not exists "deck_type" text;
-alter table "public"."presentation_templates" add column if not exists "audience" text default 'executive'::text;
-alter table "public"."presentation_templates" add column if not exists "goal" text default 'inform'::text;
-alter table "public"."presentation_templates" add column if not exists "language_default" text default 'en'::text;
-alter table "public"."presentation_templates" add column if not exists "confidentiality_default" text default 'internal'::text;
-alter table "public"."presentation_templates" add column if not exists "theme" text default 'corporate'::text;
-alter table "public"."presentation_templates" add column if not exists "outline_json" text;
-alter table "public"."presentation_templates" add column if not exists "max_slides" integer default 25;
-alter table "public"."presentation_templates" add column if not exists "min_slides" integer default 5;
-alter table "public"."presentation_templates" add column if not exists "must_have_intents" text;
-alter table "public"."presentation_templates" add column if not exists "recommended_visuals" text;
-alter table "public"."presentation_templates" add column if not exists "is_system" boolean default true;
-alter table "public"."presentation_templates" add column if not exists "is_active" boolean default true;
-alter table "public"."presentation_templates" add column if not exists "cloned_from" text;
-alter table "public"."presentation_templates" add column if not exists "created_by" text;
-alter table "public"."presentation_templates" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."presentation_templates" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."presentation_templates" add column if not exists "lifecycle_state" text default 'draft'::text;
-alter table "public"."presentation_templates" add column if not exists "approved_at" timestamp with time zone;
-alter table "public"."presentation_templates" add column if not exists "approved_by" text;
-alter table "public"."presentation_templates" add column if not exists "deprecated_at" timestamp with time zone;
-alter table "public"."presentation_templates" add column if not exists "deprecated_by" text;
-alter table "public"."presentation_templates" add column if not exists "deprecation_reason" text;
-alter table "public"."presentation_templates" add column if not exists "lineage_parent_id" text;
-alter table "public"."presentation_templates" add column if not exists "lineage_root_id" text;
-alter table "public"."presentation_templates" add column if not exists "lineage_version" integer default 1;
-alter table "public"."presentation_templates" add column if not exists "visibility" text;
 alter table "public"."presentation_templates" add column if not exists "template_family" text;
 alter table "public"."presentation_templates" add column if not exists "template_recipe_json" text default '{}'::text;
 alter table "public"."presentation_templates" add column if not exists "layout_policy_json" text default '{}'::text;
@@ -10229,15 +7875,6 @@ create table if not exists "public"."project_steering_board" (
     "created_at" text not null default '2026-03-03 18:30:01.946923+00'::timestamp with time zone,
     "updated_at" text not null default '2026-03-03 18:30:01.946923+00'::timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "project_steering_board" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."project_steering_board" add column if not exists "project_id" text;
-alter table "public"."project_steering_board" add column if not exists "enabled" integer default 0;
-alter table "public"."project_steering_board" add column if not exists "quorum_rule" text default 'SIMPLE_MAJORITY'::text;
-alter table "public"."project_steering_board" add column if not exists "sla_hours" integer default 72;
-alter table "public"."project_steering_board" add column if not exists "created_by_id" text;
-alter table "public"."project_steering_board" add column if not exists "created_at" text default '2026-03-03 18:30:01.946923+00'::timestamp with time zone;
-alter table "public"."project_steering_board" add column if not exists "updated_at" text default '2026-03-03 18:30:01.946923+00'::timestamp with time zone;
-
 
 create table if not exists "public"."project_steering_board_members" (
     "id" text not null,
@@ -10249,16 +7886,6 @@ create table if not exists "public"."project_steering_board_members" (
     "created_at" text not null default '2026-03-03 18:30:01.946923+00'::timestamp with time zone,
     "updated_at" text not null default '2026-03-03 18:30:01.946923+00'::timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "project_steering_board_members" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."project_steering_board_members" add column if not exists "id" text;
-alter table "public"."project_steering_board_members" add column if not exists "project_id" text;
-alter table "public"."project_steering_board_members" add column if not exists "user_id" text;
-alter table "public"."project_steering_board_members" add column if not exists "member_type" text default 'BOARD_MEMBER'::text;
-alter table "public"."project_steering_board_members" add column if not exists "notify_decision_requests" integer default 1;
-alter table "public"."project_steering_board_members" add column if not exists "notify_escalations" integer default 1;
-alter table "public"."project_steering_board_members" add column if not exists "created_at" text default '2026-03-03 18:30:01.946923+00'::timestamp with time zone;
-alter table "public"."project_steering_board_members" add column if not exists "updated_at" text default '2026-03-03 18:30:01.946923+00'::timestamp with time zone;
-
 
 create table if not exists "public"."prompt_library" (
     "id" text not null,
@@ -10292,23 +7919,6 @@ create table if not exists "public"."proration_records" (
     "status" text default 'pending'::text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "proration_records" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."proration_records" add column if not exists "id" text;
-alter table "public"."proration_records" add column if not exists "organization_id" text;
-alter table "public"."proration_records" add column if not exists "subscription_id" text;
-alter table "public"."proration_records" add column if not exists "old_plan_id" text;
-alter table "public"."proration_records" add column if not exists "new_plan_id" text;
-alter table "public"."proration_records" add column if not exists "proration_amount" integer;
-alter table "public"."proration_records" add column if not exists "credit_amount" integer default 0;
-alter table "public"."proration_records" add column if not exists "charge_amount" integer default 0;
-alter table "public"."proration_records" add column if not exists "currency" text default 'USD'::text;
-alter table "public"."proration_records" add column if not exists "effective_date" timestamp without time zone;
-alter table "public"."proration_records" add column if not exists "billing_period_start" timestamp without time zone;
-alter table "public"."proration_records" add column if not exists "billing_period_end" timestamp without time zone;
-alter table "public"."proration_records" add column if not exists "stripe_invoice_item_id" text;
-alter table "public"."proration_records" add column if not exists "status" text default 'pending'::text;
-alter table "public"."proration_records" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."public_booking_requests" (
     "id" text not null,
@@ -10326,22 +7936,6 @@ create table if not exists "public"."public_booking_requests" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "public_booking_requests" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."public_booking_requests" add column if not exists "id" text;
-alter table "public"."public_booking_requests" add column if not exists "organization_id" text;
-alter table "public"."public_booking_requests" add column if not exists "consultant_slug" text;
-alter table "public"."public_booking_requests" add column if not exists "requester_name" text;
-alter table "public"."public_booking_requests" add column if not exists "requester_email" text;
-alter table "public"."public_booking_requests" add column if not exists "topic" text;
-alter table "public"."public_booking_requests" add column if not exists "start_at" timestamp without time zone;
-alter table "public"."public_booking_requests" add column if not exists "end_at" timestamp without time zone;
-alter table "public"."public_booking_requests" add column if not exists "timezone" text default 'Europe/Warsaw'::text;
-alter table "public"."public_booking_requests" add column if not exists "status" text default 'pending'::text;
-alter table "public"."public_booking_requests" add column if not exists "notified_channel" text;
-alter table "public"."public_booking_requests" add column if not exists "source_utm" text;
-alter table "public"."public_booking_requests" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."public_booking_requests" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."public_mini_assessments" (
     "id" text not null default (gen_random_uuid())::text,
@@ -10362,25 +7956,6 @@ create table if not exists "public"."public_mini_assessments" (
     "completed_at" timestamp with time zone,
     "user_agent" text
 );
--- Strict-schema repair (2026-08, auto-generated): "public_mini_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."public_mini_assessments" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."public_mini_assessments" add column if not exists "token" text;
-alter table "public"."public_mini_assessments" add column if not exists "language" text default 'en'::text;
-alter table "public"."public_mini_assessments" add column if not exists "template_id" text default 'default_v1'::text;
-alter table "public"."public_mini_assessments" add column if not exists "answers_json" jsonb default '[]'::jsonb;
-alter table "public"."public_mini_assessments" add column if not exists "ai_result_json" jsonb;
-alter table "public"."public_mini_assessments" add column if not exists "respondent_email" text;
-alter table "public"."public_mini_assessments" add column if not exists "respondent_name" text;
-alter table "public"."public_mini_assessments" add column if not exists "source_campaign" text;
-alter table "public"."public_mini_assessments" add column if not exists "partner_code" text;
-alter table "public"."public_mini_assessments" add column if not exists "utm_params" jsonb default '{}'::jsonb;
-alter table "public"."public_mini_assessments" add column if not exists "organization_id" text;
-alter table "public"."public_mini_assessments" add column if not exists "ip_address" text;
-alter table "public"."public_mini_assessments" add column if not exists "status" text default 'in_progress'::text;
-alter table "public"."public_mini_assessments" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."public_mini_assessments" add column if not exists "completed_at" timestamp with time zone;
-alter table "public"."public_mini_assessments" add column if not exists "user_agent" text;
-
 
 create table if not exists "public"."public_partner_applications" (
     "id" text not null,
@@ -10449,22 +8024,6 @@ create table if not exists "public"."rag_metrics" (
     "response_length" integer,
     "created_at" timestamp with time zone not null default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "rag_metrics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."rag_metrics" add column if not exists "id" bigint default nextval('rag_metrics_id_seq'::regclass);
-alter table "public"."rag_metrics" add column if not exists "query_id" text;
-alter table "public"."rag_metrics" add column if not exists "organization_id" text;
-alter table "public"."rag_metrics" add column if not exists "retrieval_latency_ms" integer;
-alter table "public"."rag_metrics" add column if not exists "generation_latency_ms" integer;
-alter table "public"."rag_metrics" add column if not exists "total_latency_ms" integer;
-alter table "public"."rag_metrics" add column if not exists "chunks_retrieved" integer;
-alter table "public"."rag_metrics" add column if not exists "chunks_used" integer;
-alter table "public"."rag_metrics" add column if not exists "chunk_utilization" real;
-alter table "public"."rag_metrics" add column if not exists "precision_estimate" real;
-alter table "public"."rag_metrics" add column if not exists "groundedness" real;
-alter table "public"."rag_metrics" add column if not exists "query_length" integer;
-alter table "public"."rag_metrics" add column if not exists "response_length" integer;
-alter table "public"."rag_metrics" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."rag_retrieval_feedback" (
     "id" text not null,
@@ -10511,26 +8070,6 @@ create table if not exists "public"."rapid_lean_assessments" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "rapid_lean_assessments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."rapid_lean_assessments" add column if not exists "id" text;
-alter table "public"."rapid_lean_assessments" add column if not exists "organization_id" text;
-alter table "public"."rapid_lean_assessments" add column if not exists "project_id" text;
-alter table "public"."rapid_lean_assessments" add column if not exists "assessment_date" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."rapid_lean_assessments" add column if not exists "value_stream_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "waste_elimination_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "flow_pull_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "quality_source_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "continuous_improvement_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "visual_management_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "overall_score" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "industry_benchmark" real default 0;
-alter table "public"."rapid_lean_assessments" add column if not exists "ai_recommendations" text default '[]'::text;
-alter table "public"."rapid_lean_assessments" add column if not exists "top_gaps" text default '[]'::text;
-alter table "public"."rapid_lean_assessments" add column if not exists "questionnaire_responses" text default '{}'::text;
-alter table "public"."rapid_lean_assessments" add column if not exists "created_by" text;
-alter table "public"."rapid_lean_assessments" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."rapid_lean_assessments" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."realtime_channels" (
     "id" text not null,
@@ -10567,18 +8106,6 @@ create table if not exists "public"."report_agent_messages" (
     "applied_at" timestamp without time zone,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "report_agent_messages" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_agent_messages" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."report_agent_messages" add column if not exists "organization_id" text;
-alter table "public"."report_agent_messages" add column if not exists "report_id" text;
-alter table "public"."report_agent_messages" add column if not exists "role" text;
-alter table "public"."report_agent_messages" add column if not exists "content" text;
-alter table "public"."report_agent_messages" add column if not exists "structured_action" jsonb;
-alter table "public"."report_agent_messages" add column if not exists "diff_preview" jsonb;
-alter table "public"."report_agent_messages" add column if not exists "applied" boolean default false;
-alter table "public"."report_agent_messages" add column if not exists "applied_at" timestamp without time zone;
-alter table "public"."report_agent_messages" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."report_ai_proposals" (
     "id" text not null,
@@ -10605,14 +8132,6 @@ create table if not exists "public"."report_blocks" (
     "content" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "report_blocks" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_blocks" add column if not exists "id" text;
-alter table "public"."report_blocks" add column if not exists "report_id" text;
-alter table "public"."report_blocks" add column if not exists "block_type" text;
-alter table "public"."report_blocks" add column if not exists "block_order" integer;
-alter table "public"."report_blocks" add column if not exists "content" text;
-alter table "public"."report_blocks" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."report_brand_voice_policies" (
     "id" text not null,
@@ -10684,22 +8203,6 @@ create table if not exists "public"."report_definitions" (
     "is_system" boolean not null default false,
     "created_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "report_definitions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_definitions" add column if not exists "id" text;
-alter table "public"."report_definitions" add column if not exists "organization_id" uuid;
-alter table "public"."report_definitions" add column if not exists "key" text;
-alter table "public"."report_definitions" add column if not exists "name" text;
-alter table "public"."report_definitions" add column if not exists "kind" text;
-alter table "public"."report_definitions" add column if not exists "audience" text;
-alter table "public"."report_definitions" add column if not exists "cadence" text;
-alter table "public"."report_definitions" add column if not exists "scope" text;
-alter table "public"."report_definitions" add column if not exists "read_mode" text default 'live'::text;
-alter table "public"."report_definitions" add column if not exists "sections_json" jsonb default '[]'::jsonb;
-alter table "public"."report_definitions" add column if not exists "source_binding" jsonb default '{}'::jsonb;
-alter table "public"."report_definitions" add column if not exists "template_ref" text;
-alter table "public"."report_definitions" add column if not exists "is_system" boolean default false;
-alter table "public"."report_definitions" add column if not exists "created_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."report_distribution_log" (
     "id" text not null,
@@ -10754,13 +8257,6 @@ create table if not exists "public"."report_initiatives" (
     "organization_id" text not null,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "report_initiatives" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_initiatives" add column if not exists "id" text;
-alter table "public"."report_initiatives" add column if not exists "report_id" text;
-alter table "public"."report_initiatives" add column if not exists "initiative_id" text;
-alter table "public"."report_initiatives" add column if not exists "organization_id" text;
-alter table "public"."report_initiatives" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."report_quality_gates" (
     "id" text not null default (gen_random_uuid())::text,
@@ -10774,14 +8270,6 @@ create table if not exists "public"."report_quality_gates" (
     "checked_at" timestamp without time zone default now()
 );
 -- Strict-schema repair (2026-08, auto-generated): "report_quality_gates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_quality_gates" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."report_quality_gates" add column if not exists "organization_id" text;
-alter table "public"."report_quality_gates" add column if not exists "report_id" text;
-alter table "public"."report_quality_gates" add column if not exists "gate_type" text;
-alter table "public"."report_quality_gates" add column if not exists "severity" text;
-alter table "public"."report_quality_gates" add column if not exists "message" text;
-alter table "public"."report_quality_gates" add column if not exists "section_key" text;
-alter table "public"."report_quality_gates" add column if not exists "is_resolved" boolean default false;
 alter table "public"."report_quality_gates" add column if not exists "checked_at" timestamp without time zone default now();
 
 
@@ -10791,12 +8279,6 @@ create table if not exists "public"."report_snapshots" (
     "snapshot_data" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "report_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."report_snapshots" add column if not exists "id" text;
-alter table "public"."report_snapshots" add column if not exists "report_id" text;
-alter table "public"."report_snapshots" add column if not exists "snapshot_data" text;
-alter table "public"."report_snapshots" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."report_source_pack_items" (
     "id" text not null,
@@ -10860,15 +8342,6 @@ create table if not exists "public"."reports" (
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "reports" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."reports" add column if not exists "id" text;
-alter table "public"."reports" add column if not exists "project_id" text;
-alter table "public"."reports" add column if not exists "organization_id" text;
-alter table "public"."reports" add column if not exists "title" text;
-alter table "public"."reports" add column if not exists "status" text default 'draft'::text;
-alter table "public"."reports" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-alter table "public"."reports" add column if not exists "updated_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."research_evidence" (
     "id" text not null,
@@ -10974,22 +8447,6 @@ create table if not exists "public"."risk_signal_alerts" (
     "created_at" timestamp without time zone default now(),
     "expires_at" timestamp without time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "risk_signal_alerts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."risk_signal_alerts" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."risk_signal_alerts" add column if not exists "organization_id" text;
-alter table "public"."risk_signal_alerts" add column if not exists "initiative_id" text;
-alter table "public"."risk_signal_alerts" add column if not exists "raid_item_id" text;
-alter table "public"."risk_signal_alerts" add column if not exists "signal_type" text;
-alter table "public"."risk_signal_alerts" add column if not exists "severity" text;
-alter table "public"."risk_signal_alerts" add column if not exists "title" text;
-alter table "public"."risk_signal_alerts" add column if not exists "description" text;
-alter table "public"."risk_signal_alerts" add column if not exists "suggested_action" text;
-alter table "public"."risk_signal_alerts" add column if not exists "is_dismissed" boolean default false;
-alter table "public"."risk_signal_alerts" add column if not exists "dismissed_by" text;
-alter table "public"."risk_signal_alerts" add column if not exists "dismissed_at" timestamp without time zone;
-alter table "public"."risk_signal_alerts" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."risk_signal_alerts" add column if not exists "expires_at" timestamp without time zone;
-
 
 create table if not exists "public"."roi_assumptions" (
     "id" text not null default (gen_random_uuid())::text,
@@ -11013,28 +8470,6 @@ create table if not exists "public"."roi_assumptions" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "roi_assumptions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."roi_assumptions" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."roi_assumptions" add column if not exists "initiative_id" text;
-alter table "public"."roi_assumptions" add column if not exists "organization_id" text;
-alter table "public"."roi_assumptions" add column if not exists "capex" real default 0;
-alter table "public"."roi_assumptions" add column if not exists "opex_annual" real default 0;
-alter table "public"."roi_assumptions" add column if not exists "expected_roi_percent" real;
-alter table "public"."roi_assumptions" add column if not exists "expected_npv" real;
-alter table "public"."roi_assumptions" add column if not exists "expected_payback_months" integer;
-alter table "public"."roi_assumptions" add column if not exists "horizon_months" integer default 36;
-alter table "public"."roi_assumptions" add column if not exists "baseline_revenue" real;
-alter table "public"."roi_assumptions" add column if not exists "baseline_cost" real;
-alter table "public"."roi_assumptions" add column if not exists "expected_revenue_delta" real;
-alter table "public"."roi_assumptions" add column if not exists "expected_cost_delta" real;
-alter table "public"."roi_assumptions" add column if not exists "effect_start_date" date;
-alter table "public"."roi_assumptions" add column if not exists "assumptions_text" text;
-alter table "public"."roi_assumptions" add column if not exists "assumptions_owner" text;
-alter table "public"."roi_assumptions" add column if not exists "confidence" text default 'medium'::text;
-alter table "public"."roi_assumptions" add column if not exists "last_updated_by" text;
-alter table "public"."roi_assumptions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."roi_assumptions" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."roi_evidence" (
     "id" text not null,
@@ -11068,19 +8503,6 @@ create table if not exists "public"."roi_realized_values" (
     "recorded_by" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "roi_realized_values" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."roi_realized_values" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."roi_realized_values" add column if not exists "initiative_id" text;
-alter table "public"."roi_realized_values" add column if not exists "organization_id" text;
-alter table "public"."roi_realized_values" add column if not exists "period_month" date;
-alter table "public"."roi_realized_values" add column if not exists "realized_revenue_delta" real;
-alter table "public"."roi_realized_values" add column if not exists "realized_cost_delta" real;
-alter table "public"."roi_realized_values" add column if not exists "realized_savings" real;
-alter table "public"."roi_realized_values" add column if not exists "source" text default 'manual'::text;
-alter table "public"."roi_realized_values" add column if not exists "variance_notes" text;
-alter table "public"."roi_realized_values" add column if not exists "recorded_by" text;
-alter table "public"."roi_realized_values" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."role_permission_assignments" (
     "id" text not null,
@@ -11097,13 +8519,6 @@ create table if not exists "public"."role_permissions" (
     "description" text,
     "created_at" timestamp with time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "role_permissions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."role_permissions" add column if not exists "id" text;
-alter table "public"."role_permissions" add column if not exists "role" text;
-alter table "public"."role_permissions" add column if not exists "permission_key" text;
-alter table "public"."role_permissions" add column if not exists "description" text;
-alter table "public"."role_permissions" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."sandbox_activity" (
     "id" text not null,
@@ -11194,12 +8609,7 @@ create table if not exists "public"."schema_migrations" (
     "status" text not null default 'success'::text
 );
 -- Strict-schema repair (2026-08, auto-generated): "schema_migrations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."schema_migrations" add column if not exists "version" text;
-alter table "public"."schema_migrations" add column if not exists "filename" text;
-alter table "public"."schema_migrations" add column if not exists "applied_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."schema_migrations" add column if not exists "checksum" text;
-alter table "public"."schema_migrations" add column if not exists "execution_time_ms" integer;
-alter table "public"."schema_migrations" add column if not exists "status" text default 'success'::text;
 
 
 create table if not exists "public"."scim_conflict_log" (
@@ -11271,21 +8681,7 @@ create table if not exists "public"."security_incidents" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
 -- Strict-schema repair (2026-08, auto-generated): "security_incidents" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."security_incidents" add column if not exists "id" text;
-alter table "public"."security_incidents" add column if not exists "incident_type" text;
 alter table "public"."security_incidents" add column if not exists "type" text;
-alter table "public"."security_incidents" add column if not exists "title" text;
-alter table "public"."security_incidents" add column if not exists "description" text;
-alter table "public"."security_incidents" add column if not exists "severity" text default 'MEDIUM'::text;
-alter table "public"."security_incidents" add column if not exists "status" text default 'open'::text;
-alter table "public"."security_incidents" add column if not exists "affected_resources" text;
-alter table "public"."security_incidents" add column if not exists "metadata_json" text;
-alter table "public"."security_incidents" add column if not exists "detected_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."security_incidents" add column if not exists "resolved_at" timestamp without time zone;
-alter table "public"."security_incidents" add column if not exists "resolved_by" text;
-alter table "public"."security_incidents" add column if not exists "resolution_notes" text;
-alter table "public"."security_incidents" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."security_incidents" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 
 
 create table if not exists "public"."security_policies" (
@@ -11393,12 +8789,6 @@ create table if not exists "public"."spending_alerts" (
     "updated_at" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "spending_alerts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."spending_alerts" add column if not exists "id" text;
-alter table "public"."spending_alerts" add column if not exists "organization_id" text;
-alter table "public"."spending_alerts" add column if not exists "alert_type" text;
-alter table "public"."spending_alerts" add column if not exists "threshold" real;
-alter table "public"."spending_alerts" add column if not exists "is_active" integer default 1;
-alter table "public"."spending_alerts" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."spending_alerts" add column if not exists "type" text;
 alter table "public"."spending_alerts" add column if not exists "threshold_type" text;
 alter table "public"."spending_alerts" add column if not exists "action" text;
@@ -11472,35 +8862,6 @@ create table if not exists "public"."sso_configurations" (
     "jit_provisioning" integer default 1
 );
 -- Strict-schema repair (2026-08, auto-generated): "sso_configurations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."sso_configurations" add column if not exists "id" text;
-alter table "public"."sso_configurations" add column if not exists "organization_id" text;
-alter table "public"."sso_configurations" add column if not exists "provider_type" text;
-alter table "public"."sso_configurations" add column if not exists "provider_name" text;
-alter table "public"."sso_configurations" add column if not exists "idp_entity_id" text;
-alter table "public"."sso_configurations" add column if not exists "idp_sso_url" text;
-alter table "public"."sso_configurations" add column if not exists "idp_slo_url" text;
-alter table "public"."sso_configurations" add column if not exists "idp_certificate" text;
-alter table "public"."sso_configurations" add column if not exists "client_id" text;
-alter table "public"."sso_configurations" add column if not exists "client_secret_encrypted" text;
-alter table "public"."sso_configurations" add column if not exists "authorization_url" text;
-alter table "public"."sso_configurations" add column if not exists "token_url" text;
-alter table "public"."sso_configurations" add column if not exists "userinfo_url" text;
-alter table "public"."sso_configurations" add column if not exists "sp_entity_id" text;
-alter table "public"."sso_configurations" add column if not exists "sp_acs_url" text;
-alter table "public"."sso_configurations" add column if not exists "sp_slo_url" text;
-alter table "public"."sso_configurations" add column if not exists "attribute_mapping" text default '{"email":"email","firstName":"given_name","lastName":"family_name"}'::text;
-alter table "public"."sso_configurations" add column if not exists "enforce_sso" boolean default false;
-alter table "public"."sso_configurations" add column if not exists "allow_password_login" boolean default true;
-alter table "public"."sso_configurations" add column if not exists "auto_provision_users" boolean default true;
-alter table "public"."sso_configurations" add column if not exists "default_role" text default 'USER'::text;
-alter table "public"."sso_configurations" add column if not exists "is_active" boolean default false;
-alter table "public"."sso_configurations" add column if not exists "is_verified" boolean default false;
-alter table "public"."sso_configurations" add column if not exists "verified_at" timestamp without time zone;
-alter table "public"."sso_configurations" add column if not exists "metadata_url" text;
-alter table "public"."sso_configurations" add column if not exists "raw_metadata" text;
-alter table "public"."sso_configurations" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."sso_configurations" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."sso_configurations" add column if not exists "created_by" text;
 alter table "public"."sso_configurations" add column if not exists "is_enabled" integer default 0;
 alter table "public"."sso_configurations" add column if not exists "is_default" integer default 0;
 alter table "public"."sso_configurations" add column if not exists "jit_provisioning" integer default 1;
@@ -11583,21 +8944,6 @@ create table if not exists "public"."stakeholder_engagements" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "stakeholder_engagements" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."stakeholder_engagements" add column if not exists "id" text;
-alter table "public"."stakeholder_engagements" add column if not exists "organization_id" text;
-alter table "public"."stakeholder_engagements" add column if not exists "stakeholder_id" text;
-alter table "public"."stakeholder_engagements" add column if not exists "project_id" text;
-alter table "public"."stakeholder_engagements" add column if not exists "role" text;
-alter table "public"."stakeholder_engagements" add column if not exists "raci_type" text;
-alter table "public"."stakeholder_engagements" add column if not exists "influence_level" integer default 3;
-alter table "public"."stakeholder_engagements" add column if not exists "interest_level" integer default 3;
-alter table "public"."stakeholder_engagements" add column if not exists "engagement_status" text;
-alter table "public"."stakeholder_engagements" add column if not exists "notes" text;
-alter table "public"."stakeholder_engagements" add column if not exists "created_by" text;
-alter table "public"."stakeholder_engagements" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."stakeholder_engagements" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."stakeholder_registry" (
     "id" text not null,
@@ -11614,21 +8960,6 @@ create table if not exists "public"."stakeholder_registry" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "stakeholder_registry" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."stakeholder_registry" add column if not exists "id" text;
-alter table "public"."stakeholder_registry" add column if not exists "organization_id" text;
-alter table "public"."stakeholder_registry" add column if not exists "user_id" text;
-alter table "public"."stakeholder_registry" add column if not exists "external_name" text;
-alter table "public"."stakeholder_registry" add column if not exists "external_email" text;
-alter table "public"."stakeholder_registry" add column if not exists "org_unit" text;
-alter table "public"."stakeholder_registry" add column if not exists "category" text default 'INTERNAL'::text;
-alter table "public"."stakeholder_registry" add column if not exists "default_influence" integer;
-alter table "public"."stakeholder_registry" add column if not exists "default_interest" integer;
-alter table "public"."stakeholder_registry" add column if not exists "notes" text;
-alter table "public"."stakeholder_registry" add column if not exists "created_by" text;
-alter table "public"."stakeholder_registry" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."stakeholder_registry" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."stakeholder_segments" (
     "id" uuid not null default gen_random_uuid(),
@@ -11642,18 +8973,6 @@ create table if not exists "public"."stakeholder_segments" (
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "stakeholder_segments" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."stakeholder_segments" add column if not exists "id" uuid default gen_random_uuid();
-alter table "public"."stakeholder_segments" add column if not exists "organization_id" text;
-alter table "public"."stakeholder_segments" add column if not exists "initiative_id" text;
-alter table "public"."stakeholder_segments" add column if not exists "name" text;
-alter table "public"."stakeholder_segments" add column if not exists "description" text;
-alter table "public"."stakeholder_segments" add column if not exists "segment_type" text;
-alter table "public"."stakeholder_segments" add column if not exists "members_json" jsonb default '[]'::jsonb;
-alter table "public"."stakeholder_segments" add column if not exists "created_by" text;
-alter table "public"."stakeholder_segments" add column if not exists "created_at" timestamp with time zone default now();
-alter table "public"."stakeholder_segments" add column if not exists "updated_at" timestamp with time zone default now();
-
 
 create table if not exists "public"."steerco_pack_recipients" (
     "id" text not null default (gen_random_uuid())::text,
@@ -11776,17 +9095,6 @@ create table if not exists "public"."subscription_state_history" (
     "metadata" json,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "subscription_state_history" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."subscription_state_history" add column if not exists "id" text;
-alter table "public"."subscription_state_history" add column if not exists "organization_id" text;
-alter table "public"."subscription_state_history" add column if not exists "subscription_id" text;
-alter table "public"."subscription_state_history" add column if not exists "previous_state" text;
-alter table "public"."subscription_state_history" add column if not exists "new_state" text;
-alter table "public"."subscription_state_history" add column if not exists "trigger_event" text;
-alter table "public"."subscription_state_history" add column if not exists "trigger_event_id" text;
-alter table "public"."subscription_state_history" add column if not exists "metadata" json;
-alter table "public"."subscription_state_history" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."summary_sends" (
     "id" text not null,
@@ -11815,22 +9123,6 @@ create table if not exists "public"."superadmin_ai_settings" (
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_by" text
 );
--- Strict-schema repair (2026-08, auto-generated): "superadmin_ai_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."superadmin_ai_settings" add column if not exists "id" text default 'global'::text;
-alter table "public"."superadmin_ai_settings" add column if not exists "default_provider" text;
-alter table "public"."superadmin_ai_settings" add column if not exists "fallback_chain" text default '[]'::text;
-alter table "public"."superadmin_ai_settings" add column if not exists "circuit_breaker_config" text default '{"failureThreshold": 5, "cooldownSeconds": 60}'::text;
-alter table "public"."superadmin_ai_settings" add column if not exists "global_token_limit" integer default 10000000;
-alter table "public"."superadmin_ai_settings" add column if not exists "global_rate_limit" text default '{"requestsPerMinute": 60, "requestsPerHour": 1000}'::text;
-alter table "public"."superadmin_ai_settings" add column if not exists "max_context_window_size" integer default 128000;
-alter table "public"."superadmin_ai_settings" add column if not exists "max_tokens_per_request" integer default 8192;
-alter table "public"."superadmin_ai_settings" add column if not exists "pii_detection_sensitivity" text default 'medium'::text;
-alter table "public"."superadmin_ai_settings" add column if not exists "require_encryption" integer default 1;
-alter table "public"."superadmin_ai_settings" add column if not exists "data_residency" text;
-alter table "public"."superadmin_ai_settings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."superadmin_ai_settings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."superadmin_ai_settings" add column if not exists "updated_by" text;
-
 
 create table if not exists "public"."support_ticket_comments" (
     "id" text not null,
@@ -11878,21 +9170,6 @@ create table if not exists "public"."sync_error_log" (
     "resolved_at" timestamp without time zone,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "sync_error_log" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."sync_error_log" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."sync_error_log" add column if not exists "organization_id" text;
-alter table "public"."sync_error_log" add column if not exists "integration_id" text;
-alter table "public"."sync_error_log" add column if not exists "sync_run_id" text;
-alter table "public"."sync_error_log" add column if not exists "error_type" text;
-alter table "public"."sync_error_log" add column if not exists "error_code" text;
-alter table "public"."sync_error_log" add column if not exists "error_message" text;
-alter table "public"."sync_error_log" add column if not exists "is_retryable" boolean default true;
-alter table "public"."sync_error_log" add column if not exists "retry_count" integer default 0;
-alter table "public"."sync_error_log" add column if not exists "max_retries" integer default 3;
-alter table "public"."sync_error_log" add column if not exists "next_retry_at" timestamp without time zone;
-alter table "public"."sync_error_log" add column if not exists "resolved_at" timestamp without time zone;
-alter table "public"."sync_error_log" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."sync_rate_limits" (
     "id" text not null default (gen_random_uuid())::text,
@@ -11906,18 +9183,6 @@ create table if not exists "public"."sync_rate_limits" (
     "is_throttled" boolean default false,
     "last_request_at" timestamp without time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "sync_rate_limits" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."sync_rate_limits" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."sync_rate_limits" add column if not exists "organization_id" text;
-alter table "public"."sync_rate_limits" add column if not exists "integration_id" text;
-alter table "public"."sync_rate_limits" add column if not exists "provider" text;
-alter table "public"."sync_rate_limits" add column if not exists "window_start" timestamp without time zone;
-alter table "public"."sync_rate_limits" add column if not exists "window_minutes" integer default 60;
-alter table "public"."sync_rate_limits" add column if not exists "request_count" integer default 0;
-alter table "public"."sync_rate_limits" add column if not exists "max_requests" integer default 100;
-alter table "public"."sync_rate_limits" add column if not exists "is_throttled" boolean default false;
-alter table "public"."sync_rate_limits" add column if not exists "last_request_at" timestamp without time zone;
-
 
 create table if not exists "public"."system_config" (
     "id" text not null,
@@ -11927,14 +9192,6 @@ create table if not exists "public"."system_config" (
     "description" text,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "system_config" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."system_config" add column if not exists "id" text;
-alter table "public"."system_config" add column if not exists "config_key" text;
-alter table "public"."system_config" add column if not exists "config_value" text;
-alter table "public"."system_config" add column if not exists "config_type" text default 'string'::text;
-alter table "public"."system_config" add column if not exists "description" text;
-alter table "public"."system_config" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."system_feedback" (
     "id" text not null,
@@ -11964,12 +9221,6 @@ create table if not exists "public"."system_feedback" (
     "updated_at" timestamp without time zone
 );
 -- Strict-schema repair (2026-08, auto-generated): "system_feedback" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."system_feedback" add column if not exists "id" text;
-alter table "public"."system_feedback" add column if not exists "user_id" text;
-alter table "public"."system_feedback" add column if not exists "type" text;
-alter table "public"."system_feedback" add column if not exists "message" text;
-alter table "public"."system_feedback" add column if not exists "status" text default 'pending'::text;
-alter table "public"."system_feedback" add column if not exists "created_at" timestamp with time zone default CURRENT_TIMESTAMP;
 alter table "public"."system_feedback" add column if not exists "route_path" text;
 alter table "public"."system_feedback" add column if not exists "device_type" text;
 alter table "public"."system_feedback" add column if not exists "screen_size" text;
@@ -12012,13 +9263,6 @@ create table if not exists "public"."system_metrics" (
     "metric_unit" text,
     "recorded_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "system_metrics" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."system_metrics" add column if not exists "id" text;
-alter table "public"."system_metrics" add column if not exists "metric_name" text;
-alter table "public"."system_metrics" add column if not exists "metric_value" real;
-alter table "public"."system_metrics" add column if not exists "metric_unit" text;
-alter table "public"."system_metrics" add column if not exists "recorded_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."task_allocations" (
     "id" text not null default (gen_random_uuid())::text,
@@ -12081,12 +9325,6 @@ create table if not exists "public"."task_labels" (
     "label" text not null,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "task_labels" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."task_labels" add column if not exists "id" text;
-alter table "public"."task_labels" add column if not exists "project_id" text;
-alter table "public"."task_labels" add column if not exists "label" text;
-alter table "public"."task_labels" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."task_status_transitions" (
     "id" text not null,
@@ -12182,19 +9420,6 @@ create table if not exists "public"."token_ledger" (
     "ref_entity_id" text,
     "metadata_json" text
 );
--- Strict-schema repair (2026-08, auto-generated): "token_ledger" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."token_ledger" add column if not exists "id" text;
-alter table "public"."token_ledger" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."token_ledger" add column if not exists "organization_id" text;
-alter table "public"."token_ledger" add column if not exists "actor_user_id" text;
-alter table "public"."token_ledger" add column if not exists "actor_type" text default 'USER'::text;
-alter table "public"."token_ledger" add column if not exists "type" text;
-alter table "public"."token_ledger" add column if not exists "amount" integer;
-alter table "public"."token_ledger" add column if not exists "reason" text;
-alter table "public"."token_ledger" add column if not exists "ref_entity_type" text;
-alter table "public"."token_ledger" add column if not exists "ref_entity_id" text;
-alter table "public"."token_ledger" add column if not exists "metadata_json" text;
-
 
 create table if not exists "public"."tool_assets" (
     "id" uuid not null default gen_random_uuid(),
@@ -12260,17 +9485,6 @@ create table if not exists "public"."tool_facilitation_outcomes" (
     "exported_to_id" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "tool_facilitation_outcomes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."tool_facilitation_outcomes" add column if not exists "id" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "facilitation_session_id" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "outcome_type" text default 'decision'::text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "title" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "description" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "vote_summary" text default '{}'::text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "exported_to_type" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "exported_to_id" text;
-alter table "public"."tool_facilitation_outcomes" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."tool_facilitation_roles" (
     "id" text not null,
@@ -12280,14 +9494,6 @@ create table if not exists "public"."tool_facilitation_roles" (
     "permissions" text default '[]'::text,
     "assigned_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "tool_facilitation_roles" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."tool_facilitation_roles" add column if not exists "id" text;
-alter table "public"."tool_facilitation_roles" add column if not exists "facilitation_session_id" text;
-alter table "public"."tool_facilitation_roles" add column if not exists "user_id" text;
-alter table "public"."tool_facilitation_roles" add column if not exists "role_name" text default 'participant'::text;
-alter table "public"."tool_facilitation_roles" add column if not exists "permissions" text default '[]'::text;
-alter table "public"."tool_facilitation_roles" add column if not exists "assigned_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."tool_facilitation_sessions" (
     "id" text not null,
@@ -12301,18 +9507,6 @@ create table if not exists "public"."tool_facilitation_sessions" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "ended_at" timestamp without time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "tool_facilitation_sessions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."tool_facilitation_sessions" add column if not exists "id" text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "organization_id" text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "tool_session_id" text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "facilitator_id" text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "status" text default 'active'::text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "timer_state" text default '{}'::text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "current_phase" text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "settings" text default '{}'::text;
-alter table "public"."tool_facilitation_sessions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."tool_facilitation_sessions" add column if not exists "ended_at" timestamp without time zone;
-
 
 create table if not exists "public"."tool_facilitation_votes" (
     "id" text not null,
@@ -12325,17 +9519,6 @@ create table if not exists "public"."tool_facilitation_votes" (
     "comment" text,
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "tool_facilitation_votes" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."tool_facilitation_votes" add column if not exists "id" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "facilitation_session_id" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "voter_id" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "voter_name" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "vote_target_id" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "vote_type" text default 'upvote'::text;
-alter table "public"."tool_facilitation_votes" add column if not exists "vote_value" integer default 1;
-alter table "public"."tool_facilitation_votes" add column if not exists "comment" text;
-alter table "public"."tool_facilitation_votes" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."tool_initiative_batches" (
     "id" text not null,
@@ -12565,30 +9748,6 @@ create table if not exists "public"."user_ai_settings" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "user_ai_settings" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_ai_settings" add column if not exists "user_id" text;
-alter table "public"."user_ai_settings" add column if not exists "response_style" text default 'balanced'::text;
-alter table "public"."user_ai_settings" add column if not exists "writing_tone" text default 'professional'::text;
-alter table "public"."user_ai_settings" add column if not exists "preferred_language" text default 'auto'::text;
-alter table "public"."user_ai_settings" add column if not exists "code_explanations" integer default 1;
-alter table "public"."user_ai_settings" add column if not exists "show_sources" integer default 1;
-alter table "public"."user_ai_settings" add column if not exists "proactivity_mode" text default 'BALANCED'::text;
-alter table "public"."user_ai_settings" add column if not exists "model_temperature" real default 0.7;
-alter table "public"."user_ai_settings" add column if not exists "max_tokens" integer default 4096;
-alter table "public"."user_ai_settings" add column if not exists "top_p" real default 1.0;
-alter table "public"."user_ai_settings" add column if not exists "frequency_penalty" real default 0.0;
-alter table "public"."user_ai_settings" add column if not exists "presence_penalty" real default 0.0;
-alter table "public"."user_ai_settings" add column if not exists "system_instructions" text default ''::text;
-alter table "public"."user_ai_settings" add column if not exists "visible_model_ids" text default '[]'::text;
-alter table "public"."user_ai_settings" add column if not exists "preferred_model_id" text;
-alter table "public"."user_ai_settings" add column if not exists "enable_pii_redaction" integer default 0;
-alter table "public"."user_ai_settings" add column if not exists "data_retention_policy" text default 'standard'::text;
-alter table "public"."user_ai_settings" add column if not exists "share_usage_analytics" integer default 1;
-alter table "public"."user_ai_settings" add column if not exists "context_retention" text default 'session'::text;
-alter table "public"."user_ai_settings" add column if not exists "auto_suggestions" integer default 1;
-alter table "public"."user_ai_settings" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_ai_settings" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."user_appearance_preferences" (
     "user_id" text not null,
@@ -12622,13 +9781,6 @@ create table if not exists "public"."user_availability" (
     "settings" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "user_availability" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_availability" add column if not exists "id" text;
-alter table "public"."user_availability" add column if not exists "user_id" text;
-alter table "public"."user_availability" add column if not exists "status_message" text;
-alter table "public"."user_availability" add column if not exists "working_hours_json" text default '{}'::text;
-alter table "public"."user_availability" add column if not exists "dnd_hours_json" text default '{}'::text;
-alter table "public"."user_availability" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_availability" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."user_availability" add column if not exists "settings" text;
 
 
@@ -12664,14 +9816,6 @@ create table if not exists "public"."user_data_retention" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "user_data_retention" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_data_retention" add column if not exists "id" integer default nextval('user_data_retention_id_seq'::regclass);
-alter table "public"."user_data_retention" add column if not exists "user_id" text;
-alter table "public"."user_data_retention" add column if not exists "retention_period" text default '365'::text;
-alter table "public"."user_data_retention" add column if not exists "auto_delete" integer default 0;
-alter table "public"."user_data_retention" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_data_retention" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."user_experiments" (
     "id" text not null,
@@ -12691,16 +9835,6 @@ create table if not exists "public"."user_gdpr_consents" (
     "created_at" timestamp without time zone default CURRENT_TIMESTAMP,
     "updated_at" timestamp without time zone default CURRENT_TIMESTAMP
 );
--- Strict-schema repair (2026-08, auto-generated): "user_gdpr_consents" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_gdpr_consents" add column if not exists "user_id" text;
-alter table "public"."user_gdpr_consents" add column if not exists "analytics" integer default 1;
-alter table "public"."user_gdpr_consents" add column if not exists "personalization" integer default 1;
-alter table "public"."user_gdpr_consents" add column if not exists "marketing" integer default 0;
-alter table "public"."user_gdpr_consents" add column if not exists "third_party_sharing" integer default 0;
-alter table "public"."user_gdpr_consents" add column if not exists "ai_training" integer default 1;
-alter table "public"."user_gdpr_consents" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_gdpr_consents" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
-
 
 create table if not exists "public"."user_goals" (
     "id" text not null,
@@ -12812,16 +9946,6 @@ create table if not exists "public"."user_settings_history" (
     "changed_at" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "user_settings_history" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_settings_history" add column if not exists "id" text;
-alter table "public"."user_settings_history" add column if not exists "user_id" text;
-alter table "public"."user_settings_history" add column if not exists "category" text;
-alter table "public"."user_settings_history" add column if not exists "setting" text;
-alter table "public"."user_settings_history" add column if not exists "action" text;
-alter table "public"."user_settings_history" add column if not exists "old_value" text;
-alter table "public"."user_settings_history" add column if not exists "new_value" text;
-alter table "public"."user_settings_history" add column if not exists "timestamp" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_settings_history" add column if not exists "device" text;
-alter table "public"."user_settings_history" add column if not exists "ip_address" text;
 alter table "public"."user_settings_history" add column if not exists "setting_key" text;
 alter table "public"."user_settings_history" add column if not exists "changed_at" text;
 
@@ -12840,14 +9964,6 @@ create table if not exists "public"."user_settings_templates" (
     "is_global" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "user_settings_templates" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."user_settings_templates" add column if not exists "id" text;
-alter table "public"."user_settings_templates" add column if not exists "user_id" text;
-alter table "public"."user_settings_templates" add column if not exists "name" text;
-alter table "public"."user_settings_templates" add column if not exists "description" text;
-alter table "public"."user_settings_templates" add column if not exists "icon" text default '📋'::text;
-alter table "public"."user_settings_templates" add column if not exists "settings_json" text;
-alter table "public"."user_settings_templates" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."user_settings_templates" add column if not exists "updated_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."user_settings_templates" add column if not exists "settings" text;
 alter table "public"."user_settings_templates" add column if not exists "is_default" text;
 alter table "public"."user_settings_templates" add column if not exists "is_global" text;
@@ -13053,14 +10169,6 @@ create table if not exists "public"."valuation_snapshots" (
     "approved_by" text,
     "created_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "valuation_snapshots" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."valuation_snapshots" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."valuation_snapshots" add column if not exists "valuation_id" text;
-alter table "public"."valuation_snapshots" add column if not exists "version" integer;
-alter table "public"."valuation_snapshots" add column if not exists "snapshot_data" jsonb;
-alter table "public"."valuation_snapshots" add column if not exists "approved_by" text;
-alter table "public"."valuation_snapshots" add column if not exists "created_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."valuations" (
     "id" text not null default (gen_random_uuid())::text,
@@ -13088,32 +10196,6 @@ create table if not exists "public"."valuations" (
     "created_at" timestamp without time zone default now(),
     "updated_at" timestamp without time zone default now()
 );
--- Strict-schema repair (2026-08, auto-generated): "valuations" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."valuations" add column if not exists "id" text default (gen_random_uuid())::text;
-alter table "public"."valuations" add column if not exists "organization_id" text;
-alter table "public"."valuations" add column if not exists "project_id" text;
-alter table "public"."valuations" add column if not exists "initiative_id" text;
-alter table "public"."valuations" add column if not exists "title" text;
-alter table "public"."valuations" add column if not exists "description" text;
-alter table "public"."valuations" add column if not exists "status" text default 'DRAFT'::text;
-alter table "public"."valuations" add column if not exists "source_type" text;
-alter table "public"."valuations" add column if not exists "source_id" text;
-alter table "public"."valuations" add column if not exists "horizon_years" integer default 5;
-alter table "public"."valuations" add column if not exists "currency" text default 'PLN'::text;
-alter table "public"."valuations" add column if not exists "assumptions" jsonb default '{}'::jsonb;
-alter table "public"."valuations" add column if not exists "peers" jsonb default '[]'::jsonb;
-alter table "public"."valuations" add column if not exists "results" jsonb default '{}'::jsonb;
-alter table "public"."valuations" add column if not exists "advisory" jsonb;
-alter table "public"."valuations" add column if not exists "negotiation_pack" jsonb;
-alter table "public"."valuations" add column if not exists "export_path" text;
-alter table "public"."valuations" add column if not exists "exported_at" timestamp without time zone;
-alter table "public"."valuations" add column if not exists "version" integer default 1;
-alter table "public"."valuations" add column if not exists "approved_by" text;
-alter table "public"."valuations" add column if not exists "approved_at" timestamp without time zone;
-alter table "public"."valuations" add column if not exists "created_by" text;
-alter table "public"."valuations" add column if not exists "created_at" timestamp without time zone default now();
-alter table "public"."valuations" add column if not exists "updated_at" timestamp without time zone default now();
-
 
 create table if not exists "public"."webhook_deliveries" (
     "id" text not null,
@@ -13140,20 +10222,6 @@ create table if not exists "public"."webhook_deliveries" (
     "created_at" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "webhook_deliveries" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."webhook_deliveries" add column if not exists "id" text;
-alter table "public"."webhook_deliveries" add column if not exists "webhook_id" text;
-alter table "public"."webhook_deliveries" add column if not exists "event_type" text;
-alter table "public"."webhook_deliveries" add column if not exists "payload" text;
-alter table "public"."webhook_deliveries" add column if not exists "request_headers" text;
-alter table "public"."webhook_deliveries" add column if not exists "response_status" integer;
-alter table "public"."webhook_deliveries" add column if not exists "response_body" text;
-alter table "public"."webhook_deliveries" add column if not exists "response_headers" text;
-alter table "public"."webhook_deliveries" add column if not exists "attempt_count" integer default 1;
-alter table "public"."webhook_deliveries" add column if not exists "duration_ms" integer;
-alter table "public"."webhook_deliveries" add column if not exists "success" integer default 0;
-alter table "public"."webhook_deliveries" add column if not exists "error_message" text;
-alter table "public"."webhook_deliveries" add column if not exists "delivered_at" timestamp without time zone default CURRENT_TIMESTAMP;
-alter table "public"."webhook_deliveries" add column if not exists "next_retry_at" timestamp without time zone;
 alter table "public"."webhook_deliveries" add column if not exists "subscription_id" text;
 alter table "public"."webhook_deliveries" add column if not exists "event" text;
 alter table "public"."webhook_deliveries" add column if not exists "status" text;
@@ -13205,17 +10273,6 @@ create table if not exists "public"."webhook_subscriptions" (
     "secret_hash" text
 );
 -- Strict-schema repair (2026-08, auto-generated): "webhook_subscriptions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."webhook_subscriptions" add column if not exists "id" text;
-alter table "public"."webhook_subscriptions" add column if not exists "organization_id" text;
-alter table "public"."webhook_subscriptions" add column if not exists "name" text;
-alter table "public"."webhook_subscriptions" add column if not exists "url" text;
-alter table "public"."webhook_subscriptions" add column if not exists "events_json" text;
-alter table "public"."webhook_subscriptions" add column if not exists "secret" text;
-alter table "public"."webhook_subscriptions" add column if not exists "is_active" integer default 1;
-alter table "public"."webhook_subscriptions" add column if not exists "failure_count" integer default 0;
-alter table "public"."webhook_subscriptions" add column if not exists "last_success_at" timestamp without time zone;
-alter table "public"."webhook_subscriptions" add column if not exists "last_failure_at" timestamp without time zone;
-alter table "public"."webhook_subscriptions" add column if not exists "created_at" timestamp without time zone default CURRENT_TIMESTAMP;
 alter table "public"."webhook_subscriptions" add column if not exists "events" text;
 alter table "public"."webhook_subscriptions" add column if not exists "secret_hash" text;
 
@@ -13567,35 +10624,6 @@ create table if not exists "public"."z139_backup_919_notebook_pages" (
     "cover_url" text,
     "search_vector" tsvector
 );
--- Strict-schema repair (2026-08, auto-generated): "z139_backup_919_notebook_pages" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "id" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "owner_user_id" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "organization_id" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "project_id" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "visibility" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "title" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "content_json" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "content_text" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "tags_json" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "created_at" timestamp without time zone;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "updated_at" timestamp without time zone;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "maturity" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "icon" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "summary" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "status" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "pinned" integer;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "converted_to_json" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "verification_status" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "review_cadence" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "stale_at" timestamp without time zone;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "last_reviewed_at" timestamp without time zone;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "capture_source" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "capture_metadata" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "attachments_json" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "notebook_id" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "cover_url" text;
-alter table "public"."z139_backup_919_notebook_pages" add column if not exists "search_vector" tsvector;
-
 
 create table if not exists "public"."z139_backup_919_notebooks" (
     "id" text,
@@ -13609,18 +10637,6 @@ create table if not exists "public"."z139_backup_919_notebooks" (
     "created_at" timestamp without time zone,
     "updated_at" timestamp without time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "z139_backup_919_notebooks" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."z139_backup_919_notebooks" add column if not exists "id" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "owner_user_id" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "organization_id" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "title" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "icon" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "scope" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "team_id" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "context_sharing" text;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "created_at" timestamp without time zone;
-alter table "public"."z139_backup_919_notebooks" add column if not exists "updated_at" timestamp without time zone;
-
 
 create table if not exists "public"."z139_backup_919_raid_items" (
     "id" text,
@@ -13762,41 +10778,6 @@ create table if not exists "public"."z139_backup_919_work_canvas_drafts" (
     "projection_error" text,
     "template_id" text
 );
--- Strict-schema repair (2026-08, auto-generated): "z139_backup_919_work_canvas_drafts" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "organization_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "created_by" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "conversation_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "kind" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "title" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "content_json" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "sources_json" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "provenance_json" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "client_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "project_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "owner_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "research_session_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "artifact_run_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "artifact_id" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "artifact_version" integer;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "save_state" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "lifecycle_state" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "dirty_state" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "visibility" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "audit_status" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "created_at" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "updated_at" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "canonical_format" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "content_md" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "content_json_native" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "blocks_json" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "content_schema_version" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "markdown_projection_status" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "markdown_projected_at" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "markdown_projection_stale_at" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "projection_error" text;
-alter table "public"."z139_backup_919_work_canvas_drafts" add column if not exists "template_id" text;
-
 
 create table if not exists "public"."z139_backup_919_work_canvas_versions" (
     "id" text,
@@ -13809,17 +10790,6 @@ create table if not exists "public"."z139_backup_919_work_canvas_versions" (
     "created_by" text,
     "created_at" timestamp with time zone
 );
--- Strict-schema repair (2026-08, auto-generated): "z139_backup_919_work_canvas_versions" already exists earlier in the run, so the create-table-if-not-exists block above is a no-op for it and never adds these columns. Guarded ADD COLUMN so later statements in this file that reference them (indexes, etc.) don't 42703. No-op wherever the columns already exist.
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "id" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "draft_id" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "operation_type" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "summary" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "content_md" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "content_json_native" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "blocks_json" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "created_by" text;
-alter table "public"."z139_backup_919_work_canvas_versions" add column if not exists "created_at" timestamp with time zone;
-
 
 create table if not exists "v8"."v8_action_proposals" (
     "proposal_id" text not null,
