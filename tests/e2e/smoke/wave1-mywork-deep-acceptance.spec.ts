@@ -17,16 +17,24 @@ function uniqueLabel(prefix: string) {
 }
 
 async function dismissTourModal(page: Page) {
-  const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń|Pomín/i }).first();
+  const skipTour = page
+    .getByRole('button', { name: /Skip tour|Skip for now|Pomiń|Pomín/i })
+    .first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
   const welcomeTitle = page.getByText(/Welcome to Consultinity|Witamy w Consultinity/i);
+
+  await welcomeTitle.waitFor({ state: 'visible', timeout: 2500 }).catch(() => {});
 
   for (let i = 0; i < 10; i++) {
     const hasSkip = await skipTour.isVisible().catch(() => false);
     const hasWelcome = await welcomeTitle.isVisible().catch(() => false);
 
-    if (hasSkip) await skipTour.click({ timeout: 1000, force: true }).catch(() => {});
-    if (hasWelcome) await consultantCard.click({ timeout: 1000, force: true }).catch(() => {});
+    if (hasSkip) {
+      await skipTour.click({ timeout: 1000, force: true });
+      await skipTour.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+    } else if (hasWelcome) {
+      await consultantCard.click({ timeout: 1000, force: true }).catch(() => {});
+    }
 
     await page.keyboard.press('Escape').catch(() => {});
 
@@ -102,6 +110,20 @@ async function openNewNotebookPageModal(page: Page) {
   }
   await page.waitForTimeout(300);
 
+  // The current Notebook route opens on the L1 notebook library. Create a
+  // personal notebook first when the acceptance account has none; creation
+  // automatically enters its L2 page workspace.
+  const emptyLibrary = page.getByRole('heading', { name: /No notebooks yet|Brak notatników/i });
+  if (await emptyLibrary.isVisible().catch(() => false)) {
+    const notebookTitle = uniqueLabel('wave1-notebook');
+    await page.getByRole('button', { name: /New notebook|Nowy notatnik/i }).first().click();
+    const modal = page.getByRole('heading', { name: /New notebook|Nowy notatnik/i });
+    await expect(modal).toBeVisible({ timeout: 5000 });
+    await page.getByPlaceholder(/Strategy 2026|Strategia 2026/i).fill(notebookTitle);
+    await page.getByRole('button', { name: /^Create$|^Utwórz$/i }).click();
+    await expect(page.getByTestId('notebook-new-page-button')).toBeVisible({ timeout: 15000 });
+  }
+
   const candidates = [
     page.getByRole('button', { name: /New page|Nowa strona/i }).first(),
     page.getByTestId('mywork-action-button').first(),
@@ -133,6 +155,9 @@ test.describe('Wave 1 deep My Work acceptance', () => {
     const titleB = uniqueLabel('wave1-notebook-b');
     await gotoWorkspaceRoute(page, '/my-work/notebook');
     await dismissTourModal(page);
+    // Completing/skipping first-run onboarding currently returns to AI Chat.
+    // Re-enter the route under test after the overlay has been dismissed.
+    await gotoWorkspaceRoute(page, '/my-work/notebook');
 
     await openNewNotebookPageModal(page);
     await expect(page.getByRole('heading', { name: /New Note|Nowa notatka|Nowa strona/i })).toBeVisible();
@@ -166,8 +191,20 @@ test.describe('Wave 1 deep My Work acceptance', () => {
 
     const titleInput = page.locator('input[placeholder="Untitled"]').first();
     await expect(titleInput).toBeVisible({ timeout: 30000 });
+    const saveAResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        response.url().includes(`/api/v8/my-work/notebook/pages/${createdA.id}`),
+      { timeout: 30000 }
+    );
     await titleInput.fill(titleA);
     await page.keyboard.press('Tab');
+    const saveAResponse = await saveAResponsePromise;
+    if (!saveAResponse.ok()) {
+      throw new Error(
+        `Notebook save A failed: ${saveAResponse.status()} ${saveAResponse.statusText()} body=${await saveAResponse.text()}`
+      );
+    }
     await expect(page.getByText(titleA).first()).toBeVisible({ timeout: 30000 });
 
     await openNewNotebookPageModal(page);
@@ -200,8 +237,20 @@ test.describe('Wave 1 deep My Work acceptance', () => {
       );
     }
     await expect(titleInput).toBeVisible({ timeout: 30000 });
+    const saveBResponsePromise = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'PUT' &&
+        response.url().includes(`/api/v8/my-work/notebook/pages/${createdB.id}`),
+      { timeout: 30000 }
+    );
     await titleInput.fill(titleB);
     await page.keyboard.press('Tab');
+    const saveBResponse = await saveBResponsePromise;
+    if (!saveBResponse.ok()) {
+      throw new Error(
+        `Notebook save B failed: ${saveBResponse.status()} ${saveBResponse.statusText()} body=${await saveBResponse.text()}`
+      );
+    }
     await expect(page.getByText(titleB).first()).toBeVisible({ timeout: 30000 });
 
     await page.getByText(titleA).first().click();

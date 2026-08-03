@@ -23,6 +23,7 @@ import {
   History,
   Layers,
   Lightbulb,
+  Lock,
   MoreHorizontal,
   Network,
   Paperclip,
@@ -37,6 +38,7 @@ import {
   Type,
   Unlink,
   Users,
+  WifiOff,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -46,7 +48,9 @@ import { useNavigate } from 'react-router-dom';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/primitives/Button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
 import * as apiModule from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -740,6 +744,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language === 'pl';
+  // MW-08: below this breakpoint the sidebar/editor/rail three-column layout
+  // no longer fits (measured live at 375px pre-fix: editor column collapsed
+  // to 25px, unusable). Same hook/threshold as MW-07's CalendarView fix.
+  const isMobile = useIsMobile();
   const {
     emitMyWorkEvent,
     setChatKickoffMessage,
@@ -756,6 +764,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   // Live mirror of `pages` for use inside stable callbacks (e.g. autosave) that
   // must read the latest optimistic-lock version without re-subscribing.
   const pagesRef = useRef<NotebookPage[]>([]);
+  // Guards fetchPages() against out-of-order responses when overlapping calls
+  // are in flight (explicit call-site + the dependency-driven effect) — see
+  // fetchPages' own comment for the real defect this closes.
+  const fetchPagesGenerationRef = useRef(0);
   const [pagesLoading, setPagesLoading] = useState(true);
   const [pagesError, setPagesError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -832,6 +844,56 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
   const isSavingRef = useRef(false);
   const pendingDraftRef = useRef<NotebookPage | null>(null);
   const queuedSaveRef = useRef<NotebookPage | null>(null);
+  // MW-08 UX fix: every successful autosave bumps `pages[].updatedAt` to the
+  // server's fresh value (below, in persistNotebookDraft) purely to keep the
+  // NEXT save's optimistic-lock token correct. But the "sync editor" effect
+  // is keyed on that same `activePage.updatedAt` — without these markers,
+  // EVERY successful autosave would re-fire `editor.commands.setContent(...)`
+  // with content that's already live in the editor, resetting the
+  // ProseMirror selection (cursor jumps, e.g. to the start of the document)
+  // after every autosave round-trip. Two refs are needed, not one:
+  // `editorReflectsPageIdRef` — which page's content is CURRENTLY loaded in
+  // the live editor, so a genuine page switch (away and back) always
+  // resyncs even if `updatedAt` happens to match a stale self-save marker —
+  // and `selfSavedUpdatedAtRef` — the (pageId, updatedAt) our OWN last
+  // successful save just wrote, so that SPECIFIC bump can be told apart from
+  // a genuinely external one (conflict-reload, another session's write).
+  const editorReflectsPageIdRef = useRef<string | null>(null);
+  const selfSavedUpdatedAtRef = useRef<{ pageId: string; updatedAt: string } | null>(null);
+
+  // MW-08: explicit save-state surfaced to the user (Codex acceptance gate —
+  // there was previously no visible autosave indicator at all, only a dead,
+  // never-applied `.nb-saving` CSS rule). `null` = no edit made yet this
+  // page-view. "saved" is set ONLY after the backend responds — never on
+  // schedule/optimistically — so this can't show a premature success.
+  const [saveState, setSaveState] = useState<
+    'saving' | 'saved' | 'error' | 'conflict' | 'offline' | null
+  >(null);
+  // Fresh server copy of the page returned by a 409 conflict response, kept
+  // so the "Reload" action can load it without a second round-trip.
+  const [conflictServerPage, setConflictServerPage] = useState<NotebookPage | null>(null);
+  // Same navigator.onLine + online/offline listener pattern as
+  // src/components/LLMSelector.tsx — no new hook, matches an existing
+  // convention already used elsewhere in this codebase.
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === 'undefined' ? true : navigator.onLine
+  );
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // MW-08: which panel is shown at <768px, where list+editor can no longer
+  // share the screen (see useIsMobile() below). Irrelevant on desktop, where
+  // both panels always render. Starts on the editor when a specific page was
+  // deep-linked (openPageId), otherwise on the list.
+  const [mobileShowList, setMobileShowList] = useState(!openPageId);
 
   // Slash menu
   const [slashState, setSlashState] = useState<SlashMenuState>(INITIAL_SLASH_STATE);
@@ -1063,13 +1125,28 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       }
     };
     if (!activePage) {
+      editorReflectsPageIdRef.current = null;
       if (!safeSetContent({ type: 'doc', content: [] })) return;
       setTitle('');
       setPageProjectId('');
       setPageTags([]);
       return;
     }
+    // Skip re-running setContent (which resets the ProseMirror selection)
+    // ONLY when BOTH hold: (a) the editor already has THIS page loaded — a
+    // genuine switch away and back must always resync, regardless of
+    // updatedAt — and (b) this specific updatedAt is the one OUR OWN last
+    // successful save just wrote, i.e. content already matches what's live.
+    // An externally-sourced updatedAt (conflict-reload, "Save mine anyway"
+    // response, another session's write) never matches (b), so those still
+    // resync correctly.
+    const editorAlreadyHasThisPage = editorReflectsPageIdRef.current === activePage.id;
+    const isOwnAutosaveEcho =
+      selfSavedUpdatedAtRef.current?.pageId === activePage.id &&
+      selfSavedUpdatedAtRef.current?.updatedAt === activePage.updatedAt;
+    if (editorAlreadyHasThisPage && isOwnAutosaveEcho) return;
     if (!safeSetContent(activePage.contentJson || { type: 'doc', content: [] })) return;
+    editorReflectsPageIdRef.current = activePage.id;
     setTitle(activePage.title || '');
     setPageProjectId(activePage.projectId || '');
     setPageTags(activePage.tags || []);
@@ -1084,6 +1161,21 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   const fetchPages = useMemo(
     () => async () => {
+      // Real defect, reproduced against Railway DEV (real network latency —
+      // essentially never triggered on a near-zero-latency local backend):
+      // `handleNewPage` calls `await fetchPages()` explicitly right after
+      // creating a page, but the effect below ALSO calls `fetchPages()` on
+      // its own dependency changes. With two overlapping calls in flight,
+      // responses can arrive OUT OF ORDER — an earlier-dispatched request
+      // (issued before the new page existed) resolving AFTER a later one
+      // (issued after) silently overwrote `pages` with the STALE list,
+      // dropping the just-created page entirely. `activePage` then never
+      // pointed at the new page, and every keystroke into its title/content
+      // silently no-op'd or (worse) mutated a DIFFERENT page's row — with
+      // zero error, zero indication of data loss. A monotonic generation
+      // counter, applied only when this call's response is still the latest
+      // one issued, closes it.
+      const generation = ++fetchPagesGenerationRef.current;
       try {
         const q = String(searchQuery || '').trim();
         if (q) trackFunnelEvent('notebook_search_used', { query: q });
@@ -1094,17 +1186,19 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           q: q || undefined,
           limit: 50,
         });
+        if (generation !== fetchPagesGenerationRef.current) return;
         const arr = list || [];
         setPages(arr);
         setHasMore(arr.length >= 50);
         setActiveId((prev) => prev || arr?.[0]?.id || null);
         setPagesError(false);
       } catch (e) {
+        if (generation !== fetchPagesGenerationRef.current) return;
         console.error('Failed to load notebook pages', e);
         setPagesError(true);
         toast.error(t('myWork.errors.fetchFailed', 'Failed to load'));
       } finally {
-        setPagesLoading(false);
+        if (generation === fetchPagesGenerationRef.current) setPagesLoading(false);
       }
     },
     [projectId, notebookId, searchQuery, t]
@@ -1332,7 +1426,23 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       while (queuedSaveRef.current) {
         const nextDraft = queuedSaveRef.current;
         queuedSaveRef.current = null;
+
+        // Don't even attempt the request while offline — it would just fail
+        // and read as a generic error. Keep the draft queued (not lost) so
+        // reconnecting resumes the save automatically (see the `isOnline`
+        // effect below), and tell the user plainly instead of guessing.
+        if (!navigator.onLine) {
+          queuedSaveRef.current = nextDraft;
+          setSaveState('offline');
+          return;
+        }
+
         isSavingRef.current = true;
+        // Visible from the moment the request actually starts, not from the
+        // debounce schedule — "Saving" means a save is in flight, not merely
+        // pending. setSaveState('saved') below only happens after `await`
+        // resolves, so this can never show a premature success.
+        setSaveState('saving');
 
         trackFunnelEvent('notebook_page_edited', { pageId: nextDraft.id });
 
@@ -1375,12 +1485,25 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           // the next autosave carries the correct expected version.
           const savedUpdatedAt = (saved as NotebookPage | undefined)?.updatedAt;
           if (savedUpdatedAt) {
+            // Mark this exact bump as OUR OWN save landing (see
+            // `selfSavedUpdatedAtRef`'s declaration) so the "sync editor"
+            // effect doesn't call setContent again and reset the cursor for
+            // content that's already correctly live in the editor.
+            selfSavedUpdatedAtRef.current = {
+              pageId: persistedDraft.id,
+              updatedAt: savedUpdatedAt,
+            };
             setPages((prev) =>
               prev.map((p) =>
                 p.id === persistedDraft.id ? { ...p, updatedAt: savedUpdatedAt } : p
               )
             );
           }
+          // Only reachable after the backend has actually responded — the
+          // golden-flow requirement this exists for ("sees Saving, and Saved
+          // only after the backend responds").
+          setSaveState('saved');
+          setConflictServerPage(null);
 
           const textLen = (persistedDraft.contentText || '').length;
           if (textLen > 200 && persistedDraft.id) {
@@ -1394,21 +1517,48 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
             }, 3000);
           }
         } catch (e) {
-          const err = e as { status?: number; code?: string; data?: NotebookPage | null };
+          // `handleResponse` (src/services/api/baseClient.ts) sets `err.data` to
+          // the FULL parsed response body, not the fresh row directly. The v8
+          // conflict route (server/src/routes/v8/my-work.routes.ts) replies with
+          // `{ error, code, data: freshRow, meta }`, so the fresh row lives one
+          // level deeper at `err.data.data`. Confirmed against baseClient's
+          // `err.data = data` assignment and the route's 409 payload — reading
+          // `err.data` directly here would silently pick up the envelope
+          // instead of the page, leaving `conflictServerPage.updatedAt`/
+          // `.contentJson` always undefined (the token would never advance and
+          // Reload would merge garbage fields into `pages`).
+          const err = e as {
+            status?: number;
+            code?: string;
+            data?: { data?: NotebookPage | null };
+          };
           if (err?.status === 409 || err?.code === 'NOTEBOOK_PAGE_CONFLICT') {
             // Someone else (another tab/device/session) saved this page after we
             // loaded it. Do NOT silently overwrite their work. Sync our local
             // optimistic-lock token to the server's latest so the user can
             // reload/merge, and surface a non-destructive toast. Their unsaved
             // edits remain in the editor until they choose to reload.
-            const serverPage = err?.data ?? null;
+            const serverPage = err?.data?.data ?? null;
             if (serverPage?.updatedAt) {
-              setPages((prev) =>
-                prev.map((p) =>
-                  p.id === persistedDraft.id ? { ...p, updatedAt: serverPage.updatedAt } : p
-                )
+              // Advance the optimistic-lock token in the ref mirror ONLY (not
+              // the rendered `pages` state) so a "Save mine anyway" retry can
+              // send the correct expectedUpdatedAt without prematurely
+              // changing activePage.updatedAt. If this used setPages here,
+              // activePage.updatedAt would already equal the server's value
+              // by the time handleReloadFromConflict merges the same row in —
+              // the "sync editor with fresher server content" effect (keyed
+              // on activePage.updatedAt) would see no change and never
+              // re-fire, so clicking Reload would silently do nothing.
+              pagesRef.current = pagesRef.current.map((p) =>
+                p.id === persistedDraft.id ? { ...p, updatedAt: serverPage.updatedAt } : p
               );
             }
+            // Persistent state (not just a toast, which fades) so the user
+            // can't miss it and always has an explicit way out — the
+            // acceptance gate this exists for: "UI never silently overwrites
+            // a conflict, shows Reload/retry."
+            setSaveState('conflict');
+            setConflictServerPage(serverPage);
             toast.error(
               t(
                 'notebook.notebookContent.toastError2',
@@ -1419,6 +1569,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           } else {
             // eslint-disable-next-line no-console
             console.error('Failed to save notebook page', e);
+            setSaveState('error');
             toast.error(t('myWork.errors.updateFailed', 'Failed to update'));
           }
         } finally {
@@ -1428,6 +1579,14 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
     [generateSummary, t, isPolish]
   );
+
+  // Resume a save that was held back by the offline guard above, the moment
+  // connectivity returns — the draft was never lost, only queued.
+  useEffect(() => {
+    if (isOnline && queuedSaveRef.current) {
+      void persistNotebookDraft(queuedSaveRef.current);
+    }
+  }, [isOnline, persistNotebookDraft]);
 
   const flushPendingSave = useCallback(async () => {
     if (saveTimer.current) {
@@ -1466,6 +1625,52 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
     [activePage, pages, persistNotebookDraft]
   );
+
+  // Conflict recovery (MW-08 acceptance gate: no silent overwrite, explicit
+  // Reload/retry). `conflictServerPage` is the fresh row the 409 response
+  // already carried — no second fetch needed. Merging it into `pages` is
+  // enough: the existing "sync editor when the active page gets fresher
+  // server content" effect (keyed on activePage.updatedAt) picks it up and
+  // resets the editor/title/tags for us.
+  const handleReloadFromConflict = useCallback(() => {
+    if (!activePage || !conflictServerPage) return;
+    setPages((prev) =>
+      prev.map((p) => (p.id === activePage.id ? { ...p, ...conflictServerPage } : p))
+    );
+    setSaveState(null);
+    setConflictServerPage(null);
+  }, [activePage, conflictServerPage]);
+
+  // Explicit, user-initiated overwrite of the server's newer content with
+  // what's currently in the editor — safe to retry because the conflict
+  // handler already advanced the local optimistic-lock token to match the
+  // server's latest `updatedAt`, so this attempt is not blind.
+  const handleRetryAfterConflict = useCallback(() => {
+    if (!activePage) return;
+    const current = pages.find((p) => p.id === activePage.id);
+    if (!current) return;
+    setSaveState(null);
+    setConflictServerPage(null);
+    void persistNotebookDraft(current);
+  }, [activePage, pages, persistNotebookDraft]);
+
+  // Reset the indicator when switching notes — a "Saved"/"Conflict" left
+  // over from the PREVIOUS page must never bleed into the newly opened one.
+  useEffect(() => {
+    setSaveState(null);
+    setConflictServerPage(null);
+  }, [activePage?.id]);
+
+  // MW-08 mobile view switch: whenever a DIFFERENT page becomes active (any
+  // selection path — page-list row, new-page creation, mention/backlink
+  // jump, hamburger convert — there are half a dozen call sites for
+  // `setActiveId`), show the editor instead of the list on mobile. Reactive
+  // on the id itself rather than patching every call site, so this can't
+  // miss one; tapping "back to list" doesn't change activeId, so it isn't
+  // fought by this effect.
+  useEffect(() => {
+    if (isMobile && activePage) setMobileShowList(false);
+  }, [isMobile, activePage?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [checklistModalOpen, setChecklistModalOpen] = useState(false);
@@ -1545,8 +1750,29 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           trackFunnelEvent('notebook_template_used', { template: template.id });
         }
 
-        await fetchPages();
-        if (created?.id) setActiveId(created.id);
+        // Real defect, reproduced against Railway DEV (real network latency —
+        // near-invisible on a near-zero-latency local backend, where the gap
+        // below is ~1-5ms instead of the ~100-200ms measured against a real
+        // remote Postgres): `await fetchPages()` used to run BEFORE
+        // `setActiveId(created.id)`, so for the full round-trip of that list
+        // refetch, `activePage` still pointed at the PREVIOUSLY open page —
+        // typing during that window (a fast typist, or any programmatic
+        // client) silently landed on and mutated the WRONG page's row, not
+        // the one just created. `created` is already the server's own
+        // confirmed row from the POST above, the same shape `fetchPages()`
+        // itself would return for this row — insert it directly and switch
+        // immediately, no second round-trip required before it's safe to
+        // type. A separate `fetchPages()` call here was ALSO found to race
+        // an immediately-following rename: its full-list-replace could land
+        // between the rename's optimistic local update and its PUT
+        // response, overwriting the sidebar with the pre-rename snapshot.
+        // Not calling it removes that race entirely rather than reordering
+        // around it — nothing else in this flow needs a second read of a
+        // row we already have in full from the write that just created it.
+        if (created?.id) {
+          setPages((prev) => (prev.some((p) => p.id === created.id) ? prev : [created, ...prev]));
+          setActiveId(created.id);
+        }
         toast.success(t('notebook.notebookContent.toastSuccess2', 'Page created'));
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -2382,576 +2608,625 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     <div className="flex h-[calc(100vh-220px)] min-h-[520px] gap-1.5 p-3 overflow-hidden bg-c-bg">
       <style>{EDITOR_STYLES}</style>
 
-      {/* Sidebar */}
-      <div className="w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
-        {/* Sidebar header */}
-        <div className="px-4 py-3 border-b border-c-border-subtle">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2.5 min-w-0">
-              {onBackToLibrary ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={onBackToLibrary}
-                      data-testid="notebook-back-to-library"
-                      className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised text-c-text-secondary flex items-center justify-center hover:bg-c-surface-raised transition-colors"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t('notebook.notebookContent.label26', 'All notebooks')}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <div className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised flex items-center justify-center">
-                  <BookOpen size={14} className="text-c-text-muted" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-c-text truncate">
-                  {notebookTitle || t('myWork.notebook.title', 'Notebook')}
-                </div>
-                <div className="text-[10px] text-c-text-secondary">
-                  {filteredPages.length} {t('notebook.notebookContent.label27', 'pages')}
+      {/* Sidebar — on mobile this is the ONLY panel shown until a note is
+          opened (see mobileShowList); never mounted at all while the editor
+          is showing, so its controls never sit in the mobile tab order
+          (same convention as MW-07's CalendarSidebar). */}
+      {(!isMobile || mobileShowList) && (
+        <div
+          className={
+            isMobile
+              ? 'w-full flex flex-col rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface'
+              : 'w-80 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col'
+          }
+        >
+          {/* Sidebar header */}
+          <div className="px-4 py-3 border-b border-c-border-subtle">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {onBackToLibrary ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={onBackToLibrary}
+                        data-testid="notebook-back-to-library"
+                        className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised text-c-text-secondary flex items-center justify-center hover:bg-c-surface-raised transition-colors"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t('notebook.notebookContent.label26', 'All notebooks')}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised flex items-center justify-center">
+                    <BookOpen size={14} className="text-c-text-muted" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-c-text truncate">
+                    {notebookTitle || t('myWork.notebook.title', 'Notebook')}
+                  </div>
+                  <div className="text-[10px] text-c-text-secondary">
+                    {filteredPages.length} {t('notebook.notebookContent.label27', 'pages')}
+                  </div>
                 </div>
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setTemplateModalOpen(true)}
+                    data-testid="notebook-new-page-button"
+                    className="p-1.5 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent-soft hover:brightness-110 transition-colors"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
+              </Tooltip>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setTemplateModalOpen(true)}
-                  data-testid="notebook-new-page-button"
-                  className="p-1.5 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent-soft hover:brightness-110 transition-colors"
-                >
-                  <Plus size={16} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
-            </Tooltip>
           </div>
-        </div>
 
-        {/* N5 — Capture box: drop a thought or link straight into this notebook */}
-        <div className="px-3 pt-3 pb-2 border-b border-c-border-subtle">
-          <NotebookQuickCapture notebookId={notebookId} onCreated={() => void fetchPages()} />
-        </div>
+          {/* N5 — Capture box: drop a thought or link straight into this notebook */}
+          <div className="px-3 pt-3 pb-2 border-b border-c-border-subtle">
+            <NotebookQuickCapture notebookId={notebookId} onCreated={() => void fetchPages()} />
+          </div>
 
-        {/* N5 — Scope lens (who owns the page). Auto-hides when there is nothing
+          {/* N5 — Scope lens (who owns the page). Auto-hides when there is nothing
             from teammates, so personal notebooks stay clutter-free. */}
-        {teamPagesExist && (
-          <div className="px-3 pt-2.5">
-            <div className="inline-flex w-full items-center rounded-lg bg-c-surface-raised p-0.5">
-              {(
-                [
-                  { key: 'all', label: t('notebook.notebookContent.label28', 'All') },
-                  { key: 'mine', label: t('notebook.notebookContent.label29', 'Mine') },
-                  { key: 'team', label: t('notebook.notebookContent.label30', 'Team') },
-                ] as Array<{ key: NotebookScopeLens; label: string }>
-              ).map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => setScopeLens(s.key)}
-                  className={`flex-1 rounded-md py-1 text-[11px] font-semibold transition-colors ${
-                    scopeLens === s.key
-                      ? 'bg-c-surface text-c-text shadow-sm'
-                      : 'text-c-text-muted hover:text-c-text'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* N5 — View lens (flattened "Today" sections as chips). */}
-        <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-c-border-subtle">
-          {(
-            [
-              { key: 'all', label: t('notebook.notebookContent.label31', 'All'), icon: null },
-              {
-                key: 'pinned',
-                label: t('notebook.notebookContent.label32', 'Pinned'),
-                icon: <Pin size={11} />,
-              },
-              {
-                key: 'recent',
-                label: t('notebook.notebookContent.label33', 'Recent'),
-                icon: <Clock size={11} />,
-              },
-              {
-                key: 'toReview',
-                label: t('notebook.notebookContent.label34', 'To review'),
-                icon: <AlertTriangle size={11} />,
-              },
-              {
-                key: 'fresh',
-                label: t('notebook.notebookContent.label35', 'Fresh'),
-                icon: <Sparkles size={11} />,
-              },
-              {
-                key: 'orphaned',
-                label: t('notebook.notebookContent.label36', 'Orphaned'),
-                icon: <Unlink size={11} />,
-              },
-            ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
-          ).map((v) => {
-            const count = viewCounts[v.key];
-            const active = viewLens === v.key;
-            return (
-              <button
-                key={v.key}
-                onClick={() => setViewLens(v.key)}
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                  active
-                    ? 'bg-c-text text-c-surface'
-                    : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised'
-                }`}
-              >
-                {v.icon}
-                {v.label}
-                {v.key !== 'all' && count > 0 && (
-                  <span
-                    className={`rounded-full px-1 text-[9px] ${
-                      active ? 'bg-c-surface/20' : 'bg-c-surface text-c-text-muted'
+          {teamPagesExist && (
+            <div className="px-3 pt-2.5">
+              <div className="inline-flex w-full items-center rounded-lg bg-c-surface-raised p-0.5">
+                {(
+                  [
+                    { key: 'all', label: t('notebook.notebookContent.label28', 'All') },
+                    { key: 'mine', label: t('notebook.notebookContent.label29', 'Mine') },
+                    { key: 'team', label: t('notebook.notebookContent.label30', 'Team') },
+                  ] as Array<{ key: NotebookScopeLens; label: string }>
+                ).map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setScopeLens(s.key)}
+                    className={`flex-1 rounded-md py-1 text-[11px] font-semibold transition-colors ${
+                      scopeLens === s.key
+                        ? 'bg-c-surface text-c-text shadow-sm'
+                        : 'text-c-text-muted hover:text-c-text'
                     }`}
                   >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Page list */}
-        <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
-          {filteredPages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
-                <FileText size={20} className="text-c-text-secondary" />
+                    {s.label}
+                  </button>
+                ))}
               </div>
-              {(() => {
-                // A lens/filter is narrowing an otherwise non-empty notebook →
-                // say "no matches", not "create your first page".
-                const isFiltered = statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
-                const hasAnyPages = pages.length > 0;
-                if (isFiltered && hasAnyPages) {
+            </div>
+          )}
+
+          {/* N5 — View lens (flattened "Today" sections as chips). */}
+          <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-c-border-subtle">
+            {(
+              [
+                { key: 'all', label: t('notebook.notebookContent.label31', 'All'), icon: null },
+                {
+                  key: 'pinned',
+                  label: t('notebook.notebookContent.label32', 'Pinned'),
+                  icon: <Pin size={11} />,
+                },
+                {
+                  key: 'recent',
+                  label: t('notebook.notebookContent.label33', 'Recent'),
+                  icon: <Clock size={11} />,
+                },
+                {
+                  key: 'toReview',
+                  label: t('notebook.notebookContent.label34', 'To review'),
+                  icon: <AlertTriangle size={11} />,
+                },
+                {
+                  key: 'fresh',
+                  label: t('notebook.notebookContent.label35', 'Fresh'),
+                  icon: <Sparkles size={11} />,
+                },
+                {
+                  key: 'orphaned',
+                  label: t('notebook.notebookContent.label36', 'Orphaned'),
+                  icon: <Unlink size={11} />,
+                },
+              ] as Array<{ key: NotebookViewLens; label: string; icon: React.ReactNode }>
+            ).map((v) => {
+              const count = viewCounts[v.key];
+              const active = viewLens === v.key;
+              return (
+                <button
+                  key={v.key}
+                  onClick={() => setViewLens(v.key)}
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    active
+                      ? 'bg-c-text text-c-surface'
+                      : 'bg-c-surface-raised text-c-text-secondary hover:bg-c-surface-raised'
+                  }`}
+                >
+                  {v.icon}
+                  {v.label}
+                  {v.key !== 'all' && count > 0 && (
+                    <span
+                      className={`rounded-full px-1 text-[9px] ${
+                        active ? 'bg-c-surface/20' : 'bg-c-surface text-c-text-muted'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Page list */}
+          <div className="flex-1 overflow-y-auto nb-scroll p-2 space-y-1">
+            {filteredPages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-navy-800 dark:to-navy-700 flex items-center justify-center mb-3">
+                  <FileText size={20} className="text-c-text-secondary" />
+                </div>
+                {(() => {
+                  // A lens/filter is narrowing an otherwise non-empty notebook →
+                  // say "no matches", not "create your first page".
+                  const isFiltered =
+                    statusTab !== 'all' || scopeLens !== 'all' || viewLens !== 'all';
+                  const hasAnyPages = pages.length > 0;
+                  if (isFiltered && hasAnyPages) {
+                    return (
+                      <>
+                        <div className="text-sm font-medium text-c-text-muted">
+                          {t('notebook.notebookContent.label37', 'No matching pages')}
+                        </div>
+                        <div className="text-[11px] text-c-text-secondary mt-1">
+                          {t('notebook.notebookContent.label38', 'Try a different filter above')}
+                        </div>
+                      </>
+                    );
+                  }
                   return (
                     <>
                       <div className="text-sm font-medium text-c-text-muted">
-                        {t('notebook.notebookContent.label37', 'No matching pages')}
+                        {t('myWork.notebook.empty', 'No pages yet')}
                       </div>
                       <div className="text-[11px] text-c-text-secondary mt-1">
-                        {t('notebook.notebookContent.label38', 'Try a different filter above')}
+                        {t('notebook.notebookContent.label39', 'Create your first page')}
                       </div>
                     </>
                   );
-                }
-                return (
-                  <>
-                    <div className="text-sm font-medium text-c-text-muted">
-                      {t('myWork.notebook.empty', 'No pages yet')}
-                    </div>
-                    <div className="text-[11px] text-c-text-secondary mt-1">
-                      {t('notebook.notebookContent.label39', 'Create your first page')}
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          ) : (
-            <>
-              {filteredPages.map((p) => {
-                const isActive = p.id === activeId;
-                const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
-                const matCfg = MATURITY_CONFIG[mat] || MATURITY_CONFIG.seed;
-                const timeAgo = relativeTime(p.updatedAt);
-                const statusDot =
-                  p.status === 'inbox'
-                    ? 'bg-amber-400 animate-pulse'
-                    : p.status === 'converted'
-                      ? 'bg-emerald-400'
-                      : p.status === 'archived'
-                        ? 'bg-slate-300 dark:bg-slate-600'
-                        : 'bg-blue-400';
-                return (
-                  <div
-                    key={p.id}
-                    className={`group relative rounded-xl transition-all duration-200 ${
-                      isActive
-                        ? 'bg-c-surface-raised border border-c-border-subtle shadow-sm'
-                        : 'hover:bg-c-surface-raised border border-transparent'
-                    }`}
-                  >
-                    <button
-                      onClick={async () => {
-                        await flushPendingSave();
-                        setActiveId(p.id);
-                      }}
-                      className="w-full text-left px-3 py-2.5"
+                })()}
+              </div>
+            ) : (
+              <>
+                {filteredPages.map((p) => {
+                  const isActive = p.id === activeId;
+                  const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
+                  const matCfg = MATURITY_CONFIG[mat] || MATURITY_CONFIG.seed;
+                  const timeAgo = relativeTime(p.updatedAt);
+                  const statusDot =
+                    p.status === 'inbox'
+                      ? 'bg-amber-400 animate-pulse'
+                      : p.status === 'converted'
+                        ? 'bg-emerald-400'
+                        : p.status === 'archived'
+                          ? 'bg-slate-300 dark:bg-slate-600'
+                          : 'bg-blue-400';
+                  return (
+                    <div
+                      key={p.id}
+                      className={`group relative rounded-xl transition-all duration-200 ${
+                        isActive
+                          ? 'bg-c-surface-raised border border-c-border-subtle shadow-sm'
+                          : 'hover:bg-c-surface-raised border border-transparent'
+                      }`}
                     >
-                      {/* S1-U2a: Ideas-list row anatomy — leading signal dot
+                      <button
+                        onClick={async () => {
+                          await flushPendingSave();
+                          setActiveId(p.id);
+                          // MW-08 mobile fix: the isMobile+activePage.id effect
+                          // that hides the list only re-fires when the id
+                          // ACTUALLY changes. Re-opening the SAME note that was
+                          // just backed out of via "All notes" (id unchanged)
+                          // left the list showing with no way back into the
+                          // editor — reproduced live: click registers (DOM
+                          // screenshot confirms the list stays mounted), the
+                          // effect's dependency array never sees a diff, so it
+                          // never runs. Set it directly here too so opening a
+                          // note always switches to editor mode, changed id or
+                          // not.
+                          if (isMobile) setMobileShowList(false);
+                        }}
+                        className="w-full text-left px-3 py-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        {/* S1-U2a: Ideas-list row anatomy — leading signal dot
                           ("szyna skanu" §14.2), L2 title, L5 meta, neutral
                           chip shells with color only in the dot. */}
-                      <div className="flex items-start gap-2">
-                        {p.icon && /\p{Emoji}/u.test(p.icon) ? (
-                          <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
-                        ) : null}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
-                            {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
-                            {p.visibility === 'project' && (
-                              <Users size={10} className="text-c-text-muted shrink-0" />
-                            )}
-                            <span
-                              className={`font-semibold text-[13px] truncate flex-1 ${
-                                isActive ? 'text-c-text' : 'text-c-text'
-                              }`}
-                            >
-                              {p.title || t('notebook.notebookContent.label40', 'Untitled')}
-                            </span>
-                            {timeAgo && (
-                              <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
-                                {timeAgo}
-                              </span>
-                            )}
-                          </div>
-
-                          {p.summary && (
-                            <div className="mt-0.5 text-[11px] text-c-text-secondary line-clamp-1 leading-relaxed">
-                              {p.summary}
-                            </div>
-                          )}
-
-                          <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                            <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
-                              <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
-                              {t(`myWorkNotebook.notebookContent.maturity_${mat}`, matCfg.label)}
-                            </span>
-                            {(p as any).verificationStatus === 'verified' && (
-                              <Badge
-                                variant="outline"
-                                className="border-emerald-300/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0 text-[9px]"
-                                title={t('notebook.notebookContent.title', 'Verified')}
-                              >
-                                <CheckCircle2 size={9} className="inline" />
-                              </Badge>
-                            )}
-                            {(p as any).staleAt && (
-                              <Badge
-                                variant="outline"
-                                className="border-amber-300/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0 text-[9px]"
-                                title={t('notebook.notebookContent.title2', 'Stale')}
-                              >
-                                <AlertTriangle size={9} className="inline" />
-                              </Badge>
-                            )}
-                            {(() => {
-                              const uploadSource = getNotebookUploadSourceSummary(
-                                (p as any).captureSource,
-                                (p as any).captureMetadata,
-                                isPolish
-                              );
-                              if (!uploadSource) return null;
-                              return (
-                                <span
-                                  className="rounded-md bg-c-info/10 text-c-info px-1.5 py-0.5 text-[11px] font-medium"
-                                  title={uploadSource.title}
-                                >
-                                  {uploadSource.label}
-                                </span>
-                              );
-                            })()}
-                            {(() => {
-                              const convertedSummary = getNotebookConvertedOutputSummary(
-                                p.convertedTo
-                              );
-                              if (convertedSummary.total === 0) return null;
-                              return (
-                                <span
-                                  className="rounded-md bg-c-success/10 text-c-success px-1.5 py-0.5 text-[11px] font-medium"
-                                  title={convertedSummary.visibleTypes.join(', ')}
-                                >
-                                  ✓ {convertedSummary.visibleTypes.join(', ')}
-                                  {convertedSummary.extraCount > 0
-                                    ? ` +${convertedSummary.extraCount}`
-                                    : ''}
-                                </span>
-                              );
-                            })()}
-                            {/* #18 — orphan mark: zero link_graph_edges rows (no topics/mentions/backlinks) */}
-                            {orphanIds.has(p.id) && (
+                        <div className="flex items-start gap-2">
+                          {p.icon && /\p{Emoji}/u.test(p.icon) ? (
+                            <span className="text-sm leading-none mt-0.5 shrink-0">{p.icon}</span>
+                          ) : null}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusDot}`} />
+                              {p.pinned && <Pin size={10} className="text-amber-500 shrink-0" />}
+                              {p.visibility === 'project' && (
+                                <Users size={10} className="text-c-text-muted shrink-0" />
+                              )}
                               <span
-                                className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
-                                title={t(
-                                  'notebook.notebookContent.title3',
-                                  'No connections — add a mention (@) or archive'
-                                )}
+                                className={`font-semibold text-[13px] truncate flex-1 ${
+                                  isActive ? 'text-c-text' : 'text-c-text'
+                                }`}
                               >
-                                <Unlink size={9} className="inline" />
-                                {t('notebook.notebookContent.label41', 'Unlinked')}
+                                {p.title || t('notebook.notebookContent.label40', 'Untitled')}
                               </span>
-                            )}
-                            {/* #21 reminder chip — reads capture_metadata.reminder */}
-                            <NotebookReminderChip
-                              captureMetadata={(p as any).captureMetadata}
-                              isPolish={isPolish}
-                              size="sm"
-                            />
-                            {p.tags &&
-                              p.tags.slice(0, 2).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="rounded-md bg-c-surface-raised text-c-text-muted px-1.5 py-0.5 text-[11px] font-medium"
-                                >
-                                  {tag}
+                              {timeAgo && (
+                                <span className="text-[10px] text-c-text-muted shrink-0 tabular-nums">
+                                  {timeAgo}
                                 </span>
-                              ))}
-                            {p.tags && p.tags.length > 2 && (
-                              <span className="text-[9px] text-c-text-secondary">
-                                +{p.tags.length - 2}
-                              </span>
+                              )}
+                            </div>
+
+                            {p.summary && (
+                              <div className="mt-0.5 text-[11px] text-c-text-secondary line-clamp-1 leading-relaxed">
+                                {p.summary}
+                              </div>
                             )}
+
+                            <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle bg-c-surface px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
+                                <span className={`w-1.5 h-1.5 rounded-full ${matCfg.dot}`} />
+                                {t(`myWorkNotebook.notebookContent.maturity_${mat}`, matCfg.label)}
+                              </span>
+                              {(p as any).verificationStatus === 'verified' && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-emerald-300/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0 text-[9px]"
+                                  title={t('notebook.notebookContent.title', 'Verified')}
+                                >
+                                  <CheckCircle2 size={9} className="inline" />
+                                </Badge>
+                              )}
+                              {(p as any).staleAt && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-amber-300/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0 text-[9px]"
+                                  title={t('notebook.notebookContent.title2', 'Stale')}
+                                >
+                                  <AlertTriangle size={9} className="inline" />
+                                </Badge>
+                              )}
+                              {(() => {
+                                const uploadSource = getNotebookUploadSourceSummary(
+                                  (p as any).captureSource,
+                                  (p as any).captureMetadata,
+                                  isPolish
+                                );
+                                if (!uploadSource) return null;
+                                return (
+                                  <span
+                                    className="rounded-md bg-c-info/10 text-c-info px-1.5 py-0.5 text-[11px] font-medium"
+                                    title={uploadSource.title}
+                                  >
+                                    {uploadSource.label}
+                                  </span>
+                                );
+                              })()}
+                              {(() => {
+                                const convertedSummary = getNotebookConvertedOutputSummary(
+                                  p.convertedTo
+                                );
+                                if (convertedSummary.total === 0) return null;
+                                return (
+                                  <span
+                                    className="rounded-md bg-c-success/10 text-c-success px-1.5 py-0.5 text-[11px] font-medium"
+                                    title={convertedSummary.visibleTypes.join(', ')}
+                                  >
+                                    ✓ {convertedSummary.visibleTypes.join(', ')}
+                                    {convertedSummary.extraCount > 0
+                                      ? ` +${convertedSummary.extraCount}`
+                                      : ''}
+                                  </span>
+                                );
+                              })()}
+                              {/* #18 — orphan mark: zero link_graph_edges rows (no topics/mentions/backlinks) */}
+                              {orphanIds.has(p.id) && (
+                                <span
+                                  className="inline-flex items-center gap-0.5 rounded-md bg-c-warning/10 text-c-warning px-1.5 py-0.5 text-[11px] font-medium"
+                                  title={t(
+                                    'notebook.notebookContent.title3',
+                                    'No connections — add a mention (@) or archive'
+                                  )}
+                                >
+                                  <Unlink size={9} className="inline" />
+                                  {t('notebook.notebookContent.label41', 'Unlinked')}
+                                </span>
+                              )}
+                              {/* #21 reminder chip — reads capture_metadata.reminder */}
+                              <NotebookReminderChip
+                                captureMetadata={(p as any).captureMetadata}
+                                isPolish={isPolish}
+                                size="sm"
+                              />
+                              {p.tags &&
+                                p.tags.slice(0, 2).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="rounded-md bg-c-surface-raised text-c-text-muted px-1.5 py-0.5 text-[11px] font-medium"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              {p.tags && p.tags.length > 2 && (
+                                <span className="text-[9px] text-c-text-secondary">
+                                  +{p.tags.length - 2}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-
-                    {/* Quick triage actions on hover */}
-                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-c-surface/90 rounded-lg shadow-sm border border-slate-200/60 dark:border-white/[0.03] px-0.5 py-0.5">
-                      {p.status === 'inbox' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetStatus(p.id, 'active');
-                          }}
-                          className="p-1 rounded text-blue-500 hover:bg-blue-500/10 transition-colors"
-                          title={t('notebook.notebookContent.title4', 'Start working')}
-                        >
-                          <Play size={10} />
-                        </button>
-                      )}
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <ConvertToOutputMenu
-                          sourceType="notebook"
-                          sourceId={p.id}
-                          sourceTitle={p.title || ''}
-                          onConvertComplete={() => fetchPages()}
-                          variant="dropdown"
-                          compact
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTogglePin(p.id);
-                        }}
-                        className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-c-text-secondary hover:text-amber-500 hover:bg-amber-500/10'}`}
-                        title={t('notebook.notebookContent.title5', 'Pin')}
-                      >
-                        <Pin size={10} />
                       </button>
-                      {p.status !== 'archived' && (
+
+                      {/* Quick triage actions on hover */}
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-c-surface/90 rounded-lg shadow-sm border border-slate-200/60 dark:border-white/[0.03] px-0.5 py-0.5">
+                        {p.status === 'inbox' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetStatus(p.id, 'active');
+                            }}
+                            className="p-1 rounded text-blue-500 hover:bg-blue-500/10 transition-colors"
+                            title={t('notebook.notebookContent.title4', 'Start working')}
+                          >
+                            <Play size={10} />
+                          </button>
+                        )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <ConvertToOutputMenu
+                            sourceType="notebook"
+                            sourceId={p.id}
+                            sourceTitle={p.title || ''}
+                            onConvertComplete={() => fetchPages()}
+                            variant="dropdown"
+                            compact
+                          />
+                        </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleSetStatus(p.id, 'archived');
+                            handleTogglePin(p.id);
                           }}
-                          className="p-1 rounded text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                          title={t('notebook.notebookContent.title6', 'Archive')}
+                          className={`p-1 rounded transition-colors ${p.pinned ? 'text-amber-500 bg-amber-500/10' : 'text-c-text-secondary hover:text-amber-500 hover:bg-amber-500/10'}`}
+                          title={t('notebook.notebookContent.title5', 'Pin')}
                         >
-                          <Archive size={10} />
+                          <Pin size={10} />
                         </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {hasMore && (
-                <button
-                  onClick={loadMore}
-                  className="w-full py-2 text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
-                >
-                  {t('notebook.notebookContent.label42', 'Load more')}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Editor + Ideas panel */}
-      <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
-        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface-raised">
-          {!activePage && pagesLoading ? (
-            /* Editor skeleton — avoids a blank "white" pane during first load. */
-            <div className="flex-1 overflow-hidden">
-              <div className="mx-auto max-w-3xl px-6 py-8" aria-hidden="true">
-                <div className="mb-4 h-40 w-full rounded-2xl bg-c-surface-raised animate-pulse" />
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-c-surface-raised animate-pulse" />
-                  <div className="h-7 w-2/3 rounded-lg bg-c-surface-raised animate-pulse" />
-                </div>
-                <div className="space-y-3">
-                  <div className="h-4 w-full rounded bg-c-surface-raised animate-pulse" />
-                  <div className="h-4 w-11/12 rounded bg-c-surface-raised animate-pulse" />
-                  <div className="h-4 w-4/5 rounded bg-c-surface-raised animate-pulse" />
-                  <div className="h-4 w-2/3 rounded bg-c-surface-raised animate-pulse" />
-                </div>
-              </div>
-            </div>
-          ) : !activePage && pagesError ? (
-            <div className="flex h-full items-center justify-center p-8">
-              <div className="text-center">
-                <AlertTriangle size={36} className="mx-auto mb-3 text-c-text-muted" />
-                <p className="mb-3 text-sm text-c-text-secondary">
-                  {t('notebook.notebookContent.label43', 'Failed to load notes.')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void fetchPages()}
-                  className="text-sm font-medium text-c-text-secondary hover:underline"
-                >
-                  {t('notebook.notebookContent.label44', 'Retry')}
-                </button>
-              </div>
-            </div>
-          ) : !activePage ? (
-            <div className="flex h-full items-center justify-center p-8">
-              <div className="max-w-lg w-full">
-                {/* Welcome hero */}
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 shadow-lg shadow-navy-900/20 mb-4">
-                    <Pen size={28} className="text-white" />
-                  </div>
-                  <h2 className="text-xl font-bold text-c-text mb-1">
-                    {t('notebook.notebookContent.label45', 'Living Notebook')}
-                  </h2>
-                  <p className="text-sm text-c-text-muted max-w-xs mx-auto">
-                    {t(
-                      'notebook.notebookContent.label46',
-                      'Your notes grow, connect, and help you make better decisions'
-                    )}
-                  </p>
-                </div>
-
-                {/* Quick start templates */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  {[
-                    {
-                      icon: '📝',
-                      label: t('notebook.notebookContent.label47', 'Blank page'),
-                      desc: t('notebook.notebookContent.label48', 'Start from scratch'),
-                      id: 'blank',
-                    },
-                    {
-                      icon: '🧠',
-                      label: t('notebook.notebookContent.label49', 'Strategic observation'),
-                      desc: t('notebook.notebookContent.label50', 'Capture an insight'),
-                      id: 'strategic',
-                    },
-                    {
-                      icon: '⚠️',
-                      label: t('notebook.notebookContent.label51', 'Risk analysis'),
-                      desc: t('notebook.notebookContent.label52', 'Assess a threat'),
-                      id: 'risk',
-                    },
-                    {
-                      icon: '💬',
-                      label: t('notebook.notebookContent.label53', 'Meeting notes'),
-                      desc: t('notebook.notebookContent.label54', 'Capture & align'),
-                      id: 'meeting',
-                    },
-                  ].map((tmpl) => (
-                    <button
-                      key={tmpl.id}
-                      onClick={() => {
-                        setTemplateModalOpen(true);
-                      }}
-                      className="nb-welcome-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-left group"
-                    >
-                      <span className="text-2xl mt-0.5">{tmpl.icon}</span>
-                      <div>
-                        <div className="text-sm font-semibold text-c-text group-hover:text-c-accent transition-colors">
-                          {tmpl.label}
-                        </div>
-                        <div className="text-[11px] text-c-text-secondary mt-0.5">{tmpl.desc}</div>
+                        {p.status !== 'archived' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSetStatus(p.id, 'archived');
+                            }}
+                            className="p-1 rounded text-c-text-secondary hover:text-c-text hover:bg-c-surface-raised transition-colors"
+                            title={t('notebook.notebookContent.title6', 'Archive')}
+                          >
+                            <Archive size={10} />
+                          </button>
+                        )}
                       </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* AI suggestion prompt */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
-                  <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center shrink-0">
-                    <Sparkles size={14} className="text-[var(--c-info)]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-c-accent">
-                      {t('notebook.notebookContent.label55', 'AI is ready to assist')}
                     </div>
-                    <div className="text-[11px] text-c-accent mt-0.5">
+                  );
+                })}
+                {hasMore && (
+                  <button
+                    onClick={loadMore}
+                    className="w-full py-2 text-[11px] text-c-text-muted hover:text-c-accent transition-colors"
+                  >
+                    {t('notebook.notebookContent.label42', 'Load more')}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Editor + Ideas panel — on mobile, only when a note is open. */}
+      {(!isMobile || !mobileShowList) && (
+        <div className="flex-1 flex min-w-0 gap-1.5 overflow-hidden">
+          <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-c-border-subtle overflow-hidden bg-c-surface-raised">
+            {isMobile && (
+              <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-c-border-subtle">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<ChevronLeft size={14} />}
+                  onClick={() => {
+                    void flushPendingSave();
+                    setMobileShowList(true);
+                  }}
+                  aria-label={t('notebook.notebookContent.backToList', 'All notes')}
+                >
+                  {t('notebook.notebookContent.backToList', 'All notes')}
+                </Button>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-c-text-secondary">
+                  {notebookTitle || t('myWork.notebook.title', 'Notebook')}
+                </span>
+              </div>
+            )}
+            {!activePage && pagesLoading ? (
+              /* Editor skeleton — avoids a blank "white" pane during first load. */
+              <div className="flex-1 overflow-hidden">
+                <div className="mx-auto max-w-3xl px-6 py-8" aria-hidden="true">
+                  <div className="mb-4 h-40 w-full rounded-2xl bg-c-surface-raised animate-pulse" />
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-c-surface-raised animate-pulse" />
+                    <div className="h-7 w-2/3 rounded-lg bg-c-surface-raised animate-pulse" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-4 w-full rounded bg-c-surface-raised animate-pulse" />
+                    <div className="h-4 w-11/12 rounded bg-c-surface-raised animate-pulse" />
+                    <div className="h-4 w-4/5 rounded bg-c-surface-raised animate-pulse" />
+                    <div className="h-4 w-2/3 rounded bg-c-surface-raised animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ) : !activePage && pagesError ? (
+              <div className="flex h-full items-center justify-center p-8">
+                <div className="text-center">
+                  <AlertTriangle size={36} className="mx-auto mb-3 text-c-text-muted" />
+                  <p className="mb-3 text-sm text-c-text-secondary">
+                    {t('notebook.notebookContent.label43', 'Failed to load notes.')}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void fetchPages()}
+                    className="text-sm font-medium text-c-text-secondary hover:underline"
+                  >
+                    {t('notebook.notebookContent.label44', 'Retry')}
+                  </button>
+                </div>
+              </div>
+            ) : !activePage ? (
+              <div className="flex h-full items-center justify-center p-8">
+                <div className="max-w-lg w-full">
+                  {/* Welcome hero */}
+                  <div className="text-center mb-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-700 via-navy-800 to-navy-900 shadow-lg shadow-navy-900/20 mb-4">
+                      <Pen size={28} className="text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-c-text mb-1">
+                      {t('notebook.notebookContent.label45', 'Living Notebook')}
+                    </h2>
+                    <p className="text-sm text-c-text-muted max-w-xs mx-auto">
                       {t(
-                        'notebook.notebookContent.label56',
-                        'Type / in the editor to ask, expand, or challenge your ideas'
+                        'notebook.notebookContent.label46',
+                        'Your notes grow, connect, and help you make better decisions'
                       )}
+                    </p>
+                  </div>
+
+                  {/* Quick start templates */}
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    {[
+                      {
+                        icon: '📝',
+                        label: t('notebook.notebookContent.label47', 'Blank page'),
+                        desc: t('notebook.notebookContent.label48', 'Start from scratch'),
+                        id: 'blank',
+                      },
+                      {
+                        icon: '🧠',
+                        label: t('notebook.notebookContent.label49', 'Strategic observation'),
+                        desc: t('notebook.notebookContent.label50', 'Capture an insight'),
+                        id: 'strategic',
+                      },
+                      {
+                        icon: '⚠️',
+                        label: t('notebook.notebookContent.label51', 'Risk analysis'),
+                        desc: t('notebook.notebookContent.label52', 'Assess a threat'),
+                        id: 'risk',
+                      },
+                      {
+                        icon: '💬',
+                        label: t('notebook.notebookContent.label53', 'Meeting notes'),
+                        desc: t('notebook.notebookContent.label54', 'Capture & align'),
+                        id: 'meeting',
+                      },
+                    ].map((tmpl) => (
+                      <button
+                        key={tmpl.id}
+                        onClick={() => {
+                          setTemplateModalOpen(true);
+                        }}
+                        className="nb-welcome-card flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-left group"
+                      >
+                        <span className="text-2xl mt-0.5">{tmpl.icon}</span>
+                        <div>
+                          <div className="text-sm font-semibold text-c-text group-hover:text-c-accent transition-colors">
+                            {tmpl.label}
+                          </div>
+                          <div className="text-[11px] text-c-text-secondary mt-0.5">
+                            {tmpl.desc}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* AI suggestion prompt */}
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-c-surface-raised border border-c-border-subtle">
+                    <div className="w-8 h-8 rounded-lg bg-c-surface-raised flex items-center justify-center shrink-0">
+                      <Sparkles size={14} className="text-[var(--c-info)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold text-c-accent">
+                        {t('notebook.notebookContent.label55', 'AI is ready to assist')}
+                      </div>
+                      <div className="text-[11px] text-c-accent mt-0.5">
+                        {t(
+                          'notebook.notebookContent.label56',
+                          'Type / in the editor to ask, expand, or challenge your ideas'
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
-              {/* Compact toolbar (text editing only) */}
-              <div className="border-b border-c-border-subtle bg-c-surface/80 backdrop-blur-sm">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Toolbar */}
-                  {editor && <NotebookToolbar editor={editor} />}
-                  <NotebookExportMenu
-                    page={{
-                      id: activePage.id,
-                      title: title,
-                      contentJson: activePage.contentJson,
-                      contentText: activePage.contentText,
-                    }}
-                    isPolish={isPolish}
-                    className="shrink-0"
-                  />
-                  <button
-                    onClick={() => setShowVersionHistory((v) => !v)}
-                    title={t('notebook.notebookContent.title7', 'Version history')}
-                    aria-label={t('notebook.notebookContent.ariaLabel', 'Version history')}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
-                  >
-                    <History size={14} />
-                  </button>
-                  {/* N4 (U12): icon-only + tooltip — expand note into a Canvas document draft */}
-                  <button
-                    onClick={() => void handleExpandToDocument()}
-                    disabled={isExpandingToDocument}
-                    data-testid="notebook-expand-to-document"
-                    title={t(
-                      'notebook.notebookContent.title8',
-                      'Expand into document — create a Canvas doc from this note'
-                    )}
-                    aria-label={t('notebook.notebookContent.ariaLabel2', 'Expand into document')}
-                    className="ml-auto shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-60 disabled:cursor-wait"
-                  >
-                    <FileText size={14} className={isExpandingToDocument ? 'animate-pulse' : ''} />
-                  </button>
-                  {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
-                  <button
-                    onClick={() => setShowGraphView((v) => !v)}
-                    title={t('notebook.notebookContent.title9', 'Connection graph')}
-                    aria-label={t('notebook.notebookContent.ariaLabel3', 'Connection graph')}
-                    className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
-                  >
-                    <Network size={14} />
-                  </button>
-                  {/* #33 — contextual AI-CTA on the Note card ("Zapytaj AI" / "Ask AI"),
+            ) : (
+              <div className="h-full flex flex-col nb-page-enter" key={activePage.id}>
+                {/* Compact toolbar (text editing only) */}
+                <div className="border-b border-c-border-subtle bg-c-surface/80 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Toolbar */}
+                    {editor && <NotebookToolbar editor={editor} />}
+                    <NotebookExportMenu
+                      page={{
+                        id: activePage.id,
+                        title: title,
+                        contentJson: activePage.contentJson,
+                        contentText: activePage.contentText,
+                      }}
+                      isPolish={isPolish}
+                      className="shrink-0"
+                    />
+                    <button
+                      onClick={() => setShowVersionHistory((v) => !v)}
+                      title={t('notebook.notebookContent.title7', 'Version history')}
+                      aria-label={t('notebook.notebookContent.ariaLabel', 'Version history')}
+                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${showVersionHistory ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
+                    >
+                      <History size={14} />
+                    </button>
+                    {/* N4 (U12): icon-only + tooltip — expand note into a Canvas document draft */}
+                    <button
+                      onClick={() => void handleExpandToDocument()}
+                      disabled={isExpandingToDocument}
+                      data-testid="notebook-expand-to-document"
+                      title={t(
+                        'notebook.notebookContent.title8',
+                        'Expand into document — create a Canvas doc from this note'
+                      )}
+                      aria-label={t('notebook.notebookContent.ariaLabel2', 'Expand into document')}
+                      className="ml-auto shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      <FileText
+                        size={14}
+                        className={isExpandingToDocument ? 'animate-pulse' : ''}
+                      />
+                    </button>
+                    {/* N4 (U12): connection graph — icon-only + tooltip, monochrome active */}
+                    <button
+                      onClick={() => setShowGraphView((v) => !v)}
+                      title={t('notebook.notebookContent.title9', 'Connection graph')}
+                      aria-label={t('notebook.notebookContent.ariaLabel3', 'Connection graph')}
+                      className={`shrink-0 p-1.5 rounded-lg transition-colors ${showGraphView ? 'bg-c-surface-raised text-c-text' : 'text-c-text-muted hover:bg-c-surface-raised'}`}
+                    >
+                      <Network size={14} />
+                    </button>
+                    {/* #33 — contextual AI-CTA on the Note card ("Zapytaj AI" / "Ask AI"),
                       same doctrine (D17) as TaskDetailView's "Create Ideas",
                       DecisionDetailView's "Analyze options" and InitiativeDocumentView's
                       "Propose next steps": ONE docked Teresa panel, pre-seeded with a
@@ -2960,767 +3235,885 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       menu's "Ask AI" entry). Made visible in the action bar (icon-only +
                       tooltip, matching the History/Expand/Graph buttons above) instead of
                       being reachable only via the ⋯ hamburger menu. */}
-                  <button
-                    type="button"
-                    onClick={handleAskAI}
-                    title={t('notebook.notebookContent.title10', 'Ask AI about this note')}
-                    aria-label={t('notebook.notebookContent.ariaLabel4', 'Ask AI about this note')}
-                    className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                  >
-                    <Sparkles size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNotebookRailOpen(!notebookRailOpen)}
-                    title={
-                      notebookRailOpen
-                        ? t('notebook.notebookContent.label57', 'Close side panel')
-                        : t(
-                            'notebook.notebookContent.label58',
-                            'Open side panel (AI tools + context)'
-                          )
+                    <button
+                      type="button"
+                      onClick={handleAskAI}
+                      title={t('notebook.notebookContent.title10', 'Ask AI about this note')}
+                      aria-label={t(
+                        'notebook.notebookContent.ariaLabel4',
+                        'Ask AI about this note'
+                      )}
+                      className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
+                    >
+                      <Sparkles size={14} />
+                    </button>
+                    {/* MW-08: the rail (Teresa/Powiązania) is a fixed-width
+                      third column with no mobile treatment of its own, and
+                      its content is explicitly out of this package's scope
+                      (Notes AI/handoffs). Rather than ship a broken overlay,
+                      the toggle — and the rail itself, see below — are
+                      simply not offered below the mobile breakpoint; this is
+                      a deliberate, documented scope decision, not an
+                      oversight. */}
+                    {!isMobile && (
+                      <button
+                        type="button"
+                        onClick={() => setNotebookRailOpen(!notebookRailOpen)}
+                        title={
+                          notebookRailOpen
+                            ? t('notebook.notebookContent.label57', 'Close side panel')
+                            : t(
+                                'notebook.notebookContent.label58',
+                                'Open side panel (AI tools + context)'
+                              )
+                        }
+                        className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
+                          notebookRailOpen
+                            ? 'border-c-text bg-c-text text-c-surface'
+                            : 'border-c-border-subtle bg-c-surface text-c-text-muted hover:bg-c-surface-raised'
+                        }`}
+                      >
+                        <Layers size={12} />
+                      </button>
+                    )}
+                    {/* N1: hamburger ⋯ — all note actions in one menu */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
+                      }}
+                      title={t('notebook.notebookContent.title11', 'Note menu')}
+                      aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
+                      className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {hamburgerPos && activePage && (
+                  <NotebookHamburgerMenu
+                    x={hamburgerPos.x}
+                    y={hamburgerPos.y}
+                    isPolish={!!isPolish}
+                    onClose={() => setHamburgerPos(null)}
+                    onSources={() =>
+                      attachmentsSectionRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
                     }
-                    className={`mr-2 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors ${
-                      notebookRailOpen
-                        ? 'border-c-text bg-c-text text-c-surface'
-                        : 'border-c-border-subtle bg-c-surface text-c-text-muted hover:bg-c-surface-raised'
-                    }`}
-                  >
-                    <Layers size={12} />
-                  </button>
-                  {/* N1: hamburger ⋯ — all note actions in one menu */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const r = e.currentTarget.getBoundingClientRect();
-                      setHamburgerPos({ x: Math.max(8, r.right - 240), y: r.bottom + 4 });
-                    }}
-                    title={t('notebook.notebookContent.title11', 'Note menu')}
-                    aria-label={t('notebook.notebookContent.ariaLabel5', 'Note menu')}
-                    className="shrink-0 p-1.5 rounded-lg text-c-text-muted hover:bg-c-surface-raised transition-colors"
-                  >
-                    <MoreHorizontal size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {hamburgerPos && activePage && (
-                <NotebookHamburgerMenu
-                  x={hamburgerPos.x}
-                  y={hamburgerPos.y}
-                  isPolish={!!isPolish}
-                  onClose={() => setHamburgerPos(null)}
-                  onSources={() =>
-                    attachmentsSectionRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start',
-                    })
-                  }
-                  onVerification={() =>
-                    verificationStripRef.current?.scrollIntoView({
-                      behavior: 'smooth',
-                      block: 'start',
-                    })
-                  }
-                  onShare={handleShareEmail}
-                  onExpandDocument={() => void handleExpandToDocument()}
-                  onConvert={(t: NotebookConvertTarget) =>
-                    void handleConvertFromPanel(t as ConvertTarget)
-                  }
-                  onAskAI={() => setAiCommand('action')}
-                  onDelete={() => void handleDeletePage()}
-                />
-              )}
-
-              {/* Version History panel (toggleable) */}
-              {showVersionHistory && activePage && (
-                <div className="border-b border-c-border-subtle bg-c-surface-raised max-h-64 overflow-y-auto nb-scroll">
-                  <NotebookVersionHistory
-                    pageId={activePage.id}
-                    currentText={activePage.contentText || ''}
-                    isPolish={isPolish}
-                    onRestored={() => {
-                      setShowVersionHistory(false);
-                      void fetchPages();
-                    }}
+                    onVerification={() =>
+                      verificationStripRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start',
+                      })
+                    }
+                    onShare={handleShareEmail}
+                    onExpandDocument={() => void handleExpandToDocument()}
+                    onConvert={(t: NotebookConvertTarget) =>
+                      void handleConvertFromPanel(t as ConvertTarget)
+                    }
+                    onAskAI={() => setAiCommand('action')}
+                    onDelete={() => void handleDeletePage()}
                   />
-                </div>
-              )}
+                )}
 
-              {/* AI Command Prompt — hidden; accessible via Tools panel Command button */}
-              {editor && activePage && (
-                <div className="sr-only" aria-hidden="true">
-                  <AICommandPrompt
-                    editor={editor}
-                    pageId={activePage.id}
-                    noteTitle={title}
-                    noteContent={activePage.contentText || extractText(activePage.contentJson)}
-                    noteTags={pageTags}
-                    onProposalCreated={() => void refreshAIProposals(activePage.id)}
-                    inputRef={aiCommandPromptInputRef}
-                    className="max-w-2xl"
-                  />
-                </div>
-              )}
+                {/* Version History panel (toggleable) */}
+                {showVersionHistory && activePage && (
+                  <div className="border-b border-c-border-subtle bg-c-surface-raised max-h-64 overflow-y-auto nb-scroll">
+                    <NotebookVersionHistory
+                      pageId={activePage.id}
+                      currentText={activePage.contentText || ''}
+                      isPolish={isPolish}
+                      onRestored={() => {
+                        setShowVersionHistory(false);
+                        void fetchPages();
+                      }}
+                    />
+                  </div>
+                )}
 
-              {/* Editor area — drop zone for AI block */}
-              <div
-                className="flex-1 overflow-y-auto nb-scroll relative"
-                ref={editorContainerRef}
-                onDragOver={(e) => {
-                  if (e.dataTransfer.types.includes(AI_BLOCK_MIME)) {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'copy';
-                  }
-                }}
-                onDrop={(e) => {
-                  const text = e.dataTransfer.getData(AI_BLOCK_MIME);
-                  if (text) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.dispatchEvent(
-                      new CustomEvent('notebook-ai-block-drop', { detail: { text } })
-                    );
-                  }
-                }}
-              >
-                <div className="mx-auto max-w-3xl px-6 py-8">
-                  {/* Hidden file input for the cover image. */}
-                  <input
-                    ref={coverInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleCoverFile(file);
-                      e.target.value = '';
-                    }}
-                  />
+                {/* AI Command Prompt — hidden; accessible via Tools panel Command button */}
+                {editor && activePage && (
+                  <div className="sr-only" aria-hidden="true">
+                    <AICommandPrompt
+                      editor={editor}
+                      pageId={activePage.id}
+                      noteTitle={title}
+                      noteContent={activePage.contentText || extractText(activePage.contentJson)}
+                      noteTags={pageTags}
+                      onProposalCreated={() => void refreshAIProposals(activePage.id)}
+                      inputRef={aiCommandPromptInputRef}
+                      className="max-w-2xl"
+                    />
+                  </div>
+                )}
 
-                  {/* Cover image (note header) */}
-                  <CoverImageBar
-                    coverUrl={coverUrl}
-                    onPick={handlePickCover}
-                    onRemove={() => void persistCover(null)}
-                    isPolish={isPolish}
-                  />
+                {/* Editor area — drop zone for AI block */}
+                <div
+                  className="flex-1 overflow-y-auto nb-scroll relative"
+                  ref={editorContainerRef}
+                  onDragOver={(e) => {
+                    if (e.dataTransfer.types.includes(AI_BLOCK_MIME)) {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                    }
+                  }}
+                  onDrop={(e) => {
+                    const text = e.dataTransfer.getData(AI_BLOCK_MIME);
+                    if (text) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      window.dispatchEvent(
+                        new CustomEvent('notebook-ai-block-drop', { detail: { text } })
+                      );
+                    }
+                  }}
+                >
+                  <div className="mx-auto max-w-3xl px-6 py-8">
+                    {/* Hidden file input for the cover image. */}
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleCoverFile(file);
+                        e.target.value = '';
+                      }}
+                    />
 
-                  {/* Page icon + title — Notion-like */}
-                  <div className="mb-4">
-                    <div className="flex items-start gap-3 mb-1">
-                      <div className="mt-0.5">
-                        <IconPickerButton
-                          value={activePage.icon ?? null}
-                          fallback={
-                            (
-                              MATURITY_CONFIG[
-                                (activePage.maturity as NotebookMaturity) || 'seed'
-                              ] || MATURITY_CONFIG.seed
-                            ).icon
-                          }
-                          onChange={handleChangeIcon}
-                          isPolish={isPolish}
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <input
-                          value={title}
-                          onChange={(e) => {
-                            setTitle(e.target.value);
-                            scheduleSave({ title: e.target.value });
-                          }}
-                          placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
-                          className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
-                        />
-                        {/* Tags inline */}
-                        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                          <Tag size={11} className="text-c-text-secondary shrink-0" />
-                          {pageTags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="group/tag inline-flex items-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-0.5 text-[11px] font-medium hover:bg-c-surface-raised hover:text-c-text transition-colors"
-                            >
-                              {tag}
-                              <button
-                                onClick={() => handleRemoveTag(tag)}
-                                className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-danger-500"
-                                aria-label={`Remove tag ${tag}`}
-                              >
-                                <X size={9} />
-                              </button>
-                            </span>
-                          ))}
-                          <input
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={handleTagKeyDown}
-                            onBlur={handleAddTag}
-                            placeholder={t('notebook.notebookContent.placeholder2', '+ tag')}
-                            className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-c-text-secondary outline-none placeholder:text-c-text-muted"
+                    {/* Cover image (note header) */}
+                    <CoverImageBar
+                      coverUrl={coverUrl}
+                      onPick={handlePickCover}
+                      onRemove={() => void persistCover(null)}
+                      isPolish={isPolish}
+                    />
+
+                    {/* Page icon + title — Notion-like */}
+                    <div className="mb-4">
+                      <div className="flex items-start gap-3 mb-1">
+                        <div className="mt-0.5">
+                          <IconPickerButton
+                            value={activePage.icon ?? null}
+                            fallback={
+                              (
+                                MATURITY_CONFIG[
+                                  (activePage.maturity as NotebookMaturity) || 'seed'
+                                ] || MATURITY_CONFIG.seed
+                              ).icon
+                            }
+                            onChange={handleChangeIcon}
+                            isPolish={isPolish}
                           />
-                          {(() => {
-                            const uploadSource = getNotebookUploadSourceSummary(
-                              activePage.captureSource,
-                              activePage.captureMetadata,
-                              isPolish
-                            );
-                            if (!uploadSource) return null;
-                            const hasStoredSourceFile = Boolean(
-                              activePage.captureMetadata?.storedSourceFile &&
-                              activePage.captureMetadata?.fileOriginalname
-                            );
-                            return (
-                              <>
-                                <span
-                                  className="inline-flex items-center rounded-md bg-c-info/10 text-c-info px-2 py-0.5 text-[11px] font-medium"
-                                  title={uploadSource.title}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <input
+                            value={title}
+                            onChange={(e) => {
+                              setTitle(e.target.value);
+                              scheduleSave({ title: e.target.value });
+                            }}
+                            placeholder={t('notebook.notebookContent.placeholder', 'Untitled')}
+                            className="w-full bg-transparent text-3xl font-semibold tracking-tight text-c-text outline-none placeholder:text-c-text-muted"
+                          />
+                          {/* Tags inline */}
+                          <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                            <Tag size={11} className="text-c-text-secondary shrink-0" />
+                            {pageTags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="group/tag inline-flex items-center gap-1 rounded-md bg-c-surface-raised text-c-text-secondary px-2 py-0.5 text-[11px] font-medium hover:bg-c-surface-raised hover:text-c-text transition-colors"
+                              >
+                                {tag}
+                                <button
+                                  onClick={() => handleRemoveTag(tag)}
+                                  className="opacity-0 group-hover/tag:opacity-100 transition-opacity hover:text-danger-500"
+                                  aria-label={`Remove tag ${tag}`}
                                 >
-                                  {uploadSource.label}
-                                </span>
-                                {hasStoredSourceFile ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleDownloadSourceFile()}
-                                    disabled={isDownloadingSourceFile}
-                                    className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-info hover:text-c-info disabled:cursor-not-allowed disabled:opacity-60"
-                                    title={t(
-                                      'notebook.notebookContent.title12',
-                                      'Download original source file'
-                                    )}
+                                  <X size={9} />
+                                </button>
+                              </span>
+                            ))}
+                            <input
+                              value={tagInput}
+                              onChange={(e) => setTagInput(e.target.value)}
+                              onKeyDown={handleTagKeyDown}
+                              onBlur={handleAddTag}
+                              placeholder={t('notebook.notebookContent.placeholder2', '+ tag')}
+                              className="min-w-[50px] max-w-[120px] bg-transparent text-[11px] text-c-text-secondary outline-none placeholder:text-c-text-muted"
+                            />
+                            {(() => {
+                              const uploadSource = getNotebookUploadSourceSummary(
+                                activePage.captureSource,
+                                activePage.captureMetadata,
+                                isPolish
+                              );
+                              if (!uploadSource) return null;
+                              const hasStoredSourceFile = Boolean(
+                                activePage.captureMetadata?.storedSourceFile &&
+                                activePage.captureMetadata?.fileOriginalname
+                              );
+                              return (
+                                <>
+                                  <span
+                                    className="inline-flex items-center rounded-md bg-c-info/10 text-c-info px-2 py-0.5 text-[11px] font-medium"
+                                    title={uploadSource.title}
                                   >
-                                    <Paperclip size={11} />
-                                    {t('notebook.notebookContent.label59', 'Download source')}
-                                  </button>
-                                ) : null}
-                              </>
-                            );
-                          })()}
-                          {/* #21 reminder chip — reads capture_metadata.reminder */}
-                          <NotebookReminderChip
-                            captureMetadata={activePage.captureMetadata}
+                                    {uploadSource.label}
+                                  </span>
+                                  {hasStoredSourceFile ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleDownloadSourceFile()}
+                                      disabled={isDownloadingSourceFile}
+                                      className="inline-flex items-center gap-1 rounded-md border border-c-border-subtle bg-c-surface px-2 py-0.5 text-[11px] font-medium text-c-text-secondary transition-colors hover:border-c-info hover:text-c-info disabled:cursor-not-allowed disabled:opacity-60"
+                                      title={t(
+                                        'notebook.notebookContent.title12',
+                                        'Download original source file'
+                                      )}
+                                    >
+                                      <Paperclip size={11} />
+                                      {t('notebook.notebookContent.label59', 'Download source')}
+                                    </button>
+                                  ) : null}
+                                </>
+                              );
+                            })()}
+                            {/* #21 reminder chip — reads capture_metadata.reminder */}
+                            <NotebookReminderChip
+                              captureMetadata={activePage.captureMetadata}
+                              isPolish={isPolish}
+                            />
+                          </div>
+                        </div>
+                        {/* #23 live presence — avatars of others viewing this note */}
+                        <div className="mt-1 shrink-0">
+                          <NotebookPresenceStack
+                            users={notebookPresence.connectedUsers}
+                            localUserId={currentUserId}
+                            connectionStatus={notebookPresence.connectionStatus}
                             isPolish={isPolish}
                           />
                         </div>
                       </div>
-                      {/* #23 live presence — avatars of others viewing this note */}
-                      <div className="mt-1 shrink-0">
-                        <NotebookPresenceStack
-                          users={notebookPresence.connectedUsers}
-                          localUserId={currentUserId}
-                          connectionStatus={notebookPresence.connectionStatus}
-                          isPolish={isPolish}
-                        />
-                      </div>
-                    </div>
 
-                    {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
-                    <div
-                      ref={verificationStripRef}
-                      className="mt-3 flex items-center gap-2 flex-wrap"
-                    >
-                      <select
-                        value={
-                          (activePage.verificationStatus as NotebookVerificationStatus) ??
-                          'unverified'
-                        }
-                        onChange={(e) => {
-                          const v = e.target.value as NotebookVerificationStatus;
-                          scheduleSave({ verificationStatus: v });
-                          setPages((prev) =>
-                            prev.map((p) =>
-                              p.id === activePage.id ? { ...p, verificationStatus: v } : p
-                            )
-                          );
-                        }}
-                        title={t('notebook.notebookContent.title13', 'Verification')}
-                        className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
-                          (activePage.verificationStatus as NotebookVerificationStatus) ===
-                          'verified'
-                            ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
-                            : (activePage.verificationStatus as NotebookVerificationStatus) ===
-                                'disputed'
-                              ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
-                              : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary'
-                        }`}
+                      {/* MW-08 — explicit save state, owner, visibility. Header
+                        anatomy required by the Notes IA standard §6/§9: the
+                        user must always know whether the page saved, and
+                        who can see it. `aria-live="polite"` so a screen
+                        reader announces state changes without the developer
+                        needing to move focus. */}
+                      <div
+                        className="mt-2 flex items-center gap-3 flex-wrap text-[11px]"
+                        aria-live="polite"
+                        data-testid="notebook-save-state"
                       >
-                        <option value="unverified">
-                          {t('notebook.notebookContent.label60', '○ Unverified')}
-                        </option>
-                        <option value="verified">
-                          {t('notebook.notebookContent.label61', '✓ Verified')}
-                        </option>
-                        <option value="disputed">
-                          {t('notebook.notebookContent.label62', '! Disputed')}
-                        </option>
-                      </select>
-                      <select
-                        value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
-                        onChange={(e) => {
-                          const v = e.target.value as NotebookReviewCadence;
-                          scheduleSave({ reviewCadence: v });
-                          setPages((prev) =>
-                            prev.map((p) =>
-                              p.id === activePage.id ? { ...p, reviewCadence: v } : p
-                            )
-                          );
-                        }}
-                        title={t('notebook.notebookContent.title14', 'Review cadence')}
-                        className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
-                      >
-                        <option value="weekly">
-                          {t('notebook.notebookContent.label63', 'Weekly')}
-                        </option>
-                        <option value="monthly">
-                          {t('notebook.notebookContent.label64', 'Monthly')}
-                        </option>
-                        <option value="quarterly">
-                          {t('notebook.notebookContent.label65', 'Quarterly')}
-                        </option>
-                        <option value="never">
-                          {t('notebook.notebookContent.label66', 'Never')}
-                        </option>
-                      </select>
-                      {(activePage.staleAt || activePage.lastReviewedAt) && (
-                        <span className="text-[11px]">
-                          {activePage.staleAt ? (
-                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                              <AlertTriangle size={11} />
-                              {t('notebook.notebookContent.label67', 'Stale')}
-                            </span>
-                          ) : activePage.lastReviewedAt ? (
-                            <span className="inline-flex items-center gap-1 text-c-text-muted">
-                              <CheckCircle2 size={11} className="text-emerald-500" />
-                              {t('notebook.notebookContent.label68', 'Reviewed')}{' '}
-                              {relativeTime(activePage.lastReviewedAt)}
-                            </span>
-                          ) : null}
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const now = new Date().toISOString();
-                          scheduleSave({
-                            lastReviewedAt: now,
-                            staleAt: null,
-                            verificationStatus:
-                              (activePage.verificationStatus as NotebookVerificationStatus) ||
-                              'verified',
-                          });
-                          setPages((prev) =>
-                            prev.map((p) =>
-                              p.id === activePage.id
-                                ? {
-                                    ...p,
-                                    lastReviewedAt: now,
-                                    staleAt: null,
-                                    verificationStatus:
-                                      (p.verificationStatus as NotebookVerificationStatus) ||
-                                      'verified',
-                                  }
-                                : p
-                            )
-                          );
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
-                      >
-                        <RefreshCw size={10} />
-                        {t('notebook.notebookContent.label69', 'Mark reviewed')}
-                      </button>
-                    </div>
-
-                    {/* Subtle divider */}
-                    <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
-
-                    <NotebookProgressChip
-                      isPolish={isPolish}
-                      hasPendingAIProposals={pendingAIProposals.length > 0}
-                      canConvertDeliverable={canConvertDeliverable}
-                      convertBlockedReason={deliverableGuardMessage}
-                      onOpenAttachments={() =>
-                        attachmentsSectionRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        })
-                      }
-                      onCreateAIProposal={() => setAiCommand('action')}
-                      onReviewAIProposal={() =>
-                        proposalReviewRef.current?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'start',
-                        })
-                      }
-                      onConvert={() => void handleConvertFromPanel('report')}
-                      onHandoffInitiatives={handleHandoffInitiatives}
-                    />
-                  </div>
-
-                  {activePage && (
-                    <div className="mb-3">
-                      <NotebookTopicChips
-                        noteId={activePage.id}
-                        canEdit={true}
-                        onOpenTopic={(topicId) => setOpenTopicId(topicId)}
-                      />
-                    </div>
-                  )}
-
-                  {headingOutline.length > 0 && (
-                    <div className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3">
-                      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
-                        {t('notebook.notebookContent.label70', 'Mini outline')}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {headingOutline.map((heading, index) => (
-                          <button
-                            key={`${heading.level}-${heading.text}-${index}`}
-                            type="button"
-                            onClick={() => {
-                              if (!editor) return;
-                              let selectionPos = 1;
-                              editor.state.doc.descendants((node, pos) => {
-                                if (
-                                  node.type.name === 'heading' &&
-                                  Number(node.attrs?.level || 1) === heading.level &&
-                                  extractText(node.toJSON()) === heading.text
-                                ) {
-                                  selectionPos = pos + 1;
-                                  return false;
-                                }
-                                return true;
-                              });
-                              editor.chain().focus().setTextSelection(selectionPos).run();
-                              editor.view.dispatch(editor.state.tr.scrollIntoView());
-                            }}
-                            className="rounded-full bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-                          >
-                            {`H${heading.level} ${heading.text}`}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {proposalLoadError ? (
-                    <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
-                      {t(
-                        'notebook.notebookContent.label71',
-                        'Could not load AI proposals for this note. Refresh the page or try again in a moment.'
-                      )}
-                    </div>
-                  ) : null}
-
-                  {pendingAIProposals.length > 0 && (
-                    <div
-                      ref={proposalReviewRef}
-                      className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-c-text-secondary">
-                            {t('notebook.notebookContent.label72', 'AI propose -> accept')}
-                          </div>
-                          <div className="text-[11px] text-c-text-secondary">
+                        {saveState === 'saving' && (
+                          <span className="inline-flex items-center gap-1 text-c-text-muted">
+                            <RefreshCw size={11} className="animate-spin" />
+                            {t('notebook.notebookContent.saveStateSaving', 'Saving…')}
+                          </span>
+                        )}
+                        {saveState === 'saved' && (
+                          <span className="inline-flex items-center gap-1 text-c-success">
+                            <CheckCircle2 size={11} />
+                            {t('notebook.notebookContent.saveStateSaved', 'Saved')}
+                          </span>
+                        )}
+                        {saveState === 'error' && (
+                          <span className="inline-flex items-center gap-1 text-danger-500">
+                            <AlertTriangle size={11} />
+                            {t('notebook.notebookContent.saveStateError', 'Save failed')}
+                          </span>
+                        )}
+                        {saveState === 'offline' && (
+                          <span className="inline-flex items-center gap-1 text-c-text-muted">
+                            <WifiOff size={11} />
                             {t(
-                              'notebook.notebookContent.pendingProposalsCount',
-                              '{{count}} proposals waiting for review',
-                              { count: pendingAIProposals.length }
+                              'notebook.notebookContent.saveStateOffline',
+                              'Offline — your edits are kept and will save when back online'
                             )}
-                          </div>
-                        </div>
+                          </span>
+                        )}
+                        <span
+                          className="inline-flex items-center gap-1 text-c-text-muted"
+                          title={t('notebook.notebookContent.ownerTooltip', 'Who owns this page')}
+                        >
+                          {(() => {
+                            const isOwnPage =
+                              !activePage.ownerUserId || activePage.ownerUserId === currentUserId;
+                            return isOwnPage
+                              ? t('notebook.notebookContent.ownerYou', 'You')
+                              : t('notebook.notebookContent.ownerOther', 'Another user');
+                          })()}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-c-text-muted">
+                          {activePage.visibility === 'project' ? (
+                            <Users size={11} />
+                          ) : (
+                            <Lock size={11} />
+                          )}
+                          {activePage.visibility === 'project'
+                            ? t('notebook.notebookContent.visibilityProject', 'Shared with project')
+                            : t('notebook.notebookContent.visibilityPrivate', 'Private')}
+                        </span>
                       </div>
-                      <div className="mt-3 space-y-2">
-                        {pendingAIProposals.slice(0, 3).map((proposal) => (
-                          <div
-                            key={proposal.id}
-                            className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2"
-                          >
-                            <div className="text-[11px] font-medium text-c-text-secondary">
-                              {proposal.rationale ||
-                                t('notebook.notebookContent.label73', 'AI proposal')}
-                            </div>
-                            <div className="mt-1 text-[11px] text-c-text-muted line-clamp-2">
-                              {extractText(proposal.blockContent)}
-                            </div>
-                            <div className="mt-2 flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void resolveNotebookAIProposal(proposal.id, 'accepted')
-                                }
-                                className="rounded-md bg-c-text px-2.5 py-1 text-[11px] font-medium text-c-surface transition-colors hover:brightness-110"
-                              >
-                                {t('notebook.notebookContent.label74', 'Accept')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  void resolveNotebookAIProposal(proposal.id, 'rejected')
-                                }
-                                className="rounded-md bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
-                              >
-                                {t('notebook.notebookContent.label75', 'Reject')}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {selectedEmbedPreview && (
-                    <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 dark:border-amber-500/20 dark:bg-amber-500/10">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
-                            {selectedEmbedPreview.title}
-                          </div>
-                          <div className="mt-1 text-[11px] text-c-text-muted">
-                            {selectedEmbedPreview.artifactType}
-                            {selectedEmbedPreview.status ? ` · ${selectedEmbedPreview.status}` : ''}
-                          </div>
+                      {/* MW-08 — conflict recovery banner. Persistent (unlike
+                        the toast, which fades) so the user can't miss it,
+                        and never disappears until they explicitly choose an
+                        action — the local edit stays exactly as typed. */}
+                      {saveState === 'conflict' && (
+                        <div
+                          role="alert"
+                          className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-3 py-2 text-[12px] text-amber-900 dark:text-amber-200"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <AlertTriangle size={13} />
+                            {t(
+                              'notebook.notebookContent.conflictBanner',
+                              'This page was changed elsewhere. Your edits were not overwritten.'
+                            )}
+                          </span>
+                          <span className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleReloadFromConflict}
+                              className="rounded-md border border-amber-400 px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            >
+                              {t('notebook.notebookContent.conflictReload', 'Reload')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRetryAfterConflict}
+                              className="rounded-md px-2 py-1 font-semibold text-amber-900 dark:text-amber-100 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                            >
+                              {t('notebook.notebookContent.conflictRetry', 'Save mine anyway')}
+                            </button>
+                          </span>
                         </div>
+                      )}
+
+                      {/* N3: Lifecycle strip — clean status pills (status-aware, no raw selects) */}
+                      <div
+                        ref={verificationStripRef}
+                        className="mt-3 flex items-center gap-2 flex-wrap"
+                      >
+                        <select
+                          value={
+                            (activePage.verificationStatus as NotebookVerificationStatus) ??
+                            'unverified'
+                          }
+                          onChange={(e) => {
+                            const v = e.target.value as NotebookVerificationStatus;
+                            scheduleSave({ verificationStatus: v });
+                            setPages((prev) =>
+                              prev.map((p) =>
+                                p.id === activePage.id ? { ...p, verificationStatus: v } : p
+                              )
+                            );
+                          }}
+                          title={t('notebook.notebookContent.title13', 'Verification')}
+                          className={`text-[11px] px-2.5 py-1 rounded-md border cursor-pointer transition-colors ${
+                            (activePage.verificationStatus as NotebookVerificationStatus) ===
+                            'verified'
+                              ? 'bg-emerald-500/10 border-emerald-300/40 text-emerald-700 dark:text-emerald-300'
+                              : (activePage.verificationStatus as NotebookVerificationStatus) ===
+                                  'disputed'
+                                ? 'bg-amber-500/10 border-amber-300/40 text-amber-700 dark:text-amber-300'
+                                : 'bg-c-surface-raised border-c-border-subtle text-c-text-secondary'
+                          }`}
+                        >
+                          <option value="unverified">
+                            {t('notebook.notebookContent.label60', '○ Unverified')}
+                          </option>
+                          <option value="verified">
+                            {t('notebook.notebookContent.label61', '✓ Verified')}
+                          </option>
+                          <option value="disputed">
+                            {t('notebook.notebookContent.label62', '! Disputed')}
+                          </option>
+                        </select>
+                        <select
+                          value={(activePage.reviewCadence as NotebookReviewCadence) ?? 'monthly'}
+                          onChange={(e) => {
+                            const v = e.target.value as NotebookReviewCadence;
+                            scheduleSave({ reviewCadence: v });
+                            setPages((prev) =>
+                              prev.map((p) =>
+                                p.id === activePage.id ? { ...p, reviewCadence: v } : p
+                              )
+                            );
+                          }}
+                          title={t('notebook.notebookContent.title14', 'Review cadence')}
+                          className="text-[11px] px-2.5 py-1 rounded-md border bg-c-surface-raised border-c-border-subtle text-c-text-secondary cursor-pointer"
+                        >
+                          <option value="weekly">
+                            {t('notebook.notebookContent.label63', 'Weekly')}
+                          </option>
+                          <option value="monthly">
+                            {t('notebook.notebookContent.label64', 'Monthly')}
+                          </option>
+                          <option value="quarterly">
+                            {t('notebook.notebookContent.label65', 'Quarterly')}
+                          </option>
+                          <option value="never">
+                            {t('notebook.notebookContent.label66', 'Never')}
+                          </option>
+                        </select>
+                        {(activePage.staleAt || activePage.lastReviewedAt) && (
+                          <span className="text-[11px]">
+                            {activePage.staleAt ? (
+                              <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                                <AlertTriangle size={11} />
+                                {t('notebook.notebookContent.label67', 'Stale')}
+                              </span>
+                            ) : activePage.lastReviewedAt ? (
+                              <span className="inline-flex items-center gap-1 text-c-text-muted">
+                                <CheckCircle2 size={11} className="text-emerald-500" />
+                                {t('notebook.notebookContent.label68', 'Reviewed')}{' '}
+                                {relativeTime(activePage.lastReviewedAt)}
+                              </span>
+                            ) : null}
+                          </span>
+                        )}
                         <button
                           type="button"
-                          onClick={() => setSelectedEmbedPreview(null)}
-                          className="rounded-md p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text"
+                          onClick={() => {
+                            const now = new Date().toISOString();
+                            scheduleSave({
+                              lastReviewedAt: now,
+                              staleAt: null,
+                              verificationStatus:
+                                (activePage.verificationStatus as NotebookVerificationStatus) ||
+                                'verified',
+                            });
+                            setPages((prev) =>
+                              prev.map((p) =>
+                                p.id === activePage.id
+                                  ? {
+                                      ...p,
+                                      lastReviewedAt: now,
+                                      staleAt: null,
+                                      verificationStatus:
+                                        (p.verificationStatus as NotebookVerificationStatus) ||
+                                        'verified',
+                                    }
+                                  : p
+                              )
+                            );
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-c-border-subtle text-c-text-secondary hover:bg-c-surface-raised text-[11px] font-medium transition-colors"
                         >
-                          <X size={14} />
+                          <RefreshCw size={10} />
+                          {t('notebook.notebookContent.label69', 'Mark reviewed')}
                         </button>
                       </div>
-                      {selectedEmbedPreview.snippet ? (
-                        <div className="mt-2 text-sm text-c-text-secondary">
-                          {selectedEmbedPreview.snippet}
-                        </div>
-                      ) : null}
+
+                      {/* Subtle divider */}
+                      <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-navy-700 to-transparent mt-3" />
+
+                      <NotebookProgressChip
+                        isPolish={isPolish}
+                        hasPendingAIProposals={pendingAIProposals.length > 0}
+                        canConvertDeliverable={canConvertDeliverable}
+                        convertBlockedReason={deliverableGuardMessage}
+                        onOpenAttachments={() =>
+                          attachmentsSectionRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          })
+                        }
+                        onCreateAIProposal={() => setAiCommand('action')}
+                        onReviewAIProposal={() =>
+                          proposalReviewRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          })
+                        }
+                        onConvert={() => void handleConvertFromPanel('report')}
+                        onHandoffInitiatives={handleHandoffInitiatives}
+                      />
                     </div>
-                  )}
 
-                  {/* Hidden file input backing the slash "/image" command. */}
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) uploadInlineImage(file);
-                      e.target.value = '';
-                    }}
-                  />
+                    {activePage && (
+                      <div className="mb-3">
+                        <NotebookTopicChips
+                          noteId={activePage.id}
+                          canEdit={true}
+                          onOpenTopic={(topicId) => setOpenTopicId(topicId)}
+                        />
+                      </div>
+                    )}
 
-                  {/* Rich editor */}
-                  {editor && <NotebookBubbleToolbar editor={editor} />}
-                  {/* J26 (channel 2): select → rewrite fragment in place via AI. */}
-                  {editor && activePage && (
-                    <NotebookInlineAIMenu
-                      editor={editor}
-                      pageId={activePage.id}
-                      onApplied={() => {
-                        void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
+                    {headingOutline.length > 0 && (
+                      <div className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3">
+                        <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-c-text-muted">
+                          {t('notebook.notebookContent.label70', 'Mini outline')}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {headingOutline.map((heading, index) => (
+                            <button
+                              key={`${heading.level}-${heading.text}-${index}`}
+                              type="button"
+                              onClick={() => {
+                                if (!editor) return;
+                                let selectionPos = 1;
+                                editor.state.doc.descendants((node, pos) => {
+                                  if (
+                                    node.type.name === 'heading' &&
+                                    Number(node.attrs?.level || 1) === heading.level &&
+                                    extractText(node.toJSON()) === heading.text
+                                  ) {
+                                    selectionPos = pos + 1;
+                                    return false;
+                                  }
+                                  return true;
+                                });
+                                editor.chain().focus().setTextSelection(selectionPos).run();
+                                editor.view.dispatch(editor.state.tr.scrollIntoView());
+                              }}
+                              className="rounded-full bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                            >
+                              {`H${heading.level} ${heading.text}`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {proposalLoadError ? (
+                      <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                        {t(
+                          'notebook.notebookContent.label71',
+                          'Could not load AI proposals for this note. Refresh the page or try again in a moment.'
+                        )}
+                      </div>
+                    ) : null}
+
+                    {pendingAIProposals.length > 0 && (
+                      <div
+                        ref={proposalReviewRef}
+                        className="mb-4 rounded-xl border border-c-border-subtle bg-c-surface-raised px-3 py-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold text-c-text-secondary">
+                              {t('notebook.notebookContent.label72', 'AI propose -> accept')}
+                            </div>
+                            <div className="text-[11px] text-c-text-secondary">
+                              {t(
+                                'notebook.notebookContent.pendingProposalsCount',
+                                '{{count}} proposals waiting for review',
+                                { count: pendingAIProposals.length }
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 space-y-2">
+                          {pendingAIProposals.slice(0, 3).map((proposal) => (
+                            <div
+                              key={proposal.id}
+                              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface px-3 py-2"
+                            >
+                              <div className="text-[11px] font-medium text-c-text-secondary">
+                                {proposal.rationale ||
+                                  t('notebook.notebookContent.label73', 'AI proposal')}
+                              </div>
+                              <div className="mt-1 text-[11px] text-c-text-muted line-clamp-2">
+                                {extractText(proposal.blockContent)}
+                              </div>
+                              <div className="mt-2 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void resolveNotebookAIProposal(proposal.id, 'accepted')
+                                  }
+                                  className="rounded-md bg-c-text px-2.5 py-1 text-[11px] font-medium text-c-surface transition-colors hover:brightness-110"
+                                >
+                                  {t('notebook.notebookContent.label74', 'Accept')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void resolveNotebookAIProposal(proposal.id, 'rejected')
+                                  }
+                                  className="rounded-md bg-c-surface px-2.5 py-1 text-[11px] font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised"
+                                >
+                                  {t('notebook.notebookContent.label75', 'Reject')}
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedEmbedPreview && (
+                      <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                              {selectedEmbedPreview.title}
+                            </div>
+                            <div className="mt-1 text-[11px] text-c-text-muted">
+                              {selectedEmbedPreview.artifactType}
+                              {selectedEmbedPreview.status
+                                ? ` · ${selectedEmbedPreview.status}`
+                                : ''}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEmbedPreview(null)}
+                            className="rounded-md p-1 text-c-text-secondary transition-colors hover:bg-c-surface-raised hover:text-c-text"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                        {selectedEmbedPreview.snippet ? (
+                          <div className="mt-2 text-sm text-c-text-secondary">
+                            {selectedEmbedPreview.snippet}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {/* Hidden file input backing the slash "/image" command. */}
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadInlineImage(file);
+                        e.target.value = '';
                       }}
                     />
-                  )}
-                  <EditorContent editor={editor} />
 
-                  {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}
-                  {activePage && (
-                    <NotebookBacklinksBar
-                      noteId={activePage.id}
-                      isPolish={isPolish}
-                      refreshKey={backlinksRefresh}
+                    {/* Rich editor */}
+                    {editor && <NotebookBubbleToolbar editor={editor} />}
+                    {/* J26 (channel 2): select → rewrite fragment in place via AI. */}
+                    {editor && activePage && (
+                      <NotebookInlineAIMenu
+                        editor={editor}
+                        pageId={activePage.id}
+                        onApplied={() => {
+                          void Promise.all([fetchPages(), refreshAIProposals(activePage.id)]);
+                        }}
+                      />
+                    )}
+                    <EditorContent editor={editor} />
+
+                    {/* K1 — incoming backlinks ("Mentioned in") surfaced inline. */}
+                    {activePage && (
+                      <NotebookBacklinksBar
+                        noteId={activePage.id}
+                        isPolish={isPolish}
+                        refreshKey={backlinksRefresh}
+                      />
+                    )}
+
+                    {activePage ? (
+                      <div ref={attachmentsSectionRef} className="mt-4">
+                        <NotebookAttachmentsSection
+                          noteId={activePage.id}
+                          attachments={activePage.attachments || []}
+                          onUpload={handleUploadNotebookAttachments}
+                          onDelete={handleDeleteNotebookAttachment}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* AI inline response */}
+                  {aiCommand && activePage && (
+                    <AIInlineResponse
+                      pageId={activePage.id}
+                      commandType={aiCommand}
+                      noteContent={activePage.contentText || extractText(activePage.contentJson)}
+                      noteTitle={title}
+                      onInsert={(text) => {
+                        void submitNotebookAIProposal(
+                          text,
+                          aiCommand === 'ask'
+                            ? t('notebook.notebookContent.label76', 'AI answer for note')
+                            : aiCommand === 'expand'
+                              ? t('notebook.notebookContent.label77', 'AI expansion')
+                              : aiCommand === 'challenge'
+                                ? t('notebook.notebookContent.label78', 'AI challenge questions')
+                                : t('notebook.notebookContent.label79', 'AI action plan'),
+                          aiCommand === 'ask'
+                            ? t('notebook.notebookContent.label80', 'AI answer')
+                            : aiCommand === 'expand'
+                              ? t('notebook.notebookContent.label81', 'AI expansion')
+                              : aiCommand === 'challenge'
+                                ? t('notebook.notebookContent.label82', 'AI challenge')
+                                : t('notebook.notebookContent.label83', 'AI action plan')
+                        );
+                        setAiCommand(null);
+                      }}
+                      onDismiss={() => setAiCommand(null)}
                     />
                   )}
 
-                  {activePage ? (
-                    <div ref={attachmentsSectionRef} className="mt-4">
-                      <NotebookAttachmentsSection
-                        noteId={activePage.id}
-                        attachments={activePage.attachments || []}
-                        onUpload={handleUploadNotebookAttachments}
-                        onDelete={handleDeleteNotebookAttachment}
-                      />
-                    </div>
-                  ) : null}
-                </div>
+                  {/* Slash command menu */}
+                  {editor && (
+                    <SlashMenu
+                      editor={editor}
+                      state={slashState}
+                      onClose={() => setSlashState(INITIAL_SLASH_STATE)}
+                      containerRef={editorContainerRef}
+                      onAICommand={(cmd) => setAiCommand(cmd)}
+                    />
+                  )}
 
-                {/* AI inline response */}
-                {aiCommand && activePage && (
-                  <AIInlineResponse
-                    pageId={activePage.id}
-                    commandType={aiCommand}
-                    noteContent={activePage.contentText || extractText(activePage.contentJson)}
-                    noteTitle={title}
-                    onInsert={(text) => {
-                      void submitNotebookAIProposal(
-                        text,
-                        aiCommand === 'ask'
-                          ? t('notebook.notebookContent.label76', 'AI answer for note')
-                          : aiCommand === 'expand'
-                            ? t('notebook.notebookContent.label77', 'AI expansion')
-                            : aiCommand === 'challenge'
-                              ? t('notebook.notebookContent.label78', 'AI challenge questions')
-                              : t('notebook.notebookContent.label79', 'AI action plan'),
-                        aiCommand === 'ask'
-                          ? t('notebook.notebookContent.label80', 'AI answer')
-                          : aiCommand === 'expand'
-                            ? t('notebook.notebookContent.label81', 'AI expansion')
-                            : aiCommand === 'challenge'
-                              ? t('notebook.notebookContent.label82', 'AI challenge')
-                              : t('notebook.notebookContent.label83', 'AI action plan')
-                      );
-                      setAiCommand(null);
-                    }}
-                    onDismiss={() => setAiCommand(null)}
-                  />
-                )}
-
-                {/* Slash command menu */}
-                {editor && (
-                  <SlashMenu
-                    editor={editor}
-                    state={slashState}
-                    onClose={() => setSlashState(INITIAL_SLASH_STATE)}
-                    containerRef={editorContainerRef}
-                    onAICommand={(cmd) => setAiCommand(cmd)}
-                  />
-                )}
-
-                {/* @mention entity picker (K1) — coords are container-relative
+                  {/* @mention entity picker (K1) — coords are container-relative
                     like SlashMenu, so the absolutely-positioned menu lands at the caret. */}
-                {editor &&
-                  mentionState.open &&
-                  (() => {
-                    const rect = editorContainerRef.current?.getBoundingClientRect();
-                    return (
-                      <NotebookMentionMenu
-                        open={mentionState.open}
-                        query={mentionState.query}
-                        position={{
-                          x: mentionState.coords.left - (rect?.left ?? 0),
-                          y: mentionState.coords.top - (rect?.top ?? 0),
-                        }}
-                        onSelect={handleMentionSelect}
-                        onClose={() => setMentionState(INITIAL_MENTION_STATE)}
-                        isPolish={isPolish}
-                        notes={pages}
-                        activeNoteId={activePage?.id ?? null}
-                      />
-                    );
-                  })()}
+                  {editor &&
+                    mentionState.open &&
+                    (() => {
+                      const rect = editorContainerRef.current?.getBoundingClientRect();
+                      return (
+                        <NotebookMentionMenu
+                          open={mentionState.open}
+                          query={mentionState.query}
+                          position={{
+                            x: mentionState.coords.left - (rect?.left ?? 0),
+                            y: mentionState.coords.top - (rect?.top ?? 0),
+                          }}
+                          onSelect={handleMentionSelect}
+                          onClose={() => setMentionState(INITIAL_MENTION_STATE)}
+                          isPolish={isPolish}
+                          notes={pages}
+                          activeNoteId={activePage?.id ?? null}
+                        />
+                      );
+                    })()}
 
-                {/* Code-block language picker */}
-                {editor && codeLangMenu && (
-                  <div
-                    className="absolute z-50 max-h-64 w-44 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1 shadow-lg"
-                    style={{ top: codeLangMenu.top, left: codeLangMenu.left }}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {NOTEBOOK_CODE_LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.id}
-                        type="button"
-                        onClick={() => {
-                          editor.chain().focus().setCodeBlock({ language: lang.id }).run();
-                          setCodeLangMenu(null);
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
-                          codeLangMenu.current === lang.id
-                            ? 'bg-c-surface-raised text-c-text'
-                            : 'text-c-text-secondary hover:bg-c-surface-raised'
-                        }`}
-                      >
-                        {lang.label}
-                        {codeLangMenu.current === lang.id ? (
-                          <CheckCircle2 size={13} className="text-c-text-muted" />
-                        ) : null}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {/* Code-block language picker */}
+                  {editor && codeLangMenu && (
+                    <div
+                      className="absolute z-50 max-h-64 w-44 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-1 shadow-lg"
+                      style={{ top: codeLangMenu.top, left: codeLangMenu.left }}
+                      onMouseDown={(e) => e.preventDefault()}
+                    >
+                      {NOTEBOOK_CODE_LANGUAGES.map((lang) => (
+                        <button
+                          key={lang.id}
+                          type="button"
+                          onClick={() => {
+                            editor.chain().focus().setCodeBlock({ language: lang.id }).run();
+                            setCodeLangMenu(null);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-sm transition-colors ${
+                            codeLangMenu.current === lang.id
+                              ? 'bg-c-surface-raised text-c-text'
+                              : 'text-c-text-secondary hover:bg-c-surface-raised'
+                          }`}
+                        >
+                          {lang.label}
+                          {codeLangMenu.current === lang.id ? (
+                            <CheckCircle2 size={13} className="text-c-text-muted" />
+                          ) : null}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* Graph view — toggleable panel (topic+backlink connections). Same
+            fixed-width-third-column problem as the right rail below; not
+            offered on mobile for the same documented reason. */}
+          {!isMobile && showGraphView && activePage && (
+            <div className="w-72 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary">
+                  <Network size={13} />
+                  {t('notebook.notebookContent.label84', 'Connection graph')}
+                </div>
+                <button
+                  onClick={() => setShowGraphView(false)}
+                  className="p-0.5 rounded text-c-text-secondary hover:bg-c-surface-raised transition-colors"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+              <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
             </div>
           )}
-        </div>
 
-        {/* Graph view — toggleable panel (topic+backlink connections) */}
-        {showGraphView && activePage && (
-          <div className="w-72 shrink-0 rounded-2xl border border-slate-200/60 dark:border-white/[0.03] overflow-hidden bg-c-surface flex flex-col">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-c-border-subtle">
-              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-c-text-secondary">
-                <Network size={13} />
-                {t('notebook.notebookContent.label84', 'Connection graph')}
-              </div>
-              <button
-                onClick={() => setShowGraphView(false)}
-                className="p-0.5 rounded text-c-text-secondary hover:bg-c-surface-raised transition-colors"
-              >
-                <X size={13} />
-              </button>
-            </div>
-            <NotebookGraphView pageId={activePage.id} pageTitle={title} isPolish={isPolish} />
-          </div>
-        )}
-
-        {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context) */}
-        <NotebookRightRail
-          open={notebookRailOpen}
-          activeTab={notebookRailTab}
-          onTabChange={setNotebookRailTab}
-          onClose={() => setNotebookRailOpen(false)}
-          activePage={activePage}
-          allPages={pages}
-          editor={editor}
-          noteTitle={title}
-          noteContent={
-            activePage ? activePage.contentText || extractText(activePage.contentJson) : ''
-          }
-          noteTags={pageTags}
-          notePage={
-            activePage
-              ? {
-                  id: activePage.id,
-                  maturity:
-                    (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
-                  summary: activePage.summary,
-                  updatedAt: activePage.updatedAt,
-                  visibility: (activePage.visibility as NotebookVisibility) || 'private',
-                  projectId: activePage.projectId,
-                  wordCount: wordCount(
-                    activePage.contentText || extractText(activePage.contentJson)
-                  ),
+          {/* L-03: Consolidated right rail — Tab A (Praca/Work) + Tab B (Kontekst/Context).
+            Not offered on mobile — see the toggle button comment above. */}
+          {!isMobile && (
+            <NotebookRightRail
+              open={notebookRailOpen}
+              activeTab={notebookRailTab}
+              onTabChange={setNotebookRailTab}
+              onClose={() => setNotebookRailOpen(false)}
+              activePage={activePage}
+              allPages={pages}
+              editor={editor}
+              noteTitle={title}
+              noteContent={
+                activePage ? activePage.contentText || extractText(activePage.contentJson) : ''
+              }
+              noteTags={pageTags}
+              notePage={
+                activePage
+                  ? {
+                      id: activePage.id,
+                      maturity:
+                        (activePage.maturity as NotebookMaturity) || computeMaturity(activePage),
+                      summary: activePage.summary,
+                      updatedAt: activePage.updatedAt,
+                      visibility: (activePage.visibility as NotebookVisibility) || 'private',
+                      projectId: activePage.projectId,
+                      wordCount: wordCount(
+                        activePage.contentText || extractText(activePage.contentJson)
+                      ),
+                    }
+                  : undefined
+              }
+              onAskAI={handleAskAI}
+              onDeletePage={handleDeletePage}
+              onSetVisibility={(next) => {
+                if (!activePage) return;
+                if (next === 'private') {
+                  scheduleSave({ projectId: null, visibility: 'private' });
+                  setPages((prev) =>
+                    prev.map((p) =>
+                      p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p
+                    )
+                  );
+                  return;
                 }
-              : undefined
-          }
-          onAskAI={handleAskAI}
-          onDeletePage={handleDeletePage}
-          onSetVisibility={(next) => {
-            if (!activePage) return;
-            if (next === 'private') {
-              scheduleSave({ projectId: null, visibility: 'private' });
-              setPages((prev) =>
-                prev.map((p) =>
-                  p.id === activePage.id ? { ...p, projectId: null, visibility: 'private' } : p
-                )
-              );
-              return;
-            }
-            if (activePage.projectId) {
-              scheduleSave({ visibility: 'project' });
-              setPages((prev) =>
-                prev.map((p) => (p.id === activePage.id ? { ...p, visibility: 'project' } : p))
-              );
-            }
-          }}
-          getRelativeTime={(iso) => relativeTime(iso)}
-          onOpenAIChat={() => setChatOpen(true)}
-          onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
-          onConvert={handleConvertFromPanel}
-          canConvertDeliverable={canConvertDeliverable}
-          convertBlockedReason={deliverableGuardMessage}
-        />
-      </div>
+                if (activePage.projectId) {
+                  scheduleSave({ visibility: 'project' });
+                  setPages((prev) =>
+                    prev.map((p) => (p.id === activePage.id ? { ...p, visibility: 'project' } : p))
+                  );
+                }
+              }}
+              getRelativeTime={(iso) => relativeTime(iso)}
+              onOpenAIChat={() => setChatOpen(true)}
+              onFocusAICommand={() => aiCommandPromptInputRef.current?.focus()}
+              onConvert={handleConvertFromPanel}
+              canConvertDeliverable={canConvertDeliverable}
+              convertBlockedReason={deliverableGuardMessage}
+            />
+          )}
+        </div>
+      )}
 
       <NewPageModal
         open={templateModalOpen}

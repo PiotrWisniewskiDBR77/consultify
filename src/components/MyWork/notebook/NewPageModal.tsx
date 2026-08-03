@@ -285,8 +285,11 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const titleId = 'new-page-modal-title';
 
   const handleSelect = useCallback(
     async (tmpl: PageTemplate) => {
@@ -389,13 +392,61 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
     [onUploadComplete, onClose]
   );
 
+  // A11y: initial focus, focus trap (Tab cannot escape into the page behind
+  // the overlay) and focus-restore-on-close, using the same technique as
+  // src/components/ui/primitives/Modal.tsx (save previousActiveElement,
+  // focus the dialog container on open, restore focus on close).
   useEffect(() => {
     if (!open) return;
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    previousActiveElementRef.current = document.activeElement as HTMLElement;
+
+    const focusTimer = setTimeout(() => {
+      dialogRef.current?.focus();
+    }, 0);
+
+    const getFocusable = (): HTMLElement[] => {
+      const container = dialogRef.current;
+      if (!container) return [];
+      return Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input:not([disabled]), select, [tabindex]:not([tabindex="-1"])'
+        )
+      );
     };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusable = getFocusable();
+        if (focusable.length === 0) {
+          e.preventDefault();
+          dialogRef.current?.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey) {
+          if (active === first || active === dialogRef.current) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      document.removeEventListener('keydown', handleKeyDown);
+      previousActiveElementRef.current?.focus();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -408,9 +459,16 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="w-full max-w-2xl mx-4 rounded-2xl bg-c-surface border border-slate-200/60 dark:border-white/[0.03] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 outline-none"
+      >
         <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle">
-          <h2 className="text-base font-semibold text-c-text">
+          <h2 id={titleId} className="text-base font-semibold text-c-text">
             {t('myWorkNotebook.newPageModal.title')}
           </h2>
           <button

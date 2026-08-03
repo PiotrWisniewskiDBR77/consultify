@@ -1438,9 +1438,32 @@ router.put(
     // Optimistic concurrency: if the client tells us which version it based its
     // edit on (expectedUpdatedAt), reject silent last-write-wins when the row
     // has moved on since. Happy-path autosave omits the field → unchanged.
-    if (req.body?.expectedUpdatedAt !== undefined && req.body?.expectedUpdatedAt !== null) {
-      const expected = new Date(String(req.body.expectedUpdatedAt)).getTime();
-      const current = existing.updated_at ? new Date(String(existing.updated_at)).getTime() : NaN;
+    const expectedUpdatedAt =
+      req.body?.expectedUpdatedAt !== undefined && req.body?.expectedUpdatedAt !== null
+        ? String(req.body.expectedUpdatedAt)
+        : null;
+    if (expectedUpdatedAt) {
+      const expected = new Date(expectedUpdatedAt).getTime();
+      // Reproduced against real Postgres: a client-supplied expectedUpdatedAt
+      // that doesn't parse (e.g. a garbage string) used to silently skip this
+      // whole guard — `Number.isFinite(expected)` was false, so the mismatch
+      // branch below never ran, and by the time the atomic UPDATE's version
+      // predicate was reached (further down), that predicate is built from
+      // `existing.updated_at` (the server's OWN read), never from this raw
+      // client string on the Postgres path — so a malformed token bypassed
+      // CAS entirely and the write went through as HTTP 200 with the row
+      // mutated. Reject unparseable tokens outright instead of silently
+      // treating them as "no version supplied".
+      if (!Number.isFinite(expected)) {
+        return res.status(400).json({
+          error: 'expectedUpdatedAt must be a valid timestamp',
+          code: 'INVALID_EXPECTED_UPDATED_AT',
+        });
+      }
+      // pg returns TIMESTAMPTZ as a Date. String(Date) drops milliseconds, so
+      // reparsing that string turned a matching token such as `.726Z` into
+      // `.000Z` and falsely rejected every first UI autosave as a conflict.
+      const current = existing.updated_at ? new Date(existing.updated_at).getTime() : NaN;
       // Only enforce when both timestamps are parseable; a mismatch means the
       // page was edited elsewhere between the client's read and this write.
       if (Number.isFinite(expected) && Number.isFinite(current) && expected !== current) {
@@ -1532,10 +1555,48 @@ router.put(
     if (setParts.length > 0) {
       setParts.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
-      await queryHelpers.queryRun(
-        `UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`,
+      const isPostgres =
+        process.env.DB_TYPE === 'postgres' ||
+        /^postgres(?:ql)?:/i.test(String(process.env.DATABASE_URL || ''));
+      if (expectedUpdatedAt) {
+        if (isPostgres && existing.updated_at instanceof Date) {
+          // `updated_at` is TIMESTAMP WITHOUT TIME ZONE. node-postgres parses
+          // it in the process timezone, so rebuild the same naive local value
+          // before binding it back; binding Date/ISO would shift it by the TZ.
+          const value = existing.updated_at;
+          const part = (n: number, width = 2) => String(n).padStart(width, '0');
+          params.push(
+            `${value.getFullYear()}-${part(value.getMonth() + 1)}-${part(value.getDate())} ` +
+              `${part(value.getHours())}:${part(value.getMinutes())}:${part(value.getSeconds())}.` +
+              part(value.getMilliseconds(), 3)
+          );
+        } else {
+          params.push(expectedUpdatedAt);
+        }
+      }
+      // Normalize fractional precision in PostgreSQL; SQLite stores the
+      // serialized timestamp token directly and uses plain equality.
+      const versionPredicate = isPostgres
+        ? "date_trunc('milliseconds', updated_at) = date_trunc('milliseconds', CAST(? AS timestamp))"
+        : 'updated_at = ?';
+      const update = await queryHelpers.queryRun(
+        `UPDATE notebook_pages SET ${setParts.join(', ')}
+         WHERE id = ?${expectedUpdatedAt ? ` AND ${versionPredicate}` : ''}`,
         params
       );
+      if (expectedUpdatedAt && !update.changes) {
+        const fresh = await queryHelpers.queryOne<any>(
+          `SELECT ${buildNotebookSelectFields(notebookCols, '')}
+           FROM notebook_pages WHERE id = ? LIMIT 1`,
+          [id]
+        );
+        return res.status(409).json({
+          error: 'Page was modified elsewhere',
+          code: 'NOTEBOOK_PAGE_CONFLICT',
+          data: fresh ? formatNotebookRow(fresh) : null,
+          meta: { version: 'v8', contract: V8_NOTEBOOK_CONTRACT },
+        });
+      }
     }
 
     const row = await queryHelpers.queryOne<any>(
