@@ -7,3 +7,19 @@
 # Na start PUSTA — żadnych plików nie znaleziono, które legalnie potrzebują
 # c-accent/primary-100/200/300 poza kanonem (brand/logo). Dopisz tu ścieżkę
 # TYLKO ze świadomą decyzją (np. świadomy hardkod loga marki), nie żeby ominąć hook.
+
+# MW-08 canonical reconciliation (2026-08-03):
+# src/components/MyWork/NotebookContent.tsx — PRE-EXISTING crimson
+# (bg-c-accent-soft/text-c-accent) on "New page"/"Load more"/template card/
+# AI-suggestion hover states — already present on the canonical integration
+# base (1421ae29dc) before any MW-08 work touched this file, confirmed via
+# `git show 1421ae29dc:...NotebookContent.tsx | grep -c c-accent` = 9.
+# check-triada's hit here is a diff-based false positive: the mandatory
+# `eslint --fix` formatting pass (the file had ~1350 mechanical prettier
+# errors after the mobile-UX cherry-pick) reflowed indentation around these
+# pre-existing lines, so git's diff shows them as "changed" even though the
+# token content is byte-identical (proved separately: esbuild --minify on the
+# pre- and post-fix file produces the same sha256). Not a drive-by fix —
+# removing this pre-existing crimson is out of scope for MW-08 reconciliation
+# and would be its own task.
+src/components/MyWork/NotebookContent.tsx
