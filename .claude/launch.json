@@ -188,6 +188,31 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--port", "3000", "--strictPort"],
       "port": 3000
+    },
+    {
+      "name": "idee-nastepca",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3296"
+      ],
+      "port": 3296
+    },
+    {
+      "name": "ui-foundation-focus-01-evidence",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3500",
+        "--strictPort"
+      ],
+      "port": 3500
     }
   ]
 }
