@@ -453,7 +453,7 @@ describe('MW-11 migration 939', () => {
       await client.query(`SET LOCAL search_path TO ${schema}`);
       await client.query('CREATE TABLE ai_agent_plans (id TEXT PRIMARY KEY, status TEXT NOT NULL)');
       const migration = readFileSync(
-        path.resolve(testDir, '../../server/migrations/939_ai_agent_plan_execution_lease.sql'),
+        path.resolve(testDir, '../../server/migrations/941_ai_agent_plan_execution_lease.sql'),
         'utf8'
       );
       await client.query(migration);
