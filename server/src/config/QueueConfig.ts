@@ -55,9 +55,13 @@ export function loadQueueConfig(): QueueConfig {
 
   const rawConfig: QueueConfig = {
     connection: {
-      host: process.env.REDIS_HOST || urlHost || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || String(urlPort || 6379), 10),
-      password: process.env.REDIS_PASSWORD || urlPassword,
+      // A complete REDIS_URL is the canonical Railway connection contract.
+      // Do not combine its host with a potentially stale separately managed
+      // password, because that produces a valid-looking but unauthenticated
+      // BullMQ connection (WRONGPASS) while other Redis clients remain healthy.
+      host: urlHost || process.env.REDIS_HOST || 'localhost',
+      port: urlPort || parseInt(process.env.REDIS_PORT || '6379', 10),
+      password: urlPassword || process.env.REDIS_PASSWORD,
     },
   };
 
