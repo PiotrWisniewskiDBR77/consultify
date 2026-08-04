@@ -84,7 +84,6 @@ export interface ResultsThreePairsViewProps {
 }
 
 export type ResultsPair = 'kpi' | 'roi' | 'okr';
-
 // ── Formatery ───────────────────────────────────────────────────────────────
 function fmtNum(v: number | null | undefined): string {
   if (v == null || Number.isNaN(v)) return '—';
