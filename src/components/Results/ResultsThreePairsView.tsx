@@ -12,10 +12,10 @@
  * własnych <table>. Karty-pary u góry sekcji to podsumowania (jak strip nagłówka
  * w KpiOverviewView), nie tabele. Kolory = tokeny c-* (semantyka: c-success/
  * c-warning/c-danger). CTA/stany aktywne = neutralne, focus = c-focus (nigdy
- * crimson `primary-*`). Widok jest bezstanowy — dane i handlery wstrzykuje
- * rodzic (ResultsHub) lub host dev-render.
+ * crimson `primary-*`). Dane i handlery wstrzykuje rodzic (ResultsHub) lub host
+ * dev-render; lokalny stan wybiera tylko jedną z trzech równorzędnych tabel.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import type { TableColumn, TableRow } from '../standard/StandardTable';
 import StandardTable from '../standard/StandardTable';
@@ -72,6 +72,8 @@ export interface ResultsThreePairsViewProps {
   onOpenRoi?: (initiativeId: string) => void;
   onOpenObjective?: (id: string) => void;
 }
+
+type ResultsPair = 'kpi' | 'roi' | 'okr';
 
 // ── Formatery ───────────────────────────────────────────────────────────────
 function fmtNum(v: number | null | undefined): string {
@@ -212,6 +214,7 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
   onOpenObjective,
 }) => {
   const tr = (pl: string, en: string) => (isPolish ? pl : en);
+  const [activePair, setActivePair] = useState<ResultsPair>('kpi');
 
   // ── Para 1: KPI ───────────────────────────────────────────────────────────
   const kpiAgg = useMemo(() => {
@@ -486,116 +489,162 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
         </p>
       </header>
 
-      {/* PARA 1 — KPI (cel ↔ wynik) */}
-      <Section
-        step={1}
-        title={tr('KPI — cel ↔ wynik', 'KPI — target ↔ actual')}
-        subtitle={tr(
-          'Mierzalne wskaźniki inicjatyw: gdzie jesteśmy względem celu.',
-          'Measurable initiative indicators: where we are vs the target.'
-        )}
-        cta={<NeutralCta label={tr('+ Dodaj KPI', '+ Add KPI')} onClick={onAddKpi} />}
+      <nav
+        aria-label={tr('Tabele rezultatów', 'Results tables')}
+        className="flex flex-wrap items-center gap-2 border-b border-c-border-subtle pb-3"
       >
-        <div className="mb-3">
-          <PairSummary
-            planLabel={tr('Monitorowane', 'Tracked')}
-            planValue={`${kpiAgg.total} KPI`}
-            actualLabel={tr('W celu', 'On target')}
-            actualValue={`${kpiAgg.onTarget}/${kpiAgg.total}`}
-            actualClass={kpiAgg.onTarget === kpiAgg.total ? 'text-c-success' : 'text-c-text'}
-            pct={kpiAgg.avg}
-            note={tr(
-              `Średnia realizacja celu: ${kpiAgg.avg}%`,
-              `Average target attainment: ${kpiAgg.avg}%`
-            )}
+        {(
+          [
+            ['kpi', tr('KPI', 'KPI'), `${kpiAgg.total}`],
+            ['roi', tr('ROI', 'ROI'), `${roi.length}`],
+            ['okr', tr('OKR', 'OKR'), `${objectives.length}`],
+          ] as const
+        ).map(([id, label, count]) => {
+          const active = activePair === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={active}
+              data-testid={`results-pair-tab-${id}`}
+              onClick={() => setActivePair(id)}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-c-focus ${
+                active
+                  ? 'border-c-border bg-c-surface-raised text-c-text'
+                  : 'border-c-border-subtle bg-transparent text-c-text-secondary hover:bg-c-surface'
+              }`}
+            >
+              <span>{label}</span>
+              <span className="rounded-full bg-c-surface px-2 py-0.5 text-xs text-c-text-muted">
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* PARA 1 — KPI (cel ↔ wynik) */}
+      {activePair === 'kpi' && (
+        <Section
+          step={1}
+          title={tr('KPI — cel ↔ wynik', 'KPI — target ↔ actual')}
+          subtitle={tr(
+            'Mierzalne wskaźniki inicjatyw: gdzie jesteśmy względem celu.',
+            'Measurable initiative indicators: where we are vs the target.'
+          )}
+          cta={<NeutralCta label={tr('+ Dodaj KPI', '+ Add KPI')} onClick={onAddKpi} />}
+        >
+          <div className="mb-3">
+            <PairSummary
+              planLabel={tr('Monitorowane', 'Tracked')}
+              planValue={`${kpiAgg.total} KPI`}
+              actualLabel={tr('W celu', 'On target')}
+              actualValue={`${kpiAgg.onTarget}/${kpiAgg.total}`}
+              actualClass={kpiAgg.onTarget === kpiAgg.total ? 'text-c-success' : 'text-c-text'}
+              pct={kpiAgg.avg}
+              note={tr(
+                `Średnia realizacja celu: ${kpiAgg.avg}%`,
+                `Average target attainment: ${kpiAgg.avg}%`
+              )}
+            />
+          </div>
+          <StandardTable
+            columns={kpiColumns}
+            data={kpiRows}
+            onRowClick={onOpenKpi ? (row) => onOpenKpi(String(row.id)) : undefined}
+            empty={{
+              title: tr('Brak KPI', 'No KPIs'),
+              description: tr(
+                'Dodaj pierwszy wskaźnik inicjatywy.',
+                'Add the first initiative KPI.'
+              ),
+            }}
           />
-        </div>
-        <StandardTable
-          columns={kpiColumns}
-          data={kpiRows}
-          onRowClick={onOpenKpi ? (row) => onOpenKpi(String(row.id)) : undefined}
-          empty={{
-            title: tr('Brak KPI', 'No KPIs'),
-            description: tr('Dodaj pierwszy wskaźnik inicjatywy.', 'Add the first initiative KPI.'),
-          }}
-        />
-      </Section>
+        </Section>
+      )}
 
       {/* PARA 2 — ROI (oczekiwany ↔ zrealizowany netto) */}
-      <Section
-        step={2}
-        title={tr('ROI — oczekiwany ↔ zrealizowany', 'ROI — expected ↔ realized')}
-        subtitle={tr(
-          'Korzyści netto inicjatyw: prognoza względem realizacji.',
-          'Net initiative benefits: forecast vs realization.'
-        )}
-        cta={
-          <NeutralCta label={tr('+ Nowa analiza ROI', '+ New ROI analysis')} onClick={onNewRoi} />
-        }
-      >
-        <div className="mb-3">
-          <PairSummary
-            planLabel={tr('Oczekiwany (netto)', 'Expected (net)')}
-            planValue={fmtCurrency(roiAgg.projected, currency)}
-            actualLabel={tr('Zrealizowany (netto)', 'Realized (net)')}
-            actualValue={fmtCurrency(roiAgg.realized, currency)}
-            actualClass={roiAgg.variance >= 0 ? 'text-c-success' : 'text-c-warning'}
-            pct={roiAgg.pct}
-            note={tr(`Pokrycie realizacji: ${roiAgg.pct}%`, `Realization coverage: ${roiAgg.pct}%`)}
+      {activePair === 'roi' && (
+        <Section
+          step={2}
+          title={tr('ROI — oczekiwany ↔ zrealizowany', 'ROI — expected ↔ realized')}
+          subtitle={tr(
+            'Korzyści netto inicjatyw: prognoza względem realizacji.',
+            'Net initiative benefits: forecast vs realization.'
+          )}
+          cta={
+            <NeutralCta label={tr('+ Nowa analiza ROI', '+ New ROI analysis')} onClick={onNewRoi} />
+          }
+        >
+          <div className="mb-3">
+            <PairSummary
+              planLabel={tr('Oczekiwany (netto)', 'Expected (net)')}
+              planValue={fmtCurrency(roiAgg.projected, currency)}
+              actualLabel={tr('Zrealizowany (netto)', 'Realized (net)')}
+              actualValue={fmtCurrency(roiAgg.realized, currency)}
+              actualClass={roiAgg.variance >= 0 ? 'text-c-success' : 'text-c-warning'}
+              pct={roiAgg.pct}
+              note={tr(
+                `Pokrycie realizacji: ${roiAgg.pct}%`,
+                `Realization coverage: ${roiAgg.pct}%`
+              )}
+            />
+          </div>
+          <StandardTable
+            columns={roiColumns}
+            data={roiRows}
+            onRowClick={onOpenRoi ? (row) => onOpenRoi(String(row.id)) : undefined}
+            empty={{
+              title: tr('Brak analiz ROI', 'No ROI analyses'),
+              description: tr(
+                'Uruchom pierwszą analizę ROI per inicjatywa.',
+                'Run the first per-initiative ROI analysis.'
+              ),
+            }}
           />
-        </div>
-        <StandardTable
-          columns={roiColumns}
-          data={roiRows}
-          onRowClick={onOpenRoi ? (row) => onOpenRoi(String(row.id)) : undefined}
-          empty={{
-            title: tr('Brak analiz ROI', 'No ROI analyses'),
-            description: tr(
-              'Uruchom pierwszą analizę ROI per inicjatywa.',
-              'Run the first per-initiative ROI analysis.'
-            ),
-          }}
-        />
-      </Section>
+        </Section>
+      )}
 
       {/* PARA 3 — OKR (cel strategiczny ↔ kluczowe rezultaty) */}
-      <Section
-        step={3}
-        title={tr('OKR — cel ↔ kluczowe rezultaty', 'OKR — objective ↔ key results')}
-        subtitle={tr(
-          'Strategiczne cele i ich mierzalne kluczowe rezultaty (KR).',
-          'Strategic objectives and their measurable key results (KR).'
-        )}
-        cta={<NeutralCta label={tr('Zarządzaj OKR', 'Manage OKR')} onClick={onManageOkr} />}
-      >
-        <div className="mb-3">
-          <PairSummary
-            planLabel={tr('Cele strategiczne', 'Objectives')}
-            planValue={`${okrAgg.total}`}
-            actualLabel={tr('Kluczowe rezultaty', 'Key results')}
-            actualValue={`${okrAgg.krCount}`}
-            pct={okrAgg.avg}
-            note={tr(
-              `Średni wynik OKR (rollup): ${okrAgg.avg}%`,
-              `Average OKR score (rollup): ${okrAgg.avg}%`
-            )}
+      {activePair === 'okr' && (
+        <Section
+          step={3}
+          title={tr('OKR — cel ↔ kluczowe rezultaty', 'OKR — objective ↔ key results')}
+          subtitle={tr(
+            'Strategiczne cele i ich mierzalne kluczowe rezultaty (KR).',
+            'Strategic objectives and their measurable key results (KR).'
+          )}
+          cta={<NeutralCta label={tr('Zarządzaj OKR', 'Manage OKR')} onClick={onManageOkr} />}
+        >
+          <div className="mb-3">
+            <PairSummary
+              planLabel={tr('Cele strategiczne', 'Objectives')}
+              planValue={`${okrAgg.total}`}
+              actualLabel={tr('Kluczowe rezultaty', 'Key results')}
+              actualValue={`${okrAgg.krCount}`}
+              pct={okrAgg.avg}
+              note={tr(
+                `Średni wynik OKR (rollup): ${okrAgg.avg}%`,
+                `Average OKR score (rollup): ${okrAgg.avg}%`
+              )}
+            />
+          </div>
+          <StandardTable
+            columns={okrColumns}
+            data={okrRows}
+            onRowClick={
+              onOpenObjective ? (row: any) => onOpenObjective(String(row._objectiveId)) : undefined
+            }
+            empty={{
+              title: tr('Brak OKR', 'No OKRs'),
+              description: tr(
+                'Zdefiniuj pierwszy cel strategiczny i jego KR.',
+                'Define the first strategic objective and its KRs.'
+              ),
+            }}
           />
-        </div>
-        <StandardTable
-          columns={okrColumns}
-          data={okrRows}
-          onRowClick={
-            onOpenObjective ? (row: any) => onOpenObjective(String(row._objectiveId)) : undefined
-          }
-          empty={{
-            title: tr('Brak OKR', 'No OKRs'),
-            description: tr(
-              'Zdefiniuj pierwszy cel strategiczny i jego KR.',
-              'Define the first strategic objective and its KRs.'
-            ),
-          }}
-        />
-      </Section>
+        </Section>
+      )}
     </div>
   );
 };
