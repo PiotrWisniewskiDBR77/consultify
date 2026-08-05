@@ -73,7 +73,10 @@ export function useFinanceData(
       setStatements(arr);
     } catch {
       const demoFallbackHint = allowDemoData
-        ? ' Demo mode is enabled, but this module requires real source data.'
+        ? ` ${t(
+            'finance.errors.demoModeRequiresRealSource',
+            'Demo mode is enabled, but this module requires real source data.'
+          )}`
         : '';
       setLoadError(
         t(
