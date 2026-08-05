@@ -131,6 +131,7 @@ const ExecutionChangeSignalsScreen = React.lazy(() => import('./screens/executio
 const ExecutionExportPrezentacjaScreen = React.lazy(
   () => import('./screens/execution-export-prezentacja')
 );
+const FinanceHubScreen = React.lazy(() => import('./screens/finance-hub'));
 const FinanceValuePanelsScreen = React.lazy(() => import('./screens/finance-value-panels'));
 const GenDeckContentHintsScreen = React.lazy(() => import('./screens/gen-deck-content-hints'));
 const GenExcelTemplatesTabScreen = React.lazy(() => import('./screens/gen-excel-templates-tab'));
@@ -588,6 +589,11 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'ev-football-field': {
     label: 'EV Basket Football Field (Finance)',
     render: () => <EvFootballFieldScreen />,
+  },
+  'finance-hub': {
+    label:
+      'M08/M16 — REALNY FinanceHub (5 zakładek, StandardModuleBar+StandardTable+StandardPreview) — bramka wizualna MVP (&state=populated|empty|error)',
+    render: () => <FinanceHubScreen />,
   },
   'finance-value-panels': {
     label:
