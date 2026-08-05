@@ -7848,21 +7848,44 @@ Return ONLY the answer text (no markdown fences).`;
                             ? insights.find((insight) => insight.id === row.sourceId)
                             : null;
                           const sourceStyle = getTypeStyle('source');
-                          return sourceInsight ? (
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleViewInsight(sourceInsight);
-                              }}
-                              className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
-                            >
-                              <Lightbulb size={12} />
-                              Insight
-                            </button>
-                          ) : (
-                            <span className="text-xs text-c-text-muted">—</span>
-                          );
+                          if (sourceInsight) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleViewInsight(sourceInsight);
+                                }}
+                                className={`inline-flex items-center gap-1 rounded-full border border-current/20 px-2 py-0.5 text-[11px] font-medium leading-none transition-colors ${sourceStyle.bg} ${sourceStyle.text}`}
+                              >
+                                <Lightbulb size={12} />
+                                Insight
+                              </button>
+                            );
+                          }
+                          // M03R-008 — trzy stany zamiast dwóch.
+                          //
+                          // Myślnik znaczył do tej pory jednocześnie „nie ma źródła"
+                          // i „źródło jest zapisane, ale nie daje się otworzyć". Na
+                          // demo wszystkie 7 draftów MA `source_id`, a rozwiązuje się
+                          // 2 — czyli dokładnie ten drugi przypadek, pokazywany jak
+                          // pierwszy. Kanon P10 (`broken_reference_handling`) wymaga
+                          // tu jawnego „source unavailable", nie ciszy.
+                          if (row.sourceId) {
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full border border-c-border-subtle px-2 py-0.5 text-[11px] font-medium leading-none text-c-text-muted"
+                                title={t('interview.hub.sourceUnavailableHint', {
+                                  id: row.sourceId,
+                                })}
+                                data-testid="initiative-source-unavailable"
+                              >
+                                <AlertTriangle size={12} />
+                                {t('interview.hub.sourceUnavailable')}
+                              </span>
+                            );
+                          }
+                          return <span className="text-xs text-c-text-muted">—</span>;
                         },
                       },
                       {

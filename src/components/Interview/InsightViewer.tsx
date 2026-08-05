@@ -145,6 +145,7 @@ import {
   INSIGHT_CARD_SPEC,
   INSIGHT_PHASE_D_RENDER_IDS,
 } from './insightCardContract';
+import { extractQuotedFragments } from './insightQuotes';
 import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 // VF1-2 (SPEC-A wzorzec, analogicznie do VF1-1 Task): gate for visible
@@ -537,16 +538,10 @@ function stripMarkdownPreview(input?: string): string {
 }
 
 function extractQuotedLines(content?: string): string[] {
-  if (!content) return [];
-  const blockQuotes = Array.from(content.matchAll(/(^>\s?.+$)/gm)).map((match) =>
-    String(match[1] || '')
-      .replace(/^>\s?/, '')
-      .trim()
-  );
-  const inlineQuotes = Array.from(content.matchAll(/"([^"\n]{16,220})"/g)).map((match) =>
-    String(match[1] || '').trim()
-  );
-  return uniqueNonEmpty([...blockQuotes, ...inlineQuotes]);
+  // Skan cytatów mieszka w `insightQuotes.ts` (czysty tekst, test jednostkowy
+  // bez rusztowania React). Tutaj zostaje wyłącznie deduplikacja — kontrakt
+  // funkcji (kolejność: blokowe → w linii, potem unikalne) bez zmian.
+  return uniqueNonEmpty(extractQuotedFragments(content));
 }
 
 function parseInsightContent(content?: string): ParsedInsightSection[] {

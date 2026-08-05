@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import type { Insight } from '../InterviewInsightService.js';
+import { evaluateSourceCoverage } from './interviewConfidenceEvaluator.js';
 import type { P10Finding } from './interviewInsightFindingsService.js';
 import { listFindings } from './interviewInsightFindingsService.js';
 import {
@@ -87,10 +88,18 @@ export async function emitRadarSignalsForInsight(
               .map((p) => ({ type: p.type, ref: p.sourceRef })),
           ],
           lastObservedAt: finding.updated_at || new Date().toISOString(),
-          sourceCoverage:
-            finding.evidence_pointers.filter((p) => !p.isTombstone).length >= 3
-              ? ('complete' as const)
-              : ('partial' as const),
+          // M03R-012: `complete` wynika z reguły `high` (rozrzut po źródłach lub
+          // triangulacja), NIGDY z samej długości tablicy pointerów — poprzednie
+          // `length >= 3` było trzecim, niezgodnym progiem w tym kontrakcie.
+          // `clearTriangulation` celowo NIE jest przekazywane: `P10Finding` nie
+          // niesie takiej flagi, a podstawienie tu `confidence_level === 'high'`
+          // zamknęłoby pętlę (poziom uzasadniałby pokrycie, które go uzasadnia).
+          // Pokrycie ocenia więc sam materiał dowodowy; zapisany poziom może je
+          // tylko obniżyć przez sprzeczność.
+          sourceCoverage: evaluateSourceCoverage({
+            pointers: finding.evidence_pointers,
+            unresolvedMaterialContradiction: finding.confidence_level === 'contradicted',
+          }),
         },
         uncertaintyBoundary: {
           missingInputs: finding.limits ? [finding.limits] : [],

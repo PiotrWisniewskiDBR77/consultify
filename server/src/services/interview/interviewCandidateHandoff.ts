@@ -66,6 +66,8 @@ import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.j
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { createCandidateFromSource } from '../initiative/initiativeCandidateService.js';
 
+import { canonicalStatusToken } from './interviewStatusNormalization.js';
+
 export type InterviewCandidateSourceType = 'interview_submission' | 'interview_insight_finding';
 
 export type InterviewCandidateSource =
@@ -238,7 +240,10 @@ async function resolveEligibleSource(
     );
     const hasSubmissionSnapshot = Boolean(latestSubmission);
 
-    if (assignment.status !== 'approved' || !hasSubmissionSnapshot) {
+    // M03R-004: porównanie odporne na wielkość liter — w danych istnieje
+    // `SUBMITTED` obok `submitted`, więc dosłowne `!==` odrzucałoby część
+    // poprawnie zatwierdzonych zgłoszeń jako niezaakceptowane.
+    if (canonicalStatusToken(assignment.status) !== 'approved' || !hasSubmissionSnapshot) {
       throw new InterviewCandidateHandoffError(
         'SUBMISSION_NOT_ACCEPTED',
         409,
@@ -247,11 +252,27 @@ async function resolveEligibleSource(
       );
     }
 
+    // M03R-002 — nazwa szablonu czytana z KANONICZNEGO rejestru (library).
+    //
+    // Do 2026-08-04 to zapytanie szło do legacy `interview_templates`, podczas
+    // gdy `interview_assignments.template_id` wskazuje w 114 na 117 przypadków
+    // (demo, 2026-08-04) na `interview_library_templates` — a `InterviewAssignmentService`
+    // już wcześniej joinował do library. Skutek był cichy: `template` wychodziło
+    // `null`, `label` spadał na `assignment.id` i tytuł kandydata brzmiał
+    // „Interview submission: <uuid>" zamiast nazwy szablonu. Nic nie rzucało
+    // błędu, bo fallback jest poprawny składniowo.
+    //
+    // Fallback do legacy zostaje do czasu wygaszenia starego rejestru — dotyczy
+    // dziś 3 wierszy (plan retirement: docs/.../M03_TEMPLATE_REGISTRY_RETIREMENT).
     const template = assignment.template_id
-      ? await db.queryOne<{ name: string | null }>(
+      ? ((await db.queryOne<{ name: string | null }>(
+          `SELECT name FROM interview_library_templates WHERE id = ?`,
+          [assignment.template_id]
+        )) ??
+        (await db.queryOne<{ name: string | null }>(
           `SELECT name FROM interview_templates WHERE id = ?`,
           [assignment.template_id]
-        )
+        )))
       : null;
 
     const acceptedSnapshotId = `${assignment.id}:${toIsoString(latestSubmission!.saved_at)}`;

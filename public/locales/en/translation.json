@@ -5793,7 +5793,9 @@
       "createdRelative": "Created {{relative}}",
       "confirmSendReminderTo": "Are you sure you want to send a reminder to {{name}}?",
       "theUserFallback": "the user",
-      "linkedSession": "Linked session"
+      "linkedSession": "Linked session",
+      "sourceUnavailable": "Source unavailable",
+      "sourceUnavailableHint": "This draft stores a source reference ({{id}}), but the source insight can no longer be opened."
     },
     "insightViewer": {
       "panelResults": "Results",

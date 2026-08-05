@@ -1329,6 +1329,27 @@ export function buildInsightMaterialQuality(
 // SERVICE CLASS
 // ==========================================
 
+/**
+ * M03R-008 — kasowanie insightu, do którego odwołują się inicjatywy.
+ * Nie jest to błąd walidacji wejścia, tylko odmowa rozerwania lineage,
+ * dlatego niesie liczbę obiektów trzymających powiązanie.
+ */
+export class InsightReferencedError extends Error {
+  code = 'INSIGHT_REFERENCED_BY_INITIATIVES';
+  status = 409;
+  insightId: string;
+  referencingCount: number;
+
+  constructor(insightId: string, referencingCount: number) {
+    super(
+      `Insight ${insightId} is referenced by ${referencingCount} initiative(s); deleting it would leave dangling source references`
+    );
+    this.name = 'InsightReferencedError';
+    this.insightId = insightId;
+    this.referencingCount = referencingCount;
+  }
+}
+
 class InterviewInsightService {
   private db: IDatabase | null = null;
 
@@ -2031,10 +2052,33 @@ class InterviewInsightService {
   }
 
   /**
-   * Delete an insight
+   * Delete an insight.
+   *
+   * M03R-008 — strzeżone kasowanie. Do 2026-08-04 to był goły DELETE, więc
+   * skasowanie insightu zostawiało w `initiatives` wiersz z `source_id`
+   * wskazującym w pustkę. Na demo tak powstało 5 z 7 wiszących wskaźników:
+   * `source_id` jest zapisany w 100% draftów, ale rozwiązuje się tylko w 2.
+   * W UI wyglądało to jak „brak źródła", bo zerwany wskaźnik i brak wskaźnika
+   * renderowały ten sam myślnik.
+   *
+   * Guard nie kasuje niczego kaskadowo i nie fabrykuje lineage — po prostu
+   * odmawia rozerwania żywego powiązania i mówi, ile obiektów je trzyma.
+   * Sprzątanie istniejących wiszących wskaźników to osobna, autoryzowana
+   * mutacja (plan MUT-02), nie efekt uboczny tego guardu.
    */
   async delete(id: string): Promise<boolean> {
     const db = await this.getDb();
+
+    const referencing = await db.get<{ n: number }>(
+      `SELECT COUNT(*)::int AS n FROM initiatives
+        WHERE source_id = ? AND lower(COALESCE(source_type, '')) LIKE '%interview%'`,
+      [id]
+    );
+    const referencingCount = Number(referencing?.n || 0);
+    if (referencingCount > 0) {
+      throw new InsightReferencedError(id, referencingCount);
+    }
+
     const result = await db.run(`DELETE FROM interview_insights WHERE id = ?`, [id]);
     return (result as any)?.changes > 0;
   }

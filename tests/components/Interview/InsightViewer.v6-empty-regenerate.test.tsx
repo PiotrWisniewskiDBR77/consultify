@@ -13,6 +13,34 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
+// M03R-013: `tests/setup.ts` globalnie mockuje react-i18next przez `t=(k)=>k`,
+// więc asercje na angielskich literałach nie mogą przejść niezależnie od tego,
+// czy produkt działa. Ładujemy realne tłumaczenia EN — te same napisy, które
+// widzi użytkownik — dzięki czemu asercje zostają bez zmian i są mocniejsze.
+vi.mock('react-i18next', async () => {
+  const fs = await import('fs');
+  const path = await import('path');
+  const EN = JSON.parse(
+    fs.readFileSync(path.resolve(process.cwd(), 'public/locales/en/translation.json'), 'utf8')
+  );
+  const t = (key: string, options?: any) => {
+    const raw = key.split('.').reduce<any>((acc, p) => (acc == null ? acc : acc[p]), EN);
+    if (typeof raw !== 'string') return typeof options === 'string' ? options : key;
+    if (!options || typeof options !== 'object') return raw;
+    return Object.keys(options).reduce(
+      (acc, k) => acc.replace(new RegExp(`{{\\s*${k}\\s*}}`, 'g'), String(options[k])),
+      raw
+    );
+  };
+  return {
+    useTranslation: () => ({ t, i18n: { language: 'en', changeLanguage: vi.fn() } }),
+    Trans: ({ children, i18nKey }: any) => children || i18nKey,
+    I18nextProvider: ({ children }: any) => children,
+    initReactI18next: { type: '3rdParty', init: vi.fn() },
+    Translation: ({ children }: any) => children({ t, i18n: { language: 'en' } }),
+  };
+});
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -40,9 +68,13 @@ vi.mock('@/components/shared/NModeLayout/NModeHeader', () => ({
 }));
 
 vi.mock('@/components/shared/NModeLayout/NModeShell', () => ({
-  NModeShell: ({ header, sections, renderActionBar }: any) => (
+  NModeShell: ({ header, sections, rightPanel, renderActionBar }: any) => (
     <div>
       <div data-testid="nmode-header">{header?.title}</div>
+      {/* M03R-013: status artefaktu mieszka w prawym panelu od zmiany #54
+          (Properties Strip wycofany z centrum). Stub musiał go pomijać,
+          więc asercja o statusie nie miała czego znaleźć. */}
+      <div data-testid="nmode-right-panel">{rightPanel}</div>
       <div>{renderActionBar?.()}</div>
       <div data-testid="nmode-canvas">
         {sections?.map((section: any, index: number) => (

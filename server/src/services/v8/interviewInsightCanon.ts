@@ -87,15 +87,22 @@ export const P10_CONFIDENCE_SEMANTICS: Record<
 > = {
   high: {
     meaning: 'Well-supported within defined context; still has boundaries',
+    // Decyzja Master Codex 2026-08-04 (M03R-012). Egzekwuje `evaluateConfidence()`
+    // w `interviewConfidenceEvaluator.ts` — ten napis jest opisem tamtej reguły,
+    // nie drugim, niezależnym progiem.
     minimumEvidence:
-      '2+ pointers from different sources/segments OR clear triangulation + no contradictions',
+      '2+ pointers from different sources or materially different segments, OR clear triangulation; no unresolved material contradiction',
     uiRule:
       'May show "High confidence" badge; must still expose limits; default next action can be "execute"',
     overclaim_guard: 'No overclaim beyond scope (e.g. no market generalization from org-only data)',
   },
   medium: {
     meaning: 'Credible pattern, but lacks triangulation or full representativeness',
-    minimumEvidence: '2+ pointers OR 1 pointer + strong artifact (e.g. transcript excerpt)',
+    // Rozróżnienie względem `high`: te same 2+ pointery, ale w JEDNYM źródle
+    // lub segmencie. Wcześniej oba poziomy deklarowały "2+ pointers" i były
+    // nierozróżnialne.
+    minimumEvidence:
+      '2+ pointers within a single source/segment OR 1 pointer + strong artifact (e.g. transcript excerpt); no cross-source triangulation',
     uiRule:
       'UI shows "Assumptions" + "Limits" always visible without scroll-trap; handoff to initiative allowed with visible limits',
     overclaim_guard: 'No "root cause" claims without evidence',

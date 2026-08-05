@@ -20,6 +20,13 @@ import {
 } from './interviewManagerScope.js';
 import notificationService from './notificationService.js';
 
+import {
+  canonicalStatusToken,
+  statusEqualsSql,
+  statusInSql,
+} from './interview/interviewStatusNormalization.js';
+
+
 const parseJson = <T>(value: string | null | undefined, fallback: T): T => {
   if (!value) return fallback;
   try {
@@ -584,8 +591,10 @@ class InterviewAssignmentService {
     const values: any[] = [now];
 
     if (updates.status !== undefined) {
+      // M03R-004: zapis zawsze w kanonicznej postaci — to jedyne miejsce, które
+      // wpuszcza status do kolumny przez `update()`.
       fields.push('status = ?');
-      values.push(updates.status);
+      values.push(canonicalStatusToken(updates.status));
     }
     if (updates.dueAt !== undefined) {
       fields.push('due_at = ?');
@@ -635,7 +644,7 @@ class InterviewAssignmentService {
     const assignment = await this.getById(id);
 
     if (!assignment) return false;
-    if (assignment.status !== 'assigned') {
+    if (canonicalStatusToken(assignment.status) !== 'assigned') {
       throw new Error('Cannot delete assignment that has been started');
     }
 
@@ -778,10 +787,12 @@ class InterviewAssignmentService {
     ))`;
 
     if (options?.status) {
-      where += ` AND a.status = ?`;
-      params.push(options.status);
+      // Compatibility read: historyczne wiersze mają wariant WIELKIMI literami.
+      where += ` AND ${statusEqualsSql('a.status')}`;
+      params.push(canonicalStatusToken(options.status));
     } else if (!options?.includeCompleted) {
-      where += ` AND a.status != 'completed'`;
+      where += ` AND NOT ${statusEqualsSql('a.status')}`;
+      params.push(canonicalStatusToken('completed'));
     }
 
     const rows = await db.all<any>(
@@ -839,8 +850,8 @@ class InterviewAssignmentService {
     }
 
     if (options?.status) {
-      where += ` AND a.status = ?`;
-      params.push(options.status);
+      where += ` AND ${statusEqualsSql('a.status')}`;
+      params.push(canonicalStatusToken(options.status));
     }
 
     const rows = await db.all<any>(
@@ -985,7 +996,7 @@ class InterviewAssignmentService {
       `SELECT a.*, t.name as template_name
        FROM interview_assignments a
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE ${statusInSql('a.status', ['assigned', 'in_progress', 'sent_back'])}
          AND a.due_at IS NOT NULL
          AND a.due_at > ?`,
       [now.toISOString()]
@@ -1072,7 +1083,7 @@ class InterviewAssignmentService {
        LEFT JOIN interview_library_templates t ON t.id = a.template_id
        LEFT JOIN users u ON u.id = a.assignee_user_id
        LEFT JOIN users escalation_target ON escalation_target.id = COALESCE(a.escalate_to, a.created_by)
-       WHERE a.status IN ('assigned', 'in_progress', 'sent_back')
+       WHERE ${statusInSql('a.status', ['assigned', 'in_progress', 'sent_back'])}
          AND a.due_at IS NOT NULL
          AND a.due_at < ?
          AND (a.escalated_at IS NULL OR a.escalated_at < ?)`,
@@ -1398,7 +1409,9 @@ class InterviewAssignmentService {
       templateId: row.template_id,
       templateVersion: row.template_version || 1,
       processRef: row.process_ref || undefined,
-      status: row.status as AssignmentStatus,
+      // Powierzchnia API zawsze kanoniczna, niezależnie od tego, jak wiersz
+      // został zapisany historycznie.
+      status: canonicalStatusToken(row.status) as AssignmentStatus,
       sessionId: row.session_id || undefined,
       taskId: row.task_id || undefined,
       dueAt: row.due_at || undefined,

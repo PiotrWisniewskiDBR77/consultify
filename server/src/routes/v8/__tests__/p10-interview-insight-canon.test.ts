@@ -100,8 +100,25 @@ describe('P10 Interview Insight Artifact Canon', () => {
       }
     });
 
-    it('high confidence requires 3+ pointers or triangulation', () => {
-      expect(P10_CONFIDENCE_SEMANTICS.high.minimumEvidence).toContain('3+');
+    // M03R-012: test żądał wcześniej "3+", podczas gdy kanon mówił "2+", a
+    // `insightSignalBridgeService` liczył `>= 3` — trzy progi w jednym kontrakcie.
+    // Decyzja Master Codex 2026-08-04 ustaliła próg 2+ z rozrzutem po źródłach;
+    // test sprawdza teraz kanon ORAZ to, że `high` i `medium` są rozróżnialne
+    // (wcześniej oba deklarowały samo "2+ pointers").
+    it('high confidence requires 2+ pointers across different sources or clear triangulation', () => {
+      const high = P10_CONFIDENCE_SEMANTICS.high.minimumEvidence;
+      expect(high).toContain('2+');
+      expect(high).toMatch(/different sources|materially different segments/);
+      expect(high).toMatch(/triangulation/);
+      expect(high).toMatch(/no unresolved material contradiction/i);
+    });
+
+    it('medium is materially weaker than high, not a restatement of it', () => {
+      const high = P10_CONFIDENCE_SEMANTICS.high.minimumEvidence;
+      const medium = P10_CONFIDENCE_SEMANTICS.medium.minimumEvidence;
+      expect(medium).not.toEqual(high);
+      expect(medium).toMatch(/single source\/segment|strong artifact/);
+      expect(medium).toMatch(/no cross-source triangulation/i);
     });
 
     it('low confidence labels as "Hypothesis"', () => {

@@ -120,19 +120,31 @@ async function seedIdentity(): Promise<void> {
 
 async function seedInterviewMaterial(): Promise<void> {
   const now = nowIso();
+  // Liczniki sesji MUSZĄ wynikać z materiału fixture'a, nie być wpisane na sztywno.
+  // Wcześniej każda sesja dostawała `total_questions = answered_questions = 3`,
+  // podczas gdy fixture niesie po JEDNEJ odpowiedzi na sesję — fixture sam
+  // produkował więc rozjazd licznika, który mamy tu wykrywać.
+  const answersBySession = new Map<string, number>();
+  for (const answer of fixture.approvedCompletedMaterial.answers) {
+    answersBySession.set(answer.sessionId, (answersBySession.get(answer.sessionId) || 0) + 1);
+  }
+
   for (const sessionId of fixture.approvedCompletedMaterial.sessionIds) {
+    const answeredCount = answersBySession.get(sessionId) || 0;
     await DbPromise.run(
       `INSERT INTO interview_sessions (
         id, organization_id, project_id, name, owner_id, status,
         total_questions, answered_questions, template_id, completed_at, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, 'completed', 3, 3, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET status = 'completed', answered_questions = 3, updated_at = excluded.updated_at`,
+      ) VALUES (?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET status = 'completed', total_questions = excluded.total_questions, answered_questions = excluded.answered_questions, updated_at = excluded.updated_at`,
       [
         sessionId,
         fixture.organizationId,
         fixture.projectId,
         `PASS source session ${sessionId}`,
         fixture.userId,
+        answeredCount,
+        answeredCount,
         fixture.approvedCompletedMaterial.templateId,
         now,
         now,
@@ -142,20 +154,31 @@ async function seedInterviewMaterial(): Promise<void> {
     );
   }
 
+  // M03R-003 — fixture pisze do KANONICZNEGO magazynu odpowiedzi.
+  //
+  // Do 2026-08-04 ten seed wstawiał wiersze do `interview_answers`. Ta tabela
+  // nie ma w produkcie ANI JEDNEGO czytelnika (remanent: 0 odwołań w `server/src`
+  // i `src/`), a bieżący stan odpowiedzi trzyma `interview_questions.answer_text`
+  // + `status='answered'` — to z niego `updateSessionProgress()` liczy
+  // `answered_questions`. Skutek starego zapisu: sesja z licznikiem 3, w której
+  // aplikacja nie widzi żadnej odpowiedzi, czyli dokładnie kształt „submitted
+  // z progresem 0%" obserwowany na demo. Fixture musi produkować stan, który
+  // produkt potrafi odczytać — inaczej testuje coś, czego użytkownik nie zobaczy.
   for (const answer of fixture.approvedCompletedMaterial.answers) {
     await DbPromise.run(
-      `INSERT INTO interview_answers (
-        id, session_id, organization_id, category, question_answers, summary, confidence_score, status, messages_count, created_at, updated_at
-      ) VALUES (?, ?, ?, 'handoff', ?, ?, 0.9, 'answered', 1, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET status = 'answered', summary = excluded.summary, updated_at = excluded.updated_at`,
+      `INSERT INTO interview_questions (
+        id, session_id, organization_id, category, question_text, answer_text,
+        status, confidence_score, answered_by, answered_at, sort_order, created_at, updated_at
+      ) VALUES (?, ?, ?, 'handoff', ?, ?, 'answered', 5, ?, ?, 1, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET status = 'answered', answer_text = excluded.answer_text, updated_at = excluded.updated_at`,
       [
         answer.answerId,
         answer.sessionId,
         fixture.organizationId,
-        JSON.stringify([
-          { question: 'What is blocking reliable onboarding handoffs?', answer: answer.excerpt },
-        ]),
+        'What is blocking reliable onboarding handoffs?',
         answer.excerpt,
+        fixture.userId,
+        now,
         now,
         now,
       ],

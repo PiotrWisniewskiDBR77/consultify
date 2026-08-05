@@ -4715,7 +4715,7 @@
       "failed": "Błędy",
       "showArchivedInsights": "Pokaż zarchiwizowane wnioski",
       "drafts": "Szkice",
-      "pendingReview3": "Do przegladu",
+      "pendingReview3": "Do przeglądu",
       "movedForward": "Przekazane dalej",
       "sendToReview": "Wyślij do przeglądu",
       "approveMoveForward": "Zatwierdź i przekaż dalej",
@@ -5061,7 +5061,9 @@
       "createdRelative": "Utworzono {{relative}}",
       "confirmSendReminderTo": "Czy na pewno chcesz wysłać przypomnienie do {{name}}?",
       "theUserFallback": "użytkownika",
-      "linkedSession": "Powiązana sesja"
+      "linkedSession": "Powiązana sesja",
+      "sourceUnavailable": "Źródło niedostępne",
+      "sourceUnavailableHint": "Ten szkic ma zapisane odwołanie do źródła ({{id}}), ale tego insightu nie da się już otworzyć."
     },
     "insightViewer": {
       "panelResults": "Rezultaty",

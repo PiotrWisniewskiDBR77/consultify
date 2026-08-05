@@ -2,6 +2,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type PgTransactionClient, withPgTransaction } from '../../utils/queryHelpers.js';
 
+import {
+  isTruthyFlagSql,
+  LEGACY_FLAG_FALSE,
+  LEGACY_FLAG_TRUE,
+} from './interviewLegacyFlags.js';
+
 export class TemplatePublicationError extends Error {
   constructor(
     public readonly code: string,
@@ -183,11 +189,15 @@ export async function publishInterviewTemplate(params: {
     const isDefault = Boolean(params.metadata.isDefault);
 
     if (isDefault) {
+      // M03R-002: `is_default` to kolumna TEXT z trzema kodowaniami w danych
+      // ('0', 'false', 'true'). Porównanie do liczby wywalało CAŁĄ transakcję
+      // publikacji (`operator does not exist: text = integer`), więc szablonu
+      // oznaczonego jako domyślny nie dało się opublikować w ogóle.
       await tx.query(
         `UPDATE interview_library_templates
-         SET is_default = 0, updated_at = ?
-         WHERE organization_id = ? AND id != ? AND is_default = 1`,
-        [now, params.organizationId, params.templateId]
+         SET is_default = ?, updated_at = ?
+         WHERE organization_id = ? AND id != ? AND ${isTruthyFlagSql('is_default')}`,
+        [LEGACY_FLAG_FALSE, now, params.organizationId, params.templateId]
       );
     }
 
@@ -204,7 +214,10 @@ export async function publishInterviewTemplate(params: {
         String(params.metadata.category || 'CUSTOM'),
         String(params.metadata.visibility || existing.visibility || 'org'),
         requestedScope,
-        isDefault ? 1 : 0,
+        // M03R-002 (P2 review `cb47528a53`): kolumna jest TEXT, a bindowanie
+        // `1/0` dokładało CZWARTE kodowanie obok istniejących `'0' | 'false' |
+        // 'true'`. Cała ścieżka publikacji zapisuje odtąd jedną postać.
+        isDefault ? LEGACY_FLAG_TRUE : LEGACY_FLAG_FALSE,
         String(params.metadata.audience || ''),
         Number.isFinite(Number(params.metadata.estimatedTimeMinutes))
           ? Number(params.metadata.estimatedTimeMinutes)

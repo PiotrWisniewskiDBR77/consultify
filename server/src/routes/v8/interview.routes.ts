@@ -2154,7 +2154,21 @@ router.delete(
     }
 
     const interviewInsightService = await import('../../services/InterviewInsightService.js');
-    const deleted = await interviewInsightService.deleteInsight(id);
+    let deleted = false;
+    try {
+      deleted = await interviewInsightService.deleteInsight(id);
+    } catch (error) {
+      // M03R-008 — ta sama bramka co na trasie v1; obie ścieżki kasowania muszą
+      // odmawiać tak samo, inaczej guard da się obejść wyborem endpointu.
+      if (error instanceof interviewInsightService.InsightReferencedError) {
+        return res.status(error.status).json({
+          error: error.message,
+          code: error.code,
+          referencingCount: error.referencingCount,
+        });
+      }
+      throw error;
+    }
     if (!deleted)
       return res
         .status(404)

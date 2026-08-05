@@ -43,6 +43,19 @@ import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
+import {
+  canonicalStatusToken,
+  statusEqualsSql,
+} from '../services/interview/interviewStatusNormalization.js';
+import { sanitizeQuestionText } from '../services/interview/interviewQuestionTextSanitizer.js';
+
+import {
+  isTruthyFlag,
+  isTruthyFlagSql,
+  LEGACY_FLAG_FALSE,
+  LEGACY_FLAG_TRUE,
+} from '../services/interview/interviewLegacyFlags.js';
+
 // 5 Interview Categories (new spec)
 const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
 type InterviewCategory = (typeof INTERVIEW_CATEGORIES)[number];
@@ -1886,7 +1899,9 @@ const buildTemplateResponse = (row: any) => {
     description: row.description || '',
     questionCount: Number(row.question_count ?? 0),
     category: typeof row.category === 'string' ? row.category.toLowerCase() : row.category,
-    isDefault: row.is_default === 1,
+    // M03R-002: kolumna jest TEXT ('0' | 'false' | 'true'), więc porównanie do
+    // liczby zwracało `false` dla KAŻDEGO szablonu, także realnie domyślnego.
+    isDefault: isTruthyFlag(row.is_default),
     scope,
     visibility: resolvedVisibility,
     audience: row.audience || '',
@@ -2088,7 +2103,8 @@ async function createSessionFromTemplate(params: {
           id,
           user.organizationId,
           tq.category,
-          tq.question_text,
+          // M03R-007: artefakt `$NN` nie ma prawa wejść do treści pytania sesji.
+          sanitizeQuestionText(tq.question_text),
           tq.description || null,
           tq.evidence_prompt || null,
           'not_started',
@@ -2390,7 +2406,8 @@ export async function loadInterviewSessionsForOrganization(
   if (status) {
     const normalized =
       String(status).toLowerCase() === 'in_progress' ? 'active' : String(status).toLowerCase();
-    query += ` AND s.status = ?`;
+    // M03R-004: compatibility read — `COMPLETED` obok `completed` w danych.
+    query += ` AND ${statusEqualsSql('s.status')}`;
     params.push(normalized);
   }
 
@@ -2459,7 +2476,7 @@ export async function loadAcceptedInterviewSessionsForManager(
        p.organization_id = ?
        OR (s.project_id IS NULL AND s.organization_id = ?)
      )
-     AND s.status = 'completed'
+     AND lower(s.status) = 'completed'
      ORDER BY s.completed_at DESC`,
     [organizationId, userId, organizationId, organizationId]
   );
@@ -2819,7 +2836,7 @@ async function evaluateInterviewSessionAnswers(params: {
   // at all (there is nothing to judge), they are scored 0/unanswered in code.
   // Only answered questions are sent for rubric evaluation.
   const answeredQuestions = (questions as any[]).filter(
-    (q) => q.status === 'answered' && String(q.answer_text || '').trim().length > 0
+    (q) => canonicalStatusToken(q.status) === 'answered' && String(q.answer_text || '').trim().length > 0
   );
 
   const criterionKeys = INTERVIEW_RUBRIC_CRITERIA.map((c) => c.key) as [string, ...string[]];
@@ -3312,7 +3329,7 @@ export const InterviewController = {
           id,
           user.organizationId,
           template.category,
-          template.question_text,
+          sanitizeQuestionText(template.question_text),
           'not_started',
           template.sort_order,
           1,
@@ -5944,7 +5961,8 @@ export const InterviewController = {
           runtimeModeDefault || 'one_question_per_screen',
           answerDesignGuide || '',
           JSON.stringify(normalizedAreaTags),
-          isDefault ? 1 : 0,
+          // M03R-002 (P2): jedno kodowanie tekstowe w całej ścieżce.
+          isDefault ? LEGACY_FLAG_TRUE : LEGACY_FLAG_FALSE,
           0,
           user.id,
           now,
@@ -6081,7 +6099,10 @@ export const InterviewController = {
     }
 
     // Don't allow deleting default templates
-    if ((existing as any).is_default) {
+    // M03R-002 (P2): `is_default` to TEXT — goła prawdziwość łapie także
+    // `'false'` i `'0'` (niepuste stringi), więc KAŻDY szablon wyglądał na
+    // domyślny i nie dawał się skasować.
+    if (isTruthyFlag((existing as any).is_default)) {
       res.status(403).json({ error: 'Cannot delete default templates' });
       return;
     }
@@ -6185,16 +6206,17 @@ export const InterviewController = {
     if (isDefault) {
       // Single default per org: clear every OTHER org template first, then set this one.
       await queryHelpers.queryRun(
-        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE organization_id = ? AND id != ? AND is_default = 1`,
+        // M03R-002: kolumna TEXT — patrz interviewLegacyFlags.ts
+        `UPDATE interview_library_templates SET is_default = 'false', updated_at = ? WHERE organization_id = ? AND id != ? AND ${isTruthyFlagSql('is_default')}`,
         [now, user.organizationId, id]
       );
       await queryHelpers.queryRun(
-        `UPDATE interview_library_templates SET is_default = 1, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        `UPDATE interview_library_templates SET is_default = 'true', updated_at = ? WHERE id = ? AND organization_id = ?`,
         [now, id, user.organizationId]
       );
     } else {
       await queryHelpers.queryRun(
-        `UPDATE interview_library_templates SET is_default = 0, updated_at = ? WHERE id = ? AND organization_id = ?`,
+        `UPDATE interview_library_templates SET is_default = 'false', updated_at = ? WHERE id = ? AND organization_id = ?`,
         [now, id, user.organizationId]
       );
     }
@@ -6281,7 +6303,7 @@ export const InterviewController = {
     }
     if (isDefault !== undefined) {
       updates.push('is_default = ?');
-      params.push(isDefault ? 1 : 0);
+      params.push(isDefault ? LEGACY_FLAG_TRUE : LEGACY_FLAG_FALSE);
     }
     if (audience !== undefined) {
       updates.push('audience = ?');
@@ -7256,7 +7278,7 @@ ${JSON.stringify(questions || [], null, 2)}
     await ensureInterviewQuestionV6Columns();
     const {
       answerText,
-      status,
+      status: rawStatus,
       confidenceScore,
       tags,
       notes,
@@ -7268,6 +7290,11 @@ ${JSON.stringify(questions || [], null, 2)}
       voiceAudioEvidenceId,
       aiSuggestionId,
     } = req.body;
+
+    // M03R-004 — normalizacja NA ZAPISIE. Klient może przysłać `ANSWERED`;
+    // do kolumny wchodzi wyłącznie postać kanoniczna, żeby nie dokładać
+    // kolejnych wierszy do rozjazdu, który już jest w danych.
+    const status = rawStatus === undefined ? undefined : canonicalStatusToken(rawStatus);
 
     // Lock edits when session is submitted/completed
     const qSession = await queryHelpers.queryOne(
@@ -7569,7 +7596,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         user.organizationId,
         category,
-        questionText,
+        sanitizeQuestionText(questionText),
         'not_started',
         (maxOrder?.max_order || 0) + 1,
         0,
@@ -7606,7 +7633,7 @@ ${JSON.stringify(questions || [], null, 2)}
       const cat = q.category || 'general';
       categoryCount[cat] = (categoryCount[cat] || 0) + 1;
       progress[cat] = progress[cat] || 0;
-      if (q.status === 'answered') {
+      if (canonicalStatusToken(q.status) === 'answered') {
         progress[cat]++;
         answeredTotal++;
       }
@@ -8747,7 +8774,7 @@ ${JSON.stringify(questions || [], null, 2)}
        WHERE (
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)
-       ) AND s.status = 'completed'
+       ) AND lower(s.status) = 'completed'
        AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))
        ORDER BY s.completed_at DESC`,
       [user.organizationId, user.organizationId, user.organizationId]
@@ -8871,7 +8898,7 @@ ${JSON.stringify(questions || [], null, 2)}
            p.organization_id = ?
            OR (s.project_id IS NULL AND s.organization_id = ?)
          )
-         AND s.status = 'completed'
+         AND lower(s.status) = 'completed'
          AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
       [user.organizationId, ...normalizedSessionIds, user.organizationId, user.organizationId]
     );
@@ -9026,7 +9053,22 @@ ${JSON.stringify(questions || [], null, 2)}
     }
 
     const interviewInsightService = await import('../services/InterviewInsightService.js');
-    const deleted = await interviewInsightService.deleteInsight(id);
+    let deleted = false;
+    try {
+      deleted = await interviewInsightService.deleteInsight(id);
+    } catch (error) {
+      // M03R-008: odmowa rozerwania lineage jest odpowiedzią 409 z liczbą
+      // trzymających obiektów, nie anonimowym 500.
+      if (error instanceof interviewInsightService.InsightReferencedError) {
+        res.status(error.status).json({
+          error: error.message,
+          code: error.code,
+          referencingCount: error.referencingCount,
+        });
+        return;
+      }
+      throw error;
+    }
 
     if (!deleted) {
       res.status(404).json({ error: 'Insight not found' });
