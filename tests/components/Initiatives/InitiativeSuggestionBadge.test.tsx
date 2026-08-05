@@ -43,7 +43,10 @@ const candidate = {
   status: 'pending',
 };
 
-function mockFetchOnce(candidates: any[], opts: { acceptOk?: boolean } = {}) {
+function mockFetchOnce(
+  candidates: any[],
+  opts: { acceptOk?: boolean; receiptPersisted?: boolean } = {}
+) {
   const calls: Array<{ url: string; method?: string }> = [];
   const fn = vi.fn((url: string, init?: RequestInit) => {
     calls.push({ url, method: init?.method });
@@ -52,7 +55,12 @@ function mockFetchOnce(candidates: any[], opts: { acceptOk?: boolean } = {}) {
       return Promise.resolve({
         ok: opts.acceptOk !== false,
         status: opts.acceptOk !== false ? 200 : 500,
-        json: () => Promise.resolve({ accepted: true, payload: {} }),
+        json: () =>
+          Promise.resolve({
+            accepted: opts.receiptPersisted !== false,
+            receiptPersisted: opts.receiptPersisted !== false,
+            payload: {},
+          }),
       } as unknown as Response);
     }
     // list endpoint
@@ -77,16 +85,14 @@ describe('InitiativeSuggestionBadge', () => {
   it('renders the badge when a pending candidate matches the source', async () => {
     mockFetchOnce([candidate]);
     render(<InitiativeSuggestionBadge sourceType="audit" sourceId="audit-42" />);
-    expect(
-      await screen.findByText('AI sugeruje inicjatywę')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('AI suggests an initiative')).toBeInTheDocument();
     expect(screen.getByTestId('suggestion-badge-icon')).toBeInTheDocument();
   });
 
   it('queries the pending candidates endpoint with status=pending', async () => {
     const { calls } = mockFetchOnce([candidate]);
     render(<InitiativeSuggestionBadge sourceType="audit" sourceId="audit-42" />);
-    await screen.findByText('AI sugeruje inicjatywę');
+    await screen.findByRole('button');
     expect(calls[0].url).toContain('/api/initiatives/candidates');
     expect(calls[0].url).toContain('status=pending');
   });
@@ -98,7 +104,7 @@ describe('InitiativeSuggestionBadge', () => {
     );
     // give the effect a tick; nothing should render
     await waitFor(() => {
-      expect(screen.queryByText('AI sugeruje inicjatywę')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
     expect(container.querySelector('button')).toBeNull();
   });
@@ -116,7 +122,7 @@ describe('InitiativeSuggestionBadge', () => {
     mockFetchOnce([candidate]);
     render(<InitiativeSuggestionBadge sourceType="assessment" sourceId="audit-42" />);
     await waitFor(() => {
-      expect(screen.queryByText('AI sugeruje inicjatywę')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
   });
 
@@ -153,6 +159,23 @@ describe('InitiativeSuggestionBadge', () => {
     });
     await waitFor(() => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    });
+  });
+
+  it('keeps the badge visible when HTTP succeeds but the durable receipt is missing', async () => {
+    const { calls } = mockFetchOnce([candidate], {
+      acceptOk: true,
+      receiptPersisted: false,
+    });
+    render(<InitiativeSuggestionBadge sourceType="audit" sourceId="audit-42" />);
+    const btn = await screen.findByRole('button');
+    fireEvent.click(btn);
+    await waitFor(() => {
+      expect(calls.some((c) => c.url.includes('/accept') && c.method === 'POST')).toBe(
+        true
+      );
+      expect(screen.getByRole('button')).toBeInTheDocument();
+      expect(screen.getByRole('button')).not.toBeDisabled();
     });
   });
 

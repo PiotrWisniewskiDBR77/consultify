@@ -121,8 +121,14 @@ router.post(
       if (!payload) {
         return res.status(404).json({ error: 'Candidate not found' });
       }
+      // M05-FIX-01 — `accepted` now reports the DURABLE outcome, not merely that the
+      // handler ran. A candidate is accepted only once its receipt exists (status
+      // 'accepted' + initiative_id). Previously this was a hardcoded `true`, so a
+      // database missing the receipt columns still answered 200/accepted while the
+      // candidate stayed pending — the handoff looked complete and was not.
       return res.json({
-        accepted: true,
+        accepted: payload.receiptPersisted === true,
+        receiptPersisted: payload.receiptPersisted === true,
         initiativeId: payload.initiativeId,
         filled: payload.filled,
         payload,

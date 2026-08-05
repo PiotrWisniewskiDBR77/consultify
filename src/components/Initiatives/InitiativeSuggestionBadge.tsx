@@ -137,6 +137,10 @@ export function InitiativeSuggestionBadge({
         headers: getHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await readJson(res);
+      if (data?.accepted !== true || data?.receiptPersisted !== true) {
+        throw new Error('Acceptance receipt was not persisted');
+      }
       if (mounted.current) setAccepted(true);
     } catch {
       // fail-soft — keep the badge visible so it can be retried

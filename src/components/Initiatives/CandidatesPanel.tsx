@@ -125,6 +125,9 @@ export function useCandidates(status: CandidateStatus = 'pending'): UseCandidate
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await readJson(res);
+      if (data?.accepted !== true || data?.receiptPersisted !== true) {
+        throw new Error('Acceptance receipt was not persisted');
+      }
       setCandidates((prev) => prev.filter((c) => c.id !== id));
       // Serwer tworzy+wypełnia inicjatywę i zwraca initiativeId — scal do payloadu,
       // żeby hub nawigował do niej zamiast tworzyć drugą (anty-dublet F2→F1).

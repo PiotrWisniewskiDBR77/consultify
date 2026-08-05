@@ -109,6 +109,16 @@ export interface AcceptCandidatePayload {
    * like an existing initiative" instead of implying a new one was created.
    */
   duplicateOfInitiativeId?: string | null;
+  /**
+   * M05-FIX-01 — true when a durable candidate→initiative receipt exists after this
+   * call (freshly claimed, adopted from a concurrent winner, or already present).
+   *
+   * False means the initiative was resolved but the receipt could NOT be persisted:
+   * the accept is not yet idempotent, the candidate deliberately stays pending, and
+   * a retry reconciles onto the same initiative through cross-record de-dup. Callers
+   * must not present that as a completed handoff.
+   */
+  receiptPersisted: boolean;
 }
 
 /**
@@ -776,23 +786,79 @@ export async function acceptCandidate(
 
     // Persist the receipt only after an initiative was actually resolved. Keeping
     // failed creations pending makes recovery visible and one-click retryable.
+    //
+    // M05-FIX-01 — the receipt is the IDEMPOTENCY ANCHOR, so it is written as a
+    // CONDITIONAL CLAIM (`AND initiative_id IS NULL`) and evaluated FAIL-CLOSED:
+    //
+    //   - exactly one writer can ever claim a candidate, so two concurrent accepts
+    //     produce exactly one canonical receipt instead of the last writer silently
+    //     overwriting the first;
+    //   - when the claim is not ours we RE-READ and adopt whatever the durable row
+    //     says. The database row is the arbiter — never our in-memory guess;
+    //   - a failed write no longer masquerades as a clean success. It previously
+    //     logged at warn() and returned as if accepted, which is how a demo database
+    //     missing the receipt columns turned every retry into a fresh duplicate DRAFT
+    //     while the API kept answering 200.
+    let receiptPersisted = reusedReceipt;
     if (initiativeId && !reusedReceipt) {
-      try {
-        const receiptParams: unknown[] = [initiativeId, duplicateOfInitiativeId, candidate.id];
-        let receiptSql = `UPDATE initiative_candidates
+      const receiptParams: unknown[] = [initiativeId, duplicateOfInitiativeId, candidate.id];
+      let receiptSql = `UPDATE initiative_candidates
           SET status = 'accepted', initiative_id = ?, duplicate_of_initiative_id = ?, accepted_at = NOW()
-          WHERE id = ?`;
+          WHERE id = ? AND initiative_id IS NULL`;
+      if (orgId) {
+        receiptSql += ` AND organization_id = ?`;
+        receiptParams.push(orgId);
+      }
+
+      let claimed = 0;
+      let receiptErr: unknown = null;
+      try {
+        const res = await db.queryRun(receiptSql, receiptParams);
+        claimed = Number(res?.changes ?? 0);
+      } catch (err) {
+        receiptErr = err;
+      }
+
+      if (claimed >= 1) {
+        receiptPersisted = true;
+      } else {
+        // Claim not ours: either a concurrent accept won it, or the write failed.
+        // Both cases are settled by re-reading the durable row.
+        const winnerParams: unknown[] = [candidate.id];
+        let winnerSql = `SELECT initiative_id, duplicate_of_initiative_id
+          FROM initiative_candidates WHERE id = ?`;
         if (orgId) {
-          receiptSql += ` AND organization_id = ?`;
-          receiptParams.push(orgId);
+          winnerSql += ` AND organization_id = ?`;
+          winnerParams.push(orgId);
         }
-        await db.queryRun(receiptSql, receiptParams);
-      } catch (receiptErr) {
-        logger.warn(
-          `[initiativeCandidateService] acceptance receipt failed for candidate ${candidate.id} (recoverable): ${
-            (receiptErr as Error)?.message || receiptErr
-          }`
-        );
+        const winner = await db
+          .queryOne<Record<string, unknown>>(winnerSql, winnerParams)
+          .catch(() => null);
+        const winnerId = winner?.initiative_id != null ? String(winner.initiative_id) : null;
+
+        if (winnerId) {
+          if (winnerId !== initiativeId) {
+            logger.info(
+              `[initiativeCandidateService] candidate ${candidate.id}: concurrent accept already resolved to initiative ${winnerId} — adopting it and discarding local resolution ${initiativeId}`
+            );
+          }
+          initiativeId = winnerId;
+          duplicateOfInitiativeId =
+            winner?.duplicate_of_initiative_id != null
+              ? String(winner.duplicate_of_initiative_id)
+              : duplicateOfInitiativeId;
+          receiptPersisted = true;
+        } else {
+          // FAIL-CLOSED. The initiative exists but is unlinked; the candidate stays
+          // pending on purpose. The cross-record de-dup step (b0) reconciles the next
+          // retry onto this same initiative, so recovery converges instead of forking.
+          receiptPersisted = false;
+          logger.error(
+            `[initiativeCandidateService] acceptance receipt NOT persisted for candidate ${candidate.id} (initiative ${initiativeId} left unlinked; retry will reconcile via de-dup): ${
+              receiptErr ? (receiptErr as Error)?.message || receiptErr : 'no row matched the claim'
+            }`
+          );
+        }
       }
     }
 
@@ -847,6 +913,7 @@ export async function acceptCandidate(
       initiativeId,
       filled,
       duplicateOfInitiativeId,
+      receiptPersisted,
     };
   } catch {
     return null;
