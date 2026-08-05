@@ -481,6 +481,10 @@ const ensureToolsSchema = async (): Promise<void> => {
       { name: 'failure_reason', def: 'TEXT' },
       { name: 'last_generation_batch_id', def: 'TEXT' },
       { name: 'output_json', def: 'TEXT' },
+      // CAS token used by every answers_json write and SWOT proposal accept.
+      // Fresh/self-managed databases must receive it here as well as through
+      // the managed migration, otherwise the first real save fails with 500.
+      { name: 'version', def: 'INTEGER NOT NULL DEFAULT 1' },
     ]) {
       if (sessionColumns.has(col.name)) continue;
       try {

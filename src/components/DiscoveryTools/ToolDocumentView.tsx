@@ -431,6 +431,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   }, [isPolish, sessionName, toolMeta.name, toolType]);
 
   const autoExportRanRef = useRef(false);
+  // Identity of the store object created by API hydration. Hydration is not a
+  // user edit and must never arm autosave: doing so caused a read-only reopen
+  // to rewrite persisted answers/progress after two seconds. Store mutations
+  // replace currentSession, so the first genuine edit naturally clears this
+  // identity guard without adding a second dirty-state system.
+  const hydratedSessionObjectRef = useRef<unknown>(null);
   useEffect(() => {
     if (!autoExportPdf) {
       autoExportRanRef.current = false;
@@ -469,6 +475,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         answers: sessionData.answers || {},
         completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
       });
+      hydratedSessionObjectRef.current = useToolStore.getState().currentSession;
 
       const fetchedUsers = await Api.getUsers();
       setUsers(fetchedUsers || []);
@@ -579,6 +586,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
     if (!isSessionHydrated) return;
+    if (currentSession === hydratedSessionObjectRef.current) return;
     setSaveState('dirty');
 
     const flush = async () => {

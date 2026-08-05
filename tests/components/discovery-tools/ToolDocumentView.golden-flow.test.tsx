@@ -215,6 +215,32 @@ describe('ToolDocumentView golden-flow (TLS-02 create-guard, TLS-03 section-nav 
     expect(createToolSessionMock).toHaveBeenCalledTimes(1);
   });
 
+  it('reopening an existing session is read-only until the user changes it', async () => {
+    getToolSessionMock.mockResolvedValue(baseSwotSession({ completionPercent: 100 }));
+    updateToolSessionMock.mockResolvedValue({ id: 'sess-existing-1' });
+
+    const { unmount } = render(
+      <React.StrictMode>
+        <ToolDocumentView toolType="dynamic-swot" sessionId="sess-existing-1" onBack={vi.fn()} />
+      </React.StrictMode>
+    );
+
+    await waitFor(() => {
+      expect(getToolSessionMock).toHaveBeenCalledWith('sess-existing-1');
+      expect(getUsersMock).toHaveBeenCalled();
+      expect(getLinkGraphBacklinksMock).toHaveBeenCalled();
+    });
+
+    // The production debounce is 2s. A read-only reopen must neither schedule
+    // a write nor flush one during unmount.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2100));
+      unmount();
+    });
+
+    expect(updateToolSessionMock).not.toHaveBeenCalled();
+  });
+
   // ─────────────────────────────────────────────────────────────────────────
   // TLS-03 — section navigation preserves an in-progress edit
   // ─────────────────────────────────────────────────────────────────────────

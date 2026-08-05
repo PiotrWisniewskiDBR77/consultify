@@ -68,7 +68,6 @@ import { type FrameworkId, isFrameworkComingSoon } from '@/services/frameworkReg
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 import { formatRoiDisplay } from '@/utils/safeFormat';
@@ -84,6 +83,7 @@ import {
   AssessmentSessionPreviewV3Footer,
 } from '../assessment/AssessmentSessionPreviewV3';
 import { ToolDocumentView, ToolWorkspace } from '../DiscoveryTools';
+import { hasDedicatedToolDocumentView } from '../DiscoveryTools/dedicatedToolTypes';
 import { GenerateInitiativesModal } from '../DiscoveryTools/GenerateInitiativesModal';
 import { GenericToolDocumentView } from '../DiscoveryTools/GenericToolDocumentView';
 import { KnownToolDetailView } from '../DiscoveryTools/KnownToolDetailView';
@@ -3515,41 +3515,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
       // Check if this is a tool session (not an initiative)
       if (doc && doc.type === 'tool' && doc.subType !== 'initiative') {
-        // Check if the tool type is supported
-        const supportedTools = [
-          'dynamic-swot',
-          'market-forces',
-          'growth-paths',
-          'value-chain',
-          'portfolio-priority',
-          'risk-uncertainty',
-          'capability-mapper',
-          'sop-builder',
-          'a3-problem-solving',
-          'vsm-builder',
-          'smed-planner',
-          'dms-builder',
-          'inventory-autopilot',
-          'constraint-control',
-          'decision-engine',
-          'control-tower',
-          'automation-pipeline',
-          'robotics-feasibility',
-          'logistics-automation',
-          'rpa-scanner',
-          'ai-discovery',
-          'integration-diagnostic',
-          'digital-value-pool',
-          'legacy-analyzer',
-          'data-inventory',
-          'pain-to-solution',
-          'pain-explorer',
-          'process-automation',
-        ];
+        const toolType = String(doc.subType || '');
 
-        const toolType = doc.subType as StoreToolType;
-
-        if (supportedTools.includes(toolType)) {
+        if (hasDedicatedToolDocumentView(toolType)) {
           // Use new ToolDocumentView - canonical two-column layout
           return (
             <ToolDocumentView
