@@ -443,6 +443,77 @@ describe('V8 Assessment bounded routes', () => {
     expect(res.body.code).toBe('P28_NO_SILENT_SCORING');
   });
 
+  // --- ASM-006/007 (M10 F-02): accepted assessments are frozen ---
+
+  it('PUT /api/v8/assessment/:id rejects an edit of an APPROVED assessment with 409 and writes nothing', async () => {
+    mockQueryOne.mockResolvedValue({
+      answers_json: '{"existing":true}',
+      context_snapshot: '{}',
+      score_summary: '{}',
+      p28_workbench_v1: null,
+      completion_percent: 100,
+      confidence_avg: 1,
+      current_section_id: null,
+      navigation_json: '{}',
+      assessment_type: 'DRD',
+      status: 'APPROVED',
+    });
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/a-accepted')
+      .set('Authorization', 'Bearer x')
+      .send({ name: 'MUTATED AFTER ACCEPT', answers: { drd: { areas: {} } } });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('ASSESSMENT_ALREADY_ACCEPTED');
+    // The whole point of the guard: no UPDATE and no audit entry may happen.
+    expect(mockQueryRun).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE assessments'),
+      expect.anything()
+    );
+    expect(mockLogUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/v8/assessment/:id still allows editing after a reviewer send-back reopened it to DRAFT', async () => {
+    mockQueryOne.mockResolvedValue({
+      answers_json: '{"existing":true}',
+      context_snapshot: '{}',
+      score_summary: '{}',
+      p28_workbench_v1: null,
+      completion_percent: 100,
+      confidence_avg: 1,
+      current_section_id: null,
+      navigation_json: '{}',
+      assessment_type: 'DRD',
+      status: 'DRAFT',
+    });
+
+    const res = await request(createApp())
+      .put('/api/v8/assessment/a-returned')
+      .set('Authorization', 'Bearer x')
+      .send({ name: 'Edited after send-back' });
+
+    expect(res.status).toBe(200);
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE assessments'),
+      expect.arrayContaining(['Edited after send-back'])
+    );
+  });
+
+  // --- M10 F-04: the list endpoint must self-heal the schema like every other ---
+
+  it('GET /api/v8/assessment ensures the assessment schema before querying the list', async () => {
+    mockQueryAll.mockResolvedValue([]);
+    mockQueryOne.mockResolvedValue({ total: 0 });
+
+    const res = await request(createApp())
+      .get('/api/v8/assessment')
+      .set('Authorization', 'Bearer x');
+
+    expect(res.status).toBe(200);
+    expect(mockEnsureAssessmentSchema).toHaveBeenCalled();
+  });
+
   // --- ASM-001A: server-derived DRD completion (Luka 2) ---
 
   it('GET /api/v8/assessment/:id derives completion_percent server-side for DRD, ignoring the stale stored value', async () => {

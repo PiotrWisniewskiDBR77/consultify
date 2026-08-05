@@ -270,6 +270,12 @@ router.get(
     const limit = Number(firstParam(req.query.limit) ?? 100) || 100;
     const offset = Number(firstParam(req.query.offset) ?? 0) || 0;
 
+    // M10 F-04: every other handler in this router self-heals the schema
+    // first; this list endpoint was the only one that did not, so on a
+    // database where the Assessment migrations have not converged the
+    // module's primary list answered 500 / 42P01 instead of an empty list.
+    await ensureAssessmentSchema();
+
     let sql = `SELECT * FROM assessments WHERE organization_id = ?`;
     const params: unknown[] = [organizationId];
 
@@ -643,8 +649,9 @@ router.put(
       current_section_id?: string | null;
       navigation_json?: string | null;
       assessment_type?: string | null;
+      status?: string | null;
     }>(
-      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type
+      `SELECT answers_json, context_snapshot, score_summary, p28_workbench_v1, completion_percent, confidence_avg, current_section_id, navigation_json, assessment_type, status
        FROM assessments
        WHERE id = ? AND organization_id = ?`,
       [assessmentId, organizationId]
@@ -658,6 +665,7 @@ router.put(
       current_section_id?: string | null;
       navigation_json?: string | null;
       assessment_type?: string | null;
+      status?: string | null;
     } | null;
 
     if (!existing) {
@@ -681,6 +689,26 @@ router.put(
     if (!permission.ok) {
       const denied = permission as { ok: false; status: number; body: Record<string, unknown> };
       return res.status(denied.status).json(denied.body);
+    }
+
+    // ASM-006/007 (M10 F-02): an accepted assessment is frozen. Without this
+    // guard the source row silently drifts away from the immutable accepted
+    // snapshot that the report and the initiative candidate both cite — the
+    // reviewer approves one thing and the client keeps reading another.
+    // Same contract as the frozen sibling modules (TLS-05, INT-05): the only
+    // way back into editing is an explicit reviewer send-back
+    // (`POST /:assessmentId/review` with action='return'), which reopens the
+    // assessment to DRAFT.
+    if (normalizeStatus(existing.status) === 'APPROVED') {
+      return res.status(409).json({
+        error: 'Assessment has been accepted and can no longer be edited',
+        code: 'ASSESSMENT_ALREADY_ACCEPTED',
+        details: { assessmentStatus: 'APPROVED' },
+        whatNext: [
+          'Ask a reviewer to send the assessment back (review action "return") before editing it again.',
+          'The accepted output stays immutable — returning the assessment reopens it as DRAFT.',
+        ],
+      });
     }
 
     if (req.body?.scoreSummary !== undefined && existing.p28_workbench_v1) {
