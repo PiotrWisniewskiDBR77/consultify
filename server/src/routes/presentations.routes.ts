@@ -891,6 +891,58 @@ async function getTemplateForOrgOrSystem(templateId: string, organizationId: str
   )) as any;
 }
 
+/**
+ * M09-H02 — strict, tenant-scoped read-back for `presentation_templates` writes.
+ *
+ * Deliberately NOT `getTemplateForOrgOrSystem`: that helper also matches system
+ * rows (`organization_id IS NULL`), so it can confirm a row this org does not
+ * own. A write may only be reported as successful when the row is durably
+ * present AND owned by the writing organization.
+ */
+async function readBackOrgTemplate(templateId: string, organizationId: string) {
+  return (await dbGet(`SELECT * FROM presentation_templates WHERE id = ? AND organization_id = ?`, [
+    templateId,
+    organizationId,
+  ])) as any;
+}
+
+/**
+ * M09-H02 — settle a `presentation_templates` write against durable state.
+ *
+ * `dbRun` defaults to `fallback: true` (see `DbPromise.run`), so a failed
+ * statement RESOLVES `{ success: false }` instead of rejecting. Callers that
+ * ignore the result answer 200 for a row that was never written.
+ *
+ * The driver acknowledgement is therefore treated as a hint, never as the
+ * authority — the read-back is the authority:
+ *
+ *  - ack ok + row present   → success
+ *  - ack failed + row present → success, logged. This is the retry/idempotency
+ *    case scoped to this operation: a statement can commit and still report a
+ *    failure (timeout fired after COMMIT). Failing closed there would orphan a
+ *    row that genuinely exists, so the durable state wins.
+ *  - row absent (any ack)   → fail closed. Never fabricate an envelope from the
+ *    in-memory draft.
+ */
+async function settleTemplateWrite(
+  operation: string,
+  templateId: string,
+  organizationId: string,
+  ack: { success: boolean; error?: string } | null | undefined
+): Promise<{ ok: true; row: any } | { ok: false; reason: string }> {
+  const row = await readBackOrgTemplate(templateId, organizationId);
+  if (!row) {
+    return { ok: false, reason: ack?.error || 'row_not_persisted' };
+  }
+  if (!ack?.success) {
+    logger.warn(
+      `[Presentations] ${operation}: driver reported a failed write but the row is durably present — treating as committed`,
+      { templateId, organizationId, driverError: ack?.error }
+    );
+  }
+  return { ok: true, row };
+}
+
 async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
   try {
     await requireNoLegalHold(organizationId, operation);
@@ -1258,7 +1310,7 @@ router.post(
     // keeps working on installs where migration 767 (lifecycle + lineage)
     // has not run yet. `lifecycle_state` defaults to `draft` either way
     // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
-    await dbRun(
+    const insertAck = await dbRun(
       `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
       [
@@ -1280,6 +1332,27 @@ router.post(
         userId,
       ]
     );
+
+    // M09-H02 — settle against durable state BEFORE any best-effort side write.
+    // Previously the route ran the lineage/governance writes and then answered
+    // `success: true` with an envelope rebuilt from the in-memory draft whenever
+    // the read-back came back empty, so a rejected INSERT still looked like a
+    // saved template.
+    const planSettled = await settleTemplateWrite('template plan', id, orgId, insertAck);
+    if (!planSettled.ok) {
+      logger.error('[Presentations] Template plan insert did not persist', {
+        templateId: id,
+        organizationId: orgId,
+        reason: planSettled.reason,
+        correlationId: (req as any).correlationId,
+      });
+      res.status(500).json({
+        success: false,
+        error: 'template_persist_failed',
+        message: 'Template was not saved. Nothing was created.',
+      });
+      return;
+    }
 
     // Epic C2 parity with /clone: a freshly drafted template is the root
     // of its own lineage chain. Best-effort — never breaks creation when
@@ -1317,9 +1390,16 @@ router.post(
       );
     }
 
-    const row = await getTemplateForOrgOrSystem(id, orgId);
-    const normalized = row ? normalizeTemplatePayload(row) : { id, ...template };
-    res.json({ success: true, data: { template: normalized, llmRefined } });
+    // M09-H02 — re-read after the lineage write so the client gets the final
+    // persisted row. `planSettled.row` is the fail-closed guarantee; this only
+    // refreshes it. No in-memory fallback: if the row vanished between the two
+    // reads, the earlier guard already proved persistence, so we serve the row
+    // we verified rather than inventing one.
+    const row = (await readBackOrgTemplate(id, orgId)) || planSettled.row;
+    res.json({
+      success: true,
+      data: { template: normalizeTemplatePayload(row), llmRefined },
+    });
   })
 );
 
@@ -1345,7 +1425,7 @@ router.post(
 
     const id = uuidv4().replace(/-/g, '');
     const { name } = req.body;
-    await dbRun(
+    const cloneAck = await dbRun(
       `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, cloned_from, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?, ?)`,
       [
@@ -1368,6 +1448,24 @@ router.post(
         (req as any).user?.id,
       ]
     );
+
+    // M09-H02 — the clone answered `{ success: true, data: { id } }` for an id
+    // that may never have been written. Settle against durable, org-owned state
+    // before the best-effort lineage writes and before answering.
+    const cloneSettled = await settleTemplateWrite('template clone', id, orgId, cloneAck);
+    if (!cloneSettled.ok) {
+      logger.error('[Presentations] Template clone insert did not persist', {
+        templateId: id,
+        sourceTemplateId: String(req.params.id),
+        organizationId: orgId,
+        reason: cloneSettled.reason,
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'template_clone_failed',
+        message: 'Template was not cloned. Nothing was created.',
+      });
+    }
 
     // Epic C2: extend the clone with a lineage chain + governance
     // event so the registry surface can render the version history.
@@ -1464,7 +1562,7 @@ router.put(
       });
     }
 
-    await dbRun(
+    const updateAck = await dbRun(
       `UPDATE presentation_templates SET name = COALESCE(?, name), description = COALESCE(?, description), audience = COALESCE(?, audience), goal = COALESCE(?, goal), theme = COALESCE(?, theme), outline_json = COALESCE(?, outline_json), max_slides = COALESCE(?, max_slides), layout_policy_json = COALESCE(?, layout_policy_json), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
       [
         name,
@@ -1479,6 +1577,40 @@ router.put(
         orgId,
       ]
     );
+
+    // M09-H02 — the UPDATE is already tenant-scoped in its WHERE clause, but the
+    // route answered `{ success: true }` unconditionally. A foreign-org id, an
+    // unknown id or a system row therefore matched zero rows and still reported
+    // a saved edit. Zero rows changed is NOT a successful save.
+    if (updateAck?.success && updateAck.changes === 0) {
+      res.status(404).json({
+        success: false,
+        error: 'template_not_found_for_org',
+        message: 'No editable template with this id belongs to your organization.',
+      });
+      return;
+    }
+
+    const updateSettled = await settleTemplateWrite(
+      'template update',
+      String(req.params.id),
+      orgId,
+      updateAck
+    );
+    if (!updateSettled.ok) {
+      logger.error('[Presentations] Template update did not persist', {
+        templateId: String(req.params.id),
+        organizationId: orgId,
+        reason: updateSettled.reason,
+      });
+      res.status(500).json({
+        success: false,
+        error: 'template_update_failed',
+        message: 'Template was not updated. No changes were saved.',
+      });
+      return;
+    }
+
     res.json({ success: true });
   })
 );
@@ -7695,5 +7827,13 @@ router.get(
     });
   })
 );
+
+/**
+ * M09-H02 — narrow test surface. `settleTemplateWrite` encodes the
+ * "durable read-back is the authority, not the driver ack" rule; the
+ * post-commit-timeout branch cannot be reached through HTTP without racing a
+ * real timeout, so it is asserted directly. Not imported by production code.
+ */
+export const __testables = { settleTemplateWrite, readBackOrgTemplate };
 
 export default router;
