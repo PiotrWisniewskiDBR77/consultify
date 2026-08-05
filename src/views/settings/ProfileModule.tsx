@@ -51,6 +51,7 @@ import { WorkingHoursSettings } from '../../components/settings/WorkingHoursSett
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { isMfaMvpEnabled } from '../../utils/mfaMvpFlag';
 
 interface ProfileModuleProps {
   initialTab?: string;
@@ -255,6 +256,7 @@ const PasswordSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
 // Account Management Component
 const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
   const { t } = useTranslation();
+  const mfaMvpEnabled = isMfaMvpEnabled();
   const [exporting, setExporting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -347,11 +349,15 @@ const AccountSettings: React.FC<{ currentUser: User }> = ({ currentUser }) => {
             </div>
             <div>
               <p className="text-c-text-muted">2FA Status</p>
-              <p
-                className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-amber-500'}`}
-              >
-                {currentUser.mfaEnabled ? 'Enabled' : 'Disabled'}
-              </p>
+              {mfaMvpEnabled ? (
+                <p
+                  className={`font-medium ${currentUser.mfaEnabled ? 'text-green-600' : 'text-amber-500'}`}
+                >
+                  {currentUser.mfaEnabled ? 'Enabled' : 'Disabled'}
+                </p>
+              ) : (
+                <p className="font-medium text-c-text-muted">Not included in MVP</p>
+              )}
             </div>
           </div>
         </div>

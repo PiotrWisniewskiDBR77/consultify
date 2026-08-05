@@ -108,8 +108,9 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
     const issuer = 'Consultify';
     const otpauthUrl = `otpauth://totp/${issuer}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
 
-    // Store pending secret (not yet verified)
-    await db.run(
+    // Do not return a QR secret unless the pending configuration was durably
+    // stored. DbPromise.run can fail closed through its result instead of throw.
+    const storeResult = await db.run(
       `
       INSERT INTO user_mfa (user_id, secret, enabled, method, created_at)
       VALUES (?, ?, false, 'totp', datetime('now'))
@@ -117,6 +118,17 @@ router.post('/setup', verifyToken, isAuthenticated, async (req: Request, res: Re
     `,
       [userId, secret, secret]
     );
+
+    if (!storeResult?.success) {
+      logger.error('[MFA] Failed to persist pending MFA secret', {
+        userId,
+        error: storeResult?.error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się skonfigurować MFA', code: 'MFA_SETUP_NOT_PERSISTED' });
+    }
 
     logger.info(`[MFA] Setup initiated for user ${userId}`);
 

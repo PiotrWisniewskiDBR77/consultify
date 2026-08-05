@@ -33,6 +33,7 @@ import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { isMfaMvpEnabled } from '../../../utils/mfaMvpFlag';
 import { DegradedState } from '../../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from '../shared';
 
@@ -85,6 +86,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const mfaMvpEnabled = isMfaMvpEnabled();
   const navigate = useNavigate();
   const [status, setStatus] = useState<SecurityStatus>(DEFAULT_STATUS);
   const [recentEvents, setRecentEvents] = useState<LoginEvent[]>([]);
@@ -99,7 +101,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         Api.getActiveSessions(),
         Api.getLoginHistory(),
         Api.get('/settings/recovery'),
-        Api.get('/api/mfa/status'),
+        mfaMvpEnabled ? Api.get('/api/mfa/status') : Promise.resolve({ isEnabled: false }),
       ]);
       if (!sessionsRes || !Array.isArray(historyRes) || !recoveryRes || !mfaRes) {
         throw new Error('Security overview response was missing required data');
@@ -124,7 +126,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.mfaEnabled]);
+  }, [currentUser?.mfaEnabled, mfaMvpEnabled]);
 
   useEffect(() => {
     void loadSecurityData();
@@ -135,15 +137,15 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     // for an already-set password is not available client-side, so it is not
     // factored in (no fabricated value).
     let score = 0;
-    const maxScore = 5;
+    const maxScore = mfaMvpEnabled ? 5 : 1.5;
 
-    if (status.mfaEnabled) score += 2.5;
+    if (mfaMvpEnabled && status.mfaEnabled) score += 2.5;
     if (status.recoveryEmail) score += 0.75;
     if (status.recoveryPhone) score += 0.75;
-    if (status.backupCodes) score += 1;
+    if (mfaMvpEnabled && status.backupCodes) score += 1;
 
     return { score: Math.min(score, maxScore), maxScore };
-  }, [status]);
+  }, [mfaMvpEnabled, status]);
 
   const scorePercentage = Math.round((securityScore.score / securityScore.maxScore) * 100);
 
@@ -199,17 +201,26 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       id: 'mfa',
       icon: Fingerprint,
       title: t('settings.securityOverview.twoFactor', 'Two-Factor Auth'),
-      status: status.mfaEnabled,
-      statusLabel: status.mfaEnabled
-        ? t('settings.securityOverview.enabled', 'Enabled')
-        : t('settings.securityOverview.disabled', 'Disabled'),
-      description: status.mfaEnabled
-        ? t('settings.securityOverview.mfaActive', 'Your account has an extra layer of protection')
-        : t('settings.securityOverview.mfaInactive', 'Add 2FA to protect your account'),
+      status: mfaMvpEnabled && status.mfaEnabled,
+      statusLabel: !mfaMvpEnabled
+        ? t('settings.securityOverview.deferred', 'Deferred')
+        : status.mfaEnabled
+          ? t('settings.securityOverview.enabled', 'Enabled')
+          : t('settings.securityOverview.disabled', 'Disabled'),
+      description: !mfaMvpEnabled
+        ? t('settings.securityOverview.mfaDeferred', 'Not included in the MVP demo')
+        : status.mfaEnabled
+          ? t(
+              'settings.securityOverview.mfaActive',
+              'Your account has an extra layer of protection'
+            )
+          : t('settings.securityOverview.mfaInactive', 'Add 2FA to protect your account'),
       action: () => navigateTo('auth-access'),
-      actionLabel: status.mfaEnabled
-        ? t('settings.securityOverview.manage', 'Manage')
-        : t('settings.securityOverview.enable', 'Enable'),
+      actionLabel: !mfaMvpEnabled
+        ? t('settings.securityOverview.viewAvailability', 'View availability')
+        : status.mfaEnabled
+          ? t('settings.securityOverview.manage', 'Manage')
+          : t('settings.securityOverview.enable', 'Enable'),
       color: 'blue' as const,
     },
     {
@@ -234,13 +245,19 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       title: t('settings.securityOverview.recovery', 'Recovery Options'),
       status: status.recoveryEmail || status.recoveryPhone || status.backupCodes,
       statusLabel: (() => {
-        const count = [status.recoveryEmail, status.recoveryPhone, status.backupCodes].filter(
-          Boolean
-        ).length;
-        return count === 3
+        const count = [
+          status.recoveryEmail,
+          status.recoveryPhone,
+          ...(mfaMvpEnabled ? [status.backupCodes] : []),
+        ].filter(Boolean).length;
+        const expectedCount = mfaMvpEnabled ? 3 : 2;
+        return count === expectedCount
           ? t('settings.securityOverview.allSet', 'All Set')
           : count > 0
-            ? t('settings.securityOverview.partial', '{{count}}/3 configured', { count })
+            ? t('settings.securityOverview.partial', '{{count}}/{{total}} configured', {
+                count,
+                total: expectedCount,
+              })
             : t('settings.securityOverview.notConfigured', 'Not Configured');
       })(),
       description: t(
@@ -260,7 +277,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       priority: 'high' | 'medium' | 'low';
     }> = [];
 
-    if (!status.mfaEnabled) {
+    if (mfaMvpEnabled && !status.mfaEnabled) {
       recs.push({
         icon: Fingerprint,
         text: t(
@@ -280,7 +297,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
         priority: 'high',
       });
     }
-    if (!status.backupCodes) {
+    if (mfaMvpEnabled && !status.backupCodes) {
       recs.push({
         icon: Key,
         text: t(
@@ -302,7 +319,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     }
 
     return recs;
-  }, [status, t]);
+  }, [mfaMvpEnabled, status, t]);
 
   const getStatusIcon = (eventStatus: string) => {
     switch (eventStatus) {

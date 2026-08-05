@@ -44,6 +44,7 @@ import { cn } from '../../../lib/utils';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
 import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { isMfaMvpEnabled } from '../../../utils/mfaMvpFlag';
 import { DegradedState } from '../../Admin/AdminState';
 import { MFASetup } from '../../Profile/MFASetup';
 import { SettingsDivider, SettingsSection } from '../shared';
@@ -93,6 +94,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   className = '',
 }) => {
   const { t } = useTranslation();
+  const mfaMvpEnabled = isMfaMvpEnabled();
   const [loading, setLoading] = useState(true);
   const [expandedPanel, setExpandedPanel] = useState<ExpandedPanel>(null);
   const mfaSectionRef = useRef<HTMLDivElement>(null);
@@ -487,76 +489,99 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         <SettingsDivider />
 
         {/* ─── Two-Factor Authentication Section ─── */}
-        <div ref={mfaSectionRef}>
-          <h4 className={sectionLabel}>
-            <Fingerprint size={14} className="text-c-accent" />
-            {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
-          </h4>
-          <div className="bg-c-surface-raised border border-c-border-subtle rounded-lg overflow-hidden">
-            <button
-              onClick={() => togglePanel('mfa')}
-              className="w-full flex items-center justify-between p-4 hover:bg-c-surface/[0.02] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    'p-2 rounded-lg',
-                    currentUser?.mfaEnabled ? 'bg-emerald-500/10' : 'bg-amber-500/10'
-                  )}
-                >
-                  {currentUser?.mfaEnabled ? (
-                    <ShieldCheck size={16} className="text-emerald-400" />
-                  ) : (
-                    <ShieldOff size={16} className="text-amber-400" />
-                  )}
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-c-text">
-                      {t('settings.authAccess.twoFactor', 'Two-Factor Authentication')}
-                    </p>
-                    <span
-                      className={cn(
-                        'px-1.5 py-0.5 text-[10px] font-semibold rounded-full',
-                        currentUser?.mfaEnabled
-                          ? 'bg-emerald-500/15 text-emerald-400'
-                          : 'bg-amber-500/15 text-amber-400'
-                      )}
-                    >
-                      {currentUser?.mfaEnabled
-                        ? t('settings.authAccess.on', 'ON')
-                        : t('settings.authAccess.off', 'OFF')}
-                    </span>
+        {mfaMvpEnabled ? (
+          <div ref={mfaSectionRef}>
+            <h4 className={sectionLabel}>
+              <Fingerprint size={14} className="text-c-accent" />
+              {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
+            </h4>
+            <div className="bg-c-surface-raised border border-c-border-subtle rounded-lg overflow-hidden">
+              <button
+                onClick={() => togglePanel('mfa')}
+                className="w-full flex items-center justify-between p-4 hover:bg-c-surface/[0.02] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'p-2 rounded-lg',
+                      currentUser?.mfaEnabled ? 'bg-emerald-500/10' : 'bg-amber-500/10'
+                    )}
+                  >
+                    {currentUser?.mfaEnabled ? (
+                      <ShieldCheck size={16} className="text-emerald-400" />
+                    ) : (
+                      <ShieldOff size={16} className="text-amber-400" />
+                    )}
                   </div>
-                  <p className="text-xs text-c-text-muted">
-                    {currentUser?.mfaEnabled
-                      ? t('settings.authAccess.mfaActiveDesc', 'Your account is protected with 2FA')
-                      : t(
-                          'settings.authAccess.mfaInactiveDesc',
-                          'Add an extra layer of security to your account'
+                  <div className="text-left">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-c-text">
+                        {t('settings.authAccess.twoFactor', 'Two-Factor Authentication')}
+                      </p>
+                      <span
+                        className={cn(
+                          'px-1.5 py-0.5 text-[10px] font-semibold rounded-full',
+                          currentUser?.mfaEnabled
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-amber-500/15 text-amber-400'
                         )}
-                  </p>
+                      >
+                        {currentUser?.mfaEnabled
+                          ? t('settings.authAccess.on', 'ON')
+                          : t('settings.authAccess.off', 'OFF')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-c-text-muted">
+                      {currentUser?.mfaEnabled
+                        ? t(
+                            'settings.authAccess.mfaActiveDesc',
+                            'Your account is protected with 2FA'
+                          )
+                        : t(
+                            'settings.authAccess.mfaInactiveDesc',
+                            'Add an extra layer of security to your account'
+                          )}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <ChevronDown
-                size={16}
-                className={cn(
-                  'text-c-text-muted transition-transform duration-200',
-                  expandedPanel === 'mfa' && 'rotate-180'
-                )}
-              />
-            </button>
-
-            {expandedPanel === 'mfa' && (
-              <div className="border-t border-c-border-subtle pt-4 pb-2">
-                <MFASetup
-                  isEnabled={currentUser?.mfaEnabled || false}
-                  onUpdate={() => onUpdateUser?.({})}
+                <ChevronDown
+                  size={16}
+                  className={cn(
+                    'text-c-text-muted transition-transform duration-200',
+                    expandedPanel === 'mfa' && 'rotate-180'
+                  )}
                 />
-              </div>
-            )}
+              </button>
+
+              {expandedPanel === 'mfa' && (
+                <div className="border-t border-c-border-subtle pt-4 pb-2">
+                  <MFASetup
+                    isEnabled={currentUser?.mfaEnabled || false}
+                    onUpdate={() => onUpdateUser?.({})}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div data-testid="mfa-mvp-disabled" role="status">
+            <h4 className={sectionLabel}>
+              <Fingerprint size={14} className="text-c-text-muted" />
+              {t('settings.authAccess.mfaSection', 'Two-Factor Authentication')}
+            </h4>
+            <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-4">
+              <p className="text-sm font-medium text-c-text">
+                {t('settings.authAccess.mfaDeferredTitle', 'Not available in the MVP demo')}
+              </p>
+              <p className="mt-1 text-xs text-c-text-muted">
+                {t(
+                  'settings.authAccess.mfaDeferredDescription',
+                  'MFA setup and recovery are deferred to the next hardening round.'
+                )}
+              </p>
+            </div>
+          </div>
+        )}
 
         <SettingsDivider />
 
@@ -836,50 +861,56 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
                   )}
                 </div>
 
-                {/* Backup Codes */}
-                <div className="bg-c-surface-raised border border-c-border-subtle rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-1.5 bg-c-accent-soft rounded-lg">
-                        <Key size={14} className="text-c-accent" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-c-text">
-                          {t('settings.authAccess.backupCodes', 'Backup Codes')}
-                        </p>
-                        <p className="text-xs text-c-text-muted">
-                          {backupCodesCount > 0
-                            ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
-                                count: backupCodesCount,
-                              })
-                            : currentUser?.mfaEnabled
+                {/* Backup Codes belong to the same deferred MFA contract. */}
+                {mfaMvpEnabled && (
+                  <div className="bg-c-surface-raised border border-c-border-subtle rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-c-accent-soft rounded-lg">
+                          <Key size={14} className="text-c-accent" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-c-text">
+                            {t('settings.authAccess.backupCodes', 'Backup Codes')}
+                          </p>
+                          <p className="text-xs text-c-text-muted">
+                            {backupCodesCount > 0
                               ? t(
-                                  'settings.authAccess.noCodesGenerate',
-                                  'No backup codes — generate a new set from your 2FA settings'
+                                  'settings.authAccess.codesRemaining',
+                                  '{{count}} codes remaining',
+                                  {
+                                    count: backupCodesCount,
+                                  }
                                 )
-                              : t(
-                                  'settings.authAccess.codesNeedMfa',
-                                  'Backup codes are created when you set up two-factor authentication'
-                                )}
-                        </p>
+                              : currentUser?.mfaEnabled
+                                ? t(
+                                    'settings.authAccess.noCodesGenerate',
+                                    'No backup codes — generate a new set from your 2FA settings'
+                                  )
+                                : t(
+                                    'settings.authAccess.codesNeedMfa',
+                                    'Backup codes are created when you set up two-factor authentication'
+                                  )}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {backupCodesCount > 0 ? (
-                        <Check size={14} className="text-emerald-400" />
-                      ) : (
-                        <button
-                          onClick={openMfaPanel}
-                          className="text-xs text-c-accent hover:text-c-accent px-2 py-1 rounded-md hover:bg-c-accent-soft transition-colors whitespace-nowrap"
-                        >
-                          {currentUser?.mfaEnabled
-                            ? t('settings.authAccess.generateCodes', 'Generate codes')
-                            : t('settings.authAccess.setUp2fa', 'Set up 2FA')}
-                        </button>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {backupCodesCount > 0 ? (
+                          <Check size={14} className="text-emerald-400" />
+                        ) : (
+                          <button
+                            onClick={openMfaPanel}
+                            className="text-xs text-c-accent hover:text-c-accent px-2 py-1 rounded-md hover:bg-c-accent-soft transition-colors whitespace-nowrap"
+                          >
+                            {currentUser?.mfaEnabled
+                              ? t('settings.authAccess.generateCodes', 'Generate codes')
+                              : t('settings.authAccess.setUp2fa', 'Set up 2FA')}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </div>

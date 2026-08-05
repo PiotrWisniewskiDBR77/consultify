@@ -36,6 +36,21 @@ describe('AuthenticationAccessPage honest UI', () => {
     vi.mocked(Api.get).mockRejectedValue(new Error('Recovery down'));
   });
 
+  it('shows an honest MVP deferral instead of mounting the MFA setup flow', async () => {
+    render(
+      <AuthenticationAccessPage
+        currentUser={{ id: 'user-1', email: 'user@example.com', mfaEnabled: false } as any}
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('mfa-mvp-disabled')).toHaveTextContent(
+        'Not available in the MVP demo'
+      )
+    );
+    expect(screen.queryByText('MFA setup')).not.toBeInTheDocument();
+  });
+
   it('does not render failed auth data loads as empty sessions or login history', async () => {
     render(
       <AuthenticationAccessPage
@@ -67,7 +82,11 @@ describe('AuthenticationAccessPage honest UI', () => {
         sessions: [{ id: 'current', deviceInfo: 'Current Browser', current: true }],
       });
     vi.mocked(Api.getLoginHistory).mockResolvedValue([]);
-    vi.mocked(Api.get).mockResolvedValue({ recoveryEmail: '', recoveryPhone: '', backupCodesCount: 0 });
+    vi.mocked(Api.get).mockResolvedValue({
+      recoveryEmail: '',
+      recoveryPhone: '',
+      backupCodesCount: 0,
+    });
     vi.mocked(Api.revokeSession).mockResolvedValue({ success: true });
 
     render(

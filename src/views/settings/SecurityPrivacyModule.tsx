@@ -38,6 +38,7 @@ import { SecurityEventsSettings } from '../../components/settings/SecurityEvents
 import { TrustedDevicesSettings } from '../../components/settings/TrustedDevicesSettings';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
+import { isMfaMvpEnabled } from '../../utils/mfaMvpFlag';
 
 interface SecurityPrivacyModuleProps {
   initialTab?: string;
@@ -51,14 +52,19 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
   onUpdateUser,
 }) => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(initialTab || 'dashboard');
+  const mfaMvpEnabled = isMfaMvpEnabled();
+  const [activeTab, setActiveTab] = useState(
+    initialTab === 'mfa' && !mfaMvpEnabled ? 'dashboard' : initialTab || 'dashboard'
+  );
 
   // Update active tab when initialTab prop changes
   useEffect(() => {
     if (initialTab && initialTab !== activeTab) {
-      queueMicrotask(() => setActiveTab(initialTab));
+      queueMicrotask(() =>
+        setActiveTab(initialTab === 'mfa' && !mfaMvpEnabled ? 'dashboard' : initialTab)
+      );
     }
-  }, [initialTab, activeTab]);
+  }, [initialTab, activeTab, mfaMvpEnabled]);
 
   const tabs: Tab[] = [
     {
@@ -66,11 +72,15 @@ export const SecurityPrivacyModule: React.FC<SecurityPrivacyModuleProps> = ({
       label: t('settings.tabs.dashboard', 'Dashboard'),
       icon: <LayoutDashboard size={16} />,
     },
-    {
-      id: 'mfa',
-      label: t('settings.tabs.mfa', 'MFA'),
-      icon: <Fingerprint size={16} />,
-    },
+    ...(mfaMvpEnabled
+      ? [
+          {
+            id: 'mfa',
+            label: t('settings.tabs.mfa', 'MFA'),
+            icon: <Fingerprint size={16} />,
+          },
+        ]
+      : []),
     {
       id: 'devices',
       label: t('settings.tabs.devices', 'Trusted Devices'),
