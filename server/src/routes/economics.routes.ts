@@ -48,6 +48,70 @@ import { resolveStoredRelativePath } from '../utils/storagePaths.js';
 logger.info('[Economics Routes] Module loaded - TypeScript version');
 logger.info('[Economics Routes] Router type:', typeof Router);
 const router = Router();
+
+// ---------------------------------------------------------------------------
+// M08-H01/H02/H03 — fail-closed / degraded storage guards.
+//
+// `DbPromise` defaults to `fallback: true` for `get`/`all` AND `run`, so a
+// missing relation RESOLVES (`[]` / `{ success:false }`) instead of throwing.
+// Three Finance tables are absent on demo — `analysis_financial_scenarios`,
+// `benefit_tracking`, `analysis_financials` — and every call site here used the
+// default. Result: scenario and benefit writes answered `success: true` for
+// rows that were never stored, and the analyses list silently came back empty.
+//
+// This file previously contained ZERO `fallback: false` call sites. The helpers
+// below are the only sanctioned way to touch those three tables:
+//   - writes  → `FAIL CLOSED`: the caller must answer 503, never `success:true`;
+//   - reads   → `DEGRADED`: retry without the optional join and flag it, so the
+//     list keeps working while telling the truth about the missing enrichment.
+//
+// No DDL is performed here. Creating the three tables remains an open
+// deployment action — see the packet report.
+// ---------------------------------------------------------------------------
+
+/** Postgres 42P01 / SQLite equivalents for "relation does not exist". */
+export function isMissingRelationError(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  if (code === '42P01') return true;
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return (
+    /relation .* does not exist/i.test(message) ||
+    /no such table/i.test(message) ||
+    /undefined table/i.test(message)
+  );
+}
+
+/** Thrown by the write guards; converted to an honest 503 by the handlers. */
+class FinanceStorageUnavailableError extends Error {
+  constructor(public readonly table: string) {
+    super(`finance storage unavailable: ${table}`);
+    this.name = 'FinanceStorageUnavailableError';
+  }
+}
+
+/**
+ * Fail-closed wrapper for a write that targets one of the three tables.
+ * Rejects loudly instead of letting `fallback: true` swallow a 42P01.
+ */
+async function financeWrite<T>(table: string, op: () => Promise<T>): Promise<T> {
+  try {
+    return await op();
+  } catch (error) {
+    if (isMissingRelationError(error)) throw new FinanceStorageUnavailableError(table);
+    throw error;
+  }
+}
+
+/** Uniform 503 body for an unavailable Finance table. Never `success: true`. */
+function respondFinanceStorageUnavailable(res: Response, error: FinanceStorageUnavailableError) {
+  return res.status(503).json({
+    success: false,
+    error: 'FINANCE_STORAGE_UNAVAILABLE',
+    table: error.table,
+    message:
+      'Ta część Finance nie ma jeszcze zaplecza w tej bazie. Nic nie zostało zapisane — spróbuj ponownie po udostępnieniu magazynu.',
+  });
+}
 logger.info('[Economics Routes] Router created. Stack length:', router.stack?.length);
 
 // FIN-06: maps the shared Finance Candidate handoff error onto an HTTP
@@ -494,7 +558,24 @@ router.get(
 
       sql += ' ORDER BY da.created_at DESC';
 
-      const rows = await dbAll<any>(sql, params);
+      // M08-H03 — DEGRADED, not silent. `analysis_financials` is an optional
+      // enrichment join; when the table is missing the whole SELECT raised
+      // 42P01 and `fallback: true` turned it into `[]`, so the analyses list
+      // looked empty instead of broken. Now: run the full query fail-closed and,
+      // if only that table is missing, retry WITHOUT the join so the list still
+      // works — and say so via `financialsDegraded`.
+      let financialsDegraded = false;
+      let rows: any[];
+      try {
+        rows = await dbAll<any>(sql, params, { fallback: false });
+      } catch (error) {
+        if (!isMissingRelationError(error)) throw error;
+        financialsDegraded = true;
+        const degradedSql = sql
+          .replace(/LEFT JOIN analysis_financials af ON af\.analysis_id = da\.id\s*/g, '')
+          .replace(/af\.[a-z_]+ as (financial_[a-z_]+)/g, 'NULL as $1');
+        rows = await dbAll<any>(degradedSql, params, { fallback: false });
+      }
 
       const analyses = rows.map((row: any) => ({
         id: row.id,
@@ -526,10 +607,22 @@ router.get(
         updatedAt: row.updated_at,
       }));
 
-      return res.json({ analyses, total: analyses.length });
+      return res.json({
+        analyses,
+        total: analyses.length,
+        // M08-H03 — tell the client when the financial enrichment join was
+        // dropped, so an incomplete list is never mistaken for a complete one.
+        ...(financialsDegraded ? { financialsDegraded: true } : {}),
+      });
     } catch (error: any) {
+      // M08-H03 — this catch used to answer `{ analyses: [], total: 0 }`, i.e.
+      // a failed query was indistinguishable from an empty organization. A
+      // read failure is now reported as a failure.
       logger.error('[Economics] Error fetching analyses:', error);
-      return res.json({ analyses: [], total: 0 });
+      return res.status(500).json({
+        error: 'ANALYSES_READ_FAILED',
+        message: 'Nie udało się wczytać listy analiz. To błąd odczytu, nie pusta lista.',
+      });
     }
   })
 );
@@ -1118,71 +1211,92 @@ router.put(
       npv: number | null;
       roi: number | null;
     }> = [];
-    for (const scenarioType of scenarioTypes) {
-      const scenarioData =
-        scenarioType === 'base'
-          ? financialData
-          : applyScenarioAdjustments(financialData, scenarioType);
-      const scenarioMetrics = calculateFinancialMetrics(scenarioData);
-      scenarioSummaries.push({
-        scenarioType,
-        npv: scenarioMetrics.npv ?? null,
-        roi: scenarioMetrics.roi ?? null,
-      });
-      const scenarioRow = await dbGet<any>(
-        `SELECT id FROM analysis_financial_scenarios WHERE analysis_id = ? AND scenario_type = ?`,
-        [id, scenarioType]
-      );
+    try {
+      for (const scenarioType of scenarioTypes) {
+        const scenarioData =
+          scenarioType === 'base'
+            ? financialData
+            : applyScenarioAdjustments(financialData, scenarioType);
+        const scenarioMetrics = calculateFinancialMetrics(scenarioData);
+        scenarioSummaries.push({
+          scenarioType,
+          npv: scenarioMetrics.npv ?? null,
+          roi: scenarioMetrics.roi ?? null,
+        });
+        // M08-H01 — fail closed. Previously this read (and both writes below) ran
+        // with the default `fallback: true`, so a missing table resolved quietly
+        // and the handler still answered `success: true` at the end.
+        const scenarioRow = await financeWrite('analysis_financial_scenarios', () =>
+          dbGet<any>(
+            `SELECT id FROM analysis_financial_scenarios WHERE analysis_id = ? AND scenario_type = ?`,
+            [id, scenarioType],
+            { fallback: false }
+          )
+        );
 
-      if (scenarioRow) {
-        await dbRun(
-          `UPDATE analysis_financial_scenarios SET
+        if (scenarioRow) {
+          await financeWrite('analysis_financial_scenarios', () =>
+            dbRun(
+              `UPDATE analysis_financial_scenarios SET
             financial_data = ?, metrics = ?, updated_at = ?
            WHERE id = ?`,
-          [
-            JSON.stringify(scenarioData),
-            JSON.stringify({
-              npv: scenarioMetrics.npv,
-              irr: scenarioMetrics.irr,
-              roi: scenarioMetrics.roi,
-              paybackPeriod: scenarioMetrics.paybackPeriod,
-              cashFlows: scenarioMetrics.cashFlows,
-            }),
-            now,
-            scenarioRow.id,
-          ]
-        );
-      } else {
-        await dbRun(
-          `INSERT INTO analysis_financial_scenarios (
+              [
+                JSON.stringify(scenarioData),
+                JSON.stringify({
+                  npv: scenarioMetrics.npv,
+                  irr: scenarioMetrics.irr,
+                  roi: scenarioMetrics.roi,
+                  paybackPeriod: scenarioMetrics.paybackPeriod,
+                  cashFlows: scenarioMetrics.cashFlows,
+                }),
+                now,
+                scenarioRow.id,
+              ],
+              { fallback: false }
+            )
+          );
+        } else {
+          await financeWrite('analysis_financial_scenarios', () =>
+            dbRun(
+              `INSERT INTO analysis_financial_scenarios (
             id, analysis_id, organization_id, scenario_type, name, assumptions, financial_data, metrics, is_active, created_by, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            uuidv4(),
-            id,
-            orgId,
-            scenarioType,
-            scenarioType === 'base'
-              ? 'Base'
-              : scenarioType === 'optimistic'
-                ? 'Optimistic'
-                : 'Conservative',
-            JSON.stringify(financialData.assumptions || []),
-            JSON.stringify(scenarioData),
-            JSON.stringify({
-              npv: scenarioMetrics.npv,
-              irr: scenarioMetrics.irr,
-              roi: scenarioMetrics.roi,
-              paybackPeriod: scenarioMetrics.paybackPeriod,
-              cashFlows: scenarioMetrics.cashFlows,
-            }),
-            scenarioType === 'base' ? 1 : 0,
-            userId || null,
-            now,
-            now,
-          ]
-        );
+              [
+                uuidv4(),
+                id,
+                orgId,
+                scenarioType,
+                scenarioType === 'base'
+                  ? 'Base'
+                  : scenarioType === 'optimistic'
+                    ? 'Optimistic'
+                    : 'Conservative',
+                JSON.stringify(financialData.assumptions || []),
+                JSON.stringify(scenarioData),
+                JSON.stringify({
+                  npv: scenarioMetrics.npv,
+                  irr: scenarioMetrics.irr,
+                  roi: scenarioMetrics.roi,
+                  paybackPeriod: scenarioMetrics.paybackPeriod,
+                  cashFlows: scenarioMetrics.cashFlows,
+                }),
+                scenarioType === 'base' ? 1 : 0,
+                userId || null,
+                now,
+                now,
+              ],
+              { fallback: false }
+            )
+          );
+        }
       }
+    } catch (error) {
+      // M08-H01 — the scenario table is missing: answer honestly instead of
+      // reporting a save that did not happen.
+      if (error instanceof FinanceStorageUnavailableError) {
+        return respondFinanceStorageUnavailable(res, error);
+      }
+      throw error;
     }
 
     const recommendedScenario = scenarioSummaries.reduce(
@@ -1443,43 +1557,62 @@ router.put(
       return res.status(400).json({ error: 'trackingPeriod is required' });
     }
 
-    const existing = await dbGet<any>(
-      `SELECT id FROM benefit_tracking WHERE organization_id = ? AND initiative_id = ? AND tracking_period = ?`,
-      [orgId, analysis.initiative_id, trackingPeriod]
-    );
-
     const variancePercent =
       plannedBenefits > 0 ? ((actualBenefits - plannedBenefits) / plannedBenefits) * 100 : 0;
 
-    if (existing) {
-      await dbRun(
-        `UPDATE benefit_tracking SET
+    // M08-H02 — fail closed. Both writes previously ran with the default
+    // `fallback: true`, so a missing `benefit_tracking` table was swallowed and
+    // the handler still answered `{ success: true }` for a row never written.
+    try {
+      const existing = await financeWrite('benefit_tracking', () =>
+        dbGet<any>(
+          `SELECT id FROM benefit_tracking WHERE organization_id = ? AND initiative_id = ? AND tracking_period = ?`,
+          [orgId, analysis.initiative_id, trackingPeriod],
+          { fallback: false }
+        )
+      );
+
+      if (existing) {
+        await financeWrite('benefit_tracking', () =>
+          dbRun(
+            `UPDATE benefit_tracking SET
           planned_cost_savings = ?, actual_cost_savings = ?, overall_variance_percent = ?, updated_at = ?
          WHERE id = ?`,
-        [plannedBenefits, actualBenefits, variancePercent, now, existing.id]
-      );
-    } else {
-      await dbRun(
-        `INSERT INTO benefit_tracking (
+            [plannedBenefits, actualBenefits, variancePercent, now, existing.id],
+            { fallback: false }
+          )
+        );
+      } else {
+        await financeWrite('benefit_tracking', () =>
+          dbRun(
+            `INSERT INTO benefit_tracking (
           id, financial_id, initiative_id, organization_id, period_start, period_end, tracking_period,
           planned_cost_savings, actual_cost_savings, overall_variance_percent, created_by, created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          uuidv4(),
-          null,
-          analysis.initiative_id,
-          orgId,
-          now,
-          now,
-          trackingPeriod,
-          plannedBenefits,
-          actualBenefits,
-          variancePercent,
-          userId || null,
-          now,
-          now,
-        ]
-      );
+            [
+              uuidv4(),
+              null,
+              analysis.initiative_id,
+              orgId,
+              now,
+              now,
+              trackingPeriod,
+              plannedBenefits,
+              actualBenefits,
+              variancePercent,
+              userId || null,
+              now,
+              now,
+            ],
+            { fallback: false }
+          )
+        );
+      }
+    } catch (error) {
+      if (error instanceof FinanceStorageUnavailableError) {
+        return respondFinanceStorageUnavailable(res, error);
+      }
+      throw error;
     }
 
     return res.json({ success: true });

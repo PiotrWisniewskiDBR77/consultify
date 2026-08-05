@@ -18906,7 +18906,9 @@
       "document": "Dokument",
       "forecastWindow": "Prognoza",
       "scaling": "Skalowanie",
-      "type": "Typ"
+      "type": "Typ",
+      "statementType": "Kompletność",
+      "mappedLines": "Dok."
     },
     "empty": {
       "statements": "Brak sprawozdań w bieżącym widoku. Gotowe pozycje trafiają do zestawu roboczego, naprawialne do Kolejki naprawczej, a odrzucone pozostają poza dalszymi przepływami.",
@@ -19700,6 +19702,16 @@
         "title": "Wybierz model finansowy",
         "body": "Drzewo driverów rozkłada prognozę wybranego modelu (EBIT = Przychód − COGS − Opex − Amortyzacja). Wybierz model z listy, aby planować i uruchamiać what-if na jego realnych danych."
       }
+    },
+    "errors": {
+      "realSourceTitle": "Źródło danych finansowych wymaga uwagi",
+      "realSourceHint": "Nie wstawiono żadnych danych zastępczych. Zanim spróbujesz ponownie, sprawdź aktywną bazę, zakres organizacji i kontekst danych.",
+      "statementsRealSourceFailed": "Nie udało się wczytać sprawozdań finansowych z aktywnego źródła danych.",
+      "modelsRealSourceFailed": "Nie udało się wczytać modeli finansowych z aktywnego źródła danych.",
+      "analysesRealSourceFailed": "Nie udało się wczytać analiz finansowych z aktywnego źródła danych.",
+      "valuationsRealSourceFailed": "Nie udało się wczytać wycen z aktywnego źródła danych.",
+      "budgetsRealSourceFailed": "Nie udało się wczytać budżetów z aktywnego źródła danych.",
+      "demoModeRequiresRealSource": "Tryb demo jest włączony, ale ten moduł wymaga realnych danych źródłowych."
     }
   },
   "portfolio": {
