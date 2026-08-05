@@ -27,7 +27,7 @@ const fmtIdx = (v: number | null | undefined): string => (v == null ? '—' : v.
 const deltaBadge = (delta: number): { text: string; cls: string } => {
   if (delta > 0) return { text: `+${delta}`, cls: 'bg-emerald-100 text-emerald-700' };
   if (delta < 0) return { text: `${delta}`, cls: 'bg-red-100 text-red-700' };
-  return { text: '±0', cls: 'bg-gray-100 text-gray-600' };
+  return { text: '±0', cls: 'bg-c-surface-raised text-c-text-secondary' };
 };
 
 export const ExecutionWhatIfSandbox: React.FC<Props> = ({ baseline }) => {
@@ -46,9 +46,9 @@ export const ExecutionWhatIfSandbox: React.FC<Props> = ({ baseline }) => {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4" data-testid="whatif-panel">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid="whatif-panel">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">What-if — symulacja interwencji</h3>
+        <h3 className="text-sm font-semibold text-c-text">What-if — symulacja interwencji</h3>
         <span
           className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge.cls}`}
           data-testid="whatif-health-delta"
@@ -68,7 +68,7 @@ export const ExecutionWhatIfSandbox: React.FC<Props> = ({ baseline }) => {
               className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 active
                   ? 'border-blue-300 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  : 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
               }`}
               aria-pressed={active}
             >
@@ -80,7 +80,7 @@ export const ExecutionWhatIfSandbox: React.FC<Props> = ({ baseline }) => {
           <button
             type="button"
             onClick={() => setPicked([])}
-            className="rounded-full px-3 py-1 text-xs font-medium text-gray-400 hover:text-gray-600"
+            className="rounded-full px-3 py-1 text-xs font-medium text-c-text-muted hover:text-c-text-secondary"
           >
             Reset
           </button>
@@ -99,14 +99,14 @@ export const ExecutionWhatIfSandbox: React.FC<Props> = ({ baseline }) => {
       </div>
 
       {result.explanation.length > 0 && (
-        <ul className="mt-3 list-inside list-disc border-t border-gray-100 pt-2 text-xs text-gray-600">
+        <ul className="mt-3 list-inside list-disc border-t border-c-border-subtle pt-2 text-xs text-c-text-secondary">
           {result.explanation.slice(0, 5).map((e, i) => (
             <li key={i}>{e}</li>
           ))}
         </ul>
       )}
       {picked.length === 0 && (
-        <p className="mt-3 border-t border-gray-100 pt-2 text-xs text-gray-400">
+        <p className="mt-3 border-t border-c-border-subtle pt-2 text-xs text-c-text-muted">
           Wybierz interwencje powyżej, aby zobaczyć projekcję (dry-run, nic nie jest zapisywane).
         </p>
       )}
@@ -124,12 +124,12 @@ const Metric: React.FC<{
   const p = proj == null ? null : idx ? Number(proj) : Math.round(Number(proj));
   const changed = b != null && p != null && b !== p;
   return (
-    <div className="rounded-lg border border-gray-100 p-2">
-      <p className="text-[10px] uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="text-sm font-semibold text-gray-800">
+    <div className="rounded-lg border border-c-border-subtle p-2">
+      <p className="text-[10px] uppercase tracking-wide text-c-text-muted">{label}</p>
+      <p className="text-sm font-semibold text-c-text">
         {idx ? fmtIdx(p) : (p ?? '—')}
         {changed && (
-          <span className="ml-1 text-[10px] font-normal text-gray-400">
+          <span className="ml-1 text-[10px] font-normal text-c-text-muted">
             (z {idx ? fmtIdx(b) : b})
           </span>
         )}

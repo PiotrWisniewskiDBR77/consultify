@@ -162,7 +162,10 @@ interface DerivedClosure extends RolloutClosure {
   derived: true;
 }
 
-function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
+function deriveKpis(
+  initiatives: FullInitiative[],
+  t: ReturnType<typeof useTranslation>['t']
+): DerivedKpi[] {
   const total = initiatives.length;
   if (total === 0) return [];
 
@@ -190,7 +193,7 @@ function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
   return [
     {
       id: 'derived-on-track',
-      name: '% initiatives on track',
+      name: t('execution.rollout.kpi.derived.onTrackPct', '% initiatives on track'),
       baseline: 0,
       target: 100,
       current_value: onTrackPct,
@@ -200,7 +203,7 @@ function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
     },
     {
       id: 'derived-avg-progress',
-      name: 'Avg progress %',
+      name: t('execution.rollout.kpi.derived.avgProgress', 'Avg progress %'),
       baseline: 0,
       target: 100,
       current_value: avgProgress,
@@ -210,7 +213,7 @@ function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
     },
     {
       id: 'derived-overdue',
-      name: 'Overdue initiatives',
+      name: t('execution.rollout.kpi.derived.overdue', 'Overdue initiatives'),
       baseline: total,
       target: 0,
       current_value: overdueCount,
@@ -220,7 +223,7 @@ function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
     },
     {
       id: 'derived-gate-ready',
-      name: 'Gate-ready count',
+      name: t('execution.rollout.kpi.derived.gateReady', 'Gate-ready count'),
       baseline: 0,
       target: total,
       current_value: gateReadyCount,
@@ -230,7 +233,7 @@ function deriveKpis(initiatives: FullInitiative[]): DerivedKpi[] {
     },
     {
       id: 'derived-active',
-      name: 'Active initiatives',
+      name: t('execution.rollout.kpi.derived.active', 'Active initiatives'),
       baseline: 0,
       target: total,
       current_value: active.length,
@@ -389,7 +392,7 @@ export const RolloutTab: React.FC<RolloutTabProps> = ({
 
   // #14/#16/#18 — derived (read-only) rows from real in-app data, shown only when
   // the API list for that resource is empty. User-created/persisted rows win.
-  const derivedKpis = useMemo(() => deriveKpis(initiatives), [initiatives]);
+  const derivedKpis = useMemo(() => deriveKpis(initiatives, t), [initiatives, t]);
   const derivedRisks = useMemo(
     () => deriveRisks(initiatives, riskSignals, delaySignals),
     [initiatives, riskSignals, delaySignals]

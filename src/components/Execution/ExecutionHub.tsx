@@ -2668,17 +2668,16 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         ? []
         : getStatusActions(init.status as InitiativeStatus);
       return {
-        primary: [
-          {
-            id: 'open_preview',
-            label: t('common.openPreview', 'Otwórz podgląd'),
-            icon: ChevronRight,
-            onClick: () => setSummaryPreviewInitiativeId(init.id),
-          },
-        ],
+        // Canon A6: "Otwórz podgląd" is block 4, auto-added by StandardTable from
+        // `universalHandlers.preview` below. Declaring it in `primary` as well
+        // rendered the entry TWICE in the row kebab — module declares blocks 1-3 only.
+        primary: [],
         statusTransitions: statusActions.map((action) => ({
           id: `status-${action.targetStatus}`,
-          label: action.label,
+          // initiativeLifecycle already ships Polish labels (`labelPl`); the kebab
+          // used to render the English `label` regardless of locale, so a PL demo
+          // showed "Mark Complete"/"Mark Blocked" next to Polish entries.
+          label: (isPolish && action.labelPl) || action.label,
           icon: CheckCircle2,
           onClick: () => handleInlineStatusChange(init.id, String(action.targetStatus)),
         })),
@@ -2705,7 +2704,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         },
       };
     },
-    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, t]
+    [handleInlineStatusChange, handleOpenDocument, isPilotParticipant, isPolish, t]
   );
 
   // Triada standard (StandardTable rowMenu contract, canon A6) — Reports

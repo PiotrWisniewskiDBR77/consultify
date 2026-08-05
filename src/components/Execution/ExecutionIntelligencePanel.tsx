@@ -76,8 +76,8 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
 
   if (failed) {
     return (
-      <div className="rounded-xl border border-gray-200 bg-white p-4" data-testid="intel-failed">
-        <p className="text-sm text-gray-500">
+      <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid="intel-failed">
+        <p className="text-sm text-c-text-secondary">
           Predykcja niedostępna chwilowo — kokpit działa normalnie.
         </p>
       </div>
@@ -98,9 +98,9 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
   const topActions = data?.triage?.topActions ?? [];
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4" data-testid="intel-panel">
+    <div className="rounded-xl border border-c-border-subtle bg-c-surface p-4" data-testid="intel-panel">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Predykcja ryzyka (EVM)</h3>
+        <h3 className="text-sm font-semibold text-c-text">Predykcja ryzyka (EVM)</h3>
         <span
           className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
             atRisk > 0 ? LEVEL_STYLE.HIGH : LEVEL_STYLE.LOW
@@ -111,10 +111,10 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
         </span>
       </div>
 
-      {loading && <p className="text-sm text-gray-400">Ładowanie predykcji…</p>}
+      {loading && <p className="text-sm text-c-text-muted">Ładowanie predykcji…</p>}
 
       {!loading && ranked.length === 0 && (
-        <p className="text-sm text-gray-500" data-testid="intel-empty">
+        <p className="text-sm text-c-text-secondary" data-testid="intel-empty">
           Brak inicjatyw o wysokim ryzyku — wszystko w normie.
         </p>
       )}
@@ -124,14 +124,14 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
           {ranked.map((p) => (
             <li
               key={p.initiativeId}
-              className="flex items-start justify-between gap-3 rounded-lg border border-gray-100 p-2"
+              className="flex items-start justify-between gap-3 rounded-lg border border-c-border-subtle p-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-800">
+                <p className="truncate text-sm font-medium text-c-text">
                   {p.name || p.initiativeId}
                 </p>
                 {p.reasons && p.reasons.length > 0 && (
-                  <p className="truncate text-xs text-gray-500">{p.reasons[0]}</p>
+                  <p className="truncate text-xs text-c-text-secondary">{p.reasons[0]}</p>
                 )}
               </div>
               <span
@@ -145,11 +145,11 @@ export const ExecutionIntelligencePanel: React.FC<Props> = ({ projectId, fetcher
       )}
 
       {!loading && topActions.length > 0 && (
-        <div className="mt-3 border-t border-gray-100 pt-2" data-testid="intel-actions">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <div className="mt-3 border-t border-c-border-subtle pt-2" data-testid="intel-actions">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
             Sugerowane działania
           </p>
-          <ul className="list-inside list-disc text-xs text-gray-600">
+          <ul className="list-inside list-disc text-xs text-c-text-secondary">
             {topActions.slice(0, 4).map((a, i) => (
               <li key={i}>{a}</li>
             ))}

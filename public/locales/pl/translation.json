@@ -9774,7 +9774,19 @@
         "current": "Obecna",
         "target": "Cel",
         "col": {
-          "name": "Nazwa"
+          "name": "Nazwa",
+          "progress": "Postęp",
+          "trend": "Trend"
+        },
+        "derivedNote": "Wyliczone z Twoich inicjatyw — kondycja dostarczania portfela. Dodaj KPI, aby śledzić własne wskaźniki.",
+        "editTitle": "Edytuj KPI",
+        "unit": "Jednostka",
+        "derived": {
+          "onTrackPct": "% inicjatyw zgodnych z planem",
+          "avgProgress": "Średni postęp %",
+          "overdue": "Inicjatywy po terminie",
+          "gateReady": "Gotowe do bramki",
+          "active": "Inicjatywy aktywne"
         }
       },
       "risks": {
@@ -9786,13 +9798,16 @@
           "title": "Tytuł",
           "probability": "Prawdopodobieństwo",
           "impact": "Wpływ",
-          "status": "Status"
+          "status": "Status",
+          "mitigation": "Działanie zaradcze"
         },
         "status": {
           "closed": "Zamknięte",
           "mitigated": "Złagodzone",
           "open": "Otwarte"
-        }
+        },
+        "derivedNote": "Wyliczone z Twoich inicjatyw — pozycje zablokowane, zagrożone i po terminie. Dodaj ryzyko, aby prowadzić własny rejestr.",
+        "editTitle": "Edytuj ryzyko"
       },
       "change": {
         "title": "Dziennik zmian",
@@ -9802,14 +9817,16 @@
         "col": {
           "title": "Tytuł",
           "type": "Typ",
-          "status": "Status"
+          "status": "Status",
+          "impact": "Wpływ"
         },
         "status": {
           "approved": "Zatwierdzona",
           "implemented": "Wdrożona",
           "proposed": "Zaproponowana",
           "rejected": "Odrzucona"
-        }
+        },
+        "editTitle": "Edytuj zmianę"
       },
       "closure": {
         "title": "Lista zamknięcia",
@@ -9818,17 +9835,25 @@
         "empty": "Brak pozycji zamknięcia.",
         "col": {
           "status": "Status",
-          "done": "Zrobione"
+          "done": "Zrobione",
+          "category": "Kategoria",
+          "title": "Tytuł"
         },
         "status": {
-          "done": "Zrobione"
+          "done": "Zrobione",
+          "open": "Otwarte"
+        },
+        "editTitle": "Edytuj pozycję zamknięcia",
+        "resultsHandoff": {
+          "title": "Przekazanie do Rezultatów — tylko podgląd"
         }
       },
       "addClosureItem": "Dodaj pozycję",
       "addKpi": "Dodaj KPI",
       "addRisk": "Dodaj ryzyko",
       "deleteConfirm": {
-        "body": "„{{title}}” zostanie trwale usunięty. Tej operacji nie można cofnąć."
+        "body": "„{{title}}” zostanie trwale usunięty. Tej operacji nie można cofnąć.",
+        "title": "Usunąć tę pozycję?"
       }
     },
     "reporting": {
@@ -9935,7 +9960,8 @@
       "noInExecution": "Brak inicjatyw w realizacji. Przenieś inicjatywy do realizacji.",
       "noAvailable": "Brak dostępnych inicjatyw.",
       "noDeadlines": "Brak zaplanowanych terminów",
-      "deadlinesWillAppear": "Zadania i decyzje pojawią się tutaj"
+      "deadlinesWillAppear": "Zadania i decyzje pojawią się tutaj",
+      "noInExecutionDesc": "Inicjatywy przeniesione do realizacji pojawią się tutaj."
     },
     "detail": {
       "description": "Opis",
@@ -9968,7 +9994,8 @@
       "raidLog": "Log RAID",
       "export": "Eksport",
       "report": "Raport",
-      "aiChat": "Czat AI"
+      "aiChat": "Czat AI",
+      "copyLink": "Kopiuj link"
     },
     "raidLog": {
       "title": "Log RAID",
@@ -10178,7 +10205,10 @@
     "actionCenter": {
       "actionQueue": "Kolejka działań",
       "kpiNoPlan": "Odchylenie KPI bez planu",
-      "missingPlan": "Obsługa braku planu"
+      "missingPlan": "Obsługa braku planu",
+      "actionQueueDesc": "Zaległe decyzje, ryzyka, komunikacja i odchylenia KPI wymagające działania właściciela.",
+      "kpiNoPlanDesc": "Odchylenia KPI bez planu naprawczego trafiają do tej samej kolejki działań.",
+      "missingPlanDesc": "Inicjatywy bez dat startu/końca pozostają widoczne jako niepełny stan planowania, zamiast znikać z raportów."
     },
     "bulk": {
       "confirmStatusTitle": "Zmienić status zaznaczonych inicjatyw?",
@@ -10189,7 +10219,8 @@
       "noCommonStatus": "Brak wspólnej akcji statusu dla zaznaczenia"
     },
     "controlTower": {
-      "failed": "Sygnały wieży kontrolnej niedostępne"
+      "failed": "Sygnały wieży kontrolnej niedostępne",
+      "failedDesc": "Nie udało się załadować ostrzeżeń harmonogramu i sygnałów wydolności. Widok działa bez nakładek ryzyka i opóźnień."
     },
     "executiveHealth": {
       "failed": "Sygnały kondycji zarządczej niedostępne"
@@ -10213,7 +10244,8 @@
       "generateError": "Nie udało się wygenerować raportu",
       "generating": "Generowanie „{{title}}”…",
       "noData": "Brak danych wdrożenia",
-      "openGlobal": "Raporty globalne →"
+      "openGlobal": "Raporty globalne →",
+      "subheading": "Gotowe raporty budowane na żywych danych realizacji. Kliknij, aby rozwinąć kontrakt, a następnie wygeneruj lub wyeksportuj."
     },
     "reportPanel": {
       "copied": "Raport skopiowany do schowka",
@@ -10227,7 +10259,8 @@
       "methodology": "Konfiguracja i metodyka raportu",
       "pdfExported": "PDF pobrany",
       "pdfFailed": "Eksport PDF nie powiódł się",
-      "presentationOpened": "Otwieranie generatora prezentacji…"
+      "presentationOpened": "Otwieranie generatora prezentacji…",
+      "summarizePrompt": "Podsumuj ten raport w 5 punktach i zaproponuj 3 następne kroki."
     },
     "statusChange": {
       "confirmPrompt": "Czy na pewno chcesz kontynuować?",
@@ -10257,6 +10290,26 @@
       "readiness": "Gotowość ludzi na zmianę",
       "readinessEmpty": "Brak jeszcze sygnałów adopcji (pulse/capability) do oceny.",
       "readinessFailed": "Gotowość na zmianę niedostępna chwilowo — kokpit działa normalnie."
+    },
+    "initiativeLabel": "Inicjatywa",
+    "realization": {
+      "amount": "Wartość zrealizowana",
+      "amountPlaceholder": "Wartość zrealizowana",
+      "costDelta": "Δ kosztów",
+      "helper": "Ręcznie zapisana wartość trafia do Rezultatów (ROI). Nigdy nie jest wyliczana z % zadań.",
+      "invalidAmount": "Podaj poprawną kwotę",
+      "notes": "Notatka",
+      "notesPlaceholder": "Notatka (opcjonalnie)",
+      "period": "Okres",
+      "record": "Zapisz realizację",
+      "recordFailed": "Nie udało się zapisać realizacji",
+      "recorded": "Realizacja zapisana",
+      "revenueDelta": "Δ przychodu",
+      "save": "Zapisz",
+      "saving": "Zapisywanie…",
+      "savings": "Oszczędności",
+      "title": "Zapisz wartość zrealizowaną",
+      "valueType": "Typ wartości"
     }
   },
   "benefits": {
