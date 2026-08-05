@@ -1712,52 +1712,145 @@ async function createAdminAccessCode(orgId: string, body: any, createdBy?: strin
   };
 }
 
-async function readBillingAlerts(orgId: string) {
-  let record = await dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
-    fallback: true,
-  });
-  if (!record) {
-    await dbRun(
-      `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
-       VALUES (?, ?, 1, 1, 1, 2000, 1)`,
-      [uuidv4(), orgId]
-    );
-    record = await dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
-      fallback: true,
-    });
+/**
+ * M15-H02 — progi budżetowe muszą być fail-closed.
+ *
+ * `server/src/utils/DbPromise.ts` ma `fallback = true` DOMYŚLNIE — nie tylko dla
+ * `get`/`all`, ale również dla `run`. Na bazie bez tabeli `billing_alerts` (stan
+ * demo 2026-08-05) zarówno odczyt, jak i ZAPIS „przechodziły" po cichu: `SELECT`
+ * zwracał `null`, `INSERT` połykał `42P01`, a handler i tak odpowiadał
+ * `{ success: true }`. Administrator dostawał zielony toast za zapis, który nigdy
+ * się nie wydarzył, a po ponownym otwarciu widział te same sfabrykowane wartości.
+ *
+ * Odtąd KAŻDA ścieżka progów jawnie wyłącza fallback i traktuje brak trwałego
+ * wiersza jako niedostępność magazynu — nigdy jako „zapisane". Odczyt degraduje
+ * się uczciwie (200 + `available:false` + PUSTA lista, żeby nie wywalić całej
+ * sekcji Rozliczenia), zapis jest fail-closed (5xx, bez wpisu audytowego).
+ */
+const BILLING_ALERTS_UNAVAILABLE_CODE = 'BILLING_ALERTS_STORAGE_UNAVAILABLE';
+
+class BillingAlertsUnavailableError extends Error {
+  readonly code = BILLING_ALERTS_UNAVAILABLE_CODE;
+
+  constructor(readonly reason: string) {
+    super('Billing alert thresholds could not be persisted or read back.');
+    this.name = 'BillingAlertsUnavailableError';
   }
-  return {
-    alerts: [
-      {
-        id: record?.id,
-        type: 'tokens',
-        threshold: 80,
-        notifyEmails: ['billing@example.com'],
-        isActive: flagOn(record?.token_threshold_80),
-      },
-      {
-        id: `${record?.id || 'alert'}-spend`,
-        type: 'spend',
-        threshold: record?.cost_cap_monthly ? 75 : 0,
-        notifyEmails: ['finance@example.com'],
-        isActive: true,
-      },
-    ],
-  };
 }
 
+/** Odczyt bez fallbacku — brak tabeli MUSI rzucić, nie udawać pustki. */
+function selectBillingAlertsRow(orgId: string) {
+  return dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
+    fallback: false,
+  });
+}
+
+/** Alerty budujemy WYŁĄCZNIE z realnie utrwalonego wiersza. */
+function mapBillingAlertsRow(record: any) {
+  return [
+    {
+      id: record.id,
+      type: 'tokens',
+      threshold: 80,
+      notifyEmails: ['billing@example.com'],
+      isActive: flagOn(record.token_threshold_80),
+    },
+    {
+      id: `${record.id}-spend`,
+      type: 'spend',
+      threshold: record.cost_cap_monthly ? 75 : 0,
+      notifyEmails: ['finance@example.com'],
+      isActive: true,
+    },
+  ];
+}
+
+async function readBillingAlerts(orgId: string) {
+  try {
+    let record = await selectBillingAlertsRow(orgId);
+    if (!record) {
+      await dbRun(
+        `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
+         VALUES (?, ?, 1, 1, 1, 2000, 1)`,
+        [uuidv4(), orgId],
+        { fallback: false }
+      );
+      record = await selectBillingAlertsRow(orgId);
+    }
+    // Read-back jest autorytetem: bez wiersza nie ma czego pokazać jako „ustawione".
+    if (!record) {
+      return {
+        available: false,
+        unavailableReason: BILLING_ALERTS_UNAVAILABLE_CODE,
+        alerts: [] as any[],
+      };
+    }
+    return { available: true, alerts: mapBillingAlertsRow(record) };
+  } catch {
+    return {
+      available: false,
+      unavailableReason: BILLING_ALERTS_UNAVAILABLE_CODE,
+      alerts: [] as any[],
+    };
+  }
+}
+
+/**
+ * Zapis progów. Rzuca `BillingAlertsUnavailableError`, gdy zapis albo tenantowy
+ * read-back nie potwierdzi danych — wywołujący MUSI wtedy odpowiedzieć błędem.
+ * Zwraca stan potwierdzony przez bazę, żeby UI nie musiał ufać własnemu stanowi.
+ */
 async function writeBillingAlerts(orgId: string, alerts: any[]) {
   const tokenAlert = alerts?.find((item: any) => item.type === 'tokens');
   const spendAlert = alerts?.find((item: any) => item.type === 'spend');
-  await dbRun(
-    `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
-     VALUES (?, ?, ?, 1, 1, ?, 1)
-     ON CONFLICT(organization_id) DO UPDATE SET
-       token_threshold_80 = excluded.token_threshold_80,
-       cost_cap_monthly = excluded.cost_cap_monthly,
-       updated_at = CURRENT_TIMESTAMP`,
-    [uuidv4(), orgId, tokenAlert ? 1 : 0, spendAlert?.threshold ? spendAlert.threshold * 1 : null]
-  );
+  const expectedTokenFlag = tokenAlert ? 1 : 0;
+  const expectedCostCap = spendAlert?.threshold ? spendAlert.threshold * 1 : null;
+
+  try {
+    await dbRun(
+      `INSERT INTO billing_alerts (id, organization_id, token_threshold_80, token_threshold_90, token_threshold_100, cost_cap_monthly, email_notifications)
+       VALUES (?, ?, ?, 1, 1, ?, 1)
+       ON CONFLICT(organization_id) DO UPDATE SET
+         token_threshold_80 = excluded.token_threshold_80,
+         cost_cap_monthly = excluded.cost_cap_monthly,
+         updated_at = CURRENT_TIMESTAMP`,
+      [uuidv4(), orgId, expectedTokenFlag, expectedCostCap],
+      { fallback: false }
+    );
+  } catch (error) {
+    throw new BillingAlertsUnavailableError(
+      `write failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  let record: any = null;
+  try {
+    record = await selectBillingAlertsRow(orgId);
+  } catch (error) {
+    throw new BillingAlertsUnavailableError(
+      `read-back failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (!record) {
+    throw new BillingAlertsUnavailableError('read-back returned no row for this organization');
+  }
+
+  // Read-back musi ZGADZAĆ SIĘ z tym, co wysłaliśmy. Zapis, który „przeszedł",
+  // ale nie zmienił wiersza (0 rows affected, konflikt bez efektu), nie jest sukcesem.
+  const persistedTokenFlag = flagOn(record.token_threshold_80) ? 1 : 0;
+  const persistedCostCap =
+    record.cost_cap_monthly === null || record.cost_cap_monthly === undefined
+      ? null
+      : Number(record.cost_cap_monthly);
+
+  if (persistedTokenFlag !== expectedTokenFlag || persistedCostCap !== expectedCostCap) {
+    throw new BillingAlertsUnavailableError(
+      `read-back mismatch: tokenFlag ${persistedTokenFlag}!=${expectedTokenFlag} or costCap ${persistedCostCap}!=${expectedCostCap}`
+    );
+  }
+
+  return { alerts: mapBillingAlertsRow(record) };
 }
 
 async function readBillingTaxSettings(orgId: string) {
@@ -2556,13 +2649,32 @@ router.put(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['billing:write']);
     if (!actor) return;
-    await writeBillingAlerts(actor.orgId, req.body?.alerts || []);
+
+    let persisted: { alerts: any[] };
+    try {
+      persisted = await writeBillingAlerts(actor.orgId, req.body?.alerts || []);
+    } catch (error) {
+      if (error instanceof BillingAlertsUnavailableError) {
+        // Fail-closed: żadnego `success`, żadnego wpisu audytowego o zmianie,
+        // która się nie wydarzyła (M15-H02).
+        return res.status(503).json({
+          success: false,
+          error: 'billing_alerts_unavailable',
+          code: error.code,
+          message:
+            'Nie udało się trwale zapisać progów budżetowych. Ustawienia pozostały bez zmian.',
+        });
+      }
+      throw error;
+    }
+
+    // Audyt dopiero po potwierdzonym read-backu.
     await adminAuditService.logAction({
       adminId: actor.actorId,
       actionType: 'update_billing_alerts',
       details: { orgId: actor.orgId, isSensitive: true },
     });
-    return res.json({ success: true });
+    return res.json({ success: true, alerts: persisted.alerts });
   })
 );
 

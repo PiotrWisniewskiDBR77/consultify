@@ -37,6 +37,10 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const [generatedInviteMaxUses, setGeneratedInviteMaxUses] = useState(50);
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [memberFilters, setMemberFilters] = useState<FilterChip[]>([]);
+  // M15-H03: błąd wczytywania MUSI zostać jawnym stanem błędu. Toast znika po
+  // kilku sekundach, a pusta tabela z komunikatem „brak członków" kłamie —
+  // administrator widział organizację bez ludzi zamiast informacji o awarii.
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const orgId = currentOrganization?.id;
   const viewerMembership = useMemo(
@@ -59,17 +63,23 @@ export const AdminMembersRolesPanel: React.FC = () => {
   const loadMembers = useCallback(async () => {
     if (!orgId) {
       setMembers([]);
+      setLoadError(null);
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getOrganizationMembers(orgId);
       setMembers(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      toast.error(error?.message || t('admin.membersRoles.loadFailed', 'Failed to load members'));
-      setMembers([]);
+      const message =
+        error?.message || t('admin.membersRoles.loadFailed', 'Failed to load members');
+      toast.error(message);
+      // Świadomie NIE czyścimy listy do pustej — brak danych z powodu awarii to
+      // stan degraded, nie „zero członków".
+      setLoadError(message);
     } finally {
       setLoading(false);
     }
@@ -405,6 +415,35 @@ export const AdminMembersRolesPanel: React.FC = () => {
         {loading ? (
           <div className="mt-5 py-8 text-center text-sm text-c-text-muted">
             {t('admin.membersRoles.loading', 'Loading members…')}
+          </div>
+        ) : loadError ? (
+          /* M15-H03 — stan błędu/degraded zamiast fałszywej pustki. */
+          <div
+            role="alert"
+            data-testid="members-load-error"
+            className="mt-5 rounded-xl border border-c-danger/40 bg-c-danger/10 p-5 text-center"
+          >
+            <div className="text-sm font-semibold text-c-danger">
+              {t(
+                'admin.membersRoles.loadErrorTitle',
+                'Nie udało się wczytać listy członków tej organizacji.'
+              )}
+            </div>
+            <p className="mt-1 text-sm text-c-text-secondary">
+              {t('admin.membersRoles.loadErrorBody', {
+                defaultValue:
+                  'To awaria odczytu, a nie informacja, że organizacja nie ma członków. Szczegóły: {{reason}}',
+                reason: loadError,
+              })}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => void loadMembers()}
+            >
+              {t('admin.membersRoles.loadErrorRetry', 'Spróbuj ponownie')}
+            </Button>
           </div>
         ) : (
           <div className="mt-5">

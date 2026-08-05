@@ -44,10 +44,6 @@ const EMPTY_PLAN_FORM: PlanAssignmentForm = {
   expiresAt: '',
 };
 
-const DEFAULT_BILLING_ALERTS = [
-  { id: 'default-tokens', type: 'tokens', threshold: 80, isActive: true },
-  { id: 'default-spend', type: 'spend', threshold: 75, isActive: true },
-];
 
 export const AdminBillingFinOpsPanel: React.FC = () => {
   const { t } = useTranslation();
@@ -71,6 +67,10 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
+  // M15-H02: progi budżetowe mogą być NIEDOSTĘPNE (brak trwałego magazynu).
+  // Nie wolno wtedy pokazywać wartości domyślnych jako gdyby były zapisane.
+  const [alertsAvailable, setAlertsAvailable] = useState(true);
+  const [savingAlerts, setSavingAlerts] = useState(false);
   const [taxSettings, setTaxSettings] = useState<any>(null);
   const [usageDetails, setUsageDetails] = useState<any>(null);
   const [newPaymentMethodId, setNewPaymentMethodId] = useState('');
@@ -104,7 +104,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
         setPaymentMethods(paymentResult?.paymentMethods || []);
         setInvoices(invoiceResult?.invoices || []);
         const nextAlerts = Array.isArray(alertResult?.alerts) ? alertResult.alerts : [];
-        setAlerts(nextAlerts.length > 0 ? nextAlerts : DEFAULT_BILLING_ALERTS);
+        setAlertsAvailable(alertResult?.available !== false);
+        setAlerts(nextAlerts);
         setTaxSettings(taxResult?.settings || taxResult);
         setUsageDetails(usageResult?.summary || usageResult);
         setPlanOptions(Array.isArray(plansResult?.plans) ? plansResult.plans : []);
@@ -192,11 +193,37 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   };
 
   const saveAlerts = async () => {
+    // M15-H02: sukces melduje WYŁĄCZNIE serwer, po potwierdzonym read-backu.
+    // Brak potwierdzenia = błąd + oznaczenie progów jako niedostępnych, nigdy
+    // zielony toast nad niezapisanymi danymi.
     try {
-      await Api.updateAdminBillingAlerts(alerts);
-      toast.success('Billing alerts updated');
+      setSavingAlerts(true);
+      const result = await Api.updateAdminBillingAlerts(alerts);
+      if (!result?.success) {
+        setAlertsAvailable(false);
+        toast.error(
+          result?.message ||
+            t('admin.billing.alerts.saveFailed', {
+              defaultValue: 'Nie udało się zapisać progów budżetowych.',
+            })
+        );
+        return;
+      }
+      if (Array.isArray(result?.alerts)) setAlerts(result.alerts);
+      setAlertsAvailable(true);
+      toast.success(
+        t('admin.billing.alerts.saved', { defaultValue: 'Progi budżetowe zapisane' })
+      );
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update billing alerts');
+      setAlertsAvailable(false);
+      toast.error(
+        error?.message ||
+          t('admin.billing.alerts.saveFailed', {
+            defaultValue: 'Nie udało się zapisać progów budżetowych.',
+          })
+      );
+    } finally {
+      setSavingAlerts(false);
     }
   };
 
@@ -557,6 +584,25 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
             <div className="text-sm font-semibold text-slate-900 dark:text-white">Spend alerts</div>
+            {!alertsAvailable && (
+              <div
+                role="alert"
+                data-testid="billing-alerts-unavailable"
+                className="rounded-lg border border-c-warning/40 bg-c-warning/10 px-3 py-2 text-sm text-c-text"
+              >
+                {t('admin.billing.alerts.unavailable', {
+                  defaultValue:
+                    'Progi budżetowe są teraz niedostępne — magazyn ustawień nie odpowiada. Nic nie zostało zapisane i nie pokazujemy wartości, których nie ma.',
+                })}
+              </div>
+            )}
+            {alertsAvailable && alerts.length === 0 && (
+              <div className="text-sm text-c-text-muted" data-testid="billing-alerts-empty">
+                {t('admin.billing.alerts.empty', {
+                  defaultValue: 'Nie ustawiono jeszcze żadnego progu budżetowego.',
+                })}
+              </div>
+            )}
             {alerts.map((alert, index) => (
               <div key={alert.id || index} className="grid gap-2">
                 <input
@@ -577,7 +623,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
             ))}
             <button
               onClick={() => void saveAlerts()}
-              className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary"
+              disabled={!alertsAvailable || savingAlerts}
+              data-testid="billing-alerts-save"
+              className="rounded-lg bg-c-text text-c-bg px-4 py-2 text-sm font-medium hover:bg-c-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save alerts
             </button>
