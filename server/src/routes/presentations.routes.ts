@@ -3585,6 +3585,7 @@ router.put(
     }
 
     const newVersion = (deck.version || 1) + 1;
+    const canonicalSlideCount = Array.isArray(req.body?.cards) ? req.body.cards.length : 0;
 
     if (deck.deck_json) {
       try {
@@ -3616,8 +3617,8 @@ router.put(
     // need to distinguish the two cases.
     const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [bodyStr, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {

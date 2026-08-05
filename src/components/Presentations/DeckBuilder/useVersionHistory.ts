@@ -107,6 +107,7 @@ export function useVersionHistory(
   });
 
   const lastSavedDeckRef = useRef<string>('');
+  const baselineDeckIdRef = useRef<string | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const snapshotTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
@@ -315,14 +316,46 @@ export function useVersionHistory(
     [createSnapshot]
   );
 
+  /**
+   * Acknowledge a successful persistence performed by the builder's debounced
+   * autosave lane. Keeping this in the history hook makes the save indicator
+   * and the persisted payload share one baseline instead of drifting apart.
+   */
+  const markSaved = useCallback((savedDeck: Deck) => {
+    lastSavedDeckRef.current = JSON.stringify(savedDeck);
+    baselineDeckIdRef.current = savedDeck.deck_id;
+    setState((prev) => ({
+      ...prev,
+      isSaving: false,
+      lastSavedAt: Date.now(),
+      hasUnsavedChanges: false,
+    }));
+  }, []);
+
   // Track unsaved changes
   useEffect(() => {
     if (!deck) return;
     const serialized = JSON.stringify(deck);
-    if (serialized !== lastSavedDeckRef.current) {
-      setState((prev) => ({ ...prev, hasUnsavedChanges: true }));
+    const identity = resolvedDeckId ?? deck.deck_id;
+
+    // The first canonical payload for a deck is the persistence baseline, not
+    // a user edit. Previously it was compared with an empty string, which made
+    // every fresh open/reload show "Saving…" and immediately write the exact
+    // same deck back to the server.
+    if (baselineDeckIdRef.current !== identity) {
+      baselineDeckIdRef.current = identity;
+      lastSavedDeckRef.current = serialized;
+      setState((prev) => ({ ...prev, hasUnsavedChanges: false, isSaving: false }));
+      return;
     }
-  }, [deck]);
+
+    const hasUnsavedChanges = serialized !== lastSavedDeckRef.current;
+    setState((prev) =>
+      prev.hasUnsavedChanges === hasUnsavedChanges
+        ? prev
+        : { ...prev, hasUnsavedChanges }
+    );
+  }, [deck, resolvedDeckId]);
 
   // Auto-save timer
   useEffect(() => {
@@ -354,6 +387,7 @@ export function useVersionHistory(
     createSnapshot,
     restoreVersion,
     saveManualCheckpoint,
+    markSaved,
     autoSave,
     refreshVersions: fetchServerVersions,
   };

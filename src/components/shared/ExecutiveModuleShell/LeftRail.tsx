@@ -64,7 +64,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
 
   return (
     <aside
-      className="relative flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/40 flex flex-col h-full overflow-hidden transition-[width] duration-150"
+      className="relative hidden sm:flex flex-shrink-0 border-r border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900/40 flex-col h-full overflow-hidden transition-[width] duration-150"
       style={{ width: effectiveWidth }}
       data-testid={testId ?? 'mels-left-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}

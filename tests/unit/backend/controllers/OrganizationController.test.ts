@@ -38,6 +38,7 @@ describe('OrganizationController', () => {
     mockRes = {
       status: statusFn,
       json: jsonFn,
+      set: vi.fn().mockReturnThis(),
     };
   });
 
@@ -57,6 +58,7 @@ describe('OrganizationController', () => {
           }),
         ],
       });
+      expect(mockRes.set).toHaveBeenCalledWith('Cache-Control', 'no-store, private');
     });
 
     it('should return 401 if user is not authenticated', async () => {

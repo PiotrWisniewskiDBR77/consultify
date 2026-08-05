@@ -406,7 +406,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
 
         {aiEntrySlot ? (
           <aside
-            className="flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
+            className="hidden sm:flex flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
             data-testid="mels-ai-entry"
             aria-label="Discuss with Teresa"
           >

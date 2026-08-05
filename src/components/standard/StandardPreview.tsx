@@ -118,6 +118,11 @@ export interface StandardPreviewDetails {
   /** Nagłówki kolumn tabeli właściwości (przetłumaczone). */
   propertyLabel?: string;
   valueLabel?: string;
+  /**
+   * Override the prose word counter. Set to false when `text` contains
+   * metadata rows (owner, format, dates) rather than artifact body content.
+   */
+  showWordCount?: boolean;
   /** ⋮ Copy — zawsze pierwszy w kebabie Details. */
   onCopy?: () => void;
   /** ⋮ Export (np. do formatu udostępnienia). */
@@ -436,7 +441,9 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
               // Licznik słów opisuje prozę. Gdy blok niesie WYŁĄCZNIE tabelę
               // właściwości, liczyłby słowa etykiet — dokładnie ten bezsens, co
               // „~30 words" nad listą plików w Sejfie (PILNE-8).
-              showWordCount={!(details.properties?.length && !details.text)}
+              showWordCount={
+                details.showWordCount ?? !(details.properties?.length && !details.text)
+              }
             >
               {details.properties?.length ? (
                 <ArtifactPropertiesTable

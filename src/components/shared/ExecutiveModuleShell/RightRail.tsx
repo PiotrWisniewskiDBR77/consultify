@@ -183,7 +183,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   // separate handle to "expand" before the tool becomes clickable).
   return (
     <aside
-      className="flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex h-full transition-[width] duration-150"
+      className="hidden sm:flex flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
       data-testid={testId ?? 'mels-right-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}

@@ -268,6 +268,7 @@ interface ArtifactListRow extends ArtifactRow {
   presentation_status: string | null;
   presentation_mode: string | null;
   presentation_slide_count: number | null;
+  presentation_deck_json: string | null;
   presentation_export_format: string | null;
   presentation_source_refs_json: string | null;
   publish_state: string | null;
@@ -2554,6 +2555,16 @@ function sourceRefsFromOriginSummary(summary: Record<string, unknown> | null): u
   return summary.sourceRefs as unknown[];
 }
 
+export function resolvePresentationSlideCount(
+  deckJsonRaw: string | null | undefined,
+  materializedSlideCount: number | null
+): number | null {
+  const canonicalDeck = safeJsonParse<Record<string, unknown> | null>(deckJsonRaw, null);
+  return Array.isArray(canonicalDeck?.cards)
+    ? canonicalDeck.cards.length
+    : materializedSlideCount;
+}
+
 function rowToListItem(row: ArtifactListRow): ArtifactListItem {
   const base = mapArtifactRow(row);
   const sourceRefs =
@@ -2600,7 +2611,12 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
     originStatus,
     reportType: row.report_type,
     presentationMode: row.presentation_mode,
-    slideCount: row.presentation_slide_count,
+    // `slide_count` is a legacy/materialized summary and can lag after builder
+    // autosaves. The canonical deck_json is authoritative for the current deck.
+    slideCount: resolvePresentationSlideCount(
+      row.presentation_deck_json,
+      row.presentation_slide_count
+    ),
     exportFormat: row.origin_runtime === 'sheet' ? 'xlsx' : row.presentation_export_format,
     sourceRefs,
     publishState: row.publish_state,
@@ -2749,6 +2765,7 @@ async function getArtifactListItemRow(
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
+            d.deck_json AS presentation_deck_json,
             d.export_format AS presentation_export_format,
             COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,
@@ -2802,6 +2819,7 @@ export async function listArtifactsForUser(params: {
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
             d.slide_count AS presentation_slide_count,
+            d.deck_json AS presentation_deck_json,
             d.export_format AS presentation_export_format,
             COALESCE(d.source_artifacts, '[]') AS presentation_source_refs_json,
             p.current_state AS publish_state,

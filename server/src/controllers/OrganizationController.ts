@@ -68,6 +68,11 @@ export class OrganizationController {
         access_type: org.role === 'CONSULTANT' ? 'CONSULTANT' : 'MEMBER',
       }));
 
+      // Tenant membership/context must never be reused as a conditional browser
+      // cache entry. The client intentionally requests `no-store`; make the
+      // server contract explicit as defense in depth and to avoid 304 responses
+      // being mistaken for failed authenticated loads.
+      res.set?.('Cache-Control', 'no-store, private');
       res.json({ organizations: enriched });
     }
   );

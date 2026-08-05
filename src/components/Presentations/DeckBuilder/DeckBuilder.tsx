@@ -455,6 +455,7 @@ export const DeckBuilder: React.FC = () => {
     refreshVersions,
     hasUnsavedChanges,
     lastSavedAt,
+    markSaved,
     restoreVersion,
     saveManualCheckpoint,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
@@ -769,6 +770,9 @@ export const DeckBuilder: React.FC = () => {
   useEffect(() => {
     if (!deckForAutosave) return;
     if (!hasLoadedInitialRef.current) return;
+    // A canonical load/reload is already persisted. Only schedule a write for
+    // a real local delta; this also prevents false version bumps on open.
+    if (!hasUnsavedChanges) return;
     // P3.1 — pause autosave while an unresolved version conflict is on screen.
     // Autosaving again would just re-trigger the same 409 loop; the user must
     // pick "Reload latest" or "Keep my version" first.
@@ -823,19 +827,27 @@ export const DeckBuilder: React.FC = () => {
           toast.error(t('presentations.versionConflictDetected'));
           return;
         }
+        if (!res.ok) {
+          throw new Error(`Deck autosave failed (${res.status})`);
+        }
         const payload = await res.json().catch(() => ({}));
         if (typeof payload?.version === 'number') {
           serverVersionRef.current = payload.version;
         }
+        markSaved(deckForAutosave.deck);
       } catch {
-        // Non-blocking; builder remains usable offline-ish.
+        // Keep the dirty state visible and make failure explicit; never present
+        // an unsuccessful write as "Saved".
+        toast.error(
+          t('presentations.builder.autosaveFailed', 'Could not save changes. Please try again.')
+        );
       }
     }, 800);
 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [deckForAutosave, conflict]);
+  }, [deckForAutosave, conflict, hasUnsavedChanges, markSaved, t]);
 
   // P3.1 — conflict resolution handlers. "Reload latest" adopts the server's
   // deck (discarding local edits); "Keep my version" bumps our version pointer

@@ -78,6 +78,17 @@ describe('StandardPreview', () => {
     expect(screen.getByTitle('Unpin')).toBeInTheDocument();
   });
 
+  it('can suppress the word counter for metadata-only details', () => {
+    render(
+      <StandardPreview
+        title="X"
+        details={{ text: 'Owner: Piotr\nExports: PDF', showWordCount: false }}
+      />
+    );
+    expect(screen.queryByLabelText(/words$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Owner: Piotr/)).toBeInTheDocument();
+  });
+
   it('standardPreviewShortcuts collects enabled shortcuts across rows', () => {
     const map = standardPreviewShortcuts(actions);
     expect(Object.keys(map).sort()).toEqual(['A', 'I', 'R', 'Z']);

@@ -89,6 +89,25 @@ describe('useVersionHistory — server persistence', () => {
     expect(result.current.historyStatus).toBe('available');
   });
 
+  it('treats the first canonical deck as clean and only marks real edits dirty', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ success: true, data: [] }));
+    const initialDeck = makeDeck();
+    const { result, rerender } = renderHook(
+      ({ deck }: { deck: Deck }) => useVersionHistory(deck, DECK_ID),
+      { initialProps: { deck: initialDeck } }
+    );
+
+    await waitFor(() => expect(result.current.historyStatus).toBe('available'));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    const editedDeck = makeDeck({ title: 'Edited title' });
+    rerender({ deck: editedDeck });
+    await waitFor(() => expect(result.current.hasUnsavedChanges).toBe(true));
+
+    act(() => result.current.markSaved(editedDeck));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+  });
+
   it('reports history unavailable instead of presenting a failed request as an empty history', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ success: false }, false, 503));
     const deck = makeDeck();

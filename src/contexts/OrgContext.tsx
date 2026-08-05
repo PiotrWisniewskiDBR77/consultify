@@ -82,6 +82,10 @@ export const OrgProvider: React.FC<OrgProviderProps> = ({ children }) => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
+        // Organization membership is authenticated, tenant-sensitive context.
+        // A cached conditional GET can resolve to 304 (Response.ok === false),
+        // which used to surface as a fake "Failed to fetch organizations".
+        cache: 'no-store',
       });
 
       if (!response.ok) {

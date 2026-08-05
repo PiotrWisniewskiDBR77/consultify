@@ -59,6 +59,14 @@ describe('ExecutiveModuleShell', () => {
     expect(screen.getByTestId('canvas-stub')).toBeInTheDocument();
   });
 
+  it('collapses side rails below the sm breakpoint so the canvas keeps the mobile width', () => {
+    renderShell({ aiEntrySlot: <div>AI entry</div> });
+    expect(screen.getByTestId('mels-left-rail')).toHaveClass('hidden', 'sm:flex');
+    expect(screen.getByTestId('mels-right-rail')).toHaveClass('hidden', 'sm:flex');
+    expect(screen.getByTestId('mels-ai-entry')).toHaveClass('hidden', 'sm:flex');
+    expect(screen.getByTestId('mels-canvas')).toHaveClass('min-w-0');
+  });
+
   it('orders top bar chips by canonical MELS order', () => {
     renderShell();
     const chipsRow = screen.getByTestId('mels-topbar-chips');

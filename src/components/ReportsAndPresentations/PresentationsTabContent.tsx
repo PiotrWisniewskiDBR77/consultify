@@ -452,6 +452,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
               onOpenFull={() => openPresentation(previewItem)}
               meta={previewMeta ? { pills: previewMeta } : undefined}
               details={{
+                showWordCount: false,
                 text: [
                   `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
                   `${t('rap.columns.slides', 'Slajdy')}: ${previewItem.slideCount ?? '—'}`,

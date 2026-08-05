@@ -532,6 +532,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
               ),
             }}
             details={{
+              showWordCount: false,
               text: [
                 `${t('rap.columns.owner', 'Właściciel')}: ${previewItem.owner || '—'}`,
                 `${t('rap.columns.exports', 'Eksporty')}: ${

@@ -10,6 +10,7 @@ import {
   deriveArtifactVisibilityScope,
   mapPresentationStatusToDeliveryState,
   mapReportStatusToDeliveryState,
+  resolvePresentationSlideCount,
 } from '../../../../../server/src/services/v8/artifactRegistryService.js';
 
 describe('artifactRegistryService', () => {
@@ -27,6 +28,16 @@ describe('artifactRegistryService', () => {
     expect(mapPresentationStatusToDeliveryState('generating')).toBe('editing');
     expect(mapPresentationStatusToDeliveryState('ready')).toBe('ready');
     expect(mapPresentationStatusToDeliveryState('failed')).toBe('editing');
+  });
+
+  it('uses canonical deck_json cards over a stale materialized slide_count', () => {
+    expect(
+      resolvePresentationSlideCount(
+        JSON.stringify({ cards: [{ card_id: '1' }, { card_id: '2' }] }),
+        11
+      )
+    ).toBe(2);
+    expect(resolvePresentationSlideCount('{malformed', 11)).toBe(11);
   });
 
   it('derives conservative default visibility for backfill and new artifacts', () => {
