@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { classifyChecksum, isRuntimeMigrationFile } from './migrationIdentity.js';
+import { classifyMigrationChecksum, isRuntimeMigrationFile } from './migrationIdentity.js';
 
 /** Minimal shape of whatever database handle the caller already has. */
 export interface PreflightQueryable {
@@ -37,6 +37,9 @@ export interface PreflightReport {
   /** Applied migrations whose file no longer matches the recorded checksum. */
   checksumMismatches: string[];
   checksumMismatchCount: number;
+  /** Exact approved old/current pairs; compatible without rewriting history. */
+  acceptedHistoricalChecksumVariants: string[];
+  acceptedHistoricalChecksumVariantCount: number;
   /** Rows recorded before checksums existed — unverifiable, NOT drift. */
   legacyUnverifiableChecksums: number;
   /** History rows with no file on disk. Hygiene debt, inert. */
@@ -74,17 +77,22 @@ export async function analyzePendingMigrations(options: {
   const pending = onDisk.filter((f) => !applied.has(f)).sort();
 
   const checksumMismatches: string[] = [];
+  const acceptedHistoricalChecksumVariants: string[] = [];
   let legacyUnverifiableChecksums = 0;
   for (const file of onDisk) {
     if (!applied.has(file)) continue;
-    const verdict = classifyChecksum(
+    const verdict = classifyMigrationChecksum(
+      file,
       applied.get(file),
       fs.readFileSync(path.join(migrationsDir, file), 'utf-8')
     );
     if (verdict === 'unverifiable') legacyUnverifiableChecksums++;
-    else if (verdict === 'drift') checksumMismatches.push(file);
+    else if (verdict === 'accepted_historical_variant') {
+      acceptedHistoricalChecksumVariants.push(file);
+    } else if (verdict === 'drift') checksumMismatches.push(file);
   }
   checksumMismatches.sort();
+  acceptedHistoricalChecksumVariants.sort();
 
   const orphans = [...applied.keys()].filter((f) => !fs.existsSync(path.join(migrationsDir, f)));
 
@@ -97,6 +105,8 @@ export async function analyzePendingMigrations(options: {
     pendingCount: pending.length,
     checksumMismatches,
     checksumMismatchCount: checksumMismatches.length,
+    acceptedHistoricalChecksumVariants,
+    acceptedHistoricalChecksumVariantCount: acceptedHistoricalChecksumVariants.length,
     legacyUnverifiableChecksums,
     orphanHistoryEntries: orphans.length,
   };
@@ -125,6 +135,8 @@ export function formatPreflightReport(report: PreflightReport): string {
     `recorded in history       : ${report.applied}`,
     `legacy NULL checksums     : ${report.legacyUnverifiableChecksums} (unverifiable, NOT drift)`,
     `orphan history entries    : ${report.orphanHistoryEntries} (hygiene debt, inert)`,
+    `approved history variants : ${report.acceptedHistoricalChecksumVariantCount} (exact pairs, history unchanged)`,
+    ...report.acceptedHistoricalChecksumVariants.map((f) => `   ≈ ${f}`),
     `CHECKSUM DRIFT            : ${report.checksumMismatchCount}`,
     ...report.checksumMismatches.map((f) => `   ✗ ${f}`),
     `PENDING on next start     : ${report.pendingCount}`,

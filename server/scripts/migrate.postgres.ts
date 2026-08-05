@@ -234,6 +234,19 @@ const EARLY_VERSION_OVERRIDES: Record<string, number> = {
   // Sole producer of `initiative_candidates`. Consumed by
   // 932_initiative_candidate_acceptance_receipt.sql (phase 0). No FK at all.
   '20260627_initiative_candidates.sql': 501.8,
+  // Additive core parity is the sole producer of initiatives.title, consumed
+  // by 20260624_initiative_status_normalize.sql. Its dated filename otherwise
+  // sorts after that consumer on a fresh schema. Baseline already creates the
+  // projects/initiatives tables; every DDL statement is guarded and the
+  // backfill is idempotent, so running it here closes the ordering inversion
+  // without editing any already-applied migration file/checksum.
+  '20260802_mvp_core_schema_parity.sql': 501.9,
+  // Canonical additive producer of initiative_milestones/resources/raid_items.
+  // The dated consumer 20260720_fala4_kpi_snap_milestone_deps_ai_policies.sql
+  // creates FKs to initiative_milestones, so the producer's 2026-08-01 name
+  // otherwise sorts too late on a fresh schema. It depends only on baseline
+  // organizations/initiatives/tasks and is fully replay-safe.
+  '20260801_exe002004_idempotency_keys.sql': 501.95,
   // Sole producer of interview_library_template_questions.answer_type (+
   // several sibling columns) and interview_library_template_versions.
   // Consumed by 20260703_interview_question_consultant_grade_rewrite.sql
@@ -478,9 +491,8 @@ async function main() {
         // NOTE: allow explicit `--only` to run even legacy (<500) migrations.
         // PROMOTED_LEGACY_PRODUCERS overrides the blanket <500 exclusion for
         // specific, verified-safe producer files (see comment above).
-        .filter(
-          (m) =>
-            only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
+        .filter((m) =>
+          only.size ? true : PROMOTED_LEGACY_SET.has(m.filename) || !isSqliteOnlyMigration(m)
         )
     );
 

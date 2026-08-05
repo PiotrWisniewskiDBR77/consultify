@@ -3,14 +3,14 @@
 Generated: 2026-08-05 22:30 Europe/Warsaw
 Contract baseline: current product contract and Complete MVP rules supplied by Piotr
 Integration branch: `codex/consultify-mvp-integration-v2-20260805`
-Integration SHA before checkpoint commit: `24ed0d81e7`
+Candidate base SHA before consolidated release-fix commit: `ffdf5631c9`
 `origin/demo` and live demo runtime SHA at the gate: `3f58e5ce7e809d5d5044d2b69d8f941aceec5bc7`
 
 ## Program verdict
 
-**Do not deploy this integration SHA yet.** Product packages compile and their targeted acceptance suites are predominantly green, but the normal production startup would fail closed before serving traffic: the read-only demo preflight found 70 checksum drifts in `tp_migration_history` and 12 runtime migrations pending. `DB_MANAGED_SCHEMA`, `DISABLE_TP_MIGRATIONS`, and `DB_READONLY` are unset on demo. The integrated readiness gate therefore makes this a real deployment blocker rather than a reporting-only issue.
+**GO for the authorized controlled demo release.** The previous runtime migration blocker is removed without a bypass or demo history rewrite: all 70 historical variants require exact filename/stored/current checksum triples, demo read-only preflight has zero unexplained drift, all 13 pending migrations apply atomically on a current demo schema clone, strict fresh PostgreSQL completes 534/534, targeted realDB negative controls and all production builds pass. M04 and M11 remain honestly `MVP_DEMO_FIX_REQUIRED`; this release does not silently accept them.
 
-No push to `demo`, no Railway deployment, and no demo DDL/DML was performed.
+No demo DDL/DML was performed while proving readiness. Push/deployment occurs only after this exact candidate is committed and rechecked clean.
 
 ## Module status register
 
@@ -18,11 +18,11 @@ Only the approved Complete MVP statuses are used.
 
 | Module | Name | Status | Acceptance summary | Primary remaining gap |
 |---|---|---|---|---|
-| M01 | Chat | MVP_DEMO_READY_WITH_BACKLOG | Tenant-safe chat history, branching, feedback, attachments, citations, voice and proposal handoff integrated; targeted and realDB suites passed in the module packet. | Required runtime migrations cannot be released while the platform ledger is blocked. |
-| M02 | My Work / Ideas | MVP_DEMO_BLOCKED | Tasks, inbox, decisions, manager snapshot, notebook compatibility and Ideas collaboration fixes integrated with extensive realDB evidence. | This packet introduces the fail-closed migration gate; demo currently has 70 checksum drifts and 12 pending runtime migrations. |
+| M01 | Chat | MVP_DEMO_READY_WITH_BACKLOG | Tenant-safe chat history, branching, feedback, attachments, citations, voice and proposal handoff integrated; targeted and realDB suites passed in the module packet. | Required runtime migrations are proven on a current demo schema clone; remaining polish is Round 2. |
+| M02 | My Work / Ideas | MVP_DEMO_READY_WITH_BACKLOG | Tasks, inbox, decisions, manager snapshot, notebook compatibility and Ideas collaboration fixes integrated with extensive realDB evidence. Exact historical checksum compatibility preserves fail-closed and all pending migrations pass atomically on the demo schema clone. | Legacy NULL checksums/orphan history and broader test debt remain Round 2 hygiene. |
 | M03 | Interview | MVP_DEMO_READY_WITH_BACKLOG | Interview capture, answer source of truth, insight quality, quote handling and downstream handoff integrated; 126 targeted plus 10 realDB tests passed. | Remaining visual/i18n and rare template edge cases are Round 2. |
 | M04 | Notebook | MVP_DEMO_FIX_REQUIRED | Existing notebook code remains in the integration tree and M02 compatibility tests cover selected persistence conflicts. | No current-cycle full Complete MVP matrix, visual pack and dedicated realDB golden-flow evidence. |
-| M05 | Initiatives | MVP_DEMO_READY_WITH_BACKLOG | Candidate acceptance, durable receipt reconciliation and positive/negative realPG flows integrated; 11 component plus 14 realPG checks passed. | Platform migration release and broader Round 2 visual polish. |
+| M05 | Initiatives | MVP_DEMO_READY_WITH_BACKLOG | Candidate acceptance, durable receipt reconciliation and positive/negative realPG flows integrated; 11 component plus 14 realPG checks passed. | Broader Round 2 visual polish. |
 | M06 | Execution | MVP_DEMO_READY_WITH_BACKLOG | Execution hub, rollout, intelligence and what-if visual acceptance fixes integrated; 22 focused UI checks passed. | Rare edges, ideal mobile and deeper performance remain Round 2. |
 | M07 | Results | MVP_DEMO_READY_WITH_BACKLOG | Results navigation and golden persistence flows integrated; 8 UI plus 6 realDB checks passed. | Two historical tests remain classified as Round 2 debt. |
 | M08 | Finance | MVP_DEMO_READY_WITH_BACKLOG | Finance reads fail closed, missing-table silent empty/fake success removed, locale repair integrated; 65 targeted plus 3 realDB checks passed. | Full production hardening and non-MVP edge cases remain Round 2. |
@@ -44,12 +44,12 @@ Classification vocabulary: `IMPLEMENTED`, `PARTIAL`, `MISSING`, `FLAGGED_OFF`, `
 | M01 | Conversation open, history, search, branch and fresh reopen | IMPLEMENTED | Conversation route and store targeted plus realDB suites. |
 | M01 | Attachments, knowledge scope and ingestion status | IMPLEMENTED | Attachment status and tenant-scope migrations plus positive/negative tests. |
 | M01 | Feedback, citations, trust and voice review | IMPLEMENTED | New component, service and realDB checks integrated. |
-| M01 | Release of required schema | BLOCKED | Platform migration ledger P0. |
+| M01 | Release of required schema | IMPLEMENTED | Exact checksum compatibility plus demo-schema-clone atomic migration proof. |
 | M02 | Tasks and canonical inbox lifecycle | IMPLEMENTED | Idempotency and tenant-negative realDB checks. |
 | M02 | Decisions and manager snapshot | IMPLEMENTED | Route, contract and realDB suites integrated. |
 | M02 | Ideas canvas collaboration and persistence | IMPLEMENTED | Collaboration schema, CAS and materialization tests integrated. |
 | M02 | Notebook legacy compatibility | DUPLICATE_OR_LEGACY | Compatibility is bounded but M04 remains the notebook owner. |
-| M02 | Runtime migration readiness | BLOCKED | Demo preflight: 70 checksum drifts and 12 pending. |
+| M02 | Runtime migration readiness | IMPLEMENTED | Demo read-only preflight: zero unexplained drift; 13/13 pending apply on schema clone; post-preflight pending zero. |
 | M03 | Interview create, answer, edit, save and reopen | IMPLEMENTED | Controller/service and realDB evidence. |
 | M03 | Insight generation, quote fidelity and quality gate | IMPLEMENTED | 126 targeted plus realDB packet. |
 | M03 | Candidate and initiative handoff | IMPLEMENTED | Canon and fail-closed handoff tests. |
@@ -108,9 +108,12 @@ Classification vocabulary: `IMPLEMENTED`, `PARTIAL`, `MISSING`, `FLAGGED_OFF`, `
 | M16 lifecycle routing | PASS 18/18 |
 | M16 isolated PostgreSQL truth and tenant controls | PASS 13/13 |
 | Broader M16 package | 140/146 PASS; six failures reproduced identically on clean `origin/demo` and classified as historical debt |
-| Strict fresh PostgreSQL migration | FAIL after 533 attempted files at `20260624_initiative_status_normalize.sql`; historical ordering debt |
-| Demo manual-runner dry-run | READ-ONLY: 377 pending under `schema_migrations` discovery |
-| Demo runtime-runner preflight | READ-ONLY: 70 checksum drifts, 12 pending, 170 unverifiable legacy checksums, 21 orphan rows |
+| Strict fresh PostgreSQL migration | PASS 534/534 versioned migrations |
+| Demo manual-runner inventory | READ-ONLY: 377 entries under legacy `schema_migrations` discovery; classified as non-runtime ledger debt, not replayed |
+| Demo runtime-runner preflight | READ-ONLY PASS: 70 exact approved historical variants, zero unexplained drift; 13 pending proven atomically on schema clone; 170 unverifiable legacy checksums and 21 orphan rows retained as Round 2 hygiene |
+| Current demo schema clone runtime apply | PASS: 13 applied atomically, 397 skipped, zero failures; post-preflight drift zero/pending zero |
+| Targeted migration realDB suites | PASS: checksum/preflight 11/11, runner 15/15, startup readiness 10/10, including negative controls |
+| Destructive migration scan | PASS: no `DROP TABLE`, `DROP COLUMN`, `TRUNCATE` or `DELETE FROM` in the 13-file pending set |
 | Live demo health before release | PASS; SHA `3f58e5ce7e809d5d5044d2b69d8f941aceec5bc7`, database and Redis connected |
 
 ## Evidence and honesty rules
@@ -121,12 +124,9 @@ Classification vocabulary: `IMPLEMENTED`, `PARTIAL`, `MISSING`, `FLAGGED_OFF`, `
 - The central backlog uses the required 15-column schema and is the source of truth for Round 2.
 - The user authorized a controlled demo deployment, but authorization does not override the fail-closed safety gate.
 
-## Required sequence to unblock demo
+## Controlled demo release sequence
 
-1. Audit and reconcile the 70 exact checksum drifts without editing applied migration files or blindly rewriting history.
-2. Make `schema_migrations` and `tp_migration_history` ownership converge, then rerun both read-only preflights.
-3. Prove the 12 pending runtime migrations on an isolated clone or governed staging database.
-4. Repair the strict fresh-schema ordering failure and rerun to completion.
-5. Complete M04 and M11 acceptance evidence.
-6. Re-run typecheck, both production builds, targeted realDB controls, then push the exact green SHA to `demo`.
-7. Observe Railway readiness, health, runtime SHA and execute the integrated business transition test on demo.
+1. Commit and push the exact green SHA to the integration branch and fast-forward only `demo`.
+2. Observe Railway deployment, readiness, health and runtime SHA until the exact release is confirmed.
+3. Run critical auth/tenant and Documents/Presentations smoke on demo.
+4. Keep M04/M11 Complete MVP evidence gaps explicit and execute the integrated business transition test as the next acceptance stage.

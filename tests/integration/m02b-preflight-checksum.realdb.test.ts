@@ -32,6 +32,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   classifyChecksum,
+  classifyMigrationChecksum,
   fileChecksum,
   MIGRATION_PATTERN,
 } from '../../server/src/services/tablePlatform/migrationIdentity.js';
@@ -130,6 +131,24 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
     expect(classifyChecksum('', ORIGINAL_SQL)).toBe('unverifiable');
   });
 
+  it('historical compatibility is exact on filename, stored digest and current content', () => {
+    const filename = '725_module_sync.sql';
+    const current = fs.readFileSync(path.join(MIGRATIONS_DIR, filename), 'utf-8');
+    const historical = '79db562130016782';
+
+    expect(classifyMigrationChecksum(filename, historical, current)).toBe(
+      'accepted_historical_variant'
+    );
+    // A future file edit cannot ride the compatibility entry.
+    expect(classifyMigrationChecksum(filename, historical, `${current}\n-- future edit`)).toBe(
+      'drift'
+    );
+    // Nor can a third, unreviewed history value.
+    expect(classifyMigrationChecksum(filename, '0000000000000000', current)).toBe('drift');
+    // The same pair under another name is not accepted.
+    expect(classifyMigrationChecksum('725_lookalike.sql', historical, current)).toBe('drift');
+  });
+
   it('the shared pattern still excludes 9xx and includes date-prefixed files', () => {
     expect(MIGRATION_PATTERN.test('20260804_decision_workflow_canonical.sql')).toBe(true);
     expect(MIGRATION_PATTERN.test('788_tp_notifications_inbox.sql')).toBe(true);
@@ -139,23 +158,18 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
     );
   });
 
-  it('DISCOVERY (pattern + allowlist) admits exactly one 9xx and no other', async () => {
+  it('DISCOVERY (pattern + allowlist) admits only the explicit exceptions', async () => {
     // The pattern alone is no longer the whole rule: M02-C added an explicit,
     // individually reviewed allowlist for one migration that cannot carry a
     // date prefix. Consumers must ask `isRuntimeMigrationFile`, never the
     // pattern — otherwise the allowlist silently stops applying in one of them.
-    const { isRuntimeMigrationFile, getRuntimeMigrationAllowlist } = await import(
-      '../../server/src/services/tablePlatform/migrationIdentity.js'
-    );
+    const { isRuntimeMigrationFile, getRuntimeMigrationAllowlist } =
+      await import('../../server/src/services/tablePlatform/migrationIdentity.js');
 
     const allowlist = getRuntimeMigrationAllowlist();
-    // M02-P18: allowlist grew from M02-C's original single entry to 4 —
-    // M02-C's own 942 file, M01's two (800_/942_chat), and this packet's own
-    // 940 addition (see migrationIdentity.ts for the individual rationale of
-    // each). M02-P16B_FIX then added a 5th (942_ai_agent_plan_run_
-    // idempotency.sql — coordinator-reviewed defect, the packet shipped the
-    // file without allowlisting it). Order-independent: RUNTIME_MIGRATION_
-    // ALLOWLIST is consumed as a Set (ALLOWLIST_SET), never by position.
+    // Order-independent: RUNTIME_MIGRATION_ALLOWLIST is consumed as a Set,
+    // never by position. Every exception is pinned here so widening discovery
+    // cannot hide inside a regex change or an unreviewed allowlist addition.
     expect(new Set(allowlist)).toEqual(
       new Set([
         '942_ideas_collaboration_tool_sessions.sql',
@@ -163,9 +177,12 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
         '942_chat_m01p04a_attachment_status.sql',
         '940_mw010_vault_document_versions.sql',
         '942_ai_agent_plan_run_idempotency.sql',
+        '943_work_canvas_timestamp_parity_postgres.sql',
+        '944_canvas_idea_materialization_receipts.sql',
+        '945_chat_m01p04c_knowledge_doc_scope.sql',
       ])
     );
-    expect(allowlist.length).toBe(5);
+    expect(allowlist.length).toBe(8);
 
     // Pattern-matched files are unaffected.
     expect(isRuntimeMigrationFile('20260804_decision_workflow_canonical.sql')).toBe(true);
@@ -210,96 +227,167 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
   //
   // Everything below runs against `tmpDir`. The canonical directory is asserted
   // untouched at every step, not merely at the end.
-  itDB('detects drift end-to-end and fails the gate (without --fail-on-pending)', async () => {
-    expect(snapshotCanonical(), 'canonical must be untouched BEFORE').toEqual(
-      canonicalSnapshotAtStart
-    );
+  itDB(
+    'detects drift end-to-end and fails the gate (without --fail-on-pending)',
+    async () => {
+      expect(snapshotCanonical(), 'canonical must be untouched BEFORE').toEqual(
+        canonicalSnapshotAtStart
+      );
 
-    const target = path.join(tmpDir, driftFile);
-    fs.writeFileSync(target, ORIGINAL_SQL, 'utf-8');
+      const target = path.join(tmpDir, driftFile);
+      fs.writeFileSync(target, ORIGINAL_SQL, 'utf-8');
 
-    // Apply it through the REAL runner, pointed at the SAME temp directory, so
-    // history holds a real checksum for a file that exists only there.
-    const { runMigrations } = await import(
-      '../../server/src/services/tablePlatform/migrationRunner.js'
-    );
-    const applyRes = await runMigrations({ migrationsDir: tmpDir });
-    expect(applyRes.failed).toBeNull();
-    expect(applyRes.applied).toBe(1);
+      // Apply it through the REAL runner, pointed at the SAME temp directory, so
+      // history holds a real checksum for a file that exists only there.
+      const { runMigrations } =
+        await import('../../server/src/services/tablePlatform/migrationRunner.js');
+      const applyRes = await runMigrations({ migrationsDir: tmpDir });
+      expect(applyRes.failed).toBeNull();
+      expect(applyRes.applied).toBe(1);
 
-    expect(snapshotCanonical(), 'canonical must be untouched DURING (after apply)').toEqual(
-      canonicalSnapshotAtStart
-    );
+      expect(snapshotCanonical(), 'canonical must be untouched DURING (after apply)').toEqual(
+        canonicalSnapshotAtStart
+      );
 
-    const { rows } = await client.query(
-      `SELECT checksum FROM ${MIGRATION_TABLE} WHERE filename = $1`,
-      [driftFile]
-    );
-    expect(rows[0]?.checksum).toBe(fileChecksum(ORIGINAL_SQL));
+      const { rows } = await client.query(
+        `SELECT checksum FROM ${MIGRATION_TABLE} WHERE filename = $1`,
+        [driftFile]
+      );
+      expect(rows[0]?.checksum).toBe(fileChecksum(ORIGINAL_SQL));
 
-    const { analyzePendingMigrations, preflightExitCode } = await import(
-      '../../server/src/services/tablePlatform/migrationPreflight.js'
-    );
+      const { analyzePendingMigrations, preflightExitCode } =
+        await import('../../server/src/services/tablePlatform/migrationPreflight.js');
 
-    // Clean first: no drift yet, gate open.
-    const clean = await analyzePendingMigrations({ migrationsDir: tmpDir, client });
-    expect(clean.checksumMismatchCount).toBe(0);
-    expect(preflightExitCode(clean)).toBe(0);
+      // Clean first: no drift yet, gate open.
+      const clean = await analyzePendingMigrations({ migrationsDir: tmpDir, client });
+      expect(clean.checksumMismatchCount).toBe(0);
+      expect(preflightExitCode(clean)).toBe(0);
 
-    // Now drift the file — in the temp directory.
-    fs.writeFileSync(target, `${ORIGINAL_SQL} -- drifted`, 'utf-8');
+      // Now drift the file — in the temp directory.
+      fs.writeFileSync(target, `${ORIGINAL_SQL} -- drifted`, 'utf-8');
 
-    const drifted = await analyzePendingMigrations({ migrationsDir: tmpDir, client });
-    expect(drifted.checksumMismatches).toContain(driftFile);
-    expect(drifted.checksumMismatchCount).toBe(1);
-    // Drift fails the gate REGARDLESS of --fail-on-pending.
-    expect(preflightExitCode(drifted)).toBe(1);
-    expect(preflightExitCode(drifted, { failOnPending: false })).toBe(1);
+      const drifted = await analyzePendingMigrations({ migrationsDir: tmpDir, client });
+      expect(drifted.checksumMismatches).toContain(driftFile);
+      expect(drifted.checksumMismatchCount).toBe(1);
+      // Drift fails the gate REGARDLESS of --fail-on-pending.
+      expect(preflightExitCode(drifted)).toBe(1);
+      expect(preflightExitCode(drifted, { failOnPending: false })).toBe(1);
 
-    expect(snapshotCanonical(), 'canonical must be untouched AFTER').toEqual(
-      canonicalSnapshotAtStart
-    );
-  }, 120_000);
+      expect(snapshotCanonical(), 'canonical must be untouched AFTER').toEqual(
+        canonicalSnapshotAtStart
+      );
+    },
+    120_000
+  );
 
-  itDB('the runner is fail-closed on the same drift, in the same temp directory', async () => {
-    // Stands alone: rewrite the drifted content and restore the history row.
-    fs.writeFileSync(path.join(tmpDir, driftFile), `${ORIGINAL_SQL} -- drifted`, 'utf-8');
-    await client.query(
-      `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)
+  itDB(
+    'the runner is fail-closed on the same drift, in the same temp directory',
+    async () => {
+      // Stands alone: rewrite the drifted content and restore the history row.
+      fs.writeFileSync(path.join(tmpDir, driftFile), `${ORIGINAL_SQL} -- drifted`, 'utf-8');
+      await client.query(
+        `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)
        ON CONFLICT (filename) DO UPDATE SET checksum = EXCLUDED.checksum`,
-      [driftFile, fileChecksum(ORIGINAL_SQL)]
-    );
+        [driftFile, fileChecksum(ORIGINAL_SQL)]
+      );
 
-    const { runMigrations } = await import(
-      '../../server/src/services/tablePlatform/migrationRunner.js'
-    );
-    const res = await runMigrations({ migrationsDir: tmpDir });
-    expect(res.failed).toBeTruthy();
-    expect(res.checksumMismatches).toContain(driftFile);
-    expect(res.applied).toBe(0);
+      const { runMigrations } =
+        await import('../../server/src/services/tablePlatform/migrationRunner.js');
+      const res = await runMigrations({ migrationsDir: tmpDir });
+      expect(res.failed).toBeTruthy();
+      expect(res.checksumMismatches).toContain(driftFile);
+      expect(res.applied).toBe(0);
 
-    expect(snapshotCanonical(), 'canonical must be untouched').toEqual(canonicalSnapshotAtStart);
-  }, 120_000);
+      expect(snapshotCanonical(), 'canonical must be untouched').toEqual(canonicalSnapshotAtStart);
+    },
+    120_000
+  );
 
-  itDB('the production CLI still runs, read-only, against the canonical directory', async () => {
-    // The analysis is directory-parameterised for tests; the CLI is not. This
-    // exercises the real binary end-to-end and then proves it changed nothing.
-    const res = await execFileAsync('npx', ['tsx', PREFLIGHT, '--json'], {
-      cwd: REPO_ROOT,
-      env: { ...process.env },
-    }).catch((e) => e);
+  itDB(
+    'runner and preflight accept only the exact historical pair without rewriting history',
+    async () => {
+      const filename = '725_module_sync.sql';
+      const historical = '79db562130016782';
+      const compatibilityDir = fs.mkdtempSync(path.join(os.tmpdir(), 'm02b-compat-'));
+      const target = path.join(compatibilityDir, filename);
+      const current = fs.readFileSync(path.join(MIGRATIONS_DIR, filename), 'utf-8');
+      fs.writeFileSync(target, current, 'utf-8');
 
-    const stdout = String(res.stdout || '');
-    const report = JSON.parse(stdout);
-    expect(report.migrationsDir).toBe(MIGRATIONS_DIR);
-    // Exit code is whatever this database's real state warrants (0 or 1); what
-    // matters here is that it ran against canonical and mutated nothing.
-    expect([0, 1]).toContain(res.code ?? 0);
+      try {
+        await client.query(
+          `INSERT INTO ${MIGRATION_TABLE} (filename, checksum) VALUES ($1, $2)
+         ON CONFLICT (filename) DO UPDATE SET checksum = EXCLUDED.checksum`,
+          [filename, historical]
+        );
 
-    expect(snapshotCanonical(), 'the CLI must not modify canonical').toEqual(
-      canonicalSnapshotAtStart
-    );
-  }, 180_000);
+        const { analyzePendingMigrations } =
+          await import('../../server/src/services/tablePlatform/migrationPreflight.js');
+        const exact = await analyzePendingMigrations({ migrationsDir: compatibilityDir, client });
+        expect(exact.checksumMismatchCount).toBe(0);
+        expect(exact.acceptedHistoricalChecksumVariants).toEqual([filename]);
+
+        const { runMigrations } =
+          await import('../../server/src/services/tablePlatform/migrationRunner.js');
+        const run = await runMigrations({ migrationsDir: compatibilityDir });
+        expect(run.failed).toBeNull();
+        expect(run.applied).toBe(0);
+        expect(run.skipped).toBe(1);
+        expect(run.acceptedHistoricalChecksumVariants).toEqual([filename]);
+
+        const { rows } = await client.query(
+          `SELECT checksum FROM ${MIGRATION_TABLE} WHERE filename = $1`,
+          [filename]
+        );
+        expect(rows[0]?.checksum).toBe(historical); // compatibility is read-only
+
+        fs.writeFileSync(target, `${current}\n-- future edit`, 'utf-8');
+        const futureEdit = await analyzePendingMigrations({
+          migrationsDir: compatibilityDir,
+          client,
+        });
+        expect(futureEdit.checksumMismatches).toEqual([filename]);
+
+        fs.writeFileSync(target, current, 'utf-8');
+        await client.query(`UPDATE ${MIGRATION_TABLE} SET checksum = $2 WHERE filename = $1`, [
+          filename,
+          '0000000000000000',
+        ]);
+        const thirdHistoryValue = await analyzePendingMigrations({
+          migrationsDir: compatibilityDir,
+          client,
+        });
+        expect(thirdHistoryValue.checksumMismatches).toEqual([filename]);
+      } finally {
+        await client.query(`DELETE FROM ${MIGRATION_TABLE} WHERE filename = $1`, [filename]);
+        fs.rmSync(compatibilityDir, { recursive: true, force: true });
+      }
+    },
+    120_000
+  );
+
+  itDB(
+    'the production CLI still runs, read-only, against the canonical directory',
+    async () => {
+      // The analysis is directory-parameterised for tests; the CLI is not. This
+      // exercises the real binary end-to-end and then proves it changed nothing.
+      const res = await execFileAsync('npx', ['tsx', PREFLIGHT, '--json'], {
+        cwd: REPO_ROOT,
+        env: { ...process.env },
+      }).catch((e) => e);
+
+      const stdout = String(res.stdout || '');
+      const report = JSON.parse(stdout);
+      expect(report.migrationsDir).toBe(MIGRATIONS_DIR);
+      // Exit code is whatever this database's real state warrants (0 or 1); what
+      // matters here is that it ran against canonical and mutated nothing.
+      expect([0, 1]).toContain(res.code ?? 0);
+
+      expect(snapshotCanonical(), 'the CLI must not modify canonical').toEqual(
+        canonicalSnapshotAtStart
+      );
+    },
+    180_000
+  );
 
   it('the test-only directory seam is an argument, never runtime input', () => {
     const analysisSrc = fs.readFileSync(PREFLIGHT_ANALYSIS, 'utf-8');

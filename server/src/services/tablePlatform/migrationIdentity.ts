@@ -10,6 +10,8 @@
  */
 import crypto from 'crypto';
 
+import { APPROVED_HISTORICAL_CHECKSUM_VARIANTS } from './migrationHistoricalChecksums.js';
+
 /**
  * Discovery pattern for migrations the RUNTIME runner applies.
  *
@@ -157,6 +159,8 @@ export function fileChecksum(content: string): string {
 /** How a stored checksum compares to the file on disk. */
 export type ChecksumVerdict = 'match' | 'drift' | 'unverifiable';
 
+export type FilenameAwareChecksumVerdict = ChecksumVerdict | 'accepted_historical_variant';
+
 /**
  * Classifies a stored checksum against current file content.
  *
@@ -170,4 +174,30 @@ export function classifyChecksum(
 ): ChecksumVerdict {
   if (storedChecksum == null || storedChecksum === '') return 'unverifiable';
   return fileChecksum(fileContent) === storedChecksum ? 'match' : 'drift';
+}
+
+/**
+ * Filename-aware classification used by the production runner and preflight.
+ *
+ * The historical compatibility path is exact on all three inputs: filename,
+ * stored digest and current digest. It therefore reconciles the known demo
+ * history without turning checksum verification into a filename-only bypass.
+ */
+export function classifyMigrationChecksum(
+  filename: string,
+  storedChecksum: string | null | undefined,
+  fileContent: string
+): FilenameAwareChecksumVerdict {
+  const base = classifyChecksum(storedChecksum, fileContent);
+  if (base !== 'drift') return base;
+
+  const approved = APPROVED_HISTORICAL_CHECKSUM_VARIANTS[filename];
+  if (
+    approved &&
+    storedChecksum === approved.stored &&
+    fileChecksum(fileContent) === approved.current
+  ) {
+    return 'accepted_historical_variant';
+  }
+  return 'drift';
 }

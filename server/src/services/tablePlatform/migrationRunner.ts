@@ -6,7 +6,7 @@ import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
 import {
   RUNTIME_MIGRATION_ALLOWLIST as RUNTIME_MIGRATION_ALLOWLIST_FILES,
-  classifyChecksum,
+  classifyMigrationChecksum,
   fileChecksum,
   isRuntimeMigrationFile,
 } from './migrationIdentity.js';
@@ -106,6 +106,8 @@ export interface MigrationResult {
   total: number;
   /** Applied migrations whose on-disk content no longer matches history. */
   checksumMismatches: string[];
+  /** Exact, immutable historical checksum pairs accepted without rewriting DB history. */
+  acceptedHistoricalChecksumVariants: string[];
 }
 
 /**
@@ -188,6 +190,7 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
     failedFile: null,
     total: 0,
     checksumMismatches: [],
+    acceptedHistoricalChecksumVariants: [],
     ...over,
   });
 
@@ -220,16 +223,20 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
   // is not something to continue past. Rows with a NULL checksum predate
   // checksum recording and are reported as unverifiable, not treated as drift.
   const checksumMismatches: string[] = [];
+  const acceptedHistoricalChecksumVariants: string[] = [];
   let legacyUnverified = 0;
   for (const file of files) {
     if (!appliedChecksums.has(file)) continue;
     const stored = appliedChecksums.get(file);
-    const verdict = classifyChecksum(
+    const verdict = classifyMigrationChecksum(
+      file,
       stored,
       fs.readFileSync(path.join(migrationsDir, file), 'utf-8')
     );
     if (verdict === 'unverifiable') legacyUnverified++;
-    else if (verdict === 'drift') checksumMismatches.push(file);
+    else if (verdict === 'accepted_historical_variant') {
+      acceptedHistoricalChecksumVariants.push(file);
+    } else if (verdict === 'drift') checksumMismatches.push(file);
   }
 
   if (checksumMismatches.length > 0) {
@@ -237,12 +244,23 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
       `Checksum mismatch for already-applied migration(s): ${checksumMismatches.join(', ')}. ` +
       `The database no longer matches these files. Refusing to run (fail-closed).`;
     logger.error(`[TP Migrations] ${msg}`);
-    return empty({ failed: msg, total: files.length, checksumMismatches });
+    return empty({
+      failed: msg,
+      total: files.length,
+      checksumMismatches,
+      acceptedHistoricalChecksumVariants,
+    });
   }
 
   if (legacyUnverified > 0) {
     logger.warn(
       `[TP Migrations] ${legacyUnverified} applied migration(s) have no recorded checksum and could not be verified`
+    );
+  }
+
+  if (acceptedHistoricalChecksumVariants.length > 0) {
+    logger.warn(
+      `[TP Migrations] ${acceptedHistoricalChecksumVariants.length} applied migration(s) match exact approved historical checksum variants; history was not rewritten`
     );
   }
 
@@ -278,6 +296,7 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
         failedFile: file,
         total: files.length,
         checksumMismatches: [],
+        acceptedHistoricalChecksumVariants,
       };
     }
   }
@@ -292,5 +311,6 @@ export async function runMigrations(options?: RunMigrationsOptions): Promise<Mig
     failedFile: null,
     total: files.length,
     checksumMismatches: [],
+    acceptedHistoricalChecksumVariants,
   };
 }
