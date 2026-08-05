@@ -2026,15 +2026,54 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
       language,
     });
 
-    const rows = await DbPromise.all<any>(
-      db,
-      `SELECT id, title, category, file_type, file_size_bytes, min_partner_tier,
-              file_key, file_name, mime_type, size_bytes
+    // M16 — an empty list must mean "no resources", never "the query blew up".
+    //
+    // `DbPromise.all` defaults to `fallback: true`, i.e. it swallows SQL errors
+    // and returns []. Combined with the full projection below — which names
+    // `file_key`/`file_name`/`mime_type`/`size_bytes`, columns that migration
+    // 555 adds but that are absent on demo — every category rendered empty
+    // while `partner_resources` held 15 active rows. We now run with
+    // `fallback: false` and classify the failure instead of hiding it.
+    //
+    // Order: full projection → compat projection (schema before 555) → degraded.
+    const RESOURCE_COLUMNS_FULL = `id, title, category, file_type, file_size_bytes, min_partner_tier,
+              file_key, file_name, mime_type, size_bytes`;
+    const RESOURCE_COLUMNS_COMPAT = `id, title, category, file_type, file_size_bytes, min_partner_tier`;
+    const selectResources = (columns: string) =>
+      DbPromise.all<any>(
+        db,
+        `SELECT ${columns}
        FROM partner_resources
        WHERE is_active = TRUE
        ORDER BY category ASC, title ASC`,
-      []
-    );
+        [],
+        { fallback: false }
+      );
+
+    let rows: any[] = [];
+    let capability: 'FULL' | 'DEGRADED_SCHEMA' | 'DEGRADED_UNAVAILABLE' = 'FULL';
+    let capabilityCode: string | null = null;
+    let capabilityDetail: string | null = null;
+
+    try {
+      rows = await selectResources(RESOURCE_COLUMNS_FULL);
+    } catch (fullErr: any) {
+      try {
+        rows = await selectResources(RESOURCE_COLUMNS_COMPAT);
+        capability = 'DEGRADED_SCHEMA';
+        capabilityCode = 'PARTNER_RESOURCES_SCHEMA_BEHIND';
+        capabilityDetail = String(fullErr?.message || fullErr);
+        logger.warn(
+          '[partners] partner_resources full projection unavailable — serving compat read',
+          { detail: capabilityDetail }
+        );
+      } catch (compatErr: any) {
+        capability = 'DEGRADED_UNAVAILABLE';
+        capabilityCode = 'PARTNER_RESOURCES_UNAVAILABLE';
+        capabilityDetail = String(compatErr?.message || compatErr);
+        logger.error('[partners] partner_resources unreadable', { detail: capabilityDetail });
+      }
+    }
 
     const grouped = {
       documentation: [] as any[],
@@ -2098,7 +2137,22 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
       else grouped.documentation.push(item);
     }
 
-    return res.json({ success: true, data: grouped });
+    // The UI must be able to tell EMPTY from DEGRADED_UNAVAILABLE. `capability`
+    // is the contract for that; `resourcesReadable` is false only when we could
+    // not read the catalogue at all, so a truly empty catalogue still reads as
+    // an honest empty state.
+    return res.json({
+      success: true,
+      data: {
+        ...grouped,
+        capability,
+        capabilityCode,
+        resourcesReadable: capability !== 'DEGRADED_UNAVAILABLE',
+        ...(capabilityDetail && process.env.NODE_ENV !== 'production'
+          ? { capabilityDetail }
+          : {}),
+      },
+    });
   } catch (error: any) {
     logger.error('Error fetching resources:', error);
     next(error);

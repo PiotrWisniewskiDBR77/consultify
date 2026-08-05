@@ -467,7 +467,10 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
             {
               label: t('partner.earnings.v8TotalEarned', 'Governed total earned'),
               value: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalEarned ?? 0).toLocaleString()}`,
-              detail: `${v8Summary.totalPaid ?? 0} paid`,
+              // `totalPaid` is now projected from the same settled-payout
+              // register the Payouts list renders, so this can no longer read
+              // "0 paid" above a COMPLETED payout.
+              detail: `${v8Summary.currency ?? 'EUR'} ${(v8Summary.totalPaid ?? 0).toLocaleString()} ${t('partner.earnings.paidSuffix', 'wypłacone')}`,
             },
             {
               label: t('partner.earnings.v8ThisMonth', 'Governed this month'),

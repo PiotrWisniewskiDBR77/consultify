@@ -126,12 +126,21 @@ export interface Attribution {
   createdAt: string;
 }
 
+/**
+ * Whether a client display name could be resolved from a tenant-scoped source.
+ * `UNRESOLVED` is an honest state, not an error: the attribution exists but the
+ * referenced organization is not readable (orphaned or outside this tenant).
+ */
+export type PartnerClientNameResolution = 'RESOLVED' | 'UNRESOLVED';
+
 export interface PartnerClientListItem {
   id: string;
   organizationId: string;
-  name: string;
-  organizationName: string;
-  clientName: string;
+  /** null when unresolved — never a placeholder literal and never a raw UUID. */
+  name: string | null;
+  organizationName: string | null;
+  clientName: string | null;
+  nameResolution: PartnerClientNameResolution;
   status: 'active' | 'onboarding' | 'inactive';
   accessLevel: string;
   users: number;
@@ -1151,8 +1160,45 @@ export async function getPartnerClients(
     }
   }
 
+  // Secondary, tenant-scoped name source. `organizations` is the primary join,
+  // but on demo every attribution is an orphan (its organization_id has no row
+  // there), which used to collapse into the literal 'Organization' for every
+  // client. `partner_client_organizations` is scoped by partner_org_id, so
+  // reading it cannot expose another tenant's data.
+  const secondaryNameByOrg = new Map<string, string>();
+  if (orgIds.length > 0) {
+    const placeholders = orgIds.map(() => '?').join(', ');
+    try {
+      const rows = await DbPromise.all<{ organization_id: string; name: string | null }>(
+        db,
+        `SELECT organization_id, name
+           FROM partner_client_organizations
+          WHERE partner_org_id = ?
+            AND organization_id IN (${placeholders})`,
+        [partnerOrgId, ...orgIds]
+      );
+      for (const row of rows) {
+        const name = String(row.name || '').trim();
+        if (name) secondaryNameByOrg.set(String(row.organization_id), name);
+      }
+    } catch (err: any) {
+      logger.warn(
+        '[PartnerReferralService] getPartnerClients secondary name lookup failed:',
+        err?.message
+      );
+    }
+  }
+
   return attributions.map((item) => {
-    const organizationName = item.organizationName || 'Organization';
+    // No invented display name. When neither source resolves, the name is null
+    // and `nameResolution` says why — the UI renders a localized
+    // "client unavailable" state instead of a fake name or a raw UUID title.
+    const resolvedName =
+      String(item.organizationName || '').trim() ||
+      secondaryNameByOrg.get(item.organizationId) ||
+      null;
+    const nameResolution: PartnerClientNameResolution = resolvedName ? 'RESOLVED' : 'UNRESOLVED';
+    const organizationName = resolvedName;
     const userCount = userCountByOrg.get(item.organizationId) ?? 0;
     const projects = projectCountByOrg.get(item.organizationId) ?? 0;
     return {
@@ -1161,6 +1207,7 @@ export async function getPartnerClients(
       name: organizationName,
       organizationName,
       clientName: organizationName,
+      nameResolution,
       status: mapAttributionStatusToClientStatus(item.status),
       accessLevel: item.attributionType.toLowerCase().replace(/_/g, ' '),
       users: userCount,

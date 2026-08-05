@@ -34758,6 +34758,7 @@
     }
   },
   "statusChip": {
+    "onboarding": "Onboarding",
     "in_progress": "In progress",
     "draft": "Draft",
     "open": "Open",

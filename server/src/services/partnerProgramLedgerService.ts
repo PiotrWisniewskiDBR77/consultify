@@ -45,12 +45,46 @@ export interface PartnerLedgerEntryRow {
   note: string | null;
 }
 
+/**
+ * How `paidOut` relates to the payout register the Earnings list renders.
+ *
+ * `RECONCILED`            — ledger reconciliations and settled payouts agree.
+ * `LEDGER_BEHIND_REGISTER`— settled payouts exist that the ledger has not
+ *                           reconciled yet (this is demo's situation: a
+ *                           COMPLETED payout of 514.80 EUR seeded straight into
+ *                           `partner_payouts` with no `payout.reconciled` entry).
+ * `REGISTER_UNAVAILABLE`  — the payout register could not be read, so no
+ *                           cross-check was possible.
+ */
+export type PartnerPaidReconciliationStatus =
+  | 'RECONCILED'
+  | 'LEDGER_BEHIND_REGISTER'
+  | 'REGISTER_UNAVAILABLE';
+
+export interface PartnerPaidReconciliation {
+  status: PartnerPaidReconciliationStatus;
+  /** Sum of `payout.reconciled` ledger entries. */
+  ledgerReconciled: number;
+  /** Sum of COMPLETED rows in `partner_payouts` — the register the UI lists. */
+  settledPayouts: number;
+  /** settledPayouts - ledgerReconciled, clamped at 0. */
+  unreconciledAmount: number;
+}
+
 export interface PartnerProgramBalances {
   grossEarned: number;
+  /**
+   * Canonical "paid" figure. Projected from the SETTLED PAYOUT REGISTER
+   * (`partner_payouts` COMPLETED) — deliberately the same register the payout
+   * list renders, so the total and the list can never contradict each other.
+   * The ledger stays canonical for accruals and holds; `paidReconciliation`
+   * makes the projection explicit rather than papering over a divergence.
+   */
   paidOut: number;
   heldAmount: number;
   availableToPayout: number;
   currency: string;
+  paidReconciliation?: PartnerPaidReconciliation;
 }
 
 export interface PartnerProgramWhatNextContext {
@@ -436,7 +470,57 @@ export class PartnerProgramLedgerService {
       [partnerOrgId],
       { fallback: false }
     );
-    return deriveBalancesFromEntries(rows, currency);
+    const ledgerBalances = deriveBalancesFromEntries(rows, currency);
+
+    // Cross-check the ledger's reconciled total against the settled payout
+    // register and project `paidOut` from the register, so the Earnings total
+    // and the Payouts list always speak from the same source. Previously the
+    // total came from the ledger alone and rendered "0 paid" directly above a
+    // COMPLETED payout — a contradiction the partner had no way to explain.
+    let settledPayouts: number | null = null;
+    try {
+      const settled = await DbPromise.get<{ total: number | string | null }>(
+        db,
+        `SELECT COALESCE(SUM(net_amount), 0) AS total
+           FROM partner_payouts
+          WHERE partner_org_id = ? AND status = 'COMPLETED'`,
+        [partnerOrgId],
+        { fallback: false }
+      );
+      settledPayouts = Math.round((Number(settled?.total) || 0) * 10000) / 10000;
+    } catch (e) {
+      logger.warn('[PartnerProgramLedger] settled payout register unreadable', e);
+    }
+
+    if (settledPayouts === null) {
+      return {
+        ...ledgerBalances,
+        paidReconciliation: {
+          status: 'REGISTER_UNAVAILABLE',
+          ledgerReconciled: ledgerBalances.paidOut,
+          settledPayouts: 0,
+          unreconciledAmount: 0,
+        },
+      };
+    }
+
+    const ledgerReconciled = ledgerBalances.paidOut;
+    const paidOut = Math.max(ledgerReconciled, settledPayouts);
+    const unreconciledAmount = Math.round(Math.max(0, settledPayouts - ledgerReconciled) * 10000) / 10000;
+
+    return {
+      ...ledgerBalances,
+      paidOut,
+      availableToPayout:
+        Math.round(Math.max(0, ledgerBalances.grossEarned - paidOut - ledgerBalances.heldAmount) * 10000) /
+        10000,
+      paidReconciliation: {
+        status: unreconciledAmount > 0 ? 'LEDGER_BEHIND_REGISTER' : 'RECONCILED',
+        ledgerReconciled,
+        settledPayouts,
+        unreconciledAmount,
+      },
+    };
   }
 
   /** Ostatni wpis hold.placed (dla komunikatów hold / review). */
@@ -485,12 +569,21 @@ export class PartnerProgramLedgerService {
       balances = await this.getBalances(partnerOrgId);
     } catch (e) {
       logger.warn('[PartnerProgramLedger] getBalances failed — returning zero snapshot', e);
+      // A zero snapshot is NOT a statement that the partner earned nothing —
+      // it means we could not read the ledger. `degraded` is what the UI keys
+      // on to say so out loud instead of rendering a confident 0.
       balances = {
         grossEarned: 0,
         paidOut: 0,
         heldAmount: 0,
         availableToPayout: 0,
         currency: 'EUR',
+        paidReconciliation: {
+          status: 'REGISTER_UNAVAILABLE',
+          ledgerReconciled: 0,
+          settledPayouts: 0,
+          unreconciledAmount: 0,
+        },
       };
       degraded = { reason: 'ledger_unavailable', snapshotAt: new Date().toISOString() };
     }

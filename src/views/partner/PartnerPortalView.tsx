@@ -14,6 +14,7 @@
  */
 
 import {
+  AlertTriangle,
   Award,
   BarChart3,
   BookOpen,
@@ -65,6 +66,7 @@ import {
 } from '../../services/api/v8';
 import { cn } from '../../utils/cn';
 import { getLegacyPartnerSection } from './partnerLegacyRoutes';
+import { PartnerStartRouter } from './PartnerStartRouter';
 
 const PARTNER_SECTIONS = new Set<PartnerSection>([
   'partner-home',
@@ -988,12 +990,37 @@ interface ClientProject {
   targetEndDate?: string;
 }
 
+/**
+ * Localized stand-in for a client whose name could not be resolved. Never a
+ * fabricated name ("Organization") and never a raw UUID — the identifier stays
+ * available as technical detail only.
+ */
+export function resolveClientDisplayName(
+  raw: unknown,
+  t: (key: string, fallback: string) => string
+): { label: string; resolved: boolean } {
+  const name = String(raw ?? '').trim();
+  const isPlaceholder = !name || name.toLowerCase() === 'organization';
+  const isRawUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(name);
+  if (isPlaceholder || isRawUuid) {
+    return { label: t('partner.clients.unavailable', 'Klient niedostępny'), resolved: false };
+  }
+  return { label: name, resolved: true };
+}
+
 function normalizeClientOrganization(
   client: Partial<V8PartnerClient> | Record<string, any>
 ): ClientOrganization {
+  const rawName = client.name || client.organizationName || client.clientName;
+  const resolved =
+    (client as any).nameResolution === 'UNRESOLVED'
+      ? null
+      : String(rawName ?? '').trim() || null;
   return {
-    id: String(client.id || client.organizationId || client.name || 'client'),
-    name: String(client.name || client.organizationName || client.clientName || 'Organization'),
+    id: String(client.id || client.organizationId || 'client'),
+    // Empty string marks "unresolved"; the table cell renders the localized
+    // stand-in. Keeping it out of the data layer avoids baking a UI string in.
+    name: resolved && resolved.toLowerCase() !== 'organization' ? resolved : '',
     industry:
       typeof client.industry === 'string' && client.industry.trim().length > 0
         ? client.industry
@@ -1168,14 +1195,26 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
             {
               id: 'name',
               label: t('partner.clients.col.organization', 'Organization'),
-              render: (org) => (
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 shrink-0 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              render: (org) => {
+                const display = resolveClientDisplayName(org.name, t);
+                return (
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 shrink-0 rounded-lg bg-c-surface-subtle flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-c-text-muted" />
+                    </div>
+                    <span
+                      className={cn(
+                        'font-medium truncate',
+                        display.resolved ? 'text-c-text' : 'text-c-text-muted italic'
+                      )}
+                      // Raw identifier stays reachable as technical detail, never as the title.
+                      title={display.resolved ? display.label : `ID: ${org.id}`}
+                    >
+                      {display.label}
+                    </span>
                   </div>
-                  <span className="font-medium text-c-text truncate">{org.name}</span>
-                </div>
-              ),
+                );
+              },
             },
             {
               id: 'industry',
@@ -2094,6 +2133,13 @@ interface ResourcesData {
     reviewState?: string | null;
     articleSlug?: string | null;
   }>;
+  /**
+   * Read capability reported by the backend. Lets the UI tell an honestly empty
+   * catalogue from one it could not read — the two used to look identical.
+   */
+  capability?: 'FULL' | 'DEGRADED_SCHEMA' | 'DEGRADED_UNAVAILABLE';
+  capabilityCode?: string | null;
+  resourcesReadable?: boolean;
 }
 
 const ResourcesSection: React.FC<{
@@ -2273,8 +2319,43 @@ const ResourcesSection: React.FC<{
           </div>
         )}
 
-      {items.length === 0 ? (
-        <div className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center">
+      {items.length === 0 && resources?.capability === 'DEGRADED_UNAVAILABLE' ? (
+        // DEGRADED_UNAVAILABLE ≠ EMPTY. The catalogue could not be read, so we
+        // must not claim there is nothing here. Amber (warning), not crimson —
+        // this is a degraded read, not an error or a destructive state.
+        <div
+          className="bg-c-surface rounded-xl border border-amber-300 dark:border-amber-700/60 p-8 text-center"
+          data-testid="partner-resources-degraded"
+        >
+          <AlertTriangle className="w-12 h-12 text-amber-600 dark:text-amber-400 mx-auto mb-4" />
+          <p className="text-c-text font-medium">
+            {t(
+              'partner.resources.degradedTitle',
+              'Biblioteka materiałów jest chwilowo niedostępna'
+            )}
+          </p>
+          <p className="text-c-text-secondary text-sm mt-1">
+            {t(
+              'partner.resources.degradedDescription',
+              'Nie udało się odczytać katalogu, więc nie wiemy, ile materiałów tu jest. To nie znaczy, że jest pusty.'
+            )}
+          </p>
+          {resources?.capabilityCode && (
+            <p className="text-c-text-muted text-xs mt-3 font-mono">{resources.capabilityCode}</p>
+          )}
+          <button
+            type="button"
+            onClick={fetchResources}
+            className="mt-4 px-4 py-2 rounded-lg border border-c-border text-c-text text-sm hover:bg-c-surface-hover"
+          >
+            {t('partner.resources.retry', 'Spróbuj ponownie')}
+          </button>
+        </div>
+      ) : items.length === 0 ? (
+        <div
+          className="bg-c-surface rounded-xl border border-c-border-subtle p-8 text-center"
+          data-testid="partner-resources-empty"
+        >
           <FileText className="w-12 h-12 text-c-text-secondary mx-auto mb-4" />
           <p className="text-c-text-secondary">
             {t('partner.resources.empty', 'Brak materiałów w tej kategorii')}
@@ -3102,7 +3183,15 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     switch (activeSection) {
       // Home
       case 'partner-home':
-        return <ProviderHomeView />;
+        // Owner decision 2026-08-05: an active (earn/payout) partner must not be
+        // shown the acquisition landing. The variant is chosen from the server's
+        // persisted lifecycle phase; unknown/error never falls back to acquisition.
+        return (
+          <PartnerStartRouter
+            onboardingSurface={<ProviderHomeView />}
+            onNavigateSection={handleSectionChange}
+          />
+        );
       // Overview
       case 'dashboard':
         return <DashboardSection />;
@@ -3146,7 +3235,7 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       default:
         return <ProviderHomeView />;
     }
-  }, [activeSection]);
+  }, [activeSection, handleSectionChange]);
 
   const handleConnectPartnerProfile = useCallback(async () => {
     try {

@@ -35897,6 +35897,7 @@
     }
   },
   "statusChip": {
+    "onboarding": "Onboarding",
     "in_progress": "W trakcie",
     "draft": "Szkic",
     "open": "Otwarte",

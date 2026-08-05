@@ -592,15 +592,27 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-medium text-c-text">
-                        {customer.organizationName || customer.organizationId}
-                      </p>
+                      {/* Never headline a raw UUID. When the name cannot be
+                          resolved we say so, and keep the identifier as a
+                          secondary technical detail. */}
+                      {customer.organizationName ? (
+                        <p className="font-medium text-c-text">{customer.organizationName}</p>
+                      ) : (
+                        <p className="font-medium italic text-c-text-muted">
+                          {t('partner.clients.unavailable', 'Klient niedostępny')}
+                        </p>
+                      )}
                       <p className="mt-1 text-sm text-c-text-secondary">
                         {customer.attributionType.toLowerCase().replaceAll('_', ' ')}
                         {customer.referralCodeUsed ? ` · ${customer.referralCodeUsed}` : ''}
                       </p>
+                      {!customer.organizationName && customer.organizationId && (
+                        <p className="mt-1 font-mono text-xs text-c-text-muted">
+                          {t('partner.clients.technicalId', 'ID')}: {customer.organizationId}
+                        </p>
+                      )}
                     </div>
-                    <span className="rounded-full bg-primary-500/15 px-2 py-1 text-xs font-medium text-primary-300">
+                    <span className="rounded-full bg-c-surface-subtle px-2 py-1 text-xs font-medium text-c-text-secondary">
                       {customer.status.toLowerCase()}
                     </span>
                   </div>
