@@ -7677,8 +7677,15 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(feedback),
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to submit feedback');
+    // M01-P03B (coordinator fix-required) — route through the shared
+    // handleResponse() (same as every other Api.* method) instead of a
+    // hand-rolled `if (!res.ok) throw new Error(...)`. That local version
+    // discarded the HTTP status entirely, so a caller catching the thrown
+    // Error could not tell a 403 (not your message) from a 500 (save
+    // failed) from a network error — handleResponse attaches `.status` to
+    // the thrown Error (see its other ~50 call sites in this file), which
+    // InlineResponseFeedback now needs to render an honest error state.
+    await handleResponse(res, 'Failed to submit feedback');
   },
 
   /**
@@ -12791,13 +12798,32 @@ export const Api = {
     return handleResponse(res, 'Failed to unlock shared conversation');
   },
   /** Fork a conversation from a message into a new conversation (composer #4). */
-  branchConversation: async (conversationId: string, forkMessageId: string) => {
+  branchConversation: async (
+    conversationId: string,
+    forkMessageId?: string,
+    branchName?: string
+  ) => {
     const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/branch`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ forkMessageId }),
+      body: JSON.stringify({
+        ...(forkMessageId ? { forkMessageId } : {}),
+        ...(branchName ? { branchName } : {}),
+      }),
     });
     return handleResponse(res, 'Failed to branch conversation');
+  },
+
+  /**
+   * M01-P03A — list branches forked FROM `conversationId` (direct children),
+   * plus, if `conversationId` is itself a branch, its own parent lineage.
+   * See GET /api/conversations/:id/branches.
+   */
+  getConversationBranches: async (conversationId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/conversations/${conversationId}/branches`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load conversation branches');
   },
   // Analytics Reports - connected to real API
   getAnalyticsReports: async (filters?: any): Promise<any[]> => {
@@ -13770,9 +13796,28 @@ export const Api = {
   // Project Details
   getProjectDetails: async (projectId: string) =>
     ({ id: projectId, name: '', description: '', goal: '', status: 'active' }) as any,
-  // AI Chat Feedback
-  reportMessageFeedback: async (messageId: string, feedback: string) => ({ success: true }),
-  reportMessage: async (messageId: string, reason: string) => ({ success: true }),
+  // AI Chat Feedback — reports an AI answer for review.
+  // M01-010: this used to `return { success: true }` WITHOUT calling anything, so
+  // the UI confirmed a report that never left the browser. The real endpoint is
+  // POST /api/ai/report (server/src/routes/ai.routes.ts), body validated by
+  // ReportMessageRequestSchema = { messageId: uuid, reason: string(min 1) }.
+  // Failures must reach the caller so the UI can say "it did not go through".
+  reportMessageFeedback: async (
+    messageId: string,
+    reason: string
+  ): Promise<{ success: boolean }> => {
+    const res = await fetch(`${API_URL}/ai/report`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ messageId, reason }),
+    });
+    const data = await res.json().catch(() => ({}) as any);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to report message');
+    return data as { success: boolean };
+  },
+  // Alias kept for older call sites — same single real transport, no second lie.
+  reportMessage: async (messageId: string, reason: string): Promise<{ success: boolean }> =>
+    Api.reportMessageFeedback(messageId, reason),
   // Analytics Dashboard Builder
   getAnalyticsDashboardsWithDetails: async () => {
     const now = new Date().toISOString();

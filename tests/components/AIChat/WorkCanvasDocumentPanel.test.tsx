@@ -2344,25 +2344,26 @@ describe('WorkCanvasDocumentPanel', () => {
           }),
         };
       }
-      if (url === '/api/work-canvas/drafts/draft-1/save-to-workspace') {
-        expect(JSON.parse(String(init?.body))).toEqual({ target: 'idea' });
+      // Workspace handoffs go through the governed proposal flow (commit
+      // fed34ea9c5, "govern active canvas owner handoffs", 2026-08-03):
+      // create a proposal, then approve it — the old direct
+      // /save-to-workspace call this test used to mock is dead code
+      // (workCanvasSaveToWorkspace in src/services/api.ts has zero callers).
+      if (url === '/api/work-canvas/drafts/draft-1/proposals') {
+        const body = JSON.parse(String(init?.body));
+        expect(body.target).toBe('idea');
+        expect(body.payload).toMatchObject({ title: 'Company Work Note' });
+        expect(body.idempotencyKey).toEqual(expect.any(String));
         return {
           ok: true,
           json: async () => ({
-            success: true,
             data: {
-              draft: {
-                id: 'draft-1',
-                title: 'Company Work Note',
-                contentMd: '# Company Work Note',
-              },
-              linkedResource: {
-                type: 'idea',
-                id: 'idea-1',
-                title: 'Company Work Note',
-                url: '/my-work/ideas/idea-1',
-              },
-              readBack: { status: 'created' },
+              id: 'proposal-1',
+              draftId: 'draft-1',
+              target: 'idea',
+              status: 'approved',
+              targetObjectId: 'idea-1',
+              readBack: { url: '/my-work/ideas/idea-1' },
             },
           }),
         };
@@ -2399,12 +2400,13 @@ describe('WorkCanvasDocumentPanel', () => {
     await screen.findByTestId('canvas-document-view');
     await user.click(screen.getByRole('button', { name: /Send to idea/i }));
 
-    // Workspace handoff feedback now links to the resource instead of echoing
-    // the raw id. C4 — the `[Open →](path)` Markdown renders as a real
-    // clickable anchor pointing at the backend-returned deep link.
+    // Governed-handoff feedback (showDurableHandoffReceipt) renders
+    // "Created {target} ({objectId}). [Open created object](url)" — the
+    // Markdown link renders as a real clickable anchor pointing at the
+    // backend-returned deep link (readBack.url).
     const workspaceFeedback = await screen.findByTestId('canvas-action-feedback');
-    expect(workspaceFeedback).toHaveTextContent('Company Work Note saved to idea.');
-    const openLink = within(workspaceFeedback).getByRole('link', { name: 'Open →' });
+    expect(workspaceFeedback).toHaveTextContent('Created idea (idea-1).');
+    const openLink = within(workspaceFeedback).getByRole('link', { name: 'Open created object' });
     expect(openLink).toHaveAttribute('href', '/my-work/ideas/idea-1');
 
     await user.click(screen.getByRole('button', { name: /Create presentation/i }));
@@ -2455,25 +2457,23 @@ describe('WorkCanvasDocumentPanel', () => {
           }),
         };
       }
-      if (url === '/api/work-canvas/drafts/draft-1/save-to-workspace') {
-        expect(JSON.parse(String(init?.body))).toEqual({ target: 'note' });
+      // Governed proposal flow (commit fed34ea9c5, 2026-08-03) — see the
+      // sibling test above for why /save-to-workspace is no longer called.
+      if (url === '/api/work-canvas/drafts/draft-1/proposals') {
+        const body = JSON.parse(String(init?.body));
+        expect(body.target).toBe('note');
+        expect(body.payload).toMatchObject({ title: 'Company Work Note' });
+        expect(body.idempotencyKey).toEqual(expect.any(String));
         return {
           ok: true,
           json: async () => ({
-            success: true,
             data: {
-              draft: {
-                id: 'draft-1',
-                title: 'Company Work Note',
-                contentMd: '# Company Work Note',
-              },
-              linkedResource: {
-                type: 'note',
-                id: 'page-1',
-                title: 'Company Work Note',
-                url: '/my-work/notebook/page-1',
-              },
-              readBack: { status: 'created' },
+              id: 'proposal-2',
+              draftId: 'draft-1',
+              target: 'note',
+              status: 'approved',
+              targetObjectId: 'page-1',
+              readBack: { url: '/my-work/notebook/page-1' },
             },
           }),
         };
@@ -2488,8 +2488,8 @@ describe('WorkCanvasDocumentPanel', () => {
     await user.click(screen.getByRole('button', { name: /Save as note/i }));
 
     const noteFeedback = await screen.findByTestId('canvas-action-feedback');
-    expect(noteFeedback).toHaveTextContent('Company Work Note saved to note.');
-    const noteLink = within(noteFeedback).getByRole('link', { name: 'Open →' });
+    expect(noteFeedback).toHaveTextContent('Created note (page-1).');
+    const noteLink = within(noteFeedback).getByRole('link', { name: 'Open created object' });
     expect(noteLink).toHaveAttribute('href', '/my-work/notebook/page-1');
     // The panel must NOT close on success — the user reviews the link first.
     expect(onClose).not.toHaveBeenCalled();
@@ -2713,7 +2713,11 @@ describe('WorkCanvasDocumentPanel', () => {
     await screen.findByTestId('canvas-document-view');
 
     fireEvent.click(screen.getByRole('button', { name: /Canvas menu/i }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Versions' }));
+    // #87c (rewizja 07-13): the menu item was renamed "Versions" → "Version
+    // history" and now carries a stable testid (canvas-history-menu-item);
+    // the label also appears a second time in the collapsed "Advanced"
+    // details section, so a text-role query is ambiguous — the testid is not.
+    fireEvent.click(await screen.findByTestId('canvas-history-menu-item'));
 
     expect(await screen.findByText('replace_selection')).toBeInTheDocument();
     expect(screen.getByText(/Updated text/)).toBeInTheDocument();
@@ -2782,11 +2786,16 @@ describe('WorkCanvasDocumentPanel', () => {
 
     await screen.findByTestId('canvas-document-view');
     fireEvent.click(screen.getByRole('button', { name: /Canvas menu/i }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Versions' }));
-    // The version timeline now renders a stepper Restore plus a per-version
-    // Restore; both target the single version-1, so use the first match.
-    await screen.findAllByRole('button', { name: 'Restore' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]);
+    // #87c (rewizja 07-13): the menu item was renamed "Versions" → "Version
+    // history" and now carries a stable testid (canvas-history-menu-item);
+    // the label also appears a second time in the collapsed "Advanced"
+    // details section, so a text-role query is ambiguous — the testid is not.
+    fireEvent.click(await screen.findByTestId('canvas-history-menu-item'));
+    // CanvasVersionHistory now gates restore behind an inline confirm (avoid
+    // accidental data loss): "Restore" swaps to "Yes, restore" in place, a
+    // second click is required before the panel's restoreVersion path fires.
+    fireEvent.click(await screen.findByTestId('canvas-version-restore'));
+    fireEvent.click(await screen.findByTestId('canvas-version-restore-confirm'));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(

@@ -28,19 +28,28 @@ const panelSrc = readFileSync(
 );
 
 /** Extract a window of source starting at `startLineMarker`. */
-function classNameBlockAt(src: string, startLineMarker: string): string {
+function classNameBlockAt(src: string, startLineMarker: string, windowSize = 600): string {
   const idx = src.indexOf(startLineMarker);
   expect(idx, `marker not found: ${startLineMarker}`).toBeGreaterThanOrEqual(0);
-  return src.slice(idx, idx + 600);
+  return src.slice(idx, idx + windowSize);
 }
 
 describe('Chat composer single-border guard (L-06)', () => {
   it('EnhancedChatInput owns exactly one focus-border container (the composer frame)', () => {
     expect(enhancedInputSrc).toContain('{/* Main Input Container */}');
-    const container = classNameBlockAt(enhancedInputSrc, '{/* Main Input Container */}');
+    // Window widened from the default 600: the block now carries an explanatory
+    // Polish comment (see below) between the opening tag and the two border
+    // variants, which the default window no longer fully covers.
+    const container = classNameBlockAt(enhancedInputSrc, '{/* Main Input Container */}', 700);
     expect(container).toContain('rounded-xl border');
-    expect(container).toContain('border-c-focus-solid');
-    expect(container).toContain('border-slate-200');
+    // No colored focus ring on the composer (product decision, commit e3919ddecf,
+    // 2026-07-04: "koniec czerwonej obwódki przy pisaniu (polecenie Piotra)" — the
+    // caret alone signals focus; the frame only shifts to a slightly lighter
+    // neutral border. The single-border invariant this guard protects is that
+    // there is still exactly one such container, not that it use a c-focus token.
+    expect(container).toContain('isFocused');
+    expect(container).toContain("'border-slate-300 dark:border-navy-600'");
+    expect(container).toContain("'border-slate-200 dark:border-navy-700'");
   });
 
   it('the composer textarea is borderless (transparent, no outline)', () => {
@@ -75,7 +84,11 @@ describe('Chat composer single-border guard (L-06)', () => {
     const inputArea = panelSrc.match(/id="chat-input"\s+className=\{`[^`]*`\}/);
     expect(inputArea, 'normal-chat input-area wrapper not found').not.toBeNull();
     const inputAreaClass = inputArea![0];
-    expect(inputAreaClass).toContain('bg-slate-50');
+    // bg-slate-50 -> bg-c-bg: SPEC-K panel re-skin token migration (commit
+    // aad40fe254, 2026-07-03) replaced the literal Tailwind color with the
+    // canonical c-bg design token; this wrapper must still carry a background
+    // (any background) and stay borderless/ringless.
+    expect(inputAreaClass).toContain('bg-c-bg');
     expect(inputAreaClass).not.toMatch(/\bborder\b/);
     expect(inputAreaClass).not.toMatch(/\bring(-|\b)/);
   });

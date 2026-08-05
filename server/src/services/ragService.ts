@@ -143,6 +143,16 @@ type RerankableChunk = {
    * see fix 2026-07-10, task "Diagnoza DRD → raport zarządczy z dowodami".
    */
   metadata?: Record<string, unknown>;
+  /**
+   * M01-P04B (fragment anchor): real chunk ordinal within its source document,
+   * from `knowledge_chunks.chunk_index`. Previously dropped by `bm25Search`/
+   * `_vectorSearch` (never selected from SQL) the same way `metadata` was —
+   * the conversation-scoped `documentIds` search path (`hybridSearch` →
+   * `searchRelevantChunks`) had NO fragment position at all, so citations built
+   * from it could never anchor to a specific fragment (only the document as a
+   * whole). Guarded by `ensureKnowledgeChunksColumns()` — never assumed present.
+   */
+  chunkIndex?: number;
 };
 
 /** Parse a `knowledge_chunks.metadata` column value (JSON string or already-parsed object). */
@@ -182,6 +192,39 @@ type HybridOptions = {
   documentIds?: string[];
 };
 
+// M01-P04C — the ONLY legitimate reason `knowledge_docs.organization_id IS
+// NULL` may be treated as retrievable: the row was produced by the internal
+// tool/methodology/product knowledge-pack indexer
+// (`knowledgeIndexer.insertDocument`, `source_type='tool_pack'`;
+// `drdReportGrounding.ts`, `source_type='methodology'`; the product-pill
+// `.md`-file walker in `knowledgeIndexer.ts`, `source_type='product_pill'`).
+// That indexer is the ONLY writer of `source_type` for these values — no
+// user-facing route accepts or forwards a `source_type` field — so a caller
+// cannot spoof global visibility for their own upload by leaving
+// `organization_id` unset. Every OTHER `organization_id IS NULL` row
+// (pre-942-migration legacy rows; `ai.routes.ts` chat-attachment ingests
+// whose best-effort `UPDATE ... SET organization_id` no-opped) has an
+// UNRESOLVED owner, not a resolved "global" one, and must fail closed — see
+// `KnowledgeService.getDocuments` for the identical contract on the Vault
+// CRUD side, and `docs/ui-standards/evidence/.../M01_P04C_BACKFILL_PLAN.md`
+// for how those legacy rows get a real owner assigned (not done in this
+// packet).
+//
+// `product_pill` was added to this list by coordinator decision (M01-P04C
+// review, 2026-08-05), NOT unilaterally by the original packet — the
+// packet's own return summary flagged it as an open contract question
+// rather than deciding it. Reason it belongs here, verified against the
+// codebase: written by the identical internal indexing path as `tool_pack`
+// (no user-facing route involved); `virtualWorkerKnowledgeService.ts`
+// already unions `source_type IN ('product_pill', 'tool_pack')` in its own
+// pre-existing query, treating them as the same trust class before this
+// decision; `annaKnowledgeService.ts` actively queries `['product_pill']`
+// as a live consumer. Excluding it would have made every `product_pill` row
+// (98 on demo at review time) permanently unreachable by anyone —
+// `annaKnowledgeService`'s knowledge base would have silently gone empty, a
+// real functional regression this fix must not introduce.
+const GLOBAL_KNOWLEDGE_SOURCE_TYPES = ['tool_pack', 'methodology', 'product_pill'] as const;
+
 function appendKnowledgeDocAccessFilter(params: {
   sql: string;
   queryParams: unknown[];
@@ -195,6 +238,7 @@ function appendKnowledgeDocAccessFilter(params: {
   const hasStatus = columns.has('status');
   const hasDeletedAt = columns.has('deleted_at');
   const hasScope = columns.has('scope');
+  const hasSourceType = columns.has('source_type');
 
   if (Array.isArray(documentIds) && documentIds.length > 0) {
     if (!hasOrg) {
@@ -205,17 +249,33 @@ function appendKnowledgeDocAccessFilter(params: {
       return { sql, allowed: false };
     }
     // `documentIds` is a curated allow-list (e.g. the tool-pack filter in
-    // searchKnowledgeBase). Global shared-knowledge docs — DRD/methodology tool
-    // packs — carry `organization_id IS NULL` and must stay retrievable for any
-    // caller; org-scoped docs still require a matching org so there is no
-    // cross-org leak. Without a caller org, only the global docs are allowed.
+    // searchKnowledgeBase). A NULL organization_id is retrievable ONLY when
+    // `source_type` explicitly marks it as one of the internal global packs
+    // (see GLOBAL_KNOWLEDGE_SOURCE_TYPES above) — never merely because it is
+    // NULL. Org-scoped docs still require a matching organization_id, so
+    // there is no cross-org leak for those. If this schema has no
+    // `source_type` column at all, there is no signal to distinguish a
+    // legitimate global pack from an unresolved-owner legacy row, so NULL
+    // rows are excluded entirely (fail closed, not fail open).
     const placeholders = documentIds.map(() => '?').join(',');
+    const globalPlaceholders = GLOBAL_KNOWLEDGE_SOURCE_TYPES.map(() => '?').join(',');
     if (organizationId) {
-      sql += ` AND d.id IN (${placeholders}) AND (d.organization_id = ? OR d.organization_id IS NULL)`;
-      queryParams.push(...documentIds, organizationId);
+      if (hasSourceType) {
+        sql += ` AND d.id IN (${placeholders}) AND (d.organization_id = ? OR (d.organization_id IS NULL AND d.source_type IN (${globalPlaceholders})))`;
+        queryParams.push(...documentIds, organizationId, ...GLOBAL_KNOWLEDGE_SOURCE_TYPES);
+      } else {
+        sql += ` AND d.id IN (${placeholders}) AND d.organization_id = ?`;
+        queryParams.push(...documentIds, organizationId);
+      }
+    } else if (hasSourceType) {
+      sql += ` AND d.id IN (${placeholders}) AND d.organization_id IS NULL AND d.source_type IN (${globalPlaceholders})`;
+      queryParams.push(...documentIds, ...GLOBAL_KNOWLEDGE_SOURCE_TYPES);
     } else {
-      sql += ` AND d.id IN (${placeholders}) AND d.organization_id IS NULL`;
-      queryParams.push(...documentIds);
+      aiLogger.warn(
+        'RagService',
+        'Explicit documentIds search with no caller organization blocked: no source_type column to distinguish global packs from unresolved-owner rows'
+      );
+      return { sql, allowed: false };
     }
   } else if (organizationId && hasOrg) {
     sql += ' AND d.organization_id = ?';
@@ -595,6 +655,10 @@ const RagService = {
             source: (meta.source as string) || r.filename || 'Knowledge Base',
             similarity: r.hybridScore || 0,
             documentId: (r as any)?.doc_id || (r as any)?.documentId || undefined,
+            // M01-P04B: real chunk ordinal (knowledge_chunks.chunk_index), not fabricated —
+            // undefined when the column is absent (ensureKnowledgeChunksColumns guard
+            // upstream in bm25Search/_vectorSearch), never a hardcoded 0.
+            chunkIndex: typeof r.chunkIndex === 'number' ? r.chunkIndex : undefined,
             sourceAuthor: (meta.source_author as string) || undefined,
             branded: Boolean(meta.branded),
             metadata: meta,
@@ -723,6 +787,7 @@ const RagService = {
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
+    const hasChunkIndex = chunkCols.has('chunk_index');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     let sql = `
             SELECT
@@ -733,6 +798,7 @@ const RagService = {
               d.id as doc_id
               ${hasCategory ? ', d.category as doc_category' : ''}
               ${hasVersion ? ', d.version as doc_version' : ''}
+              ${hasChunkIndex ? ', c.chunk_index as chunk_index' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON ${chunkJoin}
             WHERE 1=1
@@ -754,6 +820,7 @@ const RagService = {
       content: string;
       filename: string;
       chunk_metadata?: string | Record<string, unknown> | null;
+      chunk_index?: number | null;
     }>(sql, params);
     if (!rows || rows.length === 0) {
       return [];
@@ -772,6 +839,7 @@ const RagService = {
     const scored = rows.map((row, idx) => ({
       ...row,
       metadata: parseChunkMetadata(row.chunk_metadata),
+      chunkIndex: typeof row.chunk_index === 'number' ? row.chunk_index : undefined,
       bm25Score: bm25Score(queryTokens, tokenizedDocs[idx], avgDocLength, idf),
       tokens: tokenizedDocs[idx],
     }));
@@ -901,6 +969,7 @@ const RagService = {
     const chunkCols = await ensureKnowledgeChunksColumns();
     const hasCategory = cols.has('category');
     const hasVersion = cols.has('version');
+    const hasChunkIndex = chunkCols.has('chunk_index');
     const chunkJoin = knowledgeChunkDocJoin(chunkCols);
     const queryEmbedding = await RagService.generateEmbedding(query);
     if (!queryEmbedding) return [];
@@ -915,6 +984,7 @@ const RagService = {
               c.embedding
               ${hasCategory ? ', d.category as doc_category' : ''}
               ${hasVersion ? ', d.version as doc_version' : ''}
+              ${hasChunkIndex ? ', c.chunk_index as chunk_index' : ''}
             FROM knowledge_chunks c
             JOIN knowledge_docs d ON ${chunkJoin}
             WHERE c.embedding IS NOT NULL
@@ -937,6 +1007,7 @@ const RagService = {
       filename: string;
       embedding: string;
       chunk_metadata?: string | Record<string, unknown> | null;
+      chunk_index?: number | null;
     }>(sql, params);
 
     const scored = rows.map((row) => {
@@ -944,6 +1015,7 @@ const RagService = {
       return {
         ...row,
         metadata: parseChunkMetadata(row.chunk_metadata),
+        chunkIndex: typeof row.chunk_index === 'number' ? row.chunk_index : undefined,
         vectorScore: vec ? cosineSimilarity(queryEmbedding, vec) : 0,
       };
     });

@@ -187,17 +187,42 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           className="flex-1 min-w-0 px-1.5 py-0.5 text-[13px] rounded bg-white dark:bg-navy-800 border border-primary-400 dark:border-primary-600 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
         />
       ) : (
-        <span
-          className={`flex-1 min-w-0 text-[13px] truncate ${
-            isDefaultTitle
-              ? 'text-slate-600 dark:text-slate-500 italic'
-              : isActive
-                ? 'text-slate-900 dark:text-white font-medium'
-                : 'text-slate-700 dark:text-slate-300'
-          }`}
-        >
-          {conversation.title || 'New Conversation'}
-        </span>
+        <div className="flex-1 min-w-0">
+          <span
+            className={`block text-[13px] truncate ${
+              isDefaultTitle
+                ? 'text-slate-600 dark:text-slate-500 italic'
+                : isActive
+                  ? 'text-slate-900 dark:text-white font-medium'
+                  : 'text-slate-700 dark:text-slate-300'
+            }`}
+          >
+            {conversation.title || 'New Conversation'}
+          </span>
+          {/* Search hits only: the matching excerpt, as inert {text, mark}
+              segments from the server. Rendered as React text nodes, never
+              as HTML — message content is user-authored and must stay
+              non-executable (M01-P02). */}
+          {conversation.matchedSnippet && conversation.matchedSnippet.length > 0 && (
+            <span
+              data-testid="conversation-matched-snippet"
+              className="block text-[11px] truncate text-slate-500 dark:text-slate-400"
+            >
+              {conversation.matchedSnippet.map((segment, index) =>
+                segment.mark ? (
+                  <mark
+                    key={index}
+                    className="rounded-[2px] bg-amber-100 px-0.5 text-slate-900 dark:bg-amber-500/25 dark:text-white"
+                  >
+                    {segment.text}
+                  </mark>
+                ) : (
+                  <React.Fragment key={index}>{segment.text}</React.Fragment>
+                )
+              )}
+            </span>
+          )}
+        </div>
       )}
 
       {conversation.starred && (

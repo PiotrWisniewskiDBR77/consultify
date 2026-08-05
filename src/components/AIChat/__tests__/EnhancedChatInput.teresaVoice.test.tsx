@@ -74,7 +74,19 @@ vi.mock('../../../hooks/useCloudIntegrations', () => ({
 
 vi.mock('../../../components/AIChat/AddFilesMenu', () => ({ AddFilesMenu: () => null }));
 vi.mock('../../../components/AIChat/CloudFilePicker', () => ({ CloudFilePicker: () => null }));
-vi.mock('../../../components/AIChat/CoThinkerMenu', () => ({ CoThinkerMenu: () => null }));
+// M01-P05: `EnhancedChatInput` also renders `CoThinkerActivePill` (the active
+// Co-Thinker persona indicator, added after this mock was written) right
+// next to the voice CTA — an incomplete mock here isn't a stylistic gap, it
+// crashes the render entirely ("No CoThinkerActivePill export is defined on
+// the mock"), which took out all 3 assertions in this file with an error
+// unrelated to voice. Both real exports are stubbed to `null` so the
+// component tree still mounts; neither stub loosens any assertion below —
+// they render nothing, so they can't satisfy or interfere with a
+// `getByTitle`/`toHaveBeenCalledTimes` check on the voice button itself.
+vi.mock('../../../components/AIChat/CoThinkerMenu', () => ({
+  CoThinkerMenu: () => null,
+  CoThinkerActivePill: () => null,
+}));
 vi.mock('../../../components/AIChat/MoveToProjectModal', () => ({
   MoveToProjectModal: () => null,
 }));

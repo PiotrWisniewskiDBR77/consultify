@@ -1150,6 +1150,10 @@ router.get(
       // ★ Kolumny „Rozmiar" / „W wiedzy AI" / „Błędy indeksowania" (research Harvey
       // Vault + kanon nazw z tabeli dokumentów, patrz VaultDocumentsView.tsx
       // `colChunks`/`colSize`) — policzone TYM SAMYM zapytaniem GROUP BY, zero N+1.
+      // M01-P04C: `organization_id = ?` bez `OR organization_id IS NULL` —
+      // Vault nie ma legalnej kategorii globalnej (patrz KnowledgeService
+      // .getDocuments), więc wiersze bez rozstrzygniętego ownera nie mogą
+      // wchodzić do liczników żadnego sejfu.
       const grouped = await DbPromise.all<{
         scope: string | null;
         project_id: string | null;
@@ -1165,7 +1169,7 @@ router.get(
                 SUM(CASE WHEN chunk_count > 0 THEN 1 ELSE 0 END) as indexed_cnt,
                 SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error_cnt
          FROM knowledge_docs
-         WHERE (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL
+         WHERE organization_id = ? AND deleted_at IS NULL
          GROUP BY scope, project_id, owner_id`,
         [orgId],
         { fallback: true } as any

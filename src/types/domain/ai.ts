@@ -205,12 +205,31 @@ export interface ToolCallInfo {
  */
 export interface ChatCitation {
   id: string;
-  type: 'assessment' | 'initiative' | 'report' | 'roadmap' | 'external';
+  type: 'assessment' | 'initiative' | 'report' | 'roadmap' | 'external' | string;
   title: string;
   reference: string;
   link?: string;
   excerpt?: string;
   entityId?: string;
+  /**
+   * M01-P04B (GF-CHAT-08, source failure honesty). Absent/`undefined` is
+   * treated as `'ready'` for backward compatibility with citations persisted
+   * before this field existed. `'failed'`/`'stale'`/`'no_access'` MUST
+   * suppress `title` and `excerpt` in the UI — see
+   * `CitationList.tsx#getSafeCitationView`. `'no_access'` is RBAC-specific
+   * (document exists but the caller lacks permission) — a distinct reason
+   * from `'failed'` (document verification broke/doesn't exist), even though
+   * both render as a redacted placeholder.
+   */
+  status?: 'ready' | 'stale' | 'failed' | 'no_access';
+  /**
+   * M01-P04B (GF-CHAT-02, fragment anchor). Real ordinal position of the
+   * cited chunk within its source document (`knowledge_chunks.chunk_index`).
+   * `null`/`undefined` means "no specific fragment known" — NEVER fabricate
+   * `0` as a stand-in; that would make every citation look anchored to the
+   * same (first) fragment. See `server/src/services/ai/citationExtractor.ts`.
+   */
+  fragmentIndex?: number | null;
 }
 
 /**

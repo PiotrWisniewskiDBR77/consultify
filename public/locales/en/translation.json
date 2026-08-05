@@ -14682,7 +14682,10 @@
       "branch": "Branch from here",
       "delete": "Delete",
       "report": "Report",
-      "more": "more"
+      "more": "more",
+      "continue": "Continue",
+      "continueInstruction": "Continue the previous answer from where it stopped.",
+      "regenerate": "Regenerate"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -14772,6 +14775,18 @@
     },
     "feedback": {
       "missingInfoPlaceholder": "Describe what was missing from the answer..."
+    },
+    "report": {
+      "title": "Report an issue",
+      "description": "Let us know what went wrong with this response.",
+      "incorrect": "Factually incorrect",
+      "harmful": "Harmful or unsafe content",
+      "unhelpful": "Not helpful or relevant",
+      "other": "Other issue",
+      "otherPlaceholder": "Describe the issue...",
+      "submit": "Report",
+      "sent": "Report sent for review.",
+      "failed": "Report could not be sent. Please try again."
     }
   },
   "aiChat": {
@@ -14880,7 +14895,12 @@
       "snooze": "Snooze",
       "muteType": "Mute type",
       "dismiss": "Dismiss",
-      "mutedHint": "Muted types:"
+      "mutedHint": "Muted types:",
+      "forbidden": "You don't have permission to view signals for this project.",
+      "errorState": "Couldn't check for signals right now.",
+      "moreActions": "More actions",
+      "showMore": "Show more signals",
+      "showLess": "Show fewer signals"
     },
     "quickClicks": {
       "brief": {
@@ -15408,6 +15428,11 @@
     "newConversation": "New conversation",
     "closeSidebar": "Close sidebar",
     "searchPlaceholder": "Search conversations...",
+    "searching": "Searching...",
+    "searchFailed": "Search is unavailable right now.",
+    "searchRetry": "Try again",
+    "partialResults": "Results may be incomplete. Try again later.",
+    "scopeLimited": "Some results are hidden by access restrictions.",
     "confirmDelete": "Are you sure you want to delete this conversation?",
     "sections": {
       "archived": "Archived"
@@ -15507,7 +15532,13 @@
       "reject": "Reject"
     },
     "attachments": {
+      "allFailed": "❌ Could not process the attached source(s): {{names}}. The AI will respond without them. Please re-upload in a supported format (PDF, TXT, MD, CSV, JSON) or check that the link is publicly accessible.",
+      "analyzingSources": "📎 Analyzing {{count}} attachment(s): {{names}}... Extracting content for AI analysis.",
       "extractionFailed": "Couldn't read text from file \"{{name}}\". Check that the file isn't empty or corrupted.",
+      "extractionFailedShort": "Could not extract readable text from this file.",
+      "filesPartial": "⚠️ {{processed}}/{{total}} attachment(s) processed: {{names}}. Some sources could not be read and will not be referenced. You can retry them or continue.",
+      "filesReady": "📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.",
+      "sizeExceeded": "File \"{{name}}\" exceeds the {{maxMb}} MB limit.",
       "unsupportedType": "File \"{{name}}\" is not supported. Allowed formats: {{types}}.",
       "uploadError": "Error uploading file \"{{name}}\": {{error}}",
       "uploadFailed": "Couldn't process file \"{{name}}\".",

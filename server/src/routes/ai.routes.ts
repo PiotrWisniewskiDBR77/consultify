@@ -23,6 +23,7 @@ import {
   buildProductAssistantFallback,
   isExplicitResearchAsk,
 } from '../services/ai/chatStabilizationPolicy.js';
+import { buildCitationStatusPayload } from '../services/ai/citationAccessStatus.js';
 import type { VerificationReport } from '../services/ai/citationVerifier.js';
 import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
 import {
@@ -414,32 +415,25 @@ router.post(
       });
     }
 
-    // Create a knowledge_docs row (schema is minimal across DBs; extra columns are optional)
+    // M01-P04C: `organization_id` and `category` are set in the SAME INSERT
+    // as the row's creation — not via a follow-up best-effort UPDATE. Before
+    // this fix, `organization_id` was assigned by a SEPARATE, try/catch-
+    // swallowed `UPDATE ... WHERE id = ?` issued right after this INSERT
+    // (see migration 942_chat_m01p04a_attachment_status.sql's own comment on
+    // this exact gap); if that second statement ever failed silently, the
+    // row was left with `organization_id IS NULL` — an attachment with NO
+    // resolved owner, retrievable only through the fail-closed paths this
+    // packet added (KnowledgeService/ragService), i.e. effectively orphaned
+    // and unreachable by ANY org rather than reachable by every org. A
+    // single INSERT removes that window entirely: the row is born with its
+    // real owner or the whole insert fails (caught by the caller's existing
+    // error handling), never half-created.
     await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
-       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
-      [docId, filename, ''],
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, created_at)
+       VALUES (?, ?, ?, 'indexed', ?, 'chat_attachment', CURRENT_TIMESTAMP)`,
+      [docId, filename, '', orgId],
       { fallback: true } as any
     );
-    // Best-effort optional columns (do not fail request)
-    try {
-      await dbRun(
-        `UPDATE knowledge_docs SET category = ? WHERE id = ?`,
-        ['chat_attachment', docId],
-        {
-          fallback: true,
-        } as any
-      );
-    } catch {
-      /* ignore */
-    }
-    try {
-      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
-        fallback: true,
-      } as any);
-    } catch {
-      /* ignore */
-    }
 
     const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
       const normalized = String(raw || '')
@@ -742,30 +736,16 @@ router.post(
     const filename = (detectedTitle || fallbackName).slice(0, 180);
     const docId = uuidv4();
 
+    // M01-P04C: see the identical comment on the `/attachments/ingest`
+    // handler above — `organization_id`/`category` set in the SAME INSERT,
+    // not a separate try/catch-swallowed UPDATE that could leave the row
+    // with an unresolved (NULL) owner.
     await dbRun(
-      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
-       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
-      [docId, filename, finalUrl || inputUrl],
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, organization_id, category, created_at)
+       VALUES (?, ?, ?, 'indexed', ?, 'chat_url_attachment', CURRENT_TIMESTAMP)`,
+      [docId, filename, finalUrl || inputUrl, orgId],
       { fallback: true } as any
     );
-    try {
-      await dbRun(
-        `UPDATE knowledge_docs SET category = ? WHERE id = ?`,
-        ['chat_url_attachment', docId],
-        {
-          fallback: true,
-        } as any
-      );
-    } catch {
-      /* ignore */
-    }
-    try {
-      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
-        fallback: true,
-      } as any);
-    } catch {
-      /* ignore */
-    }
 
     const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
       const normalized = String(raw || '')
@@ -1614,6 +1594,20 @@ router.post(
     let sourceLedgerSnapshot: any = null;
     // HP-15: runtime citation verification result (set right before the main-answer trust bundle).
     let runtimeCitationVerification: VerificationReport | null = null;
+    // M01-P04B (GF-CHAT-08, coverage): claim↔citation coverage result from
+    // `claimCitationValidator.validateClaimCitations`. Previously computed but
+    // only surfaced as a `policy_notice` with `displayToUser: false` — an
+    // internal audit trail the user never sees, so an answer with zero
+    // citations had NO client-visible "not grounded" signal beyond TrustBadge's
+    // separate (and independently silenced-when-empty) source count. Fed into
+    // `emitTrustBundle` below so `TrustPanel` can show it honestly.
+    let claimCoverageResult: {
+      totalClaims?: number;
+      citedClaims?: number;
+      uncitedClaims?: number;
+      coverageScore?: number;
+      passesPolicy?: boolean;
+    } | null = null;
 
     const mergeCitations = (prev: any[], next: any[]) => {
       const out: any[] = [];
@@ -2760,7 +2754,20 @@ router.post(
             cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
             tokens,
             routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
-            warnings: degraded ? [degraded.reason || degraded.mode] : [],
+            // M01-P04B (GF-CHAT-08, coverage): claim↔citation coverage result.
+            // Previously computed (`claimCitationValidator.validateClaimCitations`)
+            // but only reached an internal `policy_notice` marked
+            // `displayToUser: false` — the user never saw it. Exposed here so
+            // `TrustPanel` (owned by this packet) can render it honestly:
+            // an answer whose claims are NOT covered by citations must never
+            // read as "grounded" with no visible caveat.
+            coverage: claimCoverageResult,
+            warnings: [
+              ...(degraded ? [degraded.reason || degraded.mode] : []),
+              ...(claimCoverageResult?.passesPolicy === false
+                ? ['insufficient_citation_coverage']
+                : []),
+            ],
             assistant: 'teresa',
             assistantSurface: 'workspace_copilot',
             actionSurface: 'governed_execution',
@@ -3957,6 +3964,10 @@ router.post(
                 excerpt: String(c?.content || '')
                   .trim()
                   .slice(0, 500),
+                // GF-CHAT-02 fragment anchor: real chunk ordinal
+                // (knowledge_chunks.chunk_index via ragService.searchRelevantChunks),
+                // `null` — never a fabricated `0` — when the source has none.
+                fragmentIndex: typeof c?.chunkIndex === 'number' ? c.chunkIndex : null,
               };
             });
             emitSSE({ type: 'citations', citations: attachmentCitations });
@@ -5076,8 +5087,14 @@ router.post(
                       title: c.sourceTitle || '',
                       reference: c.sourceUrl || c.sourceId || '',
                       link: c.sourceUrl || '',
-                      excerpt: c.text || '',
+                      // M01-P04B fix: `c.text` is the marker text ("[1]"), not the
+                      // real source excerpt — was showing the marker as the preview.
+                      excerpt: c.fragmentExcerpt || c.text || '',
                       confidence: c.confidence,
+                      // GF-CHAT-02 fragment anchor: real chunk ordinal from
+                      // knowledge_chunks.chunk_index, `null` (never `0`) when unknown.
+                      fragmentIndex:
+                        typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
                     })),
                   });
                 }
@@ -5299,6 +5316,16 @@ router.post(
                   );
                   const policy = policyDecision?.evidence?.claimCitationPolicy || {};
                   const validation = validateClaimCitations(matchedClaims, policy);
+                  // M01-P04B (GF-CHAT-08): capture for emitTrustBundle (see decl above).
+                  claimCoverageResult = validation
+                    ? {
+                        totalClaims: validation.totalClaims,
+                        citedClaims: validation.citedClaims,
+                        uncitedClaims: validation.uncitedClaims,
+                        coverageScore: validation.coverageScore,
+                        passesPolicy: validation.passesPolicy,
+                      }
+                    : null;
 
                   emitSSE({
                     type: 'policy_validation',
@@ -5411,7 +5438,23 @@ router.post(
             conversationId,
             messageId: chatRunId,
             surface: 'chat_stream',
+            // M01-006: lets the verifier flag a citation whose sourceId
+            // belongs to a different organization as 'no_access' instead of
+            // 'verified' — see citationVerifier.ts#checkAccess.
+            organizationId: req.organizationId,
           });
+          // M01-P04B (GF-CHAT-08): stream a status-only delta for citations already
+          // sent to the client. `buildCitationStatusPayload` only ever emits
+          // {id, status} — no title/excerpt/url can leak through it, even for a
+          // citation the verifier just marked 'broken' (failed) or unresolved
+          // (stale). `useAIStream`'s `mergeCitations` merges by `id` and keeps
+          // newer fields, so this updates the existing citation entries in place
+          // without touching `useAIStream.ts`/`UnifiedChatPanel.tsx` (owned by
+          // lane A / P04A — out of scope here).
+          const citationStatusDelta = buildCitationStatusPayload(runtimeCitationVerification);
+          if (citationStatusDelta.length > 0) {
+            emitSSE({ type: 'citations', citations: citationStatusDelta });
+          }
           emitTrustBundle(accumulatedContent);
 
           streamCompleted = true;
@@ -5494,8 +5537,10 @@ router.post(
                       title: c.sourceTitle || '',
                       reference: c.sourceUrl || c.sourceId || '',
                       link: c.sourceUrl || '',
-                      excerpt: c.text || '',
+                      excerpt: c.fragmentExcerpt || c.text || '',
                       confidence: c.confidence,
+                      fragmentIndex:
+                        typeof c.fragmentIndex === 'number' ? c.fragmentIndex : null,
                     })),
                   });
                 }
@@ -5538,6 +5583,16 @@ router.post(
                   );
                   const policy = policyDecision?.evidence?.claimCitationPolicy || {};
                   const validation = validateClaimCitations(matchedClaims, policy);
+                  // M01-P04B (GF-CHAT-08): capture for emitTrustBundle (see decl above).
+                  claimCoverageResult = validation
+                    ? {
+                        totalClaims: validation.totalClaims,
+                        citedClaims: validation.citedClaims,
+                        uncitedClaims: validation.uncitedClaims,
+                        coverageScore: validation.coverageScore,
+                        passesPolicy: validation.passesPolicy,
+                      }
+                    : null;
 
                   emitSSE({
                     type: 'policy_validation',
@@ -5604,7 +5659,16 @@ router.post(
               conversationId,
               messageId: chatRunId,
               surface: 'chat_nonstream',
+              // M01-006: see rationale on the streaming branch above.
+              organizationId: req.organizationId,
             });
+            // M01-P04B (GF-CHAT-08) — see streaming branch above for rationale.
+            const citationStatusDeltaNonStream = buildCitationStatusPayload(
+              runtimeCitationVerification
+            );
+            if (citationStatusDeltaNonStream.length > 0) {
+              emitSSE({ type: 'citations', citations: citationStatusDeltaNonStream });
+            }
             emitTrustBundle(nonStreamContent);
           }
 
@@ -7657,6 +7721,30 @@ router.post(
     const userId = req.userId!;
 
     try {
+      // M01-P03 §8 — tenant: reporting someone else's message must be
+      // rejected. This previously logged whatever messageId the caller sent
+      // with no ownership check at all — not a data-read risk (nothing is
+      // returned), but a caller could tag an arbitrary conversation's message
+      // as "harmful" without ever having access to it. 404 (not 403) matches
+      // the not-found convention used for cross-tenant conversation access
+      // elsewhere in this codebase — no existence oracle for messages the
+      // caller cannot see.
+      const messageRow = await dbGet<{ conversation_id: string }>(
+        `SELECT conversation_id FROM conversation_messages WHERE id = ?`,
+        [messageId]
+      );
+      if (!messageRow) {
+        return res.status(404).json({ success: false, error: 'Message not found' });
+      }
+      const accessibleConversation = await dbGet<{ id: string }>(
+        `SELECT id FROM conversations
+         WHERE id = ? AND (user_id = ? OR (organization_id IS NOT NULL AND organization_id = ?))`,
+        [messageRow.conversation_id, userId, req.organizationId || null]
+      );
+      if (!accessibleConversation) {
+        return res.status(404).json({ success: false, error: 'Message not found' });
+      }
+
       logger.error(`[AI REPORT] 🚨 User ${userId} reported message ${messageId}: ${reason}`);
 
       try {

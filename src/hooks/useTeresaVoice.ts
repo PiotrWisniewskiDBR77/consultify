@@ -361,7 +361,24 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
       if (attemptRef.current !== token) return;
       console.error('[useTeresaVoice] Failed to start voice', err);
       updateStatus('error');
-      setVoiceError('Could not start voice session.');
+      // M01-P05 (P0.8 capability honesty): a denied/missing microphone is a
+      // DIFFERENT, actionable situation from "the Gemini session failed to
+      // connect" — collapsing both into "Could not start voice session."
+      // told the user nothing they could act on. `getUserMedia` rejects with
+      // a real `DOMException` whose `.name` distinguishes the cause; we
+      // surface that instead of a generic string.
+      const domErrorName = err instanceof DOMException ? err.name : null;
+      if (domErrorName === 'NotAllowedError' || domErrorName === 'PermissionDeniedError') {
+        setVoiceError(
+          'Microphone access was denied — allow microphone access in your browser settings and try again.'
+        );
+      } else if (domErrorName === 'NotFoundError' || domErrorName === 'DevicesNotFoundError') {
+        setVoiceError('No microphone found on this device.');
+      } else if (domErrorName === 'NotReadableError' || domErrorName === 'TrackStartError') {
+        setVoiceError('Microphone is in use by another application.');
+      } else {
+        setVoiceError('Could not start voice session.');
+      }
       await teardownVoice();
     }
   }, [

@@ -16,11 +16,13 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
+  CornerDownRight,
   Database,
   Download,
   FileCode,
   FilePlus2,
   FileText,
+  Flag,
   GitBranch,
   Lightbulb,
   Loader2,
@@ -31,12 +33,13 @@ import {
   Volume2,
   Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { usePermissions } from '../../hooks/usePermissions';
+import { Api } from '../../services/api';
 import { Artifact, ChatMessage, ResponseFeedback, ThinkingStep } from '../../types';
 import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
@@ -62,6 +65,19 @@ const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
   'execution_progress',
   'execution_result',
 ]);
+
+// M01-010 — report reasons offered in the AI-message "More actions" menu.
+// The i18n keys already exist under `chat.report.*`; the key itself doubles as
+// the `reason` string sent to POST /api/ai/report (schema: reason = string min 1),
+// except for `other`, where the user's own text is sent instead.
+const REPORT_REASON_KEYS = ['incorrect', 'harmful', 'unhelpful', 'other'] as const;
+type ReportReasonKey = (typeof REPORT_REASON_KEYS)[number];
+const REPORT_REASON_FALLBACKS: Record<ReportReasonKey, string> = {
+  incorrect: 'Factually incorrect',
+  harmful: 'Harmful or unsafe content',
+  unhelpful: 'Not helpful or relevant',
+  other: 'Other issue',
+};
 
 // ============================================================================
 // Inline citation rendering — feedback #3c5b87cf / #05b77280 / #1cbe2baa.
@@ -459,10 +475,86 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isContextSaved = contextSavedMessageIds.has(msg.id);
   const [showCompactActions, setShowCompactActions] = useState(false);
   const [showSourcesDetails, setShowSourcesDetails] = useState(false);
+
+  // ── M01-010: AI-message actions (regenerate / continue / report) ───────────
+  // Every one of the three is wired to a real flow: regenerate and continue go
+  // through the same `handleSendMessage` the composer and the error-retry
+  // button use; report goes through `Api.reportMessageFeedback` →
+  // POST /api/ai/report. Nothing here confirms anything it did not actually do.
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReasonKey, setReportReasonKey] = useState<ReportReasonKey>('incorrect');
+  const [reportOtherText, setReportOtherText] = useState('');
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reportSentAt, setReportSentAt] = useState<number | null>(null);
+  const reportTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const reportDialogRef = useRef<HTMLDivElement | null>(null);
+
+  // A11y: closing the dialog must always hand focus back to its trigger.
+  const closeReportDialog = useCallback(() => {
+    setReportOpen(false);
+    setReportError(null);
+    reportTriggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!reportOpen) return;
+    // Move focus into the dialog so keyboard users are not stranded behind it.
+    reportDialogRef.current?.querySelector<HTMLElement>('[data-report-autofocus="true"]')?.focus();
+  }, [reportOpen]);
+
   const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
   const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
   const userVisibleContent =
     msg.role === 'ai' ? sanitizeUserVisibleAiText(msg.content || '') : msg.content || '';
+
+  // Last user turn before this message — the same lookup the error-retry button
+  // uses; `regenerate` re-sends exactly that prompt.
+  const precedingUserMessage = (() => {
+    const currentIdx = displayMessages.indexOf(msg);
+    if (currentIdx <= 0) return null;
+    return (
+      displayMessages
+        .slice(0, currentIdx)
+        .reverse()
+        .find((m) => m.role === 'user') || null
+    );
+  })();
+  const canRegenerate = Boolean(precedingUserMessage?.content);
+
+  const handleRegenerateMessage = () => {
+    const prompt = precedingUserMessage?.content;
+    if (!prompt) return;
+    handleSendMessage(prompt);
+  };
+
+  const handleContinueMessage = () => {
+    handleSendMessage(
+      t('chat.actions.continueInstruction', 'Continue the previous answer from where it stopped.')
+    );
+  };
+
+  const handleSubmitReport = async () => {
+    // Server contract: reason must be a non-empty string. `other` sends the
+    // user's own words; the preset options send their key.
+    const reason = reportReasonKey === 'other' ? reportOtherText.trim() : reportReasonKey;
+    if (!reason || reportBusy) return;
+    setReportBusy(true);
+    setReportError(null);
+    try {
+      await Api.reportMessageFeedback(msg.id, reason);
+      setReportSentAt(Date.now());
+      setReportOpen(false);
+      reportTriggerRef.current?.focus();
+    } catch (err) {
+      // Honest failure: the dialog stays open and says the report did NOT go out.
+      console.error('[MessageRenderer] Report failed:', err);
+      setReportError(t('chat.report.failed', 'Report could not be sent. Please try again.'));
+    } finally {
+      setReportBusy(false);
+    }
+  };
+
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   // Krok A — patrz `teresaPendingConfirm` w UnifiedChatPanel.tsx. Znacznik na
   // wiadomości mówi "to JEST pytanie o potwierdzenie"; dopasowanie po
@@ -525,6 +617,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   return (
     <div
       key={msg.id}
+      // Anchor for deep links (e.g. jumping from a history search hit).
+      data-message-anchor={msg.id}
       className={`mx-auto w-full max-w-5xl flex flex-col space-y-1.5 group mb-8 last:mb-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
       onMouseEnter={() => setHoveredMessageId(msg.id)}
       onMouseLeave={() => setHoveredMessageId(null)}
@@ -1880,7 +1974,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </button>
 
             {showCompactActions && (
-              <div className="inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-c-border bg-c-surface-raised">
+              <div className="relative inline-flex items-center gap-0.5 px-1.5 py-1 rounded-xl border border-c-border bg-c-surface-raised">
                 <InlineResponseFeedback
                   messageId={msg.id}
                   conversationId={activeConversationId || undefined}
@@ -1888,16 +1982,67 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
                   compact
                   thumbsOnly
+                  // M01-P03 §7 — hydrate "already rated" from the persisted
+                  // message. M01-P03B (2026-08-05) wired the server-side
+                  // join that makes this real: GET /api/conversations/:id
+                  // now attaches the caller's own ai_response_feedback
+                  // rating onto each message, so `msg.feedback` is no
+                  // longer always null on real data.
+                  existingFeedback={
+                    msg.feedback &&
+                    (msg.feedback.rating === 'positive' || msg.feedback.rating === 'negative')
+                      ? { rating: msg.feedback.rating, timestamp: new Date() }
+                      : null
+                  }
                 />
-                {handleBranchFromMessage && !String(msg.id || '').startsWith('local-') && (
+                {/* M01-010 — Regenerate: re-sends the user turn this answer
+                    replied to, through the same path as the error-retry button.
+                    Hidden when there is no preceding user message (no dead button). */}
+                {canRegenerate && (
                   <button
-                    onClick={() => handleBranchFromMessage(msg.id)}
-                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors"
-                    title={t('chat.actions.branch', 'Branch from here')}
-                    aria-label={t('chat.actions.branch', 'Branch from here')}
+                    onClick={handleRegenerateMessage}
+                    disabled={isDisabled}
+                    data-testid="message-action-regenerate"
+                    className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                    title={t('chat.actions.regenerate', 'Regenerate')}
+                    aria-label={t('chat.actions.regenerate', 'Regenerate')}
                   >
-                    <GitBranch size={12} />
+                    <RefreshCw size={12} />
                   </button>
+                )}
+                {/* M01-010 — Continue: sends a continuation instruction on the
+                    same `handleSendMessage` path. */}
+                <button
+                  onClick={handleContinueMessage}
+                  disabled={isDisabled}
+                  data-testid="message-action-continue"
+                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  title={t('chat.actions.continue', 'Continue')}
+                  aria-label={t('chat.actions.continue', 'Continue')}
+                >
+                  <CornerDownRight size={12} />
+                </button>
+                {/* M01-010 — Report: opens the reason prompt, then really POSTs
+                    to /api/ai/report via Api.reportMessageFeedback.
+                    Hidden for optimistic messages: the endpoint requires a
+                    persisted uuid, so a `local-` id could only ever 400. Same
+                    guard Branch uses. */}
+                {!String(msg.id || '').startsWith('local-') && (
+                <button
+                  ref={reportTriggerRef}
+                  onClick={() => {
+                    setReportError(null);
+                    setReportOpen((v) => !v);
+                  }}
+                  data-testid="message-action-report"
+                  aria-haspopup="dialog"
+                  aria-expanded={reportOpen}
+                  className="p-1 rounded-md text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  title={t('chat.actions.report', 'Report')}
+                  aria-label={t('chat.actions.report', 'Report')}
+                >
+                  <Flag size={12} />
+                </button>
                 )}
                 <button
                   onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
@@ -1949,7 +2094,113 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   <ShieldCheck size={12} />
                 </button>
                 <span className="mx-0.5 h-3 w-px bg-c-border" />
+
+                {/* M01-010 — report reason prompt. Escape closes it and focus
+                    returns to the Report button (see closeReportDialog). */}
+                {reportOpen && (
+                  <div
+                    ref={reportDialogRef}
+                    role="dialog"
+                    aria-modal="false"
+                    aria-label={t('chat.report.title', 'Report an issue')}
+                    data-testid="message-report-dialog"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        e.stopPropagation();
+                        closeReportDialog();
+                      }
+                    }}
+                    className="absolute top-full left-0 z-30 mt-1 w-64 rounded-xl border border-c-border bg-c-surface p-3 shadow-lg text-left"
+                  >
+                    <div className="text-xs font-semibold text-c-text">
+                      {t('chat.report.title', 'Report an issue')}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-c-text-muted">
+                      {t(
+                        'chat.report.description',
+                        'Let us know what went wrong with this response.'
+                      )}
+                    </p>
+                    <div className="mt-2 flex flex-col gap-1" role="radiogroup">
+                      {REPORT_REASON_KEYS.map((key, idx) => (
+                        <label
+                          key={key}
+                          className="flex items-center gap-2 text-[11px] text-c-text-secondary cursor-pointer"
+                        >
+                          <input
+                            type="radio"
+                            name={`report-reason-${msg.id}`}
+                            value={key}
+                            checked={reportReasonKey === key}
+                            onChange={() => setReportReasonKey(key)}
+                            data-report-autofocus={idx === 0 ? 'true' : undefined}
+                            className="accent-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                          />
+                          <span>{t(`chat.report.${key}`, REPORT_REASON_FALLBACKS[key])}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {reportReasonKey === 'other' && (
+                      <textarea
+                        value={reportOtherText}
+                        onChange={(e) => setReportOtherText(e.target.value)}
+                        rows={2}
+                        data-testid="message-report-other-text"
+                        placeholder={t('chat.report.otherPlaceholder', 'Describe the issue...')}
+                        aria-label={t('chat.report.otherPlaceholder', 'Describe the issue...')}
+                        className="mt-2 w-full rounded-lg border border-c-border bg-c-surface-raised px-2 py-1 text-[11px] text-c-text placeholder:text-c-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      />
+                    )}
+                    {reportError && (
+                      <div
+                        role="alert"
+                        data-testid="message-report-error"
+                        className="mt-2 text-[11px] text-danger-600 dark:text-danger-300"
+                      >
+                        {reportError}
+                      </div>
+                    )}
+                    <div className="mt-2 flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={closeReportDialog}
+                        data-testid="message-report-cancel"
+                        className="h-6 px-2 rounded-md text-[11px] text-c-text-muted hover:text-c-text hover:bg-c-surface-raised transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSubmitReport}
+                        disabled={
+                          reportBusy ||
+                          (reportReasonKey === 'other' && reportOtherText.trim().length === 0)
+                        }
+                        data-testid="message-report-submit"
+                        className="h-6 px-2 rounded-md border border-c-border bg-c-surface text-[11px] font-medium text-c-text hover:bg-c-surface-raised transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                      >
+                        {reportBusy ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          t('chat.report.submit', 'Report')
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Honest result of the last report attempt (success only — a
+                failure keeps the dialog open with an inline error). */}
+            {!reportOpen && reportSentAt !== null && (
+              <span
+                role="status"
+                data-testid="message-report-status"
+                className="text-[11px] text-c-text-muted"
+              >
+                {t('chat.report.sent', 'Report sent for review.')}
+              </span>
             )}
           </div>
         )}

@@ -39,6 +39,33 @@ vi.mock('../../../services/ai/llmService.js', () => ({
   llmService: { call: (...args: unknown[]) => mockLlmCall(...args) },
 }));
 
+// FIX M01-P07B (M01-005): owner-module doubles so §1's full voice -> proposal
+// -> approve -> execute scenarios reach `completed` under the NEW
+// fail-closed contract (every target now performs an independent,
+// tenant-scoped read-back before completing — the stateless `mockDbGet`
+// double above can never satisfy that on its own). See the identical
+// comment in p08-teresa-service.test.ts for the full "why these tests used
+// to pass" explanation: they used to exercise the exact fabrication bug
+// this packet closes (`fallbackRef = randomUUID()`), not real success.
+vi.mock('../../../services/v8/radarTriageService.js', () => ({
+  createSignal: vi.fn(async () => ({ id: 'mock-radar-signal-1' })),
+  getTriageSignal: vi.fn(async () => ({ id: 'mock-radar-signal-1' })),
+}));
+vi.mock('../../../services/initiativeGenerationService.js', () => ({
+  createInitiative: vi.fn(async () => ({ id: 'mock-initiative-1' })),
+}));
+vi.mock('../../../services/v8/planningPortfolioReadService.js', () => ({
+  getInitiativeDetailRead: vi.fn(async () => ({ id: 'mock-initiative-1' })),
+}));
+vi.mock('../../../services/meetingService.js', () => ({
+  createMeeting: vi.fn(async () => ({ id: 'mock-meeting-1' })),
+  getMeeting: vi.fn(async () => ({ id: 'mock-meeting-1' })),
+}));
+vi.mock('../../../services/notebookService.js', () => ({
+  createNote: vi.fn(async () => ({ id: 'mock-note-1' })),
+  default: { resolveEmbedChip: vi.fn(async () => ({ permissionOk: true })) },
+}));
+
 // Handoff target services are loaded via tryImport (dynamic import with @vite-ignore).
 // In test, these may not resolve. The service handles null gracefully via fallback UUIDs.
 

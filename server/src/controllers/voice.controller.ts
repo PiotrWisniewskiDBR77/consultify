@@ -31,12 +31,6 @@ export class VoiceController {
     try {
       const language = req.body.language || 'pl';
       const text = await voiceService.transcribe(file.path, language);
-
-      // Clean up uploaded file
-      fs.unlink(file.path, (err) => {
-        if (err) logger.error(`[VoiceController] Failed to delete temp file: ${err.message}`);
-      });
-
       res.status(200).json({ text });
     } catch (error) {
       if (this.isServiceUnavailableError(error)) {
@@ -47,6 +41,18 @@ export class VoiceController {
         logger.error(`[VoiceController] STT Error: ${error.message}`);
       }
       res.status(500).json({ error: 'Transcription failed' });
+    } finally {
+      // M01-P05 (audio retention policy): the uploaded recording is deleted
+      // unconditionally after the transcription attempt, success or failure.
+      // Previously this only ran in the success path — a failed
+      // `transcribe()` call (unavailable provider, bad audio, network error)
+      // left the raw voice recording sitting in `uploads/voice/` forever.
+      // That's a real retention leak, not a hypothetical one: every failed
+      // STT call before this fix orphaned one file with no cleanup job
+      // anywhere in this codebase to catch it later.
+      fs.unlink(file.path, (err) => {
+        if (err) logger.error(`[VoiceController] Failed to delete temp file: ${err.message}`);
+      });
     }
   }
 

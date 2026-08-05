@@ -100,7 +100,19 @@ export function adaptRuntimeCitations(rawCitations: unknown): Citation[] {
  */
 export async function verifyRuntimeCitations(
   rawCitations: unknown,
-  ctx: { conversationId?: string | null; messageId?: string | null; surface?: string } = {}
+  ctx: {
+    conversationId?: string | null;
+    messageId?: string | null;
+    surface?: string;
+    /**
+     * M01-006 — the requesting caller's organization. Threaded through to
+     * `citationVerifier.verify` so it can flag a citation whose sourceId
+     * resolves to a document belonging to a DIFFERENT organization as
+     * `'no_access'` instead of `'verified'`. Optional: every existing
+     * caller that doesn't pass it keeps the prior existence-only behavior.
+     */
+    organizationId?: string | null;
+  } = {}
 ): Promise<VerificationReport | null> {
   try {
     const citations = adaptRuntimeCitations(rawCitations);
@@ -113,7 +125,8 @@ export async function verifyRuntimeCitations(
     const report = await citationVerifier.verify(
       citations,
       ctx.conversationId || undefined,
-      ctx.messageId || undefined
+      ctx.messageId || undefined,
+      ctx.organizationId || undefined
     );
     // Widoczne w logach produkcyjnych — twardy wymóg HP-15.
     logger.info(

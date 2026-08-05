@@ -270,6 +270,20 @@ export interface Conversation {
   /** Deep-link state from backend */
   _state?: 'active' | 'archived' | 'deleted' | 'not_found';
   _stateMessage?: string;
+  /** Search results only: the message that matched, for deep-linking (M01-P02). */
+  matchedMessageId?: string;
+  /**
+   * Search results only: the matching excerpt as inert {text, mark} segments.
+   * The server strips its own highlight delimiters before this ever leaves
+   * the API, so this can never carry markup to render (M01-P02).
+   */
+  matchedSnippet?: ConversationSnippetSegment[];
+}
+
+/** A search-result excerpt segment. `mark: true` = part of the matched term. */
+export interface ConversationSnippetSegment {
+  text: string;
+  mark: boolean;
 }
 
 export interface ConversationMessage {
@@ -637,6 +651,21 @@ interface ConversationState {
     conversations: Conversation[];
     nextCursor: string | null;
     hasMore: boolean;
+    /**
+     * The search could not be run at all (network/5xx/etc). `conversations`
+     * is empty because nothing was retrieved — this is NOT the same as "no
+     * matches" and must not be rendered as an empty result set (M01-P02).
+     */
+    failed?: boolean;
+    /** Results are a genuine subset (throttled). */
+    partial?: boolean;
+    rateLimited?: boolean;
+    /**
+     * The caller lacks team-read permission, so some matches may have been
+     * withheld. Deliberately not a count — see server-side comment in
+     * conversations.routes.ts for why a count is itself a disclosure.
+     */
+    scopeLimited?: boolean;
   }>;
 
   // ==================== UNIFIED CHAT ACTIONS ====================
@@ -1690,28 +1719,42 @@ export const useConversationStore = create<ConversationState>()(
             conversations: (result?.conversations || []).map(mapApiConversation),
             nextCursor: result?.nextCursor || null,
             hasMore: result?.hasMore || false,
+            failed: false,
+            // A 200 response is a complete answer to "what can you see",
+            // never `partial` — ACL scoping is a distinct, always-on
+            // condition (scopeLimited), not a transient/degraded one, so it
+            // gets its own flag instead of overloading `partial`.
             partial: false,
-            scopeBlocked: result?.scopeBlocked || 0,
+            scopeLimited: Boolean(result?.scopeLimited),
           };
         } catch (err: any) {
           console.error('[ConversationStore] Server search error:', err);
           const status = err?.response?.status || err?.status;
           if (status === 429) {
+            // Genuinely degraded: the search index answered, the caller was
+            // just throttled — distinct from a hard failure below.
             return {
               conversations: [],
               nextCursor: null,
               hasMore: false,
+              failed: false,
               partial: true,
               rateLimited: true,
-              scopeBlocked: 0,
+              scopeLimited: false,
             };
           }
+          // Any other error (4xx/5xx/network) is a hard failure: the search
+          // did not run at all. Reporting this as `partial` over an empty
+          // list previously made a totally broken search look like "a few
+          // matches, maybe more" (M01-P02 §3.6 — a hard failure must be
+          // reported as a failure, not softened into "may be incomplete").
           return {
             conversations: [],
             nextCursor: null,
             hasMore: false,
-            partial: true,
-            scopeBlocked: 0,
+            failed: true,
+            partial: false,
+            scopeLimited: false,
           };
         }
       },
@@ -2030,6 +2073,11 @@ function mapApiConversation(api: any): Conversation {
     deletedAt: api.deleted_at || null,
     _state: api._state || undefined,
     _stateMessage: api._stateMessage || undefined,
+    // Present only on search results: which message matched, and its
+    // snippet as inert {text, mark} segments — the server never sends
+    // markup (M01-P02).
+    matchedMessageId: api.matched_message_id || undefined,
+    matchedSnippet: Array.isArray(api.matched_snippet) ? api.matched_snippet : undefined,
   };
 }
 

@@ -63,6 +63,7 @@ import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
+import { markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
@@ -112,6 +113,20 @@ interface PendingCanvasOperation {
   };
   applyLabel: string;
   successMessage: string;
+}
+
+/**
+ * Explicit, caller-supplied values for a single save. Used by conflict
+ * recovery, which must NOT depend on `persistDraft`'s captured `documentState`
+ * closure (it still holds the pre-conflict `updatedAt`) nor on a state update
+ * that has not been applied yet.
+ */
+interface CanvasPersistOverrides {
+  draftId?: string;
+  /** Optimistic-concurrency token sent as `baseUpdatedAt`. */
+  baseUpdatedAt?: string | null;
+  title?: string;
+  contentMd?: string;
 }
 
 type PendingDatasetFormat = 'csv' | 'json' | 'xlsx';
@@ -613,7 +628,24 @@ function saveStateLabel(saveState: CanvasDocumentState['saveState'], t: CanvasPa
   if (saveState === 'saving') return t('canvas.panel.saveState.saving', 'Saving');
   if (saveState === 'failed') return t('canvas.panel.saveState.failed', 'Save failed');
   if (saveState === 'unsaved') return t('canvas.panel.saveState.unsaved', 'Unsaved changes');
+  if (saveState === 'conflict')
+    return t('canvas.panel.saveState.conflict', 'Changed elsewhere — not saved');
   return t('canvas.panel.saveState.saved', 'Saved');
+}
+
+/** Short, locale-aware clock time for the "Saved at …" affordance. */
+function formatLastSavedAt(iso: string | null | undefined, locale: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  try {
+    return new Intl.DateTimeFormat(locale || undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(d);
+  } catch {
+    return d.toISOString().slice(11, 16);
+  }
 }
 
 function capabilityLabel(status: CanvasCapabilityStatus, t: CanvasPanelTFn): string {
@@ -834,7 +866,7 @@ function WorkCanvasMarkdownDocumentPanel({
   onCanvasSelectionChange,
   onClose,
 }: WorkCanvasDocumentPanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialCanvasMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
@@ -887,6 +919,18 @@ function WorkCanvasMarkdownDocumentPanel({
   const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
   // Live TipTap editor instance (rich mode), lifted so Teresa can stream into it.
   const [richEditor, setRichEditor] = React.useState<TiptapEditor | null>(null);
+  /**
+   * Set when the server rejects a save because the draft moved on elsewhere.
+   * Holds both sides so the user can choose; nothing is written until they do.
+   */
+  const [canvasConflict, setCanvasConflict] = React.useState<{
+    draftId: string;
+    serverUpdatedAt: string | null;
+    serverTitle: string | null;
+    serverContentMd: string | null;
+    localTitle: string;
+    localContentMd: string;
+  } | null>(null);
   const [versions, setVersions] = React.useState<CanvasVersionSummary[]>([]);
   // Prev/Next stepper cursor into `versions` (0 = latest, list is DESC by date).
   const [versionCursor, setVersionCursor] = React.useState(0);
@@ -934,7 +978,85 @@ function WorkCanvasMarkdownDocumentPanel({
   const latestTitleRef = React.useRef(documentState.title);
   const autosaveTimerRef = React.useRef<number | null>(null);
   const titleInputRef = React.useRef<HTMLInputElement | null>(null);
+  // persistDraft is defined further down; conflict recovery needs to call it.
+  const persistDraftRef = React.useRef<
+    | ((
+        draft?: CanvasDocumentState,
+        overrides?: CanvasPersistOverrides
+      ) => Promise<CanvasDocumentState | null>)
+    | null
+  >(null);
+
+  const lastSavedAtLabel = React.useMemo(
+    () => formatLastSavedAt(documentState.lastSavedAt, i18n.language),
+    [documentState.lastSavedAt, i18n.language]
+  );
   const markdownEditorRef = React.useRef<HTMLTextAreaElement | null>(null);
+
+  /**
+   * Conflict recovery. Both branches are explicit user choices — neither runs
+   * automatically, which is the whole point: the previous behaviour silently
+   * re-saved local content over the other writer's version.
+   *
+   * Declared after the editor refs on purpose: "load theirs" has to push the
+   * server version into the LIVE editors, not only into React state.
+   */
+  const resolveConflictKeepMine = React.useCallback(async () => {
+    const conflict = canvasConflict;
+    if (!conflict) return;
+    // Adopt the server's updatedAt so the next save is accepted, then persist
+    // the local content as a new version. History keeps the other version.
+    setCanvasConflict(null);
+    setDocumentState((current) => ({
+      ...current,
+      updatedAt: conflict.serverUpdatedAt,
+      saveState: 'unsaved',
+    }));
+    // DEFECT-1: `persistDraft` is a useCallback closed over `documentState`, so
+    // the ref still points at a closure holding the PRE-conflict `updatedAt`.
+    // Relying on the state transition above would re-send the stale token and
+    // 409 again forever. The conflict's own values are therefore passed
+    // explicitly — the request carries the server's updatedAt as
+    // `baseUpdatedAt` and the LOCAL title/content as the payload.
+    await persistDraftRef.current?.(undefined, {
+      draftId: conflict.draftId,
+      baseUpdatedAt: conflict.serverUpdatedAt,
+      title: conflict.localTitle,
+      contentMd: conflict.localContentMd,
+    });
+  }, [canvasConflict]);
+
+  const resolveConflictLoadTheirs = React.useCallback(() => {
+    const conflict = canvasConflict;
+    if (!conflict) return;
+    const nextTitle = conflict.serverTitle ?? latestTitleRef.current;
+    const nextContentMd = conflict.serverContentMd ?? latestContentRef.current;
+    setCanvasConflict(null);
+    // DEFECT-2: React state alone left the user staring at their own text —
+    // the live editors keep their own document. Push the server version into
+    // every surface that can hold content, and re-baseline the "last saved"
+    // refs so the panel does not immediately consider itself dirty again.
+    latestTitleRef.current = nextTitle;
+    latestContentRef.current = nextContentMd;
+    lastSavedTitleRef.current = nextTitle;
+    lastSavedContentRef.current = nextContentMd;
+    if (titleInputRef.current) titleInputRef.current.value = nextTitle;
+    if (markdownEditorRef.current) markdownEditorRef.current.value = nextContentMd;
+    if (richEditor && !richEditor.isDestroyed) {
+      // emitUpdate:false — an external load must not bounce back through
+      // onUpdate as a fresh local edit (same contract as CanvasRichEditor's
+      // own external-sync effect).
+      richEditor.commands.setContent(markdownToHtml(nextContentMd), { emitUpdate: false });
+    }
+    setDocumentState((current) => ({
+      ...current,
+      title: nextTitle,
+      contentMd: nextContentMd,
+      updatedAt: conflict.serverUpdatedAt,
+      saveState: 'saved',
+      lastSavedAt: conflict.serverUpdatedAt,
+    }));
+  }, [canvasConflict, richEditor]);
   const uploadInputRef = React.useRef<HTMLInputElement | null>(null);
   // #87c — dedicated input for "Import Markdown", separate from uploadInputRef
   // (which is the CSV/JSON/XLSX dataset + generic chat-attachment uploader).
@@ -1379,7 +1501,7 @@ function WorkCanvasMarkdownDocumentPanel({
   }, [canvasSelection, onCanvasSelectionChange]);
 
   const persistDraft = React.useCallback(
-    async (draft?: CanvasDocumentState) => {
+    async (draft?: CanvasDocumentState, overrides?: CanvasPersistOverrides) => {
       const draftToPersist = draft || {
         ...documentState,
         title: titleInputRef.current?.value ?? latestTitleRef.current,
@@ -1402,12 +1524,29 @@ function WorkCanvasMarkdownDocumentPanel({
       const persistingMountedDraft =
         !draft ||
         (Boolean(draftToPersist.draftId) && draftToPersist.draftId === documentState.draftId);
-      const effectiveTitle = persistingMountedDraft
-        ? (titleInputRef.current?.value ?? latestTitleRef.current ?? draftToPersist.title)
-        : draftToPersist.title;
-      const effectiveContentMd = persistingMountedDraft
-        ? (markdownEditorRef.current?.value ?? latestContentRef.current ?? draftToPersist.contentMd)
-        : draftToPersist.contentMd;
+      //
+      // `overrides` (conflict recovery) beats both: the caller already knows
+      // exactly which bytes and which concurrency token must go out, and must
+      // not be second-guessed by a closure or a live editor.
+      const effectiveDraftId = overrides?.draftId ?? draftToPersist.draftId;
+      const effectiveTitle =
+        typeof overrides?.title === 'string'
+          ? overrides.title
+          : persistingMountedDraft
+            ? (titleInputRef.current?.value ?? latestTitleRef.current ?? draftToPersist.title)
+            : draftToPersist.title;
+      const effectiveContentMd =
+        typeof overrides?.contentMd === 'string'
+          ? overrides.contentMd
+          : persistingMountedDraft
+            ? (markdownEditorRef.current?.value ??
+              latestContentRef.current ??
+              draftToPersist.contentMd)
+            : draftToPersist.contentMd;
+      const effectiveBaseUpdatedAt =
+        overrides && 'baseUpdatedAt' in overrides
+          ? (overrides.baseUpdatedAt ?? null)
+          : draftToPersist.updatedAt || null;
       // Guard (wzorzec W2-T2): szkielet generacji deliverables NIGDY nie jest
       // wart zapisu — serwer ma go od kroku PLAN, a zapis może NADPISAĆ finalną
       // treść dopisaną w tle przez generator (udokumentowany incydent: stale
@@ -1423,11 +1562,11 @@ function WorkCanvasMarkdownDocumentPanel({
         const token = window.localStorage.getItem('token') || '';
         const saveDraft = async (baseUpdatedAt: string | null | undefined) =>
           fetch(
-            draftToPersist.draftId
-              ? `/api/work-canvas/drafts/${encodeURIComponent(draftToPersist.draftId)}`
+            effectiveDraftId
+              ? `/api/work-canvas/drafts/${encodeURIComponent(effectiveDraftId)}`
               : '/api/work-canvas/drafts',
             {
-              method: draftToPersist.draftId ? 'PUT' : 'POST',
+              method: effectiveDraftId ? 'PUT' : 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -1462,25 +1601,47 @@ function WorkCanvasMarkdownDocumentPanel({
             }
           );
 
-        let response = await saveDraft(draftToPersist.updatedAt || null);
-        let json = await response.json().catch(() => ({}));
+        const response = await saveDraft(effectiveBaseUpdatedAt);
+        const json = await response.json().catch(() => ({}));
         if (
           response.status === 409 &&
-          draftToPersist.draftId &&
+          effectiveDraftId &&
           String(json?.code || '') === 'CANVAS_DRAFT_CONFLICT'
         ) {
+          // This used to re-read the server's updatedAt and immediately re-save
+          // the local content under it, silently destroying whatever the other
+          // writer had saved. A conflict is now surfaced instead: local edits
+          // stay in the editor, nothing is overwritten, and the user chooses.
           const currentResponse = await fetch(
-            `/api/work-canvas/drafts/${encodeURIComponent(draftToPersist.draftId)}`,
+            `/api/work-canvas/drafts/${encodeURIComponent(effectiveDraftId)}`,
             {
               headers: token ? { Authorization: `Bearer ${token}` } : undefined,
             }
           );
           const currentJson = await currentResponse.json().catch(() => ({}));
           const currentDraft = currentJson?.data?.draft || currentJson?.data;
-          response = await saveDraft(
-            typeof currentDraft?.updatedAt === 'string' ? currentDraft.updatedAt : null
+          setDocumentState((current) => ({ ...current, saveState: 'conflict' }));
+          setCanvasConflict({
+            draftId: effectiveDraftId,
+            serverUpdatedAt:
+              typeof currentDraft?.updatedAt === 'string' ? currentDraft.updatedAt : null,
+            serverTitle: typeof currentDraft?.title === 'string' ? currentDraft.title : null,
+            serverContentMd:
+              typeof currentDraft?.contentMd === 'string'
+                ? currentDraft.contentMd
+                : typeof currentDraft?.content === 'string'
+                  ? currentDraft.content
+                  : null,
+            localTitle: effectiveTitle,
+            localContentMd: effectiveContentMd,
+          });
+          setAlertFeedback(
+            t(
+              'canvas.panel.conflict.detected',
+              'This document changed elsewhere. Your edits were not saved yet.'
+            )
           );
-          json = await response.json().catch(() => ({}));
+          return null;
         }
         if (!response.ok) {
           const saveError: any = new Error(json?.error || 'Failed to save Canvas draft');
@@ -1488,6 +1649,10 @@ function WorkCanvasMarkdownDocumentPanel({
           throw saveError;
         }
         const savedDraft = json?.data;
+        // A save landed, so any earlier conflict is resolved.
+        setCanvasConflict(null);
+        const savedAt =
+          typeof savedDraft?.updatedAt === 'string' ? savedDraft.updatedAt : new Date().toISOString();
         // Keep echoing the server's merged provenance on subsequent saves (C3/D-C-2).
         if (savedDraft?.provenance && typeof savedDraft.provenance === 'object') {
           draftOriginProvenanceRef.current = savedDraft.provenance as Record<string, unknown>;
@@ -1499,7 +1664,7 @@ function WorkCanvasMarkdownDocumentPanel({
           // missing contentMd/title still resolves to the appended content.
           title: effectiveTitle,
           contentMd: effectiveContentMd,
-          draftId: draftToPersist.draftId,
+          draftId: effectiveDraftId,
           saveState: 'saved',
           projectionError: null,
         });
@@ -1517,16 +1682,19 @@ function WorkCanvasMarkdownDocumentPanel({
           if (current.contentMd !== effectiveContentMd) {
             return {
               ...current,
-              draftId: savedDraftId || current.draftId || draftToPersist.draftId,
+              draftId: savedDraftId || current.draftId || effectiveDraftId,
               saveState: 'unsaved',
             };
           }
-          return mapDraftResponseToCanvasDocumentState(savedDraft, {
-            ...current,
-            draftId: savedDraftId || current.draftId || draftToPersist.draftId,
-            saveState: 'saved',
-            projectionError: null,
-          });
+          return {
+            ...mapDraftResponseToCanvasDocumentState(savedDraft, {
+              ...current,
+              draftId: savedDraftId || current.draftId || effectiveDraftId,
+              saveState: 'saved',
+              projectionError: null,
+            }),
+            lastSavedAt: savedAt,
+          };
         });
         if (latestContentRef.current === effectiveContentMd) {
           lastSavedContentRef.current = nextState.contentMd;
@@ -1546,6 +1714,11 @@ function WorkCanvasMarkdownDocumentPanel({
     },
     [conversationId, documentState]
   );
+
+  // Keep the ref current so conflict recovery, declared earlier, can persist.
+  React.useEffect(() => {
+    persistDraftRef.current = persistDraft;
+  }, [persistDraft]);
 
   const createResearchSessionForDraft = async (
     draft: CanvasDocumentState
@@ -3070,8 +3243,8 @@ function WorkCanvasMarkdownDocumentPanel({
   ) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
-      <div className="flex h-[42px] shrink-0 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-4 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
+    <div className="relative flex h-full min-h-0 flex-col bg-slate-50 text-slate-950 dark:bg-navy-950 dark:text-slate-100">
+      <div className="flex min-h-[42px] shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-slate-200/70 bg-white/70 px-4 py-1 backdrop-blur dark:border-white/[0.06] dark:bg-navy-950/60">
         {/* #17 (rewizja 07-12): "z canvasu musi być łatwy powrót do TEJ
             KONKRETNEJ notatki [nie tylko do listy]" — persistent breadcrumb,
             visible for the whole time this note-derived draft is open (not a
@@ -3115,6 +3288,30 @@ function WorkCanvasMarkdownDocumentPanel({
             aria-label="Canvas document title"
             className="w-full min-w-0 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[15px] font-semibold text-slate-950 outline-none transition-colors hover:border-slate-200 hover:bg-white/60 focus:border-slate-300 focus:bg-white dark:text-white dark:hover:border-white/10 dark:hover:bg-white/[0.04] dark:focus:border-white/20 dark:focus:bg-white/[0.06]"
           />
+          {/* Save status lived only inside the diagnostics popover, so the
+              document never showed whether it was saved. Announced politely so
+              it is not silent for screen-reader users either. */}
+          <div
+            className="mt-0.5 flex items-center gap-1.5 px-1 text-[11px] text-c-text-muted"
+            data-testid="canvas-save-status"
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              className={
+                documentState.saveState === 'failed' || documentState.saveState === 'conflict'
+                  ? 'text-c-text'
+                  : undefined
+              }
+            >
+              {saveStateLabel(documentState.saveState, t)}
+            </span>
+            {documentState.saveState === 'saved' && lastSavedAtLabel ? (
+              <span data-testid="canvas-last-saved-at">
+                {t('canvas.panel.saveState.at', 'at')} {lastSavedAtLabel}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex min-w-0 shrink-0 items-center gap-2">
@@ -4605,6 +4802,45 @@ function WorkCanvasMarkdownDocumentPanel({
           </div>
         </div>
       </div>
+
+      {canvasConflict ? (
+        <div
+          data-testid="canvas-conflict-banner"
+          role="alertdialog"
+          aria-label={t('canvas.panel.conflict.title', 'This document changed elsewhere')}
+          /* DEFECT-3: the banner used to be absolutely positioned at
+             top-[42px], overlaying the top of the editor toolbar. It is now a
+             normal sibling in the panel's column flow (directly after the
+             fixed 42px header row), so it pushes content down and the whole
+             toolbar stays visible while the conflict is open. */
+          className="shrink-0 border-b border-c-border bg-c-surface-raised px-4 py-2.5 text-[11px] text-c-text shadow-sm"
+        >
+          <p>
+            {t(
+              'canvas.panel.conflict.body',
+              'Someone else saved this document while you were editing. Nothing was overwritten — choose how to continue.'
+            )}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              data-testid="canvas-conflict-keep-mine"
+              onClick={() => void resolveConflictKeepMine()}
+              className="rounded-md border border-c-border px-2 py-1 text-c-text hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {t('canvas.panel.conflict.keepMine', 'Save mine as a new version')}
+            </button>
+            <button
+              type="button"
+              data-testid="canvas-conflict-load-theirs"
+              onClick={() => resolveConflictLoadTheirs()}
+              className="rounded-md border border-c-border px-2 py-1 text-c-text hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            >
+              {t('canvas.panel.conflict.loadTheirs', 'Discard mine, load theirs')}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {actionFeedback ? (
         <div

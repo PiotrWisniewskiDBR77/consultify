@@ -131,14 +131,36 @@ describe('P35-B: useConversationStore — History Library', () => {
       expect(result.partial).toBe(false);
     });
 
-    it('serverSearch returns partial=true on API error (degraded posture)', async () => {
+    it('serverSearch returns failed=true (not partial) on a hard API error (M01-P02 2026-08-04)', async () => {
+      // Re-pointed at the corrected contract: this previously asserted
+      // `partial: true`, which rendered a totally broken search as
+      // "Results may be incomplete" over an empty list — indistinguishable
+      // from a genuine "no matches" answer. A hard failure (network error,
+      // 4xx, 5xx) must be reported as `failed`, not softened into
+      // `partial` (M01-P02 packet §3.6). `partial` is now reserved for a
+      // genuine subset of a response that DID come back (e.g. throttling).
       mockApi.get.mockRejectedValueOnce(new Error('Network error'));
 
       const state = useConversationStore.getState();
       const result = await state.serverSearch({ q: 'failing query' });
 
       expect(result.conversations).toEqual([]);
+      expect((result as any).failed).toBe(true);
+      expect(result.partial).toBe(false);
+    });
+
+    it('serverSearch returns partial=true + rateLimited=true on a 429 (genuinely degraded, not failed)', async () => {
+      const rateLimitErr: any = new Error('Too Many Requests');
+      rateLimitErr.status = 429;
+      mockApi.get.mockRejectedValueOnce(rateLimitErr);
+
+      const state = useConversationStore.getState();
+      const result = await state.serverSearch({ q: 'throttled query' });
+
+      expect(result.conversations).toEqual([]);
+      expect((result as any).failed).toBe(false);
       expect(result.partial).toBe(true);
+      expect((result as any).rateLimited).toBe(true);
     });
 
     it('searchConversations filters locally by title', () => {
@@ -327,17 +349,25 @@ describe('P35-B: useConversationStore — History Library', () => {
       expect(after.activeConversationId).toBeNull();
     });
 
-    it('serverSearch returns scopeBlocked count', async () => {
+    it('serverSearch carries scopeLimited through as a boolean, never a count (M01-P02 2026-08-04)', async () => {
+      // Re-pointed at the corrected contract: the server used to return
+      // `scopeBlocked` — a COUNT(*) of team conversations matching the
+      // caller's own search term, computed and returned even when the
+      // caller lacked team-read permission. That count is itself a
+      // disclosure about content the caller cannot read. Replaced with
+      // `scopeLimited`, a boolean reflecting only the caller's own
+      // permission state.
       mockApi.get.mockResolvedValueOnce({
         conversations: [],
         nextCursor: null,
         hasMore: false,
-        scopeBlocked: 3,
+        scopeLimited: true,
       });
 
       const state = useConversationStore.getState();
       const result = await state.serverSearch({ q: 'test' });
-      expect((result as any).scopeBlocked).toBe(3);
+      expect((result as any).scopeLimited).toBe(true);
+      expect((result as any).scopeBlocked).toBeUndefined();
     });
   });
 

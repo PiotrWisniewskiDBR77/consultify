@@ -1,4 +1,30 @@
 /**
+ * @deprecated M01-P03A (2026-08-05) — DEAD CODE, DO NOT IMPORT.
+ *
+ * Confirmed via `grep -rn "from.*conversationBranchingService"` across
+ * `server/`, `src/`, `tests/` (excluding node_modules): this module is
+ * imported by ZERO files. The only remaining reference is a comment in
+ * `server/src/routes/conversations.routes.ts` explicitly contrasting it
+ * with the real, live `POST /:id/branch` handler.
+ *
+ * It is also functionally broken on the real database: `forkConversation()`
+ * and its INSERTs use SQLite syntax (`datetime('now')`, positional `?` that
+ * assumes SQLite semantics for functions), which is invalid on Postgres.
+ * Because `DbPromise.run()` defaults to `{ fallback: true }`, those INSERTs
+ * fail SILENTLY on Postgres (resolve `{ success: false }`, never throw) —
+ * verified against a real, freshly-migrated Postgres 16 instance
+ * (2026-08-05): the `conversation_branches` table this service targets has
+ * the 672-migration shape and rejects `datetime('now')` outright.
+ *
+ * Real conversation branching lives in
+ * `server/src/routes/conversations.routes.ts` (`POST /:id/branch`,
+ * `GET /:id/branches`) — that is Postgres-safe, column-defensive, and (as of
+ * M01-P03A) persists lineage into `conversation_branches` correctly.
+ *
+ * Kept in the tree (not deleted) only so history/blame stays intact; do not
+ * wire this up, do not fix its SQL, do not extend it. If you need branching
+ * behavior, use the route handlers above.
+ *
  * Conversation Branching Service
  *
  * Enables forking conversations from any point to explore

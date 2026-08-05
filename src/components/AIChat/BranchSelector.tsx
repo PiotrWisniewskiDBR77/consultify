@@ -5,6 +5,18 @@
  * Provides UI for creating new branches from any message.
  *
  * FLOW-CONVERSATION-BRANCHES: Branch selection and navigation
+ *
+ * M01-P03A (2026-08-05): the shape below matches the REAL backend contract
+ * (server/src/routes/conversations.routes.ts POST/GET /:id/branch[es]),
+ * backed by the `conversation_branches` table from migration
+ * `672_enterprise_agent_planner.sql` — NOT the archived `282_*` migration's
+ * `root_message_id`/`is_main` shape this component used to expose (that
+ * migration is dead/overwritten; see docs/modules/01_czat for the canonical
+ * contract). `id` on a branch IS the branch's own conversation id — select
+ * it and open that conversation directly, no separate id space to resolve.
+ * There is no `isMain` flag: the "main" state is represented by
+ * `activeBranchId === null` (the conversation the branches were forked
+ * from), which is not itself a row in `branches`.
  */
 
 import {
@@ -16,7 +28,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // ==========================================
@@ -24,15 +36,18 @@ import { useTranslation } from 'react-i18next';
 // ==========================================
 
 export interface ConversationBranch {
+  /** The branch's own conversation id — use to open/switch to it. */
   id: string;
+  /** The source/parent conversation this branch was forked FROM. */
   conversationId: string;
-  rootMessageId: string;
+  /** Ancestor branch id, if this branch was forked from another branch. */
+  parentBranchId?: string | null;
+  /** The message in the source conversation this branch forked from. */
+  forkMessageId: string;
   name: string;
-  description?: string;
-  isMain: boolean;
   messageCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | Date;
+  createdBy?: string;
 }
 
 interface BranchSelectorProps {
@@ -44,6 +59,21 @@ interface BranchSelectorProps {
   onDeleteBranch?: (branchId: string) => void;
   className?: string;
   disabled?: boolean;
+  /** Loading state while the branch list is being fetched. */
+  isLoading?: boolean;
+  /** True while a create-branch request is in flight. */
+  isCreating?: boolean;
+  /** Non-null when the last fetch/create/rename/delete failed. */
+  error?: string | null;
+  /**
+   * Label to show on the trigger when the active conversation IS a branch
+   * (its own `branchName`) but is not itself a row inside `branches` —
+   * `branches` here is always the active conversation's CHILDREN, so the
+   * active conversation can never match an id in that list. Falls back to
+   * `branch.main` ("Main") when omitted, i.e. the active conversation is the
+   * original/root, not a branch.
+   */
+  currentLabel?: string | null;
 }
 
 interface BranchItemProps {
@@ -109,18 +139,17 @@ const BranchItem: React.FC<BranchItemProps> = ({
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <span className="flex-1 text-sm truncate">
-          {branch.name}
-          {branch.isMain && <span className="ml-1 text-xs text-slate-400">(main)</span>}
-        </span>
+        <span className="flex-1 text-sm truncate">{branch.name}</span>
       )}
 
       {branch.messageCount !== undefined && (
         <span className="text-xs text-slate-400">{branch.messageCount}</span>
       )}
 
-      {/* Actions menu */}
-      {(onRename || onDelete) && !branch.isMain && (
+      {/* Actions menu — every row in `branches` is a real fork (the implicit
+          "main" conversation is never a row here, see activeBranchId===null
+          handling above), so no isMain guard is needed. */}
+      {(onRename || onDelete) && (
         <div className="relative">
           <button
             onClick={(e) => {
@@ -181,6 +210,10 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   onDeleteBranch,
   className = '',
   disabled = false,
+  isLoading = false,
+  isCreating = false,
+  error = null,
+  currentLabel = null,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -192,13 +225,32 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   const handleCreateBranch = useCallback(() => {
     if (newBranchName.trim() && onCreateBranch) {
       onCreateBranch(newBranchName.trim());
-      setNewBranchName('');
-      setShowCreateForm(false);
+      // Do NOT close the form or clear the name here: `onCreateBranch` is a
+      // fire-and-forget `void` callback from this component's point of view
+      // (the actual async work + `isCreating` flag live in the caller).
+      // Closing immediately made the "creating" state — the disabled
+      // input/spinner below — structurally unreachable: the form vanished
+      // the instant you clicked submit, before a single frame of loading
+      // feedback ever painted (found by actually driving this in a
+      // browser, not from reading the code). The effect below closes the
+      // form once `isCreating` flips back to false (success OR failure).
     }
   }, [newBranchName, onCreateBranch]);
 
-  // Don't show selector if only main branch
-  if (branches.length <= 1 && !onCreateBranch) {
+  // Reset the create form once an in-flight create settles (either way).
+  const wasCreatingRef = useRef(false);
+  useEffect(() => {
+    if (wasCreatingRef.current && !isCreating) {
+      setShowCreateForm(false);
+      setNewBranchName('');
+    }
+    wasCreatingRef.current = isCreating;
+  }, [isCreating]);
+
+  // `branches` no longer includes an implicit "main" row (see the
+  // ConversationBranch doc-comment above) — hide the selector only when
+  // there are truly zero branches AND no way to create one.
+  if (branches.length === 0 && !onCreateBranch && !isLoading) {
     return null;
   }
 
@@ -208,6 +260,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
       <button
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        data-testid="branch-selector-trigger"
         className={`
           flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
           bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700
@@ -217,9 +270,18 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
       >
         <GitBranch size={14} className="text-slate-500" />
         <span className="max-w-[120px] truncate">
-          {activeBranch?.name || t('branch.main', 'Main')}
+          {activeBranch?.name || currentLabel || t('branch.main', 'Main')}
         </span>
-        {branches.length > 1 && <span className="text-xs text-slate-400">({branches.length})</span>}
+        {isLoading ? (
+          <span
+            className="h-3 w-3 rounded-full border-2 border-slate-300 border-t-slate-500 animate-spin"
+            data-testid="branch-selector-loading"
+          />
+        ) : (
+          branches.length > 0 && (
+            <span className="text-xs text-slate-400">({branches.length})</span>
+          )
+        )}
         <ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
@@ -237,6 +299,31 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                 {t('branch.title', 'Conversation Branches')}
               </h4>
             </div>
+
+            {error && (
+              <div
+                className="mx-2 mb-2 px-2 py-1.5 text-xs rounded-lg bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400"
+                data-testid="branch-selector-error"
+              >
+                {error}
+              </div>
+            )}
+
+            {isLoading && branches.length === 0 ? (
+              <div
+                className="px-3 py-4 text-xs text-slate-400 text-center"
+                data-testid="branch-selector-loading-list"
+              >
+                {t('branch.loading', 'Loading branches…')}
+              </div>
+            ) : !isLoading && branches.length === 0 && !error ? (
+              <div
+                className="px-3 py-4 text-xs text-slate-400 text-center"
+                data-testid="branch-selector-empty"
+              >
+                {t('branch.empty', 'No branches yet.')}
+              </div>
+            ) : null}
 
             {/* Branch list */}
             <div className="max-h-48 overflow-y-auto px-1">
@@ -266,20 +353,27 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
                       onChange={(e) => setNewBranchName(e.target.value)}
                       placeholder={t('branch.namePlaceholder', 'Branch name...')}
                       autoFocus
-                      className="flex-1 px-2 py-1.5 text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg outline-none focus:border-blue-400"
+                      disabled={isCreating}
+                      className="flex-1 px-2 py-1.5 text-sm bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg outline-none focus:border-blue-400 disabled:opacity-50"
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
                     />
                     <button
                       onClick={handleCreateBranch}
-                      disabled={!newBranchName.trim()}
+                      disabled={!newBranchName.trim() || isCreating}
+                      data-testid="branch-selector-submit-create"
                       className="p-1.5 bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Plus size={14} />
+                      {isCreating ? (
+                        <span className="block h-3.5 w-3.5 rounded-full border-2 border-c-bg/40 border-t-c-bg animate-spin" />
+                      ) : (
+                        <Plus size={14} />
+                      )}
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowCreateForm(true)}
+                    data-testid="branch-selector-open-create"
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
                   >
                     <GitFork size={14} />

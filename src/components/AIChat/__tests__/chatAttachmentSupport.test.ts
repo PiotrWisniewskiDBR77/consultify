@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getChatAttachmentRejectionReason,
+  isChatAttachmentSizeOk,
   isSupportedChatAttachment,
+  MAX_CHAT_ATTACHMENT_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
   SUPPORTED_CHAT_ATTACHMENT_EXTENSIONS,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -96,5 +99,68 @@ describe('isSupportedChatAttachment — rejected types', () => {
   it('rejects a file with no name and no recognized mime type', () => {
     expect(isSupportedChatAttachment({})).toBe(false);
     expect(isSupportedChatAttachment({ name: 'noextension', type: '' })).toBe(false);
+  });
+});
+
+// M01-P04A — size half of the format/size matrix (packet §3.3). Must stay in
+// sync with server/src/routes/ai.routes.ts's attachmentsUpload multer limit.
+describe('MAX_CHAT_ATTACHMENT_BYTES / isChatAttachmentSizeOk', () => {
+  it('is exactly 25MB, matching the server-side multer limit', () => {
+    expect(MAX_CHAT_ATTACHMENT_BYTES).toBe(25 * 1024 * 1024);
+  });
+
+  it('accepts a file at or under the limit', () => {
+    expect(isChatAttachmentSizeOk({ size: MAX_CHAT_ATTACHMENT_BYTES })).toBe(true);
+    expect(isChatAttachmentSizeOk({ size: 1024 })).toBe(true);
+  });
+
+  it('rejects a file even 1 byte over the limit', () => {
+    expect(isChatAttachmentSizeOk({ size: MAX_CHAT_ATTACHMENT_BYTES + 1 })).toBe(false);
+  });
+
+  it('does not treat an unknown/zero size as a size rejection (not a size claim)', () => {
+    expect(isChatAttachmentSizeOk({})).toBe(true);
+    expect(isChatAttachmentSizeOk({ size: 0 })).toBe(true);
+    expect(isChatAttachmentSizeOk({ size: Number.NaN })).toBe(true);
+  });
+});
+
+describe('getChatAttachmentRejectionReason — honest, specific rejection reasons', () => {
+  it('returns null for a file within the full matrix', () => {
+    expect(
+      getChatAttachmentRejectionReason({ name: 'report.pdf', type: 'application/pdf', size: 1000 })
+    ).toBeNull();
+  });
+
+  it('reports UNSUPPORTED_FORMAT for a binary outside the matrix, even if small', () => {
+    expect(
+      getChatAttachmentRejectionReason({
+        name: 'payload.exe',
+        type: 'application/octet-stream',
+        size: 10,
+      })
+    ).toBe('UNSUPPORTED_FORMAT');
+  });
+
+  it('reports SIZE_LIMIT_EXCEEDED for an in-matrix format that is too large', () => {
+    expect(
+      getChatAttachmentRejectionReason({
+        name: 'huge.pdf',
+        type: 'application/pdf',
+        size: MAX_CHAT_ATTACHMENT_BYTES + 1,
+      })
+    ).toBe('SIZE_LIMIT_EXCEEDED');
+  });
+
+  it('reports the format reason before the size reason when both apply', () => {
+    // An unsupported binary that is ALSO huge should surface the more
+    // actionable "wrong format" reason, not just "too big".
+    expect(
+      getChatAttachmentRejectionReason({
+        name: 'huge.exe',
+        type: 'application/octet-stream',
+        size: MAX_CHAT_ATTACHMENT_BYTES + 1,
+      })
+    ).toBe('UNSUPPORTED_FORMAT');
   });
 });

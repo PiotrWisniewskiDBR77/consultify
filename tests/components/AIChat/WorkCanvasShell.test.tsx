@@ -331,8 +331,17 @@ describe('WorkCanvasShell', () => {
 
     fireEvent.click(screen.getByText('Idea'));
 
+    // workCanvasErrorMessage() renders t('canvas.workShell.errCapabilityRequired', <english
+    // fallback>). Commit c2f68c337c (2026-07-03, "wire Canvas toolbar, WorkCanvasShell and
+    // panel labels to t() + en/pl keys") replaced the old hardcoded-Polish copy this
+    // assertion used to check with that t()-wrapped call; the real Polish string now lives
+    // in public/locales/pl/translation.json under the same key. The global react-i18next
+    // mock (tests/setup.ts) does not load locale resources — when a string default value is
+    // passed as the second t() argument it returns that fallback verbatim — so, like every
+    // other text assertion in this file (e.g. 'Area', 'Draft', 'Saved' below), the only text
+    // this suite can observe is the English fallback actually passed in the component code.
     expect(
-      await screen.findByText('Nie masz wymaganej capability do tej akcji canvas.')
+      await screen.findByText('You do not have the required capability for this canvas action.')
     ).toBeInTheDocument();
 
     workCanvasApiMock.createProposal.mockResolvedValueOnce({
@@ -357,9 +366,11 @@ describe('WorkCanvasShell', () => {
     await waitFor(() => expect(screen.getByText('Approve proposal')).toBeInTheDocument());
     fireEvent.click(screen.getByText('Approve proposal'));
 
+    // Same t()-fallback contract as errCapabilityRequired above, for
+    // canvas.workShell.errStaleProposal.
     expect(
       await screen.findByText(
-        'Proposal jest nieaktualny, bo canvas zmienił się po jego utworzeniu. Wygeneruj proposal ponownie.'
+        'The proposal is stale because the canvas changed after it was created. Generate the proposal again.'
       )
     ).toBeInTheDocument();
   });

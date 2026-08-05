@@ -31,6 +31,36 @@ vi.mock('../../../utils/Logger.js', () => ({
   default: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+// FIX M01-P07B (M01-005): the 4 owner-module doubles below make §3's
+// "full lifecycle: create -> approve -> execute" cases reach `completed`
+// under the NEW fail-closed contract. Before M01-P07B, `handleXHandoff`
+// minted `fallbackRef = randomUUID()` whenever `tryImport` resolved these
+// (real, on-disk) service modules against the STATELESS `mockDbGet` double
+// above (which always resolves `null`) — the create call would still
+// "succeed" with a self-generated id from the real service, so §3 passed by
+// exercising the exact fabrication bug this packet closes, not real success.
+// Now every target performs an independent, tenant-scoped READ-BACK before
+// completing, which the stateless DB mock can never satisfy on its own —
+// these doubles are what a real owner write + read-back would return.
+vi.mock('../../../services/v8/radarTriageService.js', () => ({
+  createSignal: vi.fn(async () => ({ id: 'mock-radar-signal-1' })),
+  getTriageSignal: vi.fn(async () => ({ id: 'mock-radar-signal-1' })),
+}));
+vi.mock('../../../services/initiativeGenerationService.js', () => ({
+  createInitiative: vi.fn(async () => ({ id: 'mock-initiative-1' })),
+}));
+vi.mock('../../../services/v8/planningPortfolioReadService.js', () => ({
+  getInitiativeDetailRead: vi.fn(async () => ({ id: 'mock-initiative-1' })),
+}));
+vi.mock('../../../services/meetingService.js', () => ({
+  createMeeting: vi.fn(async () => ({ id: 'mock-meeting-1' })),
+  getMeeting: vi.fn(async () => ({ id: 'mock-meeting-1' })),
+}));
+vi.mock('../../../services/notebookService.js', () => ({
+  createNote: vi.fn(async () => ({ id: 'mock-note-1' })),
+  default: { resolveEmbedChip: vi.fn(async () => ({ permissionOk: true })) },
+}));
+
 const {
   createProposal,
   approveProposal,

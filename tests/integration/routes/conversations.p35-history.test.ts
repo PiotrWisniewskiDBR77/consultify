@@ -36,12 +36,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     it('GET /api/conversations returns 200 with conversations array or 401 without auth', async () => {
       const res = await request(app).get('/api/conversations');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('conversations');
-        expect(Array.isArray(res.body.conversations)).toBe(true);
-        expect(res.body).toHaveProperty('total');
-        expect(typeof res.body.total).toBe('number');
-      }
     });
 
     it('POST /api/conversations returns 201 with id or 401 without auth', async () => {
@@ -49,10 +43,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         .post('/api/conversations')
         .send({ title: 'P35 Test Conversation' });
       expect(res.status).toBe(401);
-      if (res.status === 201) {
-        expect(res.body).toHaveProperty('id');
-        expect(typeof res.body.id).toBe('string');
-      }
     });
 
     it('PATCH /api/conversations/:id returns 200 or 401/404', async () => {
@@ -67,14 +57,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         '/api/conversations/00000000-0000-0000-0000-000000000001'
       );
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body.success).toBe(true);
-        // Should be soft-delete (not purge) by default
-        if (res.body.softDeleted) {
-          expect(res.body.deletedAt).toBeDefined();
-          expect(res.body.purged).toBeUndefined();
-        }
-      }
     });
 
     it('DELETE with ?force=true purges with audit trail or 401/404', async () => {
@@ -82,10 +64,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         '/api/conversations/00000000-0000-0000-0000-000000000001?force=true'
       );
       expect(res.status).toBe(401);
-      if (res.status === 200 && res.body.purged) {
-        expect(res.body.messagesRemoved).toBeDefined();
-        expect(typeof res.body.messagesRemoved).toBe('number');
-      }
     });
   });
 
@@ -100,25 +78,11 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     it('GET /api/conversations/search?q=ab (2 chars) returns results or auth error', async () => {
       const res = await request(app).get('/api/conversations/search?q=ab');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('conversations');
-        expect(res.body).toHaveProperty('nextCursor');
-        expect(res.body).toHaveProperty('hasMore');
-        expect(res.body).toHaveProperty('query', 'ab');
-        expect(Array.isArray(res.body.conversations)).toBe(true);
-      }
     });
 
     it('search supports cursor pagination (nextCursor + hasMore)', async () => {
       const res = await request(app).get('/api/conversations/search?q=test&limit=2');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(typeof res.body.hasMore).toBe('boolean');
-        if (res.body.hasMore) {
-          expect(typeof res.body.nextCursor).toBe('string');
-          expect(res.body.nextCursor).toContain('|');
-        }
-      }
     });
 
     it('search supports filters (pinned, archived, folderId, from, to)', async () => {
@@ -137,11 +101,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         '/api/conversations?cursor=2026-01-01T00:00:00Z|fake-id&limit=5'
       );
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('conversations');
-        expect(res.body).toHaveProperty('nextCursor');
-        expect(res.body).toHaveProperty('hasMore');
-      }
     });
   });
 
@@ -214,9 +173,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
     it('GET /api/chat-projects returns folders or requires auth', async () => {
       const res = await request(app).get('/api/chat-projects');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('projects');
-      }
     });
 
     it('POST /api/chat-projects validates scope enum', async () => {
@@ -240,21 +196,12 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
           sizeBytes: 1024,
         });
       expect(res.status).toBe(401);
-      if (res.status === 201) {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body.kind).toBe('file');
-        expect(res.body.display_name).toBe('test-doc.pdf');
-      }
     });
 
     it('GET /:id/messages/:messageId/attachments lists attachments or degrades gracefully', async () => {
       const res = await request(app)
         .get('/api/conversations/00000000-0000-0000-0000-000000000001/messages/msg-1/attachments');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('attachments');
-        expect(Array.isArray(res.body.attachments)).toBe(true);
-      }
     });
   });
 
@@ -265,9 +212,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
       const res = await request(app)
         .get('/api/conversations/00000000-0000-0000-0000-000000000001/sessions');
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('sessions');
-      }
     });
 
     it('POST /:id/sessions creates a new session or requires auth', async () => {
@@ -275,10 +219,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         .post('/api/conversations/00000000-0000-0000-0000-000000000001/sessions')
         .send({ modelId: 'gpt-4', locale: 'en' });
       expect(res.status).toBe(401);
-      if (res.status === 201) {
-        expect(res.body).toHaveProperty('id');
-        expect(res.body.model_id).toBe('gpt-4');
-      }
     });
   });
 
@@ -305,11 +245,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         '/api/conversations/00000000-0000-0000-0000-000000000001/export'
       );
       expect(res.status).toBe(401);
-      if (res.status === 200) {
-        expect(res.body).toHaveProperty('conversation');
-        expect(res.body).toHaveProperty('messages');
-        expect(res.body).toHaveProperty('exportedAt');
-      }
     });
 
     it('GET /:id/export?format=markdown returns markdown', async () => {
@@ -329,13 +264,27 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
 
   // ==================== PARTIAL RETRIEVAL (§2.3.5 E7) ====================
 
-  describe('Partial Retrieval — Scope Blocked (§2.3.5 E7)', () => {
-    it('search returns scopeBlocked count', async () => {
+  describe('Partial Retrieval — Scope Limited (§2.3.5 E7, corrected M01-P02 2026-08-04)', () => {
+    // M01-P02 (2026-08-04): the original `scopeBlocked` field was a
+    // COUNT(*) of team-scope conversations matching the caller's own search
+    // term, returned even when the caller lacked team-read permission — a
+    // content-shaped side channel (a caller could learn how many team
+    // conversations match a probe term without ever being allowed to read
+    // them). Replaced with `scopeLimited`, a boolean derived only from the
+    // caller's OWN permission state (do they lack team-read at all?), never
+    // from whether a specific query matched anything in team scope. This
+    // test is re-pointed at the corrected contract rather than removed —
+    // it previously asserted the leaky shape without ever exercising it
+    // (every case here also asserts 401, since this file runs without a
+    // real login; see conversations.search.realdb.test.ts for the
+    // authenticated, real-Postgres proof of `scopeLimited`'s behavior).
+    it('search reports scopeLimited as a boolean, never a scopeBlocked count', async () => {
       const res = await request(app).get('/api/conversations/search?q=test');
       expect(res.status).toBe(401);
       if (res.status === 200) {
-        expect(res.body).toHaveProperty('scopeBlocked');
-        expect(typeof res.body.scopeBlocked).toBe('number');
+        expect(res.body).toHaveProperty('scopeLimited');
+        expect(typeof res.body.scopeLimited).toBe('boolean');
+        expect(res.body).not.toHaveProperty('scopeBlocked');
       }
     });
   });
@@ -358,9 +307,6 @@ describe('P35-B: Historia czatów — Lifecycle + Search + Governance', () => {
         .send({ keepRecent: 10 });
       // Should not get "no such table: messages" error
       expect(res.status).toBe(401);
-      if (res.status === 500) {
-        expect(res.body.error).not.toContain('no such table: messages');
-      }
     });
   });
 });

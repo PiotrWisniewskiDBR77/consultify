@@ -743,6 +743,26 @@ const KnowledgeService = {
    * fizycznie reużyta stąd (patrz DZIENNIK VLT-001), tylko odtworzona z tym samym kształtem
    * WHERE. Dokumenty sprzed VLT-001 mają `scope IS NULL` — traktowane jak 'organization'
    * (to było ich faktyczne dotychczasowe zachowanie: widoczne dla całej organizacji).
+   *
+   * ★ M01-P04C — `organization_id IS NULL` jest FAIL-CLOSED tutaj (usunięty
+   * `OR organization_id IS NULL`), NIE "widoczny dla każdej organizacji".
+   * Do 2026-08 ta klauzula czyniła KAŻDY wiersz bez rozstrzygniętego ownera
+   * (rekordy sprzed migracji 942, oraz rekordy z `ai.routes.ts`
+   * `/attachments/ingest*`, gdy późniejszy `UPDATE ... SET organization_id`
+   * cicho nie trafił) widocznym dla DOWOLNEJ organizacji przez Vault —
+   * potwierdzony przeciek cross-tenant, nie teoretyczny. Vault (ta usługa)
+   * NIE ma legalnej kategorii dokumentów globalnych — `KnowledgeService
+   * .addDocument` zawsze wymaga `organizationId`, więc `organization_id
+   * IS NULL` w tej tabeli oznacza wyłącznie "owner nierozstrzygnięty",
+   * nigdy "celowo globalny". Jedyny wyjątek globalny w całym systemie
+   * (tool/methodology/product-pill knowledge packs, `source_type IN
+   * ('tool_pack', 'methodology', 'product_pill')` — trzecia wartość
+   * dodana decyzją koordynatora po przeglądzie tego pakietu, patrz
+   * `ragService.ts` GLOBAL_KNOWLEDGE_SOURCE_TYPES) jest retrievowany przez
+   * `ragService.ts` (`appendKnowledgeDocAccessFilter`), NIE przez Vault
+   * CRUD — ten wyjątek tu nie ma zastosowania. Backfill (przypisanie
+   * prawdziwego ownera legacy wierszom) opisany w
+   * M01_P04C_BACKFILL_PLAN.md — NIE wykonany w tym pakiecie.
    */
   async getDocuments(
     orgId: string,
@@ -764,10 +784,7 @@ const KnowledgeService = {
     }
   ): Promise<any[]> {
     await ensureKnowledgeSchema();
-    const where: string[] = [
-      `(organization_id = ? OR organization_id IS NULL)`,
-      `deleted_at IS NULL`,
-    ];
+    const where: string[] = [`organization_id = ?`, `deleted_at IS NULL`];
     const params: unknown[] = [orgId];
 
     const requestedScope = access?.scope || null;
@@ -826,7 +843,7 @@ const KnowledgeService = {
     await ensureKnowledgeSchema();
     const rows = await DbPromise.all<DocumentRow>(
       `SELECT * FROM knowledge_docs
-       WHERE (organization_id = ? OR organization_id IS NULL) AND category = ? AND deleted_at IS NULL
+       WHERE organization_id = ? AND category = ? AND deleted_at IS NULL
        ORDER BY created_at DESC LIMIT 200`,
       [orgId, String(category)],
       { fallback: true } as any
@@ -853,7 +870,7 @@ const KnowledgeService = {
     const result = await DbPromise.run(
       `UPDATE knowledge_docs
        SET deleted_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+       WHERE id = ? AND organization_id = ?`,
       [docId, orgId],
       { fallback: true } as any
     );
@@ -891,7 +908,7 @@ const KnowledgeService = {
     const result = await DbPromise.run(
       `UPDATE knowledge_docs
        SET ${sets.join(', ')}, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+       WHERE id = ? AND organization_id = ?`,
       params,
       { fallback: true } as any
     );
@@ -902,12 +919,15 @@ const KnowledgeService = {
   /**
    * ★ VLT-002 — single-document lookup (ownership checks for PUT/scope-change routes;
    * `knowledge.routes.ts` needs `owner_id`/`scope` before deciding who may edit).
+   * M01-P04C: `organization_id IS NULL` fail-closed (see `getDocuments` comment) —
+   * a legacy/unresolved-owner row returns `null` for EVERY org, not "found" for
+   * whichever org happens to ask.
    */
   async getDocumentById(orgId: string, docId: string): Promise<any | null> {
     await ensureKnowledgeSchema();
     const row = await DbPromise.get<DocumentRow>(
       `SELECT * FROM knowledge_docs
-       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL`,
+       WHERE id = ? AND organization_id = ? AND deleted_at IS NULL`,
       [docId, orgId],
       { fallback: true } as any
     );
@@ -937,7 +957,7 @@ const KnowledgeService = {
     await ensureKnowledgeSchema();
     const existing = await DbPromise.get<DocumentRow>(
       `SELECT scope, project_id FROM knowledge_docs
-       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL) AND deleted_at IS NULL`,
+       WHERE id = ? AND organization_id = ? AND deleted_at IS NULL`,
       [docId, orgId],
       { fallback: true } as any
     );
@@ -952,7 +972,7 @@ const KnowledgeService = {
     const result = await DbPromise.run(
       `UPDATE knowledge_docs
        SET scope = ?, project_id = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+       WHERE id = ? AND organization_id = ?`,
       [newScope, resolvedProjectId, docId, orgId],
       { fallback: true } as any
     );
@@ -1150,7 +1170,7 @@ const KnowledgeService = {
     await ensureKnowledgeSchema();
     await DbPromise.run(
       `UPDATE knowledge_docs SET folder_id = NULL, updated_at = CURRENT_TIMESTAMP
-       WHERE folder_id = ? AND (organization_id = ? OR organization_id IS NULL)`,
+       WHERE folder_id = ? AND organization_id = ?`,
       [folderId, orgId],
       { fallback: true } as any
     );

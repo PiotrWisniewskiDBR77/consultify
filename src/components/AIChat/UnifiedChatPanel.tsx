@@ -22,6 +22,7 @@ import {
   Briefcase,
   Calculator,
   CheckCircle2,
+  GitFork,
   History,
   Loader2,
   MessageSquare,
@@ -104,9 +105,11 @@ import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSugg
 import type { CanvasToolType } from '../MyWork/ideaSelectionTypes';
 import { EMPTY_SELECTION } from '../MyWork/ideaSelectionTypes';
 import TeresaMark from '../shared/TeresaMark';
+import { BranchSelector, type ConversationBranch } from './BranchSelector';
 import { detectCanvasWriteIntent } from './canvasStreamIntentDetector';
 import {
-  isSupportedChatAttachment,
+  getChatAttachmentRejectionReason,
+  MAX_CHAT_ATTACHMENT_BYTES,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
 } from './chatAttachmentSupport';
 import { pushRecentAttachment } from './chatRecentAttachments';
@@ -894,6 +897,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     return () => controller.abort();
   }, []);
   const splitShellRef = useRef<HTMLDivElement | null>(null);
+  // Message id already jumped to (M01-P02 history search deep link), so a
+  // later re-render does not re-scroll the user away from where they are.
+  const jumpedMessageRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
     originalUserMessage: string;
@@ -3668,20 +3674,50 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       for (const file of files) {
-        if (!isSupportedChatAttachment(file)) {
-          console.warn('[UnifiedChatPanel] Skipping unsupported attachment type:', {
+        // M01-P04A — matrix pre-check (packet §3.3): reject honestly, with the
+        // SPECIFIC reason (format vs size), before spending a network round-trip
+        // on an upload the server would reject anyway. Recorded into
+        // failedAttachments so it survives on the message the same way a
+        // server-side ingest failure does (both feed the same "❌ Could not
+        // process..." summary + persisted metadata.failedAttachments).
+        const rejectionReason = getChatAttachmentRejectionReason(file);
+        if (rejectionReason) {
+          console.warn('[UnifiedChatPanel] Skipping attachment outside the matrix:', {
             name: file.name,
             type: file.type,
             size: file.size,
+            reason: rejectionReason,
           });
-          toast.error(
-            t(
-              'aiChat.attachments.unsupportedType',
-              'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: {{types}}.',
-              { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
-            ),
-            { duration: 5000 }
-          );
+          if (rejectionReason === 'SIZE_LIMIT_EXCEEDED') {
+            const maxMb = Math.round(MAX_CHAT_ATTACHMENT_BYTES / (1024 * 1024));
+            toast.error(
+              t(
+                'aiChat.attachments.sizeExceeded',
+                'Plik "{{name}}" przekracza limit {{maxMb}} MB.',
+                { name: file.name, maxMb }
+              ),
+              { duration: 5000 }
+            );
+          } else {
+            toast.error(
+              t(
+                'aiChat.attachments.unsupportedType',
+                'Plik "{{name}}" nie jest obsługiwany. Dozwolone formaty: {{types}}.',
+                { name: file.name, types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
+              ),
+              { duration: 5000 }
+            );
+          }
+          failedAttachments.push({
+            filename: file.name,
+            error:
+              rejectionReason === 'SIZE_LIMIT_EXCEEDED'
+                ? `File exceeds the ${Math.round(MAX_CHAT_ATTACHMENT_BYTES / (1024 * 1024))}MB limit`
+                : `Unsupported format — allowed: ${SUPPORTED_CHAT_ATTACHMENT_LABEL}`,
+            code: rejectionReason,
+            mimeType: file.type || undefined,
+            kind: 'file',
+          });
           continue;
         }
 
@@ -5093,6 +5129,148 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [t]
   );
 
+  // ------------------------------------------------------------------------
+  // M01-P03A — BranchSelector wiring (finding M01-035: the component was
+  // fully orphaned, imported nowhere). Lists branches forked FROM the active
+  // conversation (GET /:id/branches) so the user can see and switch between
+  // them, and — if the active conversation is itself a branch — offers a way
+  // back to its parent. See src/components/AIChat/BranchSelector.tsx for the
+  // real backend contract this maps onto.
+  // ------------------------------------------------------------------------
+  const [branchList, setBranchList] = useState<ConversationBranch[]>([]);
+  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(
+    null
+  );
+  const [branchSelfName, setBranchSelfName] = useState<string | null>(null);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchesError, setBranchesError] = useState<string | null>(null);
+  const [branchCreating, setBranchCreating] = useState(false);
+
+  const refreshBranches = useCallback(async (conversationId: string) => {
+    setBranchesLoading(true);
+    setBranchesError(null);
+    try {
+      const res: any = await Api.getConversationBranches(conversationId);
+      const mapped: ConversationBranch[] = Array.isArray(res?.branches)
+        ? res.branches.map((b: any) => ({
+            id: b.id,
+            conversationId: b.conversationId,
+            parentBranchId: b.parentBranchId ?? null,
+            forkMessageId: b.forkMessageId,
+            name: b.branchName || 'Branch',
+            messageCount: b.messageCount,
+            createdAt: b.createdAt,
+            createdBy: b.createdBy,
+          }))
+        : [];
+      setBranchList(mapped);
+      setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
+      setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
+    } catch (err) {
+      console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
+      setBranchList([]);
+      setBranchParentConversationId(null);
+      setBranchSelfName(null);
+      setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
+    } finally {
+      setBranchesLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (!activeConversationId || String(activeConversationId).startsWith('local-')) {
+      setBranchList([]);
+      setBranchParentConversationId(null);
+      setBranchSelfName(null);
+      setBranchesError(null);
+      return;
+    }
+    void refreshBranches(activeConversationId);
+    // `refreshBranches` intentionally excluded: it's a `useCallback` keyed on
+    // `[t]`, and this codebase's test-time `useTranslation()` mock
+    // (tests/setup.ts) returns a brand-new `t` function on every call (real
+    // react-i18next memoizes it; the test double does not) — including it
+    // here turned this into an infinite effect->setState->render->new-t->
+    // effect loop that OOM'd the component test suite (found by actually
+    // running it, not assumed). Only `activeConversationId` should ever
+    // trigger a refetch; `refreshBranches` is still always the current
+    // render's closure when this effect DOES run.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]);
+
+  const handleSelectBranch = useCallback(
+    async (branchId: string) => {
+      try {
+        await useConversationStore.getState().setActiveConversation(branchId);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to switch branch:', err);
+        toast.error(t('branch.switchFailed', 'Could not switch to that branch.'));
+      }
+    },
+    [t]
+  );
+
+  const handleCreateBranchFromSelector = useCallback(
+    async (name: string) => {
+      const sourceId = useConversationStore.getState().activeConversationId;
+      if (!sourceId) return;
+      // No explicit fork point from the dropdown's simple form — branch from
+      // the latest message in the thread so far (server falls back to "no
+      // messages" only when the source conversation is truly empty).
+      const msgs = useConversationStore.getState().activeMessages || [];
+      const lastRealMsg = [...msgs].reverse().find((m: any) => !String(m.id || '').startsWith('local-'));
+      setBranchCreating(true);
+      try {
+        const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);
+        const newId = res?.conversation?.id;
+        if (!newId) throw new Error('No conversation id returned');
+        await refreshBranches(sourceId);
+        toast.success(t('aiChat.branch.done', 'Branched into a new conversation'));
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Create branch failed:', err);
+        setBranchesError(t('branch.createFailed', 'Could not create branch.'));
+        toast.error(t('aiChat.branch.failed', 'Could not create a branch.'));
+      } finally {
+        setBranchCreating(false);
+      }
+    },
+    [refreshBranches, t]
+  );
+
+  const handleRenameBranch = useCallback(
+    async (branchId: string, newName: string) => {
+      try {
+        await Api.updateConversation(branchId, { title: newName });
+        const sourceId = useConversationStore.getState().activeConversationId;
+        if (sourceId) await refreshBranches(sourceId);
+        await useConversationStore.getState().fetchConversations?.();
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Rename branch failed:', err);
+        toast.error(t('branch.renameFailed', 'Could not rename branch.'));
+      }
+    },
+    [refreshBranches, t]
+  );
+
+  const handleDeleteBranch = useCallback(
+    async (branchId: string) => {
+      try {
+        await Api.deleteConversation(branchId);
+        // `branchId` is always one of the active conversation's own children
+        // here (BranchSelector only offers delete on rows from `branches`,
+        // which is always the children list — see refreshBranches) so the
+        // active conversation itself never changes; just re-list.
+        const sourceId = useConversationStore.getState().activeConversationId;
+        if (sourceId) await refreshBranches(sourceId);
+        await useConversationStore.getState().fetchConversations?.();
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Delete branch failed:', err);
+        toast.error(t('branch.deleteFailed', 'Could not delete branch.'));
+      }
+    },
+    [refreshBranches, t]
+  );
+
   const handleCommitEditMessage = useCallback(async () => {
     if (!editingMessageId) return;
     const newText = editingText.trim();
@@ -5485,9 +5663,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // Render helpers
   // ========================================================================
 
+  // Anchor wrapper for deep links (M01-P02 history search "jump to message").
+  // Kept here rather than inside MessageRenderer (owned by a different
+  // packet) so the anchor id is added without touching that file: a single
+  // extra, unstyled wrapper div per message, invisible to layout.
   const renderMessage = (msg: ChatMessage, index: number) => (
-    <MessageRenderer
-      key={msg.id}
+    <div key={msg.id} data-message-anchor={msg.id}>
+      <MessageRenderer
       msg={msg}
       index={index}
       displayMessages={displayMessages}
@@ -5565,7 +5747,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       teresaConfirmBusy={teresaConfirmBusy}
       onTeresaConfirmProceed={handleTeresaConfirmProceed}
       onTeresaConfirmCancel={handleTeresaConfirmCancel}
-    />
+      />
+    </div>
   );
 
   // ========================================================================
@@ -5640,6 +5823,65 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search, mode, navigateToRoute]);
+
+  // Deep-link support: jump to one message (`?m=`), used when opening a
+  // history search hit (M01-P02, GF-CHAT-05) so the user lands on the
+  // message that matched, not the top of a long conversation. Waits for the
+  // message to actually be present in `displayMessages` before consuming the
+  // param, so a slow conversation fetch does not silently drop the jump.
+  //
+  // M01-030 (severity P3, carried from P02 into P01): explicit semantics for
+  // `?m=` vs. hard reload. This effect CONSUMES the param via
+  // `navigateToRoute(..., {replace:true})` once the jump has happened, so
+  // `?m=` is a ONE-SHOT deep link, not a persistent view state:
+  //   - a hard reload / fresh tab open BEFORE the jump has consumed the
+  //     param (e.g. the URL bar still shows `?m=<id>` because the message
+  //     list was still loading) DOES replay the jump — the effect re-runs
+  //     from scratch on the fresh mount and finds `?m=` still present;
+  //   - a hard reload / fresh reopen AFTER the jump already consumed the
+  //     param (the URL no longer contains `?m=`, exactly like clicking any
+  //     other link and then reloading) does NOT re-jump or re-highlight —
+  //     there is nothing left in the URL to jump to. This matches ordinary
+  //     browser semantics for a one-time query param (compare: a "scroll to
+  //     anchor" link consumed by `history.replaceState`) and is NOT a bug —
+  //     but the GF-CHAT-05 claim "deep link survives hard reload" must be
+  //     read as "survives a reload of the still-pending deep link", not "the
+  //     jump target is a durable, reload-proof URL forever." See
+  //     tests/components/AIChat/UnifiedChatPanel.test.tsx ("M01-030" cases)
+  //     for both cases exercised directly.
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const targetId = String(params.get('m') || '').trim();
+    if (!targetId || jumpedMessageRef.current === targetId) return;
+    if (!displayMessages.some((m) => (m as any)?.id === targetId)) return;
+
+    const selectorId =
+      typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(targetId)
+        : targetId;
+    const el = document.querySelector(`[data-message-anchor="${selectorId}"]`);
+    if (!el) return;
+
+    jumpedMessageRef.current = targetId;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    const HIGHLIGHT = ['ring-2', 'ring-c-focus', 'rounded-lg'];
+    el.classList.add(...HIGHLIGHT);
+    const timer = setTimeout(() => el.classList.remove(...HIGHLIGHT), 2400);
+
+    // Consume `m` so a later re-render / navigation does not re-trigger the
+    // jump and does not leave a stale message id sitting in the URL.
+    params.delete('m');
+    const nextSearch = params.toString();
+    navigateToRoute(
+      { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : '' },
+      { replace: true }
+    );
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, location.search, displayMessages, navigateToRoute]);
+
   // Full `/chat` must always use the rich start screen, regardless of persisted displayMode.
   // Once the work panel is open, the left side behaves like an active conversation panel:
   // no marketing welcome surface, input stays pinned at the bottom.
@@ -5741,8 +5983,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         </a>
 
         {/* Header — Tech Sexy (T104/T105) */}
+        {/* M01-P03A: `relative z-10` — this row and the messages list below it
+            are both position:static siblings, so without an explicit z-index
+            here the header (earlier in DOM) loses to the messages list
+            (later in DOM, same implicit stacking level) regardless of any
+            z-index set on a descendant like BranchSelector's dropdown — a
+            positioned descendant can't "escape" above a later sibling of its
+            OWN ancestor's stacking level. Found by actually opening the
+            branch dropdown in the browser: its lower rows painted correctly,
+            but the upper portion was silently painted UNDER the message
+            bubble text (confirmed via elementsFromPoint, not assumed from
+            code reading — bumping the dropdown's own z-index to 9999 did
+            NOT fix it, proving the escape was the real cause). */}
         <div
-          className={`flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-c-border-subtle bg-c-surface/50 backdrop-blur-sm`}
+          className={`relative z-10 flex h-[42px] items-center justify-between ${isCompact ? 'px-3' : 'px-4'} border-b border-c-border-subtle bg-c-surface/50 backdrop-blur-sm`}
         >
           <div className="flex items-center gap-0.5">
             <button
@@ -5770,6 +6024,37 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               >
                 <History size={18} strokeWidth={1.75} />
               </button>
+            )}
+
+            {/* M01-P03A — conversation branching (finding M01-035). Only once
+                a real, persisted conversation is active: a `local-*` id has
+                no server-side row yet, so GET /:id/branches would 404. */}
+            {activeConversationId && !String(activeConversationId).startsWith('local-') && (
+              <>
+                {branchParentConversationId && (
+                  <button
+                    onClick={() => void handleSelectBranch(branchParentConversationId)}
+                    data-testid="chat-branch-back-to-parent"
+                    className="p-1.5 rounded-lg transition-colors text-c-text-muted hover:bg-c-surface-raised hover:text-c-text"
+                    title={t('branch.backToParent', 'Back to source conversation')}
+                    aria-label={t('branch.backToParent', 'Back to source conversation')}
+                  >
+                    <GitFork size={18} strokeWidth={1.75} className="rotate-180" />
+                  </button>
+                )}
+                <BranchSelector
+                  branches={branchList}
+                  activeBranchId={null}
+                  currentLabel={branchSelfName}
+                  onSelectBranch={handleSelectBranch}
+                  onCreateBranch={handleCreateBranchFromSelector}
+                  onRenameBranch={handleRenameBranch}
+                  onDeleteBranch={handleDeleteBranch}
+                  isLoading={branchesLoading}
+                  isCreating={branchCreating}
+                  error={branchesError}
+                />
+              </>
             )}
 
             {/* Show the business/actions button only when a real navigation target exists. */}

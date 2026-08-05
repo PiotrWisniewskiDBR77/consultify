@@ -10,19 +10,78 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  * my_ideas/my_idea_maps row is written server-side, BEFORE any FE code runs,
  * carrying the actual LLM-built graph (not the crude heading-splitter used by
  * the existing Canvas save-to-workspace callers that only pass `sections`).
+ *
+ * FIX (M01-P08R): this file predates M01-P07C's atomic-transaction rewrite
+ * of the `target:'idea'` path (real read-your-writes atomicity — see
+ * `server/src/services/__tests__/canvasIdeaMaterializeAtomicity.p07c.pg.test.ts`
+ * for the dedicated real-Postgres coverage of that atomicity itself). Two
+ * things changed underneath this file and were never updated here, which is
+ * exactly why M01-PTEST's red-closure report flagged all 3 tests as red and
+ * explicitly left them unfixed as "P07C territory": (1) an
+ * `information_schema` schema-preflight (`assertCanvasIdeaReceiptSchema`)
+ * now runs before any write and this file's blanket `dbGetMock` default of
+ * `null` failed it before a single test's own scenario ran; (2) the actual
+ * write moved from plain `insertDynamic(table, values, returning)` to
+ * `insertDynamicTx(query, table, values, returning)` inside
+ * `withPgTransaction`, so the old mock of `insertDynamic` was asserting
+ * against a function the module under test no longer even imports.
+ * This file's own purpose per the docstring above — graph
+ * validation/normalization shape, not transaction atomicity — is
+ * unaffected by the rewrite, so it is re-pointed at the new contract with a
+ * minimal stateful fake `query()` (same "record what was inserted, answer
+ * the read-back from it" shape already used elsewhere in this repo for
+ * `withPgTransaction`-style mocks), not a deep reimplementation of Postgres.
  */
 
 const dbGetMock = vi.fn();
+const dbAllMock = vi.fn();
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   get: (...args: any[]) => dbGetMock(...args),
+  all: (...args: any[]) => dbAllMock(...args),
 }));
 vi.mock('../../../server/src/database/index.js', () => ({
   getDatabase: () => ({}),
 }));
 
-const insertDynamicMock = vi.fn();
+// Records of the two rows `insertDynamicTx` was asked to write, keyed by
+// table name — `fakeQuery`'s read-back SELECTs answer from these, so the
+// final `ideaReadBack`/`mapReadBack` in canvasMaterialize.ts sees exactly
+// what this test's own scenario produced, not a fabricated success.
+let insertedByTable: Record<string, Record<string, unknown>> = {};
+
+const insertDynamicTxMock = vi.fn(
+  async (_query: unknown, table: string, values: Record<string, unknown>) => {
+    insertedByTable[table] = values;
+    return undefined;
+  }
+);
 vi.mock('../../../server/src/utils/dbDynamic.js', () => ({
-  insertDynamic: (...args: any[]) => insertDynamicMock(...args),
+  insertDynamicTx: (...args: any[]) => (insertDynamicTxMock as any)(...args),
+}));
+
+async function fakeQuery<R = unknown>(sql: string, params: unknown[] = []): Promise<{ rows: R[]; rowCount: number }> {
+  if (sql.includes('SAVEPOINT') || sql.startsWith('INSERT INTO canvas_idea_materialization_receipts')) {
+    return { rows: [], rowCount: 0 };
+  }
+  if (sql.includes('FROM canvas_idea_materialization_receipts')) {
+    // Idempotency-key fast path / unique-violation replay — not exercised by
+    // any scenario in this file (none of the three tests pass an
+    // idempotencyKey), so "no existing receipt" is always the honest answer.
+    return { rows: [], rowCount: 0 };
+  }
+  if (sql.includes('FROM my_ideas')) {
+    const row = insertedByTable['my_ideas'];
+    return { rows: (row ? [{ id: row.id, title: row.title }] : []) as R[], rowCount: row ? 1 : 0 };
+  }
+  if (sql.includes('FROM my_idea_maps')) {
+    const row = insertedByTable['my_idea_maps'];
+    return { rows: (row ? [{ id: row.id }] : []) as R[], rowCount: row ? 1 : 0 };
+  }
+  return { rows: [], rowCount: 0 };
+}
+
+vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
+  withPgTransaction: async (fn: (query: typeof fakeQuery) => Promise<unknown>) => fn(fakeQuery),
 }));
 
 vi.mock('../../../server/src/utils/Logger.js', () => ({
@@ -47,9 +106,36 @@ const baseInput = {
 
 beforeEach(() => {
   dbGetMock.mockReset();
-  dbGetMock.mockResolvedValue(null);
-  insertDynamicMock.mockReset();
-  insertDynamicMock.mockResolvedValue(undefined);
+  // The `information_schema.tables` preflight `assertCanvasIdeaReceiptSchema()`
+  // (M01-P07C) added ahead of any idea materialize is orthogonal to what
+  // this file exercises (chat-graph normalization) — answer it truthfully
+  // and let every other `get` call keep resolving null, same as before.
+  dbGetMock.mockImplementation(async (sql: unknown) => {
+    if (
+      typeof sql === 'string' &&
+      sql.includes('information_schema.tables') &&
+      sql.includes('canvas_idea_materialization_receipts')
+    ) {
+      return { table_name: 'canvas_idea_materialization_receipts' };
+    }
+    return null;
+  });
+  dbAllMock.mockReset();
+  dbAllMock.mockImplementation(async (sql: unknown) => {
+    if (
+      typeof sql === 'string' &&
+      sql.includes('pg_indexes') &&
+      sql.includes('canvas_idea_materialization_receipts')
+    ) {
+      return [
+        { indexname: 'idx_canvas_idea_receipts_org_idem' },
+        { indexname: 'idx_canvas_idea_receipts_idea_id' },
+      ];
+    }
+    return [];
+  });
+  insertDynamicTxMock.mockClear();
+  insertedByTable = {};
 });
 
 describe('canvasMaterialize — target:idea with a pre-built chat graph', () => {
@@ -72,14 +158,15 @@ describe('canvasMaterialize — target:idea with a pre-built chat graph', () => 
     expect(result.type).toBe('idea');
     expect(result.id).toMatch(/^idea-\d+-[0-9a-f]+$/);
 
-    expect(insertDynamicMock).toHaveBeenCalledTimes(2);
-    const [ideaCall, mapCall] = insertDynamicMock.mock.calls;
+    expect(insertDynamicTxMock).toHaveBeenCalledTimes(2);
+    const [ideaCall, mapCall] = insertDynamicTxMock.mock.calls;
 
-    expect(ideaCall[0]).toBe('my_ideas');
-    expect(ideaCall[1]).toMatchObject({ source_type: 'teresa_chat', title: 'Kapitał na wzrost' });
+    // insertDynamicTx(query, table, values, returning) — table/values are args 1/2.
+    expect(ideaCall[1]).toBe('my_ideas');
+    expect(ideaCall[2]).toMatchObject({ source_type: 'teresa_chat', title: 'Kapitał na wzrost' });
 
-    expect(mapCall[0]).toBe('my_idea_maps');
-    const mapValues = mapCall[1];
+    expect(mapCall[1]).toBe('my_idea_maps');
+    const mapValues = mapCall[2];
     expect(mapValues.preferred_tool).toBe('mindmap');
     expect(mapValues.is_canonical).toBe(true);
     expect(mapValues.last_editor_user_id).toBe('user-1');
@@ -101,12 +188,12 @@ describe('canvasMaterialize — target:idea with a pre-built chat graph', () => 
     });
 
     expect(result.id).toMatch(/^idea-\d+-[0-9a-f]+$/);
-    const mapCall = insertDynamicMock.mock.calls[1];
-    const storedNodes = JSON.parse(mapCall[1].nodes_json);
+    const mapCall = insertDynamicTxMock.mock.calls[1];
+    const storedNodes = JSON.parse(mapCall[2].nodes_json);
     expect(storedNodes[0]).toMatchObject({ id: 'root', kind: 'idea' });
     expect(storedNodes[1]).toMatchObject({ id: 's0', label: 'Ryzyka' });
     // No graph passed → preferred_tool stays null (not forced to a canvas kind).
-    expect(mapCall[1].preferred_tool).toBeNull();
+    expect(mapCall[2].preferred_tool).toBeNull();
   });
 
   it('still creates the idea (never throws) when the graph contains garbage nodes/edges', async () => {

@@ -1034,40 +1034,131 @@ function assertProposalFresh(
   }
 }
 
+/**
+ * FIX FINDING M01-021 (owned by M01-P07B — see
+ * M01_P07B_OWNER_HANDOFFS_REPORT.md for the full contract; diagnosed in
+ * M01-P07A, see M01-P07A_PROPOSAL_LIFECYCLE_REPORT.md §2.3/§10.1). This used
+ * to INSERT exclusively into `work_canvas_ideas`, a table nothing else in
+ * the codebase ever SELECTs from (verified: grep for `work_canvas_ideas`
+ * across server/src turns up only this file's own CREATE TABLE + that one
+ * INSERT — it was write-only). Meanwhile `confirmTargetObjectReadBack('idea',
+ * ...)` below in this same file correctly checks the REAL, product-facing
+ * `my_ideas` table — the one `server/src/routes/my-work.routes.ts`, the Idea
+ * Map, and Radar ranking all actually read. Every "Canvas -> Idea" approval
+ * deterministically failed its own read-back with
+ * CANVAS_HANDOFF_READBACK_MISSING (500, claim reverted to `proposed`,
+ * retried forever with the identical outcome — never transient).
+ *
+ * Fix: route through `canvasMaterialize.ts::materializeOrThrow` with
+ * `target: 'idea'` — the SAME shared materializer `/save-to-workspace`'s
+ * `createWorkspaceResource` already uses for `target=idea` (see M-7 comment
+ * on `commitProposalToDomain` below: "single materialization core" — every
+ * OTHER target already went through it; `idea` was the one branch that
+ * never got wired up). That path already writes the REAL `my_ideas` +
+ * `my_idea_maps` rows `confirmTargetObjectReadBack` expects, in production,
+ * today, for the identical `save-to-workspace` flow. No new table, no new
+ * column, no cross-module contract change, no M02 code touched — this
+ * closes the one un-wired branch of an already-correct, already-shipped
+ * writer.
+ */
 async function createCanvasIdea(params: {
   organizationId: string;
   actorUserId: string;
   draft: WorkCanvasDraftRecord;
   proposal: WorkCanvasProposalRecord;
 }): Promise<WorkCanvasActionReadBack> {
-  const id = uuidv4();
-  const now = nowIso();
   const title = readString(params.proposal.payload.title, params.proposal.title);
   const summary = readString(params.proposal.payload.summary, params.proposal.summary);
-  await dbRun(
-    `INSERT INTO work_canvas_ideas (
-      id, organization_id, project_id, title, summary, source_draft_id,
-      source_proposal_id, created_by, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      params.organizationId,
-      params.draft.projectId || null,
+
+  const { materializeOrThrow } = await import('./canvasMaterialize.js');
+  const materialized = await materializeOrThrow(
+    {
+      organizationId: params.organizationId,
+      actorUserId: params.actorUserId,
+      target: 'idea',
       title,
-      summary || null,
-      params.draft.id,
-      params.proposal.id,
-      params.actorUserId,
-      now,
-      now,
-    ]
+      contentMd: params.draft.contentMd || summary || title,
+      summary: summary || title,
+      projectId: params.draft.projectId || null,
+      sourceDraftId: params.draft.id,
+      sourceConversationId: params.draft.conversationId,
+      sourceType: 'canvas_proposal',
+      // M01-P07C (M01-033): a proposal can only ever be approved once — the
+      // CAS claim in `approveProposal` ('proposed' -> 'executing') already
+      // guarantees this call site runs at most once per `proposal.id` under
+      // normal operation. Passing it through as the idempotency key closes
+      // the remaining gap: if `approveProposal`'s own state-machine update
+      // is ever retried (client resubmits after a lost HTTP response) before
+      // it reaches `commitProposalToDomain` a second time, or two concurrent
+      // approve calls both win their own CAS claim due to a bug upstream,
+      // `materializeWorkspaceTarget`'s pinned transaction now guarantees
+      // exactly one idea/map/receipt for this proposal rather than two.
+      idempotencyKey: params.proposal.id,
+    },
+    { writer: 'proposal_approval' }
   );
+
+  // Best-effort ADDITIVE Canvas-side provenance record: `source_draft_id` /
+  // `source_proposal_id` linkage that `my_ideas` has no column for. Must
+  // NEVER fail the approval — by the time this runs the real owner object
+  // (`my_ideas` row, confirmed by `materializeOrThrow`'s own writer) already
+  // exists; this is lineage only, same best-effort contract as
+  // `appendDraftMaterializedTo` just below in this file.
+  // `{ fallback: false }` is load-bearing, not decorative, here too: dbRun's
+  // default (`fallback: true`) resolves `{ success: false, error }` on a
+  // failed INSERT WITHOUT throwing, so this try/catch would never fire and a
+  // silently-dropped provenance row would look identical to a written one.
+  //
+  // M01-P07C boundary decision: this insert is DELIBERATELY left outside
+  // `materializeWorkspaceTarget`'s pinned idea+map+receipt transaction. It
+  // targets a DIFFERENT table (`work_canvas_ideas`, Canvas-side lineage —
+  // not a My Work owner object) with an EXPLICIT "must never fail approval"
+  // contract from M01-021 (see that fix's comment above `createCanvasIdea`).
+  // Folding a caller-specific side write into the shared materializer's
+  // transaction would break the "every target reduces identically, single
+  // materialization core" design this module documents at file top, and
+  // would turn a documented best-effort write into one whose failure now
+  // rolls back an already-confirmed owner object. M01-033 is about the
+  // owner writes (idea, map) and their receipt never landing partially —
+  // this row is neither; it is out of scope for this fix by design, not by
+  // oversight.
+
+  try {
+    await dbRun(
+      `INSERT INTO work_canvas_ideas (
+        id, organization_id, project_id, title, summary, source_draft_id,
+        source_proposal_id, created_by, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.organizationId,
+        params.draft.projectId || null,
+        title,
+        summary || null,
+        params.draft.id,
+        params.proposal.id,
+        params.actorUserId,
+        nowIso(),
+        nowIso(),
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    logger.warn('[workCanvas] work_canvas_ideas provenance insert failed (idea already created)', {
+      draftId: params.draft.id,
+      proposalId: params.proposal.id,
+      ideaId: materialized.id,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   return {
     status: 'created',
     entityStatus: 'created',
     target: 'idea',
-    targetObjectId: id,
-    title,
+    targetObjectId: materialized.id,
+    title: materialized.title,
+    url: materialized.url,
     projectId: params.draft.projectId,
     ownerId: params.draft.ownerId,
     sourceDraftId: params.draft.id,
@@ -1277,6 +1368,18 @@ export async function rejectProposal(params: {
   await ensureSchema();
   const existing = await getProposal(params);
   if (!existing) throw Object.assign(new Error('Canvas proposal not found'), { statusCode: 404 });
+  // NARROWED (M01-P07A review, §4.2): keep the ORIGINAL state-machine scope
+  // — only a proposal still in `proposed` can ever be rejected. A prior
+  // revision of this guard read `if (status === 'approved' || status ===
+  // 'rejected') return existing`, which let a proposal in `executing` fall
+  // through to the CAS-guarded UPDATE below. That UPDATE's own `AND status =
+  // 'proposed'` clause would have made it a no-op for `executing` too (so no
+  // actual state got corrupted), but it silently WIDENED which states this
+  // function attempts to act on — `executing` belongs to P07B's territory,
+  // and expanding reject's reach into it was not part of "harden the reject
+  // path", it was an unreviewed state-machine change. Restored to the exact
+  // pre-P07A scope; the CAS fix itself (the guarded UPDATE below) is
+  // unchanged and still closes the real race against approve.
   if (existing.status !== 'proposed') return existing;
   const now = nowIso();
   const readBack: WorkCanvasActionReadBack = {
@@ -1287,10 +1390,24 @@ export async function rejectProposal(params: {
     reason: params.reason || 'Rejected by user',
     auditEventId: params.auditEventId || null,
   };
-  await dbRun(
+  // FIX (M01-P07A — CAS hardening): the previous version read `existing`,
+  // then ran an UNCONDITIONAL UPDATE ... WHERE id = ? AND organization_id = ?
+  // with no status guard. That is a genuine TOCTOU race against
+  // approveProposal's own CAS claim (`WHERE status = 'proposed'`): if an
+  // approve call won the race between this function's read and its write —
+  // moving the row through 'executing' and on to 'approved' with a REAL
+  // target_object_id already materialized — this UPDATE would still fire
+  // unconditionally and overwrite that row back to status='rejected' with
+  // target_object_id=null, silently orphaning the just-created domain object
+  // (task/idea/decision/table/...) while telling the caller/UI the proposal
+  // was never actioned. Guarding the UPDATE itself with
+  // `AND status = 'proposed'` makes the transition atomic and gives exactly
+  // one winner for any concurrent approve/reject pair, matching the same CAS
+  // pattern approveProposal already uses for its own claim.
+  const claim = await dbRun(
     `UPDATE work_canvas_proposals
      SET status = ?, target_object_id = ?, read_back_json = ?, audit_event_id = ?, updated_at = ?
-     WHERE id = ? AND organization_id = ?`,
+     WHERE id = ? AND organization_id = ? AND status = 'proposed'`,
     [
       'rejected',
       null,
@@ -1299,8 +1416,20 @@ export async function rejectProposal(params: {
       now,
       params.proposalId,
       params.organizationId,
-    ]
+    ],
+    { fallback: false }
   );
+  if (claim.changes !== 1) {
+    // Someone else (approve, or a concurrent reject) already resolved this
+    // proposal between our read and our write — return the CURRENT
+    // authoritative row instead of forcing a rejection over it.
+    const latest = await getProposal({
+      organizationId: params.organizationId,
+      proposalId: params.proposalId,
+    });
+    if (latest) return latest;
+    throw Object.assign(new Error('Canvas proposal not found'), { statusCode: 404 });
+  }
   const rejected = await getProposal({
     organizationId: params.organizationId,
     proposalId: params.proposalId,

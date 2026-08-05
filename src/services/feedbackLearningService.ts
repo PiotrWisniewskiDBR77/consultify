@@ -105,6 +105,16 @@ class FeedbackLearningServiceClass {
     }
 
     // Send to backend for storage (v2.0 Adaptive System)
+    //
+    // M01-P03B (coordinator fix-required, 2026-08-05) — this call is NOT a
+    // best-effort side effect like the memory-learning calls above; it is
+    // the ACTUAL PERSISTENCE of the user's rating (POST
+    // /api/ai-feedback/response -> ai_response_feedback). Swallowing its
+    // error here meant a 500 (save failed) or 403 (not your message) looked
+    // IDENTICAL, from the caller's point of view, to a real 201 — a
+    // confirmed false-success (P1): InlineResponseFeedback set "already
+    // rated" regardless of whether anything was actually saved. Rethrow so
+    // the caller can tell the difference and be honest about it.
     try {
       await Api.aiFeedback({
         messageId: feedback.messageId,
@@ -126,6 +136,7 @@ class FeedbackLearningServiceClass {
       });
     } catch (err: any) {
       console.error('[FeedbackLearning] Failed to submit to backend:', err);
+      throw err;
     }
   }
 

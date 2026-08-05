@@ -25,6 +25,30 @@ function formatConfidence(value: unknown): string | null {
   return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
 }
 
+/**
+ * M01-P04B (GF-CHAT-08, coverage) — the single authoritative "is this answer
+ * grounded" check the UI is allowed to trust. An answer is grounded ONLY when
+ * it has at least one citation AND the claim↔citation coverage check (when
+ * present) did not fail. Deliberately conservative: `citationsCount <= 0`
+ * (or missing) is NEVER grounded, and a `coverage.passesPolicy === false`
+ * downgrades an otherwise-cited answer — a response must not read as
+ * "grounded" just because SOME citation exists while its actual claims are
+ * uncited. This is the function the M01-P04B negative control (c) exercises:
+ * feed it a bundle with `citationsCount: 0` and assert `false`.
+ */
+export function isAnswerGrounded(
+  data: {
+    citationsCount?: unknown;
+    coverage?: { passesPolicy?: boolean } | null;
+  } | null
+): boolean {
+  if (!data) return false;
+  const citationsCount = typeof data.citationsCount === 'number' ? data.citationsCount : 0;
+  if (citationsCount <= 0) return false;
+  if (data.coverage && data.coverage.passesPolicy === false) return false;
+  return true;
+}
+
 export const TrustPanel: React.FC<TrustPanelProps> = ({
   bundle,
   isCompact = false,
@@ -37,9 +61,11 @@ export const TrustPanel: React.FC<TrustPanelProps> = ({
   const sourceClasses = Array.isArray(data.sourceClasses) ? data.sourceClasses : [];
   const tokens = asRecord(data.tokens);
   const sourceSummary = asRecord(data.sourceLedgerSummary);
+  const coverage = asRecord(data.coverage);
   const warnings = Array.isArray(data.warnings) ? data.warnings.filter(Boolean) : [];
   const routingTrace = data.routingTrace;
   const confidence = formatConfidence(data.confidence);
+  const grounded = isAnswerGrounded(data as { citationsCount?: unknown; coverage?: any });
 
   return (
     <details
@@ -68,6 +94,21 @@ export const TrustPanel: React.FC<TrustPanelProps> = ({
               Confidence: {confidence}
             </span>
           )}
+          {/* M01-P04B (GF-CHAT-08, coverage): an explicit grounded/not-grounded
+              signal — the previous state had no visible indicator when an
+              answer carried zero citations (or failed claim coverage) beyond
+              a since-suppressed TrustBadge "No cited sources" chip. */}
+          <span
+            data-testid="trust-panel-grounded"
+            data-grounded={grounded}
+            className={`rounded-full px-2 py-1 font-medium ${
+              grounded
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+            }`}
+          >
+            {grounded ? 'Grounded' : 'Not grounded'}
+          </span>
         </div>
 
         <div>
@@ -87,6 +128,15 @@ export const TrustPanel: React.FC<TrustPanelProps> = ({
         {sourceSummary && (
           <div>
             Sources used: {sourceSummary.usedCount ?? 0}; blocked: {sourceSummary.blockedCount ?? 0}
+          </div>
+        )}
+
+        {coverage && typeof coverage.totalClaims === 'number' && coverage.totalClaims > 0 && (
+          <div data-testid="trust-panel-coverage">
+            Claim coverage: {coverage.citedClaims ?? 0}/{coverage.totalClaims} cited
+            {typeof coverage.coverageScore === 'number'
+              ? ` (${Math.round(coverage.coverageScore * 100)}%)`
+              : ''}
           </div>
         )}
 

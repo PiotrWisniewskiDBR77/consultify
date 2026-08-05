@@ -12,7 +12,7 @@ export type CanvasStarterId =
   // nie dokument markdown — patrz docs/plans/DELIVERABLES_LIGHT_TARGET.md §10.2.
   | 'presentation';
 
-export type CanvasSaveState = 'unsaved' | 'saving' | 'saved' | 'failed';
+export type CanvasSaveState = 'unsaved' | 'saving' | 'saved' | 'failed' | 'conflict';
 
 export type CanvasLifecycleState = 'draft' | 'in_review' | 'approved';
 
@@ -112,6 +112,8 @@ export interface CanvasDocumentState extends ActiveCanvasDocument {
   markdownProjectionStatus: CanvasProjectionStatus;
   projectionError?: string | null;
   updatedAt?: string | null;
+  /** ISO timestamp of the last confirmed save, for the save-status affordance. */
+  lastSavedAt?: string | null;
   linkedIdeaId?: string | null;
   linkedNoteId?: string | null;
   linkedInitiativeId?: string | null;

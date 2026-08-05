@@ -492,6 +492,249 @@ router.post(
   })
 );
 
+// ==================== SEARCH BY CONTENT (server-side target) ====================
+//
+// M01-002 (P1): registered BEFORE GET /:id on purpose. Express matches routes
+// in registration order; GET /:id validates its param as a UUID and
+// validateParams answers a hard 400 without calling next() on mismatch, so
+// while this route was registered ~1250 lines further down, every request to
+// /search was swallowed by /:id first and this handler was dead code on
+// origin/demo. See
+// docs/ui-standards/evidence/final-acceptance-2026-08-04/01-chat/orchestration/packets/M01-P02_PACKET.md
+// §3.1 and M01-P00_DISCOVERY.md §4.3/§8.2.
+
+// Snippet highlighting is delimited with control characters, never HTML:
+// message content is arbitrary user input, so returning raw <mark>...</mark>
+// around a hit would hand the client markup it has to trust not to be
+// malicious (verified against Postgres 16: ts_headline does not escape the
+// text it highlights — a message containing `<img src=x onerror=alert(1)>`
+// comes back byte-for-byte). These control-character delimiters are parsed
+// and stripped server-side; only {text, mark} segments cross the API
+// boundary, so the client renders inert text nodes and message content can
+// never be interpreted as markup.
+const SNIPPET_MARK_START = '\u0002';
+const SNIPPET_MARK_END = '\u0003';
+
+interface ConversationSnippetSegment {
+  text: string;
+  mark: boolean;
+}
+
+function parseConversationSnippetSegments(raw: unknown): ConversationSnippetSegment[] | null {
+  if (typeof raw !== 'string' || raw.length === 0) return null;
+  const segments: ConversationSnippetSegment[] = [];
+  for (const chunk of raw.split(SNIPPET_MARK_START)) {
+    const [highlighted, ...rest] = chunk.split(SNIPPET_MARK_END);
+    if (rest.length === 0) {
+      // No closing delimiter: this chunk precedes any highlight.
+      if (highlighted) segments.push({ text: highlighted, mark: false });
+      continue;
+    }
+    if (highlighted) segments.push({ text: highlighted, mark: true });
+    const tail = rest.join(SNIPPET_MARK_END);
+    if (tail) segments.push({ text: tail, mark: false });
+  }
+  return segments.length > 0 ? segments : null;
+}
+
+const SearchQuerySchema = z.object({
+  q: z.string().min(2).max(200),
+  folderId: z.string().uuid().optional(),
+  pinned: z.enum(['true', 'false']).optional(),
+  archived: z.enum(['true', 'false']).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  hasAttachments: z.enum(['true', 'false']).optional(),
+  cursor: z.string().optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+});
+
+router.get(
+  '/search',
+  verifyToken,
+  validateQuery(SearchQuerySchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const {
+      q,
+      folderId,
+      pinned,
+      archived,
+      from,
+      to,
+      cursor: cursorParam,
+      limit: limitStr,
+    } = req.query as Record<string, string | undefined>;
+
+    const query = (q || '').trim();
+    if (!query || query.length < 2) {
+      return res.json({ conversations: [], query: '', nextCursor: null });
+    }
+
+    const limit = Math.min(parseInt(limitStr || '20', 10), 50);
+
+    try {
+      const searchPattern = `%${query}%`;
+
+      // P34 policy gateway: resolve team read permission before search (§2.3.3)
+      let teamReadAllowed = false;
+      if (req.organizationId) {
+        const perm = await checkChatPermission(req.userId!, req.organizationId, 'read');
+        teamReadAllowed = perm.allowed;
+      }
+
+      // Scope: personal + team (governed by P34 permission check)
+      let whereClause = `WHERE (c.user_id = ?`;
+      const params: (string | boolean)[] = [req.userId!];
+
+      if (teamReadAllowed && req.organizationId) {
+        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
+        params.push(req.organizationId);
+      }
+      whereClause += `)`;
+
+      // Exclude soft-deleted by default
+      whereClause += ` AND c.deleted_at IS NULL`;
+
+      // FTS with ILIKE fallback: use tsvector search on conversations + message content
+      whereClause += ` AND (
+        (c.search_vector IS NOT NULL AND c.search_vector @@ plainto_tsquery('simple', ?))
+        OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND to_tsvector('simple', coalesce(cm2.content, '')) @@ plainto_tsquery('simple', ?))
+        OR c.title ILIKE ? OR c.last_message_preview ILIKE ?
+      )`;
+      params.push(query, query, searchPattern, searchPattern);
+
+      // Filters
+      if (folderId) {
+        whereClause += ` AND c.chat_project_id = ?`;
+        params.push(folderId);
+      }
+      if (pinned !== undefined) {
+        whereClause += ` AND c.starred = ?`;
+        params.push(pinned === 'true');
+      }
+      if (archived !== undefined) {
+        whereClause += ` AND c.archived = ?`;
+        params.push(archived === 'true');
+      }
+      if (from) {
+        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) >= ?`;
+        params.push(from);
+      }
+      if (to) {
+        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) <= ?`;
+        params.push(to);
+      }
+
+      // hasAttachments filter (checks conversation_message_attachments table)
+      const hasAttachments = (req.query as any).hasAttachments;
+      if (hasAttachments === 'true') {
+        whereClause += ` AND EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
+      } else if (hasAttachments === 'false') {
+        whereClause += ` AND NOT EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
+      }
+
+      // Cursor-based pagination: cursor = "lastMessageAt|id"
+      if (cursorParam) {
+        const [cursorTs, cursorId] = cursorParam.split('|');
+        if (cursorTs && cursorId) {
+          whereClause += ` AND (COALESCE(c.last_message_at, c.updated_at) < ? OR (COALESCE(c.last_message_at, c.updated_at) = ? AND c.id < ?))`;
+          params.push(cursorTs, cursorTs, cursorId);
+        }
+      }
+
+      // Resolve the earliest matching message per conversation via LATERAL, so
+      // a hit can carry matched_message_id + a snippet of the message that
+      // actually matched (not just the conversation title/preview). LATERAL
+      // params are bound first because the FROM clause precedes WHERE in the
+      // final query text — DbPromise translates `?` to `$1, $2, ...` in
+      // left-to-right source order.
+      const lateralParams: string[] = [query, query];
+      const fromClause = `FROM conversations c
+         LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id
+         LEFT JOIN LATERAL (
+           SELECT cm.id,
+                  ts_headline('simple', cm.content, plainto_tsquery('simple', ?),
+                              'MaxWords=24, MinWords=6, StartSel=${SNIPPET_MARK_START}, StopSel=${SNIPPET_MARK_END}') AS snippet
+           FROM conversation_messages cm
+           WHERE cm.conversation_id = c.id
+             AND to_tsvector('simple', coalesce(cm.content, '')) @@ plainto_tsquery('simple', ?)
+           ORDER BY cm.seq ASC NULLS LAST, cm.created_at ASC
+           LIMIT 1
+         ) m ON TRUE`;
+
+      // Rank: FTS relevance (when available) > pinned > recency
+      // ts_rank is parameterized via the WHERE clause match; we add it as a tiebreaker
+      params.push(query); // param for ts_rank in ORDER BY
+      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, CASE WHEN c.search_vector IS NOT NULL THEN ts_rank(c.search_vector, plainto_tsquery('simple', ?)) ELSE 0 END DESC, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
+
+      // No DISTINCT: chat_projects joins 1:1 on its primary key and the
+      // LATERAL is capped at one row (LIMIT 1), so rows cannot multiply.
+      // Postgres also rejects DISTINCT outright once ts_rank is added to
+      // ORDER BY ("for SELECT DISTINCT, ORDER BY expressions must appear in
+      // select list") — verified against Postgres 16.
+      const results = (await dbAll(
+        `SELECT c.id, c.title, c.title_source, c.project_id, c.chat_project_id,
+                c.starred, c.archived, c.pmo_context, c.language,
+                c.message_count, c.last_message_preview, c.last_message_at,
+                c.created_at, c.updated_at,
+                cp.scope as chat_project_scope,
+                m.id as matched_message_id,
+                m.snippet as matched_snippet
+         ${fromClause}
+         ${whereClause}
+         ${orderClause}
+         LIMIT ?`,
+        [...lateralParams, ...params, limit + 1]
+      )) as any[];
+
+      const hasMore = results.length > limit;
+      const page = hasMore ? results.slice(0, limit) : results;
+
+      let nextCursor: string | null = null;
+      if (hasMore && page.length > 0) {
+        const last = page[page.length - 1];
+        const ts = last.last_message_at || last.updated_at;
+        nextCursor = `${ts}|${last.id}`;
+      }
+
+      // Fail-closed on out-of-scope results (M01-P02 packet §3.6/§6:
+      // "brak uprawnień nie ujawnia ani treści, ani liczby ukrytych
+      // wyników"). `scopeLimited` reflects only the caller's OWN permission
+      // state (do they lack team-read at all?) — it is NOT computed from
+      // whether this specific query matched anything in team scope, so it
+      // carries zero information about hidden content or a hidden count. The
+      // previous implementation ran a second COUNT(*) query scoped to the
+      // caller's search term and returned that count directly, which let an
+      // unauthorized caller learn how many team conversations matched their
+      // query term — a content-shaped side channel. Removed.
+      const scopeLimited = !teamReadAllowed && Boolean(req.organizationId);
+
+      return res.json({
+        conversations: page.map((row) => ({
+          ...row,
+          matched_snippet: parseConversationSnippetSegments(row.matched_snippet),
+        })),
+        query,
+        nextCursor,
+        hasMore,
+        scopeLimited,
+      });
+    } catch (err: any) {
+      logger.error('[Conversations] Search error:', err);
+      return res
+        .status(500)
+        .json(
+          buildConversationFailClosedError(
+            req,
+            500,
+            'CONVERSATIONS_SEARCH_FAILED',
+            'Failed to search conversations.'
+          )
+        );
+    }
+  })
+);
+
 // ==================== GET CONVERSATION WITH MESSAGES ====================
 
 router.get(
@@ -557,10 +800,66 @@ router.get(
         attachmentsByMessage[mid].push(att);
       }
 
-      const messagesWithAttachments = (messages as any[]).map((m: any) => ({
-        ...m,
-        attachments: attachmentsByMessage[m.id] || [],
-      }));
+      // M01-036 — hydrate the current viewer's own feedback rating per
+      // message. Before this, GET /:id never attached any feedback data, so
+      // `msg.feedback` was always undefined on real data and
+      // InlineResponseFeedback's `existingFeedback` hydration (wired up
+      // ahead of this fix) never had anything to consume — a fresh reopen
+      // always re-asked "rate this" even for a message the user already
+      // rated.
+      //
+      // M01-P03B correction to the literal M01-036 wording: it named
+      // `ai_feedback`, but that table receives ZERO rows from any reachable
+      // chat UI path — the one INSERT that targets it (the legacy
+      // `POST /api/ai-feedback` root handler) has no frontend caller
+      // (verified: no `submitAIFeedback` call site in `src/`), and its
+      // column list (interaction_id/draft_id/feedback_type/model_used)
+      // doesn't even match the `ai_feedback` table schema on Postgres. The
+      // REAL runtime write path for a thumbs rating —
+      // InlineResponseFeedback -> FeedbackLearningService.submitFeedback ->
+      // Api.aiFeedback -> POST /api/ai-feedback/response ->
+      // adaptiveResponseService.processFeedback — inserts into a DIFFERENT
+      // table, `ai_response_feedback`. Joining `ai_feedback` here would have
+      // compiled, run, and stayed permanently empty: the exact "looks
+      // fixed, isn't" shape already found elsewhere in this module (see the
+      // `POST /api/ai/report` atrapa fixed under M01-010). Hydrating from
+      // `ai_response_feedback` is what actually round-trips a real rating.
+      let feedbackByMessage: Record<string, { rating: string; created_at: string }> = {};
+      const messageIdsForFeedback = (messages as any[]).map((m: any) => m.id);
+      if (messageIdsForFeedback.length > 0) {
+        try {
+          const fbPlaceholders = messageIdsForFeedback.map(() => '?').join(',');
+          const feedbackRows = (await dbAll(
+            `SELECT message_id, rating, created_at
+             FROM ai_response_feedback
+             WHERE message_id IN (${fbPlaceholders}) AND user_id = ?
+             ORDER BY created_at DESC`,
+            [...messageIdsForFeedback, req.userId!]
+          )) as Array<{ message_id: string; rating: string; created_at: string }>;
+          for (const row of feedbackRows) {
+            // ORDER BY created_at DESC — first row seen per message_id is the
+            // most recent rating, which is what "already rated" should show
+            // if the user rated the same message more than once.
+            if (!feedbackByMessage[row.message_id]) {
+              feedbackByMessage[row.message_id] = {
+                rating: row.rating,
+                created_at: row.created_at,
+              };
+            }
+          }
+        } catch {
+          /* table may not exist (pre-migration DB) */
+        }
+      }
+
+      const messagesWithAttachments = (messages as any[]).map((m: any) => {
+        const fb = feedbackByMessage[m.id];
+        return {
+          ...m,
+          attachments: attachmentsByMessage[m.id] || [],
+          feedback: fb ? { rating: fb.rating, createdAt: fb.created_at } : undefined,
+        };
+      });
 
       return res.json({
         ...conversation,
@@ -946,31 +1245,68 @@ router.post(
         return res.status(500).json({ error: insertResult.error || 'Message insert failed' });
       }
 
-      // Auto-persist metadata.attachments to conversation_message_attachments (L4 bridge)
+      // Auto-persist metadata.attachments to conversation_message_attachments (L4
+      // bridge). M01-P04A: this used to blindly INSERT the client's claimed
+      // kind/target/mime/size as an implicit "ready" row, with no status
+      // column, no idempotency and no ACL check — and useConversationStore.ts
+      // ALSO POSTs the same message.metadata.attachments to the dedicated
+      // /attachments endpoint right after this handler returns, so every
+      // attached message produced two rows (an orphaned duplicate) before the
+      // uq_msg_attachments_message_target unique index (migration 942) and
+      // findExistingAttachment() below existed. Now routed through the same
+      // resolveAttachmentStatus()/findExistingAttachment() helpers the
+      // dedicated endpoint uses, so status is honestly attested and the two
+      // write paths can never disagree or double-insert. A rejected/invalid
+      // attachment never blocks message creation — this stays best-effort.
       if (metadata && Array.isArray((metadata as any).attachments)) {
         for (const att of (metadata as any).attachments) {
           try {
             const kind = att.kind || (att.sourceUrl ? 'link' : 'file');
+            const targetId = att.docId || att.targetId || null;
+            const targetUrl = att.sourceUrl || att.targetUrl || null;
+
+            const existingAtt = await findExistingAttachment({
+              messageId,
+              conversationId,
+              kind,
+              targetId,
+              targetUrl,
+            });
+            if (existingAtt) continue; // already persisted via the dedicated endpoint (or a prior retry)
+
+            const resolution = await resolveAttachmentStatus({
+              kind,
+              targetId,
+              sizeBytes: att.size || att.sizeBytes || null,
+              mime: att.mimeType || att.mime || null,
+              organizationId: req.organizationId,
+            });
+            if (!resolution.ok) continue; // ACL-denied reference — silently skip, do not fail the message
+
             await dbRun(
               `INSERT INTO conversation_message_attachments
-               (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, status, status_reason, status_detail, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 uuidv4(),
                 messageId,
                 conversationId,
                 kind,
-                att.docId || att.targetId || null,
-                att.sourceUrl || att.targetUrl || null,
+                targetId,
+                targetUrl,
                 att.filename || att.displayName || 'attachment',
                 att.mimeType || att.mime || null,
                 att.size || att.sizeBytes || null,
                 att.provenancePointer || null,
+                resolution.status,
+                resolution.status === 'failed' ? resolution.reason : null,
+                resolution.status === 'failed' ? resolution.detail : null,
                 now,
               ]
             );
           } catch {
-            /* attachment table may not exist; non-blocking */
+            // Race with the dedicated endpoint hitting the same unique index,
+            // or the attachment table unavailable — non-blocking either way.
           }
         }
       }
@@ -1733,185 +2069,157 @@ router.post(
   })
 );
 
-// ==================== SEARCH BY CONTENT (server-side target) ====================
-
-const SearchQuerySchema = z.object({
-  q: z.string().min(2).max(200),
-  folderId: z.string().uuid().optional(),
-  pinned: z.enum(['true', 'false']).optional(),
-  archived: z.enum(['true', 'false']).optional(),
-  from: z.string().optional(),
-  to: z.string().optional(),
-  hasAttachments: z.enum(['true', 'false']).optional(),
-  cursor: z.string().optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
-});
-
-router.get(
-  '/search',
-  verifyToken,
-  validateQuery(SearchQuerySchema),
-  asyncHandler(async (req: AuthRequest, res: Response) => {
-    const {
-      q,
-      folderId,
-      pinned,
-      archived,
-      from,
-      to,
-      cursor: cursorParam,
-      limit: limitStr,
-    } = req.query as Record<string, string | undefined>;
-
-    const query = (q || '').trim();
-    if (!query || query.length < 2) {
-      return res.json({ conversations: [], query: '', nextCursor: null });
-    }
-
-    const limit = Math.min(parseInt(limitStr || '20', 10), 50);
-
-    try {
-      const searchPattern = `%${query}%`;
-
-      // P34 policy gateway: resolve team read permission before search (§2.3.3)
-      let teamReadAllowed = false;
-      if (req.organizationId) {
-        const perm = await checkChatPermission(req.userId!, req.organizationId, 'read');
-        teamReadAllowed = perm.allowed;
-      }
-
-      // Scope: personal + team (governed by P34 permission check)
-      let whereClause = `WHERE (c.user_id = ?`;
-      const params: (string | boolean)[] = [req.userId!];
-
-      if (teamReadAllowed && req.organizationId) {
-        whereClause += ` OR (cp.scope = 'team' AND cp.organization_id = ?)`;
-        params.push(req.organizationId);
-      }
-      whereClause += `)`;
-
-      // Exclude soft-deleted by default
-      whereClause += ` AND c.deleted_at IS NULL`;
-
-      // FTS with ILIKE fallback: use tsvector search on conversations + message content
-      whereClause += ` AND (
-        (c.search_vector IS NOT NULL AND c.search_vector @@ plainto_tsquery('simple', ?))
-        OR EXISTS (SELECT 1 FROM conversation_messages cm2 WHERE cm2.conversation_id = c.id AND to_tsvector('simple', coalesce(cm2.content, '')) @@ plainto_tsquery('simple', ?))
-        OR c.title ILIKE ? OR c.last_message_preview ILIKE ?
-      )`;
-      params.push(query, query, searchPattern, searchPattern);
-
-      // Filters
-      if (folderId) {
-        whereClause += ` AND c.chat_project_id = ?`;
-        params.push(folderId);
-      }
-      if (pinned !== undefined) {
-        whereClause += ` AND c.starred = ?`;
-        params.push(pinned === 'true');
-      }
-      if (archived !== undefined) {
-        whereClause += ` AND c.archived = ?`;
-        params.push(archived === 'true');
-      }
-      if (from) {
-        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) >= ?`;
-        params.push(from);
-      }
-      if (to) {
-        whereClause += ` AND COALESCE(c.last_message_at, c.updated_at) <= ?`;
-        params.push(to);
-      }
-
-      // hasAttachments filter (checks conversation_message_attachments table)
-      const hasAttachments = (req.query as any).hasAttachments;
-      if (hasAttachments === 'true') {
-        whereClause += ` AND EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
-      } else if (hasAttachments === 'false') {
-        whereClause += ` AND NOT EXISTS (SELECT 1 FROM conversation_message_attachments cma WHERE cma.conversation_id = c.id)`;
-      }
-
-      // Cursor-based pagination: cursor = "lastMessageAt|id"
-      if (cursorParam) {
-        const [cursorTs, cursorId] = cursorParam.split('|');
-        if (cursorTs && cursorId) {
-          whereClause += ` AND (COALESCE(c.last_message_at, c.updated_at) < ? OR (COALESCE(c.last_message_at, c.updated_at) = ? AND c.id < ?))`;
-          params.push(cursorTs, cursorTs, cursorId);
-        }
-      }
-
-      const fromClause = `FROM conversations c LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id`;
-
-      // Rank: FTS relevance (when available) > pinned > recency
-      // ts_rank is parameterized via the WHERE clause match; we add it as a tiebreaker
-      params.push(query); // param for ts_rank in ORDER BY
-      const orderClause = `ORDER BY CASE WHEN c.starred = true THEN 0 ELSE 1 END, CASE WHEN c.search_vector IS NOT NULL THEN ts_rank(c.search_vector, plainto_tsquery('simple', ?)) ELSE 0 END DESC, COALESCE(c.last_message_at, c.updated_at) DESC, c.id DESC`;
-
-      const results = (await dbAll(
-        `SELECT DISTINCT c.id, c.title, c.title_source, c.project_id, c.chat_project_id,
-                c.starred, c.archived, c.pmo_context, c.language,
-                c.message_count, c.last_message_preview, c.last_message_at,
-                c.created_at, c.updated_at,
-                cp.scope as chat_project_scope
-         ${fromClause}
-         ${whereClause}
-         ${orderClause}
-         LIMIT ?`,
-        [...params, limit + 1]
-      )) as any[];
-
-      const hasMore = results.length > limit;
-      const page = hasMore ? results.slice(0, limit) : results;
-
-      let nextCursor: string | null = null;
-      if (hasMore && page.length > 0) {
-        const last = page[page.length - 1];
-        const ts = last.last_message_at || last.updated_at;
-        nextCursor = `${ts}|${last.id}`;
-      }
-
-      // E7: Partial retrieval — count scope-blocked results so UI can show badge
-      let scopeBlocked = 0;
-      if (!teamReadAllowed && req.organizationId) {
-        try {
-          const blockedCount = await dbGet(
-            `SELECT COUNT(*) as cnt FROM conversations c
-             LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id
-             WHERE cp.scope = 'team' AND cp.organization_id = ?
-             AND c.deleted_at IS NULL
-             AND (c.title ILIKE ? OR c.last_message_preview ILIKE ?)`,
-            [req.organizationId, searchPattern, searchPattern]
-          );
-          scopeBlocked = (blockedCount as any)?.cnt || 0;
-        } catch {
-          /* non-blocking */
-        }
-      }
-
-      return res.json({
-        conversations: page,
-        query,
-        nextCursor,
-        hasMore,
-        scopeBlocked,
-      });
-    } catch (err: any) {
-      logger.error('[Conversations] Search error:', err);
-      return res
-        .status(500)
-        .json(
-          buildConversationFailClosedError(
-            req,
-            500,
-            'CONVERSATIONS_SEARCH_FAILED',
-            'Failed to search conversations.'
-          )
-        );
-    }
-  })
-);
-
 // ==================== MESSAGE ATTACHMENTS (§2.3.1 — attachment pointers) ====================
+//
+// M01-P04A — this endpoint only PERSISTS a pointer to content that was
+// already ingested via /api/ai/attachments/ingest[-url] (real text
+// extraction + embedding, out of this packet's ownership). Before this
+// packet, "ready" was purely a client-remembered UI state never attested by
+// the server — nothing here re-checked that the referenced document really
+// exists, belongs to the caller's organization, or fits the documented
+// format/size matrix. `resolveAttachmentStatus` closes that gap: it is the
+// single source of truth for whether a pointer is honestly 'ready' or
+// 'failed', and it is applied at BOTH places this table is written —this
+// dedicated endpoint, and the `metadata.attachments` auto-bridge inside
+// `POST /:id/messages` (see below) — so neither path can independently
+// fabricate a "ready" pointer.
+
+// Server-side format/size matrix. Mirrors ai.routes.ts's real, already-
+// enforced limits (`attachmentsUpload` multer fileFilter = 25MB + these
+// exact mime types; `/attachments/ingest-url` MAX_BYTES = 6MB) so a client
+// cannot bypass the matrix by talking to the pointer endpoint directly with
+// a fabricated mime/sizeBytes. Keep in sync with
+// `src/components/AIChat/chatAttachmentSupport.ts` (client-side pre-check)
+// and `server/src/routes/ai.routes.ts` (real ingest enforcement) if the
+// matrix ever changes.
+const ATTACHMENT_MAX_FILE_BYTES = 25 * 1024 * 1024;
+const ATTACHMENT_MAX_URL_BYTES = 6 * 1024 * 1024;
+const ATTACHMENT_ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+
+function isAllowedAttachmentMime(mime: unknown): boolean {
+  const m = String(mime || '')
+    .trim()
+    .toLowerCase();
+  if (!m) return true; // unknown mime is not itself a rejection reason — size + targetId checks still apply
+  if (ATTACHMENT_ALLOWED_MIME_TYPES.has(m)) return true;
+  return m.startsWith('text/');
+}
+
+type AttachmentStatusResolution =
+  | { ok: true; status: 'ready' }
+  | { ok: true; status: 'failed'; reason: string; detail: string }
+  | { ok: false; httpStatus: number; error: string };
+
+/**
+ * Decides the honest, server-attested status of an attachment pointer.
+ * Only 'file' and 'link' kinds are validated — 'artifact' | 'snapshot' |
+ * 'reference' pointers belong to other M01 packets (Canvas share, owner
+ * handoffs) with their own object identity/ACL model and are left
+ * unconstrained here, exactly as before this packet.
+ */
+async function resolveAttachmentStatus(params: {
+  kind: string;
+  targetId?: string | null;
+  sizeBytes?: number | null;
+  mime?: string | null;
+  organizationId?: string | null;
+}): Promise<AttachmentStatusResolution> {
+  const { kind, targetId, sizeBytes, mime, organizationId } = params;
+
+  if (kind !== 'file' && kind !== 'link') {
+    return { ok: true, status: 'ready' };
+  }
+
+  const maxBytes = kind === 'link' ? ATTACHMENT_MAX_URL_BYTES : ATTACHMENT_MAX_FILE_BYTES;
+  if (typeof sizeBytes === 'number' && Number.isFinite(sizeBytes) && sizeBytes > maxBytes) {
+    return {
+      ok: true,
+      status: 'failed',
+      reason: 'SIZE_LIMIT_EXCEEDED',
+      detail: `${sizeBytes} bytes exceeds the ${maxBytes} byte limit for kind="${kind}"`,
+    };
+  }
+
+  if (!isAllowedAttachmentMime(mime)) {
+    return {
+      ok: true,
+      status: 'failed',
+      reason: 'UNSUPPORTED_FORMAT',
+      detail: `mime type "${mime}" is not in the supported attachment matrix`,
+    };
+  }
+
+  // targetId (docId) is the evidence that real ingestion — text extraction +
+  // embedding via /api/ai/attachments/ingest[-url] — actually completed. No
+  // targetId => nothing was ever ingested => never allowed to display "ready".
+  if (!targetId) {
+    return {
+      ok: true,
+      status: 'failed',
+      reason: 'INGEST_NOT_COMPLETED',
+      detail: 'no ingested document reference (targetId) was provided',
+    };
+  }
+
+  // Tenant ACL (P0.9 / GF-CHAT-08). A docId that does not exist, or belongs
+  // to a different organization, is rejected OUTRIGHT (403, nothing
+  // persisted) rather than stored as a 'failed' row — storing it would let a
+  // caller distinguish "doesn't exist" from "exists but isn't yours" across
+  // repeated attempts, which is itself an enumeration side-channel. Rows
+  // ingested before knowledge_docs.organization_id existed (migration
+  // 942_chat_m01p04a_attachment_status.sql) have organization_id = NULL;
+  // those are treated as untracked legacy content, not rejected — a
+  // documented residual gap (return summary "SCHEMA"/"SECURITY"), not a
+  // silent claim that history is fully tenant-scoped.
+  let doc: { organization_id?: string | null } | undefined;
+  try {
+    doc = await dbGet(`SELECT organization_id FROM knowledge_docs WHERE id = ?`, [targetId]);
+  } catch (err: any) {
+    logger.warn('[Conversations] Attachment ACL lookup failed (fail-closed):', err?.message);
+    return { ok: false, httpStatus: 403, error: 'Attachment reference could not be verified' };
+  }
+  if (!doc) {
+    return { ok: false, httpStatus: 403, error: 'Attachment reference could not be verified' };
+  }
+  const docOrgId = doc.organization_id || null;
+  if (docOrgId && organizationId && docOrgId !== organizationId) {
+    return { ok: false, httpStatus: 403, error: 'Attachment reference could not be verified' };
+  }
+
+  return { ok: true, status: 'ready' };
+}
+
+/**
+ * Idempotency (packet §6/§8 — "ponowny upload tego samego pliku nie tworzy
+ * sieroty"). Backed by the partial unique index
+ * `uq_msg_attachments_message_target` (migration 942). Only checked for
+ * 'file'/'link' kinds with a resolvable target — matches the index's WHERE
+ * clause exactly, so this pre-check and the DB constraint never disagree.
+ */
+async function findExistingAttachment(params: {
+  messageId: string;
+  conversationId: string;
+  kind: string;
+  targetId?: string | null;
+  targetUrl?: string | null;
+}): Promise<Record<string, unknown> | undefined> {
+  const { messageId, conversationId, kind, targetId, targetUrl } = params;
+  if (kind !== 'file' && kind !== 'link') return undefined;
+  if (!targetId && !targetUrl) return undefined;
+  return dbGet(
+    `SELECT * FROM conversation_message_attachments
+     WHERE message_id = ? AND conversation_id = ? AND kind = ?
+       AND COALESCE(target_id, '') = ? AND COALESCE(target_url, '') = ?`,
+    [messageId, conversationId, kind, targetId || '', targetUrl || '']
+  );
+}
 
 const AttachmentSchema = z.object({
   kind: z.enum(['file', 'link', 'artifact', 'snapshot', 'reference']),
@@ -1947,25 +2255,84 @@ router.post(
       );
       if (!message) return res.status(404).json({ error: 'Message not found' });
 
+      // Idempotency — return the existing pointer instead of creating an orphaned
+      // duplicate when the same file/URL is (re-)attached to the same message.
+      const existing = await findExistingAttachment({
+        messageId,
+        conversationId,
+        kind,
+        targetId,
+        targetUrl,
+      });
+      if (existing) {
+        return res.status(200).json(existing);
+      }
+
+      // Server-attested status (§3.1 — never trust a client-claimed "ready").
+      const resolution = await resolveAttachmentStatus({
+        kind,
+        targetId,
+        sizeBytes,
+        mime,
+        organizationId: req.organizationId,
+      });
+      if (!resolution.ok) {
+        return res.status(resolution.httpStatus).json({ error: resolution.error });
+      }
+
       const attachmentId = uuidv4();
-      await dbRun(
-        `INSERT INTO conversation_message_attachments
-         (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          attachmentId,
+      let insertFailed = false;
+      let insertError: string | undefined;
+      try {
+        const insertResult = await dbRun(
+          `INSERT INTO conversation_message_attachments
+           (id, message_id, conversation_id, kind, target_id, target_url, display_name, mime, size_bytes, provenance_pointer, status, status_reason, status_detail, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            attachmentId,
+            messageId,
+            conversationId,
+            kind,
+            targetId || null,
+            targetUrl || null,
+            displayName,
+            mime || null,
+            sizeBytes || null,
+            provenancePointer || null,
+            resolution.status,
+            resolution.status === 'failed' ? resolution.reason : null,
+            resolution.status === 'failed' ? resolution.detail : null,
+            new Date().toISOString(),
+          ],
+          { fallback: false }
+        );
+        if (insertResult && (insertResult as any).success === false) {
+          insertFailed = true;
+          insertError = (insertResult as any).error;
+        }
+      } catch (insertErr: any) {
+        // `{ fallback: false }` can either reject or resolve `{ success: false }`
+        // depending on the underlying driver — handle both so a concurrent
+        // unique-index collision on `uq_msg_attachments_message_target` never
+        // surfaces as a raw 500 to a client that just double-submitted.
+        insertFailed = true;
+        insertError = insertErr?.message;
+      }
+
+      if (insertFailed) {
+        // Concurrent duplicate request raced us to the unique index — treat it
+        // as idempotent success and return the row that won, exactly like the
+        // client_message_id race handling above for /:id/messages.
+        const raced = await findExistingAttachment({
           messageId,
           conversationId,
           kind,
-          targetId || null,
-          targetUrl || null,
-          displayName,
-          mime || null,
-          sizeBytes || null,
-          provenancePointer || null,
-          new Date().toISOString(),
-        ]
-      );
+          targetId,
+          targetUrl,
+        });
+        if (raced) return res.status(200).json(raced);
+        return res.status(500).json({ error: insertError || 'Attachment insert failed' });
+      }
 
       const attachment = await dbGet(
         `SELECT * FROM conversation_message_attachments WHERE id = ?`,
@@ -2008,15 +2375,48 @@ router.get(
       );
       if (!conversation) return res.status(404).json({ error: 'Conversation not found' });
 
+      // `{ fallback: false }` — a missing-table error (42P01) must actually
+      // reject here so the catch block below can tell it apart from a
+      // legitimate "0 attachments" result. With the wrapper's default
+      // `fallback: true` this query silently resolved to `[]` on ANY error,
+      // including a dropped/never-migrated table (M01-040) — indistinguishable
+      // from "no attachments were ever added".
       const attachments = await dbAll(
         `SELECT * FROM conversation_message_attachments WHERE message_id = ? AND conversation_id = ? ORDER BY created_at ASC`,
-        [messageId, conversationId]
+        [messageId, conversationId],
+        { fallback: false }
       );
 
       return res.json({ attachments: attachments || [] });
     } catch (err: any) {
-      // Read — side panel enrichment (attachment pointers for a message). Fail-soft:
-      // degrade to an empty list instead of breaking the panel with a 500 (H6.4).
+      const message = String(err?.message || '');
+      // Postgres 42P01 = undefined_table. Also matches the driver's own
+      // "relation ... does not exist" text as a belt-and-braces fallback in
+      // case `.code` isn't propagated through some wrapper layer.
+      const isMissingTable =
+        err?.code === '42P01' ||
+        /relation .* does not exist/i.test(message) ||
+        /undefined_table/i.test(message);
+
+      if (isMissingTable) {
+        // Read, but must NOT fail-soft here: a missing table is a schema/
+        // deployment defect, not "0 attachments". Silently returning an empty
+        // list masked the fact that `conversation_message_attachments` was
+        // never migrated on an environment (M01-040) — surface it explicitly
+        // instead so it's caught before a client mistakes it for real data.
+        logger.error('[Conversations] List attachments failed: table unavailable', {
+          err,
+          correlationId: resolveConversationCorrelationId(req),
+        });
+        return res.status(503).json({
+          error: 'Attachments are temporarily unavailable.',
+          code: 'ATTACHMENTS_TABLE_UNAVAILABLE',
+        });
+      }
+
+      // Read — side panel enrichment (attachment pointers for a message). Fail-soft
+      // for genuinely unexpected/transient errors only (H6.4); a missing table is
+      // handled explicitly above and must never be conflated with an empty result.
       logger.warn('[Conversations] List attachments degraded', {
         err,
         correlationId: resolveConversationCorrelationId(req),
@@ -2025,7 +2425,7 @@ router.get(
         attachments: [],
         degraded: true,
         _degraded: true,
-        _reason: 'attachment_table_unavailable',
+        _reason: 'list_attachments_unexpected_error',
       });
     }
   })
@@ -2380,12 +2780,61 @@ router.post(
 );
 
 /**
+ * M01-P03A helper — conversation_branches is the real, migrated (672) table.
+ * `conversations.parent_conversation_id` does NOT exist in any migration
+ * (confirmed via information_schema on a freshly-migrated Postgres instance,
+ * 2026-08-05) — the `cAdd('parent_conversation_id', ...)` call below is a
+ * historical no-op left in place for forward-compat only. conversation_branches
+ * is therefore the SOLE source of truth for parent/child lineage. We reuse the
+ * new conversation's own id as the branch row's id — a branch IS a conversation,
+ * so `branch.id` is directly usable to open it (no separate id space to track).
+ */
+async function recordConversationBranch(input: {
+  branchConversationId: string;
+  sourceConversationId: string;
+  forkMessageId: string;
+  branchName: string;
+  createdBy: string;
+}): Promise<void> {
+  // Chain lineage: if the source conversation is itself a recorded branch,
+  // point the new branch's parent_branch_id at that row so nested forks keep
+  // a walkable ancestry instead of flattening to the root every time.
+  const parentBranchRow = (await dbGet(
+    `SELECT id FROM conversation_branches WHERE id = ?`,
+    [input.sourceConversationId]
+  )) as any;
+
+  const result = await dbRun(
+    `INSERT INTO conversation_branches
+      (id, conversation_id, parent_branch_id, fork_message_id, branch_name, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.branchConversationId,
+      input.sourceConversationId,
+      parentBranchRow?.id || null,
+      input.forkMessageId,
+      input.branchName,
+      input.createdBy,
+      new Date().toISOString(),
+    ]
+  );
+  if (!(result as any)?.success) {
+    logger.error(
+      `[Conversations] Failed to persist conversation_branches row for branch=${input.branchConversationId} ` +
+        `source=${input.sourceConversationId}: ${(result as any)?.error || 'unknown error'}`
+    );
+  }
+}
+
+/**
  * POST /api/conversations/:id/branch
  *
  * Fork a conversation from a given message (composer feature #4 — branch/fork,
  * like ChatGPT "Branch in new chat" / Claude edit-branch). Copies every message
  * up to and including `forkMessageId` into a fresh conversation so the user can
- * explore an alternative path without losing the original thread.
+ * explore an alternative path without losing the original thread, AND records
+ * the fork in `conversation_branches` (M01-P03A) so it can be listed and its
+ * lineage verified after a fresh reopen via GET /:id/branches.
  *
  * Column-defensive + Postgres-safe (no datetime('now'); fresh id per copied row,
  * unlike the legacy conversationBranchingService which collided primary keys).
@@ -2399,6 +2848,7 @@ router.post(
     const organizationId = req.organizationId || null;
     const sourceId = String(req.params.id);
     const forkMessageId = String(req.body?.forkMessageId || req.body?.messageId || '').trim();
+    const requestedBranchName = String(req.body?.branchName || '').trim();
 
     // Ownership: the caller's personal conversation, or one in their org.
     const source = (await dbGet(
@@ -2416,7 +2866,19 @@ router.post(
         [forkMessageId, sourceId]
       )) as any;
       if (!fork) return res.status(404).json({ error: 'Fork message not found' });
-      cutoffCreatedAt = String(fork.created_at);
+      // M01-P03A bugfix — found via a real-Postgres test, not assumed: the pg
+      // driver auto-parses `timestamp` columns into JS `Date` objects, and
+      // `String(date)` produces `"Wed Aug 05 2026 06:05:26 GMT+0200 (Central
+      // European Summer Time)"` — Postgres's timestamp parser rejects that
+      // tz-name format outright ("time zone \"gmt+0200\" not recognized").
+      // Because dbAll()/dbRun() default to `{ fallback: true }`, the failing
+      // "copy messages up to cutoff" query silently resolved to `[]` instead
+      // of throwing — every explicit-forkMessageId branch silently copied
+      // ZERO messages in this timezone. `toISOString()` is unambiguous and
+      // Postgres-safe regardless of the server's local timezone.
+      const forkCreatedAt = fork.created_at;
+      cutoffCreatedAt =
+        forkCreatedAt instanceof Date ? forkCreatedAt.toISOString() : String(forkCreatedAt);
     }
 
     const now = new Date().toISOString();
@@ -2492,6 +2954,37 @@ router.post(
     }
 
     const conversation = await dbGet('SELECT * FROM conversations WHERE id = ?', [newId]);
+
+    // --- Record the fork in conversation_branches (M01-P03A) ---
+    // fork_message_id is NOT NULL on the real table: prefer the caller-given
+    // point, else fall back to the last copied message so a "branch the
+    // whole thread" call (no forkMessageId) still has a valid anchor. Only
+    // an empty source conversation with no explicit fork point has neither —
+    // skip the branch record in that edge case rather than violate the
+    // constraint (there is nothing meaningful to branch "from" anyway).
+    const effectiveForkMessageId =
+      forkMessageId || (rows && rows.length ? String(rows[rows.length - 1].id) : '');
+    const branchName =
+      requestedBranchName || `${String(source.title || 'Conversation').slice(0, 160)} (Branch)`;
+    if (effectiveForkMessageId) {
+      await recordConversationBranch({
+        branchConversationId: newId,
+        sourceConversationId: sourceId,
+        forkMessageId: effectiveForkMessageId,
+        branchName,
+        createdBy: userId,
+      });
+    } else {
+      logger.warn(
+        `[Conversations] Branched ${sourceId} -> ${newId} with no messages and no forkMessageId — ` +
+          `skipping conversation_branches record (no valid anchor point).`
+      );
+    }
+
+    const branchRecord = effectiveForkMessageId
+      ? ((await dbGet(`SELECT * FROM conversation_branches WHERE id = ?`, [newId])) as any)
+      : null;
+
     logger.info(
       `[Conversations] Branched ${sourceId} -> ${newId} (${(rows || []).length} messages copied)`
     );
@@ -2499,6 +2992,84 @@ router.post(
       conversation,
       branchedFrom: sourceId,
       copiedMessages: (rows || []).length,
+      branch: branchRecord
+        ? {
+            id: branchRecord.id,
+            conversationId: branchRecord.conversation_id,
+            parentBranchId: branchRecord.parent_branch_id,
+            forkMessageId: branchRecord.fork_message_id,
+            branchName: branchRecord.branch_name,
+            createdBy: branchRecord.created_by,
+            createdAt: branchRecord.created_at,
+            messageCount: (rows || []).length,
+          }
+        : null,
+    });
+  })
+);
+
+/**
+ * GET /api/conversations/:id/branches
+ *
+ * Lists conversation_branches forked FROM :id (its direct children), and, if
+ * :id is itself a recorded branch, reports its own parent lineage — so a
+ * client can both populate a branch switcher AND verify, after a fresh
+ * reopen, that a branch still exists and still points at the right
+ * parent/fork message (M01-P03A required flow, step 6).
+ *
+ * Ownership-gated with the exact same predicate as POST /:id/branch — a
+ * conversation_branches row carries no organization_id of its own, so tenant
+ * isolation is enforced entirely via the owning conversation's user_id/
+ * organization_id (verified against a real Postgres instance: the column
+ * genuinely does not exist on conversation_branches).
+ */
+router.get(
+  '/:id/branches',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const organizationId = req.organizationId || null;
+    const conversationId = String(req.params.id);
+
+    const owned = (await dbGet(
+      `SELECT id FROM conversations
+       WHERE id = ? AND (user_id = ? OR (organization_id IS NOT NULL AND organization_id = ?))`,
+      [conversationId, userId, organizationId]
+    )) as any;
+    if (!owned) return res.status(404).json({ error: 'Conversation not found' });
+
+    const selfAsBranch = (await dbGet(
+      `SELECT * FROM conversation_branches WHERE id = ?`,
+      [conversationId]
+    )) as any;
+
+    const children = (await dbAll(
+      `SELECT b.*,
+              (SELECT COUNT(*) FROM conversation_messages cm WHERE cm.conversation_id = b.id) AS message_count
+       FROM conversation_branches b
+       WHERE b.conversation_id = ?
+       ORDER BY b.created_at ASC`,
+      [conversationId]
+    )) as any[];
+
+    return res.status(200).json({
+      conversationId,
+      isBranch: Boolean(selfAsBranch),
+      parentConversationId: selfAsBranch?.conversation_id || null,
+      parentBranchId: selfAsBranch?.parent_branch_id || null,
+      forkMessageId: selfAsBranch?.fork_message_id || null,
+      branchName: selfAsBranch?.branch_name || null,
+      branches: (children || []).map((b: any) => ({
+        id: b.id,
+        conversationId: b.conversation_id,
+        parentBranchId: b.parent_branch_id,
+        forkMessageId: b.fork_message_id,
+        branchName: b.branch_name,
+        createdBy: b.created_by,
+        createdAt: b.created_at,
+        messageCount: Number(b.message_count) || 0,
+      })),
     });
   })
 );

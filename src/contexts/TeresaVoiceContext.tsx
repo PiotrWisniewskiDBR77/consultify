@@ -13,6 +13,25 @@ import { buildTeresaVoiceSystemInstruction } from '../utils/teresaVoiceInstructi
 interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
   /** Toggle voice on/off — creates conversation if needed */
   handleVoiceToggle: () => Promise<void>;
+  /**
+   * M01-P05 (GF-CHAT-06): the user's dictated turn, once Gemini Live finalizes
+   * it, is staged HERE instead of being sent straight to the conversation.
+   * `null` when there is nothing awaiting review. This is what makes the
+   * transcript editable before it becomes a chat message — see
+   * `confirmPendingTranscript`/`discardPendingTranscript` below and
+   * `VoiceConversationOverlay.tsx`, which renders the review UI.
+   */
+  pendingUserTranscript: string | null;
+  /**
+   * Sends the (possibly user-edited) pending transcript as the user's chat
+   * message and clears the pending state. Pass the edited text explicitly —
+   * the caller (the overlay's textarea) owns the live edit buffer, this
+   * function does not re-read `pendingUserTranscript` itself, so an in-flight
+   * edit is never silently dropped by a stale closure.
+   */
+  confirmPendingTranscript: (text: string) => void;
+  /** Discards the pending transcript without sending it. */
+  discardPendingTranscript: () => void;
 }
 
 const TeresaVoiceCtx = createContext<TeresaVoiceContextValue | null>(null);
@@ -30,6 +49,9 @@ const noopTeresaVoiceContext: TeresaVoiceContextValue = {
   stopVoiceConversation: async () => {},
   sendTextHistory: () => {},
   handleVoiceToggle: async () => {},
+  pendingUserTranscript: null,
+  confirmPendingTranscript: () => {},
+  discardPendingTranscript: () => {},
 };
 
 const VOICE_BACKOFF_BASE_MS = 1000;
@@ -188,11 +210,30 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     createConversation,
     setActiveConversation,
     setConversationChatLanguage,
+    chatLanguageByConversationId,
   } = useConversationStore();
 
-  const [chatLanguage] = useState<string>(() => {
-    return readPreferredChatLanguage('pl') || 'pl';
-  });
+  // M01-PTEST root-cause fix: this used to be a `useState` initializer that
+  // read `readPreferredChatLanguage('pl')` exactly once on mount and never
+  // again — Teresa's live voice session was permanently pinned to whatever
+  // language was in localStorage (or 'pl') at first mount, deaf to the
+  // per-conversation language the product contract promises ("wybór języka
+  // rozmowy niezależnie od języka UI",
+  // AGREEMENTS/CHAT_TERESA_COMPLETE_PRODUCT_CONTRACT.md §4.1) and that
+  // `chatLanguageByConversationId` exists specifically to hold (already
+  // wired the same way in UnifiedChatPanel.tsx's own `chatLanguage`
+  // useMemo — same three-step cascade, reused here for parity): an
+  // explicit user-set preference wins, then the ACTIVE conversation's own
+  // language, then the current UI language, with 'pl' as the final
+  // fallback only when none of those resolve.
+  const chatLanguage = useMemo<string>(() => {
+    const explicitPref = readPreferredChatLanguage();
+    const activeLang = activeConversationId
+      ? chatLanguageByConversationId[activeConversationId]
+      : undefined;
+    const uiLang = i18n.language?.split('-')[0];
+    return explicitPref || activeLang || uiLang || 'pl';
+  }, [activeConversationId, chatLanguageByConversationId, i18n.language]);
   const [voiceConfig, setVoiceConfig] = useState<{
     enabled: boolean;
     apiKey: string | null;
@@ -308,10 +349,31 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     voiceConfig.tone,
   ]);
 
-  const onTranscriptUpdate = useCallback(
+  // M01-P05 (GF-CHAT-06): the user's finalized turn is staged for review, not
+  // sent immediately. Previously `onTranscriptUpdate` called `addMessage`
+  // directly on every Gemini Live turn boundary — the live conversation
+  // overlay had ZERO editable-transcript-before-send step, unlike the
+  // composer's own dictation (`EnhancedChatInput`'s internal Web Speech path,
+  // which fills the input for the user to edit and send manually). This
+  // closes that gap for the overlay path too — one contract instead of two.
+  const [pendingUserTranscript, setPendingUserTranscript] = useState<string | null>(null);
+
+  const onTranscriptUpdate = useCallback((text: string) => {
+    const trimmed = text.trim();
+    if (trimmed.length > 2) {
+      // A new turn arriving while a previous one is still pending review
+      // replaces it (newest wins) rather than silently sending the old one —
+      // known limitation, documented in M01_P05_VOICE_REPORT.md, not a
+      // silent data-loss bug: nothing is sent without the user confirming.
+      setPendingUserTranscript(trimmed);
+    }
+  }, []);
+
+  const confirmPendingTranscript = useCallback(
     (text: string) => {
       const trimmed = text.trim();
-      if (trimmed.length > 2 && activeConversationId) {
+      setPendingUserTranscript(null);
+      if (trimmed.length > 0 && activeConversationId) {
         void addMessage({
           conversationId: activeConversationId,
           role: 'user',
@@ -323,6 +385,10 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     },
     [addMessage, activeConversationId]
   );
+
+  const discardPendingTranscript = useCallback(() => {
+    setPendingUserTranscript(null);
+  }, []);
 
   const onModelAudioText = useCallback(
     (text: string) => {
@@ -351,6 +417,10 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
     }
     if (status === 'idle') {
       postTeresaVoiceEvent({ eventName: 'voice_stopped', status: 'idle' });
+      // Ending the session discards (never auto-sends) whatever was still
+      // pending review — consistent with "nothing reaches the conversation
+      // without an explicit Send".
+      setPendingUserTranscript(null);
     }
   }, []);
 
@@ -414,8 +484,20 @@ export function TeresaVoiceProvider({ children }: { children: React.ReactNode })
   }, [activeConversationId, voice]);
 
   const value = useMemo<TeresaVoiceContextValue>(
-    () => ({ ...voice, handleVoiceToggle }),
-    [voice, handleVoiceToggle]
+    () => ({
+      ...voice,
+      handleVoiceToggle,
+      pendingUserTranscript,
+      confirmPendingTranscript,
+      discardPendingTranscript,
+    }),
+    [
+      voice,
+      handleVoiceToggle,
+      pendingUserTranscript,
+      confirmPendingTranscript,
+      discardPendingTranscript,
+    ]
   );
 
   return <TeresaVoiceCtx.Provider value={value}>{children}</TeresaVoiceCtx.Provider>;

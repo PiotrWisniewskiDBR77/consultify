@@ -102,19 +102,40 @@ export const ActionCenter: React.FC = () => {
     load();
   }, [load]);
 
+  // FIX (M01-P07A — consistent error states): approve/reject/execute here
+  // had NO try/catch at all — a thrown rejection (409 already-decided, 403
+  // missing capability, network error, ...) became an unhandled promise
+  // rejection with zero user-facing feedback. The `error` banner already
+  // exists and is wired for `load()`'s own failures; reuse it here so a
+  // failed decision is visible instead of silently doing nothing.
   const approve = async (actionId: string) => {
-    await Api.approveAIAction(actionId);
-    await load();
+    try {
+      await Api.approveAIAction(actionId);
+      setError(null);
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to approve action');
+    }
   };
 
   const reject = async (actionId: string) => {
-    await Api.rejectAIAction(actionId, 'Rejected from Action Center');
-    await load();
+    try {
+      await Api.rejectAIAction(actionId, 'Rejected from Action Center');
+      setError(null);
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to reject action');
+    }
   };
 
   const execute = async (actionId: string) => {
-    await Api.executeAIAction(actionId, {});
-    await load();
+    try {
+      await Api.executeAIAction(actionId, {});
+      setError(null);
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to execute action');
+    }
   };
 
   const inspect = async (actionId: string) => {

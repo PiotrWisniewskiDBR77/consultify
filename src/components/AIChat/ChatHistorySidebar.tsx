@@ -27,6 +27,7 @@ import {
   FolderPlus,
   MoreHorizontal,
   Pencil,
+  RefreshCw,
   Search,
   Trash2,
   Users,
@@ -706,8 +707,40 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   const [serverResults, setServerResults] = useState<Conversation[] | null>(null);
   const [serverSearchLoading, setServerSearchLoading] = useState(false);
   const [searchPartial, setSearchPartial] = useState(false);
-  const [searchScopeBlocked, setSearchScopeBlocked] = useState(0);
+  const [searchScopeLimited, setSearchScopeLimited] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runServerSearch = useCallback(
+    async (query: string) => {
+      setServerSearchLoading(true);
+      try {
+        const result = (await serverSearch({ q: query, limit: 30 })) as any;
+        if (result?.failed) {
+          // Distinct from "no matches": the search did not run at all, so
+          // showing an empty list as the answer would be a false negative
+          // ("Results may be incomplete" over nothing — M01-P02 §3.6).
+          setServerResults(null);
+          setSearchFailed(true);
+          setSearchPartial(false);
+          setSearchScopeLimited(false);
+          return;
+        }
+        setServerResults(result.conversations);
+        setSearchFailed(false);
+        setSearchPartial(Boolean(result?.partial));
+        setSearchScopeLimited(Boolean(result?.scopeLimited));
+      } catch {
+        setServerResults(null);
+        setSearchFailed(true);
+        setSearchPartial(false);
+        setSearchScopeLimited(false);
+      } finally {
+        setServerSearchLoading(false);
+      }
+    },
+    [serverSearch]
+  );
 
   // Trigger server-side search when query is >= 3 chars (debounced)
   useEffect(() => {
@@ -715,31 +748,20 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
 
     if (!searchQuery || searchQuery.length < 3) {
       setServerResults(null);
+      setSearchFailed(false);
       setSearchPartial(false);
-      setSearchScopeBlocked(0);
+      setSearchScopeLimited(false);
       return;
     }
 
-    setServerSearchLoading(true);
-    searchDebounceRef.current = setTimeout(async () => {
-      try {
-        const result = (await serverSearch({ q: searchQuery, limit: 30 })) as any;
-        setServerResults(result.conversations);
-        setSearchPartial(Boolean(result?.partial));
-        setSearchScopeBlocked(Number(result?.scopeBlocked || 0));
-      } catch {
-        setServerResults(null);
-        setSearchPartial(true);
-        setSearchScopeBlocked(0);
-      } finally {
-        setServerSearchLoading(false);
-      }
+    searchDebounceRef.current = setTimeout(() => {
+      void runServerSearch(searchQuery);
     }, 400);
 
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
-  }, [searchQuery, serverSearch]);
+  }, [searchQuery, runServerSearch]);
 
   // Filter conversations based on search (client-side for short queries, server-side for longer)
   const filteredConversations = searchQuery
@@ -794,11 +816,18 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   // Handle select conversation
   const handleSelectConversation = useCallback(
     (id: string) => {
-      navigate(`/chat/${id}`, { replace: false });
+      // Opening a search hit jumps to the message that matched, not just the
+      // conversation (GF-CHAT-05 deep link). ConversationRouteSync/the chat
+      // panel consumes `m` and scrolls to that message anchor.
+      const matchedMessageId = serverResults?.find((c) => c.id === id)?.matchedMessageId;
+      const target = matchedMessageId
+        ? `/chat/${id}?m=${encodeURIComponent(matchedMessageId)}`
+        : `/chat/${id}`;
+      navigate(target, { replace: false });
       setActiveConversation(id);
       if (window.innerWidth < 1024) toggleSidebar();
     },
-    [navigate, setActiveConversation, toggleSidebar]
+    [navigate, setActiveConversation, toggleSidebar, serverResults]
   );
 
   // Handle create folder with scope
@@ -1071,7 +1100,30 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                     {t('aiChat.searching', 'Searching...')}
                   </span>
                 </div>
-              ) : visibleGroups.length === 0 && !searchPartial ? (
+              ) : searchFailed ? (
+                /* The search itself failed (network/4xx/5xx). Never fall
+                   through to "no results", which would assert there are no
+                   matches when in fact we do not know (M01-P02 §3.6). */
+                <div
+                  className="mx-3 my-2 px-3 py-2.5 rounded-md bg-c-surface-raised border border-c-border"
+                  role="status"
+                  aria-live="polite"
+                  data-testid="chat-search-error"
+                >
+                  <p className="text-[11px] text-c-text">
+                    {t('aiChat.searchFailed', 'Search is unavailable right now.')}
+                  </p>
+                  <button
+                    type="button"
+                    data-testid="chat-search-retry"
+                    onClick={() => void runServerSearch(searchQuery)}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-c-border px-2 py-1 text-[11px] text-c-text hover:bg-c-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  >
+                    <RefreshCw size={11} />
+                    {t('aiChat.searchRetry', 'Try again')}
+                  </button>
+                </div>
+              ) : visibleGroups.length === 0 && !searchPartial && !searchScopeLimited ? (
                 <EmptyState
                   compact
                   icon={<Search />}
@@ -1080,7 +1132,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 />
               ) : (
                 <div className="px-3">
-                  {/* Degraded posture: partial results indicator (§2.3.5 E2/E8) */}
+                  {/* Degraded posture: throttled, genuinely-partial results (§2.3.5 E2/E8) */}
                   {searchPartial && (
                     <div className="mb-2 px-2.5 py-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40">
                       <p className="text-[11px] text-amber-700 dark:text-amber-400">
@@ -1088,14 +1140,18 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                       </p>
                     </div>
                   )}
-                  {/* E7: Scope-blocked results indicator */}
-                  {searchScopeBlocked > 0 && (
+                  {/* Some matches were withheld by access rules (§2.3.3 P34 /
+                      GF-CHAT-08). Deliberately not a count: the number itself
+                      would describe conversations the viewer is not allowed
+                      to see, and this is shown even when zero results are
+                      visible, since we cannot assert "no matches" while
+                      results may be withheld. */}
+                  {searchScopeLimited && (
                     <div className="mb-2 px-2.5 py-1.5 rounded-md bg-c-surface-raised border border-c-border-subtle">
                       <p className="text-[11px] text-c-text-muted">
                         {t(
-                          'aiChat.scopeBlocked',
-                          '{{count}} result(s) hidden due to access restrictions.',
-                          { count: searchScopeBlocked }
+                          'aiChat.scopeLimited',
+                          'Some results are hidden by access restrictions.'
                         )}
                       </p>
                     </div>

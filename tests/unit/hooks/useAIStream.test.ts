@@ -487,6 +487,77 @@ describe('useAIStream', () => {
     expect(mockSetCurrentStreamContent).toHaveBeenCalledWith('');
   });
 
+  it('GF-CHAT-07: forced disconnect mid-stream never calls onStreamDone (no false success)', async () => {
+    // Simulates a forced disconnect/timeout: the stream is still in flight
+    // (the mocked Api.chatWithAIStream promise never resolves) when the
+    // caller aborts. isStreaming must flip to false and onStreamDone must
+    // never fire — an abort is not a completion, so nothing downstream may
+    // treat it as one.
+    const mockOnStreamDone = vi.fn();
+    let releaseStream: () => void = () => {};
+    const inFlightStream = new Promise<void>((resolve) => {
+      releaseStream = resolve;
+    });
+
+    vi.mocked(Api.chatWithAIStream).mockImplementationOnce(async (_message, _history, onChunk) => {
+      onChunk('Partial content before forced disconnect');
+      await inFlightStream;
+    });
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    act(() => {
+      void result.current.startStream('Test message', []);
+    });
+
+    await waitFor(() =>
+      expect(result.current.streamedContent).toBe('Partial content before forced disconnect')
+    );
+    expect(result.current.isStreaming).toBe(true);
+
+    let hadPartial: boolean | undefined;
+    act(() => {
+      hadPartial = result.current.abortStream();
+    });
+
+    expect(hadPartial).toBe(true); // partial content WAS received — distinct from a clean cancel
+    expect(result.current.isStreaming).toBe(false);
+    expect(mockOnStreamDone).not.toHaveBeenCalled();
+
+    releaseStream();
+  });
+
+  it('GF-CHAT-07: aborting BEFORE any content arrives is a clean cancel, not a false success', async () => {
+    let releaseStream: () => void = () => {};
+    const inFlightStream = new Promise<void>((resolve) => {
+      releaseStream = resolve;
+    });
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementationOnce(async () => {
+      await inFlightStream; // no onChunk call at all before abort
+    });
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    act(() => {
+      void result.current.startStream('Test message', []);
+    });
+
+    await waitFor(() => expect(result.current.isStreaming).toBe(true));
+
+    let hadPartial: boolean | undefined;
+    act(() => {
+      hadPartial = result.current.abortStream();
+    });
+
+    expect(hadPartial).toBe(false);
+    expect(result.current.isStreaming).toBe(false);
+    expect(mockOnStreamDone).not.toHaveBeenCalled();
+
+    releaseStream();
+  });
+
   it('should check for partial response', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,

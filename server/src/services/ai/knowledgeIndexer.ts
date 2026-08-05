@@ -163,6 +163,8 @@ type KnowledgeDoc = {
   filename: string;
   filepath: string;
   sourceType: string;
+  /** ★ M01-055: real organization scope column (`knowledge_docs.organization_id`), not just JSON metadata. */
+  organizationId?: string | null;
   metadata?: Record<string, unknown>;
   chunkCount: number;
 };
@@ -864,12 +866,13 @@ export class KnowledgeIndexer {
       await db.query(
         `
                     INSERT INTO knowledge_docs
-                    (id, filename, filepath, source_type, metadata, chunk_count, status, indexed_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, 'indexed', NOW(), NOW())
+                    (id, filename, filepath, source_type, organization_id, metadata, chunk_count, status, indexed_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, 'indexed', NOW(), NOW())
                     ON CONFLICT (id) DO UPDATE SET
                         filename = EXCLUDED.filename,
                         filepath = EXCLUDED.filepath,
                         source_type = EXCLUDED.source_type,
+                        organization_id = EXCLUDED.organization_id,
                         metadata = EXCLUDED.metadata,
                         chunk_count = EXCLUDED.chunk_count,
                         status = 'indexed',
@@ -880,6 +883,7 @@ export class KnowledgeIndexer {
           doc.filename,
           doc.filepath,
           doc.sourceType,
+          doc.organizationId ?? null,
           JSON.stringify(doc.metadata || {}),
           doc.chunkCount,
         ]
@@ -890,14 +894,15 @@ export class KnowledgeIndexer {
     await DbPromise.run(
       `
                 INSERT OR REPLACE INTO knowledge_docs
-                (id, filename, filepath, source_type, metadata, chunk_count, status, indexed_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'indexed', datetime('now'), datetime('now'))
+                (id, filename, filepath, source_type, organization_id, metadata, chunk_count, status, indexed_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'indexed', datetime('now'), datetime('now'))
             `,
       [
         doc.id,
         doc.filename,
         doc.filepath,
         doc.sourceType,
+        doc.organizationId ?? null,
         JSON.stringify(doc.metadata || {}),
         doc.chunkCount,
       ],

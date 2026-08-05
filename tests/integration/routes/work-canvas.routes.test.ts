@@ -35,6 +35,29 @@ vi.mock('../../../server/src/services/effectiveAccessService.js', () => ({
   hasEffectiveCapability: (...args: any[]) => hasEffectiveCapabilityMock(...args),
 }));
 
+// M01-P07C (M01-033, "atomic Idea materialization"): idea materialization
+// (services/canvasMaterialize.ts's `materializeWorkspaceTarget`, used by both
+// POST /drafts/:id/save-to-workspace and POST /proposals/:id/approve for
+// target=idea) now pins ONE PostgreSQL connection via `withPgTransaction`
+// instead of going through DbPromise.run()'s pool, so the idea + idea-map +
+// receipt writes are genuinely atomic (see dbDynamic.ts's insertDynamicTx
+// doc comment for the M01-033 bug this closes: two independent pool
+// connections meant a crash between the two INSERTs could leave an idea
+// with no map). That path is invisible to the dbGetMock/dbAllMock/dbRunMock
+// triad above — without this mock, any target=idea write here hits a real
+// pg.Pool.connect() with no live database, which is what turns into a 500.
+// This is a lightweight in-memory relational fake, not a rewrite of the
+// real thing: it understands exactly the statement shapes
+// materializeWorkspaceTarget's idea branch issues (SAVEPOINT / ROLLBACK TO
+// SAVEPOINT, generic INSERT INTO <table> (...), and the specific SELECTs it
+// runs for idempotency replay + read-back) — enough to exercise the real
+// route/service/materializer code honestly, without a live Postgres.
+const pgTxQueryMock = vi.fn();
+vi.mock('../../../server/src/database/PostgresDatabase.js', () => ({
+  withPgTransaction: async (fn: (query: typeof pgTxQueryMock) => Promise<unknown>) =>
+    fn(pgTxQueryMock),
+}));
+
 const tableColumns: Record<string, string[]> = {
   my_ideas: [
     'id',
@@ -176,12 +199,164 @@ describe('work canvas routes', () => {
   app.use(express.json());
   app.use('/api/work-canvas', workCanvasRouter);
 
+  // In-memory tables the pgTxQueryMock (idea materialization) writes to and
+  // reads back from — reset every test so idempotency-key replay tests don't
+  // leak rows into the next test.
+  let pgTables: Record<string, Array<Record<string, unknown>>>;
+
+  // Stateful `work_canvas_proposals` row, seeded fresh from `proposalRow`
+  // every test and mutated by the UPDATE statements approveProposal() issues
+  // (claim -> executing, decided -> approved, or revert -> proposed on
+  // failure). approveProposal() legitimately re-fetches the proposal via
+  // getProposal() THREE times in the happy path — once in the route
+  // handler's capability check, once as `existing` at the top of
+  // approveProposal, and once as `decided` (the row actually returned to the
+  // caller) after the final UPDATE — exactly like a real Postgres connection
+  // would give read-your-writes consistency across all three SELECTs. A
+  // single `dbGetMock.mockResolvedValueOnce(proposalRow)` only ever answers
+  // the FIRST of those three calls; the 2nd and 3rd used to silently fall
+  // through to the unrelated `draftRow` default below, corrupting `target`/
+  // `status`/`readBack` on the object the test actually asserts against.
+  // This stateful table (mirroring the pgTables pattern already used for
+  // pgTxQueryMock) makes every SELECT see the same, up-to-date row instead.
+  let proposalsTable: Record<string, unknown>;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    dbGetMock.mockResolvedValue(draftRow);
-    dbAllMock.mockResolvedValue([]);
-    dbRunMock.mockResolvedValue({ changes: 1 });
+    proposalsTable = { ...proposalRow };
+    // assertCanvasIdeaReceiptSchema() (canvasMaterialize.ts) runs a plain
+    // dbGet/dbAllGlobal preflight — through this same DbPromise mock, NOT
+    // pgTxQueryMock — checking the receipt table + its two indexes exist
+    // before any idea materialization proceeds. Real dbGetMock/dbAllMock
+    // calls are otherwise driven per-test via mockResolvedValueOnce, which
+    // takes priority over these defaults; only the first-ever idea
+    // materialization in the whole file actually exercises this preflight
+    // (it memoizes module-globally in canvasMaterialize.ts), but every test
+    // must tolerate the possibility of being that first one.
+    dbGetMock.mockImplementation(async (sql: unknown, params: unknown[] = []) => {
+      if (
+        typeof sql === 'string' &&
+        sql.includes('information_schema.tables') &&
+        sql.includes('canvas_idea_materialization_receipts')
+      ) {
+        return { table_name: 'canvas_idea_materialization_receipts' };
+      }
+      // approveProposal()'s three getProposal() calls (route capability
+      // check, `existing`, `decided`) all land here — see proposalsTable's
+      // doc comment above for why this must be read-your-writes stateful
+      // rather than a one-shot queued value.
+      if (typeof sql === 'string' && sql.includes('FROM work_canvas_proposals')) {
+        const [proposalId, organizationId] = params as [string, string];
+        if (proposalId === proposalsTable.id && organizationId === proposalsTable.organization_id) {
+          return { ...proposalsTable };
+        }
+        return null;
+      }
+      // confirmTargetObjectReadBack('idea', ...) — the independent,
+      // post-materialize confirmation approveProposal() runs before ever
+      // reporting a proposal 'approved' (see workCanvasService.ts's
+      // CANVAS_HANDOFF_READBACK_MISSING comment). In production this reads
+      // `my_ideas` over a genuinely different pooled connection than the
+      // pinned `withPgTransaction` connection that wrote it — the mock
+      // reflects that same split (dbGetMock vs. pgTxQueryMock) while still
+      // sourcing from the ONE shared `pgTables.my_ideas` fake, so this
+      // confirmation is a real check against what was actually inserted,
+      // not a vacuous pass against an unrelated fixture row.
+      if (typeof sql === 'string' && sql.includes('FROM my_ideas WHERE')) {
+        const [id, organizationId] = params as [string, string];
+        const match = pgTables.my_ideas.find(
+          (r) => r.id === id && r.organization_id === organizationId
+        );
+        return match ? { id: match.id } : null;
+      }
+      return draftRow;
+    });
+    dbAllMock.mockImplementation(async (sql: unknown) => {
+      if (
+        typeof sql === 'string' &&
+        sql.includes('pg_indexes') &&
+        sql.includes('canvas_idea_materialization_receipts')
+      ) {
+        return [
+          { indexname: 'idx_canvas_idea_receipts_org_idem' },
+          { indexname: 'idx_canvas_idea_receipts_idea_id' },
+        ];
+      }
+      return [];
+    });
+    dbRunMock.mockImplementation(async (sql: unknown, params: unknown[] = []) => {
+      // Mirrors the three UPDATE work_canvas_proposals statements
+      // approveProposal() issues (claim to 'executing', final decided
+      // update to 'approved', or revert back to 'proposed' on failure) onto
+      // proposalsTable, so the next dbGetMock read-your-writes SELECT above
+      // sees the mutation — same rationale as proposalsTable's doc comment.
+      if (typeof sql === 'string') {
+        // \s+ (not literal spaces) between tokens: approveProposal()'s final
+        // "decided" UPDATE wraps SET onto its own line
+        // (`UPDATE work_canvas_proposals\n     SET status = ?, ...`), unlike
+        // the single-line CAS claim UPDATE — a literal-space regex silently
+        // matches the claim UPDATE but not this one, leaving proposalsTable
+        // stuck at 'executing' with a null readBack after a real 200
+        // response (caught by this file's own negative-control instinct:
+        // the claim-only case was NOT a false pass, it just masked this one).
+        const updateMatch = sql.match(/^UPDATE\s+work_canvas_proposals\s+SET\s+(.+?)\s+WHERE/is);
+        if (updateMatch) {
+          let paramIdx = 0;
+          for (const assignment of updateMatch[1].split(',')) {
+            const [rawCol, rawVal] = assignment.split('=').map((s) => s.trim());
+            proposalsTable[rawCol] = rawVal === '?' ? params[paramIdx++] : rawVal.replace(/^'(.*)'$/, '$1');
+          }
+        }
+      }
+      return { changes: 1 };
+    });
     hasEffectiveCapabilityMock.mockReturnValue(true);
+
+    pgTables = {
+      canvas_idea_materialization_receipts: [],
+      my_ideas: [],
+      my_idea_maps: [],
+    };
+    pgTxQueryMock.mockReset();
+    pgTxQueryMock.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      const trimmed = sql.trim();
+      if (/^SAVEPOINT\b/i.test(trimmed) || /^ROLLBACK TO SAVEPOINT\b/i.test(trimmed)) {
+        return { rows: [], rowCount: 0 };
+      }
+      const insertMatch = trimmed.match(/^INSERT INTO (\w+)\s*\(([^)]+)\)/i);
+      if (insertMatch) {
+        const table = insertMatch[1];
+        const columns = insertMatch[2].split(',').map((c) => c.trim());
+        const row: Record<string, unknown> = {};
+        columns.forEach((col, i) => {
+          row[col] = params[i];
+        });
+        (pgTables[table] ||= []).push(row);
+        return { rows: [], rowCount: 1 };
+      }
+      if (/FROM canvas_idea_materialization_receipts/i.test(trimmed)) {
+        const [organizationId, idempotencyKey] = params as [string, string];
+        const match = pgTables.canvas_idea_materialization_receipts.find(
+          (r) => r.organization_id === organizationId && r.idempotency_key === idempotencyKey
+        );
+        return { rows: match ? [match] : [], rowCount: match ? 1 : 0 };
+      }
+      if (/FROM my_ideas WHERE/i.test(trimmed)) {
+        const [id, organizationId] = params as [string, string];
+        const match = pgTables.my_ideas.find(
+          (r) => r.id === id && r.organization_id === organizationId
+        );
+        return { rows: match ? [match] : [], rowCount: match ? 1 : 0 };
+      }
+      if (/FROM my_idea_maps WHERE/i.test(trimmed)) {
+        const [id, organizationId] = params as [string, string];
+        const match = pgTables.my_idea_maps.find(
+          (r) => r.id === id && r.organization_id === organizationId
+        );
+        return { rows: match ? [match] : [], rowCount: match ? 1 : 0 };
+      }
+      throw new Error(`work-canvas.routes.test.ts pgTxQueryMock: unhandled query: ${trimmed}`);
+    });
   });
 
   it('persists researchSessionId when creating a research Canvas draft', async () => {
@@ -303,12 +478,22 @@ describe('work canvas routes', () => {
       .expect(200);
 
     expect(response.body.data.linkedResource.type).toBe('idea');
-    expect(response.body.data.readBack.status).toBe('created');
-    expect(dbRunMock).toHaveBeenCalledWith(
+    // canvasMaterialize.ts's idea branch always reports status 'completed' —
+    // both the fresh-write path (line ~546: `status: 'completed'`) and the
+    // idempotent-replay path (readBackIdeaFromReceipt, line ~301: also
+    // 'completed'). There is no 'created' status anywhere in the idea
+    // materializer; 'created' is what OTHER targets (note/decision/task/
+    // initiative) report from their own branches in the same file.
+    expect(response.body.data.readBack.status).toBe('completed');
+    // M01-P07C: the idea INSERT moved off DbPromise.run() (dbRunMock) onto
+    // the pinned-connection pgTxQueryMock — see the mock's doc comment above
+    // beforeEach for why. The idea was genuinely persisted into the
+    // in-memory pgTables fake, not just claimed by the response envelope.
+    expect(pgTxQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO my_ideas'),
-      expect.any(Array),
-      expect.any(Object)
+      expect.any(Array)
     );
+    expect(pgTables.my_ideas).toHaveLength(1);
     expect(dbRunMock).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO work_canvas_versions'),
       expect.any(Array),
@@ -428,10 +613,11 @@ describe('work canvas routes', () => {
   });
 
   it('materializes a real idea when approving an idea proposal', async () => {
-    // First dbGet returns the proposal; subsequent dbGet (ownedDraft) falls back
-    // to the default draftRow from beforeEach.
-    dbGetMock.mockResolvedValueOnce(proposalRow);
-
+    // proposalsTable is already seeded from proposalRow (target: 'idea',
+    // status: 'proposed') in beforeEach — no per-test dbGetMock override
+    // needed; see proposalsTable's doc comment above beforeEach for why a
+    // one-shot mockResolvedValueOnce cannot answer approveProposal()'s three
+    // getProposal() re-fetches correctly.
     const response = await request(app)
       .post('/api/work-canvas/proposals/proposal-1/approve')
       .send({})
@@ -450,41 +636,86 @@ describe('work canvas routes', () => {
     // Approval now produces a real target object id (no longer a placeholder).
     expect(response.body.data.targetObjectId).toEqual(expect.any(String));
     expect(response.body.data.readBack.targetObjectId).toEqual(expect.any(String));
-    // The idea was actually inserted.
-    expect(dbRunMock).toHaveBeenCalledWith(
+    // The idea was actually inserted — through the M01-P07C pinned-connection
+    // transaction (pgTxQueryMock), not DbPromise.run() (dbRunMock).
+    expect(pgTxQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('my_ideas'),
-      expect.any(Array),
-      expect.any(Object)
+      expect.any(Array)
     );
+    expect(pgTables.my_ideas).toHaveLength(1);
+    // The final `decided`-producing UPDATE (approveProposal(), the one whose
+    // SET list includes 'approved') is called with just (sql, params) — no
+    // options object — unlike the earlier CAS claim UPDATE ('proposed' ->
+    // 'executing'), which does pass `{ fallback: false }`. Asserting a third
+    // arg here would check for an options object that call never receives.
     expect(dbRunMock).toHaveBeenCalledWith(
       expect.stringContaining('UPDATE work_canvas_proposals'),
-      expect.arrayContaining(['approved']),
-      { fallback: false }
+      expect.arrayContaining(['approved'])
     );
   });
 
-  it('keeps an honest placeholder when approving a non-materializable target', async () => {
-    // Route now returns an honest 422 (CANVAS_TARGET_NOT_YET_SUPPORTED) instead of a
-    // silent 200+placeholder, letting the client surface "not available yet" inline.
-    dbGetMock.mockResolvedValueOnce({ ...proposalRow, target: 'project_brief' });
+  // History (see full derivation in the M01-PTEST closure report): this test
+  // originally (commit d85b7afdc1, 2026-06-17) asserted a 422
+  // CANVAS_TARGET_NOT_YET_SUPPORTED for target='project_brief'. That was
+  // wrong even at the time — 'project_brief' has routed through the real
+  // V8-artifact-runtime pipeline (saveDraftAsArtifact) since the M-7 unify
+  // commit (81b5ea82ca, 2026-06-05, an ANCESTOR of d85b7afdc1) — and no
+  // 'target_not_yet_supported' / CANVAS_TARGET_NOT_YET_SUPPORTED code path
+  // exists anywhere in workCanvasService.ts today. Every value in the typed
+  // WorkCanvasTarget union (note/table/idea/initiative/task/project_brief/
+  // decision/research_report/client_deliverable/kpi_roi_artifact) is
+  // explicitly handled by commitProposalToDomain's switch; the only thing
+  // that still reaches its `default:` branch is a target string OUTSIDE that
+  // union — e.g. stale/corrupted data, since `target` is stored and read as
+  // a bare string, not enum-checked at the DB boundary. The genuinely
+  // "honest" current behavior for that case is not a placeholder OR a 422:
+  // `default:` always falls back to createCanvasIdea(...), the same real,
+  // fully-materializing writer 'materializes a real idea...' above proves —
+  // i.e. an unrecognized target still lands as a REAL idea, never a silent
+  // fake-success placeholder with a null targetObjectId (that pattern —
+  // status 'approved_with_placeholder' / entityStatus
+  // 'placeholder_pending_conversion' / targetObjectId: null — was removed by
+  // commit 234b101b5f, 2026-06-02, before this test was ever written).
+  it('materializes a real idea as the honest fallback for an unrecognized target', async () => {
+    // Mutate the shared stateful proposalsTable (seeded from proposalRow in
+    // beforeEach) rather than queuing a one-shot dbGetMock override — see
+    // proposalsTable's doc comment above beforeEach: approveProposal() reads
+    // this row three times over the request, and a one-shot value only ever
+    // answers the first of those three reads.
+    proposalsTable.target = 'unrecognized_target_xyz';
 
     const response = await request(app)
       .post('/api/work-canvas/proposals/proposal-1/approve')
       .send({})
-      .expect(422);
+      .expect(200);
 
-    expect(response.body).toMatchObject({
-      error: 'target_not_yet_supported',
-      code: 'CANVAS_TARGET_NOT_YET_SUPPORTED',
-      target: 'project_brief',
-      recoverable: true,
+    expect(response.body.data).toMatchObject({
+      id: 'proposal-1',
+      status: 'approved',
+      readBack: expect.objectContaining({
+        // commitProposalToDomain's default branch always resolves to the
+        // real 'idea' materializer, regardless of the unrecognized input.
+        // createCanvasIdea() itself reports status: 'created', but
+        // approveProposal() unconditionally overwrites that with
+        // `approvedReadBack = { ...readBack, status: 'approved', ... }`
+        // before it ever reaches the wire — the same override the sibling
+        // 'materializes a real idea...' test above observes for the exact
+        // same code path (default branch -> createCanvasIdea ->
+        // approveProposal's approvedReadBack wrapper). 'created' survives
+        // only as entityStatus below, not as the outer readBack.status.
+        target: 'idea',
+        status: 'approved',
+        entityStatus: 'created',
+      }),
     });
-    // No entity table was written for an unsupported target.
-    expect(dbRunMock).not.toHaveBeenCalledWith(
+    expect(response.body.data.targetObjectId).toEqual(expect.any(String));
+    // A real entity table WAS written — the fallback is honest, not a
+    // no-op placeholder.
+    expect(pgTxQueryMock).toHaveBeenCalledWith(
       expect.stringContaining('my_ideas'),
-      expect.any(Array),
-      expect.any(Object)
+      expect.any(Array)
     );
+    expect(pgTables.my_ideas).toHaveLength(1);
   });
 
   it('records artifact promotion read-back when saving as artifact', async () => {
@@ -1416,29 +1647,45 @@ describe('work canvas routes', () => {
   });
 
   it('restores a Canvas version with a snapshot and clean projection state', async () => {
-    dbGetMock.mockResolvedValueOnce(draftRow).mockResolvedValueOnce({
-      id: 'version-1',
-      draft_id: 'draft-1',
-      operation_type: 'manual_save',
-      summary: 'Previous stable content',
-      content_md: '# Restored Strategy\n\nRecovered context.',
-      content_json_native: null,
-      blocks_json: JSON.stringify([
-        {
-          id: 'research-1',
-          kind: 'research',
-          schemaVersion: 'canvas-block/v1',
-          title: 'Market findings',
-          status: 'ready',
-          capabilities: ['view'],
-          data: { findings: ['Demand is growing'] },
-          provenance: { source: 'assistant' },
-          markdownProjectionStatus: 'synced',
-        },
-      ]),
-      created_by: 'user-1',
-      created_at: '2026-05-03T01:00:00.000Z',
-    });
+    const restoredBlocksJson = JSON.stringify([
+      {
+        id: 'research-1',
+        kind: 'research',
+        schemaVersion: 'canvas-block/v1',
+        title: 'Market findings',
+        status: 'ready',
+        capabilities: ['view'],
+        data: { findings: ['Demand is growing'] },
+        provenance: { source: 'assistant' },
+        markdownProjectionStatus: 'synced',
+      },
+    ]);
+    dbGetMock
+      .mockResolvedValueOnce(draftRow)
+      .mockResolvedValueOnce({
+        id: 'version-1',
+        draft_id: 'draft-1',
+        operation_type: 'manual_save',
+        summary: 'Previous stable content',
+        content_md: '# Restored Strategy\n\nRecovered context.',
+        content_json_native: null,
+        blocks_json: restoredBlocksJson,
+        created_by: 'user-1',
+        created_at: '2026-05-03T01:00:00.000Z',
+      })
+      // M01-P06 §8 — restore now does a read-back SELECT after the atomic
+      // `UPDATE ... WHERE updated_at = ?` guard (proves the write landed
+      // before answering 200), a THIRD dbGet the mock must also satisfy.
+      .mockResolvedValueOnce({
+        ...draftRow,
+        content_json: JSON.stringify('# Restored Strategy\n\nRecovered context.'),
+        content_md: '# Restored Strategy\n\nRecovered context.',
+        blocks_json: restoredBlocksJson,
+        markdown_projection_status: 'synced',
+        save_state: 'saved',
+        dirty_state: 'clean',
+        updated_at: '2026-05-03T01:05:00.000Z',
+      });
 
     const response = await request(app)
       .post('/api/work-canvas/drafts/draft-1/versions/version-1/restore')

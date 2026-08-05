@@ -451,7 +451,10 @@ router.post(
     try {
       const {
         messageId,
-        conversationId,
+        // NOTE: the client-supplied `conversationId` is intentionally not
+        // destructured/trusted here — see `verifiedConversationId` below,
+        // which is looked up server-side from `messageId` as part of the
+        // ownership check and is what actually gets persisted.
         rating,
         lengthFeedback,
         detailFeedback,
@@ -464,6 +467,7 @@ router.post(
       } = req.body;
 
       const userId = req.user?.id;
+      const organizationId = req.user?.organizationId || req.user?.organization_id;
 
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -478,6 +482,62 @@ router.post(
           .status(400)
           .json({ error: 'Valid rating is required (positive, negative, neutral)' });
       }
+
+      // M01-P03B — real ownership check (M01-036 follow-up finding). Before
+      // this, nothing here verified that `messageId` belonged to a
+      // conversation the caller can actually access: any authenticated user
+      // could POST a feedback row against ANY messageId, including a
+      // message that lives in a different organization's conversation.
+      // Mirrors the exact access policy `findAccessibleConversation()` in
+      // conversations.routes.ts already enforces on read — personal
+      // ownership scoped to the caller's organization, or team membership
+      // inside a team-scope chat_project within that organization.
+      const messageAccess = (await dbGet(
+        `
+            SELECT cm.id AS message_id, cm.conversation_id AS conversation_id,
+                   c.user_id AS conversation_user_id, c.organization_id AS conversation_org_id,
+                   cp.scope AS project_scope, cp.organization_id AS project_org_id
+            FROM conversation_messages cm
+            JOIN conversations c ON cm.conversation_id = c.id
+            LEFT JOIN chat_projects cp ON c.chat_project_id = cp.id
+            WHERE cm.id = ?
+        `,
+        [messageId]
+      )) as {
+        message_id: string;
+        conversation_id: string;
+        conversation_user_id: string | null;
+        conversation_org_id: string | null;
+        project_scope: string | null;
+        project_org_id: string | null;
+      } | null;
+
+      const isPersonalOwner = Boolean(
+        messageAccess &&
+          messageAccess.conversation_user_id === userId &&
+          (messageAccess.conversation_org_id == null ||
+            messageAccess.conversation_org_id === organizationId)
+      );
+      const isTeamMember = Boolean(
+        messageAccess &&
+          messageAccess.project_scope === 'team' &&
+          organizationId &&
+          messageAccess.project_org_id === organizationId
+      );
+
+      if (!messageAccess || (!isPersonalOwner && !isTeamMember)) {
+        // Same response for "does not exist" and "not yours" — no existence
+        // oracle that would let a caller distinguish the two by repeated
+        // probing (mirrors the attachment ACL pattern in
+        // conversations.routes.ts).
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      // Use the DB-verified conversation_id, not whatever the client body
+      // claims — the request body value is only ever used for optional
+      // display context and must never override what ownership was actually
+      // checked against.
+      const verifiedConversationId = messageAccess.conversation_id;
 
       const feedback = {
         rating,
@@ -497,7 +557,7 @@ router.post(
       const result = await adaptiveResponseService.processFeedback(
         userId,
         messageId,
-        conversationId,
+        verifiedConversationId,
         feedback,
         context
       );

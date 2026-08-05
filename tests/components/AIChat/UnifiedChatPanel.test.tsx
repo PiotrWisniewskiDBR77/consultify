@@ -24,6 +24,11 @@ const h = vi.hoisted(() => ({
     getConversationProposals: vi.fn(),
     saveDeepThinkingDecision: vi.fn(),
     uploadChatAttachment: vi.fn(),
+    // M01-P03A — conversation branching (BranchSelector mount, finding M01-035)
+    getConversationBranches: vi.fn(),
+    branchConversation: vi.fn(),
+    updateConversation: vi.fn(),
+    deleteConversation: vi.fn(),
   },
 }));
 
@@ -283,6 +288,19 @@ vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
         send-unsupported
       </button>
       <button
+        data-testid="send-oversized"
+        disabled={disabled}
+        onClick={() => {
+          // In-matrix format (PDF) but over the 25MB MAX_CHAT_ATTACHMENT_BYTES
+          // limit — overriding File.size avoids allocating a real 26MB buffer.
+          const oversized = new File(['x'], 'huge.pdf', { type: 'application/pdf' });
+          Object.defineProperty(oversized, 'size', { value: 26 * 1024 * 1024 });
+          onSend('with huge pdf', [oversized]);
+        }}
+      >
+        send-oversized
+      </button>
+      <button
         data-testid="send-url"
         disabled={disabled}
         onClick={() =>
@@ -488,6 +506,32 @@ describe('UnifiedChatPanel (L2)', () => {
     });
     h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
     h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
+    h.apiMock.getConversationBranches.mockResolvedValue({
+      conversationId: 'conv-branch-test',
+      isBranch: false,
+      parentConversationId: null,
+      parentBranchId: null,
+      forkMessageId: null,
+      branchName: null,
+      branches: [],
+    });
+    h.apiMock.branchConversation.mockResolvedValue({
+      conversation: { id: 'conv-new-branch' },
+      branchedFrom: 'conv-branch-test',
+      copiedMessages: 1,
+      branch: {
+        id: 'conv-new-branch',
+        conversationId: 'conv-branch-test',
+        parentBranchId: null,
+        forkMessageId: 'msg-1',
+        branchName: 'My branch',
+        createdBy: 'user-1',
+        createdAt: new Date().toISOString(),
+        messageCount: 1,
+      },
+    });
+    h.apiMock.updateConversation.mockResolvedValue({ id: 'conv-new-branch' });
+    h.apiMock.deleteConversation.mockResolvedValue({ success: true, deleted: 'conv-new-branch' });
   });
 
   it('derives chat language from explicit preference over store fallbacks', () => {
@@ -511,6 +555,93 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByText('Quick savings')).toBeInTheDocument();
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
+  });
+
+  // M01-P03A — BranchSelector was found fully orphaned (finding M01-035):
+  // imported nowhere in src/. These tests are the negative-control proof
+  // that it is now REALLY mounted and wired, not just present in the tree
+  // unreachably. Deleting the mount block in UnifiedChatPanel.tsx (the
+  // `{activeConversationId && !String(...).startsWith('local-') && (...)}`
+  // guard around <BranchSelector .../>) must turn the first assertion red.
+  describe('M01-P03A conversation branching (BranchSelector)', () => {
+    it('mounts the branch selector once a real (non-local) conversation is active and lists its branches', async () => {
+      conversationStoreState.activeConversationId = 'conv-branch-test';
+      conversationStoreState.activeMessages = [
+        { id: 'msg-1', role: 'user', content: 'hello' },
+      ];
+      h.apiMock.getConversationBranches.mockResolvedValue({
+        conversationId: 'conv-branch-test',
+        isBranch: false,
+        parentConversationId: null,
+        parentBranchId: null,
+        forkMessageId: null,
+        branchName: null,
+        branches: [
+          {
+            id: 'conv-existing-branch',
+            conversationId: 'conv-branch-test',
+            parentBranchId: null,
+            forkMessageId: 'msg-1',
+            branchName: 'Existing branch',
+            createdBy: 'user-1',
+            createdAt: new Date().toISOString(),
+            messageCount: 2,
+          },
+        ],
+      });
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+      await waitFor(() =>
+        expect(h.apiMock.getConversationBranches).toHaveBeenCalledWith('conv-branch-test')
+      );
+
+      const trigger = await screen.findByTestId('branch-selector-trigger');
+      expect(trigger).toBeInTheDocument();
+      // Real data reached the UI (not a fabricated/empty placeholder): the
+      // branch count badge reflects the one branch the mock API returned.
+      expect(trigger).toHaveTextContent('1');
+
+      fireEvent.click(trigger);
+      expect(await screen.findByText('Existing branch')).toBeInTheDocument();
+    });
+
+    it('does NOT fetch or render a branch selector for a local (not-yet-persisted) conversation', () => {
+      conversationStoreState.activeConversationId = 'local-draft-1';
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+      expect(h.apiMock.getConversationBranches).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('branch-selector-trigger')).not.toBeInTheDocument();
+    });
+
+    it('creating a branch from the selector calls the real API with the trailing message as fork point, then refreshes the list', async () => {
+      conversationStoreState.activeConversationId = 'conv-branch-test';
+      conversationStoreState.activeMessages = [{ id: 'msg-1', role: 'user', content: 'hi' }];
+
+      renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+      const trigger = await screen.findByTestId('branch-selector-trigger');
+      fireEvent.click(trigger);
+      fireEvent.click(await screen.findByTestId('branch-selector-open-create'));
+
+      const input = screen.getByPlaceholderText('Branch name...');
+      fireEvent.change(input, { target: { value: 'My branch' } });
+      fireEvent.click(screen.getByTestId('branch-selector-submit-create'));
+
+      await waitFor(() =>
+        expect(h.apiMock.branchConversation).toHaveBeenCalledWith(
+          'conv-branch-test',
+          'msg-1',
+          'My branch'
+        )
+      );
+      // Post-create, the panel re-fetches so a fresh reopen of the dropdown
+      // would show the newly created branch (not a locally-fabricated one).
+      await waitFor(() =>
+        expect(h.apiMock.getConversationBranches).toHaveBeenCalledTimes(2)
+      );
+    });
   });
 
   it('mindmap deliverable: forwards the backend skeleton graph as seedGraph and skips the AI-kickoff startMode', async () => {
@@ -1109,6 +1240,22 @@ describe('UnifiedChatPanel (L2)', () => {
   });
 
   it('lets users resize the chat and Canvas split from the Canvas edge', () => {
+    // Split-width contract (M01-003, resolved in M01-P01): D17
+    // (commit 6834ed2674, owner-authored, "layout(#D17): /chat split — Teresa
+    // na PRAWO, artefakt na LEWO") deliberately reversed the split — canvas
+    // moved to lg:order-1 (left), chat/Teresa to lg:order-2 (right) — and its
+    // own commit message documents the matching formula change: "matematyka
+    // resize: canvasPercent = clientX-rect.left (bez 100-)". The stored
+    // value is the CANVAS's own width (it feeds --work-canvas-width, applied
+    // directly as the canvas <aside>'s CSS width), measured as the
+    // divider's distance from the shell's LEFT edge — because the canvas is
+    // now the LEFT-hand pane, and the divider sits on its right edge.
+    // This test's magic numbers (64/66) predated that reversal and were
+    // never updated, which is what M01-003 flagged. Verified against the
+    // implementation, not just the commit message: with the canvas on the
+    // left, dragging the divider further LEFT (a smaller clientX) must
+    // shrink the canvas — 45 (clamped at MIN_WORK_CANVAS_WIDTH_PERCENT) is
+    // the geometrically correct result of this drag, not a bug.
     const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0,
       y: 0,
@@ -1129,18 +1276,110 @@ describe('UnifiedChatPanel (L2)', () => {
     const edgeResizer = screen.getByTestId('chat-work-panel-edge-resizer');
     expect(edgeResizer).toHaveAttribute('role', 'separator');
 
-    fireEvent.mouseDown(edgeResizer, { clientX: 420 });
-    fireEvent.mouseMove(window, { clientX: 360 });
+    // Drag the divider to clientX=500 (50% of the 1000px shell, exactly
+    // representable in binary floating point — 550 would give
+    // "55.00000000000001" from the (clientX / width) * 100 division, an
+    // unrelated fp-precision artifact, not a contract question) — inside
+    // the unclamped [45, 72] band, so this exercises the actual formula
+    // rather than bottoming out at MIN_WORK_CANVAS_WIDTH_PERCENT.
+    fireEvent.mouseDown(edgeResizer, { clientX: 600 });
+    fireEvent.mouseMove(window, { clientX: 500 });
     fireEvent.mouseUp(window);
-    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('64');
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('50');
 
+    // ArrowLeft narrows the canvas by 2 points (handleWorkCanvasEdgeKeyDown's
+    // own comment: "ArrowLeft = węższy" — canvas is on the left, so
+    // narrowing it is a DECREASE, not an increase).
     fireEvent.keyDown(edgeResizer, { key: 'ArrowLeft' });
-    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('66');
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('48');
 
     fireEvent.doubleClick(edgeResizer);
     expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('60');
 
     rectSpy.mockRestore();
+  });
+
+  it('M01-030: with ?m=<id> present and the message loaded, jumps to and highlights the matched message', async () => {
+    // tests/setup.ts replaces `window.location` with a static plain object
+    // (to stub assign/replace/reload, since jsdom throws on real
+    // navigation) — `window.history.pushState` therefore does NOT update
+    // `window.location.search` in this test environment. The effect under
+    // test reads `window.location.search` directly (global, not
+    // react-router's `useLocation()` — matches the pre-existing
+    // `?workPanel=` deep-link effect in the same file), so the location
+    // object itself must be mutated directly instead.
+    conversationStoreState.activeConversationId = 'conv-1';
+    conversationStoreState.activeMessages = [
+      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
+      { id: 'm2', role: 'ai', content: 'matched content', createdAt: new Date(), metadata: {} },
+    ];
+    Object.assign(window.location, { pathname: '/chat/conv-1', search: '?m=m2' });
+
+    const scrollSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollSpy;
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        customMessages={[
+          { id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any,
+          { id: 'm2', role: 'ai', content: 'matched content', timestamp: new Date() } as any,
+        ]}
+      />
+    );
+
+    // `scrollIntoView` is also called by the unrelated auto-scroll-to-bottom
+    // effect (`messagesEndRef.current?.scrollIntoView({behavior:'smooth'})`,
+    // no `block`) — disambiguate by the deep-link effect's distinct call
+    // shape (`{behavior:'smooth', block:'center'}`).
+    await waitFor(() =>
+      expect(scrollSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ behavior: 'smooth', block: 'center' })
+      )
+    );
+
+    const anchor = document.querySelector('[data-message-anchor="m2"]');
+    expect(anchor).not.toBeNull();
+    expect(anchor).toHaveClass('ring-c-focus');
+
+    Object.assign(window.location, { pathname: '/chat', search: '' });
+  });
+
+  it('M01-030: without ?m= in the URL (post-consumption or an ordinary reload), nothing is scrolled/highlighted', async () => {
+    // Simulates the state AFTER the deep link's `m` param has already been
+    // consumed (navigateToRoute(..., {replace:true}) stripped it) — a hard
+    // reload/fresh reopen at that point sees a plain `/chat/:id` URL, same
+    // as opening the conversation any other way. Documents that `?m=` is a
+    // one-shot jump, not a durable "always land on this message" contract.
+    conversationStoreState.activeConversationId = 'conv-1';
+    conversationStoreState.activeMessages = [
+      { id: 'm1', role: 'user', content: 'hello', createdAt: new Date(), metadata: {} },
+      { id: 'm2', role: 'ai', content: 'matched content', createdAt: new Date(), metadata: {} },
+    ];
+    Object.assign(window.location, { pathname: '/chat/conv-1', search: '' });
+
+    const scrollSpy = vi.fn();
+    Element.prototype.scrollIntoView = scrollSpy;
+
+    renderWithRouter(
+      <UnifiedChatPanel
+        customMessages={[
+          { id: 'm1', role: 'user', content: 'hello', timestamp: new Date() } as any,
+          { id: 'm2', role: 'ai', content: 'matched content', timestamp: new Date() } as any,
+        ]}
+      />
+    );
+
+    // Give the effect a tick to (not) fire. `scrollIntoView` MAY still be
+    // called by the unrelated auto-scroll-to-bottom effect
+    // (`{behavior:'smooth'}`, no `block`) — that's expected and not what
+    // this test is about. What must never happen is the deep-link jump's
+    // distinct call shape.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(scrollSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({ behavior: 'smooth', block: 'center' })
+    );
   });
 
   it('new chat clears state and creates/selects a conversation', async () => {
@@ -1248,6 +1487,38 @@ describe('UnifiedChatPanel (L2)', () => {
 
     fireEvent.click(screen.getByTestId('send-unsupported'));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
+  });
+
+  // M01-P04A — size half of the format/size matrix (packet §3.3): an
+  // in-matrix FORMAT that exceeds MAX_CHAT_ATTACHMENT_BYTES must be rejected
+  // with a SPECIFIC reason (SIZE_LIMIT_EXCEEDED), not the generic
+  // "unsupported format" message, and never uploaded to the server at all
+  // (uploadChatAttachment must not be called — the matrix pre-check saves
+  // the round-trip).
+  it('rejects an oversized (but otherwise supported) file with a size-specific reason, without uploading it', async () => {
+    createConversationMock.mockResolvedValue({ id: 'conv-1' });
+    renderWithRouter(<UnifiedChatPanel />);
+
+    fireEvent.click(screen.getByTestId('send-oversized'));
+
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(h.apiMock.uploadChatAttachment).not.toHaveBeenCalled();
+
+    await waitFor(() =>
+      expect(addMessageToConversationMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          role: 'user',
+          metadata: expect.objectContaining({
+            failedAttachments: [
+              expect.objectContaining({
+                filename: 'huge.pdf',
+                code: 'SIZE_LIMIT_EXCEEDED',
+              }),
+            ],
+          }),
+        })
+      )
+    );
   });
 
   it('ingests URL attachments and persists them in message metadata', async () => {

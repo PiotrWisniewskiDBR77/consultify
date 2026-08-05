@@ -300,6 +300,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       <button
         onClick={() => setIsOpen((v) => !v)}
         disabled={disabled}
+        data-testid="add-files-trigger"
         className={`p-2 rounded-lg transition-colors text-slate-600 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         title={t('aiChat.menu.addFiles', 'Add files')}
       >
@@ -314,6 +315,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
         multiple
         accept={SUPPORTED_CHAT_ATTACHMENT_ACCEPT}
         onChange={handleFileChange}
+        data-testid="add-files-hidden-input"
       />
 
       {/* Dropdown */}
@@ -332,6 +334,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
             onClick={() => fileInputRef.current?.click()}
             icon={<Upload size={15} className="text-slate-500 dark:text-slate-400" />}
             label={t('aiChat.menu.uploadFile', 'Upload file')}
+            testId="add-files-upload-file"
           />
 
           {/* Add URL */}
@@ -365,6 +368,7 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
                 onClick={openIntegrationsSettings}
                 icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
                 label={t('aiChat.menu.manageIntegrations', 'Manage cloud sources')}
+                testId="add-files-manage-cloud"
               />
             </>
           )}
@@ -542,9 +546,11 @@ const MenuItem: React.FC<{
   icon: React.ReactNode;
   label: string;
   description?: string;
-}> = ({ onClick, icon, label, description }) => (
+  testId?: string;
+}> = ({ onClick, icon, label, description, testId }) => (
   <button
     onClick={onClick}
+    data-testid={testId}
     className="w-full flex items-start gap-3 px-3.5 py-2 text-[13px] text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-white/[0.04] transition-colors"
   >
     <span className="w-4 h-4 flex items-center justify-center shrink-0 mt-0.5">{icon}</span>

@@ -44,9 +44,17 @@ export const ChatTableProposalCard: React.FC<Props> = ({
   const [currentProposal, setCurrentProposal] = useState(proposal);
   const [executed, setExecuted] = useState(false);
   const [rejected, setRejected] = useState(false);
+  // FIX (M01-P07A — consistent error states): accept/reject/refine only ever
+  // did `console.error` on failure — no toast, no inline message, nothing
+  // rendered. A failed accept looked IDENTICAL to a slow-but-pending one:
+  // the user has no way to tell "still working" from "silently failed",
+  // and no recovery hint. `error` surfaces the failure inline (translated
+  // PL/EN like the rest of this card) instead of leaving it invisible.
+  const [error, setError] = useState<string | null>(null);
 
   const handleAccept = async () => {
     setLoading(true);
+    setError(null);
     try {
       const result = await TablePlatformApi.executeSchemaProposal(currentProposal.id);
       setExecuted(true);
@@ -56,6 +64,11 @@ export const ChatTableProposalCard: React.FC<Props> = ({
       }
     } catch (err) {
       console.error('Execute failed', err);
+      setError(
+        isPl
+          ? 'Nie udało się utworzyć tabeli. Spróbuj ponownie.'
+          : 'Failed to create the table. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -63,12 +76,18 @@ export const ChatTableProposalCard: React.FC<Props> = ({
 
   const handleReject = async () => {
     setLoading(true);
+    setError(null);
     try {
       await TablePlatformApi.rejectSchemaProposal(currentProposal.id);
       setRejected(true);
       onStatusChange('rejected');
     } catch (err) {
       console.error('Reject failed', err);
+      setError(
+        isPl
+          ? 'Nie udało się odrzucić propozycji. Spróbuj ponownie.'
+          : 'Failed to reject the proposal. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -77,6 +96,7 @@ export const ChatTableProposalCard: React.FC<Props> = ({
   const handleRefine = async () => {
     if (!refineText.trim()) return;
     setLoading(true);
+    setError(null);
     try {
       const refined = await TablePlatformApi.refineSchemaProposal(currentProposal.id, refineText);
       if (refined) {
@@ -87,6 +107,11 @@ export const ChatTableProposalCard: React.FC<Props> = ({
       onStatusChange('refining');
     } catch (err) {
       console.error('Refine failed', err);
+      setError(
+        isPl
+          ? 'Nie udało się doprecyzować propozycji. Spróbuj ponownie.'
+          : 'Failed to refine the proposal. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -149,6 +174,15 @@ export const ChatTableProposalCard: React.FC<Props> = ({
           {currentProposal.warnings.map((w, i) => (
             <div key={i}>⚠ {w.message}</div>
           ))}
+        </div>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-3 rounded-lg border border-danger-200 dark:border-danger-800 bg-danger-50 dark:bg-danger-900/20 px-3 py-2 text-xs text-danger-700 dark:text-danger-400"
+        >
+          {error}
         </div>
       )}
 

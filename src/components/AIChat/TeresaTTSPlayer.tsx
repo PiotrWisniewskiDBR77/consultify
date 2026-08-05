@@ -29,6 +29,12 @@ export interface TeresaTTSPlayerProps {
   /** Auto-read `text` whenever it changes. Defaults to false. */
   autoPlay?: boolean;
   className?: string;
+  /**
+   * LOCAL_HARNESS/dev-render ONLY — never passed by production callers.
+   * Lets `dev-render/screens/m01-p05-voice.tsx` render "playing"/"error"
+   * states declaratively without a real server TTS round-trip.
+   */
+  __harnessOverride?: Partial<ReturnType<typeof useTTSPlayer>>;
 }
 
 export const TeresaTTSPlayer: React.FC<TeresaTTSPlayerProps> = ({
@@ -37,9 +43,13 @@ export const TeresaTTSPlayer: React.FC<TeresaTTSPlayerProps> = ({
   voiceName,
   autoPlay = false,
   className = '',
+  __harnessOverride,
 }) => {
   const { t } = useTranslation();
-  const { status, isActive, speak, stop } = useTTSPlayer({ language, voiceName });
+  const realPlayer = useTTSPlayer({ language, voiceName });
+  const { status, isActive, speak, stop } = __harnessOverride
+    ? { ...realPlayer, ...__harnessOverride }
+    : realPlayer;
   const lastSpokenRef = useRef<string | null>(null);
 
   // Auto-play newly-arrived text exactly once.

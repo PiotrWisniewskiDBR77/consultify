@@ -237,11 +237,21 @@ class AdaptiveResponseService {
 
     try {
       // Store feedback in database
+      // M01-P03B — column names corrected: this INSERT targeted
+      // `response_mode`/`capability`, but the actual `ai_response_feedback`
+      // table (see server/migrations/add_response_feedback.sql and
+      // 20260805_m01p03b_ai_response_feedback_fresh_db_gap.sql) defines
+      // `response_mode_used`/`capability_used`. On Postgres this threw
+      // 42703 "column does not exist" on every single call — confirmed live
+      // against a real Postgres catalog while building the M01-P03B
+      // hydration test — so this write path never persisted a row on
+      // Postgres, independent of the separate fresh-db table-creation gap
+      // fixed in the same packet.
       await db.run(
         `INSERT INTO ai_response_feedback (
           id, user_id, message_id, conversation_id, rating,
           length_feedback, detail_feedback, format_feedback, wanted_mode,
-          custom_feedback, response_mode, capability, created_at
+          custom_feedback, response_mode_used, capability_used, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           feedbackId,

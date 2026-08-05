@@ -4,7 +4,19 @@ import { fileURLToPath } from 'url';
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
-import { classifyChecksum, fileChecksum, isRuntimeMigrationFile } from './migrationIdentity.js';
+import {
+  RUNTIME_MIGRATION_ALLOWLIST as RUNTIME_MIGRATION_ALLOWLIST_FILES,
+  classifyChecksum,
+  fileChecksum,
+  isRuntimeMigrationFile,
+} from './migrationIdentity.js';
+
+// Backwards-compatible test/diagnostic surface retained for packets that
+// imported discovery helpers from migrationRunner before migrationIdentity
+// became the single source of truth. Runtime ownership still lives in
+// migrationIdentity; this Set is a read-only snapshot for membership checks.
+export const RUNTIME_MIGRATION_ALLOWLIST = new Set(RUNTIME_MIGRATION_ALLOWLIST_FILES);
+export { isRuntimeMigrationFile };
 
 const __filename_esm = fileURLToPath(import.meta.url);
 const __dirname_esm = path.dirname(__filename_esm);
@@ -67,29 +79,20 @@ export interface RunMigrationsOptions {
   migrationsDir?: string;
 }
 
-function discoverMigrationFiles(dir: string): string[] {
+export function compareMigrationFilenames(a: string, b: string): number {
+  const prefixA = a.split('_')[0];
+  const prefixB = b.split('_')[0];
+  if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
+  const prefixCmp = prefixA.localeCompare(prefixB);
+  if (prefixCmp !== 0) return prefixCmp;
+  return a.localeCompare(b);
+}
+
+export function discoverMigrationFiles(dir: string): string[] {
   return fs
     .readdirSync(dir)
     .filter((f) => isRuntimeMigrationFile(f))
-    .sort((a, b) => {
-      const prefixA = a.split('_')[0];
-      const prefixB = b.split('_')[0];
-      if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
-      const prefixCmp = prefixA.localeCompare(prefixB);
-      if (prefixCmp !== 0) return prefixCmp;
-      // M01-PRUN fix: two allowlisted files can share the SAME numeric
-      // prefix (e.g. '942_ideas_collaboration_tool_sessions.sql' and
-      // '942_chat_m01p04a_attachment_status.sql' — independent teams,
-      // coincidental numbering, confirmed collision, not a hypothetical
-      // one). Before this line the comparator returned 0 for such a pair,
-      // and Array.prototype.sort's stability then fell through to
-      // `fs.readdirSync()`'s enumeration order — which POSIX does NOT
-      // guarantee to be sorted or stable across platforms/filesystems/runs.
-      // Falling back to the full filename makes every tie deterministic and
-      // reproducible regardless of directory-entry order, without changing
-      // the relative order of any pair that did not already tie.
-      return a.localeCompare(b);
-    });
+    .sort(compareMigrationFilenames);
 }
 
 export interface MigrationResult {

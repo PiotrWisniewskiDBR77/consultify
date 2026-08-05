@@ -199,8 +199,58 @@ function requestedBaseUpdatedAt(body: unknown): string | null {
   return value.trim() ? value.trim() : null;
 }
 
+/**
+ * M01-P06A (M01-027c) — `work_canvas_drafts.updated_at`/`created_at` is
+ * canonically `TEXT` (`760_work_canvas_runtime.sql`, matches live demo
+ * schema), but `ensureStorage()` below used to `CREATE TABLE IF NOT EXISTS`
+ * the same table as `TIMESTAMPTZ`. On any environment where `ensureStorage()`
+ * creates the table FIRST (fresh/staging with `server/migrations` not yet
+ * applied), `node-postgres` has no type parser registered for OID 1184 in
+ * this codebase (same root cause documented in `financePeriodFormat.ts` for
+ * OID 1082 `DATE`), so every read of that column hands the application a JS
+ * `Date` object instead of a string. `hasDraftConflict`/
+ * `hasMissingOrStaleBaseToken` then compare that `Date` against the client's
+ * ISO-string `baseUpdatedAt` with `!==` — a `Date` is never `===` a string,
+ * so EVERY save looked like a conflict (false 409, not a real one).
+ *
+ * `ensureStorage()` now declares `TEXT` (matching the migration), and
+ * `943_work_canvas_timestamp_parity_postgres.sql` corrects any environment
+ * that already created the `TIMESTAMPTZ` version before this fix shipped.
+ * This coercion is the second, independent layer: it makes the comparison
+ * itself correct regardless of the column's actual runtime type — including
+ * the window between deploying this code and a migration run actually
+ * landing on a given environment, and any row that (for whatever reason)
+ * still comes back as a `Date`. Never throws: an unparsable value falls back
+ * to `''`, which cannot equal a real client token, so it fails safe into
+ * "conflict" rather than silently accepting a stale write.
+ */
+function normalizeTimestampToken(value: unknown): string {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? '' : value.toISOString();
+  }
+  if (typeof value === 'string') return value;
+  if (value == null) return '';
+  const coerced = new Date(value as string | number);
+  return Number.isNaN(coerced.getTime()) ? '' : coerced.toISOString();
+}
+
 function hasDraftConflict(draft: WorkCanvasDraft, baseUpdatedAt: string | null): boolean {
   return Boolean(baseUpdatedAt && draft.updatedAt && baseUpdatedAt !== draft.updatedAt);
+}
+
+/**
+ * M01-P06 §8 (CAS: WYMAGANE) — a write to the primary save path with NO
+ * conflict token is not "no conflict", it is an unverifiable write and must
+ * be rejected exactly like a stale one. `hasDraftConflict` above (used by
+ * operations/restore/workflows) intentionally stays permissive when the
+ * token is absent — those endpoints have long-standing callers that omit
+ * it and are not the client's save affordance. `PUT /drafts/:draftId` IS
+ * that affordance (`persistDraft` in WorkCanvasDocumentPanel.tsx always
+ * sends `baseUpdatedAt`), so it gets the strict check.
+ */
+function hasMissingOrStaleBaseToken(draft: WorkCanvasDraft, baseUpdatedAt: string | null): boolean {
+  if (!baseUpdatedAt) return true;
+  return Boolean(draft.updatedAt && baseUpdatedAt !== draft.updatedAt);
 }
 
 function sendDraftConflict(
@@ -673,8 +723,14 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
     dirtyState: row.dirty_state,
     visibility: row.visibility,
     auditStatus: row.audit_status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    // M01-027c — see `normalizeTimestampToken` above: `row.updated_at`/
+    // `row.created_at` are typed `string` (DraftRow) but can arrive as a
+    // JS `Date` when the underlying column is `TIMESTAMPTZ` instead of the
+    // canonical `TEXT`. Coerce here, once, at the read boundary, so every
+    // consumer of `WorkCanvasDraft.updatedAt` (CAS comparisons, JSON
+    // responses, version-cadence math) sees a stable ISO string.
+    createdAt: normalizeTimestampToken(row.created_at),
+    updatedAt: normalizeTimestampToken(row.updated_at),
   };
 }
 
@@ -1967,6 +2023,27 @@ async function ensureStorage(): Promise<void> {
       // up as a bare HTTP 500 / white screen. The IIFE is also memoized below; on
       // failure we null the promise (see .catch) so the next request retries
       // instead of being poisoned by a permanently-rejected cached promise.
+      //
+      // M01-027c — `created_at`/`updated_at` on work_canvas_drafts and
+      // work_canvas_proposals are canonically TEXT (ISO-8601 strings), NOT
+      // TIMESTAMPTZ. This was previously TIMESTAMPTZ here while
+      // `760_work_canvas_runtime.sql` declared TEXT for the same tables —
+      // whichever one created the table first "won", and on any environment
+      // where this function won that race, `node-postgres` handed the app a
+      // JS `Date` for those columns (no type parser registered for OID
+      // 1184 in this codebase), breaking the CAS string comparisons in
+      // `hasDraftConflict`/`hasMissingOrStaleBaseToken` below (false 409 on
+      // every draft save). TEXT is the canonical choice: it is what the
+      // migration already declares and what the live demo database already
+      // has, it is portable across the sqlite/postgres dual-target DbPromise
+      // layer this codebase supports, and the application never relies on
+      // SQL-level DEFAULT NOW() — every INSERT/UPDATE path already supplies
+      // an explicit `new Date().toISOString()` value. See
+      // `943_work_canvas_timestamp_parity_postgres.sql` for the migration
+      // that corrects any environment that already created the TIMESTAMPTZ
+      // version of these two tables before this fix shipped, and
+      // `normalizeTimestampToken` above for the defense-in-depth read-side
+      // coercion.
       await dbRun(
         `CREATE TABLE IF NOT EXISTS work_canvas_drafts (
           id TEXT PRIMARY KEY,
@@ -1998,8 +2075,8 @@ async function ensureStorage(): Promise<void> {
           dirty_state TEXT NOT NULL DEFAULT 'dirty',
           visibility TEXT NOT NULL DEFAULT 'private',
           audit_status TEXT NOT NULL DEFAULT 'not_required',
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
         )`,
         [],
         { fallback: true }
@@ -2045,8 +2122,8 @@ async function ensureStorage(): Promise<void> {
           target_object_id TEXT,
           read_back_json TEXT,
           audit_event_id TEXT,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
         )`,
         [],
         { fallback: true }
@@ -3332,7 +3409,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
-  if (hasDraftConflict(draft, baseUpdatedAt)) {
+  if (hasMissingOrStaleBaseToken(draft, baseUpdatedAt)) {
     return sendDraftConflict(res, draft, baseUpdatedAt, 'save_draft');
   }
   const payload =
@@ -3476,7 +3553,17 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   updated.markdownProjectionStatus = updated.contentEnvelope.markdownProjectionStatus;
   updated.markdownProjectedAt = updated.contentEnvelope.markdownProjectedAt || null;
   updated.projectionError = updated.contentEnvelope.projectionError || null;
-  await dbRun(
+  // M01-P06 §8 — the pre-check above (hasMissingOrStaleBaseToken) reads the
+  // draft, then compares in application memory: a SELECT-then-compare is NOT
+  // CAS by itself (lesson from Notatnik's legacy writer — see AGENTS/memory).
+  // Two concurrent PUTs can both pass that check against the same pre-write
+  // `updated_at` before either commits. The second half is this WHERE clause:
+  // it re-asserts `updated_at = <the token we validated>` atomically inside
+  // the UPDATE itself, so only the writer that is still current can affect a
+  // row. `changes === 0` means we lost that race — someone else's write
+  // landed between our read and our write — and the request is rejected as a
+  // conflict exactly like a stale token would be, instead of clobbering it.
+  const writeResult = await dbRun(
     `UPDATE work_canvas_drafts
      SET conversation_id = ?, kind = ?, title = ?, content_json = ?, sources_json = ?,
          provenance_json = ?, project_id = ?, owner_id = ?, research_session_id = ?,
@@ -3484,7 +3571,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
          lifecycle_state = ?, dirty_state = ?, visibility = ?, audit_status = ?,
          canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?, content_schema_version = ?,
          markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?, updated_at = ?
-     WHERE id = ? AND organization_id = ?`,
+     WHERE id = ? AND organization_id = ? AND updated_at = ?`,
     [
       updated.conversationId,
       updated.kind,
@@ -3514,9 +3601,23 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       updated.updatedAt,
       updated.id,
       updated.organizationId,
+      draft.updatedAt,
     ],
     { fallback: false }
   );
+  if (!writeResult || writeResult.changes === 0) {
+    const raceRow = await dbGet<DraftRow>(
+      `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
+      [draft.id, draft.organizationId],
+      { fallback: false }
+    );
+    return sendDraftConflict(
+      res,
+      raceRow ? toDraft(raceRow) : draft,
+      baseUpdatedAt,
+      'save_draft'
+    );
+  }
 
   // C1.1 — autosave now snapshots a version on a sensible cadence. Without this,
   // PUT /drafts/:id (the only route the rich editor hits) never produced a
@@ -3600,11 +3701,25 @@ router.post('/proposals/:proposalId/reject', async (req: AuthRequest, res) => {
     return res.status(404).json({ error: 'Canvas proposal not found' });
   }
   try {
+    // FIX (M01-P07A — audit hardening): this handler previously called
+    // rejectProposal() with no auditEventId at all, so `audit_event_id`
+    // stayed NULL in the database for every real reject that ever went
+    // through this route — the column exists (and IS populated on other
+    // work-canvas write paths, e.g. draft save/create) but was structurally
+    // dead for proposal rejection. Mint one here, the same
+    // `ae-${randomUUID()}` convention used elsewhere in this file (see the
+    // draft create/save/operations handlers above), so a reject leaves the
+    // same kind of durable audit marker an approve does.
+    const auditEventId = `ae-${randomUUID()}`;
     const updated = await workCanvasService.rejectProposal({
       organizationId,
       proposalId: proposal.id,
+      auditEventId,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
     });
-    return res.json(envelope(updated, { readBack: updated.readBack }));
+    return res.json(
+      envelope(updated, { readBack: updated.readBack, auditEventId: updated.auditEventId })
+    );
   } catch (error) {
     return sendProposalServiceError(res, error);
   }
@@ -3633,10 +3748,17 @@ router.post('/proposals/:proposalId/approve', async (req: AuthRequest, res) => {
     });
   }
   try {
+    // FIX (M01-P07A — audit hardening): same gap as reject (see comment
+    // there) — approve never minted an auditEventId either, so
+    // `updated.auditEventId` echoed back in the response envelope below was
+    // always null and the persisted `audit_event_id` column never recorded
+    // an approval event.
+    const auditEventId = `ae-${randomUUID()}`;
     const updated = await workCanvasService.approveProposal({
       organizationId,
       actorUserId: userId,
       proposalId: proposal.id,
+      auditEventId,
     });
     return res.json(
       envelope(updated, { readBack: updated.readBack, auditEventId: updated.auditEventId })
@@ -3724,12 +3846,17 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
       dirtyState: 'clean',
       updatedAt: now,
     };
-    await dbRun(
+    // M01-P06 §8 — same atomic guard as PUT /drafts/:draftId: re-assert the
+    // row's `updated_at` inside the UPDATE itself so a write that raced past
+    // the `hasDraftConflict` pre-check above (which only compares against a
+    // snapshot read at the top of this handler) still cannot silently land
+    // on top of a concurrently-committed write.
+    const opWriteResult = await dbRun(
       `UPDATE work_canvas_drafts
        SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?,
            content_schema_version = ?, markdown_projection_status = ?, markdown_projected_at = ?,
            projection_error = ?, save_state = ?, dirty_state = ?, updated_at = ?
-       WHERE id = ? AND organization_id = ?`,
+       WHERE id = ? AND organization_id = ? AND updated_at = ?`,
       [
         JSON.stringify(updated.content),
         updated.canonicalFormat,
@@ -3745,9 +3872,23 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
         updated.updatedAt,
         updated.id,
         updated.organizationId,
+        draft.updatedAt,
       ],
       { fallback: false }
     );
+    if (!opWriteResult || opWriteResult.changes === 0) {
+      const raceRow = await dbGet<DraftRow>(
+        `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
+        [draft.id, draft.organizationId],
+        { fallback: false }
+      );
+      return sendDraftConflict(
+        res,
+        raceRow ? toDraft(raceRow) : draft,
+        baseUpdatedAt,
+        'apply_operation'
+      );
+    }
     return res.json(
       envelope({
         draft: updated,
@@ -3837,12 +3978,15 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
     dirtyState: 'clean',
     updatedAt: now,
   };
-  await dbRun(
+  // M01-P06 §8 — same atomic guard as PUT /drafts/:draftId and /operations:
+  // re-assert `updated_at` inside the UPDATE so a restore cannot silently
+  // land on top of a write that committed after this handler's initial read.
+  const restoreWriteResult = await dbRun(
     `UPDATE work_canvas_drafts
      SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?, content_schema_version = ?,
          markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?,
          save_state = ?, dirty_state = ?, updated_at = ?
-     WHERE id = ? AND organization_id = ?`,
+     WHERE id = ? AND organization_id = ? AND updated_at = ?`,
     [
       restoredWrite.content_json,
       restoredWrite.canonical_format,
@@ -3858,9 +4002,23 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
       restored.updatedAt,
       restored.id,
       restored.organizationId,
+      draft.updatedAt,
     ],
     { fallback: false }
   );
+  if (!restoreWriteResult || restoreWriteResult.changes === 0) {
+    const raceRow = await dbGet<DraftRow>(
+      `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
+      [draft.id, draft.organizationId],
+      { fallback: false }
+    );
+    return sendDraftConflict(
+      res,
+      raceRow ? toDraft(raceRow) : draft,
+      baseUpdatedAt,
+      'restore_version'
+    );
+  }
   const readBackRow = await dbGet<DraftRow>(
     `SELECT * FROM work_canvas_drafts WHERE id = ? AND organization_id = ?`,
     [restored.id, restored.organizationId],

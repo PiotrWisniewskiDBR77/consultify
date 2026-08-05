@@ -71,6 +71,9 @@ class KnowledgeIndexerRagProvider implements ExternalRagProvider {
       filename: document.title || document.docKey,
       filepath,
       sourceType: EXTERNAL_RAG_SOURCE_TYPE,
+      // ★ M01-055: organizationId must land in the real `knowledge_docs.organization_id`
+      // column (not only in JSON metadata below) so org-scoped queries/filters actually work.
+      organizationId: document.organizationId ?? null,
       chunkCount: document.chunks.length,
       metadata: {
         docKey: document.docKey,

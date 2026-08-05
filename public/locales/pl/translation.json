@@ -15473,7 +15473,10 @@
       "branch": "Rozgałęź stąd",
       "delete": "Usuń",
       "report": "Raport",
-      "more": "więcej"
+      "more": "więcej",
+      "continue": "Kontynuuj",
+      "continueInstruction": "Kontynuuj poprzednią odpowiedź od miejsca, w którym się zatrzymała.",
+      "regenerate": "Wygeneruj ponownie"
     },
     "coThinker": {
       "title": "Co-Thinker",
@@ -15563,6 +15566,18 @@
     },
     "feedback": {
       "missingInfoPlaceholder": "Opisz czego brakowało w odpowiedzi..."
+    },
+    "report": {
+      "title": "Zgłoś problem",
+      "description": "Daj nam znać, co poszło nie tak z tą odpowiedzią.",
+      "incorrect": "Merytorycznie błędna",
+      "harmful": "Szkodliwa lub niebezpieczna treść",
+      "unhelpful": "Nieprzydatna lub nie na temat",
+      "other": "Inny problem",
+      "otherPlaceholder": "Opisz problem...",
+      "submit": "Zgłoś",
+      "sent": "Zgłoszenie wysłane do przeglądu.",
+      "failed": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
     }
   },
   "aiChat": {
@@ -15671,7 +15686,12 @@
       "snooze": "Wycisz",
       "muteType": "Wycisz typ",
       "dismiss": "Ukryj",
-      "mutedHint": "Wyciszone typy:"
+      "mutedHint": "Wyciszone typy:",
+      "forbidden": "Nie masz uprawnień, aby zobaczyć sygnały tego projektu.",
+      "errorState": "Nie udało się sprawdzić sygnałów.",
+      "moreActions": "Więcej akcji",
+      "showMore": "Pokaż więcej sygnałów",
+      "showLess": "Pokaż mniej sygnałów"
     },
     "quickClicks": {
       "brief": {
@@ -16199,6 +16219,11 @@
     "newConversation": "Nowa rozmowa",
     "closeSidebar": "Zamknij panel",
     "searchPlaceholder": "Szukaj rozmów...",
+    "searching": "Szukam...",
+    "searchFailed": "Wyszukiwanie jest teraz niedostępne.",
+    "searchRetry": "Spróbuj ponownie",
+    "partialResults": "Wyniki mogą być niepełne. Spróbuj ponownie później.",
+    "scopeLimited": "Część wyników jest ukryta z powodu ograniczeń dostępu.",
     "confirmDelete": "Na pewno chcesz usunąć tę rozmowę?",
     "sections": {
       "archived": "Archiwum"
@@ -16298,7 +16323,13 @@
       "reject": "Odrzuć"
     },
     "attachments": {
+      "allFailed": "❌ Nie udało się przetworzyć załączonych źródeł: {{names}}. AI odpowie bez nich. Prześlij ponownie w obsługiwanym formacie (PDF, TXT, MD, CSV, JSON) lub sprawdź, czy link jest publicznie dostępny.",
+      "analyzingSources": "📎 Analizowanie {{count}} załącznika/-ów: {{names}}... Wyodrębnianie treści do analizy AI.",
       "extractionFailed": "Nie udało się odczytać tekstu z pliku \"{{name}}\". Sprawdź czy plik nie jest pusty lub uszkodzony.",
+      "extractionFailedShort": "Nie udało się odczytać tekstu z tego pliku.",
+      "filesPartial": "⚠️ Przetworzono {{processed}}/{{total}} załączników: {{names}}. Niektórych źródeł nie udało się odczytać i nie będą uwzględnione. Możesz spróbować ponownie lub kontynuować.",
+      "filesReady": "📎 {{count}} załącznika/-ów gotowych do analizy: {{names}}. AI będzie odwoływać się do tych źródeł w odpowiedzi.",
+      "sizeExceeded": "Plik \"{{name}}\" przekracza limit {{maxMb}} MB.",
       "unsupportedType": "Plik \"{{name}}\" nie jest obsługiwany. Dozwolone formaty: {{types}}.",
       "uploadError": "Błąd przesyłania pliku \"{{name}}\": {{error}}",
       "uploadFailed": "Nie udało się przetworzyć pliku \"{{name}}\".",

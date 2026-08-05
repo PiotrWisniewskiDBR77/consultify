@@ -90,6 +90,14 @@ export const RUNTIME_MIGRATION_ALLOWLIST: readonly string[] = Object.freeze([
   // collision at this layer. See migrationRunner.ts's discoverMigrationFiles
   // for the sort-order guarantee between same-prefix files.
   '942_chat_m01p04a_attachment_status.sql',
+  // M01-P06/P07: Work Canvas timestamp parity, atomic materialization
+  // receipts, and knowledge-document tenant scope. These independently
+  // reviewed 943-945 migrations are outside the deliberately narrow runtime
+  // pattern, so each must be named explicitly or a normal deploy would skip
+  // the schema required by the matching application code.
+  '943_work_canvas_timestamp_parity_postgres.sql',
+  '944_canvas_idea_materialization_receipts.sql',
+  '945_chat_m01p04c_knowledge_doc_scope.sql',
   // M02-P18 (finding M02-020/M02-021): `940_mw010_vault_document_versions.sql`
   // creates `knowledge_doc_versions` and adds `knowledge_docs.version` /
   // `.deleted_at` / `.file_size_bytes`. Confirmed on live demo (read-only
