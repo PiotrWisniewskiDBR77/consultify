@@ -1,16 +1,16 @@
 # Consultify deployment readiness report — Complete MVP integration
 
-Date: 2026-08-05
+Updated: 2026-08-06 00:25 Europe/Warsaw
 Target: Railway environment `demo` only
-Candidate branch: `codex/consultify-mvp-integration-v2-20260805`
-Candidate base SHA before the consolidated release-fix commit: `ffdf5631c9`
-Current `origin/demo` and runtime SHA: `3f58e5ce7e809d5d5044d2b69d8f941aceec5bc7`
+Release repair branch: `codex/postdeploy-m09-m13-fix-20260805`
+Current `origin/demo` and runtime SHA: `dcf1678bb1508d8c61ecdf2de891003007e420dc`
+Railway deployment: `92d08799-bcfd-49dc-9f83-15f34afe8960` (`SUCCESS`)
 
 ## Decision
 
-**GO — CONTROLLED DEMO DEPLOYMENT AUTHORIZED AFTER THE GREEN GATES BELOW.**
+**DEPLOYED AND VERIFIED — CONTROLLED DEMO RELEASE COMPLETE FOR THE AUTHORIZED SHA.**
 
-The code candidate passes type checking, backend build and frontend production build. Module-level targeted/realDB evidence remains strong for M01-M03, M05-M10 and M12-M16, with explicit non-release-blocking Complete MVP evidence gaps for M04 and M11. The previous migration NO-GO has been removed without rewriting demo history or bypassing fail-closed:
+The release and the bounded post-deploy repair pass type checking, backend build, frontend production build and 42/42 targeted repair tests. Module-level evidence remains strong for M01-M03, M05-M10 and M12-M16, with explicit Complete MVP gaps for M04 Tools and M11 Audits. The previous migration NO-GO was removed without rewriting demo history or bypassing fail-closed:
 
 - all 70 known historical checksum variants are reconciled by an immutable exact-pair manifest (filename + observed stored digest + reviewed current digest);
 - a future file edit, a third stored digest or a different filename still fails closed;
@@ -40,6 +40,13 @@ The 170 legacy NULL checksums and 21 orphan history rows remain explicitly class
 | M04 current Complete MVP evidence | Explicit honest status | `MVP_DEMO_FIX_REQUIRED`; not silently accepted | PASS WITH BACKLOG |
 | M11 current Complete MVP evidence | Explicit honest status | `MVP_DEMO_FIX_REQUIRED`; not silently accepted | PASS WITH BACKLOG |
 | Authorized target | Demo only | Confirmed | PASS |
+| Exact deployed SHA | Runtime equals pushed SHA | `/api/health` reports `dcf1678bb1508d8c61ecdf2de891003007e420dc` | PASS |
+| Single deployment | One Railway deployment for repair SHA | `92d08799-bcfd-49dc-9f83-15f34afe8960` `SUCCESS` | PASS |
+| Runtime health | HTTP and dependencies healthy | `/ping` 200; health 200; DB and Redis connected | PASS |
+| Migration startup | No pending or failed runtime migration | 402/402 applied; governed runner 410/410 up to date | PASS |
+| M09 deployed delta | No false saving/count/metadata success | `Saved`, 10/10 canonical slides, no reload PUT, no fake word count | PASS |
+| M13 deployed delta | Authenticated context works; anonymous denied | 3 organizations loaded; no 304; anonymous 401 | PASS |
+| 390 px editor smoke | Usable canvas, no page overflow | Rails hidden; canvas 390 px; scroll width 390 px | PASS |
 
 ## Actions deliberately not taken while proving readiness
 
@@ -50,13 +57,13 @@ The 170 legacy NULL checksums and 21 orphan history rows remain explicitly class
 - No `DISABLE_TP_MIGRATIONS` bypass.
 - No merge to `main` or production.
 
-## Controlled release protocol
+## Controlled release execution record
 
-1. Commit and push the exact green candidate branch.
-2. Fast-forward the exact candidate to `demo`; do not merge to `main` or production.
-3. Observe Railway until the deployment succeeds and both health and readiness are green.
-4. Confirm live runtime SHA equals the pushed SHA and migration startup reports 13 applied without drift.
-5. Run critical auth/tenant plus Documents/Presentations smoke.
-6. Keep M04/M11 acceptance gaps and all P2/P3 findings in the central Round 2 backlog; deployment does not silently convert them to accepted.
+1. Exact green SHA committed and the repair branch pushed.
+2. `demo` fast-forwarded from `9446a69724b7f8b058be1b12abc15f2982d4be2b` to `dcf1678bb1508d8c61ecdf2de891003007e420dc`; `main` and production were untouched.
+3. Exactly one Railway deployment was observed through `SUCCESS`.
+4. Live runtime SHA, health, dependencies and migration startup were confirmed.
+5. Authenticated M09/M13 and 390 px Chrome deltas plus anonymous tenant-negative control passed without demo-data mutation.
+6. M04/M11 remain `MVP_DEMO_FIX_REQUIRED`; deployment does not silently convert partial baseline evidence into acceptance.
 
 Full module classifications and evidence are in `CONSULTIFY_COMPLETE_MVP_CHECKPOINT.md`. Round 2 records are in `CONSULTIFY_ROUND2_HARDENING_BACKLOG.csv`.
