@@ -157,10 +157,35 @@ export const MeetingHub: React.FC = () => {
       if (filter.column === 'followUp') {
         data = data.filter((item) => item.followUps.some((x) => x.status === 'open'));
       }
+      // M12-F02: "Upcoming" must filter by the SAME predicate its badge counts
+      // (isUpcoming), otherwise the chip advertises N and the table shows M.
+      // Previously the chip counted by date but filtered by status='scheduled'.
+      if (filter.column === 'upcoming') {
+        data = data.filter(isUpcoming);
+      }
     }
 
     return data;
   }, [activeFilters, meetings, searchQuery]);
+
+  /**
+   * M12-F02: `FilterableTable` applies `activeFilters` a SECOND time, matching
+   * `row[filter.column]` literally. The Menu 3 chips use semantic columns
+   * (`followUp`, `upcoming`) that are not row fields, so that second pass
+   * matched `undefined` and wiped the table — "Needs follow-up" advertised 2
+   * and rendered "No items found" on demo. Materialising the two derived flags
+   * onto each row makes the second pass agree with the first instead of
+   * silently emptying the list.
+   */
+  const tableRows = useMemo(
+    () =>
+      filteredMeetings.map((item) => ({
+        ...item,
+        upcoming: isUpcoming(item) ? 'true' : 'false',
+        followUp: item.followUps.some((x) => x.status === 'open') ? 'open' : 'none',
+      })),
+    [filteredMeetings]
+  );
 
   const selectedMeeting = useMemo(
     () => filteredMeetings.find((item) => item.id === selectedId) || null,
@@ -194,13 +219,20 @@ export const MeetingHub: React.FC = () => {
           setOperatorBriefError(false);
         }
       })
-      .catch((err: any) => {
+      .catch(() => {
         if (cancelled) return;
         setOperatorBrief(null);
-        // 404 = this meeting legitimately has no brief yet (honest empty).
-        // Any other failure (500/network/401) = honest error with retry.
-        const status = Number(err?.status ?? err?.statusCode ?? 0);
-        setOperatorBriefError(status !== 404);
+        // M12-F04: 404 was treated as "this meeting simply has no brief yet" and
+        // rendered as a calm empty state. That reading is wrong on two counts.
+        // (a) `aiOperatorService.getMeetingBrief` is deterministic — it ALWAYS
+        //     returns a brief for a meeting that exists, and we are rendering
+        //     this meeting, so it exists.
+        // (b) `/api/ai-operator/*` sits behind `requireInternalToolsAccess`,
+        //     which answers **404 {"error":"Not found"}** for every org outside
+        //     the internal allowlist. The old mapping turned that access denial
+        //     into silent emptiness — the exact "cicha pustka" this module must
+        //     not have. Every failure is now an honest, retryable error.
+        setOperatorBriefError(true);
       })
       .finally(() => {
         if (!cancelled) setOperatorBriefLoading(false);
@@ -236,11 +268,9 @@ export const MeetingHub: React.FC = () => {
   );
 
   const counts = useMemo(() => {
-    const now = Date.now();
     return {
       all: meetings.length,
-      upcoming: meetings.filter((item) => new Date(item.endAt || item.startAt).getTime() >= now)
-        .length,
+      upcoming: meetings.filter(isUpcoming).length,
       followUp: meetings.filter((item) => item.followUps.some((x) => x.status === 'open')).length,
       completed: meetings.filter((item) => item.status === 'completed').length,
     };
@@ -338,10 +368,15 @@ export const MeetingHub: React.FC = () => {
         id: 'upcoming',
         label: t('meeting.counters.upcoming', 'Upcoming'),
         count: counts.upcoming,
-        active: activeFilters.some((f) => f.id === 'status:scheduled'),
+        active: activeFilters.some((f) => f.column === 'upcoming'),
         onClick: () =>
           setActiveFilters([
-            { id: 'status:scheduled', column: 'status', value: 'scheduled', label: 'Scheduled' },
+            {
+              id: 'upcoming:true',
+              column: 'upcoming',
+              value: 'true',
+              label: t('meeting.counters.upcoming', 'Upcoming'),
+            },
           ]),
       },
       {
@@ -731,9 +766,7 @@ export const MeetingHub: React.FC = () => {
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
               <StandardTable
                 columns={columns}
-                data={
-                  filteredMeetings as unknown as Array<Record<string, unknown> & { id: string }>
-                }
+                data={tableRows as unknown as Array<Record<string, unknown> & { id: string }>}
                 selectedRowId={selectedId}
                 onRowClick={(row) => setSelectedId(String((row as any).id))}
                 onRowDoubleClick={(row) => openMeetingDocument(row as unknown as MeetingItem)}
@@ -813,27 +846,49 @@ export const MeetingHub: React.FC = () => {
                     ),
                   }}
                   details={{
-                    text: [
-                      `${t('meeting.columns.attendees', 'Attendees')}: ${
-                        selectedMeeting.attendees.length
+                    // M12-F05: these are label/value pairs, not prose. Joined
+                    // with `\n` into `text` they collapsed into one paragraph
+                    // ("Uczestnicy: Anna Kowalska Follow-upy: 0 Agenda: — …")
+                    // and drove a meaningless "~14 words" counter. `properties`
+                    // is the canonical StandardPreview slot for exactly this.
+                    properties: [
+                      {
+                        id: 'attendees',
+                        label: t('meeting.columns.attendees', 'Attendees'),
+                        value: selectedMeeting.attendees.length
                           ? selectedMeeting.attendees.join(', ')
-                          : '—'
-                      }`,
-                      `${t('meeting.columns.followUps', 'Follow-ups')}: ${
-                        selectedMeeting.followUps.filter((item) => item.status === 'open').length
-                      }`,
-                      '',
-                      `${t('meeting.agenda', 'Agenda')}: ${
-                        selectedMeeting.agenda.length ? selectedMeeting.agenda.join(' · ') : '—'
-                      }`,
-                      `${t('meeting.decisions2', 'Decisions')}: ${
-                        selectedMeeting.decisions.length
+                          : '—',
+                      },
+                      {
+                        id: 'followUps',
+                        label: t('meeting.columns.followUps', 'Follow-ups'),
+                        mono: true,
+                        value: String(
+                          selectedMeeting.followUps.filter((item) => item.status === 'open').length
+                        ),
+                      },
+                      {
+                        id: 'agenda',
+                        label: t('meeting.agenda', 'Agenda'),
+                        value: selectedMeeting.agenda.length
+                          ? selectedMeeting.agenda.join(' · ')
+                          : '—',
+                      },
+                      {
+                        id: 'decisions',
+                        label: t('meeting.decisions2', 'Decisions'),
+                        value: selectedMeeting.decisions.length
                           ? selectedMeeting.decisions.join(' · ')
-                          : '—'
-                      }`,
-                      '',
-                      selectedMeeting.location || t('meeting.noLocation2', 'No location'),
-                    ].join('\n'),
+                          : '—',
+                      },
+                      {
+                        id: 'location',
+                        label: t('meeting.fields.location', 'Location / link'),
+                        value: selectedMeeting.location || t('meeting.noLocation2', 'No location'),
+                      },
+                    ],
+                    propertyLabel: isPolish ? 'Właściwość' : 'Property',
+                    valueLabel: isPolish ? 'Wartość' : 'Value',
                     onCopy: () => {
                       void navigator.clipboard?.writeText(
                         `${selectedMeeting.title} — ${formatDateTime(selectedMeeting.startAt, isPolish)}`
@@ -978,10 +1033,20 @@ export const MeetingHub: React.FC = () => {
                 >
                   {t('common.cancel', 'Cancel')}
                 </button>
+                {/* M12-F03: `handleSaveMeeting` silently `return`s when title or
+                    start is empty, so an enabled button produced a dead click —
+                    no toast, no inline error, modal frozen open. Mirror the AI
+                    notes modal, which already disables its primary action. */}
                 <button
                   type="button"
                   onClick={handleSaveMeeting}
-                  className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90"
+                  disabled={!draft.title.trim() || !draft.startAt}
+                  title={
+                    !draft.title.trim() || !draft.startAt
+                      ? t('meeting.modal.requiredHint', 'Title and start time are required')
+                      : undefined
+                  }
+                  className="h-9 px-4 rounded-full bg-c-text text-c-surface text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingId
                     ? t('meeting.actions.save', 'Save changes')
@@ -1684,6 +1749,18 @@ function toLocalInput(value: string): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
     date.getHours()
   )}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * A meeting is "upcoming" when it has not been closed AND has not passed yet.
+ * Both the Menu 3 badge and the Menu 3 filter go through this one predicate —
+ * that is the whole point (M12-F02).
+ */
+function isUpcoming(meeting: MeetingItem): boolean {
+  if (meeting.status === 'completed') return false;
+  const end = new Date(meeting.endAt || meeting.startAt).getTime();
+  if (Number.isNaN(end)) return true;
+  return end >= Date.now();
 }
 
 function splitLines(value: string): string[] {

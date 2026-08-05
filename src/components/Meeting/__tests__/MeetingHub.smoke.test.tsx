@@ -106,16 +106,28 @@ describe('MeetingHub (smoke)', () => {
     await waitFor(() => expect(screen.getByText('Focus.')).toBeTruthy());
   });
 
-  it('treats a 404 brief as an honest empty (no error banner)', async () => {
+  // M12-F04 (2026-08-05): this test used to assert the opposite — that a 404
+  // brief is "an honest empty". That premise does not hold in the real runtime:
+  //   • `aiOperatorService.getMeetingBrief` is deterministic and returns a brief
+  //     for every meeting that exists, and we only fetch for a meeting we are
+  //     already rendering — so "this meeting has no brief yet" is not a state
+  //     the backend can be in;
+  //   • `/api/ai-operator/*` sits behind `requireInternalToolsAccess`, which
+  //     answers 404 {"error":"Not found"} for every org outside the internal
+  //     allowlist — so in practice a 404 IS an access denial.
+  // Rendering that as a calm "no brief" is silent emptiness, which this module
+  // is not allowed to have. A 404 must now surface as a retryable error.
+  it('surfaces a 404 brief as an honest error, not as silent emptiness', async () => {
     getMeetingsMock.mockResolvedValue({ meetings: [meeting] });
-    const err: any = new Error('Meeting not found');
+    const err: any = new Error('Not found');
     err.status = 404;
     getBriefMock.mockRejectedValue(err);
     render(<MeetingHub />);
 
     fireEvent.dblClick(await screen.findByText('Quarterly Review'));
 
-    await waitFor(() => expect(screen.getByText('meeting.noOperatorBrief')).toBeTruthy());
-    expect(screen.queryByText('Could not load the operator brief.')).toBeNull();
+    expect(await screen.findByText('Could not load the operator brief.')).toBeTruthy();
+    expect(await screen.findByText('Retry')).toBeTruthy();
+    expect(screen.queryByText('meeting.noOperatorBrief')).toBeNull();
   });
 });

@@ -386,6 +386,12 @@ export async function updateMeetingFollowUpStatus(input: {
     meetingId: input.meetingId,
   });
   if (!meeting) return null;
+  // M12-F01: the UPDATE below matches 0 rows for an unknown follow-up id (or one
+  // that belongs to a different meeting) and `dbRun` defaults to fallback:true,
+  // so it cannot report that. Without this guard the route answered 200 + the
+  // full meeting for an action that changed nothing — a false success the UI
+  // rendered as an ordinary state refresh. The follow-up list is the authority.
+  if (!meeting.followUps.some((item) => item.id === input.followUpId)) return null;
   await dbRun(
     `UPDATE meeting_follow_ups SET status = ?, updated_at = ?
      WHERE id = ? AND meeting_id = ?`,
