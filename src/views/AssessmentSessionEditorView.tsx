@@ -619,12 +619,27 @@ export const AssessmentSessionEditorView: React.FC = () => {
   const canEditEffective = Boolean(permissions?.canEdit || isGlobalAdmin);
   const isAdminEffective = Boolean(isGlobalAdmin || userRole === 'admin');
 
-  // Admins shouldn't need a lock toggle: keep editing enabled.
+  // ASM-006/007 (M10 F-02): an accepted assessment is frozen for everyone,
+  // admins included. The lock used to be purely permission-based, so an
+  // APPROVED assessment stayed freely editable and its autosave silently
+  // drifted away from the immutable accepted snapshot that the report and
+  // the initiative candidate cite. `PUT /api/v8/assessment/:id` now answers
+  // 409 ASSESSMENT_ALREADY_ACCEPTED, and this is the matching UI half so the
+  // user is stopped before an autosave can fail. Reopening is an explicit
+  // reviewer send-back (review action "return"), which returns it to DRAFT.
+  const isAccepted = String(assessment?.status || '').toUpperCase() === 'APPROVED';
+  const isReadOnly = isLocked || isAccepted;
+
+  // Admins shouldn't need a lock toggle: keep editing enabled — unless the
+  // assessment has already been accepted.
   useEffect(() => {
-    if (isAdminEffective) {
+    if (isAdminEffective && !isAccepted) {
       setIsLocked(false);
     }
-  }, [isAdminEffective]);
+    if (isAccepted) {
+      setIsLocked(true);
+    }
+  }, [isAdminEffective, isAccepted]);
 
   useEffect(() => {
     return () => {
@@ -1411,7 +1426,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
       },
       {
         id: 'mode',
-        label: isLocked ? 'Read-only' : 'Editing enabled',
+        label: isAccepted
+          ? 'Accepted — read-only'
+          : isReadOnly
+            ? 'Read-only'
+            : 'Editing enabled',
       },
     ];
 
@@ -1423,7 +1442,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
     }
 
     return chips;
-  }, [drdPositionLabel, framework, isLocked, sessionWorkbench, sessionWorkbenchNextSteps.length]);
+  }, [drdPositionLabel, framework, isAccepted, isReadOnly, sessionWorkbench, sessionWorkbenchNextSteps.length]);
 
   const sessionAiActions = useMemo(
     () => [
@@ -1696,7 +1715,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
         return (
           <DRDForm
             data={areasToFormData(drdData)}
-            readOnly={isLocked}
+            readOnly={isReadOnly}
             showProgress
             onChange={(nextForm) => {
               const nextDrd = formDataToAreas(nextForm, drdData);
@@ -1713,7 +1732,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
         return (
           <DRDMatrixSession
             value={drdData}
-            readOnly={isLocked}
+            readOnly={isReadOnly}
             currentAxisId={currentAxisId}
             currentAreaId={currentAreaId}
             onAxisChange={(nextAxisId) => {
@@ -1737,7 +1756,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       return (
         <DRDAssessmentEditor
           assessmentId={assessmentId}
-          readOnly={isLocked}
+          readOnly={isReadOnly}
           currentUserId={currentUser?.id || undefined}
           assignmentByAreaId={assignmentByAreaId}
           onAssignToMe={assignAreaToMe}
@@ -1786,7 +1805,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       return (
         <SIRIAssessmentEditor
           assessmentId={assessmentId || ''}
-          readOnly={isLocked}
+          readOnly={isReadOnly}
           leftOverride={
             leftWorkspace === 'manage' && canManageEffective ? (
               <AssessmentManagePanel
@@ -1813,7 +1832,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
       return (
         <ADMAAssessmentEditor
           assessmentId={assessmentId || ''}
-          readOnly={isLocked}
+          readOnly={isReadOnly}
           leftOverride={
             leftWorkspace === 'manage' && canManageEffective ? (
               <AssessmentManagePanel
@@ -1845,7 +1864,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             setAnswers(nextAnswers);
             scheduleSave(nextAnswers, calcCmmiCompletionPercent(next));
           }}
-          readOnly={isLocked}
+          readOnly={isReadOnly}
           showProgress={true}
         />
       );
@@ -1861,7 +1880,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             setAnswers(nextAnswers);
             scheduleSave(nextAnswers, calcLeanCompletionPercent(next));
           }}
-          readOnly={isLocked}
+          readOnly={isReadOnly}
           showProgress={true}
         />
       );
@@ -2025,7 +2044,11 @@ export const AssessmentSessionEditorView: React.FC = () => {
             {!isAdminEffective && (
               <button
                 type="button"
+                disabled={isAccepted}
                 onClick={() => {
+                  // Accepted assessments are frozen (M10 F-02) — the toggle
+                  // cannot reopen them; only a reviewer send-back can.
+                  if (isAccepted) return;
                   if (canEditEffective) {
                     setIsLocked((v) => !v);
                   } else {
@@ -2033,30 +2056,32 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   }
                 }}
                 className={`hidden sm:inline-flex items-center gap-2 h-10 px-3 rounded-lg border text-sm font-medium transition-colors ${
-                  !canEditEffective
-                    ? 'border-c-border-subtle bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised cursor-pointer'
-                    : isLocked
-                      ? 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
-                      : 'border-c-border bg-c-accent-soft text-c-text hover:bg-c-accent-soft'
+                  isAccepted
+                    ? 'border-c-border-subtle bg-c-surface-raised text-c-text-muted cursor-not-allowed'
+                    : !canEditEffective
+                      ? 'border-c-border-subtle bg-c-surface-raised text-c-text-muted hover:bg-c-surface-raised cursor-pointer'
+                      : isLocked
+                        ? 'border-c-border-subtle bg-c-surface text-c-text-secondary hover:bg-c-surface-raised'
+                        : 'border-c-border bg-c-accent-soft text-c-text hover:bg-c-accent-soft'
                 }`}
                 title={
-                  !canEditEffective
-                    ? 'Request edit access'
-                    : isLocked
-                      ? 'Unlock editing'
-                      : 'Lock editing'
+                  isAccepted
+                    ? 'Accepted — send the assessment back to edit it again'
+                    : !canEditEffective
+                      ? 'Request edit access'
+                      : isLocked
+                        ? 'Unlock editing'
+                        : 'Lock editing'
                 }
               >
-                {canEditEffective ? (
-                  isLocked ? (
-                    <Lock className="w-4 h-4" />
-                  ) : (
-                    <Unlock className="w-4 h-4" />
-                  )
+                {canEditEffective && !isLocked && !isAccepted ? (
+                  <Unlock className="w-4 h-4" />
                 ) : (
                   <Lock className="w-4 h-4" />
                 )}
-                <span>{canEditEffective ? (isLocked ? 'Edit' : 'Editing') : 'Edit'}</span>
+                <span>
+                  {isAccepted ? 'Accepted' : canEditEffective && !isLocked ? 'Editing' : 'Edit'}
+                </span>
               </button>
             )}
 
@@ -2410,7 +2435,13 @@ export const AssessmentSessionEditorView: React.FC = () => {
                   <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
                     Mode
                   </span>
-                  <div className="mt-1 text-sm">{isLocked ? 'Read-only' : 'Editing enabled'}</div>
+                  <div className="mt-1 text-sm">
+                    {isAccepted
+                      ? 'Accepted — read-only'
+                      : isReadOnly
+                        ? 'Read-only'
+                        : 'Editing enabled'}
+                  </div>
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-c-text-muted uppercase tracking-wider">
