@@ -274,7 +274,18 @@ interface ClickRow {
 
 let db: IDatabase = getDatabase();
 
-const BASE_URL = process.env.APP_URL || 'https://app.consultify.com';
+// Referral identity base URL. Every partner-facing artefact built here (code
+// link, QR endpoint, campaign links) is the attribution carrier — if the host is
+// wrong, the whole referral flow is dead on arrival.
+//
+// The previous default `https://app.consultify.com` does not resolve (NXDOMAIN,
+// verified 2026-08-05), and demo sets neither APP_URL nor APP_BASE_URL, so demo
+// served dead links for the referral code, the QR URL and all campaign links.
+// `partner.routes.ts` already healed toward `APP_BASE_URL || https://consultify.ai`,
+// so the two paths also disagreed on both the variable name and the default.
+// Accept either variable and default to the real product host.
+const BASE_URL =
+  process.env.APP_BASE_URL || process.env.APP_URL || 'https://consultify.ai';
 let referralSchemaEnsured = false;
 
 /**
