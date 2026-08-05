@@ -19806,7 +19806,10 @@
       "billing": "Płatności i tokeny",
       "limits": "Limity i użycie",
       "domains": "Domeny",
-      "branding": "Branding i ustawienia regionalne"
+      "branding": "Branding i ustawienia regionalne",
+      "megatrends": "Megatrendy",
+      "knowledgeGraph": "Graf wiedzy",
+      "competencies": "Katalog kompetencji"
     },
     "sections": {
       "profile": {
@@ -19844,6 +19847,18 @@
       "branding": {
         "title": "Branding i ustawienia regionalne",
         "subtitle": "Logo, kolory, strefa czasowa, język i waluta"
+      },
+      "megatrends": {
+        "title": "Megatrendy",
+        "subtitle": "Przekierowanie do Narzędzia odkrywcze → Megatrendy strategiczne"
+      },
+      "knowledgeGraph": {
+        "title": "Graf wiedzy",
+        "subtitle": "Encje, relacje, proweniencja i nadzór"
+      },
+      "competencies": {
+        "title": "Katalog kompetencji",
+        "subtitle": "Taksonomia kompetencji, kategorie i poziomy"
       }
     },
     "members": {

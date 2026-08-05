@@ -7,9 +7,9 @@
  * on a deep-link. This locks in the view-level role gate in OrganizationView.
  */
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 // --- Mocked store (object-destructure form: useAppStore() returns the whole state)
 const state: {
@@ -74,11 +74,18 @@ vi.mock('../../src/views/ContextBuilder/modules/StrategicSynthesisModule', () =>
 }));
 
 import { OrganizationView } from '../../src/views/OrganizationView';
+import { ROUTES } from '../../src/routes/routeConfig';
+
+const LocationProbe = () => {
+  const location = useLocation();
+  return <div data-testid="current-location">{location.pathname}</div>;
+};
 
 const renderAt = (path: string) =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <OrganizationView />
+      <LocationProbe />
     </MemoryRouter>
   );
 
@@ -105,12 +112,14 @@ describe('OrganizationView route-level role gate (M23 L-04)', () => {
     }
   );
 
-  it('renders the admin panel for an ADMIN deep-linking an admin section', () => {
+  it('hands an ADMIN deep-link off to the canonical Admin route without mounting the legacy panel', async () => {
     state.currentUser = { id: 'u-admin', role: 'ADMIN', isAuthenticated: true };
     renderAt('/organization/members');
 
-    const panel = screen.getByTestId('admin-panel');
-    expect(panel).toHaveTextContent('admin-panel:members');
+    expect(screen.queryByTestId('admin-panel')).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByTestId('current-location')).toHaveTextContent(ROUTES.ADMIN.PEOPLE)
+    );
   });
 
   it('keeps a non-admin section (profile) accessible to a MEMBER', () => {

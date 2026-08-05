@@ -26,6 +26,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-router-dom', () => ({
+  Navigate: ({ to, replace }: { to: string; replace?: boolean }) => (
+    <div data-testid="route-redirect" data-to={to} data-replace={String(Boolean(replace))} />
+  ),
   useNavigate: () => h.navigateMock,
   useLocation: () => h.locationState,
 }));
@@ -169,11 +172,16 @@ describe('OrganizationView (L2)', () => {
     expect(screen.getByTestId('module-strategy')).toBeInTheDocument();
   });
 
-  it('renders admin panel for admin sections', async () => {
-    const { OrganizationView } = await loadDeps();
+  it('hands admin sections off to the canonical Admin route without mounting the legacy panel', async () => {
+    const { OrganizationView, ROUTES } = await loadDeps();
     h.locationState.pathname = '/organization/members';
     render(<OrganizationView />);
-    expect(screen.getByTestId('admin-panel')).toHaveTextContent('members');
+    expect(screen.queryByTestId('admin-panel')).not.toBeInTheDocument();
+    expect(screen.getByTestId('route-redirect')).toHaveAttribute('data-to', ROUTES.ADMIN.PEOPLE);
+    expect(screen.getByTestId('route-redirect')).toHaveAttribute('data-replace', 'true');
+    await waitFor(() =>
+      expect(h.navigateMock).toHaveBeenCalledWith(ROUTES.ADMIN.PEOPLE, { replace: true })
+    );
     expect(screen.queryByTestId('organization-context-overview')).not.toBeInTheDocument();
     expect(screen.getByTestId('org-context-summary-banner')).toHaveTextContent('org-1:admin');
   });

@@ -9,6 +9,7 @@ const storeState: { currentOrganization: { id: string; name: string } | null } =
 vi.mock('@/store/useAppStore', () => ({
   useAppStore: () => ({
     currentOrganization: storeState.currentOrganization,
+    currentUser: { id: 'u-admin', role: 'admin', isAuthenticated: true },
     setCurrentView: vi.fn(),
   }),
 }));
@@ -16,11 +17,13 @@ vi.mock('@/store/useAppStore', () => ({
 const locationState = { pathname: '/organization/profile' };
 const navigateMock = vi.fn();
 vi.mock('react-router-dom', () => ({
+  Navigate: ({ to }: { to: string }) => <div data-testid="route-redirect">{to}</div>,
   useLocation: () => locationState,
   useNavigate: () => navigateMock,
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: { type: '3rdParty', init: () => {} },
   useTranslation: () => ({ t: (_k: string, fallback?: string) => fallback ?? _k }),
 }));
 
@@ -73,8 +76,8 @@ describe('OrganizationView (smoke)', () => {
     ['/organization/challenges', 'challenges-module'],
     ['/organization/strategy', 'strategy-module'],
     ['/organization/knowledge-graph', 'kg-explorer'],
-    ['/organization/members', 'admin-panel'],
-    ['/organization/limits', 'admin-panel'],
+    ['/organization/members', 'route-redirect'],
+    ['/organization/limits', 'route-redirect'],
   ];
 
   it.each(sectionCases)('renders %s without crashing', (path, testId) => {

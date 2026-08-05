@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
-import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
@@ -196,13 +195,15 @@ export const OrganizationView: React.FC = () => {
       // M23 L-04 (P1 security): view-level role gate for admin sections.
       // Defense-in-depth layer 2 — even if the URL-redirect useEffect above has not
       // yet fired (first render) or is bypassed, a non-admin member must never see
-      // OrganizationAdminPanel (which fetches org members / billing / branding data).
-      // Explicit <Navigate replace> instead of a bare `null` so the protection is
-      // intentional, testable and never a silent blank screen.
+      // admin data. Explicit <Navigate replace> instead of a bare `null` so the
+      // protection is intentional, testable and never a silent blank screen.
       if (!isOrgAdmin) {
         return <Navigate to={ROUTES.AI_CHAT} replace />;
       }
-      return <OrganizationAdminPanel section={activeSection} />;
+      // Every administration section is a handoff to the canonical Admin module.
+      // Redirect immediately so the legacy panel cannot briefly mount, fetch and
+      // show a false load-error toast before the URL effect completes.
+      return <Navigate to={ADMIN_REDIRECTS[activeSection] as string} replace />;
     }
     switch (activeSection) {
       case 'goals':

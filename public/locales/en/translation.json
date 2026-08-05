@@ -19273,7 +19273,10 @@
       "billing": "Billing & Tokens",
       "limits": "Limits & Usage",
       "domains": "Domains",
-      "branding": "Branding & Regional"
+      "branding": "Branding & Regional",
+      "megatrends": "Megatrends",
+      "knowledgeGraph": "Knowledge Graph",
+      "competencies": "Competency Catalog"
     },
     "sections": {
       "profile": {
@@ -19311,6 +19314,18 @@
       "branding": {
         "title": "Branding & Regional",
         "subtitle": "Logo, colors, timezone, language and currency"
+      },
+      "megatrends": {
+        "title": "Megatrends",
+        "subtitle": "Redirected to Discovery Tools → Strategic Megatrends"
+      },
+      "knowledgeGraph": {
+        "title": "Knowledge Graph",
+        "subtitle": "Explore entities, relations, provenance and governance"
+      },
+      "competencies": {
+        "title": "Competency Catalog",
+        "subtitle": "Define competency taxonomy, categories and skill levels"
       }
     },
     "members": {
