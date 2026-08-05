@@ -56,7 +56,6 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
-const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
@@ -247,7 +246,14 @@ const Mw007CalendarNarrowViewportScreen = React.lazy(
   () => import('./screens/mw-007-calendar-narrow-viewport')
 );
 
+const M12MvpMeetingScreen = React.lazy(() => import('./screens/m12-mvp-meeting'));
+
 const SCREENS: Record<string, { label: string; render: () => React.ReactElement }> = {
+  'm12-mvp-meeting': {
+    label:
+      'M12 Meeting — odbiór MVP: REALNY <MeetingHub> na stanowym mocku Api (?stan=dane|demo|pusto|blad · ?brief=ok|404|blad · ?widok=lista|preview|detal|kalendarz|modal-nowe|modal-notatki|modal-usun)',
+    render: () => <M12MvpMeetingScreen />,
+  },
   'mw-007-calendar-narrow-viewport': {
     label:
       'MW-07 Codex FINAL UX FIX_REQUIRED — REALNY <CalendarView>: sidebar nie nachodzi na grid poniżej breakpointu mobile (useIsMobile + Drawer)',
@@ -325,11 +331,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
-  },
-  'tools-sesja-wyjscie': {
-    label:
-      'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
-    render: () => <ToolsSesjaWyjscieScreen />,
   },
   'assessment-quality-review-panel': {
     label:
