@@ -477,8 +477,14 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
     [objectives]
   );
 
+  // M07 MVP (2026-08-05): kontener był `max-w-5xl` (1024px). Na referencyjnym
+  // desktopie 1440 tabele KPI i ROI potrzebują 980px, a scroller dawał 900px
+  // → 80px przepełnienia: ostatnia kolumna ucinała się w połowie słowa
+  // („Poniżej cel", „Brak danyc", ODCHYLENIE → „OD" z nieczytelnymi +3/−8),
+  // przy ~370px pustki po każdej stronie. `max-w-7xl` mieści wszystkie trzy
+  // tabele bez poziomego przewijania. Zmierzone, nie oszacowane.
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 p-4 sm:p-6">
+    <div className="mx-auto flex max-w-7xl flex-col gap-4 p-4 sm:p-6">
       <header className="px-1">
         <h1 className="text-xl font-semibold text-c-text">{tr('Rezultaty', 'Results')}</h1>
         <p className="mt-1 text-sm text-c-text-secondary">

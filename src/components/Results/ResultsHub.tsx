@@ -1934,6 +1934,34 @@ export const ResultsHub: React.FC = () => {
     [threePairRoiItems]
   );
 
+  // M07 Complete MVP (2026-08-05): ten wczesny `return` omijał gałąź
+  // `kpiLoadError` (linia ~2152), bo leży ona NIŻEJ. Skutek na demo (flaga
+  // `threePairs` domyślnie ON): awaria backendu KPI renderowała się jako
+  // „KPI 0 / ROI 0 / OKR 0", licznik „0/0" w kolorze sukcesu i pusty stan
+  // „Brak KPI — dodaj pierwszy wskaźnik", czyli awaria wyglądała jak zdrowy
+  // brak danych i zapraszała do zakładania rekordów. CURRENT_CONTRACT.md
+  // („Przepływ i dane") wymaga wprost: „Brak danych musi być widoczny, nie
+  // zamieniany automatycznie w zero". Błąd ma pierwszeństwo przed widokiem
+  // trzech par — ten sam komponent i te same akcje co na ścieżce ModuleHub.
+  if (threePairsOn && kpiLoadError) {
+    return (
+      <HubWorkAreaLoadError
+        title={t('results.hub.failedToLoadKpis', 'Failed to load KPI catalog.')}
+        message={kpiLoadError}
+        errorCode={kpiLoadErrorCode}
+        retryLabel={t('results.hub.retry', 'Retry')}
+        dismissLabel={t('results.hub.dismiss', 'Dismiss')}
+        onRetry={() => {
+          void fetchKPIs();
+        }}
+        onDismiss={() => {
+          setKpiLoadError(null);
+          setKpiLoadErrorCode(null);
+        }}
+      />
+    );
+  }
+
   if (threePairsOn) {
     return (
       <>
