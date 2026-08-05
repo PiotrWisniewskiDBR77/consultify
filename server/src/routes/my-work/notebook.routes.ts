@@ -1163,7 +1163,7 @@ router.put(
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, project_id, visibility
+      `SELECT id, owner_user_id, organization_id, project_id, visibility, updated_at
        FROM notebook_pages
        WHERE id = ? LIMIT 1`,
       [id]
@@ -1173,6 +1173,66 @@ router.put(
       return res.status(403).json({ error: 'Forbidden' });
     if (String(existing.owner_user_id || '') !== String(userId))
       return res.status(403).json({ error: 'Owner-only' });
+
+    /**
+     * ★ M02-018 — OPTIMISTIC CONCURRENCY ON THE LEGACY PATH TOO.
+     *
+     * `/api/v8/my-work/notebook/pages/:id` has honoured `expectedUpdatedAt`
+     * since MW-08; this handler did not read the field at all. That mattered
+     * because it is not a dormant legacy route: the client falls back here
+     * whenever V8 is off (`Api.shouldLockLegacyMyWorkNotebookMode`, which
+     * treats 404/`V8_DISABLED` as "use legacy from now on"), i.e. exactly the
+     * state a fresh or unflagged organization runs in. Reproduced against real
+     * Postgres: two writers reading the same version both got HTTP 200 and the
+     * second silently overwrote the first — the same page edited in two tabs
+     * loses one side's work with no conflict, no warning, no trace.
+     *
+     * The guard has two halves and needs both (see the inline note below):
+     * a comparison here for a STALE token, and an atomic conditional UPDATE at
+     * the end of the handler for the RACE between this read and that write.
+     * An unparseable token is rejected (400) rather than treated as "no version
+     * supplied", which would let a garbage string bypass the guard entirely.
+     *
+     * Autosave that omits the field keeps its documented last-write-wins
+     * behaviour, so this cannot break the happy path.
+     */
+    const expectedUpdatedAt =
+      req.body?.expectedUpdatedAt !== undefined && req.body?.expectedUpdatedAt !== null
+        ? String(req.body.expectedUpdatedAt)
+        : null;
+    // Two checks, two different failures — both are required.
+    //
+    //   (1) HERE: the caller's token vs the server's own read. Catches a STALE
+    //       edit ("you were looking at an older version"). The conditional
+    //       UPDATE below cannot catch this, because its predicate is built from
+    //       `existing.updated_at` — the server's read — not from the client
+    //       string, so a stale token would sail straight through it.
+    //   (2) AT THE WRITE: the same predicate applied atomically. Catches the
+    //       RACE that (1) structurally cannot see — two callers who both read
+    //       the same version pass (1) together, and only one row can then match.
+    if (expectedUpdatedAt) {
+      const expected = new Date(expectedUpdatedAt).getTime();
+      if (!Number.isFinite(expected)) {
+        return res.status(400).json({
+          error: 'expectedUpdatedAt must be a valid timestamp',
+          code: 'INVALID_EXPECTED_UPDATED_AT',
+        });
+      }
+      const current = existing.updated_at ? new Date(existing.updated_at).getTime() : NaN;
+      if (Number.isFinite(current) && expected !== current) {
+        const freshCols = await getTableColumns('notebook_pages');
+        const fresh = await queryHelpers.queryOne<any>(
+          `SELECT ${buildLegacyNotebookSelect(freshCols, '')}
+           FROM notebook_pages WHERE id = ? LIMIT 1`,
+          [id]
+        );
+        return res.status(409).json({
+          error: 'Page was modified elsewhere',
+          code: 'NOTEBOOK_PAGE_CONFLICT',
+          data: fresh ?? null,
+        });
+      }
+    }
 
     const setParts: string[] = [];
     const params: any[] = [];
@@ -1274,12 +1334,77 @@ router.put(
       return res.json(formatNotebookRow(row));
     }
 
+    /**
+     * ★ M02-018 — ATOMIC CONDITIONAL WRITE.
+     *
+     * The version the caller edited from is part of the WHERE clause, together
+     * with the tenant and the owner, so the database — not the application —
+     * decides who wins. Two writers holding the same `expectedUpdatedAt` race
+     * to the same row: exactly one UPDATE matches, the other affects zero rows
+     * and gets 409. An application-side comparison before the UPDATE cannot do
+     * this: between the read and the write both callers still see the old
+     * version and both proceed.
+     *
+     * Mirrors the V8 sibling (`server/src/routes/v8/my-work.routes.ts`),
+     * including its two dialect traps:
+     *   * `updated_at` is TIMESTAMP WITHOUT TIME ZONE and node-postgres parses
+     *     it in the process timezone, so the value is rebound as the same naive
+     *     local literal — binding a Date/ISO string shifts it by the offset;
+     *   * Postgres compares with millisecond truncation, because the token the
+     *     client echoes back has been through JSON and loses sub-millisecond
+     *     precision, which would otherwise reject every first autosave.
+     */
     setParts.push(`updated_at = CURRENT_TIMESTAMP`);
-    params.push(id);
-    await queryHelpers.queryRun(
-      `UPDATE notebook_pages SET ${setParts.join(', ')} WHERE id = ?`,
+    params.push(id, orgId, userId);
+
+    const isPostgres =
+      process.env.DB_TYPE === 'postgres' ||
+      /^postgres(?:ql)?:/i.test(String(process.env.DATABASE_URL || ''));
+
+    if (expectedUpdatedAt) {
+      if (isPostgres && existing.updated_at instanceof Date) {
+        const value = existing.updated_at as Date;
+        const part = (n: number, width = 2) => String(n).padStart(width, '0');
+        params.push(
+          `${value.getFullYear()}-${part(value.getMonth() + 1)}-${part(value.getDate())} ` +
+            `${part(value.getHours())}:${part(value.getMinutes())}:${part(value.getSeconds())}.` +
+            part(value.getMilliseconds(), 3)
+        );
+      } else {
+        params.push(expectedUpdatedAt);
+      }
+    }
+
+    const versionPredicate = isPostgres
+      ? "date_trunc('milliseconds', updated_at) = date_trunc('milliseconds', CAST(? AS timestamp))"
+      : 'updated_at = ?';
+
+    const update = await queryHelpers.queryRun(
+      `UPDATE notebook_pages SET ${setParts.join(', ')}
+        WHERE id = ? AND organization_id = ? AND owner_user_id = ?${
+          expectedUpdatedAt ? ` AND ${versionPredicate}` : ''
+        }`,
       params
     );
+
+    if (!update.changes) {
+      // Ownership and tenancy were already verified against `existing`, so with
+      // a version supplied a zero-row write means the version moved — someone
+      // saved between this caller's read and this write. Hand back the fresh
+      // state so the client can merge instead of guessing.
+      if (expectedUpdatedAt) {
+        const fresh = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
+        return res.status(409).json({
+          error: 'Page was modified elsewhere',
+          code: 'NOTEBOOK_PAGE_CONFLICT',
+          data: fresh ? formatNotebookRow(fresh) : null,
+        });
+      }
+      // No version supplied (autosave keeps its documented last-write-wins
+      // contract): zero rows can then only mean the row is gone or no longer
+      // this owner's. Calling that a conflict would be a lie.
+      return res.status(404).json({ error: 'Not found' });
+    }
 
     const row = await queryHelpers.queryOne<any>(selectNotebookFull, [id]);
     res.json(formatNotebookRow(row));

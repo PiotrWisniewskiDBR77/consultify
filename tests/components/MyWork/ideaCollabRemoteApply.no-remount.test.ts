@@ -212,9 +212,16 @@ describe('useIdeaMapSync — graph_version adopts the canonical version silently
     expect(renders).toBe(rendersBefore);
 
     // The next POST /map/sync sends the adopted baseVersion (no spurious 409).
+    // Non-empty payload: a 0-node flush before the map has ever hydrated is
+    // correctly refused by the anti-wipe guard (26a2a896ef class bug) — that
+    // guard is a separate, deliberate invariant, not what this test pins.
     await act(async () => {
-      await result.current.flushNow({ nodes: [], edges: [] }, { reason: 'manual' });
+      await result.current.flushNow(
+        { nodes: [{ id: 'n1', type: 'idea', position: { x: 0, y: 0 }, data: {} }], edges: [] },
+        { reason: 'manual' }
+      );
     });
+    expect(syncMyIdeaMap.mock.calls[0]).toBeDefined();
     const [, body] = syncMyIdeaMap.mock.calls[0];
     expect(body.baseVersion).toBe(9);
   });

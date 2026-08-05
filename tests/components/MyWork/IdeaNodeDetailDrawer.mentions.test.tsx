@@ -17,17 +17,32 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
 
 const addNodeCommentMock = vi.fn();
 const getObjectArtifactsMock = vi.fn();
 const getIdeaAISuggestionsMock = vi.fn();
 const getOrganizationMembersMock = vi.fn();
 
+// IdeaNodeDetailDrawer.tsx calls some t() keys (e.g. addCommentMention) with
+// no inline fallback — resolve real English copy for those instead of
+// falling through to the raw key.
+function resolveTranslation(key: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  return typeof value === 'string' ? value : key;
+}
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback || key,
+    t: (key: string, fallback?: string) => fallback || resolveTranslation(key),
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => ({

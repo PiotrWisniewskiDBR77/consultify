@@ -1,8 +1,36 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
 
 import { IdeaExportMenu } from '../../../src/components/MyWork/IdeaExportMenu';
+
+// IdeaExportMenu.tsx calls t('myWorkIdeas.exportMenu.pasteImportPayload') etc.
+// with NO inline fallback (relies on public/locales/en/translation.json).
+// The global tests/setup.ts mock returns the raw key for calls without a
+// fallback, so this test's placeholder/text assertions never matched real
+// product copy. Resolve real English copy instead.
+function resolveTranslation(key: string, options?: Record<string, unknown>): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  const template = typeof value === 'string' ? value : key;
+  if (!options) return template;
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, name) =>
+    Object.prototype.hasOwnProperty.call(options, name) ? String(options[name]) : `{{${name}}}`
+  );
+}
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => resolveTranslation(key, options),
+    i18n: { language: 'en' },
+  }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
+}));
 
 describe('IdeaExportMenu', () => {
   it('previews and imports a diagram package payload', () => {

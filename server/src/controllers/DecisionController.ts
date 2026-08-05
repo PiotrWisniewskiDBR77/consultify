@@ -15,6 +15,7 @@ import {
   createDecisionRisk,
   DecisionConflictError,
   DecisionNotFoundError,
+  DecisionSectionUnavailableError,
   DecisionSubResourceNotFoundError,
   DecisionValidationError,
   deleteDecisionAlternative,
@@ -605,6 +606,12 @@ function respondToCollaborationError(res: Response, err: unknown): boolean {
   }
   if (err instanceof DecisionValidationError) {
     res.status(400).json({ error: err.message });
+    return true;
+  }
+  // M02-004: the section's backing table is absent in this environment
+  // (migration not applied). 503 + a typed code, never a fake success.
+  if (err instanceof DecisionSectionUnavailableError) {
+    res.status(503).json({ error: err.message, code: err.code, section: err.section });
     return true;
   }
   return false;
@@ -2635,6 +2642,10 @@ export class DecisionController {
         dossierAlternatives: extras.alternatives,
         dossierRisks: extras.risks,
         links: extras.links,
+        // M02-004: sections whose backing table is absent in this environment.
+        // The arrays above are empty for these, so the client MUST read this
+        // to tell "nothing here yet" apart from "unavailable here".
+        degradedSections: extras.degradedSections,
       });
     }
   );

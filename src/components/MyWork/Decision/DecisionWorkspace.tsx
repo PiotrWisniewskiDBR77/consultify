@@ -53,7 +53,10 @@ import { DecisionAuditTrail } from './DecisionAuditTrail';
 import { DecisionCommentsSection } from './DecisionCommentsSection';
 import { DecisionDecideBar } from './DecisionDecideBar';
 import { DecisionRisksSection } from './DecisionRisksSection';
-import decisionWorkspaceApi, { readDecisionApiError } from './decisionWorkspaceApi';
+import decisionWorkspaceApi, {
+  readDecisionApiError,
+  readDecisionApiErrorDetail,
+} from './decisionWorkspaceApi';
 import type { DecisionDetailDTO, WorkspaceUserRef } from './types';
 import {
   buildUserNameMap,
@@ -121,6 +124,22 @@ const KNOWN_ARTIFACT_TYPES = new Set<string>([
   'knowledge',
 ]);
 
+/**
+ * M02-004: explicit "this section is unavailable here" state. Deliberately
+ * distinct from a normal empty state — a schema gap must never read as
+ * "nothing has been added yet". Neutral tokens only (CANON: crimson is
+ * reserved for critical semantics).
+ */
+const DecisionSectionUnavailable: React.FC<{ label: string }> = ({ label }) => (
+  <div
+    role="status"
+    className="flex items-start gap-2 rounded-md border border-c-border bg-c-surface-2 px-3 py-2.5 text-sm text-c-text-muted"
+  >
+    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+    <span>{label}</span>
+  </div>
+);
+
 export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
   decisionId,
   onClose,
@@ -139,6 +158,17 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
   const [users, setUsers] = useState<WorkspaceUserRef[]>([]);
 
   const usersById = useMemo(() => buildUserNameMap(users), [users]);
+
+  /**
+   * M02-004: sections the server reported as unavailable in this environment.
+   * Their arrays arrive empty, so rendering the normal empty state would tell
+   * the user "no comments yet" when the truth is "comments cannot be shown
+   * here at all". Everything else on the card still renders.
+   */
+  const degradedSections = useMemo(
+    () => new Set(detail?.degradedSections ?? []),
+    [detail?.degradedSections]
+  );
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -188,7 +218,7 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
               'myWork.decisionWorkspace.loadFailed',
               'Could not load this decision. {{msg}}',
               {
-                msg: apiErr.data?.error || apiErr.message || '',
+                msg: readDecisionApiErrorDetail(err),
               }
             ),
           });
@@ -265,7 +295,7 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
           message: t(
             'myWork.decisionWorkspace.create.genericError',
             'Could not create the decision. {{msg}}',
-            { msg: apiErr.data?.error || apiErr.message || '' }
+            { msg: readDecisionApiErrorDetail(err) }
           ),
         });
       }
@@ -614,56 +644,92 @@ export const DecisionWorkspace: React.FC<DecisionWorkspaceProps> = ({
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted mb-1.5">
             {t('myWork.decisionWorkspace.section.alternatives', 'Alternatives')}
           </h2>
-          <DecisionAlternativesSection
-            decisionId={detail.id}
-            alternatives={detail.dossierAlternatives}
-            onChange={(next) => setDetail((d) => (d ? { ...d, dossierAlternatives: next } : d))}
-            isFinalized={isFinalized}
-            canEdit={canEditDossier}
-            onFinalizedRace={() => void loadDetail({ silent: true })}
-            confirm={confirm}
-          />
+          {degradedSections.has('alternatives') ? (
+            <DecisionSectionUnavailable
+              label={t(
+                'myWork.decisionWorkspace.section.alternativesUnavailable',
+                'Alternatives are not available in this environment.'
+              )}
+            />
+          ) : (
+            <DecisionAlternativesSection
+              decisionId={detail.id}
+              alternatives={detail.dossierAlternatives}
+              onChange={(next) => setDetail((d) => (d ? { ...d, dossierAlternatives: next } : d))}
+              isFinalized={isFinalized}
+              canEdit={canEditDossier}
+              onFinalizedRace={() => void loadDetail({ silent: true })}
+              confirm={confirm}
+            />
+          )}
         </section>
 
         <section>
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted mb-1.5">
             {t('myWork.decisionWorkspace.section.risks', 'Risks')}
           </h2>
-          <DecisionRisksSection
-            decisionId={detail.id}
-            risks={detail.dossierRisks}
-            onChange={(next) => setDetail((d) => (d ? { ...d, dossierRisks: next } : d))}
-            isFinalized={isFinalized}
-            canEdit={canEditDossier}
-            onFinalizedRace={() => void loadDetail({ silent: true })}
-            usersById={usersById}
-            users={users}
-            confirm={confirm}
-          />
+          {degradedSections.has('risks') ? (
+            <DecisionSectionUnavailable
+              label={t(
+                'myWork.decisionWorkspace.section.risksUnavailable',
+                'Risks are not available in this environment.'
+              )}
+            />
+          ) : (
+            <DecisionRisksSection
+              decisionId={detail.id}
+              risks={detail.dossierRisks}
+              onChange={(next) => setDetail((d) => (d ? { ...d, dossierRisks: next } : d))}
+              isFinalized={isFinalized}
+              canEdit={canEditDossier}
+              onFinalizedRace={() => void loadDetail({ silent: true })}
+              usersById={usersById}
+              users={users}
+              confirm={confirm}
+            />
+          )}
         </section>
 
         <section>
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted mb-1.5">
             {t('myWork.decisionWorkspace.section.evidence', 'Evidence & links')}
           </h2>
-          <PreviewRelations
-            items={relationItems}
-            emptyLabel={t('myWork.decisionWorkspace.section.noLinks', 'No linked evidence yet.')}
-          />
+          {degradedSections.has('links') ? (
+            <DecisionSectionUnavailable
+              label={t(
+                'myWork.decisionWorkspace.section.linksUnavailable',
+                'Linked evidence is not available in this environment.'
+              )}
+            />
+          ) : (
+            <PreviewRelations
+              items={relationItems}
+              emptyLabel={t('myWork.decisionWorkspace.section.noLinks', 'No linked evidence yet.')}
+            />
+          )}
         </section>
 
         <section>
           <h2 className="text-[11px] font-semibold uppercase tracking-wider text-c-text-muted mb-1.5">
             {t('myWork.decisionWorkspace.section.comments', 'Comments')}
           </h2>
-          <DecisionCommentsSection
-            decisionId={detail.id}
-            comments={detail.comments}
-            onCommentsChange={(next) => setDetail((d) => (d ? { ...d, comments: next } : d))}
-            usersById={usersById}
-            currentUserId={currentUser?.id}
-            isAdminLike={isAdminLike}
-          />
+          {degradedSections.has('comments') ? (
+            <DecisionSectionUnavailable
+              label={t(
+                'myWork.decisionWorkspace.section.commentsUnavailable',
+                'Comments are not available in this environment.'
+              )}
+            />
+          ) : (
+            <DecisionCommentsSection
+              decisionId={detail.id}
+              comments={detail.comments}
+              onCommentsChange={(next) => setDetail((d) => (d ? { ...d, comments: next } : d))}
+              usersById={usersById}
+              currentUserId={currentUser?.id}
+              isAdminLike={isAdminLike}
+            />
+          )}
         </section>
 
         <section>

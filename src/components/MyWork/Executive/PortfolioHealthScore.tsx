@@ -376,7 +376,11 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
                   label={t('executive.health.capacity', 'Team Capacity')}
                   value={breakdown!.capacity}
                   icon={<CheckCircle2 size={16} className="text-slate-900 dark:text-white" />}
-                  color="bg-navy-900"
+                  // `bg-navy-900` is near-black, and the icon inside is
+                  // `text-slate-900` — in LIGHT mode that rendered a black icon
+                  // on a black tile (invisible). The tile is decorative here,
+                  // so it takes a mid-weight neutral that reads in both themes.
+                  color="bg-slate-400 dark:bg-slate-600"
                 />
               )}
               {breakdown!.risk > 0 && (
@@ -404,19 +408,14 @@ export const PortfolioHealthScore: React.FC<PortfolioHealthProps> = ({
         </div>
       </div>
 
-      {/* Footer Status */}
-      <div className="px-5 py-2.5">
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-slate-600 dark:text-slate-500">
-            {t('executive.health.lastUpdated', 'Last updated')}:{' '}
-            {new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-            <span className="w-1 h-1 rounded-full bg-emerald-500" />
-            {t('executive.health.live', 'Live')}
-          </span>
-        </div>
-      </div>
+      {/*
+        M02-008: this card used to stamp its OWN `new Date()` here, hard-coded
+        to pl-PL, so the Manager surface showed two different clocks in two
+        different formats ("Ostatnia aktualizacja: 22:54" beside "Updated:
+        10:54 PM") for one and the same read. The snapshot's read time is now
+        stated once, by `ManagerScopeBar`, and this footer is gone. Do not
+        reintroduce a per-card timestamp — a second clock is a second claim.
+      */}
     </motion.div>
   );
 };

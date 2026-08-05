@@ -13,13 +13,21 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 router.use(verifyToken);
 
+// M02-002/M02-006: this MUST NOT fall back to a client-supplied
+// x-organization-id header or ?organizationId= query param. Both are fully
+// attacker-controlled — any authenticated caller could set either to another
+// tenant's org id. `verifyToken` (auth.middleware.ts `attachUser`) already
+// resolves req.organizationId server-side from the verified JWT claim, the
+// confirmed org-context membership lookup, or the caller's actual ACTIVE org
+// membership; req.user.organizationId is that SAME resolved value (never the
+// raw token claim). If both are empty the caller has no server-resolvable
+// tenant context (e.g. no active org membership) and every one of these
+// org-scoped enterprise Inbox endpoints must fail closed rather than trust
+// anything the client sent. Every downstream inboxEnterpriseService.* call in
+// this file is keyed off this orgId, so this is the single choke point.
 const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: string } | null => {
   const userId = req.user?.id || req.userId;
-  const orgId =
-    req.user?.organizationId ||
-    req.organizationId ||
-    (req.headers['x-organization-id'] as string) ||
-    (req.query.organizationId as string);
+  const orgId = req.user?.organizationId || req.organizationId;
   if (!userId || !orgId) {
     res.status(401).json({ error: 'Authentication required' });
     return null;

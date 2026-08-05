@@ -124,8 +124,14 @@ export interface CreateAgentPlanInput {
   draft?: boolean;
 }
 
-/** AGT-009: 'deferred' dochodzi do wyników dispatchu, gdy plan utworzono jako draft. */
-export type AgentPlanDispatch = 'enqueued' | 'unavailable' | 'deferred';
+/**
+ * AGT-009: 'deferred' dochodzi do wyników dispatchu, gdy plan utworzono jako draft.
+ * M02-P16b: 'idempotent-replay' — TYLKO z `runAgentPlan`, gdy retry z tym
+ * samym `idempotencyKey` trafił na już-w-toku/już-zakończoną submisję (patrz
+ * komentarz przy `runAgentPlan` niżej) — front NIE nadpisał wtedy kroków ani
+ * nie wysłał drugiego dispatchu.
+ */
+export type AgentPlanDispatch = 'enqueued' | 'unavailable' | 'deferred' | 'idempotent-replay';
 
 export async function createAgentPlan(
   input: CreateAgentPlanInput
@@ -162,15 +168,27 @@ export async function updateAgentPlanSteps(
  * AGT-009: jawne "Uruchom" (POST /:id/run) — dispatch planu z 'planning'.
  * Opcjonalne `steps` zapisują ostateczny przestawiony schemat przed dispatchem
  * (canvas → "Uruchom" jednym żądaniem: zapis + start).
+ *
+ * M02-P16b: opcjonalny `idempotencyKey` — caller (UI) generuje JEDEN klucz na
+ * próbę uruchomienia i wysyła TEN SAM przy retry (network drop, ponowny klik
+ * po błędzie, zanim payload/steps się zmienią). Serwer
+ * (`agentPlannerService.claimRunSubmission`, migracja 942) na retry z tym
+ * samym kluczem zwraca replay zamiast drugi raz nadpisywać kroki i drugi raz
+ * kolejkować dispatch. Pominięcie parametru zachowuje dokładnie dotychczasowe
+ * zachowanie (opt-in, jak reszta wzorca idempotency-key w repo).
  */
 export async function runAgentPlan(
   planId: string,
-  steps?: AgentPlanStepPayload[]
+  steps?: AgentPlanStepPayload[],
+  idempotencyKey?: string
 ): Promise<{ plan: AgentPlan; dispatch: AgentPlanDispatch }> {
+  const body: { steps?: AgentPlanStepPayload[]; idempotencyKey?: string } = {};
+  if (steps && steps.length > 0) body.steps = steps;
+  if (idempotencyKey) body.idempotencyKey = idempotencyKey;
   const res = await fetch(`${API_URL}/ai/agent-plan/${encodeURIComponent(planId)}/run`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify(steps && steps.length > 0 ? { steps } : {}),
+    body: JSON.stringify(body),
   });
   return handleResponse<{ plan: AgentPlan; dispatch: AgentPlanDispatch }>(
     res,

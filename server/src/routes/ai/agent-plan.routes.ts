@@ -21,7 +21,11 @@
  * - GET    /api/ai/agent-plan                     -> lista planów (org + opcjonalnie user-scoped)
  * - GET    /api/ai/agent-plan/:id                 -> status planu (org-scoped)
  * - PATCH  /api/ai/agent-plan/:id/steps           -> AGT-009: zapis przestawionego schematu (tylko 'planning')
- * - POST   /api/ai/agent-plan/:id/run             -> AGT-009: jawne "Uruchom" (opc. zapis steps + dispatch)
+ * - POST   /api/ai/agent-plan/:id/run             -> AGT-009: jawne "Uruchom" (opc. zapis steps + dispatch).
+ *                                                   M02-P16b: opc. body.idempotencyKey — retry/double-click z
+ *                                                   TĄ SAMĄ wartością dostaje replay zamiast drugiego
+ *                                                   replaceSteps + drugiego wpisu do kolejki (patrz
+ *                                                   agentPlannerService.claimRunSubmission, migracja 942).
  * - POST   /api/ai/agent-plan/:id/approve-step    -> zatwierdzenie kroku awaiting_approval
  * - POST   /api/ai/agent-plan/:id/schedule        -> Harmonogram (Fala 1, 2026-07-26):
  *                                                   plan 'planning' -> 'scheduled'; dispatch robi
@@ -375,7 +379,16 @@ router.patch(
 router.post(
   '/:id/run',
   validateBody(
-    z.object({ steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN).optional() })
+    z.object({
+      steps: z.array(PlanStepInputSchema).min(1).max(MAX_STEPS_PER_PLAN).optional(),
+      // M02-P16b: opt-in request-bound idempotency key. A caller that sends
+      // no key gets exactly the pre-existing behavior (unchanged). A caller
+      // that sends the SAME key on a retry (double-click, network retry
+      // before the response arrived) gets an idempotent replay instead of a
+      // second steps-replace + a second background-queue enqueue. See
+      // `agentPlannerService.claimRunSubmission` for the CAS this backs.
+      idempotencyKey: z.string().trim().min(1).max(200).optional(),
+    })
   ),
   asyncHandler(async (req: AuthRequest, res) => {
     const userId = req.user?.id;
@@ -392,16 +405,42 @@ router.post(
     if (!canAccessPlan(existingPlan, req)) {
       return res.status(404).json({ success: false, error: 'Plan not found' });
     }
+
+    const { steps, idempotencyKey } = req.body as {
+      steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
+      idempotencyKey?: string;
+    };
+
     if (existingPlan.status !== 'planning') {
+      // A retry of the EXACT submission that already moved this plan past
+      // 'planning' is not an error — replay instead of surfacing a 409 for
+      // what is, from the client's perspective, the same run request.
+      if (idempotencyKey && existingPlan.runIdempotencyKey === idempotencyKey) {
+        return res.json({ success: true, plan: existingPlan, dispatch: 'idempotent-replay' });
+      }
       return res.status(409).json({
         success: false,
         error: `Plan not runnable in status '${existingPlan.status}' (only 'planning')`,
       });
     }
 
-    const { steps } = req.body as {
-      steps?: Array<{ toolName: string; toolInput: Record<string, unknown> }>;
-    };
+    if (idempotencyKey) {
+      const claim = await agentPlannerService.claimRunSubmission(planId, idempotencyKey);
+      if (claim === 'already-mine') {
+        // Same key, still 'planning': the earlier winning request is (or
+        // was) in flight between claiming and dispatch. Do not re-run
+        // replaceSteps or enqueue a second background job.
+        const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
+        return res.json({ success: true, plan, dispatch: 'idempotent-replay' });
+      }
+      if (claim === 'conflict') {
+        return res.status(409).json({
+          success: false,
+          error: 'Plan run already claimed by a different submission',
+        });
+      }
+      // claim === 'claimed' -> this request alone proceeds below.
+    }
 
     if (steps && steps.length > 0) {
       await agentPlannerService.replaceSteps(planId, steps);
@@ -412,6 +451,14 @@ router.post(
       organizationId,
       userId: existingPlan.userId,
     });
+
+    if (idempotencyKey && dispatch === 'unavailable') {
+      // Dispatch never even reached the queue: release the claim so a
+      // deliberate later retry (fresh key or same key) is not permanently
+      // blocked by a submission that never actually ran.
+      await agentPlannerService.releaseRunSubmissionClaim(planId, idempotencyKey);
+    }
+
     const plan = (await agentPlannerService.getPlan(planId)) ?? existingPlan;
 
     return res.json({ success: true, plan, dispatch });

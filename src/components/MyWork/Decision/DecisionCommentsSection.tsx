@@ -17,7 +17,10 @@ import { AlertTriangle, Send, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import decisionWorkspaceApi, { readDecisionApiError } from './decisionWorkspaceApi';
+import decisionWorkspaceApi, {
+  readDecisionApiError,
+  readDecisionApiErrorDetail,
+} from './decisionWorkspaceApi';
 import type { DecisionCommentDTO, WorkspaceUserRef } from './types';
 import { formatDateTime, getInitials, resolveUserName } from './workspaceHelpers';
 
@@ -76,7 +79,7 @@ export const DecisionCommentsSection: React.FC<DecisionCommentsSectionProps> = (
             'myWork.decisionWorkspace.comments.errorGeneric',
             'Could not post your comment. {{msg}}',
             {
-              msg: apiErr.data?.error || apiErr.message || '',
+              msg: readDecisionApiErrorDetail(err),
             }
           )
         );

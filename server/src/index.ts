@@ -106,6 +106,11 @@ import dbMetricsRoutes from './routes/db-metrics.routes.js';
 import dbHealthRoutes from './routes/health.routes.js';
 import healthRoutes from './routes/healthRoutes.js';
 import systemHealthRoutes from './routes/system-health.routes.js';
+import {
+  createMigrationsHealthHandler,
+  createReadinessGate,
+  createReadyHandler,
+} from './startup/readinessRoutes.js';
 
 // Health Check (Ping) - synchronous
 app.get('/ping', HealthCheckController.ping);
@@ -143,6 +148,13 @@ app.get('/test-frontend-path', (req: Request, res: Response) => {
 });
 
 // Mount Health Check Routes
+// Registered BEFORE the shared health routers so this more specific path wins.
+// Surfaces Table Platform migration state (including a deliberate
+// DISABLE_TP_MIGRATIONS override) without editing shared health route files.
+// `tpMigrationStatus` is declared below; the handler only reads it at request
+// time, long after module initialisation.
+app.get('/api/health/migrations', createMigrationsHealthHandler(getReadinessState));
+
 app.use('/api/health', healthRoutes);
 app.use('/api/health', dbHealthRoutes);
 // app.use('/api/metrics', dbMetricsRoutes); // DISABLED: Conflicts with Gateway metrics routes
@@ -186,43 +198,40 @@ const sentryHandlers = await initSentry(app);
 let dbReady = false;
 let dbInitError: string | null = null;
 
+/**
+ * Table Platform migration outcome, surfaced on /api/ready and /api/health so
+ * a failed run — or a deliberate DISABLE_TP_MIGRATIONS override — is visible
+ * to operators instead of being buried in logs.
+ */
+let tpMigrationStatus: {
+  state: 'pending' | 'ok' | 'failed' | 'disabled_by_operator';
+  detail: string | null;
+} = { state: 'pending', detail: null };
+
+export function getTpMigrationStatus(): typeof tpMigrationStatus {
+  return tpMigrationStatus;
+}
+
+/**
+ * Single state source for the extracted readiness probes/gate.
+ *
+ * A function DECLARATION on purpose: `/api/health/migrations` is registered
+ * earlier in this file than these `let` bindings, and a `const` arrow would
+ * hit the temporal dead zone at module load. The body only reads the state at
+ * request time, long after initialisation.
+ */
+function getReadinessState() {
+  return { dbReady, dbInitError, migrations: tpMigrationStatus };
+}
+
 // Readiness probe for load balancers / orchestration.
 // Returns 503 until DB init + schema verification finishes successfully.
-app.get('/api/ready', (_req: Request, res: Response) => {
-  if (dbReady) {
-    return res.status(200).json({
-      status: 'ready',
-      database: 'ready',
-      timestamp: new Date().toISOString(),
-    });
-  }
-  return res.status(503).json({
-    status: 'not_ready',
-    database: 'initializing',
-    error: dbInitError,
-    timestamp: new Date().toISOString(),
-  });
-});
+app.get('/api/ready', createReadyHandler(getReadinessState));
 
 // IMPORTANT: In dev we want the HTTP server to LISTEN immediately (so the frontend proxy never sees ECONNREFUSED),
 // but we must not run DB-dependent routes until initialization completes.
 // We allow only health/readiness endpoints through; everything else returns 503 "starting".
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (dbReady) return next();
-
-  // Only gate API routes; static assets / SPA shell can still be served.
-  if (!req.path.startsWith('/api')) return next();
-
-  // Allow health + readiness probes even before DB is ready.
-  if (req.path.startsWith('/api/health') || req.path === '/api/ready') return next();
-
-  return res.status(503).json({
-    error: 'Server starting',
-    code: 'SERVER_STARTING',
-    database: 'initializing',
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use(createReadinessGate(getReadinessState));
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   if (req.path.startsWith('/api/')) {
@@ -282,43 +291,19 @@ const databaseInitPromise: Promise<void> =
             dbInitError = initResult.message || 'Database initialization failed';
             if (isProduction) {
               logger.error(
-                '[Server] CRITICAL: Database schema incomplete. Application may not function correctly.'
+                '[Server] CRITICAL: Database schema incomplete. Refusing to serve traffic. Exiting...'
               );
+              process.exit(1);
             }
-          } else {
-            logger.info(`[Server] Database initialized successfully: ${initResult.message}`);
-            dbReady = true;
-            dbInitError = null;
+            // Dev/test: stay alive, but explicitly NOT ready. The /api gate
+            // above keeps every business route on 503 while dbReady is false.
+            logger.error(
+              '[Server] Database schema incomplete — staying up in DEGRADED/NOT-READY state (no traffic served).'
+            );
+            return;
           }
 
-          // Table Platform migrations deferred to background (non-blocking)
-          if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
-            setTimeout(async () => {
-              try {
-                const { runMigrations } =
-                  await import('./services/tablePlatform/migrationRunner.js');
-                const migResult = await runMigrations();
-                if (migResult.failed) {
-                  logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
-                } else {
-                  logger.info(
-                    `[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`
-                  );
-                }
-                try {
-                  const { default: templateService } =
-                    await import('./services/tablePlatform/TemplateService.js');
-                  if (templateService?.seedDefaultTemplates) {
-                    await templateService.seedDefaultTemplates();
-                  }
-                } catch (seedErr) {
-                  logger.warn('[Server] Template seeding skipped:', seedErr);
-                }
-              } catch (migErr) {
-                logger.warn('[Server] Table Platform migrations skipped:', migErr);
-              }
-            }, 5000);
-          }
+          logger.info(`[Server] Database schema initialized: ${initResult.message}`);
 
           // Initialize connection pool
           if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
@@ -335,6 +320,66 @@ const databaseInitPromise: Promise<void> =
           } else {
             logger.info('[Server] Connection pooling disabled (DISABLE_CONNECTION_POOL=true)');
           }
+
+          // ── Table Platform migrations — PART OF READINESS ─────────────────
+          // Previously deferred to a 5s setTimeout AFTER dbReady=true, which
+          // published the app with a possibly incomplete schema and reduced a
+          // migration failure to a log line. The sequence now lives in
+          // ./startup/databaseReadiness.ts so its order and failure policy are
+          // testable; schema init already succeeded above.
+          const { establishDatabaseReadiness } = await import('./startup/databaseReadiness.js');
+          const outcome = await establishDatabaseReadiness({
+            initializeSchema: async () => ({ success: true, message: 'verified above' }),
+            // No arguments: production always resolves the canonical directory.
+            runMigrations: async () => {
+              const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+              return runMigrations();
+            },
+            seedTemplates: async () => {
+              const { default: templateService } =
+                await import('./services/tablePlatform/TemplateService.js');
+              if (templateService?.seedDefaultTemplates) {
+                await templateService.seedDefaultTemplates();
+              }
+            },
+            isProduction,
+            migrationsDisabled: process.env.DISABLE_TP_MIGRATIONS === 'true',
+            logger: {
+              info: (m) => logger.info(m),
+              warn: (m) => logger.warn(m),
+              error: (m) => logger.error(m),
+            },
+            alert: async (title, message) => {
+              await sendSystemAlert({
+                title,
+                message,
+                severity: 'CRITICAL',
+                source: 'Database',
+                throttleKey: 'tp_migration_failed',
+                throttleMs: 15 * 60 * 1000,
+              });
+            },
+          });
+
+          tpMigrationStatus = outcome.migrations;
+
+          if (!outcome.ready) {
+            dbReady = false;
+            dbInitError = outcome.error;
+            if (outcome.shouldExitProcess) {
+              logger.error('[Server] CRITICAL: incomplete schema in production. Exiting...');
+              process.exit(1);
+            }
+            logger.error(
+              '[Server] Staying up in DEGRADED/NOT-READY state — /api/ready reports 503 and no business route is served.'
+            );
+            return; // nothing seeded, never ready
+          }
+
+          // Schema verified AND migrations settled — only now is the app ready.
+          dbReady = true;
+          dbInitError = null;
+          logger.info('[Server] ✅ Database ready — serving traffic');
 
           // Schedule periodic schema verification (every 5 minutes)
           const healthCheckInterval = setInterval(

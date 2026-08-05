@@ -55,6 +55,13 @@ import { formatBytes } from './vaultDocuments';
 export interface VaultSafe {
   id: string;
   type: 'user' | 'organization' | 'project';
+  /**
+   * M02-016 — true for the two safes the platform creates for every tenant
+   * (`user`, `organization`). Their display name is a UI label and must be
+   * localized here; `name` from the server is only a neutral English
+   * fallback. False for project safes, whose `name` IS user data.
+   */
+  isSystem?: boolean;
   projectId: string | null;
   name: string;
   documentCount: number;
@@ -111,6 +118,23 @@ const safeLevelLabel = (type: VaultSafe['type'], isPolish: boolean): string => {
   return (isPolish ? pl : en)[type];
 };
 
+/**
+ * M02-016 — what the user reads in the NAME column.
+ *
+ * System safes (`user`, `organization`) are platform concepts, so their label
+ * follows the UI locale. Project safes carry `projects.name`, which is user
+ * data and is never translated. Before this split the server sent Polish
+ * strings for the system safes, so an English account saw "Mój sejf" next to
+ * an otherwise English screen, and `safeLevelLabel()`'s EN branch was dead.
+ *
+ * `isSystem` is preferred; the `type` check keeps older payloads (which do not
+ * carry the flag yet) rendering correctly.
+ */
+const safeDisplayName = (safe: VaultSafe, isPolish: boolean): string => {
+  const isSystem = safe.isSystem ?? safe.type !== 'project';
+  return isSystem ? safeLevelLabel(safe.type, isPolish) : safe.name;
+};
+
 export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, searchQuery }) => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -147,8 +171,15 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
   const filteredSafes = useMemo(() => {
     const q = (searchQuery ?? '').trim().toLowerCase();
     if (!q) return safes;
-    return safes.filter((s) => s.name.toLowerCase().includes(q));
-  }, [safes, searchQuery]);
+    // Search what the user can actually read on screen (localized label for
+    // system safes), not the server's neutral fallback — otherwise typing
+    // "sejf" in a Polish UI would match nothing. Keep the raw name in the
+    // haystack too, so a project safe still matches its own name.
+    return safes.filter(
+      (s) =>
+        safeDisplayName(s, isPolish).toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+    );
+  }, [safes, searchQuery, isPolish]);
 
   const previewSafe = useMemo(
     () => filteredSafes.find((s) => s.id === previewSafeId) ?? null,
@@ -197,7 +228,7 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
         return (
           <span className="inline-flex items-center gap-2 text-sm font-medium text-c-text">
             <Icon size={14} className="text-c-text-muted shrink-0" />
-            {safe.name}
+            {safeDisplayName(safe, isPolish)}
           </span>
         );
       },
@@ -325,7 +356,9 @@ export const VaultSafesTable: React.FC<VaultSafesTableProps> = ({ onOpenSafe, se
   return (
     <TableWithPreviewLayout<{ id: string; title: string }>
       selectedId={previewSafeId}
-      selectedItem={previewSafe ? { id: previewSafe.id, title: previewSafe.name } : null}
+      selectedItem={
+        previewSafe ? { id: previewSafe.id, title: safeDisplayName(previewSafe, isPolish) } : null
+      }
       onSelect={setPreviewSafeId}
       onOpenFull={(id) => {
         const safe = filteredSafes.find((s) => s.id === id);

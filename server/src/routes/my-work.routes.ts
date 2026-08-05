@@ -50,6 +50,7 @@ import calendarRouter from './my-work/calendar.routes.js';
 import decisionsRouter from './my-work/decisions.routes.js';
 import focusRouter from './my-work/focus.routes.js';
 import homeRouter from './my-work/home.routes.js';
+import managerRouter from './my-work/manager.routes.js';
 import notebookRouter from './my-work/notebook.routes.js';
 import radarRouter from './my-work/radar.routes.js';
 import signalsRouter from './my-work/signals.routes.js';
@@ -1259,6 +1260,39 @@ router.post(
     const sourceId =
       typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
 
+    // M02-003/M02-P04: idempotent create for personal tasks. This is the ACTUAL
+    // My Work Tasks create path (TaskDetailView.tsx -> Api.createPersonalTask),
+    // distinct from the pmo/TaskController stack that the original M02-003
+    // candidate patched — that fix does not reach this route at all. Personal
+    // tasks never carry an initiative_id, so the relevant unique index is the
+    // org-scoped one added by 20260804_m02a_tasks_tenant_idempotency.sql
+    // (organization_id, idempotency_key) WHERE idempotency_key IS NOT NULL.
+    const idempotencyKeyRaw = req.body?.idempotencyKey;
+    const idempotencyKey =
+      typeof idempotencyKeyRaw === 'string' && idempotencyKeyRaw.trim()
+        ? idempotencyKeyRaw.trim()
+        : null;
+
+    if (idempotencyKey) {
+      const existing = await queryHelpers.queryOne<any>(
+        `
+        SELECT
+          t.id, t.title, t.description, t.status, t.priority,
+          t.due_date as "dueDate", t.tags,
+          t.created_at as "createdAt", t.updated_at as "updatedAt",
+          t.completed_at as "completedAt"
+        FROM tasks t
+        WHERE t.organization_id = ? AND t.idempotency_key = ?
+        LIMIT 1
+        `,
+        [orgId, idempotencyKey]
+      );
+      if (existing) {
+        res.status(200).json({ ...existing, tags: parseTagsArray(existing?.tags), idempotent: true });
+        return;
+      }
+    }
+
     const id = uuidv4();
     const cols = await getTableColumns('tasks');
 
@@ -1287,11 +1321,40 @@ router.post(
       add('source_type', sourceType);
       add('source_id', sourceId);
     }
+    if (idempotencyKey) add('idempotency_key', idempotencyKey);
 
-    await queryHelpers.queryRun(
-      `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
-      insertParams
-    );
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+    } catch (insertErr: any) {
+      // Race guard: two concurrent retries can both pass the pre-insert SELECT
+      // above. A unique-violation on (organization_id, idempotency_key) means the
+      // other request won; re-read and return its row instead of a 500.
+      if (idempotencyKey && insertErr?.code === '23505') {
+        const winning = await queryHelpers.queryOne<any>(
+          `
+          SELECT
+            t.id, t.title, t.description, t.status, t.priority,
+            t.due_date as "dueDate", t.tags,
+            t.created_at as "createdAt", t.updated_at as "updatedAt",
+            t.completed_at as "completedAt"
+          FROM tasks t
+          WHERE t.organization_id = ? AND t.idempotency_key = ?
+          LIMIT 1
+          `,
+          [orgId, idempotencyKey]
+        );
+        if (winning) {
+          res
+            .status(200)
+            .json({ ...winning, tags: parseTagsArray(winning?.tags), idempotent: true });
+          return;
+        }
+      }
+      throw insertErr;
+    }
 
     // V4-NOTE-06: Audit when task created from AI-extracted actions (insert-as-blocks apply)
     const isFromAIApply = tags.some((t) => String(t).toLowerCase() === 'ai-extracted');
@@ -2567,6 +2630,9 @@ router.use(focusRouter);
 // Stats, team workload, context summary → ./my-work/stats.routes.ts
 router.use(statsRouter);
 
+// M02-008: one coherent Manager snapshot → ./my-work/manager.routes.ts
+router.use(managerRouter);
+
 router.use(signalsRouter);
 
 /**
@@ -3283,22 +3349,33 @@ router.delete(
       [id, userId, orgId]
     );
 
+    // M02-P08: mirror GET/PUT's existing 404-on-not-found contract. Without
+    // this check the handler always answered 204 even when the WHERE clause
+    // (user_id + organization_id) matched zero rows -- e.g. a cross-tenant
+    // caller, a forged id, or an id already deleted. The DELETE was always
+    // correctly SCOPED (no data was ever touched cross-tenant -- verified
+    // against a real Postgres in tests/integration/
+    // m02-p08-ideas-hub-golden-flow.realdb.test.ts), but the response lied
+    // about success, which can make a client believe a no-op delete worked.
+    if (!before) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+
     await queryHelpers.queryRun(
       `DELETE FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ?`,
       [id, userId, orgId]
     );
 
-    if (before) {
-      req
-        .emitAuditEvent?.({
-          actorType: 'USER',
-          action: 'IDEA_DELETE',
-          resourceType: 'idea',
-          resourceId: id,
-          before: { title: before.title, tags: before.tags, stage: before.stage },
-        })
-        .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
-    }
+    req
+      .emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_DELETE',
+        resourceType: 'idea',
+        resourceId: id,
+        before: { title: before.title, tags: before.tags, stage: before.stage },
+      })
+      .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
     res.status(204).send();
   })

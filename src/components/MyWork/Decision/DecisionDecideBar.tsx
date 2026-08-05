@@ -29,6 +29,7 @@ import { actionPillClass } from '@/components/shared/PreviewPane/previewStyles';
 import decisionWorkspaceApi, {
   type DecideInput,
   readDecisionApiError,
+  readDecisionApiErrorDetail,
 } from './decisionWorkspaceApi';
 import type { DecideTargetStatus, DecisionDetailDTO, WorkspaceUserRef } from './types';
 import { formatDateTime, resolveUserName } from './workspaceHelpers';
@@ -157,7 +158,7 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
           onDecided();
         } else if (apiErr.status === 400) {
           setFieldError(
-            apiErr.data?.error ||
+            readDecisionApiErrorDetail(err) ||
               t('myWork.decisionWorkspace.decide.invalid', 'This decision could not be recorded.')
           );
         } else {
@@ -166,7 +167,7 @@ export const DecisionDecideBar: React.FC<DecisionDecideBarProps> = ({
               'myWork.decisionWorkspace.decide.genericFailure',
               'Could not record this decision. {{msg}}',
               {
-                msg: apiErr.data?.error || apiErr.message || '',
+                msg: readDecisionApiErrorDetail(err),
               }
             )
           );

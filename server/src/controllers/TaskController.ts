@@ -1175,15 +1175,27 @@ export class TaskController {
         idempotencyKey,
       } = body;
 
-      // EXE-002-004: idempotent retry support, scoped to tasks created under an
-      // initiative. A repeated POST with the same (initiativeId, idempotencyKey)
-      // pair returns the already-created task instead of inserting a duplicate.
-      // Tasks without an initiativeId (project/loose tasks) are unaffected.
-      if (initiativeId && idempotencyKey) {
-        const existingTask = await DbPromise.get<TaskRow>(
-          `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
-          [initiativeId, idempotencyKey, orgId]
-        );
+      // EXE-002-004: idempotent retry support, originally scoped to tasks created
+      // under an initiative (partial unique index idx_tasks_idempotency on
+      // (initiative_id, idempotency_key)). Postgres treats every NULL initiative_id
+      // as distinct from every other NULL in that index, so it silently enforced
+      // NOTHING for tasks without an initiative — exactly the case TaskDetailModal
+      // uses for "global" tasks (`initiativeId: initiativeId || null`).
+      // M02-003/M02-P04 (20260804_m02a_tasks_tenant_idempotency.sql) adds a second,
+      // org-scoped unique index (organization_id, idempotency_key) that does cover
+      // the no-initiative case, so the lookup here now branches: initiative-scoped
+      // when an initiativeId is present (byte-for-byte the original EXE-002-004
+      // contract), org-scoped when it is not.
+      if (idempotencyKey) {
+        const existingTask = initiativeId
+          ? await DbPromise.get<TaskRow>(
+              `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
+              [initiativeId, idempotencyKey, orgId]
+            )
+          : await DbPromise.get<TaskRow>(
+              `SELECT * FROM tasks WHERE initiative_id IS NULL AND idempotency_key = ? AND organization_id = ?`,
+              [idempotencyKey, orgId]
+            );
         if (existingTask) {
           res.status(200).json({ ...existingTask, idempotent: true });
           return;
@@ -1288,10 +1300,14 @@ export class TaskController {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-      // Idempotency is only enforced for tasks created under an initiative
-      // (matches the early-return check above and the partial unique index
-      // on tasks(initiative_id, idempotency_key) WHERE idempotency_key IS NOT NULL).
-      const effectiveIdempotencyKey = initiativeId && idempotencyKey ? idempotencyKey : null;
+      // Idempotency is enforced whenever a key is supplied — via
+      // idx_tasks_idempotency (initiative_id, idempotency_key) when initiativeId is
+      // present, via idx_tasks_idempotency_org (organization_id, idempotency_key)
+      // — added by 20260804_m02a_tasks_tenant_idempotency.sql — otherwise. See the
+      // comment on the pre-insert SELECT above for why the old
+      // `initiativeId && idempotencyKey` gate silently protected nothing for
+      // no-initiative tasks.
+      const effectiveIdempotencyKey = idempotencyKey || null;
 
       const insertParams = [
         id,
@@ -1348,10 +1364,15 @@ export class TaskController {
           result = await DbPromise.run(sql, insertParams, { fallback: false });
         } catch (insertErr: any) {
           if (insertErr?.code === '23505') {
-            const winningTask = await DbPromise.get<TaskRow>(
-              `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
-              [initiativeId, effectiveIdempotencyKey, orgId]
-            );
+            const winningTask = initiativeId
+              ? await DbPromise.get<TaskRow>(
+                  `SELECT * FROM tasks WHERE initiative_id = ? AND idempotency_key = ? AND organization_id = ?`,
+                  [initiativeId, effectiveIdempotencyKey, orgId]
+                )
+              : await DbPromise.get<TaskRow>(
+                  `SELECT * FROM tasks WHERE initiative_id IS NULL AND idempotency_key = ? AND organization_id = ?`,
+                  [effectiveIdempotencyKey, orgId]
+                );
             if (winningTask) {
               res.status(200).json({ ...winningTask, idempotent: true });
               return;

@@ -5578,6 +5578,32 @@ Use userId only from this list:
                  (`rightPanelSections[0]`), pionowo i bez duplikatów. */
             />
 
+            {/* M02-005: this legacy view is now reachable ONLY via the
+                m05DecisionWorkspaceFlag kill-switch (default ON routes to the
+                real-backend DecisionWorkspace instead — see MyWorkHub.tsx).
+                Comments / alternatives / risks / rationale / notes edited
+                here persist to `localStorage['consultify-decision-enhancements:
+                <id>']` only (see loadDecision's "Hydrate local enhancements"
+                block above) — never to the server, never shared with
+                teammates, and gone if this browser's storage is cleared.
+                Nothing before this fix said so; a user could reasonably
+                believe a posted comment was saved for the team. Neutral
+                tokens only (CANON: crimson is reserved for critical
+                semantics) — this is an honest capability notice, not an
+                error. */}
+            <div
+              role="status"
+              className="mb-3 flex items-start gap-2 rounded-md border border-c-border bg-c-surface-2 px-3 py-2.5 text-xs text-c-text-muted"
+            >
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>
+                {t(
+                  'decisions.detail.legacyLocalOnlyNotice',
+                  'Legacy view: comments, alternatives, risks and notes on this screen are saved only in this browser, not on the server or shared with your team.'
+                )}
+              </span>
+            </div>
+
             {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
                - PropertiesStrip (full-width, under header)

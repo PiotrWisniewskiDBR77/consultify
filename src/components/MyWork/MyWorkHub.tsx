@@ -112,6 +112,7 @@ import { isClientVaultEnabled } from '@/utils/clientVaultFlag';
 import { IDEA_TOP_BAR_SLOT_ID, isIdeaTopBarOneLineEnabled } from '@/utils/ideaTopBarOneLineFlag';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { isM05DecisionWorkspaceEnabled } from '@/utils/m05DecisionWorkspaceFlag';
+import { isMyWorkTwoLevelNavEnabled } from '@/utils/myWorkTwoLevelNavFlag';
 import {
   dispatchPilotAccessBlocked,
   getPilotLockedAreaDetail,
@@ -149,6 +150,7 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import { MyIdeasListContent } from './MyIdeasListContent';
 import type { IdeasBulkBarPayload, IdeasHomeShellPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
+import { MyWorkNav, type MyWorkNavTab, type NavGroup } from './MyWorkNav';
 import { NotebookContent } from './NotebookContent';
 import { NotebookLibraryContent } from './NotebookLibraryContent';
 import { resolveOpenItemRoute } from './openItemRouting';
@@ -1600,6 +1602,9 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.home,
         color: 'bg-sky-500',
         requiresManagerAccess: false,
+        // Never reaches MyWorkNav (filtered out below while RADAR_ENABLED is
+        // false); navGroup is only here so the array stays uniformly typed.
+        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'ideas' as ModuleTab,
@@ -1610,6 +1615,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         requiresManagerAccess: false,
         isLocked: isPilotParticipant || ideasBetaLocked,
         betaLocked: ideasBetaLocked,
+        navGroup: 'knowledge' as NavGroup,
       },
       {
         id: 'notebook' as ModuleTab,
@@ -1618,6 +1624,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.notebook,
         color: 'bg-slate-500',
         requiresManagerAccess: false,
+        navGroup: 'knowledge' as NavGroup,
       },
       {
         id: 'inbox' as ModuleTab,
@@ -1626,6 +1633,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.inbox,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
+        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'calendar' as ModuleTab,
@@ -1634,6 +1642,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.calendar,
         color: 'bg-indigo-500',
         requiresManagerAccess: false,
+        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'tasks' as ModuleTab,
@@ -1642,6 +1651,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.tasks,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
+        navGroup: 'queues' as NavGroup,
       },
       {
         id: 'decisions' as ModuleTab,
@@ -1650,6 +1660,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.decisions,
         color: 'bg-blue-500',
         requiresManagerAccess: false,
+        navGroup: 'queues' as NavGroup,
       },
       // VLT-004 (relokacja Client Vault). Same gate as the old sidebar entry
       // (isClientVaultEnabled) — hidden entirely when off, so removing the
@@ -1661,6 +1672,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-slate-500',
         requiresManagerAccess: false,
         requiresVaultFlag: true,
+        navGroup: 'knowledge' as NavGroup,
       },
       // AGT-003 (relokacja Run agent). Same gate as the old sidebar entry
       // (isAgentPlanEnabled).
@@ -1671,6 +1683,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         color: 'bg-slate-500',
         requiresManagerAccess: false,
         requiresAgentFlag: true,
+        navGroup: 'automation' as NavGroup,
       },
       {
         id: 'manager' as ModuleTab,
@@ -1679,6 +1692,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         count: tabCounts.manager,
         color: 'bg-sky-500',
         requiresManagerAccess: true,
+        navGroup: 'oversight' as NavGroup,
       },
     ];
 
@@ -1692,6 +1706,33 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return true;
     });
   }, [isPilotParticipant, ideasBetaLocked, isPolish, tabCounts, canViewManager]);
+
+  // M02-P01 (Shell/Nav, flag `isMyWorkTwoLevelNavEnabled`): group labels and
+  // the locked-tab callback for the two-level nav. `home` is never a member
+  // (filtered out of `tabs` above while RADAR_ENABLED is false), so it never
+  // needs a group label here.
+  const myWorkNavGroupLabels = useMemo<Record<NavGroup, string>>(
+    () => ({
+      queues: t('myWork.hub.navGroup.queues', 'Work queues'),
+      knowledge: t('myWork.hub.navGroup.knowledge', 'Knowledge'),
+      automation: t('myWork.hub.navGroup.automation', 'Automation'),
+      oversight: t('myWork.hub.navGroup.oversight', 'Oversight'),
+    }),
+    [t]
+  );
+
+  const handleBlockedNavTab = useCallback(
+    (tab: MyWorkNavTab) => {
+      const sourceTab = tabs.find((candidate) => candidate.id === tab.id);
+      if (sourceTab && 'betaLocked' in sourceTab && sourceTab.betaLocked) {
+        dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+        return;
+      }
+      const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+      dispatchPilotAccessBlocked({ message: detail.message, href: detail.href });
+    },
+    [tabs, t]
+  );
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -4071,47 +4112,81 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               <Search size={18} />
             </button>
 
-            {/* Main Tabs */}
-            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      if (tab.isLocked) {
-                        if (tab.betaLocked) {
-                          dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
-                        } else {
-                          const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
-                          dispatchPilotAccessBlocked({
-                            message: detail.message,
-                            href: detail.href,
-                          });
-                        }
-                        return;
-                      }
-                      setActiveTab(tab.id);
-                      // Close document when switching tabs to show list view
-                      setActiveDocumentId(null);
-                    }}
-                    className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
-                    data-testid={`mywork-tab-${tab.id}`}
-                    title={
-                      tab.isLocked
-                        ? tab.betaLocked
+            {/* Main Tabs — M02-P01: two-level grouped nav behind a default-OFF
+                flag (`isMyWorkTwoLevelNavEnabled`); OFF renders the exact
+                pre-existing flat single-row bar unchanged. */}
+            {isMyWorkTwoLevelNavEnabled() ? (
+              <MyWorkNav
+                tabs={tabs.map(
+                  (tab): MyWorkNavTab => ({
+                    id: tab.id,
+                    label: tab.label,
+                    icon: tab.icon,
+                    navGroup: tab.navGroup,
+                    count: 'count' in tab ? tab.count : undefined,
+                    isLocked: 'isLocked' in tab ? tab.isLocked : undefined,
+                    lockedReason:
+                      'isLocked' in tab && tab.isLocked
+                        ? 'betaLocked' in tab && tab.betaLocked
                           ? t('access.blocked.BETA_LOCKED')
                           : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
-                        : undefined
-                    }
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                    {tab.isLocked && <Lock size={14} className="opacity-70" />}
-                  </button>
-                );
-              })}
-            </div>
+                        : undefined,
+                  })
+                )}
+                activeTabId={activeTab}
+                groupLabels={myWorkNavGroupLabels}
+                groupsAriaLabel={t('myWork.hub.navGroup.ariaLabel', 'My Work navigation groups')}
+                onSelectTab={(tabId) => {
+                  setActiveTab(tabId as ModuleTab);
+                  // Close document when switching tabs to show list view
+                  setActiveDocumentId(null);
+                }}
+                onBlockedTab={handleBlockedNavTab}
+                activeChipClassName={BUTTON_ACTIVE}
+                inactiveChipClassName={BUTTON_INACTIVE}
+              />
+            ) : (
+              <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        if (tab.isLocked) {
+                          if (tab.betaLocked) {
+                            dispatchBetaAccessBlocked(t('access.blocked.BETA_LOCKED'));
+                          } else {
+                            const detail = getPilotLockedAreaDetail('IDEAS_TAB', tab.label);
+                            dispatchPilotAccessBlocked({
+                              message: detail.message,
+                              href: detail.href,
+                            });
+                          }
+                          return;
+                        }
+                        setActiveTab(tab.id);
+                        // Close document when switching tabs to show list view
+                        setActiveDocumentId(null);
+                      }}
+                      className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
+                      data-testid={`mywork-tab-${tab.id}`}
+                      title={
+                        tab.isLocked
+                          ? tab.betaLocked
+                            ? t('access.blocked.BETA_LOCKED')
+                            : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                          : undefined
+                      }
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      {tab.isLocked && <Lock size={14} className="opacity-70" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}

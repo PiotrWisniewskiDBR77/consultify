@@ -147,7 +147,10 @@ const ActionItemCard: React.FC<{
               e.stopPropagation();
               onApprove?.(item.id);
             }}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors duration-150"
+            // CLAUDE.md UI #3: `primary-*` in this codebase IS crimson (#85182F),
+            // reserved for critical semantics. "Approve" is a routine CTA, so it
+            // renders neutral — the red here read as a destructive action.
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/[0.06] text-slate-700 dark:bg-white/10 dark:text-slate-100 hover:bg-slate-900/[0.1] dark:hover:bg-white/[0.16] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >
             <Check size={12} />
             {t('executive.action.approve', 'Approve')}
@@ -167,7 +170,7 @@ const ActionItemCard: React.FC<{
 
       {/* Non-decision CTA */}
       {item.type !== 'decision' && (
-        <div className="flex items-center justify-end text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+        <div className="flex items-center justify-end text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
           {t('executive.action.view', 'View details')}
           <ChevronRight size={14} />
         </div>
@@ -275,7 +278,7 @@ export const ActionRequiredStrip: React.FC<ActionRequiredStripProps> = ({
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
+            className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1 transition-colors duration-150"
           >
             {t('executive.action.viewAll', 'View all')}
             <ArrowRight size={13} />

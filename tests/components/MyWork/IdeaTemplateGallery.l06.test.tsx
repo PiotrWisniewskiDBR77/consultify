@@ -19,13 +19,31 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
 
 // EN locale → component renders English labels ("Use template", "Replace", "Cancel").
+// IdeaTemplateGallery.tsx now calls most of these t() keys with NO inline
+// fallback (moved entirely to public/locales/en/translation.json), so a mock
+// that only resolves the fallback argument returns raw keys. Resolve real
+// English copy instead, falling back to any inline fallback arg first.
+function resolveTranslation(key: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  return typeof value === 'string' ? value : key;
+}
+
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: () => undefined },
   useTranslation: () => ({
     i18n: { language: 'en' },
-    t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+    t: (_key: string, fallback?: any) =>
+      typeof fallback === 'string'
+        ? fallback
+        : (fallback?.defaultValue ?? resolveTranslation(_key)),
   }),
 }));
 

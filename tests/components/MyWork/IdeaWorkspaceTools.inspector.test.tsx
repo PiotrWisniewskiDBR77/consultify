@@ -1,9 +1,24 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
+
+// Resolve real English copy from the translation file so this test verifies the
+// actual section titles a user sees (Problem/Status/Convert/Branch/Area), not raw
+// i18n keys — falls back to the key itself for anything not present.
+function resolveTranslation(key: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  return typeof value === 'string' ? value : key;
+}
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({ t: (key: string) => resolveTranslation(key), i18n: { language: 'en' } }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 // Heavy inspector widgets are out of scope for the ≤5-sections contract — stub them.

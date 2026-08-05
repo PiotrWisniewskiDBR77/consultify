@@ -82,7 +82,9 @@ const TeamMemberRow: React.FC<{
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-slate-50/60 dark:hover:bg-white/[0.03] transition-colors duration-150"
+      className={`flex items-center gap-3 p-3 rounded-lg transition-colors duration-150 ${
+        onClick ? 'cursor-pointer hover:bg-slate-50/60 dark:hover:bg-white/[0.03]' : ''
+      }`}
       onClick={onClick}
     >
       {/* Avatar */}
@@ -233,7 +235,11 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
               >
-                <TeamMemberRow member={member} onClick={() => onMemberClick?.(member.id)} />
+                {/* No handler → no click affordance (M02-011: no dead actions). */}
+                <TeamMemberRow
+                  member={member}
+                  onClick={onMemberClick ? () => onMemberClick(member.id) : undefined}
+                />
               </motion.div>
             ))}
           </div>

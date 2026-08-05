@@ -81,6 +81,14 @@ export interface AgentPlan {
   completedAt?: string;
   /** AGT-FOLDERS (2026-07-28): folder ("Moje procesy"), nullable = bez folderu. */
   folderId?: string | null;
+  /**
+   * M02-P16b: request-bound idempotency key claimed by the winning
+   * `POST /:id/run` submission (migration 942). `null` when no run
+   * submission has claimed this plan yet (fresh plan, or a plan that never
+   * left 'planning' because dispatch itself failed and the route released
+   * the claim — see `releaseRunSubmissionClaim`).
+   */
+  runIdempotencyKey?: string | null;
 }
 
 export interface SSEEmitter {
@@ -153,6 +161,67 @@ class AgentPlannerService {
       ownerToken,
       fencingToken: Number(claimed.execution_fencing_token || 0),
     };
+  }
+
+  /**
+   * M02-P16b: request-bound idempotency for `POST /:id/run` (migration 942,
+   * `ai_agent_plans.run_idempotency_key`). This is a SEPARATE, earlier CAS
+   * than `claimExecution` above — it guards the HTTP submission itself
+   * (steps replacement + background enqueue), not step execution. It closes
+   * a race `claimExecution` alone does not cover: two near-simultaneous
+   * `POST /:id/run` calls (double-click, client retry) can both observe
+   * `status === 'planning'` in the route BEFORE either request's background
+   * job has run `claimExecution` — without this claim, both would call
+   * `replaceSteps` (DELETE+INSERT, no CAS of its own) and both would enqueue
+   * an `AGENT_BACKGROUND_TASK` job.
+   *
+   * Tri-state result:
+   * - 'claimed': this is the first submission of this key; the caller
+   *   (route) should proceed with steps-replace + dispatch.
+   * - 'already-mine': this exact key was already claimed (a retry of the
+   *   SAME submission attempt, still before the plan left 'planning'); the
+   *   caller must NOT re-run replaceSteps/dispatch, just replay.
+   * - 'conflict': the plan is no longer in 'planning', or a DIFFERENT key
+   *   already holds the claim; the caller falls back to the ordinary
+   *   "not runnable" response.
+   */
+  async claimRunSubmission(
+    planId: string,
+    idempotencyKey: string
+  ): Promise<'claimed' | 'already-mine' | 'conflict'> {
+    const result = await dbRun(
+      `UPDATE ai_agent_plans
+       SET run_idempotency_key = ?, updated_at = datetime('now')
+       WHERE id = ? AND status = 'planning' AND run_idempotency_key IS NULL`,
+      [idempotencyKey, planId]
+    );
+    if (result.changes) return 'claimed';
+
+    const row = (await dbGet(
+      `SELECT run_idempotency_key FROM ai_agent_plans WHERE id = ? AND status = 'planning'`,
+      [planId]
+    )) as { run_idempotency_key?: string | null } | undefined;
+    if (!row) return 'conflict'; // status moved on between the route's own read and this claim attempt
+    return row.run_idempotency_key === idempotencyKey ? 'already-mine' : 'conflict';
+  }
+
+  /**
+   * Releases a run-submission claim ONLY when dispatch is synchronously
+   * known to have failed to even enqueue (`tryDispatchBackgroundExecution`
+   * returned 'unavailable' — e.g. queue/Redis down). Without this, a plan
+   * whose first dispatch attempt never made it onto the queue would keep
+   * `run_idempotency_key` set forever, permanently blocking a later,
+   * deliberately-distinct retry (new key) while the plan is still sitting in
+   * 'planning'. Scoped to the exact key so a request can never release a
+   * claim it did not itself win.
+   */
+  async releaseRunSubmissionClaim(planId: string, idempotencyKey: string): Promise<void> {
+    await dbRun(
+      `UPDATE ai_agent_plans
+       SET run_idempotency_key = NULL, updated_at = datetime('now')
+       WHERE id = ? AND run_idempotency_key = ? AND status = 'planning'`,
+      [planId, idempotencyKey]
+    );
   }
 
   async renewExecutionLease(lease: ExecutionLease): Promise<void> {
@@ -749,6 +818,7 @@ class AgentPlannerService {
       startedAt: row.started_at || undefined,
       completedAt: row.completed_at || undefined,
       folderId: row.folder_id || null,
+      runIdempotencyKey: row.run_idempotency_key || null,
     };
   }
 
@@ -782,6 +852,7 @@ class AgentPlannerService {
       startedAt: row.started_at || undefined,
       completedAt: row.completed_at || undefined,
       folderId: row.folder_id || null,
+      runIdempotencyKey: row.run_idempotency_key || null,
     }));
   }
 

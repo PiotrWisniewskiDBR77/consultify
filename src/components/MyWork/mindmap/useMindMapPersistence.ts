@@ -66,48 +66,59 @@ function buildLocalDefaultIdeaMap(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility (molochs pass this positionally)
   isPolish: boolean
 ): { nodes: Node[]; edges: Edge[] } {
+  // Bugfix (M02-P11, 2026-08-05): these `i18n.t()` calls run synchronously —
+  // often at catch-time right after a failed `GET /map` — and i18next's
+  // HttpBackend loads translation JSON asynchronously. If the locale bundle
+  // hasn't resolved yet (a real race, not harness-only: confirmed via
+  // dev-render `?tool=mindmap&state=error` — a same-tick API rejection beats
+  // the `/locales/**` fetch every time), `t()` falls back to the raw dotted
+  // key with no `defaultValue`, so the fallback template's labels render as
+  // e.g. "mindmap.persistence.branchProblem" instead of "Problem" — and
+  // because these are baked into node `data.label` once, not re-evaluated by
+  // a live `t()` in JSX, they never self-heal once the bundle does arrive.
+  // `defaultValue` covers the gap without changing the localized string.
   const rootNode: Node = {
     id: 'root',
     type: 'center',
     position: { x: 0, y: 0 },
     data: {
-      label: ideaTitle || i18n.t('mindmap.persistence.myIdea'),
-      hint: i18n.t('mindmap.persistence.clickToEdit'),
+      label: ideaTitle || i18n.t('mindmap.persistence.myIdea', { defaultValue: 'My idea' }),
+      hint: i18n.t('mindmap.persistence.clickToEdit', { defaultValue: 'Click to edit' }),
     },
   };
   const branchSpecs = [
     {
       id: 'branch-problem',
       branchKey: 'problem',
-      label: i18n.t('mindmap.persistence.branchProblem'),
+      label: i18n.t('mindmap.persistence.branchProblem', { defaultValue: 'Problem' }),
       position: { x: -320, y: -180 },
       selected: false,
     },
     {
       id: 'branch-options',
       branchKey: 'options',
-      label: i18n.t('mindmap.persistence.branchOptions'),
+      label: i18n.t('mindmap.persistence.branchOptions', { defaultValue: 'Options' }),
       position: { x: 320, y: -180 },
       selected: true,
     },
     {
       id: 'branch-evidence',
       branchKey: 'evidence',
-      label: i18n.t('mindmap.persistence.branchEvidence'),
+      label: i18n.t('mindmap.persistence.branchEvidence', { defaultValue: 'Evidence' }),
       position: { x: -320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-risks',
       branchKey: 'risks',
-      label: i18n.t('mindmap.persistence.branchRisks'),
+      label: i18n.t('mindmap.persistence.branchRisks', { defaultValue: 'Risks' }),
       position: { x: 320, y: 20 },
       selected: false,
     },
     {
       id: 'branch-experiments',
       branchKey: 'experiments',
-      label: i18n.t('mindmap.persistence.branchExperiments'),
+      label: i18n.t('mindmap.persistence.branchExperiments', { defaultValue: 'Experiments' }),
       position: { x: 0, y: 240 },
       selected: false,
     },
@@ -121,7 +132,9 @@ function buildLocalDefaultIdeaMap(
     data: {
       label: branch.label,
       branchKey: branch.branchKey,
-      hint: i18n.t('mindmap.persistence.selectBranchHint'),
+      hint: i18n.t('mindmap.persistence.selectBranchHint', {
+        defaultValue: 'Select branch and press Tab',
+      }),
     },
   }));
 

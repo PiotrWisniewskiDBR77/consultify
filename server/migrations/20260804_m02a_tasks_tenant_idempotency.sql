@@ -1,0 +1,54 @@
+-- Migration: 20260804_m02a_tasks_tenant_idempotency.sql
+-- M02-003 (Master Codex authorized scope A) — tenant-scoped task idempotency.
+--
+-- WHY
+-- ---
+-- EXE-002-004 added `tasks.idempotency_key` plus a partial unique index
+-- `idx_tasks_idempotency ON tasks(initiative_id, idempotency_key)`. Because the
+-- index is keyed on `initiative_id`, TaskController.createTask had to null the
+-- key for any task without an initiative:
+--
+--     const effectiveIdempotencyKey = initiativeId && idempotencyKey ? idempotencyKey : null;
+--
+-- Every personal My Work task is exactly that — no initiative — so its key was
+-- always discarded and no double-submit could ever be collapsed. Measured on
+-- the live demo database 2026-08-04: 0 of 466 task rows carry a key, while 12
+-- groups / 31 rows are genuine same-(org,title,assignee,project) duplicates,
+-- several written seconds apart by repeated create clicks
+-- (e.g. "Audyt 3 maszyn krytycznych pod PdM" 4x across 26s).
+--
+-- WHAT
+-- ----
+-- Add a SECOND partial unique index scoped to the tenant, so an idempotency key
+-- is unique per organization regardless of whether the task has an initiative.
+-- This is the correct semantic for an idempotency key: one key identifies one
+-- logical create request within one tenant. Different tenants may reuse the
+-- same key string freely — the index is (organization_id, idempotency_key), so
+-- cross-tenant reuse is unconstrained by construction.
+--
+-- The pre-existing `idx_tasks_idempotency` is deliberately LEFT IN PLACE: it is
+-- part of the EXE-002-004 contract owned by another line, and the new index is
+-- strictly stricter within an org, so keeping both changes no accepted behavior.
+--
+-- SAFETY / PREFLIGHT (run read-only against the live demo DB, 2026-08-04,
+-- system_identifier 7607447889287585827, before writing this file):
+--   * tasks total .................................... 466
+--   * tasks with a non-null idempotency_key ...........   0
+--   * groups violating (organization_id, idempotency_key)  0
+--   * same key reused across initiatives within one org .  0
+-- The index therefore cannot fail to build on demo, and cannot reject any
+-- existing row. NULL keys are exempt via the WHERE clause, so the 466 existing
+-- rows are entirely outside the index.
+--
+-- Additive and idempotent: IF NOT EXISTS, no default, no table rewrite, no
+-- backfill, no data change. Safe to re-run.
+--
+-- NOTE ON CONCURRENTLY: deliberately NOT used. CREATE INDEX CONCURRENTLY cannot
+-- run inside a transaction block, and this repo's migration runners execute each
+-- file inside one. `tasks` is small (466 rows on demo) so a brief lock is not a
+-- concern; using the plain form keeps the file runnable by every existing runner
+-- and safe to re-run.
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_idempotency_org
+  ON tasks(organization_id, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;

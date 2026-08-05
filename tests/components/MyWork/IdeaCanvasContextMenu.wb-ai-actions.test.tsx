@@ -20,6 +20,7 @@ vi.mock('@/services/api', () => ({ Api: {} }));
 const i18nState = vi.hoisted(() => ({ language: 'en' }));
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ i18n: i18nState, t: (k: string) => k }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 import { IdeaCanvasContextMenu } from '@/components/MyWork/IdeaCanvasContextMenu';

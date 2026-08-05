@@ -4503,6 +4503,10 @@ export const Api = {
     tags?: string[];
     sourceType?: string | null;
     sourceId?: string | null;
+    // M02-003/M02-P04: one stable key per create attempt (see
+    // src/utils/createIdempotencyKey.ts). Optional so existing callers that
+    // don't pass one keep working unchanged (server treats it as no-op then).
+    idempotencyKey?: string;
   }): Promise<any> => {
     const res = await fetch(`${API_URL}/my-work/personal-tasks`, {
       method: 'POST',

@@ -254,6 +254,18 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
   const [canvasBlocks, setCanvasBlocks] = useState<PlanSchemaBlock[] | null>(null);
   const [schemaSubmitted, setSchemaSubmitted] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /**
+   * M02-P16b: client-side idempotency key lifecycle for `handleRunSchema`
+   * submissions — mirrors the (key, fingerprint) contract used elsewhere in
+   * the repo for create-submission idempotency (M02-P04 Tasks fix): the SAME
+   * key is resent on a retry of an UNCHANGED payload (network drop, retrying
+   * after an error before editing the schema again); a NEW key is minted
+   * once the fingerprinted payload changes, or right after a successful run.
+   * Inlined here (not imported) because the shared
+   * `src/utils/createIdempotencyKey.ts` util lives on a sibling branch not
+   * yet merged into this one.
+   */
+  const runSubmissionRef = useRef<{ key: string; fingerprint: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -336,8 +348,26 @@ export const AgentPlanPanel: React.FC<AgentPlanPanelProps> = ({
     }
     setSchemaSubmitted(true); // zamraża schemat natychmiast (optimistic)
     setBusy('run');
+    // M02-P16b: reuse the same idempotency key across a retry of this exact
+    // (planId, steps) submission; mint a fresh one if the schema changed
+    // since the last attempt (a genuinely different run request must not
+    // replay the old one's result).
+    const fingerprint = `${planId}:${JSON.stringify(steps)}`;
+    const previous = runSubmissionRef.current;
+    const idempotencyKey =
+      previous && previous.fingerprint === fingerprint
+        ? previous.key
+        : (() => {
+            const fresh =
+              typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+                ? crypto.randomUUID()
+                : `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+            runSubmissionRef.current = { key: fresh, fingerprint };
+            return fresh;
+          })();
     try {
-      const { plan: updated } = await runAgentPlan(planId, steps);
+      const { plan: updated } = await runAgentPlan(planId, steps, idempotencyKey);
+      runSubmissionRef.current = null; // success — a future run is a new intention, mint a new key
       setPlan(updated);
       setLoadError(null);
       onRunEditedSchema?.(blocks);

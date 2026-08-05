@@ -236,10 +236,23 @@ export async function enrichPage(
 
   if (addedTags.length > 0) {
     try {
-      await queryHelpers.queryRun(
-        `UPDATE notebook_pages SET tags_json = ?, updated_at = ? WHERE id = ?`,
-        [JSON.stringify(mergedTags), new Date().toISOString(), pageId]
-      );
+      // M02-018: do NOT bump `updated_at` here. This fire-and-forget job runs
+      // asynchronously right after every content save (see the call site's
+      // `void enrichPage(id).catch(() => {})`), which races the client's very
+      // next autosave. Before this fix, a successful edit handed the client an
+      // `updatedAt` token that this background job could invalidate within
+      // milliseconds — turning the client's own immediately-following,
+      // perfectly legitimate autosave into a false 409 "modified elsewhere"
+      // conflict, even though nothing the user did conflicted with anything.
+      // Reproduced by a real create->edit->autosave->read-back cycle test
+      // (tests/integration/m02c-notebook-legacy-conflict.realdb.test.ts).
+      // Auto-tags are explicitly documented above as a non-destructive,
+      // best-effort merge; they do not need to participate in the optimistic-
+      // concurrency version a human editor is racing against.
+      await queryHelpers.queryRun(`UPDATE notebook_pages SET tags_json = ? WHERE id = ?`, [
+        JSON.stringify(mergedTags),
+        pageId,
+      ]);
       result.addedTags = addedTags;
     } catch (err: any) {
       logger.warn(`[NotebookEnrich] tag persist failed for ${pageId}: ${err?.message || err}`);

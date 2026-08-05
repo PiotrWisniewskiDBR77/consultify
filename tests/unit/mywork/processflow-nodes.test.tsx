@@ -36,10 +36,11 @@ describe('BPMNStartNode', () => {
     expect(circle).toBeTruthy();
   });
 
-  it('does not render target handle (start events have no incoming)', () => {
+  it('renders both source and target handles on all 4 sides (Z23/Fala 7: magnetic connector-snapping parity across every node type, including BPMN start events)', () => {
     render(<BPMNStartNode id="s1" data={{ label: 'Begin' }} selected={false} />);
     expect(rfHandleTypes).toContain('source');
-    expect(rfHandleTypes).not.toContain('target');
+    expect(rfHandleTypes).toContain('target');
+    expect(rfHandleTypes).toHaveLength(8);
   });
 });
 
@@ -55,10 +56,11 @@ describe('BPMNEndNode', () => {
     expect(circle).toBeTruthy();
   });
 
-  it('does not render source handle', () => {
+  it('renders both source and target handles on all 4 sides (Z23/Fala 7: magnetic connector-snapping parity across every node type, including BPMN end events)', () => {
     render(<BPMNEndNode id="e1" data={{ label: 'Finish' }} selected={false} />);
     expect(rfHandleTypes).toContain('target');
-    expect(rfHandleTypes).not.toContain('source');
+    expect(rfHandleTypes).toContain('source');
+    expect(rfHandleTypes).toHaveLength(8);
   });
 });
 

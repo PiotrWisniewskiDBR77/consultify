@@ -3016,7 +3016,8 @@
       "title4": "List",
       "title5": "Cards",
       "ariaLabel7": "Ideas view mode",
-      "unifiedCreateNew": "+ New"
+      "unifiedCreateNew": "+ New",
+      "vault": "Client Vault"
     },
     "inboxContent": {
       "justNow": "Just now",
@@ -15687,7 +15688,13 @@
       "riskLow": "Low",
       "riskMedium": "Medium",
       "riskHigh": "High",
-      "riskCritical": "Critical"
+      "riskCritical": "Critical",
+      "basisOwner": "Mine",
+      "basisOrg": "Organization",
+      "completedInWindow": "{{done}}/{{total}} · last {{days}} days",
+      "overdueOfOpen": "Overdue (of {{open}} open)",
+      "overdueTasksMine": "Overdue tasks (mine)",
+      "escalationsOrg": "Escalated decisions (org)"
     },
     "action": {
       "decision": "Decision",
@@ -15819,6 +15826,18 @@
       "executeFailed": "Failed to execute intervention.",
       "rejected": "Intervention rejected.",
       "rejectFailed": "Failed to reject intervention."
+    },
+    "snapshotError": "Could not read the manager snapshot for this period.",
+    "forbidden": {
+      "title": "Manager view is not available for your role",
+      "description": "Portfolio health, team capacity and the approval queue are limited to manager and admin roles."
+    },
+    "scope": {
+      "label": "Snapshot",
+      "windowDays": "Last {{count}} days",
+      "basisNote": "Each figure is labelled Mine or Organization",
+      "generatedAt": "Read at {{time}}",
+      "incoherent": "{{count}} figures failed their consistency check"
     }
   },
   "research": {
@@ -34748,5 +34767,22 @@
     "not_started": "Not started",
     "todo": "To do",
     "unknown": "Unknown"
+  },
+  "state": {
+    "save": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "savedAt": "Saved {{time}}",
+      "failed": "Not saved",
+      "conflict": "Changed elsewhere",
+      "forbidden": "Not permitted",
+      "reloadLatest": "Load latest"
+    },
+    "conflict": {
+      "title": "This was changed somewhere else",
+      "description": "Load the latest version before saving again.",
+      "byAt": "Last change: {{who}}{{when}}",
+      "someoneElse": "another user"
+    }
   }
 }

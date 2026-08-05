@@ -51,7 +51,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -68,6 +68,7 @@ import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Api } from '@/services/api';
 import { V8MyWorkApi } from '@/services/api/v8/my-work';
+import { type IdempotencyState, resolveIdempotencyKey } from '@/utils/createIdempotencyKey';
 // ETAP 3 standardu n-Type — „Analizuj z AI" (silnik + panel wyników).
 import type { CardAnalysisChange, CardAnalysisField } from '@/services/cardAnalysis';
 import { mergeChangeValue } from '@/services/cardAnalysis';
@@ -380,6 +381,14 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const [saving, setSaving] = useState(false);
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState<string>('');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
+  // M02-003/M02-P04: idempotency key for the CREATE submission (My Work Tasks'
+  // real create path — Api.createPersonalTask, distinct from TaskDetailModal's
+  // pmo/TaskController path). Ref, not state, so a double-click inside the same
+  // tick sees the same value — a state update would not have flushed yet.
+  // Survives a failed attempt so a retry reuses the key; cleared on success and
+  // whenever the form resets for a new task (resetForm, below).
+  const createIdempotencyRef = useRef<IdempotencyState | null>(null);
 
   // ── Golden flow: accept assignment / mark in-progress (MW-CORE-002/003) ──
   // Four honest outcomes for the Task-assigned → Inbox → accept flow's ONE
@@ -1063,6 +1072,9 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   };
 
   const resetForm = () => {
+    // Opening the form for a fresh create is a deliberate new intention —
+    // never carry a previous submission's key into it.
+    createIdempotencyRef.current = null;
     setTitle('');
     setDescription('');
     setStatus('todo');
@@ -1182,7 +1194,17 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
         }
         onSaved?.({ ...personalPayload, id: taskId });
       } else {
-        const created = await Api.createPersonalTask(personalPayload);
+        // Same payload (double-click, retry after a timeout) -> same key, so the
+        // server collapses it to one row. Edited payload -> new key, so a
+        // corrected retry is NOT answered with the stale first attempt.
+        const idem = resolveIdempotencyKey(createIdempotencyRef.current, personalPayload);
+        createIdempotencyRef.current = idem;
+        const created = await Api.createPersonalTask({
+          ...personalPayload,
+          idempotencyKey: idem.key,
+        });
+        // Success: the next create must be a genuinely new row.
+        createIdempotencyRef.current = null;
         if (!silent) toast.success(t('myWork.taskDetail.toastSuccess2', 'Task created'));
         trackFunnelEvent('personal_task_created', {
           source: 'detail',

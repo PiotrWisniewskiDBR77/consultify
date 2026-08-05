@@ -1,11 +1,25 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import enTranslation from '../../../public/locales/en/translation.json';
 
 import { IdeaWorkspaceToolbar } from '../../../src/components/MyWork/IdeaWorkspaceToolbar';
 
+// Resolve real English copy from the translation file so accessible-name
+// assertions verify actual product copy, not raw i18n keys.
+function resolveTranslation(key: string): string {
+  const value = key
+    .split('.')
+    .reduce<unknown>(
+      (acc, segment) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[segment] : undefined),
+      enTranslation
+    );
+  return typeof value === 'string' ? value : key;
+}
+
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ i18n: { language: 'en' } }),
+  useTranslation: () => ({ t: (key: string) => resolveTranslation(key), i18n: { language: 'en' } }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 const baseProps = {

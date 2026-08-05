@@ -82,6 +82,9 @@ export interface DecisionRiskDTO {
   updatedAt: string;
 }
 
+/** Collaboration sections that can be independently unavailable (M02-004). */
+export type DecisionSectionKey = 'comments' | 'alternatives' | 'risks' | 'links';
+
 export interface DecisionLinkDTO {
   id: string;
   relation: string;
@@ -132,6 +135,14 @@ export interface DecisionDetailDTO {
   dossierAlternatives: DecisionAlternativeDTO[];
   dossierRisks: DecisionRiskDTO[];
   links: DecisionLinkDTO[];
+  /**
+   * M02-004: sections whose backing table is absent in the environment
+   * serving this response (e.g. migration 932 not applied). The matching
+   * array above is empty in that case, so an empty array alone MUST NOT be
+   * read as "nothing here yet" — check this list first and render an explicit
+   * unavailable state instead of a normal empty state.
+   */
+  degradedSections?: DecisionSectionKey[];
 }
 
 /** Response of PUT/PATCH /api/decisions/:id/decide. */

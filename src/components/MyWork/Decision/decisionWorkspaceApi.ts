@@ -9,6 +9,7 @@
  * not add new transport plumbing and does not modify api.ts.
  */
 import { Api } from '@/services/api';
+import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import type {
   DecideResultDTO,
@@ -36,6 +37,29 @@ export function readDecisionApiError(err: unknown): DecisionApiError {
   if (err instanceof Error) return err as DecisionApiError;
   const wrapped = new Error(typeof err === 'string' ? err : 'Request failed') as DecisionApiError;
   return wrapped;
+}
+
+/**
+ * Human-readable detail string for microcopy interpolation — the ONLY thing
+ * that may be shown to a user.
+ *
+ * Finding M02-004: call sites used to interpolate `err.data?.error` directly,
+ * which rendered "Could not load this decision. [object Object]" whenever an
+ * endpoint answered with `{ error: { ... } }`. `Api.*` deliberately keeps the
+ * RAW parsed body on `.data` (so callers can branch on `.code`,
+ * `.currentVersion`, …) and puts the ALREADY-normalized string on `.message`
+ * — so reaching into `.data.error` reaches *past* the normalization the
+ * transport layer performed.
+ *
+ * This reuses the shared `normalizeApiErrorMessage` (src/utils/apiError.ts),
+ * which flattens nested `{ error: {...} }` / validation payloads and refuses
+ * to emit the literal "[object Object]". Returns '' when nothing readable is
+ * available, so callers keep their own fallback copy.
+ */
+export function readDecisionApiErrorDetail(err: unknown): string {
+  const apiErr = readDecisionApiError(err);
+  const fromBody = apiErr.data ? normalizeApiErrorMessage(apiErr.data, '') : '';
+  return fromBody || normalizeApiErrorMessage(apiErr.message, '') || '';
 }
 
 export interface CreateAlternativeInput {

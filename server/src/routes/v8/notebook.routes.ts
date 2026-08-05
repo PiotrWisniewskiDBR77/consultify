@@ -464,7 +464,26 @@ router.put(
     }
 
     const currentVersion = row.updated_at;
-    if (String(expectedVersion) !== String(currentVersion)) {
+    // M02-018: `String(expectedVersion) !== String(currentVersion)` (the
+    // previous check) compared a client ISO string (e.g.
+    // "2026-08-05T06:42:14.123Z") against `String(aJsDateObject)`
+    // (e.g. "Tue Aug 05 2026 06:42:14 GMT+0000 ...") — node-postgres returns
+    // TIMESTAMP columns as `Date` objects, and `String(Date)` never produces
+    // an ISO string. Those two strings can never be equal, so this endpoint
+    // rejected every request with 409 — including a client sending back
+    // exactly the version it was just given, with no concurrency involved at
+    // all. Compare parsed epoch millis instead, matching the pattern already
+    // used correctly by the sibling `v8/my-work.routes.ts` handler.
+    const expected = new Date(String(expectedVersion)).getTime();
+    if (!Number.isFinite(expected)) {
+      return res.status(400).json({
+        error: 'expectedVersion must be a valid timestamp',
+        code: 'P07_INVALID_EXPECTED_VERSION',
+        meta: notebookMeta(),
+      });
+    }
+    const current = currentVersion ? new Date(currentVersion).getTime() : NaN;
+    if (Number.isFinite(current) && expected !== current) {
       return res.status(409).json({
         degraded: true,
         scenario: 9,
@@ -483,13 +502,63 @@ router.put(
     const contentText =
       typeof content === 'string' ? content : typeof content?.text === 'string' ? content.text : '';
 
-    await dbRun(
+    // M02-018 — `updated_at` is TIMESTAMP WITHOUT TIME ZONE. Binding the `Date`
+    // object straight back as a query parameter lets node-postgres serialize it
+    // using the process's LOCAL timezone (its default `Date` -> wire-format
+    // path), while the value actually stored was written by `CURRENT_TIMESTAMP`
+    // under a UTC-wall-clock session — so the naive string round-tripped back
+    // through a plain `Date` bind rarely matches the naive string on disk,
+    // and the predicate below would silently never match. Rebuild the same
+    // naive local-literal token the sibling handlers
+    // (`server/src/routes/my-work/notebook.routes.ts`,
+    // `server/src/routes/v8/my-work.routes.ts`) already use, and compare with
+    // millisecond truncation since the client's echoed token lost sub-ms
+    // precision going through JSON.
+    const part = (n: number, width = 2) => String(n).padStart(width, '0');
+    const versionLiteral =
+      currentVersion instanceof Date
+        ? `${currentVersion.getFullYear()}-${part(currentVersion.getMonth() + 1)}-${part(currentVersion.getDate())} ` +
+          `${part(currentVersion.getHours())}:${part(currentVersion.getMinutes())}:${part(currentVersion.getSeconds())}.` +
+          part(currentVersion.getMilliseconds(), 3)
+        : currentVersion;
+
+    const update = await dbRun(
       `UPDATE notebook_pages
        SET content_json = $1, content_text = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3 AND updated_at = $4`,
-      [contentJson, contentText, noteId, currentVersion],
+       WHERE id = $3
+         AND date_trunc('milliseconds', updated_at) = date_trunc('milliseconds', CAST($4 AS timestamp))`,
+      [contentJson, contentText, noteId, versionLiteral],
       { fallback: false }
     );
+
+    // M02-018 — the version predicate above prevents CORRUPTION (only one of
+    // two racing writers can match the WHERE clause), but on its own it does
+    // NOT prevent a silent no-op: the app-level comparison a few lines up
+    // reads `currentVersion` and can pass for two callers racing on the same
+    // version, and only one of their UPDATEs then actually matches a row.
+    // Without this check, the loser's zero-row UPDATE was falling straight
+    // through to the 200 response below — reporting success on a write that
+    // changed nothing, which is worse than an overwrite: the caller believes
+    // their edit is saved when it was silently discarded.
+    if (!update.changes) {
+      const fresh = await dbGet<{ id: string; updated_at: string }>(
+        `SELECT id, updated_at FROM notebook_pages WHERE id = $1 LIMIT 1`,
+        [noteId],
+        { fallback: false }
+      );
+      return res.status(409).json({
+        degraded: true,
+        scenario: 9,
+        userVisibleState: 'conflict resolution UI (versions)',
+        nextAction: 'explicit conflict resolution — no silent overwrite',
+        conflict: {
+          yourVersion: expectedVersion,
+          serverVersion: fresh?.updated_at ?? null,
+        },
+        code: 'P07_CONCURRENT_EDIT_CONFLICT',
+        meta: notebookMeta(),
+      });
+    }
 
     const updated = await dbGet<{ id: string; updated_at: string }>(
       `SELECT id, updated_at FROM notebook_pages WHERE id = $1 LIMIT 1`,

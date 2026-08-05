@@ -20,6 +20,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -104,8 +105,10 @@ describe('B1 (M09) — IdeaWhiteboardTool observer read-only', () => {
       () => expect(screen.getByTestId('whiteboard-observer-badge')).toBeInTheDocument(),
       { timeout: 4000 }
     );
+    // t() is mocked to return the raw key (see comment above) so we assert on the key,
+    // not the translated English copy — real-copy coverage lives in the i18n contract test.
     expect(screen.getByTestId('whiteboard-observer-badge').textContent).toMatch(
-      /Observer — view only/i
+      /observerViewOnly/i
     );
     // Read-only propagation: the empty-state quick-start mutation buttons (gated on the
     // SAME `locked` flag observer feeds) must be hidden, proving the board is view-only.

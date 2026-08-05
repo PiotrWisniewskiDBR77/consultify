@@ -213,9 +213,26 @@ describe('A3 — whiteboard PNG export (Mind Map mechanism reuse)', () => {
     const fetchMock = vi.fn().mockResolvedValue({ blob: async () => pngBlob });
     vi.stubGlobal('fetch', fetchMock);
 
+    // Fixture matches the real captureMapRaster contract (mapExportRender.ts):
+    // it resolves `.react-flow__viewport` inside the container (not the outer
+    // `.react-flow` element itself — a deliberate crop-to-content refactor so
+    // exports frame the drawn content instead of the raw visible viewport),
+    // and needs at least one `.react-flow__node` with a `translate(...)`
+    // transform and non-zero offsetWidth/offsetHeight to compute content
+    // bounds (jsdom reports 0 for both unless stubbed).
     const container = document.createElement('div');
     const flowEl = document.createElement('div');
     flowEl.className = 'react-flow';
+    const viewportEl = document.createElement('div');
+    viewportEl.className = 'react-flow__viewport';
+    const nodeEl = document.createElement('div');
+    nodeEl.className = 'react-flow__node';
+    nodeEl.setAttribute('data-id', 'n1');
+    nodeEl.style.transform = 'translate(10px, 20px)';
+    Object.defineProperty(nodeEl, 'offsetWidth', { value: 100, configurable: true });
+    Object.defineProperty(nodeEl, 'offsetHeight', { value: 50, configurable: true });
+    viewportEl.appendChild(nodeEl);
+    flowEl.appendChild(viewportEl);
     container.appendChild(flowEl);
     const canvasContainerRef = { current: container };
 
@@ -225,10 +242,12 @@ describe('A3 — whiteboard PNG export (Mind Map mechanism reuse)', () => {
     fireEvent.click(screen.getByText('PNG (image)'));
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
-    // Same path as Mind Map: toPng on the live ReactFlow container, white bg, 2x.
+    // Same path as Mind Map: toPng on the live ReactFlow VIEWPORT (cropped to
+    // content bounds — CONTENT_PADDING=48 around a 100x50 node = 196x146 at
+    // scale 3, the min(MAX_RASTER_SCALE, MAX_RASTER_EDGE / max(w,h)) result).
     expect(toPng).toHaveBeenCalledWith(
-      flowEl,
-      expect.objectContaining({ backgroundColor: '#ffffff', pixelRatio: 2 })
+      viewportEl,
+      expect.objectContaining({ backgroundColor: '#ffffff', pixelRatio: 1, width: 588, height: 438 })
     );
     expect(capturedBlobs[0].type).toBe('image/png');
     vi.unstubAllGlobals();

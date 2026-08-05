@@ -1249,12 +1249,23 @@ router.get(
         projectNames = new Map((projectRows || []).map((p) => [String(p.id), String(p.name)]));
       }
 
+      // M02-016 — the two SYSTEM safes are not user data: their display name
+      // belongs to the UI locale, not to the server. `type` is the stable
+      // contract the client localizes on (`isSystem` marks that explicitly);
+      // `name` stays only as a neutral English fallback for any consumer that
+      // does not localize. Previously these were hardcoded Polish, so an
+      // English account saw "Mój sejf"/"Sejf organizacji" while every other
+      // label on the screen was English — and the client's own EN mapping in
+      // `VaultSafesTable.safeLevelLabel()` was dead code.
+      // Project safes are the opposite case: their name IS user data
+      // (`projects.name`) and must be passed through untranslated.
       const safes = [
         {
           id: 'user',
           type: 'user' as const,
+          isSystem: true as const,
           projectId: null,
-          name: 'Mój sejf',
+          name: 'My safe',
           documentCount: myCount,
           lastModified: myLast,
           sizeBytes: mySize,
@@ -1264,8 +1275,9 @@ router.get(
         {
           id: 'organization',
           type: 'organization' as const,
+          isSystem: true as const,
           projectId: null,
-          name: 'Sejf organizacji',
+          name: 'Organization safe',
           documentCount: orgCount,
           lastModified: orgLast,
           sizeBytes: orgSize,
@@ -1283,6 +1295,7 @@ router.get(
           return {
             id: `project:${pid}`,
             type: 'project' as const,
+            isSystem: false as const,
             projectId: pid,
             name: projectNames.get(pid) || 'Untitled project',
             documentCount: counted.cnt,

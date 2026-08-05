@@ -2268,7 +2268,8 @@
       "title4": "Lista",
       "title5": "Karty",
       "ariaLabel7": "Tryb widoku pomyslow",
-      "unifiedCreateNew": "+ Nowy"
+      "unifiedCreateNew": "+ Nowy",
+      "vault": "Sejf klienta"
     },
     "inboxContent": {
       "justNow": "Przed chwilą",
@@ -16478,7 +16479,13 @@
       "riskLow": "Niski",
       "riskMedium": "Średni",
       "riskHigh": "Wysoki",
-      "riskCritical": "Krytyczny"
+      "riskCritical": "Krytyczny",
+      "basisOwner": "Moje",
+      "basisOrg": "Organizacja",
+      "completedInWindow": "{{done}}/{{total}} · ostatnie {{days}} dni",
+      "overdueOfOpen": "Po terminie (z {{open}} otwartych)",
+      "overdueTasksMine": "Zadania po terminie (moje)",
+      "escalationsOrg": "Decyzje eskalowane (organizacja)"
     },
     "action": {
       "decision": "Decyzja",
@@ -16610,6 +16617,18 @@
       "executeFailed": "Nie udało się wykonać interwencji.",
       "rejected": "Interwencja została odrzucona.",
       "rejectFailed": "Nie udało się odrzucić interwencji."
+    },
+    "snapshotError": "Nie udało się odczytać migawki menedżera dla tego okresu.",
+    "forbidden": {
+      "title": "Widok Menedżera nie jest dostępny dla Twojej roli",
+      "description": "Kondycja portfela, obłożenie zespołu i kolejka zatwierdzeń są dostępne wyłącznie dla ról menedżera i administratora."
+    },
+    "scope": {
+      "label": "Migawka",
+      "windowDays": "Ostatnie {{count}} dni",
+      "basisNote": "Każda liczba ma podpisany zakres: Moje lub Organizacja",
+      "generatedAt": "Odczyt: {{time}}",
+      "incoherent": "Liczby niespójne: {{count}}"
     }
   },
   "research": {
@@ -35822,5 +35841,22 @@
     "not_started": "Nierozpoczęte",
     "todo": "Do zrobienia",
     "unknown": "Nieznany"
+  },
+  "state": {
+    "save": {
+      "saving": "Zapisywanie…",
+      "saved": "Zapisano",
+      "savedAt": "Zapisano {{time}}",
+      "failed": "Nie zapisano",
+      "conflict": "Zmienione gdzie indziej",
+      "forbidden": "Brak uprawnień",
+      "reloadLatest": "Wczytaj najnowsze"
+    },
+    "conflict": {
+      "title": "To zostało zmienione w innym miejscu",
+      "description": "Wczytaj najnowszą wersję przed kolejnym zapisem.",
+      "byAt": "Ostatnia zmiana: {{who}}{{when}}",
+      "someoneElse": "inny użytkownik"
+    }
   }
 }

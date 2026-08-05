@@ -12,26 +12,21 @@
  */
 
 import { motion } from 'framer-motion';
-import {
-  AlertTriangle,
-  ArrowRight,
-  Calendar,
-  Folder,
-  Lightbulb,
-  RefreshCw,
-  Zap,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, Calendar, Folder, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
+import { EmptyState, SaveStateIndicator, type SaveStatus } from '../../shared/states';
 import { ActionRequiredStrip } from './ActionRequiredStrip';
 import { AIOperatorOverviewCard } from './AIOperatorOverviewCard';
 import { DecisionQueuePreview } from './DecisionQueuePreview';
 import { dedupeActionItems } from './executiveData';
 import { KPIGrid } from './KPIGrid';
+import { ManagerScopeBar } from './ManagerScopeBar';
+import { fetchManagerSnapshot, type ManagerSnapshot } from './managerSnapshot';
 import { PortfolioHealthScore } from './PortfolioHealthScore';
 import { TeamPerformancePreview } from './TeamPerformancePreview';
 
@@ -168,7 +163,10 @@ const SignalCard: React.FC<{ signal: AISignal; onClick?: () => void }> = ({ sign
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className="px-4 py-3 rounded-lg hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer transition-colors duration-150"
+      // Only look clickable when there is somewhere to go (M02-011).
+      className={`px-4 py-3 rounded-lg transition-colors duration-150 ${
+        onClick ? 'hover:bg-slate-50/60 dark:hover:bg-white/[0.03] cursor-pointer' : ''
+      }`}
     >
       <div className="flex items-start gap-2.5">
         <span
@@ -204,45 +202,18 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const [healthScore, setHealthScore] = useState({
-    score: 0,
-    previousScore: 0,
-    trend: 'stable' as 'up' | 'down' | 'stable',
-    breakdown: {
-      execution: 0,
-      decisions: 0,
-      capacity: 0,
-      risk: 0,
-    },
-  });
+  // M02-008: ONE snapshot drives every number on this surface. `null` means
+  // "not loaded yet or refused" — never "zero".
+  const [snapshot, setSnapshot] = useState<ManagerSnapshot | null>(null);
+  const [coherenceFailures, setCoherenceFailures] = useState<string[]>([]);
+  const [snapshotDenied, setSnapshotDenied] = useState(false);
 
-  type TrendDir = 'up' | 'down' | 'stable';
-  type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
-  const [kpiData, setKpiData] = useState<{
-    tasks: {
-      completed: number;
-      total: number;
-      overdueCount: number;
-      onTimeRate: number;
-      trend: TrendDir;
-    } | null;
-    decisions: { pending: number; avgWaitDays: number; critical: number; trend: TrendDir } | null;
-    team: {
-      avgCapacity: number;
-      overloaded: number;
-      available: number;
-      trend: TrendDir;
-      memberCount: number;
-    } | null;
-    risk: { level: RiskLevel; blockers: number; escalations: number; trend: TrendDir } | null;
-  }>({
-    tasks: null,
-    decisions: null,
-    team: null,
-    risk: null,
-  });
+  // M02-011: write outcomes for the operator approval queue. `saved` is set
+  // only AFTER the post-commit refetch resolves — never optimistically.
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [lastFailedWrite, setLastFailedWrite] = useState<(() => void) | null>(null);
 
   const [actionItems, setActionItems] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
@@ -282,91 +253,64 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           setLoading(true);
         }
 
-        const [statsRes, decisionsRes, teamRes, tasksRes, analyticsRes, signalsRes, operatorRes] =
-          await Promise.allSettled([
-            Api.get('/my-work/stats?period=week'),
-            Api.get('/my-work/decisions?limit=10&onlyPending=true'),
-            Api.get('/my-work/team-workload'),
-            Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
-            Api.getExecutiveAnalytics(),
-            Api.get('/my-work/signals?limit=5'),
-            Api.getAIOperatorOverview(),
-          ]);
+        // M02-008 — THE RULE FOR THIS FUNCTION:
+        // `fetchManagerSnapshot` is the ONLY source of numbers on this surface.
+        // Every other request below fetches CONTENT (rows to render). None of
+        // them may contribute a count, a ratio or a headline figure — that is
+        // exactly how "Decisions pending 10" ended up being a page size and
+        // "0% · 0/1" ended up next to "Overdue 71".
+        const [
+          snapshotRes,
+          decisionsRes,
+          teamRes,
+          tasksRes,
+          analyticsRes,
+          signalsRes,
+          operatorRes,
+        ] = await Promise.allSettled([
+          fetchManagerSnapshot('week'),
+          Api.get('/my-work/decisions?limit=10&onlyPending=true'),
+          Api.get('/my-work/team-workload'),
+          Api.getTasks({ assigneeId: user?.id, status: 'todo,in_progress' } as any),
+          Api.getExecutiveAnalytics(),
+          Api.get('/my-work/signals?limit=5'),
+          Api.getAIOperatorOverview(),
+        ]);
+
+        // --- Snapshot: every KPI, the health score and the risk level ---
+        if (snapshotRes.status === 'fulfilled') {
+          const result = snapshotRes.value;
+          if (result.status === 'forbidden') {
+            setSnapshot(null);
+            setSnapshotDenied(true);
+            setCoherenceFailures([]);
+          } else if (result.status === 'error') {
+            setSnapshot(null);
+            setSnapshotDenied(false);
+            setCoherenceFailures([]);
+            setLoadError(
+              t('executive.snapshotError', 'Could not read the manager snapshot for this period.')
+            );
+          } else {
+            setSnapshot(result.snapshot);
+            setSnapshotDenied(false);
+            setCoherenceFailures(result.status === 'incoherent' ? result.failed : []);
+          }
+        } else {
+          setSnapshot(null);
+          setSnapshotDenied(false);
+          setLoadError(
+            t('executive.snapshotError', 'Could not read the manager snapshot for this period.')
+          );
+        }
 
         if (operatorRes.status === 'fulfilled' && operatorRes.value) {
           setOperatorOverview(operatorRes.value);
         }
 
-        // --- Process stats (with real previous period data) ---
-        if (statsRes.status === 'fulfilled' && statsRes.value) {
-          const stats = statsRes.value;
-          const completionRate =
-            stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-          const onTimeRate = stats.onTimeRate || 0;
-
-          const prevCompletionRate =
-            stats.previous?.total > 0
-              ? Math.round((stats.previous.completed / stats.previous.total) * 100)
-              : 0;
-          const prevOnTimeRate = stats.previous?.onTimeRate || 0;
-
-          const executionScore = completionRate;
-
-          let decisionsScore = 50;
-          if (decisionsRes.status === 'fulfilled' && Array.isArray(decisionsRes.value)) {
-            const pendingCount = decisionsRes.value.length;
-            decisionsScore =
-              pendingCount === 0 ? 100 : Math.round(Math.max(20, 100 - pendingCount * 10));
-          }
-
-          let capacityScore = 0;
-          if (teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)) {
-            const team = teamRes.value || [];
-            if (team.length > 0) {
-              const avgUtil =
-                team.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) / team.length;
-              capacityScore = Math.round(Math.min(100, avgUtil));
-            }
-          }
-
-          const blockedCount = stats.byStatus?.blocked || 0;
-          const riskScore =
-            stats.total > 0
-              ? Math.round(Math.max(0, 100 - (blockedCount / Math.max(1, stats.total)) * 100))
-              : 80;
-
-          const currentHealthScore = Math.round(
-            executionScore * 0.4 + decisionsScore * 0.2 + capacityScore * 0.2 + riskScore * 0.2
-          );
-          const previousHealthScore = Math.round(
-            prevCompletionRate * 0.4 + 50 * 0.2 + 0 * 0.2 + 80 * 0.2
-          );
-
-          setHealthScore({
-            score: currentHealthScore,
-            previousScore: previousHealthScore,
-            trend: stats.trend || 'stable',
-            breakdown: {
-              execution: executionScore,
-              decisions: decisionsScore,
-              capacity: capacityScore,
-              risk: riskScore,
-            },
-          });
-
-          setKpiData((prev) => ({
-            ...prev,
-            tasks: {
-              completed: stats.completed || 0,
-              total: stats.total || 0,
-              overdueCount: stats.byStatus?.overdue || 0,
-              onTimeRate: stats.onTimeRate || 0,
-              trend: stats.trend || 'stable',
-            },
-          }));
-        }
-
-        // --- Process decisions (using /my-work/decisions which returns flat array) ---
+        // --- Decisions: ROWS for the queue preview. The pending/critical
+        //     counts shown in the KPI card come from the snapshot, so this
+        //     list staying capped at 10 can no longer distort a headline. ---
         if (decisionsRes.status === 'fulfilled' && decisionsRes.value) {
           const decisionList = Array.isArray(decisionsRes.value) ? decisionsRes.value : [];
           const pendingDecisions = decisionList.filter((d: any) =>
@@ -387,36 +331,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             }))
           );
 
-          const criticalCount = pendingDecisions.filter(
-            (d: any) => (d.priority || '').toUpperCase() === 'CRITICAL'
-          ).length;
-
-          const avgWaitDays =
-            pendingDecisions.length > 0
-              ? Math.round(
-                  (pendingDecisions.reduce((sum: number, d: any) => {
-                    const days =
-                      d.daysWaiting ??
-                      Math.floor(
-                        (Date.now() - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24)
-                      );
-                    return sum + days;
-                  }, 0) /
-                    pendingDecisions.length) *
-                    10
-                ) / 10
-              : 0;
-
-          setKpiData((prev) => ({
-            ...prev,
-            decisions: {
-              pending: pendingDecisions.length,
-              avgWaitDays,
-              critical: criticalCount,
-              trend: pendingDecisions.length > 5 ? 'down' : 'stable',
-            },
-          }));
-
           const urgentItems = pendingDecisions
             .filter(
               (d: any) =>
@@ -436,7 +350,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           setActionItems(dedupeActionItems(urgentItems).slice(0, 3));
         }
 
-        // --- Process team data ---
+        // --- Team: ROWS for the performance preview (capacity KPI: snapshot) ---
         if (
           teamRes.status === 'fulfilled' &&
           Array.isArray(teamRes.value) &&
@@ -459,52 +373,15 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               trend: 'stable' as const,
             }))
           );
-
-          const avgCapacity = Math.round(
-            teamRes.value.reduce((sum: number, m: any) => sum + (m.capacity || 0), 0) /
-              teamRes.value.length
-          );
-          const overloadedCount = teamRes.value.filter((m: any) => (m.capacity || 0) > 100).length;
-          const availableCount = teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length;
-
-          setKpiData((prev) => ({
-            ...prev,
-            team: {
-              avgCapacity,
-              overloaded: overloadedCount,
-              available: availableCount,
-              trend: overloadedCount > 2 ? 'down' : 'stable',
-              memberCount: teamRes.value.length,
-            },
-          }));
         }
 
-        // --- Process tasks for risk assessment ---
+        // --- Overdue tasks: ROWS for the action strip (the blocker COUNT
+        //     shown on the Risk KPI comes from the snapshot) ---
         if (tasksRes.status === 'fulfilled' && Array.isArray(tasksRes.value)) {
           const overdueTasks = tasksRes.value.filter((task: any) => {
             if (!task.dueDate) return false;
             return new Date(task.dueDate) < new Date();
           });
-
-          const escalationsCount =
-            statsRes.status === 'fulfilled' ? (statsRes.value as any)?.byStatus?.escalated || 0 : 0;
-
-          const riskLevel: RiskLevel =
-            overdueTasks.length > 5 || escalationsCount > 3
-              ? 'high'
-              : overdueTasks.length > 2 || escalationsCount > 1
-                ? 'medium'
-                : 'low';
-
-          setKpiData((prev) => ({
-            ...prev,
-            risk: {
-              level: riskLevel,
-              blockers: overdueTasks.length,
-              escalations: escalationsCount,
-              trend: overdueTasks.length > 5 ? 'down' : overdueTasks.length === 0 ? 'up' : 'stable',
-            },
-          }));
 
           const overdueTaskItems = overdueTasks.map((task: any) => {
             const daysOverdue = Math.floor(
@@ -531,13 +408,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           });
         }
 
-        // --- Process initiative + capacity analytics ---
+        // --- Initiative progress: ROWS ---
         if (analyticsRes.status === 'fulfilled' && analyticsRes.value) {
           const analytics = analyticsRes.value as any;
-          const availableCount =
-            teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
-              ? teamRes.value.filter((m: any) => (m.capacity || 0) < 50).length
-              : 0;
           const progressItems: InitiativeProgress[] = Array.isArray(analytics?.initiativeBreakdown)
             ? analytics.initiativeBreakdown.slice(0, 6).map((i: any) => ({
                 id: i.id,
@@ -552,34 +425,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
             : [];
 
           setInitiatives(progressItems);
-
-          if (analytics?.capacity?.avgUtilization != null) {
-            const analyticsMemberCount =
-              teamRes.status === 'fulfilled' && Array.isArray(teamRes.value)
-                ? teamRes.value.length
-                : Array.isArray(analytics.overloads)
-                  ? analytics.overloads.length
-                  : 0;
-            setKpiData((prev) => ({
-              ...prev,
-              team: {
-                avgCapacity: Number(analytics.capacity.avgUtilization || 0),
-                overloaded: Array.isArray(analytics.overloads)
-                  ? analytics.overloads.length
-                  : (prev.team?.overloaded ?? 0),
-                available: availableCount,
-                trend:
-                  Number(analytics.capacity.shortfallHours || 0) > 0 ||
-                  (Array.isArray(analytics.overloads) && analytics.overloads.length > 0)
-                    ? 'down'
-                    : 'stable',
-                memberCount: prev.team?.memberCount ?? analyticsMemberCount,
-              },
-            }));
-          }
         }
 
-        // --- Process AI signals ---
+        // --- AI signals: ROWS ---
         if (signalsRes.status === 'fulfilled' && signalsRes.value) {
           const signalData = signalsRes.value?.signals || signalsRes.value || [];
           if (Array.isArray(signalData)) {
@@ -598,15 +446,13 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           }
         }
 
-        setLastUpdated(new Date());
-
         try {
           const pRes = await Api.get('/my-work/work-patterns');
           if (pRes) setPatterns(pRes);
         } catch {
           /* ignore */
         }
-      } catch (error) {
+      } catch {
         setLoadError(t('executive.loadError', 'Failed to load dashboard data'));
         toast.error(t('executive.loadError', 'Failed to load dashboard data'));
       } finally {
@@ -652,75 +498,122 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
     }
   };
 
-  const handleProposeOperatorIntervention = useCallback(
-    async (templateKey: string) => {
-      try {
-        setOperatorActionBusyId(templateKey);
-        await Api.proposeAIOperatorIntervention({ templateKey });
-        toast.success(t('executive.operator.proposed', 'Operator intervention proposed.'));
-        await fetchDashboardData(true);
-      } catch {
-        toast.error(t('executive.operator.proposeFailed', 'Failed to propose intervention.'));
-      } finally {
-        setOperatorActionBusyId(null);
-      }
+  /**
+   * M02-011 — every Manager write goes through here, so the surface reports the
+   * same five outcomes everywhere:
+   *
+   *   saving  → the request is in flight and the button is disabled
+   *   saved   → the mutation committed AND the post-commit refetch returned.
+   *             `saved` is set after the read-back, never after the POST, so it
+   *             cannot claim a write that the server did not keep.
+   *   conflict (HTTP 409) → someone wrote first; the only exit is reload-latest
+   *   forbidden (HTTP 403) → refused by policy; retry cannot help
+   *   error   → anything else; the exact call is stored so Retry re-runs THAT
+   *             action rather than a generic refresh
+   */
+  const runManagerWrite = useCallback(
+    async (busyId: string, mutate: () => Promise<unknown>, failureCopy: string) => {
+      const attempt = async () => {
+        try {
+          setOperatorActionBusyId(busyId);
+          setSaveStatus('saving');
+          await mutate();
+          // Fresh read-back BEFORE claiming success.
+          await fetchDashboardData(true);
+          setSaveStatus('saved');
+          setSavedAt(new Date());
+          setLastFailedWrite(null);
+        } catch (error) {
+          const status = (error as { status?: number } | null)?.status;
+          if (status === 409) {
+            setSaveStatus('conflict');
+          } else if (status === 403) {
+            setSaveStatus('forbidden');
+          } else {
+            setSaveStatus('error');
+            setLastFailedWrite(() => attempt);
+          }
+          toast.error(failureCopy);
+        } finally {
+          setOperatorActionBusyId(null);
+        }
+      };
+      await attempt();
     },
-    [fetchDashboardData, t]
+    [fetchDashboardData]
+  );
+
+  const handleProposeOperatorIntervention = useCallback(
+    (templateKey: string) =>
+      runManagerWrite(
+        templateKey,
+        () => Api.proposeAIOperatorIntervention({ templateKey }),
+        t('executive.operator.proposeFailed', 'Failed to propose intervention.')
+      ),
+    [runManagerWrite, t]
   );
 
   const handleAcceptOperatorIntervention = useCallback(
-    async (actionId: string) => {
-      try {
-        setOperatorActionBusyId(actionId);
-        await Api.acceptAIOperatorIntervention(actionId);
-        toast.success(t('executive.operator.accepted', 'Intervention accepted.'));
-        await fetchDashboardData(true);
-      } catch {
-        toast.error(t('executive.operator.acceptFailed', 'Failed to accept intervention.'));
-      } finally {
-        setOperatorActionBusyId(null);
-      }
-    },
-    [fetchDashboardData, t]
+    (actionId: string) =>
+      runManagerWrite(
+        actionId,
+        () => Api.acceptAIOperatorIntervention(actionId),
+        t('executive.operator.acceptFailed', 'Failed to accept intervention.')
+      ),
+    [runManagerWrite, t]
   );
 
   const handleExecuteOperatorIntervention = useCallback(
-    async (actionId: string) => {
-      try {
-        setOperatorActionBusyId(actionId);
-        await Api.executeAIOperatorIntervention(actionId);
-        toast.success(t('executive.operator.executed', 'Intervention executed.'));
-        await fetchDashboardData(true);
-      } catch {
-        toast.error(t('executive.operator.executeFailed', 'Failed to execute intervention.'));
-      } finally {
-        setOperatorActionBusyId(null);
-      }
-    },
-    [fetchDashboardData, t]
+    (actionId: string) =>
+      runManagerWrite(
+        actionId,
+        () => Api.executeAIOperatorIntervention(actionId),
+        t('executive.operator.executeFailed', 'Failed to execute intervention.')
+      ),
+    [runManagerWrite, t]
   );
 
   const handleRejectOperatorIntervention = useCallback(
-    async (actionId: string) => {
-      try {
-        setOperatorActionBusyId(actionId);
-        await Api.rejectAIOperatorIntervention(actionId);
-        toast.success(t('executive.operator.rejected', 'Intervention rejected.'));
-        await fetchDashboardData(true);
-      } catch {
-        toast.error(t('executive.operator.rejectFailed', 'Failed to reject intervention.'));
-      } finally {
-        setOperatorActionBusyId(null);
-      }
-    },
-    [fetchDashboardData, t]
+    (actionId: string) =>
+      runManagerWrite(
+        actionId,
+        () => Api.rejectAIOperatorIntervention(actionId),
+        t('executive.operator.rejectFailed', 'Failed to reject intervention.')
+      ),
+    [runManagerWrite, t]
   );
+
+  // The Manager surface is org-wide by nature; a 403 on the snapshot means the
+  // viewer is not a manager. That is a permission answer, not a failure, so it
+  // gets the `forbidden` state and no retry button.
+  if (!loading && snapshotDenied) {
+    return (
+      <EmptyState
+        variant="forbidden"
+        title={t('executive.forbidden.title', 'Manager view is not available for your role')}
+        description={t(
+          'executive.forbidden.description',
+          'Portfolio health, team capacity and the approval queue are limited to manager and admin roles.'
+        )}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
       {loadError && (
-        <div className="rounded-xl border border-danger-200 bg-danger-50 dark:bg-danger-900/20 dark:border-danger-500/30 px-4 py-3 text-sm text-danger-700 dark:text-danger-300">
-          {loadError}
+        <div
+          role="alert"
+          className="rounded-xl border border-danger-200 bg-danger-50 dark:bg-danger-900/20 dark:border-danger-500/30 px-4 py-3 text-sm text-danger-700 dark:text-danger-300 flex flex-wrap items-center justify-between gap-3"
+        >
+          <span>{loadError}</span>
+          <button
+            type="button"
+            onClick={() => fetchDashboardData(true)}
+            className="rounded-token-md border border-danger-300 dark:border-danger-500/40 px-2.5 py-1 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+          >
+            {t('common.retry', 'Try again')}
+          </button>
         </div>
       )}
 
@@ -728,7 +621,7 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between gap-4"
       >
         <div>
           <h1 className="text-2xl font-bold text-navy-900 dark:text-white">
@@ -741,37 +634,41 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-600 dark:text-slate-500 mr-2">
-            {t('executive.lastUpdated', 'Updated')}:{' '}
-            {lastUpdated.toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
-          </span>
-
-          <button
-            onClick={() => fetchDashboardData(true)}
-            disabled={refreshing}
-            className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
-            title={t('executive.refresh', 'Refresh')}
-          >
-            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <SaveStateIndicator
+          status={saveStatus}
+          savedAt={savedAt}
+          onRetry={lastFailedWrite ?? undefined}
+          onReload={() => {
+            setSaveStatus('idle');
+            fetchDashboardData(true);
+          }}
+        />
       </motion.div>
+
+      {/* M02-008: one scope + one timestamp for everything below. */}
+      <ManagerScopeBar
+        snapshot={snapshot}
+        coherenceFailures={coherenceFailures}
+        refreshing={refreshing}
+        onRefresh={() => fetchDashboardData(true)}
+      />
 
       {/* Portfolio Health + KPI Grid Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-1">
           <PortfolioHealthScore
-            score={healthScore.score}
-            previousScore={healthScore.previousScore}
-            trend={healthScore.trend}
-            breakdown={healthScore.breakdown}
+            score={snapshot?.health.score ?? 0}
+            previousScore={snapshot?.health.previousScore ?? 0}
+            trend={snapshot?.health.trend ?? 'stable'}
+            breakdown={
+              snapshot?.health.breakdown ?? { execution: 0, decisions: 0, capacity: 0, risk: 0 }
+            }
             loading={loading}
           />
         </div>
 
         <div className="xl:col-span-2">
-          <KPIGrid data={kpiData} loading={loading} onNavigate={onNavigate} />
+          <KPIGrid snapshot={snapshot} loading={loading} onNavigate={onNavigate} />
         </div>
       </div>
 
@@ -875,12 +772,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           onDecisionClick={(id) => onNavigate?.('decisions')}
         />
 
-        <TeamPerformancePreview
-          members={teamMembers}
-          loading={loading}
-          onViewAll={() => onNavigate?.('team')}
-          onMemberClick={(id) => onNavigate?.('team')}
-        />
+        {/* M02-011 (no dead actions): `team` has no destination inside My Work,
+            so this card is read-only rather than a click that does nothing. */}
+        <TeamPerformancePreview members={teamMembers} loading={loading} />
 
         {/* AI Signals & Insights */}
         <motion.div
@@ -903,24 +797,16 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => onNavigate?.('notifications')}
-              className="text-xs font-medium text-slate-600 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 flex items-center gap-1 transition-colors duration-150"
-            >
-              {t('executive.signals.viewAll', 'View all')}
-              <ArrowRight size={13} />
-            </button>
+            {/* M02-011 (no dead actions): "View all" used to call
+                onNavigate('notifications'), which no host handles — and the
+                only /notifications route is a SETTINGS page, not this feed. The
+                five signals shown here are the whole list, so there is nothing
+                to link to. */}
           </div>
 
           <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-0.5">
             {!loading && signals.length > 0 ? (
-              signals.map((signal) => (
-                <SignalCard
-                  key={signal.id}
-                  signal={signal}
-                  onClick={() => onNavigate?.('notifications')}
-                />
-              ))
+              signals.map((signal) => <SignalCard key={signal.id} signal={signal} />)
             ) : !loading ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Zap size={20} className="text-slate-600 dark:text-slate-400 mb-2" />

@@ -1,10 +1,11 @@
 import { Calendar, CheckSquare, Link as LinkIcon, Loader2, Save, Trash2, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { InitiativeService } from '../../services/initiativeService';
+import { type IdempotencyState, resolveIdempotencyKey } from '../../utils/createIdempotencyKey';
 
 interface TaskDetailModalProps {
   taskId: string | null;
@@ -41,6 +42,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   // Users
   const [assigneeId, setAssigneeId] = useState('');
   const [users, setUsers] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
+
+  // M02-003: idempotency key for the CREATE submission. Held in a ref (not
+  // state) so a double-click inside the same tick sees the same value — a state
+  // update would not have flushed yet, which is exactly the race that produced
+  // the live duplicates ("Audyt 3 maszyn krytycznych pod PdM", 4 rows / 26s).
+  // Survives failed attempts so a retry reuses the key; cleared on success and
+  // whenever the modal opens for a new task (a deliberate new intention).
+  const createIdempotencyRef = useRef<IdempotencyState | null>(null);
 
   useEffect(() => {
     loadInitiatives();
@@ -82,6 +91,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   }, [isOpen, taskId]);
 
   const resetForm = () => {
+    // Opening the modal for a fresh create is a deliberate new intention —
+    // never carry a previous submission's key into it.
+    createIdempotencyRef.current = null;
     setTitle('');
     setDescription('');
     setStatus('todo');
@@ -142,7 +154,16 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         await Api.put(`/tasks/${taskId}`, payload);
         toast.success('Task updated');
       } else {
-        await Api.post('/tasks', { ...payload, projectId: null }); // Global tasks might not have projectId initially
+        // Global tasks might not have projectId initially
+        const createPayload = { ...payload, projectId: null };
+        // Same payload (double-click, retry after a timeout) -> same key, so the
+        // server collapses it to one row. Edited payload -> new key, so a
+        // corrected retry is NOT answered with the stale first attempt.
+        const idem = resolveIdempotencyKey(createIdempotencyRef.current, createPayload);
+        createIdempotencyRef.current = idem;
+        await Api.post('/tasks', { ...createPayload, idempotencyKey: idem.key });
+        // Success: the next create must be a genuinely new row.
+        createIdempotencyRef.current = null;
         toast.success('Task created');
       }
       onTaskSaved();

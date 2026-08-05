@@ -129,6 +129,27 @@ export async function materializeInboxItems(
   const today = now.slice(0, 10);
   let upserted = 0;
 
+  // M02-002 (reopen half of the lifecycle; fix for the 704/706-pending
+  // backlog documented in M02_OPEN_FINDINGS.csv). The delete/archive
+  // triggers (20260805_m02p03_inbox_projection_lifecycle.sql) retire a
+  // projection to `resolved` with an `mwLifecycle` tombstone once its source
+  // leaves the eligible set. Without the CASE arms below the lifecycle would
+  // be one-way in the OTHER direction too: a task going done -> todo again,
+  // a decision re-escalated, a notification "unread"-again, or a source
+  // deleted and recreated under the same id, would re-materialize here but
+  // stay `resolved` forever — eligible work would go invisible.
+  //
+  // Reopen is deliberately narrow: ONLY rows THIS system retired, identified
+  // by metadata_json.mwLifecycle IN ('source_archived','source_deleted'). An
+  // item a USER resolved/dismissed by hand through the Inbox UI has no such
+  // tombstone (triageItem() never writes mwLifecycle) and is therefore never
+  // revived here — otherwise every re-materialization would resurrect work
+  // people already triaged away, which is the opposite of the fix. On reopen
+  // the tombstone keys are stripped, so the row returns to a clean pending
+  // state rather than carrying a stale lifecycle marker forward.
+  const SYSTEM_RETIRED = `mw_safe_jsonb(canonical_inbox_items.metadata_json) ->> 'mwLifecycle'
+      IN ('source_archived', 'source_deleted')`;
+
   const UPSERT_SQL = `INSERT INTO canonical_inbox_items
     (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
      title, description, priority, section, status, sla_deadline, source_status,
@@ -142,6 +163,14 @@ export async function materializeInboxItems(
     sla_deadline = excluded.sla_deadline,
     source_status = excluded.source_status,
     initiative_id = excluded.initiative_id,
+    status = CASE WHEN ${SYSTEM_RETIRED} THEN 'pending'
+                  ELSE canonical_inbox_items.status END,
+    resolved_at = CASE WHEN ${SYSTEM_RETIRED} THEN NULL
+                       ELSE canonical_inbox_items.resolved_at END,
+    metadata_json = CASE WHEN ${SYSTEM_RETIRED}
+                         THEN (mw_safe_jsonb(canonical_inbox_items.metadata_json)
+                               - 'mwLifecycle' - 'mwLifecycleAt')::text
+                         ELSE canonical_inbox_items.metadata_json END,
     updated_at = excluded.updated_at`;
 
   const BATCH_SIZE = 40;

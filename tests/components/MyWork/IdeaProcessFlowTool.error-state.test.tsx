@@ -32,6 +32,7 @@ vi.mock('react-i18next', () => ({
         : (fallback?.defaultValue ?? I18N_KEY_OVERRIDES[_key] ?? _key),
     i18n: { language: 'en' },
   }),
+  initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -58,6 +59,7 @@ vi.mock('reactflow', () => ({
   applyNodeChanges: vi.fn((_changes, nodes) => nodes),
   useUpdateNodeInternals: () => vi.fn(),
   useReactFlow: () => ({ fitView: vi.fn(), getNodes: () => [], getEdges: () => [], project: (p: any) => p }),
+  useStore: (selector: (s: any) => any) => selector({ transform: [0, 0, 1] }),
 }));
 
 vi.mock('@reactflow/core', () => ({

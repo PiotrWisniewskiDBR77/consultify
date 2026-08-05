@@ -4,15 +4,31 @@
  * The owner flagged "TEAM CAPACITY 512% utilized" on the Manager tab. This test
  * asserts the rendered KPI never surfaces such an absurd number, and instead
  * degrades to a "Needs setup" state with an em dash.
+ *
+ * M02-008: the grid now takes a whole `ManagerSnapshot` rather than loose
+ * numbers, so the fixture supplies team figures inside a snapshot.
  */
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 // t() returns the provided fallback so assertions read against English copy.
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (_key: string, fallback?: string) => fallback ?? _key,
+    t: (_key: string, fallback?: unknown, opts?: Record<string, unknown>) => {
+      // The component calls t(key, fallback) and t(key, fallback, params);
+      // interpolate {{name}} placeholders so assertions can match real copy.
+      const raw =
+        typeof fallback === 'string'
+          ? fallback
+          : ((fallback as Record<string, unknown>)?.defaultValue as string) ?? _key;
+      const params = (opts ?? (typeof fallback === 'object' ? fallback : null)) as Record<
+        string,
+        unknown
+      > | null;
+      if (!params) return raw;
+      return raw.replace(/\{\{(\w+)\}\}/g, (m, k) => (params[k] != null ? String(params[k]) : m));
+    },
     i18n: { language: 'en' },
   }),
 }));
@@ -31,14 +47,24 @@ vi.mock('framer-motion', () => ({
 }));
 
 import { KPIGrid } from '../../../../src/components/MyWork/Executive/KPIGrid';
+import { makeSnapshot } from './__fixtures__/managerSnapshot';
+
+const withTeam = (team: Partial<ReturnType<typeof makeSnapshot>['team']>) =>
+  makeSnapshot({
+    team: { ...makeSnapshot().team, ...team },
+  });
 
 describe('KPIGrid — Team Capacity guard', () => {
   it('does not render an absurd 512% utilization', () => {
     render(
       <KPIGrid
-        data={{
-          team: { avgCapacity: 512, overloaded: 4, available: 0, trend: 'down', memberCount: 3 },
-        }}
+        snapshot={withTeam({
+          avgUtilizationPct: 512,
+          overloaded: 4,
+          available: 0,
+          memberCount: 3,
+          utilizationCredible: false,
+        })}
       />
     );
     expect(screen.queryByText('512%')).not.toBeInTheDocument();
@@ -47,11 +73,7 @@ describe('KPIGrid — Team Capacity guard', () => {
 
   it('renders a credible utilization as a real percent', () => {
     render(
-      <KPIGrid
-        data={{
-          team: { avgCapacity: 82, overloaded: 1, available: 2, trend: 'stable', memberCount: 5 },
-        }}
-      />
+      <KPIGrid snapshot={withTeam({ avgUtilizationPct: 82, overloaded: 1, available: 2 })} />
     );
     expect(screen.getByText('82%')).toBeInTheDocument();
     expect(screen.getByText('utilized')).toBeInTheDocument();
@@ -60,9 +82,13 @@ describe('KPIGrid — Team Capacity guard', () => {
   it('shows a needs-config state for a zero-member team instead of 0% utilized', () => {
     render(
       <KPIGrid
-        data={{
-          team: { avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable', memberCount: 0 },
-        }}
+        snapshot={withTeam({
+          avgUtilizationPct: 0,
+          overloaded: 0,
+          available: 0,
+          memberCount: 0,
+          utilizationCredible: false,
+        })}
       />
     );
     expect(screen.getByText('Needs setup')).toBeInTheDocument();

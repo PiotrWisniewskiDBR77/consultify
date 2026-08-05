@@ -59,10 +59,57 @@ export class DecisionConflictError extends Error {
   }
 }
 
+/**
+ * A collaboration section whose backing table is absent from THIS database
+ * (e.g. migration 932 not applied on an environment). Deliberately NOT a
+ * silent empty list: reads report the section as degraded and writes fail
+ * with an honest 503, so a schema gap can never masquerade as "no data yet".
+ */
+export class DecisionSectionUnavailableError extends Error {
+  code = 'SECTION_NOT_AVAILABLE';
+  section: DecisionSectionKey;
+  constructor(section: DecisionSectionKey) {
+    super(`The ${section} section is not available in this environment`);
+    this.name = 'DecisionSectionUnavailableError';
+    this.section = section;
+  }
+}
+
 export class DecisionValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'DecisionValidationError';
+  }
+}
+
+// ==========================================
+// SECTION AVAILABILITY (schema-drift gate)
+// ==========================================
+
+/** Collaboration sections of the decision dossier, keyed by backing table. */
+export type DecisionSectionKey = 'comments' | 'alternatives' | 'risks' | 'links';
+
+const SECTION_TABLES: Record<DecisionSectionKey, string> = {
+  comments: 'decision_comments',
+  alternatives: 'decision_alternatives',
+  risks: 'decision_risks',
+  links: 'link_graph_edges',
+};
+
+/**
+ * True when the section's backing table exists in this database.
+ *
+ * Reuses `getTableColumns` (cached per table, same helper `listDecisionLinks`
+ * already used) so this adds no extra round-trip after the first call.
+ */
+export async function isDecisionSectionAvailable(section: DecisionSectionKey): Promise<boolean> {
+  return (await getTableColumns(SECTION_TABLES[section])).size > 0;
+}
+
+/** Write-path guard — throws the honest 503 rather than pretending to save. */
+async function assertSectionAvailable(section: DecisionSectionKey): Promise<void> {
+  if (!(await isDecisionSectionAvailable(section))) {
+    throw new DecisionSectionUnavailableError(section);
   }
 }
 
@@ -178,6 +225,7 @@ export async function listDecisionComments(
   organizationId: string
 ): Promise<DecisionCommentDTO[]> {
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('comments');
   const rows = await queryHelpers.queryAll(
     `SELECT id, decision_id, author_id, body, created_at, updated_at
      FROM decision_comments
@@ -196,6 +244,7 @@ export async function createDecisionComment(input: {
 }): Promise<DecisionCommentDTO> {
   const { decisionId, organizationId, authorId } = input;
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('comments');
   const body = requireNonEmptyText(input.body, 'body', 4000);
 
   const id = uuidv4();
@@ -222,6 +271,7 @@ export async function updateDecisionComment(input: {
 }): Promise<DecisionCommentDTO> {
   const { decisionId, organizationId, commentId, actorId, body } = input;
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('comments');
 
   const existing = await queryHelpers.queryOne<{ author_id: string }>(
     `SELECT author_id FROM decision_comments
@@ -259,6 +309,7 @@ export async function deleteDecisionComment(input: {
 }): Promise<void> {
   const { decisionId, organizationId, commentId, actorId } = input;
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('comments');
 
   const existing = await queryHelpers.queryOne<{ author_id: string }>(
     `SELECT author_id FROM decision_comments
@@ -319,6 +370,7 @@ export async function listDecisionAlternatives(
   organizationId: string
 ): Promise<DecisionAlternativeDTO[]> {
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('alternatives');
   const rows = await queryHelpers.queryAll(
     `SELECT id, decision_id, title, description, benefits, drawbacks, cost_or_feasibility,
             is_recommended, created_by, created_at, updated_at
@@ -343,6 +395,7 @@ export async function createDecisionAlternative(input: {
 }): Promise<DecisionAlternativeDTO> {
   const { decisionId, organizationId, createdBy } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('alternatives');
   assertDossierEditable(decision);
 
   const title = requireNonEmptyText(input.title, 'title', 255);
@@ -390,6 +443,7 @@ export async function updateDecisionAlternative(input: {
 }): Promise<DecisionAlternativeDTO> {
   const { decisionId, organizationId, alternativeId, patch } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('alternatives');
   assertDossierEditable(decision);
 
   const existing = await queryHelpers.queryOne(
@@ -450,6 +504,7 @@ export async function deleteDecisionAlternative(input: {
 }): Promise<void> {
   const { decisionId, organizationId, alternativeId } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('alternatives');
   assertDossierEditable(decision);
 
   const result = await queryHelpers.queryRun(
@@ -497,6 +552,7 @@ export async function listDecisionRisks(
   organizationId: string
 ): Promise<DecisionRiskDTO[]> {
   await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('risks');
   const rows = await queryHelpers.queryAll(
     `SELECT id, decision_id, description, severity, likelihood, mitigation, owner_id,
             created_by, created_at, updated_at
@@ -520,6 +576,7 @@ export async function createDecisionRisk(input: {
 }): Promise<DecisionRiskDTO> {
   const { decisionId, organizationId, createdBy } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('risks');
   assertDossierEditable(decision);
 
   const description = requireNonEmptyText(input.description, 'description', 2000);
@@ -565,6 +622,7 @@ export async function updateDecisionRisk(input: {
 }): Promise<DecisionRiskDTO> {
   const { decisionId, organizationId, riskId, patch } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('risks');
   assertDossierEditable(decision);
 
   const existing = await queryHelpers.queryOne(
@@ -621,6 +679,7 @@ export async function deleteDecisionRisk(input: {
 }): Promise<void> {
   const { decisionId, organizationId, riskId } = input;
   const decision = await getDecisionForOrgOrThrow(decisionId, organizationId);
+  await assertSectionAvailable('risks');
   assertDossierEditable(decision);
 
   const result = await queryHelpers.queryRun(
@@ -683,13 +742,27 @@ export async function getDecisionAggregateExtras(decisionId: string, organizatio
   // Existence/org-scope is re-verified by the caller (DecisionController
   // already loads the core decision row); these run in parallel since none
   // depend on each other.
+  //
+  // Fail-soft on schema drift (M02-004): before migration 932 is applied,
+  // decision_comments/_alternatives/_risks do not exist and the raw queries
+  // throw 42P01, which used to reject this `Promise.all` and turn the WHOLE
+  // detail endpoint into a 500 — the core decision became unreadable because
+  // an optional dossier section was missing. Each section is now gated
+  // individually and an unavailable one is REPORTED in `degradedSections`,
+  // never silently downgraded to "no data": the client must be able to tell
+  // "nobody commented yet" apart from "comments are unavailable here".
+  const sections: DecisionSectionKey[] = ['comments', 'alternatives', 'risks', 'links'];
+  const availability = await Promise.all(sections.map((s) => isDecisionSectionAvailable(s)));
+  const available = new Set(sections.filter((_, i) => availability[i]));
+  const degradedSections = sections.filter((s) => !available.has(s));
+
   const [comments, alternatives, risks, links] = await Promise.all([
-    listDecisionComments(decisionId, organizationId),
-    listDecisionAlternatives(decisionId, organizationId),
-    listDecisionRisks(decisionId, organizationId),
-    listDecisionLinks(decisionId, organizationId),
+    available.has('comments') ? listDecisionComments(decisionId, organizationId) : [],
+    available.has('alternatives') ? listDecisionAlternatives(decisionId, organizationId) : [],
+    available.has('risks') ? listDecisionRisks(decisionId, organizationId) : [],
+    available.has('links') ? listDecisionLinks(decisionId, organizationId) : [],
   ]);
-  return { comments, alternatives, risks, links };
+  return { comments, alternatives, risks, links, degradedSections };
 }
 
 // ==========================================
