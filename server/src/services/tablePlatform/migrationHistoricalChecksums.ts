@@ -18,6 +18,10 @@ export interface HistoricalChecksumVariant {
 export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   Record<string, HistoricalChecksumVariant>
 > = Object.freeze({
+  '20260213_task_source_origin.sql': {
+    stored: 'cccdd95deb254c7c',
+    current: '3a48f93ad30c262c',
+  },
   '20260222_interview_conversational_inference.sql': {
     stored: '552b3596cd73f03d',
     current: '7cebd37b30d3f9c7',
@@ -25,7 +29,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   '20260223_competency_taxonomy.sql': { stored: '498eeeeeed4fb091', current: 'b038612e51e3f8a0' },
   '20260228_budget_initiative_links.sql': {
     stored: '7826f403a14163b1',
-    current: '12b4cafd6a7958b2',
+    current: '50e3c21219cae784',
   },
   '20260228_financial_model_versions.sql': {
     stored: 'd8c532865f46011f',
@@ -33,7 +37,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260303_feedback_behavior_t106_t113.sql': {
     stored: '498a662b68a2313b',
-    current: '1016ab7ddc71e10b',
+    current: '71b158de25f67e9e',
   },
   '20260303_schema_alignment.sql': { stored: '8346cdf811694f5c', current: '2f24fa6845dce97f' },
   '20260304_feedback_items_canonical_tickets.sql': {
@@ -104,7 +108,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260330_p25b_kb_next_action_and_primers.sql': {
     stored: '9f23ba2b318ca541',
-    current: '2d53e92a216b74ed',
+    current: 'f5acf17b1ad060b3',
   },
   '20260331_p26b_kb_collections_tags_surfaces.sql': {
     stored: 'dfbf605897372a13',
@@ -112,7 +116,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260331_p28_workbench_p29_partner_program_ledger.sql': {
     stored: '8662c1ce32d8679a',
-    current: '502a301320c02975',
+    current: 'a4f62b55e7bccfed',
   },
   '20260331_p35b_canonical_model_completion.sql': {
     stored: '50bcc34793b78f58',
@@ -121,16 +125,36 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   '20260331_v8_mindmap_nodes_p12b.sql': { stored: '5784afc4a1174b1d', current: '034aa65953c09c5b' },
   '20260402_llm_providers_vector_dbr77.sql': {
     stored: 'e13a38cfa9e58ca8',
-    current: '14ac9b565f769d5c',
+    current: '2c09cb3b899703a8',
   },
   '20260409_fix_virtual_workers_postgres.sql': {
     stored: '5dcb9a29bd7bc07a',
     current: '63c97cb59133f167',
   },
+  '20260409_p17c_artifact_runs_cancelled_status.sql': {
+    stored: '93cebee1919b03d3',
+    current: '1dac5a6356ed7525',
+  },
+  '20260409_p25d_help_seed_and_lifecycle.sql': {
+    stored: 'd299bf66c6c2b0ab',
+    current: '4a35fe9a560f72d5',
+  },
+  '20260409_p26_kb_fts5_search.sql': {
+    stored: '2d02d7d75e90c8d2',
+    current: '0647b8f4c05a6598',
+  },
   '20260411_p01_workflow_policy.sql': { stored: '6630cbec686d185d', current: '1de83a93e6c67d7c' },
+  '20260411_consultify_partner_kb_seed.sql': {
+    stored: '691568dbf8bc3b8f',
+    current: 'be5a2523f8bee2da',
+  },
   '20260411_p11_status_history_org_id_backfill.sql': {
     stored: '4b7da5902c4329ff',
     current: 'f513d458cea1fb04',
+  },
+  '20260411_p28_definition_versions.sql': {
+    stored: '558f1f415a2dbfa1',
+    current: '2e8abd8eb8ec30c5',
   },
   '20260411_p30d_organization_type_and_new_fields.sql': {
     stored: 'fe4c4d75e94841e2',
@@ -154,7 +178,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260411_v8_p03d_manager_lane_tables.sql': {
     stored: 'd4994c85a2985024',
-    current: '2f0a4405e3424cb4',
+    current: '6d7558c11536588f',
   },
   '20260411_v8_p03e_forecast_columns.sql': {
     stored: '9cadf0ccdccb70c6',
@@ -189,6 +213,14 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
     stored: 'd5b1be720560b015',
     current: 'eaed30a802a37dc2',
   },
+  '20260608_megatrends_seed.sql': {
+    stored: 'e072d9b6f62460e6',
+    current: 'd390d7fe14d6ef02',
+  },
+  '20260611_my_idea_map_snapshots_and_activity.sql': {
+    stored: 'd6e7b86bc8514598',
+    current: '7d08e60f4ea10393',
+  },
   '20260623_distribution_delivery.sql': { stored: 'afb449dbaf10f409', current: '947a918d7445c294' },
   '20260623_raid_assumption_issue.sql': { stored: '9d44483e49c782a6', current: 'efde02c1e44a9671' },
   '20260624_finance_analysis_investment_category.sql': {
@@ -197,20 +229,45 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260624_initiative_column_dedup.sql': {
     stored: 'f93964c6f9c34a55',
-    current: '22ab3a93adaa4654',
+    current: 'b2deb8b58871c513',
+  },
+  '20260628_ensure_digitization_analyses.sql': {
+    stored: '5a7c2dc918223e3b',
+    current: '8a05ca9e15782ee5',
+  },
+  '20260628_finance_seed_readiness_fix.sql': {
+    stored: '46fbcbcd9ee9a7c4',
+    current: '101ed6effda1b204',
   },
   '20260624_kpi_kind_lineage.sql': { stored: '92f571881ea2455b', current: 'd5e4641889d801a2' },
-  '20260719_baseline_gap.sql': { stored: '64fd2d7808258e5d', current: '633dca1e3cbeb2b5' },
+  '20260719_baseline_gap.sql': { stored: '64fd2d7808258e5d', current: '232178c1e69ab6af' },
   '20260803_res010_kpi_scorecards.sql': { stored: '4664886cee3c4763', current: '109cfdb42ec1cef5' },
   '725_module_sync.sql': { stored: '79db562130016782', current: '89a77480dbecff92' },
   '726_table_dependency_config.sql': { stored: '5b870ce22d8a3e8b', current: '038e5bc45eafe1f1' },
   '729_fix_boolean_columns.sql': { stored: '86ed3610cea092de', current: 'e83758b9fe4117da' },
-  '730_beta_schema_fixes.sql': { stored: '4c593be43195592c', current: '7daf1be62b2c9318' },
+  '730_beta_schema_fixes.sql': { stored: '4c593be43195592c', current: '048cc1822527abf9' },
   '730_partner_users_uuid_columns.sql': { stored: '9364461aec6b0c0a', current: 'eec2e7dcab85898a' },
   '731_tasks_missing_columns.sql': { stored: 'd0c784a4ce7d1b52', current: '8f4a3c592bcddb0c' },
+  '737_virtual_workers.sql': { stored: 'a998246ab89e9a08', current: '0715ac5d38df2cfd' },
   '750_v4_results_enterprise_runtime_completion.sql': {
     stored: 'dc488f64ace609f5',
     current: '44611148dfcbcfa7',
+  },
+  '752_p20_deck_version_and_history.sql': {
+    stored: 'a76883f7d0b4fc88',
+    current: 'ab59da4557881b18',
+  },
+  '760_presentation_legacy_normalization.sql': {
+    stored: '82970d38da3959f8',
+    current: 'f06afe73c1517dca',
+  },
+  '761_presentation_runtime_events.sql': {
+    stored: 'dc5edf32cc5d4222',
+    current: 'fef86d9433aba19a',
+  },
+  '753_p10_interview_insight_artifact.sql': {
+    stored: '57751e37cd842049',
+    current: 'e787f48f4c37eb3d',
   },
   '765_presentation_governance_subscriber_tokens.sql': {
     stored: 'd5a003a592d93ca9',
@@ -219,5 +276,9 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   '767_presentation_template_governance.sql': {
     stored: 'bbcfbd2e3680f1d8',
     current: '0275674e87e8abf6',
+  },
+  '771_demo_mock_seed_cleanup.sql': {
+    stored: '1f26ddd1cdfd9d91',
+    current: '3ee78d938ffd1a86',
   },
 });

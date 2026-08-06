@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS virtual_workers (
     locale_default TEXT NOT NULL DEFAULT 'pl',
     avatar_url TEXT,
     description TEXT,
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_virtual_workers_slug ON virtual_workers(slug);
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS virtual_worker_profiles (
     priority_rules TEXT,
     boundaries TEXT,
     is_active INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     activated_at TEXT
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS virtual_worker_knowledge_assignments (
     knowledge_doc_id TEXT,
     product_slug TEXT,
     priority_weight REAL NOT NULL DEFAULT 1.0,
-    assigned_at TEXT DEFAULT (datetime('now'))
+    assigned_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vw_knowledge_worker ON virtual_worker_knowledge_assignments(worker_id);
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS virtual_worker_conversations (
     channel TEXT NOT NULL DEFAULT 'text_chat',
     locale TEXT,
     visitor_fingerprint TEXT,
-    started_at TEXT DEFAULT (datetime('now')),
+    started_at TEXT DEFAULT CURRENT_TIMESTAMP,
     ended_at TEXT,
     message_count INTEGER NOT NULL DEFAULT 0,
     duration_seconds INTEGER,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS virtual_worker_messages (
     matched_products TEXT,
     token_count INTEGER,
     latency_ms INTEGER,
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vw_msg_conv ON virtual_worker_messages(conversation_id);
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS virtual_worker_insights (
     evidence TEXT,
     priority TEXT NOT NULL DEFAULT 'medium',
     status TEXT NOT NULL DEFAULT 'new',
-    created_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TEXT,
     reviewed_by TEXT
 );

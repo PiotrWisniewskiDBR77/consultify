@@ -85,6 +85,8 @@ END $$;
 -- 3. ROI  (kanon: expected_roi  <-  estimated_roi)   — SoT §5
 -- ----------------------------------------------------------------------------
 DO $$
+DECLARE
+    expected_roi_type TEXT;
 BEGIN
     IF EXISTS (
         SELECT 1 FROM information_schema.columns
@@ -93,6 +95,11 @@ BEGIN
         SELECT 1 FROM information_schema.columns
         WHERE table_name = 'initiatives' AND column_name = 'estimated_roi'
     ) THEN
+        SELECT data_type INTO expected_roi_type
+          FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'initiatives'
+           AND column_name = 'expected_roi';
         -- Strict-schema repair (2026-08): `expected_roi` was later changed
         -- TEXT by 903_expected_roi_to_text.sql (an earlier, plain-numbered
         -- migration this file's own header did not anticipate — it was
@@ -105,14 +112,23 @@ BEGIN
         -- (no behavior change for those rows; they simply don't mirror back
         -- into the deprecated numeric column, same as before this file
         -- could run at all).
-        UPDATE initiatives
-           SET expected_roi = COALESCE(expected_roi, estimated_roi::text)
-         WHERE expected_roi IS NULL AND estimated_roi IS NOT NULL;
-        UPDATE initiatives
-           SET estimated_roi = COALESCE(estimated_roi, expected_roi::real)
-         WHERE estimated_roi IS NULL
-           AND expected_roi IS NOT NULL
-           AND expected_roi ~ '^-?[0-9]+(\.[0-9]+)?$';
+        IF expected_roi_type IN ('text', 'character varying', 'character') THEN
+            UPDATE initiatives
+               SET expected_roi = COALESCE(expected_roi, estimated_roi::text)
+             WHERE expected_roi IS NULL AND estimated_roi IS NOT NULL;
+            UPDATE initiatives
+               SET estimated_roi = COALESCE(estimated_roi, expected_roi::real)
+             WHERE estimated_roi IS NULL
+               AND expected_roi IS NOT NULL
+               AND expected_roi ~ '^-?[0-9]+(\.[0-9]+)?$';
+        ELSE
+            UPDATE initiatives
+               SET expected_roi = COALESCE(expected_roi, estimated_roi)
+             WHERE expected_roi IS NULL AND estimated_roi IS NOT NULL;
+            UPDATE initiatives
+               SET estimated_roi = COALESCE(estimated_roi, expected_roi)
+             WHERE estimated_roi IS NULL AND expected_roi IS NOT NULL;
+        END IF;
     END IF;
 END $$;
 

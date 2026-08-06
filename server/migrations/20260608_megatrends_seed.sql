@@ -2,6 +2,16 @@
 -- Idempotent: stable ids + ON CONFLICT DO NOTHING so re-running is safe.
 -- Ring values use the canonical UI buckets: 'Now' / 'Watch Closely' / 'On the Horizon'.
 
+CREATE TABLE IF NOT EXISTS megatrends (
+  id TEXT PRIMARY KEY,
+  industry TEXT NOT NULL,
+  type TEXT NOT NULL,
+  label TEXT NOT NULL,
+  description TEXT,
+  base_impact_score INTEGER NOT NULL,
+  initial_ring TEXT NOT NULL
+);
+
 INSERT INTO megatrends (id, industry, type, label, description, base_impact_score, initial_ring) VALUES
   ('mg-mfg-tech-01', 'Manufacturing', 'Technology', 'Industrial AI & ML', 'ML applied to predictive maintenance and quality control', 85, 'Now'),
   ('mg-mfg-tech-02', 'Manufacturing', 'Technology', 'Collaborative Robotics', 'Cobots alongside human workers in assembly', 75, 'Now'),

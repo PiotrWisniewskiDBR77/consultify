@@ -14592,6 +14592,13 @@ CREATE INDEX if not exists idx_agent_audit_metrics_run ON public.ai_agent_audit_
 
 CREATE INDEX if not exists idx_agent_audit_reviews_run ON public.ai_agent_audit_reviews USING btree (run_id);
 
+-- A legacy bootstrap can leave this table at the pre-accept-risk shape while
+-- still recording the historical ALTER migration. Converge the shape before
+-- creating indexes from the captured baseline.
+ALTER TABLE public.ai_agent_audit_runs ADD COLUMN IF NOT EXISTS accepted_at timestamp with time zone;
+ALTER TABLE public.ai_agent_audit_runs ADD COLUMN IF NOT EXISTS accepted_by_user_id text;
+ALTER TABLE public.ai_agent_audit_runs ADD COLUMN IF NOT EXISTS accepted_note text;
+
 CREATE INDEX if not exists idx_agent_audit_runs_accepted ON public.ai_agent_audit_runs USING btree (organization_id, accepted_at);
 
 CREATE INDEX if not exists idx_agent_audit_runs_conversation ON public.ai_agent_audit_runs USING btree (conversation_id);
@@ -14599,6 +14606,47 @@ CREATE INDEX if not exists idx_agent_audit_runs_conversation ON public.ai_agent_
 CREATE INDEX if not exists idx_agent_audit_runs_org_time ON public.ai_agent_audit_runs USING btree (organization_id, created_at);
 
 CREATE INDEX if not exists idx_agent_msgs_org ON public.report_agent_messages USING btree (organization_id);
+
+-- Several legacy report producers created narrower variants of these tables.
+-- The captured baseline later indexes report_id, so converge that shared key
+-- before any of those indexes are evaluated.
+DO $$
+DECLARE
+  table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'report_agent_messages', 'assessment_report_sections',
+    'assessment_report_section_history', 'assessment_initiative_batches',
+    'multi_framework_initiatives', 'management_report_approvals',
+    'management_report_audit_log', 'management_report_comments',
+    'management_report_recipients', 'management_report_versions',
+    'report_quality_gates', 'report_ai_proposals', 'report_data_bindings',
+    'report_distribution_schedules', 'report_blocks', 'report_comments',
+    'report_edit_history', 'report_initiatives', 'report_snapshots',
+    'report_source_packs', 'report_section_history'
+  ] LOOP
+    IF to_regclass('public.' || table_name) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS report_id text', table_name);
+    END IF;
+  END LOOP;
+
+  FOREACH table_name IN ARRAY ARRAY[
+    'presentation_templates', 'report_builder_templates', 'tp_base_templates'
+  ] LOOP
+    IF to_regclass('public.' || table_name) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS visibility text', table_name);
+    END IF;
+  END LOOP;
+
+  FOREACH table_name IN ARRAY ARRAY[
+    'ai_inbox', 'knowledge_graph_entities', 'llm_routing_rules',
+    'system_feedback', 'token_ledger'
+  ] LOOP
+    IF to_regclass('public.' || table_name) IS NOT NULL THEN
+      EXECUTE format('ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS type text', table_name);
+    END IF;
+  END LOOP;
+END $$;
 
 CREATE INDEX if not exists idx_agent_msgs_report ON public.report_agent_messages USING btree (report_id);
 
@@ -33760,7 +33808,11 @@ exception when others then null; end $t10r$;
 -- ============================================================
 DO $t10uuid$
 BEGIN
-  IF (SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='partner_organizations' AND column_name='id')='text' THEN
+  -- TEXT is now the canonical runtime identity for Partner Portal. The old
+  -- snapshot attempted an in-place UUID conversion that breaks active TEXT
+  -- ledgers and application references; retain the block only as historical
+  -- documentation and never execute the destructive type rewrite.
+  IF FALSE AND (SELECT data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='partner_organizations' AND column_name='id')='text' THEN
     ALTER TABLE public.partner_certificates DROP CONSTRAINT IF EXISTS partner_certificates_certification_id_fkey;
     ALTER TABLE public.partner_certificates DROP CONSTRAINT IF EXISTS partner_certificates_partner_org_id_fkey;
     ALTER TABLE public.partner_certifications DROP CONSTRAINT IF EXISTS partner_certifications_partner_org_id_fkey;

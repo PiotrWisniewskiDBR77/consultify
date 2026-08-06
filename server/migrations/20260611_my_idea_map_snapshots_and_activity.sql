@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS my_idea_map_snapshots (
   node_count INTEGER DEFAULT 0,
   edge_count INTEGER DEFAULT 0,
   data_json TEXT NOT NULL DEFAULT '{}',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (idea_id) REFERENCES my_ideas(id) ON DELETE CASCADE
 );
 
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS my_idea_activity (
   node_id TEXT,
   node_label TEXT,
   detail TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (idea_id) REFERENCES my_ideas(id) ON DELETE CASCADE
 );
 

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS presentation_migration_reports (
   retry_pointer_json TEXT,
   notes TEXT,
   created_by TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_presentation_migration_reports_org_created

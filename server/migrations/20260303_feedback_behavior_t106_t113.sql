@@ -2,16 +2,25 @@
 -- T106: Advanced User Feedback System + T113: Behavioral Intelligence Tracking
 
 -- T106: Enhance system_feedback with context metadata
-ALTER TABLE system_feedback ADD COLUMN route_path TEXT;
-ALTER TABLE system_feedback ADD COLUMN device_type TEXT;
-ALTER TABLE system_feedback ADD COLUMN screen_size TEXT;
-ALTER TABLE system_feedback ADD COLUMN user_agent_hash TEXT;
-ALTER TABLE system_feedback ADD COLUMN ui_language TEXT;
-ALTER TABLE system_feedback ADD COLUMN ui_theme TEXT;
-ALTER TABLE system_feedback ADD COLUMN workspace_context_json TEXT;
-ALTER TABLE system_feedback ADD COLUMN severity TEXT DEFAULT 'NORMAL';
-ALTER TABLE system_feedback ADD COLUMN duplicate_of TEXT;
-ALTER TABLE system_feedback ADD COLUMN notification_sent INTEGER DEFAULT 0;
+CREATE TABLE IF NOT EXISTS system_feedback (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+    feedback_type TEXT,
+    message TEXT NOT NULL,
+    status TEXT DEFAULT 'new',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS route_path TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS device_type TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS screen_size TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS user_agent_hash TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS ui_language TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS ui_theme TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS workspace_context_json TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS severity TEXT DEFAULT 'NORMAL';
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS duplicate_of TEXT;
+ALTER TABLE system_feedback ADD COLUMN IF NOT EXISTS notification_sent INTEGER DEFAULT 0;
 
 -- Feedback status history for full traceability
 CREATE TABLE IF NOT EXISTS feedback_status_history (
@@ -28,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_status_history_feedback ON feedback_stat
 CREATE INDEX IF NOT EXISTS idx_feedback_status_history_created ON feedback_status_history(created_at);
 
 -- T113: Behavior opt-out
-ALTER TABLE users ADD COLUMN behavior_analytics_enabled INTEGER DEFAULT 1;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS behavior_analytics_enabled INTEGER DEFAULT 1;
 
 -- Baseline Postgres migrations skip the legacy SQLite-first superadmin overview migration (<500).
 CREATE TABLE IF NOT EXISTS api_logs (

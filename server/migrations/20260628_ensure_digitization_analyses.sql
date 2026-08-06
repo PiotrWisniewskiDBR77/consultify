@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS digitization_analyses (
   completion_percent INTEGER DEFAULT 0,
   axis_scores      TEXT DEFAULT '{}',
   imported_from    TEXT,
-  import_date      DATETIME,
-  created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+  import_date      TIMESTAMP,
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_digitization_analyses_org

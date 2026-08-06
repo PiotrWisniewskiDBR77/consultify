@@ -14,6 +14,19 @@ ALTER TABLE decisions ADD COLUMN IF NOT EXISTS context_type TEXT;
 ALTER TABLE decisions ADD COLUMN IF NOT EXISTS context_id TEXT;
 
 -- 2. assessments: add missing columns
+-- Fresh PostgreSQL bootstrap owns only the compact core schema and may not
+-- have replayed the legacy 000/293 files. Establish the canonical base before
+-- applying this migration's additive assessment extensions.
+CREATE TABLE IF NOT EXISTS assessments (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    type TEXT,
+    name TEXT,
+    status TEXT DEFAULT 'draft',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS framework_type TEXT DEFAULT 'DRD';
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS framework_data JSONB DEFAULT '{}';
 ALTER TABLE assessments ADD COLUMN IF NOT EXISTS description TEXT;

@@ -2,6 +2,29 @@
 -- This is the DBR77 platform-native AI model optimized for consulting workflows.
 -- Managed by SuperAdmin; currently in beta.
 
+-- Historical bootstrap paths could create llm_providers with the older,
+-- narrower registry shape and still record the baseline migration.  Keep this
+-- migration self-healing so a fresh runtime bootstrap and a drifted demo both
+-- converge without any out-of-band DDL.
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS tier TEXT DEFAULT 'standard';
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'admin';
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS context_window INTEGER DEFAULT 4096;
+ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS llm_tier_assignments (
+    id TEXT PRIMARY KEY,
+    provider_id TEXT NOT NULL REFERENCES llm_providers(id) ON DELETE CASCADE,
+    tier TEXT NOT NULL,
+    priority INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(provider_id, tier)
+);
+CREATE INDEX IF NOT EXISTS idx_tier_assignments_provider ON llm_tier_assignments(provider_id);
+CREATE INDEX IF NOT EXISTS idx_tier_assignments_tier ON llm_tier_assignments(tier);
+CREATE INDEX IF NOT EXISTS idx_tier_assignments_priority ON llm_tier_assignments(tier, priority);
+
 INSERT INTO llm_providers (
     id, name, provider, model_id, api_key, endpoint,
     tier, visibility, is_active, is_default, cost_per_1k, context_window

@@ -1,7 +1,7 @@
 -- P28 Assessment definition/version separation + stricter workbench metadata.
 
-ALTER TABLE assessments ADD COLUMN assessment_definition_id TEXT;
-ALTER TABLE assessments ADD COLUMN assessment_definition_version TEXT;
+ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assessment_definition_id TEXT;
+ALTER TABLE assessments ADD COLUMN IF NOT EXISTS assessment_definition_version TEXT;
 
 CREATE TABLE IF NOT EXISTS assessment_definitions (
   id TEXT PRIMARY KEY,

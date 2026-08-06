@@ -8,10 +8,21 @@
 -- Bezpieczna: UPDATE tylko na znanych seed ID z prefiksem 'staging-'.
 -- Na prod/staging nie istnieją te ID — WHERE jest no-op.
 
-UPDATE financial_statements
-SET
-  validation_status  = 'pass',
-  readiness_status   = 'ready'
-WHERE id LIKE 'staging-%'
-  AND status = 'confirmed'
-  AND (readiness_status IS NULL OR readiness_status != 'ready');
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'financial_statements'
+      AND column_name = 'readiness_status'
+  ) AND EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'financial_statements'
+      AND column_name = 'validation_status'
+  ) THEN
+    UPDATE financial_statements
+    SET validation_status = 'pass', readiness_status = 'ready'
+    WHERE id LIKE 'staging-%'
+      AND status = 'confirmed'
+      AND (readiness_status IS NULL OR readiness_status != 'ready');
+  END IF;
+END $$;

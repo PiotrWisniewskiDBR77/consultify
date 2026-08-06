@@ -4,6 +4,26 @@
 --  - Enforce canonical bounded handoff / evidence-ledger semantics
 --  - Extend Interview Insights permissions for review / publish / handoff actions
 
+-- These governance tables historically lived only in excluded 000 baselines.
+-- Establish their canonical minimum before inserting module permissions.
+CREATE TABLE IF NOT EXISTS permissions (
+    key TEXT PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    category TEXT,
+    icon TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+    id TEXT PRIMARY KEY,
+    role TEXT NOT NULL,
+    permission_key TEXT NOT NULL REFERENCES permissions(key),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(role, permission_key)
+);
+
 CREATE TABLE IF NOT EXISTS interview_insight_findings (
     id TEXT PRIMARY KEY,
     organization_id TEXT NOT NULL,
@@ -105,12 +125,13 @@ CREATE INDEX IF NOT EXISTS idx_interview_insight_audit_insight
 CREATE INDEX IF NOT EXISTS idx_interview_insight_audit_finding
     ON interview_insight_audit_log(finding_id);
 
-INSERT OR IGNORE INTO permissions (key, description, category) VALUES
+INSERT INTO permissions (key, description, category) VALUES
     ('INTERVIEW_INSIGHTS_REVIEW', 'Review interview insights findings and evidence', 'INTERVIEW'),
     ('INTERVIEW_INSIGHTS_PUBLISH', 'Publish interview insights artifacts', 'INTERVIEW'),
-    ('INTERVIEW_INSIGHTS_HANDOFF', 'Create bounded handoff from interview insights', 'INTERVIEW');
+    ('INTERVIEW_INSIGHTS_HANDOFF', 'Create bounded handoff from interview insights', 'INTERVIEW')
+ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) VALUES
+INSERT INTO role_permissions (id, role, permission_key, description) VALUES
     ('rp_interview_insights_review_pm', 'PROJECT_MANAGER', 'INTERVIEW_INSIGHTS_REVIEW', 'Review interview insights'),
     ('rp_interview_insights_publish_pm', 'PROJECT_MANAGER', 'INTERVIEW_INSIGHTS_PUBLISH', 'Publish interview insights'),
     ('rp_interview_insights_handoff_pm', 'PROJECT_MANAGER', 'INTERVIEW_INSIGHTS_HANDOFF', 'Handoff interview findings'),
@@ -119,4 +140,5 @@ INSERT OR IGNORE INTO role_permissions (id, role, permission_key, description) V
     ('rp_interview_insights_handoff_admin', 'ADMIN', 'INTERVIEW_INSIGHTS_HANDOFF', 'Handoff interview findings'),
     ('rp_interview_insights_review_super', 'SUPERADMIN', 'INTERVIEW_INSIGHTS_REVIEW', 'Review interview insights'),
     ('rp_interview_insights_publish_super', 'SUPERADMIN', 'INTERVIEW_INSIGHTS_PUBLISH', 'Publish interview insights'),
-    ('rp_interview_insights_handoff_super', 'SUPERADMIN', 'INTERVIEW_INSIGHTS_HANDOFF', 'Handoff interview findings');
+    ('rp_interview_insights_handoff_super', 'SUPERADMIN', 'INTERVIEW_INSIGHTS_HANDOFF', 'Handoff interview findings')
+ON CONFLICT DO NOTHING;

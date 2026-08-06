@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS budget_initiative_links (
     revenue_uplift REAL DEFAULT 0,
     cost_savings REAL DEFAULT 0,
     capex_required REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
     FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
     UNIQUE(budget_id, initiative_id)

@@ -17,12 +17,14 @@ VALUES
   ('kb-cat-consultify-partner-case-studies-pl', 'kb-cat-consultify-partner-case-studies', 'pl', 'Case studies partnera', 'Narracje proof-layer pokazujace, jak partnerzy buduja wartosc handlowa i delivery.')
 ON CONFLICT (category_id, language) DO NOTHING;
 
-INSERT INTO kb_collections (id, slug, visibility, featured, sort_order, status)
+INSERT INTO kb_collections (
+  id, slug, parent_collection_id, visibility, featured, sort_order, status
+)
 VALUES
-  ('kb-coll-consultify-partner', 'consultify-partner-program', 'public', TRUE, 31, 'active'),
-  ('kb-coll-consultify-partner-program', 'consultify-partner-program-guides', 'kb-coll-consultify-partner', TRUE, 1, 'active'),
-  ('kb-coll-consultify-partner-operations', 'consultify-partner-operations-guides', 'kb-coll-consultify-partner', TRUE, 2, 'active'),
-  ('kb-coll-consultify-partner-cases', 'consultify-partner-case-studies', 'kb-coll-consultify-partner', TRUE, 3, 'active')
+  ('kb-coll-consultify-partner', 'consultify-partner-program', NULL, 'public', TRUE, 31, 'active'),
+  ('kb-coll-consultify-partner-program', 'consultify-partner-program-guides', 'kb-coll-consultify-partner', 'public', TRUE, 1, 'active'),
+  ('kb-coll-consultify-partner-operations', 'consultify-partner-operations-guides', 'kb-coll-consultify-partner', 'public', TRUE, 2, 'active'),
+  ('kb-coll-consultify-partner-cases', 'consultify-partner-case-studies', 'kb-coll-consultify-partner', 'public', TRUE, 3, 'active')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO kb_collection_translations (id, collection_id, language, title, description)

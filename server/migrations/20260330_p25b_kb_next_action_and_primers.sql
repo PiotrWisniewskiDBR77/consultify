@@ -81,7 +81,7 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS next_action TEXT;
 
 -- 2) Seed: Tools primer
-INSERT OR IGNORE INTO kb_articles (
+INSERT INTO kb_articles (
   id, category_id, slug, status, is_featured, is_public, reading_time_minutes,
   related_modules, target_audience, next_action
 ) VALUES (
@@ -95,9 +95,9 @@ INSERT OR IGNORE INTO kb_articles (
   '["discovery-tools","tools"]',
   '["all"]',
   '{"route":"/discovery-tools"}'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
+INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   (
     'kb-art-trans-p25b-tools-en',
     'kb-art-p25b-tools-primer',
@@ -133,10 +133,10 @@ To jest primer dla runtime Help używany w P25-B.
 
 ## Następny krok
 Użyj przycisku u góry artykułu, aby wrócić do Tools.'
-  );
+  ) ON CONFLICT DO NOTHING;
 
 -- 3) Seed: Interview primer
-INSERT OR IGNORE INTO kb_articles (
+INSERT INTO kb_articles (
   id, category_id, slug, status, is_featured, is_public, reading_time_minutes,
   related_modules, target_audience, next_action
 ) VALUES (
@@ -150,9 +150,9 @@ INSERT OR IGNORE INTO kb_articles (
   '["interview"]',
   '["all"]',
   '{"route":"/interview"}'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
+INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   (
     'kb-art-trans-p25b-interview-en',
     'kb-art-p25b-interview-primer',
@@ -172,10 +172,10 @@ Use Help to search for guidance and then continue work using **Next action**.'
     '# Interview — zacznij tutaj
 
 Użyj Help, aby znaleźć wskazówki, a potem kontynuuj pracę przez **Next action**.'
-  );
+  ) ON CONFLICT DO NOTHING;
 
 -- 4) Seed: Outputs primer
-INSERT OR IGNORE INTO kb_articles (
+INSERT INTO kb_articles (
   id, category_id, slug, status, is_featured, is_public, reading_time_minutes,
   related_modules, target_audience, next_action
 ) VALUES (
@@ -189,9 +189,9 @@ INSERT OR IGNORE INTO kb_articles (
   '["outputs","results"]',
   '["all"]',
   '{"route":"/presentations"}'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
+INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   (
     'kb-art-trans-p25b-outputs-en',
     'kb-art-p25b-outputs-primer',
@@ -211,10 +211,10 @@ Use Help to search for an article and continue with **Next action**.'
     '# Outputs — zacznij tutaj
 
 Użyj Help, aby wyszukać artykuł, a potem kontynuuj przez **Next action**.'
-  );
+  ) ON CONFLICT DO NOTHING;
 
 -- 5) Seed: EN-only article for explicit PL degraded + EN fallback proof
-INSERT OR IGNORE INTO kb_articles (
+INSERT INTO kb_articles (
   id, category_id, slug, status, is_featured, is_public, reading_time_minutes,
   related_modules, target_audience, next_action
 ) VALUES (
@@ -228,9 +228,9 @@ INSERT OR IGNORE INTO kb_articles (
   '["discovery-tools","tools"]',
   '["all"]',
   '{"route":"/discovery-tools"}'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
+INSERT INTO kb_article_translations (id, article_id, language, title, summary, content) VALUES
   (
     'kb-art-trans-p25b-en-only-en',
     'kb-art-p25b-en-only',
@@ -240,5 +240,4 @@ INSERT OR IGNORE INTO kb_article_translations (id, article_id, language, title, 
     '# EN-only article (P25-B fallback proof)
 
 If you are in PL locale, the Help runtime should show an explicit banner and display this content in EN.'
-  );
-
+  ) ON CONFLICT DO NOTHING;

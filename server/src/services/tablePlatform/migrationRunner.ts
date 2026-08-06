@@ -85,7 +85,13 @@ export function compareMigrationFilenames(a: string, b: string): number {
   if (prefixA.length !== prefixB.length) return prefixA.length - prefixB.length;
   const prefixCmp = prefixA.localeCompare(prefixB);
   if (prefixCmp !== 0) return prefixCmp;
-  return a.localeCompare(b);
+  // Filename ordering is part of the schema contract. localeCompare() places
+  // punctuation such as the terminal `.sql` and an additional `_suffix`
+  // differently across ICU locales (and can run an extension before its base
+  // producer). Raw code-point order is deterministic on every runtime and
+  // naturally places `name.sql` before `name_extension.sql`.
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
 }
 
 export function discoverMigrationFiles(dir: string): string[] {

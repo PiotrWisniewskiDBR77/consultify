@@ -8,27 +8,29 @@
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS last_reviewed_at TEXT DEFAULT NULL;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS content_owner TEXT DEFAULT NULL;
 ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS redirect_to_slug TEXT DEFAULT NULL;
+ALTER TABLE kb_articles ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
 
 -- ============================================================
 -- 2. Seed: Help overview article (§2.3.4 requirement)
 -- ============================================================
 
-INSERT OR IGNORE INTO kb_articles (
-  slug, category_id, status, is_featured, reading_time_minutes,
+INSERT INTO kb_articles (
+  id, slug, category_id, status, is_featured, reading_time_minutes,
   sort_order, next_action, related_modules, last_reviewed_at, content_owner
 ) VALUES (
+  'kb-art-help-overview',
   'help-overview',
   (SELECT id FROM kb_categories WHERE slug = 'getting-started' LIMIT 1),
   'published', 1, 3, 1,
   '{"route":"/"}',
   '["help"]',
   '2026-04-09', 'product'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (
-  article_id, language, title, summary, content
+INSERT INTO kb_article_translations (
+  id, article_id, language, title, summary, content
 ) SELECT
-  id, 'en',
+  'kb-art-trans-help-overview-en', id, 'en',
   'Help in Consultify — how it works and where to find support',
   'A complete guide to the Consultify Help system: contextual help, search, knowledge base, and AI assistance.',
   '# Help in Consultify
@@ -63,12 +65,13 @@ When you click "Ask AI", Teresa receives context about where you are and what he
 - Use the search to find articles by keyword
 - Browse knowledge base collections for curated content
 - Ask Teresa for step-by-step guidance'
-FROM kb_articles WHERE slug = 'help-overview';
+FROM kb_articles WHERE slug = 'help-overview'
+ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (
-  article_id, language, title, summary, content
+INSERT INTO kb_article_translations (
+  id, article_id, language, title, summary, content
 ) SELECT
-  id, 'pl',
+  'kb-art-trans-help-overview-pl', id, 'pl',
   'Help w Consultify — jak działa i gdzie szukać wsparcia',
   'Kompletny przewodnik po systemie Help w Consultify: pomoc kontekstowa, wyszukiwarka, baza wiedzy i asystent AI.',
   '# Help w Consultify
@@ -103,28 +106,30 @@ Gdy klikniesz „Zapytaj AI", Teresa otrzymuje kontekst o tym, gdzie jesteś i j
 - Użyj wyszukiwarki, aby znaleźć artykuły po słowach kluczowych
 - Przeglądaj kolekcje bazy wiedzy po wyselekcjonowane treści
 - Zapytaj Teresę o krok po kroku'
-FROM kb_articles WHERE slug = 'help-overview';
+FROM kb_articles WHERE slug = 'help-overview'
+ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- 3. Seed: Search guide article (§2.3.4 requirement)
 -- ============================================================
 
-INSERT OR IGNORE INTO kb_articles (
-  slug, category_id, status, is_featured, reading_time_minutes,
+INSERT INTO kb_articles (
+  id, slug, category_id, status, is_featured, reading_time_minutes,
   sort_order, next_action, related_modules, last_reviewed_at, content_owner
 ) VALUES (
+  'kb-art-help-search-guide',
   'help-search-guide',
   (SELECT id FROM kb_categories WHERE slug = 'getting-started' LIMIT 1),
   'published', 0, 2, 2,
   '{"route":"/"}',
   '["help"]',
   '2026-04-09', 'product'
-);
+) ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (
-  article_id, language, title, summary, content
+INSERT INTO kb_article_translations (
+  id, article_id, language, title, summary, content
 ) SELECT
-  id, 'en',
+  'kb-art-trans-help-search-guide-en', id, 'en',
   'How Help search works and how to interpret results',
   'Learn how to use the Help search effectively: search operators, result types, language indicators, and tips for finding what you need.',
   '# How Help Search Works
@@ -160,12 +165,13 @@ Each result shows:
 - **↑↓** to navigate between results
 - **↵ Enter** to open the selected result
 - **Esc** to close search'
-FROM kb_articles WHERE slug = 'help-search-guide';
+FROM kb_articles WHERE slug = 'help-search-guide'
+ON CONFLICT DO NOTHING;
 
-INSERT OR IGNORE INTO kb_article_translations (
-  article_id, language, title, summary, content
+INSERT INTO kb_article_translations (
+  id, article_id, language, title, summary, content
 ) SELECT
-  id, 'pl',
+  'kb-art-trans-help-search-guide-pl', id, 'pl',
   'Jak działa wyszukiwarka Help i jak interpretować wyniki',
   'Dowiedz się, jak efektywnie korzystać z wyszukiwarki Help: typy wyników, wskaźniki językowe i wskazówki.',
   '# Jak działa wyszukiwarka Help
@@ -201,7 +207,8 @@ Każdy wynik pokazuje:
 - **↑↓** nawigacja między wynikami
 - **↵ Enter** otwarcie wybranego wyniku
 - **Esc** zamknięcie wyszukiwarki'
-FROM kb_articles WHERE slug = 'help-search-guide';
+FROM kb_articles WHERE slug = 'help-search-guide'
+ON CONFLICT DO NOTHING;
 
 -- ============================================================
 -- 4. Backfill last_reviewed_at for P25-B primers

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS presentation_runtime_events (
   status TEXT,
   scope TEXT,
   metadata_json TEXT,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_presentation_runtime_events_org_time

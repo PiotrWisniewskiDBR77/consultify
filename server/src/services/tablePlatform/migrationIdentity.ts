@@ -70,6 +70,18 @@ export const MIGRATION_PATTERN = /^(7\d{2}|\d{8})_.*\.sql$/;
  * reviewable act, widening the regex is not.
  */
 export const RUNTIME_MIGRATION_ALLOWLIST: readonly string[] = Object.freeze([
+  // Strict fresh-schema producer for canonical_inbox_items. The migration was
+  // deliberately copied out of never-ran/ but its 654_ prefix is still outside
+  // the runtime regex; without this exact entry 736 fails on every empty DB.
+  '654_canonical_inbox_items_producer_fresh_db_gap.sql',
+  // Strict producer for the facilitation session consumed by 790. Like 654,
+  // it was copied from never-ran/ but remained undiscoverable under its 669_
+  // prefix until explicitly admitted here.
+  '669_tool_facilitation_producer_fresh_db_gap.sql',
+  // Agent Planner canonical producer and execution lease. Both are explicit
+  // strict-path migrations but their 672_/941_ prefixes sit outside 7xx.
+  '672_enterprise_agent_planner.sql',
+  '941_ai_agent_plan_execution_lease.sql',
   // MAT-010: durable fencing/lease claims used by the mounted artifact
   // lineage runtime. The intentionally consolidated filename contains a
   // letter suffix (`20260802c_`) and therefore is not an eight-digit dated

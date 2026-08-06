@@ -1,7 +1,7 @@
 -- P20 Contract Compliance: optimistic concurrency (§2.3 version field, §2.11 conflict 409)
 -- and server-side version history (§2.6 continuation depth)
 
-ALTER TABLE presentation_decks ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE presentation_decks ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
 
 -- Server-side version history for revert capability (P20 §2.6)
 CREATE TABLE IF NOT EXISTS presentation_deck_versions (
