@@ -102,8 +102,10 @@ function richInlineContent(content: unknown, fallbackText: string): PMNode[] {
       text: leaf.text,
       ...(Array.isArray(leaf.marks)
         ? {
-            marks: leaf.marks.filter(
-              (mark) => mark?.type === 'bold' || mark?.type === 'italic' || mark?.type === 'link'
+            marks: leaf.marks.filter((mark) =>
+              ['bold', 'italic', 'strike', 'underline', 'link', 'textStyle', 'highlight'].includes(
+                mark?.type
+              )
             ),
           }
         : {}),
@@ -139,24 +141,33 @@ export function blockToPMNodes(block: DocumentBlock, sectionId: string): PMNode[
 
   switch (block.type) {
     case 'heading': {
-      const c = (block.content ?? {}) as { level?: number; text?: string; richText?: PMNode[] };
+      const c = (block.content ?? {}) as {
+        level?: number;
+        text?: string;
+        richText?: PMNode[];
+        textAlign?: string;
+      };
       const rawLevel = typeof c.level === 'number' ? c.level : 2;
       const level = Math.min(3, Math.max(1, rawLevel)) as 1 | 2 | 3;
       return [
         {
           type: 'heading',
-          attrs: { ...identity, level },
+          attrs: { ...identity, level, ...(c.textAlign ? { textAlign: c.textAlign } : {}) },
           content: richInlineContent(c, typeof c.text === 'string' ? c.text : ''),
         },
       ];
     }
 
     case 'paragraph': {
-      const c = (block.content ?? {}) as { text?: string; richText?: PMNode[] };
+      const c = (block.content ?? {}) as {
+        text?: string;
+        richText?: PMNode[];
+        textAlign?: string;
+      };
       return [
         {
           type: 'paragraph',
-          attrs: identity,
+          attrs: { ...identity, ...(c.textAlign ? { textAlign: c.textAlign } : {}) },
           content: richInlineContent(c, c.text ?? ''),
         },
       ];

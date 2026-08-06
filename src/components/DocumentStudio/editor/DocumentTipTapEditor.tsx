@@ -517,6 +517,46 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               },
             },
             {
+              label: 'U',
+              title: 'Podkreślenie (Ctrl/Cmd+U)',
+              active: editor.isActive('underline'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleUnderline().run();
+              },
+            },
+            {
+              label: 'S',
+              title: 'Przekreślenie',
+              active: editor.isActive('strike'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleStrike().run();
+              },
+            },
+            {
+              label: 'Zakreśl',
+              title: 'Kolor wyróżnienia',
+              active: editor.isActive('highlight'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleHighlight({ color: '#fde68a' }).run();
+              },
+            },
+            ...(['left', 'center', 'right'] as const).map((alignment) => ({
+              label: alignment === 'left' ? '⇤' : alignment === 'center' ? '↔' : '⇥',
+              title: `Wyrównaj: ${
+                alignment === 'left'
+                  ? 'do lewej'
+                  : alignment === 'center'
+                    ? 'wyśrodkuj'
+                    : 'do prawej'
+              }`,
+              active: editor.isActive({ textAlign: alignment }),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().setTextAlign(alignment).run()),
+            })),
+            {
               label: 'Link',
               title: 'Dodaj lub edytuj link (Ctrl/Cmd+K)',
               active: editor.isActive('link'),
@@ -602,6 +642,41 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               {action.label}
             </button>
           ))}
+          <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+            <span className="sr-only">Rozmiar czcionki</span>
+            <select
+              aria-label="Rozmiar czcionki"
+              value={String(editor.getAttributes('textStyle').fontSize ?? '')}
+              onChange={(event) => {
+                userEditArmedRef.current = true;
+                const size = event.target.value;
+                if (size) editor.chain().focus().setFontSize(size).run();
+                else editor.chain().focus().unsetFontSize().run();
+              }}
+              className="rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+            >
+              <option value="">Auto</option>
+              <option value="12px">12</option>
+              <option value="14px">14</option>
+              <option value="16px">16</option>
+              <option value="18px">18</option>
+              <option value="24px">24</option>
+              <option value="32px">32</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+            <span>Kolor</span>
+            <input
+              type="color"
+              aria-label="Kolor tekstu"
+              value={String(editor.getAttributes('textStyle').color ?? '#111827')}
+              onChange={(event) => {
+                userEditArmedRef.current = true;
+                editor.chain().focus().setColor(event.target.value).run();
+              }}
+              className="h-7 w-8 cursor-pointer rounded border border-c-border bg-transparent p-0.5"
+            />
+          </label>
         </div>
       ) : null}
       <EditorContent

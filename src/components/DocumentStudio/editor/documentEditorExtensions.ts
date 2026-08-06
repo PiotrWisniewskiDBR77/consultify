@@ -11,12 +11,17 @@
  * versions without a clash, mirroring `canvasEditorExtensions.ts`.
  */
 
+import Color from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
+import TextAlign from '@tiptap/extension-text-align';
+import { FontSize, TextStyle } from '@tiptap/extension-text-style';
+import Underline from '@tiptap/extension-underline';
 // Typ z '@tiptap/react' (re-eksport @tiptap/core) — patrz uzasadnienie
 // w canvasEditorExtensions.ts (dwie fizyczne kopie tej samej wersji core).
 import type { AnyExtension } from '@tiptap/react';
@@ -91,6 +96,12 @@ export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[
       defaultProtocol: 'https',
       protocols: ['http', 'https', 'mailto'],
     }),
+    Underline,
+    TextStyle,
+    FontSize,
+    Color,
+    Highlight.configure({ multicolor: true }),
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
     DocumentBlockIdentity,
     Table.configure({ resizable: true }),
     TableRow,

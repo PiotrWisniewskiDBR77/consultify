@@ -66,14 +66,20 @@ function richInlineContent(node: PMNode): PMNode[] | undefined {
       ...(Array.isArray(leaf.marks) && leaf.marks.length > 0
         ? {
             marks: leaf.marks
-              .filter(
-                (mark) => mark?.type === 'bold' || mark?.type === 'italic' || mark?.type === 'link'
+              .filter((mark) =>
+                [
+                  'bold',
+                  'italic',
+                  'strike',
+                  'underline',
+                  'link',
+                  'textStyle',
+                  'highlight',
+                ].includes(mark?.type)
               )
               .map((mark) => ({
                 type: mark.type,
-                ...(mark.type === 'link' && typeof mark.attrs?.href === 'string'
-                  ? { attrs: { href: mark.attrs.href } }
-                  : {}),
+                ...(mark.attrs ? { attrs: mark.attrs } : {}),
               })),
           }
         : {}),
@@ -140,7 +146,12 @@ export function pmNodeToBlock(node: PMNode): DocumentBlock | null {
         {
           blockId: identity.blockId,
           type: 'heading',
-          content: { level, text: nodeText(node), ...(richText ? { richText } : {}) },
+          content: {
+            level,
+            text: nodeText(node),
+            ...(richText ? { richText } : {}),
+            ...(typeof attrs.textAlign === 'string' ? { textAlign: attrs.textAlign } : {}),
+          },
         },
         identity
       );
@@ -156,7 +167,11 @@ export function pmNodeToBlock(node: PMNode): DocumentBlock | null {
         {
           blockId: identity.blockId,
           type: restoredType,
-          content: { text: nodeText(node), ...(richText ? { richText } : {}) },
+          content: {
+            text: nodeText(node),
+            ...(richText ? { richText } : {}),
+            ...(typeof attrs.textAlign === 'string' ? { textAlign: attrs.textAlign } : {}),
+          },
         },
         identity
       );
