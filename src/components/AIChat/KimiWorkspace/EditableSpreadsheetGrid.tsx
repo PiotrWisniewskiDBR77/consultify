@@ -53,6 +53,13 @@ interface Selection {
   colIndex: number;
 }
 
+interface CellChange {
+  rowIndex: number;
+  colIndex: number;
+  before: import('@/utils/workbookFormulaEngine').FormulaCellRaw;
+  after: import('@/utils/workbookFormulaEngine').FormulaCellRaw;
+}
+
 interface Props {
   workbookId: string;
   /** WSZYSTKIE arkusze skoroszytu (formuły cross-sheet muszą widzieć każdy). */
@@ -84,6 +91,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
+  const undoStackRef = useRef<CellChange[][]>([]);
+  const redoStackRef = useRef<CellChange[][]>([]);
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
@@ -92,6 +101,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     setSelected(null);
     setEditingValue(null);
     setSaveState('idle');
+    undoStackRef.current = [];
+    redoStackRef.current = [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workbookId]);
 
@@ -114,6 +125,52 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     }
   }, [editingValue]);
 
+  const persistChanges = useCallback(
+    async (changes: CellChange[], direction: 'after' | 'before') => {
+      setSaveState('saving');
+      try {
+        // Cell updates are versioned server-side. Keep them sequential so a
+        // multi-cell paste cannot create avoidable compare-and-swap races.
+        for (const change of changes) {
+          const col = localSheets[activeSheetIndex]?.columns?.[change.colIndex];
+          if (!col) continue;
+          const cell = change[direction];
+          await Api.updateWorkbookCell(workbookId, {
+            sheetIndex: activeSheetIndex,
+            rowIndex: change.rowIndex,
+            columnKey: col.key,
+            value: cell.value,
+            formula: cell.formula,
+          });
+        }
+        setSaveState('saved');
+      } catch {
+        setSaveState('error');
+      }
+    },
+    [activeSheetIndex, localSheets, workbookId]
+  );
+
+  const applyChanges = useCallback(
+    (changes: CellChange[], direction: 'after' | 'before') => {
+      setLocalSheets((prev) => {
+        const clone = cloneSheets(prev);
+        const sheet = clone[activeSheetIndex];
+        if (!sheet) return prev;
+        for (const change of changes) {
+          const col = sheet.columns?.[change.colIndex];
+          const row = sheet.rows?.[change.rowIndex];
+          if (!col || !row) continue;
+          if (!row.cells) row.cells = {};
+          row.cells[col.key] = { ...change[direction] };
+        }
+        return clone;
+      });
+      void persistChanges(changes, direction);
+    },
+    [activeSheetIndex, persistChanges]
+  );
+
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
   // kontenera siatki — kolejne strzałki/Enter/Delete lądowały donikąd (klawiatura
@@ -132,6 +189,17 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       const col = activeRaw.columns[selected.colIndex];
       if (!col) return;
       const parsed = parseCellInput(nextRaw);
+      const oldCell = activeRaw.rows?.[selected.rowIndex]?.cells?.[col.key] ?? {};
+      const afterCell = {
+        style: (oldCell as Record<string, unknown>).style,
+        comment: (oldCell as Record<string, unknown>).comment,
+        validation: (oldCell as Record<string, unknown>).validation,
+        ...parsed,
+      };
+      undoStackRef.current.push([
+        { rowIndex: selected.rowIndex, colIndex: selected.colIndex, before: { ...oldCell }, after: afterCell },
+      ]);
+      redoStackRef.current = [];
 
       setLocalSheets((prev) => {
         const clone = cloneSheets(prev);
@@ -140,13 +208,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         const targetRow = sheet.rows[selected.rowIndex];
         if (!targetRow) return prev;
         if (!targetRow.cells) targetRow.cells = {};
-        const oldCell = targetRow.cells[col.key] ?? {};
-        targetRow.cells[col.key] = {
-          style: (oldCell as Record<string, unknown>).style,
-          comment: (oldCell as Record<string, unknown>).comment,
-          validation: (oldCell as Record<string, unknown>).validation,
-          ...parsed,
-        };
+        targetRow.cells[col.key] = afterCell;
         return clone;
       });
 
@@ -217,6 +279,23 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const handleNavigationKey = useCallback(
     (key: string, modifiers: { ctrlKey: boolean; metaKey: boolean; altKey: boolean }): boolean => {
       if (editingValue !== null || !selected) return false;
+      const command = modifiers.ctrlKey || modifiers.metaKey;
+      if (command && key.toLowerCase() === 'z') {
+        const changes = undoStackRef.current.pop();
+        if (changes) {
+          redoStackRef.current.push(changes);
+          applyChanges(changes, 'before');
+        }
+        return true;
+      }
+      if (command && key.toLowerCase() === 'y') {
+        const changes = redoStackRef.current.pop();
+        if (changes) {
+          undoStackRef.current.push(changes);
+          applyChanges(changes, 'after');
+        }
+        return true;
+      }
       switch (key) {
         case 'ArrowUp':
           moveSelection(-1, 0);
@@ -246,8 +325,36 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           return false;
       }
     },
-    [editingValue, selected, moveSelection, startEditing, commit]
+    [editingValue, selected, moveSelection, startEditing, commit, applyChanges]
   );
+
+  const handleCopy = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (!selected) return;
+    const col = activeRaw?.columns?.[selected.colIndex];
+    const cell = col ? activeRaw?.rows?.[selected.rowIndex]?.cells?.[col.key] : undefined;
+    e.clipboardData.setData('text/plain', rawCellToEditText(cell));
+    e.preventDefault();
+  }, [activeRaw, selected]);
+
+  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (!selected || editingValue !== null || !activeRaw?.columns?.length) return;
+    const matrix = e.clipboardData.getData('text/plain').replace(/\r/g, '').split('\n').map((line) => line.split('\t'));
+    const changes: CellChange[] = [];
+    matrix.forEach((values, rowOffset) => values.forEach((raw, colOffset) => {
+      const rowIndex = selected.rowIndex + rowOffset;
+      const colIndex = selected.colIndex + colOffset;
+      const col = activeRaw.columns?.[colIndex];
+      const row = activeRaw.rows?.[rowIndex];
+      if (!col || !row) return;
+      const before = row.cells?.[col.key] ?? {};
+      changes.push({ rowIndex, colIndex, before: { ...before }, after: { ...before, ...parseCellInput(raw) } });
+    }));
+    if (!changes.length) return;
+    undoStackRef.current.push(changes);
+    redoStackRef.current = [];
+    applyChanges(changes, 'after');
+    e.preventDefault();
+  }, [activeRaw, applyChanges, editingValue, selected]);
 
   const handleContainerKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -406,6 +513,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         ref={containerRef}
         className="overflow-x-auto max-h-[520px] overflow-y-auto focus:outline-none"
         onKeyDown={handleContainerKeyDown}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
         tabIndex={0}
       >
         {/* prettier-ignore */}
