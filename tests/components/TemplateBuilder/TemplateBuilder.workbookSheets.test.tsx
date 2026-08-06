@@ -52,12 +52,27 @@ describe('TemplateBuilder workbook sheets', () => {
     await user.click(screen.getByRole('button', { name: 'Utwórz i edytuj' }));
 
     const realShell = screen.getByTestId('template-builder-mels');
-    const add = within(realShell).getByTestId('structure-add');
-    await user.click(add);
+    await user.click(within(realShell).getByTestId('structure-add'));
+    expect(screen.getByTestId('template-builder-shell')).toHaveAttribute(
+      'data-structure-count',
+      '2'
+    );
+    expect(within(realShell).getByTestId('template-structure-list')).toHaveAttribute(
+      'data-structure-count',
+      '2'
+    );
     expect(within(realShell).getByTestId('template-structure-list')).toHaveTextContent('Arkusz 1');
     expect(within(realShell).getByTestId('template-structure-list')).toHaveTextContent('Arkusz 2');
 
-    await user.click(add);
+    await user.click(within(realShell).getByTestId('structure-add'));
+    expect(screen.getByTestId('template-builder-shell')).toHaveAttribute(
+      'data-structure-count',
+      '3'
+    );
+    expect(within(realShell).getByTestId('template-structure-list')).toHaveAttribute(
+      'data-structure-count',
+      '3'
+    );
     const structureItems = within(realShell)
       .getAllByRole('button')
       .filter((item) => item.dataset.testid?.startsWith('structure-item-'));

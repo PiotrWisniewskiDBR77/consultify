@@ -144,6 +144,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
     <div
       className="h-screen flex flex-col bg-c-surface overflow-hidden"
       data-testid="template-builder-shell"
+      data-structure-count={structureItems.length}
     >
       <div className="flex-1 flex min-h-0 overflow-hidden">
         <div className="flex-1 min-w-0 flex flex-col">
@@ -160,6 +161,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             }
             leftRailContent={
               <TemplateStructureList
+                key={`${draft.type}:${structureItems.map((item) => item.id).join('|')}`}
                 items={structureItems}
                 selectedId={selectedId}
                 addLabel={addLabel}

@@ -39,7 +39,11 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="flex flex-col h-full min-h-0" data-testid="template-structure-list">
+    <div
+      className="flex flex-col h-full min-h-0"
+      data-testid="template-structure-list"
+      data-structure-count={items.length}
+    >
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-1">
         {items.map((item, i) => {
           const active = item.id === selectedId;
