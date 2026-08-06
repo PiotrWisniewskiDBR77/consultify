@@ -87,6 +87,40 @@ Worth singling out: the `coverage` job carries **no branch gate**, so it is the 
 
 Workflow re-parsed after editing: valid YAML, 25 jobs, all four now carry the flags.
 
+### What the change actually costs — measured, not estimated
+
+`server/src` (554 test files) was run twice locally against a migrated PostgreSQL 17.9:
+
+| | Mock (CI today) | Real database |
+|---|---|---|
+| Files failed | 27 | 33 |
+| Files passed | 511 | 520 |
+| **Files skipped** | **16** | **1** |
+
+So the headline is not "6 new failures" — it is that **15 files that were being skipped now actually execute**, 9 of which pass.
+
+The 6 files that differ were then re-run **in isolation against a genuinely fresh, migrated database** (550/550), because the full-suite run shares one database and several of these tests drop and recreate tables, contaminating each other. That correction matters: on a clean database the true result is **3 failed / 3 passed**, not 6 failed. The two `atelierFinance*.pg.test.ts` files fail only as collateral damage of the shared run.
+
+| File | Verdict on a clean database |
+|---|---|
+| `ini005-portfolio-resources-roadmap.pg.test.ts` | **test-fixture bug** — its setup issues `DROP TABLE tasks`, which now fails (`2BP01`) because the complete schema gives `tasks` six dependent FKs, including `studio_documents_linked_task_id_fkey` from the team's recent Studio fix. The test was written against an incomplete schema. |
+| `initiativeCapabilityMatrix.pg.test.ts` | **test-fixture bug** — inserts a user with an `organization_id` whose organization was never created, violating `users_organization_id_fkey`. It passed only where that FK did not exist. The failure is evidence the constraint is now real. |
+| `documentSourcePackService.test.ts` | **candidate product defect — see below** |
+
+### The one genuine defect the mock was hiding
+
+`documentSourcePackService.test.ts` passes 13 of 14. The single failure is the test named *"write-through to DAO survives a registry-only reset and is restored by hydration"*:
+
+```
+expected 'draft' to be 'ready'
+```
+
+The in-memory registry holds `ready`; what comes back out of Postgres after rehydration is `draft`. **The promotion to `ready` is not persisted.** Against the mock the assertion passed, because the mock returned the in-memory value it had just been given.
+
+This is precisely the class of defect the audit predicted and could not see: a state change that looks applied and is not. It is left open here rather than fixed in passing — it needs the DAO write path investigated properly, and it belongs with DB-P0-02 (unchecked writes) rather than in a CI commit.
+
+**Conclusion: the CI change is safe to land.** It costs two test-fixture repairs and surfaces one real persistence bug — which is the entire point of it.
+
 ---
 
 ## 5. Found, not fixed — the test suite is deferred on the branches actually in use
@@ -130,3 +164,5 @@ Nothing pushed. Nothing deployed. No demo or production database was written to 
 | DB-P0-05 | MFA has no table in any environment. Choosing between `user_mfa` and `user_mfa_methods` is a product/schema decision, and the write routes also need to check `.success` — which is DB-P0-02's fix. |
 | DB-P0-06 | Demo schema reconciliation is an operational decision, not a code change. The gap against the corrected canon is now **171 tables** (canon grew to 1416 as the team's Studio fix added 5 tables demo does not yet have). |
 | DB-P1-* | Registered with evidence and remedies in `CONSULTIFY_DATABASE_RISK_REGISTER.csv`. |
+| **NEW — source pack `ready` not persisted** | Found by §4's measurement. `documentSourcePackService` promotes a pack to `ready` in memory; Postgres returns `draft` after rehydration. Needs the DAO write path traced. |
+| **NEW — two test fixtures assume an incomplete schema** | `ini005-portfolio-resources-roadmap.pg.test.ts` (drops `tasks`, now has 6 dependent FKs) and `initiativeCapabilityMatrix.pg.test.ts` (inserts a user for a nonexistent organization). Both need fixture repair before the CI change lands cleanly. |
