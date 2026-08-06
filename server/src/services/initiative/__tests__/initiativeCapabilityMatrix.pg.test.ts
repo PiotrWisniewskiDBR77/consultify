@@ -212,6 +212,20 @@ describe.skipIf(!REAL_PG)('INI-04 capability matrix — real PostgreSQL', () => 
       );
     `);
     try {
+      // The organizations must exist BEFORE the users that reference them.
+      //
+      // The `CREATE TABLE IF NOT EXISTS users (...)` above is a no-op against
+      // the real migrated schema, where `users.organization_id` carries
+      // `users_organization_id_fkey`. Inserting a user for an organization
+      // that was never created therefore failed with 23503. It only ever
+      // "worked" where that foreign key did not exist — the failure is
+      // evidence the constraint is now real, not a reason to remove it.
+      // Both ids are fresh random UUIDs, so these rows collide with nothing.
+      await pool.query(
+        `INSERT INTO organizations (id) VALUES ($1), ($2) ON CONFLICT (id) DO NOTHING`,
+        [orgA, orgB]
+      );
+
       await pool.query(`INSERT INTO users (id, organization_id) VALUES ($1, $2)`, [
         userInOrgA,
         orgA,
@@ -220,10 +234,17 @@ describe.skipIf(!REAL_PG)('INI-04 capability matrix — real PostgreSQL', () => 
         userInOrgB,
         orgB,
       ]);
-      await pool.query(`INSERT INTO initiatives (id, organization_id) VALUES ($1, $2)`, [
-        initiativeId,
-        orgA,
-      ]);
+      // The real schema constrains this row in ways the minimal
+      // `CREATE TABLE IF NOT EXISTS initiatives (id, organization_id)` above
+      // cannot express — that statement is a no-op against it. `name` is NOT
+      // NULL, and `status` carries `initiatives_status_check`, whose column
+      // default ('step3') is itself not an accepted value. Both are supplied
+      // explicitly rather than assumed away; 'DRAFT' is the lifecycle entry
+      // state and is irrelevant to what this suite asserts (tenant scoping).
+      await pool.query(
+        `INSERT INTO initiatives (id, organization_id, name, status) VALUES ($1, $2, $3, $4)`,
+        [initiativeId, orgA, 'INI-04 capability matrix fixture', 'DRAFT']
+      );
       await pool.query(
         `INSERT INTO initiative_stakeholders (id, initiative_id, user_id, raci_type) VALUES ($1, $2, $3, 'A')`,
         [randomUUID(), initiativeId, userInOrgA]
@@ -248,11 +269,16 @@ describe.skipIf(!REAL_PG)('INI-04 capability matrix — real PostgreSQL', () => 
       const raciCrossTenant = await matrix.readInitiativeRaciRoles(orgA, initiativeId, userInOrgB);
       expect(raciCrossTenant).toEqual([]);
     } finally {
+      // Reverse dependency order: children, then users, then the organizations
+      // they point at. No CASCADE, no constraint juggling — just the correct
+      // order, so nothing this file created is left behind for another file
+      // to trip over.
       await pool.query(`DELETE FROM initiative_stakeholders WHERE initiative_id = $1`, [
         initiativeId,
       ]);
       await pool.query(`DELETE FROM initiatives WHERE id = $1`, [initiativeId]);
       await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[userInOrgA, userInOrgB]]);
+      await pool.query(`DELETE FROM organizations WHERE id = ANY($1)`, [[orgA, orgB]]);
     }
   });
 });

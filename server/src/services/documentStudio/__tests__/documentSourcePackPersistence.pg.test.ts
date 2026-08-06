@@ -22,11 +22,22 @@
  */
 import { randomUUID } from 'node:crypto';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const REAL_DB = process.env.RUN_DB_TESTS === '1' && process.env.MOCK_DB === 'false';
 
-const freshOrg = () => `org-sp-${randomUUID()}`;
+/**
+ * Every organization id this file invents, so the rows it deliberately leaves
+ * behind mid-test (durability is the whole point) can be removed afterwards.
+ * Ids are unique per test, so cleanup can never touch another file's data.
+ */
+const createdOrgs: string[] = [];
+
+const freshOrg = () => {
+  const id = `org-sp-${randomUUID()}`;
+  createdOrgs.push(id);
+  return id;
+};
 
 const makeItem = () => ({
   itemType: 'text' as const,
@@ -55,6 +66,30 @@ describe.skipIf(!REAL_DB)('Source Pack persistence — real PostgreSQL', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();
+  });
+
+  // Children (audit) before parents (packs), by this file's own org ids only.
+  afterAll(async () => {
+    if (createdOrgs.length === 0) return;
+    const { Pool } = await import('pg');
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    try {
+      await pool.query(`DELETE FROM document_source_pack_audit WHERE organization_id = ANY($1)`, [
+        createdOrgs,
+      ]);
+      await pool.query(`DELETE FROM document_source_packs WHERE organization_id = ANY($1)`, [
+        createdOrgs,
+      ]);
+      const residue = await pool.query(
+        `SELECT COUNT(*)::int AS n FROM document_source_packs WHERE organization_id = ANY($1)`,
+        [createdOrgs]
+      );
+      if (residue.rows[0]?.n !== 0) {
+        throw new Error(`source pack cleanup left ${residue.rows[0]?.n} row(s) behind`);
+      }
+    } finally {
+      await pool.end();
+    }
   });
 
   it('promotion to ready survives a cold service instance and rehydration', async () => {
