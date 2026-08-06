@@ -196,7 +196,6 @@ afterEach(() => {
 
 describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
   it('adds a named section through the outline and persists normalized structure', async () => {
-    vi.spyOn(window, 'prompt').mockReturnValue('Decision required');
     const onSchemaUpdated = vi.fn();
     saveContentMock.mockImplementation(async (_artifactId, input) => ({
       ...SCHEMA,
@@ -206,6 +205,10 @@ describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
     renderPanel(onSchemaUpdated);
 
     fireEvent.click(screen.getByRole('button', { name: '+ Add section' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Nazwa nowej sekcji' }), {
+      target: { value: 'Decision required' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
 
     await waitFor(() => expect(saveContentMock).toHaveBeenCalledTimes(1));
     const [, input] = saveContentMock.mock.calls[0];

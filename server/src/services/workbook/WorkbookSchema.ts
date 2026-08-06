@@ -18,6 +18,7 @@ import { z } from 'zod';
 export const CellStyleSchema = z.object({
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
   fontSize: z.number().optional(),
   fontColor: z.string().optional(),
   bgColor: z.string().optional(),

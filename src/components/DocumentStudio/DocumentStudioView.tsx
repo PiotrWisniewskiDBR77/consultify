@@ -45,6 +45,7 @@ import {
 import { DocumentStudioIntakeForm, type IntakeSubmitOptions } from './DocumentStudioIntakeForm';
 import { DocumentStudioOutlinePanel } from './DocumentStudioOutlinePanel';
 import { DocumentStudioTemplateArchitectView } from './DocumentStudioTemplateArchitectView';
+import { useManualPrompt } from './editor/useManualPrompt';
 import type {
   DocumentGenerationWarning,
   DocumentIntake,
@@ -107,6 +108,7 @@ function buildTemplateOutlinePreview(
 export const DocumentStudioView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { requestConfirm, promptDialog } = useManualPrompt();
   const { artifactId: artifactIdFromPath } = useParams<{ artifactId?: string }>();
   // #84b fix: getArtifactPath('report', id) / legacy /wordy deep-links resolve to
   // `/document-studio?artifactId=X` (query string), while this view historically
@@ -768,15 +770,15 @@ export const DocumentStudioView: React.FC = () => {
   // true no-op. The document itself is NOT deleted (autosaved server-side,
   // reachable again via File → Otwórz) — the confirm copy says exactly
   // that instead of implying data loss that doesn't actually happen.
-  const handleStartOver = (): void => {
+  const handleStartOver = async (): Promise<void> => {
     if (
       phase !== 'intake' &&
-      !window.confirm(
+      !(await requestConfirm(
         t(
           'documentStudio.view.startOverConfirm',
           'Zamknąć ten dokument i zacząć nowy? Bieżący dokument jest zapisany — możesz do niego wrócić przez „Otwórz” w menu Plik.'
         )
-      )
+      ))
     ) {
       return;
     }
@@ -855,6 +857,7 @@ export const DocumentStudioView: React.FC = () => {
       data-testid="document-studio-view"
       className="flex h-full min-h-0 flex-col bg-c-surface-raised"
     >
+      {promptDialog}
       {showDocumentShell ? null : (
         <TopBar
           moduleLabel={t('documentStudio.view.moduleLabel', 'Document Studio')}

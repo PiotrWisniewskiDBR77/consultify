@@ -122,7 +122,6 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
   });
 
   it('inserts a canonical KPI block through the manual toolbar and arms autosave', async () => {
-    vi.spyOn(window, 'prompt').mockReturnValue('Postęp=72%;Budżet=1,4 mln EUR');
     const schema = {
       artifactId: 'artifact-manual-kpi',
       title: 'Manual KPI',
@@ -132,6 +131,11 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
     render(<DocumentTipTapEditor schema={schema} artifactId="artifact-manual-kpi" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wstaw: KPI' }));
+    const input = screen.getByRole('textbox', {
+      name: 'KPI w formacie Nazwa=Wartość; Nazwa=Wartość',
+    });
+    fireEvent.change(input, { target: { value: 'Postęp=72%;Budżet=1,4 mln EUR' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
     await act(async () => vi.advanceTimersByTimeAsync(600));
 
     expect(saveMock).toHaveBeenCalledTimes(1);

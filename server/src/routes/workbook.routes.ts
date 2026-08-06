@@ -1924,6 +1924,25 @@ router.patch(
           target.columns[colIndex].width = width;
           break;
         }
+        case 'resizeRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const height = Number(command.height);
+          if (!target.rows[rowIndex] || !Number.isFinite(height) || height < 10 || height > 200) throw new Error('Invalid row height');
+          target.rows[rowIndex].height = height;
+          break;
+        }
+        case 'resizeRowAndColumn': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const height = Number(command.height);
+          const width = Number(command.width);
+          if (!target.rows[rowIndex] || !target.columns[colIndex] || !Number.isFinite(height) || !Number.isFinite(width) || height < 10 || height > 200 || width < 4 || width > 80) throw new Error('Invalid row or column size');
+          target.rows[rowIndex].height = height;
+          target.columns[colIndex].width = width;
+          break;
+        }
         case 'formatCells': {
           const target = requireSheet();
           const rowIndexes = Array.isArray(command.rowIndexes) ? command.rowIndexes : [];
@@ -1986,6 +2005,40 @@ router.patch(
           if (!col || !targetRow) throw new Error('Invalid cell');
           const current = targetRow.cells[col.key] || {};
           targetRow.cells[col.key] = { ...current, validation: command.validation || undefined };
+          break;
+        }
+        case 'setComment': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = { ...current, comment: String(command.comment || '').trim() || undefined };
+          break;
+        }
+        case 'findReplace': {
+          const find = String(command.find || '');
+          const replacement = String(command.replacement ?? '');
+          if (!find) throw new Error('Find text is required');
+          const matchCase = Boolean(command.matchCase);
+          const normalize = (value: string) => matchCase ? value : value.toLocaleLowerCase();
+          let replacements = 0;
+          schema.sheets.forEach((target) => target.rows.forEach((targetRow) => Object.values(targetRow.cells).forEach((cell) => {
+            if (typeof cell.value !== 'string') return;
+            const source = cell.value;
+            const sourceComparable = normalize(source);
+            const findComparable = normalize(find);
+            if (!sourceComparable.includes(findComparable)) return;
+            if (matchCase) cell.value = source.split(find).join(replacement);
+            else {
+              const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              cell.value = source.replace(new RegExp(escaped, 'gi'), replacement);
+            }
+            replacements += 1;
+          })));
+          (schema.metadata ||= {}).lastFindReplaceCount = replacements;
           break;
         }
         default:

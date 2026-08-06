@@ -118,6 +118,7 @@ function applyStyle(cell: ExcelJS.Cell, style?: CellStyle): void {
   const font: Partial<ExcelJS.Font> = {};
   if (style.bold) font.bold = true;
   if (style.italic) font.italic = true;
+  if (style.underline) font.underline = true;
   if (style.fontSize) font.size = style.fontSize;
   if (style.fontColor) font.color = { argb: hexToArgb(style.fontColor) };
   if (Object.keys(font).length > 0) cell.font = { ...cell.font, ...font };

@@ -843,8 +843,11 @@ export async function materializeDocumentArtifact(
   // genuinely blank canonical section after the grounding boundary and remove
   // auto-attached context from the blank document itself.
   if (
+    params.useLlm !== true &&
     params.intake.documentType === 'generic_document' &&
-    params.intake.description?.trim() === 'Pusty dokument roboczy do samodzielnej edycji.'
+    /^(Nowy dokument|New document)$/i.test(params.intake.title?.trim() || outline.title.trim()) &&
+    outline.sections.length === 1 &&
+    /^(Sekcja 1|Section 1)$/i.test(outline.sections[0]?.title?.trim() || '')
   ) {
     provisionalSchema.title = params.intake.title?.trim() || outline.title;
     provisionalSchema.sections = outline.sections.map((section, orderIndex) => ({

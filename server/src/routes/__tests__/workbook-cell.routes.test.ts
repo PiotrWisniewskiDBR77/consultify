@@ -279,6 +279,10 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
       { type: 'setFreeze', sheetIndex: 1, freezeRow: 1, freezeCol: 1 },
       { type: 'setAutoFilter', sheetIndex: 1, enabled: true },
       { type: 'setValidation', sheetIndex: 1, rowIndex: 0, colIndex: 0, validation: { type: 'list', values: ['Base', 'Upside'] } },
+      { type: 'renameWorkbook', title: 'Renamed workbook' },
+      { type: 'resizeRowAndColumn', sheetIndex: 1, rowIndex: 0, colIndex: 0, height: 30, width: 24 },
+      { type: 'setComment', sheetIndex: 1, rowIndex: 0, colIndex: 0, comment: 'Reviewed manually' },
+      { type: 'findReplace', find: 'NPV', replacement: 'Net Present Value' },
     ];
     for (const command of commands) {
       vi.clearAllMocks();

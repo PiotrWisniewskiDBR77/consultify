@@ -87,6 +87,7 @@ import { DocumentStudioFileMenu } from './DocumentStudioFileMenu';
 import { DocumentStudioQaPanel } from './DocumentStudioQaPanel';
 import { DocumentUndoRedoControls } from './DocumentUndoRedoControls';
 import { type DocumentAutosaveStatus, DocumentTipTapEditor } from './editor';
+import { useManualPrompt } from './editor/useManualPrompt';
 import type {
   DocumentAccessHistoryEntry,
   DocumentApprovalDecisionKind,
@@ -1998,6 +1999,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { requestText, requestConfirm, promptDialog } = useManualPrompt();
   // N20 (menu pliku) — live autosave status observed from the TipTap editor's
   // debounced `PUT /:artifactId/content` (see `DocumentTipTapEditor.tsx`
   // `persistManualEdit`). This was already computed and thrown away before —
@@ -2170,8 +2172,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     [artifactId, onSchemaUpdated, schema.updatedAt, t]
   );
 
-  const handleAddSection = useCallback(() => {
-    const title = window.prompt(
+  const handleAddSection = useCallback(async () => {
+    const title = await requestText(
       t('documentStudio.outline.newSectionPrompt', 'Nazwa nowej sekcji'),
       t('documentStudio.outline.newSectionDefault', 'Nowa sekcja')
     );
@@ -2196,13 +2198,13 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         sourceRefs: [],
       },
     ]);
-  }, [persistSectionStructure, schema.sections, t]);
+  }, [persistSectionStructure, requestText, schema.sections, t]);
 
   const handleRenameSection = useCallback(
-    (sectionId: string) => {
+    async (sectionId: string) => {
       const section = schema.sections.find((candidate) => candidate.sectionId === sectionId);
       if (!section) return;
-      const title = window.prompt(
+      const title = await requestText(
         t('documentStudio.outline.renameSectionPrompt', 'Nowa nazwa sekcji'),
         section.title
       );
@@ -2214,28 +2216,26 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         )
       );
     },
-    [persistSectionStructure, schema.sections, t]
+    [persistSectionStructure, requestText, schema.sections, t]
   );
 
   const handleDeleteSection = useCallback(
-    (sectionId: string) => {
+    async (sectionId: string) => {
       if (schema.sections.length <= 1) return;
       const section = schema.sections.find((candidate) => candidate.sectionId === sectionId);
       if (!section) return;
-      if (
-        !window.confirm(
-          t('documentStudio.outline.deleteSectionConfirm', {
-            defaultValue: 'Usunąć sekcję „{{title}}” wraz z jej treścią?',
-            title: section.title,
-          })
-        )
-      )
-        return;
+      const confirmed = await requestConfirm(
+        t('documentStudio.outline.deleteSectionConfirm', {
+          defaultValue: 'Usunąć sekcję „{{title}}” wraz z jej treścią?',
+          title: section.title,
+        })
+      );
+      if (!confirmed) return;
       void persistSectionStructure(
         schema.sections.filter((candidate) => candidate.sectionId !== sectionId)
       );
     },
-    [persistSectionStructure, schema.sections, t]
+    [persistSectionStructure, requestConfirm, schema.sections, t]
   );
 
   const handleMoveSection = useCallback(
@@ -2280,10 +2280,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     [artifactId, onSchemaUpdated, schema.updatedAt, t]
   );
 
-  const handleAddSource = useCallback(() => {
-    const sourceType = window.prompt('Typ źródła', 'url')?.trim();
+  const handleAddSource = useCallback(async () => {
+    const sourceType = (await requestText('Typ źródła', 'url'))?.trim();
     if (!sourceType) return;
-    const sourceId = window.prompt('Identyfikator lub adres źródła', '')?.trim();
+    const sourceId = (await requestText('Identyfikator lub adres źródła', ''))?.trim();
     if (!sourceId) return;
     if (
       schema.sourceRefs.some((ref) => ref.sourceType === sourceType && ref.sourceId === sourceId)
@@ -2291,17 +2291,19 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       toast.error(t('documentStudio.sources.duplicate', 'To źródło jest już podpięte.'));
       return;
     }
-    const sourceTitle = window.prompt('Nazwa źródła', sourceId)?.trim() || sourceId;
-    const sourceVersion = window.prompt('Wersja źródła (opcjonalnie)', '')?.trim() || undefined;
+    const sourceTitle = (await requestText('Nazwa źródła', sourceId))?.trim() || sourceId;
+    const sourceVersion =
+      (await requestText('Wersja źródła (opcjonalnie)', ''))?.trim() || undefined;
     void persistEvidenceEdits(schema.sections, [
       ...schema.sourceRefs,
       { sourceType, sourceId, sourceTitle, sourceVersion },
     ]);
-  }, [persistEvidenceEdits, schema.sections, schema.sourceRefs, t]);
+  }, [persistEvidenceEdits, requestText, schema.sections, schema.sourceRefs, t]);
 
   const handleRemoveSource = useCallback(
-    (sourceType: string, sourceId: string) => {
-      if (!window.confirm(t('documentStudio.sources.removeConfirm', 'Usunąć to źródło?'))) return;
+    async (sourceType: string, sourceId: string) => {
+      if (!(await requestConfirm(t('documentStudio.sources.removeConfirm', 'Usunąć to źródło?'))))
+        return;
       const nextSources = schema.sourceRefs.filter(
         (ref) => !(ref.sourceType === sourceType && ref.sourceId === sourceId)
       );
@@ -2318,7 +2320,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       }));
       void persistEvidenceEdits(nextSections, nextSources);
     },
-    [persistEvidenceEdits, schema.sections, schema.sourceRefs, t]
+    [persistEvidenceEdits, requestConfirm, schema.sections, schema.sourceRefs, t]
   );
 
   const handleToggleAssumption = useCallback(
@@ -3076,6 +3078,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 
   const canvas = (
     <div className="flex min-h-full flex-col">
+      {promptDialog}
       {showSaveAsTemplateModal ? (
         <CreateTemplateFromArtifactModal
           artifactId={artifactId}

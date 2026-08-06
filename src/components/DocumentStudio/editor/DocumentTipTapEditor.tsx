@@ -44,6 +44,7 @@ import { getDocumentEditorExtensions } from './documentEditorExtensions';
 import { DOC_IMAGE_NODE_NAME, KPI_STRIP_NODE_NAME } from './nodeNames';
 import { schemaToProseMirror } from './schemaToTipTap';
 import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
+import { useManualPrompt } from './useManualPrompt';
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -227,6 +228,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     // content edit. This is the remount-on-edit guard.
     [schema.artifactId]
   );
+  const { requestText, promptDialog } = useManualPrompt();
 
   // Keep editable in sync without remounting.
   useEffect(() => {
@@ -295,7 +297,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   }, []);
 
   const insertStructuredBlock = useCallback(
-    (blockType: 'table' | 'risk_table' | 'kpi_strip' | 'image' | 'roadmap' | 'callout') => {
+    async (blockType: 'table' | 'risk_table' | 'kpi_strip' | 'image' | 'roadmap' | 'callout') => {
       if (!editor) return;
       const identity = {
         blockId: `blk-${crypto.randomUUID()}`,
@@ -304,7 +306,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         isAssumption: false,
       };
       if (blockType === 'callout') {
-        const text = window.prompt('Treść wyróżnienia', 'Kluczowa decyzja lub rekomendacja');
+        const text = await requestText('Treść wyróżnienia', 'Kluczowa decyzja lub rekomendacja');
         if (!text?.trim()) return;
         userEditArmedRef.current = true;
         editor
@@ -319,10 +321,10 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         return;
       }
       if (blockType === 'image') {
-        const url = window.prompt('Adres obrazu (https://)', 'https://');
+        const url = await requestText('Adres obrazu (https://)', 'https://');
         if (!url?.trim() || !/^https:\/\//i.test(url.trim())) return;
-        const alt = window.prompt('Opis alternatywny obrazu', '')?.trim() ?? '';
-        const caption = window.prompt('Podpis obrazu (opcjonalnie)', '')?.trim() ?? '';
+        const alt = (await requestText('Opis alternatywny obrazu', ''))?.trim() ?? '';
+        const caption = (await requestText('Podpis obrazu (opcjonalnie)', ''))?.trim() ?? '';
         userEditArmedRef.current = true;
         editor
           .chain()
@@ -340,7 +342,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
 
       let payload: Record<string, unknown>;
       if (blockType === 'kpi_strip') {
-        const raw = window.prompt('KPI w formacie Nazwa=Wartość; Nazwa=Wartość', 'Postęp=72%');
+        const raw = await requestText('KPI w formacie Nazwa=Wartość; Nazwa=Wartość', 'Postęp=72%');
         if (!raw?.trim()) return;
         const items = raw
           .split(';')
@@ -350,7 +352,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         if (items.length === 0) return;
         payload = { items };
       } else if (blockType === 'risk_table') {
-        const raw = window.prompt(
+        const raw = await requestText(
           'Ryzyka: nazwa|prawdopodobieństwo|wpływ|właściciel; …',
           'Adopcja|Średnie|Wysoki|COO'
         );
@@ -360,7 +362,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
           rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
         };
       } else if (blockType === 'roadmap') {
-        const raw = window.prompt(
+        const raw = await requestText(
           'Roadmapa: okres|rezultat|właściciel; …',
           '30 dni|Pilotaż|COO;60 dni|Rollout|CIO;90 dni|Stabilizacja|PMO'
         );
@@ -370,7 +372,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
           rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
         };
       } else {
-        const raw = window.prompt(
+        const raw = await requestText(
           'Tabela: nagłówki w pierwszym wierszu; pola oddziel |, wiersze oddziel ;',
           'Metryka|Wartość;Postęp|72%'
         );
@@ -388,12 +390,12 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         })
         .run();
     },
-    [editor]
+    [editor, requestText]
   );
 
-  const findInDocument = useCallback(() => {
+  const findInDocument = useCallback(async () => {
     if (!editor) return;
-    const query = window.prompt('Znajdź w dokumencie', '')?.trim();
+    const query = (await requestText('Znajdź w dokumencie', ''))?.trim();
     if (!query) return;
     const needle = query.toLocaleLowerCase();
     const after = editor.state.selection.from;
@@ -409,17 +411,17 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     });
     const match = matches.find((candidate) => candidate.from > after) ?? matches[0];
     if (!match) {
-      window.alert(`Nie znaleziono: ${query}`);
+      toast.error(`Nie znaleziono: ${query}`);
       return;
     }
     editor.chain().focus().setTextSelection(match).scrollIntoView().run();
-  }, [editor]);
+  }, [editor, requestText]);
 
-  const replaceInDocument = useCallback(() => {
+  const replaceInDocument = useCallback(async () => {
     if (!editor) return;
-    const query = window.prompt('Znajdź tekst do zamiany', '')?.trim();
+    const query = (await requestText('Znajdź tekst do zamiany', ''))?.trim();
     if (!query) return;
-    const replacement = window.prompt('Zamień na', '');
+    const replacement = await requestText('Zamień na', '');
     if (replacement === null) return;
     const needle = query.toLocaleLowerCase();
     const matches: Array<{ from: number; to: number }> = [];
@@ -433,14 +435,14 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       }
     });
     if (matches.length === 0) {
-      window.alert(`Nie znaleziono: ${query}`);
+      toast.error(`Nie znaleziono: ${query}`);
       return;
     }
     userEditArmedRef.current = true;
     for (const match of matches.reverse()) {
       editor.chain().focus().setTextSelection(match).insertContent(replacement).run();
     }
-  }, [editor]);
+  }, [editor, requestText]);
 
   const runBodyBlockCommand = useCallback(
     (command: () => boolean): boolean => {
@@ -519,14 +521,20 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title: 'Dodaj lub edytuj link (Ctrl/Cmd+K)',
               active: editor.isActive('link'),
               run: () => {
-                const current = String(editor.getAttributes('link').href ?? '');
-                const entered = window.prompt('Adres linku', current || 'https://');
-                if (entered === null) return false;
-                const value = entered.trim();
-                userEditArmedRef.current = true;
-                if (!value) return editor.chain().focus().unsetLink().run();
-                const href = /^(https?:|mailto:)/i.test(value) ? value : `https://${value}`;
-                return editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+                void (async () => {
+                  const current = String(editor.getAttributes('link').href ?? '');
+                  const entered = await requestText('Adres linku', current || 'https://');
+                  if (entered === null) return;
+                  const value = entered.trim();
+                  userEditArmedRef.current = true;
+                  if (!value) {
+                    editor.chain().focus().unsetLink().run();
+                    return;
+                  }
+                  const href = /^(https?:|mailto:)/i.test(value) ? value : `https://${value}`;
+                  editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+                })();
+                return true;
               },
             },
             {
@@ -552,7 +560,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title: `Wstaw: ${label}`,
               active: false,
               run: () => {
-                insertStructuredBlock(blockType);
+                void insertStructuredBlock(blockType);
                 return true;
               },
             })),
@@ -561,7 +569,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title: 'Znajdź w dokumencie',
               active: false,
               run: () => {
-                findInDocument();
+                void findInDocument();
                 return true;
               },
             },
@@ -570,7 +578,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title: 'Znajdź i zamień',
               active: false,
               run: () => {
-                replaceInDocument();
+                void replaceInDocument();
                 return true;
               },
             },
@@ -600,6 +608,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
         editor={editor}
         className="document-studio-editor prose prose-slate max-w-none dark:prose-invert"
       />
+      {promptDialog}
       {artifactId && (
         <DocumentInlineAIMenu
           editor={editor ?? null}
