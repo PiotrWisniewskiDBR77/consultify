@@ -44,7 +44,6 @@ export const EnvironmentBadge: React.FC = () => {
   const currentUser = useAppStore((s) => s.currentUser);
 
   const [health, setHealth] = useState<HealthMeta | null>(null);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'ok'>('idle');
 
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
@@ -117,29 +116,14 @@ export const EnvironmentBadge: React.FC = () => {
     .join('\n');
 
   return (
-    <button
-      type="button"
-      className="fixed bottom-3 left-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur hover:bg-navy-950/90"
+    <div
+      className="pointer-events-none fixed bottom-3 left-3 z-toast rounded-full border border-white/10 bg-navy-950/80 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-slate-200 backdrop-blur"
       title={tooltip}
-      onClick={async () => {
-        const payload = {
-          env: envLabel,
-          sha,
-          branch,
-          version,
-          host: hostname,
-          at: new Date().toISOString(),
-        };
-        try {
-          await navigator.clipboard.writeText(JSON.stringify(payload));
-          setCopyStatus('ok');
-          setTimeout(() => setCopyStatus('idle'), 900);
-        } catch {
-          // ignore
-        }
-      }}
+      role="status"
+      aria-label={`Środowisko ${label}${sha ? `, wersja ${sha}` : ''}`}
+      data-testid="environment-badge"
     >
-      <span className="opacity-90">{copyStatus === 'ok' ? 'COPIED' : chip}</span>
-    </button>
+      <span className="opacity-90">{chip}</span>
+    </div>
   );
 };

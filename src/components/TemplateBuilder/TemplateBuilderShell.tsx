@@ -161,7 +161,6 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             }
             leftRailContent={
               <TemplateStructureList
-                key={`${draft.type}:${structureItems.map((item) => item.id).join('|')}`}
                 items={structureItems}
                 selectedId={selectedId}
                 addLabel={addLabel}
