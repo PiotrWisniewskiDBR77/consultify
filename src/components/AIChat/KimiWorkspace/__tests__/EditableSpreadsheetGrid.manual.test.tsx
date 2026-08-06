@@ -73,6 +73,17 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     fireEvent.click(screen.getByTestId('workbook-cell-0-plan'));
     fireEvent.click(screen.getByRole('button', { name: 'Insert row' }));
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', { type: 'insertRow', sheetIndex: 0, rowIndex: 0 }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    fireEvent.change(screen.getByLabelText('Sheet name'), { target: { value: 'Forecast' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', { type: 'renameSheet', sheetIndex: 0, name: 'Forecast' }));
+
+    fireEvent.click(screen.getByTestId('workbook-cell-0-plan'));
+    fireEvent.click(screen.getByRole('button', { name: 'Set dropdown validation' }));
+    fireEvent.change(screen.getByLabelText('Allowed values, separated by commas'), { target: { value: 'Open,Closed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', expect.objectContaining({ type: 'setValidation', validation: { type: 'list', values: ['Open', 'Closed'] } })));
   });
 
   it('selects a range with Shift, copies TSV and fills formulas down relatively', async () => {

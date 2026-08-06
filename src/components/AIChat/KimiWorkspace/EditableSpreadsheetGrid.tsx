@@ -90,6 +90,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [dialogMode, setDialogMode] = useState<'rename' | 'delete' | 'validation' | null>(null);
+  const [dialogValue, setDialogValue] = useState('');
   const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -538,9 +540,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           {localSheets.map((sheet, index) => <option key={`${sheet.name}-${index}`} value={index}>{sheet.name || `Sheet ${index + 1}`}</option>)}
         </select>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'addSheet', name: `Sheet ${localSheets.length + 1}` })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs" aria-label={t('kimi.excele.addSheet', 'Add sheet')}><Plus size={14} /></button>
-        <button type="button" onClick={() => { const name = window.prompt(t('kimi.excele.renameSheetPrompt', 'New sheet name'), activeRaw?.name || ''); if (name) void runSchemaCommand({ type: 'renameSheet', sheetIndex: workingSheetIndex, name }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs">{t('kimi.excele.rename', 'Rename')}</button>
+        <button type="button" onClick={() => { setDialogValue(activeRaw?.name || ''); setDialogMode('rename'); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs">{t('kimi.excele.rename', 'Rename')}</button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'duplicateSheet', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.duplicateSheet', 'Duplicate sheet')}><Copy size={14} /></button>
-        <button type="button" disabled={localSheets.length <= 1} onClick={() => { if (window.confirm(t('kimi.excele.deleteSheetConfirm', 'Delete this sheet?'))) void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}><Trash2 size={14} /></button>
+        <button type="button" disabled={localSheets.length <= 1} onClick={() => setDialogMode('delete')} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}><Trash2 size={14} /></button>
         <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
         <button type="button" onClick={() => void runSchemaCommand({ type: 'insertRow', sheetIndex: workingSheetIndex, rowIndex: selected?.rowIndex ?? activeRaw.rows?.length ?? 0 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.insertRow', 'Insert row')}><Rows3 size={14} /><Plus size={9} className="inline" /></button>
         <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'deleteRow', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteRow', 'Delete selected row')}><Rows3 size={14} /><Trash2 size={9} className="inline" /></button>
@@ -556,9 +558,26 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'sortRows', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, direction: 'desc' })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.sortDesc', 'Sort descending')}><ArrowUpAZ size={14} /></button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'setAutoFilter', sheetIndex: workingSheetIndex, enabled: !Boolean((activeRaw as any).autoFilter) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')} aria-pressed={Boolean((activeRaw as any).autoFilter)}><Filter size={14} /></button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'setFreeze', sheetIndex: workingSheetIndex, freezeRow: (activeRaw as any).freezeRow ? 0 : 1, freezeCol: Number((activeRaw as any).freezeCol || 0) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')} aria-pressed={Boolean((activeRaw as any).freezeRow)}><Snowflake size={14} /></button>
-        <button type="button" disabled={!selected} onClick={() => { if (!selected) return; const raw = window.prompt(t('kimi.excele.validationPrompt', 'Allowed values, separated by commas'), 'Yes,No'); if (raw) void runSchemaCommand({ type: 'setValidation', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, colIndex: selected.colIndex, validation: { type: 'list', values: raw.split(',').map((v) => v.trim()).filter(Boolean) } }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.validation', 'Set dropdown validation')}><ListChecks size={14} /></button>
+        <button type="button" disabled={!selected} onClick={() => { setDialogValue('Yes,No'); setDialogMode('validation'); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.validation', 'Set dropdown validation')}><ListChecks size={14} /></button>
         <button type="button" disabled={!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart} onClick={fillDown} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.fillDown', 'Fill selected range down')}><ChevronsDown size={14} /></button>
       </div>
+      {dialogMode && (
+        <div role="dialog" aria-modal="true" aria-labelledby="workbook-command-title" className="border-b border-c-border-subtle bg-c-surface px-4 py-3">
+          <h3 id="workbook-command-title" className="text-sm font-semibold text-c-text">
+            {dialogMode === 'rename' ? t('kimi.excele.renameSheet', 'Rename sheet') : dialogMode === 'delete' ? t('kimi.excele.deleteSheet', 'Delete sheet') : t('kimi.excele.validation', 'Set dropdown validation')}
+          </h3>
+          {dialogMode === 'delete' ? <p className="mt-1 text-xs text-c-text-secondary">{t('kimi.excele.deleteSheetConfirm', 'Delete this sheet? This action can be restored from version history.')}</p> : (
+            <label className="mt-2 block text-xs text-c-text-secondary">
+              {dialogMode === 'rename' ? t('kimi.excele.sheetName', 'Sheet name') : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')}
+              <input autoFocus value={dialogValue} onChange={(e) => setDialogValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setDialogMode(null); }} className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus" />
+            </label>
+          )}
+          <div className="mt-3 flex justify-end gap-2">
+            <button type="button" onClick={() => setDialogMode(null)} className="h-8 rounded-hig-xs px-3 text-xs hover:bg-c-border-subtle">{t('common.cancel', 'Cancel')}</button>
+            <button type="button" disabled={dialogMode !== 'delete' && !dialogValue.trim()} onClick={() => { if (dialogMode === 'rename') void runSchemaCommand({ type: 'renameSheet', sheetIndex: workingSheetIndex, name: dialogValue.trim() }); else if (dialogMode === 'delete') void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex }); else if (dialogMode === 'validation' && selected) void runSchemaCommand({ type: 'setValidation', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, colIndex: selected.colIndex, validation: { type: 'list', values: dialogValue.split(',').map((v) => v.trim()).filter(Boolean) } }); setDialogMode(null); }} className="h-8 rounded-hig-xs bg-c-primary px-3 text-xs font-medium text-white disabled:opacity-40">{dialogMode === 'delete' ? t('common.delete', 'Delete') : t('common.save', 'Save')}</button>
+          </div>
+        </div>
+      )}
       {/* Pasek formuły — pokazuje, co REALNIE siedzi w komórce (wartość vs
           formuła), nie wynik. To jest sedno dla właściciela — patrz nagłówek
           pliku i specyfikacja zadania. */}
