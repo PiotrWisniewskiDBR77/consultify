@@ -14,7 +14,7 @@ import { TipTapEditor } from './TipTapEditor';
 interface EditableBlockProps {
   block: CardBlock;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (additive: boolean) => void;
   onUpdate: (updates: Partial<CardBlock>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -252,7 +252,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
       ref={wrapperRef}
       onClick={(e) => {
         e.stopPropagation();
-        onSelect();
+        onSelect(e.shiftKey || e.metaKey || e.ctrlKey);
       }}
       onDoubleClick={handleDoubleClick}
       className={`relative group rounded-lg transition-all ${

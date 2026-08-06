@@ -61,6 +61,15 @@ import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
 import { mergeStarterBlockContent, resolveBlankCardInsertionIndex } from './manualEditing';
+import {
+  alignBlocks,
+  distributeBlocks,
+  expandSelectionToGroups,
+  groupBlocks,
+  ungroupBlocks,
+  type HorizontalAlignment,
+  type VerticalAlignment,
+} from './geometryOps';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
@@ -473,7 +482,8 @@ export const DeckBuilder: React.FC = () => {
   // TipTap edit (EditableBlock). Block ids are unique across the whole deck
   // (`block-<card_id>-<n>` or `block-<timestamp>-<rand>`), so a single id is
   // enough to identify the selection deck-wide.
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const selectedBlockId = selectedBlockIds.at(-1) ?? null;
   const selectedBlock = useMemo(
     () =>
       deck?.cards
@@ -485,14 +495,25 @@ export const DeckBuilder: React.FC = () => {
   const handleSelectCard = useCallback(
     (index: number) => {
       setActiveCardIndex(index);
-      setSelectedBlockId(null);
+      setSelectedBlockIds([]);
     },
     [setActiveCardIndex]
   );
 
   const handleSelectBlock = useCallback(
-    (cardId: string, blockId: string) => {
-      setSelectedBlockId(blockId);
+    (cardId: string, blockId: string, additive = false) => {
+      const card = deck?.cards.find((candidate) => candidate.card_id === cardId);
+      setSelectedBlockIds((current) => {
+        const sameCardIds = card
+          ? current.filter((id) => card.blocks.some((block) => block.block_id === id))
+          : [];
+        const toggled = additive
+          ? sameCardIds.includes(blockId)
+            ? sameCardIds.filter((id) => id !== blockId)
+            : [...sameCardIds, blockId]
+          : [blockId];
+        return card ? expandSelectionToGroups(card.blocks, toggled) : toggled;
+      });
       const idx = deck?.cards.findIndex((c) => c.card_id === cardId) ?? -1;
       if (idx >= 0 && idx !== activeCardIndex) setActiveCardIndex(idx);
     },
@@ -525,7 +546,7 @@ export const DeckBuilder: React.FC = () => {
   const handleBlockDelete = useCallback(
     (cardId: string, blockId: string) => {
       applyBlockChange(cardId, (blocks) => deleteBlockFromList(blocks, blockId));
-      setSelectedBlockId((current) => (current === blockId ? null : current));
+      setSelectedBlockIds((current) => current.filter((id) => id !== blockId));
     },
     [applyBlockChange]
   );
@@ -542,6 +563,39 @@ export const DeckBuilder: React.FC = () => {
       applyBlockChange(cardId, (blocks) => moveBlockInList(blocks, blockId, direction));
     },
     [applyBlockChange]
+  );
+
+  const handleGroupBlocks = useCallback(() => {
+    if (!activeCard || selectedBlockIds.length < 2) return;
+    const groupId = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    applyBlockChange(activeCard.card_id, (blocks) =>
+      groupBlocks(blocks, selectedBlockIds, groupId)
+    );
+  }, [activeCard, applyBlockChange, selectedBlockIds]);
+
+  const handleUngroupBlocks = useCallback(() => {
+    if (!activeCard || selectedBlockIds.length === 0) return;
+    applyBlockChange(activeCard.card_id, (blocks) => ungroupBlocks(blocks, selectedBlockIds));
+  }, [activeCard, applyBlockChange, selectedBlockIds]);
+
+  const handleAlignBlocks = useCallback(
+    (alignment: HorizontalAlignment | VerticalAlignment) => {
+      if (!activeCard || selectedBlockIds.length < 2) return;
+      applyBlockChange(activeCard.card_id, (blocks) =>
+        alignBlocks(blocks, selectedBlockIds, alignment)
+      );
+    },
+    [activeCard, applyBlockChange, selectedBlockIds]
+  );
+
+  const handleDistributeBlocks = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      if (!activeCard || selectedBlockIds.length < 3) return;
+      applyBlockChange(activeCard.card_id, (blocks) =>
+        distributeBlocks(blocks, selectedBlockIds, axis)
+      );
+    },
+    [activeCard, applyBlockChange, selectedBlockIds]
   );
 
   const handleBlockRefresh = useCallback(
@@ -1282,7 +1336,7 @@ export const DeckBuilder: React.FC = () => {
       // Fala 1 (manual mode) — Escape deselects the active block first (most
       // local interaction), before falling through to modals/back-navigation.
       if (selectedBlockId) {
-        setSelectedBlockId(null);
+        setSelectedBlockIds([]);
         return;
       }
       if (presentMode !== 'off' || commandPaletteOpen || governanceModalOpen || auditLogOpen) {
@@ -1485,11 +1539,18 @@ export const DeckBuilder: React.FC = () => {
                 onUpload={() => setMediaLibraryOpen(true)}
                 cards={deck.cards}
                 selectedBlock={selectedBlock}
+                selectedBlocks={activeCard?.blocks.filter((block) =>
+                  selectedBlockIds.includes(block.block_id)
+                )}
                 onSelectedBlockUpdate={(updates) => {
                   if (activeCard && selectedBlock)
                     handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
                 }}
                 onSelectCard={handleSelectCard}
+                onGroup={handleGroupBlocks}
+                onUngroup={handleUngroupBlocks}
+                onAlign={handleAlignBlocks}
+                onDistribute={handleDistributeBlocks}
                 onUndo={undo}
                 onRedo={redo}
                 canUndo={canUndo}
@@ -1564,13 +1625,14 @@ export const DeckBuilder: React.FC = () => {
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
               selectedBlockId={selectedBlockId}
+              selectedBlockIds={selectedBlockIds}
               onBlockUpdate={handleBlockUpdate}
               onBlockDelete={handleBlockDelete}
               onBlockDuplicate={handleBlockDuplicate}
               onBlockMove={handleBlockMove}
               onBlockRefresh={handleBlockRefresh}
               onBlockReplaceImage={(_cardId, blockId) => {
-                setSelectedBlockId(blockId);
+                setSelectedBlockIds([blockId]);
                 setMediaLibraryOpen(true);
               }}
               onUpdateCard={updateCard}
@@ -1957,13 +2019,14 @@ export const DeckBuilder: React.FC = () => {
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}
             selectedBlockId={selectedBlockId}
+            selectedBlockIds={selectedBlockIds}
             onBlockUpdate={handleBlockUpdate}
             onBlockDelete={handleBlockDelete}
             onBlockDuplicate={handleBlockDuplicate}
             onBlockMove={handleBlockMove}
             onBlockRefresh={handleBlockRefresh}
             onBlockReplaceImage={(_cardId, blockId) => {
-              setSelectedBlockId(blockId);
+              setSelectedBlockIds([blockId]);
               setMediaLibraryOpen(true);
             }}
             onUpdateCard={updateCard}
@@ -1978,11 +2041,18 @@ export const DeckBuilder: React.FC = () => {
             onUpload={() => setMediaLibraryOpen(true)}
             cards={deck.cards}
             selectedBlock={selectedBlock}
+            selectedBlocks={activeCard?.blocks.filter((block) =>
+              selectedBlockIds.includes(block.block_id)
+            )}
             onSelectedBlockUpdate={(updates) => {
               if (activeCard && selectedBlock)
                 handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
             }}
             onSelectCard={handleSelectCard}
+            onGroup={handleGroupBlocks}
+            onUngroup={handleUngroupBlocks}
+            onAlign={handleAlignBlocks}
+            onDistribute={handleDistributeBlocks}
             onUndo={undo}
             onRedo={redo}
             canUndo={canUndo}

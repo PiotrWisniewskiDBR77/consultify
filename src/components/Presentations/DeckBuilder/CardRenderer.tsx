@@ -41,7 +41,7 @@ interface CardRendererProps {
   scale?: number;
   animationsEnabled?: boolean;
   recentLayoutIds?: string[];
-  onBlockClick?: (blockId: string) => void;
+  onBlockClick?: (blockId: string, additive?: boolean) => void;
   onSourceClick?: (ref: {
     artifact_id: string;
     artifact_type: string;
@@ -56,6 +56,7 @@ interface CardRendererProps {
    */
   editable?: boolean;
   selectedBlockId?: string | null;
+  selectedBlockIds?: string[];
   onBlockUpdate?: (blockId: string, updates: Partial<CardBlock>) => void;
   onBlockDelete?: (blockId: string) => void;
   onBlockDuplicate?: (blockId: string) => void;
@@ -98,6 +99,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onSourceClick,
   editable = false,
   selectedBlockId = null,
+  selectedBlockIds,
   onBlockUpdate,
   onBlockDelete,
   onBlockDuplicate,
@@ -232,8 +234,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         >
           <EditableBlock
             block={block}
-            isSelected={selectedBlockId === block.block_id}
-            onSelect={() => onBlockClick?.(block.block_id)}
+            isSelected={(selectedBlockIds ?? (selectedBlockId ? [selectedBlockId] : [])).includes(
+              block.block_id
+            )}
+            onSelect={(additive) => onBlockClick?.(block.block_id, additive)}
             onUpdate={(updates) => onBlockUpdate?.(block.block_id, updates)}
             onDelete={() => onBlockDelete?.(block.block_id)}
             onDuplicate={() => onBlockDuplicate?.(block.block_id)}

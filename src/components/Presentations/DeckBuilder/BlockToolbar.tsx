@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, DeckCard } from '../wizard/types';
+import type { HorizontalAlignment, VerticalAlignment } from './geometryOps';
 
 type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
@@ -24,12 +25,17 @@ interface BlockToolbarProps {
   onUpload?: () => void;
   cards?: DeckCard[];
   selectedBlock?: CardBlock | null;
+  selectedBlocks?: CardBlock[];
   onSelectedBlockUpdate?: (updates: Partial<CardBlock>) => void;
   onSelectCard?: (index: number) => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  onAlign?: (alignment: HorizontalAlignment | VerticalAlignment) => void;
+  onDistribute?: (axis: 'horizontal' | 'vertical') => void;
 }
 
 const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labelKey: string }[] = [
@@ -49,12 +55,17 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   onUpload,
   cards = [],
   selectedBlock,
+  selectedBlocks = [],
   onSelectedBlockUpdate,
   onSelectCard,
   onUndo,
   onRedo,
   canUndo = false,
   canRedo = false,
+  onGroup,
+  onUngroup,
+  onAlign,
+  onDistribute,
 }) => {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<ToolbarPanel>(null);
@@ -129,6 +140,15 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'search' && <SearchPanel cards={cards} onSelectCard={onSelectCard} />}
+            {selectedBlocks.length > 1 && (
+              <SelectionTools
+                blocks={selectedBlocks}
+                onGroup={onGroup}
+                onUngroup={onUngroup}
+                onAlign={onAlign}
+                onDistribute={onDistribute}
+              />
+            )}
             {selectedBlock && onSelectedBlockUpdate && (
               <BlockInspector block={selectedBlock} onUpdate={onSelectedBlockUpdate} />
             )}
@@ -136,6 +156,76 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+const SelectionTools: React.FC<{
+  blocks: CardBlock[];
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  onAlign?: (alignment: HorizontalAlignment | VerticalAlignment) => void;
+  onDistribute?: (axis: 'horizontal' | 'vertical') => void;
+}> = ({ blocks, onGroup, onUngroup, onAlign, onDistribute }) => {
+  const geometryCount = blocks.filter((block) => block.geometry).length;
+  const hasGroup = blocks.some((block) => block.group_id);
+  const buttonClass =
+    'rounded-md border border-c-border-subtle px-2 py-1.5 text-[10px] font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-35';
+  return (
+    <section aria-label="Multiple block selection tools" className="mb-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-c-text">{blocks.length} blocks selected</h3>
+        <span className="text-[10px] text-c-text-secondary">Shift/⌘ click</span>
+      </div>
+      <div className="grid grid-cols-2 gap-1">
+        <button className={buttonClass} onClick={onGroup} aria-label="Group selected blocks">
+          Group
+        </button>
+        <button
+          className={buttonClass}
+          onClick={onUngroup}
+          disabled={!hasGroup}
+          aria-label="Ungroup selected blocks"
+        >
+          Ungroup
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-1" aria-label="Align selected blocks">
+        {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((alignment) => (
+          <button
+            key={alignment}
+            className={buttonClass}
+            disabled={geometryCount < 2}
+            onClick={() => onAlign?.(alignment)}
+            aria-label={`Align ${alignment}`}
+          >
+            {alignment}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-1" aria-label="Distribute selected blocks">
+        <button
+          className={buttonClass}
+          disabled={geometryCount < 3}
+          onClick={() => onDistribute?.('horizontal')}
+          aria-label="Distribute horizontally"
+        >
+          Distribute H
+        </button>
+        <button
+          className={buttonClass}
+          disabled={geometryCount < 3}
+          onClick={() => onDistribute?.('vertical')}
+          aria-label="Distribute vertically"
+        >
+          Distribute V
+        </button>
+      </div>
+      {geometryCount < 2 && (
+        <p className="text-[10px] text-c-text-secondary">
+          Alignment becomes available for freeform-positioned blocks.
+        </p>
+      )}
+    </section>
   );
 };
 

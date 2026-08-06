@@ -11,7 +11,7 @@ interface CardCanvasProps {
   activeCardIndex: number;
   colorSetId?: string;
   onSelectCard: (index: number) => void;
-  onBlockClick?: (cardId: string, blockId: string) => void;
+  onBlockClick?: (cardId: string, blockId: string, additive?: boolean) => void;
   onAddCard?: (atIndex: number) => void;
   /**
    * R4 — Free-text AI rewrite of a single slide. `instruction` is the optional
@@ -25,6 +25,7 @@ interface CardCanvasProps {
   animationsEnabled?: boolean;
   /** Fala 1 (manual mode) — selected block (id only; unique across the deck). */
   selectedBlockId?: string | null;
+  selectedBlockIds?: string[];
   onBlockUpdate?: (cardId: string, blockId: string, updates: Partial<CardBlock>) => void;
   onBlockDelete?: (cardId: string, blockId: string) => void;
   onBlockDuplicate?: (cardId: string, blockId: string) => void;
@@ -47,6 +48,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   showNotes,
   animationsEnabled = true,
   selectedBlockId = null,
+  selectedBlockIds,
   onBlockUpdate,
   onBlockDelete,
   onBlockDuplicate,
@@ -126,10 +128,13 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 card={card}
                 colorSetId={colorSetId}
                 isActive={index === activeCardIndex}
-                onBlockClick={(blockId) => onBlockClick?.(card.card_id, blockId)}
+                onBlockClick={(blockId, additive) =>
+                  onBlockClick?.(card.card_id, blockId, additive)
+                }
                 animationsEnabled={animationsEnabled}
                 editable
                 selectedBlockId={selectedBlockId}
+                selectedBlockIds={selectedBlockIds}
                 onBlockUpdate={(blockId, updates) =>
                   onBlockUpdate?.(card.card_id, blockId, updates)
                 }
