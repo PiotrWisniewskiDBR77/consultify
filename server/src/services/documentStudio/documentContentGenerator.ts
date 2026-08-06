@@ -121,6 +121,12 @@ export function enforceDocumentSchemaGrounding(
     'optimized resource allocation': 'Zoptymalizowana alokacja zasobów',
     scope: 'Zakres',
     timing: 'Harmonogram',
+    initiative: 'Inicjatywa',
+    progress: 'Postęp',
+    assumed: 'Założone',
+    'digital performance management': 'Cyfrowe zarządzanie wydajnością',
+    'offense strategy': 'Strategia ofensywna',
+    'repair strategy': 'Strategia naprawcza',
   };
   const obviousEnglish =
     /\b(the|and|for|with|without|required|information|portfolio|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|total|plan|realization|milestones?|completed|high|medium|low|scope|timing)\b/i;
@@ -217,7 +223,29 @@ export function enforceDocumentSchemaGrounding(
       const content = block.content as Record<string, unknown> | undefined;
       if (block.type === 'table' || block.type === 'risk_table') {
         const columns = Array.isArray(content?.columns) ? content.columns : [];
-        const rows = Array.isArray(content?.rows) ? content.rows : [];
+        let rows = Array.isArray(content?.rows) ? content.rows : [];
+        // Initiative names are factual entities, not harmless presentation
+        // labels. For Polish final documents, fail closed when a generated
+        // initiative row names something absent from the supplied grounding
+        // source. Dropping the whole row avoids exporting a plausible-looking
+        // but invented portfolio entry (and avoids retaining its status/value).
+        if (language === 'pl') {
+          const initiativeColumn = columns.findIndex(
+            (column) =>
+              typeof column === 'string' &&
+              ['initiative', 'inicjatywa'].includes(column.trim().toLowerCase())
+          );
+          if (initiativeColumn >= 0) {
+            const normalizedGrounding = groundingSource.toLocaleLowerCase('pl-PL');
+            rows = rows.filter((row) => {
+              if (!Array.isArray(row)) return false;
+              const initiative = row[initiativeColumn];
+              if (typeof initiative !== 'string' || !initiative.trim()) return false;
+              return normalizedGrounding.includes(initiative.trim().toLocaleLowerCase('pl-PL'));
+            });
+            (content as Record<string, unknown>).rows = rows;
+          }
+        }
         return columns.length > 0 || rows.length > 0;
       }
       if (block.type === 'paragraph' && typeof content?.text === 'string') {

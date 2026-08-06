@@ -153,4 +153,33 @@ describe('premium document grounding and canonical shapes — DOC-DBR77-20260806
     expect(serialized).toContain('Wysokie');
     expect(result.sections[0].blocks.map((block: any) => block.blockId)).toEqual(['k', 't']);
   });
+
+  it('SIGMA localizes portfolio fields and removes ungrounded initiative rows', () => {
+    const schema = {
+      documentId: 'sigma', artifactId: 'sigma', title: 'Raport SIGMA',
+      documentType: 'board_report', language: 'pl', audience: ['Zarząd'], goal: 'inform',
+      communicationRegister: 'executive', density: 'concise', languageStyle: 'consulting',
+      confidentiality: 'internal', formattingSchema: {}, sourceRefs: [], createdAt: '', updatedAt: '',
+      sections: [{ sectionId: 's', orderIndex: 0, level: 1, title: 'Portfel', purpose: '', sourceRefs: [], blocks: [{
+        blockId: 'portfolio', type: 'table', content: {
+          columns: ['initiative', 'progress', 'Status'],
+          rows: [
+            ['Digital Performance Management', 'Assumed', 'Offense Strategy'],
+            ['Program SIGMA', '72%', 'Repair Strategy'],
+          ],
+        },
+      }] }],
+    } as any;
+
+    const result = enforceDocumentSchemaGrounding(
+      schema,
+      'Polski raport. Program SIGMA ma postęp 72%.'
+    );
+    const table = result.sections[0].blocks[0].content as any;
+    expect(table.columns).toEqual(['Inicjatywa', 'Postęp', 'Status']);
+    expect(table.rows).toEqual([['Program SIGMA', '72%', 'Strategia naprawcza']]);
+    expect(JSON.stringify(result)).not.toMatch(
+      /initiative|progress|Assumed|Digital Performance Management|Offense Strategy|Repair Strategy/
+    );
+  });
 });

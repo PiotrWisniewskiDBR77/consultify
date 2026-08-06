@@ -222,6 +222,12 @@ describe('Document Studio generate -> export happy path', () => {
       .flatMap((section) => section.blocks)
       .filter((block) => block.isAssumption === true);
     expect(assumptions.length).toBeGreaterThan(0);
+    const reopened = await getDocumentArtifact(run.artifactId, 'org-delta');
+    const reopenedAssumptions = reopened!.sections
+      .flatMap((section) => section.blocks)
+      .filter((block) => block.isAssumption === true);
+    expect(reopenedAssumptions).toHaveLength(assumptions.length);
+    expect(reopened?.evidence?.assumptions).toEqual(run.schema.evidence?.assumptions);
     expect(persisted!.evidence?.risks.join(' ')).toMatch(/bloków oznaczonych jako założenie/);
     expect(persisted!.evidence?.assumptions.length).toBeGreaterThan(0);
     expect(persisted!.evidence?.confidence).not.toBe('high');

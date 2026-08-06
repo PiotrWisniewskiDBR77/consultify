@@ -794,6 +794,25 @@ export async function materializeDocumentArtifact(
   finalSchema.statusChangedAt = lifecycle.statusChangedAt;
   finalSchema.statusChangedBy = lifecycle.statusChangedBy;
 
+  // The schema returned by generate must be the same schema a subsequent GET
+  // observes. Wave5 is inserted before lifecycle finalization, so persist the
+  // finalized canonical snapshot in the durable, tenant-scoped schema overlay
+  // and synchronously populate the read-through cache. This closes the race in
+  // which the streaming response contained assumption flags but opening the
+  // saved artifact URL rehydrated an earlier snapshot without them.
+  const finalOverlayPersistence = await daoPersistSchemaOverlay(
+    artifactId,
+    params.organizationId,
+    finalSchema
+  );
+  if (!finalOverlayPersistence.ok) {
+    logger.warn('[DocumentStudio] final generated schema overlay did not persist', {
+      artifactId,
+      organizationId: params.organizationId,
+    });
+  }
+  schemaOverlayStore.set(schemaOverlayKey(artifactId, params.organizationId), finalSchema);
+
   // C1 — emit each finalized section (in orderIndex order) so the streaming
   // FE can progressively fill the skeleton painted from the `plan` event. The
   // sections handed to the hook are references into `finalSchema.sections`,
