@@ -690,6 +690,7 @@ function ArtifactPreviewPane({
                 {preview.perSheetData && preview.sheetNames ? (
                   <WorkbookBoardSummary
                     sheets={preview.perSheetData.map((sheet, index) => ({ ...sheet, name: preview.sheetNames?.[index] || `Sheet ${index + 1}` }))}
+                    rawSheets={preview.rawSheets}
                     activeSheetName={preview.sheetNames[activeSheet]}
                   />
                 ) : null}

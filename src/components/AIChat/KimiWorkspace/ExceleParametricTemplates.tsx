@@ -675,7 +675,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
                 </div>
               ) : gridSheets && gridSheets.length > 0 ? (
                 <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
-                  <WorkbookBoardSummary sheets={gridSheets} activeSheetName={(gridSheets[activeSheet] || gridSheets[0])?.name} />
+                  <WorkbookBoardSummary sheets={gridSheets} rawSheets={rawSheets} activeSheetName={(gridSheets[activeSheet] || gridSheets[0])?.name} />
                   {chartSeries && <MiniBarChart series={chartSeries} />}
                   {gridSheets.length > 1 && (
                     <div className="flex items-center gap-1 px-2 pt-2 overflow-x-auto border-b border-c-border-subtle">

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
+import { recalcWorkbook, type FormulaSheet } from '@/utils/workbookFormulaEngine';
 
 const asNumber = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -13,10 +14,18 @@ const asNumber = (value: unknown): number | null => {
 const display = (value: unknown): string =>
   typeof value === 'number' ? value.toLocaleString('pl-PL', { maximumFractionDigits: 1 }) : String(value ?? '—');
 
-export const WorkbookBoardSummary: React.FC<{ sheets: WorkbookGridSheet[]; activeSheetName?: string }> = ({ sheets, activeSheetName }) => {
+export const WorkbookBoardSummary: React.FC<{ sheets: WorkbookGridSheet[]; rawSheets?: FormulaSheet[] | null; activeSheetName?: string }> = ({ sheets, rawSheets, activeSheetName }) => {
+  const computedSheets = useMemo<WorkbookGridSheet[]>(() => {
+    if (!rawSheets?.length) return sheets;
+    return recalcWorkbook(rawSheets).map((sheet) => ({
+      name: sheet.name,
+      columns: sheet.columns.map((column) => column.header || column.key),
+      rows: sheet.rows.map((row) => Object.fromEntries(sheet.columns.map((column) => [column.header || column.key, row.cells[column.key]?.error || (row.cells[column.key]?.computed ?? '')]))),
+    }));
+  }, [rawSheets, sheets]);
   if (activeSheetName && activeSheetName !== 'Executive Summary') return null;
-  const summary = sheets.find((sheet) => sheet.name === 'Executive Summary');
-  const scenarios = sheets.find((sheet) => sheet.name === 'Scenario Model');
+  const summary = computedSheets.find((sheet) => sheet.name === 'Executive Summary');
+  const scenarios = computedSheets.find((sheet) => sheet.name === 'Scenario Model');
   if (!summary || !scenarios) return null;
 
   const summaryLabel = summary.columns[0];
@@ -56,4 +65,3 @@ export const WorkbookBoardSummary: React.FC<{ sheets: WorkbookGridSheet[]; activ
     </section>
   );
 };
-
