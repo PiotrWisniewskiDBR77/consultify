@@ -1002,9 +1002,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
               colIndexes: [selected.colIndex],
               style: {
                 bold: !Boolean(
-                  activeRaw.rows?.[selected.rowIndex]?.cells?.[
+                  (activeRaw.rows?.[selected.rowIndex]?.cells?.[
                     activeRaw.columns?.[selected.colIndex]?.key || ''
-                  ]?.style?.bold
+                  ]?.style as Record<string, unknown> | undefined)?.bold
                 ),
               },
             })
@@ -1522,7 +1522,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </thead>
           <tbody>
             {visibleRows.map((row, ri) => (
-              <tr key={ri} style={{ height: typeof row.height === 'number' ? `${row.height}px` : undefined, display: activeRaw.rows?.[ri]?.hidden ? 'none' : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
+              <tr key={ri} style={{ height: typeof activeRaw.rows?.[ri]?.height === 'number' ? `${activeRaw.rows[ri].height}px` : undefined, display: activeRaw.rows?.[ri]?.hidden ? 'none' : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                 {columns.map((col, ci) => {
                   const cell: ComputedCell | undefined = row.cells[col.key];
                   const rawCell = activeRaw.rows?.[ri]?.cells?.[col.key];
