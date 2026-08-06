@@ -877,31 +877,64 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   return [table, caption];
 }
 
-function renderImagePlaceholder(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
-  const value = (block.content ?? {}) as { caption?: string; alt?: string };
+function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
+  const value = (block.content ?? {}) as {
+    caption?: string;
+    alt?: string;
+    dataBase64?: string;
+    mimeType?: string;
+    widthCm?: number;
+  };
   ctx.figureCounter.value += 1;
   const captionLabel = `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
   const captionText = `${captionLabel} — ${description}`;
-  // We do not embed the image bytes in MVP-4 (image embedding is
-  // deferred to a later epic); we still surface the caption + a
-  // typographic placeholder so the visual flow + counter are correct.
-  const placeholder = new Paragraph({
-    style: DOCX_STYLE_IDS.CAPTION,
-    children: [
-      new TextRun({
-        text: `[${captionLabel} placeholder — image asset not yet embedded]`,
-        font: ctx.bodyFont,
-      }),
-    ],
-  });
+  const raw = typeof value.dataBase64 === 'string' ? value.dataBase64 : '';
+  const base64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
+  let buffer: Buffer | null = null;
+  try {
+    if (base64) buffer = Buffer.from(base64, 'base64');
+  } catch {
+    buffer = null;
+  }
+  let visual: Paragraph;
+  if (buffer?.length && (value.mimeType === 'image/png' || value.mimeType === 'image/jpeg')) {
+    const widthPx = Math.round(Math.min(Math.max(value.widthCm ?? 15, 2), 16) * 37.7953);
+    let heightPx = Math.round(widthPx * 0.625);
+    try {
+      const size = imageSize(buffer);
+      if (size.width && size.height) heightPx = Math.round((widthPx * size.height) / size.width);
+    } catch {
+      // Preserve the safe 16:10 fallback when dimensions cannot be decoded.
+    }
+    visual = new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new ImageRun({
+          data: buffer,
+          transformation: { width: widthPx, height: Math.min(heightPx, 520) },
+          type: value.mimeType === 'image/png' ? 'png' : 'jpg',
+        }),
+      ],
+    });
+  } else {
+    visual = new Paragraph({
+      style: DOCX_STYLE_IDS.CAPTION,
+      children: [
+        new TextRun({
+          text: `[${captionLabel} placeholder — image bytes unavailable]`,
+          font: ctx.bodyFont,
+        }),
+      ],
+    });
+  }
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
     style: DOCX_STYLE_IDS.CAPTION,
     children: captionChildren,
   });
-  return [placeholder, caption];
+  return [visual, caption];
 }
 
 function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
@@ -1025,7 +1058,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'kpi_strip':
       return renderKpiStripBlock(block, ctx);
     case 'image':
-      return renderImagePlaceholder(block, ctx);
+      return renderImageBlock(block, ctx);
     case 'chart':
       return renderChartBlock(block, ctx);
     case 'footnote':

@@ -414,6 +414,59 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     [editor, requestText]
   );
 
+  const uploadImageFile = useCallback(
+    async (file: File): Promise<void> => {
+      if (!editor) return;
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        toast.error('Obsługiwane są obrazy PNG i JPEG.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Obraz może mieć maksymalnie 5 MB.');
+        return;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('image_read_failed'));
+        reader.readAsDataURL(file);
+      });
+      const alt = (await requestText('Opis alternatywny obrazu', file.name))?.trim();
+      if (!alt) {
+        toast.error('Opis alternatywny jest wymagany.');
+        return;
+      }
+      const caption = (await requestText('Podpis obrazu (opcjonalnie)', ''))?.trim() ?? '';
+      const payloadJson = JSON.stringify({
+        url: dataUrl,
+        dataBase64: dataUrl.slice(dataUrl.indexOf(',') + 1),
+        mimeType: file.type,
+        alt,
+        caption,
+      });
+      userEditArmedRef.current = true;
+      if (editor.isActive(DOC_IMAGE_NODE_NAME)) {
+        editor.chain().focus().updateAttributes(DOC_IMAGE_NODE_NAME, { payloadJson }).run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: DOC_IMAGE_NODE_NAME,
+            attrs: {
+              blockId: `blk-${crypto.randomUUID()}`,
+              blockType: 'image',
+              sourceRef: '',
+              isAssumption: false,
+              payloadJson,
+            },
+          })
+          .run();
+      }
+    },
+    [editor, requestText]
+  );
+
   const findInDocument = useCallback(async () => {
     if (!editor) return;
     const query = (await requestText('Znajdź w dokumencie', ''))?.trim();
@@ -684,6 +737,20 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               <option value="24px">24</option>
               <option value="32px">32</option>
             </select>
+          </label>
+          <label className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover hover:text-c-text">
+            Wgraj / zmień obraz
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="sr-only"
+              aria-label="Wgraj lub zmień obraz"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                if (file) void uploadImageFile(file);
+              }}
+            />
           </label>
           <label className="flex items-center gap-1 text-xs text-c-text-secondary">
             <span>Kolor</span>

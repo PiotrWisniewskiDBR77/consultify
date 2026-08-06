@@ -165,7 +165,38 @@ describe('documentDocxRenderer — captions (Slice 8.3)', () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(schema);
     const { document } = await readDocxParts(buffer);
     expect(document).toContain('Figure 1 — Architecture overview');
-    expect(document).toContain('placeholder — image asset not yet embedded');
+    expect(document).toContain('placeholder — image bytes unavailable');
+  });
+
+  it('embeds inline PNG bytes as a real DOCX figure with caption', async () => {
+    const schema = makeSchema({
+      sections: [
+        makeSection({
+          sectionId: 's1',
+          title: 'Findings',
+          blocks: [
+            {
+              blockId: 'b1',
+              type: 'image',
+              content: {
+                caption: 'Uploaded process',
+                alt: 'Process diagram',
+                mimeType: 'image/png',
+                dataBase64:
+                  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAEUlEQVR4nGP4z8DA8B+MgBgAHfAD/dPQfSYAAAAASUVORK5CYII=',
+              },
+            },
+          ],
+        }),
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const document = (await zip.file('word/document.xml')?.async('string')) ?? '';
+    const media = Object.keys(zip.files).filter((name) => name.startsWith('word/media/'));
+    expect(document).toContain('Figure 1 — Uploaded process');
+    expect(document).not.toContain('placeholder');
+    expect(media.length).toBeGreaterThan(0);
   });
 });
 
