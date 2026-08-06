@@ -33,6 +33,7 @@ import type {
   DocumentSchema,
   DocumentTemplate,
   DocumentTypeKey,
+  FormattingSchema,
   TemplateAuditAction,
   TemplateAuditEntry,
   TemplateCategory,
@@ -700,6 +701,10 @@ export interface ReviseTemplateStructureParams {
    * Architect's outline editor) — see `DocumentStudioTemplateArchitectView.tsx`.
    */
   colorTemplateId?: string | null;
+  /** Complete author-owned Word formatting contract (draft-only). */
+  formattingSchema?: FormattingSchema;
+  /** Source-pack inputs required before Mode 3 generation. */
+  requiredInputs?: string[];
 }
 
 const MAX_TEMPLATE_SECTIONS = 60;
@@ -813,14 +818,21 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
   const now = nowIso();
   // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` leaves the
   // existing formattingSchema untouched; `null`/`''` clears the pattern.
-  const formattingSchema =
-    params.colorTemplateId !== undefined
-      ? { ...template.formattingSchema, colorTemplateId: params.colorTemplateId || null }
-      : template.formattingSchema;
+  let formattingSchema = params.formattingSchema
+    ? JSON.parse(JSON.stringify(params.formattingSchema))
+    : template.formattingSchema;
+  if (params.colorTemplateId !== undefined) {
+    formattingSchema = { ...formattingSchema, colorTemplateId: params.colorTemplateId || null };
+  }
+  const requiredInputs =
+    params.requiredInputs === undefined
+      ? template.requiredInputs
+      : [...new Set(params.requiredInputs.map((v) => String(v).trim()).filter(Boolean))];
   const next: DocumentTemplate = {
     ...template,
     sectionBlueprint,
     formattingSchema,
+    requiredInputs,
     updatedAt: now,
   };
   registryStore.set(templateKey(params.organizationId, template.templateId), next);
@@ -837,6 +849,8 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
       sectionCount: sectionBlueprint.length,
       previousSectionCount: template.sectionBlueprint.length,
       colorTemplateChanged: params.colorTemplateId !== undefined,
+      formattingChanged: params.formattingSchema !== undefined,
+      requiredInputsChanged: params.requiredInputs !== undefined,
     },
   });
   return next;

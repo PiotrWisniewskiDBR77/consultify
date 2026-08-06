@@ -1421,6 +1421,13 @@ router.patch(
         userId,
         sections,
         colorTemplateId,
+        formattingSchema:
+          req.body?.formattingSchema && typeof req.body.formattingSchema === 'object'
+            ? req.body.formattingSchema
+            : undefined,
+        requiredInputs: Array.isArray(req.body?.requiredInputs)
+          ? req.body.requiredInputs
+          : undefined,
       });
       res.json({ template });
     } catch (err) {
@@ -2495,8 +2502,7 @@ router.post(
             parseAudienceLanguageStyle(body.languageStyleOverride) === null
               ? undefined
               : (parseAudienceLanguageStyle(body.languageStyleOverride) as
-                  | DocumentLanguageStyle
-                  | undefined),
+                  DocumentLanguageStyle | undefined),
           sectionFilters: parseAudienceTagFilter(body.sectionFilters),
           blockFilters: parseAudienceTagFilter(body.blockFilters),
           executiveSummaryPolicy: parseAudienceExecutiveSummaryPolicy(body.executiveSummaryPolicy),

@@ -891,10 +891,13 @@ export async function reviseDocumentStudioTemplateStructure(
    * omit the field, leave the saved color pattern untouched. `null`/`''` —
    * explicitly clear it. A `CURATED_COLOR_SETS[].id`/`'brand_kit'` — set it.
    */
-  colorTemplateId?: string | null
+  colorTemplateId?: string | null,
+  options?: Pick<DocumentTemplate, 'formattingSchema' | 'requiredInputs'>
 ): Promise<DocumentTemplate> {
   const body: Record<string, unknown> = { sections };
   if (colorTemplateId !== undefined) body.colorTemplateId = colorTemplateId;
+  if (options?.formattingSchema) body.formattingSchema = options.formattingSchema;
+  if (options?.requiredInputs) body.requiredInputs = options.requiredInputs;
   const res = await fetchWithRetry(
     `${BASE}/templates/${encodeURIComponent(templateId)}/structure`,
     {

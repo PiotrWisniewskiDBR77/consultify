@@ -9,6 +9,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import JSZip from 'jszip';
 
 vi.mock('../../wave5ArtifactRuntimeService.js', () => {
   let nextId = 1;
@@ -27,11 +28,14 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => {
 });
 
 import { materializeDocumentArtifact } from '../documentStudioService.js';
+import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 import {
   __resetTemplateRegistryForTests,
   approveTemplate,
   draftTemplate,
+  getTemplate,
+  reviseTemplateStructure,
 } from '../documentTemplateService.js';
 
 const baseIntake: DocumentIntake = {
@@ -77,6 +81,97 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     expect(result.schema.sections.map((s) => s.title)).toEqual(
       approved.sectionBlueprint.map((s) => s.title)
     );
+  });
+
+  it('creates, versions, approves, reopens and consumes an exact Word template version through DOCX export', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Governed Word board pack',
+        documentType: 'board_report',
+        purpose: 'Reusable governed board document',
+        language: 'en',
+      },
+    });
+    const formattingSchema = {
+      ...draft.formattingSchema,
+      fonts: { ...draft.formattingSchema.fonts, body: 'Arial 10', heading: 'Arial' },
+      headingStyles: { h1: '18pt bold', h2: '14pt bold', h3: '11pt bold' },
+      coverPage: true,
+      coverPageDetailed: { enabled: true, includeLogo: true, includeStatus: true },
+      toc: true,
+      tocConfig: { enabled: true, maxDepth: 2 as const },
+      headers: { enabled: true, content: 'Board Confidential' },
+      footers: {
+        enabled: true,
+        pageNumbering: true,
+        confidentialityLabel: true,
+        pageNumberingFormat: 'Page X of Y',
+      },
+    };
+    const revised = reviseTemplateStructure({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'author',
+      sections: [
+        {
+          title: 'Executive Summary',
+          level: 1,
+          purpose: 'Decision summary',
+          required: true,
+          expectedLengthHint: 'short',
+        },
+        {
+          title: 'Evidence',
+          level: 1,
+          purpose: 'Grounding evidence',
+          required: true,
+          expectedLengthHint: 'medium',
+        },
+      ],
+      formattingSchema,
+      requiredInputs: ['Board pack source'],
+    });
+    expect(revised.status).toBe('draft');
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    expect(approved.version).not.toBe(draft.version);
+
+    const reopened = getTemplate(approved.templateId, 'org-A');
+    expect(reopened).toEqual(approved);
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: baseIntake,
+      templateId: approved.templateId,
+      sourceRefs: [
+        { sourceType: 'document', sourceId: 'board-pack', sourceTitle: 'Board pack source' },
+      ],
+    });
+    expect(result.schema.templateRef).toEqual({
+      templateId: approved.templateId,
+      templateVersion: approved.version,
+    });
+    expect(result.schema.formattingSchema).toEqual(formattingSchema);
+    expect(result.schema.sections.map((section) => section.title)).toEqual([
+      'Executive Summary',
+      'Evidence',
+    ]);
+    const docx = await renderDocumentSchemaToDocxBuffer(result.schema);
+    expect(docx[0]).toBe(0x50);
+    expect(docx[1]).toBe(0x4b);
+    expect(docx.includes(Buffer.from('[Content_Types].xml'))).toBe(true);
+    const zip = await JSZip.loadAsync(docx);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    const headerXml = await zip.file('word/header1.xml')!.async('string');
+    const footerXml = await zip.file('word/footer1.xml')!.async('string');
+    expect(documentXml).toContain('Table of Contents');
+    expect(headerXml).toContain('Board Confidential');
+    expect(footerXml).toContain('Page ');
   });
 
   it('records the templateId in wave5 artifact metadata', async () => {

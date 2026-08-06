@@ -160,6 +160,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   // edits on this one screen; a template can carry colors, structure, or
   // both (see `ColorPatternPicker`).
   const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const [editFormatting, setEditFormatting] = useState<DocumentTemplate['formattingSchema'] | null>(
+    null
+  );
+  const [requiredInputsText, setRequiredInputsText] = useState('');
   const brandKitColors = useBrandKitColors();
 
   // Reset the working copy whenever the selected draft (or its saved revision)
@@ -169,6 +173,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       selectedTemplate ? selectedTemplate.sectionBlueprint.map((s) => ({ ...s })) : []
     );
     setEditColorTemplateId(selectedTemplate?.formattingSchema?.colorTemplateId ?? '');
+    setEditFormatting(
+      selectedTemplate ? JSON.parse(JSON.stringify(selectedTemplate.formattingSchema)) : null
+    );
+    setRequiredInputsText((selectedTemplate?.requiredInputs ?? []).join('\n'));
   }, [selectedTemplate?.templateId, selectedTemplate?.updatedAt]);
 
   const structureDirty = useMemo(() => {
@@ -182,6 +190,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   }, [editColorTemplateId, selectedTemplate]);
 
   const hasUnsavedChanges = structureDirty || colorPatternDirty;
+  const wordSettingsDirty = useMemo(() => {
+    if (!selectedTemplate || !editFormatting) return false;
+    return (
+      JSON.stringify(editFormatting) !== JSON.stringify(selectedTemplate.formattingSchema) ||
+      requiredInputsText !== selectedTemplate.requiredInputs.join('\n')
+    );
+  }, [editFormatting, requiredInputsText, selectedTemplate]);
+  const hasAnyUnsavedChanges = hasUnsavedChanges || wordSettingsDirty;
 
   const hasBlankSectionTitle = useMemo(
     () => editSections.some((s) => s.title.trim().length === 0),
@@ -254,7 +270,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       await reviseDocumentStudioTemplateStructure(
         selectedTemplate.templateId,
         normalized,
-        colorPatternDirty ? editColorTemplateId || null : undefined
+        colorPatternDirty ? editColorTemplateId || null : undefined,
+        editFormatting
+          ? {
+              formattingSchema: editFormatting,
+              requiredInputs: requiredInputsText
+                .split('\n')
+                .map((value) => value.trim())
+                .filter(Boolean),
+            }
+          : undefined
       );
       await refresh();
     } catch (err) {
@@ -651,7 +676,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                       {t('documentStudio.templateArchitect.sectionBlueprint', 'Section blueprint')}{' '}
                       — {selectedTemplate.name}
                     </div>
-                    {hasUnsavedChanges ? (
+                    {hasAnyUnsavedChanges ? (
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
@@ -663,6 +688,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                             setEditColorTemplateId(
                               selectedTemplate.formattingSchema?.colorTemplateId ?? ''
                             );
+                            setEditFormatting(
+                              JSON.parse(JSON.stringify(selectedTemplate.formattingSchema))
+                            );
+                            setRequiredInputsText(selectedTemplate.requiredInputs.join('\n'));
                           }}
                           disabled={savingStructure}
                         >
@@ -700,6 +729,112 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                       hideLabel
                     />
                   </div>
+                  {editFormatting ? (
+                    <fieldset className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-c-border-subtle p-3 sm:grid-cols-2">
+                      <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-c-text-muted">
+                        {t('documentStudio.templateArchitect.wordSettings', 'Word layout')}
+                      </legend>
+                      {(
+                        [
+                          ['coverPage', 'Cover page'],
+                          ['toc', 'Table of contents'],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2 text-sm text-c-text">
+                          <input
+                            type="checkbox"
+                            checked={editFormatting[key]}
+                            onChange={(event) =>
+                              setEditFormatting((prev) =>
+                                prev ? { ...prev, [key]: event.target.checked } : prev
+                              )
+                            }
+                          />
+                          {t(`documentStudio.templateArchitect.${key}`, label)}
+                        </label>
+                      ))}
+                      <label className="flex items-center gap-2 text-sm text-c-text">
+                        <input
+                          type="checkbox"
+                          checked={editFormatting.headers.enabled}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    headers: { ...prev.headers, enabled: event.target.checked },
+                                  }
+                                : prev
+                            )
+                          }
+                        />
+                        {t('documentStudio.templateArchitect.header', 'Header')}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-c-text">
+                        <input
+                          type="checkbox"
+                          checked={editFormatting.footers.enabled}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    footers: { ...prev.footers, enabled: event.target.checked },
+                                  }
+                                : prev
+                            )
+                          }
+                        />
+                        {t('documentStudio.templateArchitect.footer', 'Footer')}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-c-text">
+                        <input
+                          type="checkbox"
+                          checked={editFormatting.footers.pageNumbering}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    footers: {
+                                      ...prev.footers,
+                                      pageNumbering: event.target.checked,
+                                    },
+                                  }
+                                : prev
+                            )
+                          }
+                        />
+                        {t('documentStudio.templateArchitect.pageNumbering', 'Page numbering')}
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
+                        {t('documentStudio.templateArchitect.bodyFont', 'Body font/style')}
+                        <input
+                          value={editFormatting.fonts.body}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? { ...prev, fonts: { ...prev.fonts, body: event.target.value } }
+                                : prev
+                            )
+                          }
+                          className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-sm text-c-text"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-c-text-secondary sm:col-span-2">
+                        {t(
+                          'documentStudio.templateArchitect.requiredInputs',
+                          'Required source inputs (one per line)'
+                        )}
+                        <textarea
+                          value={requiredInputsText}
+                          onChange={(event) => setRequiredInputsText(event.target.value)}
+                          rows={3}
+                          className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-sm text-c-text"
+                        />
+                      </label>
+                    </fieldset>
+                  ) : null}
                   <ol className="mt-2 space-y-1">
                     {editSections.map((section, idx) => (
                       <li
