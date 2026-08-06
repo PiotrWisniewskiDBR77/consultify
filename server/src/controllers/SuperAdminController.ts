@@ -4,6 +4,13 @@
 // The @ts-nocheck remains only for the legacy handlers still in this file;
 // extracted domain controllers have full TypeScript checking.
 
+// `speakeasy` was previously pulled in with `require('speakeasy')` inside the
+// TOTP handlers. This package is ESM ("type": "module") and the file has no
+// `createRequire`, so `require` is not defined at runtime — both handlers threw
+// ReferenceError before reaching any SQL. speakeasy is CommonJS, so a default
+// import is the correct interop form here.
+import speakeasy from 'speakeasy';
+
 import AccessCodeService from '../services/accessCodeService.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { alertPrivilegeEscalation } from '../services/securityAlerts.js';
@@ -4012,7 +4019,6 @@ const getMFAMethods = catchAsync(async (req, res, next) => {
 
 const setupTOTP = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const speakeasy = require('speakeasy');
   const secret = speakeasy.generateSecret({ name: `Consultify (${req.user.email})` });
   const mfaId = deps.uuid.v4();
 
@@ -4030,10 +4036,12 @@ const setupTOTP = catchAsync(async (req, res, next) => {
 const verifyTOTP = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { token } = req.body;
-  const speakeasy = require('speakeasy');
 
   deps.db.get(
-    'SELECT secret FROM user_mfa_methods WHERE user_id = ? AND method_type = "totp" AND is_primary = 1',
+    // `"totp"` was a double-quoted literal — valid in SQLite, but Postgres
+    // reads it as an IDENTIFIER, so this resolved to a column named `totp`
+    // and failed with 42703 rather than matching any row.
+    "SELECT secret FROM user_mfa_methods WHERE user_id = ? AND method_type = 'totp' AND is_primary = 1",
     [id],
     (err, mfa) => {
       if (err || !mfa) return next(new AppError('MFA not set up', 400));
@@ -4044,7 +4052,11 @@ const verifyTOTP = catchAsync(async (req, res, next) => {
       });
       if (verified) {
         deps.db.run(
-          'UPDATE user_mfa_methods SET is_enabled = 1, last_used_at = datetime("now") WHERE user_id = ? AND method_type = "totp"',
+          // Same double-quote defect as the SELECT above. `datetime("now")` is
+          // NOT a defect — `adaptQuery` rewrites it to NOW() for either quote
+          // style — but it is normalised here so the statement reads as one
+          // dialect rather than two.
+          "UPDATE user_mfa_methods SET is_enabled = 1, last_used_at = datetime('now') WHERE user_id = ? AND method_type = 'totp'",
           [id]
         );
       }
