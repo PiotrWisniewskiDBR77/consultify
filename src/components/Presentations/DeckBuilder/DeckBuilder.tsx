@@ -1573,6 +1573,7 @@ export const DeckBuilder: React.FC = () => {
                 setSelectedBlockId(blockId);
                 setMediaLibraryOpen(true);
               }}
+              onUpdateCard={updateCard}
             />
           }
           aiEntrySlot={
@@ -1965,6 +1966,7 @@ export const DeckBuilder: React.FC = () => {
               setSelectedBlockId(blockId);
               setMediaLibraryOpen(true);
             }}
+            onUpdateCard={updateCard}
           />
 
           {/* Right: Block Toolbar */}

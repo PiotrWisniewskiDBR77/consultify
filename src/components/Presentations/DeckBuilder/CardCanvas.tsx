@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, DeckCard } from '../wizard/types';
+import { CardFloatingToolbar } from './CardFloatingToolbar';
 import { CardRenderer } from './CardRenderer';
 
 interface CardCanvasProps {
@@ -30,6 +31,7 @@ interface CardCanvasProps {
   onBlockMove?: (cardId: string, blockId: string, direction: 'up' | 'down') => void;
   onBlockRefresh?: (cardId: string, blockId: string) => void;
   onBlockReplaceImage?: (cardId: string, blockId: string) => void;
+  onUpdateCard?: (cardId: string, updates: Partial<DeckCard>) => void;
 }
 
 export const CardCanvas: React.FC<CardCanvasProps> = ({
@@ -51,6 +53,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onBlockMove,
   onBlockRefresh,
   onBlockReplaceImage,
+  onUpdateCard,
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -113,6 +116,12 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               onClick={() => onSelectCard(index)}
               className="max-w-4xl mx-auto cursor-pointer relative group"
             >
+              {index === activeCardIndex && onUpdateCard && (
+                <CardFloatingToolbar
+                  card={card}
+                  onUpdateCard={(updates) => onUpdateCard(card.card_id, updates)}
+                />
+              )}
               <CardRenderer
                 card={card}
                 colorSetId={colorSetId}

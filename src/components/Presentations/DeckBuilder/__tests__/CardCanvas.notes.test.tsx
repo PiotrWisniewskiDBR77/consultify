@@ -42,4 +42,23 @@ describe('CardCanvas speaker notes', () => {
     fireEvent.change(editor, { target: { value: 'Updated manual note' } });
     expect(onSpeakerNotesChange).toHaveBeenCalledWith('Updated manual note');
   });
+
+  it('mounts the real slide layout toolbar for the active card', () => {
+    const onUpdateCard = vi.fn();
+    render(
+      <CardCanvas
+        cards={[card]}
+        activeCardIndex={0}
+        onSelectCard={vi.fn()}
+        showNotes={false}
+        onUpdateCard={onUpdateCard}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choose slide layout' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use Left / Right layout' }));
+    expect(onUpdateCard).toHaveBeenCalledWith('slide-1', {
+      layout_id: 'content_left_right',
+    });
+  });
 });
