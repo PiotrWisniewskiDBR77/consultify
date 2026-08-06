@@ -139,7 +139,7 @@ docs/ui-standards/
 ### Warstwy szczegółu
 - **`00-foundation/`** — `color-system.md` · `visual-language.md` · `light-mode-readability.md` · `canvas-mode.md` · `artifact-identity-map.md` · `BRAND_EXPORT_CANON.md` (DRAFT — patrz §7.1)
 - **`01-shell-layout/`** — `presentation-modes.md` (tryby D/N/C) · `n-mode-card-standard.md` · `shared-nmode-sections-standard.md` · `artifact-shell.md` · `artifact-shell-future-standard.md` · `app-topbar-standard-v3.md`
-- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `empty-loading-states.md` (stany empty/loading uczciwe — CANON §4.1/§5) · `MICRO_INTERACTIONS_CANON.md` (★ katalog 12 wzorców mikro-interakcji ZAMROŻONY — hover-reveal/kebab/accordion/toast/skeleton/lista→preview/drag-kanban/kolumny/modal/focus-ring/streaming/zapis, każdy z tokenem `--motion-*` + plik-binding, Vegas VF0-9) · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
+- **`02-components/`** — `shared-sections.md` · `decision-panel.md` · `task-panel.md` · `notification-panel.md` · `building-blocks.md` · `empty-loading-states.md` (stany empty/loading uczciwe — CANON §4.1/§5) · [`MATERIALS_EDITOR_VISUAL_STANDARD.md`](02-components/MATERIALS_EDITOR_VISUAL_STANDARD.md) (wspólny shell, ikony, menu i grafiki Word/Excel/PowerPoint oraz template builders) · `MICRO_INTERACTIONS_CANON.md` (★ katalog 12 wzorców mikro-interakcji ZAMROŻONY — hover-reveal/kebab/accordion/toast/skeleton/lista→preview/drag-kanban/kolumny/modal/focus-ring/streaming/zapis, każdy z tokenem `--motion-*` + plik-binding, Vegas VF0-9) · `help-*` · `workspace-3-tools-strip.md` · `navigation-permissions-canon.md` (nawigacja cross-tool + bramki uprawnień, ref sweepu L1) …
 - **`03-modules/`** — `TABLE_AND_PREVIEW_CANON.md` · `BLOCK_TYPES_CANON.md` · `INSIGHT_CANON.md` · `INITIATIVE_CANON.md` · `TIMELINE_CALENDAR_CANON.md` · `module-hub-standard.md` · `interactive-board-standard.md` · `tools-library-detail-standard.md`
 
 ### Aneks
@@ -156,6 +156,8 @@ Każdy agent (Claude, Cursor) **musi przeczytać ten kanon przed pracą nad UI**
 ---
 
 ## 9. Changelog
+
+| 2026-08-06 | v3.0 | **Wspólny standard edytorów materiałów:** dodano `02-components/MATERIALS_EDITOR_VISUAL_STANDARD.md` jako kontrakt ikon, grafik, menu, shellu i manualnej parytetowości Word/Excel/PowerPoint oraz ich template builderów. |
 
 | Data | Wersja | Zmiana |
 |---|---|---|
