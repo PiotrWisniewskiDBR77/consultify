@@ -275,6 +275,44 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     expect((xml.match(/<w:tbl>/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 
+  it('does not invent premium risk, roadmap or recommendation facts absent from the intake', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Evidence-safe business case',
+        documentType: 'business_case',
+        purpose: 'Board investment decision',
+        language: 'en',
+      },
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      templateId: approved.templateId,
+      intake: {
+        ...baseIntake,
+        title: 'Controlled investment decision',
+        description: 'Create a governed report using only supplied evidence.',
+      },
+      sourceRefs: [{ sourceType: 'brief', sourceId: 'safe-brief', sourceTitle: 'Safe brief' }],
+    });
+    const serialized = JSON.stringify(result.schema);
+
+    expect(serialized).not.toContain('ERP integration');
+    expect(serialized).not.toContain('Store champion network');
+    expect(serialized).not.toContain('Approve the recommended scenario');
+    expect(serialized).toContain('Risk data required');
+    expect(serialized).toContain('Action data required');
+    expect(serialized).toContain('Recommendation requires supplied evidence');
+  });
+
   it('creates, versions, approves, reopens and consumes an exact Word template version through DOCX export', async () => {
     const { template: draft } = draftTemplate({
       organizationId: 'org-A',

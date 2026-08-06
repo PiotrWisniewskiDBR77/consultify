@@ -348,18 +348,21 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       // która po kliknięciu i tak nie miałaby czego wygenerować.
       (() => {
         const usePath = resolveUsePath(row);
+        const isDeprecated = String(row.status).toLowerCase() === 'deprecated';
         return {
           id: 'use',
           label: t('rap.actions.useTemplate', 'Użyj wzorca'),
           icon: Play,
-          disabled: !usePath,
-          note: usePath
-            ? undefined
-            : t(
-                'rap.templates.useBlocked',
-                'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
-              ),
-          onClick: usePath ? () => navigate(usePath) : undefined,
+          disabled: !usePath || isDeprecated,
+          note: isDeprecated
+            ? t('rap.templates.deprecatedUseBlocked', 'Wycofany wzorzec nie może być użyty.')
+            : usePath
+              ? undefined
+              : t(
+                  'rap.templates.useBlocked',
+                  'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+                ),
+          onClick: usePath && !isDeprecated ? () => navigate(usePath) : undefined,
         };
       })(),
       {
@@ -450,7 +453,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 icon: Play,
                 shortcut: 'O',
                 // Sierota → akcja wyłączona (bez cichego fallbacku).
-                disabled: !resolveUsePath(selectedItem),
+                disabled:
+                  !resolveUsePath(selectedItem) ||
+                  String(selectedItem.status).toLowerCase() === 'deprecated',
                 onClick: () => {
                   const usePath = resolveUsePath(selectedItem);
                   if (usePath) navigate(usePath);

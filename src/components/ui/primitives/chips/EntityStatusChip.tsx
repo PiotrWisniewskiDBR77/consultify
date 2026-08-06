@@ -70,6 +70,7 @@ const TONE_BY_STATUS: Record<string, StatusTone> = {
 
   // neutral — terminal-inert or unassigned (explicit, not accidental fallback)
   archived: 'neutral',
+  deprecated: 'neutral',
   trashed: 'neutral',
   final: 'neutral',
   inactive: 'neutral',

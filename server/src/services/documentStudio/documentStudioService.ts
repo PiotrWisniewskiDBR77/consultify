@@ -579,6 +579,17 @@ function premiumBusinessCaseBlocks(
     const amount = assessment.match(/(?:EUR|USD|GBP)\s*\d+(?:\.\d+)?m/iu)?.[0];
     return [label, amount ?? 'Data required', assessment];
   };
+  const riskNames = (() => {
+    const clause = brief.match(/\brisks?\s+(?:are|include)\s+([^.!?]+)/iu)?.[1] ?? '';
+    return clause
+      .split(/,|\s+and\s+/iu)
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .slice(0, 6);
+  })();
+  const riskRows: string[][] = riskNames.length
+    ? riskNames.map((risk) => [risk, 'TBC', 'TBC', 'TBC', 'Evidence required'])
+    : [['Risk data required', 'TBC', 'TBC', 'TBC', 'Evidence required']];
 
   sections.forEach((section, index) => {
     const blueprint = template.sectionBlueprint[index];
@@ -634,11 +645,7 @@ function premiumBusinessCaseBlocks(
       section.blocks = [
         mk('risk_table', {
           columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'],
-          rows: [
-            ['ERP integration', 'Medium', 'High', 'CIO', 'Integration spike before Gate 1'],
-            ['Data quality', 'Medium', 'High', 'COO', 'Six-week data cleansing sprint'],
-            ['Frontline adoption', 'Medium', 'Medium', 'COO', 'Store champion network'],
-          ],
+          rows: riskRows,
         }),
       ];
     } else if (style.includes('thirty_sixty_ninety') || title.includes('30/60/90')) {
@@ -646,17 +653,9 @@ function premiumBusinessCaseBlocks(
         mk('table', {
           columns: ['Window', 'Priority action', 'Exit evidence'],
           rows: [
-            [
-              '0–30 days',
-              'Confirm governance and run ERP integration spike',
-              'Gate 1 evidence pack',
-            ],
-            [
-              '31–60 days',
-              'Complete data cleansing and configure pilot',
-              'Pilot readiness confirmed',
-            ],
-            ['61–90 days', 'Launch pilot and measure KPI movement', 'Gate 2 recommendation'],
+            ['0–30 days', 'Action data required', 'Exit evidence required'],
+            ['31–60 days', 'Action data required', 'Exit evidence required'],
+            ['61–90 days', 'Action data required', 'Exit evidence required'],
           ],
         }),
       ];
@@ -664,10 +663,7 @@ function premiumBusinessCaseBlocks(
       section.blocks = [
         mk('callout', {
           variant: 'recommendation',
-          text: sentence(
-            /recommend|approve/i,
-            'Approve the recommended scenario subject to gate conditions.'
-          ),
+          text: sentence(/recommend|approve/i, 'Recommendation requires supplied evidence.'),
         }),
       ];
     }

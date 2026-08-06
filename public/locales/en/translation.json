@@ -11182,6 +11182,7 @@
     "exported": "Exported",
     "shared": "Shared",
     "archived": "Archived",
+    "deprecated": "Deprecated",
     "creatingACopy": "Creating a copy…",
     "createdAnEditableCopy": "Created an editable copy",
     "couldNotCreateACopy": "Could not create a copy",
