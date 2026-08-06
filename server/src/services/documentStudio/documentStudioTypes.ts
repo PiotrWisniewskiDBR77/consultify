@@ -317,6 +317,8 @@ export interface FormattingSchema {
     enabled: boolean;
     pageNumbering: boolean;
     confidentialityLabel: boolean;
+    /** Optional author-defined footer text rendered before governance labels. */
+    content?: string;
     /**
      * Slice E15.5.formatting — page-numbering format string (e.g.
      * "Page X of Y", "X / Y", "Strona X z Y"). Optional /

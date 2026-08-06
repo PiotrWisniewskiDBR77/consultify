@@ -1364,7 +1364,23 @@ export async function renderDocumentSchemaToDocxBuffer(
       ]
     : [];
   const footerRuns: TextRun[] = [];
+  const footerOverride = formatting.footers.content?.trim();
+  if (footerOverride) {
+    footerRuns.push(
+      new TextRun({
+        text: footerOverride,
+        size: 16,
+        color: DOCX_PALETTE.faint,
+        font: ctx.bodyFont,
+      })
+    );
+  }
   if (formatting.footers.confidentialityLabel) {
+    if (footerRuns.length > 0) {
+      footerRuns.push(
+        new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
+      );
+    }
     footerRuns.push(
       new TextRun({
         text: schema.confidentiality.replace(/_/g, ' '),

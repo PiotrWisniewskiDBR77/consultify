@@ -717,6 +717,23 @@ const MAX_KEY_MESSAGE_CHARS = 200;
 const MAX_DATA_NEEDED_ITEMS = 6;
 const MAX_DATA_NEEDED_CHARS = 100;
 const MAX_SUGGESTED_EVIDENCE_CHARS = 150;
+const MAX_HEADER_FOOTER_CONTENT_CHARS = 200;
+
+function normalizeTemplateFormattingSchema(schema: FormattingSchema): FormattingSchema {
+  const normalized = JSON.parse(JSON.stringify(schema)) as FormattingSchema;
+  const normalizeContent = (value: unknown): string | undefined => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim().slice(0, MAX_HEADER_FOOTER_CONTENT_CHARS);
+    return trimmed.length > 0 ? trimmed : undefined;
+  };
+  const headerContent = normalizeContent(normalized.headers?.content);
+  const footerContent = normalizeContent(normalized.footers?.content);
+  if (headerContent) normalized.headers.content = headerContent;
+  else delete normalized.headers.content;
+  if (footerContent) normalized.footers.content = footerContent;
+  else delete normalized.footers.content;
+  return normalized;
+}
 
 /**
  * Sanitize a single author-supplied section blueprint. Coerces the two
@@ -819,7 +836,7 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
   // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` leaves the
   // existing formattingSchema untouched; `null`/`''` clears the pattern.
   let formattingSchema = params.formattingSchema
-    ? JSON.parse(JSON.stringify(params.formattingSchema))
+    ? normalizeTemplateFormattingSchema(params.formattingSchema)
     : template.formattingSchema;
   if (params.colorTemplateId !== undefined) {
     formattingSchema = { ...formattingSchema, colorTemplateId: params.colorTemplateId || null };

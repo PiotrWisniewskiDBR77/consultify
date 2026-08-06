@@ -222,6 +222,29 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
     expect(cleared.sectionBlueprint[0].suggestedEvidence).toBeUndefined();
   });
 
+  it('normalizes and persists authored header/footer content across reload', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Header footer persistence', documentType: 'board_report' },
+    });
+    const formattingSchema = structuredClone(template.formattingSchema);
+    formattingSchema.headers.content = '  Board Confidential  ';
+    formattingSchema.footers.content = `  ${'F'.repeat(250)}  `;
+
+    reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: template.sectionBlueprint,
+      formattingSchema,
+    });
+
+    const reloaded = getTemplate(template.templateId, 'org-A');
+    expect(reloaded?.formattingSchema.headers.content).toBe('Board Confidential');
+    expect(reloaded?.formattingSchema.footers.content).toBe('F'.repeat(200));
+  });
+
   it('does not leak across tenants', () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

@@ -787,6 +787,54 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                         />
                         {t('documentStudio.templateArchitect.footer', 'Footer')}
                       </label>
+                      <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
+                        {t('documentStudio.templateArchitect.headerContent', 'Header text')}
+                        <input
+                          data-testid="template-header-content"
+                          value={editFormatting.headers.content ?? ''}
+                          disabled={!editFormatting.headers.enabled}
+                          maxLength={200}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    headers: { ...prev.headers, content: event.target.value },
+                                  }
+                                : prev
+                            )
+                          }
+                          placeholder={t(
+                            'documentStudio.templateArchitect.headerContentPlaceholder',
+                            'e.g., Board Confidential'
+                          )}
+                          className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-sm text-c-text disabled:opacity-50"
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-c-text-secondary">
+                        {t('documentStudio.templateArchitect.footerContent', 'Footer text')}
+                        <input
+                          data-testid="template-footer-content"
+                          value={editFormatting.footers.content ?? ''}
+                          disabled={!editFormatting.footers.enabled}
+                          maxLength={200}
+                          onChange={(event) =>
+                            setEditFormatting((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    footers: { ...prev.footers, content: event.target.value },
+                                  }
+                                : prev
+                            )
+                          }
+                          placeholder={t(
+                            'documentStudio.templateArchitect.footerContentPlaceholder',
+                            'e.g., Internal use only'
+                          )}
+                          className="rounded-md border border-c-border-subtle bg-c-surface px-2 py-1 text-sm text-c-text disabled:opacity-50"
+                        />
+                      </label>
                       <label className="flex items-center gap-2 text-sm text-c-text">
                         <input
                           type="checkbox"

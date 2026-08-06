@@ -222,6 +222,15 @@ describe('Slice E15.5.formatting.render — DOCX renderer honors header / footer
     expect(headerFooter).toContain('z ');
   });
 
+  it('renders custom footers.content in the DOCX footer', async () => {
+    const formatting = baseFormatting();
+    formatting.footers.content = 'Internal use only';
+    const schema = makeSchema(formatting);
+    const buf = await renderDocumentSchemaToDocxBuffer(schema);
+    const { headerFooter } = await extractDocxXml(buf);
+    expect(headerFooter).toContain('Internal use only');
+  });
+
   it('uses default TOC range 1-3 when tocConfig absent', async () => {
     const schema = makeSchema(baseFormatting());
     const buf = await renderDocumentSchemaToDocxBuffer(schema);

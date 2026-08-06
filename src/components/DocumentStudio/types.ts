@@ -424,6 +424,7 @@ export interface DocumentTemplateFormattingSchema {
     enabled: boolean;
     pageNumbering: boolean;
     confidentialityLabel: boolean;
+    content?: string;
     pageNumberingFormat?: string;
   };
   toc: boolean;
