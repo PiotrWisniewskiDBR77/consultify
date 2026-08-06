@@ -19,6 +19,16 @@ PASS means the action was performed in the deployed browser UI and read back. PA
 - Slide layout/distribution toolbar: **FAIL → FIXED LOCALLY**. Runtime exposed that `CardFloatingToolbar` was tested in isolation but not mounted by `CardCanvas`. It is now mounted for the active slide and wired to `updateCard`; integration test covers `content_left_right` selection.
 - Fresh PDF: **PASS**. Exact production file `Nova Board Investment Decision — Fresh Acceptance — 20260806 (1).pdf` is 8,260 bytes; `pdfinfo` reports exactly 10 pages, `pdftotext` contains slide 1 and slide 10 content, and Poppler renders exactly 10 PNG pages. Visual inspection of pages 1 and 10 found no clipping or overflow.
 
+### Final manual-authoring runtime proof — `3ce652bf` (2026-08-07)
+
+- Slide layout selection and durability: **PASS**. The mounted layout selector changed the active slide layout; save completed and the selected layout survived a cold reload.
+- Modifier multiselect: **PASS**. Shift/Command-assisted selection retained multiple blocks on the active slide.
+- Group and ungroup: **PASS**. The selected set grouped and ungrouped through the canonical right-rail controls.
+- Align and distribute: **PASS**. Freeform blocks aligned and distributed through the selected-set controls and the resulting geometry survived reload.
+- Freeform move, resize and rotate: **PASS**. Pointer handles changed position, size and rotation; keyboard movement also worked. Each completed gesture persisted through save and cold reload.
+- Responsive editor at 1280 px: **PASS**. Both rails, the command row and slide thumbnails remained visible and usable without clipping the editing workflow.
+- No failure was observed in the above acceptance path. Named arbitrary-master selection, organization image breadth, visual 16:9 PDF parity, destructive restore and forced collaboration/save-failure paths remain outside this runtime proof.
+
 ## Full manual capability matrix
 
 | Area          | Manual user task                        |                            Result | Runtime evidence / exact limitation                                                                                                                                                        |
@@ -55,6 +65,10 @@ PASS means the action was performed in the deployed browser UI and read back. PA
 | Blocks        | Select block and open inspector         |                              PASS | Text, table, chart, KPI and diagram inspectors opened from canvas selection.                                                                                                               |
 | Blocks        | Duplicate block                         |            PASS / control present | Floating toolbar exposes `Duplicate block`; focused component tests cover the operation.                                                                                                   |
 | Blocks        | Move block up/down                      |            PASS / control present | Semantic `Move up` / `Move down` actions are exposed.                                                                                                                                      |
+| Blocks        | Modifier multiselect                    |                              PASS | Deployment `3ce652bf`: multiple blocks were selected with pointer + modifier keyboard input.                                                                                              |
+| Blocks        | Group and ungroup selected blocks       |                              PASS | Deployment `3ce652bf`: both operations completed through the right rail.                                                                                                                   |
+| Blocks        | Align/distribute selected blocks        |                              PASS | Deployment `3ce652bf`: align and distribute updated freeform geometry and survived reload.                                                                                                |
+| Blocks        | Pointer move/resize/rotate               |                              PASS | Deployment `3ce652bf`: all three handles worked and persisted after cold reload; move also passed by keyboard.                                                                            |
 | Blocks        | Delete block                            |            PASS / control present | Semantic `Delete block` action is exposed.                                                                                                                                                 |
 | History       | Undo                                    |                              PASS | Manual alignment/data change was reverted.                                                                                                                                                 |
 | History       | Redo                                    |                              PASS | Reverted change was restored.                                                                                                                                                              |
@@ -81,6 +95,7 @@ PASS means the action was performed in the deployed browser UI and read back. PA
 | Export        | Capture and parse production PDF        |                              PASS | After deployment `e9af278c`, the fresh 8,260-byte PDF has exactly 10 pages in `pdfinfo`; text extraction and ten-page Poppler rendering pass with no clipping on inspected pages 1 and 10. |
 | Accessibility | Semantic toolbar actions                |                              PASS | Undo, Redo, block move/duplicate/delete, Search, Notes and Present have accessible names.                                                                                                  |
 | Accessibility | Keyboard editing/navigation             |                              PASS | Core canvas selection, history and Present keyboard flows work.                                                                                                                            |
+| Responsive    | 1280 px editor workflow                 |                              PASS | Deployment `3ce652bf`: rails, command row and thumbnails remained visible and usable.                                                                                                     |
 | Collaboration | Concurrent conflict/rebase              |             NOT RUNTIME-TRIGGERED | Multi-session conflict was outside this retained-deck audit; no claim of PASS.                                                                                                             |
 | Reliability   | Visible save failure/retry              |                           PARTIAL | Error handling exists, but a deterministic production save failure was not induced.                                                                                                        |
 
@@ -93,17 +108,18 @@ PASS means the action was performed in the deployed browser UI and read back. PA
 | `ea2f8fab9c` | Preserve complete starter data when inserting partial chart/KPI/diagram variants; expose inspector after selection.                         |
 | `c101c74bf6` | Read persisted comment envelopes hidden by the shared API Proxy; regression tests cover list/add/resolve/delete.                            |
 | `c7173474dd` | Read public share and collaborator tokens from the real API response envelope.                                                              |
+| `afcaf7ebb7` | Mount the slide layout toolbar in the real canvas path.                                                                                      |
+| `1f309f0ff9` | Add modifier multiselect plus atomic group, ungroup, align and distribute controls.                                                         |
+| `356e55b8eb` | Add accessible freeform move, resize and rotate handles with one durable write per completed gesture.                                       |
 
 ## Exact residuals
 
 1. **P2 — slide density:** slide 10 has approximately 92 words; BRIEFING recommends at most 60. This does not block export or share.
-2. **DEPLOYMENT RETEST — slide layout toolbar:** the integration gap is fixed in `afcaf7ebb7`; runtime must still select a layout, reload and verify persistence after that commit is deployed.
-3. **MODEL LIMIT — freeform canvas:** the canonical block model remains region + order, not arbitrary x/y. Width, minimum height, horizontal placement, region and layer order now work, but mouse-drag resize handles, rotation, pixel positioning, multi-select, grouping, and align/distribute across a selected set are not implemented.
-4. **MODEL LIMIT — named master selection:** users can select renderer-supported slide layouts; a per-slide picker for arbitrary named masters from an imported/custom template is not exposed. PPTX export still resolves the master through layout/custom-template mapping.
-5. **PARTIAL — typography breadth:** family, size, color, weight, italic, underline, alignment, line height and letter spacing are editable. There is no organization-font browser, text shadow, per-run rich text, paragraph before/after spacing or indentation controls.
-6. **PARTIAL — image workflow runtime breadth:** add/replace/URL/alt controls are implemented, but a real organization image was not selected in the final acceptance deck; crop, focal point and masking controls are not exposed.
-7. **PARTIAL — PDF visual fidelity:** page count, text, parser and render correctness pass. The PDF route intentionally produces an A4 textual briefing, not a visual 16:9 rendering of the presentation; visual parity with PPTX/public viewer remains a separate product enhancement.
-8. **PARTIAL — destructive version restore:** checkpoint creation/listing passes; a final retained-deck restore was not completed in browser runtime.
-9. **UNPROVEN — collaboration failure paths:** concurrent conflict/rebase, forced save failure and offline recovery were not deterministically triggered in production.
+2. **MODEL LIMIT — named master selection:** users can select renderer-supported slide layouts; a per-slide picker for arbitrary named masters from an imported/custom template is not exposed. PPTX export still resolves the master through layout/custom-template mapping.
+3. **PARTIAL — typography breadth:** family, size, color, weight, italic, underline, alignment, line height and letter spacing are editable. There is no organization-font browser, text shadow, per-run rich text, paragraph before/after spacing or indentation controls.
+4. **PARTIAL — image workflow runtime breadth:** add/replace/URL/alt controls are implemented, but a real organization image was not selected in the final acceptance deck; crop, focal point and masking controls are not exposed.
+5. **PARTIAL — PDF visual fidelity:** page count, text, parser and render correctness pass. The PDF route intentionally produces an A4 textual briefing, not a visual 16:9 rendering of the presentation; visual parity with PPTX/public viewer remains a separate product enhancement.
+6. **PARTIAL — destructive version restore:** checkpoint creation/listing passes; a final retained-deck restore was not completed in browser runtime.
+7. **UNPROVEN — collaboration failure paths:** concurrent conflict/rebase, forced save failure and offline recovery were not deterministically triggered in production.
 
 There are no remaining P0 or P1 manual-authoring failures in the tested PowerPoint workflow.
