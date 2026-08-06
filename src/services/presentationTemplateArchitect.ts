@@ -274,3 +274,22 @@ export async function deprecatePresentationTemplate(
   );
   return unwrap<{ record: unknown }>(res);
 }
+
+// ---------------------------------------------------------------------------
+// approvePresentationTemplate — POST /templates/:id/governance/transition
+//
+// Tenant OWNER/ADMIN roles already own the server-side `template_approve`
+// capability.  Keep the Architect caller next to the other lifecycle helpers
+// so those users do not need access to the SUPERADMIN-only System module just
+// to publish an organization template.
+// ---------------------------------------------------------------------------
+
+export async function approvePresentationTemplate(
+  templateId: string
+): Promise<{ record: unknown; warnings?: string[] }> {
+  const res = await Api.post(
+    `/presentations/templates/${encodeURIComponent(templateId)}/governance/transition`,
+    { targetState: 'approved' }
+  );
+  return unwrap<{ record: unknown; warnings?: string[] }>(res);
+}

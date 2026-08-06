@@ -21,7 +21,16 @@
  * or deprecated.
  */
 
-import { ArrowDown, ArrowUp, Copy, Loader2, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  Plus,
+  ShieldAlert,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -36,6 +45,7 @@ import {
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
 import {
+  approvePresentationTemplate,
   clonePresentationTemplate,
   deprecatePresentationTemplate,
   getPresentationTemplate,
@@ -174,6 +184,7 @@ export const PresentationTemplateArchitectView: React.FC<
   const [drafting, setDrafting] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [deprecatingId, setDeprecatingId] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -460,6 +471,27 @@ export const PresentationTemplateArchitectView: React.FC<
       );
     } finally {
       setCloningId(null);
+    }
+  };
+
+  const handleApprove = async (): Promise<void> => {
+    if (!selectedTemplate || selectedTemplate.lifecycleState !== 'draft') return;
+    setApprovingId(selectedTemplate.id);
+    setError(null);
+    try {
+      await approvePresentationTemplate(selectedTemplate.id);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t(
+              'presentations.templateArchitect.errApproveTemplate',
+              'Failed to approve and publish template'
+            )
+      );
+    } finally {
+      setApprovingId(null);
     }
   };
 
@@ -1211,7 +1243,27 @@ export const PresentationTemplateArchitectView: React.FC<
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end">
+            <div className="mt-4 flex justify-end gap-2">
+              {selectedTemplate.lifecycleState === 'draft' ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void handleApprove()}
+                  disabled={savingOutline || approvingId === selectedTemplate.id}
+                >
+                  {approvingId === selectedTemplate.id ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('presentations.templateArchitect.approving', 'Publishing…')}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {t('presentations.templateArchitect.approveAndPublish', 'Approve & publish')}
+                    </span>
+                  )}
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="primary"

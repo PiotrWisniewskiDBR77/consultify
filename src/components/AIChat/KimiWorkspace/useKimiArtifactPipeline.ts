@@ -38,6 +38,46 @@ import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 import type { ArtifactPreview, KimiLane, TaskStep } from './KimiWorkspaceShell';
 import { loadTabelePreviewByTableId } from './tabele/loadTabelePreview';
 
+function parsePresentationJson(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True only when the persisted deck has at least one renderable card/slide. */
+export function hasRenderablePresentationContent(deck: unknown): boolean {
+  if (!deck || typeof deck !== 'object') return false;
+  const row = deck as Record<string, unknown>;
+  for (const candidate of [row.deck_json, row.unified_json]) {
+    const parsed = parsePresentationJson(candidate);
+    if (!parsed) continue;
+    if (Array.isArray(parsed.cards) && parsed.cards.length > 0) return true;
+    if (Array.isArray(parsed.slides) && parsed.slides.length > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * GET /presentations/decks/:id returns the rich outline envelope persisted by
+ * generateOutline (`{ ..., outline: [...] }`), not necessarily a bare array.
+ */
+export function extractPresentationGenerationOutline(deck: unknown): unknown[] {
+  if (!deck || typeof deck !== 'object') return [];
+  const raw = (deck as Record<string, unknown>).outline_json;
+  if (Array.isArray(raw)) return raw;
+  const parsed = parsePresentationJson(raw);
+  return parsed && Array.isArray(parsed.outline) ? parsed.outline : [];
+}
+
 function deriveEffectiveStatus(
   runStatus: ArtifactRunRecord['runStatus'],
   executionState: string | null | undefined
@@ -441,13 +481,17 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           };
 
           const initialDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
-          const hasGeneratedContent = Boolean(initialDeck?.deck_json || initialDeck?.unified_json);
+          const hasGeneratedContent = hasRenderablePresentationContent(initialDeck);
 
           if (!hasGeneratedContent) {
+            const outline = extractPresentationGenerationOutline(initialDeck);
+            if (outline.length === 0) {
+              throw new Error('presentation_generation_outline_missing');
+            }
             try {
               await Api.post(`/presentations/generate/deck`, {
                 deckId,
-                outline: Array.isArray(initialDeck?.outline_json) ? initialDeck.outline_json : [],
+                outline,
                 setup: {
                   title: initialDeck?.title || title,
                   templateId:
@@ -466,11 +510,19 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                   sourceId: initialDeck?.source_id || undefined,
                 },
               });
-            } catch {
-              // generation may already be done or a legacy payload may still be accepted
+            } catch (generationError) {
+              // A concurrent generator can win the race. Re-read once and only
+              // suppress the request error if canonical slide content now exists.
+              const racedDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+              if (!hasRenderablePresentationContent(racedDeck)) throw generationError;
+              return racedDeck;
             }
           }
-          return unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          const generatedDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          if (!hasRenderablePresentationContent(generatedDeck)) {
+            throw new Error('presentation_generation_produced_no_slides');
+          }
+          return generatedDeck;
         };
 
         generateAndFetch()
@@ -552,17 +604,20 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
             });
             setContentGenerated(true);
           })
-          .catch(() => {
+          .catch((error: unknown) => {
             setPreview({
               type: 'deck',
               title,
               fileName: `${title.replace(/\s+/g, '_')}.pptx`,
-              summary: `Presentation "${title}" generated.`,
-              kpiItems: [{ label: 'Status', value: 'Ready' }],
+              summary: `Presentation "${title}" could not generate slide content.`,
+              kpiItems: [{ label: 'Status', value: 'Generation failed' }],
               deckId,
               deckSlides: [],
             });
-            setContentGenerated(true);
+            setStartupError(
+              error instanceof Error ? error.message : 'presentation_generation_failed'
+            );
+            setContentGenerated(false);
           });
         return;
       }
