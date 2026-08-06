@@ -356,14 +356,33 @@ const CONTENT_TO_DOCUMENT_BLOCK_TYPE: Record<ContentBlockType, DocumentBlockType
  * fresh blockId. Returns `null` for block types with no DocumentBlock analogue
  * (divider) so the caller can drop them.
  */
-function contentBlockToDocumentBlock(block: ContentBlock): DocumentBlock | null {
-  const docType = CONTENT_TO_DOCUMENT_BLOCK_TYPE[block.type] ?? 'paragraph';
+function contentBlockToDocumentBlock(
+  block: ContentBlock,
+  plannedType?: string,
+  hasSources = false
+): DocumentBlock | null {
+  const docType =
+    plannedType === 'risk_table'
+      ? 'risk_table'
+      : (CONTENT_TO_DOCUMENT_BLOCK_TYPE[block.type] ?? 'paragraph');
   if (docType === null) return null;
   return {
     blockId: uuidv4(),
     type: docType,
     content: block.content,
+    // An LLM result is not evidence. Without an attached source every premium
+    // block remains an explicit assumption, including structured KPI/tables.
+    isAssumption: !hasSources,
   };
+}
+
+/** Test seam for the premium-to-canonical boundary (no I/O, no LLM). */
+export function __contentBlockToDocumentBlockForTests(
+  block: ContentBlock,
+  plannedType?: string,
+  hasSources = false
+): DocumentBlock | null {
+  return contentBlockToDocumentBlock(block, plannedType, hasSources);
 }
 
 /**
@@ -442,7 +461,13 @@ export async function buildDocumentSchemaPremium(
       const contentSection = contentSections[index];
       const mapped = Array.isArray(contentSection?.blocks)
         ? contentSection.blocks
-            .map(contentBlockToDocumentBlock)
+            .map((block, blockIndex) =>
+              contentBlockToDocumentBlock(
+                block,
+                plan.sections[index]?.blocks[blockIndex]?.type,
+                hasSources
+              )
+            )
             .filter((b): b is DocumentBlock => b !== null)
         : [];
       const blocks =

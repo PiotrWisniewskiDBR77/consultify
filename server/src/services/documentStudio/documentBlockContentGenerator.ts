@@ -135,18 +135,26 @@ function clampNumber(n: unknown, lo: number, hi: number, fallback: number): numb
 
 /** KPI strip: 3-5 itemów {label, value, delta}. */
 export function normalizeKpiContent(raw: unknown): Record<string, unknown> {
-  const rawItems = Array.isArray((raw as any)?.items) ? (raw as any).items : [];
+  const rawItems = Array.isArray((raw as any)?.items)
+    ? (raw as any).items
+    : Array.isArray((raw as any)?.kpis)
+      ? (raw as any).kpis
+      : [];
   let items = rawItems
     .filter((it: any) => it && typeof it === 'object')
     .map((it: any) => ({
       label: String(it.label ?? '').trim() || 'Metric',
       value: String(it.value ?? '').trim() || '—',
-      delta: String(it.delta ?? '').trim() || '0',
+      delta: String(it.delta ?? '').trim() || '—',
     }));
   // Clamp do [3,5]: dopełnij placeholderami lub przytnij.
   if (items.length > KPI_MAX) items = items.slice(0, KPI_MAX);
   while (items.length < KPI_MIN) {
-    items.push({ label: `Metric ${items.length + 1}`, value: '—', delta: '0' });
+    items.push({
+      label: `Metric ${String.fromCharCode(65 + items.length)}`,
+      value: '—',
+      delta: '—',
+    });
   }
   return { items };
 }
@@ -180,22 +188,35 @@ export function normalizeChartContent(raw: unknown): Record<string, unknown> {
 
 /** Table: rows (cells keyed). Opcjonalnie styled cells (bgColor). */
 export function normalizeTableContent(raw: unknown): Record<string, unknown> {
+  const rawColumns = Array.isArray((raw as any)?.columns)
+    ? (raw as any).columns.map((column: unknown) => String(column))
+    : Array.isArray((raw as any)?.headers)
+      ? (raw as any).headers.map((column: unknown) => String(column))
+      : [];
   const rawRows = Array.isArray((raw as any)?.rows) ? (raw as any).rows : [];
-  const rows = rawRows
-    .filter((row: any) => row && typeof row === 'object')
-    .map((row: any) => {
-      const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
-      const outCells: Record<string, { value?: unknown; style?: { bgColor?: string } }> = {};
-      for (const [k, v] of Object.entries(cells as Record<string, unknown>)) {
-        if (v && typeof v === 'object' && 'value' in (v as any)) {
-          outCells[k] = v as any;
-        } else {
-          outCells[k] = { value: v };
-        }
-      }
-      return { cells: outCells };
+  const keyedRows = rawRows.filter((row: any) => row && typeof row === 'object');
+  const inferredKeys: string[] = [];
+  for (const row of keyedRows) {
+    if (Array.isArray(row)) continue;
+    const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
+    for (const key of Object.keys(cells)) {
+      if (!inferredKeys.includes(key)) inferredKeys.push(key);
+    }
+  }
+  const columns = rawColumns.length > 0 ? rawColumns : inferredKeys;
+  const rows = keyedRows.map((row: any) => {
+    if (Array.isArray(row)) return row.map((value: unknown) => String(value ?? ''));
+    const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
+    return columns.map((key) => {
+      const value = (cells as Record<string, unknown>)[key];
+      return String(
+        value && typeof value === 'object' && 'value' in value
+          ? ((value as any).value ?? '')
+          : (value ?? '')
+      );
     });
-  return { rows };
+  });
+  return { columns, rows };
 }
 
 /** Callout: text + tone ∈ {info, warning, danger, success}. */
@@ -397,7 +418,8 @@ const CONTENT_SYSTEM_PROMPT =
   '- text/heading: {text}\n' +
   `Density default (override only if the hint says otherwise): aim for ${DENSITY_GUIDANCE}.\n` +
   'Example block: {"blockId":"b-0-1","contentJson":"{\\"text\\":\\"...\\"}"}.\n' +
-  'Reply with ONLY a JSON object: {blocks:[{blockId, contentJson}]}.';
+  'STRICT FACT RULE: do not introduce any number, percentage, currency amount, date, count, ratio, or duration that is not present verbatim in the Intent, Section goal, or block hint. If a quantitative value is needed but absent, write a qualitative statement or explicitly label it as an assumption; never manufacture a plausible value.\n' +
+  'Reply with ONLY a JSON object: {blocks:[{blockId, contentJson}]}.\n';
 
 /** Tolerant JSON parse for a per-block contentJson string. Returns {} on failure. */
 function parseBlockContentJson(raw: unknown): Record<string, unknown> {

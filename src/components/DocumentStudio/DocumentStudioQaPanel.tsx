@@ -62,7 +62,10 @@ function FabricationBadge({
     return (
       <div className="flex items-center gap-1.5 rounded-md border border-success-500/30 bg-success-500/10 px-2.5 py-1.5 text-xs font-medium text-success-700 dark:text-emerald-300">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        {t('documentStudio.qa.fabrication.verified', 'Zweryfikowane — brak niepopartych liczb')}
+        {t(
+          'documentStudio.qa.fabrication.notDetected',
+          'Nie wykryto nieoznaczonych precyzyjnych liczb — ugruntowanie nie zostało zweryfikowane'
+        )}
       </div>
     );
   }

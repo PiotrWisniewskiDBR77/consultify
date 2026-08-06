@@ -31,14 +31,19 @@ describe('documentBlockContentGenerator — normalizery', () => {
     vi.resetModules();
     llmCall.mockReset();
     flagState.premium = true;
-    mod = await import('../../../server/src/services/documentStudio/documentBlockContentGenerator.js');
+    mod =
+      await import('../../../server/src/services/documentStudio/documentBlockContentGenerator.js');
   });
   afterEach(() => vi.clearAllMocks());
 
   it('KPI: <3 itemy → dopełnione do 3; >5 → przycięte do 5', () => {
-    expect((mod.normalizeKpiContent({ items: [{ label: 'A', value: '1', delta: '+1%' }] }).items as any[])).toHaveLength(3);
-    const big = mod.normalizeKpiContent({ items: Array.from({ length: 8 }, (_, i) => ({ label: `K${i}`, value: '1', delta: '0' })) });
-    expect((big.items as any[])).toHaveLength(5);
+    expect(
+      mod.normalizeKpiContent({ items: [{ label: 'A', value: '1', delta: '+1%' }] }).items as any[]
+    ).toHaveLength(3);
+    const big = mod.normalizeKpiContent({
+      items: Array.from({ length: 8 }, (_, i) => ({ label: `K${i}`, value: '1', delta: '0' })),
+    });
+    expect(big.items as any[]).toHaveLength(5);
   });
 
   it('KPI: każdy item ma label/value/delta (uzupełnione gdy brak)', () => {
@@ -50,13 +55,28 @@ describe('documentBlockContentGenerator — normalizery', () => {
     }
   });
 
+  it('KPI: normalizuje alternatywny premium shape `kpis` do niepustego `items`', () => {
+    const r = mod.normalizeKpiContent({
+      kpis: [
+        { label: 'Realizacja', value: '72%' },
+        { label: 'Budżet', value: '1.4 mln EUR' },
+        { label: 'Zakres', value: '18/21' },
+      ],
+    });
+    expect(r.items).toEqual([
+      { label: 'Realizacja', value: '72%', delta: '—' },
+      { label: 'Budżet', value: '1.4 mln EUR', delta: '—' },
+      { label: 'Zakres', value: '18/21', delta: '—' },
+    ]);
+  });
+
   it('Chart: paleta clamp ≤7 + series clamp ≤6 + kind walidowany', () => {
     const r = mod.normalizeChartContent({
       kind: 'rainbow', // invalid → bar
       series: Array.from({ length: 10 }, (_, i) => ({ label: `S${i}`, values: [1, 2, 3] })),
     });
     expect(r.kind).toBe('bar');
-    expect((r.series as any[])).toHaveLength(6); // clamp ≤6
+    expect(r.series as any[]).toHaveLength(6); // clamp ≤6
     const colors = new Set((r.series as any[]).map((s) => s.color));
     expect(colors.size).toBeLessThanOrEqual(7);
     expect(r.title).toBeTruthy();
@@ -65,7 +85,9 @@ describe('documentBlockContentGenerator — normalizery', () => {
 
   it('Chart: zachowuje valid kind (line/area/pie/donut/scatter)', () => {
     for (const kind of ['line', 'area', 'pie', 'donut', 'scatter']) {
-      expect(mod.normalizeChartContent({ kind, series: [{ label: 'A', values: [1] }] }).kind).toBe(kind);
+      expect(mod.normalizeChartContent({ kind, series: [{ label: 'A', values: [1] }] }).kind).toBe(
+        kind
+      );
     }
   });
 
@@ -76,9 +98,31 @@ describe('documentBlockContentGenerator — normalizery', () => {
 
   it('Table: normalizuje wiersze do {cells:{key:{value}}}', () => {
     const r = mod.normalizeTableContent({ rows: [{ a: 1, b: 2 }, { cells: { a: { value: 3 } } }] });
-    expect((r.rows as any[])).toHaveLength(2);
-    expect((r.rows as any[])[0].cells.a.value).toBe(1);
-    expect((r.rows as any[])[1].cells.a.value).toBe(3);
+    expect(r.rows as any[]).toHaveLength(2);
+    expect(r.columns).toEqual(['a', 'b']);
+    expect(r.rows).toEqual([
+      ['1', '2'],
+      ['3', ''],
+    ]);
+  });
+
+  it('Risk table: zachowuje jawne nagłówki i populację w kanonicznym shape', () => {
+    const r = mod.normalizeTableContent({
+      columns: ['Ryzyko', 'Wpływ', 'Mitygacja'],
+      rows: [
+        {
+          cells: {
+            Ryzyko: { value: 'Brak danych' },
+            Wpływ: { value: 'Wysoki' },
+            Mitygacja: { value: 'Walidacja' },
+          },
+        },
+      ],
+    });
+    expect(r).toEqual({
+      columns: ['Ryzyko', 'Wpływ', 'Mitygacja'],
+      rows: [['Brak danych', 'Wysoki', 'Walidacja']],
+    });
   });
 
   // ──────────────────────────────────────────────────────────────
@@ -97,12 +141,18 @@ describe('documentBlockContentGenerator — normalizery', () => {
       object: {
         blocks: [
           { blockId: 'b-0-0', content: { items: [{ label: 'Rev', value: '12M', delta: '+8%' }] } },
-          { blockId: 'b-1-0', content: { kind: 'line', title: 'T', series: [{ label: 'A', values: [1, 2, 3] }] } },
+          {
+            blockId: 'b-1-0',
+            content: { kind: 'line', title: 'T', series: [{ label: 'A', values: [1, 2, 3] }] },
+          },
         ],
       },
     });
 
-    const result = await mod.generateDocumentContent('raport', PLAN, { orgId: 'o', preferPremium: true });
+    const result = await mod.generateDocumentContent('raport', PLAN, {
+      orgId: 'o',
+      preferPremium: true,
+    });
     expect(result.tierUsed).toBe('PREMIUM');
     expect(result.fallbackUsed).toBe(false);
     const kpiBlock = result.sections[0].blocks[0];
@@ -124,15 +174,24 @@ describe('documentBlockContentGenerator — normalizery', () => {
 
   it('FAIL-OPEN: LLM throws → prozowy fallback, no throw', async () => {
     llmCall.mockRejectedValueOnce(new Error('LLM down'));
-    const result = await mod.generateDocumentContent('raport', PLAN, { orgId: 'o', preferPremium: true });
+    const result = await mod.generateDocumentContent('raport', PLAN, {
+      orgId: 'o',
+      preferPremium: true,
+    });
     expect(result.tierUsed).toBe('PREMIUM');
     expect(result.fallbackUsed).toBe(true);
     expect(result.sections[0].blocks[0].type).toBe('heading');
   });
 
   it('citationCount → wstrzykuje cytowania', async () => {
-    llmCall.mockResolvedValueOnce({ object: { blocks: [{ blockId: 'b-0-0', content: { items: [] } }] } });
-    const result = await mod.generateDocumentContent('r', PLAN, { orgId: 'o', preferPremium: true, citationCount: 5 });
+    llmCall.mockResolvedValueOnce({
+      object: { blocks: [{ blockId: 'b-0-0', content: { items: [] } }] },
+    });
+    const result = await mod.generateDocumentContent('r', PLAN, {
+      orgId: 'o',
+      preferPremium: true,
+      citationCount: 5,
+    });
     expect(result.citations).toHaveLength(5);
   });
 });
