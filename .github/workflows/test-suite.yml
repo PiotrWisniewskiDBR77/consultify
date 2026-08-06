@@ -580,6 +580,12 @@ jobs:
         env:
           DB_TYPE: postgres
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
+          # Without these two, getDatabaseAsync() (server/src/database/Database.ts)
+          # substitutes an in-memory mock because vitest sets NODE_ENV=test — so the
+          # Postgres service started above and migrated by the previous step would be
+          # provisioned and then never touched by a single assertion.
+          RUN_DB_TESTS: '1'
+          MOCK_DB: 'false'
 
       # Frontend colocated tests run under jsdom (no DB).
       - name: Run src colocated __tests__
@@ -656,6 +662,10 @@ jobs:
         env:
           DB_TYPE: postgres
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
+          # See the note in colocated-tests: without these, the migrated Postgres
+          # service is ignored and every assertion runs against the in-memory mock.
+          RUN_DB_TESTS: '1'
+          MOCK_DB: 'false'
 
       - name: Upload test results
         if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.ref_name == 'main' || github.ref_name == 'develop') }}
@@ -1324,6 +1334,10 @@ jobs:
         env:
           DB_TYPE: postgres
           DATABASE_URL: postgres://iris:iris_test@localhost:5432/iris_test
+          # See the note in colocated-tests. This job carries no branch gate, so it is
+          # the one that actually runs on demo/Londyn — and it was measuring the mock.
+          RUN_DB_TESTS: '1'
+          MOCK_DB: 'false'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
