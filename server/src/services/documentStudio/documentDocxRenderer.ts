@@ -410,7 +410,12 @@ function asString(value: unknown): string {
   if (value == null) return '';
   if (typeof value === 'string') {
     const named: Record<string, string> = {
-      amp: '&', apos: "'", gt: '>', lt: '<', nbsp: '\u00a0', quot: '"',
+      amp: '&',
+      apos: "'",
+      gt: '>',
+      lt: '<',
+      nbsp: '\u00a0',
+      quot: '"',
     };
     let decoded = value;
     // A bounded loop also handles upstream strings encoded more than once
@@ -418,7 +423,12 @@ function asString(value: unknown): string {
     for (let pass = 0; pass < 4; pass += 1) {
       const next = decoded.replace(
         /&(?:#(\d+)|#x([0-9a-f]+)|([a-z][a-z0-9]+));/gi,
-        (entity, decimal: string | undefined, hex: string | undefined, name: string | undefined) => {
+        (
+          entity,
+          decimal: string | undefined,
+          hex: string | undefined,
+          name: string | undefined
+        ) => {
           if (name) return named[name.toLowerCase()] ?? entity;
           const codePoint = Number.parseInt(decimal ?? hex ?? '', hex ? 16 : 10);
           if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10ffff) return entity;

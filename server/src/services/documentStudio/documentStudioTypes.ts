@@ -940,12 +940,7 @@ export interface DocumentExportResult {
  *                  SSOT 6-scope edit doctrine.
  */
 export type DocumentEditorScope =
-  | 'local'
-  | 'section'
-  | 'global'
-  | 'methodology'
-  | 'source'
-  | 'transformative';
+  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -1358,10 +1353,7 @@ export interface DocumentCommentSectionCounts {
  *                       snapshots are never pruned by that cap.
  */
 export type DocumentVersionSnapshotOrigin =
-  | 'manual'
-  | 'auto_status_change'
-  | 'rollback_revert'
-  | 'autosave';
+  'manual' | 'auto_status_change' | 'rollback_revert' | 'autosave';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
@@ -2248,10 +2240,7 @@ export interface AudienceProfileUpdateInput {
 }
 
 export type AudienceProfileAuditAction =
-  | 'profile_drafted'
-  | 'profile_updated'
-  | 'profile_activated'
-  | 'profile_archived';
+  'profile_drafted' | 'profile_updated' | 'profile_activated' | 'profile_archived';
 
 export interface AudienceProfileAuditEntry {
   auditId: string;
@@ -2311,11 +2300,7 @@ export interface DocumentVariant {
  * Terminal states: approved, rejected, changes_requested, cancelled.
  */
 export type DocumentApprovalStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'changes_requested'
-  | 'cancelled';
+  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
 
 /** A single reviewer's verdict on an open approval request. */
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
@@ -2391,10 +2376,7 @@ export interface DocumentApprovalRequest {
 }
 
 export type DocumentApprovalAuditAction =
-  | 'approval_requested'
-  | 'approval_decision_recorded'
-  | 'approval_resolved'
-  | 'approval_cancelled';
+  'approval_requested' | 'approval_decision_recorded' | 'approval_resolved' | 'approval_cancelled';
 
 export interface DocumentApprovalAuditEntry {
   auditId: string;
