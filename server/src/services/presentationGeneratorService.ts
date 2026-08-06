@@ -1441,6 +1441,22 @@ export async function generateDeck(
   });
 
   try {
+    // `generateOutline` and `generateDeck` are separate API steps and therefore
+    // do not share lexical state. Resolve the selected runtime again at the
+    // materialization boundary so both approved custom templates and built-in
+    // template families reach deck metadata and the PPTX pipeline.
+    let templateRuntime: PresentationTemplateRuntime | null = null;
+    if (setup.templateId) {
+      const template = await dbGet(
+        `SELECT * FROM presentation_templates WHERE id = ? AND is_active = TRUE AND (organization_id IS NULL OR organization_id = ?)`,
+        [setup.templateId, organizationId]
+      );
+      templateRuntime = resolveApprovedPresentationTemplate(template).runtime;
+    } else {
+      const requestedFamily = (setup as any).templateFamily || (setup as any).deckType;
+      if (requestedFamily) templateRuntime = buildSystemTemplateRuntime(requestedFamily);
+    }
+
     // Build structured ContextPack for AI consumption
     const sourceArtifacts = Array.isArray(setup.sourceArtifacts) ? setup.sourceArtifacts : [];
     const sourcePackPreflight = preflightPresentationSourcePack({
