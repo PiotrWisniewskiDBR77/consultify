@@ -297,6 +297,13 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
   useEffect(() => {
     const id = String(initialWorkbookId || '').trim();
     if (!id || reopenedWorkbook.current === id) return;
+    // A successful build updates the URL synchronously through onBuilt. Its
+    // in-memory result still carries the full qualityReport; do not replace it
+    // with a metadata hydration just because the parent exposed the same id.
+    if (result?.id === id) {
+      reopenedWorkbook.current = id;
+      return;
+    }
     // openForm() deliberately clears previous result state. When both ids are
     // present on a cold deep link, wait until the async template catalog has
     // selected that template, then restore the durable workbook afterwards.
@@ -316,7 +323,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
           fileName: metadata?.file_name || 'workbook.xlsx',
           downloadUrl: metadata?.downloadUrl || `/api/workbook/${id}/download`,
           sheetCount: sheets.length,
-          qualityReport: null,
+          qualityReport: metadata?.qualityReport ?? null,
         });
         setGridSheets(buildWorkbookGridSheets(sheets));
         setRawSheets(sheets as FormulaSheet[]);
@@ -336,7 +343,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
     return () => {
       alive = false;
     };
-  }, [initialTemplateId, initialWorkbookId, selected?.id, t]);
+  }, [initialTemplateId, initialWorkbookId, result?.id, selected?.id, t]);
 
   // Mini bar chart (2026-07-23): poglądowa wizualizacja trendu/porównania nad
   // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od

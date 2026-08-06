@@ -246,3 +246,22 @@ describe('PATCH /api/workbook/:id/cell', () => {
     expect(res.body.cell.style).toEqual({ bgColor: 'FFF6DF', border: 'thin' });
   });
 });
+
+describe('GET /api/workbook/:id quality reopen', () => {
+  it('recomputes the deterministic quality report from the persisted canonical schema', async () => {
+    const app = createApp();
+    asUser(ORG);
+
+    const res = await request(app).get(`/api/workbook/${WB_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBeUndefined(); // the narrow mock only supplies schema_json
+    expect(res.body.qualityReport).toEqual(
+      expect.objectContaining({
+        score: expect.any(Number),
+        passed: expect.any(Boolean),
+        issues: expect.any(Array),
+      })
+    );
+  });
+});

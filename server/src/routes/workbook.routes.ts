@@ -1853,6 +1853,10 @@ router.get(
     }
 
     const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
+    // critiqueWorkbook is deterministic over the persisted canonical schema.
+    // Recompute it on reopen so a cold reload restores the same QA badge even
+    // though older generated_workbooks rows predate a quality-report column.
+    const qualityReport = schemaJson ? critiqueWorkbook(schemaJson as WorkbookSchema) : null;
     res.json({
       id: row.id,
       title: row.title || schemaJson?.title,
@@ -1862,6 +1866,7 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      qualityReport,
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
       evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { listWorkbookTemplates, getWorkbook, getWorkbookSchema } = vi.hoisted(() => ({
@@ -8,6 +8,7 @@ const { listWorkbookTemplates, getWorkbook, getWorkbookSchema } = vi.hoisted(() 
   getWorkbook: vi.fn(),
   getWorkbookSchema: vi.fn(),
 }));
+const buildWorkbookTemplate = vi.hoisted(() => vi.fn());
 
 vi.mock('@/services/api', () => ({
   API_URL: '/api',
@@ -15,7 +16,7 @@ vi.mock('@/services/api', () => ({
     listWorkbookTemplates,
     getWorkbook,
     getWorkbookSchema,
-    buildWorkbookTemplate: vi.fn(),
+    buildWorkbookTemplate,
   },
 }));
 
@@ -46,6 +47,20 @@ describe('ExceleParametricTemplates durable custom build', () => {
       title: 'Portfolio Transformation Control',
       file_name: 'Portfolio_Transformation_Control.xlsx',
       downloadUrl: '/api/workbook/workbook-42/download',
+      qualityReport: { score: 100, passed: true, issues: [] },
+    });
+    buildWorkbookTemplate.mockResolvedValue({
+      id: 'workbook-fresh',
+      title: 'Fresh Portfolio',
+      fileName: 'Fresh_Portfolio.xlsx',
+      downloadUrl: '/api/workbook/workbook-fresh/download',
+      sheets: [
+        { name: 'Portfolio' },
+        { name: 'Milestones' },
+        { name: 'Summary' },
+        { name: 'Info' },
+      ],
+      qualityReport: { score: 100, passed: true, issues: [] },
     });
     getWorkbookSchema.mockResolvedValue({
       id: 'workbook-42',
@@ -70,6 +85,7 @@ describe('ExceleParametricTemplates durable custom build', () => {
     await waitFor(() => expect(getWorkbook).toHaveBeenCalledWith('workbook-42'));
     expect(getWorkbookSchema).toHaveBeenCalledWith('workbook-42');
     expect(await screen.findByText(/Ready: Portfolio Transformation Control/)).toBeInTheDocument();
+    expect(screen.getByText(/Model verified.*0 notes/)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Portfolio_Transformation_Control.xlsx/ })
     ).toBeInTheDocument();
@@ -82,5 +98,35 @@ describe('ExceleParametricTemplates durable custom build', () => {
     expect(screen.getByRole('button', { name: 'Milestones' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Summary' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Info' })).toBeInTheDocument();
+  });
+
+  it('keeps the fresh quality report when onBuilt adds the same workbook id to the URL', async () => {
+    const onBuilt = vi.fn();
+    const view = render(
+      <ExceleParametricTemplates
+        isPolish={false}
+        initialTemplateId="template-42"
+        onBuilt={onBuilt}
+      />
+    );
+
+    await screen.findByText('Portfolio template');
+    fireEvent.click(screen.getByRole('button', { name: 'Build workbook' }));
+    await screen.findByText(/Ready: Fresh Portfolio/);
+    expect(screen.getByText(/Model verified.*0 notes/)).toBeInTheDocument();
+    expect(onBuilt).toHaveBeenCalledWith(expect.objectContaining({ id: 'workbook-fresh' }));
+
+    getWorkbook.mockClear();
+    view.rerender(
+      <ExceleParametricTemplates
+        isPolish={false}
+        initialTemplateId="template-42"
+        initialWorkbookId="workbook-fresh"
+        onBuilt={onBuilt}
+      />
+    );
+
+    await waitFor(() => expect(getWorkbook).not.toHaveBeenCalled());
+    expect(screen.getByText(/Model verified.*0 notes/)).toBeInTheDocument();
   });
 });
