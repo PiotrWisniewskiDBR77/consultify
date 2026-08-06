@@ -45,6 +45,10 @@ import {
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
 import {
+  fetchTemplateLineage,
+  type ClientTemplateLineageNode,
+} from '@/services/presentationTemplateGovernance';
+import {
   approvePresentationTemplate,
   clonePresentationTemplate,
   deprecatePresentationTemplate,
@@ -205,6 +209,8 @@ export const PresentationTemplateArchitectView: React.FC<
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [lineage, setLineage] = useState<ClientTemplateLineageNode[]>([]);
+  const [versionComparison, setVersionComparison] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
@@ -324,6 +330,17 @@ export const PresentationTemplateArchitectView: React.FC<
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      setLineage([]);
+      setVersionComparison(null);
+      return;
+    }
+    void fetchTemplateLineage(selectedTemplateId).then((result) => {
+      setLineage(result.status === 'ok' ? result.chain : []);
+    });
+  }, [selectedTemplateId]);
 
   const handleDraft = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -488,6 +505,40 @@ export const PresentationTemplateArchitectView: React.FC<
       );
     } finally {
       setCloningId(null);
+    }
+  };
+
+  const handleRestoreVersionAsDraft = async (version: ClientTemplateLineageNode): Promise<void> => {
+    setCloningId(version.id);
+    setError(null);
+    try {
+      const result = await clonePresentationTemplate(
+        version.id,
+        `${version.name} — restored v${version.lineageVersion}`
+      );
+      await refresh();
+      setSelectedTemplateId(result.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore version as a new draft');
+    } finally {
+      setCloningId(null);
+    }
+  };
+
+  const handleCompareVersion = async (version: ClientTemplateLineageNode): Promise<void> => {
+    if (!selectedTemplate) return;
+    try {
+      const candidate = await getPresentationTemplate(version.id);
+      const currentTitles = selectedTemplate.outline_json.map((item) => item.title);
+      const candidateTitles = candidate.outline_json.map((item) => item.title);
+      const changed =
+        Math.max(currentTitles.length, candidateTitles.length) -
+        currentTitles.filter((title, index) => title === candidateTitles[index]).length;
+      setVersionComparison(
+        `v${version.lineageVersion} vs v${selectedTemplate.lineage_version || 1}: ${candidateTitles.length} → ${currentTitles.length} slides; ${Math.max(0, changed)} position(s) changed.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to compare template versions');
     }
   };
 
@@ -860,6 +911,63 @@ export const PresentationTemplateArchitectView: React.FC<
                 )}
               </p>
             ) : null}
+
+            <section
+              className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
+              aria-label="Template version history"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs font-semibold text-c-text">Version history</h4>
+                <span className="text-[10px] text-c-text-secondary">
+                  {lineage.length} version(s)
+                </span>
+              </div>
+              {lineage.length === 0 ? (
+                <p className="mt-2 text-[11px] text-c-text-secondary">
+                  No lineage versions available.
+                </p>
+              ) : (
+                <div className="mt-2 space-y-1.5">
+                  {lineage.map((version) => (
+                    <div
+                      key={version.id}
+                      className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle px-2 py-1.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium text-c-text">
+                          v{version.lineageVersion} · {version.name}
+                        </p>
+                        <p className="text-[10px] text-c-text-secondary">
+                          {version.lifecycleState}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => void handleCompareVersion(version)}
+                        >
+                          Compare
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={cloningId === version.id}
+                          onClick={() => void handleRestoreVersionAsDraft(version)}
+                        >
+                          Restore as draft
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {versionComparison ? (
+                <p role="status" className="mt-2 text-[11px] text-c-text-secondary">
+                  {versionComparison}
+                </p>
+              ) : null}
+            </section>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-xs">
