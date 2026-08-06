@@ -174,8 +174,8 @@ Verified on 2026-08-06 against DEMO build `97a42e810bc1` using the canonical wor
 
 - Import XLSX/CSV into an open workbook: **DELIVERED / deployment runtime check pending**. ExcelJS parses actual files into canonical sheets, formulas, values, styles, comments, dimensions and frozen panes with version history/CAS persistence.
 - Manual chart authoring: **DELIVERED within renderer capability / deployment runtime check pending**. A selected range becomes an editable/deletable canonical `chartImages` PNG with title/type/source-range metadata; the same image is mounted into XLSX by `WorkbookBuilder`.
-- Conditional-formatting rule authoring: **FAIL / not implemented**.
-- Row/column hide/unhide and merge/unmerge: **FAIL / not implemented**.
+- Conditional-formatting authoring: **DELIVERED / deployment runtime check pending**. Users can apply a negative-value rule to a selected A1 range or clear sheet rules; the web grid evaluates the supported cell rule and XLSX export uses the canonical conditional-formatting block.
+- Row/column hide/unhide and merge/unmerge: **DELIVERED / deployment runtime check pending**. Commands persist in canonical schema, render in the web grid where applicable and export through `WorkbookBuilder`.
 - General Excel-compatible formula breadth: **FAIL / intentionally limited engine**.
-- Collaborative conflict/rebase and offline queued-save recovery: **FAIL / not exposed in UI**.
+- Collaborative conflict/rebase and offline queued-save recovery: **DELIVERED / deployment runtime check pending**. A 409 reloads the latest workbook and retries once; network failures queue cell and schema operations in workbook-scoped local storage and replay them on the browser `online` event with visible status.
 - Download-event completion: **UNPROVEN in browser automation** although the XLSX action is present.
