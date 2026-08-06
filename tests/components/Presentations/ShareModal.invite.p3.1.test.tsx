@@ -42,6 +42,15 @@ import { ShareModal } from '../../../src/components/Presentations/DeckBuilder/Sh
 // The Collaborate tab is flag-gated; force it on for the test.
 const ORIGINAL_ENV = { ...import.meta.env };
 
+function proxiedApiResponse<T extends object>(payload: T): T {
+  return new Proxy(payload, {
+    get(target, property, receiver) {
+      if (property === 'data') return target;
+      return Reflect.get(target, property, receiver);
+    },
+  });
+}
+
 describe('ShareModal — Collaborate invite (P3.1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -101,6 +110,21 @@ describe('ShareModal — Collaborate invite (P3.1)', () => {
       expect(decodeURIComponent(href)).toContain('/presentations/shared/tok_abc123');
     });
     await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+  });
+
+  it('reads a public share token from the real shared Api proxy shape', async () => {
+    const user = userEvent.setup();
+    postMock.mockResolvedValue(
+      proxiedApiResponse({ success: true, data: { shareToken: 'tok_runtime' } })
+    );
+    renderModal();
+
+    await user.click(screen.getByRole('button', { name: 'OFF' }));
+
+    await waitFor(() =>
+      expect(screen.getByDisplayValue(/presentations\/shared\/tok_runtime/)).toBeInTheDocument()
+    );
+    expect(screen.getByRole('button', { name: 'ON' })).toBeInTheDocument();
   });
 
   it('rejects an invalid email without hitting the network', async () => {
