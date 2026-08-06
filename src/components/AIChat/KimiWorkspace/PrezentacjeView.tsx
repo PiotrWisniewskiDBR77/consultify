@@ -203,6 +203,7 @@ export const PrezentacjeView: React.FC = () => {
 
   const [reopenPreview, setReopenPreview] = useState<ArtifactPreview | null>(null);
   const [reopenDeckId, setReopenDeckId] = useState<string | null>(null);
+  const [reopenError, setReopenError] = useState<string | null>(null);
   const reopenLoaded = useRef(false);
 
   // D2 (roboty tri-tryby): jawny wybór 3 trybów na wejściu `?view=new`, tylko za
@@ -315,6 +316,7 @@ export const PrezentacjeView: React.FC = () => {
     loadPresentationDeck(artifactId)
       .then(async ({ deckId, deckData: row }) => {
         const { slides, status } = parseDeckSlides(row);
+        if (slides.length === 0) throw new Error('presentation_content_missing');
         const title = row.title || t('prezentacje.defaultTitle', 'Presentation');
 
         let statusLabel = deriveDeckLifecycleBadge(null, null);
@@ -334,6 +336,7 @@ export const PrezentacjeView: React.FC = () => {
         }
 
         setReopenDeckId(deckId);
+        setReopenError(null);
         setReopenPreview({
           type: 'deck',
           title,
@@ -353,16 +356,16 @@ export const PrezentacjeView: React.FC = () => {
         });
       })
       .catch(() => {
-        setReopenDeckId(artifactId);
-        setReopenPreview({
-          type: 'deck',
-          title: t('prezentacje.defaultTitle', 'Presentation'),
-          fileName: 'presentation.pptx',
-          summary: t('prezentacje.loadPreviewFailed', 'Could not load deck preview.'),
-          kpiItems: [],
-          deckId: artifactId,
-          deckSlides: [],
-        });
+        // Fail closed: a missing/corrupt deck is not a valid empty deck. Keep
+        // every builder/export target unset and render a blocking state below.
+        setReopenDeckId(null);
+        setReopenPreview(null);
+        setReopenError(
+          t(
+            'prezentacje.reopenFailedBlocking',
+            'Nie udało się otworzyć prezentacji. Jej treść jest niedostępna lub uszkodzona.'
+          )
+        );
       });
   }, [artifactId, t]);
 
@@ -780,6 +783,25 @@ export const PrezentacjeView: React.FC = () => {
           className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
           {t('prezentacje.template.backToLibrary', 'Wróć do Biblioteki')}
+        </button>
+      </div>
+    );
+  }
+
+  if (artifactId && reopenError) {
+    return (
+      <div
+        data-testid="prezentacje-reopen-error"
+        role="alert"
+        className="flex h-full flex-1 flex-col items-center justify-center gap-3 px-6 text-center"
+      >
+        <p className="max-w-md text-sm text-c-text-secondary">{reopenError}</p>
+        <button
+          type="button"
+          onClick={handleAllFiles}
+          className="rounded-md border border-c-border px-3 py-1.5 text-sm text-c-text-primary hover:bg-c-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        >
+          {t('prezentacje.reopenBackToLibrary', 'Wróć do prezentacji')}
         </button>
       </div>
     );
