@@ -172,6 +172,7 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
     // cannot hide inside a regex change or an unreviewed allowlist addition.
     expect(new Set(allowlist)).toEqual(
       new Set([
+        '20260802c_mat010_operation_claims_table.sql',
         '942_ideas_collaboration_tool_sessions.sql',
         '800_chat_007_proposal_idempotency_key.sql',
         '942_chat_m01p04a_attachment_status.sql',
@@ -182,7 +183,7 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
         '945_chat_m01p04c_knowledge_doc_scope.sql',
       ])
     );
-    expect(allowlist.length).toBe(8);
+    expect(allowlist.length).toBe(9);
 
     // Pattern-matched files are unaffected.
     expect(isRuntimeMigrationFile('20260804_decision_workflow_canonical.sql')).toBe(true);

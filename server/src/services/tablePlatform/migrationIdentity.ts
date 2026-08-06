@@ -70,6 +70,13 @@ export const MIGRATION_PATTERN = /^(7\d{2}|\d{8})_.*\.sql$/;
  * reviewable act, widening the regex is not.
  */
 export const RUNTIME_MIGRATION_ALLOWLIST: readonly string[] = Object.freeze([
+  // MAT-010: durable fencing/lease claims used by the mounted artifact
+  // lineage runtime. The intentionally consolidated filename contains a
+  // letter suffix (`20260802c_`) and therefore is not an eight-digit dated
+  // migration under MIGRATION_PATTERN. Without this exact allowlist entry a
+  // fresh manual schema has the table, while a normal demo deployment never
+  // discovers it and MAT-010 fails at the first claim acquisition.
+  '20260802c_mat010_operation_claims_table.sql',
   // M02-C: sole producer of tool_sessions / tool_session_presence (Ideas
   // collaboration presence). Without it a fresh deploy answers every
   // /api/realtime-v4/tool-sessions/* call with HTTP 500 — the manual script

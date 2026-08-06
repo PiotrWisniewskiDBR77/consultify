@@ -12,6 +12,12 @@ describe('Migration Runner', () => {
     expect(runner).toContain("'081_studio_tables.sql'");
   });
 
+  it('runtime discovery includes the MAT-010 operation-claims producer', async () => {
+    const { isRuntimeMigrationFile } = await import('../migrationIdentity.js');
+
+    expect(isRuntimeMigrationFile('20260802c_mat010_operation_claims_table.sql')).toBe(true);
+  });
+
   it('all 27 migration files exist (700-726)', () => {
     const migrationsDir = path.resolve(process.cwd(), 'server/migrations');
     const files = fs.readdirSync(migrationsDir).filter((f) => /^7\d{2}_.*\.sql$/.test(f));
