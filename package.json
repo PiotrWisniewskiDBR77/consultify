@@ -260,6 +260,7 @@
     "docs:links": "tsx server/scripts/check-ui-standards-links.ts",
     "lint:motion": "tsx server/scripts/check-motion-compliance.ts --top 15",
     "lint:motion:ci": "tsx server/scripts/check-motion-compliance.ts --budget docs/ui-standards/.motion-baseline.json"
+    ,"lint:materials-visual": "tsx scripts/check-materials-visual-compliance.ts"
   },
   "overrides": {
     "react-is": "^19.0.0"

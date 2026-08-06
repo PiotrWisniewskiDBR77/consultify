@@ -20,9 +20,6 @@ import {
   Presentation,
   Sparkles,
   Table2,
-  TableProperties,
-  PanelsTopLeft,
-  FileType2,
   Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -33,6 +30,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/ExceleParametricTemplates';
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLauncher';
+import { MATERIAL_VISUAL_IDENTITY } from '@/components/shared/materialsVisualIdentity';
 import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -539,7 +537,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     () => [
       {
         id: 'document' as TemplateFormat,
-        icon: FileType2,
+        icon: MATERIAL_VISUAL_IDENTITY.document.templateIcon,
         title: t('rap.templatesLauncher.document', 'Szablon dokumentu Word'),
         hint: t(
           'rap.templatesLauncher.documentHint',
@@ -548,7 +546,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       },
       {
         id: 'presentation' as TemplateFormat,
-        icon: PanelsTopLeft,
+        icon: MATERIAL_VISUAL_IDENTITY.presentation.templateIcon,
         title: t('rap.templatesLauncher.presentation', 'Szablon prezentacji'),
         hint: t(
           'rap.templatesLauncher.presentationHint',
@@ -557,7 +555,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       },
       {
         id: 'spreadsheet' as TemplateFormat,
-        icon: TableProperties,
+        icon: MATERIAL_VISUAL_IDENTITY.spreadsheet.templateIcon,
         title: t('rap.templatesLauncher.spreadsheet', 'Szablon skoroszytu Excel'),
         hint: t(
           'rap.templatesLauncher.spreadsheetHint',
