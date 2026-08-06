@@ -86,7 +86,22 @@ export function extractPresentationGenerationOutline(deck: unknown): unknown[] {
  * the body in the user's request instead of inventing content.
  */
 export function buildDeterministicTeresaSlides(outline: unknown[], request: string) {
-  return outline.map((raw, index) => {
+  const explicitCount = Number(
+    request.match(/produce exactly\s+(\d+)\s+[^.\n]*?slides/i)?.[1] || 0
+  );
+  const explicitList = request.match(/slides:\s*([\s\S]*?)(?:\.\s*Use only|\n|$)/i)?.[1] || '';
+  const explicitTitles = Array.from(
+    explicitList.matchAll(/(?:^|,\s*)(\d+)\s+([^,]+?)(?=,\s*\d+\s+|$)/g)
+  ).map((match) => match[2].trim());
+  const sourceOutline =
+    explicitCount > 0 && explicitTitles.length === explicitCount
+      ? explicitTitles.map((title, index) => ({
+          title,
+          intent: index === 0 ? 'cover' : index === explicitCount - 1 ? 'next_steps' : 'content',
+        }))
+      : outline;
+
+  return sourceOutline.map((raw, index) => {
     const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const title = String(item.title || item.heading || `Slide ${index + 1}`);
     const guidance = [item.keyMessage, item.key_message, item.thesis, item.contentGuidance]

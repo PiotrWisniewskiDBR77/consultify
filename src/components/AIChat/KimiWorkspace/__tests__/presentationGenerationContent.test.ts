@@ -66,4 +66,22 @@ describe('Teresa presentation generation content contract', () => {
       )
     ).toBe('Atlas Transformation Executive Update — E2E-20260806');
   });
+
+  it('honors an explicit exact slide count and numbered slide list', () => {
+    const slides = buildDeterministicTeresaSlides(
+      Array.from({ length: 10 }, (_, index) => ({ title: `Generic ${index + 1}` })),
+      'Produce exactly 8 executive slides: 1 Cover, 2 Executive summary, 3 Portfolio progress, 4 Budget and value, 5 Milestones, 6 Risks, 7 Decisions required, 8 Next steps and sources. Use only these facts: progress 72%.'
+    );
+    expect(slides).toHaveLength(8);
+    expect(slides.map((slide) => slide.content.title)).toEqual([
+      'Cover',
+      'Executive summary',
+      'Portfolio progress',
+      'Budget and value',
+      'Milestones',
+      'Risks',
+      'Decisions required',
+      'Next steps and sources',
+    ]);
+  });
 });
