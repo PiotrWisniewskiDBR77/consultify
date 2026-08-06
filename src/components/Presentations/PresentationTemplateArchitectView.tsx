@@ -475,7 +475,7 @@ export const PresentationTemplateArchitectView: React.FC<
   };
 
   const handleApprove = async (): Promise<void> => {
-    if (!selectedTemplate || selectedTemplate.lifecycleState !== 'draft') return;
+    if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
     setApprovingId(selectedTemplate.id);
     setError(null);
     try {
@@ -1244,7 +1244,7 @@ export const PresentationTemplateArchitectView: React.FC<
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
-              {selectedTemplate.lifecycleState === 'draft' ? (
+              {selectedTemplate.lifecycle_state === 'draft' ? (
                 <Button
                   type="button"
                   variant="secondary"

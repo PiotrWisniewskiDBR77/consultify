@@ -7,6 +7,7 @@ vi.mock('@/services/api', () => ({
 }));
 
 import { approvePresentationTemplate } from '../presentationTemplateArchitect';
+import type { PresentationTemplate } from '../presentationTemplateArchitect';
 
 describe('approvePresentationTemplate', () => {
   beforeEach(() => vi.clearAllMocks());
@@ -31,5 +32,13 @@ describe('approvePresentationTemplate', () => {
       '/presentations/templates/tpl%20with%20space/governance/transition',
       { targetState: 'approved' }
     );
+  });
+});
+
+describe('PresentationTemplate lifecycle contract', () => {
+  it('uses the snake_case lifecycle_state returned by the presentation API', () => {
+    const template = { lifecycle_state: 'draft' } as PresentationTemplate;
+    expect(template.lifecycle_state).toBe('draft');
+    expect('lifecycleState' in template).toBe(false);
   });
 });
