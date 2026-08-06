@@ -111,7 +111,7 @@ describe('generateBlockProse', () => {
     generateChatResponseMock.mockResolvedValue({
       content: JSON.stringify({
         blocks: [
-          { blockId: 'blk-para', text: 'The Board should approve the migration in Q3.' },
+          { blockId: 'blk-para', text: 'The Board should approve the migration this quarter.' },
           {
             blockId: 'blk-list',
             items: ['Lower unit cost', 'Faster billing cycle', 'Lower vendor risk'],
@@ -127,7 +127,7 @@ describe('generateBlockProse', () => {
 
     const section = result.sections[0];
     expect((section.blocks[0].content as { text: string }).text).toBe(
-      'The Board should approve the migration in Q3.'
+      'The Board should approve the migration this quarter.'
     );
     expect((section.blocks[1].content as { items: string[] }).items).toEqual([
       'Lower unit cost',
@@ -138,6 +138,25 @@ describe('generateBlockProse', () => {
     expect(section.blocks[2].content).toEqual({ columns: ['Risk'], rows: [['r1']] });
     // Grounded blocks lose the bare-assumption flag (sources present).
     expect(section.blocks[0].isAssumption).toBe(false);
+  });
+
+  it('removes unsupported claims introduced by the prose enrichment pass', async () => {
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: 'Reach 85% by entering DACH with 8 initiatives.',
+          },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    expect((result.sections[0].blocks[0].content as { text: string }).text).toContain(
+      'unsupported claim'
+    );
+    expect(result.sections[0].blocks[0].isAssumption).toBe(true);
   });
 
   it('ignores unknown blockIds in the response', async () => {

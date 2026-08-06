@@ -25,6 +25,7 @@
  */
 
 import { generateChatResponse } from '../aiService.js';
+import { enforceBlockGrounding } from './documentBlockContentGenerator.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
 import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from './documentStudioTypes.js';
 
@@ -369,6 +370,7 @@ export async function generateBlockProse(
 
   // Deep clone so the caller's input schema is never mutated in place.
   const next = JSON.parse(JSON.stringify(schema)) as DocumentSchema;
+  const groundingSource = [intake.title, intake.description].filter(Boolean).join(' — ');
   for (const section of next.sections) {
     for (const block of section.blocks) {
       const payload = generated.get(block.blockId);
@@ -379,18 +381,21 @@ export async function generateBlockProse(
       } else if (payload.text !== undefined) {
         content.text = payload.text;
       }
-      block.content = content;
+      const guarded = enforceBlockGrounding(content, groundingSource);
+      block.content = guarded.content;
       // The block is now grounded in (or explicitly flagged against) the
       // source pack, so it is no longer a bare structural assumption.
-      if (sourceRefs.length > 0) {
-        block.isAssumption = false;
-      }
+      block.isAssumption = guarded.changed || sourceRefs.length === 0;
       // N-9: a paragraph carrying a GFM table must NOT get the inline
       // "_[Assumption]_" suffix from the renderer — appended after the final
       // "| … |" row it breaks the row's table membership in marked. Concrete
       // table content is not a bare assumption, so clear the flag.
-      if (typeof content.text === 'string' && /^\s*\|.*\|\s*$/m.test(content.text)) {
-        block.isAssumption = false;
+      if (
+        !guarded.changed &&
+        typeof guarded.content.text === 'string' &&
+        /^\s*\|.*\|\s*$/m.test(guarded.content.text)
+      ) {
+        block.isAssumption = sourceRefs.length === 0;
       }
     }
   }
