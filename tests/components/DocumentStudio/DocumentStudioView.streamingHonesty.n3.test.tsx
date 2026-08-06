@@ -48,7 +48,15 @@ vi.mock('@/components/shared/TriModeChooser', () => ({
 }));
 
 vi.mock('@/components/DocumentStudio/DocumentStudioDocumentPanel', () => ({
-  DocumentStudioDocumentPanel: () => <div data-testid="document-panel-stub" />,
+  DocumentStudioDocumentPanel: ({
+    schema,
+  }: {
+    schema: { sections?: Array<{ title: string }> };
+  }) => (
+    <div data-testid="document-panel-stub">
+      {schema.sections?.map((section) => section.title).join('|')}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/DocumentStudio/DocumentStudioTemplateArchitectView', () => ({
@@ -244,5 +252,41 @@ describe('DocumentStudioView — N3 doktryna streaming honesty fixes', () => {
     expect(within(sourcesRow).getByText('Insight #12')).toBeInTheDocument();
     // Deduped: "Wywiad #4" appears once even though two blocks referenced it.
     expect(within(sourcesRow).getAllByText('Wywiad #4')).toHaveLength(1);
+  });
+
+  it('(d) mounts the persisted canonical schema after done, never the progressive raw section state', async () => {
+    const canonicalSections = Array.from({ length: 7 }, (_, index) => ({
+      sectionId: `canonical-${index}`,
+      title: `Canonical ${index + 1}`,
+      orderIndex: index,
+      blocks: [],
+    }));
+    generateDocumentStudioArtifactStreamMock.mockImplementation(
+      async (_params: unknown, handlers: { onSection: (event: unknown) => void }) => {
+        handlers.onSection({
+          sectionId: 'raw-1',
+          index: 0,
+          total: 1,
+          title: 'Vendor delays and resource reallocation',
+          blocks: [{ blockId: 'raw-block', type: 'paragraph', content: 'progressive raw prose' }],
+        });
+        return {
+          artifactId: 'artifact-canonical',
+          schema: { artifactId: 'artifact-canonical', title: 'Done', sections: canonicalSections },
+          generationWarnings: [],
+        };
+      }
+    );
+    getDocumentStudioArtifactMock.mockResolvedValue({
+      schema: { artifactId: 'artifact-canonical', title: 'Reloaded', sections: canonicalSections },
+      generationWarnings: [],
+    });
+
+    renderAt('/document-studio?entry=blank');
+
+    const panel = await screen.findByTestId('document-panel-stub');
+    expect(panel).toHaveTextContent('Canonical 1|Canonical 2|Canonical 3');
+    expect(panel).not.toHaveTextContent(/vendor delays|reallocation|progressive raw/i);
+    expect(getDocumentStudioArtifactMock).toHaveBeenCalledWith('artifact-canonical');
   });
 });

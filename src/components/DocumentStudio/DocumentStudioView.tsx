@@ -177,7 +177,9 @@ export const DocumentStudioView: React.FC = () => {
   const [useLlm, setUseLlm] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [activeTemplateVersion, setActiveTemplateVersion] = useState<string | null>(null);
-  const [activeSourceRefs, setActiveSourceRefs] = useState<GenerateDocumentParams['sourceRefs']>([]);
+  const [activeSourceRefs, setActiveSourceRefs] = useState<GenerateDocumentParams['sourceRefs']>(
+    []
+  );
   const [approvedTemplates, setApprovedTemplates] = useState<DocumentTemplate[]>([]);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [artifactId, setArtifactId] = useState<string | null>(null);
@@ -420,15 +422,34 @@ export const DocumentStudioView: React.FC = () => {
       streamAbortControllerRef.current = abortController;
       setCanStopStream(true);
 
-      const commitDone = (result: DocumentStreamDoneEvent): DocumentStreamDoneEvent => {
+      const commitDone = async (
+        result: DocumentStreamDoneEvent
+      ): Promise<DocumentStreamDoneEvent> => {
         streamAbortControllerRef.current = null;
         setCanStopStream(false);
-        setArtifactId(result.artifactId);
-        setSchema(result.schema);
-        setGenerationWarnings(result.generationWarnings ?? []);
+        // The progressive `section` frames are presentation-only. Re-read the
+        // persisted artifact at the SSE boundary before mounting the editable
+        // panel, so no transient/raw LLM state can become the editor's initial
+        // autosave buffer. The terminal payload remains a safe fallback for a
+        // brief read-after-write transport failure.
+        let canonical = result;
+        try {
+          const persisted = await getDocumentStudioArtifact(result.artifactId);
+          canonical = {
+            artifactId: result.artifactId,
+            schema: persisted.schema,
+            generationWarnings: persisted.generationWarnings ?? result.generationWarnings ?? [],
+          };
+        } catch {
+          // `done.schema` is itself the server-finalized snapshot. Do not turn
+          // a successful generation into an error solely because GET failed.
+        }
+        setArtifactId(canonical.artifactId);
+        setSchema(canonical.schema);
+        setGenerationWarnings(canonical.generationWarnings ?? []);
         setPhase('document');
-        navigate(`/document-studio/${encodeURIComponent(result.artifactId)}`, { replace: true });
-        return result;
+        navigate(`/document-studio/${encodeURIComponent(canonical.artifactId)}`, { replace: true });
+        return canonical;
       };
 
       try {
@@ -463,7 +484,7 @@ export const DocumentStudioView: React.FC = () => {
           },
           abortController.signal
         );
-        return commitDone(result);
+        return await commitDone(result);
       } catch (streamErr) {
         streamAbortControllerRef.current = null;
         setCanStopStream(false);
@@ -504,7 +525,7 @@ export const DocumentStudioView: React.FC = () => {
         );
         try {
           const sync = await generateDocumentStudioArtifact(params);
-          return commitDone({
+          return await commitDone({
             artifactId: sync.artifactId,
             schema: sync.schema,
             generationWarnings: sync.generationWarnings ?? [],

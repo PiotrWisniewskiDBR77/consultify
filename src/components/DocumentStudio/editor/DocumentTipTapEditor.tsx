@@ -91,6 +91,12 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExternalUpdateRef = useRef(false);
+  // TipTap may emit `onUpdate` while normalizing its initial ProseMirror
+  // document. That is hydration, not a user edit, and must never trigger the
+  // manual-content PUT (especially immediately after an SSE `done`, where it
+  // could overwrite the server-finalized schema with a transient buffer).
+  // Arm autosave only from an actual editing DOM gesture.
+  const userEditArmedRef = useRef(false);
 
   // Optimistic-lock version — the `schema.updatedAt` this editor instance
   // last confirmed against the server (either from the initial load, a
@@ -179,8 +185,30 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       extensions,
       editable,
       content: initialDoc as unknown as Record<string, unknown>,
+      editorProps: {
+        handleDOMEvents: {
+          beforeinput: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          paste: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          drop: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          cut: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+        },
+      },
       onUpdate: ({ editor: ed }) => {
         if (isExternalUpdateRef.current) return;
+        if (!userEditArmedRef.current) return;
+        userEditArmedRef.current = false;
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(() => {
           const json = ed.getJSON() as unknown as PMDoc;

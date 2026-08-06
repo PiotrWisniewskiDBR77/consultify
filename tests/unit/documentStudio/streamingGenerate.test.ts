@@ -184,7 +184,7 @@ describe('Document Studio — streaming generation contract (C1)', () => {
       documentType: 'board_report' as const,
       // Production may carry the browser locale rather than the narrow UI
       // union; the runtime must normalize it before final grounding.
-      language: 'pl-PL' as any,
+      language: 'PL' as any,
       goal: 'decide' as const,
       audience: ['Zarząd'],
     };
