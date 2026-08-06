@@ -22,6 +22,8 @@ Nothing was cherry-picked, merged or deployed. The target worktree was inspected
 | 8 | `c3cb5e3faf` | test(fixtures) — two realDB fixtures repaired | 3 | +122 −11 |
 | 9 | `7159830f95` | docs — this handover | 1 | — |
 | 10 | `bacd413dd9` | test(fixtures) — third fixture stopped destroying the schema | 1 | +21 −1 |
+| 11 | `e0e418f726` | docs — full realDB sample result | 1 | — |
+| 12 | `ab691d748a` | fix(mfa) — 2FA storage exists and writes are checked | 3 | +250 −12 |
 
 Thirteen files total. No file is touched by more than one functional commit except `documentSourcePackPersistence.pg.test.ts` (created in 7, cleanup added in 8).
 
@@ -166,8 +168,22 @@ The remaining 24 are pre-existing and unaddressed here.
 | `documentStudioEditorStatePersistence.test.ts` | **fails in isolation on real Postgres — pre-existing, untouched by this branch.** Needs its own investigation. |
 | `documentAudienceProfileService.test.ts` | passes alone, fails in the directory run — cross-file pollution, present without this branch's files. |
 | DB-P0-02 (`DbPromise.run` default `fallback: true`) | open. Repository-wide blast radius; should land after commit 4 so the fallout is visible rather than silent. |
-| DB-P0-05 (MFA has no table anywhere) | open. Needs a schema-name decision plus the DB-P0-02 fix. |
+| DB-P0-05 (MFA had no table anywhere) | **closed** by commit 12 — see §8. |
 | DB-P0-06 (demo schema ≠ canon, 171 tables) | open. Operational decision, not a code change. |
 | Branch-gated test suite | `main` is 7646 commits behind `demo`, `develop` 7746. Opening the gate is a cost decision for the Release Owner. |
 
-The audit does not issue a GO. This branch closes four P0s and one real product defect; the remainder are listed above with their evidence in `CONSULTIFY_DATABASE_RISK_REGISTER.csv`.
+The audit does not issue a GO. This branch closes five P0s and one real product defect; the remainder are listed above with their evidence in `CONSULTIFY_DATABASE_RISK_REGISTER.csv`.
+
+---
+
+## 8. MFA (commit 12) — what was wrong and what is now pinned
+
+`user_mfa` was referenced 13 times across `mfa.routes.ts` and `settings.routes.ts` and created by **no migration in the corpus**. The only MFA DDL, `015_enterprise_customers_module.sql`, defines a differently shaped `user_mfa_methods` and is excluded from every run by the `< 500` filter. Combined with `DbPromise.run()` resolving instead of throwing, four of the six write routes answered 200 regardless — users were told two-factor authentication was on while nothing was stored.
+
+- Migration `20260806_mfa_user_mfa_table.sql` creates the table, with the column set **derived from the live queries** rather than invented, and an FK to `users` with `ON DELETE CASCADE`.
+- The five remaining writes now inspect their result. The distinction is deliberate: an unpersisted enable, disable, backup-code consumption or code regeneration returns 500, while an unpersisted `last_verified_at` stamp is only logged — the factor itself was verified, and only the audit trail is missing.
+- `user_mfa_methods` (SuperAdminController) is **not** unified here. It is a different multi-method model and still carries SQLite string literals (`method_type = "totp"`, which Postgres parses as an identifier). It needs its own repair and is recorded as open.
+
+Evidence: `mfaPersistence.pg.test.ts` — 5/5 on real Postgres, asserting state read straight from the database rather than from response bodies. Two negative controls: removing the migration turns it red, and reverting the result checks turns the enablement case red. The first version of that test did *not* catch the second case — it targeted `/setup`, which had been hardened before this work — so the enablement case was added specifically to pin what changed.
+
+Final combined run on one fresh database (551/551 migrations): **6/6 test files green**, schema intact at 1296 tables, **zero residual rows**.
