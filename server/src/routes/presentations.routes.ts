@@ -2222,6 +2222,19 @@ router.post(
       status: 'draft',
       createdBy: userId,
     });
+    if (source === 'teresa_deterministic_fallback') {
+      for (const card of canonicalDeckDocument.cards) {
+        card.source_refs = [
+          {
+            artifact_id: `teresa-request-${deckId}`,
+            artifact_type: 'chat_prompt',
+            artifact_name: 'Teresa user request',
+            confidence: 1,
+            readiness: 'user_supplied',
+          },
+        ];
+      }
+    }
     const deckJsonStr = JSON.stringify(canonicalDeckDocument);
 
     try {

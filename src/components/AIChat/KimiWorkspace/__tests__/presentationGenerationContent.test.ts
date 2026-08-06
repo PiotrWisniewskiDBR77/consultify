@@ -55,8 +55,10 @@ describe('Teresa presentation generation content contract', () => {
       content: { title: 'Atlas update', body: 'Board update' },
     });
     expect(slides[1]).toMatchObject({
-      content: { title: 'Budget', body: `Source request: ${request}` },
+      content: { title: 'Budget' },
     });
+    expect(slides[1].content.body).toContain('Source: Teresa user request.');
+    expect(slides[1].content.body.split(/\s+/).length).toBeLessThan(60);
   });
 
   it('uses the explicit Title field instead of the truncated chat goal', () => {

@@ -100,6 +100,21 @@ export function buildDeterministicTeresaSlides(outline: unknown[], request: stri
           intent: index === 0 ? 'cover' : index === explicitCount - 1 ? 'next_steps' : 'content',
         }))
       : outline;
+  const facts =
+    request
+      .match(/Use only these facts:\s*([\s\S]*?)(?:Clearly label|Generate the actual|$)/i)?.[1]
+      ?.split(';')
+      .map((fact) => fact.trim().replace(/[.\s]+$/, ''))
+      .filter(Boolean) || [];
+  const keywordsForTitle = (title: string) => {
+    const lower = title.toLowerCase();
+    if (/budget|value/.test(lower)) return /budget|spend|benefit/i;
+    if (/milestone|progress/.test(lower)) return /progress|milestone/i;
+    if (/risk/.test(lower)) return /risk|migration|vendor|adoption/i;
+    if (/decision/.test(lower)) return /decision|approve|owner/i;
+    if (/next|source/.test(lower)) return /meeting|owner|decision/i;
+    return /progress|budget|milestone|meeting/i;
+  };
 
   return sourceOutline.map((raw, index) => {
     const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -108,11 +123,15 @@ export function buildDeterministicTeresaSlides(outline: unknown[], request: stri
       .find((value) => typeof value === 'string' && value.trim())
       ?.toString()
       .trim();
+    const matchedFacts = facts.filter((fact) => keywordsForTitle(title).test(fact)).slice(0, 3);
+    const groundedBody = matchedFacts.length
+      ? matchedFacts.join('; ')
+      : facts[index % Math.max(facts.length, 1)] || 'No facts were supplied for this section.';
     return {
       type: String(item.intent || item.layout || 'content'),
       content: {
         title,
-        body: guidance || `Source request: ${request}`,
+        body: guidance || `Source: Teresa user request. ${groundedBody}.`,
       },
     };
   });
