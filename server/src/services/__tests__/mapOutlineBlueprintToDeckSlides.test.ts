@@ -155,4 +155,27 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     ]);
     expect(JSON.stringify(slide)).not.toContain('Validate');
   });
+
+  it('uses the intake brief across template slides so a complete Nova brief leaves no gaps', () => {
+    const slides = mapOutlineBlueprintToDeckSlides(
+      [
+        {
+          intent: 'executive_summary',
+          title: 'Recommendation',
+          dataNeeded: ['Recommended scenario', 'Investment envelope', 'Annual benefit'],
+        },
+        {
+          intent: 'performance_overview',
+          title: 'Economics',
+          dataNeeded: ['Implementation cost', 'Run-rate benefit', 'NPV', 'Payback'],
+        },
+      ],
+      'Recommended scenario: Gated Scale; Investment envelope: EUR 1.4m; Annual benefit: EUR 2.2m; Implementation cost: EUR 1.4m; Run-rate benefit: EUR 2.2m; NPV: EUR 3.2m; Payback: 11 months'
+    );
+    const serialized = JSON.stringify(slides);
+    expect(serialized).not.toContain('Data required');
+    expect(serialized).not.toContain('Validate');
+    expect(serialized).toContain('EUR 3.2m');
+    expect(serialized).toContain('11 months');
+  });
 });

@@ -565,14 +565,29 @@ function cleanStringList(value: unknown): string[] {
 }
 
 function groundedValueForLabel(label: string, sourceLines: string[]): string {
-  const labelTerms = label.toLowerCase().split(/\W+/).filter((term) => term.length > 2);
+  const labelTerms = label
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((term) => term.length > 2);
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const explicitlyLabelled = sourceLines.find((line) =>
+    new RegExp(`${escapedLabel}\\s*[:—–=-]\\s*\\S+`, 'i').test(line)
+  );
+  if (explicitlyLabelled) {
+    const explicitValue = explicitlyLabelled
+      .match(new RegExp(`${escapedLabel}\\s*[:—–=-]\\s*([^;]+)`, 'i'))?.[1]
+      ?.trim();
+    if (explicitValue)
+      return explicitValue.length > 48 ? `${explicitValue.slice(0, 45).trim()}…` : explicitValue;
+  }
   const grounded = sourceLines.find((line) => {
     const lower = line.toLowerCase();
     return labelTerms.some((term) => lower.includes(term)) && /(?:\d|€|\$|£|%)/.test(line);
   });
   if (!grounded) return 'Data required';
-  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const labelledValue = grounded.match(new RegExp(`${escapedLabel}\\s*[:—–-]\\s*([^;]+)`, 'i'))?.[1];
+  const labelledValue = grounded.match(
+    new RegExp(`${escapedLabel}\\s*[:—–-]\\s*([^;]+)`, 'i')
+  )?.[1];
   const concise = labelledValue?.trim() || grounded.trim();
   return concise.length > 48 ? `${concise.slice(0, 45).trim()}…` : concise;
 }
@@ -584,13 +599,18 @@ function groundedValueForLabel(label: string, sourceLines: string[]): string {
  * inventing numerical results.  Each intent gets a native block topology that
  * the Deck Builder and PPTX exporter already understand.
  */
-function blocksForTemplateIntent(item: Record<string, unknown>, title: string, intent: string) {
+function blocksForTemplateIntent(
+  item: Record<string, unknown>,
+  title: string,
+  intent: string,
+  briefLines: string[] = []
+) {
   const keyMessage = String(item.keyMessage ?? item.key_message ?? '').trim();
   const hints = cleanStringList(item.contentHints ?? item.content_hints);
   const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
   const headline = keyMessage || hints[0] || title;
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
-  const sourceLines = [keyMessage, ...hints].filter(Boolean);
+  const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
   const paragraph = { type: 'paragraph', content: { text: headline } };
 
@@ -762,14 +782,19 @@ function blocksForTemplateIntent(item: Record<string, unknown>, title: string, i
  * same function — the route must never re-derive this mapping inline.
  */
 export function mapOutlineBlueprintToDeckSlides(
-  outlineBlueprint: unknown[]
+  outlineBlueprint: unknown[],
+  brief?: string
 ): DeckSlideFromOutline[] {
   const items = Array.isArray(outlineBlueprint) ? outlineBlueprint : [];
+  const briefLines = String(brief || '')
+    .split(/[\n;]/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   return items.map((raw, index) => {
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const intent = String(item.intent || 'content');
     const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
-    const blocks = blocksForTemplateIntent(item, title, intent);
+    const blocks = blocksForTemplateIntent(item, title, intent, briefLines);
     return { type: intent, content: { title, intent, blocks } };
   });
 }

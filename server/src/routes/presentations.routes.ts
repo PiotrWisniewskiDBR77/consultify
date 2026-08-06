@@ -2385,7 +2385,7 @@ router.post(
  * HERE via `resolvePresentationTemplateForCreation` — never trusted from a
  * prior `/templates/resolve` response.
  *
- * Body: { templateArtifactId: string, title?: string }
+ * Body: { templateArtifactId: string, title?: string, brief?: string }
  * Returns 201: { success: true, data: { id, title, slideCount } } — same
  * shape as `POST /decks` so the client can reuse its existing deck-created
  * handling.
@@ -2407,6 +2407,7 @@ router.post(
       return;
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const brief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
 
     let resolved;
     try {
@@ -2429,7 +2430,7 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, brief);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
@@ -2540,6 +2541,7 @@ router.post(
             source: 'template_library',
             templateArtifactId,
             canonicalTemplateId: resolved.canonicalTemplateId,
+            briefProvided: Boolean(brief),
           }),
           deckJsonStr,
         ]

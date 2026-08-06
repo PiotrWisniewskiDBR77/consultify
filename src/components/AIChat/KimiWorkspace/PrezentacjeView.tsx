@@ -308,6 +308,8 @@ export const PrezentacjeView: React.FC = () => {
     'idle'
   );
   const [templateCreateErrorCode, setTemplateCreateErrorCode] = useState<string | null>(null);
+  const [templateBrief, setTemplateBrief] = useState('');
+  const [templateDeckTitle, setTemplateDeckTitle] = useState('');
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -451,36 +453,33 @@ export const PrezentacjeView: React.FC = () => {
   // `POST /presentations/decks/from-template`, świeżo, bez zaufania do
   // czegokolwiek z URL-a. Brak AI: struktura szablonu jest już znana, więc
   // (jak przy trybie „Czysto") nowy deck ląduje wprost w Deck Builderze.
-  useEffect(() => {
-    if (
-      !templateArtifactId ||
-      templateTriggered.current ||
-      pipeline.currentRun ||
-      pipeline.isGenerating
-    )
-      return;
+  const handleCreateFromTemplate = useCallback(async () => {
+    if (!templateArtifactId || templateTriggered.current || !templateBrief.trim()) return;
     templateTriggered.current = true;
     autoTriggered.current = true;
     setTemplateCreateState('loading');
     setTemplateCreateErrorCode(null);
-    void (async () => {
-      try {
-        const res = await Api.post('/presentations/decks/from-template', { templateArtifactId });
-        const deckId = unwrapApiData<{ id?: string }>(res)?.id;
-        if (!deckId) throw new Error('missing deckId in from-template response');
-        setTemplateCreateState('idle');
-        openInDeckBuilder(deckId);
-      } catch (err: any) {
-        // ★ Żaden fallback do promptu AI ani do pickera — wzorzec, którego nie
-        // da się rozwiązać, musi zatrzymać przepływ z uczciwym komunikatem
-        // (wzorowane na DocumentStudioView.tsx templateResolveMessage).
-        const code =
-          typeof err?.data?.error === 'string' ? err.data.error : 'TEMPLATE_RESOLVE_FAILED';
-        setTemplateCreateErrorCode(code);
-        setTemplateCreateState('error');
-      }
-    })();
-  }, [templateArtifactId, pipeline.currentRun, pipeline.isGenerating, openInDeckBuilder]);
+    try {
+      const res = await Api.post('/presentations/decks/from-template', {
+        templateArtifactId,
+        brief: templateBrief.trim(),
+        ...(templateDeckTitle.trim() ? { title: templateDeckTitle.trim() } : {}),
+      });
+      const deckId = unwrapApiData<{ id?: string }>(res)?.id;
+      if (!deckId) throw new Error('missing deckId in from-template response');
+      setTemplateCreateState('idle');
+      openInDeckBuilder(deckId);
+    } catch (err: any) {
+      // ★ Żaden fallback do promptu AI ani do pickera — wzorzec, którego nie
+      // da się rozwiązać, musi zatrzymać przepływ z uczciwym komunikatem
+      // (wzorowane na DocumentStudioView.tsx templateResolveMessage).
+      const code =
+        typeof err?.data?.error === 'string' ? err.data.error : 'TEMPLATE_RESOLVE_FAILED';
+      setTemplateCreateErrorCode(code);
+      setTemplateCreateState('error');
+      templateTriggered.current = false;
+    }
+  }, [templateArtifactId, templateBrief, templateDeckTitle, openInDeckBuilder]);
 
   // Uczciwy komunikat po polsku per kod odrzucenia — patrz
   // DocumentStudioView.tsx `templateResolveMessage` (ten sam wzorzec).
@@ -756,11 +755,7 @@ export const PrezentacjeView: React.FC = () => {
     );
   }
 
-  // R11 deck slice — "Użyj wzorca": stan ładowania podczas materializacji
-  // decka z szablonu (`POST /presentations/decks/from-template`). Sukces
-  // nawiguje od razu do Deck Buildera (patrz efekt wyżej) — ten branch nigdy
-  // nie zostaje wyrenderowany po sukcesie.
-  if (templateArtifactId && templateCreateState !== 'error') {
+  if (templateArtifactId && templateCreateState === 'loading') {
     return (
       <div className="flex h-full flex-1 items-center justify-center gap-2 text-c-text-secondary">
         <Loader2 size={18} className="animate-spin" />
@@ -768,6 +763,91 @@ export const PrezentacjeView: React.FC = () => {
           {t('prezentacje.template.creating', 'Tworzenie prezentacji z szablonu…')}
         </span>
       </div>
+    );
+  }
+
+  if (templateArtifactId && templateCreateState === 'idle') {
+    return (
+      <main
+        className="flex h-full flex-1 items-center justify-center px-6"
+        aria-labelledby="template-brief-heading"
+      >
+        <form
+          className="w-full max-w-2xl space-y-5 rounded-xl border border-c-border bg-c-surface p-6 shadow-sm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleCreateFromTemplate();
+          }}
+        >
+          <div>
+            <h1 id="template-brief-heading" className="text-xl font-semibold text-c-text-primary">
+              {t('prezentacje.template.briefHeading', 'Uzupełnij brief prezentacji')}
+            </h1>
+            <p className="mt-1 text-sm text-c-text-secondary">
+              {t(
+                'prezentacje.template.briefHelp',
+                'Podaj fakty i wartości, które mają wypełnić opublikowany szablon. Struktura i pochodzenie template’u zostaną zachowane.'
+              )}
+            </p>
+            <p
+              className="mt-2 text-xs text-c-text-tertiary"
+              data-testid="presentation-template-lineage"
+            >
+              {t('prezentacje.template.lineage', 'Template lineage')}: {templateArtifactId}
+            </p>
+          </div>
+          <div>
+            <label
+              htmlFor="presentation-template-title"
+              className="mb-1 block text-sm font-medium text-c-text-primary"
+            >
+              {t('prezentacje.template.titleLabel', 'Tytuł prezentacji')}
+            </label>
+            <input
+              id="presentation-template-title"
+              value={templateDeckTitle}
+              onChange={(event) => setTemplateDeckTitle(event.target.value)}
+              className="w-full rounded-md border border-c-border bg-c-background px-3 py-2 text-sm text-c-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="presentation-template-brief"
+              className="mb-1 block text-sm font-medium text-c-text-primary"
+            >
+              {t('prezentacje.template.briefLabel', 'Brief i dane do slajdów')}
+            </label>
+            <textarea
+              id="presentation-template-brief"
+              required
+              rows={10}
+              value={templateBrief}
+              onChange={(event) => setTemplateBrief(event.target.value)}
+              placeholder={t(
+                'prezentacje.template.briefPlaceholder',
+                'Np. Recommended scenario: Gated Scale; Investment envelope: EUR 1.4m; Annual benefit: EUR 2.2m…'
+              )}
+              className="w-full resize-y rounded-md border border-c-border bg-c-background px-3 py-2 text-sm text-c-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleAllFiles}
+              className="rounded-md border border-c-border px-4 py-2 text-sm text-c-text-primary hover:bg-c-surface-hover"
+            >
+              {t('common.cancel', 'Anuluj')}
+            </button>
+            <button
+              type="submit"
+              disabled={!templateBrief.trim()}
+              className="rounded-md bg-c-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {t('prezentacje.template.generate', 'Generuj prezentację')}
+            </button>
+          </div>
+        </form>
+      </main>
     );
   }
 
