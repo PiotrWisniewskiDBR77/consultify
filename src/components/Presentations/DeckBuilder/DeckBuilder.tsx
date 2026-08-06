@@ -60,7 +60,7 @@ import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
-import { resolveBlankCardInsertionIndex } from './manualEditing';
+import { mergeStarterBlockContent, resolveBlankCardInsertionIndex } from './manualEditing';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
@@ -998,7 +998,12 @@ export const DeckBuilder: React.FC = () => {
         block_id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         card_id: activeCard.card_id,
         type: blockType as CardBlock['type'],
-        content: content || getDefaultContent(blockType),
+        // Toolbar panels often pass only a variant (for example
+        // `{ chartType: 'bar' }` or `{ diagram_kind: 'funnel' }`). Merge that
+        // partial choice over a complete editable starter model; using the
+        // partial object verbatim produced invisible charts/diagrams and KPI
+        // blocks with no selectable content.
+        content: mergeStarterBlockContent(getDefaultContent(blockType), content),
         is_refreshable: false,
         position: { area: 'full', order: activeCard.blocks.length },
         ai_editable: true,

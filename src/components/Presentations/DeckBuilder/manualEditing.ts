@@ -27,4 +27,11 @@ export function blockContentStyle(content: Record<string, unknown>): CSSProperti
     ...(align ? { textAlign: align } : {}),
   };
 }
+
+export function mergeStarterBlockContent(
+  defaults: Record<string, unknown>,
+  selection?: Record<string, unknown>
+): Record<string, unknown> {
+  return { ...defaults, ...(selection || {}) };
+}
 import type { CSSProperties } from 'react';

@@ -107,12 +107,14 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
       </div>
 
       {/* Expanded Panel */}
-      {activePanel && (
+      {(activePanel || selectedBlock) && (
         <div className="w-64 border-l border-c-border-subtle bg-c-surface overflow-y-auto">
           <div className="p-3">
-            <h3 className="text-sm font-semibold text-c-text mb-3">
-              {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
-            </h3>
+            {activePanel && (
+              <h3 className="text-sm font-semibold text-c-text mb-3">
+                {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
+              </h3>
+            )}
 
             {activePanel === 'basic' && <BasicBlocksPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'images' && (
