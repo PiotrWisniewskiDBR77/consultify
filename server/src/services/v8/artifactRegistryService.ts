@@ -4036,6 +4036,24 @@ export async function retryArtifactRun(params: {
   });
 }
 
+export function isArtifactRunLifecycleMaterializable(
+  artifactRunStatus: string,
+  executionRunState: string
+): boolean {
+  if (
+    artifactRunStatus === 'rejected' ||
+    artifactRunStatus === 'failed' ||
+    artifactRunStatus === 'completed' ||
+    artifactRunStatus === 'cancelled'
+  ) {
+    return false;
+  }
+  if (artifactRunStatus !== 'planned' && artifactRunStatus !== 'retry_requested') {
+    return true;
+  }
+  return executionRunState === 'approved_for_apply' || executionRunState === 'applying';
+}
+
 export async function materializeArtifactRun(
   params: MaterializeArtifactRunParams
 ): Promise<ArtifactRunRecord> {
@@ -4055,30 +4073,27 @@ export async function materializeArtifactRun(
       `ArtifactRun ${validated.runId} only supports report, presentation, or sheet materialization currently`
     );
   }
-  if (
-    current.persistedRunStatus === 'planned' ||
-    current.persistedRunStatus === 'retry_requested' ||
-    current.persistedRunStatus === 'rejected' ||
-    current.persistedRunStatus === 'failed' ||
-    current.persistedRunStatus === 'completed' ||
-    current.persistedRunStatus === 'cancelled'
-  ) {
+  const spineRun = await executionSpineService.getRun(
+    current.executionRunId,
+    validated.organizationId
+  );
+  if (!spineRun) {
+    throw new Error(
+      `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`
+    );
+  }
+
+  // accept-plan persists `proposal_created` before the governed execution run can
+  // advance to approval. A lagging artifact-run read must not strand an already
+  // approved execution forever, but the execution spine remains the fail-closed
+  // authority: only its post-approval states can reconcile a stale planned row.
+  if (!isArtifactRunLifecycleMaterializable(current.persistedRunStatus, spineRun.state)) {
     throw new Error(
       `ArtifactRun ${validated.runId} must have an accepted lifecycle before materialization`
     );
   }
 
   try {
-    const spineRun = await executionSpineService.getRun(
-      current.executionRunId,
-      validated.organizationId
-    );
-    if (!spineRun) {
-      throw new Error(
-        `Execution run ${current.executionRunId} not found for ArtifactRun ${validated.runId}`
-      );
-    }
-
     const preflight = await computeArtifactRunPreflight({
       run: current,
       executionRunExists: true,
