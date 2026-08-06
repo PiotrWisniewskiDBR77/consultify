@@ -162,8 +162,8 @@ Verified on 2026-08-06 against DEMO build `97a42e810bc1` using the canonical wor
 | Workbook rename | PASS | Renamed to `Runtime QA Workbook`; title, summary and `.xlsx` filename all reflected the new name after a cold reload. |
 | Find and replace | PASS | `Alpha plan` was replaced with `Beta plan`, saved and survived reload. |
 | Row/column resize command | PASS | Width `24` and height `30` were accepted and the workbook returned `Saved`. |
-| Rich formatting commands | PASS / limited visual proof | Italic, underline, highlight fill, wrap+border and center alignment were accepted and durably saved. The compact web grid does not provide a complete visual/style inspector; exported/schema persistence is covered by automated tests. |
-| Comments | PASS / discoverability gap | Comment `Runtime QA comment` was saved and pre-populated after a cold reload. The grid still lacks an obvious comment marker. |
+| Rich formatting commands | PASS | Italic, underline, highlight fill, wrap+border, alignment and dimensions are now rendered in the web grid and retained for XLSX export. |
+| Comments | PASS | Comment `Runtime QA comment` was saved and pre-populated after reload; a visible corner marker now exposes its tooltip in the grid. |
 | Grid accessibility | PASS | Live surface exposes `grid`, A1-addressed `gridcell` labels and selected state. |
 | Shortcut discoverability | PASS | Keyboard-help dialog lists edit, navigation, copy/paste, undo/redo, delete and Tab behavior. |
 | Filter/freeze persistence | PASS | Both toggles remained pressed after cold reload on `Runtime QA`. |
@@ -172,11 +172,10 @@ Verified on 2026-08-06 against DEMO build `97a42e810bc1` using the canonical wor
 
 ### Exact remaining gaps
 
-- Import XLSX/CSV into an open workbook: **FAIL / not implemented**.
-- Native chart creation and editing: **FAIL / not implemented**.
+- Import XLSX/CSV into an open workbook: **DELIVERED / deployment runtime check pending**. ExcelJS parses actual files into canonical sheets, formulas, values, styles, comments, dimensions and frozen panes with version history/CAS persistence.
+- Manual chart authoring: **DELIVERED within renderer capability / deployment runtime check pending**. A selected range becomes an editable/deletable canonical `chartImages` PNG with title/type/source-range metadata; the same image is mounted into XLSX by `WorkbookBuilder`.
 - Conditional-formatting rule authoring: **FAIL / not implemented**.
 - Row/column hide/unhide and merge/unmerge: **FAIL / not implemented**.
 - General Excel-compatible formula breadth: **FAIL / intentionally limited engine**.
 - Collaborative conflict/rebase and offline queued-save recovery: **FAIL / not exposed in UI**.
-- Visible comment indicator in the grid: **FAIL / comment is accessible only through the toolbar dialog**.
 - Download-event completion: **UNPROVEN in browser automation** although the XLSX action is present.
