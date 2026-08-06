@@ -2218,8 +2218,9 @@ async function canUserAccessSession(params: {
   sessionId: string;
   organizationId: string;
   userId: string;
+  userRole?: string | null;
 }): Promise<boolean> {
-  const { sessionId, organizationId, userId } = params;
+  const { sessionId, organizationId, userId, userRole } = params;
 
   let base: any = null;
   try {
@@ -2227,7 +2228,8 @@ async function canUserAccessSession(params: {
       `SELECT
          s.id,
          s.assignment_id,
-         s.owner_id as owner_id
+         s.owner_id as owner_id,
+         s.is_anonymous
        FROM interview_sessions s
        LEFT JOIN projects p ON p.id = s.project_id
        WHERE s.id = ?
@@ -2242,7 +2244,8 @@ async function canUserAccessSession(params: {
       `SELECT
          s.id,
          s.assignment_id,
-         s.user_id as owner_id
+         s.user_id as owner_id,
+         s.is_anonymous
        FROM interview_sessions s
        LEFT JOIN projects p ON p.id = s.project_id
        WHERE s.id = ?
@@ -2256,6 +2259,19 @@ async function canUserAccessSession(params: {
 
   if (!base) return false;
   if (String((base as any).owner_id) === String(userId)) return true;
+
+  // The row above is already tenant-scoped. Organization owners/admins may
+  // read an identified interview in their organization, but anonymous
+  // sessions remain respondent-only. `is_anonymous` is read in the same
+  // tenant-scoped query, so a DB/schema failure cannot fall open.
+  const elevatedRoles = new Set(['OWNER', 'ADMIN', 'ADMINISTRATOR', 'SUPERADMIN']);
+  if (
+    userRole &&
+    elevatedRoles.has(String(userRole).toUpperCase()) &&
+    !flagOn((base as any).is_anonymous)
+  ) {
+    return true;
+  }
 
   const assignmentId = (base as any).assignment_id ? String((base as any).assignment_id) : '';
   if (!assignmentId) return false;
@@ -2287,9 +2303,10 @@ async function assertSessionAccessibleOrThrow(params: {
   sessionId: string;
   organizationId: string;
   userId: string;
+  userRole?: string | null;
 }): Promise<void> {
-  const { sessionId, organizationId, userId } = params;
-  const ok = await canUserAccessSession({ sessionId, organizationId, userId });
+  const { sessionId, organizationId, userId, userRole } = params;
+  const ok = await canUserAccessSession({ sessionId, organizationId, userId, userRole });
   if (ok) return;
 
   // Differentiate "not found" from "forbidden" for read endpoints.
@@ -2860,7 +2877,11 @@ async function evaluateInterviewSessionAnswers(params: {
             'complete_required_fields',
             'correct_meaning',
           ])
-          .optional(),
+          // Strict structured-output providers require every object property
+          // to be present in `required`. `optional()` produces a schema the
+          // provider rejects before inference; `null` is the explicit
+          // no-remediation value and is normalized by the read side below.
+          .nullable(),
       })
     ),
     recommendations: z.array(z.string()),
@@ -3587,6 +3608,7 @@ export const InterviewController = {
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
         action,
       });
       if (result === 'ok') {
@@ -7236,6 +7258,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -7664,6 +7687,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -7872,6 +7896,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
@@ -8214,6 +8239,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
+        userRole: user.role,
       });
     } catch (e: any) {
       const msg = String(e?.message || '');
