@@ -781,6 +781,11 @@ async function registerBuilderTemplateArtifactBestEffort(params: {
         visibilityScope: 'organization',
         originSummary: {
           template: {
+            // `sheet_template` also contains historical entries. This record was
+            // authored by the current workbook builder, so persist its real
+            // lineage explicitly instead of inferring it from the runtime name.
+            source: 'canonical',
+            legacy: false,
             scope: 'org',
             status: 'draft',
             description: description || '',

@@ -156,8 +156,19 @@ describe('originSummary.template identity block', () => {
     expect(legacy.source).toBe('legacy');
     expect(legacy.legacy).toBe(true);
 
+    const workbookBuilder = buildTemplateOriginSummaryFields({
+      canonicalTemplateId: 'workbook-template-1',
+      originRuntime: 'sheet_template',
+      orphaned: false,
+      scope: 'organization',
+      status: 'draft',
+      source: 'canonical',
+    });
+    expect(workbookBuilder.source).toBe('canonical');
+    expect(workbookBuilder.legacy).toBe(false);
+
     // The forbidden 'application' spelling never appears in the contract.
-    expect(JSON.stringify([canonical, legacy])).not.toContain('application');
+    expect(JSON.stringify([canonical, legacy, workbookBuilder])).not.toContain('application');
   });
 });
 
@@ -225,7 +236,7 @@ describe('backfill adapter — document_studio_templates → document_template',
     expect(summary.status).toBe('approved');
   });
 
-  it('reads only approved templates visible to the org (own rows + __system__ catalogue)', async () => {
+  it('reads all lifecycle states visible to the org (own rows + __system__ catalogue)', async () => {
     mockDbAll.mockResolvedValue([]);
     await ensureBackfilledOutputsForOrg('org-visibility-probe');
 
@@ -234,7 +245,8 @@ describe('backfill adapter — document_studio_templates → document_template',
     );
     expect(docQuery).toBeDefined();
     const sql = String(docQuery![0]);
-    expect(sql).toContain("t.status = 'approved'");
+    // Drafts must be indexed too; otherwise Submit for review has no visible row.
+    expect(sql).not.toContain("t.status = 'approved'");
     expect(sql).toContain('is_system = TRUE');
     // Idempotency guard: only rows without an existing link are inserted.
     expect(sql).toContain('l.link_id IS NULL');

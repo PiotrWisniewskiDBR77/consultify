@@ -35,6 +35,7 @@ import type {
   TemplateOriginRuntime,
   TemplateOriginSummaryFields,
   TemplateScope,
+  TemplateSource,
   TemplateStatus,
 } from '../materials/templateContract.js';
 import {
@@ -2053,8 +2054,10 @@ export function buildTemplateOriginSummaryFields(params: {
   orphaned: boolean;
   scope: TemplateScope;
   status: TemplateStatus;
+  /** Explicit lineage wins when one runtime hosts both legacy and canonical records. */
+  source?: TemplateSource;
 }): TemplateOriginSummaryFields {
-  const source = templateSourceForRuntime(params.originRuntime);
+  const source = params.source ?? templateSourceForRuntime(params.originRuntime);
   return {
     canonicalTemplateId: params.canonicalTemplateId,
     originRuntime: params.originRuntime,
@@ -2315,6 +2318,8 @@ export async function enrichTemplateOriginSummaries(
     const status = canonicalRow
       ? statusFromCanonicalRow(item.originRuntime, canonicalRow)
       : normalizeTemplateStatus(snapshot.status);
+    const snapshotSource =
+      snapshot.source === 'canonical' || snapshot.source === 'legacy' ? snapshot.source : undefined;
 
     return {
       ...item,
@@ -2328,6 +2333,7 @@ export async function enrichTemplateOriginSummaries(
             orphaned,
             scope,
             status,
+            source: snapshotSource,
           }),
         },
       },
