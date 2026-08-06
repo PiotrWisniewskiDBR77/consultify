@@ -37,7 +37,17 @@ if (REAL_PG_REQUESTED) {
   process.env.DB_TYPE = 'postgres';
 }
 const REAL_PG = REAL_PG_REQUESTED;
-const SHARED_DB = process.env.INI005_SHARED_DB === '1';
+// Same detection as ini005-portfolio-resources-roadmap.pg.test.ts, and for the
+// same reason: `INI005_SHARED_DB` was an opt-in nobody set, so every run took
+// the throwaway branch and ended in `DROP TABLE ... CASCADE` on organizations,
+// projects, initiatives, users and initiative_history. Against the real
+// migrated schema that is not a cleanup — it is schema destruction, and CASCADE
+// silently takes every dependent object with it. In a full-suite run this file
+// removed `organizations` outright, after which every later file touching it
+// failed with 42P01. A database carrying an applied migration ledger was built
+// by the migration corpus, not by this file, so this file must not touch its
+// schema.
+let SHARED_DB = process.env.INI005_SHARED_DB === '1';
 
 // Module-level mock — must be declared before the controller (and therefore
 // before this file's dynamic imports below) ever loads it.
@@ -93,6 +103,18 @@ describe.skipIf(!REAL_PG)('INI-05 negative control — capability guard neutrali
   beforeAll(async () => {
     const { Pool } = await import('pg');
     pool = new Pool({ connectionString: CONNECTION_STRING });
+
+    if (!SHARED_DB) {
+      const ledger = await pool.query(
+        `SELECT COUNT(*)::int AS n
+           FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'schema_migrations'`
+      );
+      if (ledger.rows[0]?.n > 0) {
+        const applied = await pool.query(`SELECT COUNT(*)::int AS n FROM schema_migrations`);
+        if (applied.rows[0]?.n > 0) SHARED_DB = true;
+      }
+    }
 
     if (SHARED_DB) {
       // Real, persistent, already-populated DB (Railway dev) — schema
