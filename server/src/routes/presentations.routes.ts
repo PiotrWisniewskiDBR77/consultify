@@ -149,6 +149,7 @@ import {
   type OperationsHealthAnomaly,
   type OperationsHealthReport,
 } from '../services/presentationOperationsHealthService.js';
+import { drawPresentationPdfFooter } from '../services/presentationPdfLayoutService.js';
 import {
   buildPresentationRuntimeRollup,
   type PresentationRuntimeEventRow,
@@ -3090,15 +3091,11 @@ router.get(
         });
         const footer = card.header_footer;
         if (footer) {
-          doc
-            .fillColor('#666')
-            .fontSize(8)
-            .text(
-              `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
-              48,
-              doc.page.height - 42,
-              { align: 'center' }
-            );
+          drawPresentationPdfFooter(
+            doc,
+            `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
+            pdfMargin
+          );
         }
       });
 
