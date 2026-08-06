@@ -167,6 +167,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [pendingOfflineCount, setPendingOfflineCount] = useState(0);
+  const [rebaseNotice, setRebaseNotice] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<
     | 'rename'
     | 'renameWorkbook'
@@ -188,6 +190,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const undoStackRef = useRef<CellChange[][]>([]);
   const redoStackRef = useRef<CellChange[][]>([]);
   const lastSchemaCommandRef = useRef<Record<string, unknown> | null>(null);
+  const offlineQueueKey = `consultify:workbook:${workbookId}:pending-schema-commands`;
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
@@ -246,23 +249,48 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           const col = localSheets[workingSheetIndex]?.columns?.[change.colIndex];
           if (!col) continue;
           const cell = change[direction];
-          await Api.updateWorkbookCell(workbookId, {
+          const payload = {
             sheetIndex: workingSheetIndex,
             rowIndex: change.rowIndex,
             columnKey: col.key,
             value: cell.value,
             formula: cell.formula,
-          });
+          };
+          try {
+            await Api.updateWorkbookCell(workbookId, payload);
+          } catch (cellError) {
+            const message = cellError instanceof Error ? cellError.message : String(cellError);
+            if (/409|conflict/i.test(message)) {
+              const latest = await Api.getWorkbook(workbookId);
+              const latestSheets = latest?.schema?.sheets || latest?.schema_json?.sheets || latest?.sheets;
+              if (Array.isArray(latestSheets) && latestSheets.length) setLocalSheets(cloneSheets(latestSheets));
+              setRebaseNotice(t('kimi.excele.rebased', 'Workbook changed elsewhere. Rebased on the latest version and retried your edit.'));
+              await Api.updateWorkbookCell(workbookId, payload);
+            } else throw cellError;
+          }
         }
         setSaveState('saved');
       } catch (error) {
         setSaveState('error');
-        setSaveError(
-          error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed')
-        );
+        const message = error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+        const isOffline = typeof navigator !== 'undefined' && (!navigator.onLine || /network|fetch/i.test(message));
+        if (isOffline) {
+          try {
+            const queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+            for (const change of changes) {
+              const col = localSheets[workingSheetIndex]?.columns?.[change.colIndex];
+              if (!col) continue;
+              const cell = change[direction];
+              queued.push({ kind: 'cell', payload: { sheetIndex: workingSheetIndex, rowIndex: change.rowIndex, columnKey: col.key, value: cell.value, formula: cell.formula } });
+            }
+            localStorage.setItem(offlineQueueKey, JSON.stringify(queued));
+            setPendingOfflineCount(queued.length);
+          } catch { /* ignored */ }
+        }
+        setSaveError(isOffline ? t('kimi.excele.offlineQueued', 'Offline: edit queued and will retry after reconnecting.') : message);
       }
     },
-    [localSheets, t, workbookId, workingSheetIndex]
+    [localSheets, offlineQueueKey, t, workbookId, workingSheetIndex]
   );
 
   const applyChanges = useCallback(
@@ -291,7 +319,19 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       setSaveState('saving');
       setSaveError(null);
       try {
-        const result = await Api.updateWorkbookSchema(workbookId, command);
+        let result;
+        try {
+          result = await Api.updateWorkbookSchema(workbookId, command);
+        } catch (firstError) {
+          const firstMessage = firstError instanceof Error ? firstError.message : String(firstError);
+          if (/409|conflict/i.test(firstMessage)) {
+            const latest = await Api.getWorkbook(workbookId);
+            const latestSheets = latest?.schema?.sheets || latest?.schema_json?.sheets || latest?.sheets;
+            if (Array.isArray(latestSheets) && latestSheets.length) setLocalSheets(cloneSheets(latestSheets));
+            setRebaseNotice(t('kimi.excele.rebased', 'Workbook changed elsewhere. Rebased on the latest version and retried your edit.'));
+            result = await Api.updateWorkbookSchema(workbookId, command);
+          } else throw firstError;
+        }
         const nextSheets = result?.schema?.sheets;
         if (Array.isArray(nextSheets) && nextSheets.length) {
           setLocalSheets(cloneSheets(nextSheets));
@@ -306,8 +346,19 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         setSaveState('error');
         const message =
           error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+        const isOffline = typeof navigator !== 'undefined' && (!navigator.onLine || /network|fetch/i.test(message));
+        if (isOffline) {
+          try {
+            const queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+            queued.push({ kind: 'schema', payload: command });
+            localStorage.setItem(offlineQueueKey, JSON.stringify(queued));
+            setPendingOfflineCount(queued.length);
+          } catch { /* localStorage can be unavailable in hardened browsers */ }
+        }
         setSaveError(
-          message.includes('409') || /conflict/i.test(message)
+          isOffline
+            ? t('kimi.excele.offlineQueued', 'Offline: edit queued and will retry after reconnecting.')
+            : message.includes('409') || /conflict/i.test(message)
             ? t(
                 'kimi.excele.conflict',
                 'This workbook changed in another session. Reload, then retry your edit.'
@@ -316,8 +367,26 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         );
       }
     },
-    [t, workbookId]
+    [offlineQueueKey, t, workbookId]
   );
+
+  useEffect(() => {
+    try { setPendingOfflineCount(JSON.parse(localStorage.getItem(offlineQueueKey) || '[]').length); } catch { setPendingOfflineCount(0); }
+    const replay = async () => {
+      let queued: Record<string, unknown>[] = [];
+      try {
+        queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+        localStorage.removeItem(offlineQueueKey);
+        setPendingOfflineCount(0);
+      } catch { return; }
+      for (const entry of queued as any[]) {
+        if (entry?.kind === 'cell') await Api.updateWorkbookCell(workbookId, entry.payload);
+        else await runSchemaCommand(entry?.payload || entry);
+      }
+    };
+    window.addEventListener('online', replay);
+    return () => window.removeEventListener('online', replay);
+  }, [offlineQueueKey, runSchemaCommand, workbookId]);
 
   const importWorkbook = useCallback(async (file: File) => {
     setSaveState('saving');
@@ -1173,6 +1242,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           <HelpCircle size={14} />
         </button>
       </div>
+      {(pendingOfflineCount > 0 || rebaseNotice) && (
+        <div role="status" className="flex items-center justify-between gap-3 border-b border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
+          <span>{pendingOfflineCount > 0 ? t('kimi.excele.pendingOffline', '{{count}} edit(s) waiting for connection.', { count: pendingOfflineCount }) : rebaseNotice}</span>
+          {rebaseNotice ? <button type="button" className="underline" onClick={() => setRebaseNotice(null)}>{t('common.dismiss', 'Dismiss')}</button> : null}
+        </div>
+      )}
       {dialogMode && (
         <div
           role="dialog"

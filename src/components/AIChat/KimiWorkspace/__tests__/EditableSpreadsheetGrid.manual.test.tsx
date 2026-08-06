@@ -1,16 +1,17 @@
 /** @vitest-environment jsdom */
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { updateWorkbookCell, updateWorkbookSchema, importWorkbook } = vi.hoisted(() => ({
+const { updateWorkbookCell, updateWorkbookSchema, importWorkbook, getWorkbook } = vi.hoisted(() => ({
   updateWorkbookCell: vi.fn(),
   updateWorkbookSchema: vi.fn(),
   importWorkbook: vi.fn(),
+  getWorkbook: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({
-  Api: { updateWorkbookCell, updateWorkbookSchema, importWorkbook },
+  Api: { updateWorkbookCell, updateWorkbookSchema, importWorkbook, getWorkbook },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -59,6 +60,8 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       schema: { title: 'Budget', sheets },
     });
     importWorkbook.mockResolvedValue({ ok: true, version: 3, schema: { title: 'Imported', sheets } });
+    getWorkbook.mockResolvedValue({ schema: { title: 'Budget', sheets } });
+    localStorage.clear();
   });
 
   it('pastes a TSV range, recalculates formulas, persists cells sequentially and supports undo', async () => {
@@ -315,5 +318,26 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     fireEvent.click(screen.getByTestId('workbook-cell-1-variance'), { shiftKey: true });
     fireEvent.click(screen.getByRole('button', { name: 'Highlight negative values' }));
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'addConditionalFormat', block: expect.objectContaining({ ref: 'D2:D3' }) })));
+  });
+
+  it('rebases once on a version conflict and retries the command', async () => {
+    updateWorkbookSchema.mockRejectedValueOnce(new Error('409 VERSION_CONFLICT'));
+    render(<EditableSpreadsheetGrid workbookId="wb-conflict" sheets={sheets} activeSheetIndex={0} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledTimes(2));
+    expect(getWorkbook).toHaveBeenCalledWith('wb-conflict');
+    expect(screen.getByRole('status')).toHaveTextContent('Rebased on the latest version');
+  });
+
+  it('queues a schema edit offline and replays it after reconnecting', async () => {
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+    updateWorkbookSchema.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    render(<EditableSpreadsheetGrid workbookId="wb-offline" sheets={sheets} activeSheetIndex={0} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
+    await waitFor(() => expect(screen.getByText(/Offline: edit queued/)).toBeInTheDocument());
+    expect(localStorage.getItem('consultify:workbook:wb-offline:pending-schema-commands')).toContain('addSheet');
+    Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledTimes(2));
   });
 });
