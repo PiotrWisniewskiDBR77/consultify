@@ -157,7 +157,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             backLabel="Wróć"
             topBarChips={chips}
             leftRailTitle={
-              draft.type === 'doc' ? 'Sekcje' : draft.type === 'deck' ? 'Slajdy' : 'Kolumny'
+              draft.type === 'doc' ? 'Sekcje' : draft.type === 'deck' ? 'Slajdy' : 'Arkusze'
             }
             leftRailContent={
               <TemplateStructureList

@@ -83,7 +83,7 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
                   <div className="text-[11px] text-c-text-muted truncate">{item.meta}</div>
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                 <button
                   type="button"
                   aria-label="Przesuń w górę"
