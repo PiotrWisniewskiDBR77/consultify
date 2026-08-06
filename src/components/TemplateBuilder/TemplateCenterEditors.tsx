@@ -6,7 +6,7 @@
  * Każdy edytor operuje na STRUKTURZE jednego elementu (nie treści finalnej).
  */
 
-import { FileText, LayoutTemplate, Table2 } from 'lucide-react';
+import { FileText, LayoutTemplate, Plus, Table2, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { Field, Segmented, Select, TextArea, TextInput, Toggle } from './templateBuilderFields';
@@ -16,12 +16,15 @@ import {
   DOC_BLOCK_LABELS,
   type DocBlockKind,
   type DocSection,
+  newSheetColumn,
   SHEET_COLUMN_TYPE_LABELS,
   type SheetColumn,
   type SheetColumnType,
+  type SheetValidationType,
   SLIDE_ARCHETYPE_LABELS,
   type SlideArchetype,
   type TemplateDepth,
+  type WorkbookTemplateSheet,
 } from './templateBuilderModel';
 
 const CENTER_WRAP = 'h-full overflow-y-auto bg-c-bg flex justify-center';
@@ -227,51 +230,163 @@ const SlidePreview: React.FC<{ archetype: SlideArchetype; title: string }> = ({
 
 // ── TABLE — edytor kolumny (Excel/Sheet) ───────────────────────────────────
 
-export const SheetColumnEditor: React.FC<{
-  column: SheetColumn | null;
-  onChange: (patch: Partial<SheetColumn>) => void;
-}> = ({ column, onChange }) => {
-  if (!column)
+export const WorkbookSheetEditor: React.FC<{
+  sheet: WorkbookTemplateSheet | null;
+  onChange: (sheet: WorkbookTemplateSheet) => void;
+}> = ({ sheet, onChange }) => {
+  if (!sheet)
     return (
-      <EmptyCenter icon={<Table2 className="w-12 h-12" />} text="Wybierz kolumnę z lewej listy." />
+      <EmptyCenter icon={<Table2 className="w-12 h-12" />} text="Wybierz arkusz z lewej listy." />
     );
   const typeOpts = (Object.keys(SHEET_COLUMN_TYPE_LABELS) as SheetColumnType[]).map((k) => ({
     value: k,
     label: SHEET_COLUMN_TYPE_LABELS[k],
   }));
+  const validationOpts: { value: SheetValidationType; label: string }[] = [
+    { value: 'none', label: 'Brak' },
+    { value: 'list', label: 'Lista wartości' },
+    { value: 'decimal', label: 'Liczba dziesiętna' },
+    { value: 'whole', label: 'Liczba całkowita' },
+  ];
+  const patchColumn = (id: string, patch: Partial<SheetColumn>) =>
+    onChange({
+      ...sheet,
+      columns: sheet.columns.map((column) => (column.id === id ? { ...column, ...patch } : column)),
+    });
   return (
-    <div className={CENTER_WRAP} data-testid="sheet-column-editor">
+    <div className={CENTER_WRAP} data-testid="workbook-sheet-editor">
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
           <Table2 className="w-4 h-4" />
-          Kolumna arkusza
+          Arkusz skoroszytu
         </div>
-        <Field label="Nazwa kolumny">
+        <Field label="Nazwa arkusza">
           <TextInput
-            value={column.name}
-            onChange={(v) => onChange({ name: v })}
-            placeholder="np. Przychód netto"
-            testId="col-name"
+            value={sheet.name}
+            onChange={(name) => onChange({ ...sheet, name })}
+            placeholder="np. Plan finansowy"
+            testId="sheet-name"
           />
         </Field>
-        <Field label="Typ danych">
-          <Select
-            value={column.type}
-            options={typeOpts}
-            onChange={(v) => onChange({ type: v })}
-            testId="col-type"
-          />
-        </Field>
-        {column.type === 'formula' && (
-          <Field label="Formuła" hint="Wyrażenie schematu, np. =B*C. Struktura, nie dane.">
-            <TextInput
-              value={column.formula}
-              onChange={(v) => onChange({ formula: v })}
-              placeholder="=B*C"
-              testId="col-formula"
-            />
-          </Field>
-        )}
+        {sheet.columns.map((column, index) => (
+          <div key={column.id} className="space-y-4 rounded-lg border border-c-border p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-c-text">Kolumna {index + 1}</span>
+              <button
+                type="button"
+                aria-label={`Usuń kolumnę ${index + 1}`}
+                disabled={sheet.columns.length === 1}
+                onClick={() =>
+                  onChange({
+                    ...sheet,
+                    columns: sheet.columns.filter((item) => item.id !== column.id),
+                  })
+                }
+                className="rounded p-1 text-c-text-muted hover:text-c-danger disabled:opacity-30"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            <Field label="Nazwa kolumny">
+              <TextInput
+                value={column.name}
+                onChange={(name) => patchColumn(column.id, { name })}
+                testId={`sheet-column-${index}-name`}
+              />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Typ danych">
+                <Select
+                  value={column.type}
+                  options={typeOpts}
+                  onChange={(type) => patchColumn(column.id, { type })}
+                  testId={`sheet-column-${index}-type`}
+                />
+              </Field>
+              <Field label="Format liczbowy" hint="Opcjonalny format zgodny z Excel.">
+                <TextInput
+                  value={column.numberFormat}
+                  onChange={(numberFormat) => patchColumn(column.id, { numberFormat })}
+                  placeholder="np. #,##0.00"
+                  testId={`sheet-column-${index}-number-format`}
+                />
+              </Field>
+            </div>
+            {column.type === 'formula' ? (
+              <Field
+                label="Formuła startowa"
+                hint="Np. =B2*C2; zostanie zapisana w pierwszym wierszu."
+              >
+                <TextInput
+                  value={column.formula}
+                  onChange={(formula) => patchColumn(column.id, { formula })}
+                  placeholder="=B2*C2"
+                  testId={`sheet-column-${index}-formula`}
+                />
+              </Field>
+            ) : (
+              <Field label="Wartość startowa" hint="Opcjonalna wartość pierwszego wiersza.">
+                <TextInput
+                  value={column.starterValue}
+                  onChange={(starterValue) => patchColumn(column.id, { starterValue })}
+                  testId={`sheet-column-${index}-starter`}
+                />
+              </Field>
+            )}
+            <Field label="Walidacja danych">
+              <Select
+                value={column.validation.type}
+                options={validationOpts}
+                onChange={(type) =>
+                  patchColumn(column.id, { validation: { ...column.validation, type } })
+                }
+                testId={`sheet-column-${index}-validation-type`}
+              />
+            </Field>
+            {column.validation.type === 'list' && (
+              <Field label="Dozwolone wartości" hint="Rozdziel wartości przecinkami.">
+                <TextInput
+                  value={column.validation.values}
+                  onChange={(values) =>
+                    patchColumn(column.id, { validation: { ...column.validation, values } })
+                  }
+                  placeholder="Plan, Realizacja"
+                  testId={`sheet-column-${index}-validation-values`}
+                />
+              </Field>
+            )}
+            {(column.validation.type === 'decimal' || column.validation.type === 'whole') && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Minimum">
+                  <TextInput
+                    value={column.validation.min}
+                    onChange={(min) =>
+                      patchColumn(column.id, { validation: { ...column.validation, min } })
+                    }
+                    testId={`sheet-column-${index}-validation-min`}
+                  />
+                </Field>
+                <Field label="Maksimum">
+                  <TextInput
+                    value={column.validation.max}
+                    onChange={(max) =>
+                      patchColumn(column.id, { validation: { ...column.validation, max } })
+                    }
+                    testId={`sheet-column-${index}-validation-max`}
+                  />
+                </Field>
+              </div>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          data-testid="sheet-add-column"
+          onClick={() => onChange({ ...sheet, columns: [...sheet.columns, newSheetColumn()] })}
+          className="inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised"
+        >
+          <Plus className="h-4 w-4" /> Dodaj kolumnę
+        </button>
       </div>
     </div>
   );

@@ -498,7 +498,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         navigate('/document-studio?tab=templates');
         return;
       }
-      const targetTab = format === 'presentation' ? 'template_architect' : 'workbook_templates';
+      if (format === 'spreadsheet') {
+        setTemplateBuilderOpen(true);
+        return;
+      }
+      const targetTab = 'template_architect';
       const params = new URLSearchParams(location.search || '');
       params.set('tab', targetTab);
       navigate(`${location.pathname}?${params.toString()}`);
@@ -1627,6 +1631,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       {templateBuilderOpen && (
         <div className="fixed inset-0 z-modal" data-testid="template-builder-overlay">
           <TemplateBuilderFlow
+            initialType="table"
             onClose={() => setTemplateBuilderOpen(false)}
             onSaved={() => {
               setTemplateBuilderOpen(false);

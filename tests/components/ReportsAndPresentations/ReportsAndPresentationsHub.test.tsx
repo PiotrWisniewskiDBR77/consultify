@@ -30,7 +30,8 @@ vi.mock('react-i18next', async () => {
   return {
     ...actual,
     useTranslation: () => ({
-      t: (_key: string, fallback?: any) => (typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key)),
+      t: (_key: string, fallback?: any) =>
+        typeof fallback === 'string' ? fallback : (fallback?.defaultValue ?? _key),
       i18n: { language: 'en' },
     }),
   };
@@ -150,10 +151,19 @@ vi.mock('../../../src/components/ReportsAndPresentations/TemplatesTabContent', (
 // real screens with their own data fetching, out of scope for this shallow
 // Menu 1 / routing test.
 vi.mock('../../../src/components/Presentations/PresentationTemplateArchitectView', () => ({
-  PresentationTemplateArchitectView: () => <div data-testid="deck-architect-view">deck-architect</div>,
+  PresentationTemplateArchitectView: () => (
+    <div data-testid="deck-architect-view">deck-architect</div>
+  ),
 }));
 vi.mock('../../../src/components/AIChat/KimiWorkspace/ExceleParametricTemplates', () => ({
-  ExceleParametricTemplates: () => <div data-testid="workbook-templates-view">workbook-templates</div>,
+  ExceleParametricTemplates: () => (
+    <div data-testid="workbook-templates-view">workbook-templates</div>
+  ),
+}));
+vi.mock('../../../src/components/TemplateBuilder', () => ({
+  TemplateBuilderFlow: ({ initialType }: { initialType?: string }) => (
+    <div data-testid="excel-template-builder-flow">{initialType}</div>
+  ),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -169,7 +179,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=all&artifactId=art-123&view=detail']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(lastOnTabChange).toBeTypeOf('function');
@@ -224,7 +234,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=templates&artifactId=tpl-art-77']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByTestId('templates-initial-artifact')).toHaveTextContent('tpl-art-77');
@@ -234,7 +244,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=presentations&deck=deck-22']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByTestId('presentations-initial-artifact')).toHaveTextContent('deck-22');
@@ -244,12 +254,15 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=presentations&deck=deck-22']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
-    expect(navigateMock).toHaveBeenCalledWith('/presentations?tab=presentations&artifactId=deck-22', {
-      replace: true,
-    });
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/presentations?tab=presentations&artifactId=deck-22',
+      {
+        replace: true,
+      }
+    );
   });
 
   // Kanon 2026-07-26: Architekt szablonów (Deck) i Generator szablonów (Excel)
@@ -379,6 +392,24 @@ describe('ReportsAndPresentationsHub', () => {
       });
 
       expect(screen.getByTestId('template-library-create-launcher')).toBeInTheDocument();
+    });
+
+    it('opens the Excel Template Builder from the spreadsheet tile', () => {
+      render(
+        <MemoryRouter initialEntries={['/presentations?tab=templates']}>
+          <ReportsAndPresentationsHub />
+        </MemoryRouter>
+      );
+
+      act(() => screen.getByTestId('outputs-new-btn').click());
+      act(() => screen.getByTestId('template-library-create-launcher-format-spreadsheet').click());
+      act(() => screen.getByTestId('template-library-create-launcher-mode-blank').click());
+
+      expect(screen.getByTestId('template-builder-overlay')).toBeInTheDocument();
+      expect(screen.getByTestId('excel-template-builder-flow')).toHaveTextContent('table');
+      expect(navigateMock).not.toHaveBeenCalledWith(
+        expect.stringContaining('tab=workbook_templates')
+      );
     });
 
     it('clicking the split arrow reveals "Architekt szablonów", and selecting it navigates into the embedded deck-architect mode', () => {

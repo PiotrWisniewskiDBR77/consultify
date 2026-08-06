@@ -17,16 +17,15 @@ import {
   emptyDraft,
   newDeckSlide,
   newDocSection,
-  newSheetColumn,
-  SHEET_COLUMN_TYPE_LABELS,
-  type SheetColumn,
+  newWorkbookSheet,
   SLIDE_ARCHETYPE_LABELS,
   type TemplateDraft,
   type TemplateScope,
   type TemplateType,
+  type WorkbookTemplateSheet,
 } from './templateBuilderModel';
 import { TemplateBuilderShell } from './TemplateBuilderShell';
-import { DeckSlideEditor, DocSectionEditor, SheetColumnEditor } from './TemplateCenterEditors';
+import { DeckSlideEditor, DocSectionEditor, WorkbookSheetEditor } from './TemplateCenterEditors';
 import { TemplateCreateWizard } from './TemplateCreateWizard';
 import type { TemplateRightTool, ThemeOption } from './TemplateRightPanel';
 import type { StructureListItem } from './TemplateStructureList';
@@ -83,16 +82,16 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         meta: SLIDE_ARCHETYPE_LABELS[s.archetype],
         index: i + 1,
       }));
-    return draft.table.map((c, i) => ({
-      id: c.id,
-      label: c.name || 'Bez nazwy',
-      meta: SHEET_COLUMN_TYPE_LABELS[c.type],
+    return draft.table.map((sheet, i) => ({
+      id: sheet.id,
+      label: sheet.name || 'Bez nazwy',
+      meta: `${sheet.columns.length} kolumn`,
       index: i + 1,
     }));
   }, [draft]);
 
   const addLabel =
-    draft.type === 'doc' ? 'Dodaj sekcję' : draft.type === 'deck' ? 'Dodaj slajd' : 'Dodaj kolumnę';
+    draft.type === 'doc' ? 'Dodaj sekcję' : draft.type === 'deck' ? 'Dodaj slajd' : 'Dodaj arkusz';
 
   // ── Mutacje listy ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(() => {
@@ -107,7 +106,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         setSelectedId(el.id);
         return { ...d, deck: [...d.deck, el] };
       }
-      const el = newSheetColumn();
+      const el = newWorkbookSheet(`Arkusz ${d.table.length + 1}`);
       setSelectedId(el.id);
       return { ...d, table: [...d.table, el] };
     });
@@ -165,14 +164,15 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         />
       );
     }
-    const sel = (draft.table.find((c) => c.id === selectedId) ?? null) as SheetColumn | null;
+    const sel = (draft.table.find((sheet) => sheet.id === selectedId) ??
+      null) as WorkbookTemplateSheet | null;
     return (
-      <SheetColumnEditor
-        column={sel}
-        onChange={(patch) =>
+      <WorkbookSheetEditor
+        sheet={sel}
+        onChange={(nextSheet) =>
           setDraft((d) => ({
             ...d,
-            table: d.table.map((c) => (c.id === selectedId ? { ...c, ...patch } : c)),
+            table: d.table.map((sheet) => (sheet.id === selectedId ? nextSheet : sheet)),
           }))
         }
       />
