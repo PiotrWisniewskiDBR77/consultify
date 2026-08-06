@@ -60,6 +60,8 @@ export interface TemplateBuilderShellProps {
   onSave: () => void;
   saving?: boolean;
   canSave?: boolean;
+  saveLabel?: string;
+  validationErrors?: string[];
 
   onBack?: () => void;
   persistRailState?: boolean;
@@ -82,6 +84,8 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
   onSave,
   saving = false,
   canSave = true,
+  saveLabel = 'Zapisz jako szablon',
+  validationErrors = [],
   onBack,
   persistRailState = true,
 }) => {
@@ -118,15 +122,15 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
       },
       {
         id: 'save-template',
-        label: saving ? 'Zapisywanie…' : 'Zapisz jako szablon',
+        label: saving ? 'Zapisywanie…' : saveLabel,
         kind: 'primary',
         group: 'primary',
         disabled: saving || !canSave,
         onClick: onSave,
-        tooltip: canSave ? 'Zapisz reużywalny szablon' : 'Uzupełnij nazwę szablonu',
+        tooltip: canSave ? 'Zapisz reużywalny szablon' : validationErrors[0] || 'Uzupełnij szablon',
       },
     ],
-    [draft.type, draft.scope, themeLabel, saving, canSave, onSave, onActiveRightToolChange]
+    [draft.type, draft.scope, themeLabel, saving, canSave, saveLabel, validationErrors, onSave, onActiveRightToolChange]
   );
 
   const rightTools: RightRailToolDescriptor[] = useMemo(

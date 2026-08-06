@@ -1069,11 +1069,17 @@ export async function updateDeliverableTemplate(
     );
   } else {
     // table
+    const schemaSnapshot =
+      metaObj.schema_snapshot !== undefined
+        ? typeof metaObj.schema_snapshot === 'string'
+          ? metaObj.schema_snapshot
+          : JSON.stringify(metaObj.schema_snapshot)
+        : JSON.stringify(existing.meta.schema_snapshot ?? {});
     await queryRun(
       `UPDATE tp_base_templates
-       SET name = $1, description = $2
-       WHERE id::text = $3 AND organization_id = $4 AND created_by IS NOT NULL`,
-      [newName, newDesc, id, orgId]
+       SET name = $1, description = $2, schema_snapshot = $3::jsonb
+       WHERE id::text = $4 AND organization_id = $5 AND created_by IS NOT NULL`,
+      [newName, newDesc, schemaSnapshot, id, orgId]
     );
   }
 

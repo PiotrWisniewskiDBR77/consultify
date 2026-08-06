@@ -9,7 +9,7 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { saveTemplate } from './templateBuilderApi';
+import { saveTemplate, updateTemplate } from './templateBuilderApi';
 import {
   type DeckSlide,
   DOC_BLOCK_LABELS,
@@ -23,6 +23,7 @@ import {
   type TemplateScope,
   type TemplateType,
   type WorkbookTemplateSheet,
+  validateTemplateDraft,
 } from './templateBuilderModel';
 import { TemplateBuilderShell } from './TemplateBuilderShell';
 import { DeckSlideEditor, DocSectionEditor, WorkbookSheetEditor } from './TemplateCenterEditors';
@@ -45,6 +46,8 @@ export interface TemplateBuilderProps {
   /** wstrzyknięcie zapisu (dev-render / testy). Domyślnie żywa fasada. */
   saveFn?: (draft: TemplateDraft) => Promise<{ id: string }>;
   persistRailState?: boolean;
+  /** Canonical id switches Save from create to persisted update. */
+  templateId?: string;
 }
 
 export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
@@ -54,6 +57,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   onClose,
   saveFn = saveTemplate,
   persistRailState = true,
+  templateId,
 }) => {
   const [builderState, setBuilderState] = useState(() => ({
     draft: initialDraft,
@@ -200,20 +204,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   }, [draft, selectedId]);
 
   // ── Zapis ─────────────────────────────────────────────────────────────────
-  const canSave = draft.name.trim().length > 0;
+  const validation = useMemo(() => validateTemplateDraft(draft), [draft]);
+  const canSave = validation.valid;
   const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
     setError(null);
     try {
-      const res = await saveFn(draft);
+      const res = templateId ? await updateTemplate(templateId, draft) : await saveFn(draft);
       onSaved?.(res.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Zapis nie powiódł się');
     } finally {
       setSaving(false);
     }
-  }, [canSave, saving, saveFn, draft, onSaved]);
+  }, [canSave, saving, saveFn, draft, onSaved, templateId]);
 
   return (
     <>
@@ -242,6 +247,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         onSave={handleSave}
         saving={saving}
         canSave={canSave}
+        saveLabel={templateId ? 'Zapisz zmiany' : 'Zapisz jako szablon'}
+        validationErrors={validation.errors}
         onBack={onClose}
         persistRailState={persistRailState}
       />
