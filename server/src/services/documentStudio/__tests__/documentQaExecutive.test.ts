@@ -170,6 +170,71 @@ describe('Document QA — Executive QA category', () => {
     expect(exec.findings.map((f) => f.code)).toContain('executive_summary_missing_action_verb');
   });
 
+  it('accepts a narrowly explicit no-decision conclusion without inventing an action verb', () => {
+    const schema = makeSchema({
+      language: 'pl',
+      documentType: 'board_report',
+      sections: [
+        {
+          sectionId: 's-exec',
+          title: 'Podsumowanie zarządcze',
+          level: 1,
+          blocks: [makeParagraph('b-exec', 'Realizacja planu wynosi 72%.')],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 's-decisions',
+          title: 'Wymagane decyzje',
+          level: 1,
+          blocks: [makeParagraph('b-decision', 'Brief nie wskazuje decyzji do zatwierdzenia.')],
+          sourceRefs: [],
+        },
+      ],
+    });
+    expect(findExecutive(runDocumentQa(schema)).findings.map((f) => f.code)).not.toContain(
+      'executive_summary_missing_action_verb'
+    );
+
+    const english = makeSchema({
+      sections: [
+        {
+          sectionId: 's-exec-en',
+          title: 'Executive Summary',
+          level: 1,
+          blocks: [makeParagraph('b-exec-en', 'Delivery remains on the reported baseline.')],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 's-decisions-en',
+          title: 'Decisions Required',
+          level: 1,
+          blocks: [makeParagraph('b-decision-en', 'No decision is requested.')],
+          sourceRefs: [],
+        },
+      ],
+    });
+    expect(findExecutive(runDocumentQa(english)).findings.map((f) => f.code)).not.toContain(
+      'executive_summary_missing_action_verb'
+    );
+
+    const vague = makeSchema({
+      language: 'pl',
+      documentType: 'board_report',
+      sections: [
+        {
+          sectionId: 's-exec-vague',
+          title: 'Podsumowanie zarządcze',
+          level: 1,
+          blocks: [makeParagraph('b-exec-vague', 'Brak danych o dalszych działaniach.')],
+          sourceRefs: [],
+        },
+      ],
+    });
+    expect(findExecutive(runDocumentQa(vague)).findings.map((f) => f.code)).toContain(
+      'executive_summary_missing_action_verb'
+    );
+  });
+
   it('Polish heuristic: "Rekomendujemy" / "Decydujemy" satisfy the action-verb requirement', () => {
     const schema = makeSchema({
       language: 'pl',

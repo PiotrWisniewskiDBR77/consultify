@@ -271,6 +271,43 @@ function isEditableBlock(block: DocumentBlock): boolean {
   );
 }
 
+function blockHasRenderableContent(block: DocumentBlock): boolean {
+  if (isEditableBlock(block)) return blockToText(block).trim().length > 0;
+  const content = block.content as Record<string, unknown> | null | undefined;
+  if (!content) return false;
+  const type = String(block.type || '').toLowerCase();
+  if (type === 'table' || type === 'risk_table') {
+    const rows = Array.isArray(content.rows) ? content.rows : [];
+    return rows.some((row) =>
+      Array.isArray(row) ? row.some((cell) => String(cell ?? '').trim().length > 0) : false
+    );
+  }
+  if (type === 'kpi_strip') {
+    const items = Array.isArray(content.items) ? content.items : [];
+    return items.some((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const value = item as Record<string, unknown>;
+      return (
+        String(value.label ?? '').trim().length > 0 || String(value.value ?? '').trim().length > 0
+      );
+    });
+  }
+  if (type === 'image') {
+    return ['src', 'url', 'data', 'assetId'].some(
+      (key) => String(content[key] ?? '').trim().length > 0
+    );
+  }
+  if (type === 'chart') {
+    return Array.isArray(content.series) && content.series.length > 0;
+  }
+  if (type === 'footnote' || type === 'citation') {
+    return ['text', 'label', 'title', 'citation'].some(
+      (key) => String(content[key] ?? '').trim().length > 0
+    );
+  }
+  return false;
+}
+
 function countWords(text: string): number {
   if (!text) return 0;
   return text
@@ -1104,12 +1141,7 @@ function runSourceDriftQa(
 
 function isSectionEmpty(section: DocumentSchema['sections'][number]): boolean {
   if (!Array.isArray(section.blocks) || section.blocks.length === 0) return true;
-  for (const block of section.blocks) {
-    if (!isEditableBlock(block)) continue;
-    const text = blockToText(block);
-    if (text.trim().length > 0) return false;
-  }
-  return true;
+  return !section.blocks.some(blockHasRenderableContent);
 }
 
 function runCompletenessQa(
@@ -1405,6 +1437,14 @@ const EXEC_TIME_ANCHORS =
 
 const EXEC_SUMMARY_WORD_BUDGET = 220;
 
+const EXPLICIT_NO_DECISION_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bbrief nie wskazuje decyzji do zatwierdzenia\b/i,
+  /\bbrak decyzji do (?:podjecia|zatwierdzenia)\b/i,
+  /\bnie (?:jest )?wymagana zadna decyzja\b/i,
+  /\bno decision (?:is )?(?:requested|required)\b/i,
+  /\bthe brief identifies no decision (?:for approval|to approve)\b/i,
+];
+
 function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
   const findings: DocumentQaFinding[] = [];
 
@@ -1418,6 +1458,7 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
   }
 
   const execSection = findSectionByHints(schema, EXEC_SUMMARY_HINTS);
+  const decisionSection = findSectionByHints(schema, DECISION_SECTION_HINTS);
   if (!execSection) {
     findings.push(
       makeFinding(
@@ -1446,7 +1487,16 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     const verbs = schema.language === 'pl' ? EXEC_ACTION_VERBS_PL : EXEC_ACTION_VERBS_EN;
     const lower = normalizeForHints(summaryText);
     const hasActionVerb = verbs.some((verb) => lower.includes(normalizeForHints(verb)));
-    if (!hasActionVerb && summaryText.length > 0) {
+    const decisionTextForAbsence = decisionSection
+      ? decisionSection.blocks.map((block) => blockToText(block)).join(' ')
+      : '';
+    const explicitNoDecisionText = normalizeForHints(
+      `${summaryText} ${decisionTextForAbsence}`.trim()
+    );
+    const explicitlyNoDecision = EXPLICIT_NO_DECISION_PATTERNS.some((pattern) =>
+      pattern.test(explicitNoDecisionText)
+    );
+    if (!hasActionVerb && !explicitlyNoDecision && summaryText.length > 0) {
       findings.push(
         makeFinding(
           'high',
@@ -1458,7 +1508,6 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     }
   }
 
-  const decisionSection = findSectionByHints(schema, DECISION_SECTION_HINTS);
   if (decisionSection) {
     const editable = decisionSection.blocks.filter(isEditableBlock).filter((b) => {
       const t = blockToText(b).trim();

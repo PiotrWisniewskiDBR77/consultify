@@ -178,8 +178,21 @@ describe('applyOrgContextGrounding', () => {
     expect(result.intake).toBe(intake);
     expect(result.intake.description).not.toContain(samplePack.contextSummaryPl);
     expect(result.sourceRefs).toEqual([
-      expect.objectContaining({ sourceType: 'intake', sourceId: 'explicit-user-brief' }),
+      expect.objectContaining({
+        sourceType: 'intake',
+        sourceId: 'explicit-user-brief',
+        sourceTitle: 'Jawny brief użytkownika',
+        sourceVersion: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+      }),
     ]);
+    const repeated = applyOrgContextGrounding({ ...intake }, [], samplePack);
+    expect(repeated.sourceRefs[0]?.sourceVersion).toBe(result.sourceRefs[0]?.sourceVersion);
+    const changed = applyOrgContextGrounding(
+      { ...intake, description: `${intake.description} Zmiana.` },
+      [],
+      samplePack
+    );
+    expect(changed.sourceRefs[0]?.sourceVersion).not.toBe(result.sourceRefs[0]?.sourceVersion);
   });
 
   it('is a no-op (fail-open) when no pack is available, e.g. brand-new organization', () => {

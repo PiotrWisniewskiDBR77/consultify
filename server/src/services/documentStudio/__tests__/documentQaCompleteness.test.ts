@@ -207,6 +207,49 @@ describe('Document QA — Completeness QA category', () => {
     expect(completeness.blocking).toBe(true);
   });
 
+  it('treats a populated structured risk table as renderable section content', () => {
+    const populated = makeSchema({
+      documentType: 'workshop_summary',
+      sections: [
+        {
+          sectionId: 's-risks',
+          title: 'Ryzyka',
+          level: 1,
+          sourceRefs: [],
+          blocks: [
+            {
+              blockId: 'b-risk',
+              type: 'risk_table',
+              content: {
+                columns: ['Ryzyko', 'Wpływ'],
+                rows: [['Brak danych budżetowych', 'Do weryfikacji']],
+              },
+            },
+          ],
+        },
+      ],
+    });
+    expect(findCompleteness(runDocumentQa(populated)).findings.map((f) => f.code)).not.toContain(
+      'completeness_empty_section'
+    );
+
+    const empty = makeSchema({
+      documentType: 'workshop_summary',
+      sections: [
+        {
+          sectionId: 's-risks-empty',
+          title: 'Ryzyka',
+          level: 1,
+          sourceRefs: [],
+          blocks: [{ blockId: 'b-risk-empty', type: 'risk_table', content: { rows: [] } }],
+        },
+      ],
+    });
+    expect(findCompleteness(runDocumentQa(empty)).findings.map((f) => f.code)).toContain(
+      'completeness_empty_section'
+    );
+  });
+
   it('flags blueprint-required sections that are absent from the schema', () => {
     const schema = makeSchema({
       sections: [
