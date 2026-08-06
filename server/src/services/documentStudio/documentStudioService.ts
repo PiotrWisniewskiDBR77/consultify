@@ -517,14 +517,29 @@ export function preflightRequiredSources(
   return { ok: false, missing };
 }
 
-function outlineFromTemplate(template: DocumentTemplate, intake: DocumentIntake): DocumentOutline {
+function templateSectionPurpose(section: DocumentTemplate['sectionBlueprint'][number]): string {
+  const guidance = [
+    section.purpose,
+    section.keyMessage ? `Key message: ${section.keyMessage}` : null,
+    section.contentHints?.length ? `Content guidance: ${section.contentHints.join('; ')}` : null,
+    section.dataNeeded?.length ? `Data needed: ${section.dataNeeded.join('; ')}` : null,
+    section.suggestedEvidence ? `Suggested evidence: ${section.suggestedEvidence}` : null,
+    section.formattingStyle ? `Formatting: ${section.formattingStyle}` : null,
+  ].filter((value): value is string => Boolean(value));
+  return guidance.join('\n');
+}
+
+export function outlineFromTemplate(
+  template: DocumentTemplate,
+  intake: DocumentIntake
+): DocumentOutline {
   return {
     documentType: template.documentType,
     title: intake.title?.trim() || `${template.documentType.replace(/_/g, ' ')}: ${template.name}`,
     sections: template.sectionBlueprint.map((blueprint) => ({
       title: blueprint.title,
       level: blueprint.level,
-      purpose: blueprint.purpose,
+      purpose: templateSectionPurpose(blueprint),
       expectedLengthHint: blueprint.expectedLengthHint,
     })),
     recommendedDensity: template.density,
@@ -568,10 +583,13 @@ export async function materializeDocumentArtifact(
   }
 
   let outline: DocumentOutline;
-  if (params.outline) {
-    outline = params.outline;
-  } else if (template) {
+  // A governed template is the structural source of truth. The UI may send a
+  // stale/generic preview outline alongside Mode 3 generation; accepting it
+  // here used to silently replace the approved names, order and guidance.
+  if (template) {
     outline = outlineFromTemplate(template, params.intake);
+  } else if (params.outline) {
+    outline = params.outline;
   } else {
     outline = planDocumentOutline(params.intake);
     if (params.useLlm) {
@@ -678,6 +696,22 @@ export async function materializeDocumentArtifact(
     provisionalSchema,
     [params.intake.title, params.intake.description].filter(Boolean).join(' — ')
   );
+
+  // Template labels and authoring guidance are governed metadata, not factual
+  // claims derived from intake. The grounding boundary may redact unfamiliar
+  // wording; restore the approved skeleton afterwards while leaving generated
+  // body claims fully guarded.
+  if (template) {
+    const governedOutline = outlineFromTemplate(template, params.intake);
+    provisionalSchema.sections.forEach((section, index) => {
+      const governed = governedOutline.sections[index];
+      if (!governed) return;
+      section.title = governed.title;
+      section.purpose = governed.purpose;
+      const heading = section.blocks.find((block) => block.type === 'heading');
+      if (heading) heading.content = { text: governed.title };
+    });
+  }
 
   const generationWarnings = warningsCollector.list();
 
@@ -2445,6 +2479,18 @@ export class DocumentManualSaveNotFoundError extends Error {
   }
 }
 
+export class DocumentManualStructureMismatchError extends Error {
+  readonly code = 'template_structure_mismatch' as const;
+  readonly expectedSectionCount: number;
+  readonly receivedSectionCount: number;
+  constructor(expectedSectionCount: number, receivedSectionCount: number) {
+    super('A template-based document must preserve its approved section structure.');
+    this.name = 'DocumentManualStructureMismatchError';
+    this.expectedSectionCount = expectedSectionCount;
+    this.receivedSectionCount = receivedSectionCount;
+  }
+}
+
 export interface UpdateDocumentManualContentParams {
   artifactId: string;
   organizationId: string;
@@ -2488,7 +2534,24 @@ export async function updateDocumentManualContent(
   }
 
   const nextSchema = cloneSchema(current);
-  nextSchema.sections = params.sections;
+  if (current.templateRef) {
+    if (params.sections.length !== current.sections.length) {
+      throw new DocumentManualStructureMismatchError(
+        current.sections.length,
+        params.sections.length
+      );
+    }
+    // Full-editor replacement may change content, never the governed template
+    // skeleton. Map edited blocks back onto the existing section identities so
+    // a serializer cannot flatten or rename the approved structure.
+    nextSchema.sections = current.sections.map((section, index) => ({
+      ...section,
+      blocks: params.sections[index].blocks,
+      sourceRefs: params.sections[index].sourceRefs,
+    }));
+  } else {
+    nextSchema.sections = params.sections;
+  }
   const trimmedTitle = typeof params.title === 'string' ? params.title.trim() : '';
   if (trimmedTitle) {
     nextSchema.title = trimmedTitle;

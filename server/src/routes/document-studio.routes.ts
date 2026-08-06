@@ -302,6 +302,7 @@ import {
   DocumentLifecycleTransitionError,
   DocumentManualSaveConflictError,
   DocumentManualSaveNotFoundError,
+  DocumentManualStructureMismatchError,
   DocumentRollbackError,
   ensureDocumentCommentsHydrated,
   ensureDocumentLifecycleHydrated,
@@ -4562,6 +4563,15 @@ router.put(
             yourVersion: body.expectedVersion,
             serverVersion: err.serverVersion,
           },
+        });
+        return;
+      }
+      if (err instanceof DocumentManualStructureMismatchError) {
+        res.status(422).json({
+          error: err.code,
+          code: 'DOC_CONTENT_TEMPLATE_STRUCTURE_MISMATCH',
+          expectedSectionCount: err.expectedSectionCount,
+          receivedSectionCount: err.receivedSectionCount,
         });
         return;
       }

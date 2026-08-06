@@ -27,7 +27,11 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => {
   };
 });
 
-import { materializeDocumentArtifact } from '../documentStudioService.js';
+import {
+  DocumentManualStructureMismatchError,
+  materializeDocumentArtifact,
+  updateDocumentManualContent,
+} from '../documentStudioService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 import {
@@ -81,6 +85,81 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     expect(result.schema.sections.map((s) => s.title)).toEqual(
       approved.sectionBlueprint.map((s) => s.title)
     );
+  });
+
+  it('treats the approved template as authoritative and rejects full-editor flattening', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Investment decision memo',
+        documentType: 'business_case',
+        purpose: 'Decision',
+      },
+    });
+    const sections = Array.from({ length: 9 }, (_, index) => ({
+      title: `Governed section ${index + 1}`,
+      level: 1 as const,
+      purpose: `Decision guidance ${index + 1}`,
+      contentHints: [`Explain evidence ${index + 1}`],
+      keyMessage: `Investment thesis ${index + 1}`,
+      required: true,
+      expectedLengthHint: 'medium' as const,
+    }));
+    reviseTemplateStructure({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'author',
+      sections,
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const genericOutline = {
+      documentType: 'business_case' as const,
+      title: 'Generic plan',
+      sections: [
+        {
+          title: 'Generic deterministic section',
+          level: 1 as const,
+          purpose: 'Wrong',
+          expectedLengthHint: 'short' as const,
+        },
+      ],
+      recommendedDensity: 'standard' as const,
+      recommendedRegister: 'executive' as const,
+      recommendedLanguageStyle: 'concise' as const,
+    };
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: baseIntake,
+      templateId: approved.templateId,
+      outline: genericOutline,
+    });
+
+    expect(result.schema.sections.map((section) => section.title)).toEqual(
+      sections.map((section) => section.title)
+    );
+    expect(result.schema.sections[0].purpose).toContain('Investment thesis 1');
+    await expect(
+      updateDocumentManualContent({
+        artifactId: result.schema.artifactId,
+        organizationId: 'org-A',
+        userId: 'consult-user',
+        expectedVersion: result.schema.updatedAt,
+        sections: [
+          { ...result.schema.sections[0], blocks: result.schema.sections.flatMap((s) => s.blocks) },
+        ],
+      })
+    ).rejects.toBeInstanceOf(DocumentManualStructureMismatchError);
+
+    const docx = await renderDocumentSchemaToDocxBuffer(result.schema);
+    const zip = await JSZip.loadAsync(docx);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    for (const section of sections) expect(documentXml).toContain(section.title);
   });
 
   it('creates, versions, approves, reopens and consumes an exact Word template version through DOCX export', async () => {
