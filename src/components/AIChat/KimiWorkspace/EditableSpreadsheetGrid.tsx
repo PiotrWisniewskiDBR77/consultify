@@ -147,7 +147,18 @@ function conditionalPresentationStyle(sheet: FormulaSheet, rowIndex: number, col
         (rule.operator === 'greaterThan' && numeric > threshold) ||
         (rule.operator === 'equal' && numeric === threshold)
       );
-      if (applies) return cellPresentationStyle({ style: rule.style });
+      if (applies) {
+        // Spreadsheet CF colors are often authored for a white Excel canvas.
+        // Resolve the web preview through theme-aware semantic tokens so a
+        // pale imported fill cannot pair with illegible text in dark mode.
+        const tone = rule.operator === 'lessThan' ? 'danger' : rule.operator === 'greaterThan' ? 'success' : 'warning';
+        return {
+          backgroundColor: `color-mix(in srgb, var(--c-${tone}) 14%, var(--c-surface))`,
+          color: `var(--c-${tone})`,
+          fontWeight: rule.style?.bold ? 700 : undefined,
+          fontStyle: rule.style?.italic ? 'italic' : undefined,
+        };
+      }
     }
   }
   return {};
