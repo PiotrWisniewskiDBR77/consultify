@@ -78,6 +78,30 @@ export function extractPresentationGenerationOutline(deck: unknown): unknown[] {
   return parsed && Array.isArray(parsed.outline) ? parsed.outline : [];
 }
 
+export async function createGovernedSheetMaterializationTarget(params: {
+  workspaceId: string;
+  title: string;
+}): Promise<string> {
+  const base = await TablePlatformApi.createBase(
+    params.workspaceId,
+    `${params.title} — governed workspace`
+  );
+  const baseId = String((base as Record<string, unknown> | null)?.id || '').trim();
+  if (!baseId) throw new Error('Sheet materialization base did not return an id.');
+
+  const table = await TablePlatformApi.createTable(
+    baseId,
+    params.title,
+    'Governed materialization target for Teresa workbook generation.'
+  );
+  const tableId = String((table as Record<string, unknown> | null)?.id || '').trim();
+  if (!tableId) throw new Error('Sheet materialization table did not return an id.');
+
+  await TablePlatformApi.createField(tableId, 'Input', 'text');
+  await TablePlatformApi.createField(tableId, 'Value', 'number');
+  return tableId;
+}
+
 function deriveEffectiveStatus(
   runStatus: ArtifactRunRecord['runStatus'],
   executionState: string | null | undefined
@@ -411,6 +435,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const [isStartingPipeline, setIsStartingPipeline] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
   const contentGenerationTriggered = useRef(false);
+  const sheetMaterializationTableIdRef = useRef<string | null>(null);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   const latestSnapshot =
@@ -844,6 +869,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       setCurrentRun(null);
       setCurrentPlan(null);
       setPreview(null);
+      sheetMaterializationTableIdRef.current = null;
 
       let activeConvId = conversationId;
 
@@ -943,6 +969,18 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         setCurrentRun(result.run);
         setCurrentPlan(result.artifactPlan);
 
+        if (outputType === 'sheet') {
+          const workspaceId = currentOrganization?.id?.trim();
+          if (!workspaceId) {
+            throw new Error('Organization workspace is required for sheet materialization.');
+          }
+          sheetMaterializationTableIdRef.current =
+            await createGovernedSheetMaterializationTarget({
+              workspaceId,
+              title: result.artifactPlan.titleHint,
+            });
+        }
+
         try {
           const preflighted = await preflightRun.mutateAsync(result.run.runId);
           setCurrentRun(preflighted);
@@ -1027,7 +1065,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               params: {
                 title: accepted.plan.titleHint,
                 config:
-                  outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
+                  outputType === 'sheet'
+                    ? {
+                        tableId: sheetMaterializationTableIdRef.current,
+                        tableName: accepted.plan.titleHint,
+                        goal,
+                      }
+                    : undefined,
               },
             });
             setCurrentRun(materialized);
@@ -1115,6 +1159,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               outputType === 'sheet'
                 ? {
                     tableName: currentRun.plan.titleHint,
+                    tableId: sheetMaterializationTableIdRef.current,
                     goal: lastGoal || currentRun.plan.titleHint,
                   }
                 : undefined,
