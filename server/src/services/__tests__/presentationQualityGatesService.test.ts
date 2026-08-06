@@ -35,7 +35,7 @@ describe('presentationQualityGatesService', () => {
       cards: [
         { intent: 'cover', title: 'Cover', blocks: [{ content: { text: 'Program Update' } }] },
         {
-          intent: 'executive_summary',
+          intent: 'recommendation_single',
           title: 'Exec',
           key_message: 'TBD',
           source_refs: [],
@@ -115,6 +115,70 @@ describe('presentationQualityGatesService', () => {
     expect(report.scorecard.p0).toBe(0);
     expect(report.scorecard.p1).toBe(0);
     expect(report.scorecard.p2).toBeGreaterThan(0);
+  });
+
+  it('accepts a custom-template deck with inherited lineage, theme and exporter metadata', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-template', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return null;
+      return null;
+    });
+    const sourceRef = {
+      artifact_id: 'template-artifact-1',
+      artifact_type: 'presentation_template',
+      artifact_name: 'Board Transformation Control',
+      confidence: 1,
+      freshness_days: 0,
+    };
+    const intents = [
+      'cover',
+      'executive_summary',
+      'performance_overview',
+      'initiative_portfolio',
+      'roadmap',
+      'risk_management',
+      'next_steps',
+      'appendix',
+    ];
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: intents.map((intent, index) => ({
+        intent,
+        title: `Slide ${index + 1} grounded title`,
+        key_message: `Grounded template guidance for slide ${index + 1}`,
+        source_refs: [sourceRef],
+        blocks: [
+          {
+            content: {
+              text: 'Substantive template guidance for a reusable board presentation structure.',
+            },
+          },
+        ],
+        ...(index === 0
+          ? {}
+          : {
+              header_footer: { footerText: 'Board Transformation Control', pageNumber: index + 1 },
+            }),
+      })),
+      meta: { confidentiality: 'internal' },
+      delivery: {
+        brandLayoutSystem: {
+          source: 'custom_template',
+          brand: { primaryColor: '#123456', titleFont: 'Aptos Display' },
+        },
+      },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-template');
+
+    expect(report.gates.map((gate) => gate.gateType)).not.toContain('LOW_TRACEABILITY');
+    expect(report.gates.map((gate) => gate.gateType)).not.toContain(
+      'DECISION_MISSING_TRACEABILITY'
+    );
+    expect(report.gates.map((gate) => gate.gateType)).not.toContain('MISSING_HEADER_FOOTER');
+    expect(report.gates.map((gate) => gate.gateType)).not.toContain('NO_BRAND_KIT');
+    expect(report.scorecard.p1).toBe(0);
   });
 
   // BUG C: a slide that pasted the template catalogue as content must HARD FAIL (P0),

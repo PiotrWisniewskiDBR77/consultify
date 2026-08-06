@@ -76,18 +76,16 @@ const MODE_WORD_LIMITS: Record<string, { min: number; max: number }> = {
   workshop: { min: 5, max: 40 },
 };
 
+// Evidence on every slide is covered by the deck-wide traceability gate. This
+// narrower set is intentionally reserved for slides that themselves ask for a
+// choice/approval; summaries, status, risks and roadmaps are not decisions just
+// because they may inform one.
 const DECISION_INTENTS = new Set([
-  'executive_summary',
-  'performance_overview',
-  'single_insight',
-  'comparison',
-  'assessment',
+  'decision',
+  'decision_request',
   'recommendation_portfolio',
   'recommendation_single',
   'prioritization_matrix',
-  'roadmap',
-  'risk_management',
-  'next_steps',
 ]);
 
 const PLACEHOLDER_TOKENS = [

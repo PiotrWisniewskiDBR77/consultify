@@ -1827,13 +1827,11 @@ router.post(
         if (customTemplate != null) {
           const validation = validatePresentationCustomTemplate(customTemplate);
           if (!validation.ok)
-            return res
-              .status(422)
-              .json({
-                success: false,
-                error: 'custom_template_invalid',
-                details: validation.errors,
-              });
+            return res.status(422).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
         }
       }
     }
@@ -2347,15 +2345,91 @@ router.post(
     // MAT-007/009 root-cause fix — see matching comment in `POST /decks`
     // above: persist canonical deck_json at creation so this row never lands
     // in the "Ready + slide_count>0, empty builder" state.
-    const canonicalDeckDocument = buildDeckDocumentFromStructuredSlides({
+    const templateSourceRef = {
+      artifact_id: templateArtifactId,
+      artifact_type: 'presentation_template',
+      artifact_name: resolved.name || 'Presentation template',
+      confidence: 1,
+      readiness: 'approved_template',
+      freshness_days: 0,
+      captured_at: new Date().toISOString(),
+      lineage: { canonicalTemplateId: resolved.canonicalTemplateId, origin: 'template_library' },
+    };
+    const baseDeckDocument = buildDeckDocumentFromStructuredSlides({
       deckId,
       organizationId: orgId,
       title,
-      theme: 'modern',
+      theme: resolved.theme,
       slides: slides as StructuredSlideInput[],
       status: 'draft',
       createdBy: userId,
     });
+    // A deterministic template copy is grounded in the approved template
+    // itself. Preserve that lineage on every card (and block), and carry the
+    // Template Architect's custom visual contract into the canonical deck so
+    // quality gates and exporters see the same brand/header-footer metadata.
+    const customTemplate = resolved.customTemplate as any;
+    if (customTemplate != null) {
+      const validation = validatePresentationCustomTemplate(customTemplate);
+      if (!validation.ok) {
+        throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
+      }
+    }
+    const customTheme = customTemplate?.theme;
+    const canonicalDeckDocument = {
+      ...baseDeckDocument,
+      theme_id: resolved.theme,
+      color_set_id: customTheme ? 'custom_template' : baseDeckDocument.color_set_id,
+      source_refs: [templateSourceRef],
+      meta: {
+        ...baseDeckDocument.meta,
+        theme: resolved.theme,
+        templateId: resolved.canonicalTemplateId,
+        customTemplate: customTemplate || undefined,
+        templateVersion: customTemplate?.version || null,
+      },
+      cards: baseDeckDocument.cards.map((card, index) => ({
+        ...card,
+        source_refs: [templateSourceRef],
+        blocks: card.blocks.map((block) => ({ ...block, source_ref: templateSourceRef })),
+        header_footer:
+          index === 0
+            ? undefined
+            : {
+                confidentiality: baseDeckDocument.meta.confidentiality || 'internal',
+                pageNumber: index + 1,
+                totalPages: baseDeckDocument.cards.length,
+                footerText: resolved.name || 'Consultify presentation',
+                showPageNumbers: true,
+              },
+      })),
+      delivery: {
+        ...baseDeckDocument.delivery,
+        brandLayoutSystem: {
+          templateFamily: resolved.name || resolved.theme,
+          source: customTheme ? 'custom_template' : 'template_theme',
+          brand: customTheme || { themeId: resolved.theme },
+          customTemplate: customTemplate || null,
+          headerFooter: {
+            enabled: true,
+            hideOnCover: true,
+            showPageNumbers: true,
+            showConfidentiality: true,
+          },
+        },
+      },
+      traceability: {
+        sourceRefs: [templateSourceRef],
+        sourceArtifacts: [
+          {
+            artifactId: templateArtifactId,
+            artifactType: 'presentation_template',
+            name: resolved.name,
+            canonicalTemplateId: resolved.canonicalTemplateId,
+          },
+        ],
+      },
+    };
     const deckJsonStr = JSON.stringify(canonicalDeckDocument);
     try {
       await ensureDeckLineageSchema();
@@ -2364,11 +2438,12 @@ router.post(
       // insert can answer 201 for a deck row that was never written.
       const deckInsertResult = await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
           title,
+          resolved.theme,
           slideCount,
           JSON.stringify({
             source: 'template_library',
