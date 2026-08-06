@@ -60,6 +60,7 @@ import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
+import { resolveBlankCardInsertionIndex } from './manualEditing';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
@@ -558,6 +559,14 @@ export const DeckBuilder: React.FC = () => {
     [deck, updateCard]
   );
 
+  const handleSpeakerNotesChange = useCallback(
+    (value: string) => {
+      if (!activeCard) return;
+      updateCard(activeCard.card_id, { speaker_notes: value, is_locked: true });
+    },
+    [activeCard, updateCard]
+  );
+
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
   useEffect(() => {
     Api.get('/presentations/brand-kit')
@@ -927,7 +936,15 @@ export const DeckBuilder: React.FC = () => {
 
   const handleAddBlankCard = useCallback(
     (atIndex?: number) => {
-      const idx = atIndex ?? (deck?.cards.length || 0);
+      // `SlideSorter` uses this callback as a React click handler, while
+      // `CardCanvas` calls it with an explicit insertion index.  A click
+      // handler receives a SyntheticEvent as its first argument; treating
+      // that value as an array index coerced it to 0 in `splice()` and also
+      // stored the event object as `activeCardIndex`.  The visible symptom
+      // was "Card [object Object]1 of N" and every subsequent block insert
+      // silently targeted no active card.  Only a finite numeric argument is
+      // an insertion request; UI events mean "append".
+      const idx = resolveBlankCardInsertionIndex(atIndex, deck?.cards.length || 0);
       const newCard: DeckCard = {
         card_id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         deck_id: deck?.deck_id || '',
@@ -1429,9 +1446,11 @@ export const DeckBuilder: React.FC = () => {
             comments: (
               <DeckCommentsPanel
                 deckId={deckId || deck?.deck_id || ''}
-                slides={deck.cards.map(
-                  (c, idx): DeckSlideRef => ({ id: c.card_id, title: c.title || '', index: idx })
-                )}
+                slides={deck.cards.map((c, idx): DeckSlideRef => ({
+                  id: c.card_id,
+                  title: c.title || '',
+                  index: idx,
+                }))}
                 activeSlideId={activeCard?.card_id ?? null}
                 onJumpToSlide={(slideId) => {
                   const idx = deck.cards.findIndex((c) => c.card_id === slideId);
@@ -1488,6 +1507,7 @@ export const DeckBuilder: React.FC = () => {
               onAddCard={handleAddBlankCard}
               onRewriteCard={handleRewriteCard}
               speakerNotes={activeCard?.speaker_notes}
+              onSpeakerNotesChange={handleSpeakerNotesChange}
               showNotes={showNotes}
               animationsEnabled={animationsEnabled}
               selectedBlockId={selectedBlockId}
@@ -1875,6 +1895,7 @@ export const DeckBuilder: React.FC = () => {
             onAddCard={handleAddBlankCard}
             onRewriteCard={handleRewriteCard}
             speakerNotes={activeCard?.speaker_notes}
+            onSpeakerNotesChange={handleSpeakerNotesChange}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}
             selectedBlockId={selectedBlockId}

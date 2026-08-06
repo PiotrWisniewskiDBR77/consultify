@@ -31,6 +31,8 @@ import {
   ensureDeckCommentsHydrated,
   getDeckCommentCounts,
   listDeckCommentThreads,
+  persistDeckCommentNow,
+  refreshDeckCommentsFromPersistence,
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
@@ -3522,6 +3524,9 @@ router.get(
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
     await ensureDeckCommentsHydrated(orgId);
+    // Comments are shared review state. Refresh the local cache on every read
+    // so a GET served by a different Railway instance sees recent mutations.
+    await refreshDeckCommentsFromPersistence(orgId);
     const slideId =
       typeof req.query.slideId === 'string' && req.query.slideId.trim()
         ? String(req.query.slideId).trim()
@@ -3578,6 +3583,7 @@ router.post(
             body: text,
             slideId: typeof body.slideId === 'string' ? body.slideId : null,
           });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: parentCommentId ? 'deck_comment_reply' : 'deck_comment_add',
@@ -3617,6 +3623,7 @@ router.patch(
         commentId,
         resolved,
       });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: resolved ? 'deck_comment_resolve' : 'deck_comment_reopen',
@@ -3654,6 +3661,7 @@ router.delete(
         userId,
         commentId,
       });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: 'deck_comment_delete',

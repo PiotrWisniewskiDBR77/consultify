@@ -19,6 +19,7 @@ interface CardCanvasProps {
    */
   onRewriteCard?: (cardIndex: number, instruction?: string) => Promise<void>;
   speakerNotes?: string;
+  onSpeakerNotesChange?: (value: string) => void;
   showNotes: boolean;
   animationsEnabled?: boolean;
   /** Fala 1 (manual mode) — selected block (id only; unique across the deck). */
@@ -39,6 +40,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onAddCard,
   onRewriteCard,
   speakerNotes,
+  onSpeakerNotesChange,
   showNotes,
   animationsEnabled = true,
   selectedBlockId = null,
@@ -213,12 +215,13 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
           </p>
           <textarea
             value={speakerNotes || ''}
-            readOnly
+            onChange={(event) => onSpeakerNotesChange?.(event.target.value)}
+            readOnly={!onSpeakerNotesChange}
             placeholder={t(
               'presentations.builder.notesPlaceholder',
               'Speaker notes for this slide...'
             )}
-            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none"
+            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none read-only:cursor-default"
             rows={4}
           />
         </div>

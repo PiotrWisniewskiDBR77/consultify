@@ -20,7 +20,7 @@
  * Block C · EPIC-T10 · Sprint C-S5.
  */
 
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, TriangleAlert } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -122,7 +122,7 @@ export const TabeleAiEditorPanel: React.FC<TabeleAiEditorPanelProps> = ({
       setActive({ ...result, prompt: prompt.trim() });
       if (result.softWarn) {
         toast(t('kimi.tabeleShell.aiEditor.softWarnBudget', 'Soft warning: AI budget at 70 %.'), {
-          icon: '⚠️',
+          icon: <TriangleAlert size={16} aria-hidden />,
         });
       }
     } catch (e) {
