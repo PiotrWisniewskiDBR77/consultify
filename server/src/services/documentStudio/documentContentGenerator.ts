@@ -592,6 +592,15 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
   const { artifactId, intake, outline, sourceRefs } = input;
   const now = new Date().toISOString();
   const hasSources = sourceRefs.length > 0;
+  // The manual "Czysto" entry is a real blank authoring surface, not a
+  // deterministic-generation request. Previously it received a generic
+  // English stub which the grounding boundary replaced with the alarming
+  // "Treść usunięta…" warning. Keep one empty paragraph so ProseMirror has a
+  // valid cursor target while presenting no generated/technical copy.
+  const isManualBlank =
+    intake.documentType === 'generic_document' &&
+    intake.description?.trim() === 'Pusty dokument roboczy do samodzielnej edycji.' &&
+    sourceRefs.length === 0;
 
   const sections: DocumentSection[] = outline.sections.map((outlineSection, index) => ({
     sectionId: uuidv4(),
@@ -599,7 +608,16 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     level: outlineSection.level,
     title: outlineSection.title,
     purpose: outlineSection.purpose,
-    blocks: buildSectionBlocks(outlineSection.title, intake.description ?? '', hasSources),
+    blocks: isManualBlank
+      ? [
+          {
+            blockId: uuidv4(),
+            type: 'paragraph',
+            content: { text: '' },
+            isAssumption: false,
+          },
+        ]
+      : buildSectionBlocks(outlineSection.title, intake.description ?? '', hasSources),
     sourceRefs: sourceRefs.slice(0, 1),
   }));
 

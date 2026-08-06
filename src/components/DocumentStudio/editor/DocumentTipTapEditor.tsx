@@ -294,6 +294,64 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
 
   return (
     <div className={className} data-testid="document-tiptap-editor">
+      {editable && editor ? (
+        <div
+          className="mb-3 flex flex-wrap items-center gap-1 rounded-xl border border-c-border bg-c-surface p-1.5"
+          role="toolbar"
+          aria-label="Formatowanie dokumentu"
+          data-testid="document-formatting-toolbar"
+        >
+          {[
+            {
+              label: 'Tekst',
+              title: 'Zwykły tekst',
+              active: editor.isActive('paragraph'),
+              run: () => editor.chain().focus().setParagraph().run(),
+            },
+            ...([1, 2, 3] as const).map((level) => ({
+              label: `H${level}`,
+              title: `Nagłówek ${level}`,
+              active: editor.isActive('heading', { level }),
+              run: () => editor.chain().focus().toggleHeading({ level }).run(),
+            })),
+            {
+              label: '• Lista',
+              title: 'Lista punktowana',
+              active: editor.isActive('bulletList'),
+              run: () => editor.chain().focus().toggleBulletList().run(),
+            },
+            {
+              label: '1. Lista',
+              title: 'Lista numerowana',
+              active: editor.isActive('orderedList'),
+              run: () => editor.chain().focus().toggleOrderedList().run(),
+            },
+          ].map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              aria-label={action.title}
+              aria-pressed={action.active}
+              title={action.title}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                // Toolbar commands are programmatic TipTap transactions, so
+                // they do not emit the DOM beforeinput event that normally
+                // arms manual autosave. Mark them as user edits explicitly.
+                userEditArmedRef.current = true;
+                action.run();
+              }}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                action.active
+                  ? 'bg-primary-600 text-white'
+                  : 'text-c-text-secondary hover:bg-c-surface-hover hover:text-c-text'
+              }`}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <EditorContent
         editor={editor}
         className="document-studio-editor prose prose-slate max-w-none dark:prose-invert"

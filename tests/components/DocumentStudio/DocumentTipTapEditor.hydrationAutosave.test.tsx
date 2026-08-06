@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,11 +9,25 @@ vi.mock('@tiptap/react', () => ({
   EditorContent: () => <div data-testid="editor" />,
   useEditor: (options: any) => {
     editorOptions = options;
-    return {
+    const editor: any = {
       setEditable: vi.fn(),
       getJSON: () => ({ type: 'doc', content: [] }),
       commands: { setContent: vi.fn() },
+      isActive: vi.fn(() => false),
     };
+    const chain: any = {
+      focus: () => chain,
+      setParagraph: () => chain,
+      toggleHeading: () => chain,
+      toggleBulletList: () => chain,
+      toggleOrderedList: () => chain,
+      run: () => {
+        options.onUpdate({ editor });
+        return true;
+      },
+    };
+    editor.chain = () => chain;
+    return editor;
   },
 }));
 
@@ -66,6 +80,26 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
     await act(async () => vi.advanceTimersByTimeAsync(600));
     expect(saveMock).toHaveBeenCalledTimes(1);
     expect(saveMock).toHaveBeenCalledWith('artifact-canonical', {
+      sections: [],
+      expectedVersion: '2026-08-06T12:00:00.000Z',
+    });
+  });
+
+  it('shows the manual formatting toolbar and persists a toolbar command', async () => {
+    const schema = {
+      artifactId: 'artifact-manual-format',
+      title: 'Manual formatting',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-manual-format" />);
+
+    expect(screen.getByRole('toolbar', { name: 'Formatowanie dokumentu' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Nagłówek 2' }));
+    await act(async () => vi.advanceTimersByTimeAsync(600));
+
+    expect(saveMock).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenCalledWith('artifact-manual-format', {
       sections: [],
       expectedVersion: '2026-08-06T12:00:00.000Z',
     });
