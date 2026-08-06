@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   __contentBlockToDocumentBlockForTests,
   buildDocumentSchema,
+  enforceDocumentSchemaGrounding,
 } from '../documentContentGenerator.js';
 
 describe('premium document grounding and canonical shapes — DOC-DBR77-20260806-ALFA', () => {
@@ -77,5 +78,79 @@ describe('premium document grounding and canonical shapes — DOC-DBR77-20260806
     });
 
     expect(schema.sections[0]?.blocks[0]?.isAssumption).toBe(false);
+  });
+
+  it('EPSILON localizes nested KPI/table values and drops empty canonical/raw-json tables', () => {
+    const schema = {
+      documentId: 'epsilon',
+      artifactId: 'epsilon',
+      title: 'Raport EPSILON',
+      documentType: 'board_report',
+      language: 'pl',
+      audience: ['Zarząd'],
+      goal: 'inform',
+      communicationRegister: 'executive',
+      density: 'concise',
+      languageStyle: 'consulting',
+      confidentiality: 'internal',
+      formattingSchema: {} as any,
+      sourceRefs: [],
+      createdAt: '',
+      updatedAt: '',
+      sections: [
+        {
+          sectionId: 's',
+          orderIndex: 0,
+          level: 1,
+          title: 'KPI',
+          purpose: '',
+          sourceRefs: [],
+          blocks: [
+            {
+              blockId: 'k',
+              type: 'kpi_strip',
+              content: {
+                items: [
+                  { label: 'Total Budget', value: '1,4 mln EUR' },
+                  { label: 'Plan Realization', value: '72%' },
+                  { label: 'Milestones Completed', value: '18/21' },
+                ],
+              },
+            },
+            {
+              blockId: 't',
+              type: 'risk_table',
+              content: {
+                columns: ['Risk', 'Severity'],
+                rows: [
+                  ['Budget overrun', 'High'],
+                  ['Scope', 'Medium'],
+                  ['Timing', 'Low'],
+                ],
+              },
+            },
+            { blockId: 'empty', type: 'table', content: { columns: [], rows: [] } },
+            {
+              blockId: 'raw',
+              type: 'paragraph',
+              content: { text: '{ "columns": [], "rows": [] }' },
+            },
+          ],
+        },
+      ],
+    } as any;
+    const result = enforceDocumentSchemaGrounding(
+      schema,
+      'Polski raport EPSILON. 72%, 1,4 mln EUR, 18/21. Bez DACH.'
+    );
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain('DACH');
+    expect(serialized).not.toContain('Total Budget');
+    expect(serialized).toContain('Łączny budżet');
+    expect(serialized).toContain('Realizacja planu');
+    expect(serialized).toContain('Ukończone kamienie milowe');
+    expect(serialized).toContain('Przekroczenie budżetu');
+    expect(serialized).toContain('Wysokie');
+    expect(result.sections[0].blocks.map((block: any) => block.blockId)).toEqual(['k', 't']);
   });
 });

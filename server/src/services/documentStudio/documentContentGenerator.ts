@@ -116,9 +116,11 @@ export function enforceDocumentSchemaGrounding(
   for (const section of next.sections) {
     const title = guardText(section.title);
     if (title.changed) section.title = removed;
+    let purposeChanged = false;
     if (section.purpose) {
       const purpose = guardText(section.purpose);
       if (purpose.changed) section.purpose = removed;
+      purposeChanged = purpose.changed;
     }
     for (const block of section.blocks) {
       const guarded = enforceBlockGrounding(
@@ -128,8 +130,28 @@ export function enforceDocumentSchemaGrounding(
         groundingSource
       );
       block.content = guarded.content;
-      block.isAssumption = block.isAssumption === true || guarded.changed || title.changed;
+      block.isAssumption =
+        block.isAssumption === true || guarded.changed || title.changed || purposeChanged;
     }
+
+    // Empty structured payloads have no semantic content and several renderers
+    // fall back to JSON.stringify, surfacing `{ "columns": [], "rows": [] }`.
+    // Drop them at the final canonical boundary instead of exporting raw JSON.
+    section.blocks = section.blocks.filter((block) => {
+      const content = block.content as Record<string, unknown> | undefined;
+      if (block.type === 'table' || block.type === 'risk_table') {
+        const columns = Array.isArray(content?.columns) ? content.columns : [];
+        const rows = Array.isArray(content?.rows) ? content.rows : [];
+        return columns.length > 0 || rows.length > 0;
+      }
+      if (block.type === 'paragraph' && typeof content?.text === 'string') {
+        const text = content.text.trim();
+        if (/^\{\s*"columns"\s*:\s*\[\s*\]\s*,\s*"rows"\s*:\s*\[\s*\]\s*\}$/.test(text)) {
+          return false;
+        }
+      }
+      return true;
+    });
   }
 
   next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);

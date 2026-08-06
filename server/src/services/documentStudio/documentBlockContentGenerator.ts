@@ -410,6 +410,14 @@ const POLISH_HEADER_TRANSLATIONS: Record<string, string> = {
   metric: 'Metryka',
   value: 'Wartość',
   target: 'Cel',
+  severity: 'Waga',
+  'total budget': 'Łączny budżet',
+  'plan realization': 'Realizacja planu',
+  'milestones completed': 'Ukończone kamienie milowe',
+  'budget overrun': 'Przekroczenie budżetu',
+  high: 'Wysokie',
+  medium: 'Średnie',
+  low: 'Niskie',
 };
 
 function groundingPlaceholder(language: 'pl' | 'en'): string {
@@ -430,9 +438,16 @@ function unsupportedClaimInString(
   // deliberately conservative: normal business abbreviations stay allowed,
   // while a new all-caps name must occur in the brief/source text verbatim.
   const acronyms = text.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ]{2,}\b/g) ?? [];
-  return acronyms.some(
-    (token) => !SAFE_BUSINESS_ACRONYMS.has(token) && !sourceTextUpper.includes(token)
-  );
+  return acronyms.some((token) => {
+    if (SAFE_BUSINESS_ACRONYMS.has(token)) return false;
+    const index = sourceTextUpper.indexOf(token);
+    if (index < 0) return true;
+    // Merely mentioning a value in a negative constraint ("bez DACH", "zakaz
+    // DACH") is not evidence that the named claim is allowed. This was the
+    // EPSILON leak: the forbidden example itself accidentally became allowlist.
+    const before = sourceTextUpper.slice(Math.max(0, index - 60), index);
+    return /\b(BEZ|ZAKAZ|NIE UŻYWAJ|NIE UZYWAJ|NIEDOZWOLON|WYKLUCZ)\b/.test(before);
+  });
 }
 
 /**
@@ -464,7 +479,7 @@ export function enforceBlockGrounding(
         changed = true;
         return groundingPlaceholder(language);
       }
-      if (language === 'pl' && key === 'column') {
+      if (language === 'pl') {
         return POLISH_HEADER_TRANSLATIONS[value.trim().toLowerCase()] ?? value;
       }
       return value;

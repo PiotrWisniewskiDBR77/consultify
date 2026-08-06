@@ -148,14 +148,22 @@ describe('Document Studio generate -> export happy path', () => {
   it('DELTA: final persisted schema removes post-premium unsupported claims and recomputes assumptions', async () => {
     generateChatResponseMock.mockImplementation(async (request: any) => {
       const prompt = String(request?.messages?.[0]?.content ?? '');
-      const ids = [...prompt.matchAll(/"blockId":\s*"([^"]+)"/g)].map((match) => match[1]);
+      const targets = [
+        ...prompt.matchAll(/"blockId":\s*"([^"]+)"[\s\S]*?"kind":\s*"([^"]+)"/g),
+      ].map((match) => ({ blockId: match[1], kind: match[2] }));
       return {
         content: JSON.stringify({
-          blocks: ids.map((blockId) => ({
-            blockId,
-            text: 'DACH: 8 inicjatyw w horyzoncie 6-9 miesięcy; wynik 85%.',
-            items: ['DACH', '8 inicjatyw', 'Horyzont 6-9 miesięcy', 'Wynik 85%'],
-          })),
+          blocks: targets.map(({ blockId, kind }, index) =>
+            kind === 'items'
+              ? { blockId, items: ['DACH', '8 inicjatyw', 'Horyzont 6-9 miesięcy'] }
+              : {
+                  blockId,
+                  text:
+                    index === 0
+                      ? '{ "columns": [], "rows": [] }'
+                      : 'DACH: 8 inicjatyw w horyzoncie 6-9 miesięcy; wynik 85%.',
+                }
+          ),
         }),
       };
     });
@@ -185,6 +193,18 @@ describe('Document Studio generate -> export happy path', () => {
             purpose: 'Podsumowanie dla zarządu',
             expectedLengthHint: 'short',
           },
+          {
+            title: 'Decisions Required',
+            level: 1,
+            purpose: 'Decyzje zarządu',
+            expectedLengthHint: 'short',
+          },
+          {
+            title: 'Risks',
+            level: 1,
+            purpose: 'Ryzyka i działania ograniczające',
+            expectedLengthHint: 'short',
+          },
         ],
       },
       useLlm: true,
@@ -195,6 +215,7 @@ describe('Document Studio generate -> export happy path', () => {
     expect(persisted).toBeDefined();
     const serialized = JSON.stringify(persisted);
     expect(serialized).not.toMatch(/DACH|8 inicjatyw|6-9|85%/);
+    expect(serialized).not.toContain('{ \\"columns\\": [], \\"rows\\": [] }');
     expect(serialized).toContain('niepoparte twierdzenie');
     const assumptions = persisted!.sections
       .flatMap((section) => section.blocks)
@@ -202,5 +223,15 @@ describe('Document Studio generate -> export happy path', () => {
     expect(assumptions.length).toBeGreaterThan(0);
     expect(persisted!.evidence?.risks.join(' ')).toMatch(/bloków oznaczonych jako założenie/);
     expect(persisted!.evidence?.confidence).not.toBe('high');
+    const risk = persisted!.sections
+      .flatMap((section) => section.blocks)
+      .find((block) => block.type === 'risk_table');
+    expect((risk?.content as any)?.columns).toEqual([
+      'Ryzyko',
+      'Prawdopodobieństwo',
+      'Wpływ',
+      'Właściciel',
+      'Mitygacja',
+    ]);
   });
 });
