@@ -82,7 +82,10 @@ describe('presentationQualityGatesService', () => {
               confidence: 0.92,
             },
           ],
-          blocks: [{ content: { text: 'High confidence summary' } }],
+          blocks: [
+            { type: 'callout', content: { text: 'High confidence summary for the decision.' } },
+            { type: 'smart_layout', content: { items: [{ title: 'Value' }, { title: 'Risk' }] } },
+          ],
           speaker_notes: 'Presenter narrative for executive context.',
         },
         {
@@ -99,10 +102,12 @@ describe('presentationQualityGatesService', () => {
           ],
           blocks: [
             {
+              type: 'numbered_list',
               content: {
                 text: 'Action items and owners with explicit sequencing, decision framing, governance checkpoints, implementation details, dependency notes, communication paths, risk safeguards, and release prerequisites for each workstream owner.',
               },
             },
+            { type: 'callout', content: { text: 'Approve owners and launch the first gate.' } },
           ],
         },
       ],
@@ -148,13 +153,29 @@ describe('presentationQualityGatesService', () => {
         title: `Slide ${index + 1} grounded title`,
         key_message: `Grounded template guidance for slide ${index + 1}`,
         source_refs: [sourceRef],
-        blocks: [
-          {
-            content: {
-              text: 'Substantive template guidance for a reusable board presentation structure.',
-            },
-          },
-        ],
+        blocks:
+          intent === 'cover'
+            ? [{ type: 'heading', content: { text: 'Board Transformation Control' } }]
+            : [
+                {
+                  type:
+                    intent === 'performance_overview'
+                      ? 'metric_strip'
+                      : intent === 'roadmap'
+                        ? 'timeline_block'
+                        : intent === 'risk_management'
+                          ? 'table'
+                          : intent === 'next_steps'
+                            ? 'numbered_list'
+                            : intent === 'executive_summary'
+                              ? 'callout'
+                              : 'bullet_list',
+                  content: {
+                    text: 'Substantive template guidance for a reusable board presentation structure and its evidence.',
+                  },
+                },
+                { type: 'paragraph', content: { text: 'Audience-ready supporting explanation.' } },
+              ],
         ...(index === 0
           ? {}
           : {
@@ -251,5 +272,47 @@ describe('presentationQualityGatesService', () => {
         (gate) => gate.gateType === 'EMPTY_DECISION_SECTIONS' && gate.priority === 'P1'
       )
     ).toBe(true);
+  });
+
+  it('blocks a visually sparse title-plus-thesis deck and reports missing layout evidence', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-sparse', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    const sourceRef = { artifact_id: 'template-1', confidence: 1 };
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: [
+        {
+          intent: 'cover',
+          title: 'Cover',
+          source_refs: [sourceRef],
+          blocks: [{ type: 'heading', content: { text: 'Cover' } }],
+        },
+        {
+          intent: 'performance_overview',
+          title: 'Investment economics',
+          key_message: 'Economics are attractive under the base case.',
+          source_refs: [sourceRef],
+          blocks: [
+            {
+              type: 'paragraph',
+              content: { text: 'Economics are attractive under the base case.' },
+            },
+          ],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-sparse');
+
+    expect(report.canExport).toBe(false);
+    expect(report.result).toBe('BLOCKED_P1');
+    expect(report.gates.map((gate) => gate.gateType)).toEqual(
+      expect.arrayContaining(['LOW_INFORMATION_SLIDES', 'LAYOUT_EVIDENCE_MISSING'])
+    );
   });
 });

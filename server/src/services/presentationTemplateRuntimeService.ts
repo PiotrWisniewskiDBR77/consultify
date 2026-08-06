@@ -556,8 +556,174 @@ export interface DeckSlideFromOutline {
   content: {
     title: string;
     intent: string;
-    blocks: Array<{ type: 'heading' | 'text'; content: string }>;
+    blocks: Array<{ type: string; content: any }>;
   };
+}
+
+function cleanStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+}
+
+/**
+ * Materialise an approved template into useful, audience-facing slide content.
+ * The template stores instructions rather than source facts, so these blocks
+ * deliberately express a decision framework and evidence slots without
+ * inventing numerical results.  Each intent gets a native block topology that
+ * the Deck Builder and PPTX exporter already understand.
+ */
+function blocksForTemplateIntent(item: Record<string, unknown>, title: string, intent: string) {
+  const keyMessage = String(item.keyMessage ?? item.key_message ?? '').trim();
+  const hints = cleanStringList(item.contentHints ?? item.content_hints);
+  const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
+  const headline = keyMessage || hints[0] || title;
+  const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
+  const heading = { type: 'heading', content: { text: title, level: 1 } };
+  const paragraph = { type: 'paragraph', content: { text: headline } };
+
+  switch (intent) {
+    case 'cover':
+      return [heading, ...(keyMessage ? [paragraph] : [])];
+    case 'executive_summary':
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'recommendation', text: headline } },
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: (evidenceLabels.length
+              ? evidenceLabels
+              : ['Recommendation', 'Value', 'Conditions']
+            )
+              .slice(0, 3)
+              .map((label) => ({ title: label, description: `Evidence required: ${label}` })),
+          },
+        },
+      ];
+    case 'performance_overview':
+      return [
+        heading,
+        paragraph,
+        {
+          type: 'metric_strip',
+          content: {
+            metrics: (evidenceLabels.length
+              ? evidenceLabels
+              : ['Investment', 'Run-rate benefit', 'Payback', 'NPV']
+            ).map((label) => ({ label, value: 'Validate', trend: 'stable' })),
+          },
+        },
+      ];
+    case 'comparison':
+      return [
+        heading,
+        paragraph,
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: ['Defer', 'Pilot', 'Scale'].map((scenario) => ({
+              title: scenario,
+              description: `Compare value, investment, time to impact and risk for ${scenario.toLowerCase()}.`,
+            })),
+          },
+        },
+      ];
+    case 'roadmap':
+      return [
+        heading,
+        paragraph,
+        {
+          type: 'timeline_block',
+          content: {
+            items: [
+              {
+                date: '0–3',
+                title: 'Mobilise',
+                description: 'Confirm baseline, owners and controls.',
+              },
+              {
+                date: '4–9',
+                title: 'Prove',
+                description: 'Deliver priority use cases and validate value.',
+              },
+              {
+                date: '10–18',
+                title: 'Scale',
+                description: 'Expand proven automation and lock in benefits.',
+              },
+            ],
+          },
+        },
+      ];
+    case 'risk_management':
+      return [
+        heading,
+        paragraph,
+        {
+          type: 'table',
+          content: {
+            headers: ['Risk', 'Exposure', 'Mitigation', 'Owner'],
+            rows: [
+              [
+                'Adoption',
+                'Assess',
+                'Role-based enablement and adoption measures',
+                'Business owner',
+              ],
+              ['Controls', 'Assess', 'Human review for exceptions and audit trail', 'Risk owner'],
+              [
+                'Value leakage',
+                'Assess',
+                'Monthly benefit validation against baseline',
+                'Finance owner',
+              ],
+            ],
+          },
+        },
+      ];
+    case 'recommendation_single':
+    case 'recommendation_portfolio':
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'recommendation', text: headline } },
+        {
+          type: 'bullet_list',
+          content: {
+            items: (hints.length
+              ? hints
+              : ['Decision rights', 'Value ownership', 'Control cadence']
+            ).slice(0, 5),
+          },
+        },
+      ];
+    case 'next_steps':
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'decision', text: headline } },
+        {
+          type: 'numbered_list',
+          content: {
+            items: (hints.length
+              ? hints
+              : [
+                  'Confirm the decision and conditions',
+                  'Nominate accountable owners',
+                  'Launch the first control gate',
+                ]
+            ).slice(0, 5),
+          },
+        },
+      ];
+    default:
+      return [
+        heading,
+        paragraph,
+        ...(hints.length > 1
+          ? [{ type: 'bullet_list', content: { items: hints.slice(1, 6) } }]
+          : []),
+      ];
+  }
 }
 
 /**
@@ -582,13 +748,7 @@ export function mapOutlineBlueprintToDeckSlides(
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const intent = String(item.intent || 'content');
     const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
-    const keyMessageRaw = item.keyMessage ?? item.key_message ?? null;
-    const blocks: Array<{ type: 'heading' | 'text'; content: string }> = [
-      { type: 'heading', content: title },
-    ];
-    if (typeof keyMessageRaw === 'string' && keyMessageRaw.trim()) {
-      blocks.push({ type: 'text', content: keyMessageRaw.trim() });
-    }
+    const blocks = blocksForTemplateIntent(item, title, intent);
     return { type: intent, content: { title, intent, blocks } };
   });
 }

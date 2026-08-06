@@ -626,12 +626,26 @@ const parseChatSaveIntent = (rawContent: string): ChatSaveIntent | null => {
   return null;
 };
 
+export function resolveWorkspaceArtifactKind(
+  workspaceContext?: WorkspaceContext | null
+): 'presentation' | 'document' | 'sheet' | null {
+  const kind = String(workspaceContext?.entityData?.artifactKind || workspaceContext?.type || '')
+    .trim()
+    .toLowerCase();
+  if (kind === 'deck' || kind === 'presentation') return 'presentation';
+  if (kind === 'document' || kind === 'doc' || kind === 'report') return 'document';
+  if (kind === 'sheet' || kind === 'spreadsheet' || kind === 'workbook' || kind === 'table')
+    return 'sheet';
+  return null;
+}
+
 export const __private__ = {
   firstMatchIndex,
   isLikelyAiFailureText,
   extractSlashPayload,
   parseChatCanvasIntent,
   parseChatSaveIntent,
+  resolveWorkspaceArtifactKind,
 };
 
 interface UnifiedChatPanelProps {
@@ -2420,6 +2434,87 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           } finally {
             clearTimeout(actionTimeout);
           }
+        }
+      }
+
+      // An artifact-native editor owns free-form turns before generic noun/
+      // finance classifiers run. Without this precedence, a presentation turn
+      // mentioning NPV, scenarios or a risk heatmap was incorrectly captured by
+      // the workbook lane and Teresa created a Sheet next to the open deck.
+      // The Deck Builder supplies onModuleIntent and artifactKind='deck', so the
+      // existing presentation agent-edit endpoint remains the single writer.
+      if (
+        onModuleIntent &&
+        resolveWorkspaceArtifactKind(workspaceContext) === 'presentation' &&
+        (!attachments || attachments.length === 0)
+      ) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+              metadata: { artifactKind: 'presentation' } as any,
+            });
+          } catch {
+            /* best-effort persist */
+          }
+        }
+        try {
+          const moduleIntentResult = await onModuleIntent(content);
+          const handled =
+            typeof moduleIntentResult === 'object'
+              ? moduleIntentResult.handled
+              : Boolean(moduleIntentResult);
+          if (handled) {
+            const reply =
+              typeof moduleIntentResult === 'object'
+                ? String(moduleIntentResult.reply || '').trim()
+                : '';
+            if (reply) {
+              addChatMessage({
+                id: `module-intent-${Date.now()}`,
+                role: 'ai',
+                content: reply,
+                timestamp: new Date(),
+              });
+              if (activeConversationId) {
+                try {
+                  await addMessageToConversation({
+                    conversationId: activeConversationId,
+                    role: 'ai',
+                    content: reply,
+                    messageType: 'text',
+                    metadata: { artifactKind: 'presentation' } as any,
+                  });
+                } catch {
+                  /* best-effort persist */
+                }
+              }
+            }
+            onMessageSent?.(content);
+            return;
+          }
+        } catch (err) {
+          console.error('[UnifiedChatPanel] Presentation module intent handler failed:', err);
+          addChatMessage({
+            id: `module-intent-error-${Date.now()}`,
+            role: 'ai',
+            content: i18n.language?.startsWith('pl')
+              ? 'Nie udało się wykonać tej akcji w prezentacji.'
+              : 'I could not complete that action in the presentation.',
+            timestamp: new Date(),
+          });
+          onMessageSent?.(content);
+          return;
         }
       }
 

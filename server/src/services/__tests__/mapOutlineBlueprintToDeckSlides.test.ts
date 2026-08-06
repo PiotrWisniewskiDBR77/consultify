@@ -38,7 +38,10 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
       expect(slide.content.intent).toBe(source.intent);
       expect(slide.content.title).toBe(source.title);
       // The heading block carries the REAL title from the fixture.
-      expect(slide.content.blocks[0]).toEqual({ type: 'heading', content: source.title });
+      expect(slide.content.blocks[0]).toEqual({
+        type: 'heading',
+        content: { text: source.title, level: 1 },
+      });
     });
   });
 
@@ -47,10 +50,12 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
       { intent: 'executive_summary', title: 'Executive Summary', keyMessage: 'Q3 on track' },
     ]);
 
-    expect(slides[0].content.blocks).toEqual([
-      { type: 'heading', content: 'Executive Summary' },
-      { type: 'text', content: 'Q3 on track' },
-    ]);
+    expect(slides[0].content.blocks).toEqual(
+      expect.arrayContaining([
+        { type: 'heading', content: { text: 'Executive Summary', level: 1 } },
+        { type: 'callout', content: { variant: 'recommendation', text: 'Q3 on track' } },
+      ])
+    );
   });
 
   it('accepts the snake_case key_message spelling too', () => {
@@ -58,12 +63,17 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
       { intent: 'next_steps', title: 'Next Steps', key_message: 'Ship by Friday' },
     ]);
 
-    expect(slides[0].content.blocks).toContainEqual({ type: 'text', content: 'Ship by Friday' });
+    expect(slides[0].content.blocks).toContainEqual({
+      type: 'callout',
+      content: { variant: 'decision', text: 'Ship by Friday' },
+    });
   });
 
   it('omits the text block when there is no keyMessage (heading-only slide)', () => {
     const slides = mapOutlineBlueprintToDeckSlides([{ intent: 'cover', title: 'Cover' }]);
-    expect(slides[0].content.blocks).toEqual([{ type: 'heading', content: 'Cover' }]);
+    expect(slides[0].content.blocks).toEqual([
+      { type: 'heading', content: { text: 'Cover', level: 1 } },
+    ]);
   });
 
   it('falls back to a positional title when an outline item has none', () => {
@@ -95,5 +105,34 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     const a = mapOutlineBlueprintToDeckSlides(STEERING_OUTLINE_FIXTURE);
     const b = mapOutlineBlueprintToDeckSlides(STEERING_OUTLINE_FIXTURE);
     expect(a).toEqual(b);
+  });
+
+  it('materialises layout-specific native blocks for an executive decision deck', () => {
+    const slides = mapOutlineBlueprintToDeckSlides([
+      { intent: 'executive_summary', title: 'Recommendation', keyMessage: 'Approve gated scale' },
+      {
+        intent: 'performance_overview',
+        title: 'Economics',
+        dataNeeded: ['Investment', 'Annual benefit', 'Payback'],
+      },
+      { intent: 'comparison', title: 'Scenarios' },
+      { intent: 'roadmap', title: 'Roadmap' },
+      { intent: 'risk_management', title: 'Risks' },
+      { intent: 'recommendation_portfolio', title: 'Governance' },
+      { intent: 'next_steps', title: 'Decision' },
+    ]);
+
+    expect(slides.map((slide) => slide.content.blocks.map((block) => block.type))).toEqual([
+      ['heading', 'callout', 'smart_layout'],
+      ['heading', 'paragraph', 'metric_strip'],
+      ['heading', 'paragraph', 'smart_layout'],
+      ['heading', 'paragraph', 'timeline_block'],
+      ['heading', 'paragraph', 'table'],
+      ['heading', 'callout', 'bullet_list'],
+      ['heading', 'callout', 'numbered_list'],
+    ]);
+    expect(
+      new Set(slides.flatMap((slide) => slide.content.blocks.map((block) => block.type))).size
+    ).toBeGreaterThanOrEqual(8);
   });
 });

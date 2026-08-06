@@ -180,6 +180,23 @@ const REQUIRED_DECISION_CONTENT_INTENTS = new Set([
   'next_steps',
 ]);
 
+const LAYOUT_EVIDENCE_BLOCKS: Record<string, Set<string>> = {
+  executive_summary: new Set(['callout', 'metric_strip', 'smart_layout', 'bullet_list']),
+  performance_overview: new Set(['metric_strip', 'kpi_widget', 'chart']),
+  comparison: new Set(['smart_layout', 'table', 'chart']),
+  roadmap: new Set(['timeline_block', 'smart_diagram']),
+  risk_management: new Set(['table', 'chart', 'smart_layout']),
+  recommendation_single: new Set(['callout', 'bullet_list', 'smart_layout']),
+  recommendation_portfolio: new Set(['callout', 'bullet_list', 'smart_layout']),
+  next_steps: new Set(['numbered_list', 'bullet_list', 'timeline_block', 'callout']),
+};
+
+function substantiveBlockTypes(card: DeckCard): string[] {
+  return (card.blocks || [])
+    .map((block) => String(block.type || '').trim())
+    .filter((type) => type && type !== 'heading' && type !== 'divider');
+}
+
 function cardAggregateText(card: DeckCard): string {
   return [
     String(card.title || ''),
@@ -309,6 +326,53 @@ export async function checkDeckQualityGates(
         category: 'content',
       });
     }
+  }
+
+  // Gate 4b: visual information sufficiency. A title plus one thesis sentence
+  // is technically non-empty but still produces the blank, unpresentable canvas
+  // that this gate exists to stop. Decision layouts must also carry native
+  // evidence blocks (KPI/chart/scenarios/timeline/risks/actions) appropriate to
+  // their declared intent; the intent label alone is not evidence.
+  const sparseCards: number[] = [];
+  const layoutEvidenceMissing: number[] = [];
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const intent = String(card.intent || 'content');
+    if (intent === 'cover' || intent === 'section_divider') continue;
+    const bodyBlocks = substantiveBlockTypes(card);
+    const aggregateWords = cardAggregateText(card)
+      .replace(String(card.title || ''), '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+    if (bodyBlocks.length < 2 || aggregateWords < 8) sparseCards.push(i);
+
+    const expected = LAYOUT_EVIDENCE_BLOCKS[intent];
+    if (expected && !bodyBlocks.some((type) => expected.has(type))) {
+      layoutEvidenceMissing.push(i);
+    }
+  }
+  if (sparseCards.length > 0) {
+    pushGate({
+      id: 'qg-low-information-slides',
+      gateType: 'LOW_INFORMATION_SLIDES',
+      severity: 'error',
+      priority: 'P1',
+      message: `${sparseCards.length} slide(s) contain only a heading or a single low-information statement. Add audience-ready evidence and visual structure.`,
+      cardIndex: sparseCards[0],
+      category: 'content',
+    });
+  }
+  if (layoutEvidenceMissing.length > 0) {
+    pushGate({
+      id: 'qg-layout-evidence-missing',
+      gateType: 'LAYOUT_EVIDENCE_MISSING',
+      severity: 'error',
+      priority: 'P1',
+      message: `${layoutEvidenceMissing.length} slide(s) are missing layout-specific evidence blocks (KPI/chart/scenarios/steps/risks/actions).`,
+      cardIndex: layoutEvidenceMissing[0],
+      category: 'quality',
+    });
   }
 
   // Gate 5: Brand consistency

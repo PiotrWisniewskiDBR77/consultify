@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { __private__ } from '../../../src/components/AIChat/UnifiedChatPanel';
 
-const { firstMatchIndex, isLikelyAiFailureText, extractSlashPayload, parseChatSaveIntent } =
-  __private__;
+const {
+  firstMatchIndex,
+  isLikelyAiFailureText,
+  extractSlashPayload,
+  parseChatSaveIntent,
+  resolveWorkspaceArtifactKind,
+} = __private__;
 
 describe('UnifiedChatPanel helpers (L2)', () => {
   it('firstMatchIndex returns the earliest match across patterns', () => {
@@ -19,9 +24,7 @@ describe('UnifiedChatPanel helpers (L2)', () => {
   });
 
   it('parseChatSaveIntent handles slash commands and save phrases', () => {
-    expect(parseChatSaveIntent('/note')).toEqual(
-      expect.objectContaining({ target: 'note' })
-    );
+    expect(parseChatSaveIntent('/note')).toEqual(expect.objectContaining({ target: 'note' }));
     expect(parseChatSaveIntent('/idea Build')).toEqual(
       expect.objectContaining({ target: 'idea', cleanPrompt: 'Build' })
     );
@@ -40,6 +43,20 @@ describe('UnifiedChatPanel helpers (L2)', () => {
 
     const ideaFirst = parseChatSaveIntent('zapisz pomysl i notatke');
     expect(ideaFirst).toEqual(expect.objectContaining({ target: 'idea' }));
+  });
+
+  it('forces Deck Builder context to presentation even when the prompt contains workbook signals', () => {
+    const deckContext = {
+      type: 'presentation',
+      entityData: { artifactKind: 'deck', moduleKey: 'deckBuilder' },
+    } as any;
+    expect(resolveWorkspaceArtifactKind(deckContext)).toBe('presentation');
+    expect(
+      resolveWorkspaceArtifactKind({
+        type: 'spreadsheet',
+        entityData: { artifactKind: 'workbook' },
+      } as any)
+    ).toBe('sheet');
   });
 
   it('isLikelyAiFailureText flags empty/error strings', () => {
