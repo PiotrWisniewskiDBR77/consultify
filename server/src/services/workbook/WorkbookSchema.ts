@@ -304,6 +304,8 @@ export const SheetSchema = z.object({
   headerStyle: CellStyleSchema.optional(),
   alternateRowColor: z.string().optional(),
   showGridLines: z.boolean().optional(),
+  /** Show native Excel filter dropdowns on the header row. */
+  autoFilter: z.boolean().optional(),
   tabColor: z.string().optional(),
   /** X2 — Conditional formatting blocks (per range). */
   conditionalFormatting: z.array(ConditionalFormattingBlockSchema).optional(),

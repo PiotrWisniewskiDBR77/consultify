@@ -275,6 +275,10 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
       { type: 'insertRow', sheetIndex: 1, rowIndex: 1 },
       { type: 'insertColumn', sheetIndex: 1, colIndex: 1, key: 'scenario', header: 'Scenario' },
       { type: 'formatCells', sheetIndex: 1, rowIndexes: [0], colIndexes: [1], style: { bold: true, numberFormat: '0.0%' } },
+      { type: 'sortRows', sheetIndex: 1, colIndex: 0, direction: 'asc' },
+      { type: 'setFreeze', sheetIndex: 1, freezeRow: 1, freezeCol: 1 },
+      { type: 'setAutoFilter', sheetIndex: 1, enabled: true },
+      { type: 'setValidation', sheetIndex: 1, rowIndex: 0, colIndex: 0, validation: { type: 'list', values: ['Base', 'Upside'] } },
     ];
     for (const command of commands) {
       vi.clearAllMocks();

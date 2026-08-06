@@ -999,6 +999,12 @@ export async function buildWorkbookBuffer(
       header: col.header,
       width: col.width ?? 16,
     }));
+    if (sheetDef.autoFilter && sheetDef.columns.length > 0) {
+      ws.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: Math.max(sheetDef.rows.length + 1, 1), column: sheetDef.columns.length },
+      };
+    }
 
     // Style header row — brand navy default (crimson NEVER as a fill).
     const headerRow = ws.getRow(1);

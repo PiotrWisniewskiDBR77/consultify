@@ -29,7 +29,7 @@
  * wierszach/kolumnach wygenerowanego skoroszytu.
  */
 
-import { AlertTriangle, Bold, Check, Columns3, Copy, Loader2, Plus, Rows3, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowDownAZ, ArrowUpAZ, Bold, Check, Columns3, Copy, Filter, ListChecks, Loader2, Plus, Rows3, Snowflake, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -88,12 +88,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
   const undoStackRef = useRef<CellChange[][]>([]);
   const redoStackRef = useRef<CellChange[][]>([]);
+  const lastSchemaCommandRef = useRef<Record<string, unknown> | null>(null);
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
@@ -102,6 +104,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     setSelected(null);
     setEditingValue(null);
     setSaveState('idle');
+    setSaveError(null);
     setWorkingSheetIndex(activeSheetIndex);
     undoStackRef.current = [];
     redoStackRef.current = [];
@@ -131,6 +134,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const persistChanges = useCallback(
     async (changes: CellChange[], direction: 'after' | 'before') => {
       setSaveState('saving');
+      setSaveError(null);
       try {
         // Cell updates are versioned server-side. Keep them sequential so a
         // multi-cell paste cannot create avoidable compare-and-swap races.
@@ -147,11 +151,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           });
         }
         setSaveState('saved');
-      } catch {
+      } catch (error) {
         setSaveState('error');
+        setSaveError(error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed'));
       }
     },
-    [localSheets, workbookId, workingSheetIndex]
+    [localSheets, t, workbookId, workingSheetIndex]
   );
 
   const applyChanges = useCallback(
@@ -175,7 +180,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   );
 
   const runSchemaCommand = useCallback(async (command: Record<string, unknown>) => {
+    lastSchemaCommandRef.current = command;
     setSaveState('saving');
+    setSaveError(null);
     try {
       const result = await Api.updateWorkbookSchema(workbookId, command);
       const nextSheets = result?.schema?.sheets;
@@ -187,10 +194,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       undoStackRef.current = [];
       redoStackRef.current = [];
       setSaveState('saved');
-    } catch {
+    } catch (error) {
       setSaveState('error');
+      const message = error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+      setSaveError(message.includes('409') || /conflict/i.test(message) ? t('kimi.excele.conflict', 'This workbook changed in another session. Reload, then retry your edit.') : message);
     }
-  }, [workbookId]);
+  }, [t, workbookId]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -498,6 +507,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         <select aria-label={t('kimi.excele.numberFormat', 'Number format')} disabled={!selected} defaultValue="" onChange={(e) => { if (selected && e.target.value) void runSchemaCommand({ type: 'formatCells', sheetIndex: workingSheetIndex, rowIndexes: [selected.rowIndex], colIndexes: [selected.colIndex], style: { numberFormat: e.target.value } }); e.target.value = ''; }} className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40">
           <option value="">{t('kimi.excele.format', 'Format')}</option><option value="# ##0.00">Number</option><option value="# ##0.00 [$EUR]">EUR</option><option value="0.0%">%</option><option value="yyyy-mm-dd">Date</option>
         </select>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'sortRows', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, direction: 'asc' })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.sortAsc', 'Sort ascending')}><ArrowDownAZ size={14} /></button>
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'sortRows', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, direction: 'desc' })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.sortDesc', 'Sort descending')}><ArrowUpAZ size={14} /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'setAutoFilter', sheetIndex: workingSheetIndex, enabled: !Boolean((activeRaw as any).autoFilter) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')} aria-pressed={Boolean((activeRaw as any).autoFilter)}><Filter size={14} /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'setFreeze', sheetIndex: workingSheetIndex, freezeRow: (activeRaw as any).freezeRow ? 0 : 1, freezeCol: Number((activeRaw as any).freezeCol || 0) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')} aria-pressed={Boolean((activeRaw as any).freezeRow)}><Snowflake size={14} /></button>
+        <button type="button" disabled={!selected} onClick={() => { if (!selected) return; const raw = window.prompt(t('kimi.excele.validationPrompt', 'Allowed values, separated by commas'), 'Yes,No'); if (raw) void runSchemaCommand({ type: 'setValidation', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, colIndex: selected.colIndex, validation: { type: 'list', values: raw.split(',').map((v) => v.trim()).filter(Boolean) } }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.validation', 'Set dropdown validation')}><ListChecks size={14} /></button>
       </div>
       {/* Pasek formuły — pokazuje, co REALNIE siedzi w komórce (wartość vs
           formuła), nie wynik. To jest sedno dla właściciela — patrz nagłówek
@@ -543,7 +558,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           {saveState === 'error' && (
             <>
               <AlertTriangle size={11} className="text-c-danger" />
-              {t('kimi.excele.saveFailed', 'Błąd zapisu')}
+              <span title={saveError || undefined}>{saveError || t('kimi.excele.saveFailed', 'Błąd zapisu')}</span>
+              {lastSchemaCommandRef.current && <button type="button" onClick={() => void runSchemaCommand(lastSchemaCommandRef.current!)} className="underline font-medium">{t('kimi.excele.retry', 'Retry')}</button>}
             </>
           )}
         </span>

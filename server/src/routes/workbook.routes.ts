@@ -1937,6 +1937,41 @@ router.patch(
           }));
           break;
         }
+        case 'sortRows': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          if (!col) throw new Error('Invalid colIndex');
+          const direction = command.direction === 'desc' ? -1 : 1;
+          const scalar = (row: (typeof target.rows)[number]) => row.cells[col.key]?.value ?? '';
+          target.rows.sort((a, b) => String(scalar(a)).localeCompare(String(scalar(b)), undefined, { numeric: true }) * direction);
+          break;
+        }
+        case 'setFreeze': {
+          const target = requireSheet();
+          const freezeRow = Number(command.freezeRow ?? 0);
+          const freezeCol = Number(command.freezeCol ?? 0);
+          if (!Number.isInteger(freezeRow) || !Number.isInteger(freezeCol) || freezeRow < 0 || freezeCol < 0) throw new Error('Invalid freeze panes');
+          target.freezeRow = freezeRow;
+          target.freezeCol = freezeCol;
+          break;
+        }
+        case 'setAutoFilter': {
+          const target = requireSheet();
+          target.autoFilter = Boolean(command.enabled);
+          break;
+        }
+        case 'setValidation': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = { ...current, validation: command.validation || undefined };
+          break;
+        }
         default:
           throw new Error(`Unsupported command ${command.type}`);
       }
