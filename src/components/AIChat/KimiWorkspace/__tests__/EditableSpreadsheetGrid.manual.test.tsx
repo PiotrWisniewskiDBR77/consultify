@@ -313,6 +313,44 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     }
   );
 
+  it.each(['light', 'dark'])(
+    'uses the high-contrast %s-theme foreground for an imported fill without fontColor',
+    (theme) => {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      const importedFillSheets = [
+        {
+          ...sheets[0],
+          rows: [
+            {
+              cells: {
+                month: { value: 'ROI' },
+                plan: { value: -0.71, style: { bgColor: 'DCEFEA', bold: true } },
+                actual: { value: 80 },
+                variance: { value: -0.71 },
+              },
+            },
+          ],
+        },
+      ];
+
+      render(
+        <EditableSpreadsheetGrid
+          workbookId="wb-imported-fill"
+          sheets={importedFillSheets}
+          activeSheetIndex={0}
+        />
+      );
+
+      expect(screen.getByTestId('workbook-cell-0-plan')).toHaveStyle({
+        backgroundColor: '#DCEFEA',
+        color: 'var(--c-text)',
+        WebkitTextFillColor: 'var(--c-text)',
+        fontWeight: '700',
+      });
+      document.documentElement.classList.remove('dark');
+    }
+  );
+
   it('imports XLSX through the canonical parser endpoint and replaces the local view', async () => {
     render(<EditableSpreadsheetGrid workbookId="wb-1" sheets={sheets} activeSheetIndex={0} />);
     const file = new File(['xlsx-bytes'], 'forecast.xlsx', {

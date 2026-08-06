@@ -32,6 +32,22 @@
     width: 200px !important;
   }
 
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:hover
+    [data-testid='mels-left-rail-list'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:hover
+    [data-testid='mels-left-rail-tools'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:hover
+    [data-testid='mels-left-rail-bottom'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:focus-within
+    [data-testid='mels-left-rail-list'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:focus-within
+    [data-testid='mels-left-rail-tools'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:focus-within
+    [data-testid='mels-left-rail-bottom'] {
+    visibility: visible;
+    pointer-events: auto;
+  }
+
   .deck-builder-responsive-shell [data-testid='mels-right-rail'] {
     position: absolute;
     z-index: var(--z-overlay, 40);

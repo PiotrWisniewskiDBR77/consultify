@@ -117,9 +117,13 @@ function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').For
   const style = cell?.style as Record<string, unknown> | undefined;
   if (!style) return {};
   const borderWidth = style.border === 'thick' ? 3 : style.border === 'medium' ? 2 : style.border === 'thin' ? 1 : 0;
+  const backgroundColor = cssColor(style.bgColor);
+  const explicitFontColor = cssColor(style.fontColor);
+  const themeForeground = backgroundColor && !explicitFontColor ? 'var(--c-text)' : undefined;
   return {
-    backgroundColor: cssColor(style.bgColor),
-    color: cssColor(style.fontColor),
+    backgroundColor,
+    color: explicitFontColor ?? themeForeground,
+    WebkitTextFillColor: themeForeground,
     fontWeight: style.bold ? 700 : undefined,
     fontStyle: style.italic ? 'italic' : undefined,
     textDecoration: style.underline ? 'underline' : undefined,

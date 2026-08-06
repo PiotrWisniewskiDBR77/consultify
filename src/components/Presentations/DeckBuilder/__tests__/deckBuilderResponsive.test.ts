@@ -33,4 +33,12 @@ describe('DeckBuilder laptop-width policy', () => {
       'className="h-screen flex flex-col bg-c-surface overflow-hidden"'
     );
   });
+
+  it('restores thumbnail-list visibility and interaction when the compact rail opens', () => {
+    expect(css).toContain("[data-testid='mels-left-rail']:hover");
+    expect(css).toContain("[data-testid='mels-left-rail']:focus-within");
+    expect(css).toContain("[data-testid='mels-left-rail-list']");
+    expect(css).toContain('visibility: visible');
+    expect(css).toContain('pointer-events: auto');
+  });
 });
