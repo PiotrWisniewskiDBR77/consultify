@@ -1802,7 +1802,7 @@ router.post(
       return;
     }
     try {
-      const pack = draftSourcePack({
+      const pack = await draftSourcePack({
         organizationId,
         userId,
         name,
@@ -1985,7 +1985,7 @@ router.post(
           res.status(400).json({ error: 'unknown_connector', connector });
           return;
       }
-      const pack = addSourcePackItem({
+      const pack = await addSourcePackItem({
         organizationId,
         userId,
         packId,
@@ -2024,7 +2024,7 @@ router.delete(
       return;
     }
     try {
-      const pack = removeSourcePackItem({ organizationId, userId, packId, itemId });
+      const pack = await removeSourcePackItem({ organizationId, userId, packId, itemId });
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_item_remove_failed';
@@ -2049,7 +2049,7 @@ router.post(
       return;
     }
     try {
-      const pack = markSourcePackReady({ organizationId, userId, packId, notes });
+      const pack = await markSourcePackReady({ organizationId, userId, packId, notes });
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_ready_failed';
@@ -2074,7 +2074,7 @@ router.post(
       return;
     }
     try {
-      const pack = archiveSourcePack({ organizationId, userId, packId, reason });
+      const pack = await archiveSourcePack({ organizationId, userId, packId, reason });
       res.json({ pack });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'source_pack_archive_failed';

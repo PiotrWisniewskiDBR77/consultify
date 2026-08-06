@@ -67,8 +67,8 @@ afterEach(async () => {
 });
 
 describe('Source Pack Service — lifecycle', () => {
-  it('drafts a pack, adds two items, recomputes content length, and stays in draft', () => {
-    const pack = draftSourcePack({
+  it('drafts a pack, adds two items, recomputes content length, and stays in draft', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Discovery pack — Q3 transformation',
@@ -78,7 +78,7 @@ describe('Source Pack Service — lifecycle', () => {
     expect(pack.items).toEqual([]);
     expect(pack.totalContentLength).toBe(0);
 
-    const after1 = addSourcePackItem({
+    const after1 = await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -88,7 +88,7 @@ describe('Source Pack Service — lifecycle', () => {
     expect(after1.totalContentLength).toBe(1200);
     expect(after1.status).toBe('draft');
 
-    const after2 = addSourcePackItem({
+    const after2 = await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -106,24 +106,24 @@ describe('Source Pack Service — lifecycle', () => {
     expect(after2.totalContentLength).toBe(2000);
   });
 
-  it('promotes a non-empty pack from draft to ready and rejects empty packs', () => {
-    const empty = draftSourcePack({
+  it('promotes a non-empty pack from draft to ready and rejects empty packs', async () => {
+    const empty = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Empty pack',
       language: 'en',
     });
-    expect(() =>
+    await expect(
       markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: empty.packId })
-    ).toThrow(/source_pack_empty/);
+    ).rejects.toThrow(/source_pack_empty/);
 
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: empty.packId,
       item: makeItem(),
     });
-    const ready = markSourcePackReady({
+    const ready = await markSourcePackReady({
       organizationId: ORG_A,
       userId: USER,
       packId: empty.packId,
@@ -132,22 +132,22 @@ describe('Source Pack Service — lifecycle', () => {
     expect(ready.items).toHaveLength(1);
   });
 
-  it('reverts a ready pack to draft when an item is added or removed', () => {
-    const pack = draftSourcePack({
+  it('reverts a ready pack to draft when an item is added or removed', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    const firstItemPack = addSourcePackItem({
+    const firstItemPack = await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
 
-    const afterAdd = addSourcePackItem({
+    const afterAdd = await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -162,9 +162,9 @@ describe('Source Pack Service — lifecycle', () => {
     });
     expect(afterAdd.status).toBe('draft');
 
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
 
-    const afterRemove = removeSourcePackItem({
+    const afterRemove = await removeSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -174,20 +174,20 @@ describe('Source Pack Service — lifecycle', () => {
     expect(afterRemove.items).toHaveLength(1);
   });
 
-  it('archives a pack and refuses further mutation', () => {
-    const pack = draftSourcePack({
+  it('archives a pack and refuses further mutation', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    const archived = archiveSourcePack({
+    const archived = await archiveSourcePack({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -196,7 +196,7 @@ describe('Source Pack Service — lifecycle', () => {
     expect(archived.status).toBe('archived');
     expect(archived.archivedBy).toBe(USER);
 
-    expect(() =>
+    await expect(
       addSourcePackItem({
         organizationId: ORG_A,
         userId: USER,
@@ -206,27 +206,27 @@ describe('Source Pack Service — lifecycle', () => {
           sourceRef: { sourceType: 'doc', sourceId: 'late', sourceTitle: 'late' },
         }),
       })
-    ).toThrow(/source_pack_archived/);
-    expect(() =>
+    ).rejects.toThrow(/source_pack_archived/);
+    await expect(
       removeSourcePackItem({
         organizationId: ORG_A,
         userId: USER,
         packId: pack.packId,
         itemId: 'whatever',
       })
-    ).toThrow(/source_pack_archived/);
+    ).rejects.toThrow(/source_pack_archived/);
   });
 });
 
 describe('Source Pack Service — attach', () => {
-  it('projects a ready pack to DocumentSourceRef[] and audits the attach', () => {
-    const pack = draftSourcePack({
+  it('projects a ready pack to DocumentSourceRef[] and audits the attach', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -234,7 +234,7 @@ describe('Source Pack Service — attach', () => {
         sourceRef: { sourceType: 'transcript', sourceId: 'a', sourceTitle: 'A' },
       }),
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -243,7 +243,7 @@ describe('Source Pack Service — attach', () => {
         sourceRef: { sourceType: 'doc', sourceId: 'b', sourceTitle: 'B' },
       }),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
 
     const result = attachSourcePackToDocument({
       organizationId: ORG_A,
@@ -261,14 +261,14 @@ describe('Source Pack Service — attach', () => {
     );
   });
 
-  it('refuses to attach a draft pack', () => {
-    const pack = draftSourcePack({
+  it('refuses to attach a draft pack', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -284,21 +284,21 @@ describe('Source Pack Service — attach', () => {
     ).toThrow(/source_pack_not_ready/);
   });
 
-  it('refuses to attach an archived pack even if it was ready before', () => {
-    const pack = draftSourcePack({
+  it('refuses to attach an archived pack even if it was ready before', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
-    archiveSourcePack({
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await archiveSourcePack({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -315,8 +315,8 @@ describe('Source Pack Service — attach', () => {
 });
 
 describe('Source Pack Service — tenancy', () => {
-  it('refuses cross-tenant reads via getSourcePack', () => {
-    const pack = draftSourcePack({
+  it('refuses cross-tenant reads via getSourcePack', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Org A pack',
@@ -326,14 +326,14 @@ describe('Source Pack Service — tenancy', () => {
     expect(getSourcePack(pack.packId, ORG_B)).toBeNull();
   });
 
-  it('listSourcePacks returns only the caller tenant rows', () => {
-    draftSourcePack({
+  it('listSourcePacks returns only the caller tenant rows', async () => {
+    await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Org A',
       language: 'en',
     });
-    draftSourcePack({
+    await draftSourcePack({
       organizationId: ORG_B,
       userId: USER,
       name: 'Org B',
@@ -343,40 +343,40 @@ describe('Source Pack Service — tenancy', () => {
     expect(listSourcePacks(ORG_B).map((p) => p.name)).toEqual(['Org B']);
   });
 
-  it('listSourcePacks excludes archived packs by default and includes them when asked', () => {
-    const pack = draftSourcePack({
+  it('listSourcePacks excludes archived packs by default and includes them when asked', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    archiveSourcePack({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await archiveSourcePack({ organizationId: ORG_A, userId: USER, packId: pack.packId });
     expect(listSourcePacks(ORG_A)).toHaveLength(0);
     expect(listSourcePacks(ORG_A, { includeArchived: true })).toHaveLength(1);
   });
 });
 
 describe('Source Pack Service — audit', () => {
-  it('records pack_drafted, pack_item_added, pack_marked_ready in order', () => {
-    const pack = draftSourcePack({
+  it('records pack_drafted, pack_item_added, pack_marked_ready in order', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
     const audit = listSourcePackAuditEntries(pack.packId, ORG_A);
     expect(audit.map((e) => e.action)).toEqual([
       'pack_drafted',
@@ -385,21 +385,21 @@ describe('Source Pack Service — audit', () => {
     ]);
   });
 
-  it('records pack_archived with the previous status and reason', () => {
-    const pack = draftSourcePack({
+  it('records pack_archived with the previous status and reason', async () => {
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Pack',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
-    archiveSourcePack({
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await archiveSourcePack({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
@@ -420,19 +420,19 @@ describe('Source Pack Service — audit', () => {
 
 describe('Source Pack Service — persistence + hydration', () => {
   it('write-through to DAO survives a registry-only reset and is restored by hydration', async () => {
-    const pack = draftSourcePack({
+    const pack = await draftSourcePack({
       organizationId: ORG_A,
       userId: USER,
       name: 'Persisted',
       language: 'en',
     });
-    addSourcePackItem({
+    await addSourcePackItem({
       organizationId: ORG_A,
       userId: USER,
       packId: pack.packId,
       item: makeItem(),
     });
-    markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
+    await markSourcePackReady({ organizationId: ORG_A, userId: USER, packId: pack.packId });
 
     // Sanity check: DAO has the pack persisted via write-through.
     const persisted = await __loadSourcePackByIdForTests(pack.packId, ORG_A);

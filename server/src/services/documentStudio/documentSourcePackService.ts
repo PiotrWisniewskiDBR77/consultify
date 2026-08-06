@@ -34,8 +34,8 @@ import {
   loadSourcePackById,
   loadSourcePacksForOrg,
   markSourcePackArchivedInDao,
-  persistSourcePack,
   persistSourcePackAuditEntry,
+  persistSourcePackWithAudit,
 } from './documentSourcePackRegistryDao.js';
 import { recordSeenSourceVersion } from './documentSourceVersionRegistryService.js';
 import type {
@@ -75,6 +75,43 @@ function pushAudit(entry: SourcePackAuditEntry): void {
   current.push(entry);
   auditStore.set(key, current);
   void persistSourcePackAuditEntry(entry).catch(() => undefined);
+}
+
+function recordAuditInMemory(entry: SourcePackAuditEntry): void {
+  const key = packKey(entry.organizationId, entry.packId);
+  const current = auditStore.get(key) ?? [];
+  current.push(entry);
+  auditStore.set(key, current);
+}
+
+/**
+ * Commit one lifecycle transition: persist the new pack state and its audit
+ * entry atomically FIRST, and only then publish the transition to the
+ * in-process cache.
+ *
+ * The order is deliberate and is the fix for the persistence defect. The
+ * previous shape mutated the cache, fired two un-awaited upserts and returned
+ * synchronously, so:
+ *
+ *   - the caller was told the transition succeeded before anything reached
+ *     Postgres, and could never learn that it had not — a false success;
+ *   - consecutive transitions on the same pack raced, and an earlier upsert
+ *     landing late overwrote a later one. A pack promoted to `ready` was read
+ *     back from Postgres as `draft`.
+ *
+ * Persisting before publishing means a failed write leaves the cache holding
+ * the last state that IS in the database, rather than a phantom newer one.
+ * The lifecycle contract itself is untouched: the same validations, the same
+ * transitions, the same idempotence, the same error identifiers.
+ */
+async function commitTransition(next: SourcePack, audit: SourcePackAuditEntry): Promise<SourcePack> {
+  const result = await persistSourcePackWithAudit(next, audit);
+  if (!result.ok) {
+    throw new Error('source_pack_persist_failed');
+  }
+  registryStore.set(packKey(next.organizationId, next.packId), next);
+  recordAuditInMemory(audit);
+  return next;
 }
 
 function recomputeContentLength(items: SourcePackItem[]): number {
@@ -140,7 +177,7 @@ export interface DraftSourcePackParams {
  * `addSourcePackItem`. The pack is not usable for attach until it is
  * promoted to `ready` via `markSourcePackReady`.
  */
-export function draftSourcePack(params: DraftSourcePackParams): SourcePack {
+export async function draftSourcePack(params: DraftSourcePackParams): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   if (!params.name || params.name.trim().length === 0) {
@@ -166,10 +203,7 @@ export function draftSourcePack(params: DraftSourcePackParams): SourcePack {
     notes: params.notes?.trim() || undefined,
   };
 
-  registryStore.set(packKey(params.organizationId, pack.packId), pack);
-  void persistSourcePack(pack).catch(() => undefined);
-
-  pushAudit({
+  return commitTransition(pack, {
     auditId: makeId('source-pack-audit'),
     packId: pack.packId,
     organizationId: params.organizationId,
@@ -178,8 +212,6 @@ export function draftSourcePack(params: DraftSourcePackParams): SourcePack {
     occurredAt: now,
     details: { language: pack.language, name: pack.name },
   });
-
-  return pack;
 }
 
 export interface AddSourcePackItemParams {
@@ -204,7 +236,7 @@ export interface AddSourcePackItemParams {
  * the consultant explicitly opts back into draft semantics by calling
  * this on a ready pack and the status flips back to `draft`.
  */
-export function addSourcePackItem(params: AddSourcePackItemParams): SourcePack {
+export async function addSourcePackItem(params: AddSourcePackItemParams): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const pack = getSourcePack(params.packId, params.organizationId);
@@ -246,8 +278,20 @@ export function addSourcePackItem(params: AddSourcePackItemParams): SourcePack {
     updatedAt: now,
   };
 
-  registryStore.set(packKey(params.organizationId, pack.packId), next);
-  void persistSourcePack(next).catch(() => undefined);
+  const committed = await commitTransition(next, {
+    auditId: makeId('source-pack-audit'),
+    packId: pack.packId,
+    organizationId: params.organizationId,
+    action: 'pack_item_added',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      itemId: newItem.itemId,
+      itemType: newItem.itemType,
+      contentLength: newItem.contentLength,
+      previousStatus: pack.status,
+    },
+  });
 
   // Slice E5.6.qa.hard — when the freshly-ingested item carries a
   // `sourceVersion` on its `sourceRef`, register the observation in
@@ -272,22 +316,7 @@ export function addSourcePackItem(params: AddSourcePackItemParams): SourcePack {
     // ignore — see contract above
   }
 
-  pushAudit({
-    auditId: makeId('source-pack-audit'),
-    packId: pack.packId,
-    organizationId: params.organizationId,
-    action: 'pack_item_added',
-    actorId: params.userId,
-    occurredAt: now,
-    details: {
-      itemId: newItem.itemId,
-      itemType: newItem.itemType,
-      contentLength: newItem.contentLength,
-      previousStatus: pack.status,
-    },
-  });
-
-  return next;
+  return committed;
 }
 
 export interface RemoveSourcePackItemParams {
@@ -297,7 +326,9 @@ export interface RemoveSourcePackItemParams {
   itemId: string;
 }
 
-export function removeSourcePackItem(params: RemoveSourcePackItemParams): SourcePack {
+export async function removeSourcePackItem(
+  params: RemoveSourcePackItemParams
+): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const pack = getSourcePack(params.packId, params.organizationId);
@@ -318,10 +349,7 @@ export function removeSourcePackItem(params: RemoveSourcePackItemParams): Source
     updatedAt: now,
   };
 
-  registryStore.set(packKey(params.organizationId, pack.packId), next);
-  void persistSourcePack(next).catch(() => undefined);
-
-  pushAudit({
+  return commitTransition(next, {
     auditId: makeId('source-pack-audit'),
     packId: pack.packId,
     organizationId: params.organizationId,
@@ -330,8 +358,6 @@ export function removeSourcePackItem(params: RemoveSourcePackItemParams): Source
     occurredAt: now,
     details: { itemId: target.itemId, itemType: target.itemType },
   });
-
-  return next;
 }
 
 export interface MarkSourcePackReadyParams {
@@ -345,7 +371,9 @@ export interface MarkSourcePackReadyParams {
  * Promote a `draft` pack to `ready`. Rejects empty packs and archived
  * packs. Idempotent on already-ready packs (returns the pack unchanged).
  */
-export function markSourcePackReady(params: MarkSourcePackReadyParams): SourcePack {
+export async function markSourcePackReady(
+  params: MarkSourcePackReadyParams
+): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const pack = getSourcePack(params.packId, params.organizationId);
@@ -362,10 +390,7 @@ export function markSourcePackReady(params: MarkSourcePackReadyParams): SourcePa
     notes: params.notes?.trim() || pack.notes,
   };
 
-  registryStore.set(packKey(params.organizationId, pack.packId), next);
-  void persistSourcePack(next).catch(() => undefined);
-
-  pushAudit({
+  return commitTransition(next, {
     auditId: makeId('source-pack-audit'),
     packId: pack.packId,
     organizationId: params.organizationId,
@@ -374,8 +399,6 @@ export function markSourcePackReady(params: MarkSourcePackReadyParams): SourcePa
     occurredAt: now,
     details: { itemCount: pack.items.length, totalContentLength: pack.totalContentLength },
   });
-
-  return next;
 }
 
 export interface ArchiveSourcePackParams {
@@ -385,7 +408,7 @@ export interface ArchiveSourcePackParams {
   reason?: string;
 }
 
-export function archiveSourcePack(params: ArchiveSourcePackParams): SourcePack {
+export async function archiveSourcePack(params: ArchiveSourcePackParams): Promise<SourcePack> {
   if (!params.organizationId) throw new Error('organizationId is required');
   if (!params.userId) throw new Error('userId is required');
   const pack = getSourcePack(params.packId, params.organizationId);
@@ -401,13 +424,7 @@ export function archiveSourcePack(params: ArchiveSourcePackParams): SourcePack {
     updatedAt: now,
   };
 
-  registryStore.set(packKey(params.organizationId, pack.packId), next);
-  void persistSourcePack(next).catch(() => undefined);
-  void markSourcePackArchivedInDao(pack.packId, params.organizationId, 'archived').catch(
-    () => undefined
-  );
-
-  pushAudit({
+  await commitTransition(next, {
     auditId: makeId('source-pack-audit'),
     packId: pack.packId,
     organizationId: params.organizationId,
@@ -416,6 +433,13 @@ export function archiveSourcePack(params: ArchiveSourcePackParams): SourcePack {
     occurredAt: now,
     details: { previousStatus: pack.status, reason: params.reason },
   });
+
+  // Belt-and-braces for the scalar `status` column on rows written before the
+  // payload carried the archived status. The authoritative write is the
+  // transactional upsert above; this is a no-op on a consistent row.
+  void markSourcePackArchivedInDao(pack.packId, params.organizationId, 'archived').catch(
+    () => undefined
+  );
 
   return next;
 }
