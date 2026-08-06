@@ -212,4 +212,48 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       'Cmd/Ctrl+Z'
     );
   });
+
+  it('renders persisted rich styles, dimensions and a visible comment marker', () => {
+    const styledSheets = [
+      {
+        name: 'Styled',
+        columns: [{ key: 'note', header: 'Note', width: 24 }],
+        rows: [
+          {
+            height: 30,
+            cells: {
+              note: {
+                value: 'Reviewed',
+                comment: 'Owner reviewed',
+                style: {
+                  bold: true,
+                  italic: true,
+                  underline: true,
+                  bgColor: 'FFF2CC',
+                  fontColor: '123456',
+                  alignment: 'center',
+                  wrapText: true,
+                  border: 'thin',
+                },
+              },
+            },
+          },
+        ],
+      },
+    ];
+    render(
+      <EditableSpreadsheetGrid workbookId="wb-styled" sheets={styledSheets} activeSheetIndex={0} />
+    );
+    const cell = screen.getByTestId('workbook-cell-0-note');
+    expect(cell).toHaveStyle({
+      backgroundColor: '#FFF2CC',
+      color: '#123456',
+      fontWeight: '700',
+      fontStyle: 'italic',
+      textAlign: 'center',
+      whiteSpace: 'normal',
+      width: '192px',
+    });
+    expect(screen.getByLabelText('Has comment')).toHaveAttribute('title', 'Owner reviewed');
+  });
 });

@@ -101,6 +101,30 @@ function cloneSheets(sheets: FormulaSheet[]): FormulaSheet[] {
   return JSON.parse(JSON.stringify(sheets));
 }
 
+function cssColor(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const normalized = value.trim();
+  return normalized.startsWith('#') ? normalized : `#${normalized}`;
+}
+
+function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').FormulaCellRaw | undefined): React.CSSProperties {
+  const style = cell?.style as Record<string, unknown> | undefined;
+  if (!style) return {};
+  const borderWidth = style.border === 'thick' ? 3 : style.border === 'medium' ? 2 : style.border === 'thin' ? 1 : 0;
+  return {
+    backgroundColor: cssColor(style.bgColor),
+    color: cssColor(style.fontColor),
+    fontWeight: style.bold ? 700 : undefined,
+    fontStyle: style.italic ? 'italic' : undefined,
+    textDecoration: style.underline ? 'underline' : undefined,
+    fontSize: typeof style.fontSize === 'number' ? `${style.fontSize}px` : undefined,
+    textAlign: style.alignment === 'center' || style.alignment === 'right' ? style.alignment : style.alignment === 'left' ? 'left' : undefined,
+    whiteSpace: style.wrapText ? 'normal' : undefined,
+    overflowWrap: style.wrapText ? 'anywhere' : undefined,
+    border: borderWidth ? `${borderWidth}px solid var(--color-border-subtle, #cbd5e1)` : undefined,
+  };
+}
+
 export const EditableSpreadsheetGrid: React.FC<Props> = ({
   workbookId,
   sheets,
@@ -1280,6 +1304,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
               {columns.map((col, ci) => (
                 <th
                   key={`${col.key}-${ci}`}
+                  style={{ width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined }}
                   className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
                 >
                   {col.header || col.key}
@@ -1289,9 +1314,10 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </thead>
           <tbody>
             {visibleRows.map((row, ri) => (
-              <tr key={ri} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
+              <tr key={ri} style={{ height: typeof row.height === 'number' ? `${row.height}px` : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                 {columns.map((col, ci) => {
                   const cell: ComputedCell | undefined = row.cells[col.key];
+                  const rawCell = activeRaw.rows?.[ri]?.cells?.[col.key];
                   const isSelected = selected?.rowIndex === ri && selected?.colIndex === ci;
                   const isEditingThis = isSelected && editingValue !== null;
                   const isNegativeVariance = isNegativeVarianceCell(
@@ -1307,6 +1333,10 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                       aria-selected={selectionRange ? ri >= selectionRange.rowStart && ri <= selectionRange.rowEnd && ci >= selectionRange.colStart && ci <= selectionRange.colEnd : false}
                       aria-label={`${colIndexToLetter(ci)}${excelRowForDataRowIndex(ri)} ${formatComputedForDisplay(cell)}`}
                       data-testid={`workbook-cell-${ri}-${col.key}`}
+                      style={{
+                        width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined,
+                        ...cellPresentationStyle(rawCell),
+                      }}
                       key={`${col.key}-${ci}`}
                       onClick={(event) => {
                         if (event.shiftKey && selected) setSelectionEnd({ rowIndex: ri, colIndex: ci });
@@ -1340,7 +1370,16 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                           className="absolute inset-0 w-full h-full px-3 bg-c-surface text-c-text text-xs font-mono focus:outline-none"
                         />
                       ) : (
-                        formatComputedForDisplay(cell)
+                        <>
+                          {formatComputedForDisplay(cell)}
+                          {rawCell?.comment ? (
+                            <span
+                              aria-label={t('kimi.excele.hasComment', 'Has comment')}
+                              title={String(rawCell.comment)}
+                              className="absolute right-0 top-0 h-0 w-0 border-l-[7px] border-l-transparent border-t-[7px] border-t-c-focus"
+                            />
+                          ) : null}
+                        </>
                       )}
                     </td>
                   );

@@ -152,3 +152,31 @@ Remaining release blocker from this pass: deploy `ee5dcef0f7`, then repeat the f
 - Sequential server persistence for paste to avoid CAS races.
 - Ctrl/Cmd+Z undo and Ctrl/Cmd+Y redo with durable reverse/forward writes.
 - Interaction tests covering paste, formula recalculation, persistence, undo and raw-formula copy.
+
+## Final deployed runtime verification
+
+Verified on 2026-08-06 against DEMO build `97a42e810bc1` using the canonical workbook `550fe25b-c01f-4d32-ab20-c0324a554e07`.
+
+| Capability | Final result | Runtime evidence |
+| --- | --- | --- |
+| Workbook rename | PASS | Renamed to `Runtime QA Workbook`; title, summary and `.xlsx` filename all reflected the new name after a cold reload. |
+| Find and replace | PASS | `Alpha plan` was replaced with `Beta plan`, saved and survived reload. |
+| Row/column resize command | PASS | Width `24` and height `30` were accepted and the workbook returned `Saved`. |
+| Rich formatting commands | PASS / limited visual proof | Italic, underline, highlight fill, wrap+border and center alignment were accepted and durably saved. The compact web grid does not provide a complete visual/style inspector; exported/schema persistence is covered by automated tests. |
+| Comments | PASS / discoverability gap | Comment `Runtime QA comment` was saved and pre-populated after a cold reload. The grid still lacks an obvious comment marker. |
+| Grid accessibility | PASS | Live surface exposes `grid`, A1-addressed `gridcell` labels and selected state. |
+| Shortcut discoverability | PASS | Keyboard-help dialog lists edit, navigation, copy/paste, undo/redo, delete and Tab behavior. |
+| Filter/freeze persistence | PASS | Both toggles remained pressed after cold reload on `Runtime QA`. |
+| Sort with relative formulas | PASS | Runtime descending sort moved `40` above `20`, produced `80`/`40`, and formula-bar inspection confirmed relocated formulas `=B2*2` and `=B3*2`. |
+| Save/cold reopen | PASS | Rename, replaced value, comment, filter and freeze state survived a fresh page load. |
+
+### Exact remaining gaps
+
+- Import XLSX/CSV into an open workbook: **FAIL / not implemented**.
+- Native chart creation and editing: **FAIL / not implemented**.
+- Conditional-formatting rule authoring: **FAIL / not implemented**.
+- Row/column hide/unhide and merge/unmerge: **FAIL / not implemented**.
+- General Excel-compatible formula breadth: **FAIL / intentionally limited engine**.
+- Collaborative conflict/rebase and offline queued-save recovery: **FAIL / not exposed in UI**.
+- Visible comment indicator in the grid: **FAIL / comment is accessible only through the toolbar dialog**.
+- Download-event completion: **UNPROVEN in browser automation** although the XLSX action is present.
