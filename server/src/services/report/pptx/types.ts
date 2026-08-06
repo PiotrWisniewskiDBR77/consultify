@@ -43,6 +43,9 @@ export interface UnifiedReportMeta {
   language: 'en' | 'pl';
   brandColor?: string;
   template?: 'corporate' | 'minimal' | 'modern';
+  customTemplate?: import('../../presentationTemplateRuntimeService.js').PresentationCustomTemplateDefinition;
+  templateId?: string;
+  templateVersion?: number;
 }
 
 export interface UnifiedSlide {

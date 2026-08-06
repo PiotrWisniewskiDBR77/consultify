@@ -45,4 +45,18 @@ describe('presentationTemplateCompatibilityService', () => {
     expect(normalized.max_slides).toBe(14);
     expect(normalized.min_slides).toBe(6);
   });
+
+  it('reopens a persisted custom theme and named-layout contract', () => {
+    const customTemplate = {
+      version: 2,
+      theme: { titleFont: 'Aptos', bodyFont: 'Arial', primaryColor: '112233' },
+      layouts: { cover: { masterName: 'Client Cover' } },
+      layoutMapping: { cover: 'cover' },
+    };
+    const normalized = normalizeTemplatePayload({
+      id: 'tpl-custom',
+      layout_policy_json: JSON.stringify({ customTemplate }),
+    });
+    expect(normalized.custom_template).toEqual(customTemplate);
+  });
 });

@@ -21,6 +21,28 @@ export interface TemplateSlideRecipe {
   sourceTypes?: string[];
 }
 
+export type CustomTemplateLayoutRole = 'cover' | 'content' | 'kpi' | 'table' | 'decision';
+
+export interface PresentationCustomTemplateDefinition {
+  version: number;
+  theme: {
+    titleFont: string;
+    bodyFont: string;
+    primaryColor: string;
+    backgroundColor: string;
+    surfaceColor: string;
+    textColor: string;
+    accentColor: string;
+    logoDataUri?: string;
+  };
+  layouts: Record<string, {
+    masterName: string;
+    backgroundColor?: string;
+    accentColor?: string;
+  }>;
+  layoutMapping: Record<CustomTemplateLayoutRole, string>;
+}
+
 export interface PresentationTemplateRuntime {
   templateId?: string;
   templateFamily: TemplateFamily;
@@ -41,6 +63,7 @@ export interface PresentationTemplateRuntime {
     showPageNumbers: boolean;
     showConfidentiality: boolean;
   };
+  customTemplate?: PresentationCustomTemplateDefinition;
 }
 
 const FAMILY_BY_DECK_TYPE: Record<string, TemplateFamily> = {
@@ -256,6 +279,7 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
           : undefined,
   }));
   const recipeJson = safeJsonParse<any>(row.template_recipe_json, null);
+  const layoutPolicy = safeJsonParse<any>(row.layout_policy_json, null);
   const slideRecipes = outline.map((item) => {
     const override =
       Array.isArray(recipeJson?.slideRecipes) &&
@@ -289,6 +313,10 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
       showConfidentiality: true,
       ...(recipeJson?.headerFooter || {}),
     },
+    customTemplate:
+      layoutPolicy?.customTemplate && typeof layoutPolicy.customTemplate === 'object'
+        ? layoutPolicy.customTemplate
+        : undefined,
   };
 }
 

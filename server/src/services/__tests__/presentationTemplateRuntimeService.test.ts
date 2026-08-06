@@ -17,6 +17,21 @@ import { buildTemplateRuntimeFromRow } from '../presentationTemplateRuntimeServi
  * mapping (both camelCase and snake_case DB shapes).
  */
 describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the row mapping', () => {
+  it('carries custom template version, theme and layout mapping into generation runtime', () => {
+    const customTemplate = {
+      version: 4,
+      theme: { titleFont: 'Aptos', bodyFont: 'Arial' },
+      layouts: { decision: { masterName: 'Client Decision' } },
+      layoutMapping: { decision: 'decision' },
+    };
+    const runtime = buildTemplateRuntimeFromRow({
+      id: 'tmpl-custom',
+      outline_json: JSON.stringify([{ intent: 'next_steps', title: 'Decision' }]),
+      layout_policy_json: JSON.stringify({ customTemplate }),
+    });
+    expect(runtime?.templateId).toBe('tmpl-custom');
+    expect(runtime?.customTemplate).toEqual(customTemplate);
+  });
   it('carries dataNeeded/suggestedVisual through (camelCase)', () => {
     const row = {
       id: 'tmpl-1',

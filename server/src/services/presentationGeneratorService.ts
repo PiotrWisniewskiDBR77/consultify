@@ -1343,6 +1343,7 @@ export async function generateOutline(
               recommendedVisuals: templateRuntime.recommendedVisuals,
               sourceRequirements: templateRuntime.sourceRequirements,
               headerFooter: templateRuntime.headerFooter,
+              customTemplate: templateRuntime.customTemplate,
             }
           : null,
         templateSlotMapping,
@@ -1550,6 +1551,9 @@ export async function generateDeck(
       language: setup.language,
       brandColor,
       template: setup.theme,
+      customTemplate: templateRuntime?.customTemplate,
+      templateId: templateRuntime?.templateId,
+      templateVersion: templateRuntime?.customTemplate?.version,
     };
 
     const extraWarnings: string[] = [];
@@ -2049,6 +2053,9 @@ export async function generateDeck(
       warnings: [...warnings, ...sourcePackPreflight.warnings, ...narrativePlan.warnings],
       createdBy: 'system',
     });
+    deckDocument.meta.customTemplate = templateRuntime?.customTemplate;
+    deckDocument.meta.templateId = templateRuntime?.templateId || null;
+    deckDocument.meta.templateVersion = templateRuntime?.customTemplate?.version || null;
     deckDocument = applyBrandLayoutSystem(
       deckDocument,
       buildBrandLayoutSystem({
@@ -2069,6 +2076,7 @@ export async function generateDeck(
       brandColor,
       confidentiality: setup.confidentiality,
       skipValidation: false,
+      customTemplate: templateRuntime?.customTemplate,
     });
 
     const fs = await import('fs');

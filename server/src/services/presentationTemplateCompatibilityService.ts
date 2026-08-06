@@ -30,6 +30,7 @@ export function normalizeTemplatePayload(row: any) {
   // callers don't need to know the storage detail (mirrors how
   // `outline_json`/`must_have_intents` are already flattened from JSON text).
   template.color_template_id = template.layout_policy_json?.colorTemplateId ?? null;
+  template.custom_template = template.layout_policy_json?.customTemplate ?? null;
   template.template_family = String(
     template.template_family || template.deck_type || 'Custom Deck'
   );

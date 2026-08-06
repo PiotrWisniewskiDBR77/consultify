@@ -42,6 +42,7 @@ import { generateChatResponse } from './aiService.js';
 import {
   buildSystemTemplateRuntime,
   type PresentationTemplateRuntime,
+  type PresentationCustomTemplateDefinition,
   type TemplateFamily,
 } from './presentationTemplateRuntimeService.js';
 import type { SlideIntent } from './report/pptx/types.js';
@@ -64,6 +65,7 @@ export interface PresentationTemplateDraftInput {
   maxSlides?: number;
   minSlides?: number;
   notes?: string;
+  customTemplate?: PresentationCustomTemplateDefinition;
 }
 
 export interface PresentationTemplateOutlineItem {

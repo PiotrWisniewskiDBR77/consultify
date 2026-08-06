@@ -44,6 +44,7 @@ import {
   PRESENTATION_SLIDE_INTENTS,
   type PresentationSlideIntent,
   type PresentationTemplate,
+  type PresentationCustomTemplateDefinition,
   type PresentationTemplateDraftInput,
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
@@ -108,6 +109,20 @@ const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: stri
   { value: 'minimal', fallback: 'Minimal' },
   { value: 'modern', fallback: 'Modern' },
 ];
+
+const DEFAULT_CUSTOM_TEMPLATE: PresentationCustomTemplateDefinition = {
+  version: 1,
+  theme: {
+    titleFont: 'Inter', bodyFont: 'Inter', primaryColor: '123B5D',
+    backgroundColor: 'FFFFFF', surfaceColor: 'F3F6F8', textColor: '172B3A', accentColor: '00A67E',
+  },
+  layouts: Object.fromEntries(
+    ['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [
+      role, { masterName: `Consultify ${role}` },
+    ])
+  ),
+  layoutMapping: { cover: 'cover', content: 'content', kpi: 'kpi', table: 'table', decision: 'decision' },
+};
 
 const INTENT_FALLBACK_LABELS: Record<PresentationSlideIntent, string> = {
   cover: 'Cover',
@@ -189,6 +204,9 @@ export const PresentationTemplateArchitectView: React.FC<
   // generation time. Independent of the outline — a template can carry
   // colors, structure, or both (see `ColorPatternPicker`).
   const [editColorTemplateId, setEditColorTemplateId] = useState('');
+  const [editCustomTemplate, setEditCustomTemplate] = useState<PresentationCustomTemplateDefinition>(
+    DEFAULT_CUSTOM_TEMPLATE
+  );
   const brandKitColors = useBrandKitColors();
 
   const selectedTemplate = useMemo(
@@ -208,6 +226,7 @@ export const PresentationTemplateArchitectView: React.FC<
     setEditTheme(selectedTemplate.theme || 'corporate');
     setEditOutline(selectedTemplate.outline_json ? [...selectedTemplate.outline_json] : []);
     setEditColorTemplateId(selectedTemplate.color_template_id || '');
+    setEditCustomTemplate(selectedTemplate.custom_template || DEFAULT_CUSTOM_TEMPLATE);
   }, [selectedTemplate]);
 
   const tableColumns = useMemo<TableColumn[]>(
@@ -293,6 +312,7 @@ export const PresentationTemplateArchitectView: React.FC<
         goal,
         language,
         theme,
+        customTemplate: DEFAULT_CUSTOM_TEMPLATE,
       };
       const result = await planPresentationTemplate(input, { useLlm });
       setName('');
@@ -405,6 +425,7 @@ export const PresentationTemplateArchitectView: React.FC<
         // tell "leave unchanged" (undefined, never sent) apart from
         // "explicitly cleared" (null) once a value existed.
         colorTemplateId: editColorTemplateId || null,
+        customTemplate: editCustomTemplate,
       });
       const fresh = await getPresentationTemplate(selectedTemplate.id);
       setTemplates((prev) => prev.map((tpl) => (tpl.id === fresh.id ? fresh : tpl)));
@@ -847,6 +868,73 @@ export const PresentationTemplateArchitectView: React.FC<
                     brandKitColors={brandKitColors}
                     hideLabel
                   />
+                </div>
+              </div>
+              <div className="col-span-1 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 sm:col-span-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                  {t('presentations.templateArchitect.customMasterTheme', 'Custom PowerPoint theme and masters')}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {(['titleFont', 'bodyFont'] as const).map((key) => (
+                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                      {key}
+                      <input
+                        value={editCustomTemplate.theme[key]}
+                        disabled={!isEditable}
+                        onChange={(e) => setEditCustomTemplate((current) => ({
+                          ...current, theme: { ...current.theme, [key]: e.target.value },
+                        }))}
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                      />
+                    </label>
+                  ))}
+                  {(['primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'accentColor'] as const).map((key) => (
+                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                      {key}
+                      <input
+                        value={editCustomTemplate.theme[key]}
+                        disabled={!isEditable}
+                        onChange={(e) => setEditCustomTemplate((current) => ({
+                          ...current, theme: { ...current.theme, [key]: e.target.value.replace('#', '') },
+                        }))}
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 font-mono text-xs text-c-text"
+                      />
+                    </label>
+                  ))}
+                  <label className="col-span-2 flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                    logoDataUri (optional)
+                    <input
+                      value={editCustomTemplate.theme.logoDataUri || ''}
+                      disabled={!isEditable}
+                      onChange={(e) => setEditCustomTemplate((current) => ({
+                        ...current, theme: { ...current.theme, logoDataUri: e.target.value || undefined },
+                      }))}
+                      placeholder="data:image/png;base64,…"
+                      className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                    />
+                  </label>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
+                  {(Object.keys(editCustomTemplate.layoutMapping) as Array<keyof typeof editCustomTemplate.layoutMapping>).map((role) => {
+                    const layoutId = editCustomTemplate.layoutMapping[role];
+                    return (
+                      <label key={role} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                        {role} master
+                        <input
+                          value={editCustomTemplate.layouts[layoutId]?.masterName || ''}
+                          disabled={!isEditable}
+                          onChange={(e) => setEditCustomTemplate((current) => ({
+                            ...current,
+                            layouts: {
+                              ...current.layouts,
+                              [layoutId]: { ...current.layouts[layoutId], masterName: e.target.value },
+                            },
+                          }))}
+                          className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
+                        />
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
               <label className="col-span-1 flex flex-col gap-1 text-xs sm:col-span-2">

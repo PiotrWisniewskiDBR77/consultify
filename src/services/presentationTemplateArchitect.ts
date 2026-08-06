@@ -90,6 +90,16 @@ export interface PresentationTemplateOutlineItem {
 
 export type PresentationTemplateLifecycleState = 'draft' | 'approved' | 'deprecated';
 
+export interface PresentationCustomTemplateDefinition {
+  version: number;
+  theme: {
+    titleFont: string; bodyFont: string; primaryColor: string; backgroundColor: string;
+    surfaceColor: string; textColor: string; accentColor: string; logoDataUri?: string;
+  };
+  layouts: Record<string, { masterName: string; backgroundColor?: string; accentColor?: string }>;
+  layoutMapping: Record<'cover' | 'content' | 'kpi' | 'table' | 'decision', string>;
+}
+
 /**
  * Frontend mirror of `normalizeTemplatePayload()` — snake_case, matches
  * the raw `presentation_templates` row shape (same shape `DeckTemplateGallery`
@@ -120,6 +130,7 @@ export interface PresentationTemplate {
    * corporate/minimal/modern enum it always was.
    */
   color_template_id?: string | null;
+  custom_template?: PresentationCustomTemplateDefinition | null;
   is_system: boolean;
   is_active?: boolean;
   cloned_from: string | null;
@@ -145,6 +156,7 @@ export interface PresentationTemplateDraftInput {
   maxSlides?: number;
   minSlides?: number;
   notes?: string;
+  customTemplate?: PresentationCustomTemplateDefinition;
 }
 
 export interface PlanPresentationTemplateOptions {
@@ -166,6 +178,7 @@ export interface UpdatePresentationTemplateInput {
   maxSlides?: number;
   /** Fala 1 (2026-07-28) — see `PresentationTemplate.color_template_id`. `null` clears it. */
   colorTemplateId?: string | null;
+  customTemplate?: PresentationCustomTemplateDefinition | null;
 }
 
 // ---------------------------------------------------------------------------

@@ -1393,13 +1393,12 @@ router.post(
 
     const { template, llmRefined } = draft;
     const id = uuidv4().replace(/-/g, '');
-    // Base insert uses ONLY the migration-568 columns so template creation
-    // keeps working on installs where migration 767 (lifecycle + lineage)
-    // has not run yet. `lifecycle_state` defaults to `draft` either way
-    // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
+    // `layout_policy_json` carries the versioned custom theme/master contract.
+    // Legacy preset-only templates store `{ customTemplate: null }` and retain
+    // the corporate/minimal/modern behavior unchanged.
     const insertAck = await dbRun(
-      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, layout_policy_json, is_system, is_active, cloned_from, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
       [
         id,
         orgId,
@@ -1416,6 +1415,7 @@ router.post(
         template.minSlides,
         JSON.stringify(template.mustHaveIntents),
         JSON.stringify(template.recommendedVisuals),
+        JSON.stringify({ customTemplate: input.customTemplate || null }),
         userId,
       ]
     );
@@ -1624,8 +1624,10 @@ router.put(
       }
     }
 
-    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
-      req.body;
+    const {
+      name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId,
+      customTemplate,
+    } = req.body;
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1634,7 +1636,7 @@ router.put(
     // `colorTemplateId === undefined` means "field not sent, leave
     // untouched"; `null` or `''` means "explicitly cleared".
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined) {
+    if (colorTemplateId !== undefined || customTemplate !== undefined) {
       let currentLayoutPolicy: Record<string, unknown> = {};
       if (existing?.layout_policy_json) {
         try {
@@ -1645,7 +1647,8 @@ router.put(
       }
       layoutPolicyJson = JSON.stringify({
         ...currentLayoutPolicy,
-        colorTemplateId: colorTemplateId || null,
+        ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
+        ...(customTemplate !== undefined ? { customTemplate: customTemplate || null } : {}),
       });
     }
 

@@ -107,6 +107,9 @@ export interface DeckDocument {
     theme?: string | null;
     presentationMode?: string | null;
     communicationRegister?: string | null;
+    customTemplate?: import('./presentationTemplateRuntimeService.js').PresentationCustomTemplateDefinition;
+    templateId?: string | null;
+    templateVersion?: number | null;
   };
   lifecycle: {
     status: DeckStatus;
@@ -932,6 +935,9 @@ export function deckDocumentToUnifiedJson(deck: DeckDocument): UnifiedReportJSON
       (deck.meta?.confidentiality as UnifiedReportMeta['confidentiality']) || 'internal',
     language: (deck.meta?.language as UnifiedReportMeta['language']) || 'en',
     template: (deck.meta?.theme as UnifiedReportMeta['template']) || 'corporate',
+    customTemplate: deck.meta?.customTemplate,
+    templateId: deck.meta?.templateId || undefined,
+    templateVersion: deck.meta?.templateVersion || undefined,
   };
 
   const slides: UnifiedSlide[] = [...deck.cards]

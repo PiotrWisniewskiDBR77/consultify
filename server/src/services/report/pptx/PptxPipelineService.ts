@@ -11,6 +11,10 @@
 import { createRequire } from 'module';
 
 import logger from '../../../utils/Logger.js';
+import type {
+  CustomTemplateLayoutRole,
+  PresentationCustomTemplateDefinition,
+} from '../../presentationTemplateRuntimeService.js';
 import { buildLayoutTruncationMarker } from './composites/LayoutTruncationMarker.js';
 import { getDesignTokens } from './designTokens.js';
 import { resolveLayout, resolveLayoutContext } from './layouts/index.js';
@@ -62,6 +66,69 @@ function defineMasterSlides(pptx: any, tokens: DesignTokens): void {
   });
 }
 
+function normalizeMasterName(value: string): string {
+  return `CUSTOM_${value.replace(/[^A-Za-z0-9_]/g, '_').toUpperCase()}`;
+}
+
+export function customLayoutRoleForIntent(intent: string): CustomTemplateLayoutRole {
+  if (intent === 'cover') return 'cover';
+  if (intent === 'performance_overview') return 'kpi';
+  if (intent === 'risk_management' || intent === 'appendix') return 'table';
+  if (intent === 'next_steps' || intent === 'recommendation_single') return 'decision';
+  return 'content';
+}
+
+function applyCustomThemeTokens(
+  tokens: DesignTokens,
+  customTemplate?: PresentationCustomTemplateDefinition
+): DesignTokens {
+  if (!customTemplate?.theme) return tokens;
+  const theme = customTemplate.theme;
+  const clean = (color: string | undefined, fallback: string) =>
+    typeof color === 'string' && /^[#]?[0-9A-Fa-f]{6}$/.test(color)
+      ? color.replace('#', '').toUpperCase()
+      : fallback;
+  return {
+    ...tokens,
+    fonts: {
+      ...tokens.fonts,
+      title: theme.titleFont || tokens.fonts.title,
+      body: theme.bodyFont || tokens.fonts.body,
+    },
+    colors: {
+      ...tokens.colors,
+      primary: clean(theme.primaryColor, tokens.colors.primary),
+      background: clean(theme.backgroundColor, tokens.colors.background),
+      surface: clean(theme.surfaceColor, tokens.colors.surface),
+      textPrimary: clean(theme.textColor, tokens.colors.textPrimary),
+      accent: clean(theme.accentColor, tokens.colors.accent),
+    },
+  };
+}
+
+function defineCustomMasterSlides(
+  pptx: any,
+  tokens: DesignTokens,
+  customTemplate?: PresentationCustomTemplateDefinition
+): Map<string, string> {
+  const masters = new Map<string, string>();
+  if (!customTemplate?.theme || !customTemplate.layouts || !customTemplate.layoutMapping) return masters;
+  for (const [layoutId, definition] of Object.entries(customTemplate.layouts || {})) {
+    const masterName = normalizeMasterName(definition.masterName || layoutId);
+    const backgroundColor = (definition.backgroundColor || tokens.colors.background).replace('#', '');
+    const accentColor = (definition.accentColor || tokens.colors.accent).replace('#', '');
+    const objects: any[] = [
+      { rect: { x: 0, y: 0, w: 0.12, h: '100%', fill: { color: accentColor }, line: { color: accentColor } } },
+    ];
+    if (/^data:image\/(?:png|jpeg);base64,/i.test(customTemplate.theme.logoDataUri || '')) {
+      objects.push({ image: { data: customTemplate.theme.logoDataUri, x: 8.35, y: 0.2, w: 1.15, h: 0.45 } });
+    }
+    pptx.defineSlideMaster({ title: masterName, background: { color: backgroundColor }, objects });
+    masters.set(layoutId, masterName);
+  }
+  return masters;
+}
+
 // ============================================================
 // PIPELINE SERVICE
 // ============================================================
@@ -72,7 +139,9 @@ export interface PipelineOptions {
   brandColor?: string;
   confidentiality?: 'confidential' | 'internal' | 'public';
   addCover?: boolean;
+  addClosingSlide?: boolean;
   skipValidation?: boolean;
+  customTemplate?: PresentationCustomTemplateDefinition;
 }
 
 export interface PipelineResult {
@@ -99,9 +168,12 @@ export class PptxPipelineService {
     );
 
     // 1. Get design tokens
-    const tokens = getDesignTokens(
-      options.template ?? report.meta.template ?? 'corporate',
-      options.brandColor ?? report.meta.brandColor
+    const tokens = applyCustomThemeTokens(
+      getDesignTokens(
+        options.template ?? report.meta.template ?? 'corporate',
+        options.brandColor ?? report.meta.brandColor
+      ),
+      options.customTemplate ?? report.meta.customTemplate
     );
 
     // 2. Validate (quality gates)
@@ -132,6 +204,8 @@ export class PptxPipelineService {
 
     // 4. Define master slides
     defineMasterSlides(pptx, tokens);
+    const activeCustomTemplate = options.customTemplate ?? report.meta.customTemplate;
+    const customMasters = defineCustomMasterSlides(pptx, tokens, activeCustomTemplate);
 
     // 5. Render each slide through the pipeline
     let renderedCount = 0;
@@ -153,7 +227,11 @@ export class PptxPipelineService {
         const layoutResult: LayoutResult = layoutFn(slideData, report.meta, tokens, layoutCtx);
 
         // Create pptxgenjs slide with the correct master
-        const slide = pptx.addSlide({ masterName: layoutResult.masterName });
+        const customRole = customLayoutRoleForIntent(slideData.intent);
+        const customLayoutId = activeCustomTemplate?.layoutMapping?.[customRole];
+        const masterName =
+          (customLayoutId && customMasters.get(customLayoutId)) || layoutResult.masterName;
+        const slide = pptx.addSlide({ masterName });
 
         // Apply any slide-level options
         if (layoutResult.slideOptions) {
@@ -204,8 +282,10 @@ export class PptxPipelineService {
     }
 
     // 6. Add closing slide
-    this.addClosingSlide(pptx, report.meta, tokens);
-    renderedCount++;
+    if (options.addClosingSlide !== false) {
+      this.addClosingSlide(pptx, report.meta, tokens);
+      renderedCount++;
+    }
 
     // 7. Generate buffer
     const buffer = await pptx.write({ outputType: 'nodebuffer' });

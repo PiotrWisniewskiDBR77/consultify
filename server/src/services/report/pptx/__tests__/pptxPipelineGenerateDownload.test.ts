@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import JSZip from 'jszip';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -115,6 +116,42 @@ describe('Generate -> PPTX download happy path', () => {
     expect(onDisk.length).toBe(result.buffer.length);
     // The served file is still a valid .pptx package.
     expect(onDisk.subarray(0, 4).equals(ZIP_SIGNATURE)).toBe(true);
+  });
+
+  it('renders an 8-slide second deck through persisted custom named masters', async () => {
+    const base = buildUnifiedReport();
+    const slides: any[] = [
+      base.slides[0], base.slides[1],
+      { intent: 'performance_overview', key_message: 'KPIs are improving', content: { type: 'performance_overview', kpis: [{ name: 'Adoption', value: '72%', status: 'good' }] } },
+      { intent: 'key_messages', key_message: 'Delivery remains focused', content: { type: 'key_messages', messages: [{ title: 'Focus', description: 'Three workstreams remain on plan.' }] } },
+      { intent: 'roadmap', key_message: 'Three waves sequence delivery', content: { type: 'roadmap', phases: [{ label: 'Wave 1', timeframe: 'Q3', items: ['Foundation'] }] } },
+      { intent: 'risk_management', key_message: 'Two risks require active mitigation', content: { type: 'risk_management', risks: [{ risk: 'Dependency', likelihood: 'medium', impact: 'high', mitigation: 'Sequence rollout', owner: 'COO' }] } },
+      { intent: 'next_steps', key_message: 'One decision is required', content: { type: 'next_steps', actions: [{ action: 'Approve wave two', owner: 'SteerCo', deadline: '2026-09-01' }], closing_message: 'Approve wave two' } },
+      { intent: 'appendix', key_message: 'Sources and assumptions', content: { type: 'appendix', title: 'Sources', body: 'Portfolio status pack, 2026-08-06' } },
+    ];
+    const customTemplate: any = {
+      version: 3,
+      theme: { titleFont: 'Aptos Display', bodyFont: 'Aptos', primaryColor: '19324D', backgroundColor: 'FFFDF8', surfaceColor: 'EEF2F5', textColor: '152536', accentColor: 'E06C47' },
+      layouts: Object.fromEntries(['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [role, { masterName: `SteerCo ${role}` }])),
+      layoutMapping: { cover: 'cover', content: 'content', kpi: 'kpi', table: 'table', decision: 'decision' },
+    };
+    const result = await new PptxPipelineService().generateFromUnifiedJson(
+      { ...base, meta: { ...base.meta, customTemplate, templateId: 'tpl-steerco', templateVersion: 3 }, slides },
+      { customTemplate, addClosingSlide: false } as any
+    );
+    expect(result.slideCount).toBe(8);
+    expect(result.warnings.filter((w) => w.includes('render failed'))).toEqual([]);
+
+    const zip = await JSZip.loadAsync(result.buffer);
+    const masterXml = await Promise.all(
+      Object.values(zip.files)
+        .filter((entry) => /^ppt\/(?:slideMasters|slideLayouts)\/.*\.xml$/.test(entry.name))
+        .map((entry) => entry.async('string'))
+    );
+    const allMasters = masterXml.join('\n');
+    for (const role of ['COVER', 'CONTENT', 'KPI', 'TABLE', 'DECISION']) {
+      expect(allMasters).toContain(`CUSTOM_STEERCO_${role}`);
+    }
   });
 
   it('fails closed and preserves the old file when a stale deck cannot be regenerated', async () => {
