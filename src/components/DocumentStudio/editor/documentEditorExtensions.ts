@@ -30,6 +30,7 @@ import StarterKit from '@tiptap/starter-kit';
 
 import { CalloutNode } from '@/components/MyWork/notebook/extensions';
 
+import { CollapsedSectionsExtension } from './collapsedSectionsExtension';
 import { ChartNode } from './nodes/ChartNode';
 import { DocImageNode } from './nodes/DocImageNode';
 import { DocSectionNode } from './nodes/DocSectionNode';
@@ -103,6 +104,7 @@ export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[
     Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     DocumentBlockIdentity,
+    CollapsedSectionsExtension,
     Table.configure({ resizable: true }),
     TableRow,
     TableHeader,
