@@ -46,7 +46,10 @@ export const DocSectionEditor: React.FC<{
 }> = ({ section, onChange }) => {
   if (!section)
     return (
-      <EmptyCenter icon={<FileText className="w-12 h-12" />} text="Wybierz sekcję z lewej listy." />
+      <EmptyCenter
+        icon={<FileText className="h-6 w-6" aria-hidden />}
+        text="Wybierz sekcję z lewej listy."
+      />
     );
   const blockOpts = (Object.keys(DOC_BLOCK_LABELS) as DocBlockKind[]).map((k) => ({
     value: k,
@@ -60,7 +63,7 @@ export const DocSectionEditor: React.FC<{
     <div className={CENTER_WRAP} data-testid="doc-section-editor">
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
-          <FileText className="w-4 h-4" />
+          <FileText className="w-4 h-4" aria-hidden />
           Sekcja dokumentu
         </div>
         <Field label="Tytuł sekcji">
@@ -118,7 +121,7 @@ export const DeckSlideEditor: React.FC<{
   if (!slide)
     return (
       <EmptyCenter
-        icon={<LayoutTemplate className="w-12 h-12" />}
+        icon={<LayoutTemplate className="h-6 w-6" aria-hidden />}
         text="Wybierz slajd z lewej listy."
       />
     );
@@ -130,7 +133,7 @@ export const DeckSlideEditor: React.FC<{
     <div className={CENTER_WRAP} data-testid="deck-slide-editor">
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
-          <LayoutTemplate className="w-4 h-4" />
+          <LayoutTemplate className="w-4 h-4" aria-hidden />
           Slajd prezentacji
         </div>
         {/* Podgląd archetypu — schematyczny układ slajdu. */}
@@ -236,7 +239,10 @@ export const WorkbookSheetEditor: React.FC<{
 }> = ({ sheet, onChange }) => {
   if (!sheet)
     return (
-      <EmptyCenter icon={<Table2 className="w-12 h-12" />} text="Wybierz arkusz z lewej listy." />
+      <EmptyCenter
+        icon={<Table2 className="h-6 w-6" aria-hidden />}
+        text="Wybierz arkusz z lewej listy."
+      />
     );
   const typeOpts = (Object.keys(SHEET_COLUMN_TYPE_LABELS) as SheetColumnType[]).map((k) => ({
     value: k,
@@ -257,7 +263,7 @@ export const WorkbookSheetEditor: React.FC<{
     <div className={CENTER_WRAP} data-testid="workbook-sheet-editor">
       <div className={CARD}>
         <div className="flex items-center gap-2 text-c-text-muted text-xs font-semibold uppercase tracking-wide">
-          <Table2 className="w-4 h-4" />
+          <Table2 className="w-4 h-4" aria-hidden />
           Arkusz skoroszytu
         </div>
         <Field label="Nazwa arkusza">
@@ -284,7 +290,7 @@ export const WorkbookSheetEditor: React.FC<{
                 }
                 className="rounded p-1 text-c-text-muted hover:text-c-danger disabled:opacity-30"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden />
               </button>
             </div>
             <Field label="Nazwa kolumny">
@@ -385,7 +391,7 @@ export const WorkbookSheetEditor: React.FC<{
           onClick={() => onChange({ ...sheet, columns: [...sheet.columns, newSheetColumn()] })}
           className="inline-flex items-center gap-2 rounded-lg border border-c-border px-3 py-2 text-sm font-medium text-c-text hover:bg-c-surface-raised"
         >
-          <Plus className="h-4 w-4" /> Dodaj kolumnę
+          <Plus className="h-4 w-4" aria-hidden /> Dodaj kolumnę
         </button>
       </div>
     </div>

@@ -10,6 +10,7 @@ Scope: Document Studio (Word), Workbook Studio (Excel), Deck Builder (PowerPoint
 | Emoji in product chrome            | Pass      | No Unicode pictograph remains in scoped source. The automated ratchet rejects it.                                                                          |
 | Legacy raster / clip-art in chrome | Pass      | No literal PNG/JPG/GIF/WebP asset reference in scoped product chrome. User-authored images and actual material images remain supported.                    |
 | Template identity                  | Pass      | Template launcher now resolves the three template identities through the canonical registry.                                                               |
+| Builder rails and empty states     | Pass      | Structure actions have named 36 px targets and tooltips; empty states use restrained 24 px semantic Lucide anchors.                                        |
 | Misleading thumbnails              | Follow-up | Must be verified against every generated template during the manual runtime acceptance; static code cannot establish truthfulness of a generated preview.  |
 | Empty/loading/error                | Follow-up | The shared standard is established. Each live empty/loading/error state requires screenshot verification in the final cross-tool runtime sweep.            |
 
