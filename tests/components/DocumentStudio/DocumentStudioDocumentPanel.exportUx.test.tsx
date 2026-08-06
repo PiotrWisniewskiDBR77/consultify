@@ -169,7 +169,9 @@ function renderPanel(onSchemaUpdated: (schema: DocumentSchema) => void = () => u
 }
 
 function exportButton(label: 'Markdown' | 'DOCX' | 'PDF'): HTMLButtonElement {
-  return screen.getByRole('button', { name: new RegExp(`^${label}$`) }) as HTMLButtonElement;
+  return screen.getByRole('button', {
+    name: new RegExp(`^(?:Download )?${label}$`),
+  }) as HTMLButtonElement;
 }
 
 const SUCCESS_PAYLOAD = {

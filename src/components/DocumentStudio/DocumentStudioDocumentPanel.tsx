@@ -2798,10 +2798,14 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'run',
         label: exporting
           ? t('documentStudio.panel.chipExporting', 'Exporting')
-          : t('documentStudio.panel.chipExportDocx', 'Export DOCX'),
+          : t('documentStudio.panel.chipExportDocx', 'Download DOCX'),
         icon: Download,
         disabled: exporting !== null,
         onClick: () => void handleExport('docx'),
+        tooltip: t(
+          'documentStudio.panel.chipExportDocxTooltip',
+          'Download this document as a Word DOCX file. PDF and Markdown downloads are available above the editor.'
+        ),
       },
     ],
     [
@@ -3309,7 +3313,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
-                Markdown
+                Download Markdown
               </span>
             </Button>
             <Button
@@ -3325,7 +3329,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
-                DOCX
+                Download DOCX
               </span>
             </Button>
             <Button
@@ -3341,7 +3345,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
-                PDF
+                Download PDF
               </span>
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={onStartOver}>
