@@ -340,6 +340,27 @@ describe('audit-programs generate-surveys fan-out', () => {
     expect(res.body.created).toBe(1);
   });
 
+  it('normalizes persisted membership status when validating assignees', async () => {
+    mockDbGet
+      .mockResolvedValueOnce(baseRow())
+      .mockResolvedValueOnce(baseRow())
+      .mockResolvedValueOnce(updatedRow());
+    mockDbAll
+      .mockResolvedValueOnce([{ user_id: OWN_ASSIGNEE }])
+      .mockResolvedValueOnce([{ id: TMPL_ID }]);
+
+    const app = await makeApp(ORG_A);
+    const res = await request(app).post(`/api/audit/programs/${PROG_ID}/generate-surveys`);
+
+    expect(res.status).toBe(200);
+    expect(mockDbAll).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining("LOWER(status) = 'active'"),
+      [ORG_A, OWN_ASSIGNEE],
+      { fallback: true }
+    );
+  });
+
   it('SEC-3: filters foreign assignees — does not create assignment for non-members', async () => {
     const rowWithForeign = baseRow({
       config: JSON.stringify({

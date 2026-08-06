@@ -434,7 +434,7 @@ export async function generateSurveys(
   // to prevent cross-org injection via PATCH config.assigneeIds=[<foreign user>].
   const validatedRows = rawAssigneeIds.length
     ? await dbAll<{ user_id: string }>(
-        `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id IN (${rawAssigneeIds.map(() => '?').join(',')}) AND status = 'active'`,
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND user_id IN (${rawAssigneeIds.map(() => '?').join(',')}) AND LOWER(status) = 'active'`,
         [organizationId, ...rawAssigneeIds],
         { fallback: true }
       )
