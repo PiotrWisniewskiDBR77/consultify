@@ -527,31 +527,81 @@ function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: st
 // updated more recently than the exported file was written, then persist the refreshed
 // file + `exported_at` so subsequent downloads (and the bundle/ZIP export, which reuses
 // this same export_path) see the same up-to-date artifact.
-async function regeneratePptxIfStale(deck: any): Promise<any> {
-  try {
-    if (!deck?.export_path) return deck;
-    const exportPath = String(deck.export_path);
-    const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
-    if (!deckUpdatedAt || Number.isNaN(deckUpdatedAt)) return deck;
+export class CurrentPptxExportError extends Error {
+  readonly code = 'PPTX_CURRENT_RENDER_FAILED';
 
-    let fileMtimeMs = 0;
+  constructor(message: string, readonly cause?: unknown) {
+    super(message);
+    this.name = 'CurrentPptxExportError';
+  }
+}
+
+interface CurrentPptxExportDependencies {
+  generate: (unifiedJson: any, options: any) => Promise<{
+    buffer: Buffer;
+    slideCount: number;
+    warnings: string[];
+  }>;
+  persist: (params: {
+    deckId: string;
+    organizationId: string;
+    exportPath: string;
+    slideCount: number;
+    exportedAt: string;
+  }) => Promise<void>;
+}
+
+/** Ensure the downloadable bytes represent the current persisted deck version. */
+export async function ensureCurrentPptxExport(
+  deck: any,
+  dependencies?: Partial<CurrentPptxExportDependencies>
+): Promise<any> {
+  const exportPath = deck?.export_path
+    ? String(deck.export_path)
+    : path.join(exportsDir('presentations'), `${String(deck?.id || 'presentation')}.pptx`);
+  const generate =
+    dependencies?.generate ??
+    (async (unifiedJson: any, options: any) => {
+      const pipeline = new PptxPipelineService();
+      return pipeline.generateFromUnifiedJson(unifiedJson, options);
+    });
+  const persist =
+    dependencies?.persist ??
+    (async (params) => {
+      await dbRun(
+        `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', slide_count = ?, exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+        [
+          params.exportPath,
+          params.slideCount,
+          params.exportedAt,
+          params.deckId,
+          params.organizationId,
+        ]
+      );
+    });
+
+  try {
+    const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
+    let fileMtimeMs: number | null = null;
     try {
       fileMtimeMs = fs.statSync(exportPath).mtimeMs;
     } catch {
-      // Missing file is handled by the existing fs.existsSync() check downstream.
-      return deck;
+      fileMtimeMs = null;
     }
 
     // Small tolerance to avoid re-render churn from clock/rounding skew between the
     // DB timestamp and the filesystem mtime for a file we just wrote ourselves.
     const STALE_TOLERANCE_MS = 2000;
-    if (deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS) return deck;
+    const hasReliableTimestamp = deckUpdatedAt > 0 && !Number.isNaN(deckUpdatedAt);
+    const isCurrent =
+      fileMtimeMs !== null &&
+      hasReliableTimestamp &&
+      deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS;
+    if (isCurrent) return { ...deck, export_path: exportPath };
 
     const deckDocument = normalizeDeckDocument(deck);
     if (!deckDocument || !Array.isArray(deckDocument.cards) || deckDocument.cards.length === 0) {
-      // Nothing renderable — leave the stale-but-existing file in place rather than
-      // failing the download outright.
-      return deck;
+      throw new CurrentPptxExportError('The current deck has no renderable slides.');
     }
 
     // Fix 2026-07-14 (dowód _DOWOD_DECK_PPTX_2026-07-14.md): re-rendering from the
@@ -568,48 +618,62 @@ async function regeneratePptxIfStale(deck: any): Promise<any> {
       baseUnified = null; // legacy/corrupt unified_json → coerced-flatten fallback
     }
     const unifiedJson = deckDocumentToRenderableUnifiedJson(deckDocument, baseUnified);
-    const pipeline = new PptxPipelineService();
-    // Validation is intentionally ON (skipValidation removed): the only
-    // error-severity rules (missing intent/key_message/content, nameless
-    // initiatives, empty deck) are integrity failures that would render broken
-    // anyway. A validation throw lands in the catch below → the download keeps
-    // serving the last-known-good file instead of a broken re-render.
-    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
+    // Validation is intentionally ON: integrity failures must block download;
+    // serving last-known-good bytes here would misrepresent the saved deck.
+    const result = await generate(unifiedJson, {
       template: (deckDocument.meta?.theme as any) || undefined,
       language: (deckDocument.meta?.language as any) || undefined,
       confidentiality: (deckDocument.meta?.confidentiality as any) || undefined,
+      addClosingSlide: false,
     });
 
     // Render-integrity gate: never overwrite a good export with a deck that
-    // contains fallback "Render Error" slides — serve the previous file instead.
+    // contains fallback "Render Error" slides, and never serve it as current.
     const renderFailures = result.warnings.filter((warning) => warning.includes('render failed'));
     if (renderFailures.length > 0) {
-      logger.error('[Presentations] Stale-regen produced error slides; keeping previous export', {
-        deckId: deck.id,
-        renderFailures,
-      });
-      return deck;
+      throw new CurrentPptxExportError(
+        `The current deck could not be rendered cleanly: ${renderFailures.join('; ')}`
+      );
     }
 
-    fs.writeFileSync(exportPath, result.buffer);
+    fs.mkdirSync(path.dirname(exportPath), { recursive: true });
+    const temporaryPath = `${exportPath}.tmp-${uuidv4()}`;
+    try {
+      fs.writeFileSync(temporaryPath, result.buffer);
+      fs.renameSync(temporaryPath, exportPath);
+    } finally {
+      if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
+    }
     const exportedAtIso = new Date().toISOString();
-    await dbRun(
-      `UPDATE presentation_decks SET slide_count = ?, exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
-      [result.slideCount, exportedAtIso, deck.id, deck.organization_id]
-    );
+    await persist({
+      deckId: String(deck.id),
+      organizationId: String(deck.organization_id),
+      exportPath,
+      slideCount: result.slideCount,
+      exportedAt: exportedAtIso,
+    });
     logger.info('[Presentations] Re-rendered stale PPTX export before download', {
       deckId: deck.id,
       slideCount: result.slideCount,
     });
 
-    return { ...deck, exported_at: exportedAtIso, slide_count: result.slideCount };
+    return {
+      ...deck,
+      export_path: exportPath,
+      export_format: 'pptx',
+      exported_at: exportedAtIso,
+      slide_count: result.slideCount,
+    };
   } catch (error) {
-    // Regeneration failure must never block the download of the last-known-good file.
-    logger.warn('[Presentations] PPTX re-render before download failed; serving existing file', {
+    logger.warn('[Presentations] Current PPTX render failed; download blocked', {
       deckId: deck?.id,
       error: (error as any)?.message || error,
     });
-    return deck;
+    if (error instanceof CurrentPptxExportError) throw error;
+    throw new CurrentPptxExportError(
+      `The current presentation could not be rendered: ${(error as any)?.message || 'unknown error'}`,
+      error
+    );
   }
 }
 
@@ -2486,8 +2550,7 @@ router.get(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
-    if (!deck || !deck.export_path)
-      return res.status(404).json({ success: false, error: 'Export not available' });
+    if (!deck) return res.status(404).json({ success: false, error: 'Export not available' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
     const quality = await enforceQualityGateForExport({
@@ -2521,13 +2584,29 @@ router.get(
       return res.status(quality.status ?? 422).json(quality.payload);
     }
 
-    if (!fs.existsSync(deck.export_path))
-      return res.status(404).json({ success: false, error: 'File not found' });
-
-    // P0 fix: deck_json can have been edited (autosave / agent-edit) after the on-disk
-    // PPTX was last rendered. Re-render from the current deck_json when stale so the
-    // download reflects the latest edits instead of the file from creation time.
-    const freshDeck = await regeneratePptxIfStale(deck);
+    let freshDeck: any;
+    try {
+      freshDeck = await ensureCurrentPptxExport(deck);
+    } catch (error) {
+      const message =
+        error instanceof CurrentPptxExportError
+          ? error.message
+          : 'The current presentation could not be rendered.';
+      await recordPresentationExportRecord({
+        organizationId: orgId,
+        userId,
+        deckId: String(req.params.id || ''),
+        format: 'pptx',
+        status: 'failed',
+        qualityReport: quality.report,
+        errorCategory: 'current_render_failed',
+      });
+      return res.status(422).json({
+        success: false,
+        error: message,
+        code: 'PPTX_CURRENT_RENDER_FAILED',
+      });
+    }
 
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
@@ -2548,7 +2627,7 @@ router.get(
         format: 'pptx',
         status: 'completed',
         qualityReport: quality.report,
-        filePath: deck.export_path,
+        filePath: freshDeck.export_path,
       });
       // Response not yet sent — safe to fail-closed on a genuine double
       // failure. Retry-safety: re-running this export has no persisted side
@@ -2584,7 +2663,7 @@ router.get(
         entityId: String(req.params.id || ''),
         actionUrl: `/presentations/builder/${req.params.id}`,
       }).catch(() => null);
-      res.sendFile(path.resolve(deck.export_path));
+      res.sendFile(path.resolve(freshDeck.export_path));
     } catch (exportErr: any) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
