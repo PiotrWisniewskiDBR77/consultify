@@ -44,6 +44,7 @@ import {
   rawCellToEditText,
   recalcWorkbook,
 } from '@/utils/workbookFormulaEngine';
+import { isNegativeVarianceCell } from '@/utils/workbookGridPreview';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -428,6 +429,11 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                   const cell: ComputedCell | undefined = row.cells[col.key];
                   const isSelected = selected?.rowIndex === ri && selected?.colIndex === ci;
                   const isEditingThis = isSelected && editingValue !== null;
+                  const isNegativeVariance = isNegativeVarianceCell(
+                    activeRaw.name || '',
+                    col.header || col.key,
+                    cell?.computed
+                  );
                   return (
                     <td
                       data-testid={`workbook-cell-${ri}-${col.key}`}
@@ -443,7 +449,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                       }}
                       onDoubleClick={() => startEditing(ri, ci)}
                       className={`relative px-3 py-1.5 whitespace-nowrap max-w-[220px] truncate cursor-cell ${
-                        cell?.error
+                        isNegativeVariance
+                          ? 'bg-c-danger/10 text-c-danger font-semibold'
+                          : cell?.error
                           ? 'text-c-danger font-mono'
                           : cell?.isFormula
                             ? 'font-mono text-c-text-secondary'
