@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 
 import { LLMController } from '../controllers/ai/LLMController.js';
 import { verifyAdmin } from '../middleware/admin.middleware.js';
@@ -29,6 +30,50 @@ const router = Router();
 function getAuditActor(req: any): string {
   return String(req?.user?.id || req?.userId || req?.auth?.userId || 'system');
 }
+
+/**
+ * Cross-tenant guard for the `/org/:organizationId/*` family.
+ *
+ * `verifyToken` proves who the caller is; it does not prove the caller belongs
+ * to the organization named in the path. Without this check, any authenticated
+ * user could read another organization's AI configuration by editing the URL,
+ * because `req.params.organizationId` is passed straight into the queries below.
+ *
+ * Super admins are exempt, which matches how the write routes in this file are
+ * already gated (`verifySuperAdmin`).
+ */
+const requireSameOrganization = (req: Request, res: Response, next: NextFunction): void => {
+  const user = (
+    req as Request & {
+      user?: { organizationId?: string; organization_id?: string; isSuperAdmin?: boolean };
+      organizationId?: string;
+    }
+  ).user;
+
+  if (user?.isSuperAdmin === true) {
+    next();
+    return;
+  }
+
+  const callerOrg = String(
+    user?.organizationId ||
+      user?.organization_id ||
+      (req as Request & { organizationId?: string }).organizationId ||
+      ''
+  ).trim();
+  const requestedOrg = String(req.params.organizationId || '').trim();
+
+  if (!callerOrg || !requestedOrg || callerOrg !== requestedOrg) {
+    res.status(403).json({
+      success: false,
+      error: 'Organization access denied',
+      code: 'ORG_SCOPE_MISMATCH',
+    });
+    return;
+  }
+
+  next();
+};
 
 // ---------------------------------------------------------------------------
 // Enterprise schema bootstrap (safe in DB_MANAGED_SCHEMA=off environments)
@@ -541,6 +586,8 @@ router.post(
  */
 router.get(
   '/org/:organizationId/available-models',
+  verifyToken,
+  requireSameOrganization,
   asyncHandler(async (req, res) => {
     const organizationId = String(req.params.organizationId || '');
     if (!organizationId) return res.status(400).json({ error: 'organizationId is required' });
@@ -1673,6 +1720,7 @@ router.post(
 router.get(
   '/org/:organizationId/policy',
   verifyToken,
+  requireSameOrganization,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const organizationId = String(req.params.organizationId || '').trim();
@@ -1766,6 +1814,7 @@ router.put(
 router.get(
   '/org/:organizationId/policy/history',
   verifyToken,
+  requireSameOrganization,
   asyncHandler(async (req, res) => {
     await ensureEnterpriseSchema();
     const organizationId = String(req.params.organizationId || '').trim();
