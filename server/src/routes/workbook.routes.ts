@@ -1944,7 +1944,23 @@ router.patch(
           if (!col) throw new Error('Invalid colIndex');
           const direction = command.direction === 'desc' ? -1 : 1;
           const scalar = (row: (typeof target.rows)[number]) => row.cells[col.key]?.value ?? '';
-          target.rows.sort((a, b) => String(scalar(a)).localeCompare(String(scalar(b)), undefined, { numeric: true }) * direction);
+          const sorted = target.rows
+            .map((rowValue, oldIndex) => ({ rowValue, oldIndex }))
+            .sort((a, b) => String(scalar(a.rowValue)).localeCompare(String(scalar(b.rowValue)), undefined, { numeric: true }) * direction);
+          target.rows = sorted.map(({ rowValue, oldIndex }, newIndex) => {
+            const delta = newIndex - oldIndex;
+            if (!delta) return rowValue;
+            const clone = JSON.parse(JSON.stringify(rowValue)) as typeof rowValue;
+            Object.values(clone.cells).forEach((cell) => {
+              if (typeof cell?.formula !== 'string') return;
+              cell.formula = cell.formula.replace(
+                /(\$?[A-Z]+)(\$?)(\d+)/g,
+                (_match, letters: string, absoluteRow: string, rowNumber: string) =>
+                  `${letters}${absoluteRow}${absoluteRow ? rowNumber : Math.max(1, Number(rowNumber) + delta)}`
+              );
+            });
+            return clone;
+          });
           break;
         }
         case 'setFreeze': {

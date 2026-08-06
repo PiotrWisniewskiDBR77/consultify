@@ -308,6 +308,31 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
       .send({ command: { type: 'deleteColumn', sheetIndex: 0, colIndex: 99 } });
     expect(unknown.status).toBe(400);
   });
+
+  it('moves relative formula references with their rows during sort', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const sortable = {
+      title: 'Sort formulas',
+      sheets: [{
+        name: 'Data',
+        columns: [{ key: 'formula', header: 'Formula' }, { key: 'value', header: 'Value' }],
+        rows: [
+          { cells: { formula: { formula: 'B2*2' }, value: { value: 20 } } },
+          { cells: { formula: { formula: 'B3*2' }, value: { value: 40 } } },
+        ],
+      }],
+    };
+    mockQueryOne.mockResolvedValueOnce({ schema_json: JSON.stringify(sortable), version: 1, title: sortable.title });
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'sortRows', sheetIndex: 0, colIndex: 1, direction: 'desc' } });
+    expect(res.status).toBe(200);
+    expect(res.body.schema.sheets[0].rows[0].cells.value.value).toBe(40);
+    expect(res.body.schema.sheets[0].rows[0].cells.formula.formula).toBe('B2*2');
+    expect(res.body.schema.sheets[0].rows[1].cells.value.value).toBe(20);
+    expect(res.body.schema.sheets[0].rows[1].cells.formula.formula).toBe('B3*2');
+  });
 });
 
 describe('GET /api/workbook/:id quality reopen', () => {
