@@ -417,6 +417,16 @@ export interface CardBlock {
   is_refreshable: boolean;
   position: { area: 'full' | 'left' | 'right' | 'top' | 'bottom' | 'overlay'; order: number };
   style_overrides?: Record<string, unknown>;
+  /** Optional freeform geometry, expressed as percentages of the slide canvas. */
+  geometry?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+  };
+  /** Blocks sharing a group id move/resize as one selection. */
+  group_id?: string;
   ai_editable: boolean;
 }
 
