@@ -2374,7 +2374,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     const element = target ?? fallback;
     if (!element) return;
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const previousTabIndex = element.getAttribute('tabindex');
+    element.setAttribute('tabindex', '-1');
+    element.setAttribute('data-qa-highlight', 'true');
+    element.classList.add('ring-2', 'ring-c-focus', 'ring-offset-2', 'transition-shadow');
     element.focus({ preventScroll: true });
+    window.setTimeout(() => {
+      element.removeAttribute('data-qa-highlight');
+      element.classList.remove('ring-2', 'ring-c-focus', 'ring-offset-2', 'transition-shadow');
+      if (previousTabIndex === null) element.removeAttribute('tabindex');
+      else element.setAttribute('tabindex', previousTabIndex);
+    }, 2400);
   }, []);
 
   const triggerTextDownload = (filename: string, content: string, mime: string): void => {
