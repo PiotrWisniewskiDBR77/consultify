@@ -10,6 +10,10 @@ import type { DocumentTemplate } from '@/components/DocumentStudio/types';
 const apiMocks = vi.hoisted(() => ({
   list: vi.fn(),
   revise: vi.fn(),
+  validate: vi.fn(),
+  audit: vi.fn(),
+  newVersion: vi.fn(),
+  deleteDraft: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -23,12 +27,17 @@ vi.mock('@/components/shared/colorPatterns/ColorPatternPicker', () => ({
   ColorPatternPicker: () => <div />,
 }));
 vi.mock('@/components/shared/ModuleHub', () => ({
-  FilterableTable: ({ data, onRowClick }: any) => (
+  FilterableTable: ({ data, onRowClick, getRowActions }: any) => (
     <div>
       {data.map((row: any) => (
-        <button key={row.id} data-testid={`template-row-${row.id}`} onClick={() => onRowClick(row)}>
-          {row.name}
-        </button>
+        <div key={row.id}>
+          <button data-testid={`template-row-${row.id}`} onClick={() => onRowClick(row)}>
+            {row.name}
+          </button>
+          {getRowActions(row).map((action: any) => (
+            <button key={action.id} onClick={action.onClick}>{action.label}</button>
+          ))}
+        </div>
       ))}
     </div>
   ),
@@ -39,6 +48,10 @@ vi.mock('@/components/DocumentStudio/api', () => ({
   approveDocumentStudioTemplate: vi.fn(),
   deprecateDocumentStudioTemplate: vi.fn(),
   planDocumentStudioTemplate: vi.fn(),
+  validateDocumentStudioTemplate: (...args: unknown[]) => apiMocks.validate(...args),
+  listDocumentStudioTemplateAudit: (...args: unknown[]) => apiMocks.audit(...args),
+  createDocumentStudioTemplateVersion: (...args: unknown[]) => apiMocks.newVersion(...args),
+  deleteDocumentStudioDraftTemplate: (...args: unknown[]) => apiMocks.deleteDraft(...args),
 }));
 
 const makeTemplate = (): DocumentTemplate =>
@@ -86,6 +99,18 @@ describe('DocumentStudioTemplateArchitectView header/footer persistence', () => 
       };
       return template;
     });
+    apiMocks.validate.mockReset().mockResolvedValue({ valid: true, issues: [] });
+    apiMocks.audit.mockReset().mockResolvedValue([]);
+    apiMocks.newVersion.mockReset();
+    apiMocks.deleteDraft.mockReset();
+  });
+
+  it('runs explicit validation and surfaces a passing result', async () => {
+    render(<DocumentStudioTemplateArchitectView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Validate' }));
+
+    await waitFor(() => expect(apiMocks.validate).toHaveBeenCalledWith('template-1'));
+    expect(await screen.findByText('Validation passed')).toBeInTheDocument();
   });
 
   it('saves header/footer text and restores it after the registry refresh', async () => {

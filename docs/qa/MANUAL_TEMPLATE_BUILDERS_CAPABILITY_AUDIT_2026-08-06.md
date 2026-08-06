@@ -156,16 +156,16 @@ Signed-in DEMO test used the disposable organization template `QA Word Manual Li
 | Word style and layout | PASS | Persisted Indigo color pattern, cover, TOC, header/footer, page numbering and body-font description. |
 | Preview and save | PASS | Structure preview reflected 10 sections; Save structure persisted all edits. |
 | Cold reopen/edit | PASS | Reopen restored 10 sections, header/footer/font, required inputs and renamed sections. |
-| Explicit validation | GAP | Approval performs server validation, but the architect exposes no separate Validate command or diagnostics summary before approval. |
+| Explicit validation | **LOCAL FIX** | A named Validate action now returns actionable blocking issues; approval calls the same validator and returns 422 while blocking issues remain. Runtime proof awaits deployment. |
 | Approve/publish | PASS | Draft transitioned from `v0.1 Draft` to `v1.0 Approved`. |
 | Use and output lineage | PASS | Central Template Library resolved artifact-index id `12e2c147-a4f2-4998-b9f7-18239d75e73b`; generation created `artifact-da7911fd-15ac-44d9-aa8b-c5d01ced4586` with all 10 sections and Properties lineage `doc-template-1786055501296-bh1gtkwt v1.0`, plus four source records. |
 | Evidence-grounded output | **RUNTIME FAIL → LOCAL P0 FIX** | Runtime output invented ERP integration, frontline adoption, store-champion and roadmap facts absent from the generation intake. The local service fix removes all hard-coded business facts, derives risks only from explicit `Risks are/include` text and otherwise emits honest `data/evidence required` placeholders. Focused Mode-3 suite: 10/10 passing. |
-| Version history/new version | GAP | Version number changes on approval and service-level revision is tested, but the Word architect exposes no history, comparison or Create new version action. |
+| Version history/new version | **LOCAL FIX / PARTIAL** | The architect now loads the governed audit history and can clone any current approved/deprecated version into an exact editable `v0.1` draft with source id/version lineage. Historical audit entries do not yet contain content snapshots, so true old-content compare/restore remains a gap rather than a simulated success. |
 | Deprecate | PASS | Approved template transitioned to Deprecated and the generation resolver rejected subsequent use with an explicit Polish explanation. |
 | Deprecated UI honesty | **RUNTIME FAIL → LOCAL P1 FIX** | Architect leaked `statusChip.deprecated`; central library still offered Use template and sent the user into the resolver error. Local fixes add canonical EN/PL status copy/tone and disable Use in both table/preview and gallery with an explicit reason. |
-| Delete draft | GAP | Neither the Word architect nor central library exposes deletion backed by the canonical Word-template lifecycle service. |
+| Delete draft | **LOCAL FIX** | Draft-only Delete uses in-app confirmation, tenant/status guards, canonical database deletion and artifact-index envelope cleanup. Approved/deprecated templates remain non-deletable. Runtime proof awaits deployment. |
 
-Conclusion: Word now proves the core `draft → author → save/reopen → approve → use → deprecate` path and exact generated-artifact lineage. It is still **PARTIAL+**, not complete: explicit validation, history/new-version and safe draft deletion are absent. The P0 evidence-grounding and P1 deprecated-state UI fixes require deployment before runtime acceptance.
+Conclusion: Word now proves the core `draft → author → save/reopen → approve → use → deprecate` path and exact generated-artifact lineage. Explicit validation, new-version drafting and safe draft deletion are implemented locally and require deployment acceptance. True historical content compare/restore remains incomplete because the existing governance audit stores events, not immutable template snapshots. The P0 evidence-grounding and P1 deprecated-state UI fixes also require deployment before runtime acceptance.
 
 ## PowerPoint Template Architect lifecycle follow-up — 2026-08-07
 

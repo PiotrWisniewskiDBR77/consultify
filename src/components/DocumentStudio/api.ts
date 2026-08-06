@@ -888,6 +888,59 @@ export async function deprecateDocumentStudioTemplate(
   return json.template;
 }
 
+export interface DocumentTemplateValidationIssue {
+  code: string;
+  message: string;
+  blocking: boolean;
+}
+
+export async function validateDocumentStudioTemplate(templateId: string): Promise<{
+  valid: boolean;
+  issues: DocumentTemplateValidationIssue[];
+}> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}/validate`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'DocumentStudio validate template');
+}
+
+export async function listDocumentStudioTemplateAudit(
+  templateId: string
+): Promise<TemplateAuditEntry[]> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}/audit`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ auditEntries: TemplateAuditEntry[] }>(
+    res,
+    'DocumentStudio template audit'
+  );
+  return json.auditEntries;
+}
+
+export async function createDocumentStudioTemplateVersion(
+  templateId: string
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/${encodeURIComponent(templateId)}/new-version`,
+    { method: 'POST', headers: getHeaders(), body: '{}' }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio create template version'
+  );
+  return json.template;
+}
+
+export async function deleteDocumentStudioDraftTemplate(templateId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  if (!res.ok) await handleResponse(res, 'DocumentStudio delete draft template');
+}
+
 /**
  * C1 — persist an author's manual structural edits (add/remove/reorder/rename)
  * to a DRAFT template's section blueprint. The server accepts full structural

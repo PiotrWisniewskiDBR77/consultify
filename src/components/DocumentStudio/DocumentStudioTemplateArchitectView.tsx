@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  GitBranch,
+  History,
   Loader2,
   Plus,
   ShieldAlert,
@@ -36,12 +38,17 @@ import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
 import {
   approveDocumentStudioTemplate,
+  createDocumentStudioTemplateVersion,
+  deleteDocumentStudioDraftTemplate,
   deprecateDocumentStudioTemplate,
+  listDocumentStudioTemplateAudit,
   listDocumentStudioTemplates,
   planDocumentStudioTemplate,
   reviseDocumentStudioTemplateStructure,
+  validateDocumentStudioTemplate,
 } from './api';
 import { DocumentStructurePreview } from './DocumentStructurePreview';
+import { useManualPrompt } from './editor/useManualPrompt';
 import {
   insertSection,
   makeBlankSection,
@@ -51,6 +58,7 @@ import {
 import type {
   DocumentTemplate,
   DocumentTypeKey,
+  TemplateAuditEntry,
   TemplateDraftInput,
   TemplateSectionBlueprint,
 } from './types';
@@ -120,6 +128,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   DocumentStudioTemplateArchitectViewProps
 > = ({ onTemplateApproved }) => {
   const { t } = useTranslation();
+  const { requestConfirm } = useManualPrompt();
   const documentTypeOptions = useDocumentTypeOptions(t);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -128,6 +137,13 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [validationIssues, setValidationIssues] = useState<Array<{
+    code: string;
+    message: string;
+    blocking: boolean;
+  }> | null>(null);
+  const [auditEntries, setAuditEntries] = useState<TemplateAuditEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -348,6 +364,26 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     if (!template) return [];
     const isBusy = busyTemplateId === template.templateId;
     const actions: RowAction[] = [];
+    actions.push({
+      id: 'validate',
+      label: t('documentStudio.templateArchitect.validate', 'Validate'),
+      icon: CheckCircle2,
+      onClick: () => void handleValidate(template.templateId),
+    });
+    actions.push({
+      id: 'history',
+      label: t('documentStudio.templateArchitect.history', 'Version history'),
+      icon: History,
+      onClick: () => void handleHistory(template.templateId),
+    });
+    if (template.status !== 'draft') {
+      actions.push({
+        id: 'new-version',
+        label: t('documentStudio.templateArchitect.newVersion', 'Create new version'),
+        icon: GitBranch,
+        onClick: () => void handleNewVersion(template.templateId),
+      });
+    }
     if (template.status === 'draft') {
       actions.push({
         id: 'approve',
@@ -369,6 +405,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         variant: 'danger',
         divider: actions.length > 0,
         onClick: () => void handleDeprecate(template.templateId),
+      });
+    }
+    if (template.status === 'draft') {
+      actions.push({
+        id: 'delete',
+        label: t('documentStudio.templateArchitect.deleteDraft', 'Delete draft'),
+        icon: Trash2,
+        variant: 'danger',
+        divider: true,
+        onClick: () => void handleDeleteDraft(template.templateId, template.name),
       });
     }
     return actions;
@@ -443,6 +489,66 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           ? err.message
           : t('documentStudio.templateArchitect.errApproveTemplate', 'Failed to approve template')
       );
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleValidate = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const result = await validateDocumentStudioTemplate(templateId);
+      setSelectedTemplateId(templateId);
+      setValidationIssues(result.issues);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to validate template');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleHistory = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      setSelectedTemplateId(templateId);
+      setAuditEntries(await listDocumentStudioTemplateAudit(templateId));
+      setShowHistory(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load version history');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleNewVersion = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const draft = await createDocumentStudioTemplateVersion(templateId);
+      await refresh();
+      setSelectedTemplateId(draft.templateId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create a new version');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleDeleteDraft = async (templateId: string, templateName: string): Promise<void> => {
+    const confirmed = await requestConfirm(
+      `Delete draft “${templateName}”? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      await deleteDocumentStudioDraftTemplate(templateId);
+      setSelectedTemplateId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete draft');
     } finally {
       setBusyTemplateId(null);
     }
@@ -668,6 +774,33 @@ export const DocumentStudioTemplateArchitectView: React.FC<
 
         {selectedTemplate ? (
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+            {validationIssues ? (
+              <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+                <div className="font-semibold text-c-text">
+                  {validationIssues.length === 0 ? 'Validation passed' : 'Validation issues'}
+                </div>
+                {validationIssues.length > 0 ? (
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-c-text-secondary">
+                    {validationIssues.map((issue) => (
+                      <li key={issue.code}>{issue.message}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+            {showHistory ? (
+              <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+                <div className="font-semibold text-c-text">Version history</div>
+                <ol className="mt-2 space-y-1 text-c-text-secondary">
+                  {auditEntries.map((entry) => (
+                    <li key={entry.auditId}>
+                      {entry.action.replace(/_/g, ' ')} ·{' '}
+                      {new Date(entry.occurredAt).toLocaleString()}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
             <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
               {isEditableDraft ? (
                 <>
