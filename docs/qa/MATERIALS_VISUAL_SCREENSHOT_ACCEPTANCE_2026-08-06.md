@@ -10,6 +10,21 @@
 
 **Focused re-acceptance evidence:** [`docs/qa/evidence/materials-visual-0df01551/`](evidence/materials-visual-0df01551/)
 
+**Final focused deployment:** Railway `1440ad3a` (2026-08-07)
+
+**Final evidence:** [`docs/qa/evidence/materials-visual-1440ad3a/`](evidence/materials-visual-1440ad3a/)
+
+## Final focused recapture — `1440ad3a`
+
+| Surface | 1280 light | 1440 light | 1280 dark | 1440 dark | Verdict |
+|---|---:|---:|---:|---:|---|
+| Excel conditional formatting | PASS | PASS | FAIL | FAIL | Light: B5 computes to dark `rgb(71, 85, 105)` on `rgb(220, 239, 234)`. Dark: the deployed cell still has no inline foreground and inherits `rgb(184, 196, 214)` on the same pale fill, only **1.48:1** contrast. |
+| PowerPoint command row | PASS | PASS | PASS | PASS | Stable recapture after theme/layout settlement reports `topbar.y = 48` and `scrollTop = 0` at both widths and themes; the complete command row is visible below the global header. |
+| PowerPoint canvas / right tools / Teresa | PASS | PASS | PASS | PASS | At 1280 the canvas remains 992 px wide, right tools remain a 56 px overlay rail and Teresa is a 360 px overlay. At 1440 the standard expanded layout remains usable. |
+| PowerPoint thumbnails | FAIL | PASS | FAIL | PASS | Full 16:9 thumbnails and truthful captions pass at 1440. At 1280 the compact left rail correctly stays 48 px, but focus expands it to 200 px while its list retains `visibility:hidden`; the overlay is blank and thumbnails cannot be reached. |
+
+**Final disposition:** PowerPoint command-row and central-canvas P1 defects are closed. Release remains **FAIL P1** for Excel dark conditional-format contrast and the inaccessible 1280 PowerPoint thumbnail overlay. No source code was changed during this final recapture.
+
 ## Focused re-acceptance — 2026-08-07
 
 | Surface | 1280 light | 1440 light | 1280 dark | 1440 dark | Verdict |
