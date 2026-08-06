@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { __contentBlockToDocumentBlockForTests } from '../documentContentGenerator.js';
+import {
+  __contentBlockToDocumentBlockForTests,
+  buildDocumentSchema,
+} from '../documentContentGenerator.js';
 
 describe('premium document grounding and canonical shapes — DOC-DBR77-20260806-ALFA', () => {
   it('preserves risk_table identity and marks ungrounded premium content as an assumption', () => {
@@ -52,5 +55,27 @@ describe('premium document grounding and canonical shapes — DOC-DBR77-20260806
       true
     );
     expect(block).toMatchObject({ type: 'paragraph', isAssumption: true });
+  });
+
+  it('builds a sourced deterministic fallback without referencing a premium block', () => {
+    const schema = buildDocumentSchema({
+      artifactId: 'artifact-grounding-fallback',
+      intake: {
+        title: 'Raport',
+        description: 'Opis raportu',
+        documentType: 'board_report',
+        language: 'pl',
+        density: 'standard',
+        goal: 'inform',
+        audience: ['Zarząd'],
+      },
+      outline: {
+        title: 'Raport',
+        sections: [{ title: 'Status programu', level: 1, purpose: 'Status' }],
+      },
+      sourceRefs: [{ sourceId: 'source-1', sourceType: 'organization', title: 'DBR77' }],
+    });
+
+    expect(schema.sections[0]?.blocks[0]?.isAssumption).toBe(false);
   });
 });

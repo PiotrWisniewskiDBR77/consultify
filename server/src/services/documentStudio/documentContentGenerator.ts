@@ -199,7 +199,7 @@ function buildSectionBlocks(
     content: {
       text: sectionStubText(sectionTitle),
     },
-    isAssumption: block.isAssumption === true || !hasSources,
+    isAssumption: !hasSources,
   });
 
   return blocks;
