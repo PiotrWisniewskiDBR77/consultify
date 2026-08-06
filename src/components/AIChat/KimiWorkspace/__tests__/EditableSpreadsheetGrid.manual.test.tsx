@@ -270,4 +270,33 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     await waitFor(() => expect(importWorkbook).toHaveBeenCalledWith('wb-1', file));
     await waitFor(() => expect(screen.getByText('Zapisano')).toBeInTheDocument());
   });
+
+  it('renders and deletes an editable chart image that remains exportable in schema', async () => {
+    const chartSheets = [
+      {
+        ...sheets[0],
+        chartImages: [
+          {
+            id: 'chart-1',
+            title: 'Plan by month',
+            chartType: 'bar',
+            sourceRange: 'A2:B3',
+            pngBase64: 'iVBORw0KGgo=',
+            anchorCell: 'A6',
+          },
+        ],
+      },
+    ];
+    render(<EditableSpreadsheetGrid workbookId="wb-chart" sheets={chartSheets} activeSheetIndex={0} />);
+    expect(screen.getByRole('img', { name: 'Plan by month' })).toBeInTheDocument();
+    expect(screen.getByText('A2:B3')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Delete chart' }));
+    await waitFor(() =>
+      expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-chart', {
+        type: 'deleteChartImage',
+        sheetIndex: 0,
+        chartId: 'chart-1',
+      })
+    );
+  });
 });

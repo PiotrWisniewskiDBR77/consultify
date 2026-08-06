@@ -3,7 +3,7 @@ import { Readable } from 'stream';
 
 import type { CellStyle, WorkbookSchema } from './WorkbookSchema.js';
 
-function argb(color: ExcelJS.Color | undefined): string | undefined {
+function argb(color: Partial<ExcelJS.Color> | undefined): string | undefined {
   return color && 'argb' in color && color.argb ? color.argb.slice(-6) : undefined;
 }
 
@@ -58,8 +58,9 @@ export async function importWorkbookBuffer(buffer: Buffer, filename: string): Pr
         const sourceCell = sourceRow.getCell(columnOffset + 1);
         const value = sourceCell.value;
         const formula = value && typeof value === 'object' && 'formula' in value ? String(value.formula) : undefined;
-        const comment = sourceCell.note ? (typeof sourceCell.note === 'string' ? sourceCell.note : sourceCell.note.texts.map((part) => part.text).join('')) : undefined;
-        cells[column.key] = { value: formula ? scalarValue(value.result as ExcelJS.CellValue) : scalarValue(value), formula, style: importedStyle(sourceCell), comment };
+        const comment = sourceCell.note ? (typeof sourceCell.note === 'string' ? sourceCell.note : sourceCell.note.texts?.map((part) => part.text).join('')) : undefined;
+        const formulaResult = value && typeof value === 'object' && 'result' in value ? value.result : null;
+        cells[column.key] = { value: formula ? scalarValue(formulaResult as ExcelJS.CellValue) : scalarValue(value), formula, style: importedStyle(sourceCell), comment };
       });
       rows.push({ cells, height: sourceRow.height });
     }
@@ -67,8 +68,8 @@ export async function importWorkbookBuffer(buffer: Buffer, filename: string): Pr
       name: worksheet.name || `Sheet ${sheetIndex + 1}`,
       columns,
       rows,
-      freezeRow: worksheet.views[0]?.ySplit || undefined,
-      freezeCol: worksheet.views[0]?.xSplit || undefined,
+      freezeRow: (worksheet.views[0] as any)?.ySplit || undefined,
+      freezeCol: (worksheet.views[0] as any)?.xSplit || undefined,
     };
   });
   return { title: filename.replace(/\.(xlsx|csv)$/i, ''), sheets };

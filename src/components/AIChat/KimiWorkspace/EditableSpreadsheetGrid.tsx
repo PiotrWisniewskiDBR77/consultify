@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   ArrowDownAZ,
   ArrowUpAZ,
+  BarChart3,
   Bold,
   Check,
   ChevronsDown,
@@ -312,6 +313,40 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       if (importInputRef.current) importInputRef.current.value = '';
     }
   }, [t, workbookId]);
+
+  const createChartFromSelection = useCallback(async () => {
+    if (!selectionRange || selectionRange.colEnd <= selectionRange.colStart) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 420;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Chart canvas is unavailable');
+    const chartColumns = activeRaw?.columns || [];
+    const labelColumn = activeComputed?.rows?.map((row) => formatComputedForDisplay(row.cells[chartColumns[selectionRange.colStart]?.key])) || [];
+    const valueColumn = activeComputed?.rows?.map((row) => Number(row.cells[chartColumns[selectionRange.colStart + 1]?.key]?.computed)) || [];
+    const labels = labelColumn.slice(selectionRange.rowStart, selectionRange.rowEnd + 1);
+    const values = valueColumn.slice(selectionRange.rowStart, selectionRange.rowEnd + 1).map((value) => Number.isFinite(value) ? value : 0);
+    const max = Math.max(1, ...values.map((value) => Math.abs(value)));
+    context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#172033'; context.font = '600 22px sans-serif';
+    const title = `${chartColumns[selectionRange.colStart + 1]?.header || 'Values'} by ${chartColumns[selectionRange.colStart]?.header || 'Category'}`;
+    context.fillText(title, 36, 38);
+    const plotTop = 70; const plotHeight = 280; const plotLeft = 55; const plotWidth = 620;
+    const slot = plotWidth / Math.max(1, values.length);
+    values.forEach((value, index) => {
+      const height = Math.abs(value) / max * plotHeight;
+      context.fillStyle = '#3267d6';
+      context.fillRect(plotLeft + index * slot + slot * 0.18, plotTop + plotHeight - height, slot * 0.64, height);
+      context.fillStyle = '#526077'; context.font = '12px sans-serif';
+      context.fillText(labels[index]?.slice(0, 12) || String(index + 1), plotLeft + index * slot + slot * 0.12, plotTop + plotHeight + 24);
+    });
+    const sourceRange = `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`;
+    await runSchemaCommand({
+      type: 'upsertChartImage',
+      sheetIndex: workingSheetIndex,
+      chart: { id: crypto.randomUUID(), title, chartType: 'bar', sourceRange, pngBase64: canvas.toDataURL('image/png'), anchorCell: `A${(activeRaw.rows?.length || 0) + 4}`, width: 720, height: 420 },
+    });
+  }, [activeComputed, activeRaw?.columns, activeRaw?.rows?.length, runSchemaCommand, selectionRange, workingSheetIndex]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -1086,6 +1121,15 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         </button>
         <button
           type="button"
+          disabled={!selectionRange || selectionRange.colEnd <= selectionRange.colStart}
+          onClick={() => void createChartFromSelection()}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.createChart', 'Create chart from selected range')}
+        >
+          <BarChart3 size={14} />
+        </button>
+        <button
+          type="button"
           onClick={() => setDialogMode('help')}
           className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
           aria-label={t('kimi.excele.shortcutHelp', 'Keyboard shortcuts')}
@@ -1431,6 +1475,21 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </tbody>
         </table>
       </div>
+
+      {Array.isArray((activeRaw as any).chartImages) && (activeRaw as any).chartImages.length > 0 && (
+        <section aria-label={t('kimi.excele.charts', 'Charts')} className="grid gap-3 border-t border-c-border-subtle p-3 md:grid-cols-2">
+          {(activeRaw as any).chartImages.map((chart: any, index: number) => (
+            <figure key={chart.id || index} className="rounded-hig-sm border border-c-border-subtle bg-c-surface-raised p-2">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <figcaption className="text-xs font-medium text-c-text">{chart.title || `Chart ${index + 1}`}</figcaption>
+                <button type="button" aria-label={t('kimi.excele.deleteChart', 'Delete chart')} className="rounded-hig-xs p-1 hover:bg-c-border-subtle" onClick={() => void runSchemaCommand({ type: 'deleteChartImage', sheetIndex: workingSheetIndex, chartId: chart.id })}><Trash2 size={13} /></button>
+              </div>
+              <img src={chart.pngBase64.startsWith('data:') ? chart.pngBase64 : `data:image/png;base64,${chart.pngBase64}`} alt={chart.title || `Chart ${index + 1}`} className="h-auto w-full" />
+              {chart.sourceRange ? <p className="mt-1 text-[11px] text-c-text-secondary">{chart.sourceRange}</p> : null}
+            </figure>
+          ))}
+        </section>
+      )}
 
       {rows.length > rowCap && (
         <div className="px-3 py-2 flex items-center justify-center gap-3 text-xs text-c-text-secondary border-t border-c-border-subtle">

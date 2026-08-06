@@ -280,6 +280,12 @@ export const SensitivityTableSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const ChartImageSchema = z.object({
+  /** Stable id for manual update/delete operations. */
+  id: z.string().optional(),
+  /** Editable metadata retained with the exported PNG. */
+  title: z.string().optional(),
+  chartType: z.enum(['bar', 'line']).optional(),
+  sourceRange: z.string().optional(),
   /** PNG image, base64-encoded (no data-URI prefix) OR a raw base64 string. */
   pngBase64: z.string(),
   /** Top-left anchor cell (A1) for the image. */

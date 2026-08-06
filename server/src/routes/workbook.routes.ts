@@ -42,7 +42,7 @@ import {
 } from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
-import { type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
+import { ChartImageSchema, type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
 import { importWorkbookBuffer } from '../services/workbook/workbookImport.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -2057,6 +2057,22 @@ router.patch(
           if (!col || !targetRow) throw new Error('Invalid cell');
           const current = targetRow.cells[col.key] || {};
           targetRow.cells[col.key] = { ...current, validation: command.validation || undefined };
+          break;
+        }
+        case 'upsertChartImage': {
+          const target = requireSheet();
+          const chart = ChartImageSchema.parse(command.chart);
+          const charts = target.chartImages || [];
+          const existingIndex = chart.id ? charts.findIndex((item) => item.id === chart.id) : -1;
+          if (existingIndex >= 0) charts[existingIndex] = chart;
+          else charts.push({ ...chart, id: chart.id || uuidv4() });
+          target.chartImages = charts;
+          break;
+        }
+        case 'deleteChartImage': {
+          const target = requireSheet();
+          const chartId = String(command.chartId || '');
+          target.chartImages = (target.chartImages || []).filter((chart) => chart.id !== chartId);
           break;
         }
         case 'setComment': {
