@@ -11,6 +11,7 @@
  * versions without a clash, mirroring `canvasEditorExtensions.ts`.
  */
 
+import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { Table } from '@tiptap/extension-table';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -40,6 +41,12 @@ export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[
     }),
     Placeholder.configure({
       placeholder: placeholder || 'Edit the document…',
+    }),
+    Link.configure({
+      openOnClick: false,
+      autolink: true,
+      defaultProtocol: 'https',
+      protocols: ['http', 'https', 'mailto'],
     }),
     Table.configure({ resizable: true }),
     TableRow,

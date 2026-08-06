@@ -40,6 +40,7 @@ import {
 import { DocumentInlineAIMenu } from '../inline-ai';
 import type { DocumentSchema } from '../types';
 import { getDocumentEditorExtensions } from './documentEditorExtensions';
+import { DOC_IMAGE_NODE_NAME, KPI_STRIP_NODE_NAME } from './nodeNames';
 import { schemaToProseMirror } from './schemaToTipTap';
 import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
 
@@ -292,6 +293,154 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     };
   }, []);
 
+  const insertStructuredBlock = useCallback(
+    (blockType: 'table' | 'risk_table' | 'kpi_strip' | 'image' | 'roadmap' | 'callout') => {
+      if (!editor) return;
+      const identity = {
+        blockId: `blk-${crypto.randomUUID()}`,
+        blockType: blockType === 'roadmap' ? 'table' : blockType,
+        sourceRef: '',
+        isAssumption: false,
+      };
+      if (blockType === 'callout') {
+        const text = window.prompt('Treść wyróżnienia', 'Kluczowa decyzja lub rekomendacja');
+        if (!text?.trim()) return;
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'callout',
+            attrs: { ...identity, variant: 'info' },
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: text.trim() }] }],
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'image') {
+        const url = window.prompt('Adres obrazu (https://)', 'https://');
+        if (!url?.trim() || !/^https:\/\//i.test(url.trim())) return;
+        const alt = window.prompt('Opis alternatywny obrazu', '')?.trim() ?? '';
+        const caption = window.prompt('Podpis obrazu (opcjonalnie)', '')?.trim() ?? '';
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: DOC_IMAGE_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({ url: url.trim(), alt, caption }),
+            },
+          })
+          .run();
+        return;
+      }
+
+      let payload: Record<string, unknown>;
+      if (blockType === 'kpi_strip') {
+        const raw = window.prompt('KPI w formacie Nazwa=Wartość; Nazwa=Wartość', 'Postęp=72%');
+        if (!raw?.trim()) return;
+        const items = raw
+          .split(';')
+          .map((entry) => entry.split('=').map((part) => part.trim()))
+          .filter(([label, value]) => Boolean(label && value))
+          .map(([label, value]) => ({ label, value }));
+        if (items.length === 0) return;
+        payload = { items };
+      } else if (blockType === 'risk_table') {
+        const raw = window.prompt(
+          'Ryzyka: nazwa|prawdopodobieństwo|wpływ|właściciel; …',
+          'Adopcja|Średnie|Wysoki|COO'
+        );
+        if (!raw?.trim()) return;
+        payload = {
+          columns: ['Ryzyko', 'Prawdopodobieństwo', 'Wpływ', 'Właściciel'],
+          rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
+        };
+      } else if (blockType === 'roadmap') {
+        const raw = window.prompt(
+          'Roadmapa: okres|rezultat|właściciel; …',
+          '30 dni|Pilotaż|COO;60 dni|Rollout|CIO;90 dni|Stabilizacja|PMO'
+        );
+        if (!raw?.trim()) return;
+        payload = {
+          columns: ['Okres', 'Rezultat', 'Właściciel'],
+          rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
+        };
+      } else {
+        const raw = window.prompt(
+          'Tabela: nagłówki w pierwszym wierszu; pola oddziel |, wiersze oddziel ;',
+          'Metryka|Wartość;Postęp|72%'
+        );
+        if (!raw?.trim()) return;
+        const rows = raw.split(';').map((row) => row.split('|').map((cell) => cell.trim()));
+        payload = { columns: rows.shift() ?? [], rows };
+      }
+      userEditArmedRef.current = true;
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: KPI_STRIP_NODE_NAME,
+          attrs: { ...identity, payloadJson: JSON.stringify(payload) },
+        })
+        .run();
+    },
+    [editor]
+  );
+
+  const findInDocument = useCallback(() => {
+    if (!editor) return;
+    const query = window.prompt('Znajdź w dokumencie', '')?.trim();
+    if (!query) return;
+    const needle = query.toLocaleLowerCase();
+    const after = editor.state.selection.from;
+    const matches: Array<{ from: number; to: number }> = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return;
+      const haystack = node.text.toLocaleLowerCase();
+      let index = haystack.indexOf(needle);
+      while (index >= 0) {
+        matches.push({ from: pos + index, to: pos + index + query.length });
+        index = haystack.indexOf(needle, index + Math.max(1, needle.length));
+      }
+    });
+    const match = matches.find((candidate) => candidate.from > after) ?? matches[0];
+    if (!match) {
+      window.alert(`Nie znaleziono: ${query}`);
+      return;
+    }
+    editor.chain().focus().setTextSelection(match).scrollIntoView().run();
+  }, [editor]);
+
+  const replaceInDocument = useCallback(() => {
+    if (!editor) return;
+    const query = window.prompt('Znajdź tekst do zamiany', '')?.trim();
+    if (!query) return;
+    const replacement = window.prompt('Zamień na', '');
+    if (replacement === null) return;
+    const needle = query.toLocaleLowerCase();
+    const matches: Array<{ from: number; to: number }> = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return;
+      const haystack = node.text.toLocaleLowerCase();
+      let index = haystack.indexOf(needle);
+      while (index >= 0) {
+        matches.push({ from: pos + index, to: pos + index + query.length });
+        index = haystack.indexOf(needle, index + Math.max(1, needle.length));
+      }
+    });
+    if (matches.length === 0) {
+      window.alert(`Nie znaleziono: ${query}`);
+      return;
+    }
+    userEditArmedRef.current = true;
+    for (const match of matches.reverse()) {
+      editor.chain().focus().setTextSelection(match).insertContent(replacement).run();
+    }
+  }, [editor]);
+
   return (
     <div className={className} data-testid="document-tiptap-editor">
       {editable && editor ? (
@@ -325,6 +474,74 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title: 'Lista numerowana',
               active: editor.isActive('orderedList'),
               run: () => editor.chain().focus().toggleOrderedList().run(),
+            },
+            {
+              label: 'B',
+              title: 'Pogrubienie (Ctrl/Cmd+B)',
+              active: editor.isActive('bold'),
+              run: () => editor.chain().focus().toggleBold().run(),
+            },
+            {
+              label: 'I',
+              title: 'Kursywa (Ctrl/Cmd+I)',
+              active: editor.isActive('italic'),
+              run: () => editor.chain().focus().toggleItalic().run(),
+            },
+            {
+              label: 'Link',
+              title: 'Dodaj lub edytuj link (Ctrl/Cmd+K)',
+              active: editor.isActive('link'),
+              run: () => {
+                const current = String(editor.getAttributes('link').href ?? '');
+                const entered = window.prompt('Adres linku', current || 'https://');
+                if (entered === null) return false;
+                const value = entered.trim();
+                if (!value) return editor.chain().focus().unsetLink().run();
+                const href = /^(https?:|mailto:)/i.test(value) ? value : `https://${value}`;
+                return editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+              },
+            },
+            {
+              label: 'Usuń link',
+              title: 'Usuń link',
+              active: false,
+              run: () => editor.chain().focus().unsetLink().run(),
+            },
+            ...(
+              [
+                ['Wyróżnienie', 'callout'],
+                ['Tabela', 'table'],
+                ['KPI', 'kpi_strip'],
+                ['Ryzyka', 'risk_table'],
+                ['Roadmapa', 'roadmap'],
+                ['Obraz', 'image'],
+              ] as const
+            ).map(([label, blockType]) => ({
+              label,
+              title: `Wstaw: ${label}`,
+              active: false,
+              run: () => {
+                insertStructuredBlock(blockType);
+                return true;
+              },
+            })),
+            {
+              label: 'Znajdź',
+              title: 'Znajdź w dokumencie',
+              active: false,
+              run: () => {
+                findInDocument();
+                return true;
+              },
+            },
+            {
+              label: 'Zamień',
+              title: 'Znajdź i zamień',
+              active: false,
+              run: () => {
+                replaceInDocument();
+                return true;
+              },
             },
           ].map((action) => (
             <button

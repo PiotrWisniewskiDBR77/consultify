@@ -14,6 +14,11 @@ vi.mock('@tiptap/react', () => ({
       getJSON: () => ({ type: 'doc', content: [] }),
       commands: { setContent: vi.fn() },
       isActive: vi.fn(() => false),
+      getAttributes: vi.fn(() => ({})),
+      state: {
+        selection: { from: 0 },
+        doc: { descendants: vi.fn() },
+      },
     };
     const chain: any = {
       focus: () => chain,
@@ -21,6 +26,14 @@ vi.mock('@tiptap/react', () => ({
       toggleHeading: () => chain,
       toggleBulletList: () => chain,
       toggleOrderedList: () => chain,
+      toggleBold: () => chain,
+      toggleItalic: () => chain,
+      extendMarkRange: () => chain,
+      setLink: () => chain,
+      unsetLink: () => chain,
+      insertContent: () => chain,
+      setTextSelection: () => chain,
+      scrollIntoView: () => chain,
       run: () => {
         options.onUpdate({ editor });
         return true;
@@ -103,5 +116,21 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
       sections: [],
       expectedVersion: '2026-08-06T12:00:00.000Z',
     });
+  });
+
+  it('inserts a canonical KPI block through the manual toolbar and arms autosave', async () => {
+    vi.spyOn(window, 'prompt').mockReturnValue('Postęp=72%;Budżet=1,4 mln EUR');
+    const schema = {
+      artifactId: 'artifact-manual-kpi',
+      title: 'Manual KPI',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-manual-kpi" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wstaw: KPI' }));
+    await act(async () => vi.advanceTimersByTimeAsync(600));
+
+    expect(saveMock).toHaveBeenCalledTimes(1);
   });
 });

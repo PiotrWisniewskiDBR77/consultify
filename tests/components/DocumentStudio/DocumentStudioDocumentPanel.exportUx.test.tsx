@@ -25,8 +25,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string, arg?: string | Record<string, unknown>) => {
       const opts: Record<string, unknown> =
         typeof arg === 'string' ? { defaultValue: arg } : (arg ?? {});
-      const template =
-        typeof opts.defaultValue === 'string' ? (opts.defaultValue as string) : key;
+      const template = typeof opts.defaultValue === 'string' ? (opts.defaultValue as string) : key;
       return template.replace(/\{\{(\w+)\}\}/g, (_m, name: string) => String(opts[name] ?? ''));
     },
   }),
@@ -40,8 +39,17 @@ vi.mock('react-hot-toast', () => {
 // The shared shell brings rails/shortcuts/persistence — out of scope here.
 // Render only what the export UX lives in: the canvas.
 vi.mock('@/components/shared/ExecutiveModuleShell', () => ({
-  ExecutiveModuleShell: ({ canvas }: { canvas: React.ReactNode }) => (
-    <div data-testid="shell-canvas">{canvas}</div>
+  ExecutiveModuleShell: ({
+    canvas,
+    leftRailContent,
+  }: {
+    canvas: React.ReactNode;
+    leftRailContent: React.ReactNode;
+  }) => (
+    <div>
+      <aside data-testid="shell-left-rail">{leftRailContent}</aside>
+      <div data-testid="shell-canvas">{canvas}</div>
+    </div>
   ),
 }));
 
@@ -102,6 +110,8 @@ vi.mock('@/components/DocumentStudio/api', () => {
     listDocumentStudioVariants: vi.fn(async () => []),
     recordDocumentStudioApprovalDecision: vi.fn(),
     requestDocumentStudioApproval: vi.fn(),
+    saveDocumentStudioManualContent: vi.fn(),
+    getDocumentStudioArtifact: vi.fn(),
   };
 });
 
@@ -112,12 +122,14 @@ import { toast } from 'react-hot-toast';
 import {
   exportDocumentStudioArtifact,
   QaBlockingError,
+  saveDocumentStudioManualContent,
 } from '@/components/DocumentStudio/api';
 import DocumentStudioDocumentPanel from '@/components/DocumentStudio/DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '@/components/DocumentStudio/types';
 /* eslint-enable import/first */
 
 const exportMock = vi.mocked(exportDocumentStudioArtifact);
+const saveContentMock = vi.mocked(saveDocumentStudioManualContent);
 
 const SCHEMA: DocumentSchema = {
   documentId: 'doc-1',
@@ -131,17 +143,27 @@ const SCHEMA: DocumentSchema = {
   density: 'standard',
   languageStyle: 'business',
   confidentiality: 'internal',
-  sections: [],
+  sections: [
+    {
+      sectionId: 'sec-1',
+      orderIndex: 0,
+      level: 1,
+      title: 'Existing section',
+      blocks: [],
+      sourceRefs: [],
+    },
+  ],
   sourceRefs: [],
+  updatedAt: '2026-08-06T20:00:00.000Z',
 } as unknown as DocumentSchema;
 
-function renderPanel(): void {
+function renderPanel(onSchemaUpdated: (schema: DocumentSchema) => void = () => undefined): void {
   render(
     <DocumentStudioDocumentPanel
       artifactId="art-1"
       schema={SCHEMA}
       onStartOver={() => undefined}
-      onSchemaUpdated={() => undefined}
+      onSchemaUpdated={onSchemaUpdated}
     />
   );
 }
@@ -173,6 +195,28 @@ afterEach(() => {
 });
 
 describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
+  it('adds a named section through the outline and persists normalized structure', async () => {
+    vi.spyOn(window, 'prompt').mockReturnValue('Decision required');
+    const onSchemaUpdated = vi.fn();
+    saveContentMock.mockImplementation(async (_artifactId, input) => ({
+      ...SCHEMA,
+      sections: input.sections,
+      updatedAt: '2026-08-06T20:01:00.000Z',
+    }));
+    renderPanel(onSchemaUpdated);
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add section' }));
+
+    await waitFor(() => expect(saveContentMock).toHaveBeenCalledTimes(1));
+    const [, input] = saveContentMock.mock.calls[0];
+    expect(input.expectedVersion).toBe('2026-08-06T20:00:00.000Z');
+    expect(input.sections).toHaveLength(2);
+    expect(input.sections[1]).toEqual(
+      expect.objectContaining({ title: 'Decision required', orderIndex: 1 })
+    );
+    expect(onSchemaUpdated).toHaveBeenCalledTimes(1);
+  });
+
   it('shows a per-format spinner and disables all export buttons while exporting', async () => {
     let resolveExport: (v: typeof SUCCESS_PAYLOAD) => void = () => undefined;
     exportMock.mockImplementation(
@@ -266,18 +310,14 @@ describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
     exportMock.mockRejectedValue(
       new QaBlockingError({
         overall: 42,
-        categories: [
-          { category: 'sources', score: 40, blocking: true, findings: [{ id: 'f1' }] },
-        ],
+        categories: [{ category: 'sources', score: 40, blocking: true, findings: [{ id: 'f1' }] }],
       } as never)
     );
     renderPanel();
 
     fireEvent.click(exportButton('DOCX'));
 
-    await waitFor(() =>
-      expect(screen.getByText('QA blocked the DOCX export')).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText('QA blocked the DOCX export')).toBeInTheDocument());
     expect(
       screen.getByText(/Export blocked by Quality QA\. Resolve the findings below/)
     ).toBeInTheDocument();

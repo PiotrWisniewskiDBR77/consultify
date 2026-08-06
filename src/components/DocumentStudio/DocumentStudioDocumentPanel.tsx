@@ -75,8 +75,8 @@ import {
   recordDocumentStudioApprovalDecision,
   requestDocumentStudioApproval,
   revokeDocumentStudioShareLink,
-  rotateDocumentStudioShareLink,
   rollbackDocumentStudioSnapshot,
+  rotateDocumentStudioShareLink,
   saveDocumentStudioManualContent,
 } from './api';
 import { CreateTemplateFromArtifactModal } from './CreateTemplateFromArtifactModal';
@@ -508,10 +508,18 @@ function OutlinePanel({
   sections,
   sourceCount,
   assumptionCount,
+  onAddSection,
+  onRenameSection,
+  onDeleteSection,
+  onMoveSection,
 }: {
   sections: DocumentSection[];
   sourceCount: number;
   assumptionCount: number;
+  onAddSection: () => void;
+  onRenameSection: (sectionId: string) => void;
+  onDeleteSection: (sectionId: string) => void;
+  onMoveSection: (sectionId: string, direction: -1 | 1) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -534,7 +542,10 @@ function OutlinePanel({
       <nav aria-label={t('documentStudio.documentPanel.outlineAria', 'Document outline')}>
         <ol className="space-y-1.5">
           {sections.map((section, index) => (
-            <li key={section.sectionId}>
+            <li
+              key={section.sectionId}
+              className="group rounded-lg border border-transparent hover:border-c-border"
+            >
               <a
                 href={`#${section.sectionId}`}
                 className="block rounded-lg px-3 py-2 text-xs text-c-text transition-colors hover:bg-c-surface-raised hover:text-c-text"
@@ -549,10 +560,66 @@ function OutlinePanel({
                   })}
                 </span>
               </a>
+              <div className="flex flex-wrap gap-1 px-2 pb-2">
+                <button
+                  type="button"
+                  onClick={() => onRenameSection(section.sectionId)}
+                  className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                  aria-label={t('documentStudio.outline.renameSection', {
+                    defaultValue: 'Rename section {{title}}',
+                    title: section.title,
+                  })}
+                >
+                  {t('documentStudio.outline.rename', 'Rename')}
+                </button>
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={() => onMoveSection(section.sectionId, -1)}
+                  className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text disabled:opacity-30"
+                  aria-label={t('documentStudio.outline.moveSectionUp', {
+                    defaultValue: 'Move section {{title}} up',
+                    title: section.title,
+                  })}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  disabled={index === sections.length - 1}
+                  onClick={() => onMoveSection(section.sectionId, 1)}
+                  className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text disabled:opacity-30"
+                  aria-label={t('documentStudio.outline.moveSectionDown', {
+                    defaultValue: 'Move section {{title}} down',
+                    title: section.title,
+                  })}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  disabled={sections.length <= 1}
+                  onClick={() => onDeleteSection(section.sectionId)}
+                  className="rounded px-1.5 py-1 text-[10px] text-danger-600 hover:bg-danger-500/10 disabled:opacity-30"
+                  aria-label={t('documentStudio.outline.deleteSection', {
+                    defaultValue: 'Delete section {{title}}',
+                    title: section.title,
+                  })}
+                >
+                  {t('documentStudio.outline.delete', 'Delete')}
+                </button>
+              </div>
             </li>
           ))}
         </ol>
       </nav>
+      <button
+        type="button"
+        onClick={onAddSection}
+        className="mt-3 rounded-lg border border-dashed border-c-border px-3 py-2 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+      >
+        {t('documentStudio.outline.addSection', '+ Add section')}
+      </button>
     </div>
   );
 }
@@ -2012,6 +2079,121 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     [artifactId, onSchemaUpdated, schema.sections, schema.title, schema.updatedAt, t]
   );
 
+  const persistSectionStructure = useCallback(
+    async (nextSections: DocumentSection[]): Promise<void> => {
+      if (!schema.updatedAt) {
+        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+        return;
+      }
+      const normalized = nextSections.map((section, orderIndex) => ({ ...section, orderIndex }));
+      setAutosaveStatus('saving');
+      try {
+        const saved = await saveDocumentStudioManualContent(artifactId, {
+          sections: normalized,
+          expectedVersion: schema.updatedAt,
+        });
+        onSchemaUpdated(saved);
+        setAutosaveStatus('saved');
+      } catch (err) {
+        if (err instanceof DocumentManualSaveConflictError) {
+          setAutosaveStatus('conflict');
+          try {
+            const fresh = await getDocumentStudioArtifact(artifactId);
+            onSchemaUpdated(fresh.schema);
+          } catch {
+            /* best-effort reconciliation */
+          }
+        } else {
+          setAutosaveStatus('error');
+        }
+        toast.error(t('documentStudio.outline.saveFailed', 'Nie udało się zapisać struktury.'));
+      }
+    },
+    [artifactId, onSchemaUpdated, schema.updatedAt, t]
+  );
+
+  const handleAddSection = useCallback(() => {
+    const title = window.prompt(
+      t('documentStudio.outline.newSectionPrompt', 'Nazwa nowej sekcji'),
+      t('documentStudio.outline.newSectionDefault', 'Nowa sekcja')
+    );
+    const trimmed = title?.trim();
+    if (!trimmed) return;
+    const suffix = crypto.randomUUID();
+    void persistSectionStructure([
+      ...schema.sections,
+      {
+        sectionId: `sec-${suffix}`,
+        orderIndex: schema.sections.length,
+        level: 1,
+        title: trimmed,
+        blocks: [
+          {
+            blockId: `blk-${crypto.randomUUID()}`,
+            type: 'paragraph',
+            content: { text: '' },
+            isAssumption: false,
+          },
+        ],
+        sourceRefs: [],
+      },
+    ]);
+  }, [persistSectionStructure, schema.sections, t]);
+
+  const handleRenameSection = useCallback(
+    (sectionId: string) => {
+      const section = schema.sections.find((candidate) => candidate.sectionId === sectionId);
+      if (!section) return;
+      const title = window.prompt(
+        t('documentStudio.outline.renameSectionPrompt', 'Nowa nazwa sekcji'),
+        section.title
+      );
+      const trimmed = title?.trim();
+      if (!trimmed || trimmed === section.title) return;
+      void persistSectionStructure(
+        schema.sections.map((candidate) =>
+          candidate.sectionId === sectionId ? { ...candidate, title: trimmed } : candidate
+        )
+      );
+    },
+    [persistSectionStructure, schema.sections, t]
+  );
+
+  const handleDeleteSection = useCallback(
+    (sectionId: string) => {
+      if (schema.sections.length <= 1) return;
+      const section = schema.sections.find((candidate) => candidate.sectionId === sectionId);
+      if (!section) return;
+      if (
+        !window.confirm(
+          t('documentStudio.outline.deleteSectionConfirm', {
+            defaultValue: 'Usunąć sekcję „{{title}}” wraz z jej treścią?',
+            title: section.title,
+          })
+        )
+      )
+        return;
+      void persistSectionStructure(
+        schema.sections.filter((candidate) => candidate.sectionId !== sectionId)
+      );
+    },
+    [persistSectionStructure, schema.sections, t]
+  );
+
+  const handleMoveSection = useCallback(
+    (sectionId: string, direction: -1 | 1) => {
+      const currentIndex = schema.sections.findIndex(
+        (candidate) => candidate.sectionId === sectionId
+      );
+      const targetIndex = currentIndex + direction;
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= schema.sections.length) return;
+      const next = [...schema.sections];
+      [next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]];
+      void persistSectionStructure(next);
+    },
+    [persistSectionStructure, schema.sections]
+  );
+
   const triggerTextDownload = (filename: string, content: string, mime: string): void => {
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -3024,6 +3206,25 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       topBarChips={topBarChips}
       presenceSlot={
         <div className="text-right text-[11px] text-c-text-secondary">
+          <div
+            role={autosaveStatus === 'error' || autosaveStatus === 'conflict' ? 'alert' : 'status'}
+            aria-live="polite"
+            className={
+              autosaveStatus === 'error' || autosaveStatus === 'conflict'
+                ? 'font-medium text-danger-600'
+                : 'text-c-text-secondary'
+            }
+          >
+            {autosaveStatus === 'saving'
+              ? t('documentStudio.autosave.saving', 'Zapisywanie…')
+              : autosaveStatus === 'saved'
+                ? t('documentStudio.autosave.saved', 'Zapisano')
+                : autosaveStatus === 'conflict'
+                  ? t('documentStudio.autosave.conflict', 'Konflikt zmian — odświeżono dokument')
+                  : autosaveStatus === 'error'
+                    ? t('documentStudio.autosave.error', 'Błąd zapisu — spróbuj ponownie')
+                    : t('documentStudio.autosave.ready', 'Autozapis gotowy')}
+          </div>
           <div>
             {schema.language.toUpperCase()} · {schema.confidentiality}
           </div>
@@ -3047,6 +3248,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           sections={schema.sections}
           sourceCount={sourceCount}
           assumptionCount={assumptionCount}
+          onAddSection={handleAddSection}
+          onRenameSection={handleRenameSection}
+          onDeleteSection={handleDeleteSection}
+          onMoveSection={handleMoveSection}
         />
       }
       rightRailTools={rightRailTools}

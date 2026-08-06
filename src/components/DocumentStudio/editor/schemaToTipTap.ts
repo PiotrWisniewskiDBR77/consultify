@@ -84,6 +84,32 @@ function textParagraph(text: string): PMNode {
   };
 }
 
+function richInlineContent(content: unknown, fallbackText: string): PMNode[] {
+  const rich = (content as { richText?: unknown } | null)?.richText;
+  if (!Array.isArray(rich)) {
+    return fallbackText.length > 0 ? [{ type: 'text', text: fallbackText }] : [];
+  }
+  return rich
+    .filter(
+      (leaf): leaf is PMNode =>
+        Boolean(leaf) &&
+        typeof leaf === 'object' &&
+        (leaf as PMNode).type === 'text' &&
+        typeof (leaf as PMNode).text === 'string'
+    )
+    .map((leaf) => ({
+      type: 'text',
+      text: leaf.text,
+      ...(Array.isArray(leaf.marks)
+        ? {
+            marks: leaf.marks.filter(
+              (mark) => mark?.type === 'bold' || mark?.type === 'italic' || mark?.type === 'link'
+            ),
+          }
+        : {}),
+    }));
+}
+
 /** An atom NodeView block carrying its entire content as `payloadJson`. */
 function atomBlockNode(nodeName: string, block: DocumentBlock, sectionId: string): PMNode {
   let payloadJson = '';
@@ -113,22 +139,27 @@ export function blockToPMNodes(block: DocumentBlock, sectionId: string): PMNode[
 
   switch (block.type) {
     case 'heading': {
-      const c = (block.content ?? {}) as { level?: number; text?: string };
+      const c = (block.content ?? {}) as { level?: number; text?: string; richText?: PMNode[] };
       const rawLevel = typeof c.level === 'number' ? c.level : 2;
       const level = Math.min(3, Math.max(1, rawLevel)) as 1 | 2 | 3;
       return [
         {
           type: 'heading',
           attrs: { ...identity, level },
-          content:
-            typeof c.text === 'string' && c.text.length > 0 ? [{ type: 'text', text: c.text }] : [],
+          content: richInlineContent(c, typeof c.text === 'string' ? c.text : ''),
         },
       ];
     }
 
     case 'paragraph': {
-      const c = (block.content ?? {}) as { text?: string };
-      return [{ ...textParagraph(c.text ?? ''), attrs: identity }];
+      const c = (block.content ?? {}) as { text?: string; richText?: PMNode[] };
+      return [
+        {
+          type: 'paragraph',
+          attrs: identity,
+          content: richInlineContent(c, c.text ?? ''),
+        },
+      ];
     }
 
     case 'bullet_list':

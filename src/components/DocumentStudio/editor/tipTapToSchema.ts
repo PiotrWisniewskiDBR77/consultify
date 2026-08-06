@@ -56,6 +56,33 @@ function nodeText(node: PMNode): string {
   return node.content.map(nodeText).join('');
 }
 
+function richInlineContent(node: PMNode): PMNode[] | undefined {
+  if (!Array.isArray(node.content)) return undefined;
+  const leaves = node.content
+    .filter((leaf) => leaf.type === 'text' && typeof leaf.text === 'string')
+    .map((leaf) => ({
+      type: 'text',
+      text: leaf.text,
+      ...(Array.isArray(leaf.marks) && leaf.marks.length > 0
+        ? {
+            marks: leaf.marks
+              .filter(
+                (mark) => mark?.type === 'bold' || mark?.type === 'italic' || mark?.type === 'link'
+              )
+              .map((mark) => ({
+                type: mark.type,
+                ...(mark.type === 'link' && typeof mark.attrs?.href === 'string'
+                  ? { attrs: { href: mark.attrs.href } }
+                  : {}),
+              })),
+          }
+        : {}),
+    }));
+  return leaves.some((leaf) => Array.isArray(leaf.marks) && leaf.marks.length > 0)
+    ? leaves
+    : undefined;
+}
+
 /** Each `listItem` collapses to one line of plain text. */
 function listItems(node: PMNode): string[] {
   if (!Array.isArray(node.content)) return [];
@@ -108,8 +135,13 @@ export function pmNodeToBlock(node: PMNode): DocumentBlock | null {
   switch (node.type) {
     case 'heading': {
       const level = typeof attrs.level === 'number' ? attrs.level : 2;
+      const richText = richInlineContent(node);
       return attachIdentity(
-        { blockId: identity.blockId, type: 'heading', content: { level, text: nodeText(node) } },
+        {
+          blockId: identity.blockId,
+          type: 'heading',
+          content: { level, text: nodeText(node), ...(richText ? { richText } : {}) },
+        },
         identity
       );
     }
@@ -119,8 +151,13 @@ export function pmNodeToBlock(node: PMNode): DocumentBlock | null {
       // type from the stored blockType so those round-trip exactly.
       const restoredType =
         declaredType === 'footnote' || declaredType === 'citation' ? declaredType : 'paragraph';
+      const richText = richInlineContent(node);
       return attachIdentity(
-        { blockId: identity.blockId, type: restoredType, content: { text: nodeText(node) } },
+        {
+          blockId: identity.blockId,
+          type: restoredType,
+          content: { text: nodeText(node), ...(richText ? { richText } : {}) },
+        },
         identity
       );
     }
