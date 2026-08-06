@@ -925,7 +925,10 @@ function ArtifactPreviewPane({
       </div>
 
       {/* Sheet tabs (for xlsx) */}
-      {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
+      {preview.type === 'xlsx' &&
+        preview.sheetNames &&
+        preview.sheetNames.length > 0 &&
+        !(isExceleEditEnabled() && preview.rawSheets && preview.rawSheets.length > 0) && (
         <div
           role="tablist"
           className="flex items-center gap-0.5 px-2 py-1.5 border-t border-c-border-subtle bg-c-surface-raised overflow-x-auto shrink-0"
