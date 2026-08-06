@@ -89,7 +89,10 @@ vi.mock('../../../server/src/services/aiService.js', () => ({
         const targets = JSON.parse(match[0]) as Array<{ blockId: string; kind: string }>;
         blocks = targets.map((t) =>
           t.kind === 'items'
-            ? { blockId: t.blockId, items: [`Point A for ${t.blockId}`, `Point B for ${t.blockId}`] }
+            ? {
+                blockId: t.blockId,
+                items: [`Point A for ${t.blockId}`, `Point B for ${t.blockId}`],
+              }
             : { blockId: t.blockId, text: `Deterministic prose for ${t.blockId}.` }
         );
       } catch {
@@ -100,9 +103,12 @@ vi.mock('../../../server/src/services/aiService.js', () => ({
   }),
 }));
 
-const { materializeDocumentArtifact } = await import(
-  '../../../server/src/services/documentStudio/documentStudioService.js'
-);
+const { materializeDocumentArtifact } =
+  await import('../../../server/src/services/documentStudio/documentStudioService.js');
+const { getDocumentArtifact } =
+  await import('../../../server/src/services/documentStudio/documentStudioService.js');
+const { applyOrgContextGrounding } =
+  await import('../../../server/src/services/documentStudio/documentOrgContextSourcePack.js');
 
 const INTAKE = {
   description:
@@ -156,13 +162,69 @@ function canonicalizeSchema(schema: unknown): string {
       block.blockId = canonicalBlockId;
     });
   });
-  return JSON.stringify(clone);
+  // EvidenceContract messages intentionally quote canonical block UUIDs; they
+  // must be normalized too when comparing two independently materialized runs.
+  return JSON.stringify(clone).replace(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi,
+    '<uuid>'
+  );
 }
 
 describe('Document Studio — streaming generation contract (C1)', () => {
   beforeEach(() => {
     store.clear();
     seq = 0;
+  });
+
+  it('production SSE path keeps an explicit three-fact brief isolated and persists only grounded board content', async () => {
+    const intake = {
+      title: 'Raport dla zarządu',
+      description:
+        '72% realizacji planu, budżet 1,4 mln EUR, 18/21 kamieni milowych; zakaz utożsamiania realizacji planu z wykorzystaniem budżetu; brakujące owners i dates oznacz jako assumptions.',
+      documentType: 'board_report' as const,
+      language: 'pl' as const,
+      goal: 'decide' as const,
+      audience: ['Zarząd'],
+    };
+    const routed = applyOrgContextGrounding(intake, [], {
+      contextSummaryPl:
+        'DACH. 8 inicjatyw. Offense-Repair-Conversion. Automated Changeover. Status: green.',
+      sourceRef: {
+        sourceType: 'organization_context',
+        sourceId: 'org-context',
+        sourceTitle: 'Org',
+      },
+      activeProjectNames: [],
+      activeInitiativeNames: [],
+    });
+    expect(routed.intake.description).toBe(intake.description);
+    expect(routed.sourceRefs[0]?.sourceId).toBe('explicit-user-brief');
+
+    const streamedSections: DocumentSection[] = [];
+    const run = await materializeDocumentArtifact({
+      organizationId: 'org-production-path',
+      userId: 'user-production-path',
+      intake: routed.intake,
+      sourceRefs: routed.sourceRefs,
+      useLlm: true,
+      hooks: { onSection: (section) => streamedSections.push(section) },
+    });
+    const reopened = await getDocumentArtifact(run.artifactId, 'org-production-path');
+    expect(reopened).not.toBeNull();
+    expect(JSON.stringify(streamedSections)).toBe(JSON.stringify(run.schema.sections));
+    expect(JSON.stringify(reopened?.sections)).toBe(JSON.stringify(run.schema.sections));
+
+    const text = JSON.stringify(reopened);
+    expect(text).toContain('Realizacja planu wynosi 72%');
+    expect(text).toContain('1,4 mln EUR');
+    expect(text).toContain('18/21');
+    expect(text).not.toMatch(
+      /DACH|8 inicjatyw|Offense-Repair-Conversion|Automated Changeover|Status: green|stopień wykorzystania budżetu.*pozostaje w ramach alokacji/i
+    );
+    expect(reopened?.sections).toHaveLength(7);
+    expect(
+      reopened?.sections.flatMap((section) => section.blocks).some((block) => block.isAssumption)
+    ).toBe(true);
   });
 
   it('fires hooks in order plan → section* and never before its schema is ready', async () => {

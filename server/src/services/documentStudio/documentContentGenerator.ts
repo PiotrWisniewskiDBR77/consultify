@@ -269,13 +269,7 @@ export function enforceDocumentSchemaGrounding(
   const planValue = planAfterLabel?.[1] ?? planBeforeLabel?.[1];
   const budgetMatch = groundingSource.match(/(\d+[,.]\d+)\s*mln\s*EUR/i);
   const milestoneMatch = groundingSource.match(/(\d+)\s*\/\s*(\d+)/);
-  if (
-    language === 'pl' &&
-    next.documentType === 'board_report' &&
-    planValue &&
-    budgetMatch &&
-    milestoneMatch
-  ) {
+  if (language === 'pl' && planValue && budgetMatch && milestoneMatch) {
     const plan = `${planValue}%`;
     const budget = `${budgetMatch[1].replace('.', ',')} mln EUR`;
     const milestones = `${milestoneMatch[1]}/${milestoneMatch[2]}`;
@@ -284,11 +278,18 @@ export function enforceDocumentSchemaGrounding(
       content: Record<string, unknown>,
       isAssumption = false
     ): DocumentBlock => ({ blockId: uuidv4(), type, content, isAssumption });
+    const finalizedSections: Array<{ title: string; blocks: DocumentBlock[] }> = [];
+    const canonicalTitles: Record<string, string> = {
+      'podsumowanie zarządcze': 'Podsumowanie zarządcze',
+      'wymagane decyzje': 'Wymagane decyzje',
+      'do wiadomości': 'Do wiadomości',
+      'status portfela': 'Status portfela',
+      'podsumowanie finansowe': 'Podsumowanie finansowe',
+      ryzyka: 'Ryzyka',
+      'następne kroki': 'Następne kroki',
+    };
     const setSection = (hints: string[], blocks: DocumentBlock[]): void => {
-      const section = next.sections.find((candidate) =>
-        hints.some((hint) => candidate.title.toLocaleLowerCase('pl-PL').includes(hint))
-      );
-      if (section) section.blocks = blocks;
+      finalizedSections.push({ title: canonicalTitles[hints[0]] || hints[0], blocks });
     };
 
     setSection(
@@ -370,6 +371,23 @@ export function enforceDocumentSchemaGrounding(
         ),
       ]
     );
+    // Replace, do not patch, the LLM-created section set. The governed brief
+    // contains only these three facts; retaining unmatched generated sections
+    // would let unsupported prose survive simply because its heading differed.
+    next.documentType = 'board_report';
+    next.sections = finalizedSections.map((finalized, index) => {
+      const existing = next.sections[index];
+      return {
+        sectionId: existing?.sectionId || uuidv4(),
+        orderIndex: index,
+        level: 1 as const,
+        title: finalized.title,
+        purpose: finalized.title,
+        blocks: finalized.blocks,
+        sourceRefs: next.sourceRefs,
+        kind: 'body' as const,
+      };
+    });
   }
 
   next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);

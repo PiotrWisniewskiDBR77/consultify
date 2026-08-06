@@ -199,6 +199,25 @@ export function applyOrgContextGrounding(
   if (!pack || sourceRefs.length > 0) {
     return { intake, sourceRefs, autoGrounded: false };
   }
+  // An explicit quantitative brief is itself the authoritative source for
+  // generation. Mixing the organization's broad context into it changes the
+  // user's source boundary (and can legitimize unrelated initiatives/markets).
+  // Keep it isolated and attach a synthetic intake ref so Sources QA remains
+  // honest without importing facts the caller did not provide.
+  const explicitDescription = String(intake.description || '').trim();
+  if (/\d/.test(explicitDescription)) {
+    return {
+      intake,
+      sourceRefs: [
+        {
+          sourceType: 'intake',
+          sourceId: 'explicit-user-brief',
+          sourceTitle: 'Explicit user brief',
+        },
+      ],
+      autoGrounded: false,
+    };
+  }
   const groundedDescription = intake.description
     ? `${pack.contextSummaryPl}\n\n${intake.description}`
     : pack.contextSummaryPl;

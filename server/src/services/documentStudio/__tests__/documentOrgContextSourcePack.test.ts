@@ -169,6 +169,19 @@ describe('applyOrgContextGrounding', () => {
     expect(result.intake).toBe(intake);
   });
 
+  it('does not mix broad org context into an explicit quantitative user brief', () => {
+    const intake = baseIntake({
+      description: '72% realizacji planu, budżet 1,4 mln EUR i 18/21 kamieni milowych.',
+    });
+    const result = applyOrgContextGrounding(intake, [], samplePack);
+    expect(result.autoGrounded).toBe(false);
+    expect(result.intake).toBe(intake);
+    expect(result.intake.description).not.toContain(samplePack.contextSummaryPl);
+    expect(result.sourceRefs).toEqual([
+      expect.objectContaining({ sourceType: 'intake', sourceId: 'explicit-user-brief' }),
+    ]);
+  });
+
   it('is a no-op (fail-open) when no pack is available, e.g. brand-new organization', () => {
     const intake = baseIntake();
     const result = applyOrgContextGrounding(intake, [], null);
