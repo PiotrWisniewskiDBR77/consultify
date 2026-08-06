@@ -31,6 +31,7 @@
 import type { Editor } from '@tiptap/react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { toast } from 'react-hot-toast';
 
 import {
   DocumentManualSaveConflictError,
@@ -441,6 +442,24 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     }
   }, [editor]);
 
+  const runBodyBlockCommand = useCallback(
+    (command: () => boolean): boolean => {
+      if (!editor) return false;
+      const { from, to } = editor.state.selection;
+      let includesSectionMarker = false;
+      editor.state.doc.nodesBetween(from, to, (node) => {
+        if (node.type.name === 'docSection') includesSectionMarker = true;
+      });
+      if (includesSectionMarker) {
+        toast.error('Zaznacz treść wewnątrz jednej sekcji — nagłówki sekcji są chronione.');
+        return false;
+      }
+      userEditArmedRef.current = true;
+      return command();
+    },
+    [editor]
+  );
+
   return (
     <div className={className} data-testid="document-tiptap-editor">
       {editable && editor ? (
@@ -455,37 +474,45 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               label: 'Tekst',
               title: 'Zwykły tekst',
               active: editor.isActive('paragraph'),
-              run: () => editor.chain().focus().setParagraph().run(),
+              run: () => runBodyBlockCommand(() => editor.chain().focus().setParagraph().run()),
             },
             ...([1, 2, 3] as const).map((level) => ({
               label: `H${level}`,
               title: `Nagłówek ${level}`,
               active: editor.isActive('heading', { level }),
-              run: () => editor.chain().focus().toggleHeading({ level }).run(),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().toggleHeading({ level }).run()),
             })),
             {
               label: '• Lista',
               title: 'Lista punktowana',
               active: editor.isActive('bulletList'),
-              run: () => editor.chain().focus().toggleBulletList().run(),
+              run: () => runBodyBlockCommand(() => editor.chain().focus().toggleBulletList().run()),
             },
             {
               label: '1. Lista',
               title: 'Lista numerowana',
               active: editor.isActive('orderedList'),
-              run: () => editor.chain().focus().toggleOrderedList().run(),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().toggleOrderedList().run()),
             },
             {
               label: 'B',
               title: 'Pogrubienie (Ctrl/Cmd+B)',
               active: editor.isActive('bold'),
-              run: () => editor.chain().focus().toggleBold().run(),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleBold().run();
+              },
             },
             {
               label: 'I',
               title: 'Kursywa (Ctrl/Cmd+I)',
               active: editor.isActive('italic'),
-              run: () => editor.chain().focus().toggleItalic().run(),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleItalic().run();
+              },
             },
             {
               label: 'Link',
@@ -496,6 +523,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
                 const entered = window.prompt('Adres linku', current || 'https://');
                 if (entered === null) return false;
                 const value = entered.trim();
+                userEditArmedRef.current = true;
                 if (!value) return editor.chain().focus().unsetLink().run();
                 const href = /^(https?:|mailto:)/i.test(value) ? value : `https://${value}`;
                 return editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
@@ -505,7 +533,10 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               label: 'Usuń link',
               title: 'Usuń link',
               active: false,
-              run: () => editor.chain().focus().unsetLink().run(),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().unsetLink().run();
+              },
             },
             ...(
               [
@@ -552,10 +583,6 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
               title={action.title}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
-                // Toolbar commands are programmatic TipTap transactions, so
-                // they do not emit the DOM beforeinput event that normally
-                // arms manual autosave. Mark them as user edits explicitly.
-                userEditArmedRef.current = true;
                 action.run();
               }}
               className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${

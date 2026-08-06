@@ -63,6 +63,7 @@ import {
   instantiateDocumentContentBlock,
 } from './documentContentBlockService.js';
 import {
+  buildDocumentEvidenceContract,
   buildDocumentSchema,
   buildDocumentSchemaPremium,
   enforceDocumentSchemaGrounding,
@@ -834,6 +835,37 @@ export async function materializeDocumentArtifact(
     provisionalSchema,
     [params.intake.title, params.intake.description].filter(Boolean).join(' — ')
   );
+
+  // Manual "Czysto" is an authoring canvas, not a grounded deterministic
+  // generation. Organization-context auto-grounding happens before this
+  // service, so detecting it by `sourceRefs.length === 0` was incorrect and
+  // caused the generic stub to be redacted into "Treść usunięta…". Restore a
+  // genuinely blank canonical section after the grounding boundary and remove
+  // auto-attached context from the blank document itself.
+  if (
+    params.intake.documentType === 'generic_document' &&
+    params.intake.description?.trim() === 'Pusty dokument roboczy do samodzielnej edycji.'
+  ) {
+    provisionalSchema.title = params.intake.title?.trim() || outline.title;
+    provisionalSchema.sections = outline.sections.map((section, orderIndex) => ({
+      sectionId: randomUUID(),
+      orderIndex,
+      level: section.level,
+      title: section.title,
+      purpose: section.purpose,
+      blocks: [
+        {
+          blockId: randomUUID(),
+          type: 'paragraph',
+          content: { text: '' },
+          isAssumption: false,
+        },
+      ],
+      sourceRefs: [],
+    }));
+    provisionalSchema.sourceRefs = [];
+    provisionalSchema.evidence = buildDocumentEvidenceContract([], provisionalSchema.sections);
+  }
 
   // Template labels and authoring guidance are governed metadata, not factual
   // claims derived from intake. The grounding boundary may redact unfamiliar

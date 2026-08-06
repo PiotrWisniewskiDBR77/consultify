@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const saveMock = vi.fn();
 let editorOptions: any;
+let currentEditor: any;
 
 vi.mock('@tiptap/react', () => ({
   EditorContent: () => <div data-testid="editor" />,
@@ -16,8 +17,8 @@ vi.mock('@tiptap/react', () => ({
       isActive: vi.fn(() => false),
       getAttributes: vi.fn(() => ({})),
       state: {
-        selection: { from: 0 },
-        doc: { descendants: vi.fn() },
+        selection: { from: 0, to: 0 },
+        doc: { descendants: vi.fn(), nodesBetween: vi.fn() },
       },
     };
     const chain: any = {
@@ -40,6 +41,7 @@ vi.mock('@tiptap/react', () => ({
       },
     };
     editor.chain = () => chain;
+    currentEditor = editor;
     return editor;
   },
 }));
@@ -73,6 +75,7 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
     vi.useFakeTimers();
     saveMock.mockReset().mockResolvedValue({});
     editorOptions = undefined;
+    currentEditor = undefined;
   });
 
   it('does not PUT when TipTap emits an initialization update, but still saves after a user gesture', async () => {
@@ -132,5 +135,25 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
     await act(async () => vi.advanceTimersByTimeAsync(600));
 
     expect(saveMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a block-format command that would consume a protected section marker', async () => {
+    const schema = {
+      artifactId: 'artifact-section-guard',
+      title: 'Guarded sections',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-section-guard" />);
+    currentEditor.state.selection = { from: 0, to: 20 };
+    currentEditor.state.doc.nodesBetween.mockImplementation(
+      (_from: number, _to: number, callback: (node: any) => void) =>
+        callback({ type: { name: 'docSection' } })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lista punktowana' }));
+    await act(async () => vi.advanceTimersByTimeAsync(600));
+
+    expect(saveMock).not.toHaveBeenCalled();
   });
 });

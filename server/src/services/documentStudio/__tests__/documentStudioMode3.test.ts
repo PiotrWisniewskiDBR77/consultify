@@ -55,6 +55,42 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     __resetTemplateRegistryForTests();
   });
 
+  it('keeps the manual Czysto artifact genuinely blank even when org context was auto-attached', async () => {
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: {
+        title: 'Nowy dokument',
+        description: 'Pusty dokument roboczy do samodzielnej edycji.',
+        documentType: 'generic_document',
+        language: 'pl',
+      },
+      outline: {
+        documentType: 'generic_document',
+        title: 'Nowy dokument',
+        sections: [{ title: 'Sekcja 1', level: 1, purpose: '', expectedLengthHint: 'short' }],
+        recommendedDensity: 'concise',
+        recommendedRegister: 'professional',
+        recommendedLanguageStyle: 'formal',
+      },
+      sourceRefs: [
+        {
+          sourceType: 'organization_context',
+          sourceId: 'org-context-1',
+          sourceTitle: 'Kontekst organizacji',
+        },
+      ],
+    });
+
+    expect(result.schema.sourceRefs).toEqual([]);
+    expect(result.schema.sections).toHaveLength(1);
+    expect(result.schema.sections[0].title).toBe('Sekcja 1');
+    expect(result.schema.sections[0].sourceRefs).toEqual([]);
+    expect(result.schema.sections[0].blocks).toEqual([
+      expect.objectContaining({ type: 'paragraph', content: { text: '' }, isAssumption: false }),
+    ]);
+  });
+
   it('hydrates outline + formatting from an approved template', async () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',
