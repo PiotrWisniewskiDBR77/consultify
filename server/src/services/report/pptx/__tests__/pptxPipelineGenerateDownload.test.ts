@@ -121,22 +121,94 @@ describe('Generate -> PPTX download happy path', () => {
   it('renders an 8-slide second deck through persisted custom named masters', async () => {
     const base = buildUnifiedReport();
     const slides: any[] = [
-      base.slides[0], base.slides[1],
-      { intent: 'performance_overview', key_message: 'KPIs are improving', content: { type: 'performance_overview', kpis: [{ name: 'Adoption', value: '72%', status: 'good' }] } },
-      { intent: 'key_messages', key_message: 'Delivery remains focused', content: { type: 'key_messages', messages: [{ title: 'Focus', description: 'Three workstreams remain on plan.' }] } },
-      { intent: 'roadmap', key_message: 'Three waves sequence delivery', content: { type: 'roadmap', phases: [{ label: 'Wave 1', timeframe: 'Q3', items: ['Foundation'] }] } },
-      { intent: 'risk_management', key_message: 'Two risks require active mitigation', content: { type: 'risk_management', risks: [{ risk: 'Dependency', likelihood: 'medium', impact: 'high', mitigation: 'Sequence rollout', owner: 'COO' }] } },
-      { intent: 'next_steps', key_message: 'One decision is required', content: { type: 'next_steps', actions: [{ action: 'Approve wave two', owner: 'SteerCo', deadline: '2026-09-01' }], closing_message: 'Approve wave two' } },
-      { intent: 'appendix', key_message: 'Sources and assumptions', content: { type: 'appendix', title: 'Sources', body: 'Portfolio status pack, 2026-08-06' } },
+      base.slides[0],
+      base.slides[1],
+      {
+        intent: 'performance_overview',
+        key_message: 'KPIs are improving',
+        content: {
+          type: 'performance_overview',
+          kpis: [{ name: 'Adoption', value: '72%', status: 'good' }],
+        },
+      },
+      {
+        intent: 'key_messages',
+        key_message: 'Delivery remains focused',
+        content: {
+          type: 'key_messages',
+          messages: [{ title: 'Focus', description: 'Three workstreams remain on plan.' }],
+        },
+      },
+      {
+        intent: 'roadmap',
+        key_message: 'Three waves sequence delivery',
+        content: {
+          type: 'roadmap',
+          phases: [{ label: 'Wave 1', timeframe: 'Q3', items: ['Foundation'] }],
+        },
+      },
+      {
+        intent: 'risk_management',
+        key_message: 'Two risks require active mitigation',
+        content: {
+          type: 'risk_management',
+          risks: [
+            {
+              risk: 'Dependency',
+              likelihood: 'medium',
+              impact: 'high',
+              mitigation: 'Sequence rollout',
+              owner: 'COO',
+            },
+          ],
+        },
+      },
+      {
+        intent: 'next_steps',
+        key_message: 'One decision is required',
+        content: {
+          type: 'next_steps',
+          actions: [{ action: 'Approve wave two', owner: 'SteerCo', deadline: '2026-09-01' }],
+          closing_message: 'Approve wave two',
+        },
+      },
+      {
+        intent: 'appendix',
+        key_message: 'Sources and assumptions',
+        content: { type: 'appendix', title: 'Sources', body: 'Portfolio status pack, 2026-08-06' },
+      },
     ];
     const customTemplate: any = {
       version: 3,
-      theme: { titleFont: 'Aptos Display', bodyFont: 'Aptos', primaryColor: '19324D', backgroundColor: 'FFFDF8', surfaceColor: 'EEF2F5', textColor: '152536', accentColor: 'E06C47' },
-      layouts: Object.fromEntries(['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [role, { masterName: `SteerCo ${role}` }])),
-      layoutMapping: { cover: 'cover', content: 'content', kpi: 'kpi', table: 'table', decision: 'decision' },
+      theme: {
+        titleFont: 'Aptos Display',
+        bodyFont: 'Aptos',
+        primaryColor: '19324D',
+        backgroundColor: 'FFFDF8',
+        surfaceColor: 'EEF2F5',
+        textColor: '152536',
+        accentColor: 'E06C47',
+      },
+      layouts: Object.fromEntries(
+        ['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [
+          role,
+          { masterName: `SteerCo ${role}` },
+        ])
+      ),
+      layoutMapping: {
+        cover: 'cover',
+        content: 'content',
+        kpi: 'kpi',
+        table: 'table',
+        decision: 'decision',
+      },
     };
     const result = await new PptxPipelineService().generateFromUnifiedJson(
-      { ...base, meta: { ...base.meta, customTemplate, templateId: 'tpl-steerco', templateVersion: 3 }, slides },
+      {
+        ...base,
+        meta: { ...base.meta, customTemplate, templateId: 'tpl-steerco', templateVersion: 3 },
+        slides,
+      },
       { customTemplate, addClosingSlide: false } as any
     );
     expect(result.slideCount).toBe(8);
@@ -180,6 +252,8 @@ describe('Generate -> PPTX download happy path', () => {
           id: 'stale-deck',
           organization_id: 'org-1',
           export_path: exportPath,
+          version: 2,
+          exported_version: 1,
           updated_at: new Date().toISOString(),
           deck_json: JSON.stringify(deckDocument),
           unified_json: JSON.stringify(report),
@@ -191,6 +265,65 @@ describe('Generate -> PPTX download happy path', () => {
     expect(generate).toHaveBeenCalledOnce();
     expect(persist).not.toHaveBeenCalled();
     expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
+  });
+
+  it('rerenders an autosave within two seconds and preserves the persisted custom master contract', async () => {
+    const report = buildUnifiedReport();
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'fast-edit',
+      organizationId: 'org-1',
+      title: 'Fast edit',
+      unifiedJson: report,
+    });
+    const customTemplate: any = {
+      version: 2,
+      theme: {
+        titleFont: 'Aptos',
+        bodyFont: 'Arial',
+        primaryColor: '112233',
+        backgroundColor: 'FFFFFF',
+        surfaceColor: 'EEEEEE',
+        textColor: '111111',
+        accentColor: '445566',
+      },
+      layouts: { standard: { masterName: 'Client Master' } },
+      layoutMapping: {
+        cover: 'standard',
+        content: 'standard',
+        kpi: 'standard',
+        table: 'standard',
+        decision: 'standard',
+      },
+    };
+    deckDocument.meta.customTemplate = customTemplate;
+    const exportPath = path.join(os.tmpdir(), `fast-edit-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+    fs.writeFileSync(exportPath, Buffer.from('version-one'));
+    const generate = vi.fn(async (_unified, options) => ({
+      buffer: Buffer.from('version-two'),
+      slideCount: deckDocument.cards.length,
+      warnings: [],
+    }));
+    const persist = vi.fn(async () => undefined);
+    await ensureCurrentPptxExport(
+      {
+        id: 'fast-edit',
+        organization_id: 'org-1',
+        export_path: exportPath,
+        version: 2,
+        exported_version: 1,
+        updated_at: new Date().toISOString(),
+        deck_json: JSON.stringify(deckDocument),
+        unified_json: JSON.stringify(report),
+      },
+      { generate, persist }
+    );
+    expect(generate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ customTemplate })
+    );
+    expect(fs.readFileSync(exportPath).toString()).toBe('version-two');
+    expect(persist).toHaveBeenCalledWith(expect.objectContaining({ exportedVersion: 2 }));
   });
 
   it('materializes and persists a current PPTX when export_path is missing', async () => {

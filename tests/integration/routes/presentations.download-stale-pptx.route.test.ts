@@ -224,10 +224,12 @@ describe('P0 — GET /presentations/decks/:id/download re-renders a stale PPTX',
     expect(onDisk.equals(buffer)).toBe(true);
   });
 
-  it('does NOT re-render when the on-disk file is already newer than updated_at', async () => {
-    // File written AFTER the deck's updated_at -> fresh, must be served as-is.
+  it('does NOT re-render when the on-disk file matches the current deck version', async () => {
+    // Freshness is version-bound, not clock-bound. Matching versions prove
+    // that these bytes were rendered from the current canonical deck.
     const freshBytes = Buffer.from('FRESH-UNCHANGED-BYTES');
     fs.writeFileSync(exportPath, freshBytes);
+    deckRow.exported_version = deckRow.version;
     const freshMtime = new Date(Date.now() + 60_000);
     fs.utimesSync(exportPath, freshMtime, freshMtime);
 

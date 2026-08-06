@@ -153,11 +153,7 @@ export interface SourceArtifact {
   label: string;
   confidence?: number;
   readiness?:
-    | 'ready'
-    | 'partial_ready'
-    | 'missing_sales_data'
-    | 'policy_blocked'
-    | 'insufficient_evidence';
+    'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
   lineage?: {
     runtime?: string;
     recordId?: string;
@@ -2148,7 +2144,7 @@ export async function generateDeck(
     }
 
     await dbRun(
-      `UPDATE presentation_decks SET status = 'ready', deck_json = ?, unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      `UPDATE presentation_decks SET status = 'ready', deck_json = ?, unified_json = ?, slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, exported_version = version, validation_warnings = ?, outline_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
       [
         JSON.stringify(deckDocument),
         JSON.stringify(unifiedJson),

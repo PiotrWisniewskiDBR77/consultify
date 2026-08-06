@@ -29,4 +29,12 @@ describe('GET /decks/:id/download — current PPTX contract', () => {
     expect(handler).toContain('res.sendFile(path.resolve(freshDeck.export_path))');
     expect(handler).not.toContain('res.sendFile(path.resolve(deck.export_path))');
   });
+
+  it('records an export rejected by limits as failed, never completed', async () => {
+    const handler = await downloadHandlerSource();
+    const limitStart = handler.indexOf('if (!limitCheck.ok)');
+    const limitBranch = handler.slice(limitStart, handler.indexOf('const filename', limitStart));
+    expect(limitBranch).toContain("status: 'failed'");
+    expect(limitBranch).not.toContain("status: 'completed'");
+  });
 });

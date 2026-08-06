@@ -35,12 +35,93 @@ export interface PresentationCustomTemplateDefinition {
     accentColor: string;
     logoDataUri?: string;
   };
-  layouts: Record<string, {
-    masterName: string;
-    backgroundColor?: string;
-    accentColor?: string;
-  }>;
+  layouts: Record<
+    string,
+    {
+      masterName: string;
+      backgroundColor?: string;
+      accentColor?: string;
+    }
+  >;
   layoutMapping: Record<CustomTemplateLayoutRole, string>;
+}
+
+const CUSTOM_LAYOUT_ROLES: CustomTemplateLayoutRole[] = [
+  'cover',
+  'content',
+  'kpi',
+  'table',
+  'decision',
+];
+const HEX_COLOR = /^#?[0-9A-Fa-f]{6}$/;
+
+export function validatePresentationCustomTemplate(
+  value: unknown
+): { ok: true; value: PresentationCustomTemplateDefinition } | { ok: false; errors: string[] } {
+  const errors: string[] = [];
+  const input = value as any;
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { ok: false, errors: ['customTemplate must be an object'] };
+  }
+  if (!Number.isInteger(input.version) || input.version < 1)
+    errors.push('version must be a positive integer');
+  if (!input.theme || typeof input.theme !== 'object') errors.push('theme is required');
+  const theme = input.theme || {};
+  for (const key of ['titleFont', 'bodyFont'] as const) {
+    if (typeof theme[key] !== 'string' || !theme[key].trim())
+      errors.push(`theme.${key} is required`);
+  }
+  for (const key of [
+    'primaryColor',
+    'backgroundColor',
+    'surfaceColor',
+    'textColor',
+    'accentColor',
+  ] as const) {
+    if (typeof theme[key] !== 'string' || !HEX_COLOR.test(theme[key]))
+      errors.push(`theme.${key} must be a 6-digit hex color`);
+  }
+  if (
+    theme.logoDataUri !== undefined &&
+    !/^data:image\/(?:png|jpeg);base64,[A-Za-z0-9+/=]+$/i.test(theme.logoDataUri)
+  ) {
+    errors.push('theme.logoDataUri must be a PNG or JPEG data URI');
+  }
+  if (
+    !input.layouts ||
+    typeof input.layouts !== 'object' ||
+    Array.isArray(input.layouts) ||
+    Object.keys(input.layouts).length === 0
+  ) {
+    errors.push('layouts must contain at least one layout');
+  } else {
+    for (const [id, layout] of Object.entries(input.layouts) as Array<[string, any]>) {
+      if (!id.trim()) errors.push('layout id must not be empty');
+      if (
+        !layout ||
+        typeof layout !== 'object' ||
+        typeof layout.masterName !== 'string' ||
+        !layout.masterName.trim()
+      )
+        errors.push(`layouts.${id}.masterName is required`);
+      for (const key of ['backgroundColor', 'accentColor'] as const) {
+        if (layout?.[key] !== undefined && !HEX_COLOR.test(layout[key]))
+          errors.push(`layouts.${id}.${key} must be a 6-digit hex color`);
+      }
+    }
+  }
+  if (!input.layoutMapping || typeof input.layoutMapping !== 'object') {
+    errors.push('layoutMapping is required');
+  } else {
+    for (const role of CUSTOM_LAYOUT_ROLES) {
+      const layoutId = input.layoutMapping[role];
+      if (typeof layoutId !== 'string' || !layoutId.trim())
+        errors.push(`layoutMapping.${role} is required`);
+      else if (!input.layouts || !Object.prototype.hasOwnProperty.call(input.layouts, layoutId))
+        errors.push(`layoutMapping.${role} references unknown layout '${layoutId}'`);
+    }
+  }
+  return errors.length ? { ok: false, errors } : { ok: true, value: input };
 }
 
 export interface PresentationTemplateRuntime {
@@ -313,10 +394,13 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
       showConfidentiality: true,
       ...(recipeJson?.headerFooter || {}),
     },
-    customTemplate:
-      layoutPolicy?.customTemplate && typeof layoutPolicy.customTemplate === 'object'
-        ? layoutPolicy.customTemplate
-        : undefined,
+    customTemplate: (() => {
+      if (layoutPolicy?.customTemplate == null) return undefined;
+      const validation = validatePresentationCustomTemplate(layoutPolicy.customTemplate);
+      if (!validation.ok)
+        throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
+      return validation.value;
+    })(),
   };
 }
 

@@ -176,7 +176,10 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
+import {
+  mapOutlineBlueprintToDeckSlides,
+  validatePresentationCustomTemplate,
+} from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -530,14 +533,20 @@ function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: st
 export class CurrentPptxExportError extends Error {
   readonly code = 'PPTX_CURRENT_RENDER_FAILED';
 
-  constructor(message: string, readonly cause?: unknown) {
+  constructor(
+    message: string,
+    readonly cause?: unknown
+  ) {
     super(message);
     this.name = 'CurrentPptxExportError';
   }
 }
 
 interface CurrentPptxExportDependencies {
-  generate: (unifiedJson: any, options: any) => Promise<{
+  generate: (
+    unifiedJson: any,
+    options: any
+  ) => Promise<{
     buffer: Buffer;
     slideCount: number;
     warnings: string[];
@@ -548,6 +557,7 @@ interface CurrentPptxExportDependencies {
     exportPath: string;
     slideCount: number;
     exportedAt: string;
+    exportedVersion: number;
   }) => Promise<void>;
 }
 
@@ -569,11 +579,12 @@ export async function ensureCurrentPptxExport(
     dependencies?.persist ??
     (async (params) => {
       await dbRun(
-        `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', slide_count = ?, exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+        `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', slide_count = ?, exported_at = ?, exported_version = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
         [
           params.exportPath,
           params.slideCount,
           params.exportedAt,
+          params.exportedVersion,
           params.deckId,
           params.organizationId,
         ]
@@ -581,22 +592,17 @@ export async function ensureCurrentPptxExport(
     });
 
   try {
-    const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
-    let fileMtimeMs: number | null = null;
+    let fileExists = false;
     try {
-      fileMtimeMs = fs.statSync(exportPath).mtimeMs;
+      fileExists = fs.statSync(exportPath).isFile();
     } catch {
-      fileMtimeMs = null;
+      fileExists = false;
     }
-
-    // Small tolerance to avoid re-render churn from clock/rounding skew between the
-    // DB timestamp and the filesystem mtime for a file we just wrote ourselves.
-    const STALE_TOLERANCE_MS = 2000;
-    const hasReliableTimestamp = deckUpdatedAt > 0 && !Number.isNaN(deckUpdatedAt);
-    const isCurrent =
-      fileMtimeMs !== null &&
-      hasReliableTimestamp &&
-      deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS;
+    const deckVersion = Number.isInteger(Number(deck?.version)) ? Number(deck.version) : 1;
+    const exportedVersion = Number.isInteger(Number(deck?.exported_version))
+      ? Number(deck.exported_version)
+      : null;
+    const isCurrent = fileExists && exportedVersion !== null && exportedVersion === deckVersion;
     if (isCurrent) return { ...deck, export_path: exportPath };
 
     const deckDocument = normalizeDeckDocument(deck);
@@ -625,6 +631,7 @@ export async function ensureCurrentPptxExport(
       language: (deckDocument.meta?.language as any) || undefined,
       confidentiality: (deckDocument.meta?.confidentiality as any) || undefined,
       addClosingSlide: false,
+      customTemplate: deckDocument.meta?.customTemplate,
     });
 
     // Render-integrity gate: never overwrite a good export with a deck that
@@ -651,6 +658,7 @@ export async function ensureCurrentPptxExport(
       exportPath,
       slideCount: result.slideCount,
       exportedAt: exportedAtIso,
+      exportedVersion: deckVersion,
     });
     logger.info('[Presentations] Re-rendered stale PPTX export before download', {
       deckId: deck.id,
@@ -662,6 +670,7 @@ export async function ensureCurrentPptxExport(
       export_path: exportPath,
       export_format: 'pptx',
       exported_at: exportedAtIso,
+      exported_version: deckVersion,
       slide_count: result.slideCount,
     };
   } catch (error) {
@@ -795,7 +804,7 @@ async function renderInitialPptxForDeck(params: {
     fs.mkdirSync(exportDir, { recursive: true });
     fs.writeFileSync(exportPath, result.buffer);
     await dbRun(
-      `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, exported_version = version, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
       [exportPath, params.deckId, params.organizationId]
     );
   } catch (renderErr) {
@@ -1377,6 +1386,14 @@ router.post(
       return;
     }
     const useLlm = req.body?.useLlm === true;
+    if (input.customTemplate !== undefined) {
+      const validation = validatePresentationCustomTemplate(input.customTemplate);
+      if (!validation.ok) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
+      }
+    }
 
     let draft;
     try {
@@ -1625,9 +1642,24 @@ router.put(
     }
 
     const {
-      name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId,
+      name,
+      description,
+      audience,
+      goal,
+      theme,
+      outlineJson,
+      maxSlides,
+      colorTemplateId,
       customTemplate,
     } = req.body;
+    if (customTemplate !== undefined && customTemplate !== null) {
+      const validation = validatePresentationCustomTemplate(customTemplate);
+      if (!validation.ok) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
+      }
+    }
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1782,6 +1814,28 @@ router.post(
         error: 'Unknown targetState. Allowed: draft, approved, deprecated.',
         code: 'INVALID_TARGET_STATE',
       });
+    }
+    if (targetState === 'approved') {
+      const candidate = await getTemplateForOrgOrSystem(templateId, orgId);
+      if (candidate?.layout_policy_json) {
+        let customTemplate: unknown;
+        try {
+          customTemplate = JSON.parse(candidate.layout_policy_json)?.customTemplate;
+        } catch {
+          customTemplate = '__invalid_json__';
+        }
+        if (customTemplate != null) {
+          const validation = validatePresentationCustomTemplate(customTemplate);
+          if (!validation.ok)
+            return res
+              .status(422)
+              .json({
+                success: false,
+                error: 'custom_template_invalid',
+                details: validation.errors,
+              });
+        }
+      }
     }
 
     const result = await applyLifecycleTransition({
@@ -2628,7 +2682,7 @@ router.get(
         userId,
         deckId: String(req.params.id || ''),
         format: 'pptx',
-        status: 'completed',
+        status: 'failed',
         qualityReport: quality.report,
         filePath: freshDeck.export_path,
       });

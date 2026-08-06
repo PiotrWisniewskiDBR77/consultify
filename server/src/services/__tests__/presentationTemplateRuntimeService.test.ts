@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTemplateRuntimeFromRow } from '../presentationTemplateRuntimeService.js';
+import {
+  buildTemplateRuntimeFromRow,
+  validatePresentationCustomTemplate,
+} from '../presentationTemplateRuntimeService.js';
 
 /**
  * FALA D (2026-07-26, "deck-narrative-depth") — regression pin for a real bug
@@ -20,9 +23,23 @@ describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the 
   it('carries custom template version, theme and layout mapping into generation runtime', () => {
     const customTemplate = {
       version: 4,
-      theme: { titleFont: 'Aptos', bodyFont: 'Arial' },
-      layouts: { decision: { masterName: 'Client Decision' } },
-      layoutMapping: { decision: 'decision' },
+      theme: {
+        titleFont: 'Aptos',
+        bodyFont: 'Arial',
+        primaryColor: '112233',
+        backgroundColor: 'FFFFFF',
+        surfaceColor: 'EEEEEE',
+        textColor: '111111',
+        accentColor: '445566',
+      },
+      layouts: { standard: { masterName: 'Client Decision' } },
+      layoutMapping: {
+        cover: 'standard',
+        content: 'standard',
+        kpi: 'standard',
+        table: 'standard',
+        decision: 'standard',
+      },
     };
     const runtime = buildTemplateRuntimeFromRow({
       id: 'tmpl-custom',
@@ -31,6 +48,23 @@ describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the 
     });
     expect(runtime?.templateId).toBe('tmpl-custom');
     expect(runtime?.customTemplate).toEqual(customTemplate);
+  });
+  it('rejects incomplete custom contracts before runtime generation', () => {
+    const result = validatePresentationCustomTemplate({
+      version: 1,
+      theme: {},
+      layouts: {},
+      layoutMapping: {},
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok)
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          'theme.titleFont is required',
+          'layouts must contain at least one layout',
+          'layoutMapping.cover is required',
+        ])
+      );
   });
   it('carries dataNeeded/suggestedVisual through (camelCase)', () => {
     const row = {
