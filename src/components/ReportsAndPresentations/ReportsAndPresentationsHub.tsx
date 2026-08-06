@@ -325,6 +325,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     void fetchReports(showDrafts);
     void fetchPresentations(showDrafts);
     void fetchSheets(showDrafts);
+    void fetchTemplates(showDrafts);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showDrafts]);
 
