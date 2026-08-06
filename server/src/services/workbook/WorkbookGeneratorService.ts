@@ -28,6 +28,7 @@ import {
   listWorkbookTemplates,
   type WorkbookTemplateId,
 } from './templates/index.js';
+import { buildDeterministicInitiativeBudgetFromPrompt } from './deterministicInitiativeBudget.js';
 
 // ---------------------------------------------------------------------------
 // Phase prompts
@@ -729,7 +730,8 @@ class WorkbookGeneratorService {
     // Dopasowanie POMIJA Fazy 1-3: LLM parametryzuje sprawdzony wzorzec zamiast
     // projektować model od zera.
     // =====================================================================
-    const templateMatch = await this.matchWorkbookTemplate(
+    const deterministicSchema = buildDeterministicInitiativeBudgetFromPrompt(prompt);
+    const templateMatch = deterministicSchema ? null : await this.matchWorkbookTemplate(
       userPrompt,
       researchContext,
       llmParams
@@ -748,7 +750,15 @@ class WorkbookGeneratorService {
     // fallback is never exercised there — a template schema is already valid).
     let generationPrompt = '';
 
-    if (templateMatch) {
+    if (deterministicSchema) {
+      pipelineLog.push({
+        phase: 'deterministic_plan',
+        status: 'ok',
+        durationMs: 0,
+        detail: 'Built explicit 12-month initiative budget locally; skipped external PLAN/CONFIRM/GENERATE calls.',
+      });
+      schema = deterministicSchema;
+    } else if (templateMatch) {
       pipelineLog.push({
         phase: 'template_match',
         status: 'ok',
@@ -960,7 +970,12 @@ class WorkbookGeneratorService {
     const p4Start = Date.now();
     let qualityScore: number | null = null;
 
-    try {
+    if (deterministicSchema) {
+      pipelineLog.push({
+        phase: 'review', status: 'skipped', durationMs: 0,
+        detail: 'Deterministic schema uses the local quality gate; external LLM review skipped.',
+      });
+    } else try {
       const schemaJson = JSON.stringify(schema!, null, 2);
       const reviewResponse = await this.callLLM(
         REVIEW_SYSTEM_PROMPT,
@@ -1106,7 +1121,7 @@ class WorkbookGeneratorService {
 
     let qualityReport = critiqueSafe(schema!);
 
-    if (!qualityReport.passed && WORKBOOK_REPAIR_MAX_ITERS > 0) {
+    if (!deterministicSchema && !qualityReport.passed && WORKBOOK_REPAIR_MAX_ITERS > 0) {
       logger.info(
         `[WorkbookGenerator] Phase 5 REPAIR: critic failed (score=${qualityReport.score}, ` +
           `${qualityReport.issues.filter((i) => i.severity === 'CRITICAL').length} critical) — entering bounded repair loop`,
