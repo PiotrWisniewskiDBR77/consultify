@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   blockContentStyle,
   blockFrameStyle,
+  blockGeometryStyle,
   mergeStarterBlockContent,
   resolveBlankCardInsertionIndex,
 } from '../manualEditing';
@@ -60,5 +61,19 @@ describe('manual PowerPoint editing helpers', () => {
       alignSelf: 'center',
     });
     expect(blockFrameStyle({ widthPercent: '5', alignSelf: 'flex-start' }).width).toBe('10%');
+  });
+
+  it('renders opted-in freeform geometry as absolute slide percentages', () => {
+    expect(blockGeometryStyle({ x: 10, y: 20, width: 40, height: 30, rotation: 15 })).toMatchObject(
+      {
+        position: 'absolute',
+        left: '10%',
+        top: '20%',
+        width: '40%',
+        height: '30%',
+        transform: 'rotate(15deg)',
+      }
+    );
+    expect(blockGeometryStyle()).toEqual({});
   });
 });

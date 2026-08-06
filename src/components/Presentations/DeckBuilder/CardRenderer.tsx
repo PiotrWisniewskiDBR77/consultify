@@ -31,7 +31,7 @@ import {
   type VerticalFillMode,
   verticalFillMode,
 } from './layouts/LayoutEngine';
-import { blockFrameStyle } from './manualEditing';
+import { blockFrameStyle, blockGeometryStyle } from './manualEditing';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
@@ -112,18 +112,22 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   // Tło karty (nie motyw aplikacji) decyduje o kolorze tekstu — patrz komentarz
   // przy `themeForCard`. Dla kart jasnych zwraca dokładnie `deckTheme`.
   const theme = useMemo(() => themeForCard(card, deckTheme), [card, deckTheme]);
+  const structuredBlocks = useMemo(
+    () => card.blocks.filter((block) => !block.geometry),
+    [card.blocks]
+  );
 
   const layout = useMemo(() => {
-    if (card.blocks.length === 0) return null;
-    return selectLayout(card, recentLayoutIds);
-  }, [card, recentLayoutIds]);
+    if (structuredBlocks.length === 0) return null;
+    return selectLayout({ ...card, blocks: structuredBlocks }, recentLayoutIds);
+  }, [card, recentLayoutIds, structuredBlocks]);
 
   const regionMap = useMemo(() => {
-    if (!layout || card.blocks.length === 0) return null;
+    if (!layout || structuredBlocks.length === 0) return null;
     // STEP 1b — pass B1's composition so the AI's area assignment is honoured;
     // absent → byte-identical to the prior preferred-block-type heuristic.
-    return assignBlocksToRegions(card.blocks, layout, card.composition);
-  }, [layout, card.blocks, card.composition]);
+    return assignBlocksToRegions(structuredBlocks, layout, card.composition);
+  }, [layout, structuredBlocks, card.composition]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
 
@@ -132,14 +136,14 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   // is not glued to the top with a dead bottom.
   const stackedFillMode = useMemo(
     () =>
-      card.blocks.length
+      structuredBlocks.length
         ? verticalFillMode(
-            card.blocks as { type: string; content?: Record<string, unknown> }[],
+            structuredBlocks as { type: string; content?: Record<string, unknown> }[],
             undefined,
             card.intent
           )
         : 'top',
-    [card.blocks, card.intent]
+    [structuredBlocks, card.intent]
   );
 
   const handleSourceClick = (ref: {
@@ -218,7 +222,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     // Operations read/write ONLY `card.blocks` via the raw (unsanitized)
     // block_id — the model stays a sequence of blocks (SPEC §2.1), never x/y.
     if (editable) {
-      return (
+      const editableNode = (
         <AnimatedBlock
           key={block.block_id}
           blockType={block.type}
@@ -245,6 +249,13 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             {blockBody}
           </EditableBlock>
         </AnimatedBlock>
+      );
+      return block.geometry ? (
+        <div key={block.block_id} style={blockGeometryStyle(block.geometry)}>
+          {editableNode}
+        </div>
+      ) : (
+        editableNode
       );
     }
 
@@ -329,9 +340,21 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             className="flex-1 flex flex-col gap-3"
             style={{ justifyContent: justifyFor(card.content_alignment || stackedFillMode) }}
           >
-            {card.blocks
+            {structuredBlocks
               .sort((a, b) => a.position.order - b.position.order)
               .map((block, blockIndex) => renderBlockItem(block, blockIndex))}
+          </div>
+        )}
+
+        {card.blocks.some((block) => block.geometry) && (
+          <div className="absolute inset-8 pointer-events-none">
+            {card.blocks
+              .filter((block) => block.geometry)
+              .map((block, index) => (
+                <div key={block.block_id} className="pointer-events-auto">
+                  {renderBlockItem(block, index)}
+                </div>
+              ))}
           </div>
         )}
 

@@ -63,6 +63,26 @@ export function blockFrameStyle(styleOverrides?: Record<string, unknown>): CSSPr
   };
 }
 
+export function blockGeometryStyle(geometry?: {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}): CSSProperties {
+  if (!geometry) return {};
+  return {
+    position: 'absolute',
+    left: `${geometry.x}%`,
+    top: `${geometry.y}%`,
+    width: `${geometry.width}%`,
+    height: `${geometry.height}%`,
+    transform: `rotate(${geometry.rotation}deg)`,
+    transformOrigin: 'center',
+    zIndex: 20,
+  };
+}
+
 export function mergeStarterBlockContent(
   defaults: Record<string, unknown>,
   selection?: Record<string, unknown>
