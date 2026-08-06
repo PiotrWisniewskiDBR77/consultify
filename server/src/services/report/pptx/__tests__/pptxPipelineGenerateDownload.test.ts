@@ -17,8 +17,13 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  CurrentPptxExportError,
+  ensureCurrentPptxExport,
+} from '../../../../routes/presentations.routes.js';
+import { deckDocumentFromUnifiedJson } from '../../../presentationDeckDocumentService.js';
 import { PptxPipelineService } from '../PptxPipelineService.js';
 import type { UnifiedReportJSON } from '../types.js';
 
@@ -110,5 +115,86 @@ describe('Generate -> PPTX download happy path', () => {
     expect(onDisk.length).toBe(result.buffer.length);
     // The served file is still a valid .pptx package.
     expect(onDisk.subarray(0, 4).equals(ZIP_SIGNATURE)).toBe(true);
+  });
+
+  it('fails closed and preserves the old file when a stale deck cannot be regenerated', async () => {
+    const report = buildUnifiedReport();
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'stale-deck',
+      organizationId: 'org-1',
+      title: 'Stale deck',
+      unifiedJson: report,
+    });
+    const exportPath = path.join(os.tmpdir(), `stale-deck-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+    const oldBytes = Buffer.from('old-pptx-bytes');
+    fs.writeFileSync(exportPath, oldBytes);
+    const oldTime = new Date(Date.now() - 60_000);
+    fs.utimesSync(exportPath, oldTime, oldTime);
+
+    const generate = vi.fn(async () => {
+      throw new Error('renderer unavailable');
+    });
+    const persist = vi.fn(async () => undefined);
+
+    await expect(
+      ensureCurrentPptxExport(
+        {
+          id: 'stale-deck',
+          organization_id: 'org-1',
+          export_path: exportPath,
+          updated_at: new Date().toISOString(),
+          deck_json: JSON.stringify(deckDocument),
+          unified_json: JSON.stringify(report),
+        },
+        { generate, persist }
+      )
+    ).rejects.toBeInstanceOf(CurrentPptxExportError);
+
+    expect(generate).toHaveBeenCalledOnce();
+    expect(persist).not.toHaveBeenCalled();
+    expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
+  });
+
+  it('materializes and persists a current PPTX when export_path is missing', async () => {
+    const report = buildUnifiedReport();
+    const deckId = `missing-export-${Date.now()}`;
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId,
+      organizationId: 'org-1',
+      title: 'Missing export',
+      unifiedJson: report,
+    });
+    const generatedBytes = Buffer.from('fresh-pptx-bytes');
+    const generate = vi.fn(async () => ({
+      buffer: generatedBytes,
+      slideCount: deckDocument.cards.length,
+      warnings: [],
+    }));
+    const persist = vi.fn(async () => undefined);
+
+    const result = await ensureCurrentPptxExport(
+      {
+        id: deckId,
+        organization_id: 'org-1',
+        export_path: null,
+        updated_at: new Date().toISOString(),
+        deck_json: JSON.stringify(deckDocument),
+        unified_json: JSON.stringify(report),
+      },
+      { generate, persist }
+    );
+    tmpFiles.push(result.export_path);
+
+    expect(generate).toHaveBeenCalledOnce();
+    expect(fs.readFileSync(result.export_path)).toEqual(generatedBytes);
+    expect(persist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deckId,
+        organizationId: 'org-1',
+        exportPath: result.export_path,
+        slideCount: deckDocument.cards.length,
+      })
+    );
   });
 });
