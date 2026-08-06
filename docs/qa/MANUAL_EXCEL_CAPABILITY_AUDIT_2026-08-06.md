@@ -17,6 +17,36 @@
 - Runtime blocker found: Rename, validation and delete used native browser prompt/confirm dialogs. These are inconsistent with the application, weak for accessibility and blocked reliable automation. Fixed in local commit `3d4a767fe4` with an application-owned accessible dialog; **redeploy required** before continuing the destructive/full retest.
 - The outer legacy sheet tablist remained on `Inputs` while the canonical editor selector showed `Budget`. Editing targets the selector's sheet correctly, but the duplicate navigation is visually contradictory: **FAIL (UX)**.
 
+### Full runtime retest — deployment `4f5898e3`
+
+Control workbook: `550fe25b-c01f-4d32-ab20-c0324a554e07`. All operations below were performed manually in the canonical `/excele` UI without Teresa.
+
+| Runtime operation | Result | Evidence |
+|---|---:|---|
+| Cold reopen after prior deployment | PASS | Reopened with four sheets including durable `Sheet 4`. |
+| Single sheet navigation | PASS | Only canonical Active sheet selector remains; duplicate legacy tabs are gone. |
+| Add / rename / duplicate / delete sheet | PASS | Created `Sheet 4`, renamed to `Runtime QA`, duplicated to `Runtime QA copy`, then deleted copy through accessible application dialog; every command showed `Saved`. |
+| Insert row / column | PASS | `Runtime QA` expanded from 1×1 to 2×2; header became `New column / Column A`. |
+| Delete row / column | PASS | Reduced 2×2 to 1×1; cold reopen preserved structure. |
+| Cell and 2×2 range paste | PASS | Clipboard `10\t20\n30\t40` rendered as four cells and showed `Saved`. |
+| Shift range selection + raw copy | PASS | Copied exact TSV `10\t20\n30\t40` from selected rectangle. |
+| Undo / redo range | PASS | Undo cleared all four cells; redo restored exact 10/20/30/40 values. |
+| Formula entry + Fill Down | PASS | A2 `=B2*2` calculated 40; fill produced A3 `=B3*2` and value 80. |
+| Bold / EUR number format | PASS (persistence) | Both commands returned `Saved`; formatting is schema/export styling and is not visually represented by accessible DOM text. |
+| Sort simple values | PASS | Descending sort on value column changed paired rows from 20/40 to 40/20. |
+| Sort rows containing formulas | FAIL → FIXED LOCALLY | Runtime sort moved rows but left relative A1 references tied to old row numbers, corrupting row semantics. Fixed in `ee5dcef0f7`; focused route suite 21/21 PASS. Redeploy required. |
+| Header filter | PASS | Toggle exposed `aria-pressed=true`; cold reopen retained it. Native XLSX autofilter is persisted in canonical schema. |
+| Freeze header | PASS | Toggle exposed `aria-pressed=true`; cold reopen retained it. |
+| Dropdown validation | PASS (persistence) | Application dialog saved `Low,High`, returned `Saved`; rule is exported to XLSX. |
+| Explicit save status | PASS | Cell, range and schema commands consistently transitioned to `Saved`. |
+| Conflict + retry | NOT RUNTIME-TRIGGERED | Conflict message and Retry exist, but current UI does not send an expected version for normal schema commands, so a deterministic two-session conflict could not be produced from UI alone. |
+| Cold reopen after full mutation set | PASS | `Runtime QA`, 1×1 structure, filter and freeze all survived reload. |
+| Version history | PASS | Modal listed immutable versions 1–32 with sheet counts. |
+| Restore version | PASS | Restored version 32; modal closed, editor reloaded, and `Runtime QA` returned from 1 column to 2 columns while retaining filter/freeze. |
+| XLSX export | PARTIAL | Download CTA is enabled and invoked, but Chrome automation did not emit a download event within 8 seconds. Native export cannot be counted as runtime-proven in this pass. |
+
+Remaining release blocker from this pass: deploy `ee5dcef0f7`, then repeat the formula-bearing sort assertion. No other tested manual operation failed.
+
 ## Acceptance scale
 
 - **PASS / intuitive** — discoverable control or standard spreadsheet gesture, correct result, durable when applicable.
