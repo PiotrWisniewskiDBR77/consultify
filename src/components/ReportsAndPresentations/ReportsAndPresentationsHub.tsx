@@ -210,37 +210,42 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   // odpowiednim `templatesView` zamiast na osobnej zakładce.
   type TemplatesLibraryView = 'library' | 'deckArchitect' | 'workbookTemplates';
 
-  const { initialTab, initialArtifactId, initialTemplatesView } = useMemo(() => {
-    const params = new URLSearchParams(location.search || '');
-    const fromQuery = parseRapTabFromQuery(params.get('tab'));
-    let tab: RapTab;
-    let templatesView: TemplatesLibraryView = 'library';
-    if (fromQuery === 'template_architect') {
-      tab = 'templates';
-      templatesView = 'deckArchitect';
-    } else if (fromQuery === 'workbook_templates') {
-      tab = 'templates';
-      templatesView = 'workbookTemplates';
-    } else if (fromQuery) {
-      tab = fromQuery;
-    } else if (location.pathname.startsWith('/reports')) {
-      tab = 'outputs_documents';
-    } else if (location.pathname.startsWith('/presentations')) {
-      tab = 'presentations';
-    } else {
-      tab = 'outputs_all';
-    }
-    return {
-      initialTab: tab,
-      // Keep backward compatibility with older deep links using ?deck=<id>.
-      initialArtifactId: params.get('artifactId') || params.get('deck') || null,
-      initialTemplatesView: templatesView,
-    };
-  }, [location.pathname, location.search]);
+  const { initialTab, initialArtifactId, initialTemplatesView, initialWorkbookTemplateId } =
+    useMemo(() => {
+      const params = new URLSearchParams(location.search || '');
+      const fromQuery = parseRapTabFromQuery(params.get('tab'));
+      let tab: RapTab;
+      let templatesView: TemplatesLibraryView = 'library';
+      if (fromQuery === 'template_architect') {
+        tab = 'templates';
+        templatesView = 'deckArchitect';
+      } else if (fromQuery === 'workbook_templates') {
+        tab = 'templates';
+        templatesView = 'workbookTemplates';
+      } else if (fromQuery) {
+        tab = fromQuery;
+      } else if (location.pathname.startsWith('/reports')) {
+        tab = 'outputs_documents';
+      } else if (location.pathname.startsWith('/presentations')) {
+        tab = 'presentations';
+      } else {
+        tab = 'outputs_all';
+      }
+      return {
+        initialTab: tab,
+        // Keep backward compatibility with older deep links using ?deck=<id>.
+        initialArtifactId: params.get('artifactId') || params.get('deck') || null,
+        initialTemplatesView: templatesView,
+        initialWorkbookTemplateId: params.get('workbookTemplateId') || null,
+      };
+    }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
   // Internal sub-view of the 'templates' tab — see kanon note above initialTab.
   const [templatesView, setTemplatesView] = useState<TemplatesLibraryView>(initialTemplatesView);
+  const [workbookTemplateId, setWorkbookTemplateId] = useState<string | null>(
+    initialWorkbookTemplateId
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -1442,7 +1447,10 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             <div className="flex h-full min-h-0 flex-col overflow-hidden">
               {renderTemplatesArchitectBackBar('templates-workbook-back')}
               <div className="min-h-0 flex-1 overflow-y-auto">
-                <ExceleParametricTemplates isPolish={isPolish} />
+                <ExceleParametricTemplates
+                  isPolish={isPolish}
+                  initialTemplateId={workbookTemplateId}
+                />
               </div>
             </div>
           );
@@ -1633,9 +1641,21 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           <TemplateBuilderFlow
             initialType="table"
             onClose={() => setTemplateBuilderOpen(false)}
-            onSaved={() => {
+            onSaved={(id) => {
               setTemplateBuilderOpen(false);
-              toast.success(t('rap.templateBuilder.saved', 'Szablon zapisany'));
+              setActiveTab('templates');
+              setTemplatesView('workbookTemplates');
+              setWorkbookTemplateId(id);
+              const params = new URLSearchParams(location.search || '');
+              params.set('tab', 'workbook_templates');
+              params.set('workbookTemplateId', id);
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+              toast.success(
+                t(
+                  'rap.templateBuilder.savedBuildNow',
+                  'Szablon zapisany — wybierz „Zbuduj skoroszyt”'
+                )
+              );
               void fetchTemplates();
             }}
           />

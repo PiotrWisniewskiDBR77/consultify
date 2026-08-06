@@ -843,14 +843,23 @@ router.get(
     }
 
     const { listWorkbookTemplates } = await import('../services/workbook/templates/index.js');
-    const templates = listWorkbookTemplates().map((t) => ({
+    const { listCustomWorkbookTemplates } =
+      await import('../services/workbook/customWorkbookTemplateService.js');
+    const registered = listWorkbookTemplates().map((t) => ({
       id: t.id,
       name: t.title,
       description: t.description,
       params: t.params,
+      kind: 'parametric' as const,
+    }));
+    const custom = (await listCustomWorkbookTemplates(user.organizationId)).map((t) => ({
+      ...t,
+      description: t.description ?? '',
+      params: [],
+      kind: 'custom' as const,
     }));
 
-    res.json({ templates });
+    res.json({ templates: [...custom, ...registered] });
   })
 );
 

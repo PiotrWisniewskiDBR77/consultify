@@ -11,6 +11,7 @@ import { ReportsAndPresentationsHub } from '../../../src/components/ReportsAndPr
 const navigateMock = vi.fn();
 let lastOnTabChange: ((tab: string) => void) | null = null;
 let lastTabs: Array<{ id: string; label: string }> | null = null;
+let lastWorkbookTemplateId: string | null | undefined;
 
 // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
 // §3): Menu 1 must stay at exactly 5 tabs REGARDLESS of these flags — the
@@ -156,9 +157,10 @@ vi.mock('../../../src/components/Presentations/PresentationTemplateArchitectView
   ),
 }));
 vi.mock('../../../src/components/AIChat/KimiWorkspace/ExceleParametricTemplates', () => ({
-  ExceleParametricTemplates: () => (
-    <div data-testid="workbook-templates-view">workbook-templates</div>
-  ),
+  ExceleParametricTemplates: ({ initialTemplateId }: { initialTemplateId?: string | null }) => {
+    lastWorkbookTemplateId = initialTemplateId;
+    return <div data-testid="workbook-templates-view">workbook-templates</div>;
+  },
 }));
 vi.mock('../../../src/components/TemplateBuilder', () => ({
   TemplateBuilderFlow: ({ initialType }: { initialType?: string }) => (
@@ -175,6 +177,19 @@ vi.mock('react-router-dom', async () => {
 });
 
 describe('ReportsAndPresentationsHub', () => {
+  it('opens a canonical sheet template directly in workbook UI', () => {
+    render(
+      <MemoryRouter
+        initialEntries={['/reports?tab=workbook_templates&workbookTemplateId=sheet-template-42']}
+      >
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('workbook-templates-view')).toBeInTheDocument();
+    expect(lastWorkbookTemplateId).toBe('sheet-template-42');
+  });
+
   it('preserves artifactId query param when switching tabs', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=all&artifactId=art-123&view=detail']}>

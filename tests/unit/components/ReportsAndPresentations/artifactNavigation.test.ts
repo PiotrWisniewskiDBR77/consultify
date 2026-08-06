@@ -148,6 +148,30 @@ describe('resolveTemplateUsePath', () => {
     expect(path).toBe('/document-studio?entry=template&templateArtifactId=art-doc-tpl-1');
   });
 
+  it('routes a sheet_template to the workbook builder with its canonical id', () => {
+    const path = resolveTemplateUsePath({
+      artifactIndexId: 'artifact-sheet-template-1',
+      canonicalTemplateId: 'canonical sheet/template 1',
+      templateType: 'sheet',
+      originRuntime: 'sheet_template',
+    });
+    expect(path).toBe(
+      `/reports?tab=workbook_templates&workbookTemplateId=${encodeURIComponent('canonical sheet/template 1')}`
+    );
+    expect(path).not.toContain('templateArtifactId');
+  });
+
+  it('does not route a sheet_template without a canonical id into the generic pipeline', () => {
+    expect(
+      resolveTemplateUsePath({
+        artifactIndexId: 'artifact-sheet-template-1',
+        canonicalTemplateId: null,
+        templateType: 'sheet',
+        originRuntime: 'sheet_template',
+      })
+    ).toBeNull();
+  });
+
   it('falls back to the legacy per-type route when originRuntime is not yet tagged', () => {
     const path = resolveTemplateUsePath({
       artifactIndexId: 'art-untagged-1',

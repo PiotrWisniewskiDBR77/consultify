@@ -1,18 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const queryOneMock = vi.fn();
+const queryAllMock = vi.fn();
 vi.mock('../../../utils/queryHelpers.js', () => ({
   queryOne: (...args: unknown[]) => queryOneMock(...args),
+  queryAll: (...args: unknown[]) => queryAllMock(...args),
 }));
 
 import {
   convertCustomTemplateSnapshot,
   CustomWorkbookTemplateInvalidError,
+  listCustomWorkbookTemplates,
   resolveCustomWorkbookTemplate,
 } from '../customWorkbookTemplateService.js';
 
 describe('customWorkbookTemplateService', () => {
-  beforeEach(() => queryOneMock.mockReset());
+  beforeEach(() => {
+    queryOneMock.mockReset();
+    queryAllMock.mockReset();
+  });
+
+  it('lists only user-created templates from the active organization', async () => {
+    queryAllMock.mockResolvedValue([{ id: 'tpl-1', name: 'Owned', description: null }]);
+    await expect(listCustomWorkbookTemplates('org-1')).resolves.toEqual([
+      { id: 'tpl-1', name: 'Owned', description: null },
+    ]);
+    const [sql, params] = queryAllMock.mock.calls[0];
+    expect(sql).toContain('organization_id = ?');
+    expect(sql).toContain('created_by IS NOT NULL');
+    expect(params).toEqual(['org-1']);
+  });
 
   it('converts the legacy TemplateBuilder columns snapshot, including formulas', () => {
     const schema = convertCustomTemplateSnapshot(

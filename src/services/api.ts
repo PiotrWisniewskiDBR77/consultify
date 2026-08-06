@@ -7135,6 +7135,7 @@ export const Api = {
       id: string;
       name: string;
       description: string;
+      kind: 'parametric' | 'custom';
       params: Array<{
         name: string;
         label: string;

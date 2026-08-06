@@ -83,6 +83,17 @@ describe('MAT-003A workbook golden round-trip (SQLite + real XLSX)', () => {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await runSql(`
+      CREATE TABLE tp_base_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        schema_snapshot TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        created_by TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
   });
 
   afterAll(
@@ -138,6 +149,69 @@ describe('MAT-003A workbook golden round-trip (SQLite + real XLSX)', () => {
     expect(sheet).toBeDefined();
     expect(sheet!.getCell('A2').value).toBe(21);
     expect(sheet!.getCell('B2').value).toEqual(expect.objectContaining({ formula: 'A2*2' }));
+  });
+
+  it('saved custom template → build → persisted schema reopen → XLSX download', async () => {
+    const schemaSnapshot = {
+      title: 'Saved margin model',
+      sheets: [
+        {
+          name: 'Model',
+          columns: [
+            { key: 'A', header: 'Revenue', type: 'currency', numberFormat: '#,##0.00' },
+            { key: 'B', header: 'Margin', type: 'percent', numberFormat: '0.0%' },
+          ],
+          rows: [{ cells: { A: { value: 1000 }, B: { formula: 'A2/2000' } } }],
+        },
+      ],
+    };
+    await runSql(
+      `INSERT OR REPLACE INTO tp_base_templates
+         (id, name, description, schema_snapshot, organization_id, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        'custom-template-1',
+        'Saved margin model',
+        'Created by Template Builder',
+        JSON.stringify(schemaSnapshot),
+        'org-mat-003a',
+        'user-mat-003a',
+      ]
+    );
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/workbook', workbookRoutes);
+
+    const built = await request(app)
+      .post('/api/workbook/templates/custom-template-1/build')
+      .send({ params: {} });
+    expect(built.status, JSON.stringify(built.body)).toBe(200);
+    const workbookId = String(built.body.id);
+    expect(workbookId).toBeTruthy();
+    expect(built.body.downloadUrl).toBe(`/api/workbook/${workbookId}/download`);
+
+    const reopened = await request(app).get(`/api/workbook/${workbookId}/schema`).expect(200);
+    expect(reopened.body.sheets[0].columns[1]).toEqual(
+      expect.objectContaining({ key: 'B', numberFormat: '0.0%' })
+    );
+    expect(reopened.body.sheets[0].rows[0].cells.B.formula).toBe('A2/2000');
+
+    const download = await request(app)
+      .get(`/api/workbook/${workbookId}/download`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const chunks: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => chunks.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(chunks)));
+        response.on('error', callback);
+      })
+      .expect(200);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(download.body as Buffer);
+    expect(workbook.getWorksheet('Model')!.getCell('B2').value).toEqual(
+      expect.objectContaining({ formula: 'A2/2000' })
+    );
   });
 
   it('fails closed when a blank workbook cannot be persisted', async () => {

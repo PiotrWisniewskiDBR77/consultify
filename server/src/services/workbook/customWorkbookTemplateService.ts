@@ -17,6 +17,24 @@ export interface CustomWorkbookTemplate {
   schema: WorkbookSchema;
 }
 
+export interface CustomWorkbookTemplateSummary {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export async function listCustomWorkbookTemplates(
+  organizationId: string
+): Promise<CustomWorkbookTemplateSummary[]> {
+  return queryHelpers.queryAll<CustomWorkbookTemplateSummary>(
+    `SELECT CAST(id AS TEXT) AS id, name, description
+       FROM tp_base_templates
+      WHERE organization_id = ? AND created_by IS NOT NULL
+      ORDER BY created_at DESC, name ASC`,
+    [organizationId]
+  );
+}
+
 function parseSnapshot(raw: unknown): unknown {
   if (typeof raw !== 'string') return raw;
   try {
@@ -116,9 +134,9 @@ export async function resolveCustomWorkbookTemplate(
     description: string | null;
     schema_snapshot: unknown;
   }>(
-    `SELECT id::text AS id, name, description, schema_snapshot
-       FROM tp_base_templates
-      WHERE id::text = ? AND organization_id = ? AND created_by IS NOT NULL`,
+    `SELECT CAST(id AS TEXT) AS id, name, description, schema_snapshot
+      FROM tp_base_templates
+      WHERE CAST(id AS TEXT) = ? AND organization_id = ? AND created_by IS NOT NULL`,
     [templateId, organizationId]
   );
   if (!row) return null;

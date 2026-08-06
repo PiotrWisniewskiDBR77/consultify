@@ -170,17 +170,17 @@ describe('resolveTemplateUsePath', () => {
     expect(path).not.toContain(CANONICAL_ID);
   });
 
-  it('legacy report_template zachowuje dotychczasową trasę generacji', () => {
+  it('legacy report_template używa kanonicznego Report Buildera', () => {
     const path = resolveTemplateUsePath({
       artifactIndexId: ARTIFACT_INDEX_ID,
       templateType: 'report',
       canonicalTemplateId: CANONICAL_ID,
       originRuntime: 'report_template',
     });
-    expect(path).toBe(`/wordy?templateArtifactId=${ARTIFACT_INDEX_ID}`);
+    expect(path).toBe(`/reports/builder?new=true&templateArtifactId=${ARTIFACT_INDEX_ID}`);
   });
 
-  it('deck i sheet bez zmian', () => {
+  it('deck zachowuje dotychczasową trasę, a sheet używa kanonicznego workbook buildera', () => {
     expect(
       resolveTemplateUsePath({
         artifactIndexId: ARTIFACT_INDEX_ID,
@@ -192,9 +192,10 @@ describe('resolveTemplateUsePath', () => {
       resolveTemplateUsePath({
         artifactIndexId: ARTIFACT_INDEX_ID,
         templateType: 'sheet',
+        canonicalTemplateId: CANONICAL_ID,
         originRuntime: 'sheet_template',
       })
-    ).toBe(`/tabele?templateArtifactId=${ARTIFACT_INDEX_ID}`);
+    ).toBe(`/reports?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
   });
 
   it('wpis osierocony NIE daje ścieżki użycia', () => {

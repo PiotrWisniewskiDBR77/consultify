@@ -121,6 +121,7 @@ interface TemplateEntry {
   name: string;
   description: string;
   params: TemplateParam[];
+  kind?: 'parametric' | 'custom';
 }
 
 /** Mirrors server/src/services/workbook/workbookQualityGate.ts WorkbookIssue
@@ -152,6 +153,7 @@ interface BuildResult {
 
 interface Props {
   isPolish: boolean;
+  initialTemplateId?: string | null;
   /** Called after a successful build so the parent can refresh the Recent list. */
   onBuilt?: () => void;
 }
@@ -198,7 +200,11 @@ const formatRangeHint = (
  *  full-size KimiWorkspaceShell grid (src/utils/workbookGridPreview.ts consumer). */
 const PREVIEW_ROW_CAP = 50;
 
-export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }) => {
+export const ExceleParametricTemplates: React.FC<Props> = ({
+  isPolish,
+  initialTemplateId,
+  onBuilt,
+}) => {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<TemplateEntry | null>(null);
@@ -270,6 +276,16 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
     setPresetName('');
     setSelected(tpl);
   }, []);
+
+  const initialSelectionApplied = useRef<string | null>(null);
+  useEffect(() => {
+    const id = String(initialTemplateId || '').trim();
+    if (!id || initialSelectionApplied.current === id || templates.length === 0) return;
+    const match = templates.find((template) => template.id === id);
+    if (!match) return;
+    initialSelectionApplied.current = id;
+    openForm(match);
+  }, [initialTemplateId, openForm, templates]);
 
   // Mini bar chart (2026-07-23): poglądowa wizualizacja trendu/porównania nad
   // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od
@@ -921,13 +937,13 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
       <div className="flex items-center gap-2 mb-1">
         <Sparkles size={15} className="text-c-text-secondary" />
         <h2 className="text-sm font-semibold text-c-text">
-          {t('Szablony parametryczne (żywe formuły)', 'Parametric templates (live formulas)')}
+          {t('Szablony skoroszytów', 'Workbook templates')}
         </h2>
       </div>
       <p className="text-xs text-c-text-secondary mb-3">
         {t(
-          'Sprawdzone modele z prawdziwymi formułami Excela — ustaw parametry i zbuduj gotowy .xlsx.',
-          'Proven models with real Excel formulas — set the parameters and build a ready .xlsx.'
+          'Wybierz model parametryczny lub własny szablon i zbuduj gotowy .xlsx.',
+          'Choose a parametric model or your own template and build a ready .xlsx.'
         )}
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -943,7 +959,9 @@ export const ExceleParametricTemplates: React.FC<Props> = ({ isPolish, onBuilt }
             </div>
             <p className="text-xs text-c-text-secondary line-clamp-3">{tpl.description}</p>
             <p className="text-[11px] text-c-text-muted mt-2">
-              {tpl.params.length} {t('parametrów', 'parameters')}
+              {tpl.kind === 'custom'
+                ? t('Własny szablon', 'Custom template')
+                : `${tpl.params.length} ${t('parametrów', 'parameters')}`}
             </p>
           </button>
         ))}
