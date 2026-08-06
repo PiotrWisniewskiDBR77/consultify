@@ -69,6 +69,8 @@ export interface DocumentTipTapEditorProps {
    * ADDITIVE: omit to keep this editor's behaviour byte-identical.
    */
   onEditorInstance?: (editor: Editor | null) => void;
+  /** Section ids whose body blocks are visually collapsed in the manual canvas. */
+  collapsedSectionIds?: ReadonlySet<string>;
 }
 
 export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
@@ -80,6 +82,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   artifactId,
   onAutosaveStatusChange,
   onEditorInstance,
+  collapsedSectionIds,
 }) => {
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
@@ -228,6 +231,21 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     // content edit. This is the remount-on-edit guard.
     [schema.artifactId]
   );
+
+  useEffect(() => {
+    if (!editor?.view?.dom) return;
+    let collapsed = false;
+    for (const child of Array.from(editor.view.dom.children)) {
+      const element = child as HTMLElement;
+      if (element.hasAttribute('data-doc-section')) {
+        collapsed = Boolean(collapsedSectionIds?.has(element.dataset.sectionId ?? ''));
+        element.setAttribute('aria-expanded', String(!collapsed));
+        element.hidden = false;
+      } else {
+        element.hidden = collapsed;
+      }
+    }
+  }, [collapsedSectionIds, editor, schema.sections]);
   const { requestText, promptDialog } = useManualPrompt();
 
   // Keep editable in sync without remounting.

@@ -222,6 +222,37 @@ describe('DocumentStudioDocumentPanel — export UX (B4)', () => {
     expect(onSchemaUpdated).toHaveBeenCalledTimes(1);
   });
 
+  it('duplicates a section with fresh section and block identities', async () => {
+    const onSchemaUpdated = vi.fn();
+    saveContentMock.mockImplementation(async (_artifactId, input) => ({
+      ...SCHEMA,
+      sections: input.sections,
+      updatedAt: '2026-08-06T12:01:00.000Z',
+    }));
+    renderPanel(onSchemaUpdated);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Duplicate section Existing section' }));
+
+    await waitFor(() => expect(saveContentMock).toHaveBeenCalledTimes(1));
+    const [, input] = saveContentMock.mock.calls[0];
+    expect(input.sections).toHaveLength(2);
+    expect(input.sections[1].title).toBe('Existing section — kopia');
+    expect(input.sections[1].sectionId).not.toBe(input.sections[0].sectionId);
+    expect(input.sections[1].blocks).toEqual([]);
+  });
+
+  it('exposes an accessible local collapse toggle for each section', () => {
+    renderPanel();
+    const toggle = screen.getByRole('button', { name: 'Collapse section Existing section' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(toggle);
+    expect(
+      screen
+        .getByRole('button', { name: 'Expand section Existing section' })
+        .getAttribute('aria-expanded')
+    ).toBe('false');
+  });
+
   it('shows a per-format spinner and disables all export buttons while exporting', async () => {
     let resolveExport: (v: typeof SUCCESS_PAYLOAD) => void = () => undefined;
     exportMock.mockImplementation(

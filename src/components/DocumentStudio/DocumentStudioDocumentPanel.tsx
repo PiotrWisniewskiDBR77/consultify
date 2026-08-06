@@ -571,6 +571,9 @@ function OutlinePanel({
   onRenameSection,
   onDeleteSection,
   onMoveSection,
+  onDuplicateSection,
+  collapsedSectionIds,
+  onToggleSection,
 }: {
   sections: DocumentSection[];
   sourceCount: number;
@@ -579,6 +582,9 @@ function OutlinePanel({
   onRenameSection: (sectionId: string) => void;
   onDeleteSection: (sectionId: string) => void;
   onMoveSection: (sectionId: string, direction: -1 | 1) => void;
+  onDuplicateSection: (sectionId: string) => void;
+  collapsedSectionIds: ReadonlySet<string>;
+  onToggleSection: (sectionId: string) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -622,6 +628,15 @@ function OutlinePanel({
               <div className="flex flex-wrap gap-1 px-2 pb-2">
                 <button
                   type="button"
+                  onClick={() => onToggleSection(section.sectionId)}
+                  className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                  aria-label={`${collapsedSectionIds.has(section.sectionId) ? 'Expand' : 'Collapse'} section ${section.title}`}
+                  aria-expanded={!collapsedSectionIds.has(section.sectionId)}
+                >
+                  {collapsedSectionIds.has(section.sectionId) ? 'Expand' : 'Collapse'}
+                </button>
+                <button
+                  type="button"
                   onClick={() => onRenameSection(section.sectionId)}
                   className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
                   aria-label={t('documentStudio.outline.renameSection', {
@@ -630,6 +645,14 @@ function OutlinePanel({
                   })}
                 >
                   {t('documentStudio.outline.rename', 'Rename')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDuplicateSection(section.sectionId)}
+                  className="rounded px-1.5 py-1 text-[10px] text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+                  aria-label={`Duplicate section ${section.title}`}
+                >
+                  Duplicate
                 </button>
                 <button
                   type="button"
@@ -2000,6 +2023,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { requestText, requestConfirm, promptDialog } = useManualPrompt();
+  const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(() => new Set());
   // N20 (menu pliku) — live autosave status observed from the TipTap editor's
   // debounced `PUT /:artifactId/content` (see `DocumentTipTapEditor.tsx`
   // `persistManualEdit`). This was already computed and thrown away before —
@@ -2218,6 +2242,38 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     },
     [persistSectionStructure, requestText, schema.sections, t]
   );
+
+  const handleDuplicateSection = useCallback(
+    (sectionId: string) => {
+      const sourceIndex = schema.sections.findIndex((section) => section.sectionId === sectionId);
+      if (sourceIndex < 0) return;
+      const source = schema.sections[sourceIndex];
+      const duplicate: DocumentSection = {
+        ...source,
+        sectionId: `sec-${crypto.randomUUID()}`,
+        title: `${source.title} — kopia`,
+        blocks: source.blocks.map((block) => ({
+          ...block,
+          blockId: `blk-${crypto.randomUUID()}`,
+          content: structuredClone(block.content),
+        })),
+        sourceRefs: source.sourceRefs.map((ref) => ({ ...ref })),
+      };
+      const next = [...schema.sections];
+      next.splice(sourceIndex + 1, 0, duplicate);
+      void persistSectionStructure(next);
+    },
+    [persistSectionStructure, schema.sections]
+  );
+
+  const handleToggleSection = useCallback((sectionId: string) => {
+    setCollapsedSectionIds((current) => {
+      const next = new Set(current);
+      if (next.has(sectionId)) next.delete(sectionId);
+      else next.add(sectionId);
+      return next;
+    });
+  }, []);
 
   const handleDeleteSection = useCallback(
     async (sectionId: string) => {
@@ -3363,6 +3419,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           artifactId={artifactId}
           onEditorInstance={setTiptapEditor}
           onAutosaveStatusChange={setAutosaveStatus}
+          collapsedSectionIds={collapsedSectionIds}
         />
       </div>
     </div>
@@ -3456,6 +3513,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           onRenameSection={handleRenameSection}
           onDeleteSection={handleDeleteSection}
           onMoveSection={handleMoveSection}
+          onDuplicateSection={handleDuplicateSection}
+          collapsedSectionIds={collapsedSectionIds}
+          onToggleSection={handleToggleSection}
         />
       }
       rightRailTools={rightRailTools}
