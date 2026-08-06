@@ -25,6 +25,20 @@
 
 **Final disposition:** PowerPoint command-row and central-canvas P1 defects are closed. Release remains **FAIL P1** for Excel dark conditional-format contrast and the inaccessible 1280 PowerPoint thumbnail overlay. No source code was changed during this final recapture.
 
+**Robust-fix deployment:** Railway `e296c7fd` (2026-08-07)
+
+**Robust-fix evidence:** [`docs/qa/evidence/materials-visual-e296c7fd/`](evidence/materials-visual-e296c7fd/)
+
+## Robust-fix recapture — `e296c7fd`
+
+| Surface | 1280 light | 1440 light | 1280 dark | 1440 dark | Verdict |
+|---|---:|---:|---:|---:|---|
+| Excel imported fill without `fontColor` | PASS | PASS | FAIL | FAIL | The new inline contract is present (`color` and `-webkit-text-fill-color: var(--c-text)`), but dark `--c-text` resolves to `rgb(244,247,251)` while the imported fill stays pale `rgb(220,239,234)`: only **1.11:1** contrast. Foreground selection alone cannot make a fixed light import theme-safe. |
+| PowerPoint 1280 thumbnail rail | PASS | — | — | — | Focus expands the rail from 48 to 200 px; list and thumbnails resolve to `visibility:visible` and the list to `pointer-events:auto`. Full 16:9 previews and truthful captions are visible in the overlay. |
+| PowerPoint 1280 command row | FAIL cold load / PASS after focus | — | — | — | After a cold reload the top bar is at `y=-8`; focusing the rail scrolls/settles it to `y=48` with `scrollTop=0`. The row is usable after interaction, but the cold-load `y>=0` acceptance condition is not yet deterministic. |
+
+**Robust-fix disposition:** the 1280 thumbnail-rail P1 is closed. Release remains **FAIL P1** because Excel dark contrast is 1.11:1 and the PowerPoint command row can still begin above the viewport on cold load. This was a docs-only recapture; no runtime source file was changed.
+
 ## Focused re-acceptance — 2026-08-07
 
 | Surface | 1280 light | 1440 light | 1280 dark | 1440 dark | Verdict |
