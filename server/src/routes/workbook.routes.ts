@@ -42,7 +42,7 @@ import {
 } from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
-import { ChartImageSchema, type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
+import { ChartImageSchema, ConditionalFormattingBlockSchema, type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
 import { importWorkbookBuffer } from '../services/workbook/workbookImport.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1993,6 +1993,52 @@ router.patch(
           if (!target.rows[rowIndex] || !target.columns[colIndex] || !Number.isFinite(height) || !Number.isFinite(width) || height < 10 || height > 200 || width < 4 || width > 80) throw new Error('Invalid row or column size');
           target.rows[rowIndex].height = height;
           target.columns[colIndex].width = width;
+          break;
+        }
+        case 'setRowHidden': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!target.rows[rowIndex]) throw new Error('Invalid rowIndex');
+          target.rows[rowIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'setColumnHidden': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!target.columns[colIndex]) throw new Error('Invalid colIndex');
+          target.columns[colIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'unhideAll': {
+          const target = requireSheet();
+          target.rows.forEach((rowValue) => { rowValue.hidden = false; });
+          target.columns.forEach((column) => { column.hidden = false; });
+          break;
+        }
+        case 'mergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          if (!/^\$?[A-Z]+\$?\d+:\$?[A-Z]+\$?\d+$/.test(range)) throw new Error('Invalid merge range');
+          const [start, end] = range.split(':');
+          target.merges = [...(target.merges || []).filter((item) => `${item.start}:${item.end}` !== range), { start, end }];
+          break;
+        }
+        case 'unmergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          target.merges = (target.merges || []).filter((item) => `${item.start}:${item.end}`.toUpperCase() !== range);
+          break;
+        }
+        case 'addConditionalFormat': {
+          const target = requireSheet();
+          const block = command.block;
+          const parsed = ConditionalFormattingBlockSchema.parse(block);
+          target.conditionalFormatting = [...(target.conditionalFormatting || []), parsed];
+          break;
+        }
+        case 'clearConditionalFormats': {
+          const target = requireSheet();
+          target.conditionalFormatting = [];
           break;
         }
         case 'formatCells': {

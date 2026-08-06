@@ -42,11 +42,14 @@ import {
   Copy,
   Filter,
   FileUp,
+  Eye,
+  EyeOff,
   HelpCircle,
   Italic,
   ListChecks,
   Loader2,
   MessageSquare,
+  Merge,
   PaintBucket,
   Plus,
   Rows3,
@@ -55,6 +58,7 @@ import {
   Snowflake,
   Trash2,
   Underline,
+  WandSparkles,
   WrapText,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -125,6 +129,28 @@ function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').For
     overflowWrap: style.wrapText ? 'anywhere' : undefined,
     border: borderWidth ? `${borderWidth}px solid var(--color-border-subtle, #cbd5e1)` : undefined,
   };
+}
+
+function conditionalPresentationStyle(sheet: FormulaSheet, rowIndex: number, colIndex: number, value: unknown): React.CSSProperties {
+  const addressRow = rowIndex + 2;
+  const blocks = Array.isArray((sheet as any).conditionalFormatting) ? (sheet as any).conditionalFormatting : [];
+  for (const block of blocks) {
+    const match = String(block.ref || '').match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i);
+    if (!match) continue;
+    const toIndex = (letters: string) => letters.toUpperCase().split('').reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+    if (colIndex < toIndex(match[1]) || colIndex > toIndex(match[3]) || addressRow < Number(match[2]) || addressRow > Number(match[4])) continue;
+    for (const rule of block.rules || []) {
+      const threshold = Number(rule.formulae?.[0]);
+      const numeric = Number(value);
+      const applies = rule.type === 'cellIs' && Number.isFinite(numeric) && (
+        (rule.operator === 'lessThan' && numeric < threshold) ||
+        (rule.operator === 'greaterThan' && numeric > threshold) ||
+        (rule.operator === 'equal' && numeric === threshold)
+      );
+      if (applies) return cellPresentationStyle({ style: rule.style });
+    }
+  }
+  return {};
 }
 
 export const EditableSpreadsheetGrid: React.FC<Props> = ({
@@ -676,6 +702,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const columns = activeRaw.columns;
   const rows = activeComputed?.rows ?? [];
   const visibleRows = showAllRows ? rows : rows.slice(0, rowCap);
+  const selectedRangeA1 = selectionRange
+    ? `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`
+    : '';
 
   const formulaBarText =
     selected && editingValue !== null
@@ -795,6 +824,13 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           <Trash2 size={14} />
         </button>
         <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'setRowHidden', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, hidden: true })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.hideRow', 'Hide selected row')}><EyeOff size={14} /></button>
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'setColumnHidden', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, hidden: true })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.hideColumn', 'Hide selected column')}><Columns3 size={14} /><EyeOff size={9} className="inline" /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'unhideAll', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.unhideAll', 'Unhide all rows and columns')}><Eye size={14} /></button>
+        <button type="button" disabled={!selectionRange || (selectionRange.rowStart === selectionRange.rowEnd && selectionRange.colStart === selectionRange.colEnd)} onClick={() => void runSchemaCommand({ type: 'mergeCells', sheetIndex: workingSheetIndex, range: selectedRangeA1 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.merge', 'Merge selected cells')}><Merge size={14} /></button>
+        <button type="button" disabled={!selectionRange} onClick={() => void runSchemaCommand({ type: 'unmergeCells', sheetIndex: workingSheetIndex, range: selectedRangeA1 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.unmerge', 'Unmerge selected cells')}><Merge size={14} className="rotate-180" /></button>
+        <button type="button" disabled={!selectionRange} onClick={() => void runSchemaCommand({ type: 'addConditionalFormat', sheetIndex: workingSheetIndex, block: { ref: selectedRangeA1, rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { bgColor: 'FDE8E8', fontColor: 'B42318', bold: true } }] } })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.negativeFormat', 'Highlight negative values')}><WandSparkles size={14} /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'clearConditionalFormats', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-[11px]" aria-label={t('kimi.excele.clearConditionalFormats', 'Clear conditional formats')}>CF×</button>
         <button
           type="button"
           onClick={() =>
@@ -1390,7 +1426,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
               {columns.map((col, ci) => (
                 <th
                   key={`${col.key}-${ci}`}
-                  style={{ width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined }}
+                  style={{ width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined, display: col.hidden ? 'none' : undefined }}
                   className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
                 >
                   {col.header || col.key}
@@ -1400,7 +1436,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </thead>
           <tbody>
             {visibleRows.map((row, ri) => (
-              <tr key={ri} style={{ height: typeof row.height === 'number' ? `${row.height}px` : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
+              <tr key={ri} style={{ height: typeof row.height === 'number' ? `${row.height}px` : undefined, display: activeRaw.rows?.[ri]?.hidden ? 'none' : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                 {columns.map((col, ci) => {
                   const cell: ComputedCell | undefined = row.cells[col.key];
                   const rawCell = activeRaw.rows?.[ri]?.cells?.[col.key];
@@ -1421,7 +1457,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                       data-testid={`workbook-cell-${ri}-${col.key}`}
                       style={{
                         width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined,
+                        display: col.hidden ? 'none' : undefined,
                         ...cellPresentationStyle(rawCell),
+                        ...conditionalPresentationStyle(activeRaw, ri, ci, cell?.computed),
                       }}
                       key={`${col.key}-${ci}`}
                       onClick={(event) => {

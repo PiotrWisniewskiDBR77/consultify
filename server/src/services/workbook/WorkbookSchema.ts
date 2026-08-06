@@ -88,6 +88,7 @@ export const ColumnDefSchema = z.object({
   type: z.enum(['text', 'number', 'currency', 'percent', 'date', 'boolean', 'rating']).optional(),
   numberFormat: z.string().optional(),
   style: CellStyleSchema.optional(),
+  hidden: z.boolean().optional(),
   /** Column-wide data validation applied to every data cell in the column
    *  (cell-level `validation` still wins for a specific cell). */
   validation: DataValidationSchema.optional(),
@@ -103,6 +104,7 @@ export const RowSchema = z.object({
   height: z.number().optional(),
   isHeader: z.boolean().optional(),
   isSummary: z.boolean().optional(),
+  hidden: z.boolean().optional(),
 });
 
 // ---------------------------------------------------------------------------

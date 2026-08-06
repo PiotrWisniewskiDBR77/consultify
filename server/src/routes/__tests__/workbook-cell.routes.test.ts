@@ -282,13 +282,20 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
       { type: 'renameWorkbook', title: 'Renamed workbook' },
       { type: 'resizeRowAndColumn', sheetIndex: 1, rowIndex: 0, colIndex: 0, height: 30, width: 24 },
       { type: 'setComment', sheetIndex: 1, rowIndex: 0, colIndex: 0, comment: 'Reviewed manually' },
+      { type: 'setRowHidden', sheetIndex: 1, rowIndex: 0, hidden: true },
+      { type: 'setColumnHidden', sheetIndex: 1, colIndex: 0, hidden: true },
+      { type: 'unhideAll', sheetIndex: 1 },
+      { type: 'mergeCells', sheetIndex: 1, range: 'A2:B2' },
+      { type: 'unmergeCells', sheetIndex: 1, range: 'A2:B2' },
+      { type: 'addConditionalFormat', sheetIndex: 1, block: { ref: 'A2:A3', rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { bgColor: 'FDE8E8' } }] } },
+      { type: 'clearConditionalFormats', sheetIndex: 1 },
       { type: 'findReplace', find: 'NPV', replacement: 'Net Present Value' },
     ];
     for (const command of commands) {
       vi.clearAllMocks();
       mockQueryRun.mockResolvedValue({ changes: 1 });
       const res = await request(app).patch(`/api/workbook/${WB_ID}/schema-command`).send({ command });
-      expect(res.status).toBe(200);
+      expect(res.status, `${JSON.stringify(command)} ${JSON.stringify(res.body)}`).toBe(200);
       expect(res.body.schema.sheets[1].rows[0].cells.wartosc.formula).toBe("'Założenia'!$B$2*100");
     }
   });

@@ -999,6 +999,7 @@ export async function buildWorkbookBuffer(
       key: col.key,
       header: col.header,
       width: col.width ?? 16,
+      hidden: col.hidden || undefined,
     }));
     if (sheetDef.autoFilter && sheetDef.columns.length > 0) {
       ws.autoFilter = {
@@ -1227,6 +1228,7 @@ export async function buildWorkbookBuffer(
         excelRow.eachCell((cell) => applyStyle(cell, rowDef.style));
       }
       if (rowDef.height) excelRow.height = rowDef.height;
+      if (rowDef.hidden) excelRow.hidden = true;
 
       // Summary row styling
       if (rowDef.isSummary) {

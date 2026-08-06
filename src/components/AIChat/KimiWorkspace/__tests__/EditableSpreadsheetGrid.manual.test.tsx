@@ -299,4 +299,21 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       })
     );
   });
+
+  it('authors hide, merge and conditional-format commands from a range', async () => {
+    render(<EditableSpreadsheetGrid workbookId="wb-p1" sheets={sheets} activeSheetIndex={0} />);
+    fireEvent.click(screen.getByTestId('workbook-cell-0-plan'));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide selected row' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'setRowHidden', rowIndex: 0, hidden: true })));
+
+    fireEvent.click(screen.getByTestId('workbook-cell-0-month'));
+    fireEvent.click(screen.getByTestId('workbook-cell-1-plan'), { shiftKey: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Merge selected cells' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'mergeCells', range: 'A2:B3' })));
+
+    fireEvent.click(screen.getByTestId('workbook-cell-0-variance'));
+    fireEvent.click(screen.getByTestId('workbook-cell-1-variance'), { shiftKey: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Highlight negative values' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'addConditionalFormat', block: expect.objectContaining({ ref: 'D2:D3' }) })));
+  });
 });
