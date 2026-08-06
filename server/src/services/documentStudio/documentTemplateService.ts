@@ -45,6 +45,7 @@ import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
 import { refineTemplateWithLlm } from './documentTemplateRefiner.js';
 import {
   __resetTemplateRegistryDaoForTests,
+  deleteTemplateRecord,
   loadAuditForTemplate,
   loadTemplatesForOrg,
   persistAuditEntry,
@@ -980,6 +981,98 @@ export function listTemplateAuditEntries(
   organizationId: string
 ): TemplateAuditEntry[] {
   return [...(auditStore.get(templateKey(organizationId, templateId)) ?? [])];
+}
+
+export interface TemplateValidationIssue {
+  code: string;
+  message: string;
+  blocking: boolean;
+}
+
+export function validateTemplate(template: DocumentTemplate): TemplateValidationIssue[] {
+  const issues: TemplateValidationIssue[] = [];
+  if (!template.name.trim())
+    issues.push({ code: 'name_required', message: 'Template name is required.', blocking: true });
+  if (template.purpose.trim().length < 8)
+    issues.push({
+      code: 'purpose_required',
+      message: 'Purpose must contain at least 8 characters.',
+      blocking: true,
+    });
+  if (template.sectionBlueprint.length === 0)
+    issues.push({ code: 'section_required', message: 'Add at least one section.', blocking: true });
+  const titles = template.sectionBlueprint.map((section) => section.title.trim().toLowerCase());
+  if (titles.some((title) => !title))
+    issues.push({
+      code: 'section_title_required',
+      message: 'Every section needs a title.',
+      blocking: true,
+    });
+  if (new Set(titles).size !== titles.length)
+    issues.push({
+      code: 'duplicate_section_title',
+      message: 'Section titles must be unique.',
+      blocking: true,
+    });
+  const inputs = template.requiredInputs.map((input) => input.trim().toLowerCase()).filter(Boolean);
+  if (new Set(inputs).size !== inputs.length)
+    issues.push({
+      code: 'duplicate_required_input',
+      message: 'Required source inputs must be unique.',
+      blocking: true,
+    });
+  return issues;
+}
+
+export function cloneTemplateAsDraft(params: {
+  templateId: string;
+  organizationId: string;
+  userId: string;
+}): DocumentTemplate {
+  const source = getTemplate(params.templateId, params.organizationId);
+  if (!source) throw new Error('template_not_found');
+  const now = nowIso();
+  const draft: DocumentTemplate = {
+    ...structuredClone(source),
+    templateId: makeId('doc-template'),
+    organizationId: params.organizationId,
+    status: 'draft',
+    version: '0.1',
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+    approvedBy: undefined,
+    approvedAt: undefined,
+    deprecatedBy: undefined,
+    deprecatedAt: undefined,
+    notes: `New version from ${source.templateId} v${source.version}`,
+  };
+  registryStore.set(templateKey(params.organizationId, draft.templateId), draft);
+  void persistTemplate(draft).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: draft.templateId,
+    organizationId: params.organizationId,
+    action: 'template_drafted',
+    actorId: params.userId,
+    occurredAt: now,
+    details: { sourceTemplateId: source.templateId, sourceVersion: source.version },
+  });
+  return draft;
+}
+
+export async function deleteDraftTemplate(params: {
+  templateId: string;
+  organizationId: string;
+}): Promise<void> {
+  const template = getTemplate(params.templateId, params.organizationId);
+  if (!template) throw new Error('template_not_found');
+  if (template.organizationId !== params.organizationId) throw new Error('template_forbidden');
+  if (template.status !== 'draft') throw new Error('template_not_draft');
+  const persisted = await deleteTemplateRecord(params.templateId, params.organizationId);
+  if (!persisted.ok) throw new Error('template_delete_failed');
+  registryStore.delete(templateKey(params.organizationId, params.templateId));
+  auditStore.delete(templateKey(params.organizationId, params.templateId));
 }
 
 /**

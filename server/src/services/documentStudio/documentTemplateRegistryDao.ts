@@ -344,6 +344,33 @@ export async function persistTemplate(
   }
 }
 
+export async function deleteTemplateRecord(
+  templateId: string,
+  organizationId: string
+): Promise<{ ok: boolean }> {
+  if (!templateId || !organizationId || organizationId === SYSTEM_ORG_ID) return { ok: false };
+  try {
+    await dbRun(
+      `DELETE FROM document_studio_template_audit
+        WHERE template_id = $1 AND organization_id = $2`,
+      [templateId, organizationId]
+    );
+    await dbRun(
+      `DELETE FROM document_studio_templates
+        WHERE template_id = $1 AND organization_id = $2 AND status = 'draft' AND is_system = FALSE`,
+      [templateId, organizationId]
+    );
+    return { ok: true };
+  } catch (err) {
+    logger.warn('[DocumentStudio][TemplateDao] deleteTemplateRecord failed', {
+      templateId,
+      organizationId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return { ok: false };
+  }
+}
+
 export async function loadAuditForTemplate(
   templateId: string,
   organizationId: string

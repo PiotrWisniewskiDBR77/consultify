@@ -14,12 +14,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   __resetTemplateRegistryForTests,
   approveTemplate,
+  cloneTemplateAsDraft,
   deprecateTemplate,
   draftTemplate,
   getTemplate,
   isTemplateUsableForGeneration,
   listTemplateAuditEntries,
   listTemplates,
+  validateTemplate,
 } from '../documentTemplateService.js';
 
 describe('documentTemplateService — registry CRUD', () => {
@@ -120,6 +122,48 @@ describe('documentTemplateService — registry CRUD', () => {
       'template_approved',
       'template_deprecated',
     ]);
+  });
+
+  it('creates an exact editable draft from an approved or deprecated version', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Version source template', documentType: 'business_case' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const next = cloneTemplateAsDraft({
+      templateId: approved.templateId,
+      organizationId: 'org-A',
+      userId: 'editor',
+    });
+
+    expect(next.templateId).not.toBe(approved.templateId);
+    expect(next.status).toBe('draft');
+    expect(next.version).toBe('0.1');
+    expect(next.sectionBlueprint).toEqual(approved.sectionBlueprint);
+    expect(next.formattingSchema).toEqual(approved.formattingSchema);
+    expect(next.notes).toContain(`${approved.templateId} v1.0`);
+  });
+
+  it('returns actionable blocking validation issues', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Validation test template', documentType: 'executive_memo' },
+    });
+    const invalid = {
+      ...template,
+      sectionBlueprint: [template.sectionBlueprint[0], { ...template.sectionBlueprint[0] }],
+      requiredInputs: ['finance', 'Finance'],
+    };
+    expect(validateTemplate(invalid).map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(['duplicate_section_title', 'duplicate_required_input'])
+    );
+    expect(validateTemplate(template)).toEqual([]);
   });
 
   it('isolates templates across tenants', () => {

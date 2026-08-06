@@ -368,7 +368,9 @@ import type {
 } from '../services/documentStudio/documentStudioTypes.js';
 import {
   approveTemplate,
+  cloneTemplateAsDraft,
   createTemplateFromArtifact,
+  deleteDraftTemplate,
   deprecateTemplate,
   draftTemplate,
   draftTemplateAsync,
@@ -379,6 +381,7 @@ import {
   recordTemplateFeedback,
   recordTemplateUsage,
   reviseTemplateStructure,
+  validateTemplate,
 } from '../services/documentStudio/documentTemplateService.js';
 import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
 // MAT-010 — canonical artifact lineage (fail-open hooks only).
@@ -401,6 +404,7 @@ import {
   resolveDocumentTemplateForCreation,
   type TemplateResolveErrorCode,
 } from '../services/materials/creationIntent.js';
+import { removeTemplateArtifactByOrigin } from '../services/v8/artifactRegistryService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1322,6 +1326,68 @@ router.get(
   })
 );
 
+router.get(
+  '/templates/:templateId/validate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    const template = getTemplate(String(req.params.templateId || ''), organizationId);
+    if (!template) return void res.status(404).json({ error: 'template_not_found' });
+    const issues = validateTemplate(template);
+    res.json({ valid: !issues.some((issue) => issue.blocking), issues });
+  })
+);
+
+router.post(
+  '/templates/:templateId/new-version',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const template = cloneTemplateAsDraft({
+        templateId: String(req.params.templateId || ''),
+        organizationId,
+        userId,
+      });
+      res.status(201).json({ template });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_clone_failed';
+      res.status(message === 'template_not_found' ? 404 : 400).json({ error: message });
+    }
+  })
+);
+
+router.delete(
+  '/templates/:templateId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    if (!['admin', 'owner', 'superadmin'].includes(userRole.toLowerCase())) {
+      return void res
+        .status(403)
+        .json({ error: 'Admin or owner role required to delete templates' });
+    }
+    const templateId = String(req.params.templateId || '');
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      await deleteDraftTemplate({ templateId, organizationId });
+      await removeTemplateArtifactByOrigin({
+        organizationId,
+        originRuntime: 'document_template',
+        originRecordId: templateId,
+      });
+      res.status(204).send();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_delete_failed';
+      const status =
+        message === 'template_not_found' ? 404 : message === 'template_not_draft' ? 409 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
 router.post(
   '/templates/:templateId/approve',
   asyncHandler(async (req: Request, res: Response) => {
@@ -1341,6 +1407,12 @@ router.post(
     }
     const notes = typeof req.body?.notes === 'string' ? req.body.notes : undefined;
     try {
+      const current = getTemplate(templateId, organizationId);
+      if (!current) return void res.status(404).json({ error: 'template_not_found' });
+      const issues = validateTemplate(current);
+      if (issues.some((issue) => issue.blocking)) {
+        return void res.status(422).json({ error: 'template_validation_failed', issues });
+      }
       const template = approveTemplate({ templateId, organizationId, userId, notes });
       res.json({ template });
     } catch (err) {
