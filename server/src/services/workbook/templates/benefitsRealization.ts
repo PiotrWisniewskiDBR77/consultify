@@ -4,6 +4,7 @@ export interface BenefitsRealizationParams {
   programName?: string;
   currencyCode?: 'PLN' | 'EUR' | 'USD';
   investment?: number;
+  implementationCost?: number;
   revenueBenefit?: number;
   costBenefit?: number;
   workingCapitalBenefit?: number;
@@ -13,7 +14,7 @@ export interface BenefitsRealizationParams {
 
 export const BENEFITS_REALIZATION_DEFAULTS = {
   programName: 'Program transformacji', currencyCode: 'PLN' as const,
-  investment: 2_400_000, revenueBenefit: 1_800_000, costBenefit: 1_200_000,
+  investment: 2_400_000, implementationCost: 300_000, revenueBenefit: 1_800_000, costBenefit: 1_200_000,
   workingCapitalBenefit: 600_000, confidencePct: 0.8, realizationPct: 0.65,
 };
 
@@ -36,6 +37,8 @@ export function buildBenefitsRealizationSchema(p: BenefitsRealizationParams = {}
     ],
     rows: [
       { cells: { driver: { value: 'Nakład inwestycyjny', style: { bold: true } }, value: input(d.investment, cur), owner: { value: 'CFO / Program Director' }, source: { value: 'Approved investment case' } } },
+      { cells: { driver: { value: 'Koszt wdrożenia', style: { bold: true } }, value: input(d.implementationCost, cur), owner: { value: 'Program Director / CIO' }, source: { value: 'Approved implementation plan' } } },
+      { isSummary: true, cells: { driver: { value: 'Łączny nakład', style: { bold: true, bgColor: 'DCEFEA' } }, value: { formula: 'SUM(B2:B3)', style: { bold: true, bgColor: 'DCEFEA', numberFormat: cur } }, owner: { value: 'CFO', style: { bold: true } }, source: { value: 'Investment + implementation', style: { italic: true } } } },
       { cells: { driver: { value: 'Korzyść przychodowa — plan roczny' }, value: input(d.revenueBenefit, cur), owner: { value: 'Commercial Director' }, source: { value: 'CRM + revenue ledger' } } },
       { cells: { driver: { value: 'Redukcja kosztów — plan roczny' }, value: input(d.costBenefit, cur), owner: { value: 'COO' }, source: { value: 'ERP cost centres' } } },
       { cells: { driver: { value: 'Uwolnienie kapitału obrotowego' }, value: input(d.workingCapitalBenefit, cur), owner: { value: 'CFO' }, source: { value: 'ERP balance sheet' } } },
@@ -59,15 +62,15 @@ export function buildBenefitsRealizationSchema(p: BenefitsRealizationParams = {}
   const benefitRow = (label: string, assumptionRow: number, outputRow: number): Row => ({ cells: {
     benefit: { value: label, style: { bold: true } },
     plan: { formula: `'Assumptions'!B${assumptionRow}`, style: { numberFormat: cur } },
-    riskAdjusted: { formula: `B${outputRow}*'Assumptions'!$B$6`, style: { numberFormat: cur } },
-    realized: { formula: `C${outputRow}*'Assumptions'!$B$7`, style: { numberFormat: cur } },
+    riskAdjusted: { formula: `B${outputRow}*'Assumptions'!$B$8`, style: { numberFormat: cur } },
+    realized: { formula: `C${outputRow}*'Assumptions'!$B$9`, style: { numberFormat: cur } },
     gap: { formula: `C${outputRow}-D${outputRow}`, style: { numberFormat: cur } },
   }});
-  // Sheet rows 2..4 intentionally align with assumption rows 3..5.
+  // Sheet rows 2..4 intentionally align with assumption rows 5..7.
   const benefits: Sheet = {
     name: 'Benefits Register', purpose: 'Plan, plan skorygowany o pewność, realizacja i luka dla każdego strumienia.',
     columns: benefitColumns,
-    rows: [benefitRow('Wzrost przychodów', 3, 2), benefitRow('Redukcja kosztów', 4, 3), benefitRow('Kapitał obrotowy', 5, 4), {
+    rows: [benefitRow('Wzrost przychodów', 5, 2), benefitRow('Redukcja kosztów', 6, 3), benefitRow('Kapitał obrotowy', 7, 4), {
       isSummary: true, cells: {
         benefit: { value: 'RAZEM', style: { bold: true, bgColor: 'DCEFEA' } },
         plan: { formula: 'SUM(B2:B4)', style: { bold: true, numberFormat: cur } },
@@ -89,10 +92,10 @@ export function buildBenefitsRealizationSchema(p: BenefitsRealizationParams = {}
       { key: 'upside', header: 'Upside', type: 'number' },
     ],
     rows: [
-      { cells: { metric: { value: 'Mnożnik scenariusza', style: { bold: true } }, downside: { formula: `'Assumptions'!B8`, style: { numberFormat: '0%' } }, base: { formula: `'Assumptions'!B9`, style: { numberFormat: '0%' } }, upside: { formula: `'Assumptions'!B10`, style: { numberFormat: '0%' } } } },
+      { cells: { metric: { value: 'Mnożnik scenariusza', style: { bold: true } }, downside: { formula: `'Assumptions'!B10`, style: { numberFormat: '0%' } }, base: { formula: `'Assumptions'!B11`, style: { numberFormat: '0%' } }, upside: { formula: `'Assumptions'!B12`, style: { numberFormat: '0%' } } } },
       { cells: { metric: { value: 'Korzyści risk-adjusted' }, downside: { formula: `'Benefits Register'!$C$5*B2`, style: { numberFormat: cur } }, base: { formula: `'Benefits Register'!$C$5*C2`, style: { numberFormat: cur } }, upside: { formula: `'Benefits Register'!$C$5*D2`, style: { numberFormat: cur } } } },
-      { cells: { metric: { value: 'ROI' }, downside: { formula: `(B3-'Assumptions'!$B$2)/'Assumptions'!$B$2`, style: { numberFormat: '0.0%' } }, base: { formula: `(C3-'Assumptions'!$B$2)/'Assumptions'!$B$2`, style: { numberFormat: '0.0%' } }, upside: { formula: `(D3-'Assumptions'!$B$2)/'Assumptions'!$B$2`, style: { numberFormat: '0.0%' } } } },
-      { cells: { metric: { value: 'Payback (miesiące)' }, downside: { formula: `'Assumptions'!$B$2/(B3/12)`, style: { numberFormat: '0.0' } }, base: { formula: `'Assumptions'!$B$2/(C3/12)`, style: { numberFormat: '0.0' } }, upside: { formula: `'Assumptions'!$B$2/(D3/12)`, style: { numberFormat: '0.0' } } } },
+      { cells: { metric: { value: 'ROI' }, downside: { formula: `(B3-'Assumptions'!$B$4)/'Assumptions'!$B$4`, style: { numberFormat: '0.0%' } }, base: { formula: `(C3-'Assumptions'!$B$4)/'Assumptions'!$B$4`, style: { numberFormat: '0.0%' } }, upside: { formula: `(D3-'Assumptions'!$B$4)/'Assumptions'!$B$4`, style: { numberFormat: '0.0%' } } } },
+      { cells: { metric: { value: 'Payback (miesiące)' }, downside: { formula: `'Assumptions'!$B$4/(B3/12)`, style: { numberFormat: '0.0' } }, base: { formula: `'Assumptions'!$B$4/(C3/12)`, style: { numberFormat: '0.0' } }, upside: { formula: `'Assumptions'!$B$4/(D3/12)`, style: { numberFormat: '0.0' } } } },
     ],
     freezeRow: 1, showGridLines: false, tabColor: '6D5BD0',
     conditionalFormatting: [{ ref: 'B3:D5', rules: [{ type: 'colorScale', colors: ['FCE4E4', 'FFF3CD', 'E4F4EC'] }] }],
@@ -113,23 +116,26 @@ export function buildBenefitsRealizationSchema(p: BenefitsRealizationParams = {}
       return { cells: {
         month: { value: month },
         plan: { formula: `'Benefits Register'!$C$5/12`, style: { numberFormat: cur } },
-        realized: { formula: `B${row}*'Assumptions'!$B$7`, style: { numberFormat: cur } },
-        variance: { formula: `C${row}-B${row}`, style: { numberFormat: cur } },
+        realized: { formula: `B${row}*'Assumptions'!$B$9`, style: { numberFormat: cur } },
+        variance: { formula: `C${row}-B${row}`, style: { numberFormat: cur, fontColor: 'C2415D', bgColor: 'FCE4E4', bold: true } },
         cumulative: { formula: `SUM($C$2:C${row})`, style: { numberFormat: cur } },
       }};
     }),
     freezeRow: 1, showGridLines: false, tabColor: '0C447C',
-    conditionalFormatting: [{ ref: 'D2:D13', rules: [{ type: 'dataBar', color: 'C2415D' }] }],
+    conditionalFormatting: [{ ref: 'D2:D13', rules: [
+      { type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { fontColor: 'C2415D', bgColor: 'FCE4E4', bold: true } },
+      { type: 'dataBar', color: 'C2415D' },
+    ] }],
   };
 
   const summary: Sheet = {
     name: 'Executive Summary', purpose: 'Jednostronicowa karta decyzji dla sponsora i CFO.',
     columns: [{ key: 'metric', header: 'KPI / decyzja', type: 'text', width: 38 }, { key: 'value', header: 'Wartość', type: 'number', width: 22 }],
     rows: [
-      { cells: { metric: { value: 'Nakład inwestycyjny', style: { bold: true } }, value: { formula: `'Assumptions'!B2`, style: { numberFormat: cur } } } },
+      { cells: { metric: { value: 'Łączny nakład', style: { bold: true, fontColor: 'FFFFFF', bgColor: '164E63' } }, value: { formula: `'Assumptions'!B4`, style: { bold: true, fontSize: 16, fontColor: 'FFFFFF', bgColor: '164E63', numberFormat: cur } } } },
       { cells: { metric: { value: 'Korzyści risk-adjusted' }, value: { formula: `'Benefits Register'!C5`, style: { numberFormat: cur } } } },
       { cells: { metric: { value: 'Zrealizowane korzyści YTD' }, value: { formula: `'Benefits Register'!D5`, style: { numberFormat: cur } } } },
-      { cells: { metric: { value: 'ROI risk-adjusted' }, value: { formula: `('Benefits Register'!C5-'Assumptions'!B2)/'Assumptions'!B2`, style: { bold: true, numberFormat: '0.0%' } } } },
+      { cells: { metric: { value: 'ROI risk-adjusted', style: { bold: true, bgColor: 'DCEFEA' } }, value: { formula: `('Benefits Register'!C5-'Assumptions'!B4)/'Assumptions'!B4`, style: { bold: true, fontSize: 16, bgColor: 'DCEFEA', numberFormat: '0.0%' } } } },
       { cells: { metric: { value: 'Pokrycie planu YTD' }, value: { formula: `'Benefits Register'!D5/'Benefits Register'!C5`, style: { bold: true, numberFormat: '0.0%' } } } },
     ],
     freezeRow: 1, showGridLines: false, tabColor: '164E63',

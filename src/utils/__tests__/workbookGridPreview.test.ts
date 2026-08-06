@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { buildWorkbookGridSheets, isFormulaDisplayValue } from '../workbookGridPreview';
+import { buildWorkbookGridSheets, isFormulaDisplayValue, isNegativeVarianceCell } from '../workbookGridPreview';
 
 describe('buildWorkbookGridSheets', () => {
   it('carries the real sheet name through for each sheet', () => {
@@ -70,5 +70,15 @@ describe('buildWorkbookGridSheets', () => {
     expect(result[0].rows[0]['Pozycja']).toBe('Przychód');
     expect(isFormulaDisplayValue(result[0].rows[0]['Rok 1'])).toBe(true);
     expect(result[0].rows[0]['Rok 1']).toBe('=SUM(A1:A2)');
+  });
+});
+
+describe('semantic workbook preview styles', () => {
+  it('marks only negative variance values in tracking-like sheets', () => {
+    expect(isNegativeVarianceCell('Monthly Tracking', 'Variance', -54_843.75)).toBe(true);
+    expect(isNegativeVarianceCell('Monthly Tracking', 'Variance', '-54 843,75')).toBe(true);
+    expect(isNegativeVarianceCell('Monthly Tracking', 'Variance', 10)).toBe(false);
+    expect(isNegativeVarianceCell('Executive Summary', 'Wartość', -1)).toBe(false);
+    expect(isNegativeVarianceCell('Monthly Tracking', 'Variance', '=C2-B2')).toBe(false);
   });
 });

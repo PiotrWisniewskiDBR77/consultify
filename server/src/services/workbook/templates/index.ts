@@ -834,6 +834,7 @@ const BENEFITS_REALIZATION_PARAMS: WorkbookTemplateParam[] = [
   { name: 'programName', label: 'Nazwa programu', type: 'text', default: BENEFITS_REALIZATION_DEFAULTS.programName, group: 'Ogólne' },
   { name: 'currencyCode', label: 'Waluta', type: 'enum', options: ['PLN', 'EUR', 'USD'], default: BENEFITS_REALIZATION_DEFAULTS.currencyCode, group: 'Ogólne' },
   { name: 'investment', label: 'Nakład inwestycyjny', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.investment, min: 0, group: 'Wartość' },
+  { name: 'implementationCost', label: 'Koszt wdrożenia', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.implementationCost, min: 0, group: 'Wartość' },
   { name: 'revenueBenefit', label: 'Korzyść przychodowa', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit, min: 0, group: 'Wartość' },
   { name: 'costBenefit', label: 'Redukcja kosztów', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.costBenefit, min: 0, group: 'Wartość' },
   { name: 'workingCapitalBenefit', label: 'Kapitał obrotowy', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit, min: 0, group: 'Wartość' },

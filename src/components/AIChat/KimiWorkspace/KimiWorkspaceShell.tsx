@@ -42,9 +42,10 @@ import type {
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
 import { isExceleEditEnabled } from '@/utils/exceleEditFlag';
-import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
+import { isFormulaDisplayValue, isNegativeVarianceCell } from '@/utils/workbookGridPreview';
 
 import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
+import { WorkbookBoardSummary } from './WorkbookBoardSummary';
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
 
 export type KimiLane = 'excele' | 'prezentacje' | 'tabele';
@@ -686,6 +687,12 @@ function ArtifactPreviewPane({
                 return sheetData && sheetData.columns.length > 0;
               })() ? (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+                {preview.perSheetData && preview.sheetNames ? (
+                  <WorkbookBoardSummary
+                    sheets={preview.perSheetData.map((sheet, index) => ({ ...sheet, name: preview.sheetNames?.[index] || `Sheet ${index + 1}` }))}
+                    activeSheetName={preview.sheetNames[activeSheet]}
+                  />
+                ) : null}
                 <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
                   {(() => {
                     const sheetData = (preview.perSheetData?.[activeSheet] ?? preview.tableData)!;
@@ -717,12 +724,15 @@ function ArtifactPreviewPane({
                               {sheetData.columns.map((col, ci) => {
                                 const raw = row[col];
                                 const isFormula = isFormulaDisplayValue(raw);
+                                const isNegativeVariance = isNegativeVarianceCell(preview.sheetNames?.[activeSheet] || '', col, raw);
                                 return (
                                   <td
                                     key={`${col}-${ci}`}
                                     title={isFormula ? raw : undefined}
                                     className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
-                                      isFormula ? 'font-mono text-c-text-secondary' : 'text-c-text'
+                                      isNegativeVariance
+                                        ? 'bg-c-danger/10 font-semibold text-c-danger'
+                                        : isFormula ? 'font-mono text-c-text-secondary' : 'text-c-text'
                                     }`}
                                   >
                                     {String(raw ?? '')}

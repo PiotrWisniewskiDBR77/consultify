@@ -96,10 +96,11 @@ import {
 } from '@/utils/exceleTemplatePresets';
 import type { FormulaSheet } from '@/utils/workbookFormulaEngine';
 import type { WorkbookGridSheet } from '@/utils/workbookGridPreview';
-import { buildWorkbookGridSheets, isFormulaDisplayValue } from '@/utils/workbookGridPreview';
+import { buildWorkbookGridSheets, isFormulaDisplayValue, isNegativeVarianceCell } from '@/utils/workbookGridPreview';
 
 import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
 import { findBarChartSeries, MiniBarChart } from './MiniBarChart';
+import { WorkbookBoardSummary } from './WorkbookBoardSummary';
 
 type ParamType = 'text' | 'integer' | 'number' | 'percent' | 'currency' | 'enum';
 
@@ -658,6 +659,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
             <div className="mt-4">
               {gridLoading ? (
                 <div className="rounded-lg border border-c-border-subtle bg-c-surface overflow-hidden">
+                  <WorkbookBoardSummary sheets={gridSheets} activeSheetName={(gridSheets[activeSheet] || gridSheets[0])?.name} />
                   <div className="p-6 text-center text-c-text-secondary">
                     <Loader2 size={24} className="mx-auto mb-2 animate-spin" />
                     <p className="text-xs font-medium">
@@ -751,12 +753,15 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
                                   {sheetData.columns.map((col, ci) => {
                                     const raw = row[col];
                                     const isFormula = isFormulaDisplayValue(raw);
+                                    const isNegativeVariance = isNegativeVarianceCell(sheetData.name, col, raw);
                                     return (
                                       <td
                                         key={`${col}-${ci}`}
                                         title={isFormula ? raw : undefined}
                                         className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
-                                          isFormula
+                                          isNegativeVariance
+                                            ? 'bg-c-danger/10 font-semibold text-c-danger'
+                                            : isFormula
                                             ? 'font-mono text-c-text-secondary'
                                             : 'text-c-text'
                                         }`}
