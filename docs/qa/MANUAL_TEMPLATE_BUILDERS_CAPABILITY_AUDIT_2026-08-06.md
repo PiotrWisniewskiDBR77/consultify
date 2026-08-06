@@ -102,3 +102,21 @@ Completion additionally requires:
 7. one visual/accessibility standard and consistent action names.
 
 Current result: **Word PARTIAL+, Excel PARTIAL, PowerPoint PARTIAL+**. Structure editing is viable; cross-tool lifecycle, preview and variable parity are not yet complete.
+
+## Excel runtime lifecycle follow-up — 2026-08-07
+
+Signed-in DEMO test used the disposable organization template `QA Excel Lifecycle 20260807 0011` and no Teresa/AI generation.
+
+| Step | Result | Runtime evidence |
+| --- | --- | --- |
+| Create blank template | PASS | Format → `Od czystego` → organization scope opened the workbook builder. |
+| Manual schema authoring | PASS | Created `Budget` and `Milestones`; added text/list validation, currency/date columns, formats and starter values. |
+| Validate | PASS | Selecting list validation without values immediately changed the command to `Błędy: 1` and disabled Save; completing the list restored `Walidacja: OK`. |
+| Save draft | PASS | Save returned a success toast and opened the workbook-template use surface. |
+| Instantiate/use | PASS | `Build workbook` created an XLSX-backed workbook with both sheets and preserved starter values (`Operations`, `1 400 000`, `875 000`). Runtime reported `Model verified ✓ (0 notes)`. |
+| Reopen/edit/update | **FAIL → FIXED IN CODE, AWAITING DEPLOY** | Library `Edit` incorrectly routed a Sheet template to `/reports/builder?...&edit=true`. Fix `c6d564bb60` routes with the canonical template id to `PersistedTemplateBuilder`. |
+| Approve/version/deprecate/delete | BLOCKED BY REOPEN ROUTE | Lifecycle controls cannot be reached on the currently served build until the routing fix is deployed. |
+
+Additional evidence: the page badge reported `DEMO @97a42e810bc1`, not the deployment identifier `bf6d50e7` supplied for this acceptance run. The runtime-created template was also labelled `Legacy` in the central library even though its canonical workbook record and artifact-index id both existed. This label should be audited separately because it obscures the lifecycle authority visible to the user.
+
+The routing repair adds an explicit Sheet edit contract, URL deep link (`editWorkbookTemplateId=<canonical id>`), persisted full-screen builder overlay, save refresh and safe return to Template Library. Contract/unit/component suite: **28/28 passing**.
