@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildDeterministicTeresaSlides,
   extractPresentationGenerationOutline,
+  extractRequestedPresentationTitle,
   hasRenderablePresentationContent,
 } from '../useKimiArtifactPipeline';
 
@@ -35,5 +37,33 @@ describe('Teresa presentation generation content contract', () => {
   it('preserves legacy bare-array outlines', () => {
     const outline = [{ intent: 'cover', title: 'Cover', enabled: true }];
     expect(extractPresentationGenerationOutline({ outline_json: outline })).toEqual(outline);
+  });
+
+  it('materializes every accepted outline item without inventing facts', () => {
+    const request = 'Use only: progress 72%; budget EUR 1.4m.';
+    const slides = buildDeterministicTeresaSlides(
+      [
+        { intent: 'cover', title: 'Atlas update', keyMessage: 'Board update' },
+        { intent: 'content', title: 'Budget' },
+      ],
+      request
+    );
+
+    expect(slides).toHaveLength(2);
+    expect(slides[0]).toMatchObject({
+      type: 'cover',
+      content: { title: 'Atlas update', body: 'Board update' },
+    });
+    expect(slides[1]).toMatchObject({
+      content: { title: 'Budget', body: `Source request: ${request}` },
+    });
+  });
+
+  it('uses the explicit Title field instead of the truncated chat goal', () => {
+    expect(
+      extractRequestedPresentationTitle(
+        'Create a deck. Title: Atlas Transformation Executive Update — E2E-20260806. Produce exactly 8 slides.'
+      )
+    ).toBe('Atlas Transformation Executive Update — E2E-20260806');
   });
 });
