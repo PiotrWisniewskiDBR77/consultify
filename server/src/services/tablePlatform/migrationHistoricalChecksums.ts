@@ -53,6 +53,10 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
     stored: '67b02166371cd93b',
     current: 'f276ca048cb5c3fc',
   },
+  '20260318_postgres_datetime_compat.sql': {
+    stored: '9b627dacd3f1d867',
+    current: 'd830f00f3552c51b',
+  },
   '20260323_v8_chat_execution.sql': { stored: 'ccbef04283d81a77', current: '11969b94eff1d5f7' },
   '20260323_v8_context_snapshot_identity_chain.sql': {
     stored: 'e5453b4845a79843',
