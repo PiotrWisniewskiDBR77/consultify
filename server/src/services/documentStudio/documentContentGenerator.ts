@@ -272,7 +272,19 @@ export function enforceDocumentSchemaGrounding(
   const planBeforeLabel = groundingSource.match(/(\d{1,3})\s*%[^.\n]{0,30}realizacj\w*\s+planu/i);
   const planValue = planAfterLabel?.[1] ?? planBeforeLabel?.[1];
   const budgetMatch = groundingSource.match(/(\d+[,.]\d+)\s*mln\s*EUR/i);
-  const milestoneMatch = groundingSource.match(/(\d+)\s*\/\s*(\d+)/);
+  // Keep milestone extraction label-aware: production briefs use natural
+  // language ("ukończono 18 z 21 kamieni milowych"), while an unrestricted
+  // `18 z 21` matcher could accidentally join unrelated figures. Support the
+  // equivalent English phrasing for imported/browser-locale briefs too.
+  const milestonePatterns = [
+    /(?:ukończono|ukończonych?|zrealizowano)\s*(\d+)\s*(?:z|\/)\s*(\d+)\s*(?:kamieni\s+milowych|kamienie\s+milowe)/i,
+    /(\d+)\s*(?:z|\/)\s*(\d+)\s*(?:ukończonych?\s+)?(?:kamieni\s+milowych|kamienie\s+milowe)/i,
+    /(?:completed|delivered)\s*(\d+)\s*(?:of|\/)\s*(\d+)\s*milestones?/i,
+    /(\d+)\s*(?:of|\/)\s*(\d+)\s*milestones?\s*(?:completed|delivered)?/i,
+  ];
+  const milestoneMatch = milestonePatterns
+    .map((pattern) => groundingSource.match(pattern))
+    .find((match): match is RegExpMatchArray => Boolean(match));
   if (language === 'pl' && planValue && budgetMatch && milestoneMatch) {
     const plan = `${planValue}%`;
     const budget = `${budgetMatch[1].replace('.', ',')} mln EUR`;

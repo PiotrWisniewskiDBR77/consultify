@@ -175,7 +175,7 @@ describe('Document Studio generate -> export happy path', () => {
       intake: {
         title: 'Raport DELTA',
         description:
-          'Polski raport zarządu DELTA. Jedyne dozwolone liczby: 72%, 1,4 mln EUR oraz 18/21.',
+          'Polski raport zarządu DELTA. Potwierdzone fakty: 72% realizacji planu, budżet programu 1,4 mln EUR oraz ukończono 18 z 21 kamieni milowych.',
         documentType: 'board_report',
         language: 'pl',
         goal: 'inform',
@@ -215,14 +215,17 @@ describe('Document Studio generate -> export happy path', () => {
       import('../documentStudioTypes.js').DocumentSchema | undefined;
     expect(persisted).toBeDefined();
     const serialized = JSON.stringify(persisted);
-    expect(serialized).not.toMatch(/DACH|8 inicjatyw|6-9|85%/);
+    expect(serialized).not.toMatch(/DACH|8 inicjatyw|horyzoncie 6-9|85%/);
     expect(serialized).not.toContain('{ \\"columns\\": [], \\"rows\\": [] }');
-    expect(serialized).toContain('niepoparte twierdzenie');
+    expect(persisted!.sections).toHaveLength(7);
+    expect(serialized).toContain('Realizacja planu wynosi 72%');
+    expect(serialized).toContain('18/21');
     const assumptions = persisted!.sections
       .flatMap((section) => section.blocks)
       .filter((block) => block.isAssumption === true);
     expect(assumptions.length).toBeGreaterThan(0);
     const reopened = await getDocumentArtifact(run.artifactId, 'org-delta');
+    expect(reopened?.sections).toEqual(run.schema.sections);
     const reopenedAssumptions = reopened!.sections
       .flatMap((section) => section.blocks)
       .filter((block) => block.isAssumption === true);
@@ -274,7 +277,8 @@ describe('Document Studio generate -> export happy path', () => {
       userId: 'user-omega',
       intake: {
         title: 'Raport OMEGA',
-        description: 'Polski raport zarządu OMEGA. Dozwolone: 72%, 1,4 mln EUR, 18/21.',
+        description:
+          'Polski raport zarządu OMEGA. Potwierdzone fakty: 72% realizacji planu, budżet programu 1,4 mln EUR oraz ukończono 18 z 21 kamieni milowych.',
         documentType: 'board_report',
         language: 'pl',
         goal: 'inform',
@@ -360,7 +364,7 @@ describe('Document Studio generate -> export happy path', () => {
       intake: {
         title: 'Raport SIGMA-2',
         description:
-          'Polski raport zarządu. Potwierdzone fakty: 72% realizacji planu, budżet programu 1,4 mln EUR oraz 18/21 ukończonych kamieni milowych.',
+          'Polski raport zarządu. Potwierdzone fakty: 72% realizacji planu, budżet programu 1,4 mln EUR oraz ukończono 18 z 21 kamieni milowych.',
         documentType: 'board_report',
         language: 'pl',
         goal: 'decide',

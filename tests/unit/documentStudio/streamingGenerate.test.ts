@@ -180,7 +180,7 @@ describe('Document Studio — streaming generation contract (C1)', () => {
     const intake = {
       title: 'Raport dla zarządu',
       description:
-        '72% realizacji planu, budżet 1,4 mln EUR, 18/21 kamieni milowych; zakaz utożsamiania realizacji planu z wykorzystaniem budżetu; brakujące owners i dates oznacz jako assumptions.',
+        '72% realizacji planu, budżet 1,4 mln EUR, ukończono 18 z 21 kamieni milowych; zakaz utożsamiania realizacji planu z wykorzystaniem budżetu; brakujące owners i dates oznacz jako assumptions.',
       documentType: 'board_report' as const,
       // Production may carry the browser locale rather than the narrow UI
       // union; the runtime must normalize it before final grounding.

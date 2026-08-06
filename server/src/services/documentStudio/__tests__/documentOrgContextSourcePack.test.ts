@@ -171,7 +171,7 @@ describe('applyOrgContextGrounding', () => {
 
   it('does not mix broad org context into an explicit quantitative user brief', () => {
     const intake = baseIntake({
-      description: '72% realizacji planu, budżet 1,4 mln EUR i 18/21 kamieni milowych.',
+      description: '72% realizacji planu, budżet 1,4 mln EUR i ukończono 18 z 21 kamieni milowych.',
     });
     const result = applyOrgContextGrounding(intake, [], samplePack);
     expect(result.autoGrounded).toBe(false);
