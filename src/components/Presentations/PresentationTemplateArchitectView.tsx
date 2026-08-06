@@ -56,6 +56,7 @@ import {
   type PresentationTemplate,
   type PresentationCustomTemplateDefinition,
   type PresentationTemplateDraftInput,
+  type PresentationTemplateLifecycleState,
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
 } from '@/services/presentationTemplateArchitect';
@@ -123,15 +124,27 @@ const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: stri
 const DEFAULT_CUSTOM_TEMPLATE: PresentationCustomTemplateDefinition = {
   version: 1,
   theme: {
-    titleFont: 'Inter', bodyFont: 'Inter', primaryColor: '123B5D',
-    backgroundColor: 'FFFFFF', surfaceColor: 'F3F6F8', textColor: '172B3A', accentColor: '00A67E',
+    titleFont: 'Inter',
+    bodyFont: 'Inter',
+    primaryColor: '123B5D',
+    backgroundColor: 'FFFFFF',
+    surfaceColor: 'F3F6F8',
+    textColor: '172B3A',
+    accentColor: '00A67E',
   },
   layouts: Object.fromEntries(
     ['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [
-      role, { masterName: `Consultify ${role}` },
+      role,
+      { masterName: `Consultify ${role}` },
     ])
   ),
-  layoutMapping: { cover: 'cover', content: 'content', kpi: 'kpi', table: 'table', decision: 'decision' },
+  layoutMapping: {
+    cover: 'cover',
+    content: 'content',
+    kpi: 'kpi',
+    table: 'table',
+    decision: 'decision',
+  },
 };
 
 const INTENT_FALLBACK_LABELS: Record<PresentationSlideIntent, string> = {
@@ -172,6 +185,11 @@ function moveItem<T>(list: T[], from: number, to: number): T[] {
 export interface PresentationTemplateArchitectViewProps {
   onTemplateSaved?: (template: PresentationTemplate) => void;
 }
+
+/** Approved records stay immutable but must remain governable from this surface. */
+export const canDeprecatePublishedPresentationTemplate = (
+  lifecycleState: PresentationTemplateLifecycleState
+): boolean => lifecycleState === 'approved';
 
 export const PresentationTemplateArchitectView: React.FC<
   PresentationTemplateArchitectViewProps
@@ -215,9 +233,8 @@ export const PresentationTemplateArchitectView: React.FC<
   // generation time. Independent of the outline — a template can carry
   // colors, structure, or both (see `ColorPatternPicker`).
   const [editColorTemplateId, setEditColorTemplateId] = useState('');
-  const [editCustomTemplate, setEditCustomTemplate] = useState<PresentationCustomTemplateDefinition>(
-    DEFAULT_CUSTOM_TEMPLATE
-  );
+  const [editCustomTemplate, setEditCustomTemplate] =
+    useState<PresentationCustomTemplateDefinition>(DEFAULT_CUSTOM_TEMPLATE);
   const brandKitColors = useBrandKitColors();
 
   const selectedTemplate = useMemo(
@@ -497,10 +514,13 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const handleDeprecate = async (): Promise<void> => {
     if (!selectedTemplate) return;
+    const isDraft = selectedTemplate.lifecycle_state === 'draft';
     const reason = window.prompt(
       t(
         'presentations.templateArchitect.deprecateReasonPrompt',
-        'Why are you withdrawing this draft? (required)'
+        isDraft
+          ? 'Why are you withdrawing this draft? (required)'
+          : 'Why are you deprecating this published template? (required)'
       ),
       ''
     );
@@ -790,21 +810,43 @@ export const PresentationTemplateArchitectView: React.FC<
                     </span>
                   </Button>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void handleCloneAsDraft()}
-                    disabled={cloningId === selectedTemplate.id}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      {cloningId === selectedTemplate.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                      {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
-                    </span>
-                  </Button>
+                  <>
+                    {canDeprecatePublishedPresentationTemplate(lifecycleState) ? (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => void handleDeprecate()}
+                        disabled={deprecatingId === selectedTemplate.id}
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          {deprecatingId === selectedTemplate.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                          {t(
+                            'presentations.templateArchitect.deprecatePublishedTemplate',
+                            'Deprecate published template'
+                          )}
+                        </span>
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => void handleCloneAsDraft()}
+                      disabled={cloningId === selectedTemplate.id}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        {cloningId === selectedTemplate.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                        {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
+                      </span>
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -904,31 +946,54 @@ export const PresentationTemplateArchitectView: React.FC<
               </div>
               <div className="col-span-1 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 sm:col-span-2">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
-                  {t('presentations.templateArchitect.customMasterTheme', 'Custom PowerPoint theme and masters')}
+                  {t(
+                    'presentations.templateArchitect.customMasterTheme',
+                    'Custom PowerPoint theme and masters'
+                  )}
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {(['titleFont', 'bodyFont'] as const).map((key) => (
-                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                    <label
+                      key={key}
+                      className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                    >
                       {key}
                       <input
                         value={editCustomTemplate.theme[key]}
                         disabled={!isEditable}
-                        onChange={(e) => setEditCustomTemplate((current) => ({
-                          ...current, theme: { ...current.theme, [key]: e.target.value },
-                        }))}
+                        onChange={(e) =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            theme: { ...current.theme, [key]: e.target.value },
+                          }))
+                        }
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                       />
                     </label>
                   ))}
-                  {(['primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'accentColor'] as const).map((key) => (
-                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                  {(
+                    [
+                      'primaryColor',
+                      'backgroundColor',
+                      'surfaceColor',
+                      'textColor',
+                      'accentColor',
+                    ] as const
+                  ).map((key) => (
+                    <label
+                      key={key}
+                      className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                    >
                       {key}
                       <input
                         value={editCustomTemplate.theme[key]}
                         disabled={!isEditable}
-                        onChange={(e) => setEditCustomTemplate((current) => ({
-                          ...current, theme: { ...current.theme, [key]: e.target.value.replace('#', '') },
-                        }))}
+                        onChange={(e) =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            theme: { ...current.theme, [key]: e.target.value.replace('#', '') },
+                          }))
+                        }
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 font-mono text-xs text-c-text"
                       />
                     </label>
@@ -938,30 +1003,45 @@ export const PresentationTemplateArchitectView: React.FC<
                     <input
                       value={editCustomTemplate.theme.logoDataUri || ''}
                       disabled={!isEditable}
-                      onChange={(e) => setEditCustomTemplate((current) => ({
-                        ...current, theme: { ...current.theme, logoDataUri: e.target.value || undefined },
-                      }))}
+                      onChange={(e) =>
+                        setEditCustomTemplate((current) => ({
+                          ...current,
+                          theme: { ...current.theme, logoDataUri: e.target.value || undefined },
+                        }))
+                      }
                       placeholder="data:image/png;base64,…"
                       className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                     />
                   </label>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
-                  {(Object.keys(editCustomTemplate.layoutMapping) as Array<keyof typeof editCustomTemplate.layoutMapping>).map((role) => {
+                  {(
+                    Object.keys(editCustomTemplate.layoutMapping) as Array<
+                      keyof typeof editCustomTemplate.layoutMapping
+                    >
+                  ).map((role) => {
                     const layoutId = editCustomTemplate.layoutMapping[role];
                     return (
-                      <label key={role} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                      <label
+                        key={role}
+                        className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                      >
                         {role} master
                         <input
                           value={editCustomTemplate.layouts[layoutId]?.masterName || ''}
                           disabled={!isEditable}
-                          onChange={(e) => setEditCustomTemplate((current) => ({
-                            ...current,
-                            layouts: {
-                              ...current.layouts,
-                              [layoutId]: { ...current.layouts[layoutId], masterName: e.target.value },
-                            },
-                          }))}
+                          onChange={(e) =>
+                            setEditCustomTemplate((current) => ({
+                              ...current,
+                              layouts: {
+                                ...current.layouts,
+                                [layoutId]: {
+                                  ...current.layouts[layoutId],
+                                  masterName: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                           className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                         />
                       </label>

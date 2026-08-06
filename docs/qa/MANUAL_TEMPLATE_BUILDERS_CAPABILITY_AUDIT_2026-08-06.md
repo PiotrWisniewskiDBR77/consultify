@@ -18,39 +18,39 @@ The shared `TemplateBuilder` supports all three formats in code, but it is not t
 
 ## Entry, library and lifecycle
 
-| Capability | Word | Excel | PowerPoint | Evidence / usability |
-| --- | --- | --- | --- | --- |
-| Open template library | PASS | PASS | PASS | One canonical Template Library with All/Documents/Presentations/Sheets tabs, table/grid switch and status counters. |
-| Create from blank | PASS | PASS | PASS | Runtime launcher exposes format → `Od czystego`; Word routes to its architect, Excel to shared builder, PPT to presentation architect. |
-| Create with AI | PASS | PASS | PASS | Launcher exposes a peer `Z AI` mode. Not used in this manual-only audit. |
-| Clone existing | PASS | PASS | PASS | Launcher exposes `Na bazie istniejącego`; canonical resolution differs by runtime. |
-| Open existing | PASS | PASS | PASS | Registry rows and row-action menus are visible. Word registry showed draft and approved records with versions. |
-| Rename template | PASS | PASS | PASS | Word/PPT architect forms and shared builder title/properties expose name editing. |
-| Save draft | PASS | PARTIAL | PASS | Word/PPT explicitly model drafts. Shared Excel builder says `Zapisz jako szablon` and performs a create POST; draft status is not explained at action time. |
-| Validate before publish | PARTIAL | FAIL | PARTIAL | Word/PPT impose structural/server validation at approval. Shared Excel builder only disables save for an empty name; no visible quality/validation summary. |
-| Publish / approve | PASS | FAIL in shared blank builder | PASS | Word has approve/deprecate actions; PPT has `Approve & publish`; shared builder has save only. |
-| Use template to generate | PASS | PASS | PASS | Canonical use routes exist: Document Studio Mode 3, workbook template selection, and presentation generation. |
-| Edit after save | PASS | PARTIAL | PASS | Governed architects support editing/cloning drafts. Shared builder accepts only `initialDraft` and its API only POSTs a new record; no canonical reopen/update contract. |
-| Version history | PASS | PARTIAL | PASS | Word registry displays `v0.1/v1.0`; PPT model and architect expose versions. Shared builder has no history UI. |
-| Deprecate / withdraw | PASS | FAIL | PASS | Word/PPT expose governed retirement. Shared builder exposes none. |
-| Delete draft | PARTIAL | FAIL | PASS | PPT explicitly offers withdraw/delete draft. Word exposes lifecycle row actions but destructive runtime was not invoked. Shared builder cannot delete a persisted template. |
+| Capability               | Word    | Excel                        | PowerPoint | Evidence / usability                                                                                                                                                        |
+| ------------------------ | ------- | ---------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open template library    | PASS    | PASS                         | PASS       | One canonical Template Library with All/Documents/Presentations/Sheets tabs, table/grid switch and status counters.                                                         |
+| Create from blank        | PASS    | PASS                         | PASS       | Runtime launcher exposes format → `Od czystego`; Word routes to its architect, Excel to shared builder, PPT to presentation architect.                                      |
+| Create with AI           | PASS    | PASS                         | PASS       | Launcher exposes a peer `Z AI` mode. Not used in this manual-only audit.                                                                                                    |
+| Clone existing           | PASS    | PASS                         | PASS       | Launcher exposes `Na bazie istniejącego`; canonical resolution differs by runtime.                                                                                          |
+| Open existing            | PASS    | PASS                         | PASS       | Registry rows and row-action menus are visible. Word registry showed draft and approved records with versions.                                                              |
+| Rename template          | PASS    | PASS                         | PASS       | Word/PPT architect forms and shared builder title/properties expose name editing.                                                                                           |
+| Save draft               | PASS    | PARTIAL                      | PASS       | Word/PPT explicitly model drafts. Shared Excel builder says `Zapisz jako szablon` and performs a create POST; draft status is not explained at action time.                 |
+| Validate before publish  | PARTIAL | FAIL                         | PARTIAL    | Word/PPT impose structural/server validation at approval. Shared Excel builder only disables save for an empty name; no visible quality/validation summary.                 |
+| Publish / approve        | PASS    | FAIL in shared blank builder | PASS       | Word has approve/deprecate actions; PPT has `Approve & publish`; shared builder has save only.                                                                              |
+| Use template to generate | PASS    | PASS                         | PASS       | Canonical use routes exist: Document Studio Mode 3, workbook template selection, and presentation generation.                                                               |
+| Edit after save          | PASS    | PARTIAL                      | PASS       | Governed architects support editing/cloning drafts. Shared builder accepts only `initialDraft` and its API only POSTs a new record; no canonical reopen/update contract.    |
+| Version history          | PASS    | PARTIAL                      | PASS       | Word registry displays `v0.1/v1.0`; PPT model and architect expose versions. Shared builder has no history UI.                                                              |
+| Deprecate / withdraw     | PASS    | FAIL                         | PASS       | Word/PPT expose governed retirement. Shared builder exposes none.                                                                                                           |
+| Delete draft             | PARTIAL | FAIL                         | PASS       | PPT explicitly offers withdraw/delete draft. Word exposes lifecycle row actions but destructive runtime was not invoked. Shared builder cannot delete a persisted template. |
 
 ## Structure and editing contract
 
-| Capability | Word | Excel | PowerPoint | Evidence / usability |
-| --- | --- | --- | --- | --- |
-| Add structure item | PASS | PASS | PASS | Sections / sheets / slides. |
-| Rename item | PASS | PASS | PASS | Section title, sheet name and slide title are editable. |
-| Remove item | PASS | PASS | PASS | All editors prevent an empty template or validate minimum structure. |
-| Reorder item | PASS | PASS | PASS | Up/down actions exist across the three editors. Shared builder lacks drag reorder despite showing a grip icon. |
-| Item type/archetype | PASS | PASS | PASS | Word block type/depth, Excel column types/validation, PPT slide archetype/layout. |
-| Formula/validation schema | N/A | PASS | N/A | Excel sheet editor exposes column type, formulas/validation-oriented schema and sheet CRUD. |
-| Layout selection | PARTIAL | PARTIAL | PASS | PPT has archetype preview/layout policy. Word layout is mostly document-type/section blueprint. Excel layout is structural, not page/dashboard composition. |
-| Style/theme | PARTIAL | PARTIAL | PASS | Shared builder offers only a theme reference backed by three demo options; Word architect is governance-first; PPT has the strongest theme/layout surface. |
-| Variables/placeholders | PARTIAL | PARTIAL | PARTIAL | Structural prompts and AI-filled toggles exist, but no common variable catalog, type system, required/default values or unused-variable diagnostics. |
-| Preview | PARTIAL | PARTIAL | PASS | Shared PPT cards have silhouette preview; Word has structure preview, not rendered DOCX; Excel has schema editing, not a representative generated workbook preview. |
-| Keyboard operation | PARTIAL | PARTIAL | PARTIAL | Structure cards are keyboard selectable and buttons are labeled. Actions were visually hidden until hover; fixed to reveal on `focus-within`. No documented builder shortcut map. |
-| Undo/redo | FAIL | FAIL | PARTIAL | Shared builder and Word template architect do not expose local undo/redo. PPT editor has richer history through its deck tooling, but template-outline operations do not present a uniform undo contract. |
+| Capability                | Word    | Excel   | PowerPoint | Evidence / usability                                                                                                                                                                                      |
+| ------------------------- | ------- | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add structure item        | PASS    | PASS    | PASS       | Sections / sheets / slides.                                                                                                                                                                               |
+| Rename item               | PASS    | PASS    | PASS       | Section title, sheet name and slide title are editable.                                                                                                                                                   |
+| Remove item               | PASS    | PASS    | PASS       | All editors prevent an empty template or validate minimum structure.                                                                                                                                      |
+| Reorder item              | PASS    | PASS    | PASS       | Up/down actions exist across the three editors. Shared builder lacks drag reorder despite showing a grip icon.                                                                                            |
+| Item type/archetype       | PASS    | PASS    | PASS       | Word block type/depth, Excel column types/validation, PPT slide archetype/layout.                                                                                                                         |
+| Formula/validation schema | N/A     | PASS    | N/A        | Excel sheet editor exposes column type, formulas/validation-oriented schema and sheet CRUD.                                                                                                               |
+| Layout selection          | PARTIAL | PARTIAL | PASS       | PPT has archetype preview/layout policy. Word layout is mostly document-type/section blueprint. Excel layout is structural, not page/dashboard composition.                                               |
+| Style/theme               | PARTIAL | PARTIAL | PASS       | Shared builder offers only a theme reference backed by three demo options; Word architect is governance-first; PPT has the strongest theme/layout surface.                                                |
+| Variables/placeholders    | PARTIAL | PARTIAL | PARTIAL    | Structural prompts and AI-filled toggles exist, but no common variable catalog, type system, required/default values or unused-variable diagnostics.                                                      |
+| Preview                   | PARTIAL | PARTIAL | PASS       | Shared PPT cards have silhouette preview; Word has structure preview, not rendered DOCX; Excel has schema editing, not a representative generated workbook preview.                                       |
+| Keyboard operation        | PARTIAL | PARTIAL | PARTIAL    | Structure cards are keyboard selectable and buttons are labeled. Actions were visually hidden until hover; fixed to reveal on `focus-within`. No documented builder shortcut map.                         |
+| Undo/redo                 | FAIL    | FAIL    | PARTIAL    | Shared builder and Word template architect do not expose local undo/redo. PPT editor has richer history through its deck tooling, but template-outline operations do not present a uniform undo contract. |
 
 ## Visual canon and intuitiveness
 
@@ -107,16 +107,39 @@ Current result: **Word PARTIAL+, Excel PARTIAL, PowerPoint PARTIAL+**. Structure
 
 Signed-in DEMO test used the disposable organization template `QA Excel Lifecycle 20260807 0011` and no Teresa/AI generation.
 
-| Step | Result | Runtime evidence |
-| --- | --- | --- |
-| Create blank template | PASS | Format → `Od czystego` → organization scope opened the workbook builder. |
-| Manual schema authoring | PASS | Created `Budget` and `Milestones`; added text/list validation, currency/date columns, formats and starter values. |
-| Validate | PASS | Selecting list validation without values immediately changed the command to `Błędy: 1` and disabled Save; completing the list restored `Walidacja: OK`. |
-| Save draft | PASS | Save returned a success toast and opened the workbook-template use surface. |
-| Instantiate/use | PASS | `Build workbook` created an XLSX-backed workbook with both sheets and preserved starter values (`Operations`, `1 400 000`, `875 000`). Runtime reported `Model verified ✓ (0 notes)`. |
-| Reopen/edit/update | **FAIL → FIXED IN CODE, AWAITING DEPLOY** | Library `Edit` incorrectly routed a Sheet template to `/reports/builder?...&edit=true`. Fix `c6d564bb60` routes with the canonical template id to `PersistedTemplateBuilder`. |
-| Approve/version/deprecate/delete | BLOCKED BY REOPEN ROUTE | Lifecycle controls cannot be reached on the currently served build until the routing fix is deployed. |
+| Step                             | Result                                    | Runtime evidence                                                                                                                                                                      |
+| -------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create blank template            | PASS                                      | Format → `Od czystego` → organization scope opened the workbook builder.                                                                                                              |
+| Manual schema authoring          | PASS                                      | Created `Budget` and `Milestones`; added text/list validation, currency/date columns, formats and starter values.                                                                     |
+| Validate                         | PASS                                      | Selecting list validation without values immediately changed the command to `Błędy: 1` and disabled Save; completing the list restored `Walidacja: OK`.                               |
+| Save draft                       | PASS                                      | Save returned a success toast and opened the workbook-template use surface.                                                                                                           |
+| Instantiate/use                  | PASS                                      | `Build workbook` created an XLSX-backed workbook with both sheets and preserved starter values (`Operations`, `1 400 000`, `875 000`). Runtime reported `Model verified ✓ (0 notes)`. |
+| Reopen/edit/update               | **FAIL → FIXED IN CODE, AWAITING DEPLOY** | Library `Edit` incorrectly routed a Sheet template to `/reports/builder?...&edit=true`. Fix `c6d564bb60` routes with the canonical template id to `PersistedTemplateBuilder`.         |
+| Approve/version/deprecate/delete | BLOCKED BY REOPEN ROUTE                   | Lifecycle controls cannot be reached on the currently served build until the routing fix is deployed.                                                                                 |
 
 Additional evidence: the page badge reported `DEMO @97a42e810bc1`, not the deployment identifier `bf6d50e7` supplied for this acceptance run. The runtime-created template was also labelled `Legacy` in the central library even though its canonical workbook record and artifact-index id both existed. This label should be audited separately because it obscures the lifecycle authority visible to the user.
 
 The routing repair adds an explicit Sheet edit contract, URL deep link (`editWorkbookTemplateId=<canonical id>`), persisted full-screen builder overlay, save refresh and safe return to Template Library. Contract/unit/component suite: **28/28 passing**.
+
+## PowerPoint Template Architect lifecycle follow-up — 2026-08-07
+
+Signed-in DEMO walkthrough used `QA PPT Lifecycle 20260807 0018`, with AI refinement disabled and no Teresa interaction. The generated deck is `99934eb408d6469a918bb8cc300d19c9`.
+
+| Step                         | Result                                    | Runtime evidence                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create manual draft          | PASS                                      | Board Decision, Executive, Decide, English and Modern produced a six-slide deterministic draft.                                                                                     |
+| Structure CRUD               | PASS                                      | Added slide 7, renamed the cover, edited slide intent/content guidance/key message/data-needed/suggested-visual fields and saved.                                                   |
+| Style and masters            | PASS                                      | Selected Ocean, changed title/body fonts to Georgia/Arial and content master to `QA content master`.                                                                                |
+| Save, reload and reopen      | PASS                                      | Registry reopened the draft with seven slides; fonts, content master and `Investment decision cover` survived cold reload.                                                          |
+| Validate                     | PARTIAL                                   | Approval completed server validation, but the architect exposes no explicit preflight command, diagnostics list or success summary before publish.                                  |
+| Preview                      | PARTIAL                                   | Slide silhouettes and the generated deck prove structure; there is no faithful representative deck preview action inside the architect.                                             |
+| Variables                    | FAIL                                      | No typed variable catalog, required/default/sample values or unused-variable diagnostics exist in the PowerPoint architect. Slide data guidance is not a variable system.           |
+| Approve/publish              | PASS                                      | `Approve & publish` changed the registry record from Draft to Approved and locked editing. The central library showed the same record as Published.                                 |
+| Reopen/edit approved         | PASS                                      | Approved templates are immutable; `Clone as new draft` created `QA PPT Lifecycle 20260807 0018 (Copy)` with seven slides for the next editable version.                             |
+| Version/lineage              | PARTIAL                                   | Clone lineage exists and the use flow exposes the source template id, but the architect has no version list, comparison or restore UI.                                              |
+| Use template                 | PASS                                      | Central library `Use template` opened a fact-entry brief with explicit `Template lineage: b2f0e91c-f0f3-446c-b157-fb5b43509d03`.                                                    |
+| Generated deck lineage       | PASS                                      | Generation opened deck `99934eb408d6469a918bb8cc300d19c9`; seven template slides, template name, edited cover title and supplied investment facts were retained.                    |
+| Deprecate published template | **FAIL → FIXED IN CODE, AWAITING DEPLOY** | Runtime hid deprecation after approval even though the endpoint supports it. The architect now exposes `Deprecate published template` next to Clone for approved records.           |
+| Withdraw/delete draft        | PARTIAL                                   | The draft-only action and required-reason prompt opened. Final registry removal could not be read back after the browser-control session reset, so deletion is not claimed as PASS. |
+
+Exact current gaps: faithful in-architect preview, explicit validation diagnostics, typed variables, version compare/restore and separately modelled hard deletion versus lifecycle deprecation. No P0 blocked create→publish→use→generated-deck lineage; the missing published deprecation action was the only lifecycle P1 fixed in this pass.
