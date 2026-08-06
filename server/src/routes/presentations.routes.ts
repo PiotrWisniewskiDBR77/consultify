@@ -742,7 +742,30 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
 
 function toPublicDeckRow(row: any) {
   const full = normalizeDeckRow(row);
-  return Object.fromEntries(Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k)));
+  const publicRow = Object.fromEntries(
+    Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k))
+  ) as Record<string, any>;
+
+  // Give the public viewer the same canonical document used by the builder,
+  // rather than making it reconstruct a deck from a mixture of legacy row
+  // columns. Keep `deck_json` for backwards-compatible clients, but derive it
+  // from the exact same sanitized object so the two representations cannot
+  // drift. In particular, canonical deck documents carry tenant/author fields
+  // of their own; stripping only the database row leaked those values inside
+  // the JSON string.
+  const canonicalDeck = resolveDeckContentCoherence(row).document;
+  if (canonicalDeck) {
+    const {
+      organization_id: _organizationId,
+      created_by: _createdBy,
+      updated_by: _updatedBy,
+      ...publicDeck
+    } = canonicalDeck as any;
+    publicRow.deck = publicDeck;
+    publicRow.deck_json = JSON.stringify(publicDeck);
+  }
+
+  return publicRow;
 }
 
 function parseDeckPayload(row: any): any {

@@ -315,4 +315,26 @@ describe('presentationQualityGatesService', () => {
       expect.arrayContaining(['LOW_INFORMATION_SLIDES', 'LAYOUT_EVIDENCE_MISSING'])
     );
   });
+
+  it('reports explicit unresolved Data required labels as P2 rather than P0', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks')) return { id: 'deck-data-gap', presentation_mode: 'show' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'show',
+      cards: [{
+        intent: 'performance_overview', title: 'Economics',
+        key_message: 'Economics require one final input before approval.',
+        source_refs: [{ artifact_id: 'brief-1', confidence: 1 }],
+        blocks: [{ type: 'metric_strip', content: { metrics: [{ label: 'Payback', value: 'Data required' }] } }],
+      }],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-data-gap');
+    expect(report.gates).toContainEqual(expect.objectContaining({ id: 'qg-unresolved-data', priority: 'P2' }));
+    expect(report.gates).not.toContainEqual(expect.objectContaining({ id: 'qg-placeholder-content', priority: 'P0' }));
+  });
 });

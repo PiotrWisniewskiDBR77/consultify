@@ -51,7 +51,10 @@ export const SharedPresentationView: React.FC = () => {
         }
 
         const row = payload.data;
-        const deckJson = safeJsonParse<Deck | null>(row.deck_json, null);
+        // New share payloads expose the already-normalized canonical deck as
+        // `deck`. `deck_json` remains a compatibility fallback for links
+        // minted before that contract was introduced.
+        const deckJson = safeJsonParse<Deck | null>(row.deck ?? row.deck_json, null);
         const loadedDeck =
           deckJson && Array.isArray(deckJson.cards)
             ? {

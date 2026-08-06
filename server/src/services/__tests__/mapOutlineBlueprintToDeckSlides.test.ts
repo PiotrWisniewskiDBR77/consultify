@@ -135,4 +135,24 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
       new Set(slides.flatMap((slide) => slide.content.blocks.map((block) => block.type))).size
     ).toBeGreaterThanOrEqual(8);
   });
+
+  it('grounds metric values from the supplied brief and marks only absent data explicitly', () => {
+    const [slide] = mapOutlineBlueprintToDeckSlides([
+      {
+        intent: 'performance_overview',
+        title: 'Economics',
+        keyMessage: 'Investment: EUR 1.4m; NPV: EUR 3.2m',
+        contentHints: ['Annual benefit: EUR 900k'],
+        dataNeeded: ['Investment', 'Annual benefit', 'Payback'],
+      },
+    ]);
+    const metrics = slide.content.blocks.find((block) => block.type === 'metric_strip')?.content
+      .metrics;
+    expect(metrics).toEqual([
+      expect.objectContaining({ label: 'Investment', value: 'EUR 1.4m' }),
+      expect.objectContaining({ label: 'Annual benefit', value: 'EUR 900k' }),
+      expect.objectContaining({ label: 'Payback', value: 'Data required' }),
+    ]);
+    expect(JSON.stringify(slide)).not.toContain('Validate');
+  });
 });

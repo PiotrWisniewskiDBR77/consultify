@@ -564,6 +564,19 @@ function cleanStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
 }
 
+function groundedValueForLabel(label: string, sourceLines: string[]): string {
+  const labelTerms = label.toLowerCase().split(/\W+/).filter((term) => term.length > 2);
+  const grounded = sourceLines.find((line) => {
+    const lower = line.toLowerCase();
+    return labelTerms.some((term) => lower.includes(term)) && /(?:\d|€|\$|£|%)/.test(line);
+  });
+  if (!grounded) return 'Data required';
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const labelledValue = grounded.match(new RegExp(`${escapedLabel}\\s*[:—–-]\\s*([^;]+)`, 'i'))?.[1];
+  const concise = labelledValue?.trim() || grounded.trim();
+  return concise.length > 48 ? `${concise.slice(0, 45).trim()}…` : concise;
+}
+
 /**
  * Materialise an approved template into useful, audience-facing slide content.
  * The template stores instructions rather than source facts, so these blocks
@@ -577,6 +590,7 @@ function blocksForTemplateIntent(item: Record<string, unknown>, title: string, i
   const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
   const headline = keyMessage || hints[0] || title;
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
+  const sourceLines = [keyMessage, ...hints].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
   const paragraph = { type: 'paragraph', content: { text: headline } };
 
@@ -596,7 +610,10 @@ function blocksForTemplateIntent(item: Record<string, unknown>, title: string, i
               : ['Recommendation', 'Value', 'Conditions']
             )
               .slice(0, 3)
-              .map((label) => ({ title: label, description: `Evidence required: ${label}` })),
+              .map((label) => ({
+                title: label,
+                description: groundedValueForLabel(label, sourceLines),
+              })),
           },
         },
       ];
@@ -610,7 +627,11 @@ function blocksForTemplateIntent(item: Record<string, unknown>, title: string, i
             metrics: (evidenceLabels.length
               ? evidenceLabels
               : ['Investment', 'Run-rate benefit', 'Payback', 'NPV']
-            ).map((label) => ({ label, value: 'Validate', trend: 'stable' })),
+            ).map((label) => ({
+              label,
+              value: groundedValueForLabel(label, sourceLines),
+              trend: 'stable',
+            })),
           },
         },
       ];

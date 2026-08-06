@@ -96,6 +96,7 @@ const PLACEHOLDER_TOKENS = [
   'placeholder',
   '[object object]',
 ];
+const UNRESOLVED_DATA_TOKENS = ['data required', 'evidence required'];
 
 const ENCODING_ARTEFACTS = ['&amp;', '&nbsp;', 'â€™', 'â€“', '�'];
 
@@ -462,6 +463,7 @@ export async function checkDeckQualityGates(
 
   // Gate 6b: Placeholder / encoding hard gate (P0)
   const placeholderCards: number[] = [];
+  const unresolvedDataCards: number[] = [];
   const encodingCards: number[] = [];
   const thesisMissingCards: number[] = [];
   cards.forEach((card, index) => {
@@ -477,6 +479,7 @@ export async function checkDeckQualityGates(
       .filter(Boolean)
       .join(' ');
     if (textContainsAny(aggregate, PLACEHOLDER_TOKENS)) placeholderCards.push(index);
+    if (textContainsAny(aggregate, UNRESOLVED_DATA_TOKENS)) unresolvedDataCards.push(index);
     if (textContainsAny(aggregate, ENCODING_ARTEFACTS)) encodingCards.push(index);
     if (DECISION_INTENTS.has(String(card.intent || ''))) {
       const thesis = String(card.key_message || card.title || '').trim();
@@ -491,6 +494,17 @@ export async function checkDeckQualityGates(
       priority: 'P0',
       message: `Placeholder content detected on ${placeholderCards.length} decision-critical slide(s).`,
       cardIndex: placeholderCards[0],
+      category: 'content',
+    });
+  }
+  if (unresolvedDataCards.length > 0) {
+    pushGate({
+      id: 'qg-unresolved-data',
+      gateType: 'PLACEHOLDER_CONTENT',
+      severity: 'warning',
+      priority: 'P2',
+      message: `Data required on ${unresolvedDataCards.length} slide(s); replace explicit gaps with grounded evidence before final delivery.`,
+      cardIndex: unresolvedDataCards[0],
       category: 'content',
     });
   }
