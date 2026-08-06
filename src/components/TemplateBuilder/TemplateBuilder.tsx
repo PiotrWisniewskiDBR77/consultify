@@ -95,22 +95,22 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   // ── Mutacje listy ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(() => {
-    setDraft((d) => {
-      if (d.type === 'doc') {
-        const el = newDocSection();
-        setSelectedId(el.id);
-        return { ...d, doc: [...d.doc, el] };
-      }
-      if (d.type === 'deck') {
-        const el = newDeckSlide();
-        setSelectedId(el.id);
-        return { ...d, deck: [...d.deck, el] };
-      }
-      const el = newWorkbookSheet(`Arkusz ${d.table.length + 1}`);
-      setSelectedId(el.id);
-      return { ...d, table: [...d.table, el] };
-    });
-  }, []);
+    if (draft.type === 'doc') {
+      const element = newDocSection();
+      setDraft((current) => ({ ...current, doc: [...current.doc, element] }));
+      setSelectedId(element.id);
+      return;
+    }
+    if (draft.type === 'deck') {
+      const element = newDeckSlide();
+      setDraft((current) => ({ ...current, deck: [...current.deck, element] }));
+      setSelectedId(element.id);
+      return;
+    }
+    const element = newWorkbookSheet(`Arkusz ${draft.table.length + 1}`);
+    setDraft((current) => ({ ...current, table: [...current.table, element] }));
+    setSelectedId(element.id);
+  }, [draft.type, draft.table.length]);
 
   const handleMove = useCallback((id: string, dir: -1 | 1) => {
     setDraft((d) => {
