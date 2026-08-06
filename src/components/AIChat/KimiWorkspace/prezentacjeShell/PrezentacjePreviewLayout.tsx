@@ -105,7 +105,7 @@ export const PrezentacjePreviewLayout: React.FC<PrezentacjePreviewLayoutProps> =
       ) : (
         <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
           <div className="p-8 text-center text-c-text-secondary">
-            <Presentation size={48} className="mx-auto mb-3 opacity-50" />
+            <Presentation size={24} className="mx-auto mb-3 opacity-50" aria-hidden />
             <p className="text-sm font-medium">{t('kimi.deckPreview', 'Presentation preview')}</p>
             {preview.deckId && onOpenBuilder && (
               <button
