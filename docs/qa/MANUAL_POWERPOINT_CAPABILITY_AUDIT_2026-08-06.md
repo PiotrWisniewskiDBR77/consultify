@@ -97,10 +97,13 @@ PASS means the action was performed in the deployed browser UI and read back. PA
 ## Exact residuals
 
 1. **P2 — slide density:** slide 10 has approximately 92 words; BRIEFING recommends at most 60. This does not block export or share.
-2. **PASS — exact production PPTX artifact:** 196 KB file found and independently validated as a 10-slide, structurally valid PPTX despite the missing browser download event.
-3. **PASS — PDF pagination and artifact proof:** fresh post-fix production PDF is exactly 10 pages for 10 slides and passes parser/render verification.
-4. **PARTIAL — image workflow runtime breadth:** add/replace/alt controls are implemented, but a real organization image was not selected in the final acceptance deck.
-5. **PARTIAL — destructive version restore:** checkpoint creation/listing passes; a final retained-deck restore was not completed in browser runtime.
-6. **UNPROVEN — concurrent conflict and forced save-failure recovery:** no deterministic production fault was injected.
+2. **DEPLOYMENT RETEST — slide layout toolbar:** the integration gap is fixed in `afcaf7ebb7`; runtime must still select a layout, reload and verify persistence after that commit is deployed.
+3. **MODEL LIMIT — freeform canvas:** the canonical block model remains region + order, not arbitrary x/y. Width, minimum height, horizontal placement, region and layer order now work, but mouse-drag resize handles, rotation, pixel positioning, multi-select, grouping, and align/distribute across a selected set are not implemented.
+4. **MODEL LIMIT — named master selection:** users can select renderer-supported slide layouts; a per-slide picker for arbitrary named masters from an imported/custom template is not exposed. PPTX export still resolves the master through layout/custom-template mapping.
+5. **PARTIAL — typography breadth:** family, size, color, weight, italic, underline, alignment, line height and letter spacing are editable. There is no organization-font browser, text shadow, per-run rich text, paragraph before/after spacing or indentation controls.
+6. **PARTIAL — image workflow runtime breadth:** add/replace/URL/alt controls are implemented, but a real organization image was not selected in the final acceptance deck; crop, focal point and masking controls are not exposed.
+7. **PARTIAL — PDF visual fidelity:** page count, text, parser and render correctness pass. The PDF route intentionally produces an A4 textual briefing, not a visual 16:9 rendering of the presentation; visual parity with PPTX/public viewer remains a separate product enhancement.
+8. **PARTIAL — destructive version restore:** checkpoint creation/listing passes; a final retained-deck restore was not completed in browser runtime.
+9. **UNPROVEN — collaboration failure paths:** concurrent conflict/rebase, forced save failure and offline recovery were not deterministically triggered in production.
 
 There are no remaining P0 or P1 manual-authoring failures in the tested PowerPoint workflow.
