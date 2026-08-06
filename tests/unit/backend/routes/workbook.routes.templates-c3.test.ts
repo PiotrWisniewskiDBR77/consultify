@@ -15,6 +15,8 @@ import request from 'supertest';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const mockUser = { id: 'user-1', role: 'ADMIN', organizationId: 'org-1' };
+const queryRunMock = vi.fn().mockResolvedValue({ changes: 1 });
+const queryOneMock = vi.fn().mockResolvedValue(null);
 
 vi.mock('../../../../server/src/middleware/auth.middleware.js', () => ({
   verifyToken: (req: any, _res: any, next: () => void) => {
@@ -33,9 +35,12 @@ vi.mock('../../../../server/src/middleware/rateLimiting.middleware.js', () => ({
 vi.mock('../../../../server/src/middleware/rbac.middleware.js', () => ({
   requireOrgAccess: () => (_req: any, _res: any, next: () => void) => next(),
 }));
+vi.mock('../../../../server/src/services/documentStudio/documentOrgContextSourcePack.js', () => ({
+  buildOrgContextSourcePack: vi.fn().mockResolvedValue(null),
+}));
 vi.mock('../../../../server/src/utils/queryHelpers.js', () => ({
-  queryRun: vi.fn().mockResolvedValue(undefined),
-  queryOne: vi.fn().mockResolvedValue(null),
+  queryRun: (...args: unknown[]) => queryRunMock(...args),
+  queryOne: (...args: unknown[]) => queryOneMock(...args),
   queryAll: vi.fn().mockResolvedValue([]),
 }));
 
@@ -46,19 +51,26 @@ vi.mock('../../../../server/src/services/workbook/WorkbookGeneratorService.js', 
     generateFromTemplate: (...args: unknown[]) => generateFromTemplateMock(...args),
   },
 }));
+vi.mock('../../../../server/src/services/workbook/WorkbookBuilder.js', () => ({
+  buildWorkbookBuffer: vi.fn().mockResolvedValue(Buffer.from('custom-xlsx-bytes')),
+  validateWorkbookSchema: vi.fn().mockReturnValue({ valid: true, errors: [] }),
+  classifyBuildError: vi.fn((error: Error) => ({ code: 'export_failed', message: error.message })),
+}));
 
-const registerArtifactOriginMock = vi
-  .fn()
-  .mockResolvedValue({ artifactId: 'art-1' });
+const registerArtifactOriginMock = vi.fn().mockResolvedValue({ artifactId: 'art-1' });
 vi.mock('../../../../server/src/services/v8/artifactRegistryService.js', () => ({
   registerArtifactOrigin: (...a: unknown[]) => registerArtifactOriginMock(...a),
   adoptRunArtifactForWorkbook: vi.fn().mockResolvedValue(null),
 }));
+vi.mock('../../../../server/src/services/lineage/artifactLineageService.js', () => ({
+  deriveCreatedEventIdempotencyKey: vi.fn(() => 'created-key'),
+  recordLineageEventSafe: vi.fn().mockResolvedValue(undefined),
+  recordLineageEventTracked: vi.fn().mockResolvedValue({ status: 'recorded' }),
+}));
 
 async function buildApp() {
-  const { default: workbookRouter } = await import(
-    '../../../../server/src/routes/workbook.routes.js'
-  );
+  const { default: workbookRouter } =
+    await import('../../../../server/src/routes/workbook.routes.js');
   const app = express();
   app.use(express.json());
   app.use('/workbook', workbookRouter);
@@ -69,6 +81,8 @@ describe('workbook.routes — C3 parametric templates', () => {
   beforeEach(() => {
     generateFromTemplateMock.mockReset();
     registerArtifactOriginMock.mockClear();
+    queryRunMock.mockReset().mockResolvedValue({ changes: 1 });
+    queryOneMock.mockReset().mockResolvedValue(null);
   });
 
   it('GET /workbook/templates lists the registry with param descriptors', async () => {
@@ -145,5 +159,114 @@ describe('workbook.routes — C3 parametric templates', () => {
 
     expect(res.status).toBe(404);
     expect(generateFromTemplateMock).not.toHaveBeenCalled();
+  });
+
+  it('builds an org-owned custom template snapshot and preserves workbook features', async () => {
+    queryOneMock.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.includes('FROM tp_base_templates')) {
+        expect(params).toEqual(['custom-portfolio', 'org-1']);
+        return {
+          id: 'custom-portfolio',
+          name: 'Portfolio Transformation Control',
+          description: 'Custom portfolio template',
+          schema_snapshot: {
+            title: 'Portfolio Transformation Control',
+            sheets: [
+              {
+                name: 'Inputs',
+                isAssumptions: true,
+                columns: [
+                  { key: 'A', header: 'Metric', type: 'text' },
+                  { key: 'B', header: 'Value', type: 'percent', numberFormat: '0.0%' },
+                ],
+                rows: [
+                  {
+                    cells: {
+                      A: { value: 'Risk threshold' },
+                      B: {
+                        value: 0.5,
+                        validation: { type: 'decimal', min: 0, max: 1 },
+                        style: { bgColor: '#FFF2CC', numberFormat: '0.0%' },
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                name: 'Executive Summary',
+                columns: [
+                  { key: 'A', header: 'KPI' },
+                  { key: 'B', header: 'Value', numberFormat: '0.0%' },
+                ],
+                rows: [{ cells: { A: { value: 'Threshold' }, B: { formula: "'Inputs'!B2" } } }],
+                conditionalFormatting: [
+                  { ref: 'B2:B2', rules: [{ type: 'dataBar', color: '#4472C4' }] },
+                ],
+              },
+            ],
+          },
+        };
+      }
+      return null;
+    });
+
+    const app = await buildApp();
+    const res = await request(app)
+      .post('/workbook/templates/custom-portfolio/build')
+      .send({ params: { title: 'Portfolio Transformation Control — Run 2' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe('Portfolio Transformation Control — Run 2');
+    expect(res.body.sheets.map((sheet: any) => sheet.name)).toEqual([
+      'Inputs',
+      'Executive Summary',
+    ]);
+    expect(res.body.downloadUrl).toMatch(/^\/api\/workbook\/.+\/download$/);
+    expect(generateFromTemplateMock).not.toHaveBeenCalled();
+    const insert = queryRunMock.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO generated_workbooks')
+    );
+    expect(insert).toBeTruthy();
+    const persistedSchema = JSON.parse(String(insert![1][5]));
+    expect(persistedSchema.sheets[0].rows[0].cells.B.validation).toMatchObject({
+      type: 'decimal',
+      min: 0,
+      max: 1,
+    });
+    expect(persistedSchema.sheets[1].rows[0].cells.B.formula).toBe("'Inputs'!B2");
+    expect(persistedSchema.sheets[1].conditionalFormatting[0].rules[0].type).toBe('dataBar');
+
+    const workbookId = String(res.body.id);
+    const reopen = await request(app).get(`/workbook/${workbookId}/schema`);
+    expect(reopen.status).toBe(200);
+    expect(reopen.body.sheets.map((sheet: any) => sheet.name)).toEqual([
+      'Inputs',
+      'Executive Summary',
+    ]);
+    expect(reopen.body.sheets[1].rows[0].cells.B.formula).toBe("'Inputs'!B2");
+  });
+
+  it('does not return success or register an artifact when durable persistence fails', async () => {
+    generateFromTemplateMock.mockResolvedValue({
+      id: 'wb-no-row',
+      buffer: Buffer.from('xlsx-bytes'),
+      fileName: 'failed.xlsx',
+      schema: { title: 'Failed', sheets: [{ name: 'Sheet1', columns: [], rows: [] }] },
+      validationErrors: [],
+      qualityScore: null,
+      pipelineLog: [],
+      generatedAt: new Date().toISOString(),
+    });
+    queryRunMock.mockImplementation(async (sql: string) =>
+      sql.includes('INSERT INTO generated_workbooks') ? { changes: 0 } : { changes: 1 }
+    );
+
+    const app = await buildApp();
+    const res = await request(app)
+      .post('/workbook/templates/threeScenarioPnL/build')
+      .send({ params: {} });
+
+    expect(res.status).toBe(500);
+    expect(registerArtifactOriginMock).not.toHaveBeenCalled();
   });
 });

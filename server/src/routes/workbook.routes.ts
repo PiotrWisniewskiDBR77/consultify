@@ -31,10 +31,16 @@ import {
 } from '../services/lineage/artifactLineageService.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import {
+  CustomWorkbookTemplateInvalidError,
+  materializeCustomWorkbookSchema,
+  resolveCustomWorkbookTemplate,
+} from '../services/workbook/customWorkbookTemplateService.js';
+import {
   buildWorkbookCsv,
   WorkbookCsvExportError,
 } from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
+import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
 import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -472,9 +478,9 @@ async function ensureWorkbookSchema() {
  * Shared tail for any produced workbook (free-form `/generate` OR parametric
  * `/templates/:id/build`): cache the buffer for download, persist metadata, and
  * register/adopt the Outputs Library artifact — then return the JSON response
- * payload. Factored out so the template path reuses the EXACT same persistence,
- * caching and artifact-registration code as `/generate` (no duplication, one
- * card per workbook). Fail-soft on persist/registration (logs, never throws).
+ * payload. Persistence is fail-hard: no cache, registry entry or success response
+ * may exist unless the canonical generated_workbooks row was durably inserted.
+ * Artifact registration remains best-effort after that durable boundary.
  */
 async function finalizeGeneratedWorkbook(params: {
   result: {
@@ -506,51 +512,49 @@ async function finalizeGeneratedWorkbook(params: {
 }): Promise<Record<string, unknown>> {
   const { result, user } = params;
 
-  // Cache the buffer for download
+  // Persist metadata
+  const persistResult = await queryHelpers.queryRun(
+    `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      result.id,
+      user.organizationId,
+      result.schema.title,
+      result.schema.description || null,
+      params.promptText,
+      JSON.stringify(result.schema),
+      result.schema.sheets.length,
+      result.fileName,
+      result.buffer.length,
+      result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
+      result.qualityScore,
+      JSON.stringify(result.pipelineLog),
+      JSON.stringify(
+        params.actionContract && typeof params.actionContract === 'object'
+          ? params.actionContract
+          : {}
+      ),
+      JSON.stringify(
+        params.sourcePack && typeof params.sourcePack === 'object' ? params.sourcePack : {}
+      ),
+      JSON.stringify(Array.isArray(params.evidenceRefs) ? params.evidenceRefs : []),
+      user.id,
+      result.generatedAt,
+    ]
+  );
+  if (!persistResult || persistResult.changes !== 1) {
+    throw new Error(`Workbook persistence did not insert exactly one row (${result.id})`);
+  }
+
+  // Cache only after durable persistence succeeds.
   workbookCache.set(result.id, {
     buffer: result.buffer,
     fileName: result.fileName,
     schema: result.schema,
     createdAt: result.generatedAt,
-    // MAT-010 tenant scoping — see `getOwnedCachedWorkbook`.
     organizationId: user.organizationId,
   });
   pruneCache();
-
-  // Persist metadata
-  try {
-    await queryHelpers.queryRun(
-      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        result.id,
-        user.organizationId,
-        result.schema.title,
-        result.schema.description || null,
-        params.promptText,
-        JSON.stringify(result.schema),
-        result.schema.sheets.length,
-        result.fileName,
-        result.buffer.length,
-        result.validationErrors.length > 0 ? JSON.stringify(result.validationErrors) : null,
-        result.qualityScore,
-        JSON.stringify(result.pipelineLog),
-        JSON.stringify(
-          params.actionContract && typeof params.actionContract === 'object'
-            ? params.actionContract
-            : {}
-        ),
-        JSON.stringify(
-          params.sourcePack && typeof params.sourcePack === 'object' ? params.sourcePack : {}
-        ),
-        JSON.stringify(Array.isArray(params.evidenceRefs) ? params.evidenceRefs : []),
-        user.id,
-        result.generatedAt,
-      ]
-    );
-  } catch (err) {
-    logger.warn('[WorkbookRoutes] Failed to persist workbook metadata:', err);
-  }
 
   // Register in V8 artifact registry (P19 Outputs Library integration)
   let artifactId: string | null = null;
@@ -872,18 +876,36 @@ router.post(
     const { getWorkbookTemplate, buildTemplateParamsSchema } =
       await import('../services/workbook/templates/index.js');
     const entry = getWorkbookTemplate(id);
+    let customTemplate = null;
     if (!entry) {
-      res.status(404).json({
-        error: `Unknown workbook template: "${id}"`,
-        classified: createP23Error('validation_failed', `No registered template with id "${id}"`),
-      });
-      return;
+      try {
+        customTemplate = await resolveCustomWorkbookTemplate(id, user.organizationId);
+      } catch (err) {
+        if (err instanceof CustomWorkbookTemplateInvalidError) {
+          res.status(422).json({
+            error: err.message,
+            classified: createP23Error('validation_failed', err.message),
+          });
+          return;
+        }
+        throw err;
+      }
+      if (!customTemplate) {
+        res.status(404).json({
+          error: `Unknown workbook template: "${id}"`,
+          classified: createP23Error('validation_failed', `No registered template with id "${id}"`),
+        });
+        return;
+      }
     }
 
     // Validate the flat param map against the template's descriptor-derived zod
     // schema (unknown keys stripped, out-of-range/typed values rejected at the edge).
-    const schemaZod = buildTemplateParamsSchema(entry);
-    const parsed = schemaZod.safeParse(rawParams && typeof rawParams === 'object' ? rawParams : {});
+    const rawParamMap = rawParams && typeof rawParams === 'object' ? rawParams : {};
+    const schemaZod = entry ? buildTemplateParamsSchema(entry) : null;
+    const parsed = schemaZod
+      ? schemaZod.safeParse(rawParamMap)
+      : { success: true as const, data: rawParamMap as Record<string, unknown> };
     if (!parsed.success) {
       res.status(400).json({
         error: 'Invalid template parameters',
@@ -909,11 +931,62 @@ router.post(
 
     let result;
     try {
-      result = await WorkbookGeneratorService.generateFromTemplate({
-        templateId: id,
-        flatParams: parsed.data as Record<string, unknown>,
-        organizationName: orgContextForTemplate?.organizationName,
-      });
+      if (entry) {
+        result = await WorkbookGeneratorService.generateFromTemplate({
+          templateId: id,
+          flatParams: parsed.data as Record<string, unknown>,
+          organizationName: orgContextForTemplate?.organizationName,
+        });
+      } else {
+        const schema = materializeCustomWorkbookSchema(
+          customTemplate!,
+          parsed.data as Record<string, unknown>
+        );
+        const { buildWorkbookBuffer, validateWorkbookSchema } =
+          await import('../services/workbook/WorkbookBuilder.js');
+        const structural = validateWorkbookSchema(schema);
+        if (!structural.valid) {
+          res.status(422).json({
+            error: 'Custom workbook template failed structural validation',
+            issues: structural.errors,
+          });
+          return;
+        }
+        const qualityReport = critiqueWorkbook(schema);
+        const buffer = await buildWorkbookBuffer(schema, {
+          meta: {
+            organizationName: orgContextForTemplate?.organizationName,
+            source: 'Consultify — custom workbook template',
+            generatedAt: new Date().toISOString().slice(0, 10),
+          },
+        });
+        result = {
+          id: uuidv4(),
+          schema,
+          buffer,
+          fileName: `${
+            schema.title
+              .replace(/[^a-zA-Z0-9_\- ]/g, '')
+              .trim()
+              .replace(/\s+/g, '_') || 'Workbook'
+          }.xlsx`,
+          validationErrors: [],
+          classifiedErrors: qualityReport.issues.map((issue) =>
+            createP23Error(issue.canonCode, `${issue.code} [${issue.sheet}] ${issue.message}`)
+          ),
+          qualityScore: null,
+          qualityReport,
+          pipelineLog: [
+            {
+              phase: 'custom_template_resolve',
+              status: qualityReport.passed ? 'ok' : 'warning',
+              durationMs: 0,
+              detail: `Built from organization template "${id}".`,
+            },
+          ],
+          generatedAt: new Date().toISOString(),
+        };
+      }
     } catch (err) {
       logger.error('[WorkbookRoutes] Template build failed:', err);
       res.status(500).json({
