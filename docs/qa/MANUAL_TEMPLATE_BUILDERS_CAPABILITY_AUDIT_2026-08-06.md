@@ -121,6 +121,30 @@ Additional evidence: the page badge reported `DEMO @97a42e810bc1`, not the deplo
 
 The routing repair adds an explicit Sheet edit contract, URL deep link (`editWorkbookTemplateId=<canonical id>`), persisted full-screen builder overlay, save refresh and safe return to Template Library. Contract/unit/component suite: **28/28 passing**.
 
+## Excel lifecycle final acceptance — 2026-08-07
+
+Final signed-in runtime on the deployment containing the org-owned lifecycle facade completed the entire manual flow without Teresa:
+
+| Acceptance step | Result | Evidence |
+| --- | --- | --- |
+| Library Edit → persisted builder | PASS | Sheet `Edit` opened `editWorkbookTemplateId=<canonical id>` and restored `Budget` + `Milestones`. |
+| Update + reopen | PASS | Added `Owner` to `Milestones`; full reload restored all three columns. |
+| Validate | PASS | Command row showed `Walidacja: OK`; incomplete list validation had already been proven to block save. |
+| Approve/publish | PASS | Transition completed for the organization owner with no super-admin error; command row changed to `1.0.0 · approved · 1 zmian`. |
+| Library lifecycle and lineage | PASS | Row changed to `Approved`; the false `Legacy` badge disappeared because explicit canonical lineage was synchronized. |
+| Instantiate/use | PASS with route repair | Canonical workbook-template route built both sheets and reported `Model verified ✓ (0 notes)`. The library helper still used obsolete `/reports?...`, fixed in `17d85314bc` to `/presentations?tab=workbook_templates...`. |
+| Deprecate | PASS | Command row changed to `1.0.0 · deprecated · 2 zmian`; library row read back as `Deprecated`. |
+| Theme/scope persistence | PASS | Separate draft reopened with `Navy Executive` and `Organizacja` preserved from `schema_snapshot`. |
+| Canonical badge for new template | PASS | Separate draft appeared without `Legacy`. |
+| Delete draft | PASS | Confirmation was accepted; subsequent clean library load returned zero matching rows, proving canonical row and artifact envelope cleanup. |
+
+Two final honesty fixes followed the acceptance pass:
+
+- `17d85314bc` routes Sheet `Use template` to the live Materials/Workbook Templates surface.
+- Deprecated templates no longer offer the invalid `Zatwierdź i opublikuj` transition.
+
+Excel manual template lifecycle result after these fixes: **PASS** for create → author → validate → save → reopen/update → approve → version/status/history → use → deprecate and create → delete draft. Remaining cross-tool improvement areas are faithful pre-publish preview, typed shared variables and undo/redo; they do not block the verified workbook lifecycle.
+
 ## Word runtime lifecycle follow-up — 2026-08-07
 
 Signed-in DEMO test used the disposable organization template `QA Word Manual Lifecycle 20260807 0030`, without Teresa or AI refinement.
