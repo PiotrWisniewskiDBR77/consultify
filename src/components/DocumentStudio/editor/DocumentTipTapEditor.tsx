@@ -30,7 +30,7 @@
 
 import type { Editor } from '@tiptap/react';
 import { EditorContent, useEditor } from '@tiptap/react';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 import {
@@ -296,19 +296,37 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
 
   // Apply the visual collapse after any external setContent synchronization,
   // because setContent recreates the ProseMirror child DOM.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!editor?.view?.dom) return;
-    let collapsed = false;
-    for (const child of Array.from(editor.view.dom.children)) {
-      const element = child as HTMLElement;
-      if (element.hasAttribute('data-doc-section')) {
-        collapsed = Boolean(collapsedSectionIds?.has(element.dataset.sectionId ?? ''));
-        element.setAttribute('aria-expanded', String(!collapsed));
-        element.hidden = false;
-      } else {
-        element.hidden = collapsed;
+    const applyCollapsedSections = () => {
+      let collapsed = false;
+      for (const child of Array.from(editor.view.dom.children)) {
+        const element = child as HTMLElement;
+        if (element.hasAttribute('data-doc-section')) {
+          collapsed = Boolean(collapsedSectionIds?.has(element.dataset.sectionId ?? ''));
+          element.setAttribute('aria-expanded', String(!collapsed));
+          element.hidden = false;
+          element.style.removeProperty('display');
+        } else {
+          element.hidden = collapsed;
+          // Keep a deterministic fallback for app/theme styles that override
+          // the browser's native `[hidden] { display: none }` rule.
+          if (collapsed) element.style.setProperty('display', 'none');
+          else element.style.removeProperty('display');
+        }
       }
-    }
+    };
+
+    applyCollapsedSections();
+    // ProseMirror can recreate child DOM during a transaction after React's
+    // layout effects. Reapply on every transaction so collapse survives
+    // setContent, normalization and local editing alike.
+    editor.on('transaction', applyCollapsedSections);
+    const frame = window.requestAnimationFrame(applyCollapsedSections);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      editor.off('transaction', applyCollapsedSections);
+    };
   }, [collapsedSectionIds, editor, schema]);
 
   useEffect(() => {
