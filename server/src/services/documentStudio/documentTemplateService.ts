@@ -219,16 +219,50 @@ function deriveBlueprintFromDocumentType(
     density,
   };
   const outline = planDocumentOutline(probeIntake);
-  return outline.sections.map((section) => ({
-    title: section.title,
-    level: section.level,
-    purpose: section.purpose,
-    required:
-      section.title.toLowerCase().includes('executive summary') ||
-      section.title.toLowerCase() === 'next steps' ||
-      section.title.toLowerCase() === 'recommendations',
-    expectedLengthHint: section.expectedLengthHint,
-  }));
+  return outline.sections.map((section) => {
+    const normalized = section.title.toLowerCase();
+    const premiumBusinessCase =
+      documentType === 'business_case'
+        ? normalized.includes('executive summary')
+          ? {
+              formattingStyle: 'executive_kpi_strip_with_recommendation_callout',
+              contentHints: ['Lead with the investment decision', 'Show value, cost and timing'],
+            }
+          : normalized.includes('scenario')
+            ? {
+                formattingStyle: 'scenario_comparison_table_with_assumptions',
+                contentHints: ['Compare investment, value and delivery risk by scenario'],
+              }
+            : normalized.includes('risk')
+              ? { formattingStyle: 'risk_table_with_owner_and_mitigation' }
+              : normalized.includes('30/60/90')
+                ? { formattingStyle: 'thirty_sixty_ninety_day_roadmap' }
+                : normalized.includes('recommendation')
+                  ? { formattingStyle: 'decision_callout_with_conditions' }
+                  : {}
+        : {};
+    return {
+      title: section.title,
+      level: section.level,
+      purpose: section.purpose,
+      required:
+        section.title.toLowerCase().includes('executive summary') ||
+        section.title.toLowerCase() === 'next steps' ||
+        section.title.toLowerCase() === 'recommendations',
+      expectedLengthHint: section.expectedLengthHint,
+      ...premiumBusinessCase,
+    };
+  });
+}
+
+function validateBusinessCaseBlueprint(sections: TemplateSectionBlueprint[]): void {
+  const titles = sections.map((section) => section.title.toLowerCase()).join(' | ');
+  if (!/(methodology|approach|scope)/i.test(titles)) {
+    throw new Error('business_case_scope_or_approach_required');
+  }
+  if (!/(assumption|scenario)/i.test(titles)) {
+    throw new Error('business_case_assumptions_or_scenarios_required');
+  }
 }
 
 function defaultLanguageStyleFor(category: TemplateCategory): DocumentLanguageStyle {
@@ -832,6 +866,7 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
   }
 
   const sectionBlueprint = params.sections.map(sanitizeAuthoredSection);
+  if (template.documentType === 'business_case') validateBusinessCaseBlueprint(sectionBlueprint);
   const now = nowIso();
   // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` leaves the
   // existing formattingSchema untouched; `null`/`''` clears the pattern.

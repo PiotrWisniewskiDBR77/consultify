@@ -35,6 +35,34 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
     __resetTemplateRegistryForTests();
   });
 
+  it('rejects a custom business-case blueprint that omits QA-required semantics', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Investment decision', documentType: 'business_case' },
+    });
+    expect(() =>
+      reviseTemplateStructure({
+        templateId: template.templateId,
+        organizationId: 'org-A',
+        userId: 'user-1',
+        sections: [section('Executive Summary'), section('Economics'), section('Recommendation')],
+      })
+    ).toThrow('business_case_scope_or_approach_required');
+    expect(() =>
+      reviseTemplateStructure({
+        templateId: template.templateId,
+        organizationId: 'org-A',
+        userId: 'user-1',
+        sections: [
+          section('Executive Summary'),
+          section('Scope and Approach'),
+          section('Recommendation'),
+        ],
+      })
+    ).toThrow('business_case_assumptions_or_scenarios_required');
+  });
+
   it('accepts add / remove / reorder / rename on a draft and audits it', () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

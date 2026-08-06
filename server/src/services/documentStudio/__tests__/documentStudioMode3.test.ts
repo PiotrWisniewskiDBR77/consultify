@@ -33,6 +33,7 @@ import {
   updateDocumentManualContent,
 } from '../documentStudioService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
+import { runDocumentQa } from '../documentQaService.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 import {
   __resetTemplateRegistryForTests,
@@ -97,8 +98,19 @@ describe('Document Studio Mode 3 (template-driven)', () => {
         purpose: 'Decision',
       },
     });
-    const sections = Array.from({ length: 9 }, (_, index) => ({
-      title: `Governed section ${index + 1}`,
+    const governedTitles = [
+      'Executive Summary',
+      'Problem Statement',
+      'Scope and Approach',
+      'Proposed Initiative',
+      'Scenarios and Assumptions',
+      'Benefits and KPIs',
+      'Risks',
+      '30/60/90 Implementation Roadmap',
+      'Recommendation',
+    ];
+    const sections = governedTitles.map((title, index) => ({
+      title,
       level: 1 as const,
       purpose: `Decision guidance ${index + 1}`,
       contentHints: [`Explain evidence ${index + 1}`],
@@ -160,6 +172,64 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     const zip = await JSZip.loadAsync(docx);
     const documentXml = await zip.file('word/document.xml')!.async('string');
     for (const section of sections) expect(documentXml).toContain(section.title);
+  });
+
+  it('materializes premium business-case blocks, passes blocking QA and renders DOCX structure', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Premium business case',
+        documentType: 'business_case',
+        purpose: 'Board investment decision',
+        language: 'en',
+      },
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      templateId: approved.templateId,
+      intake: {
+        ...baseIntake,
+        title: 'Nova Unified Commerce',
+        description:
+          'Approve Scenario B. Scenario A costs EUR 0.35m with limited benefits. Scenario B costs EUR 1.4m and is recommended. Scenario C costs EUR 2.2m with excessive risk. Current conversion is 2.1%, cancellation is 8.4%, inventory accuracy is 91%; targets are 3.0%, below 4%, and above 97%. Payback is 22-month payback. Risks are ERP integration, data quality and frontline adoption. Use an integration spike, six-week data cleansing sprint and store champion network. CIO owns delivery and COO owns adoption.',
+      },
+      sourceRefs: [
+        { sourceType: 'brief', sourceId: 'nova-board-brief', sourceTitle: 'Nova board brief' },
+      ],
+    });
+    expect(result.schema.sections).toHaveLength(9);
+    expect(result.schema.sections.map((section) => section.title)).toEqual(
+      expect.arrayContaining(['Scope and Approach', 'Scenarios and Assumptions'])
+    );
+    const blocks = result.schema.sections.flatMap((section) => section.blocks);
+    expect(blocks.map((block) => block.type)).toEqual(
+      expect.arrayContaining(['kpi_strip', 'callout', 'table', 'risk_table'])
+    );
+    expect(blocks.some((block) => JSON.stringify(block.content).includes('awaiting content'))).toBe(
+      false
+    );
+    expect(runDocumentQa(result.schema).categories.filter((category) => category.blocking)).toEqual(
+      []
+    );
+
+    const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(result.schema));
+    const xml = await zip.file('word/document.xml')!.async('string');
+    for (const text of [
+      'Scope and Approach',
+      'Scenarios and Assumptions',
+      'Recommended investment',
+      'ERP integration',
+      '0–30 days',
+    ])
+      expect(xml).toContain(text);
+    expect((xml.match(/<w:tbl>/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 
   it('creates, versions, approves, reopens and consumes an exact Word template version through DOCX export', async () => {

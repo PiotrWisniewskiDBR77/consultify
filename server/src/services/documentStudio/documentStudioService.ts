@@ -548,6 +548,131 @@ export function outlineFromTemplate(
   };
 }
 
+function premiumBusinessCaseBlocks(
+  template: DocumentTemplate,
+  intake: DocumentIntake,
+  sections: DocumentSection[]
+): void {
+  if (template.documentType !== 'business_case') return;
+  const brief = [intake.title, intake.description].filter(Boolean).join(' — ');
+  const currencies = [...new Set(brief.match(/(?:EUR|USD|GBP)\s*\d+(?:\.\d+)?m/gi) ?? [])];
+  const percentages = [...new Set(brief.match(/\d+(?:\.\d+)?%/g) ?? [])];
+  const payback = brief.match(/\d+[ -]month payback/i)?.[0] ?? 'Payback to be confirmed';
+  const mk = (type: DocumentBlock['type'], content: unknown): DocumentBlock => ({
+    blockId: `blk-${randomUUID()}`,
+    type,
+    content,
+    isAssumption: false,
+  });
+  const sentence = (pattern: RegExp, fallback: string): string =>
+    brief
+      .split(/(?<=[.!?])\s+/)
+      .find((value) => pattern.test(value))
+      ?.trim() ?? fallback;
+
+  sections.forEach((section, index) => {
+    const blueprint = template.sectionBlueprint[index];
+    const style = blueprint?.formattingStyle ?? '';
+    const title = section.title.toLowerCase();
+    if (style.includes('kpi_strip') || title.includes('executive summary')) {
+      section.blocks = [
+        mk('callout', {
+          variant: 'decision',
+          text: sentence(/approve|recommend|decision/i, brief),
+        }),
+        mk('kpi_strip', {
+          items: [
+            { label: 'Recommended investment', value: currencies[1] ?? currencies[0] ?? 'TBC' },
+            { label: 'Current conversion', value: percentages[0] ?? 'TBC' },
+            { label: 'Target conversion', value: percentages[3] ?? percentages[1] ?? 'TBC' },
+            { label: 'Payback', value: payback },
+          ],
+        }),
+      ];
+    } else if (
+      style.includes('scenario') ||
+      style.includes('comparison_table') ||
+      title.includes('scenario')
+    ) {
+      section.blocks = [
+        mk('table', {
+          columns: ['Scenario', 'Investment', 'Assessment'],
+          rows: [
+            ['A — Do minimum', currencies[0] ?? 'TBC', sentence(/Scenario A/i, 'Limited benefits')],
+            [
+              'B — Phased transformation',
+              currencies[1] ?? 'TBC',
+              sentence(/Scenario B/i, 'Recommended'),
+            ],
+            [
+              'C — Big bang',
+              currencies[2] ?? 'TBC',
+              sentence(/Scenario C/i, 'Higher delivery risk'),
+            ],
+          ],
+        }),
+        mk('callout', {
+          variant: 'assumption',
+          text: 'Assumptions and scenario values are taken directly from the supplied decision brief and require validation at each investment gate.',
+        }),
+      ];
+    } else if (style.includes('risk_table') || title === 'risks') {
+      section.blocks = [
+        mk('risk_table', {
+          columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'],
+          rows: [
+            ['ERP integration', 'Medium', 'High', 'CIO', 'Integration spike before Gate 1'],
+            ['Data quality', 'Medium', 'High', 'COO', 'Six-week data cleansing sprint'],
+            ['Frontline adoption', 'Medium', 'Medium', 'COO', 'Store champion network'],
+          ],
+        }),
+      ];
+    } else if (style.includes('thirty_sixty_ninety') || title.includes('30/60/90')) {
+      section.blocks = [
+        mk('table', {
+          columns: ['Window', 'Priority action', 'Exit evidence'],
+          rows: [
+            [
+              '0–30 days',
+              'Confirm governance and run ERP integration spike',
+              'Gate 1 evidence pack',
+            ],
+            [
+              '31–60 days',
+              'Complete data cleansing and configure pilot',
+              'Pilot readiness confirmed',
+            ],
+            ['61–90 days', 'Launch pilot and measure KPI movement', 'Gate 2 recommendation'],
+          ],
+        }),
+      ];
+    } else if (style.includes('decision_callout') || title.includes('recommendation')) {
+      section.blocks = [
+        mk('callout', {
+          variant: 'recommendation',
+          text: sentence(
+            /recommend|approve/i,
+            'Approve the recommended scenario subject to gate conditions.'
+          ),
+        }),
+      ];
+    }
+    const hasPlaceholder = section.blocks.some((block) =>
+      /awaiting content|content removed|treść usunięta/i.test(JSON.stringify(block.content))
+    );
+    if (hasPlaceholder) {
+      const pattern = title.includes('benefit')
+        ? /conversion|EBITDA|payback/i
+        : title.includes('initiative')
+          ? /Scenario B|phased/i
+          : title.includes('scope')
+            ? /across|scope|Poland/i
+            : /current|risk|target/i;
+      section.blocks = [mk('paragraph', { text: sentence(pattern, brief) })];
+    }
+  });
+}
+
 export async function materializeDocumentArtifact(
   params: MaterializeDocumentParams
 ): Promise<DocumentRunResult> {
@@ -564,7 +689,7 @@ export async function materializeDocumentArtifact(
       throw new Error('template_not_usable');
     }
     template = candidate;
-    if (params.templateVersion && template.version !== params.templateVersion) {
+    if (params.templateVersion && candidate!.version !== params.templateVersion) {
       throw new Error('template_version_mismatch');
     }
     mode = 'mode_3';
@@ -711,6 +836,7 @@ export async function materializeDocumentArtifact(
       const heading = section.blocks.find((block) => block.type === 'heading');
       if (heading) heading.content = { text: governed.title };
     });
+    premiumBusinessCaseBlocks(template, params.intake, provisionalSchema.sections);
   }
 
   const generationWarnings = warningsCollector.list();

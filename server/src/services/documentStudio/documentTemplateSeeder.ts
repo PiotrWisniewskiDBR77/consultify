@@ -408,21 +408,29 @@ function deriveBlueprint(
       'executive summary': {
         formattingStyle: 'executive_kpi_strip_with_recommendation_callout',
         requiredData: ['investment envelope', 'base-case NPV', 'payback period'],
-        contentHints: ['Lead with the investment decision', 'Show value, cost and timing as KPI cards'],
-        keyMessage: 'The evidence supports one explicit investment recommendation and clear conditions.',
+        contentHints: [
+          'Lead with the investment decision',
+          'Show value, cost and timing as KPI cards',
+        ],
+        keyMessage:
+          'The evidence supports one explicit investment recommendation and clear conditions.',
       },
       recommendation: {
         formattingStyle: 'decision_callout_with_conditions',
         requiredData: ['recommended option', 'approval conditions'],
         approvalRequired: true,
       },
-      options: {
+      scenario: {
         formattingStyle: 'comparison_table_with_tradeoffs',
         requiredData: ['option costs', 'option benefits', 'delivery risk'],
       },
       risks: {
         formattingStyle: 'risk_heatmap_with_mitigations',
         requiredData: ['risk owner', 'probability', 'impact', 'mitigation'],
+      },
+      '30/60/90': {
+        formattingStyle: 'thirty_sixty_ninety_day_roadmap',
+        requiredData: ['action owner', 'success measure'],
       },
     },
     board_report: {
@@ -445,7 +453,10 @@ function deriveBlueprint(
       'executive summary': {
         formattingStyle: 'transformation_status_kpi_strip',
         requiredData: ['progress percent', 'budget status', 'milestone status'],
-        contentHints: ['Show plan-versus-actual', 'State the recovery action for every amber or red metric'],
+        contentHints: [
+          'Show plan-versus-actual',
+          'State the recovery action for every amber or red metric',
+        ],
       },
       risks: {
         formattingStyle: 'risk_table_with_severity_and_owner',
