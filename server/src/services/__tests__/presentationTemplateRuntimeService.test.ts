@@ -40,6 +40,9 @@ describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the 
         table: 'standard',
         decision: 'standard',
       },
+      variables: [
+        { key: 'investment', label: 'Investment', type: 'number', required: true, defaultValue: 0 },
+      ],
     };
     const runtime = buildTemplateRuntimeFromRow({
       id: 'tmpl-custom',
@@ -48,6 +51,45 @@ describe('buildTemplateRuntimeFromRow — per-slide briefing fields survive the 
     });
     expect(runtime?.templateId).toBe('tmpl-custom');
     expect(runtime?.customTemplate).toEqual(customTemplate);
+  });
+  it('rejects duplicate/invalid variable keys and enum variables without options', () => {
+    const base = {
+      version: 1,
+      theme: {
+        titleFont: 'A',
+        bodyFont: 'B',
+        primaryColor: '112233',
+        backgroundColor: 'FFFFFF',
+        surfaceColor: 'EEEEEE',
+        textColor: '111111',
+        accentColor: '445566',
+      },
+      layouts: { standard: { masterName: 'Master' } },
+      layoutMapping: {
+        cover: 'standard',
+        content: 'standard',
+        kpi: 'standard',
+        table: 'standard',
+        decision: 'standard',
+      },
+    };
+    const result = validatePresentationCustomTemplate({
+      ...base,
+      variables: [
+        { key: 'bad key', label: '', type: 'enum', required: true, options: [] },
+        { key: 'bad key', label: 'Again', type: 'text', required: false },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok)
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          'variables.0.key is invalid',
+          'variables.0.label is required',
+          'variables.0.options are required for enum',
+          'variables.1.key must be unique',
+        ])
+      );
   });
   it('rejects incomplete custom contracts before runtime generation', () => {
     const result = validatePresentationCustomTemplate({

@@ -25,6 +25,15 @@ export type CustomTemplateLayoutRole = 'cover' | 'content' | 'kpi' | 'table' | '
 
 export interface PresentationCustomTemplateDefinition {
   version: number;
+  variables?: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+    required: boolean;
+    defaultValue?: string | number | boolean;
+    description?: string;
+    options?: string[];
+  }>;
   theme: {
     titleFont: string;
     bodyFont: string;
@@ -65,6 +74,28 @@ export function validatePresentationCustomTemplate(
   }
   if (!Number.isInteger(input.version) || input.version < 1)
     errors.push('version must be a positive integer');
+  if (input.variables !== undefined) {
+    if (!Array.isArray(input.variables)) errors.push('variables must be an array');
+    else {
+      const keys = new Set<string>();
+      input.variables.forEach((variable: any, index: number) => {
+        const prefix = `variables.${index}`;
+        const key = typeof variable?.key === 'string' ? variable.key.trim() : '';
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key)) errors.push(`${prefix}.key is invalid`);
+        if (keys.has(key)) errors.push(`${prefix}.key must be unique`);
+        keys.add(key);
+        if (typeof variable?.label !== 'string' || !variable.label.trim())
+          errors.push(`${prefix}.label is required`);
+        if (!['text', 'number', 'date', 'boolean', 'enum'].includes(variable?.type))
+          errors.push(`${prefix}.type is invalid`);
+        if (
+          variable?.type === 'enum' &&
+          (!Array.isArray(variable.options) || variable.options.length === 0)
+        )
+          errors.push(`${prefix}.options are required for enum`);
+      });
+    }
+  }
   if (!input.theme || typeof input.theme !== 'object') errors.push('theme is required');
   const theme = input.theme || {};
   for (const key of ['titleFont', 'bodyFont'] as const) {

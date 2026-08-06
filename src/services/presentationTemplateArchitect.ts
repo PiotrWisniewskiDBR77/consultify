@@ -92,9 +92,24 @@ export type PresentationTemplateLifecycleState = 'draft' | 'approved' | 'depreca
 
 export interface PresentationCustomTemplateDefinition {
   version: number;
+  variables?: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+    required: boolean;
+    defaultValue?: string | number | boolean;
+    description?: string;
+    options?: string[];
+  }>;
   theme: {
-    titleFont: string; bodyFont: string; primaryColor: string; backgroundColor: string;
-    surfaceColor: string; textColor: string; accentColor: string; logoDataUri?: string;
+    titleFont: string;
+    bodyFont: string;
+    primaryColor: string;
+    backgroundColor: string;
+    surfaceColor: string;
+    textColor: string;
+    accentColor: string;
+    logoDataUri?: string;
   };
   layouts: Record<string, { masterName: string; backgroundColor?: string; accentColor?: string }>;
   layoutMapping: Record<'cover' | 'content' | 'kpi' | 'table' | 'decision', string>;

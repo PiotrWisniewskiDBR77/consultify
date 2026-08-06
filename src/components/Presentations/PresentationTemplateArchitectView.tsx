@@ -455,6 +455,33 @@ export const PresentationTemplateArchitectView: React.FC<
     ]);
   };
 
+  const addTemplateVariable = (): void => {
+    setEditCustomTemplate((current) => ({
+      ...current,
+      variables: [
+        ...(current.variables ?? []),
+        {
+          key: `field_${(current.variables?.length ?? 0) + 1}`,
+          label: 'New field',
+          type: 'text',
+          required: false,
+        },
+      ],
+    }));
+  };
+
+  const updateTemplateVariable = (
+    index: number,
+    patch: Partial<NonNullable<PresentationCustomTemplateDefinition['variables']>[number]>
+  ): void => {
+    setEditCustomTemplate((current) => ({
+      ...current,
+      variables: (current.variables ?? []).map((variable, i) =>
+        i === index ? { ...variable, ...patch } : variable
+      ),
+    }));
+  };
+
   const handleSave = async (): Promise<void> => {
     if (!selectedTemplate) return;
     setSavingOutline(true);
@@ -585,6 +612,17 @@ export const PresentationTemplateArchitectView: React.FC<
     if (!editCustomTemplate.theme.titleFont.trim() || !editCustomTemplate.theme.bodyFont.trim()) {
       issues.push('Choose both title and body fonts.');
     }
+    const variableKeys = new Set<string>();
+    (editCustomTemplate.variables ?? []).forEach((variable, index) => {
+      const key = variable.key.trim();
+      if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key))
+        issues.push(`Variable ${index + 1} needs a valid key.`);
+      if (variableKeys.has(key)) issues.push(`Variable key “${key}” is duplicated.`);
+      variableKeys.add(key);
+      if (!variable.label.trim()) issues.push(`Variable ${index + 1} needs a label.`);
+      if (variable.type === 'enum' && (variable.options ?? []).length === 0)
+        issues.push(`Enum variable “${key}” needs options.`);
+    });
     return issues;
   };
 
@@ -1180,6 +1218,134 @@ export const PresentationTemplateArchitectView: React.FC<
                       </label>
                     );
                   })}
+                </div>
+              </div>
+              <div className="col-span-1 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 sm:col-span-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                      Template variables
+                    </div>
+                    <p className="text-[11px] text-c-text-secondary">
+                      Typed fields are persisted in the template schema and become the
+                      deck-generation data requirements.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!isEditable}
+                    onClick={addTemplateVariable}
+                  >
+                    Add variable
+                  </Button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {(editCustomTemplate.variables ?? []).map((variable, index) => (
+                    <div
+                      key={`${variable.key}-${index}`}
+                      className="grid grid-cols-1 gap-2 rounded-md border border-c-border-subtle p-2 sm:grid-cols-6"
+                    >
+                      <input
+                        aria-label={`Variable ${index + 1} key`}
+                        value={variable.key}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { key: event.target.value })
+                        }
+                        placeholder="key"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <input
+                        aria-label={`Variable ${index + 1} label`}
+                        value={variable.label}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { label: event.target.value })
+                        }
+                        placeholder="Label"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <select
+                        aria-label={`Variable ${index + 1} type`}
+                        value={variable.type}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, {
+                            type: event.target.value as typeof variable.type,
+                          })
+                        }
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      >
+                        {['text', 'number', 'date', 'boolean', 'enum'].map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        aria-label={`Variable ${index + 1} default`}
+                        value={String(variable.defaultValue ?? '')}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { defaultValue: event.target.value })
+                        }
+                        placeholder="Default"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+                        <input
+                          type="checkbox"
+                          checked={variable.required}
+                          disabled={!isEditable}
+                          onChange={(event) =>
+                            updateTemplateVariable(index, { required: event.target.checked })
+                          }
+                        />
+                        Required
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!isEditable}
+                        onClick={() =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            variables: (current.variables ?? []).filter((_, i) => i !== index),
+                          }))
+                        }
+                        className="text-xs text-danger-600 disabled:opacity-40"
+                      >
+                        Remove
+                      </button>
+                      <input
+                        aria-label={`Variable ${index + 1} description`}
+                        value={variable.description ?? ''}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { description: event.target.value })
+                        }
+                        placeholder="Description"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
+                      />
+                      {variable.type === 'enum' ? (
+                        <input
+                          aria-label={`Variable ${index + 1} options`}
+                          value={(variable.options ?? []).join(', ')}
+                          disabled={!isEditable}
+                          onChange={(event) =>
+                            updateTemplateVariable(index, {
+                              options: event.target.value
+                                .split(',')
+                                .map((item) => item.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          placeholder="Options, comma separated"
+                          className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
+                        />
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               </div>
               <label className="col-span-1 flex flex-col gap-1 text-xs sm:col-span-2">
