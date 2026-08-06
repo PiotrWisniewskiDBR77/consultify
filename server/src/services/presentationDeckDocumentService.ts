@@ -585,7 +585,9 @@ export function normalizeDeckDocument(row: any): DeckDocument | null {
   const unifiedJson = safeJsonParse<UnifiedReportJSON | null>(row?.unified_json, null);
   const unifiedSlides = Array.isArray(unifiedJson?.slides) ? unifiedJson.slides : [];
   if (deckJson?.schemaVersion === 1 && Array.isArray(deckJson.cards)) {
-    const cards = Array.isArray(deckJson.cards) ? deckJson.cards : [];
+    const cards = repairStructuredBlocksInCards(
+      (Array.isArray(deckJson.cards) ? deckJson.cards : []) as DeckDocumentCard[]
+    );
     if (cards.length === 0 && unifiedSlides.length > 0 && unifiedJson) {
       return deckDocumentFromUnifiedJson({
         deckId: String(row?.id || ''),
@@ -662,6 +664,100 @@ export interface StructuredSlideInput {
   content?: Record<string, unknown> | null;
 }
 
+const CANONICAL_DECK_BLOCK_TYPES = new Set([
+  'heading',
+  'paragraph',
+  'bullet_list',
+  'numbered_list',
+  'table',
+  'chart',
+  'image',
+  'kpi_widget',
+  'metric_strip',
+  'smart_layout',
+  'smart_diagram',
+  'callout',
+  'quote_block',
+  'timeline_block',
+  'artifact_embed',
+  'divider',
+  'icon_row',
+]);
+
+function inferStructuredBlockType(
+  content: Record<string, unknown>,
+  intent: string,
+  fallback = 'paragraph'
+): string {
+  if (Array.isArray(content.metrics)) return 'metric_strip';
+  if (typeof content.layoutType === 'string') return 'smart_layout';
+  if (Array.isArray(content.headers) && Array.isArray(content.rows)) return 'table';
+  if (typeof content.variant === 'string' && typeof content.text === 'string') return 'callout';
+  if (Array.isArray(content.items)) {
+    const first = content.items[0];
+    if (first && typeof first === 'object' && ('date' in first || 'phase' in first)) {
+      return 'timeline_block';
+    }
+    if (intent === 'next_steps') return 'numbered_list';
+    if (intent === 'executive_summary' || intent.startsWith('recommendation')) {
+      return 'bullet_list';
+    }
+  }
+  return fallback;
+}
+
+function normalizeStructuredBlock(
+  raw: unknown,
+  intent: string
+): { type: string; content: Record<string, unknown> } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const block = raw as Record<string, unknown>;
+  const declaredType = String(block.type || '').trim();
+  let content = block.content;
+  if (typeof content === 'string') {
+    const trimmed = content.trim();
+    if (!trimmed) return null;
+    try {
+      const parsed = JSON.parse(trimmed);
+      content = parsed && typeof parsed === 'object' ? parsed : { text: trimmed };
+    } catch {
+      content = { text: trimmed };
+    }
+  }
+  if (!content || typeof content !== 'object' || Array.isArray(content)) return null;
+  let canonicalContent = content as Record<string, unknown>;
+  // Compatibility for decks created by the former from-template mapper: it
+  // wrapped JSON.stringify(block.content) inside paragraph.content.text.
+  if (
+    declaredType === 'paragraph' &&
+    typeof canonicalContent.text === 'string' &&
+    /^\s*[\[{]/.test(canonicalContent.text)
+  ) {
+    try {
+      const parsed = JSON.parse(canonicalContent.text);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) canonicalContent = parsed;
+    } catch {
+      // Genuine audience text beginning with a bracket remains a paragraph.
+    }
+  }
+  const fallbackType = CANONICAL_DECK_BLOCK_TYPES.has(declaredType) ? declaredType : 'paragraph';
+  const type =
+    declaredType === 'paragraph' || !CANONICAL_DECK_BLOCK_TYPES.has(declaredType)
+      ? inferStructuredBlockType(canonicalContent, intent, fallbackType)
+      : declaredType;
+  return { type, content: canonicalContent };
+}
+
+function repairStructuredBlocksInCards(cards: DeckDocumentCard[]): DeckDocumentCard[] {
+  return cards.map((card) => ({
+    ...card,
+    blocks: (Array.isArray(card.blocks) ? card.blocks : []).map((block) => {
+      const normalized = normalizeStructuredBlock(block, String(card.intent || 'content'));
+      return normalized ? { ...block, type: normalized.type, content: normalized.content } : block;
+    }),
+  }));
+}
+
 function structuredSlideToCard(
   deckId: string,
   slide: StructuredSlideInput,
@@ -697,14 +793,8 @@ function structuredSlideToCard(
   const nestedBlocks = Array.isArray((content as any).blocks) ? (content as any).blocks : null;
   if (nestedBlocks && nestedBlocks.length) {
     for (const b of nestedBlocks) {
-      const btype = b && (b as any).type === 'heading' ? 'heading' : 'paragraph';
-      const btext =
-        typeof (b as any)?.content === 'string'
-          ? (b as any).content
-          : (b as any)?.content != null
-            ? JSON.stringify((b as any).content)
-            : '';
-      if (btext) pushBlock(btype, { text: btext });
+      const normalized = normalizeStructuredBlock(b, intent);
+      if (normalized) pushBlock(normalized.type, normalized.content);
     }
   } else {
     pushBlock('heading', { text: title, level: 2 });
@@ -922,7 +1012,18 @@ function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
 function textFromBlock(block: DeckCardBlock): string {
   const content = block.content || {};
   if (typeof content.text === 'string') return content.text;
-  if (Array.isArray(content.items)) return content.items.map(String).join(' · ');
+  if (Array.isArray(content.items)) {
+    return content.items
+      .map((item: any) => {
+        if (!item || typeof item !== 'object') return String(item ?? '');
+        return [item.date || item.phase, item.title || item.label, item.description]
+          .filter(Boolean)
+          .map(String)
+          .join(': ');
+      })
+      .filter(Boolean)
+      .join(' · ');
+  }
   if (Array.isArray((content as any).metrics)) {
     return (content as any).metrics
       .map((metric: any) => `${metric.label || metric.name}: ${metric.value ?? ''}`)

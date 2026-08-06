@@ -123,6 +123,76 @@ describe('presentationDeckDocumentService.buildDeckDocumentFromStructuredSlides'
     expect(card.blocks[1].content.text).toBe('Key message from template');
   });
 
+  it('preserves canonical structured block types and object content for every board layout', () => {
+    const blocks = [
+      { type: 'heading', content: { text: 'Investment decision', level: 1 } },
+      { type: 'metric_strip', content: { metrics: [{ label: 'NPV', value: '€4.2m' }] } },
+      { type: 'smart_layout', content: { layoutType: '3col', items: [{ title: 'Scale' }] } },
+      { type: 'timeline_block', content: { items: [{ date: 'Q1', title: 'Mobilise' }] } },
+      { type: 'table', content: { headers: ['Risk'], rows: [['Adoption']] } },
+      { type: 'callout', content: { variant: 'recommendation', text: 'Approve' } },
+      { type: 'numbered_list', content: { items: ['Nominate owner', 'Launch gate'] } },
+    ];
+    const deck = buildDeckDocumentFromStructuredSlides({
+      deckId: 'deck_structured_blocks',
+      organizationId: 'org_mat007',
+      title: 'Board decision',
+      slides: [{ type: 'next_steps', content: { title: 'Decision', blocks } }],
+    });
+
+    expect(deck.cards[0].blocks.map((block) => block.type)).toEqual(
+      blocks.map((block) => block.type)
+    );
+    expect(deck.cards[0].blocks[1].content).toEqual(blocks[1].content);
+    expect(deck.cards[0].blocks.every((block) => typeof block.content !== 'string')).toBe(true);
+    expect(JSON.stringify(deck.cards[0].blocks)).not.toContain('\\"metrics\\"');
+  });
+
+  it('repairs legacy JSON-string paragraphs into canonical blocks on read', () => {
+    const legacyDeck = buildDeckDocumentFromStructuredSlides({
+      deckId: 'deck_legacy_json_blocks',
+      organizationId: 'org_mat007',
+      title: 'Legacy template deck',
+      slides: [{ type: 'content', content: { title: 'placeholder' } }],
+    });
+    legacyDeck.cards[0].intent = 'next_steps';
+    legacyDeck.cards[0].blocks = [
+      {
+        ...legacyDeck.cards[0].blocks[0],
+        type: 'paragraph',
+        content: { text: JSON.stringify({ metrics: [{ label: 'NPV', value: '€4.2m' }] }) },
+      },
+      {
+        ...legacyDeck.cards[0].blocks[0],
+        block_id: 'legacy-timeline',
+        type: 'paragraph',
+        content: { text: JSON.stringify({ items: [{ date: 'Q1', title: 'Mobilise' }] }) },
+      },
+      {
+        ...legacyDeck.cards[0].blocks[0],
+        block_id: 'legacy-steps',
+        type: 'paragraph',
+        content: { text: JSON.stringify({ items: ['Approve', 'Launch'] }) },
+      },
+    ];
+
+    const normalized = normalizeDeckDocument({
+      id: legacyDeck.deck_id,
+      title: legacyDeck.title,
+      status: 'draft',
+      deck_json: JSON.stringify(legacyDeck),
+    });
+
+    expect(normalized!.cards[0].blocks.map((block) => block.type)).toEqual([
+      'metric_strip',
+      'timeline_block',
+      'numbered_list',
+    ]);
+    expect(normalized!.cards[0].blocks[0].content).toEqual({
+      metrics: [{ label: 'NPV', value: '€4.2m' }],
+    });
+  });
+
   it('never produces an empty cards array for a non-empty slide input (the MAT-006B symptom)', () => {
     const slides = [{ type: 'content', content: {} }];
     const deckDocument = buildDeckDocumentFromStructuredSlides({
