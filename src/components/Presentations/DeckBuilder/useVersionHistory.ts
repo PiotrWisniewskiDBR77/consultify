@@ -153,6 +153,7 @@ export function useVersionHistory(
 
   /** The deck state the SERVER is known to hold (loaded, restored, or saved). */
   const lastSavedDeckRef = useRef<string>('');
+  const baselineDeckIdRef = useRef<string | null>(null);
   /**
    * The deck currently on screen, serialized. Needed because a save reports back
    * asynchronously: when the user edited again while the write was in flight,
@@ -427,6 +428,22 @@ export function useVersionHistory(
     if (!deck) return;
     const serialized = JSON.stringify(deck);
     currentDeckRef.current = serialized;
+    const identity = resolvedDeckId ?? deck.deck_id;
+
+    // The first canonical payload for each deck is a read baseline, not an
+    // edit. DeckBuilder also baselines before setting server truth, while this
+    // guard keeps the hook correct for every other caller and isolated tests.
+    if (baselineDeckIdRef.current !== identity) {
+      baselineDeckIdRef.current = identity;
+      lastSavedDeckRef.current = serialized;
+      savePendingRef.current = false;
+      setState((prev) =>
+        prev.hasUnsavedChanges || prev.isSaving
+          ? { ...prev, hasUnsavedChanges: false, isSaving: false }
+          : prev
+      );
+      return;
+    }
     // ★ `savePendingRef` is why this is not just a string compare. Undo (or a
     // drag back) DURING an in-flight write makes the deck byte-identical to the
     // baseline again while the server is about to hold the OTHER state — calling
@@ -436,7 +453,7 @@ export function useVersionHistory(
     setState((prev) =>
       prev.hasUnsavedChanges === unsaved ? prev : { ...prev, hasUnsavedChanges: unsaved }
     );
-  }, [deck]);
+  }, [deck, resolvedDeckId]);
 
   // Snapshot timer (every 5 min)
   useEffect(() => {

@@ -68,6 +68,7 @@ import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
+import { useDeckAutosave } from './useDeckAutosave';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
@@ -376,7 +377,6 @@ export const DeckBuilder: React.FC = () => {
     critic?: { overallScore: number; regenerateSlides: number[]; passed: boolean };
   } | null>(null);
   const [qualityBannerExpanded, setQualityBannerExpanded] = useState(false);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
 
@@ -455,7 +455,6 @@ export const DeckBuilder: React.FC = () => {
     refreshVersions,
     hasUnsavedChanges,
     lastSavedAt,
-    markSaved,
     restoreVersion,
     saveManualCheckpoint,
     markSaved,
@@ -731,6 +730,7 @@ export const DeckBuilder: React.FC = () => {
             updated_at: row?.updated_at || deckJson.updated_at || new Date().toISOString(),
           };
           if (!cancelled) {
+            markPersisted(loaded);
             setDeck(loaded);
             setLoadingDeck(false);
             setLoadError(null);
@@ -754,6 +754,7 @@ export const DeckBuilder: React.FC = () => {
         });
         if (converted) {
           if (!cancelled) {
+            markPersisted(converted);
             setDeck(converted);
             setLoadingDeck(false);
             setLoadError(null);
@@ -793,6 +794,7 @@ export const DeckBuilder: React.FC = () => {
           updated_at: String(row?.updated_at || nowIso),
         };
         if (!cancelled) {
+          markPersisted(emptyDeck);
           setDeck(emptyDeck);
           setLoadingDeck(false);
           setLoadError(null);
@@ -818,94 +820,7 @@ export const DeckBuilder: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [deckId, setDeck, deckReloadKey]);
-
-  const deckForAutosave = useMemo(() => {
-    if (!deckId || !deck) return null;
-    return { deckId, deck };
-  }, [deckId, deck]);
-
-  useEffect(() => {
-    if (!deckForAutosave) return;
-    if (!hasLoadedInitialRef.current) return;
-    // A canonical load/reload is already persisted. Only schedule a write for
-    // a real local delta; this also prevents false version bumps on open.
-    if (!hasUnsavedChanges) return;
-    // P3.1 — pause autosave while an unresolved version conflict is on screen.
-    // Autosaving again would just re-trigger the same 409 loop; the user must
-    // pick "Reload latest" or "Keep my version" first.
-    if (conflict) return;
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'X-Deck-Version': String(serverVersionRef.current),
-          },
-          body: JSON.stringify(deckForAutosave.deck),
-        });
-        if (res.status === 409) {
-          // P3.1 — another session advanced the deck's version. DO NOT silently
-          // clobber the local (unsaved) edits with the server copy. Fetch the
-          // latest so we can offer an instant reload, then raise a visible
-          // conflict banner and stop autosaving until the user resolves it.
-          const conflictPayload = await res.json().catch(() => ({}));
-          let serverVersion: number | null =
-            typeof conflictPayload?.serverVersion === 'number'
-              ? conflictPayload.serverVersion
-              : null;
-          let pendingServer: { deckJson: any; title: string } | null = null;
-          try {
-            const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
-            const latestPayload =
-              latest?.data && typeof latest.data === 'object' && 'data' in latest.data
-                ? latest.data.data
-                : latest?.data;
-            if (typeof latestPayload?.version === 'number') {
-              serverVersion = latestPayload.version;
-            }
-            const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
-            if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
-              pendingServer = {
-                deckJson: latestDeckJson,
-                title: String(latestPayload?.title || latestDeckJson.title || 'Untitled'),
-              };
-            }
-          } catch {
-            /* keep whatever the 409 body told us */
-          }
-          setConflict({ serverVersion, pendingServer });
-          toast.error(t('presentations.versionConflictDetected'));
-          return;
-        }
-        if (!res.ok) {
-          throw new Error(`Deck autosave failed (${res.status})`);
-        }
-        const payload = await res.json().catch(() => ({}));
-        if (typeof payload?.version === 'number') {
-          serverVersionRef.current = payload.version;
-        }
-        markSaved(deckForAutosave.deck);
-      } catch {
-        // Keep the dirty state visible and make failure explicit; never present
-        // an unsuccessful write as "Saved".
-        toast.error(
-          t('presentations.builder.autosaveFailed', 'Could not save changes. Please try again.')
-        );
-      }
-    }, 800);
-
-    return () => {
-      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    };
-  }, [deckForAutosave, conflict, hasUnsavedChanges, markSaved, t]);
+  }, [deckId, setDeck, deckReloadKey, markPersisted]);
 
   // P3.1 — conflict resolution handlers. "Reload latest" adopts the server's
   // deck (discarding local edits); "Keep my version" bumps our version pointer
@@ -917,17 +832,21 @@ export const DeckBuilder: React.FC = () => {
         serverVersionRef.current = current.serverVersion;
       }
       if (current?.pendingServer && Array.isArray(current.pendingServer.deckJson?.cards)) {
-        setDeck((prev) => ({
-          ...(prev || {}),
-          ...current.pendingServer!.deckJson,
-          deck_id: deckId,
-          title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
-        }));
+        setDeck((prev) => {
+          const adopted = {
+            ...(prev || {}),
+            ...current.pendingServer!.deckJson,
+            deck_id: deckId,
+            title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
+          } as Deck;
+          markPersisted(adopted);
+          return adopted;
+        });
       }
       return null;
     });
     toast.success(t('presentations.versionConflictReloaded'));
-  }, [deckId, setDeck, t]);
+  }, [deckId, setDeck, t, markPersisted]);
 
   const resolveConflictKeepMine = useCallback(() => {
     setConflict((current) => {
