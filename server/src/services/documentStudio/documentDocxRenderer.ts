@@ -112,7 +112,6 @@ interface DocxRuntime {
   Table: new (options: Record<string, unknown>) => DocxTable;
   TableCell: new (options: Record<string, unknown>) => unknown;
   TableRow: new (options: Record<string, unknown>) => unknown;
-  TableOfContents: new (alias?: string, options?: Record<string, unknown>) => unknown;
   TextRun: new (options: Record<string, unknown>) => DocxTextRun;
   WidthType: { PERCENTAGE: unknown };
 }
@@ -143,7 +142,6 @@ const {
   Table,
   TableCell,
   TableRow,
-  TableOfContents,
   TextRun,
   WidthType,
 } = docxModule as unknown as DocxRuntime;
@@ -410,7 +408,32 @@ function buildCitationRuns(
 
 function asString(value: unknown): string {
   if (value == null) return '';
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') {
+    const named: Record<string, string> = {
+      amp: '&', apos: "'", gt: '>', lt: '<', nbsp: '\u00a0', quot: '"',
+    };
+    let decoded = value;
+    // A bounded loop also handles upstream strings encoded more than once
+    // (`&amp;quot;`) without risking unbounded replacement work.
+    for (let pass = 0; pass < 4; pass += 1) {
+      const next = decoded.replace(
+        /&(?:#(\d+)|#x([0-9a-f]+)|([a-z][a-z0-9]+));/gi,
+        (entity, decimal: string | undefined, hex: string | undefined, name: string | undefined) => {
+          if (name) return named[name.toLowerCase()] ?? entity;
+          const codePoint = Number.parseInt(decimal ?? hex ?? '', hex ? 16 : 10);
+          if (!Number.isFinite(codePoint) || codePoint < 0 || codePoint > 0x10ffff) return entity;
+          try {
+            return String.fromCodePoint(codePoint);
+          } catch {
+            return entity;
+          }
+        }
+      );
+      if (next === decoded) break;
+      decoded = next;
+    }
+    return decoded;
+  }
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   try {
     return JSON.stringify(value);
@@ -623,8 +646,14 @@ function renderKpiStripBlock(block: DocumentBlock, ctx: RenderContext): (Table |
     });
   });
   ctx.tableCounter.value += 1;
+  const rows: unknown[] = [];
+  // Keep metric cards readable on A4. More than three cards wrap onto the
+  // next table row instead of shrinking every card into an unusable sliver.
+  for (let offset = 0; offset < cells.length; offset += 3) {
+    rows.push(new TableRow({ children: cells.slice(offset, offset + 3) }));
+  }
   const table = new Table({
-    rows: [new TableRow({ children: cells })],
+    rows,
     width: { size: 100, type: WidthType.PERCENTAGE },
   });
   return [table];
@@ -1191,35 +1220,48 @@ function buildCoverLogoParagraph(
 }
 
 /**
- * Insert a real Word TOC field. Word renders the placeholder text on
- * first open and offers "Update field" to populate the field with
- * actual heading entries. The renderer honors `formattingSchema.toc`
- * — when disabled this helper is never called.
- *
- * The TOC pulls levels 1–3 from named heading styles (`Heading1`,
- * `Heading2`, `Heading3`). The terminal page break ensures body
- * content starts on its own page even on documents without a cover.
+ * Insert a deterministic static TOC. A Word TOC field is empty until the
+ * desktop application updates fields; LibreOffice and server-side PDF
+ * conversion commonly leave that field empty, producing a blank TOC page.
+ * Static entries keep the export useful on first open and in rendered PDFs.
+ * The terminal page break keeps body content on its own page.
  */
 function renderTocBlock(ctx: RenderContext): unknown[] {
   const heading = new Paragraph({
     style: DOCX_STYLE_IDS.TOC_HEADING,
-    heading: HeadingLevel.HEADING_1,
     children: [new TextRun({ text: 'Table of Contents', font: ctx.headingFont })],
   });
   // Slice E15.5.formatting.render — honor `tocConfig.maxDepth` when
   // the schema carries the E15.5 substrate. Default stays `1-3`
   // (current behavior) so legacy schemas render unchanged.
   const tocMaxDepth = ctx.schema.formattingSchema.tocConfig?.maxDepth ?? 3;
-  const headingStyleRange = `1-${tocMaxDepth}`;
-  const toc = new TableOfContents('Table of Contents', {
-    hyperlink: true,
-    headingStyleRange,
-  });
+  const partitioned = partitionSections(ctx.schema.sections);
+  const entries = [
+    ...partitioned.body.map((section, index) => ({
+      section,
+      text: formatBodyHeading(section, index),
+    })),
+    ...partitioned.appendix.map((section, index) => ({
+      section,
+      text: formatAppendixHeading(section, index, ctx.schema.formattingSchema),
+    })),
+  ]
+    .filter(({ section }) => section.level <= tocMaxDepth)
+    .map(
+      ({ section, text }) =>
+        new Paragraph({
+          style: DOCX_STYLE_IDS.BODY_TEXT,
+          indent: { left: Math.max(0, section.level - 1) * 360 },
+          spacing: { after: 80 },
+          keepNext: true,
+          children: [new TextRun({ text, font: ctx.bodyFont })],
+        })
+    );
   const trailingBreak = new Paragraph({
     style: DOCX_STYLE_IDS.BODY_TEXT,
     children: [new PageBreak()],
   });
-  return [heading, toc, trailingBreak];
+  return [heading, ...entries, trailingBreak];
 }
 
 function renderSources(ctx: RenderContext): (Paragraph | Table)[] {

@@ -72,10 +72,20 @@ export function partitionSections(sections: readonly DocumentSection[]): Partiti
  * absent) `rows` array — under either shape — has nothing to draw.
  */
 function isEmptyTableBlock(block: DocumentBlock): boolean {
-  if (block.type !== 'table') return false;
+  if (block.type !== 'table' && block.type !== 'risk_table') return false;
   const content = block.content as { rows?: unknown } | undefined | null;
   const rows = content && typeof content === 'object' ? content.rows : undefined;
   return !Array.isArray(rows) || rows.length === 0;
+}
+
+function isEmptyKpiStripBlock(block: DocumentBlock): boolean {
+  if (block.type !== 'kpi_strip') return false;
+  const content = block.content as { items?: unknown; rows?: unknown } | undefined | null;
+  if (!content || typeof content !== 'object') return true;
+  const hasItems = Array.isArray(content.items) && content.items.length > 0;
+  // Preserve the supported legacy table-shaped KPI contract.
+  const hasLegacyRows = Array.isArray(content.rows) && content.rows.length > 0;
+  return !hasItems && !hasLegacyRows;
 }
 
 /**
@@ -107,7 +117,7 @@ export function pruneUnrenderableBlocks(schema: DocumentSchema): DocumentSchema 
   let dropped = 0;
   const sections = schema.sections.map((section) => {
     const kept = section.blocks.filter((block) => {
-      if (isEmptyTableBlock(block) || isEmptyChartBlock(block)) {
+      if (isEmptyTableBlock(block) || isEmptyKpiStripBlock(block) || isEmptyChartBlock(block)) {
         dropped += 1;
         return false;
       }

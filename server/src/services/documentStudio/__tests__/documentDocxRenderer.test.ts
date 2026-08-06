@@ -114,6 +114,34 @@ async function unzipDocx(buffer: Buffer): Promise<{ document: string; styles: st
 }
 
 describe('documentDocxRenderer — named styles', () => {
+  it('decodes common HTML entities before writing visible DOCX text', async () => {
+    const schema = makeSchema({
+      sections: [
+        {
+          sectionId: 'entities',
+          orderIndex: 0,
+          level: 1,
+          title: 'Entity safety',
+          purpose: 'Entity safety',
+          blocks: [
+            {
+              blockId: 'entity-paragraph',
+              type: 'paragraph',
+              content: { text: 'Decision &amp;quot;approved&amp;quot;&#58;&nbsp;owner&#x27;s action &amp; evidence &#x2713;.' } as unknown,
+            },
+          ],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const { document } = await unzipDocx(buffer);
+    expect(document).toContain('Decision &quot;approved&quot;: owner&apos;s action &amp; evidence ✓.');
+    expect(document).not.toContain('&amp;quot;');
+    expect(document).not.toContain('&amp;#x27;');
+    expect(document).not.toContain('&amp;nbsp;');
+  });
+
   it('produces a non-empty buffer with ZIP magic and Office Open XML content type', async () => {
     const buffer = await renderDocumentSchemaToDocxBuffer(makeSchema());
     expect(buffer.length).toBeGreaterThan(1024);
@@ -182,7 +210,7 @@ describe('documentDocxRenderer — named styles', () => {
 });
 
 describe('documentDocxRenderer — TOC + cover page break + appendices (Slice 8.2)', () => {
-  it('embeds a Word TOC field when formattingSchema.toc is true', async () => {
+  it('embeds a populated static TOC that is useful before Word updates fields', async () => {
     const schema = makeSchema({
       formattingSchema: makeFormattingSchema({ toc: true }),
     });
@@ -190,11 +218,11 @@ describe('documentDocxRenderer — TOC + cover page break + appendices (Slice 8.
     const zip = await JSZip.loadAsync(buffer);
     const document = await zip.file('word/document.xml')?.async('string');
     expect(document).toBeTruthy();
-    // Word TOC fields embed an instrText element with `TOC \\o "1-3"` (or
-    // similar); the docx package lowercases nothing, so a substring check
-    // for `TOC ` is the most stable assertion across docx upgrades.
-    expect(document).toContain('TOC ');
     expect(document).toContain(`w:val="${DOCX_STYLE_IDS.TOC_HEADING}"`);
+    expect(document).toContain('Table of Contents');
+    expect(document).toContain('1. Executive Summary');
+    expect(document).toContain('2. Findings');
+    expect(document).not.toContain('w:instrText');
   });
 
   it('omits the TOC field when formattingSchema.toc is false', async () => {
@@ -323,5 +351,91 @@ describe('documentDocxRenderer — TOC + cover page break + appendices (Slice 8.
     expect(document).toContain('Appendix 1 — Glossary');
     expect(document).toContain('Appendix 2 — Sources');
     expect(document).not.toContain('Appendix A —');
+  });
+});
+
+describe('documentDocxRenderer — KPI and risk tables', () => {
+  it('renders KPI items and keyed risk rows as real wrapping Word tables, not JSON text', async () => {
+    const longMitigation =
+      'Sequence the rollout by business unit, retain an accountable owner, and verify every control with evidence before the next wave begins.';
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ coverPage: false }),
+      sections: [
+        {
+          sectionId: 'tables',
+          orderIndex: 0,
+          level: 1,
+          title: 'Metrics and risks',
+          blocks: [
+            {
+              blockId: 'kpi',
+              type: 'kpi_strip',
+              content: {
+                items: [{ label: 'Adoption &amp; usage', value: '72%', delta: '+8 pp' }],
+              } as unknown,
+            },
+            {
+              blockId: 'risk',
+              type: 'risk_table',
+              content: {
+                rows: [
+                  {
+                    cells: {
+                      risk: { value: 'Delivery dependency' },
+                      owner: { value: 'COO' },
+                      mitigation: { value: longMitigation },
+                    },
+                  },
+                ],
+              } as unknown,
+            },
+          ],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const { document } = await unzipDocx(buffer);
+    expect((document.match(/<w:tbl>/g) ?? []).length).toBe(2);
+    expect(document).toContain('Adoption &amp; usage');
+    expect(document).toContain('Delivery dependency');
+    expect(document).toContain(longMitigation);
+    expect(document).not.toContain('&amp;quot;');
+    expect(document).not.toContain('w:noWrap');
+    expect(document).not.toContain('{&quot;value&quot;');
+  });
+
+  it('wraps KPI strips wider than three metrics onto additional table rows', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ coverPage: false }),
+      sections: [
+        {
+          sectionId: 'kpis', orderIndex: 0, level: 1, title: 'KPIs', sourceRefs: [],
+          blocks: [{
+            blockId: 'wide-kpi', type: 'kpi_strip',
+            content: { items: ['A', 'B', 'C', 'D'].map((label) => ({ label, value: '1' })) } as unknown,
+          }],
+        },
+      ],
+    });
+    const { document } = await unzipDocx(await renderDocumentSchemaToDocxBuffer(schema));
+    const tableXml = document.match(/<w:tbl>[\s\S]*?<\/w:tbl>/)?.[0] ?? '';
+    expect((tableXml.match(/<w:tr>/g) ?? []).length).toBe(2);
+  });
+
+  it('prunes empty KPI and risk shells instead of emitting technical placeholders', async () => {
+    const schema = makeSchema({
+      formattingSchema: makeFormattingSchema({ coverPage: false }),
+      sections: [{
+        sectionId: 'empty', orderIndex: 0, level: 1, title: 'Honest no-data state', sourceRefs: [],
+        blocks: [
+          { blockId: 'empty-kpi', type: 'kpi_strip', content: { items: [] } as unknown },
+          { blockId: 'empty-risk', type: 'risk_table', content: { rows: [] } as unknown },
+        ],
+      }],
+    });
+    const { document } = await unzipDocx(await renderDocumentSchemaToDocxBuffer(schema));
+    expect(document).not.toContain('placeholder');
+    expect(document).not.toContain('<w:tbl>');
   });
 });
