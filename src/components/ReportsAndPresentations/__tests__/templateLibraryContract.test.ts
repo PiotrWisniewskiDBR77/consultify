@@ -195,7 +195,7 @@ describe('resolveTemplateUsePath', () => {
         canonicalTemplateId: CANONICAL_ID,
         originRuntime: 'sheet_template',
       })
-    ).toBe(`/reports?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
+    ).toBe(`/presentations?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
   });
 
   it('wpis osierocony NIE daje ścieżki użycia', () => {

@@ -345,7 +345,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                       ? 'Walidacja zakończona: szablon jest gotowy do publikacji.'
                       : validation.errors.join(' ')
                   ),
-                onApprove: lifecycle?.status === 'approved' ? undefined : handleApprove,
+                onApprove: lifecycle?.status === 'draft' ? handleApprove : undefined,
                 onDeprecate: lifecycle?.status === 'approved' ? handleDeprecate : undefined,
                 onDelete: lifecycle?.status === 'draft' ? handleDeleteTemplate : undefined,
               }

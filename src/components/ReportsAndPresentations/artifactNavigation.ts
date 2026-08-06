@@ -93,7 +93,7 @@ export function resolveTemplateUsePath(target: TemplateUseTarget): string | null
   if (target.originRuntime === 'sheet_template') {
     const canonicalTemplateId = String(target.canonicalTemplateId || '').trim();
     if (!canonicalTemplateId) return null;
-    return `/reports?tab=workbook_templates&workbookTemplateId=${encodeURIComponent(canonicalTemplateId)}`;
+    return `/presentations?tab=workbook_templates&workbookTemplateId=${encodeURIComponent(canonicalTemplateId)}`;
   }
 
   // Wszystko, czego indeks jeszcze nie oznaczył originRuntime: dotychczasowa
