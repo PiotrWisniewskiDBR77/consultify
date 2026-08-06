@@ -387,7 +387,7 @@ function deriveBlueprint(
     density,
   };
   const outline = planDocumentOutline(probe);
-  return outline.sections.map((section) => ({
+  const base = outline.sections.map((section) => ({
     title: section.title,
     level: section.level,
     purpose: section.purpose,
@@ -397,6 +397,74 @@ function deriveBlueprint(
       section.title.toLowerCase() === 'recommendations',
     expectedLengthHint: section.expectedLengthHint,
   }));
+
+  // Executive templates need a visual/content contract, not merely a list of
+  // headings. These recipes are deliberately evidence-led: they tell Mode 3
+  // which form factor to create without seeding fake client facts.
+  const premiumRecipes: Partial<
+    Record<DocumentTypeKey, Record<string, Partial<TemplateSectionBlueprint>>>
+  > = {
+    business_case: {
+      'executive summary': {
+        formattingStyle: 'executive_kpi_strip_with_recommendation_callout',
+        requiredData: ['investment envelope', 'base-case NPV', 'payback period'],
+        contentHints: ['Lead with the investment decision', 'Show value, cost and timing as KPI cards'],
+        keyMessage: 'The evidence supports one explicit investment recommendation and clear conditions.',
+      },
+      recommendation: {
+        formattingStyle: 'decision_callout_with_conditions',
+        requiredData: ['recommended option', 'approval conditions'],
+        approvalRequired: true,
+      },
+      options: {
+        formattingStyle: 'comparison_table_with_tradeoffs',
+        requiredData: ['option costs', 'option benefits', 'delivery risk'],
+      },
+      risks: {
+        formattingStyle: 'risk_heatmap_with_mitigations',
+        requiredData: ['risk owner', 'probability', 'impact', 'mitigation'],
+      },
+    },
+    board_report: {
+      'executive summary': {
+        formattingStyle: 'board_kpi_strip_with_status_callout',
+        requiredData: ['period KPIs', 'overall RAG status', 'management recommendation'],
+        contentHints: ['Use a one-page board digest', 'Separate facts, interpretation and ask'],
+      },
+      'decisions required': {
+        formattingStyle: 'numbered_decision_cards',
+        requiredData: ['decision owner', 'decision deadline', 'recommended resolution'],
+        approvalRequired: true,
+      },
+      risks: {
+        formattingStyle: 'top_risks_table_with_trend',
+        requiredData: ['risk trend', 'financial exposure', 'accountable executive'],
+      },
+    },
+    project_status_report: {
+      'executive summary': {
+        formattingStyle: 'transformation_status_kpi_strip',
+        requiredData: ['progress percent', 'budget status', 'milestone status'],
+        contentHints: ['Show plan-versus-actual', 'State the recovery action for every amber or red metric'],
+      },
+      risks: {
+        formattingStyle: 'risk_table_with_severity_and_owner',
+        requiredData: ['likelihood', 'impact', 'owner', 'next mitigation date'],
+      },
+      'next steps': {
+        formattingStyle: 'thirty_sixty_ninety_day_roadmap',
+        requiredData: ['action owner', 'due date', 'success measure'],
+      },
+    },
+  };
+
+  const recipes = premiumRecipes[documentType];
+  if (!recipes) return base;
+  return base.map((section) => {
+    const normalized = section.title.toLowerCase();
+    const recipe = Object.entries(recipes).find(([key]) => normalized.includes(key))?.[1];
+    return recipe ? { ...section, ...recipe } : section;
+  });
 }
 
 function buildSeedTemplate(spec: SeedSpec, language: 'pl' | 'en'): DocumentTemplate {
@@ -430,7 +498,26 @@ function buildSeedTemplate(spec: SeedSpec, language: 'pl' | 'en'): DocumentTempl
     confidentiality: spec.confidentiality,
     requiredInputs: spec.requiredInputs,
     sectionBlueprint: blueprint,
-    formattingSchema: { ...DEFAULT_CONSULTING_FORMATTING_SCHEMA },
+    formattingSchema: {
+      ...DEFAULT_CONSULTING_FORMATTING_SCHEMA,
+      headers: { enabled: true, content: 'Consultify | Executive document' },
+      footers: {
+        enabled: true,
+        pageNumbering: true,
+        confidentialityLabel: true,
+        pageNumberingFormat: language === 'pl' ? 'Strona X z Y' : 'Page X of Y',
+      },
+      coverPage: true,
+      coverPageDetailed: {
+        enabled: true,
+        includeLogo: true,
+        includeStatus: true,
+        includeConfidentiality: true,
+      },
+      toc: true,
+      tocConfig: { enabled: true, maxDepth: 2 },
+      colorTemplateId: 'consultify_executive',
+    },
     exportRules,
     status: 'approved',
     version: '1.0',
