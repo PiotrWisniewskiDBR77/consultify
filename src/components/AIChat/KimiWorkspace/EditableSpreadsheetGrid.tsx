@@ -29,7 +29,32 @@
  * wierszach/kolumnach wygenerowanego skoroszytu.
  */
 
-import { AlertTriangle, ArrowDownAZ, ArrowUpAZ, Bold, Check, ChevronsDown, Columns3, Copy, Filter, ListChecks, Loader2, Plus, Rows3, Snowflake, Trash2 } from 'lucide-react';
+import {
+  AlignLeft,
+  AlertTriangle,
+  ArrowDownAZ,
+  ArrowUpAZ,
+  Bold,
+  Check,
+  ChevronsDown,
+  Columns3,
+  Copy,
+  Filter,
+  HelpCircle,
+  Italic,
+  ListChecks,
+  Loader2,
+  MessageSquare,
+  PaintBucket,
+  Plus,
+  Rows3,
+  Ruler,
+  Search,
+  Snowflake,
+  Trash2,
+  Underline,
+  WrapText,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -90,8 +115,19 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [dialogMode, setDialogMode] = useState<'rename' | 'delete' | 'validation' | null>(null);
+  const [dialogMode, setDialogMode] = useState<
+    | 'rename'
+    | 'renameWorkbook'
+    | 'delete'
+    | 'validation'
+    | 'findReplace'
+    | 'resize'
+    | 'comment'
+    | 'help'
+    | null
+  >(null);
   const [dialogValue, setDialogValue] = useState('');
+  const [dialogValue2, setDialogValue2] = useState('');
   const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -168,7 +204,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         setSaveState('saved');
       } catch (error) {
         setSaveState('error');
-        setSaveError(error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed'));
+        setSaveError(
+          error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed')
+        );
       }
     },
     [localSheets, t, workbookId, workingSheetIndex]
@@ -194,28 +232,39 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     [persistChanges, workingSheetIndex]
   );
 
-  const runSchemaCommand = useCallback(async (command: Record<string, unknown>) => {
-    lastSchemaCommandRef.current = command;
-    setSaveState('saving');
-    setSaveError(null);
-    try {
-      const result = await Api.updateWorkbookSchema(workbookId, command);
-      const nextSheets = result?.schema?.sheets;
-      if (Array.isArray(nextSheets) && nextSheets.length) {
-        setLocalSheets(cloneSheets(nextSheets));
-        setWorkingSheetIndex((current) => Math.min(current, nextSheets.length - 1));
-        setSelected(null);
-        setSelectionEnd(null);
+  const runSchemaCommand = useCallback(
+    async (command: Record<string, unknown>) => {
+      lastSchemaCommandRef.current = command;
+      setSaveState('saving');
+      setSaveError(null);
+      try {
+        const result = await Api.updateWorkbookSchema(workbookId, command);
+        const nextSheets = result?.schema?.sheets;
+        if (Array.isArray(nextSheets) && nextSheets.length) {
+          setLocalSheets(cloneSheets(nextSheets));
+          setWorkingSheetIndex((current) => Math.min(current, nextSheets.length - 1));
+          setSelected(null);
+          setSelectionEnd(null);
+        }
+        undoStackRef.current = [];
+        redoStackRef.current = [];
+        setSaveState('saved');
+      } catch (error) {
+        setSaveState('error');
+        const message =
+          error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+        setSaveError(
+          message.includes('409') || /conflict/i.test(message)
+            ? t(
+                'kimi.excele.conflict',
+                'This workbook changed in another session. Reload, then retry your edit.'
+              )
+            : message
+        );
       }
-      undoStackRef.current = [];
-      redoStackRef.current = [];
-      setSaveState('saved');
-    } catch (error) {
-      setSaveState('error');
-      const message = error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
-      setSaveError(message.includes('409') || /conflict/i.test(message) ? t('kimi.excele.conflict', 'This workbook changed in another session. Reload, then retry your edit.') : message);
-    }
-  }, [t, workbookId]);
+    },
+    [t, workbookId]
+  );
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -243,7 +292,12 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         ...parsed,
       };
       undoStackRef.current.push([
-        { rowIndex: selected.rowIndex, colIndex: selected.colIndex, before: { ...oldCell }, after: afterCell },
+        {
+          rowIndex: selected.rowIndex,
+          colIndex: selected.colIndex,
+          before: { ...oldCell },
+          after: afterCell,
+        },
       ]);
       redoStackRef.current = [];
 
@@ -374,20 +428,23 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     [editingValue, selected, moveSelection, startEditing, commit, applyChanges]
   );
 
-  const handleCopy = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (!selectionRange) return;
-    const lines: string[] = [];
-    for (let ri = selectionRange.rowStart; ri <= selectionRange.rowEnd; ri += 1) {
-      const values: string[] = [];
-      for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
-        const col = activeRaw?.columns?.[ci];
-        values.push(rawCellToEditText(col ? activeRaw?.rows?.[ri]?.cells?.[col.key] : undefined));
+  const handleCopy = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      if (!selectionRange) return;
+      const lines: string[] = [];
+      for (let ri = selectionRange.rowStart; ri <= selectionRange.rowEnd; ri += 1) {
+        const values: string[] = [];
+        for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
+          const col = activeRaw?.columns?.[ci];
+          values.push(rawCellToEditText(col ? activeRaw?.rows?.[ri]?.cells?.[col.key] : undefined));
+        }
+        lines.push(values.join('\t'));
       }
-      lines.push(values.join('\t'));
-    }
-    e.clipboardData.setData('text/plain', lines.join('\n'));
-    e.preventDefault();
-  }, [activeRaw, selectionRange]);
+      e.clipboardData.setData('text/plain', lines.join('\n'));
+      e.preventDefault();
+    },
+    [activeRaw, selectionRange]
+  );
 
   const fillDown = useCallback(() => {
     if (!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart || !activeRaw) return;
@@ -401,7 +458,11 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         const delta = ri - selectionRange.rowStart;
         const after = { ...source };
         if (typeof after.formula === 'string') {
-          after.formula = after.formula.replace(/(\$?[A-Z]+)(\$?)(\d+)/g, (_match, letters: string, absoluteRow: string, row: string) => `${letters}${absoluteRow}${absoluteRow ? row : Number(row) + delta}`);
+          after.formula = after.formula.replace(
+            /(\$?[A-Z]+)(\$?)(\d+)/g,
+            (_match, letters: string, absoluteRow: string, row: string) =>
+              `${letters}${absoluteRow}${absoluteRow ? row : Number(row) + delta}`
+          );
         }
         changes.push({ rowIndex: ri, colIndex: ci, before: { ...before }, after });
       }
@@ -412,25 +473,39 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     applyChanges(changes, 'after');
   }, [activeRaw, applyChanges, selectionRange]);
 
-  const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (!selected || editingValue !== null || !activeRaw?.columns?.length) return;
-    const matrix = e.clipboardData.getData('text/plain').replace(/\r/g, '').split('\n').map((line) => line.split('\t'));
-    const changes: CellChange[] = [];
-    matrix.forEach((values, rowOffset) => values.forEach((raw, colOffset) => {
-      const rowIndex = selected.rowIndex + rowOffset;
-      const colIndex = selected.colIndex + colOffset;
-      const col = activeRaw.columns?.[colIndex];
-      const row = activeRaw.rows?.[rowIndex];
-      if (!col || !row) return;
-      const before = row.cells?.[col.key] ?? {};
-      changes.push({ rowIndex, colIndex, before: { ...before }, after: { ...before, ...parseCellInput(raw) } });
-    }));
-    if (!changes.length) return;
-    undoStackRef.current.push(changes);
-    redoStackRef.current = [];
-    applyChanges(changes, 'after');
-    e.preventDefault();
-  }, [activeRaw, applyChanges, editingValue, selected]);
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      if (!selected || editingValue !== null || !activeRaw?.columns?.length) return;
+      const matrix = e.clipboardData
+        .getData('text/plain')
+        .replace(/\r/g, '')
+        .split('\n')
+        .map((line) => line.split('\t'));
+      const changes: CellChange[] = [];
+      matrix.forEach((values, rowOffset) =>
+        values.forEach((raw, colOffset) => {
+          const rowIndex = selected.rowIndex + rowOffset;
+          const colIndex = selected.colIndex + colOffset;
+          const col = activeRaw.columns?.[colIndex];
+          const row = activeRaw.rows?.[rowIndex];
+          if (!col || !row) return;
+          const before = row.cells?.[col.key] ?? {};
+          changes.push({
+            rowIndex,
+            colIndex,
+            before: { ...before },
+            after: { ...before, ...parseCellInput(raw) },
+          });
+        })
+      );
+      if (!changes.length) return;
+      undoStackRef.current.push(changes);
+      redoStackRef.current = [];
+      applyChanges(changes, 'after');
+      e.preventDefault();
+    },
+    [activeRaw, applyChanges, editingValue, selected]
+  );
 
   const handleContainerKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -534,47 +609,593 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
   return (
     <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
-      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised" role="toolbar" aria-label={t('kimi.excele.structureToolbar', 'Workbook editing tools')}>
-        <label className="sr-only" htmlFor={`workbook-sheet-${workbookId}`}>{t('kimi.excele.activeSheet', 'Active sheet')}</label>
-        <select id={`workbook-sheet-${workbookId}`} value={workingSheetIndex} onChange={(e) => { setWorkingSheetIndex(Number(e.target.value)); setSelected(null); }} className="h-8 max-w-44 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text">
-          {localSheets.map((sheet, index) => <option key={`${sheet.name}-${index}`} value={index}>{sheet.name || `Sheet ${index + 1}`}</option>)}
+      <div
+        className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised"
+        role="toolbar"
+        aria-label={t('kimi.excele.structureToolbar', 'Workbook editing tools')}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue('');
+            setDialogMode('renameWorkbook');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+        >
+          {t('kimi.excele.renameWorkbook', 'Rename workbook')}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue('');
+            setDialogValue2('');
+            setDialogMode('findReplace');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.findReplace', 'Find and replace')}
+        >
+          <Search size={14} />
+        </button>
+        <label className="sr-only" htmlFor={`workbook-sheet-${workbookId}`}>
+          {t('kimi.excele.activeSheet', 'Active sheet')}
+        </label>
+        <select
+          id={`workbook-sheet-${workbookId}`}
+          value={workingSheetIndex}
+          onChange={(e) => {
+            setWorkingSheetIndex(Number(e.target.value));
+            setSelected(null);
+          }}
+          className="h-8 max-w-44 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+        >
+          {localSheets.map((sheet, index) => (
+            <option key={`${sheet.name}-${index}`} value={index}>
+              {sheet.name || `Sheet ${index + 1}`}
+            </option>
+          ))}
         </select>
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'addSheet', name: `Sheet ${localSheets.length + 1}` })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs" aria-label={t('kimi.excele.addSheet', 'Add sheet')}><Plus size={14} /></button>
-        <button type="button" onClick={() => { setDialogValue(activeRaw?.name || ''); setDialogMode('rename'); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs">{t('kimi.excele.rename', 'Rename')}</button>
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'duplicateSheet', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.duplicateSheet', 'Duplicate sheet')}><Copy size={14} /></button>
-        <button type="button" disabled={localSheets.length <= 1} onClick={() => setDialogMode('delete')} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}><Trash2 size={14} /></button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({ type: 'addSheet', name: `Sheet ${localSheets.length + 1}` })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+          aria-label={t('kimi.excele.addSheet', 'Add sheet')}
+        >
+          <Plus size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue(activeRaw?.name || '');
+            setDialogMode('rename');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+        >
+          {t('kimi.excele.rename', 'Rename')}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({ type: 'duplicateSheet', sheetIndex: workingSheetIndex })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.duplicateSheet', 'Duplicate sheet')}
+        >
+          <Copy size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={localSheets.length <= 1}
+          onClick={() => setDialogMode('delete')}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}
+        >
+          <Trash2 size={14} />
+        </button>
         <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'insertRow', sheetIndex: workingSheetIndex, rowIndex: selected?.rowIndex ?? activeRaw.rows?.length ?? 0 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.insertRow', 'Insert row')}><Rows3 size={14} /><Plus size={9} className="inline" /></button>
-        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'deleteRow', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteRow', 'Delete selected row')}><Rows3 size={14} /><Trash2 size={9} className="inline" /></button>
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'insertColumn', sheetIndex: workingSheetIndex, colIndex: selected?.colIndex ?? activeRaw.columns?.length ?? 0, header: t('kimi.excele.newColumn', 'New column') })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.insertColumn', 'Insert column')}><Columns3 size={14} /><Plus size={9} className="inline" /></button>
-        <button type="button" disabled={!selected || (activeRaw.columns?.length ?? 0) <= 1} onClick={() => selected && void runSchemaCommand({ type: 'deleteColumn', sheetIndex: workingSheetIndex, colIndex: selected.colIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteColumn', 'Delete selected column')}><Columns3 size={14} /><Trash2 size={9} className="inline" /></button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'insertRow',
+              sheetIndex: workingSheetIndex,
+              rowIndex: selected?.rowIndex ?? activeRaw.rows?.length ?? 0,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.insertRow', 'Insert row')}
+        >
+          <Rows3 size={14} />
+          <Plus size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'deleteRow',
+              sheetIndex: workingSheetIndex,
+              rowIndex: selected.rowIndex,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteRow', 'Delete selected row')}
+        >
+          <Rows3 size={14} />
+          <Trash2 size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'insertColumn',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected?.colIndex ?? activeRaw.columns?.length ?? 0,
+              header: t('kimi.excele.newColumn', 'New column'),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.insertColumn', 'Insert column')}
+        >
+          <Columns3 size={14} />
+          <Plus size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected || (activeRaw.columns?.length ?? 0) <= 1}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'deleteColumn',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteColumn', 'Delete selected column')}
+        >
+          <Columns3 size={14} />
+          <Trash2 size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            setDialogValue(String(activeRaw.columns?.[selected?.colIndex || 0]?.width || 16));
+            setDialogValue2(String(activeRaw.rows?.[selected?.rowIndex || 0]?.height || 20));
+            setDialogMode('resize');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.resize', 'Resize selected row and column')}
+        >
+          <Ruler size={14} />
+        </button>
         <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
-        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'formatCells', sheetIndex: workingSheetIndex, rowIndexes: [selected.rowIndex], colIndexes: [selected.colIndex], style: { bold: !Boolean(activeRaw.rows?.[selected.rowIndex]?.cells?.[activeRaw.columns?.[selected.colIndex]?.key || '']?.style?.bold) } })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.bold', 'Toggle bold')}><Bold size={14} /></button>
-        <select aria-label={t('kimi.excele.numberFormat', 'Number format')} disabled={!selected} defaultValue="" onChange={(e) => { if (selected && e.target.value) void runSchemaCommand({ type: 'formatCells', sheetIndex: workingSheetIndex, rowIndexes: [selected.rowIndex], colIndexes: [selected.colIndex], style: { numberFormat: e.target.value } }); e.target.value = ''; }} className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40">
-          <option value="">{t('kimi.excele.format', 'Format')}</option><option value="# ##0.00">Number</option><option value="# ##0.00 [$EUR]">EUR</option><option value="0.0%">%</option><option value="yyyy-mm-dd">Date</option>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: {
+                bold: !Boolean(
+                  activeRaw.rows?.[selected.rowIndex]?.cells?.[
+                    activeRaw.columns?.[selected.colIndex]?.key || ''
+                  ]?.style?.bold
+                ),
+              },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.bold', 'Toggle bold')}
+        >
+          <Bold size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { italic: true },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.italic', 'Toggle italic')}
+        >
+          <Italic size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { underline: true },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.underline', 'Toggle underline')}
+        >
+          <Underline size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { bgColor: 'FFF2CC' },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.fillColor', 'Apply highlight fill')}
+        >
+          <PaintBucket size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { wrapText: true, border: 'thin' },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.wrapBorder', 'Wrap text and apply border')}
+        >
+          <WrapText size={14} />
+        </button>
+        <select
+          aria-label={t('kimi.excele.alignment', 'Text alignment')}
+          disabled={!selected}
+          defaultValue=""
+          onChange={(e) => {
+            if (selected && e.target.value)
+              void runSchemaCommand({
+                type: 'formatCells',
+                sheetIndex: workingSheetIndex,
+                rowIndexes: [selected.rowIndex],
+                colIndexes: [selected.colIndex],
+                style: { alignment: e.target.value },
+              });
+            e.target.value = '';
+          }}
+          className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40"
+        >
+          <option value="">{t('kimi.excele.align', 'Align')}</option>
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </select>
+        <select
+          aria-label={t('kimi.excele.numberFormat', 'Number format')}
+          disabled={!selected}
+          defaultValue=""
+          onChange={(e) => {
+            if (selected && e.target.value)
+              void runSchemaCommand({
+                type: 'formatCells',
+                sheetIndex: workingSheetIndex,
+                rowIndexes: [selected.rowIndex],
+                colIndexes: [selected.colIndex],
+                style: { numberFormat: e.target.value },
+              });
+            e.target.value = '';
+          }}
+          className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40"
+        >
+          <option value="">{t('kimi.excele.format', 'Format')}</option>
+          <option value="# ##0.00">Number</option>
+          <option value="# ##0.00 [$EUR]">EUR</option>
+          <option value="0.0%">%</option>
+          <option value="yyyy-mm-dd">Date</option>
         </select>
         <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
-        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'sortRows', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, direction: 'asc' })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.sortAsc', 'Sort ascending')}><ArrowDownAZ size={14} /></button>
-        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'sortRows', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, direction: 'desc' })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.sortDesc', 'Sort descending')}><ArrowUpAZ size={14} /></button>
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'setAutoFilter', sheetIndex: workingSheetIndex, enabled: !Boolean((activeRaw as any).autoFilter) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')} aria-pressed={Boolean((activeRaw as any).autoFilter)}><Filter size={14} /></button>
-        <button type="button" onClick={() => void runSchemaCommand({ type: 'setFreeze', sheetIndex: workingSheetIndex, freezeRow: (activeRaw as any).freezeRow ? 0 : 1, freezeCol: Number((activeRaw as any).freezeCol || 0) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')} aria-pressed={Boolean((activeRaw as any).freezeRow)}><Snowflake size={14} /></button>
-        <button type="button" disabled={!selected} onClick={() => { setDialogValue('Yes,No'); setDialogMode('validation'); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.validation', 'Set dropdown validation')}><ListChecks size={14} /></button>
-        <button type="button" disabled={!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart} onClick={fillDown} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.fillDown', 'Fill selected range down')}><ChevronsDown size={14} /></button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'sortRows',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+              direction: 'asc',
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.sortAsc', 'Sort ascending')}
+        >
+          <ArrowDownAZ size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'sortRows',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+              direction: 'desc',
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.sortDesc', 'Sort descending')}
+        >
+          <ArrowUpAZ size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'setAutoFilter',
+              sheetIndex: workingSheetIndex,
+              enabled: !Boolean((activeRaw as any).autoFilter),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')}
+          aria-pressed={Boolean((activeRaw as any).autoFilter)}
+        >
+          <Filter size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'setFreeze',
+              sheetIndex: workingSheetIndex,
+              freezeRow: (activeRaw as any).freezeRow ? 0 : 1,
+              freezeCol: Number((activeRaw as any).freezeCol || 0),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')}
+          aria-pressed={Boolean((activeRaw as any).freezeRow)}
+        >
+          <Snowflake size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            setDialogValue('Yes,No');
+            setDialogMode('validation');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.validation', 'Set dropdown validation')}
+        >
+          <ListChecks size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            const col = selected ? activeRaw.columns?.[selected.colIndex] : null;
+            setDialogValue(
+              col && selected
+                ? String(activeRaw.rows?.[selected.rowIndex]?.cells?.[col.key]?.comment || '')
+                : ''
+            );
+            setDialogMode('comment');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.comment', 'Add or edit comment')}
+        >
+          <MessageSquare size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart}
+          onClick={fillDown}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.fillDown', 'Fill selected range down')}
+        >
+          <ChevronsDown size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setDialogMode('help')}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.shortcutHelp', 'Keyboard shortcuts')}
+        >
+          <HelpCircle size={14} />
+        </button>
       </div>
       {dialogMode && (
-        <div role="dialog" aria-modal="true" aria-labelledby="workbook-command-title" className="border-b border-c-border-subtle bg-c-surface px-4 py-3">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="workbook-command-title"
+          className="border-b border-c-border-subtle bg-c-surface px-4 py-3"
+        >
           <h3 id="workbook-command-title" className="text-sm font-semibold text-c-text">
-            {dialogMode === 'rename' ? t('kimi.excele.renameSheet', 'Rename sheet') : dialogMode === 'delete' ? t('kimi.excele.deleteSheet', 'Delete sheet') : t('kimi.excele.validation', 'Set dropdown validation')}
+            {dialogMode === 'rename'
+              ? t('kimi.excele.renameSheet', 'Rename sheet')
+              : dialogMode === 'renameWorkbook'
+                ? t('kimi.excele.renameWorkbook', 'Rename workbook')
+                : dialogMode === 'delete'
+                  ? t('kimi.excele.deleteSheet', 'Delete sheet')
+                  : dialogMode === 'findReplace'
+                    ? t('kimi.excele.findReplace', 'Find and replace')
+                    : dialogMode === 'resize'
+                      ? t('kimi.excele.resize', 'Resize selected row and column')
+                      : dialogMode === 'comment'
+                        ? t('kimi.excele.comment', 'Add or edit comment')
+                        : dialogMode === 'help'
+                          ? t('kimi.excele.shortcutHelp', 'Keyboard shortcuts')
+                          : t('kimi.excele.validation', 'Set dropdown validation')}
           </h3>
-          {dialogMode === 'delete' ? <p className="mt-1 text-xs text-c-text-secondary">{t('kimi.excele.deleteSheetConfirm', 'Delete this sheet? This action can be restored from version history.')}</p> : (
+          {dialogMode === 'help' ? (
+            <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-c-text-secondary">
+              <li>Enter / F2 — Edit cell</li>
+              <li>Esc — Cancel edit</li>
+              <li>Arrow keys — Move selection</li>
+              <li>Shift+click — Select range</li>
+              <li>Cmd/Ctrl+C — Copy</li>
+              <li>Cmd/Ctrl+V — Paste</li>
+              <li>Cmd/Ctrl+Z — Undo</li>
+              <li>Cmd/Ctrl+Y — Redo</li>
+              <li>Delete — Clear cell</li>
+              <li>Tab — Save and move right</li>
+            </ul>
+          ) : dialogMode === 'delete' ? (
+            <p className="mt-1 text-xs text-c-text-secondary">
+              {t(
+                'kimi.excele.deleteSheetConfirm',
+                'Delete this sheet? This action can be restored from version history.'
+              )}
+            </p>
+          ) : (
             <label className="mt-2 block text-xs text-c-text-secondary">
-              {dialogMode === 'rename' ? t('kimi.excele.sheetName', 'Sheet name') : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')}
-              <input autoFocus value={dialogValue} onChange={(e) => setDialogValue(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') setDialogMode(null); }} className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus" />
+              {dialogMode === 'rename'
+                ? t('kimi.excele.sheetName', 'Sheet name')
+                : dialogMode === 'renameWorkbook'
+                  ? t('kimi.excele.workbookName', 'Workbook name')
+                  : dialogMode === 'findReplace'
+                    ? t('kimi.excele.find', 'Find')
+                    : dialogMode === 'resize'
+                      ? t('kimi.excele.columnWidth', 'Column width')
+                      : dialogMode === 'comment'
+                        ? t('kimi.excele.commentText', 'Comment')
+                        : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')}
+              <input
+                autoFocus
+                aria-label={
+                  dialogMode === 'rename'
+                    ? t('kimi.excele.sheetName', 'Sheet name')
+                    : dialogMode === 'renameWorkbook'
+                      ? t('kimi.excele.workbookName', 'Workbook name')
+                      : dialogMode === 'findReplace'
+                        ? t('kimi.excele.find', 'Find')
+                        : dialogMode === 'resize'
+                          ? t('kimi.excele.columnWidth', 'Column width')
+                          : dialogMode === 'comment'
+                            ? t('kimi.excele.commentText', 'Comment')
+                            : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')
+                }
+                value={dialogValue}
+                onChange={(e) => setDialogValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setDialogMode(null);
+                }}
+                className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              />
+              {(dialogMode === 'findReplace' || dialogMode === 'resize') && (
+                <>
+                  <span className="mt-2 block">
+                    {dialogMode === 'findReplace'
+                      ? t('kimi.excele.replaceWith', 'Replace with')
+                      : t('kimi.excele.rowHeight', 'Row height')}
+                  </span>
+                  <input
+                    aria-label={
+                      dialogMode === 'findReplace'
+                        ? t('kimi.excele.replaceWith', 'Replace with')
+                        : t('kimi.excele.rowHeight', 'Row height')
+                    }
+                    value={dialogValue2}
+                    onChange={(e) => setDialogValue2(e.target.value)}
+                    className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  />
+                </>
+              )}
             </label>
           )}
           <div className="mt-3 flex justify-end gap-2">
-            <button type="button" onClick={() => setDialogMode(null)} className="h-8 rounded-hig-xs px-3 text-xs hover:bg-c-border-subtle">{t('common.cancel', 'Cancel')}</button>
-            <button type="button" disabled={dialogMode !== 'delete' && !dialogValue.trim()} onClick={() => { if (dialogMode === 'rename') void runSchemaCommand({ type: 'renameSheet', sheetIndex: workingSheetIndex, name: dialogValue.trim() }); else if (dialogMode === 'delete') void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex }); else if (dialogMode === 'validation' && selected) void runSchemaCommand({ type: 'setValidation', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, colIndex: selected.colIndex, validation: { type: 'list', values: dialogValue.split(',').map((v) => v.trim()).filter(Boolean) } }); setDialogMode(null); }} className="h-8 rounded-hig-xs bg-c-primary px-3 text-xs font-medium text-white disabled:opacity-40">{dialogMode === 'delete' ? t('common.delete', 'Delete') : t('common.save', 'Save')}</button>
+            <button
+              type="button"
+              onClick={() => setDialogMode(null)}
+              className="h-8 rounded-hig-xs px-3 text-xs hover:bg-c-border-subtle"
+            >
+              {t('common.cancel', 'Cancel')}
+            </button>
+            {dialogMode !== 'help' && (
+              <button
+                type="button"
+                disabled={
+                  dialogMode !== 'delete' && dialogMode !== 'comment' && !dialogValue.trim()
+                }
+                onClick={() => {
+                  if (dialogMode === 'rename')
+                    void runSchemaCommand({
+                      type: 'renameSheet',
+                      sheetIndex: workingSheetIndex,
+                      name: dialogValue.trim(),
+                    });
+                  else if (dialogMode === 'renameWorkbook')
+                    void runSchemaCommand({ type: 'renameWorkbook', title: dialogValue.trim() });
+                  else if (dialogMode === 'delete')
+                    void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex });
+                  else if (dialogMode === 'validation' && selected)
+                    void runSchemaCommand({
+                      type: 'setValidation',
+                      sheetIndex: workingSheetIndex,
+                      rowIndex: selected.rowIndex,
+                      colIndex: selected.colIndex,
+                      validation: {
+                        type: 'list',
+                        values: dialogValue
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter(Boolean),
+                      },
+                    });
+                  else if (dialogMode === 'findReplace')
+                    void runSchemaCommand({
+                      type: 'findReplace',
+                      find: dialogValue,
+                      replacement: dialogValue2,
+                    });
+                  else if (dialogMode === 'resize' && selected) {
+                    void runSchemaCommand({
+                      type: 'resizeRowAndColumn',
+                      sheetIndex: workingSheetIndex,
+                      colIndex: selected.colIndex,
+                      rowIndex: selected.rowIndex,
+                      width: Number(dialogValue),
+                      height: Number(dialogValue2),
+                    });
+                  } else if (dialogMode === 'comment' && selected)
+                    void runSchemaCommand({
+                      type: 'setComment',
+                      sheetIndex: workingSheetIndex,
+                      rowIndex: selected.rowIndex,
+                      colIndex: selected.colIndex,
+                      comment: dialogValue,
+                    });
+                  setDialogMode(null);
+                }}
+                className="h-8 rounded-hig-xs bg-c-primary px-3 text-xs font-medium text-white disabled:opacity-40"
+              >
+                {dialogMode === 'delete' ? t('common.delete', 'Delete') : t('common.save', 'Save')}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -622,8 +1243,18 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           {saveState === 'error' && (
             <>
               <AlertTriangle size={11} className="text-c-danger" />
-              <span title={saveError || undefined}>{saveError || t('kimi.excele.saveFailed', 'Błąd zapisu')}</span>
-              {lastSchemaCommandRef.current && <button type="button" onClick={() => void runSchemaCommand(lastSchemaCommandRef.current!)} className="underline font-medium">{t('kimi.excele.retry', 'Retry')}</button>}
+              <span title={saveError || undefined}>
+                {saveError || t('kimi.excele.saveFailed', 'Błąd zapisu')}
+              </span>
+              {lastSchemaCommandRef.current && (
+                <button
+                  type="button"
+                  onClick={() => void runSchemaCommand(lastSchemaCommandRef.current!)}
+                  className="underline font-medium"
+                >
+                  {t('kimi.excele.retry', 'Retry')}
+                </button>
+              )}
             </>
           )}
         </span>
@@ -632,6 +1263,10 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       <div
         data-testid="editable-spreadsheet-grid"
         ref={containerRef}
+        role="grid"
+        aria-label={t('kimi.excele.grid', 'Editable spreadsheet grid')}
+        aria-rowcount={(activeRaw.rows?.length ?? 0) + 1}
+        aria-colcount={columns.length}
         className="overflow-x-auto max-h-[520px] overflow-y-auto focus:outline-none"
         onKeyDown={handleContainerKeyDown}
         onCopy={handleCopy}
@@ -639,7 +1274,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         tabIndex={0}
       >
         {/* prettier-ignore */}
-        <table className="w-full text-xs" /* §27-exempt: edytor komorkowy/arkusz, edycja cell-by-cell — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
+        <table role="presentation" className="w-full text-xs" /* §27-exempt: edytor komorkowy/arkusz, edycja cell-by-cell — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
           <thead className="sticky top-0 z-10">
             <tr className="bg-c-surface-raised">
               {columns.map((col, ci) => (
@@ -666,6 +1301,11 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                   );
                   return (
                     <td
+                      role="gridcell"
+                      aria-rowindex={ri + 2}
+                      aria-colindex={ci + 1}
+                      aria-selected={selectionRange ? ri >= selectionRange.rowStart && ri <= selectionRange.rowEnd && ci >= selectionRange.colStart && ci <= selectionRange.colEnd : false}
+                      aria-label={`${colIndexToLetter(ci)}${excelRowForDataRowIndex(ri)} ${formatComputedForDisplay(cell)}`}
                       data-testid={`workbook-cell-${ri}-${col.key}`}
                       key={`${col.key}-${ci}`}
                       onClick={(event) => {
