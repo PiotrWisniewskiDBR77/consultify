@@ -660,7 +660,9 @@ export const PrezentacjeView: React.FC = () => {
 
   const effectivePreview = pipeline.preview || reopenPreview;
   const effectiveDeckId =
-    pipeline.currentRun?.materializationOrigin?.originRecordId || reopenDeckId;
+    (effectivePreview?.type === 'deck' ? effectivePreview.deckId : undefined) ||
+    pipeline.currentRun?.materializationOrigin?.originRecordId ||
+    reopenDeckId;
   const effectiveCompleted = pipeline.isCompleted || (!!reopenPreview && !pipeline.currentRun);
 
   const ensureExportAllowed = useCallback(
