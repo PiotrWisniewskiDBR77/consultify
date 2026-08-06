@@ -28,6 +28,11 @@ interface StoredArtifact {
 
 const store = new Map<string, StoredArtifact>();
 let seq = 0;
+const generateChatResponseMock = vi.fn();
+
+vi.mock('../../aiService.js', () => ({
+  generateChatResponse: (...args: unknown[]) => generateChatResponseMock(...args),
+}));
 
 vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
   createWave5Artifact: vi.fn(
@@ -81,6 +86,7 @@ describe('Document Studio generate -> export happy path', () => {
     store.clear();
     seq = 0;
     markExported.mockClear();
+    generateChatResponseMock.mockReset();
   });
 
   it('materializes a deterministic artifact and exports it to PDF + DOCX', async () => {
@@ -137,5 +143,64 @@ describe('Document Studio generate -> export happy path', () => {
     });
     const crossTenant = await getDocumentArtifact(run.artifactId, 'org-2');
     expect(crossTenant).toBeNull();
+  });
+
+  it('DELTA: final persisted schema removes post-premium unsupported claims and recomputes assumptions', async () => {
+    generateChatResponseMock.mockImplementation(async (request: any) => {
+      const prompt = String(request?.messages?.[0]?.content ?? '');
+      const ids = [...prompt.matchAll(/"blockId":\s*"([^"]+)"/g)].map((match) => match[1]);
+      return {
+        content: JSON.stringify({
+          blocks: ids.map((blockId) => ({
+            blockId,
+            text: 'DACH: 8 inicjatyw w horyzoncie 6-9 miesięcy; wynik 85%.',
+            items: ['DACH', '8 inicjatyw', 'Horyzont 6-9 miesięcy', 'Wynik 85%'],
+          })),
+        }),
+      };
+    });
+
+    const run = await materializeDocumentArtifact({
+      organizationId: 'org-delta',
+      userId: 'user-delta',
+      intake: {
+        title: 'Raport DELTA',
+        description:
+          'Polski raport zarządu DELTA. Jedyne dozwolone liczby: 72%, 1,4 mln EUR oraz 18/21.',
+        documentType: 'board_report',
+        language: 'pl',
+        goal: 'inform',
+        audience: ['Zarząd'],
+      },
+      outline: {
+        documentType: 'board_report',
+        title: 'Raport DELTA',
+        recommendedDensity: 'concise',
+        recommendedRegister: 'executive',
+        recommendedLanguageStyle: 'consulting',
+        sections: [
+          {
+            title: 'Podsumowanie',
+            level: 1,
+            purpose: 'Podsumowanie dla zarządu',
+            expectedLengthHint: 'short',
+          },
+        ],
+      },
+      useLlm: true,
+    });
+
+    const persisted = store.get(`org-delta::${run.artifactId}`)?.content_json as
+      import('../documentStudioTypes.js').DocumentSchema | undefined;
+    expect(persisted).toBeDefined();
+    const serialized = JSON.stringify(persisted);
+    expect(serialized).not.toMatch(/DACH|8 inicjatyw|6-9|85%/);
+    expect(serialized).toContain('niepoparte twierdzenie');
+    const assumptions = persisted!.sections
+      .flatMap((section) => section.blocks)
+      .filter((block) => block.isAssumption === true);
+    expect(assumptions.length).toBeGreaterThan(0);
+    expect(persisted!.evidence?.risks.join(' ')).toMatch(/bloków oznaczonych jako założenie/);
+    expect(persisted!.evidence?.confidence).not.toBe('high');
   });
 });

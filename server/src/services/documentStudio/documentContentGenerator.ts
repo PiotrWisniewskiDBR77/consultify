@@ -20,7 +20,11 @@ import {
   type EvidenceContract,
   type EvidenceContractSource,
 } from '../evidence/evidenceContract.js';
-import type { ContentBlock, ContentBlockType } from './documentBlockContentGenerator.js';
+import {
+  enforceBlockGrounding,
+  type ContentBlock,
+  type ContentBlockType,
+} from './documentBlockContentGenerator.js';
 import type {
   DocumentBlock,
   DocumentBlockType,
@@ -79,6 +83,57 @@ export function buildDocumentEvidenceContract(
   });
 
   return { sources, assumptions: [], risks, confidence, toVerify };
+}
+
+/**
+ * Final, deterministic safety boundary for the complete generation pipeline.
+ * This runs after every LLM enrichment layer, guards metadata rendered outside
+ * block content (section titles/purposes), preserves prior assumption flags,
+ * and always recomputes EvidenceContract from the final schema.
+ */
+export function enforceDocumentSchemaGrounding(
+  schema: DocumentSchema,
+  groundingSource: string
+): DocumentSchema {
+  const next = JSON.parse(JSON.stringify(schema)) as DocumentSchema;
+  const language = next.language;
+  const removed =
+    language === 'pl'
+      ? 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).'
+      : 'Content removed — unsupported claim (assumption to verify).';
+
+  const guardText = (text: string): { text: string; changed: boolean } => {
+    const guarded = enforceBlockGrounding({ text }, groundingSource);
+    return {
+      text: typeof guarded.content.text === 'string' ? guarded.content.text : removed,
+      changed: guarded.changed,
+    };
+  };
+
+  const guardedTitle = guardText(next.title);
+  if (guardedTitle.changed) next.title = removed;
+
+  for (const section of next.sections) {
+    const title = guardText(section.title);
+    if (title.changed) section.title = removed;
+    if (section.purpose) {
+      const purpose = guardText(section.purpose);
+      if (purpose.changed) section.purpose = removed;
+    }
+    for (const block of section.blocks) {
+      const guarded = enforceBlockGrounding(
+        block.content && typeof block.content === 'object'
+          ? (block.content as Record<string, unknown>)
+          : { text: String(block.content ?? '') },
+        groundingSource
+      );
+      block.content = guarded.content;
+      block.isAssumption = block.isAssumption === true || guarded.changed || title.changed;
+    }
+  }
+
+  next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
+  return next;
 }
 
 interface BuildSchemaInput {

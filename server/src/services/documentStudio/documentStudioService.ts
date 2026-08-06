@@ -62,7 +62,11 @@ import {
   ensureContentBlockRegistryHydrated,
   instantiateDocumentContentBlock,
 } from './documentContentBlockService.js';
-import { buildDocumentSchema, buildDocumentSchemaPremium } from './documentContentGenerator.js';
+import {
+  buildDocumentSchema,
+  buildDocumentSchemaPremium,
+  enforceDocumentSchemaGrounding,
+} from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import {
@@ -661,6 +665,14 @@ export async function materializeDocumentArtifact(
       warnings: warningsCollector,
     });
   }
+
+  // FINAL grounding boundary. Must remain after every content/prose LLM layer:
+  // earlier guards can otherwise be overwritten by D11 prose enrichment. This
+  // also recomputes EvidenceContract from the exact schema being persisted.
+  provisionalSchema = enforceDocumentSchemaGrounding(
+    provisionalSchema,
+    [params.intake.title, params.intake.description].filter(Boolean).join(' — ')
+  );
 
   const generationWarnings = warningsCollector.list();
 
