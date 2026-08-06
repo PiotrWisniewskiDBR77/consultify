@@ -57,6 +57,14 @@ export function buildDocumentEvidenceContract(
 
   const allBlocks = sections.flatMap((s) => s.blocks);
   const assumptionBlocks = allBlocks.filter((b) => b.isAssumption === true);
+  const assumptions = sections.flatMap((section) =>
+    section.blocks
+      .filter((block) => block.isAssumption === true)
+      .map(
+        (block) =>
+          `Sekcja "${section.title}", blok ${block.blockId}: treść oznaczona jako założenie do weryfikacji.`
+      )
+  );
 
   const risks: string[] = [];
   if (assumptionBlocks.length > 0) {
@@ -82,7 +90,7 @@ export function buildDocumentEvidenceContract(
     unresolvedGaps: assumptionBlocks.length,
   });
 
-  return { sources, assumptions: [], risks, confidence, toVerify };
+  return { sources, assumptions, risks, confidence, toVerify };
 }
 
 /**

@@ -222,6 +222,7 @@ describe('Document Studio generate -> export happy path', () => {
       .filter((block) => block.isAssumption === true);
     expect(assumptions.length).toBeGreaterThan(0);
     expect(persisted!.evidence?.risks.join(' ')).toMatch(/bloków oznaczonych jako założenie/);
+    expect(persisted!.evidence?.assumptions.length).toBeGreaterThan(0);
     expect(persisted!.evidence?.confidence).not.toBe('high');
     const risk = persisted!.sections
       .flatMap((section) => section.blocks)
