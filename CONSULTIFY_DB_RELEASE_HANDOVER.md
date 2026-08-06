@@ -20,6 +20,8 @@ Nothing was cherry-picked, merged or deployed. The target worktree was inspected
 | 6 | `7106b2eb95` | docs — realDB CI measurement | 1 | +36 |
 | 7 | `52967aef30` | fix(document-studio) — source pack persists `ready` | 5 | +446 −113 |
 | 8 | `c3cb5e3faf` | test(fixtures) — two realDB fixtures repaired | 3 | +122 −11 |
+| 9 | `7159830f95` | docs — this handover | 1 | — |
+| 10 | `bacd413dd9` | test(fixtures) — third fixture stopped destroying the schema | 1 | +21 −1 |
 
 Thirteen files total. No file is touched by more than one functional commit except `documentSourcePackPersistence.pg.test.ts` (created in 7, cleanup added in 8).
 
@@ -36,11 +38,15 @@ Order matters in one place only: **8 must follow 7** (it amends a file 7 creates
 2. 3bf6a22e3b   # package.json script rename
 3. f743371c1e   # CI env vars
 4. d091f42266   # llm route guard + its test
-5. 52967aef30   # source pack persistence  ── must precede 8
-6. c3cb5e3faf   # fixture repairs          ── depends on 5
-7. 20398850fe   # docs
-8. 7106b2eb95   # docs
+5. 52967aef30   # source pack persistence   ── must precede 6
+6. c3cb5e3faf   # fixture repairs (two)     ── depends on 5
+7. bacd413dd9   # fixture repair (third)    ── independent, but see note
+8. 20398850fe   # docs
+9. 7106b2eb95   # docs
+10. 7159830f95  # docs (this handover)
 ```
+
+**Do not skip step 7.** It is independent of the others in file terms, but it is the one that stops the suite destroying its own database mid-run. Taking 6 without 7 reproduces measurement B: the repaired fixtures pass alone and still fail in the full suite, because a sibling removes `organizations` before they run.
 
 Rationale for putting `fa0dd9fec6` first: until it lands, a fresh database cannot be built at all, so nothing downstream can be verified on one.
 
@@ -126,7 +132,30 @@ No FK was disabled. No `DROP … CASCADE` was used. No lifecycle contract was ch
 
 ## 6. Full bounded realDB sample
 
-*(filled in below once the run completes — see the final report)*
+`server/src` — 555 test files, real PostgreSQL 17.9, schema built strictly (550/550), `--no-file-parallelism`.
+
+| Measurement | Files failed | Passed | Schema after the run |
+|---|---|---|---|
+| A — before any of this work | **33** | 520 | not measured |
+| B — after the persistence fix and the two named fixtures | **31** | 523 | **1292 tables — 3 destroyed** |
+| C — after the third fixture was found and fixed | **24** | 530 | **1295 tables — intact** |
+
+Measurement B is the interesting one: it looked like modest progress, but the run was **destroying the schema mid-flight**. `ini005-negative-controls.pg.test.ts` — a sibling of the fixture named in the brief, carrying the same unset `INI005_SHARED_DB` switch — reached `DROP TABLE … CASCADE` and removed `organizations`, `projects` and `initiative_history` outright. Every later file touching `organizations` then failed with `42P01`, including the `initiativeCapabilityMatrix` fixture that had just been repaired and passes standalone.
+
+Fixing that third fixture turned **eight further files green** without touching any of them:
+
+```
+kpiAttributionService.res011.pg          okrService.res009.pg
+evidenceEnvelopeService.res011.pg        resultsStrategicViewService.res011.pg
+initiativeCapabilityMatrix.pg            kpiDefinitionService.pg
+kpiDeviationService.res004.pg            kpiMeasurementWriterService.pg
+```
+
+**Net effect of this branch on the real-database suite: 33 → 24 failing files, 520 → 530 passing, and the schema survives the run.**
+
+One file, `m07-golden-flows.pg.test.ts`, appears in C but not in B. It is **not a regression from this branch**: it was already failing in measurement A, it touches none of the changed code, and it passes in isolation on a fresh database both with and without these changes. It is order/state-dependent — the same class of defect as the fixtures above, in a file outside this scope.
+
+The remaining 24 are pre-existing and unaddressed here.
 
 ---
 
