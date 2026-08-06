@@ -235,6 +235,73 @@ function titleFromUnifiedSlide(slide: UnifiedSlide): string {
   );
 }
 
+const CANONICAL_VIEWER_LAYOUTS: Record<string, string> = {
+  cover: 'cover-client-gradient',
+  executive_summary: 'executive-summary-three-column',
+  performance_overview: 'dashboard-kpi-strip',
+  initiative_portfolio: 'portfolio-table-client',
+  prioritization_matrix: 'impact-effort-matrix',
+  roadmap: 'governance-roadmap',
+  risk_management: 'raid-table',
+  next_steps: 'decision-and-next-steps',
+};
+
+const TECHNICAL_SOURCE_LINE = /^\s*(?:source|sources|źródło|źródła)\s*:\s*/i;
+
+function sourceNotes(refs: DeckSourceRef[]): string {
+  if (!refs.length) return '';
+  return `[Sources]\n${refs
+    .map(
+      (ref) =>
+        `- ${ref.artifact_name} (${ref.artifact_type}${ref.artifact_id ? `; ${ref.artifact_id}` : ''})`
+    )
+    .join('\n')}\n[/Sources]`;
+}
+
+/** Keep producer/process language off the canvas and provenance in notes. */
+export function normalizeAudienceFacingSlide(
+  slide: UnifiedSlide,
+  deckTitle: string,
+  refs: DeckSourceRef[]
+): UnifiedSlide {
+  const content = { ...((slide.content || {}) as Record<string, unknown>) };
+  let keyMessage = String(slide.key_message || '').trim();
+  const movedLines: string[] = [];
+  if (TECHNICAL_SOURCE_LINE.test(keyMessage)) {
+    movedLines.push(keyMessage);
+    keyMessage = '';
+  }
+  for (const key of ['subtitle', 'description']) {
+    const value = typeof content[key] === 'string' ? String(content[key]).trim() : '';
+    if (TECHNICAL_SOURCE_LINE.test(value)) {
+      movedLines.push(value);
+      delete content[key];
+    }
+  }
+  if (slide.intent === 'cover') {
+    const currentTitle = String(content.title || '').trim();
+    if (!currentTitle || /^(?:cover|title|okładka)$/i.test(currentTitle)) content.title = deckTitle;
+    if (!keyMessage) keyMessage = String(content.title || deckTitle);
+  }
+  const existingNotes =
+    typeof (slide as any).speaker_notes === 'string'
+      ? String((slide as any).speaker_notes).trim()
+      : '';
+  const notes = [
+    existingNotes,
+    movedLines.length ? `[Sources]\n${movedLines.join('\n')}\n[/Sources]` : '',
+    sourceNotes(refs),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  return {
+    ...slide,
+    key_message: keyMessage,
+    content: content as any,
+    ...(notes ? { speaker_notes: notes } : {}),
+  };
+}
+
 function blocksFromUnifiedSlide(
   deckId: string,
   cardId: string,
@@ -398,11 +465,12 @@ export function deckDocumentFromUnifiedJson(params: {
   const nowIso = new Date().toISOString();
   const setup = params.setup || {};
   const baseSourceRefs = sourceRefsFromUnknown(params.sourceRefs);
-  const cards = params.unifiedJson.slides.map((slide, index) => {
+  const cards = params.unifiedJson.slides.map((rawSlide, index) => {
     const slideRefs = uniqueSourceRefs([
       ...baseSourceRefs,
-      ...sourceRefsFromUnknown((slide as any).source_refs),
+      ...sourceRefsFromUnknown((rawSlide as any).source_refs),
     ]);
+    const slide = normalizeAudienceFacingSlide(rawSlide, params.title, slideRefs);
     const cardId =
       (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
     const blocks = blocksFromUnifiedSlide(params.deckId, cardId, slide, index, slideRefs);
@@ -420,14 +488,10 @@ export function deckDocumentFromUnifiedJson(params: {
       deck_id: params.deckId,
       order_index: index,
       intent: slide.intent,
-      layout_id:
-        slide.intent === 'cover'
-          ? 'cover_centered'
-          : slide.intent === 'performance_overview'
-            ? 'data_grid'
-            : slide.intent === 'initiative_portfolio'
-              ? 'table_full'
-              : 'content_full',
+      // Use the same semantic layout identity as the PPTX/master pipeline.
+      // applyBrandLayoutSystem may enrich this later, but chat/template/manual
+      // materializers already render professionally before that optional pass.
+      layout_id: CANONICAL_VIEWER_LAYOUTS[String(slide.intent)] || 'content_full',
       title: titleFromUnifiedSlide(slide),
       key_message: slide.key_message,
       blocks,
