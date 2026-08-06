@@ -238,6 +238,29 @@ describe('Document QA — Brand QA category', () => {
 });
 
 describe('Document QA — Language QA category', () => {
+  it('does not count exact safety placeholders in block or document density', () => {
+    const safetyText = 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).';
+    const schema = makeSchema({
+      language: 'pl',
+      documentType: 'generic_document',
+      sections: [
+        {
+          sectionId: 'safe',
+          orderIndex: 0,
+          level: 1,
+          title: 'Bezpieczna treść',
+          blocks: ['a', 'b', 'c', 'd', 'e'].map((blockId) => makeParagraph(blockId, safetyText)),
+          sourceRefs: [],
+        },
+      ],
+    });
+    const language = runDocumentQa(schema).categories.find(
+      (category) => category.category === 'language'
+    );
+    expect(language?.findings.filter((finding) => finding.code.includes('density'))).toEqual([]);
+    expect(language?.blocking).toBe(false);
+  });
+
   it('flags an English block inside a Polish document', () => {
     const schema = makeSchema({
       language: 'pl',

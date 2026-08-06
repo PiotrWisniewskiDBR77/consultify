@@ -325,4 +325,81 @@ describe('Document Studio generate -> export happy path', () => {
     );
     expect(languageQa?.blocking).toBe(false);
   });
+
+  it('SIGMA-2: materializes a useful grounded board report with assumptions and clean QA', async () => {
+    generateChatResponseMock.mockImplementation(async (request: any) => {
+      const prompt = String(request?.messages?.[0]?.content ?? '');
+      const targets = [
+        ...prompt.matchAll(/"blockId":\s*"([^"]+)"[\s\S]*?"kind":\s*"([^"]+)"/g),
+      ].map((match) => ({ blockId: match[1], kind: match[2] }));
+      return {
+        content: JSON.stringify({
+          blocks: targets.map(({ blockId, kind }) =>
+            kind === 'items'
+              ? { blockId, items: ['DACH', '8 inicjatyw', 'Miesięczne monitorowanie'] }
+              : {
+                  blockId,
+                  text: 'Budżet wykorzystany. Realizacja budżetu 72%. Finalizacja inicjatyw w DACH.',
+                }
+          ),
+        }),
+      };
+    });
+    const titles = [
+      'Executive Summary',
+      'Decisions Required',
+      'For Information',
+      'Portfolio Status',
+      'Financial Snapshot',
+      'Risks',
+      'Next Steps',
+    ];
+    const run = await materializeDocumentArtifact({
+      organizationId: 'org-sigma-2',
+      userId: 'user-sigma-2',
+      intake: {
+        title: 'Raport SIGMA-2',
+        description:
+          'Polski raport zarządu. Potwierdzone fakty: 72% realizacji planu, budżet programu 1,4 mln EUR oraz 18/21 ukończonych kamieni milowych.',
+        documentType: 'board_report',
+        language: 'pl',
+        goal: 'decide',
+        audience: ['Zarząd'],
+      },
+      outline: {
+        documentType: 'board_report',
+        title: 'Raport SIGMA-2',
+        recommendedDensity: 'standard',
+        recommendedRegister: 'executive',
+        recommendedLanguageStyle: 'consulting',
+        sections: titles.map((title) => ({
+          title,
+          level: 1 as const,
+          purpose: title,
+          expectedLengthHint: 'medium' as const,
+        })),
+      },
+      sourceRefs: [
+        { sourceType: 'intake', sourceId: 'sigma-2-brief', sourceTitle: 'Jawny brief SIGMA-2' },
+      ],
+      useLlm: true,
+    });
+    const persisted = store.get(`org-sigma-2::${run.artifactId}`)?.content_json as
+      import('../documentStudioTypes.js').DocumentSchema | undefined;
+    expect(persisted).toBeDefined();
+    const text = JSON.stringify(persisted);
+    expect(text).toContain('Realizacja planu wynosi 72%');
+    expect(text).toContain('1,4 mln EUR');
+    expect(text).toContain('18/21');
+    expect(text).not.toMatch(/DACH|8 inicjatyw|Realizacja budżetu 72%|Budżet wykorzystany/);
+    expect(
+      persisted!.sections.flatMap((section) => section.blocks).filter((block) => block.isAssumption)
+        .length
+    ).toBeGreaterThan(0);
+    const qa = runDocumentQa(persisted!);
+    expect(
+      qa.categories.filter((category) => category.blocking).map((category) => category.category)
+    ).toEqual([]);
+    expect(qa.anyBlocking).toBe(false);
+  });
 });

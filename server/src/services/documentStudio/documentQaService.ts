@@ -763,6 +763,13 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
 
   let editableBlockCount = 0;
   let totalWords = 0;
+  const isSafetyPlaceholder = (text: string): boolean => {
+    const normalized = text.trim();
+    return (
+      normalized === 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).' ||
+      normalized === 'Content removed — unsupported claim (assumption to verify).'
+    );
+  };
 
   for (const section of schema.sections) {
     for (const block of section.blocks) {
@@ -787,7 +794,8 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
       // Headings and explicit assumptions/removal placeholders are not prose
       // density samples. Counting them made a fully localized PL document
       // remain Language-blocking after fail-closed grounding (OMEGA).
-      const densityEligible = block.type !== 'heading' && block.isAssumption !== true;
+      const densityEligible =
+        block.type !== 'heading' && block.isAssumption !== true && !isSafetyPlaceholder(trimmed);
       if (!densityEligible) continue;
       editableBlockCount += 1;
       totalWords += words;
