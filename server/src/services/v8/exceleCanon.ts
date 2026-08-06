@@ -125,6 +125,11 @@ export const P23_ERROR_TAXONOMY = {
     userMessage: 'Export failed. You can retry — no ghost output was created.',
     recovery: ['retry'],
   },
+  persistence_failed: {
+    retryable: true,
+    userMessage: 'Workbook persistence failed. You can retry — no ghost output was created.',
+    recovery: ['retry'],
+  },
   access_denied: {
     retryable: false,
     userMessage: 'You do not have permission to perform this action. Contact your administrator.',

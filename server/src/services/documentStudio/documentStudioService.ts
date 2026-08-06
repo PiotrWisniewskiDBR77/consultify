@@ -1016,9 +1016,7 @@ export async function exportDocumentArtifact(
     let fabricationSample: string[] = [];
     try {
       const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-      const fab = detectDocumentFabrication(
-        schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
-      );
+      const fab = detectDocumentFabrication(schema);
       fabricationCount = fab.count;
       fabricationSample = fab.hits.slice(0, 5).map((h) => h.value);
     } catch (fabErr) {
@@ -2959,9 +2957,7 @@ export async function runQaForDocument(
   // detektora nigdy nie psuje raportu QA.
   try {
     const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-    const fab = detectDocumentFabrication(
-      schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
-    );
+    const fab = detectDocumentFabrication(schema);
     report.fabrication = {
       count: fab.count,
       sample: fab.hits.slice(0, 5).map((h) => h.value),
