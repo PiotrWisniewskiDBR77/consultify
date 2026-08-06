@@ -215,6 +215,13 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     expect(blocks.some((block) => JSON.stringify(block.content).includes('awaiting content'))).toBe(
       false
     );
+    const scenarioTable = blocks.find(
+      (block) => block.type === 'table' && JSON.stringify(block.content).includes('C — Big bang')
+    );
+    expect(scenarioTable).toBeDefined();
+    const scenarioRows = (scenarioTable!.content as { rows: string[][] }).rows;
+    expect(scenarioRows[2][1]).toBe('EUR 2.2m');
+    expect(scenarioRows[2][1]).not.toBe('EUR 0.9m');
     expect(runDocumentQa(result.schema).categories.filter((category) => category.blocking)).toEqual(
       []
     );

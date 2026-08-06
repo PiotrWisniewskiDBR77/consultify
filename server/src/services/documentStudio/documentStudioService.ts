@@ -569,6 +569,15 @@ function premiumBusinessCaseBlocks(
       .split(/(?<=[.!?])\s+/)
       .find((value) => pattern.test(value))
       ?.trim() ?? fallback;
+  const scenarioRow = (
+    label: string,
+    pattern: RegExp,
+    fallbackAssessment: string
+  ): [string, string, string] => {
+    const assessment = sentence(pattern, fallbackAssessment);
+    const amount = assessment.match(/(?:EUR|USD|GBP)\s*\d+(?:\.\d+)?m/iu)?.[0];
+    return [label, amount ?? 'Data required', assessment];
+  };
 
   sections.forEach((section, index) => {
     const blueprint = template.sectionBlueprint[index];
@@ -598,17 +607,21 @@ function premiumBusinessCaseBlocks(
         mk('table', {
           columns: ['Scenario', 'Investment', 'Assessment'],
           rows: [
-            ['A — Do minimum', currencies[0] ?? 'TBC', sentence(/Scenario A/i, 'Limited benefits')],
-            [
+            scenarioRow(
+              'A — Do minimum',
+              /Scenario A|Downside|Do Minimum|Defer/i,
+              'Assessment data required'
+            ),
+            scenarioRow(
               'B — Phased transformation',
-              currencies[1] ?? 'TBC',
-              sentence(/Scenario B/i, 'Recommended'),
-            ],
-            [
+              /Scenario B|Base Case|Phased|Pilot/i,
+              'Assessment data required'
+            ),
+            scenarioRow(
               'C — Big bang',
-              currencies[2] ?? 'TBC',
-              sentence(/Scenario C/i, 'Higher delivery risk'),
-            ],
+              /Scenario C|Upside|Big Bang|Scale/i,
+              'Assessment data required'
+            ),
           ],
         }),
         mk('callout', {

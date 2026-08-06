@@ -1835,6 +1835,45 @@ function runDataQa(schema: DocumentSchema): DocumentQaCategoryReport {
         }
         continue;
       }
+      if (String(block.type) === 'table') {
+        const content = block.content as { columns?: unknown[]; rows?: unknown[][] } | undefined;
+        const columns = Array.isArray(content?.columns)
+          ? content.columns.map((value) => String(value).toLowerCase())
+          : [];
+        const investmentIndex = columns.findIndex((value) => /investment|cost|budget/.test(value));
+        const assessmentIndex = columns.findIndex((value) =>
+          /assessment|description|rationale/.test(value)
+        );
+        if (investmentIndex >= 0 && assessmentIndex >= 0 && Array.isArray(content?.rows)) {
+          for (const [rowIndex, row] of content.rows.entries()) {
+            if (!Array.isArray(row)) continue;
+            const investment = String(row[investmentIndex] ?? '');
+            const assessment = String(row[assessmentIndex] ?? '');
+            const amountPattern = /(?:EUR|USD|GBP|PLN|CHF)\s*\d+(?:[.,]\d+)?(?:m|k)?/giu;
+            const cellAmount = investment
+              .match(amountPattern)?.[0]
+              ?.replace(/\s+/g, '')
+              .toLowerCase();
+            const assessmentAmounts = (assessment.match(amountPattern) ?? []).map((value) =>
+              value.replace(/\s+/g, '').toLowerCase()
+            );
+            if (
+              cellAmount &&
+              assessmentAmounts.length > 0 &&
+              !assessmentAmounts.includes(cellAmount)
+            ) {
+              findings.push(
+                makeFinding(
+                  'high',
+                  `Scenario investment "${investment}" conflicts with assessment text "${assessment}".`,
+                  'data_scenario_investment_assessment_mismatch',
+                  { sectionId: section.sectionId, blockId: block.blockId, rowIndex }
+                )
+              );
+            }
+          }
+        }
+      }
       if (!isEditableBlock(block)) continue;
       const text = blockToText(block);
       if (!text) continue;
