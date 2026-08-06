@@ -111,6 +111,7 @@ describe('ExceleParametricTemplates durable custom build', () => {
     );
 
     await screen.findByText('Portfolio template');
+    fireEvent.click(screen.getByRole('button', { name: /Portfolio template/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Build workbook' }));
     await screen.findByText(/Ready: Fresh Portfolio/);
     expect(screen.getByText(/Model verified.*0 notes/)).toBeInTheDocument();
