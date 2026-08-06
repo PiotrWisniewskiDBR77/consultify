@@ -262,36 +262,65 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     expect(screen.getByLabelText('Has comment')).toHaveAttribute('title', 'Owner reviewed');
   });
 
-  it('renders conditional formatting with theme-aware semantic contrast', () => {
-    const conditionalSheets = [{
-      ...sheets[0],
-      rows: [{ cells: { month: { value: 'Jan' }, plan: { value: -0.71 }, actual: { value: 80 }, variance: { value: -0.71 } } }],
-      conditionalFormatting: [{
-        ref: 'B2:B2',
-        rules: [{
-          type: 'cellIs',
-          operator: 'lessThan',
-          formulae: [0],
-          style: { bgColor: 'DDEBF7', fontColor: 'FFFFFF', bold: true },
-        }],
-      }],
-    }];
+  it.each(['light', 'dark'])(
+    'renders conditional formatting with deterministic %s-theme contrast',
+    (theme) => {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      const conditionalSheets = [
+        {
+          ...sheets[0],
+          rows: [
+            {
+              cells: {
+                month: { value: 'Jan' },
+                plan: { value: -0.71 },
+                actual: { value: 80 },
+                variance: { value: -0.71 },
+              },
+            },
+          ],
+          conditionalFormatting: [
+            {
+              ref: 'B2:B2',
+              rules: [
+                {
+                  type: 'cellIs',
+                  operator: 'lessThan',
+                  formulae: [0],
+                  style: { bgColor: 'DDEBF7', fontColor: 'FFFFFF', bold: true },
+                },
+              ],
+            },
+          ],
+        },
+      ];
 
-    render(<EditableSpreadsheetGrid workbookId="wb-conditional" sheets={conditionalSheets} activeSheetIndex={0} />);
+      render(
+        <EditableSpreadsheetGrid
+          workbookId="wb-conditional"
+          sheets={conditionalSheets}
+          activeSheetIndex={0}
+        />
+      );
 
-    expect(screen.getByTestId('workbook-cell-0-plan')).toHaveStyle({
-      backgroundColor: 'color-mix(in srgb, var(--c-danger) 14%, var(--c-surface))',
-      color: 'var(--c-danger)',
-      fontWeight: '700',
-    });
-  });
+      expect(screen.getByTestId('workbook-cell-0-plan')).toHaveStyle({
+        backgroundColor: 'color-mix(in srgb, var(--c-danger) 18%, var(--c-surface))',
+        color: 'var(--c-text)',
+        WebkitTextFillColor: 'var(--c-text)',
+        fontWeight: '700',
+      });
+      document.documentElement.classList.remove('dark');
+    }
+  );
 
   it('imports XLSX through the canonical parser endpoint and replaces the local view', async () => {
     render(<EditableSpreadsheetGrid workbookId="wb-1" sheets={sheets} activeSheetIndex={0} />);
     const file = new File(['xlsx-bytes'], 'forecast.xlsx', {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
-    const fileInput = screen.getAllByLabelText('Import XLSX or CSV').find((node) => node.tagName === 'INPUT');
+    const fileInput = screen
+      .getAllByLabelText('Import XLSX or CSV')
+      .find((node) => node.tagName === 'INPUT');
     expect(fileInput).toBeDefined();
     fireEvent.change(fileInput!, { target: { files: [file] } });
     await waitFor(() => expect(importWorkbook).toHaveBeenCalledWith('wb-1', file));

@@ -1,10 +1,25 @@
 # Materials visual screenshot acceptance — 2026-08-06
 
-**Target deployment:** `e9af278c`
+**Initial target deployment:** `e9af278c`
+
+**Focused re-acceptance deployment:** Railway `0df01551` (2026-08-07)
 
 **Runtime identity note:** the DEMO badge still shows the base metadata SHA `97a42e810bc1`. Acceptance is tied to the deployed functional fingerprint: Word advanced toolbar plus collapse/duplicate, Excel import plus chart creation, and PowerPoint manual block operations/new slide. The badge is therefore recorded as stale metadata, not a standalone failure.
 
 **Evidence directory:** [`docs/qa/evidence/materials-visual-e9af278c/`](evidence/materials-visual-e9af278c/)
+
+**Focused re-acceptance evidence:** [`docs/qa/evidence/materials-visual-0df01551/`](evidence/materials-visual-0df01551/)
+
+## Focused re-acceptance — 2026-08-07
+
+| Surface | 1280 light | 1440 light | 1280 dark | 1440 dark | Verdict |
+|---|---:|---:|---:|---:|---|
+| Excel conditional formatting | — | — | FAIL | FAIL | Deployed DOM still carries imported `rgb(220, 239, 234)` background with inherited `rgb(184, 196, 214)` text on B5. The token-based source fix is not present in the rendered inline style; deployment proof remains open. |
+| PowerPoint canvas and rails | PASS | PASS | PASS | PASS | At 1280 the canvas is 992 px wide; left/right rails use the compact 48/56 px overlay policy and Teresa no longer consumes layout width. |
+| PowerPoint command row | FAIL | FAIL | FAIL | FAIL | The deck root used `h-screen` inside an 852 px host area. The host scrolled by 48 px, placing the 56 px command row at `y=0` (1440) or `y=-56` (1280), under/outside the global header. Corrected locally to `h-full`; new deployment proof required. |
+| PowerPoint thumbnails | PASS | PASS | PASS | PASS | Full 16:9 compositions render without misleading crop; captions provide truthful readable slide identity. At 1280 the compact rail intentionally reveals the thumbnails as an overlay on hover/focus. |
+
+**Focused disposition:** PowerPoint responsive canvas/rails and thumbnail truthfulness are accepted. Excel dark conditional contrast and PowerPoint command-row visibility remain release-blocking until the corrected sources are deployed and recaptured.
 
 ## Matrix
 

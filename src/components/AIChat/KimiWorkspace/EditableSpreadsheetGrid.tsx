@@ -124,37 +124,69 @@ function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').For
     fontStyle: style.italic ? 'italic' : undefined,
     textDecoration: style.underline ? 'underline' : undefined,
     fontSize: typeof style.fontSize === 'number' ? `${style.fontSize}px` : undefined,
-    textAlign: style.alignment === 'center' || style.alignment === 'right' ? style.alignment : style.alignment === 'left' ? 'left' : undefined,
+    textAlign:
+      style.alignment === 'center' || style.alignment === 'right'
+        ? style.alignment
+        : style.alignment === 'left'
+          ? 'left'
+          : undefined,
     whiteSpace: style.wrapText ? 'normal' : undefined,
     overflowWrap: style.wrapText ? 'anywhere' : undefined,
     border: borderWidth ? `${borderWidth}px solid var(--color-border-subtle, #cbd5e1)` : undefined,
   };
 }
 
-function conditionalPresentationStyle(sheet: FormulaSheet, rowIndex: number, colIndex: number, value: unknown): React.CSSProperties {
+function conditionalPresentationStyle(
+  sheet: FormulaSheet,
+  rowIndex: number,
+  colIndex: number,
+  value: unknown
+): React.CSSProperties {
   const addressRow = rowIndex + 2;
-  const blocks = Array.isArray((sheet as any).conditionalFormatting) ? (sheet as any).conditionalFormatting : [];
+  const blocks = Array.isArray((sheet as any).conditionalFormatting)
+    ? (sheet as any).conditionalFormatting
+    : [];
   for (const block of blocks) {
     const match = String(block.ref || '').match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i);
     if (!match) continue;
-    const toIndex = (letters: string) => letters.toUpperCase().split('').reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
-    if (colIndex < toIndex(match[1]) || colIndex > toIndex(match[3]) || addressRow < Number(match[2]) || addressRow > Number(match[4])) continue;
+    const toIndex = (letters: string) =>
+      letters
+        .toUpperCase()
+        .split('')
+        .reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+    if (
+      colIndex < toIndex(match[1]) ||
+      colIndex > toIndex(match[3]) ||
+      addressRow < Number(match[2]) ||
+      addressRow > Number(match[4])
+    )
+      continue;
     for (const rule of block.rules || []) {
       const threshold = Number(rule.formulae?.[0]);
       const numeric = Number(value);
-      const applies = rule.type === 'cellIs' && Number.isFinite(numeric) && (
-        (rule.operator === 'lessThan' && numeric < threshold) ||
-        (rule.operator === 'greaterThan' && numeric > threshold) ||
-        (rule.operator === 'equal' && numeric === threshold)
-      );
+      const applies =
+        rule.type === 'cellIs' &&
+        Number.isFinite(numeric) &&
+        ((rule.operator === 'lessThan' && numeric < threshold) ||
+          (rule.operator === 'greaterThan' && numeric > threshold) ||
+          (rule.operator === 'equal' && numeric === threshold));
       if (applies) {
         // Spreadsheet CF colors are often authored for a white Excel canvas.
         // Resolve the web preview through theme-aware semantic tokens so a
         // pale imported fill cannot pair with illegible text in dark mode.
-        const tone = rule.operator === 'lessThan' ? 'danger' : rule.operator === 'greaterThan' ? 'success' : 'warning';
+        const tone =
+          rule.operator === 'lessThan'
+            ? 'danger'
+            : rule.operator === 'greaterThan'
+              ? 'success'
+              : 'warning';
         return {
-          backgroundColor: `color-mix(in srgb, var(--c-${tone}) 14%, var(--c-surface))`,
-          color: `var(--c-${tone})`,
+          backgroundColor: `color-mix(in srgb, var(--c-${tone}) 18%, var(--c-surface))`,
+          // The high-contrast theme foreground is emitted inline in the real
+          // grid-cell branch, so neither imported fontColor nor a utility
+          // class can turn pale text against a pale conditional fill.
+          color: 'var(--c-text)',
+          WebkitTextFillColor: 'var(--c-text)',
           fontWeight: rule.style?.bold ? 700 : undefined,
           fontStyle: rule.style?.italic ? 'italic' : undefined,
         };

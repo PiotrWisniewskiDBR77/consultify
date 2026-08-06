@@ -6,6 +6,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const css = fs.readFileSync(path.resolve(__dirname, '../deckBuilderResponsive.css'), 'utf8');
+const viewSource = fs.readFileSync(path.resolve(__dirname, '../DeckBuilderMelsView.tsx'), 'utf8');
 
 describe('DeckBuilder laptop-width policy', () => {
   it('reserves the central canvas by compacting both tertiary rails at 1280px', () => {
@@ -24,5 +25,12 @@ describe('DeckBuilder laptop-width policy', () => {
     expect(css).toContain('position: absolute');
     expect(css).toContain("[data-testid='mels-topbar-chips']");
     expect(css).toContain('visibility: visible');
+  });
+
+  it('fits the host content area instead of creating a viewport-height inner scroller', () => {
+    expect(viewSource).toContain('className="h-full flex flex-col bg-c-surface overflow-hidden"');
+    expect(viewSource).not.toContain(
+      'className="h-screen flex flex-col bg-c-surface overflow-hidden"'
+    );
   });
 });
