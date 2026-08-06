@@ -69,6 +69,8 @@ export interface ContentBlock {
   blockId: string;
   type: ContentBlockType;
   content: Record<string, unknown>;
+  /** Deterministic post-generation guard found and removed an unsupported claim. */
+  isAssumption?: boolean;
 }
 
 export interface ContentSection {
@@ -378,6 +380,121 @@ function normalizeBlockContent(
 }
 
 // ──────────────────────────────────────────────────────────────
+// Deterministic grounding guard (post-LLM, before canonical schema)
+// ──────────────────────────────────────────────────────────────
+
+const QUANT_TOKEN_RE = /\d+(?:[.,]\d+)?/g;
+const SAFE_BUSINESS_ACRONYMS = new Set([
+  'AI',
+  'CEO',
+  'CFO',
+  'EUR',
+  'GBP',
+  'IT',
+  'KPI',
+  'PLN',
+  'PMO',
+  'RAG',
+  'ROI',
+  'USD',
+]);
+const POLISH_INTENT_RE =
+  /[ąćęłńóśźż]|\b(raport|zarząd|zarzadu|ryzyko|ryzyka|wpływ|wplyw|właściciel|wlasciciel|mitygacja|inicjatyw|budżet|budzet|postęp|postep)\b/i;
+const POLISH_HEADER_TRANSLATIONS: Record<string, string> = {
+  risk: 'Ryzyko',
+  likelihood: 'Prawdopodobieństwo',
+  impact: 'Wpływ',
+  owner: 'Właściciel',
+  mitigation: 'Mitygacja',
+  status: 'Status',
+  metric: 'Metryka',
+  value: 'Wartość',
+  target: 'Cel',
+};
+
+function groundingPlaceholder(language: 'pl' | 'en'): string {
+  return language === 'pl'
+    ? 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).'
+    : 'Content removed — unsupported claim (assumption to verify).';
+}
+
+function unsupportedClaimInString(
+  text: string,
+  allowedNumbers: ReadonlySet<string>,
+  sourceTextUpper: string
+): boolean {
+  const numericTokens = text.match(QUANT_TOKEN_RE) ?? [];
+  if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return true;
+
+  // Catch obvious invented named market/entity claims such as "DACH". This is
+  // deliberately conservative: normal business abbreviations stay allowed,
+  // while a new all-caps name must occur in the brief/source text verbatim.
+  const acronyms = text.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ]{2,}\b/g) ?? [];
+  return acronyms.some(
+    (token) => !SAFE_BUSINESS_ACRONYMS.has(token) && !sourceTextUpper.includes(token)
+  );
+}
+
+/**
+ * Removes unsupported quantitative (and obvious named acronym) claims from one
+ * normalized LLM block. It never relies on the model's self-report. The caller
+ * receives an explicit `changed` bit which becomes `isAssumption` in the
+ * canonical DocumentSchema and therefore feeds EvidenceContract/QA.
+ */
+export function enforceBlockGrounding(
+  content: Record<string, unknown>,
+  sourceText: string
+): { content: Record<string, unknown>; changed: boolean } {
+  const language: 'pl' | 'en' = POLISH_INTENT_RE.test(sourceText) ? 'pl' : 'en';
+  const allowedNumbers = new Set(
+    (sourceText.match(QUANT_TOKEN_RE) ?? []).map((token) => token.replace(',', '.'))
+  );
+  const sourceTextUpper = sourceText.toUpperCase();
+  let changed = false;
+
+  const visit = (value: unknown, key?: string): unknown => {
+    if (typeof value === 'number') {
+      if (allowedNumbers.has(String(value))) return value;
+      changed = true;
+      return undefined;
+    }
+    if (typeof value === 'string') {
+      if (key === 'bgColor' || key === 'color' || key === 'url') return value;
+      if (unsupportedClaimInString(value, allowedNumbers, sourceTextUpper)) {
+        changed = true;
+        return groundingPlaceholder(language);
+      }
+      if (language === 'pl' && key === 'column') {
+        return POLISH_HEADER_TRANSLATIONS[value.trim().toLowerCase()] ?? value;
+      }
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map((entry) => visit(entry, key)).filter((entry) => entry !== undefined);
+    }
+    if (value && typeof value === 'object') {
+      const out: Record<string, unknown> = {};
+      for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+        const mapped = visit(childValue, childKey);
+        if (mapped !== undefined) out[childKey] = mapped;
+      }
+      return out;
+    }
+    return value;
+  };
+
+  const guarded = visit(content) as Record<string, unknown>;
+  if (language === 'pl' && Array.isArray(guarded.columns)) {
+    guarded.columns = guarded.columns.map((column) =>
+      typeof column === 'string'
+        ? (POLISH_HEADER_TRANSLATIONS[column.trim().toLowerCase()] ?? column)
+        : column
+    );
+  }
+  return { content: guarded, changed };
+}
+
+// ──────────────────────────────────────────────────────────────
 // Fallback prozowy (STANDARD lub LLM fail)
 // ──────────────────────────────────────────────────────────────
 function buildProseFallback(plan: StructurePlanInput): ContentSection[] {
@@ -645,7 +762,15 @@ export async function generateDocumentContent(
         const blockId = `b-${si}-${bi}`;
         const type = mapType(b.type);
         const raw = contentById.get(blockId);
-        return { blockId, type, content: normalizeBlockContent(type, raw, b.hint) };
+        const normalized =
+          type === 'heading' ? { text: s.title } : normalizeBlockContent(type, raw, b.hint);
+        const guarded = enforceBlockGrounding(normalized, intent);
+        return {
+          blockId,
+          type,
+          content: guarded.content,
+          isAssumption: guarded.changed,
+        };
       }),
     }));
 

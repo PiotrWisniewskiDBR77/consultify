@@ -39,4 +39,18 @@ describe('premium document grounding and canonical shapes — DOC-DBR77-20260806
     );
     expect(block).toMatchObject({ type: 'kpi_strip', isAssumption: false });
   });
+
+  it('retains a deterministic post-generation assumption even when sources are attached', () => {
+    const block = __contentBlockToDocumentBlockForTests(
+      {
+        blockId: 'scrubbed',
+        type: 'text',
+        content: { text: 'Treść usunięta — niepoparte twierdzenie.' },
+        isAssumption: true,
+      },
+      'paragraph',
+      true
+    );
+    expect(block).toMatchObject({ type: 'paragraph', isAssumption: true });
+  });
 });

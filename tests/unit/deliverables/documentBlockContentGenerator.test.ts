@@ -125,6 +125,45 @@ describe('documentBlockContentGenerator — normalizery', () => {
     });
   });
 
+  it('BETA: deterministycznie usuwa dokładny zestaw niepopartych liczb i named claim', () => {
+    const brief =
+      'Polski raport zarządu BETA. Jedyne dozwolone liczby: 72%, 1.4 mln EUR oraz 18/21.';
+    const result = mod.enforceBlockGrounding(
+      {
+        text: '8 initiatives for DACH: 14%, 15-25%, 6-9 months, 200-300k; 85%, 100% by 2027-03-01.',
+        items: ['Potwierdzone: 72%', 'Budżet 1.4 mln EUR', 'Zakres 18/21'],
+      },
+      brief
+    );
+
+    expect(result.changed).toBe(true);
+    expect(result.content.text).toBe(
+      'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).'
+    );
+    expect(result.content.items).toEqual([
+      'Potwierdzone: 72%',
+      'Budżet 1.4 mln EUR',
+      'Zakres 18/21',
+    ]);
+    expect(JSON.stringify(result.content)).not.toMatch(
+      /8 initiatives|DACH|14%|15-25%|6-9|200-300|85%|100%|2027/
+    );
+  });
+
+  it('BETA: tłumaczy oczywiste angielskie nagłówki tabeli dla polskiego briefu', () => {
+    const result = mod.enforceBlockGrounding(
+      { columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'], rows: [] },
+      'Polski raport zarządu BETA: 72%, 1.4 mln EUR, 18/21.'
+    );
+    expect(result.content.columns).toEqual([
+      'Ryzyko',
+      'Prawdopodobieństwo',
+      'Wpływ',
+      'Właściciel',
+      'Mitygacja',
+    ]);
+  });
+
   // ──────────────────────────────────────────────────────────────
   // generateDocumentContent
   // ──────────────────────────────────────────────────────────────

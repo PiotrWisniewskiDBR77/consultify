@@ -199,7 +199,7 @@ function buildSectionBlocks(
     content: {
       text: sectionStubText(sectionTitle),
     },
-    isAssumption: !hasSources,
+    isAssumption: block.isAssumption === true || !hasSources,
   });
 
   return blocks;
@@ -372,7 +372,7 @@ function contentBlockToDocumentBlock(
     content: block.content,
     // An LLM result is not evidence. Without an attached source every premium
     // block remains an explicit assumption, including structured KPI/tables.
-    isAssumption: !hasSources,
+    isAssumption: block.isAssumption === true || !hasSources,
   };
 }
 
