@@ -770,9 +770,7 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
       const text = blockToText(block);
       const trimmed = text.trim();
       if (!trimmed) continue;
-      editableBlockCount += 1;
       const words = countWords(trimmed);
-      totalWords += words;
 
       const detected = detectLanguageOfText(trimmed);
       if (detected !== 'unknown' && detected !== target) {
@@ -785,6 +783,14 @@ function runLanguageQa(schema: DocumentSchema): DocumentQaCategoryReport {
           )
         );
       }
+
+      // Headings and explicit assumptions/removal placeholders are not prose
+      // density samples. Counting them made a fully localized PL document
+      // remain Language-blocking after fail-closed grounding (OMEGA).
+      const densityEligible = block.type !== 'heading' && block.isAssumption !== true;
+      if (!densityEligible) continue;
+      editableBlockCount += 1;
+      totalWords += words;
 
       // Per-block density check: paragraphs that are way under the floor are
       // stubs; way over the ceiling are a hint that the density target was

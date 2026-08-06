@@ -73,6 +73,7 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => ({
 }));
 
 import { markWave5ArtifactExported } from '../../wave5ArtifactRuntimeService.js';
+import { runDocumentQa } from '../documentQaService.js';
 import {
   exportDocumentArtifact,
   getDocumentArtifact,
@@ -234,5 +235,88 @@ describe('Document Studio generate -> export happy path', () => {
       'Właściciel',
       'Mitygacja',
     ]);
+  });
+
+  it('OMEGA: persisted Polish artifact localizes canonical headings and blocks Language QA mismatch', async () => {
+    generateChatResponseMock.mockImplementation(async (request: any) => {
+      const prompt = String(request?.messages?.[0]?.content ?? '');
+      const targets = [
+        ...prompt.matchAll(/"blockId":\s*"([^"]+)"[\s\S]*?"kind":\s*"([^"]+)"/g),
+      ].map((match) => ({ blockId: match[1], kind: match[2] }));
+      return {
+        content: JSON.stringify({
+          blocks: targets.map(({ blockId, kind }) =>
+            kind === 'items'
+              ? { blockId, items: ['Financial Constraints', 'Optimized resource allocation'] }
+              : { blockId, text: 'Financial Constraints and Optimized resource allocation.' }
+          ),
+        }),
+      };
+    });
+
+    const canonicalTitles = [
+      'Executive Summary',
+      'Decisions Required',
+      'For Information',
+      'Portfolio Status',
+      'Financial Snapshot',
+      'Risks',
+      'Next Steps',
+    ];
+    const run = await materializeDocumentArtifact({
+      organizationId: 'org-omega',
+      userId: 'user-omega',
+      intake: {
+        title: 'Raport OMEGA',
+        description: 'Polski raport zarządu OMEGA. Dozwolone: 72%, 1,4 mln EUR, 18/21.',
+        documentType: 'board_report',
+        language: 'pl',
+        goal: 'inform',
+        audience: ['Zarząd'],
+      },
+      outline: {
+        documentType: 'board_report',
+        title: 'Raport OMEGA',
+        recommendedDensity: 'concise',
+        recommendedRegister: 'executive',
+        recommendedLanguageStyle: 'consulting',
+        sections: canonicalTitles.map((title) => ({
+          title,
+          level: 1 as const,
+          purpose: title,
+          expectedLengthHint: 'short' as const,
+        })),
+      },
+      useLlm: true,
+    });
+
+    const persisted = store.get(`org-omega::${run.artifactId}`)?.content_json as
+      import('../documentStudioTypes.js').DocumentSchema | undefined;
+    expect(persisted).toBeDefined();
+    const serialized = JSON.stringify(persisted);
+    for (const english of canonicalTitles) expect(serialized).not.toContain(english);
+    expect(serialized).not.toContain('Financial Constraints');
+    expect(serialized).not.toContain('Optimized resource allocation');
+    expect(persisted!.sections.map((section) => section.title)).toEqual([
+      'Podsumowanie zarządcze',
+      'Wymagane decyzje',
+      'Do wiadomości',
+      'Status portfela',
+      'Podsumowanie finansowe',
+      'Ryzyka',
+      'Następne kroki',
+    ]);
+    for (const section of persisted!.sections) {
+      for (const heading of section.blocks.filter((block) => block.type === 'heading')) {
+        expect((heading.content as any).text).toBe(section.title);
+      }
+    }
+    const languageQa = runDocumentQa(persisted!).categories.find(
+      (category) => category.category === 'language'
+    );
+    expect(languageQa?.findings.filter((finding) => finding.code === 'language_mismatch')).toEqual(
+      []
+    );
+    expect(languageQa?.blocking).toBe(false);
   });
 });

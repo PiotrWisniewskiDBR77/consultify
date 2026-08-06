@@ -109,6 +109,56 @@ export function enforceDocumentSchemaGrounding(
     language === 'pl'
       ? 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).'
       : 'Content removed — unsupported claim (assumption to verify).';
+  const plCanonical: Record<string, string> = {
+    'executive summary': 'Podsumowanie zarządcze',
+    'decisions required': 'Wymagane decyzje',
+    'for information': 'Do wiadomości',
+    'portfolio status': 'Status portfela',
+    'financial snapshot': 'Podsumowanie finansowe',
+    risks: 'Ryzyka',
+    'next steps': 'Następne kroki',
+    'financial constraints': 'Ograniczenia finansowe',
+    'optimized resource allocation': 'Zoptymalizowana alokacja zasobów',
+    scope: 'Zakres',
+    timing: 'Harmonogram',
+  };
+  const obviousEnglish =
+    /\b(the|and|for|with|without|required|information|portfolio|financial|constraints?|optimized|resource|allocation|executive|summary|decisions?|risks?|next|steps?|budget|overrun|severity|likelihood|impact|owner|mitigation|total|plan|realization|milestones?|completed|high|medium|low|scope|timing)\b/i;
+
+  const localizePolishValue = (
+    value: unknown,
+    key?: string
+  ): { value: unknown; changed: boolean } => {
+    if (typeof value === 'string') {
+      if (key === 'bgColor' || key === 'color' || key === 'url') {
+        return { value, changed: false };
+      }
+      const translated = plCanonical[value.trim().toLowerCase()];
+      if (translated) return { value: translated, changed: translated !== value };
+      if (obviousEnglish.test(value)) return { value: removed, changed: true };
+      return { value, changed: false };
+    }
+    if (Array.isArray(value)) {
+      let changed = false;
+      const mapped = value.map((entry) => {
+        const result = localizePolishValue(entry, key);
+        changed ||= result.changed;
+        return result.value;
+      });
+      return { value: mapped, changed };
+    }
+    if (value && typeof value === 'object') {
+      let changed = false;
+      const mapped: Record<string, unknown> = {};
+      for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
+        const result = localizePolishValue(childValue, childKey);
+        changed ||= result.changed;
+        mapped[childKey] = result.value;
+      }
+      return { value: mapped, changed };
+    }
+    return { value, changed: false };
+  };
 
   const guardText = (text: string): { text: string; changed: boolean } => {
     const guarded = enforceBlockGrounding({ text }, groundingSource);
@@ -122,6 +172,14 @@ export function enforceDocumentSchemaGrounding(
   if (guardedTitle.changed) next.title = removed;
 
   for (const section of next.sections) {
+    if (language === 'pl') {
+      const localizedTitle = localizePolishValue(section.title);
+      section.title = String(localizedTitle.value);
+      if (section.purpose) {
+        const localizedPurpose = localizePolishValue(section.purpose);
+        section.purpose = String(localizedPurpose.value);
+      }
+    }
     const title = guardText(section.title);
     if (title.changed) section.title = removed;
     let purposeChanged = false;
@@ -140,6 +198,16 @@ export function enforceDocumentSchemaGrounding(
       block.content = guarded.content;
       block.isAssumption =
         block.isAssumption === true || guarded.changed || title.changed || purposeChanged;
+      if (language === 'pl') {
+        const localized = localizePolishValue(block.content);
+        block.content = localized.value;
+        block.isAssumption = block.isAssumption === true || localized.changed;
+        // Canonical headings are metadata mirrors, not independent LLM prose.
+        // Pin them to the final localized section title to prevent split-brain.
+        if (block.type === 'heading') {
+          block.content = { text: section.title };
+        }
+      }
     }
 
     // Empty structured payloads have no semantic content and several renderers
