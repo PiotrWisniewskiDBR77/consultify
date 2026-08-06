@@ -166,6 +166,13 @@ const LATE_PHASE_SET = new Set(LATE_PHASE_MANIFEST);
 // runs alongside the other historical producers) with a one-line reason.
 // See STRICT_SCHEMA_REPAIR_REPORT.md ETAP 1/3 for the full trace.
 const PROMOTED_LEGACY_PRODUCERS: string[] = [
+  // Sole producer of `studio_documents`, `studio_snapshots`, and the related
+  // Studio CRUD tables used by the mounted `/api/studio` routes. The file is
+  // Postgres-compatible after the runner's narrow DATETIME/boolean shims and
+  // depends only on core baseline tables. Excluding it made strict fresh
+  // schema report success while every mounted Studio persistence call failed
+  // at runtime with a missing relation.
+  '081_studio_tables.sql',
   // Sole producer of `conversations` / `conversation_messages` for the
   // strict path (000_z_core_baseline.sql does not create them). Consumed by
   // 515_team_chat_projects.sql (ALTER ... ADD COLUMN). Already
