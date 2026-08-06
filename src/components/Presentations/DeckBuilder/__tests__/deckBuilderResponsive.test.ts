@@ -1,0 +1,28 @@
+/** @vitest-environment node */
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const css = fs.readFileSync(path.resolve(__dirname, '../deckBuilderResponsive.css'), 'utf8');
+
+describe('DeckBuilder laptop-width policy', () => {
+  it('reserves the central canvas by compacting both tertiary rails at 1280px', () => {
+    expect(css).toContain('@media (max-width: 1365px)');
+    expect(css).toContain("[data-testid='mels-left-rail']");
+    expect(css).toContain('width: 48px !important');
+    expect(css).toContain("[data-testid='mels-right-rail']");
+    expect(css).toContain('width: 56px !important');
+    expect(css).toContain("[data-testid='mels-right-rail']:has(");
+    expect(css).toContain('width: 336px !important');
+    expect(css).toContain(':focus-within');
+  });
+
+  it('turns Teresa into a non-layout overlay while retaining the command row', () => {
+    expect(css).toContain("[data-testid='mels-ai-entry']");
+    expect(css).toContain('position: absolute');
+    expect(css).toContain("[data-testid='mels-topbar-chips']");
+    expect(css).toContain('visibility: visible');
+  });
+});

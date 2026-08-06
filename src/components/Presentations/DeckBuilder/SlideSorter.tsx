@@ -84,13 +84,19 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
         </span>
         <div className="flex gap-1">
           <button
+            type="button"
             onClick={() => setViewMode('cards')}
+            aria-label={t('presentations.builder.cardView', 'Slide thumbnails')}
+            aria-pressed={viewMode === 'cards'}
             className={`p-1 rounded ${viewMode === 'cards' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
             <LayoutGrid size={12} />
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('list')}
+            aria-label={t('presentations.builder.listView', 'Slide list')}
+            aria-pressed={viewMode === 'list'}
             className={`p-1 rounded ${viewMode === 'list' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
             <List size={12} />
@@ -107,10 +113,19 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               key={card.card_id}
               data-testid={`deck-slide-${index}`}
               draggable
+              role="button"
+              tabIndex={0}
+              aria-label={`${t('presentations.builder.selectSlide', 'Select slide')} ${index + 1}: ${card.title}`}
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               onClick={() => {
+                onSelect(index);
+                closeContextMenu();
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
                 onSelect(index);
                 closeContextMenu();
               }}
@@ -119,10 +134,23 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
               } ${dragIndex === index ? 'opacity-50' : ''}`}
             >
               {viewMode === 'cards' ? (
-                <div className="relative">
-                  <div className="pointer-events-none overflow-hidden rounded-lg">
-                    <CardRenderer card={card} colorSetId={colorSetId} scale={0.2} />
+                <div className="relative bg-c-surface rounded-lg overflow-hidden">
+                  <div
+                    className="relative pointer-events-none overflow-hidden aspect-video rounded-t-lg bg-c-surface-raised"
+                    data-testid={`deck-slide-thumbnail-${index}`}
+                    data-thumbnail-fit="contain"
+                    aria-hidden="true"
+                  >
+                    <div className="absolute left-0 top-0 h-[540px] w-[960px] origin-top-left scale-[0.1708333333]">
+                      <CardRenderer card={card} colorSetId={colorSetId} animationsEnabled={false} />
+                    </div>
                   </div>
+                  <p
+                    className="truncate px-2 py-1.5 text-[10px] font-medium text-c-text"
+                    title={card.title}
+                  >
+                    {card.title}
+                  </p>
                   <div className="absolute top-1 left-1 flex items-center gap-0.5">
                     <GripVertical
                       size={10}
@@ -170,12 +198,14 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
 
                   {/* Context menu trigger */}
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMoveSubmenu(false);
                       setContextMenuIndex(contextMenuIndex === index ? null : index);
                     }}
                     className="absolute top-1 right-1 p-0.5 rounded bg-black/30 text-c-text opacity-0 group-hover:opacity-100"
+                    aria-label={`${t('presentations.builder.slideActions', 'Slide')} ${index + 1} actions`}
                   >
                     <MoreVertical size={10} />
                   </button>

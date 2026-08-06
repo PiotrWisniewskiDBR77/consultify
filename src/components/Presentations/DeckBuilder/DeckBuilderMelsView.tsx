@@ -24,6 +24,8 @@
  *                         palette, share modal, bottom bar (supplied verbatim).
  */
 
+import './deckBuilderResponsive.css';
+
 import React, { useMemo } from 'react';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
@@ -175,6 +177,7 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       onOpenCommandPalette={onOpenCommandPalette}
       onOpenShortcutHelp={onOpenShortcutHelp}
       persistRailState={persistRailState}
+      className="deck-builder-responsive-shell"
       testId="deck-builder-mels-view"
     />
   );

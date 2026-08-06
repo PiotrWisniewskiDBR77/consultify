@@ -1,0 +1,65 @@
+/*
+ * Presentation-specific compact policy. The shared MELS shell remains
+ * unchanged for Word/Excel; at laptop widths the deck canvas keeps priority.
+ */
+@media (max-width: 1365px) {
+  .deck-builder-responsive-shell {
+    position: relative;
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-left-rail'] {
+    position: absolute;
+    z-index: var(--z-overlay, 40);
+    top: 56px;
+    bottom: 0;
+    left: 0;
+    width: 48px !important;
+    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.12));
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:not(:hover):not(:focus-within)
+    [data-testid='mels-left-rail-list'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:not(:hover):not(:focus-within)
+    [data-testid='mels-left-rail-tools'],
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:not(:hover):not(:focus-within)
+    [data-testid='mels-left-rail-bottom'] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:hover,
+  .deck-builder-responsive-shell [data-testid='mels-left-rail']:focus-within {
+    width: 200px !important;
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-right-rail'] {
+    position: absolute;
+    z-index: var(--z-overlay, 40);
+    top: 56px;
+    right: 0;
+    bottom: 0;
+    width: 56px !important;
+    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgb(0 0 0 / 0.12));
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-right-rail']:has(
+      [data-testid='mels-right-rail-panel']
+    ) {
+    width: 336px !important;
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-ai-entry'] {
+    position: absolute;
+    z-index: var(--z-overlay, 40);
+    top: 56px;
+    right: 56px;
+    bottom: 0;
+    width: min(360px, calc(100% - 112px));
+    box-shadow: var(--shadow-xl, 0 20px 25px -5px rgb(0 0 0 / 0.18));
+  }
+
+  .deck-builder-responsive-shell [data-testid='mels-topbar-chips'] {
+    display: flex;
+    visibility: visible;
+  }
+}
