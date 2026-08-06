@@ -211,6 +211,7 @@ export const PresentationTemplateArchitectView: React.FC<
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [lineage, setLineage] = useState<ClientTemplateLineageNode[]>([]);
   const [versionComparison, setVersionComparison] = useState<string | null>(null);
+  const [validationIssues, setValidationIssues] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
@@ -544,6 +545,9 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const handleApprove = async (): Promise<void> => {
     if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
+    const issues = validateCurrentTemplate();
+    setValidationIssues(issues);
+    if (issues.length > 0) return;
     setApprovingId(selectedTemplate.id);
     setError(null);
     try {
@@ -561,6 +565,27 @@ export const PresentationTemplateArchitectView: React.FC<
     } finally {
       setApprovingId(null);
     }
+  };
+
+  const validateCurrentTemplate = (): string[] => {
+    const issues: string[] = [];
+    if (editName.trim().length < 3)
+      issues.push('Template name must contain at least 3 characters.');
+    if (editDescription.trim().length < 8)
+      issues.push('Description must explain the template purpose.');
+    if (editOutline.length < 2) issues.push('Add at least two slides.');
+    editOutline.forEach((slide, index) => {
+      if (!slide.title.trim()) issues.push(`Slide ${index + 1} needs a title.`);
+    });
+    for (const intent of selectedTemplate?.must_have_intents ?? []) {
+      if (!editOutline.some((slide) => slide.intent === intent)) {
+        issues.push(`Add the mandatory “${intentLabel(intent)}” slide.`);
+      }
+    }
+    if (!editCustomTemplate.theme.titleFont.trim() || !editCustomTemplate.theme.bodyFont.trim()) {
+      issues.push('Choose both title and body fonts.');
+    }
+    return issues;
   };
 
   const handleDeprecate = async (): Promise<void> => {
@@ -1431,26 +1456,60 @@ export const PresentationTemplateArchitectView: React.FC<
               </div>
             </div>
 
+            {validationIssues ? (
+              <div
+                role="status"
+                className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
+              >
+                {validationIssues.length === 0 ? (
+                  <p className="font-medium">Validation passed. This draft is ready to publish.</p>
+                ) : (
+                  <>
+                    <p className="font-medium">
+                      Resolve {validationIssues.length} issue(s) before publishing:
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                      {validationIssues.map((issue) => (
+                        <li key={issue}>{issue}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            ) : null}
+
             <div className="mt-4 flex justify-end gap-2">
               {selectedTemplate.lifecycle_state === 'draft' ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => void handleApprove()}
-                  disabled={savingOutline || approvingId === selectedTemplate.id}
-                >
-                  {approvingId === selectedTemplate.id ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('presentations.templateArchitect.approving', 'Publishing…')}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
-                      {t('presentations.templateArchitect.approveAndPublish', 'Approve & publish')}
-                    </span>
-                  )}
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setValidationIssues(validateCurrentTemplate())}
+                  >
+                    Validate
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void handleApprove()}
+                    disabled={savingOutline || approvingId === selectedTemplate.id}
+                  >
+                    {approvingId === selectedTemplate.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t('presentations.templateArchitect.approving', 'Publishing…')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        {t(
+                          'presentations.templateArchitect.approveAndPublish',
+                          'Approve & publish'
+                        )}
+                      </span>
+                    )}
+                  </Button>
+                </>
               ) : null}
               <Button
                 type="button"
