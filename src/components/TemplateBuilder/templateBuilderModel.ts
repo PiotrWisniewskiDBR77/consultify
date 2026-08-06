@@ -254,16 +254,18 @@ export function draftToPostBody(draft: TemplateDraft): TemplatePostBody {
         title: draft.name.trim(),
         description: draft.description.trim() || undefined,
         sheets: draft.table.map((sheet, sheetIndex) => {
-          const cells = Object.fromEntries(
-            sheet.columns.flatMap((column, columnIndex) => {
-              const key = columnKey(columnIndex);
-              if (column.type === 'formula' && column.formula.trim()) {
-                return [[key, { formula: column.formula.trim().replace(/^=/, '') }]];
-              }
-              if (!column.starterValue.trim()) return [];
-              return [[key, { value: parseStarterValue(column.starterValue, column.type) }]];
-            })
-          );
+          type StarterCell = { formula: string } | { value: string | number };
+          const cellEntries: Array<[string, StarterCell]> = [];
+          sheet.columns.forEach((column, columnIndex) => {
+            const key = columnKey(columnIndex);
+            if (column.type === 'formula' && column.formula.trim()) {
+              cellEntries.push([key, { formula: column.formula.trim().replace(/^=/, '') }]);
+              return;
+            }
+            if (!column.starterValue.trim()) return;
+            cellEntries.push([key, { value: parseStarterValue(column.starterValue, column.type) }]);
+          });
+          const cells: Record<string, StarterCell> = Object.fromEntries(cellEntries);
           return {
             name: sheet.name.trim() || `Arkusz ${sheetIndex + 1}`,
             columns: sheet.columns.map((column, columnIndex) => ({

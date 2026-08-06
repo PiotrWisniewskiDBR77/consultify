@@ -194,12 +194,7 @@ export interface DocumentGenerationWarning {
 // relaxes structural guardrails but keeps absolute safety caps and
 // tags the audit trail with `authority: 'user_explicit_rebuild'`.
 export type DocumentEditorScope =
-  | 'local'
-  | 'section'
-  | 'global'
-  | 'methodology'
-  | 'source'
-  | 'transformative';
+  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -211,13 +206,7 @@ export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'exe
  * change list, and falls back to the aggregate `diff` when absent.
  */
 export type DocumentEditType =
-  | 'rewrite'
-  | 'replace'
-  | 'restructure'
-  | 'annotate'
-  | 'expand'
-  | 'condense'
-  | 'reformat';
+  'rewrite' | 'replace' | 'restructure' | 'annotate' | 'expand' | 'condense' | 'reformat';
 
 export interface DocumentEditTargetedChange {
   targetSectionId: string;
@@ -418,11 +407,29 @@ export interface TemplateExportRules {
 // filters, and dependency-gated visibility.
 /**
  * Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Frontend mirror of the
- * server `FormattingSchema` is intentionally partial: the client has never
- * needed the rest of that type (fonts/heading styles are author-invisible
- * defaults today), so we only mirror the one field this fala adds.
+ * server `FormattingSchema`. Template Architect now edits the core Word
+ * layout controls, so these fields must remain structurally aligned.
  */
 export interface DocumentTemplateFormattingSchema {
+  fonts: { body: string; heading: string; mono?: string };
+  headingStyles: { h1: string; h2: string; h3: string };
+  tableStyles: { default: string };
+  listStyles: { bullet: string; numbered: string };
+  page: {
+    size: 'A4' | 'Letter';
+    marginsCm: { top: number; bottom: number; left: number; right: number };
+  };
+  headers: { enabled: boolean; content?: string };
+  footers: {
+    enabled: boolean;
+    pageNumbering: boolean;
+    confidentialityLabel: boolean;
+    pageNumberingFormat?: string;
+  };
+  toc: boolean;
+  coverPage: boolean;
+  appendixStyle: 'lettered' | 'numbered' | 'none';
+  citationStyle: 'inline_marker' | 'footnote' | 'endnote';
   colorTemplateId?: string | null;
 }
 
@@ -649,11 +656,7 @@ export interface DocumentVariantSummary {
 }
 
 export type DocumentApprovalStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'changes_requested'
-  | 'cancelled';
+  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
 export type DocumentApprovalQuorumPolicy = 'unanimous' | 'majority' | 'single_approval';
 
