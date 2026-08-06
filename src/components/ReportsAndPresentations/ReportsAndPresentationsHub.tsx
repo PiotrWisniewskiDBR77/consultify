@@ -20,6 +20,9 @@ import {
   Presentation,
   Sparkles,
   Table2,
+  TableProperties,
+  PanelsTopLeft,
+  FileType2,
   Wand2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -536,18 +539,30 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     () => [
       {
         id: 'document' as TemplateFormat,
-        icon: FileText,
-        title: t('rap.templatesLauncher.document', 'Word'),
+        icon: FileType2,
+        title: t('rap.templatesLauncher.document', 'Szablon dokumentu Word'),
+        hint: t(
+          'rap.templatesLauncher.documentHint',
+          'Raporty zarządcze, memoranda i dokumenty z kontrolowanym układem sekcji.'
+        ),
       },
       {
         id: 'presentation' as TemplateFormat,
-        icon: Presentation,
-        title: t('rap.templatesLauncher.presentation', 'Prezentacja'),
+        icon: PanelsTopLeft,
+        title: t('rap.templatesLauncher.presentation', 'Szablon prezentacji'),
+        hint: t(
+          'rap.templatesLauncher.presentationHint',
+          'Narracja slajdowa, layouty i reguły wizualne dla prezentacji decyzyjnych.'
+        ),
       },
       {
         id: 'spreadsheet' as TemplateFormat,
-        icon: FileSpreadsheet,
-        title: t('rap.templatesLauncher.spreadsheet', 'Excel'),
+        icon: TableProperties,
+        title: t('rap.templatesLauncher.spreadsheet', 'Szablon skoroszytu Excel'),
+        hint: t(
+          'rap.templatesLauncher.spreadsheetHint',
+          'Modele, budżety i trackery z arkuszami, formułami oraz walidacją danych.'
+        ),
       },
     ],
     [t]
