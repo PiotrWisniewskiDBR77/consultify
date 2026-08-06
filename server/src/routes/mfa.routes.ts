@@ -180,10 +180,14 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
       crypto.createHash('sha256').update(code).digest('hex')
     );
 
-    await db.run(
+    // Same fail-closed contract as the setup route above: DbPromise.run
+    // resolves `{ success: false }` instead of throwing, so an unchecked
+    // result would report "MFA enabled" to a user whose factor was never
+    // stored.
+    const enableResult = await db.run(
       `
-      UPDATE user_mfa 
-      SET enabled = true, 
+      UPDATE user_mfa
+      SET enabled = true,
           backup_codes = ?,
           backup_codes_count = 10,
           last_verified_at = datetime('now'),
@@ -192,6 +196,17 @@ router.post('/verify-setup', verifyToken, isAuthenticated, async (req: Request, 
     `,
       [JSON.stringify(hashedBackupCodes), userId]
     );
+
+    if (!enableResult?.success) {
+      logger.error('[MFA] Failed to persist MFA enablement', {
+        userId,
+        error: enableResult?.error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się włączyć MFA', code: 'MFA_ENABLE_NOT_PERSISTED' });
+    }
 
     logger.info(`[MFA] Successfully enabled for user ${userId}`);
 
@@ -246,14 +261,28 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
       if (codeIndex >= 0) {
         // Remove used backup code
         backupCodes.splice(codeIndex, 1);
-        await db.run(
+        const consumeResult = await db.run(
           `
-          UPDATE user_mfa 
+          UPDATE user_mfa
           SET backup_codes = ?, backup_codes_count = backup_codes_count - 1
           WHERE user_id = ?
         `,
           [JSON.stringify(backupCodes), userId]
         );
+        // A recovery code that is accepted but not consumed stays valid
+        // forever — the opposite of single-use. Refuse rather than admit on an
+        // unpersisted consumption.
+        if (!consumeResult?.success) {
+          logger.error('[MFA] Failed to consume backup code', {
+            userId,
+            error: consumeResult?.error,
+            correlationId: (req as any).correlationId,
+          });
+          return res.status(500).json({
+            error: 'Weryfikacja nie powiodła się',
+            code: 'MFA_BACKUP_CODE_NOT_CONSUMED',
+          });
+        }
         verified = true;
       }
     } else {
@@ -265,12 +294,23 @@ router.post('/verify', verifyToken, async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid verification code' });
     }
 
-    await db.run(
+    const stampResult = await db.run(
       `
       UPDATE user_mfa SET last_verified_at = datetime('now') WHERE user_id = ?
     `,
       [userId]
     );
+
+    // The factor itself was verified above; only the "last used" stamp may be
+    // missing. That is an audit-quality problem, not an authentication one, so
+    // it is logged rather than turned into a failed login.
+    if (!stampResult?.success) {
+      logger.warn('[MFA] Verified, but last_verified_at was not persisted', {
+        userId,
+        error: stampResult?.error,
+        correlationId: (req as any).correlationId,
+      });
+    }
 
     res.json({ success: true, verified: true });
   } catch (error: any) {
@@ -309,14 +349,28 @@ router.post('/disable', verifyToken, isAuthenticated, async (req: Request, res: 
       return res.status(401).json({ error: 'Invalid verification code' });
     }
 
-    await db.run(
+    const disableResult = await db.run(
       `
-      UPDATE user_mfa 
+      UPDATE user_mfa
       SET enabled = false, secret = null, backup_codes = null, backup_codes_count = 0
       WHERE user_id = ?
     `,
       [userId]
     );
+
+    // Telling a user their second factor is off while the secret is still
+    // stored is the most dangerous false success in this file — they would
+    // stop expecting a prompt that still fires.
+    if (!disableResult?.success) {
+      logger.error('[MFA] Failed to persist MFA disablement', {
+        userId,
+        error: disableResult?.error,
+        correlationId: (req as any).correlationId,
+      });
+      return res
+        .status(500)
+        .json({ error: 'Nie udało się wyłączyć MFA', code: 'MFA_DISABLE_NOT_PERSISTED' });
+    }
 
     logger.info(`[MFA] Disabled for user ${userId}`);
 
@@ -362,14 +416,29 @@ router.post(
         crypto.createHash('sha256').update(code).digest('hex')
       );
 
-      await db.run(
+      const regenerateResult = await db.run(
         `
-      UPDATE user_mfa 
+      UPDATE user_mfa
       SET backup_codes = ?, backup_codes_count = 10, updated_at = datetime('now')
       WHERE user_id = ?
     `,
         [JSON.stringify(hashedBackupCodes), userId]
       );
+
+      // Handing back codes the response calls valid, while the old set is
+      // still the one stored, would lock the user out of their own recovery
+      // path. Refuse instead of printing codes that do not work.
+      if (!regenerateResult?.success) {
+        logger.error('[MFA] Failed to persist regenerated backup codes', {
+          userId,
+          error: regenerateResult?.error,
+          correlationId: (req as any).correlationId,
+        });
+        return res.status(500).json({
+          error: 'Nie udało się wygenerować nowych kodów zapasowych',
+          code: 'MFA_BACKUP_CODES_NOT_PERSISTED',
+        });
+      }
 
       res.json({
         success: true,
