@@ -29,7 +29,7 @@
  * wierszach/kolumnach wygenerowanego skoroszytu.
  */
 
-import { AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { AlertTriangle, Bold, Check, Columns3, Copy, Loader2, Plus, Rows3, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -88,6 +88,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
@@ -101,6 +102,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     setSelected(null);
     setEditingValue(null);
     setSaveState('idle');
+    setWorkingSheetIndex(activeSheetIndex);
     undoStackRef.current = [];
     redoStackRef.current = [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,13 +110,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
   // Zmiana zakładki arkusza → zaznaczenie z poprzedniego arkusza nie ma sensu.
   useEffect(() => {
+    setWorkingSheetIndex(activeSheetIndex);
     setSelected(null);
     setEditingValue(null);
   }, [activeSheetIndex]);
 
   const computedSheets = useMemo(() => recalcWorkbook(localSheets), [localSheets]);
-  const activeRaw = localSheets[activeSheetIndex];
-  const activeComputed = computedSheets[activeSheetIndex];
+  const activeRaw = localSheets[workingSheetIndex];
+  const activeComputed = computedSheets[workingSheetIndex];
 
   useEffect(() => {
     // Starting an edit from the formula bar must not steal focus into the
@@ -132,11 +135,11 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         // Cell updates are versioned server-side. Keep them sequential so a
         // multi-cell paste cannot create avoidable compare-and-swap races.
         for (const change of changes) {
-          const col = localSheets[activeSheetIndex]?.columns?.[change.colIndex];
+          const col = localSheets[workingSheetIndex]?.columns?.[change.colIndex];
           if (!col) continue;
           const cell = change[direction];
           await Api.updateWorkbookCell(workbookId, {
-            sheetIndex: activeSheetIndex,
+            sheetIndex: workingSheetIndex,
             rowIndex: change.rowIndex,
             columnKey: col.key,
             value: cell.value,
@@ -148,14 +151,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         setSaveState('error');
       }
     },
-    [activeSheetIndex, localSheets, workbookId]
+    [localSheets, workbookId, workingSheetIndex]
   );
 
   const applyChanges = useCallback(
     (changes: CellChange[], direction: 'after' | 'before') => {
       setLocalSheets((prev) => {
         const clone = cloneSheets(prev);
-        const sheet = clone[activeSheetIndex];
+        const sheet = clone[workingSheetIndex];
         if (!sheet) return prev;
         for (const change of changes) {
           const col = sheet.columns?.[change.colIndex];
@@ -168,8 +171,26 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       });
       void persistChanges(changes, direction);
     },
-    [activeSheetIndex, persistChanges]
+    [persistChanges, workingSheetIndex]
   );
+
+  const runSchemaCommand = useCallback(async (command: Record<string, unknown>) => {
+    setSaveState('saving');
+    try {
+      const result = await Api.updateWorkbookSchema(workbookId, command);
+      const nextSheets = result?.schema?.sheets;
+      if (Array.isArray(nextSheets) && nextSheets.length) {
+        setLocalSheets(cloneSheets(nextSheets));
+        setWorkingSheetIndex((current) => Math.min(current, nextSheets.length - 1));
+        setSelected(null);
+      }
+      undoStackRef.current = [];
+      redoStackRef.current = [];
+      setSaveState('saved');
+    } catch {
+      setSaveState('error');
+    }
+  }, [workbookId]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -203,7 +224,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
       setLocalSheets((prev) => {
         const clone = cloneSheets(prev);
-        const sheet = clone[activeSheetIndex];
+        const sheet = clone[workingSheetIndex];
         if (!sheet.rows) sheet.rows = [];
         const targetRow = sheet.rows[selected.rowIndex];
         if (!targetRow) return prev;
@@ -214,7 +235,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
       setSaveState('saving');
       Api.updateWorkbookCell(workbookId, {
-        sheetIndex: activeSheetIndex,
+        sheetIndex: workingSheetIndex,
         rowIndex: selected.rowIndex,
         columnKey: col.key,
         ...parsed,
@@ -238,7 +259,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         });
       }
     },
-    [selected, activeRaw, activeSheetIndex, workbookId]
+    [selected, activeRaw, workbookId, workingSheetIndex]
   );
 
   const startEditing = useCallback(
@@ -458,6 +479,26 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
   return (
     <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised" role="toolbar" aria-label={t('kimi.excele.structureToolbar', 'Workbook editing tools')}>
+        <label className="sr-only" htmlFor={`workbook-sheet-${workbookId}`}>{t('kimi.excele.activeSheet', 'Active sheet')}</label>
+        <select id={`workbook-sheet-${workbookId}`} value={workingSheetIndex} onChange={(e) => { setWorkingSheetIndex(Number(e.target.value)); setSelected(null); }} className="h-8 max-w-44 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text">
+          {localSheets.map((sheet, index) => <option key={`${sheet.name}-${index}`} value={index}>{sheet.name || `Sheet ${index + 1}`}</option>)}
+        </select>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'addSheet', name: `Sheet ${localSheets.length + 1}` })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs" aria-label={t('kimi.excele.addSheet', 'Add sheet')}><Plus size={14} /></button>
+        <button type="button" onClick={() => { const name = window.prompt(t('kimi.excele.renameSheetPrompt', 'New sheet name'), activeRaw?.name || ''); if (name) void runSchemaCommand({ type: 'renameSheet', sheetIndex: workingSheetIndex, name }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs">{t('kimi.excele.rename', 'Rename')}</button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'duplicateSheet', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.duplicateSheet', 'Duplicate sheet')}><Copy size={14} /></button>
+        <button type="button" disabled={localSheets.length <= 1} onClick={() => { if (window.confirm(t('kimi.excele.deleteSheetConfirm', 'Delete this sheet?'))) void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}><Trash2 size={14} /></button>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'insertRow', sheetIndex: workingSheetIndex, rowIndex: selected?.rowIndex ?? activeRaw.rows?.length ?? 0 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.insertRow', 'Insert row')}><Rows3 size={14} /><Plus size={9} className="inline" /></button>
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'deleteRow', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteRow', 'Delete selected row')}><Rows3 size={14} /><Trash2 size={9} className="inline" /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'insertColumn', sheetIndex: workingSheetIndex, colIndex: selected?.colIndex ?? activeRaw.columns?.length ?? 0, header: t('kimi.excele.newColumn', 'New column') })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.insertColumn', 'Insert column')}><Columns3 size={14} /><Plus size={9} className="inline" /></button>
+        <button type="button" disabled={!selected || (activeRaw.columns?.length ?? 0) <= 1} onClick={() => selected && void runSchemaCommand({ type: 'deleteColumn', sheetIndex: workingSheetIndex, colIndex: selected.colIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40" aria-label={t('kimi.excele.deleteColumn', 'Delete selected column')}><Columns3 size={14} /><Trash2 size={9} className="inline" /></button>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'formatCells', sheetIndex: workingSheetIndex, rowIndexes: [selected.rowIndex], colIndexes: [selected.colIndex], style: { bold: !Boolean(activeRaw.rows?.[selected.rowIndex]?.cells?.[activeRaw.columns?.[selected.colIndex]?.key || '']?.style?.bold) } })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.bold', 'Toggle bold')}><Bold size={14} /></button>
+        <select aria-label={t('kimi.excele.numberFormat', 'Number format')} disabled={!selected} defaultValue="" onChange={(e) => { if (selected && e.target.value) void runSchemaCommand({ type: 'formatCells', sheetIndex: workingSheetIndex, rowIndexes: [selected.rowIndex], colIndexes: [selected.colIndex], style: { numberFormat: e.target.value } }); e.target.value = ''; }} className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40">
+          <option value="">{t('kimi.excele.format', 'Format')}</option><option value="# ##0.00">Number</option><option value="# ##0.00 [$EUR]">EUR</option><option value="0.0%">%</option><option value="yyyy-mm-dd">Date</option>
+        </select>
+      </div>
       {/* Pasek formuły — pokazuje, co REALNIE siedzi w komórce (wartość vs
           formuła), nie wynik. To jest sedno dla właściciela — patrz nagłówek
           pliku i specyfikacja zadania. */}

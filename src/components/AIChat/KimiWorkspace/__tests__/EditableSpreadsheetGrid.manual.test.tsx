@@ -3,10 +3,10 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const updateWorkbookCell = vi.hoisted(() => vi.fn());
+const { updateWorkbookCell, updateWorkbookSchema } = vi.hoisted(() => ({ updateWorkbookCell: vi.fn(), updateWorkbookSchema: vi.fn() }));
 
 vi.mock('@/services/api', () => ({
-  Api: { updateWorkbookCell },
+  Api: { updateWorkbookCell, updateWorkbookSchema },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -33,6 +33,7 @@ describe('EditableSpreadsheetGrid manual operations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     updateWorkbookCell.mockResolvedValue({ ok: true });
+    updateWorkbookSchema.mockResolvedValue({ ok: true, version: 2, schema: { title: 'Budget', sheets } });
   });
 
   it('pastes a TSV range, recalculates formulas, persists cells sequentially and supports undo', async () => {
@@ -63,5 +64,14 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     const setData = vi.fn();
     fireEvent.copy(screen.getByTestId('editable-spreadsheet-grid'), { clipboardData: { setData } });
     expect(setData).toHaveBeenCalledWith('text/plain', '=B2-C2');
+  });
+
+  it('runs canonical sheet and row commands from the accessible toolbar', async () => {
+    render(<EditableSpreadsheetGrid workbookId="wb-1" sheets={sheets} activeSheetIndex={0} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add sheet' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', { type: 'addSheet', name: 'Sheet 2' }));
+    fireEvent.click(screen.getByTestId('workbook-cell-0-plan'));
+    fireEvent.click(screen.getByRole('button', { name: 'Insert row' }));
+    await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', { type: 'insertRow', sheetIndex: 0, rowIndex: 0 }));
   });
 });

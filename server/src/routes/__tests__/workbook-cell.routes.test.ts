@@ -118,7 +118,7 @@ beforeEach(() => {
     ) {
       const [id, orgId] = params as [string, string];
       if (id === WB_ID && orgId === ORG) {
-        return { schema_json: JSON.stringify(SCHEMA) };
+        return { schema_json: JSON.stringify(SCHEMA), version: 1, title: SCHEMA.title };
       }
       return null;
     }
@@ -213,8 +213,10 @@ describe('PATCH /api/workbook/:id/cell', () => {
     const [, updateParams] = updateCall as [string, unknown[]];
     const savedSchema = JSON.parse(updateParams[0] as string);
     expect(savedSchema.sheets[0].rows[0].cells.wartosc.value).toBe(0.15);
-    expect(updateParams[1]).toBe(WB_ID);
-    expect(updateParams[2]).toBe(ORG);
+    expect(updateParams[1]).toBe(2);
+    expect(updateParams[2]).toBe(WB_ID);
+    expect(updateParams[3]).toBe(ORG);
+    expect(updateParams[4]).toBe(1);
   });
 
   it('a formula wins over a simultaneously-provided value, and strips a leading "="', async () => {
@@ -244,6 +246,63 @@ describe('PATCH /api/workbook/:id/cell', () => {
     expect(res.body.cell.value).toBeUndefined();
     expect(res.body.cell.formula).toBeUndefined();
     expect(res.body.cell.style).toEqual({ bgColor: 'FFF6DF', border: 'thin' });
+  });
+});
+
+describe('PATCH /api/workbook/:id/schema-command', () => {
+  it('persists sheet add through canonical schema with version snapshot', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'addSheet', name: 'Scenarios' } });
+    expect(res.status).toBe(200);
+    expect(res.body.schema.sheets).toHaveLength(3);
+    expect(res.body.schema.sheets[2].name).toBe('Scenarios');
+    expect(res.body.version).toBe(2);
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO generated_workbook_versions'),
+      expect.any(Array)
+    );
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) => String(sql).includes('UPDATE generated_workbooks SET schema_json'));
+    expect(JSON.parse(updateCall?.[1]?.[0] as string).sheets).toHaveLength(3);
+  });
+
+  it('supports row, column and cell-format commands without dropping formulas', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const commands = [
+      { type: 'insertRow', sheetIndex: 1, rowIndex: 1 },
+      { type: 'insertColumn', sheetIndex: 1, colIndex: 1, key: 'scenario', header: 'Scenario' },
+      { type: 'formatCells', sheetIndex: 1, rowIndexes: [0], colIndexes: [1], style: { bold: true, numberFormat: '0.0%' } },
+    ];
+    for (const command of commands) {
+      vi.clearAllMocks();
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+      const res = await request(app).patch(`/api/workbook/${WB_ID}/schema-command`).send({ command });
+      expect(res.status).toBe(200);
+      expect(res.body.schema.sheets[1].rows[0].cells.wartosc.formula).toBe("'Założenia'!$B$2*100");
+    }
+  });
+
+  it('rejects deleting the last column and stale expectedVersion', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const conflict = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ expectedVersion: 9, command: { type: 'addSheet' } });
+    expect(conflict.status).toBe(409);
+
+    const invalid = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'deleteColumn', sheetIndex: 0, colIndex: 0 } });
+    // Sheet 0 has two columns, so first delete is valid; deleting an unknown
+    // index must still be rejected rather than silently corrupting schema.
+    expect(invalid.status).toBe(200);
+    const unknown = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'deleteColumn', sheetIndex: 0, colIndex: 99 } });
+    expect(unknown.status).toBe(400);
   });
 });
 

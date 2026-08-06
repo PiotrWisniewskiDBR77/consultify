@@ -41,7 +41,7 @@ import {
 } from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
-import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
+import { type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -1802,6 +1802,165 @@ router.patch(
       cell: targetRow.cells[columnKey],
       version: nextVersion,
     });
+  })
+);
+
+/**
+ * PATCH /api/workbook/:id/schema-command
+ *
+ * Canonical structural editor command. Unlike replacing schema_json from the
+ * browser, commands are validated and applied to the latest org-scoped schema,
+ * snapshot the pre-change version and use CAS for conflict-safe persistence.
+ */
+router.patch(
+  '/:id/schema-command',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) return void res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { command, expectedVersion } = req.body || {};
+    if (!command || typeof command.type !== 'string') {
+      return void res.status(400).json({ error: 'command.type is required' });
+    }
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{ schema_json: string; version: number; title: string }>(
+      `SELECT schema_json, version, title FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) return void res.status(404).json({ error: 'Workbook not found' });
+    const currentVersion = Number(row.version) || 1;
+    if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      return void res.status(409).json({ error: 'Version conflict', code: 'VERSION_CONFLICT', serverVersion: currentVersion });
+    }
+    const schema = JSON.parse(row.schema_json) as WorkbookSchema;
+    const sheetIndex = Number(command.sheetIndex ?? 0);
+    const sheet = schema.sheets[sheetIndex];
+    const requireSheet = () => {
+      if (!Number.isInteger(sheetIndex) || !sheet) throw new Error('Unknown sheetIndex');
+      return sheet;
+    };
+    try {
+      switch (command.type) {
+        case 'renameWorkbook': {
+          const title = String(command.title || '').trim();
+          if (!title) throw new Error('Workbook title is required');
+          schema.title = title.slice(0, 160);
+          break;
+        }
+        case 'addSheet': {
+          const base = String(command.name || `Sheet ${schema.sheets.length + 1}`).trim();
+          const names = new Set(schema.sheets.map((s) => s.name.toLowerCase()));
+          let name = base || `Sheet ${schema.sheets.length + 1}`;
+          let suffix = 2;
+          while (names.has(name.toLowerCase())) name = `${base} ${suffix++}`;
+          schema.sheets.push({ name, columns: [{ key: 'A', header: 'Column A' }], rows: [{ cells: { A: { value: null } } }] });
+          break;
+        }
+        case 'renameSheet': {
+          const target = requireSheet();
+          const name = String(command.name || '').trim();
+          if (!name) throw new Error('Sheet name is required');
+          if (schema.sheets.some((s, i) => i !== sheetIndex && s.name.toLowerCase() === name.toLowerCase())) throw new Error('Sheet name must be unique');
+          target.name = name.slice(0, 80);
+          break;
+        }
+        case 'duplicateSheet': {
+          const target = requireSheet();
+          const clone = JSON.parse(JSON.stringify(target));
+          clone.name = `${target.name} copy`;
+          schema.sheets.splice(sheetIndex + 1, 0, clone);
+          break;
+        }
+        case 'deleteSheet': {
+          requireSheet();
+          if (schema.sheets.length <= 1) throw new Error('Workbook must keep at least one sheet');
+          schema.sheets.splice(sheetIndex, 1);
+          break;
+        }
+        case 'moveSheet': {
+          requireSheet();
+          const toIndex = Number(command.toIndex);
+          if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= schema.sheets.length) throw new Error('Invalid toIndex');
+          const [moved] = schema.sheets.splice(sheetIndex, 1);
+          schema.sheets.splice(toIndex, 0, moved);
+          break;
+        }
+        case 'insertRow': {
+          const target = requireSheet();
+          const rowIndex = Math.max(0, Math.min(Number(command.rowIndex ?? target.rows.length), target.rows.length));
+          target.rows.splice(rowIndex, 0, { cells: Object.fromEntries(target.columns.map((c) => [c.key, { value: null }])) });
+          break;
+        }
+        case 'deleteRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= target.rows.length) throw new Error('Invalid rowIndex');
+          target.rows.splice(rowIndex, 1);
+          break;
+        }
+        case 'insertColumn': {
+          const target = requireSheet();
+          const colIndex = Math.max(0, Math.min(Number(command.colIndex ?? target.columns.length), target.columns.length));
+          let key = String(command.key || `column_${Date.now()}`).replace(/[^A-Za-z0-9_]/g, '_');
+          while (target.columns.some((c) => c.key === key)) key += '_2';
+          target.columns.splice(colIndex, 0, { key, header: String(command.header || 'New column'), width: 16 });
+          target.rows.forEach((r) => { r.cells[key] = { value: null }; });
+          break;
+        }
+        case 'deleteColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!Number.isInteger(colIndex) || colIndex < 0 || colIndex >= target.columns.length) throw new Error('Invalid colIndex');
+          if (target.columns.length <= 1) throw new Error('Sheet must keep at least one column');
+          const [removed] = target.columns.splice(colIndex, 1);
+          target.rows.forEach((r) => { delete r.cells[removed.key]; });
+          break;
+        }
+        case 'resizeColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const width = Number(command.width);
+          if (!target.columns[colIndex] || !Number.isFinite(width) || width < 4 || width > 80) throw new Error('Invalid column width');
+          target.columns[colIndex].width = width;
+          break;
+        }
+        case 'formatCells': {
+          const target = requireSheet();
+          const rowIndexes = Array.isArray(command.rowIndexes) ? command.rowIndexes : [];
+          const colIndexes = Array.isArray(command.colIndexes) ? command.colIndexes : [];
+          const style = command.style && typeof command.style === 'object' ? command.style : {};
+          rowIndexes.forEach((ri: number) => colIndexes.forEach((ci: number) => {
+            const col = target.columns[ci];
+            const targetRow = target.rows[ri];
+            if (!col || !targetRow) return;
+            targetRow.cells[col.key] = { ...(targetRow.cells[col.key] || {}), style: { ...(targetRow.cells[col.key]?.style || {}), ...style } };
+          }));
+          break;
+        }
+        default:
+          throw new Error(`Unsupported command ${command.type}`);
+      }
+    } catch (error) {
+      return void res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid command' });
+    }
+    const parsed = WorkbookSchemaValidator.safeParse(schema);
+    if (!parsed.success) return void res.status(400).json({ error: 'Command produced invalid workbook schema', issues: parsed.error.issues });
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [uuidv4(), id, currentVersion, row.schema_json, schema.sheets.length, user.id]
+      );
+    } catch (error) {
+      logger.warn(`[WorkbookRoutes] Could not snapshot schema command for ${id}:`, error);
+    }
+    const nextVersion = currentVersion + 1;
+    const result = await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET schema_json = ?, title = ?, sheet_count = ?, version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
+      [JSON.stringify(parsed.data), parsed.data.title, parsed.data.sheets.length, nextVersion, id, user.organizationId, currentVersion]
+    );
+    if (!result?.changes) return void res.status(409).json({ error: 'Version conflict', code: 'VERSION_CONFLICT' });
+    workbookCache.delete(id);
+    res.json({ ok: true, schema: parsed.data, version: nextVersion });
   })
 );
 

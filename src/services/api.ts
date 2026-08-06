@@ -7223,6 +7223,19 @@ export const Api = {
     return handleResponse(res, 'Failed to save cell edit');
   },
 
+  updateWorkbookSchema: async (
+    workbookId: string,
+    command: Record<string, unknown>,
+    expectedVersion?: number
+  ): Promise<{ ok: boolean; schema: any; version: number }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/schema-command`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ command, expectedVersion }),
+    });
+    return handleResponse(res, 'Failed to update workbook structure');
+  },
+
   // MAT-006 (2026-08-02) — workbook lifecycle: versions/checkpoint/restore/
   // share/revoke/CSV export. See server/src/routes/workbook.routes.ts.
   getWorkbookVersions: async (
