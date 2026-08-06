@@ -51,7 +51,15 @@ vi.mock('@/components/DocumentStudio/DocumentStudioAiEntryPanel', () => ({
 
 vi.mock('@/components/DocumentStudio/DocumentStudioIntakeForm', () => ({
   DocumentStudioIntakeForm: (props: {
-    onSubmit: (intake: unknown, options: { useLlm: boolean; templateId?: string }) => void;
+    onSubmit: (
+      intake: unknown,
+      options: {
+        useLlm: boolean;
+        templateId?: string;
+        templateVersion?: string;
+        sourceRefs?: unknown[];
+      }
+    ) => void;
   }) => (
     <div data-testid="intake-form-stub">
       <button
@@ -59,7 +67,14 @@ vi.mock('@/components/DocumentStudio/DocumentStudioIntakeForm', () => ({
         onClick={() =>
           props.onSubmit(
             { description: 'Raport z audytu Q3.' },
-            { useLlm: true, templateId: 'tpl-1' }
+            {
+              useLlm: true,
+              templateId: 'tpl-1',
+              templateVersion: '1.0',
+              sourceRefs: [
+                { sourceType: 'url', sourceId: 'https://example.test/status', sourceTitle: 'Status' },
+              ],
+            }
           )
         }
       >
@@ -196,9 +211,13 @@ describe('DocumentStudioView — N3 Mode 3 (template) shows the plan before gene
       expect(generateDocumentStudioArtifactStreamMock).toHaveBeenCalledTimes(1);
     });
     const [params] = generateDocumentStudioArtifactStreamMock.mock.calls[0] as [
-      { templateId?: string; outline?: unknown },
+      { templateId?: string; templateVersion?: string; sourceRefs?: unknown[]; outline?: unknown },
     ];
     expect(params.templateId).toBe('tpl-1');
+    expect(params.templateVersion).toBe('1.0');
+    expect(params.sourceRefs).toEqual([
+      { sourceType: 'url', sourceId: 'https://example.test/status', sourceTitle: 'Status' },
+    ]);
     // The preview outline is for display only — the server remains the sole
     // source of truth for Mode 3's canonical outline (`outlineFromTemplate`
     // in `documentStudioService.ts`).

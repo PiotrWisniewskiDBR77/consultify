@@ -392,6 +392,8 @@ export interface MaterializeDocumentParams {
    * organization as the call site; cross-tenant template IDs are rejected.
    */
   templateId?: string | null;
+  /** Exact version selected by Mode 3 UI; prevents generation after template drift. */
+  templateVersion?: string | null;
   /**
    * Slice E15.wiring.materialize — explicit `sourcePackId` propagated
    * onto the resulting `DocumentSchema.sourcePackId` artifact-ref
@@ -547,6 +549,9 @@ export async function materializeDocumentArtifact(
       throw new Error('template_not_usable');
     }
     template = candidate;
+    if (params.templateVersion && template.version !== params.templateVersion) {
+      throw new Error('template_version_mismatch');
+    }
     mode = 'mode_3';
   }
 

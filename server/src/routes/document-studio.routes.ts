@@ -614,6 +614,7 @@ interface ParsedGenerateRequest {
   projectId: string | null;
   useLlm: boolean;
   templateId: string | null;
+  templateVersion: string | null;
 }
 
 /** Parse & validate a generate request body. Returns `null` when intake is missing. */
@@ -631,6 +632,10 @@ function parseGenerateRequest(body: unknown): ParsedGenerateRequest | null {
     templateId:
       typeof b.templateId === 'string' && (b.templateId as string).trim().length > 0
         ? (b.templateId as string)
+        : null,
+    templateVersion:
+      typeof b.templateVersion === 'string' && (b.templateVersion as string).trim().length > 0
+        ? (b.templateVersion as string)
         : null,
   };
 }
@@ -839,7 +844,7 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { outline, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId, templateVersion } = parsed;
     const { intake, sourceRefs } = await autoGroundGenerateRequest(
       organizationId,
       parsed.intake,
@@ -856,6 +861,7 @@ router.post(
         projectId,
         useLlm,
         templateId,
+        templateVersion,
       });
 
       registerGeneratedDocumentOrigin({
@@ -886,9 +892,11 @@ router.post(
         });
         return;
       }
-      const status = message === 'template_not_usable' ? 400 : 500;
+      const templateError =
+        message === 'template_not_usable' || message === 'template_version_mismatch';
+      const status = templateError ? 400 : 500;
       res.status(status).json({
-        error: status === 400 ? 'template_not_usable' : 'generate_failed',
+        error: templateError ? message : 'generate_failed',
         message: status === 400 ? message : GENERIC_5XX_MESSAGE,
       });
     }
@@ -934,7 +942,7 @@ router.post(
       res.status(400).json({ error: 'intake is required' });
       return;
     }
-    const { outline, projectId, useLlm, templateId } = parsed;
+    const { outline, projectId, useLlm, templateId, templateVersion } = parsed;
     const { intake, sourceRefs } = await autoGroundGenerateRequest(
       organizationId,
       parsed.intake,
@@ -998,6 +1006,7 @@ router.post(
         projectId,
         useLlm,
         templateId,
+        templateVersion,
         hooks: {
           onPlan: (resolvedOutline) => {
             write(sseFrame('plan', { outline: resolvedOutline }));
@@ -1046,6 +1055,9 @@ router.post(
         clientMessage = message;
       } else if (message === 'template_not_usable') {
         code = 'template_not_usable';
+        clientMessage = message;
+      } else if (message === 'template_version_mismatch') {
+        code = 'template_version_mismatch';
         clientMessage = message;
       }
       // Headers are already flushed (SSE), so a fatal error is delivered as an

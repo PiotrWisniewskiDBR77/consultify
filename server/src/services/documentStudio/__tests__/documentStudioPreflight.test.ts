@@ -156,6 +156,23 @@ describe('Document Studio source-pack preflight (MVP-3)', () => {
       ],
     });
     expect(result.artifactId).toBe('wave5-preflight-1');
+    expect(result.schema.templateRef).toEqual({
+      templateId: template.templateId,
+      templateVersion: template.version,
+    });
+  });
+
+  it('pins Mode 3 to the exact selected template version', async () => {
+    const { template } = approvedTemplateWithRequirements([]);
+    await expect(
+      materializeDocumentArtifact({
+        organizationId: 'org-A',
+        userId: 'consult-user',
+        intake: baseIntake,
+        templateId: template.templateId,
+        templateVersion: 'stale-version',
+      })
+    ).rejects.toThrow('template_version_mismatch');
   });
 
   it('Mode 1 generation ignores preflight (no template, source pack allowed to be empty)', async () => {

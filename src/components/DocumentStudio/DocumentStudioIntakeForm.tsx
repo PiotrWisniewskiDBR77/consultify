@@ -18,6 +18,7 @@ import type {
   DocumentDensity,
   DocumentGoal,
   DocumentIntake,
+  DocumentSourceRef,
   DocumentTemplate,
   DocumentTypeKey,
 } from './types';
@@ -112,6 +113,8 @@ const GOAL_OPTIONS: { value: DocumentGoal; label: string }[] = [
 export interface IntakeSubmitOptions {
   useLlm: boolean;
   templateId?: string | null;
+  templateVersion?: string | null;
+  sourceRefs?: DocumentSourceRef[];
 }
 
 interface DocumentStudioIntakeFormProps {
@@ -167,6 +170,9 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
   // OFF dokument powstawał jako pusty szkielet („This section is awaiting content").
   const [useLlm, setUseLlm] = useState(true);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [requiredSources, setRequiredSources] = useState<
+    Record<string, { kind: 'text' | 'url' | 'attachment'; value: string }>
+  >({});
 
   const preselectApplied = useRef(false);
 
@@ -201,6 +207,10 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
     }
   }, [selectedTemplate]);
 
+  useEffect(() => {
+    setRequiredSources({});
+  }, [selectedTemplateId]);
+
   // D1 tri-tryby: gdy wejście przez „Z szablonu" i picker jest dostępny —
   // ustaw na nim fokus, żeby wybór trybu miał widoczny skutek.
   useEffect(() => {
@@ -209,7 +219,12 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
     }
   }, [autoFocusTemplatePicker, hasTemplates]);
 
-  const isValid = description.trim().length >= 10 && !loading;
+  const requiredSourcesComplete =
+    !selectedTemplate ||
+    selectedTemplate.requiredInputs.every(
+      (requirement) => requiredSources[requirement]?.value.trim().length > 0
+    );
+  const isValid = description.trim().length >= 10 && requiredSourcesComplete && !loading;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -233,6 +248,22 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
       // to false which bypassed LLM entirely even when a template was selected.
       useLlm: inTemplateMode ? true : useLlm,
       templateId: inTemplateMode ? selectedTemplateId : null,
+      templateVersion: inTemplateMode ? selectedTemplate?.version : null,
+      sourceRefs: inTemplateMode
+        ? selectedTemplate?.requiredInputs.map((requirement) => {
+            const source = requiredSources[requirement];
+            return {
+              sourceType: source.kind,
+              sourceId:
+                source.kind === 'url'
+                  ? source.value.trim()
+                  : `${source.kind}:${requirement}:${source.value.trim()}`,
+              // Exact requirement label is intentional: the backend preflight
+              // matches the declared dependency against this explicit binding.
+              sourceTitle: requirement,
+            };
+          })
+        : undefined,
     });
   };
 
@@ -332,12 +363,51 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
           </p>
           <ul className="mt-2 space-y-1 text-xs">
             {selectedTemplate.requiredInputs.map((requirement) => (
-              <li key={requirement} className="flex items-start gap-2 text-c-text">
-                <span
-                  aria-hidden
-                  className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-sky-500"
-                />
-                <span>{requirement}</span>
+              <li key={requirement} className="grid gap-1 rounded-md py-1 text-c-text">
+                <label className="font-medium" htmlFor={`required-source-${requirement}`}>
+                  {requirement}
+                </label>
+                <div className="grid grid-cols-[8rem_1fr] gap-2">
+                  <select
+                    aria-label={`${requirement} source type`}
+                    value={requiredSources[requirement]?.kind ?? 'text'}
+                    onChange={(event) =>
+                      setRequiredSources((current) => ({
+                        ...current,
+                        [requirement]: {
+                          kind: event.target.value as 'text' | 'url' | 'attachment',
+                          value: '',
+                        },
+                      }))
+                    }
+                    className="rounded-md border border-sky-300 bg-c-surface px-2 py-1"
+                  >
+                    <option value="text">{t('documentStudio.intake.sourceText', 'Text')}</option>
+                    <option value="url">{t('documentStudio.intake.sourceUrl', 'URL')}</option>
+                    <option value="attachment">
+                      {t('documentStudio.intake.sourceAttachment', 'Attachment ID')}
+                    </option>
+                  </select>
+                  <input
+                    id={`required-source-${requirement}`}
+                    type={requiredSources[requirement]?.kind === 'url' ? 'url' : 'text'}
+                    value={requiredSources[requirement]?.value ?? ''}
+                    onChange={(event) =>
+                      setRequiredSources((current) => ({
+                        ...current,
+                        [requirement]: {
+                          kind: current[requirement]?.kind ?? 'text',
+                          value: event.target.value,
+                        },
+                      }))
+                    }
+                    placeholder={t(
+                      'documentStudio.intake.requiredSourcePlaceholder',
+                      'Paste content, URL, or an existing attachment ID'
+                    )}
+                    className="rounded-md border border-sky-300 bg-c-surface px-2 py-1"
+                  />
+                </div>
               </li>
             ))}
           </ul>

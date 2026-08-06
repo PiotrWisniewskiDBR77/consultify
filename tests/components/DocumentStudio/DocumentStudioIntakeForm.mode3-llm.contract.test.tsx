@@ -76,7 +76,7 @@ describe('DocumentStudioIntakeForm — Mode3 LLM gate (M18/L-04)', () => {
     expect(options.templateId).toBe('tpl-001');
   });
 
-  it('passes useLlm:false when no template is selected and toggle is off (Mode1 default)', async () => {
+  it('uses the current LLM default when no template is selected', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
 
     render(
@@ -100,7 +100,52 @@ describe('DocumentStudioIntakeForm — Mode3 LLM gate (M18/L-04)', () => {
 
     const [_intake, options] = onSubmit.mock.calls[0] as [unknown, { useLlm: boolean; templateId: string | null }];
 
-    expect(options.useLlm).toBe(false);
+    expect(options.useLlm).toBe(true);
     expect(options.templateId).toBeNull();
+  });
+
+  it('blocks Mode3 until every required source is bound and submits exact template version', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    const requiredTemplate = {
+      ...STUB_TEMPLATE,
+      version: '1.7',
+      requiredInputs: ['Current plan status', 'Risk register'],
+    };
+    render(
+      <DocumentStudioIntakeForm
+        onSubmit={onSubmit}
+        approvedTemplates={[requiredTemplate]}
+        loading={false}
+      />
+    );
+
+    fireEvent.change(screen.getByRole('combobox', { name: /template/i }), {
+      target: { value: 'tpl-001' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: /description/i }), {
+      target: { value: 'Board control report for the current programme.' },
+    });
+    const submit = screen.getByRole('button', { name: /generate from template/i });
+    expect(submit).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Current plan status'), {
+      target: { value: 'Execution is on plan.' },
+    });
+    expect(submit).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Risk register'), {
+      target: { value: 'https://example.test/risk-register' },
+    });
+    expect(submit).toBeEnabled();
+    fireEvent.click(submit);
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(onSubmit.mock.calls[0][1]).toMatchObject({
+      templateId: 'tpl-001',
+      templateVersion: '1.7',
+      sourceRefs: [
+        expect.objectContaining({ sourceType: 'text', sourceTitle: 'Current plan status' }),
+        expect.objectContaining({ sourceType: 'text', sourceTitle: 'Risk register' }),
+      ],
+    });
   });
 });

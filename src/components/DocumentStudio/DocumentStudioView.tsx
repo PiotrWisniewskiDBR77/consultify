@@ -176,6 +176,8 @@ export const DocumentStudioView: React.FC = () => {
   const [outline, setOutline] = useState<DocumentOutline | null>(null);
   const [useLlm, setUseLlm] = useState(true);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [activeTemplateVersion, setActiveTemplateVersion] = useState<string | null>(null);
+  const [activeSourceRefs, setActiveSourceRefs] = useState<GenerateDocumentParams['sourceRefs']>([]);
   const [approvedTemplates, setApprovedTemplates] = useState<DocumentTemplate[]>([]);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [artifactId, setArtifactId] = useState<string | null>(null);
@@ -562,6 +564,8 @@ export const DocumentStudioView: React.FC = () => {
     if (options.templateId) {
       setIntake(nextIntake);
       setActiveTemplateId(options.templateId);
+      setActiveTemplateVersion(options.templateVersion ?? null);
+      setActiveSourceRefs(options.sourceRefs ?? []);
       setUseLlm(false);
       const template = approvedTemplates.find((tpl) => tpl.templateId === options.templateId);
       if (template) {
@@ -573,7 +577,15 @@ export const DocumentStudioView: React.FC = () => {
       // currently loaded list (stale cache / race with `refreshApprovedTemplates`).
       // Don't block the user behind a plan screen we have no data to render —
       // generate directly, same as the pre-N3 behavior.
-      await runStreamingGeneration({ intake: nextIntake, templateId: options.templateId }, null);
+      await runStreamingGeneration(
+        {
+          intake: nextIntake,
+          templateId: options.templateId,
+          templateVersion: options.templateVersion ?? undefined,
+          sourceRefs: options.sourceRefs,
+        },
+        null
+      );
       return;
     }
 
@@ -585,6 +597,8 @@ export const DocumentStudioView: React.FC = () => {
       setOutline(result);
       setUseLlm(options.useLlm);
       setActiveTemplateId(null);
+      setActiveTemplateVersion(null);
+      setActiveSourceRefs([]);
       setPhase('outline');
     } catch (err) {
       setError(
@@ -643,6 +657,8 @@ export const DocumentStudioView: React.FC = () => {
       const nextIntake = buildAiChatIntake(description);
       setIntake(nextIntake);
       setActiveTemplateId(null);
+      setActiveTemplateVersion(null);
+      setActiveSourceRefs([]);
       setUseLlm(true);
       await runStreamingGeneration({ intake: nextIntake, useLlm: true }, null);
     },
@@ -667,6 +683,8 @@ export const DocumentStudioView: React.FC = () => {
         outline: activeTemplateId ? undefined : outline,
         useLlm,
         templateId: activeTemplateId ?? undefined,
+        templateVersion: activeTemplateVersion ?? undefined,
+        sourceRefs: activeSourceRefs,
       },
       outline
     );
@@ -747,6 +765,8 @@ export const DocumentStudioView: React.FC = () => {
     setOutline(null);
     setUseLlm(false);
     setActiveTemplateId(null);
+    setActiveTemplateVersion(null);
+    setActiveSourceRefs([]);
     setArtifactId(null);
     setSchema(null);
     setGenerationWarnings([]);

@@ -157,6 +157,8 @@ export interface GenerateDocumentParams {
   useLlm?: boolean;
   /** Mode 3: when set, generation hydrates from this approved template. */
   templateId?: string;
+  /** Exact approved version selected in the UI; backend rejects stale picks. */
+  templateVersion?: string;
 }
 
 export async function generateDocumentStudioArtifact(
