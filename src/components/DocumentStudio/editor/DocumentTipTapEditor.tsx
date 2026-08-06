@@ -232,20 +232,6 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     [schema.artifactId]
   );
 
-  useEffect(() => {
-    if (!editor?.view?.dom) return;
-    let collapsed = false;
-    for (const child of Array.from(editor.view.dom.children)) {
-      const element = child as HTMLElement;
-      if (element.hasAttribute('data-doc-section')) {
-        collapsed = Boolean(collapsedSectionIds?.has(element.dataset.sectionId ?? ''));
-        element.setAttribute('aria-expanded', String(!collapsed));
-        element.hidden = false;
-      } else {
-        element.hidden = collapsed;
-      }
-    }
-  }, [collapsedSectionIds, editor, schema.sections]);
   const { requestText, promptDialog } = useManualPrompt();
 
   // Keep editable in sync without remounting.
@@ -307,6 +293,23 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schema, editor]);
+
+  // Apply the visual collapse after any external setContent synchronization,
+  // because setContent recreates the ProseMirror child DOM.
+  useEffect(() => {
+    if (!editor?.view?.dom) return;
+    let collapsed = false;
+    for (const child of Array.from(editor.view.dom.children)) {
+      const element = child as HTMLElement;
+      if (element.hasAttribute('data-doc-section')) {
+        collapsed = Boolean(collapsedSectionIds?.has(element.dataset.sectionId ?? ''));
+        element.setAttribute('aria-expanded', String(!collapsed));
+        element.hidden = false;
+      } else {
+        element.hidden = collapsed;
+      }
+    }
+  }, [collapsedSectionIds, editor, schema]);
 
   useEffect(() => {
     return () => {
