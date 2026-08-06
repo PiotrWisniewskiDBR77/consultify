@@ -212,7 +212,7 @@ export function applyOrgContextGrounding(
         {
           sourceType: 'intake',
           sourceId: 'explicit-user-brief',
-          sourceTitle: 'Explicit user brief',
+          sourceTitle: `Jawny brief użytkownika: ${explicitDescription}`,
         },
       ],
       autoGrounded: false,

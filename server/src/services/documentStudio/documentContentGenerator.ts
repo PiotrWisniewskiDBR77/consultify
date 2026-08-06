@@ -104,6 +104,10 @@ export function enforceDocumentSchemaGrounding(
   groundingSource: string
 ): DocumentSchema {
   const next = JSON.parse(JSON.stringify(schema)) as DocumentSchema;
+  const isPolish = String(next.language || '')
+    .toLowerCase()
+    .startsWith('pl');
+  if (isPolish) next.language = 'pl';
   const language = next.language;
   const removed =
     language === 'pl'
@@ -296,7 +300,7 @@ export function enforceDocumentSchemaGrounding(
       ['podsumowanie zarządcze', 'executive summary'],
       [
         mk('paragraph', {
-          text: `Realizacja planu wynosi ${plan}, budżet programu wynosi ${budget}, a ukończone kamienie milowe to ${milestones}. Rekomendujemy, aby zarząd potwierdził dalszą realizację planu wyłącznie na podstawie tych danych. Właściciel decyzji i termin pozostają założeniami do weryfikacji; dokument nie interpretuje realizacji planu jako wykorzystania budżetu.`,
+          text: `Realizacja planu wynosi ${plan}, budżet programu wynosi ${budget}, a ukończone kamienie milowe to ${milestones}. Właściciel decyzji i termin nie zostały podane i pozostają założeniami do weryfikacji. Realizacja planu nie jest w tym raporcie interpretowana jako wykorzystanie budżetu.`,
         }),
       ]
     );
@@ -304,7 +308,7 @@ export function enforceDocumentSchemaGrounding(
       ['wymagane decyzje', 'decisions required'],
       [
         mk('paragraph', {
-          text: `Decyzja wymagana: potwierdzić dalszą realizację planu przy stanie ${plan} i ${milestones} ukończonych kamieni milowych.`,
+          text: `Brief nie wskazuje decyzji do zatwierdzenia. Dostępny stan wykonania to realizacja planu ${plan} oraz ${milestones} ukończonych kamieni milowych.`,
         }),
         mk('paragraph', { text: 'Właściciel decyzji pozostaje założeniem do weryfikacji.' }, true),
         mk('paragraph', { text: 'Termin decyzji pozostaje założeniem do weryfikacji.' }, true),
@@ -314,7 +318,7 @@ export function enforceDocumentSchemaGrounding(
       ['do wiadomości', 'for information'],
       [
         mk('paragraph', {
-          text: `Do wiadomości zarządu: potwierdzone dane obejmują realizację planu ${plan}, budżet programu ${budget} oraz ${milestones} ukończonych kamieni milowych. Pozostałe wnioski operacyjne wymagają oddzielnych źródeł i nie są w tym dokumencie przedstawiane jako fakty.`,
+          text: `Potwierdzone dane obejmują realizację planu ${plan}, budżet programu ${budget} oraz ${milestones} ukończonych kamieni milowych. Brief nie zawiera innych danych operacyjnych.`,
         }),
       ]
     );
@@ -322,7 +326,7 @@ export function enforceDocumentSchemaGrounding(
       ['status portfela', 'portfolio status'],
       [
         mk('paragraph', {
-          text: `Status programu opisują trzy potwierdzone wartości: realizacja planu ${plan}, budżet programu ${budget} oraz ukończenie ${milestones} kamieni milowych. Dane nie określają liczby inicjatyw, harmonogramu miesięcznego ani właścicieli działań, dlatego dokument nie dodaje takich informacji.`,
+          text: `Status programu opisują trzy podane wartości: realizacja planu ${plan}, budżet programu ${budget} oraz ukończenie ${milestones} kamieni milowych. Liczba inicjatyw, statusy projektów i harmonogram nie zostały podane.`,
         }),
       ]
     );
@@ -343,11 +347,11 @@ export function enforceDocumentSchemaGrounding(
             columns: ['Ryzyko', 'Prawdopodobieństwo', 'Wpływ', 'Właściciel', 'Mitygacja'],
             rows: [
               [
-                'Błędne utożsamienie realizacji planu z wykorzystaniem budżetu',
+                'Utożsamienie realizacji planu z wykorzystaniem budżetu jest wykluczone przez brief',
                 'Założenie do weryfikacji',
                 'Założenie do weryfikacji',
                 'Założenie do weryfikacji',
-                'Raportować oba wskaźniki oddzielnie',
+                'Brak danych o wykorzystaniu budżetu',
               ],
             ],
           },
@@ -362,9 +366,9 @@ export function enforceDocumentSchemaGrounding(
           'bullet_list',
           {
             items: [
-              `Potwierdzić interpretację realizacji planu ${plan}.`,
-              `Potwierdzić zakres ukończonych kamieni milowych ${milestones}.`,
-              'Ustalić właściciela oraz termin decyzji — założenia do weryfikacji.',
+              `Brief nie wskazuje działań następczych poza stanem realizacji planu ${plan}.`,
+              `Zakres ukończonych kamieni milowych wynosi ${milestones}.`,
+              'Właściciel i termin nie zostały podane — założenia do weryfikacji.',
             ],
           },
           true

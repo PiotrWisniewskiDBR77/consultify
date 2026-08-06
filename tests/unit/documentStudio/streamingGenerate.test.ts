@@ -182,7 +182,9 @@ describe('Document Studio — streaming generation contract (C1)', () => {
       description:
         '72% realizacji planu, budżet 1,4 mln EUR, 18/21 kamieni milowych; zakaz utożsamiania realizacji planu z wykorzystaniem budżetu; brakujące owners i dates oznacz jako assumptions.',
       documentType: 'board_report' as const,
-      language: 'pl' as const,
+      // Production may carry the browser locale rather than the narrow UI
+      // union; the runtime must normalize it before final grounding.
+      language: 'pl-PL' as any,
       goal: 'decide' as const,
       audience: ['Zarząd'],
     };
@@ -219,12 +221,23 @@ describe('Document Studio — streaming generation contract (C1)', () => {
     expect(text).toContain('1,4 mln EUR');
     expect(text).toContain('18/21');
     expect(text).not.toMatch(
-      /DACH|8 inicjatyw|Offense-Repair-Conversion|Automated Changeover|Status: green|stopień wykorzystania budżetu.*pozostaje w ramach alokacji/i
+      /DACH|8 inicjatyw|Offense-Repair-Conversion|Automated Changeover|Status: green|stopień wykorzystania budżetu.*pozostaje w ramach alokacji|realokacj/i
     );
     expect(reopened?.sections).toHaveLength(7);
+    const safetyPlaceholder = 'Treść usunięta — niepoparte twierdzenie (założenie do weryfikacji).';
+    for (const section of reopened?.sections ?? []) {
+      const sectionText = JSON.stringify(section.blocks);
+      expect(sectionText).not.toContain(safetyPlaceholder);
+      expect(sectionText.length).toBeGreaterThan(80);
+    }
     expect(
       reopened?.sections.flatMap((section) => section.blocks).some((block) => block.isAssumption)
     ).toBe(true);
+    const { runDocumentQa } =
+      await import('../../../server/src/services/documentStudio/documentQaService.js');
+    const qa = runDocumentQa(reopened!);
+    expect(qa.anyBlocking).toBe(false);
+    expect(qa.categories.filter((category) => category.blocking)).toEqual([]);
   });
 
   it('fires hooks in order plan → section* and never before its schema is ready', async () => {
