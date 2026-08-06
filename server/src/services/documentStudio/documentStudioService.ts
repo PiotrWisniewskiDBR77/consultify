@@ -2647,6 +2647,8 @@ export interface UpdateDocumentManualContentParams {
    * Omitted/blank → title is left untouched.
    */
   title?: string;
+  /** Optional artifact-level sources edited manually in the Sources rail. */
+  sourceRefs?: DocumentSchema['sourceRefs'];
 }
 
 export interface UpdateDocumentManualContentResult {
@@ -2694,6 +2696,9 @@ export async function updateDocumentManualContent(
   const trimmedTitle = typeof params.title === 'string' ? params.title.trim() : '';
   if (trimmedTitle) {
     nextSchema.title = trimmedTitle;
+  }
+  if (Array.isArray(params.sourceRefs)) {
+    nextSchema.sourceRefs = params.sourceRefs;
   }
   nextSchema.updatedAt = nowIso();
 

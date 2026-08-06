@@ -97,6 +97,7 @@ import type {
   DocumentContentBlockTemplate,
   DocumentGenerationWarning,
   DocumentOutline,
+  DocumentQaFinding,
   DocumentQaReport,
   DocumentSchema,
   DocumentSchemaDiffResponse,
@@ -313,10 +314,16 @@ function SourceListPanel({
   sourceRefs,
   sections,
   assumptionCount,
+  onAddSource,
+  onRemoveSource,
+  onToggleAssumption,
 }: {
   sourceRefs: DocumentSourceRef[];
   sections: DocumentSection[];
   assumptionCount: number;
+  onAddSource: () => void;
+  onRemoveSource: (sourceType: string, sourceId: string) => void;
+  onToggleAssumption: (sectionId: string, blockId: string) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
   const usedSourceKeys = useMemo(() => collectBlockSourceKeys(sections), [sections]);
@@ -356,6 +363,13 @@ function SourceListPanel({
             assumptions: assumptionCount,
           })}
         </p>
+        <button
+          type="button"
+          onClick={onAddSource}
+          className="mt-2 rounded-lg border border-c-border px-2.5 py-1.5 text-xs font-medium text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
+        >
+          {t('documentStudio.sources.add', '+ Add source')}
+        </button>
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
         {[
@@ -432,11 +446,55 @@ function SourceListPanel({
                 >
                   {connector.label}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => onRemoveSource(ref.sourceType, ref.sourceId)}
+                  className="rounded-full px-2 py-0.5 text-[10px] font-medium text-danger-600 hover:bg-danger-500/10"
+                  aria-label={t('documentStudio.sources.remove', {
+                    defaultValue: 'Remove source {{title}}',
+                    title: ref.sourceTitle || ref.sourceId,
+                  })}
+                >
+                  {t('documentStudio.sources.removeShort', 'remove')}
+                </button>
               </div>
             </li>
           ))}
         </ul>
       )}
+      <div className="mt-4 border-t border-c-border pt-3">
+        <h4 className="text-xs font-semibold text-c-text">
+          {t('documentStudio.sources.assumptions', 'Assumptions by block')}
+        </h4>
+        <ul className="mt-2 space-y-1.5">
+          {sections.flatMap((section) =>
+            section.blocks.map((block, blockIndex) => (
+              <li
+                key={block.blockId}
+                className="flex items-center justify-between gap-2 rounded-lg border border-c-border-subtle p-2 text-[11px]"
+              >
+                <span className="min-w-0 truncate text-c-text-secondary">
+                  {section.title} · {block.type} {blockIndex + 1}
+                </span>
+                <button
+                  type="button"
+                  aria-pressed={Boolean(block.isAssumption)}
+                  onClick={() => onToggleAssumption(section.sectionId, block.blockId)}
+                  className={`shrink-0 rounded-full px-2 py-0.5 font-medium ${
+                    block.isAssumption
+                      ? 'bg-warning-500/10 text-warning-700'
+                      : 'bg-success-500/10 text-success-700'
+                  }`}
+                >
+                  {block.isAssumption
+                    ? t('documentStudio.sources.assumption', 'assumption')
+                    : t('documentStudio.sources.sourced', 'verified')}
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -2194,6 +2252,129 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     [persistSectionStructure, schema.sections]
   );
 
+  const persistEvidenceEdits = useCallback(
+    async (nextSections: DocumentSection[], nextSourceRefs: DocumentSourceRef[]): Promise<void> => {
+      if (!schema.updatedAt) return;
+      setAutosaveStatus('saving');
+      try {
+        const saved = await saveDocumentStudioManualContent(artifactId, {
+          sections: nextSections,
+          sourceRefs: nextSourceRefs,
+          expectedVersion: schema.updatedAt,
+        });
+        onSchemaUpdated(saved);
+        setAutosaveStatus('saved');
+      } catch (err) {
+        setAutosaveStatus(err instanceof DocumentManualSaveConflictError ? 'conflict' : 'error');
+        if (err instanceof DocumentManualSaveConflictError) {
+          try {
+            const fresh = await getDocumentStudioArtifact(artifactId);
+            onSchemaUpdated(fresh.schema);
+          } catch {
+            /* best-effort reconciliation */
+          }
+        }
+        toast.error(t('documentStudio.sources.saveFailed', 'Nie udało się zapisać źródeł.'));
+      }
+    },
+    [artifactId, onSchemaUpdated, schema.updatedAt, t]
+  );
+
+  const handleAddSource = useCallback(() => {
+    const sourceType = window.prompt('Typ źródła', 'url')?.trim();
+    if (!sourceType) return;
+    const sourceId = window.prompt('Identyfikator lub adres źródła', '')?.trim();
+    if (!sourceId) return;
+    if (
+      schema.sourceRefs.some((ref) => ref.sourceType === sourceType && ref.sourceId === sourceId)
+    ) {
+      toast.error(t('documentStudio.sources.duplicate', 'To źródło jest już podpięte.'));
+      return;
+    }
+    const sourceTitle = window.prompt('Nazwa źródła', sourceId)?.trim() || sourceId;
+    const sourceVersion = window.prompt('Wersja źródła (opcjonalnie)', '')?.trim() || undefined;
+    void persistEvidenceEdits(schema.sections, [
+      ...schema.sourceRefs,
+      { sourceType, sourceId, sourceTitle, sourceVersion },
+    ]);
+  }, [persistEvidenceEdits, schema.sections, schema.sourceRefs, t]);
+
+  const handleRemoveSource = useCallback(
+    (sourceType: string, sourceId: string) => {
+      if (!window.confirm(t('documentStudio.sources.removeConfirm', 'Usunąć to źródło?'))) return;
+      const nextSources = schema.sourceRefs.filter(
+        (ref) => !(ref.sourceType === sourceType && ref.sourceId === sourceId)
+      );
+      const nextSections = schema.sections.map((section) => ({
+        ...section,
+        sourceRefs: section.sourceRefs.filter(
+          (ref) => !(ref.sourceType === sourceType && ref.sourceId === sourceId)
+        ),
+        blocks: section.blocks.map((block) =>
+          block.sourceRef?.sourceType === sourceType && block.sourceRef.sourceId === sourceId
+            ? { ...block, sourceRef: undefined, isAssumption: true }
+            : block
+        ),
+      }));
+      void persistEvidenceEdits(nextSections, nextSources);
+    },
+    [persistEvidenceEdits, schema.sections, schema.sourceRefs, t]
+  );
+
+  const handleToggleAssumption = useCallback(
+    (sectionId: string, blockId: string) => {
+      const block = schema.sections
+        .find((section) => section.sectionId === sectionId)
+        ?.blocks.find((candidate) => candidate.blockId === blockId);
+      if (!block) return;
+      if (block.isAssumption && schema.sourceRefs.length === 0) {
+        toast.error(
+          t(
+            'documentStudio.sources.sourceRequired',
+            'Najpierw dodaj źródło, aby oznaczyć blok jako zweryfikowany.'
+          )
+        );
+        return;
+      }
+      const sourceRef = block.isAssumption ? schema.sourceRefs[0] : undefined;
+      const nextSections = schema.sections.map((section) =>
+        section.sectionId === sectionId
+          ? {
+              ...section,
+              sourceRefs:
+                sourceRef &&
+                !section.sourceRefs.some(
+                  (ref) =>
+                    ref.sourceType === sourceRef.sourceType && ref.sourceId === sourceRef.sourceId
+                )
+                  ? [...section.sourceRefs, sourceRef]
+                  : section.sourceRefs,
+              blocks: section.blocks.map((candidate) =>
+                candidate.blockId === blockId
+                  ? { ...candidate, isAssumption: !candidate.isAssumption, sourceRef }
+                  : candidate
+              ),
+            }
+          : section
+      );
+      void persistEvidenceEdits(nextSections, schema.sourceRefs);
+    },
+    [persistEvidenceEdits, schema.sections, schema.sourceRefs, t]
+  );
+
+  const handleNavigateQaFinding = useCallback((finding: DocumentQaFinding) => {
+    const target = finding.blockId
+      ? document.querySelector<HTMLElement>(`[data-block-id="${finding.blockId}"]`)
+      : null;
+    const fallback = finding.sectionId
+      ? document.querySelector<HTMLElement>(`[data-section-id="${finding.sectionId}"]`)
+      : null;
+    const element = target ?? fallback;
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element.focus({ preventScroll: true });
+  }, []);
+
   const triggerTextDownload = (filename: string, content: string, mime: string): void => {
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -2853,6 +3034,9 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           sourceRefs={schema.sourceRefs}
           sections={schema.sections}
           assumptionCount={assumptionCount}
+          onAddSource={handleAddSource}
+          onRemoveSource={handleRemoveSource}
+          onToggleAssumption={handleToggleAssumption}
         />
       );
     }
@@ -2880,7 +3064,10 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     if (activeToolId === 'qa') {
       return (
         <div className="h-full overflow-y-auto p-3">
-          <DocumentStudioQaPanel artifactId={artifactId} />
+          <DocumentStudioQaPanel
+            artifactId={artifactId}
+            onNavigateFinding={handleNavigateQaFinding}
+          />
         </div>
       );
     }

@@ -379,6 +379,8 @@ export async function saveDocumentStudioManualContent(
      * save the content autosave already uses instead of a new endpoint.
      */
     title?: string;
+    /** Optional artifact-level source registry for manual evidence management. */
+    sourceRefs?: DocumentSchema['sourceRefs'];
   }
 ): Promise<DocumentSchema> {
   const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/content`, {

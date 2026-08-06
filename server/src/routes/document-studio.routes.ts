@@ -4500,6 +4500,7 @@ router.put(
       // P-10 (2026-07-28): optional title rename riding along the same
       // durable content save — see `updateDocumentManualContent` doc-comment.
       title?: unknown;
+      sourceRefs?: unknown;
     };
     if (!Array.isArray(body.sections)) {
       res.status(400).json({ error: 'sections_required', code: 'DOC_CONTENT_SECTIONS_REQUIRED' });
@@ -4515,6 +4516,12 @@ router.put(
       res.status(400).json({ error: 'title_must_be_string', code: 'DOC_CONTENT_TITLE_INVALID' });
       return;
     }
+    if (body.sourceRefs !== undefined && !Array.isArray(body.sourceRefs)) {
+      res
+        .status(400)
+        .json({ error: 'sourceRefs_must_be_array', code: 'DOC_CONTENT_SOURCE_REFS_INVALID' });
+      return;
+    }
     try {
       const result = await updateDocumentManualContent({
         artifactId,
@@ -4523,6 +4530,9 @@ router.put(
         sections: body.sections as DocumentSchema['sections'],
         expectedVersion: body.expectedVersion,
         title: typeof body.title === 'string' ? body.title : undefined,
+        sourceRefs: Array.isArray(body.sourceRefs)
+          ? (body.sourceRefs as DocumentSchema['sourceRefs'])
+          : undefined,
       });
 
       // MAT-010 lineage hook (fail-safe). The Document type's real

@@ -31,6 +31,7 @@ import type {
 
 interface DocumentStudioQaPanelProps {
   artifactId: string;
+  onNavigateFinding?: (finding: DocumentQaFinding) => void;
 }
 
 const SEVERITY_STYLES: Record<DocumentQaSeverity, string> = {
@@ -129,9 +130,11 @@ function scoreColor(score: number): string {
 function CategoryReportView({
   report,
   categoryLabel,
+  onNavigateFinding,
 }: {
   report: DocumentQaCategoryReport;
   categoryLabel: string;
+  onNavigateFinding?: (finding: DocumentQaFinding) => void;
 }): React.ReactElement {
   const { t } = useTranslation();
   return (
@@ -172,11 +175,17 @@ function CategoryReportView({
                 <div className="flex-1">
                   <div>{finding.message}</div>
                   {finding.sectionId || finding.blockId ? (
-                    <div className="mt-0.5 text-[10px] text-c-text-secondary">
+                    <button
+                      type="button"
+                      onClick={() => onNavigateFinding?.(finding)}
+                      className="mt-0.5 text-left text-[10px] text-c-accent underline-offset-2 hover:underline disabled:text-c-text-secondary"
+                      disabled={!onNavigateFinding}
+                      aria-label={t('documentStudio.qa.goToFinding', 'Go to finding in document')}
+                    >
                       {finding.sectionId ? `section: ${finding.sectionId}` : null}
                       {finding.sectionId && finding.blockId ? ' · ' : ''}
                       {finding.blockId ? `block: ${finding.blockId}` : null}
-                    </div>
+                    </button>
                   ) : null}
                 </div>
               </div>
@@ -188,7 +197,10 @@ function CategoryReportView({
   );
 }
 
-export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ artifactId }) => {
+export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({
+  artifactId,
+  onNavigateFinding,
+}) => {
   const { t } = useTranslation();
   const [report, setReport] = useState<DocumentQaReport | null>(null);
   const [loading, setLoading] = useState(false);
@@ -284,6 +296,7 @@ export const DocumentStudioQaPanel: React.FC<DocumentStudioQaPanelProps> = ({ ar
                 key={cat.category}
                 report={cat}
                 categoryLabel={labelForCategory(cat.category)}
+                onNavigateFinding={onNavigateFinding}
               />
             ))}
           </div>

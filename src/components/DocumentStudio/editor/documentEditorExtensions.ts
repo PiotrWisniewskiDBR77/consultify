@@ -20,6 +20,7 @@ import { TableRow } from '@tiptap/extension-table-row';
 // Typ z '@tiptap/react' (re-eksport @tiptap/core) — patrz uzasadnienie
 // w canvasEditorExtensions.ts (dwie fizyczne kopie tej samej wersji core).
 import type { AnyExtension } from '@tiptap/react';
+import { Extension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
 import { CalloutNode } from '@/components/MyWork/notebook/extensions';
@@ -29,6 +30,48 @@ import { DocImageNode } from './nodes/DocImageNode';
 import { DocSectionNode } from './nodes/DocSectionNode';
 import { KpiStripNode } from './nodes/KpiStripNode';
 import { QuoteNode } from './nodes/QuoteNode';
+
+const DocumentBlockIdentity = Extension.create({
+  name: 'documentBlockIdentity',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['paragraph', 'heading', 'bulletList', 'orderedList', 'callout'],
+        attributes: {
+          blockId: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-block-id') || '',
+            renderHTML: (attrs) =>
+              attrs.blockId ? { 'data-block-id': String(attrs.blockId) } : {},
+          },
+          sectionId: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-section-id') || '',
+            renderHTML: (attrs) =>
+              attrs.sectionId ? { 'data-section-id': String(attrs.sectionId) } : {},
+          },
+          blockType: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-block-type') || '',
+            renderHTML: (attrs) =>
+              attrs.blockType ? { 'data-block-type': String(attrs.blockType) } : {},
+          },
+          sourceRef: {
+            default: '',
+            parseHTML: (element) => element.getAttribute('data-source-ref') || '',
+            renderHTML: (attrs) =>
+              attrs.sourceRef ? { 'data-source-ref': String(attrs.sourceRef) } : {},
+          },
+          isAssumption: {
+            default: false,
+            parseHTML: (element) => element.getAttribute('data-is-assumption') === 'true',
+            renderHTML: (attrs) => (attrs.isAssumption ? { 'data-is-assumption': 'true' } : {}),
+          },
+        },
+      },
+    ];
+  },
+});
 
 export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[] {
   return [
@@ -48,6 +91,7 @@ export function getDocumentEditorExtensions(placeholder?: string): AnyExtension[
       defaultProtocol: 'https',
       protocols: ['http', 'https', 'mailto'],
     }),
+    DocumentBlockIdentity,
     Table.configure({ resizable: true }),
     TableRow,
     TableHeader,
