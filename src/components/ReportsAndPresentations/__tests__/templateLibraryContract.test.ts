@@ -271,4 +271,13 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
       `/reports/builder?new=true&templateArtifactId=${ARTIFACT_INDEX_ID}`
     );
   });
+
+  it('szablon SHEET (edit) → persisted Excel Template Builder z kanonicznym id', () => {
+    expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', CANONICAL_ID)).toBe(
+      `/presentations?tab=templates&editWorkbookTemplateId=${CANONICAL_ID}`
+    );
+    expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', null)).toBe(
+      '/presentations?tab=templates'
+    );
+  });
 });

@@ -4,7 +4,12 @@
  */
 
 export type { TemplateBuilderFlowProps, TemplateBuilderProps } from './TemplateBuilder';
-export { DEMO_THEME_OPTIONS, TemplateBuilder, TemplateBuilderFlow } from './TemplateBuilder';
+export {
+  DEMO_THEME_OPTIONS,
+  PersistedTemplateBuilder,
+  TemplateBuilder,
+  TemplateBuilderFlow,
+} from './TemplateBuilder';
 export { saveTemplate } from './templateBuilderApi';
 export { isTemplateBuilderEnabled } from './templateBuilderFlags';
 export * from './templateBuilderModel';

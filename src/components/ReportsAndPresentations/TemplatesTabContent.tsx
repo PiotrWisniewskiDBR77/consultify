@@ -413,7 +413,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     ],
     universalHandlers: {
       preview: () => setSelectedId(row.id),
-      edit: () => navigate(resolveTemplateEditPath(row.id, row.type)),
+      edit: () => navigate(resolveTemplateEditPath(row.id, row.type, row.canonicalTemplateId)),
       // Brak API archiwizacji wzorca — pozycja disabled z notą (StandardTable dokłada ją sama).
     },
     // Brak API kasowania wzorca — blok 5 disabled z notą (StandardTable dokłada ją sama).
@@ -634,7 +634,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             if (usePath) navigate(usePath);
           }
           if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
-          if (actionId === 'edit') navigate(resolveTemplateEditPath(tpl.id, tpl.type));
+          if (actionId === 'edit')
+            navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
         }}
         emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
         newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}

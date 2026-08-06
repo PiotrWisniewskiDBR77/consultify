@@ -121,9 +121,18 @@ export function resolveTemplateUsePath(target: TemplateUseTarget): string | null
  * ląduje na liście architekta i sam wybiera wiersz; to jest świadomy,
  * tymczasowy kompromis (sprzątanie wejść, nie budowa nowej funkcji).
  */
-export function resolveTemplateEditPath(templateId: string, templateType: TemplateType): string {
+export function resolveTemplateEditPath(
+  templateId: string,
+  templateType: TemplateType,
+  canonicalTemplateId?: string | null
+): string {
   if (templateType === 'presentation') {
     return '/presentations?tab=template_architect';
+  }
+  if (templateType === 'sheet') {
+    const canonicalId = String(canonicalTemplateId || '').trim();
+    if (!canonicalId) return '/presentations?tab=templates';
+    return `/presentations?tab=templates&editWorkbookTemplateId=${encodeURIComponent(canonicalId)}`;
   }
   return `/reports/builder?tab=templates&templateArtifactId=${encodeURIComponent(templateId)}&edit=true`;
 }

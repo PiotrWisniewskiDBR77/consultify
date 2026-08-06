@@ -31,7 +31,7 @@ import { ExceleParametricTemplates } from '@/components/AIChat/KimiWorkspace/Exc
 import { PresentationTemplateArchitectView } from '@/components/Presentations/PresentationTemplateArchitectView';
 import { CreateFormatModeLauncher } from '@/components/shared/CreateFormatModeLauncher';
 import { MATERIAL_VISUAL_IDENTITY } from '@/components/shared/materialsVisualIdentity';
-import { TemplateBuilderFlow } from '@/components/TemplateBuilder';
+import { PersistedTemplateBuilder, TemplateBuilderFlow } from '@/components/TemplateBuilder';
 import { isDeliverablesLightEnabled } from '@/services/deliverablesGeneration';
 import { useConversationStore } from '@/store/useConversationStore';
 import { isDeckArchitectEnabled } from '@/utils/deckArchitectFlag';
@@ -217,6 +217,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     initialTemplatesView,
     initialWorkbookTemplateId,
     initialWorkbookId,
+    initialEditWorkbookTemplateId,
   } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
     const fromQuery = parseRapTabFromQuery(params.get('tab'));
@@ -244,6 +245,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       initialTemplatesView: templatesView,
       initialWorkbookTemplateId: params.get('workbookTemplateId') || null,
       initialWorkbookId: params.get('workbookId') || null,
+      initialEditWorkbookTemplateId: params.get('editWorkbookTemplateId') || null,
     };
   }, [location.pathname, location.search]);
 
@@ -253,6 +255,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const [workbookTemplateId, setWorkbookTemplateId] = useState<string | null>(
     initialWorkbookTemplateId
   );
+  const [editWorkbookTemplateId, setEditWorkbookTemplateId] = useState<string | null>(
+    initialEditWorkbookTemplateId
+  );
+  useEffect(() => {
+    const params = new URLSearchParams(location.search || '');
+    setEditWorkbookTemplateId(params.get('editWorkbookTemplateId') || null);
+  }, [location.search]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -1683,6 +1692,26 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   'Szablon zapisany — wybierz „Zbuduj skoroszyt”'
                 )
               );
+              void fetchTemplates();
+            }}
+          />
+        </div>
+      )}
+
+      {editWorkbookTemplateId && (
+        <div className="fixed inset-0 z-modal" data-testid="persisted-template-builder-overlay">
+          <PersistedTemplateBuilder
+            templateId={editWorkbookTemplateId}
+            onClose={() => {
+              setEditWorkbookTemplateId(null);
+              const params = new URLSearchParams(location.search || '');
+              params.delete('editWorkbookTemplateId');
+              params.set('tab', 'templates');
+              navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+              void fetchTemplates();
+            }}
+            onSaved={() => {
+              toast.success(t('rap.templateBuilder.updated', 'Zmiany szablonu zostały zapisane'));
               void fetchTemplates();
             }}
           />
