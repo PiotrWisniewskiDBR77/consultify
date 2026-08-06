@@ -1131,6 +1131,16 @@ async function cleanupGhostOutputsByOrigin(params: {
   return { cleanedUp: true, notes: null };
 }
 
+/** Remove the artifact-index envelope after its canonical template draft was deleted. */
+export async function removeTemplateArtifactByOrigin(params: {
+  organizationId: string;
+  originRuntime: TemplateOriginRuntime;
+  originRecordId: string;
+}): Promise<boolean> {
+  const result = await cleanupGhostOutputsByOrigin(params);
+  return result.cleanedUp;
+}
+
 async function mapArtifactRunRowWithEffectiveStatus(
   row: ArtifactRunRow
 ): Promise<ArtifactRunRecord> {

@@ -10,8 +10,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
-  approveTemplate as approveWorkbookTemplate,
-  deprecateTemplate as deprecateWorkbookTemplate,
   getTemplate as getWorkbookLifecycle,
   type LifecycleTemplate,
 } from '@/services/api/templateLifecycle.api';
@@ -21,6 +19,7 @@ import {
   loadTemplate,
   recordToDraft,
   saveTemplate,
+  transitionWorkbookTemplate,
   updateTemplate,
 } from './templateBuilderApi';
 import {
@@ -256,7 +255,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     try {
       setError(null);
       setLifecycle(
-        await approveWorkbookTemplate(templateId, 'Approved in manual template builder')
+        await transitionWorkbookTemplate(
+          templateId,
+          'approve',
+          'Approved in manual template builder'
+        )
       );
       setNotice('Szablon został zatwierdzony i jest gotowy do użycia.');
     } catch (e) {
@@ -269,7 +272,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     try {
       setError(null);
       setLifecycle(
-        await deprecateWorkbookTemplate(templateId, 'Deprecated in manual template builder')
+        await transitionWorkbookTemplate(
+          templateId,
+          'deprecate',
+          'Deprecated in manual template builder'
+        )
       );
       setNotice('Szablon wycofano. Historia i wersje zostały zachowane.');
     } catch (e) {

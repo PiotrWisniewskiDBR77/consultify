@@ -13,6 +13,7 @@ describe('TemplateBuilder workbook payload', () => {
   it('serializes a complete multi-sheet WorkbookSchema snapshot', () => {
     const draft = emptyDraft('table', 'Plan operacyjny', 'org');
     draft.description = 'Plan i realizacja';
+    draft.themeRef = 'brand-navy';
     draft.table[0].name = 'Plan';
     draft.table[0].columns[0] = {
       ...draft.table[0].columns[0],
@@ -45,6 +46,8 @@ describe('TemplateBuilder workbook payload', () => {
         schema_snapshot: {
           title: 'Plan operacyjny',
           description: 'Plan i realizacja',
+          themeRef: 'brand-navy',
+          scope: 'org',
           sheets: [
             {
               name: 'Plan',

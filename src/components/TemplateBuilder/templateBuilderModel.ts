@@ -287,6 +287,8 @@ export function draftToPostBody(draft: TemplateDraft): TemplatePostBody {
       schema_snapshot: {
         title: draft.name.trim(),
         description: draft.description.trim() || undefined,
+        themeRef: draft.themeRef,
+        scope: draft.scope,
         sheets: draft.table.map((sheet, sheetIndex) => {
           type StarterCell = { formula: string } | { value: string | number };
           const cellEntries: Array<[string, StarterCell]> = [];

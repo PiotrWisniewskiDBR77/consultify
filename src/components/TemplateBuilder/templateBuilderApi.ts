@@ -79,6 +79,18 @@ export async function deleteTemplate(id: string): Promise<void> {
   });
 }
 
+export async function transitionWorkbookTemplate(
+  id: string,
+  action: 'approve' | 'deprecate',
+  note?: string
+): Promise<import('@/services/api/templateLifecycle.api').LifecycleTemplate> {
+  return templateRequest(`/api/deliverables/templates/${encodeURIComponent(id)}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(note ? { note } : {}),
+  });
+}
+
 /** Hydrates the manual editor from the canonical record returned by the facade. */
 export function recordToDraft(record: DeliverableTemplateRecord): TemplateDraft {
   const scope = (record.meta?.scope === 'private' ? 'private' : 'org') as TemplateScope;
@@ -89,6 +101,9 @@ export function recordToDraft(record: DeliverableTemplateRecord): TemplateDraft 
 
   const raw = record.meta?.schema_snapshot;
   const schema = typeof raw === 'string' ? safeJson(raw) : raw;
+  if (!draft.themeRef && typeof (schema as any)?.themeRef === 'string')
+    draft.themeRef = (schema as any).themeRef;
+  if ((schema as any)?.scope === 'private') draft.scope = 'private';
   const sheets = Array.isArray((schema as any)?.sheets) ? (schema as any).sheets : [];
   draft.table = sheets.map((sheet: any, sheetIndex: number) => {
     const firstRowCells = sheet?.rows?.[0]?.cells ?? {};
