@@ -60,6 +60,38 @@ describe('presentationQualityGatesService', () => {
     ).toBe(true);
   });
 
+  it('blocks export while a manually added slide still contains starter prompts', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-manual', presentation_mode: 'show' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'show',
+      cards: [
+        {
+          intent: 'cover',
+          title: 'Cover',
+          blocks: [{ type: 'heading', content: { text: 'Board update' } }],
+        },
+        {
+          intent: 'key_messages',
+          title: 'New Slide',
+          blocks: [
+            { type: 'heading', content: { text: 'Add a clear slide title' } },
+            { type: 'paragraph', content: { text: 'Add the key message or supporting evidence.' } },
+          ],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-manual');
+    expect(report.canExport).toBe(false);
+    expect(report.gates.some((gate) => gate.gateType === 'PLACEHOLDER_CONTENT')).toBe(true);
+  });
+
   it('returns PASS_WITH_P2 when only non-blocking warnings remain', async () => {
     dbGet.mockImplementation(async (query: string) => {
       if (query.includes('presentation_decks')) return { id: 'deck-2', presentation_mode: 'show' };
@@ -318,23 +350,36 @@ describe('presentationQualityGatesService', () => {
 
   it('reports explicit unresolved Data required labels as P2 rather than P0', async () => {
     dbGet.mockImplementation(async (query: string) => {
-      if (query.includes('presentation_decks')) return { id: 'deck-data-gap', presentation_mode: 'show' };
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-data-gap', presentation_mode: 'show' };
       if (query.includes('brand_kits')) return { id: 'brand-1' };
       return null;
     });
     normalizeDeckDocument.mockReturnValue({
       presentation_mode: 'show',
-      cards: [{
-        intent: 'performance_overview', title: 'Economics',
-        key_message: 'Economics require one final input before approval.',
-        source_refs: [{ artifact_id: 'brief-1', confidence: 1 }],
-        blocks: [{ type: 'metric_strip', content: { metrics: [{ label: 'Payback', value: 'Data required' }] } }],
-      }],
+      cards: [
+        {
+          intent: 'performance_overview',
+          title: 'Economics',
+          key_message: 'Economics require one final input before approval.',
+          source_refs: [{ artifact_id: 'brief-1', confidence: 1 }],
+          blocks: [
+            {
+              type: 'metric_strip',
+              content: { metrics: [{ label: 'Payback', value: 'Data required' }] },
+            },
+          ],
+        },
+      ],
       meta: { confidentiality: 'internal' },
     });
 
     const report = await checkDeckQualityGates('org-1', 'deck-data-gap');
-    expect(report.gates).toContainEqual(expect.objectContaining({ id: 'qg-unresolved-data', priority: 'P2' }));
-    expect(report.gates).not.toContainEqual(expect.objectContaining({ id: 'qg-placeholder-content', priority: 'P0' }));
+    expect(report.gates).toContainEqual(
+      expect.objectContaining({ id: 'qg-unresolved-data', priority: 'P2' })
+    );
+    expect(report.gates).not.toContainEqual(
+      expect.objectContaining({ id: 'qg-placeholder-content', priority: 'P0' })
+    );
   });
 });

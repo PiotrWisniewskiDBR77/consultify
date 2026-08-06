@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
+import { blockContentStyle } from '../manualEditing';
 
 interface Props {
   block: CardBlock;
@@ -16,7 +17,7 @@ export const BulletListBlock: React.FC<Props> = ({ block, theme }) => {
   return (
     <ListTag
       className={`text-sm space-y-1.5 ${isNumbered ? 'list-decimal' : 'list-disc'} pl-5`}
-      style={{ color: theme.colors.textPrimary }}
+      style={{ color: theme.colors.textPrimary, ...blockContentStyle(block.content) }}
     >
       {items.map((item, i) => (
         <li key={i} className="leading-relaxed">

@@ -29,6 +29,7 @@ interface CardCanvasProps {
   onBlockDuplicate?: (cardId: string, blockId: string) => void;
   onBlockMove?: (cardId: string, blockId: string, direction: 'up' | 'down') => void;
   onBlockRefresh?: (cardId: string, blockId: string) => void;
+  onBlockReplaceImage?: (cardId: string, blockId: string) => void;
 }
 
 export const CardCanvas: React.FC<CardCanvasProps> = ({
@@ -49,6 +50,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onBlockDuplicate,
   onBlockMove,
   onBlockRefresh,
+  onBlockReplaceImage,
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,6 +130,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                   onBlockMove?.(card.card_id, blockId, direction)
                 }
                 onBlockRefresh={(blockId) => onBlockRefresh?.(card.card_id, blockId)}
+                onBlockReplaceImage={(blockId) => onBlockReplaceImage?.(card.card_id, blockId)}
               />
               {onRewriteCard && (
                 <>

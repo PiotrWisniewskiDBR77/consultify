@@ -474,6 +474,13 @@ export const DeckBuilder: React.FC = () => {
   // (`block-<card_id>-<n>` or `block-<timestamp>-<rand>`), so a single id is
   // enough to identify the selection deck-wide.
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const selectedBlock = useMemo(
+    () =>
+      deck?.cards
+        .flatMap((card) => card.blocks)
+        .find((block) => block.block_id === selectedBlockId) ?? null,
+    [deck, selectedBlockId]
+  );
 
   const handleSelectCard = useCallback(
     (index: number) => {
@@ -952,13 +959,33 @@ export const DeckBuilder: React.FC = () => {
         intent: 'key_messages',
         layout_id: 'content_full',
         title: 'New Slide',
-        blocks: [],
+        blocks: [
+          {
+            block_id: `block-${Date.now()}-heading`,
+            card_id: '',
+            type: 'heading',
+            content: { text: 'Add a clear slide title', level: 2 },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: true,
+          },
+          {
+            block_id: `block-${Date.now()}-body`,
+            card_id: '',
+            type: 'paragraph',
+            content: { text: 'Add the key message or supporting evidence.' },
+            is_refreshable: false,
+            position: { area: 'full', order: 1 },
+            ai_editable: true,
+          },
+        ],
         source_refs: [],
         has_refreshable_data: false,
         background: { type: 'theme' },
         animations: { entrance: 'fade', block_stagger: false },
         is_locked: false,
       };
+      newCard.blocks = newCard.blocks.map((block) => ({ ...block, card_id: newCard.card_id }));
       addCard(idx, newCard);
     },
     [deck, addCard]
@@ -985,14 +1012,24 @@ export const DeckBuilder: React.FC = () => {
 
   const handleInsertMediaImage = useCallback(
     (item: { storage_url: string; original_name: string }) => {
-      handleInsertBlock('image', {
-        url: item.storage_url,
-        alt: item.original_name,
-        fit: 'cover',
-      });
+      if (activeCard && selectedBlock?.type === 'image') {
+        handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, {
+          content: {
+            ...selectedBlock.content,
+            url: item.storage_url,
+            alt: item.original_name,
+          },
+        });
+      } else {
+        handleInsertBlock('image', {
+          url: item.storage_url,
+          alt: item.original_name,
+          fit: 'cover',
+        });
+      }
       setMediaLibraryOpen(false);
     },
-    [handleInsertBlock]
+    [activeCard, handleBlockUpdate, handleInsertBlock, selectedBlock]
   );
 
   const handleExport = useCallback(
@@ -1441,6 +1478,17 @@ export const DeckBuilder: React.FC = () => {
                 onGenerateAiImage={handleGenerateAiImage}
                 isGeneratingAiImage={generatingAiImage}
                 onUpload={() => setMediaLibraryOpen(true)}
+                cards={deck.cards}
+                selectedBlock={selectedBlock}
+                onSelectedBlockUpdate={(updates) => {
+                  if (activeCard && selectedBlock)
+                    handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
+                }}
+                onSelectCard={handleSelectCard}
+                onUndo={undo}
+                onRedo={redo}
+                canUndo={canUndo}
+                canRedo={canRedo}
               />
             ),
             comments: (
@@ -1516,6 +1564,10 @@ export const DeckBuilder: React.FC = () => {
               onBlockDuplicate={handleBlockDuplicate}
               onBlockMove={handleBlockMove}
               onBlockRefresh={handleBlockRefresh}
+              onBlockReplaceImage={(_cardId, blockId) => {
+                setSelectedBlockId(blockId);
+                setMediaLibraryOpen(true);
+              }}
             />
           }
           aiEntrySlot={
@@ -1904,6 +1956,10 @@ export const DeckBuilder: React.FC = () => {
             onBlockDuplicate={handleBlockDuplicate}
             onBlockMove={handleBlockMove}
             onBlockRefresh={handleBlockRefresh}
+            onBlockReplaceImage={(_cardId, blockId) => {
+              setSelectedBlockId(blockId);
+              setMediaLibraryOpen(true);
+            }}
           />
 
           {/* Right: Block Toolbar */}
@@ -1913,6 +1969,17 @@ export const DeckBuilder: React.FC = () => {
             onGenerateAiImage={handleGenerateAiImage}
             isGeneratingAiImage={generatingAiImage}
             onUpload={() => setMediaLibraryOpen(true)}
+            cards={deck.cards}
+            selectedBlock={selectedBlock}
+            onSelectedBlockUpdate={(updates) => {
+              if (activeCard && selectedBlock)
+                handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
+            }}
+            onSelectCard={handleSelectCard}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
 
           {/* Passive AI Activity Panel — runtime telemetry feed */}

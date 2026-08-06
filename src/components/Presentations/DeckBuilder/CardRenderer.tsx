@@ -60,6 +60,7 @@ interface CardRendererProps {
   onBlockDuplicate?: (blockId: string) => void;
   onBlockMove?: (blockId: string, direction: 'up' | 'down') => void;
   onBlockRefresh?: (blockId: string) => void;
+  onBlockReplaceImage?: (blockId: string) => void;
 }
 
 const BLOCK_COMPONENTS: Record<
@@ -101,6 +102,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onBlockDuplicate,
   onBlockMove,
   onBlockRefresh,
+  onBlockReplaceImage,
 }) => {
   const navigate = useNavigate();
   const deckTheme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
@@ -231,6 +233,9 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             onDelete={() => onBlockDelete?.(block.block_id)}
             onDuplicate={() => onBlockDuplicate?.(block.block_id)}
             onRefresh={block.is_refreshable ? () => onBlockRefresh?.(block.block_id) : undefined}
+            onReplaceImage={
+              block.type === 'image' ? () => onBlockReplaceImage?.(block.block_id) : undefined
+            }
             onMoveUp={() => onBlockMove?.(block.block_id, 'up')}
             onMoveDown={() => onBlockMove?.(block.block_id, 'down')}
             canMoveUp={canMoveBlock(card.blocks, block.block_id, 'up')}

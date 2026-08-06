@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
+import { blockContentStyle } from '../manualEditing';
 
 interface Props {
   block: CardBlock;
@@ -19,7 +20,10 @@ export const HeadingBlock: React.FC<Props> = ({ block, theme }) => {
   };
 
   return (
-    <div className={sizeClasses[level] || sizeClasses[1]} style={{ color: theme.colors.heading }}>
+    <div
+      className={sizeClasses[level] || sizeClasses[1]}
+      style={{ color: theme.colors.heading, ...blockContentStyle(block.content) }}
+    >
       {text}
     </div>
   );

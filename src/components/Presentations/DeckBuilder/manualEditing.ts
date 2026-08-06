@@ -11,3 +11,20 @@ export function resolveBlankCardInsertionIndex(atIndex: unknown, cardCount: numb
     ? Math.min(Math.max(Math.trunc(atIndex), 0), safeCount)
     : safeCount;
 }
+
+export function blockContentStyle(content: Record<string, unknown>): CSSProperties {
+  const raw = (content.style && typeof content.style === 'object' ? content.style : {}) as Record<
+    string,
+    unknown
+  >;
+  const size = String(raw.fontSize || '').trim();
+  const align = ['left', 'center', 'right'].includes(String(raw.textAlign))
+    ? (String(raw.textAlign) as CSSProperties['textAlign'])
+    : undefined;
+  return {
+    ...(size ? { fontSize: /^\d+(\.\d+)?$/.test(size) ? `${size}px` : size } : {}),
+    ...(typeof raw.color === 'string' && raw.color.trim() ? { color: raw.color.trim() } : {}),
+    ...(align ? { textAlign: align } : {}),
+  };
+}
+import type { CSSProperties } from 'react';

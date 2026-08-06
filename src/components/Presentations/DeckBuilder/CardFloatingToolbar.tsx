@@ -4,12 +4,15 @@
  */
 
 import {
-  AlignCenter,
   AlignVerticalJustifyStart,
-  Image,
+  Layers,
   Layout,
   Palette,
+  PanelLeft,
+  PanelRight,
+  PanelTop,
   Sparkles,
+  Square,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,11 +25,11 @@ interface CardFloatingToolbarProps {
 }
 
 const LAYOUTS = [
-  { id: 'full', label: 'Full', icon: '▢' },
-  { id: 'left-right', label: 'Left / Right', icon: '▤' },
-  { id: 'right-left', label: 'Right / Left', icon: '▥' },
-  { id: 'top-bottom', label: 'Top / Bottom', icon: '▦' },
-  { id: 'overlay', label: 'Overlay', icon: '▣' },
+  { id: 'full', label: 'Full', icon: Square },
+  { id: 'left-right', label: 'Left / Right', icon: PanelLeft },
+  { id: 'right-left', label: 'Right / Left', icon: PanelRight },
+  { id: 'top-bottom', label: 'Top / Bottom', icon: PanelTop },
+  { id: 'overlay', label: 'Overlay', icon: Layers },
 ];
 
 const BG_TYPES = [
@@ -57,28 +60,33 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title="Layout"
+            aria-label="Choose slide layout"
           >
             <Layout size={14} />
           </button>
           {expandedPanel === 'layout' && (
             <div className="absolute top-full mt-1 left-0 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-lg shadow-xl p-2 flex gap-1 z-40">
-              {LAYOUTS.map((l) => (
-                <button
-                  key={l.id}
-                  onClick={() => {
-                    onUpdateCard({ layout_id: l.id });
-                    setExpandedPanel(null);
-                  }}
-                  className={`w-10 h-8 rounded border text-[10px] font-mono flex items-center justify-center ${
-                    card.layout_id === l.id
-                      ? 'border-c-accent bg-c-accent-soft'
-                      : 'border-c-border-subtle hover:border-c-border-subtle'
-                  }`}
-                  title={l.label}
-                >
-                  {l.icon}
-                </button>
-              ))}
+              {LAYOUTS.map((l) => {
+                const LayoutIcon = l.icon;
+                return (
+                  <button
+                    key={l.id}
+                    onClick={() => {
+                      onUpdateCard({ layout_id: l.id });
+                      setExpandedPanel(null);
+                    }}
+                    className={`w-10 h-8 rounded border text-[10px] font-mono flex items-center justify-center ${
+                      card.layout_id === l.id
+                        ? 'border-c-accent bg-c-accent-soft'
+                        : 'border-c-border-subtle hover:border-c-border-subtle'
+                    }`}
+                    title={l.label}
+                    aria-label={`Use ${l.label} layout`}
+                  >
+                    <LayoutIcon size={16} />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -93,6 +101,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                 : 'text-c-text-secondary hover:bg-c-surface-raised'
             }`}
             title="Background"
+            aria-label="Choose slide background"
           >
             <Palette size={14} />
           </button>
@@ -112,6 +121,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                       ? 'bg-c-accent-soft text-c-accent'
                       : 'text-c-text-secondary hover:bg-c-surface-raised'
                   }`}
+                  aria-label={`Use ${bg.label} background`}
                 >
                   {bg.label}
                 </button>
@@ -126,6 +136,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
         <button
           className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
           title="Content alignment"
+          aria-label="Change content alignment"
         >
           <AlignVerticalJustifyStart size={14} />
         </button>
@@ -146,6 +157,7 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
               : 'text-c-text-secondary hover:bg-c-surface-raised'
           }`}
           title="Animations"
+          aria-label="Toggle block animations"
         >
           <Sparkles size={14} />
         </button>

@@ -19,6 +19,7 @@ interface EditableBlockProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onRefresh?: () => void;
+  onReplaceImage?: () => void;
   /** Fala 1 — przenieś blok w obrębie tego samego regionu (patrz `blockOps.ts`). */
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -92,6 +93,7 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
   onDelete,
   onDuplicate,
   onRefresh,
+  onReplaceImage,
   onMoveUp,
   onMoveDown,
   canMoveUp = false,
@@ -204,6 +206,11 @@ export const EditableBlock: React.FC<EditableBlockProps> = ({
             )}
             {block.type === 'image' && (
               <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReplaceImage?.();
+                }}
+                disabled={!onReplaceImage}
                 className="p-1 text-c-text-secondary hover:text-c-text-secondary"
                 title={t('presentations.builder.block.replaceImage', 'Replace image')}
               >

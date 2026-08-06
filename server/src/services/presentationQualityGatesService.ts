@@ -94,6 +94,8 @@ const PLACEHOLDER_TOKENS = [
   'do uzupelnienia',
   'do uzupełnienia',
   'placeholder',
+  'add a clear slide title',
+  'add the key message or supporting evidence',
   '[object object]',
 ];
 const UNRESOLVED_DATA_TOKENS = ['data required', 'evidence required'];

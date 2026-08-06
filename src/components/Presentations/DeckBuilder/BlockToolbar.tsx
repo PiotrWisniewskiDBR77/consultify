@@ -1,6 +1,8 @@
-import { BarChart3, Image, LayoutGrid, Search, Share2, Type } from 'lucide-react';
+import { BarChart3, Image, LayoutGrid, Redo2, Search, Share2, Type, Undo2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import type { CardBlock, DeckCard } from '../wizard/types';
 
 type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
@@ -20,6 +22,14 @@ interface BlockToolbarProps {
    * panel, which already has a real file-upload flow built in.
    */
   onUpload?: () => void;
+  cards?: DeckCard[];
+  selectedBlock?: CardBlock | null;
+  onSelectedBlockUpdate?: (updates: Partial<CardBlock>) => void;
+  onSelectCard?: (index: number) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labelKey: string }[] = [
@@ -37,6 +47,14 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   onGenerateAiImage,
   isGeneratingAiImage,
   onUpload,
+  cards = [],
+  selectedBlock,
+  onSelectedBlockUpdate,
+  onSelectCard,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
 }) => {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<ToolbarPanel>(null);
@@ -49,6 +67,24 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
     <div className="flex flex-shrink-0">
       {/* Icon strip */}
       <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
+        <button
+          aria-label="Undo"
+          title="Undo (⌘Z)"
+          disabled={!canUndo}
+          onClick={onUndo}
+          className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
+        >
+          <Undo2 size={18} />
+        </button>
+        <button
+          aria-label="Redo"
+          title="Redo (⇧⌘Z)"
+          disabled={!canRedo}
+          onClick={onRedo}
+          className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
+        >
+          <Redo2 size={18} />
+        </button>
         {TOOLBAR_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activePanel === item.id;
@@ -57,6 +93,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               key={item.id}
               onClick={() => togglePanel(item.id)}
               title={t(item.labelKey, item.id || '')}
+              aria-label={t(item.labelKey, item.id || '')}
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
                   ? 'bg-c-accent-soft0 text-c-accent'
@@ -89,7 +126,10 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'layouts' && <LayoutsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
-            {activePanel === 'search' && <SearchPanel />}
+            {activePanel === 'search' && <SearchPanel cards={cards} onSelectCard={onSelectCard} />}
+            {selectedBlock && onSelectedBlockUpdate && (
+              <BlockInspector block={selectedBlock} onUpdate={onSelectedBlockUpdate} />
+            )}
           </div>
         </div>
       )}
@@ -270,13 +310,251 @@ const ImagesPanel: React.FC<{
   );
 };
 
-const SearchPanel: React.FC = () => (
-  <div>
-    <input
-      type="text"
-      placeholder="Search deck content..."
-      className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
-    />
-    <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all cards</p>
-  </div>
+const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) => void }> = ({
+  cards,
+  onSelectCard,
+}) => {
+  const [query, setQuery] = useState('');
+  const normalized = query.trim().toLowerCase();
+  const matches = normalized
+    ? cards.flatMap((card, cardIndex) => {
+        const haystack = [card.title, ...card.blocks.map((b) => JSON.stringify(b.content))]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(normalized) ? [{ card, cardIndex }] : [];
+      })
+    : [];
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search deck content..."
+        aria-label="Search deck content"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
+      />
+      {!normalized && (
+        <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all slides</p>
+      )}
+      {normalized && matches.length === 0 && (
+        <p className="text-xs text-c-text-secondary mt-3">No matching slides</p>
+      )}
+      <div className="mt-2 space-y-1">
+        {matches.map(({ card, cardIndex }) => (
+          <button
+            key={card.card_id}
+            onClick={() => onSelectCard?.(cardIndex)}
+            className="w-full rounded-lg px-2 py-2 text-left hover:bg-c-surface-raised"
+            aria-label={`Go to slide ${cardIndex + 1}: ${card.title}`}
+          >
+            <span className="text-[10px] text-c-text-muted">Slide {cardIndex + 1}</span>
+            <p className="text-xs font-medium text-c-text truncate">{card.title || 'Untitled'}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const InspectorField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+}> = ({ label, value, onChange, multiline }) => (
+  <label className="block text-[10px] text-c-text-secondary">
+    <span>{label}</span>
+    {multiline ? (
+      <textarea
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 min-h-20 w-full rounded border border-c-border-subtle bg-c-surface-raised p-2 text-xs text-c-text"
+      />
+    ) : (
+      <input
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs text-c-text"
+      />
+    )}
+  </label>
 );
+
+const BlockInspector: React.FC<{
+  block: CardBlock;
+  onUpdate: (updates: Partial<CardBlock>) => void;
+}> = ({ block, onUpdate }) => {
+  const content = block.content || {};
+  const patchContent = (patch: Record<string, unknown>) =>
+    onUpdate({ content: { ...content, ...patch } });
+  const dataText = Array.isArray(content.data) ? JSON.stringify(content.data, null, 2) : '';
+  const items = Array.isArray(content.items) ? content.items : [];
+  return (
+    <div
+      className="mt-4 border-t border-c-border-subtle pt-3 space-y-2"
+      data-testid="block-inspector"
+    >
+      <h4 className="text-xs font-semibold text-c-text">
+        Selected {block.type.replace(/_/g, ' ')}
+      </h4>
+      {(block.type === 'heading' || block.type === 'paragraph' || block.type === 'callout') && (
+        <InspectorField
+          label="Text"
+          multiline
+          value={String(content.text || '')}
+          onChange={(text) => patchContent({ text })}
+        />
+      )}
+      {(block.type === 'bullet_list' ||
+        block.type === 'numbered_list' ||
+        block.type === 'smart_diagram') && (
+        <InspectorField
+          label="Items (one per line)"
+          multiline
+          value={items
+            .map((x: unknown) =>
+              typeof x === 'string' ? x : String((x as any)?.label || (x as any)?.title || '')
+            )
+            .join('\n')}
+          onChange={(value) =>
+            patchContent({
+              items: value
+                .split('\n')
+                .filter(Boolean)
+                .map((label) => (block.type === 'smart_diagram' ? { label } : label)),
+            })
+          }
+        />
+      )}
+      {block.type === 'table' && (
+        <>
+          <InspectorField
+            label="Headers (comma separated)"
+            value={(Array.isArray(content.headers) ? content.headers : []).join(', ')}
+            onChange={(value) => patchContent({ headers: value.split(',').map((x) => x.trim()) })}
+          />
+          <InspectorField
+            label="Rows (CSV, one row per line)"
+            multiline
+            value={(Array.isArray(content.rows) ? content.rows : [])
+              .map((r: unknown) => (Array.isArray(r) ? r.join(', ') : ''))
+              .join('\n')}
+            onChange={(value) =>
+              patchContent({
+                rows: value
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((row) => row.split(',').map((x) => x.trim())),
+              })
+            }
+          />
+        </>
+      )}
+      {block.type === 'chart' && (
+        <>
+          <InspectorField
+            label="Chart title"
+            value={String(content.title || '')}
+            onChange={(title) => patchContent({ title })}
+          />
+          <label className="block text-[10px] text-c-text-secondary">
+            Chart type
+            <select
+              aria-label="Chart type"
+              value={String(content.chartType || 'bar')}
+              onChange={(e) => patchContent({ chartType: e.target.value })}
+              className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+            >
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
+              <option value="area">Area</option>
+              <option value="pie">Pie</option>
+              <option value="donut">Donut</option>
+            </select>
+          </label>
+          <InspectorField
+            label="Chart data (JSON)"
+            multiline
+            value={dataText}
+            onChange={(value) => {
+              try {
+                patchContent({ data: JSON.parse(value) });
+              } catch {
+                /* keep editing until valid */
+              }
+            }}
+          />
+        </>
+      )}
+      {block.type === 'kpi_widget' && (
+        <>
+          <InspectorField
+            label="KPI label"
+            value={String(content.label || '')}
+            onChange={(label) => patchContent({ label })}
+          />
+          <InspectorField
+            label="KPI value"
+            value={String(content.value || '')}
+            onChange={(value) => patchContent({ value })}
+          />
+          <InspectorField
+            label="Trend"
+            value={String(content.trend || '')}
+            onChange={(trend) => patchContent({ trend })}
+          />
+        </>
+      )}
+      {block.type === 'image' && (
+        <>
+          <InspectorField
+            label="Image URL"
+            value={String(content.url || '')}
+            onChange={(url) => patchContent({ url })}
+          />
+          <InspectorField
+            label="Alt text"
+            value={String(content.alt || '')}
+            onChange={(alt) => patchContent({ alt })}
+          />
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <InspectorField
+          label="Font size"
+          value={String((content.style as any)?.fontSize || '')}
+          onChange={(fontSize) =>
+            patchContent({ style: { ...((content.style as any) || {}), fontSize } })
+          }
+        />
+        <InspectorField
+          label="Text color"
+          value={String((content.style as any)?.color || '')}
+          onChange={(color) =>
+            patchContent({ style: { ...((content.style as any) || {}), color } })
+          }
+        />
+      </div>
+      <label className="block text-[10px] text-c-text-secondary">
+        Alignment
+        <select
+          aria-label="Alignment"
+          value={String((content.style as any)?.textAlign || 'left')}
+          onChange={(e) =>
+            patchContent({
+              style: { ...((content.style as any) || {}), textAlign: e.target.value },
+            })
+          }
+          className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+        >
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </select>
+      </label>
+    </div>
+  );
+};
