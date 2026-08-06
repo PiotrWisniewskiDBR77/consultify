@@ -8,6 +8,15 @@
 - No Teresa/AI operation was counted as proof.
 - PASS means the operation was performed in the live browser UI and its result was read back from the UI. BLOCKED means that the canonical UI exposes no control/gesture for the operation. PARTIAL means a narrower form works.
 
+### Post-deployment retest — deployment `7589eed1`
+
+- Existing control workbook reopened successfully at the canonical editor URL.
+- New `Workbook editing tools` toolbar is visible in runtime.
+- Active-sheet selector changed the editable grid from Inputs to Budget: **PASS**.
+- `Add sheet` created `Sheet 4`, updated the selector and showed `Saved`: **PASS**.
+- Runtime blocker found: Rename, validation and delete used native browser prompt/confirm dialogs. These are inconsistent with the application, weak for accessibility and blocked reliable automation. Fixed in local commit `3d4a767fe4` with an application-owned accessible dialog; **redeploy required** before continuing the destructive/full retest.
+- The outer legacy sheet tablist remained on `Inputs` while the canonical editor selector showed `Budget`. Editing targets the selector's sheet correctly, but the duplicate navigation is visually contradictory: **FAIL (UX)**.
+
 ## Acceptance scale
 
 - **PASS / intuitive** — discoverable control or standard spreadsheet gesture, correct result, durable when applicable.
@@ -113,4 +122,3 @@
 - Sequential server persistence for paste to avoid CAS races.
 - Ctrl/Cmd+Z undo and Ctrl/Cmd+Y redo with durable reverse/forward writes.
 - Interaction tests covering paste, formula recalculation, persistence, undo and raw-formula copy.
-
