@@ -40,6 +40,7 @@ import {
   Columns3,
   Copy,
   Filter,
+  FileUp,
   HelpCircle,
   Italic,
   ListChecks,
@@ -154,6 +155,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const [dialogValue2, setDialogValue2] = useState('');
   const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
   const undoStackRef = useRef<CellChange[][]>([]);
@@ -289,6 +291,27 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     },
     [t, workbookId]
   );
+
+  const importWorkbook = useCallback(async (file: File) => {
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      const result = await Api.importWorkbook(workbookId, file);
+      if (!Array.isArray(result?.schema?.sheets) || !result.schema.sheets.length) throw new Error('Imported workbook has no sheets');
+      setLocalSheets(cloneSheets(result.schema.sheets));
+      setWorkingSheetIndex(0);
+      setSelected(null);
+      setSelectionEnd(null);
+      undoStackRef.current = [];
+      redoStackRef.current = [];
+      setSaveState('saved');
+    } catch (error) {
+      setSaveState('error');
+      setSaveError(error instanceof Error ? error.message : t('kimi.excele.importFailed', 'Import failed'));
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
+  }, [t, workbookId]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -659,6 +682,25 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           aria-label={t('kimi.excele.findReplace', 'Find and replace')}
         >
           <Search size={14} />
+        </button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+          className="sr-only"
+          aria-label={t('kimi.excele.importFile', 'Import XLSX or CSV')}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void importWorkbook(file);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => importInputRef.current?.click()}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.importFile', 'Import XLSX or CSV')}
+        >
+          <FileUp size={14} />
         </button>
         <label className="sr-only" htmlFor={`workbook-sheet-${workbookId}`}>
           {t('kimi.excele.activeSheet', 'Active sheet')}

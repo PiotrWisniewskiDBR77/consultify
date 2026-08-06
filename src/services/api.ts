@@ -7236,6 +7236,22 @@ export const Api = {
     return handleResponse(res, 'Failed to update workbook structure');
   },
 
+  importWorkbook: async (
+    workbookId: string,
+    file: File
+  ): Promise<{ ok: boolean; schema: any; version: number }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = getHeaders();
+    delete (headers as Record<string, string>)['Content-Type'];
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/import`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    return handleResponse(res, 'Failed to import workbook');
+  },
+
   // MAT-006 (2026-08-02) — workbook lifecycle: versions/checkpoint/restore/
   // share/revoke/CSV export. See server/src/routes/workbook.routes.ts.
   getWorkbookVersions: async (

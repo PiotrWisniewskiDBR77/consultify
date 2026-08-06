@@ -11,6 +11,7 @@
 import { createHash } from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPgTransaction } from '../database/PostgresDatabase.js';
@@ -42,6 +43,7 @@ import {
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
 import { type WorkbookSchema, WorkbookSchemaValidator } from '../services/workbook/WorkbookSchema.js';
+import { importWorkbookBuffer } from '../services/workbook/workbookImport.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -49,6 +51,11 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
+const workbookImportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => callback(null, /\.(xlsx|csv)$/i.test(file.originalname)),
+});
 
 // ---------------------------------------------------------------------------
 // MAT-006 (2026-08-02) — public share reader. MUST be registered before
@@ -1802,6 +1809,51 @@ router.patch(
       cell: targetRow.cells[columnKey],
       version: nextVersion,
     });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/import
+ *
+ * Parses a real XLSX/CSV file with ExcelJS and replaces the workbook's
+ * canonical schema. The previous schema is retained in version history.
+ */
+router.post(
+  '/:id/import',
+  workbookImportUpload.single('file'),
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) return void res.status(401).json({ error: 'Unauthorized' });
+    if (!req.file) return void res.status(400).json({ error: 'XLSX or CSV file is required' });
+    const { id } = req.params;
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) return void res.status(404).json({ error: 'Workbook not found' });
+    try {
+      const parsed = WorkbookSchemaValidator.parse(
+        await importWorkbookBuffer(req.file.buffer, req.file.originalname)
+      );
+      const currentVersion = Number(row.version) || 1;
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json, sheet_count, created_by)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [uuidv4(), id, currentVersion, row.schema_json, JSON.parse(row.schema_json).sheets?.length || 0, user.id]
+      );
+      const nextVersion = currentVersion + 1;
+      const updated = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET title = ?, schema_json = ?, version = ?
+         WHERE id = ? AND organization_id = ? AND version = ?`,
+        [parsed.title, JSON.stringify(parsed), nextVersion, id, user.organizationId, currentVersion]
+      );
+      if (!updated?.changes) return void res.status(409).json({ error: 'Version conflict', code: 'VERSION_CONFLICT' });
+      workbookCache.delete(id);
+      res.json({ ok: true, schema: parsed, version: nextVersion });
+    } catch (error) {
+      res.status(422).json({ error: error instanceof Error ? error.message : 'Workbook import failed' });
+    }
   })
 );
 

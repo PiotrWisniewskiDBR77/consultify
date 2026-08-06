@@ -3,13 +3,14 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { updateWorkbookCell, updateWorkbookSchema } = vi.hoisted(() => ({
+const { updateWorkbookCell, updateWorkbookSchema, importWorkbook } = vi.hoisted(() => ({
   updateWorkbookCell: vi.fn(),
   updateWorkbookSchema: vi.fn(),
+  importWorkbook: vi.fn(),
 }));
 
 vi.mock('@/services/api', () => ({
-  Api: { updateWorkbookCell, updateWorkbookSchema },
+  Api: { updateWorkbookCell, updateWorkbookSchema, importWorkbook },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -57,6 +58,7 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       version: 2,
       schema: { title: 'Budget', sheets },
     });
+    importWorkbook.mockResolvedValue({ ok: true, version: 3, schema: { title: 'Imported', sheets } });
   });
 
   it('pastes a TSV range, recalculates formulas, persists cells sequentially and supports undo', async () => {
@@ -255,5 +257,17 @@ describe('EditableSpreadsheetGrid manual operations', () => {
       width: '192px',
     });
     expect(screen.getByLabelText('Has comment')).toHaveAttribute('title', 'Owner reviewed');
+  });
+
+  it('imports XLSX through the canonical parser endpoint and replaces the local view', async () => {
+    render(<EditableSpreadsheetGrid workbookId="wb-1" sheets={sheets} activeSheetIndex={0} />);
+    const file = new File(['xlsx-bytes'], 'forecast.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const fileInput = screen.getAllByLabelText('Import XLSX or CSV').find((node) => node.tagName === 'INPUT');
+    expect(fileInput).toBeDefined();
+    fireEvent.change(fileInput!, { target: { files: [file] } });
+    await waitFor(() => expect(importWorkbook).toHaveBeenCalledWith('wb-1', file));
+    await waitFor(() => expect(screen.getByText('Zapisano')).toBeInTheDocument());
   });
 });
