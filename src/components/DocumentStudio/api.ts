@@ -45,6 +45,12 @@ import type {
 
 const BASE = '/api/document-studio';
 
+// `/plan` with LLM refinement is bounded server-side by the AI service's 30s
+// timeout. The shared API client's 20s default could therefore abort a valid
+// response just before it arrived. Keep this override local to Documents and
+// leave enough transport margin for the server to complete or fall back.
+const DOCUMENT_PLAN_LLM_TIMEOUT_MS = 60_000;
+
 /**
  * Structured error for the Mode 3 source-pack preflight failure. Surfaces
  * the missing requirements so callers can render a remediation checklist
@@ -137,6 +143,7 @@ export async function planDocumentStudioOutline(
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({ intake, useLlm: options.useLlm === true }),
+    ...(options.useLlm === true ? { timeoutMs: DOCUMENT_PLAN_LLM_TIMEOUT_MS } : {}),
   });
   const json = await handleResponse<PlanResponse>(res, 'DocumentStudio plan');
   return json.outline;
