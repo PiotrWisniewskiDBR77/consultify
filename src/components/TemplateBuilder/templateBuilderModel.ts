@@ -219,17 +219,20 @@ export interface TemplateValidationResult {
 export function validateTemplateDraft(draft: TemplateDraft): TemplateValidationResult {
   const errors: string[] = [];
   if (!draft.name.trim()) errors.push('Nazwa szablonu jest wymagana.');
-  const elements = draft.type === 'doc' ? draft.doc : draft.type === 'deck' ? draft.deck : draft.table;
+  const elements =
+    draft.type === 'doc' ? draft.doc : draft.type === 'deck' ? draft.deck : draft.table;
   if (elements.length === 0) errors.push('Szablon musi zawierać co najmniej jeden element.');
   if (draft.type === 'table') {
     draft.table.forEach((sheet, sheetIndex) => {
       if (!sheet.name.trim()) errors.push(`Arkusz ${sheetIndex + 1}: nazwa jest wymagana.`);
-      if (sheet.columns.length === 0) errors.push(`${sheet.name || `Arkusz ${sheetIndex + 1}`}: dodaj kolumnę.`);
+      if (sheet.columns.length === 0)
+        errors.push(`${sheet.name || `Arkusz ${sheetIndex + 1}`}: dodaj kolumnę.`);
       const names = new Set<string>();
       sheet.columns.forEach((column, columnIndex) => {
         const name = column.name.trim().toLocaleLowerCase();
         if (!name) errors.push(`${sheet.name}: kolumna ${columnIndex + 1} nie ma nazwy.`);
-        else if (names.has(name)) errors.push(`${sheet.name}: nazwa kolumny „${column.name.trim()}” jest powtórzona.`);
+        else if (names.has(name))
+          errors.push(`${sheet.name}: nazwa kolumny „${column.name.trim()}” jest powtórzona.`);
         names.add(name);
         if (column.type === 'formula' && !column.formula.trim())
           errors.push(`${sheet.name}: kolumna „${column.name}” wymaga formuły.`);

@@ -37,7 +37,9 @@ async function templateRequest(path: string, init?: RequestInit): Promise<any> {
     try {
       const data = await res.json();
       if (data?.error) msg = String(data.error);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     throw new Error(msg);
   }
   if (res.status === 204) return null;
@@ -121,7 +123,11 @@ export function recordToDraft(record: DeliverableTemplateRecord): TemplateDraft 
 }
 
 function safeJson(raw: string): unknown {
-  try { return JSON.parse(raw); } catch { return {}; }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
 function normalizeColumnType(value: unknown): SheetColumnType {
