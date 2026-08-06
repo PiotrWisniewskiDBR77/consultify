@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeStarterBlockContent, resolveBlankCardInsertionIndex } from '../manualEditing';
+import {
+  blockContentStyle,
+  blockFrameStyle,
+  mergeStarterBlockContent,
+  resolveBlankCardInsertionIndex,
+} from '../manualEditing';
 
 describe('manual PowerPoint editing helpers', () => {
   it('appends when React passes a click event to New slide', () => {
@@ -20,5 +25,40 @@ describe('manual PowerPoint editing helpers', () => {
         { chartType: 'line' }
       )
     ).toEqual({ chartType: 'line', data: [{ label: 'A', value: 30 }] });
+  });
+
+  it('maps the full manual typography contract to renderable CSS', () => {
+    expect(
+      blockContentStyle({
+        style: {
+          fontFamily: 'Georgia',
+          fontSize: '28',
+          fontWeight: '700',
+          fontStyle: 'italic',
+          textDecoration: 'underline',
+          lineHeight: '1.4',
+          letterSpacing: '0.5',
+          textAlign: 'center',
+        },
+      })
+    ).toMatchObject({
+      fontFamily: 'Georgia',
+      fontSize: '28px',
+      fontWeight: '700',
+      fontStyle: 'italic',
+      textDecoration: 'underline',
+      lineHeight: 1.4,
+      letterSpacing: '0.5px',
+      textAlign: 'center',
+    });
+  });
+
+  it('clamps model-safe block resize and placement values', () => {
+    expect(blockFrameStyle({ widthPercent: '150', minHeight: '48', alignSelf: 'center' })).toEqual({
+      width: '100%',
+      minHeight: '48px',
+      alignSelf: 'center',
+    });
+    expect(blockFrameStyle({ widthPercent: '5', alignSelf: 'flex-start' }).width).toBe('10%');
   });
 });

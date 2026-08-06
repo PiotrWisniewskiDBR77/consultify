@@ -15,7 +15,6 @@ import {
   Square,
 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import type { DeckCard } from '../wizard/types';
 
@@ -25,11 +24,12 @@ interface CardFloatingToolbarProps {
 }
 
 const LAYOUTS = [
-  { id: 'full', label: 'Full', icon: Square },
-  { id: 'left-right', label: 'Left / Right', icon: PanelLeft },
-  { id: 'right-left', label: 'Right / Left', icon: PanelRight },
-  { id: 'top-bottom', label: 'Top / Bottom', icon: PanelTop },
-  { id: 'overlay', label: 'Overlay', icon: Layers },
+  { id: 'auto', label: 'Automatic', icon: Layout },
+  { id: 'content_full', label: 'Full', icon: Square },
+  { id: 'content_left_right', label: 'Left / Right', icon: PanelLeft },
+  { id: 'content_right_image', label: 'Text / Image', icon: PanelRight },
+  { id: 'content_top_bottom', label: 'Top / Bottom', icon: PanelTop },
+  { id: 'content_overlay', label: 'Overlay', icon: Layers },
 ];
 
 const BG_TYPES = [
@@ -40,12 +40,14 @@ const BG_TYPES = [
 ];
 
 export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, onUpdateCard }) => {
-  const { t } = useTranslation();
   const [expandedPanel, setExpandedPanel] = useState<'layout' | 'bg' | null>(null);
 
   const togglePanel = (panel: 'layout' | 'bg') => {
     setExpandedPanel((prev) => (prev === panel ? null : panel));
   };
+  const alignment = card.content_alignment || 'top';
+  const nextAlignment =
+    alignment === 'top' ? 'center' : alignment === 'center' ? 'space-between' : 'top';
 
   return (
     <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30">
@@ -134,9 +136,10 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
 
         {/* Alignment */}
         <button
+          onClick={() => onUpdateCard({ content_alignment: nextAlignment })}
           className="p-1.5 rounded-lg text-c-text-secondary hover:bg-c-surface-raised"
-          title="Content alignment"
-          aria-label="Change content alignment"
+          title={`Content distribution: ${alignment}`}
+          aria-label={`Change content distribution (currently ${alignment})`}
         >
           <AlignVerticalJustifyStart size={14} />
         </button>

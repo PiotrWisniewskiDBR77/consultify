@@ -284,11 +284,7 @@ export interface SourceArtifact {
   artifactId?: string;
   confidence?: number;
   readiness?:
-    | 'ready'
-    | 'partial_ready'
-    | 'missing_sales_data'
-    | 'policy_blocked'
-    | 'insufficient_evidence';
+    'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
   lineage?: {
     runtime?: string;
     recordId?: string;
@@ -449,6 +445,8 @@ export interface DeckCard {
    * the renderer honours it and skips the heuristic. 'auto'/'' → heuristic.
    */
   layout_id: string;
+  /** Manual slide-level vertical alignment/distribution override. */
+  content_alignment?: 'top' | 'center' | 'space-between';
   /** STEP 1b — optional B1 composition plan; absent → pure heuristic. */
   composition?: CardComposition | null;
   title: string;

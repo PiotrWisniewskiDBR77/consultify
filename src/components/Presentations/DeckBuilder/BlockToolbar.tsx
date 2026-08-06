@@ -390,6 +390,8 @@ const BlockInspector: React.FC<{
   onUpdate: (updates: Partial<CardBlock>) => void;
 }> = ({ block, onUpdate }) => {
   const content = block.content || {};
+  const textStyle = ((content.style as Record<string, unknown>) || {}) as Record<string, unknown>;
+  const frameStyle = block.style_overrides || {};
   const patchContent = (patch: Record<string, unknown>) =>
     onUpdate({ content: { ...content, ...patch } });
   const dataText = Array.isArray(content.data) ? JSON.stringify(content.data, null, 2) : '';
@@ -541,6 +543,80 @@ const BlockInspector: React.FC<{
         />
       </div>
       <label className="block text-[10px] text-c-text-secondary">
+        Font family
+        <select
+          aria-label="Font family"
+          value={String(textStyle.fontFamily || '')}
+          onChange={(e) => patchContent({ style: { ...textStyle, fontFamily: e.target.value } })}
+          className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+        >
+          <option value="">Theme default</option>
+          <option value="Inter">Inter</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Times New Roman">Times New Roman</option>
+        </select>
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block text-[10px] text-c-text-secondary">
+          Font weight
+          <select
+            aria-label="Font weight"
+            value={String(textStyle.fontWeight || 'normal')}
+            onChange={(e) => patchContent({ style: { ...textStyle, fontWeight: e.target.value } })}
+            className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+          >
+            <option value="normal">Regular</option>
+            <option value="500">Medium</option>
+            <option value="600">Semibold</option>
+            <option value="700">Bold</option>
+          </select>
+        </label>
+        <InspectorField
+          label="Line height"
+          value={String(textStyle.lineHeight || '')}
+          onChange={(lineHeight) => patchContent({ style: { ...textStyle, lineHeight } })}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <InspectorField
+          label="Letter spacing"
+          value={String(textStyle.letterSpacing || '')}
+          onChange={(letterSpacing) => patchContent({ style: { ...textStyle, letterSpacing } })}
+        />
+        <div className="flex items-end gap-3 pb-1">
+          <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
+            <input
+              aria-label="Italic"
+              type="checkbox"
+              checked={textStyle.fontStyle === 'italic'}
+              onChange={(e) =>
+                patchContent({
+                  style: { ...textStyle, fontStyle: e.target.checked ? 'italic' : 'normal' },
+                })
+              }
+            />
+            Italic
+          </label>
+          <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
+            <input
+              aria-label="Underline"
+              type="checkbox"
+              checked={textStyle.textDecoration === 'underline'}
+              onChange={(e) =>
+                patchContent({
+                  style: {
+                    ...textStyle,
+                    textDecoration: e.target.checked ? 'underline' : 'none',
+                  },
+                })
+              }
+            />
+            Underline
+          </label>
+        </div>
+      </div>
+      <label className="block text-[10px] text-c-text-secondary">
         Alignment
         <select
           aria-label="Alignment"
@@ -557,6 +633,75 @@ const BlockInspector: React.FC<{
           <option value="right">Right</option>
         </select>
       </label>
+      <div className="mt-3 border-t border-c-border-subtle pt-3 space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
+          Position and size
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block text-[10px] text-c-text-secondary">
+            Layout region
+            <select
+              aria-label="Layout region"
+              value={block.position.area}
+              onChange={(e) =>
+                onUpdate({
+                  position: {
+                    ...block.position,
+                    area: e.target.value as CardBlock['position']['area'],
+                  },
+                })
+              }
+              className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+            >
+              <option value="full">Full</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="overlay">Overlay</option>
+            </select>
+          </label>
+          <InspectorField
+            label="Layer order"
+            value={String(block.position.order)}
+            onChange={(value) =>
+              onUpdate({
+                position: { ...block.position, order: Math.max(0, Number(value) || 0) },
+              })
+            }
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <InspectorField
+            label="Width (%)"
+            value={String(frameStyle.widthPercent || 100)}
+            onChange={(widthPercent) =>
+              onUpdate({ style_overrides: { ...frameStyle, widthPercent } })
+            }
+          />
+          <InspectorField
+            label="Minimum height (px)"
+            value={String(frameStyle.minHeight || '')}
+            onChange={(minHeight) => onUpdate({ style_overrides: { ...frameStyle, minHeight } })}
+          />
+        </div>
+        <label className="block text-[10px] text-c-text-secondary">
+          Horizontal placement
+          <select
+            aria-label="Horizontal placement"
+            value={String(frameStyle.alignSelf || 'stretch')}
+            onChange={(e) =>
+              onUpdate({ style_overrides: { ...frameStyle, alignSelf: e.target.value } })
+            }
+            className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+          >
+            <option value="stretch">Stretch</option>
+            <option value="flex-start">Left</option>
+            <option value="center">Center</option>
+            <option value="flex-end">Right</option>
+          </select>
+        </label>
+      </div>
     </div>
   );
 };

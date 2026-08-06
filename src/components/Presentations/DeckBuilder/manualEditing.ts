@@ -21,10 +21,45 @@ export function blockContentStyle(content: Record<string, unknown>): CSSProperti
   const align = ['left', 'center', 'right'].includes(String(raw.textAlign))
     ? (String(raw.textAlign) as CSSProperties['textAlign'])
     : undefined;
+  const fontWeight = ['normal', '500', '600', '700', 'bold'].includes(String(raw.fontWeight))
+    ? (String(raw.fontWeight) as CSSProperties['fontWeight'])
+    : undefined;
+  const lineHeight = String(raw.lineHeight || '').trim();
+  const letterSpacing = String(raw.letterSpacing || '').trim();
   return {
     ...(size ? { fontSize: /^\d+(\.\d+)?$/.test(size) ? `${size}px` : size } : {}),
     ...(typeof raw.color === 'string' && raw.color.trim() ? { color: raw.color.trim() } : {}),
     ...(align ? { textAlign: align } : {}),
+    ...(typeof raw.fontFamily === 'string' && raw.fontFamily.trim()
+      ? { fontFamily: raw.fontFamily.trim() }
+      : {}),
+    ...(fontWeight ? { fontWeight } : {}),
+    ...(raw.fontStyle === 'italic' ? { fontStyle: 'italic' } : {}),
+    ...(raw.textDecoration === 'underline' ? { textDecoration: 'underline' } : {}),
+    ...(lineHeight
+      ? { lineHeight: /^\d+(\.\d+)?$/.test(lineHeight) ? Number(lineHeight) : lineHeight }
+      : {}),
+    ...(letterSpacing
+      ? {
+          letterSpacing: /^-?\d+(\.\d+)?$/.test(letterSpacing)
+            ? `${letterSpacing}px`
+            : letterSpacing,
+        }
+      : {}),
+  };
+}
+
+export function blockFrameStyle(styleOverrides?: Record<string, unknown>): CSSProperties {
+  const raw = styleOverrides || {};
+  const width = Math.min(100, Math.max(10, Number(raw.widthPercent) || 100));
+  const minHeight = Math.max(0, Number(raw.minHeight) || 0);
+  const placement = ['flex-start', 'center', 'flex-end', 'stretch'].includes(String(raw.alignSelf))
+    ? (String(raw.alignSelf) as CSSProperties['alignSelf'])
+    : 'stretch';
+  return {
+    width: placement === 'stretch' ? '100%' : `${width}%`,
+    minHeight: minHeight ? `${minHeight}px` : undefined,
+    alignSelf: placement,
   };
 }
 

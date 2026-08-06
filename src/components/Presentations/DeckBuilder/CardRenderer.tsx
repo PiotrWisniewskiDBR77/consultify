@@ -31,6 +31,7 @@ import {
   type VerticalFillMode,
   verticalFillMode,
 } from './layouts/LayoutEngine';
+import { blockFrameStyle } from './manualEditing';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
@@ -201,7 +202,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     });
     const block = sanitizeDeckBlock(rawBlock);
     const blockBody = (
-      <>
+      <div style={blockFrameStyle(block.style_overrides)} data-block-frame={block.block_id}>
         <Component block={block} theme={theme} density={density} />
         {block.source_ref && (
           <BlockSourceBadge
@@ -209,7 +210,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             isRefreshable={block.is_refreshable ?? false}
           />
         )}
-      </>
+      </div>
     );
 
     // Fala 1 (manual mode) — EditableBlock adds selection ring, floating
@@ -310,7 +311,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
               return (
                 <div
                   key={region.area}
-                  style={{ gridArea: region.gridArea, justifyContent: justifyFor(regionFill) }}
+                  style={{
+                    gridArea: region.gridArea,
+                    justifyContent: justifyFor(card.content_alignment || regionFill),
+                  }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
                   {blocksInRegion.map((block, idx) =>
@@ -323,7 +327,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         ) : (
           <div
             className="flex-1 flex flex-col gap-3"
-            style={{ justifyContent: justifyFor(stackedFillMode) }}
+            style={{ justifyContent: justifyFor(card.content_alignment || stackedFillMode) }}
           >
             {card.blocks
               .sort((a, b) => a.position.order - b.position.order)
