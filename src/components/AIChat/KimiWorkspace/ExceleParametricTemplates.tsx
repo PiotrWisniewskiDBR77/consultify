@@ -82,7 +82,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { API_URL } from '@/services/api';
