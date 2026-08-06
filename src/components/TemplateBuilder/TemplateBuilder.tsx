@@ -55,9 +55,23 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   saveFn = saveTemplate,
   persistRailState = true,
 }) => {
-  const [draft, setDraft] = useState<TemplateDraft>(initialDraft);
-  const initialSelected = firstElementId(initialDraft);
-  const [selectedId, setSelectedId] = useState<string | null>(initialSelected);
+  const [builderState, setBuilderState] = useState(() => ({
+    draft: initialDraft,
+    selectedId: firstElementId(initialDraft),
+  }));
+  const { draft, selectedId } = builderState;
+  const setDraft = useCallback((update: React.SetStateAction<TemplateDraft>) => {
+    setBuilderState((current) => ({
+      ...current,
+      draft: typeof update === 'function' ? update(current.draft) : update,
+    }));
+  }, []);
+  const setSelectedId = useCallback((update: React.SetStateAction<string | null>) => {
+    setBuilderState((current) => ({
+      ...current,
+      selectedId: typeof update === 'function' ? update(current.selectedId) : update,
+    }));
+  }, []);
   const [activeRightTool, setActiveRightTool] = useState<TemplateRightTool | null>('properties');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,19 +111,25 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const handleAdd = useCallback(() => {
     if (draft.type === 'doc') {
       const element = newDocSection();
-      setDraft((current) => ({ ...current, doc: [...current.doc, element] }));
-      setSelectedId(element.id);
+      setBuilderState((current) => ({
+        draft: { ...current.draft, doc: [...current.draft.doc, element] },
+        selectedId: element.id,
+      }));
       return;
     }
     if (draft.type === 'deck') {
       const element = newDeckSlide();
-      setDraft((current) => ({ ...current, deck: [...current.deck, element] }));
-      setSelectedId(element.id);
+      setBuilderState((current) => ({
+        draft: { ...current.draft, deck: [...current.draft.deck, element] },
+        selectedId: element.id,
+      }));
       return;
     }
     const element = newWorkbookSheet(`Arkusz ${draft.table.length + 1}`);
-    setDraft((current) => ({ ...current, table: [...current.table, element] }));
-    setSelectedId(element.id);
+    setBuilderState((current) => ({
+      draft: { ...current.draft, table: [...current.draft.table, element] },
+      selectedId: element.id,
+    }));
   }, [draft.type, draft.table.length]);
 
   const handleMove = useCallback((id: string, dir: -1 | 1) => {

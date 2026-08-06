@@ -5,7 +5,10 @@ import userEvent from '@testing-library/user-event';
 import React, { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TemplateBuilder } from '../../../src/components/TemplateBuilder/TemplateBuilder';
+import {
+  TemplateBuilder,
+  TemplateBuilderFlow,
+} from '../../../src/components/TemplateBuilder/TemplateBuilder';
 import {
   draftToPostBody,
   type TemplateDraft,
@@ -39,6 +42,29 @@ const initialDraft = (): TemplateDraft => ({
 });
 
 describe('TemplateBuilder workbook sheets', () => {
+  it('adds sheets through the complete wizard and real ExecutiveModuleShell', async () => {
+    const user = userEvent.setup();
+    render(<TemplateBuilderFlow initialType="table" />);
+
+    await user.type(screen.getByTestId('wizard-name'), 'Runtime shell workbook');
+    await user.click(screen.getByRole('button', { name: 'Dalej' }));
+    await user.click(screen.getByRole('button', { name: 'Dalej' }));
+    await user.click(screen.getByRole('button', { name: 'Utwórz i edytuj' }));
+
+    const realShell = screen.getByTestId('template-builder-mels');
+    const add = within(realShell).getByTestId('structure-add');
+    await user.click(add);
+    expect(within(realShell).getByTestId('template-structure-list')).toHaveTextContent('Arkusz 1');
+    expect(within(realShell).getByTestId('template-structure-list')).toHaveTextContent('Arkusz 2');
+
+    await user.click(add);
+    const structureItems = within(realShell)
+      .getAllByRole('button')
+      .filter((item) => item.dataset.testid?.startsWith('structure-item-'));
+    expect(structureItems).toHaveLength(3);
+    expect(within(realShell).getByTestId('template-structure-list')).toHaveTextContent('Arkusz 3');
+  });
+
   it('adds a second sheet, keeps schemas independent, then saves and reopens both', async () => {
     const user = userEvent.setup();
     let savedDraft: TemplateDraft | null = null;
