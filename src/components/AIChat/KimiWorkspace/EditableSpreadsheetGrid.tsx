@@ -29,7 +29,7 @@
  * wierszach/kolumnach wygenerowanego skoroszytu.
  */
 
-import { AlertTriangle, ArrowDownAZ, ArrowUpAZ, Bold, Check, Columns3, Copy, Filter, ListChecks, Loader2, Plus, Rows3, Snowflake, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowDownAZ, ArrowUpAZ, Bold, Check, ChevronsDown, Columns3, Copy, Filter, ListChecks, Loader2, Plus, Rows3, Snowflake, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -85,6 +85,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const { t } = useTranslation();
   const [localSheets, setLocalSheets] = useState<FormulaSheet[]>(() => cloneSheets(sheets));
   const [selected, setSelected] = useState<Selection | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<Selection | null>(null);
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
@@ -102,6 +103,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   useEffect(() => {
     setLocalSheets(cloneSheets(sheets));
     setSelected(null);
+    setSelectionEnd(null);
     setEditingValue(null);
     setSaveState('idle');
     setSaveError(null);
@@ -115,12 +117,23 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   useEffect(() => {
     setWorkingSheetIndex(activeSheetIndex);
     setSelected(null);
+    setSelectionEnd(null);
     setEditingValue(null);
   }, [activeSheetIndex]);
 
   const computedSheets = useMemo(() => recalcWorkbook(localSheets), [localSheets]);
   const activeRaw = localSheets[workingSheetIndex];
   const activeComputed = computedSheets[workingSheetIndex];
+  const selectionRange = useMemo(() => {
+    if (!selected) return null;
+    const end = selectionEnd || selected;
+    return {
+      rowStart: Math.min(selected.rowIndex, end.rowIndex),
+      rowEnd: Math.max(selected.rowIndex, end.rowIndex),
+      colStart: Math.min(selected.colIndex, end.colIndex),
+      colEnd: Math.max(selected.colIndex, end.colIndex),
+    };
+  }, [selected, selectionEnd]);
 
   useEffect(() => {
     // Starting an edit from the formula bar must not steal focus into the
@@ -190,6 +203,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         setLocalSheets(cloneSheets(nextSheets));
         setWorkingSheetIndex((current) => Math.min(current, nextSheets.length - 1));
         setSelected(null);
+        setSelectionEnd(null);
       }
       undoStackRef.current = [];
       redoStackRef.current = [];
@@ -359,12 +373,42 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   );
 
   const handleCopy = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (!selected) return;
-    const col = activeRaw?.columns?.[selected.colIndex];
-    const cell = col ? activeRaw?.rows?.[selected.rowIndex]?.cells?.[col.key] : undefined;
-    e.clipboardData.setData('text/plain', rawCellToEditText(cell));
+    if (!selectionRange) return;
+    const lines: string[] = [];
+    for (let ri = selectionRange.rowStart; ri <= selectionRange.rowEnd; ri += 1) {
+      const values: string[] = [];
+      for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
+        const col = activeRaw?.columns?.[ci];
+        values.push(rawCellToEditText(col ? activeRaw?.rows?.[ri]?.cells?.[col.key] : undefined));
+      }
+      lines.push(values.join('\t'));
+    }
+    e.clipboardData.setData('text/plain', lines.join('\n'));
     e.preventDefault();
-  }, [activeRaw, selected]);
+  }, [activeRaw, selectionRange]);
+
+  const fillDown = useCallback(() => {
+    if (!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart || !activeRaw) return;
+    const changes: CellChange[] = [];
+    for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
+      const col = activeRaw.columns?.[ci];
+      if (!col) continue;
+      const source = activeRaw.rows?.[selectionRange.rowStart]?.cells?.[col.key] ?? {};
+      for (let ri = selectionRange.rowStart + 1; ri <= selectionRange.rowEnd; ri += 1) {
+        const before = activeRaw.rows?.[ri]?.cells?.[col.key] ?? {};
+        const delta = ri - selectionRange.rowStart;
+        const after = { ...source };
+        if (typeof after.formula === 'string') {
+          after.formula = after.formula.replace(/(\$?[A-Z]+)(\$?)(\d+)/g, (_match, letters: string, absoluteRow: string, row: string) => `${letters}${absoluteRow}${absoluteRow ? row : Number(row) + delta}`);
+        }
+        changes.push({ rowIndex: ri, colIndex: ci, before: { ...before }, after });
+      }
+    }
+    if (!changes.length) return;
+    undoStackRef.current.push(changes);
+    redoStackRef.current = [];
+    applyChanges(changes, 'after');
+  }, [activeRaw, applyChanges, selectionRange]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
     if (!selected || editingValue !== null || !activeRaw?.columns?.length) return;
@@ -513,6 +557,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         <button type="button" onClick={() => void runSchemaCommand({ type: 'setAutoFilter', sheetIndex: workingSheetIndex, enabled: !Boolean((activeRaw as any).autoFilter) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')} aria-pressed={Boolean((activeRaw as any).autoFilter)}><Filter size={14} /></button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'setFreeze', sheetIndex: workingSheetIndex, freezeRow: (activeRaw as any).freezeRow ? 0 : 1, freezeCol: Number((activeRaw as any).freezeCol || 0) })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')} aria-pressed={Boolean((activeRaw as any).freezeRow)}><Snowflake size={14} /></button>
         <button type="button" disabled={!selected} onClick={() => { if (!selected) return; const raw = window.prompt(t('kimi.excele.validationPrompt', 'Allowed values, separated by commas'), 'Yes,No'); if (raw) void runSchemaCommand({ type: 'setValidation', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, colIndex: selected.colIndex, validation: { type: 'list', values: raw.split(',').map((v) => v.trim()).filter(Boolean) } }); }} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.validation', 'Set dropdown validation')}><ListChecks size={14} /></button>
+        <button type="button" disabled={!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart} onClick={fillDown} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.fillDown', 'Fill selected range down')}><ChevronsDown size={14} /></button>
       </div>
       {/* Pasek formuły — pokazuje, co REALNIE siedzi w komórce (wartość vs
           formuła), nie wynik. To jest sedno dla właściciela — patrz nagłówek
@@ -604,8 +649,9 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                     <td
                       data-testid={`workbook-cell-${ri}-${col.key}`}
                       key={`${col.key}-${ci}`}
-                      onClick={() => {
-                        setSelected({ rowIndex: ri, colIndex: ci });
+                      onClick={(event) => {
+                        if (event.shiftKey && selected) setSelectionEnd({ rowIndex: ri, colIndex: ci });
+                        else { setSelected({ rowIndex: ri, colIndex: ci }); setSelectionEnd(null); }
                         // Fokus SYNCHRONICZNIE w momencie kliknięcia (nie
                         // czekając na useEffect po renderze) — <td> nie jest
                         // fokusowalny, więc bez tego strzałka/Enter naciśnięte
@@ -622,7 +668,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                           : cell?.isFormula
                             ? 'font-mono text-c-text-secondary'
                             : 'text-c-text'
-                      } ${isSelected ? 'outline outline-2 outline-c-focus outline-offset-[-2px]' : ''}`}
+                      } ${selectionRange && ri >= selectionRange.rowStart && ri <= selectionRange.rowEnd && ci >= selectionRange.colStart && ci <= selectionRange.colEnd ? 'outline outline-2 outline-c-focus outline-offset-[-2px]' : ''}`}
                     >
                       {isEditingThis ? (
                         <input

@@ -74,4 +74,15 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Insert row' }));
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-1', { type: 'insertRow', sheetIndex: 0, rowIndex: 0 }));
   });
+
+  it('selects a range with Shift, copies TSV and fills formulas down relatively', async () => {
+    render(<EditableSpreadsheetGrid workbookId="wb-1" sheets={sheets} activeSheetIndex={0} />);
+    fireEvent.click(screen.getByTestId('workbook-cell-0-variance'));
+    fireEvent.click(screen.getByTestId('workbook-cell-1-variance'), { shiftKey: true });
+    const setData = vi.fn();
+    fireEvent.copy(screen.getByTestId('editable-spreadsheet-grid'), { clipboardData: { setData } });
+    expect(setData).toHaveBeenCalledWith('text/plain', '=B2-C2\n=B3-C3');
+    fireEvent.click(screen.getByRole('button', { name: 'Fill selected range down' }));
+    await waitFor(() => expect(updateWorkbookCell).toHaveBeenCalledWith('wb-1', expect.objectContaining({ rowIndex: 1, columnKey: 'variance', formula: 'B3-C3' })));
+  });
 });
