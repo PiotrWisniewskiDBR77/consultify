@@ -41,6 +41,16 @@ When the user describes a presentation they want:
 Always be transparent about each step. Show your work process clearly.
 Structure each slide with: title, key points/bullets, speaker notes suggestion, and recommended layout intent.`;
 
+type TemplateVariable = {
+  key: string;
+  label: string;
+  type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+  required: boolean;
+  defaultValue?: string | number | boolean;
+  description?: string;
+  options?: string[];
+};
+
 function parseDeckSlides(deckData: any): {
   slides: Array<{ slideId: string; intent: string; title: string; bulletPoints?: string[] }>;
   status: string;
@@ -310,6 +320,36 @@ export const PrezentacjeView: React.FC = () => {
   const [templateCreateErrorCode, setTemplateCreateErrorCode] = useState<string | null>(null);
   const [templateBrief, setTemplateBrief] = useState('');
   const [templateDeckTitle, setTemplateDeckTitle] = useState('');
+  const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
+  const [templateVariableValues, setTemplateVariableValues] = useState<
+    Record<string, string | boolean>
+  >({});
+  const missingTemplateVariables = templateVariables.filter(
+    (variable) =>
+      variable.required &&
+      (templateVariableValues[variable.key] === undefined ||
+        templateVariableValues[variable.key] === '')
+  );
+
+  useEffect(() => {
+    if (!templateArtifactId) return;
+    void Api.post('/presentations/templates/resolve', { templateArtifactId })
+      .then((response) => {
+        const template = unwrapApiData<{ template?: { variables?: TemplateVariable[] } }>(
+          response
+        )?.template;
+        const variables = Array.isArray(template?.variables) ? template.variables : [];
+        setTemplateVariables(variables);
+        setTemplateVariableValues(
+          Object.fromEntries(
+            variables
+              .filter((variable) => variable.defaultValue !== undefined)
+              .map((variable) => [variable.key, variable.defaultValue as string | boolean])
+          )
+        );
+      })
+      .catch(() => setTemplateVariables([]));
+  }, [templateArtifactId]);
 
   useEffect(() => {
     if (!artifactId || reopenLoaded.current) return;
@@ -454,7 +494,13 @@ export const PrezentacjeView: React.FC = () => {
   // czegokolwiek z URL-a. Brak AI: struktura szablonu jest już znana, więc
   // (jak przy trybie „Czysto") nowy deck ląduje wprost w Deck Builderze.
   const handleCreateFromTemplate = useCallback(async () => {
-    if (!templateArtifactId || templateTriggered.current || !templateBrief.trim()) return;
+    if (
+      !templateArtifactId ||
+      templateTriggered.current ||
+      missingTemplateVariables.length > 0 ||
+      (!templateBrief.trim() && templateVariables.length === 0)
+    )
+      return;
     templateTriggered.current = true;
     autoTriggered.current = true;
     setTemplateCreateState('loading');
@@ -463,6 +509,7 @@ export const PrezentacjeView: React.FC = () => {
       const res = await Api.post('/presentations/decks/from-template', {
         templateArtifactId,
         brief: templateBrief.trim(),
+        variableValues: templateVariableValues,
         ...(templateDeckTitle.trim() ? { title: templateDeckTitle.trim() } : {}),
       });
       const deckId = unwrapApiData<{ id?: string }>(res)?.id;
@@ -479,7 +526,15 @@ export const PrezentacjeView: React.FC = () => {
       setTemplateCreateState('error');
       templateTriggered.current = false;
     }
-  }, [templateArtifactId, templateBrief, templateDeckTitle, openInDeckBuilder]);
+  }, [
+    templateArtifactId,
+    templateBrief,
+    templateDeckTitle,
+    templateVariableValues,
+    templateVariables.length,
+    missingTemplateVariables.length,
+    openInDeckBuilder,
+  ]);
 
   // Uczciwy komunikat po polsku per kod odrzucenia — patrz
   // DocumentStudioView.tsx `templateResolveMessage` (ten sam wzorzec).
@@ -796,6 +851,77 @@ export const PrezentacjeView: React.FC = () => {
               {t('prezentacje.template.lineage', 'Template lineage')}: {templateArtifactId}
             </p>
           </div>
+          {templateVariables.length > 0 ? (
+            <fieldset className="space-y-3 rounded-lg border border-c-border p-3">
+              <legend className="px-1 text-sm font-medium text-c-text-primary">
+                Template data
+              </legend>
+              {templateVariables.map((variable) => (
+                <label key={variable.key} className="block text-sm text-c-text-primary">
+                  <span>
+                    {variable.label}
+                    {variable.required ? ' *' : ''}
+                  </span>
+                  {variable.type === 'enum' ? (
+                    <select
+                      value={String(templateVariableValues[variable.key] ?? '')}
+                      required={variable.required}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-c-border bg-c-background px-3 py-2"
+                    >
+                      <option value="">Select…</option>
+                      {(variable.options ?? []).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  ) : variable.type === 'boolean' ? (
+                    <input
+                      type="checkbox"
+                      checked={Boolean(templateVariableValues[variable.key])}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.checked,
+                        }))
+                      }
+                      className="ml-2"
+                    />
+                  ) : (
+                    <input
+                      type={variable.type}
+                      value={String(templateVariableValues[variable.key] ?? '')}
+                      required={variable.required}
+                      onChange={(event) =>
+                        setTemplateVariableValues((current) => ({
+                          ...current,
+                          [variable.key]: event.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-md border border-c-border bg-c-background px-3 py-2"
+                    />
+                  )}
+                  {variable.description ? (
+                    <span className="mt-1 block text-xs text-c-text-secondary">
+                      {variable.description}
+                    </span>
+                  ) : null}
+                </label>
+              ))}
+              {missingTemplateVariables.length > 0 ? (
+                <p role="alert" className="text-xs text-danger-600">
+                  Complete required fields:{' '}
+                  {missingTemplateVariables.map((variable) => variable.label).join(', ')}
+                </p>
+              ) : null}
+            </fieldset>
+          ) : null}
           <div>
             <label
               htmlFor="presentation-template-title"
@@ -819,7 +945,6 @@ export const PrezentacjeView: React.FC = () => {
             </label>
             <textarea
               id="presentation-template-brief"
-              required
               rows={10}
               value={templateBrief}
               onChange={(event) => setTemplateBrief(event.target.value)}
@@ -840,7 +965,10 @@ export const PrezentacjeView: React.FC = () => {
             </button>
             <button
               type="submit"
-              disabled={!templateBrief.trim()}
+              disabled={
+                missingTemplateVariables.length > 0 ||
+                (!templateBrief.trim() && templateVariables.length === 0)
+              }
               className="rounded-md bg-c-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('prezentacje.template.generate', 'Generuj prezentację')}

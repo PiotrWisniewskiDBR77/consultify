@@ -180,6 +180,7 @@ import {
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
 import {
+  materializeTemplateVariableBrief,
   mapOutlineBlueprintToDeckSlides,
   validatePresentationCustomTemplate,
 } from '../services/presentationTemplateRuntimeService.js';
@@ -1373,6 +1374,9 @@ router.post(
           source: resolved.source,
           legacy: resolved.legacy,
           slideCount: resolved.outlineBlueprint.length,
+          variables: Array.isArray((resolved.customTemplate as any)?.variables)
+            ? (resolved.customTemplate as any).variables
+            : [],
         },
       });
     } catch (err) {
@@ -2411,6 +2415,10 @@ router.post(
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
     const brief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
+    const variableValues =
+      req.body?.variableValues && typeof req.body.variableValues === 'object'
+        ? req.body.variableValues
+        : {};
 
     let resolved;
     try {
@@ -2433,7 +2441,23 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, brief);
+    const templateVariables = Array.isArray((resolved.customTemplate as any)?.variables)
+      ? (resolved.customTemplate as any).variables
+      : [];
+    const variableMaterialization = materializeTemplateVariableBrief(
+      templateVariables,
+      variableValues
+    );
+    if (variableMaterialization.missingRequired.length > 0) {
+      res.status(422).json({
+        success: false,
+        error: 'TEMPLATE_VARIABLES_REQUIRED',
+        details: variableMaterialization.missingRequired,
+      });
+      return;
+    }
+    const materializedBrief = [brief, ...variableMaterialization.lines].filter(Boolean).join('\n');
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');

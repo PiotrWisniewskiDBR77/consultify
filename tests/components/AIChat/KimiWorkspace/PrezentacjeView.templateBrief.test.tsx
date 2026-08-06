@@ -48,7 +48,13 @@ describe('PrezentacjeView template intake', () => {
     vi.clearAllMocks();
   });
   it('shows accessible brief before materialization and submits template lineage with facts', async () => {
-    state.post.mockResolvedValue({ data: { data: { id: 'deck-fresh' } } });
+    state.post.mockImplementation((path: string) =>
+      Promise.resolve(
+        path.endsWith('/resolve')
+          ? { data: { data: { template: { variables: [] } } } }
+          : { data: { data: { id: 'deck-fresh' } } }
+      )
+    );
     render(
       <MemoryRouter initialEntries={['/prezentacje-gen?templateArtifactId=tpl-nova']}>
         <Routes>
@@ -69,13 +75,66 @@ describe('PrezentacjeView template intake', () => {
     fireEvent.change(screen.getByLabelText('Tytuł prezentacji'), {
       target: { value: 'Nova decision' },
     });
-    fireEvent.click(generate);
+    fireEvent.submit(generate.closest('form')!);
     await waitFor(() =>
       expect(state.post).toHaveBeenCalledWith('/presentations/decks/from-template', {
         templateArtifactId: 'tpl-nova',
         brief: 'NPV: EUR 3.2m; Payback: 11 months',
+        variableValues: {},
         title: 'Nova decision',
       })
+    );
+  });
+
+  it('renders typed catalog controls, blocks missing required values and submits materialization values', async () => {
+    state.post.mockImplementation((path: string) =>
+      Promise.resolve(
+        path.endsWith('/resolve')
+          ? {
+              data: {
+                data: {
+                  template: {
+                    variables: [
+                      { key: 'budget', label: 'Budget', type: 'number', required: true },
+                      {
+                        key: 'scenario',
+                        label: 'Scenario',
+                        type: 'enum',
+                        required: true,
+                        options: ['Base', 'Upside'],
+                      },
+                    ],
+                  },
+                },
+              },
+            }
+          : { data: { data: { id: 'deck-vars' } } }
+      )
+    );
+    render(
+      <MemoryRouter initialEntries={['/prezentacje-gen?templateArtifactId=tpl-vars']}>
+        <Routes>
+          <Route path="/prezentacje-gen" element={<PrezentacjeView />} />
+          <Route path="/presentations/builder/:id" element={<div>Builder opened</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole('spinbutton', { name: 'Budget *' })).toBeInTheDocument();
+    const generate = screen.getByRole('button', { name: 'Generuj prezentację' });
+    expect(generate).toBeDisabled();
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Budget *' }), {
+      target: { value: '1400000' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Scenario *' }), {
+      target: { value: 'Base' },
+    });
+    expect(generate).toBeEnabled();
+    fireEvent.submit(generate.closest('form')!);
+    await waitFor(() =>
+      expect(state.post).toHaveBeenCalledWith(
+        '/presentations/decks/from-template',
+        expect.objectContaining({ variableValues: { budget: '1400000', scenario: 'Base' } })
+      )
     );
   });
 });

@@ -2,8 +2,28 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildTemplateRuntimeFromRow,
+  materializeTemplateVariableBrief,
   validatePresentationCustomTemplate,
 } from '../presentationTemplateRuntimeService.js';
+
+it('materializes typed template values and emits explicit Data required', () => {
+  const variables = [
+    { key: 'budget', label: 'Budget', type: 'number' as const, required: true },
+    { key: 'owner', label: 'Owner', type: 'text' as const, required: false },
+    {
+      key: 'approved',
+      label: 'Approved',
+      type: 'boolean' as const,
+      required: false,
+      defaultValue: false,
+    },
+  ];
+  expect(materializeTemplateVariableBrief(variables, { budget: 1400000 })).toEqual({
+    lines: ['Budget: 1400000', 'Data required: Owner', 'Approved: false'],
+    missingRequired: [],
+  });
+  expect(materializeTemplateVariableBrief(variables, {}).missingRequired).toEqual(['budget']);
+});
 
 /**
  * FALA D (2026-07-26, "deck-narrative-depth") — regression pin for a real bug

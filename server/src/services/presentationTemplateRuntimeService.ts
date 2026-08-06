@@ -155,6 +155,22 @@ export function validatePresentationCustomTemplate(
   return errors.length ? { ok: false, errors } : { ok: true, value: input };
 }
 
+export function materializeTemplateVariableBrief(
+  variables: NonNullable<PresentationCustomTemplateDefinition['variables']>,
+  values: Record<string, unknown>
+): { lines: string[]; missingRequired: string[] } {
+  const missingRequired: string[] = [];
+  const lines = variables.map((variable) => {
+    const value = values[variable.key] ?? variable.defaultValue;
+    if (value === undefined || value === '') {
+      if (variable.required) missingRequired.push(variable.key);
+      return `Data required: ${variable.label}`;
+    }
+    return `${variable.label}: ${String(value)}`;
+  });
+  return { lines, missingRequired };
+}
+
 export interface PresentationTemplateRuntime {
   templateId?: string;
   templateFamily: TemplateFamily;
