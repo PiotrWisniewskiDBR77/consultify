@@ -1867,6 +1867,61 @@ router.post(
       });
     }
 
+    // An approved Architect template must be usable immediately from the
+    // canonical Template Library.  The generic artifact backfill is throttled
+    // and may already have run before this template was approved, leaving the
+    // newly-approved row invisible for the rest of the UI session.  Index the
+    // canonical presentation_templates row at the lifecycle boundary instead
+    // of waiting for a later best-effort sweep.
+    if (targetState === 'approved' && result.record) {
+      const approved = (await getTemplateForOrgOrSystem(templateId, orgId)) as any;
+      if (approved) {
+        let outline: unknown = [];
+        try {
+          outline = JSON.parse(approved.outline_json || '[]');
+        } catch {
+          outline = [];
+        }
+        const actorId = (req as any).user?.id || getUserId(req) || 'system';
+        await artifactRegistryService.registerArtifactOrigin({
+          organizationId: orgId,
+          outputType: 'presentation',
+          artifactFamily: 'template',
+          originRuntime: 'presentation_template',
+          originRecordId: templateId,
+          titleSnapshot: approved.name || 'Untitled presentation template',
+          ownerUserId: actorId,
+          createdBy: approved.created_by || actorId,
+          deliveryState: 'ready',
+          visibilityScope: 'organization',
+          originSummary: {
+            template: {
+              canonicalTemplateId: templateId,
+              originRuntime: 'presentation_template',
+              orphaned: false,
+              scope: approved.is_system ? 'application' : 'organization',
+              status: 'published',
+              description: approved.description || '',
+              deckType: approved.deck_type || 'custom',
+              structureBlueprint: {
+                outline: Array.isArray(outline)
+                  ? outline
+                  : Array.isArray((outline as any)?.outline)
+                    ? (outline as any).outline
+                    : [],
+              },
+              metadata: {
+                createdBy: approved.created_by || actorId,
+                createdAt: approved.created_at,
+                updatedAt: approved.updated_at,
+                legacyTemplateId: templateId,
+              },
+            },
+          },
+        });
+      }
+    }
+
     res.json({
       success: true,
       data: {
