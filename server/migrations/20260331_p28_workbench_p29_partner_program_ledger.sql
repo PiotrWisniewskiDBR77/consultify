@@ -17,12 +17,29 @@ CREATE TABLE IF NOT EXISTS partner_program_runtime (
   last_transition_note TEXT
 );
 
--- The canonical fresh schema exposes partner_organizations.id as TEXT.
--- Existing environments where this table already uses UUID are unchanged by
--- CREATE TABLE IF NOT EXISTS.
+-- partner_org_id is TEXT and deliberately carries NO foreign key.
+--
+-- The previous revision declared `REFERENCES partner_organizations(id)` on the
+-- claim that "the canonical fresh schema exposes partner_organizations.id as
+-- TEXT". That claim is false: the producer that actually runs in the strict
+-- order, 215_partner_portal.sql, declares `id UUID PRIMARY KEY`. Postgres
+-- cannot implement a TEXT -> UUID foreign key, so on a genuinely fresh
+-- database this migration aborted and every migration ordered after it never
+-- ran. 798_partner_certifications_00base.sql, which does define the column as
+-- TEXT, is a no-op on a fresh build because CREATE TABLE IF NOT EXISTS finds
+-- the table already created by 215.
+--
+-- TEXT without the constraint is what the application actually uses:
+-- ensurePartnerProgramSchema() in server/src/services/partnerProgramLedgerService.ts
+-- creates this table at runtime as `partner_org_id TEXT NOT NULL` with no
+-- foreign key, and that is the shape live environments already hold. Keeping
+-- the column TEXT makes the migrated schema and the runtime schema identical.
+-- The missing referential constraint is tracked as a known integrity gap, not
+-- resolved here, because changing the column type would make freshly built
+-- environments diverge from the deployed ones.
 CREATE TABLE IF NOT EXISTS partner_program_ledger (
   id TEXT PRIMARY KEY,
-  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  partner_org_id TEXT NOT NULL,
   entry_type TEXT NOT NULL,
   amount NUMERIC(18, 4) DEFAULT 0 NOT NULL,
   currency TEXT NOT NULL DEFAULT 'EUR',
