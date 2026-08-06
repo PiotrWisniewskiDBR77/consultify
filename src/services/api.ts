@@ -7187,6 +7187,14 @@ export const Api = {
     return handleResponse(res, 'Failed to load workbook schema');
   },
 
+  /** Durable workbook metadata used by template-build deep links after reload. */
+  getWorkbook: async (workbookId: string): Promise<any> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to reopen workbook');
+  },
+
   // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28): persists
   // ONE cell edit made in `EditableSpreadsheetGrid` (behind `ff_excele_edit`,
   // src/utils/exceleEditFlag.ts) so it survives a page refresh. See
