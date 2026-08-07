@@ -1041,9 +1041,43 @@ function flattenedContentTypeForIntent(intent: unknown): 'cover' | 'appendix' | 
   return intent === 'cover' ? 'cover' : intent === 'appendix' ? 'appendix' : 'key_messages';
 }
 
+function cardDisplayTitle(card: DeckDocumentCard): string {
+  const heading = (card.blocks || []).find((block) => block.type === 'heading');
+  const headingText = String((heading?.content as any)?.text || '').trim();
+  return headingText || String(card.title || card.key_message || card.intent || 'Slide').trim();
+}
+
+function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
+  const content = (block.content || {}) as Record<string, unknown>;
+  const explicit = String(content.title || content.headline || content.label || '').trim();
+  if (explicit) return explicit.slice(0, 80);
+
+  const text = textFromBlock(block).trim();
+  if (text && (block.type === 'paragraph' || block.type === 'callout')) {
+    const firstClause = text.split(/(?<=[.!?])\s|[;:]/, 1)[0]?.trim() || text;
+    const words = firstClause.split(/\s+/).filter(Boolean);
+    const concise = words.length > 9 ? `${words.slice(0, 9).join(' ')}…` : firstClause;
+    return concise.slice(0, 80);
+  }
+
+  const semanticFallbacks: Record<string, string> = {
+    bullet_list: 'Key points',
+    numbered_list: 'Actions',
+    table: 'Evidence',
+    chart: 'Performance',
+    metric_strip: 'Key metrics',
+    kpi_widget: 'Key metric',
+    timeline_block: 'Timeline',
+    smart_diagram: 'Operating model',
+    image: 'Supporting visual',
+  };
+  return semanticFallbacks[block.type] || `Key point ${index + 1}`;
+}
+
 function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMeta): UnifiedSlide {
   const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
   const firstText = bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
+  const displayTitle = cardDisplayTitle(card);
   const sourceRefs = uniqueSourceRefs([
     ...sourceRefsFromUnknown(card.source_refs),
     ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
@@ -1060,26 +1094,26 @@ function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMe
     // download path (8/12 slides in the proof deck). The original card intent is
     // preserved as `source_intent` for traceability.
     intent: contentType as SlideIntent,
-    key_message: String(card.key_message || card.title || card.intent || 'Slide'),
+    key_message: displayTitle,
     content: {
       type: contentType,
       ...(contentType === 'cover'
         ? {
-            title: card.title,
+            title: displayTitle,
             subtitle: firstText,
             organization: meta.client,
             date: meta.date,
             confidentiality: meta.confidentiality,
           }
         : contentType === 'appendix'
-          ? { title: card.title, body: firstText }
+          ? { title: displayTitle, body: firstText }
           : {
               messages: bodyBlocks.length
-                ? bodyBlocks.map((block) => ({
-                    title: block.type.replace(/_/g, ' '),
+                ? bodyBlocks.map((block, index) => ({
+                    title: messageTitleFromBlock(block, index),
                     description: textFromBlock(block),
                   }))
-                : [{ title: card.title, description: firstText }],
+                : [{ title: displayTitle, description: firstText }],
             }),
     } as any,
   };
