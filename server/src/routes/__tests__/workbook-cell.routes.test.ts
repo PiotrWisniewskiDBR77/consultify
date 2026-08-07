@@ -53,6 +53,12 @@ vi.mock('../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../services/lineage/artifactLineageService.js', () => ({
+  deriveCreatedEventIdempotencyKey: vi.fn(() => 'created-test-key'),
+  recordLineageEventSafe: vi.fn(),
+  recordLineageEventTracked: vi.fn(async () => ({ durable: true })),
+}));
+
 import workbookRoutes from '../workbook.routes.js';
 
 function createApp(): Express {
