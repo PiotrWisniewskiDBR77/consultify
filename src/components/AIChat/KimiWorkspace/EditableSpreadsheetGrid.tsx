@@ -503,12 +503,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       selectionRange.colEnd + 1
     );
     const headerRow = rows[selectionRange.rowStart];
-    const labelHeader = formatComputedForDisplay(headerRow?.cells?.[labelKey]) ||
-      chartColumns[selectionRange.colStart]?.header || 'Category';
     const hasSemanticHeader = selectedSeriesColumns.some((column) => {
       const value = headerRow?.cells?.[column.key]?.computed;
       return typeof value === 'string' && value.trim().length > 0;
     });
+    const labelHeader = hasSemanticHeader
+      ? formatComputedForDisplay(headerRow?.cells?.[labelKey]) ||
+        chartColumns[selectionRange.colStart]?.header || 'Category'
+      : chartColumns[selectionRange.colStart]?.header || 'Category';
     const dataStart = selectionRange.rowStart + (hasSemanticHeader ? 1 : 0);
     const labels = rows
       .slice(dataStart, selectionRange.rowEnd + 1)
