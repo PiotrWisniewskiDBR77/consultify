@@ -904,6 +904,11 @@ export const PresentationTemplateArchitectView: React.FC<
           data={tableRows}
           selectedRowId={selectedTemplateId}
           onRowClick={(row) => void handleSelectRow(row)}
+          // Lifecycle-aware actions live in the selected-template editor below.
+          // Without this flag FilterableTable injects its generic Open/Edit/Delete
+          // menu even though no onRowAction handler exists, exposing no-op and
+          // misleading destructive actions for approved templates.
+          hideRowActions
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
           emptyMessage={
