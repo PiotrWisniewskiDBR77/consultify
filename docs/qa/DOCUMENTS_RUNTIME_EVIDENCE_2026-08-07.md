@@ -113,3 +113,41 @@ Documents / Templates DoD.
 
 This entry closes only the deployed merge/unmerge regression. The broader Excel
 manual and template-to-workbook acceptance matrix remains open.
+
+## Excel — clean/manual workbook, formulas, chart and native XLSX export
+
+- Railway deployments:
+  - `71778455-c5da-4f52-a800-b77a27e91d1a` (`SUCCESS`) — decision-ready chart
+    generation (`0b373826c6`)
+  - `369a40c4-f5df-4bfe-a855-bb5ac87d4203` (`SUCCESS`) — reopened-workbook
+    native Download (`fe7da32025`)
+  - `8db9fd72-ca69-40b2-8b3e-9c9bfd89eb0f` (`SUCCESS`) — renamed-workbook
+    download filename (`6c95a3b013`)
+- Workbook: `59ef4ce7-01c3-492d-8787-69866887c00e`
+- URL: `https://demo.consultify.ai/excele?artifactId=59ef4ce7-01c3-492d-8787-69866887c00e`
+- Entry mode: **Clean / manual**, without Teresa.
+- Final title: `Program Atlas Performance Model — Board QA`.
+- Manual content: Plan/Actual/Variance table for delivery, annual benefit, spend
+  and contingency; formulas in `D3:D6`; percentage and EUR formats; negative
+  variance conditional formatting; styled header; header filters and freeze;
+  chart sourced from `A2:C6`.
+- Autosave/cold reopen: **PASS**. Title, values, all formula results and chart
+  `Plan vs Actual by Metric` returned on the exact URL.
+- Native Download button: **PASS**. Browser emitted a download event and the
+  deployed endpoint returned HTTP 200 on deployment
+  `8db9fd72-ca69-40b2-8b3e-9c9bfd89eb0f`.
+- Download readback:
+  `/Users/piotrwisniewski/Downloads/Program_Atlas_Performance_Model_Board_QA.xlsx`.
+  Independent workbook inspection found 2 sheets (`Arkusz1`, `Info`), four
+  formulas (`D3:D6`), no formula-error matches, and the chart image anchored at
+  row 8 rather than far below the working table. The Info sheet retained the
+  final workbook title.
+- Visual verification: the extracted 720x420 chart renders two distinct Plan
+  and Actual series, a business-readable title, legend and full category labels.
+- Defects found and fixed: the original chart treated generic column letters as
+  business headers, emitted only one series, clipped labels and anchored at row
+  34; reopened Download used a popup/no-op path; rename did not update the XLSX
+  `Content-Disposition` filename.
+
+This entry closes the tested Excel clean/manual and native XLSX export slice.
+The Excel template-to-workbook slice remains open.
