@@ -424,8 +424,8 @@ export async function checkDeckQualityGates(
       pushGate({
         id: 'qg-low-traceability',
         gateType: 'LOW_TRACEABILITY',
-        severity: 'error',
-        priority: 'P1',
+        severity: 'warning',
+        priority: 'P2',
         message: `Only ${Math.round(coverage * 100)}% of cards have source references. Traceability improves trust.`,
         category: 'traceability',
       });

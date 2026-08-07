@@ -154,6 +154,63 @@ describe('presentationQualityGatesService', () => {
     expect(report.scorecard.p2).toBeGreaterThan(0);
   });
 
+  it('allows a substantive manually authored deck to export with a traceability warning', async () => {
+    dbGet.mockImplementation(async (query: string) => {
+      if (query.includes('presentation_decks'))
+        return { id: 'deck-manual-grounded', presentation_mode: 'briefing' };
+      if (query.includes('brand_kits')) return { id: 'brand-1' };
+      return null;
+    });
+    normalizeDeckDocument.mockReturnValue({
+      presentation_mode: 'briefing',
+      cards: [
+        {
+          intent: 'cover',
+          title: 'Program Atlas board update',
+          source_refs: [],
+          blocks: [{ type: 'heading', content: { text: 'Program Atlas board update' } }],
+        },
+        {
+          intent: 'key_messages',
+          title: 'Three decisions unlock the next phase',
+          key_message: 'Approve scope, ownership and funding by 15 August',
+          source_refs: [],
+          blocks: [
+            {
+              type: 'paragraph',
+              content: {
+                text: 'Delivery is 72% versus 75% plan and annual benefit is EUR 2.2m.',
+              },
+            },
+            {
+              type: 'callout',
+              content: {
+                text: 'Confirm Operations ownership and release funding within the agreed envelope.',
+              },
+            },
+          ],
+        },
+      ],
+      meta: { confidentiality: 'internal' },
+    });
+
+    const report = await checkDeckQualityGates('org-1', 'deck-manual-grounded');
+
+    expect(report.canExport).toBe(true);
+    expect(report.result).toBe('PASS_WITH_P2');
+    expect(
+      report.gates.some(
+        (gate) =>
+          gate.gateType === 'LOW_TRACEABILITY' &&
+          gate.severity === 'warning' &&
+          gate.priority === 'P2'
+      )
+    ).toBe(true);
+    expect(report.gates.map((gate) => gate.gateType)).not.toContain(
+      'DECISION_MISSING_TRACEABILITY'
+    );
+  });
+
   it('accepts a custom-template deck with inherited lineage, theme and exporter metadata', async () => {
     dbGet.mockImplementation(async (query: string) => {
       if (query.includes('presentation_decks'))
