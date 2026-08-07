@@ -327,7 +327,9 @@ content and visual qualification of the nine reusable templates.
 ## Final board-ready template qualification and deployment closure
 
 - Final code commit: `a11c20995f` (`fix(templates): remove KPI starter formula error`).
-- Railway deployment: `d0997799-c978-4b50-b3bf-064c215d3979` (`SUCCESS`).
+- Final Railway deployment: `6aa14696-61ef-42e1-91b0-9174f32f87f0`
+  (`SUCCESS`); qualification deployment `d0997799-c978-4b50-b3bf-064c215d3979`
+  passed the same runtime checks before the evidence-only commit.
 - Image digest: `sha256:8004cf6e7b3f13bd0e52299a1896824a0acaf4390e10b10a5c686ac54c0e3550`.
 - Durable Word structure saves are covered by commits `66cdc0a466` and
   `748a8bde1f`; canonical Business Case validation is aligned by `8530ce3048`.
@@ -357,12 +359,14 @@ content and visual qualification of the nine reusable templates.
   `b0b7b891-3fed-4560-9b1a-769325b55591`; Product Roadmap generated
   `672fb49f-a907-46e5-852f-b74e0eb665e3`. Both rendered their full governed
   schemas, formulas and `Model verified (0 notes)` without formula errors.
-- Authenticated final cold-reopen smoke on deployment `d0997799` passed for all
+- Authenticated six-artifact cold-reopen smoke on deployment `d0997799` passed for all
   six accepted artifacts: both Word documents retained decision content and
   embedded structures; both Excel workbooks retained values, formulas and
   charts; both PPT decks retained their manual two-card and template eight-card
   structures. Native DOCX/XLSX/PPTX exports and independent readbacks had
-  already passed for these exact immutable artifact IDs, as recorded above.
+  already passed for these exact immutable artifact IDs, as recorded above. The
+  Dashboard cold-reopen was repeated on final deployment `6aa14696` with the
+  same `Model verified (0 notes)`, eight columns and no formula error.
 
 This closes the Documents / Templates release scope: three governed builders,
 nine reusable board-ready templates and six independent final artifacts are

@@ -80,7 +80,7 @@ in `docs/qa/DOCUMENTS_RUNTIME_EVIDENCE_2026-08-07.md`.
 ## Final release gate
 
 - Final code HEAD: `a11c20995f`.
-- Final runtime deployment: `d0997799-c978-4b50-b3bf-064c215d3979`
+- Final runtime deployment: `6aa14696-61ef-42e1-91b0-9174f32f87f0`
   (`SUCCESS`, image digest
   `sha256:8004cf6e7b3f13bd0e52299a1896824a0acaf4390e10b10a5c686ac54c0e3550`).
 - Final Dashboard materialization and cold reopen:
