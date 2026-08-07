@@ -1318,7 +1318,7 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
     // CoverLayout reads `content.title` directly. Some legacy/manual base
     // slides use a different title field, so the generic field loop above can
     // leave the starter title intact even though the heading block was edited.
-    if (base.intent === 'cover') content.title = editedTitle;
+    if (content.type === 'cover') content.title = editedTitle;
   }
 
   overlayCardBlocksOntoContent(card, content);

@@ -478,6 +478,17 @@ describe('stale-regen download path — renderable projection', () => {
     const renderable = deckDocumentToRenderableUnifiedJson(deck, report);
     expect((renderable.slides[0] as any).content.title).toBe('Board Transformation Update');
     expect((renderable.slides[0] as any).key_message).toBe('Board Transformation Update');
+
+    // Legacy manual decks use the `title` intent with cover-shaped content.
+    // The renderer resolves that to CoverLayout, so content shape—not intent
+    // spelling—is the authoritative signal for writing the edited title back.
+    const legacyBase = JSON.parse(JSON.stringify(report)) as UnifiedReportJSON;
+    (legacyBase.slides[0] as any).intent = 'title';
+    cover.intent = 'title';
+    const legacyRenderable = deckDocumentToRenderableUnifiedJson(deck, legacyBase);
+    expect((legacyRenderable.slides[0] as any).content.title).toBe(
+      'Board Transformation Update'
+    );
   });
 
   it('cards with a changed intent fall back to the renderable flattened shape', () => {
