@@ -379,12 +379,19 @@ export async function seedDbr77Templates(): Promise<void> {
     try {
       await queryRun(
         `INSERT INTO tp_base_templates
-           (name, description, category, schema_snapshot, is_featured, created_by, created_at)
-         SELECT $1, $2, $3, $4::jsonb, $5, NULL, NOW()
+           (name, description, category, schema_snapshot, is_featured, status,
+            visibility, created_by, created_at)
+         SELECT $1, $2, $3, $4::jsonb, $5, 'approved', 'system', NULL, NOW()
          WHERE NOT EXISTS (
            SELECT 1 FROM tp_base_templates WHERE name = $1 AND category = $3
          )`,
         [t.name, t.description, t.category, JSON.stringify(t.schema_snapshot), t.is_featured]
+      );
+      await queryRun(
+        `UPDATE tp_base_templates
+            SET status = 'approved', visibility = 'system'
+          WHERE name = $1 AND category = $2 AND created_by IS NULL`,
+        [t.name, t.category]
       );
     } catch (err: any) {
       logger.warn(`${TAG} Table template seed skipped (${t.name}): ${err?.message}`);
