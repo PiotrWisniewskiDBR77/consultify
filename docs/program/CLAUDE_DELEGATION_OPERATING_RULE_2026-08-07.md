@@ -7,7 +7,7 @@
 
 Codex odpowiada za architekturę, priorytety, kryteria akceptacji, rozbicie pracy, review diffów, ochronę shared worktree, integrację, runtime QA, deployment i dowody. Sam pisze krótkie krytyczne patche, gdy delegacja byłaby wolniejsza lub ryzykowniejsza.
 
-Claude domyślnie wykonuje każdą implementację wieloplikową, nowy workflow, większy refactor lub pracę szacowaną na ponad 30–45 minut, a także izolowane migracje, testy i audyty. Oszczędność tokenów jest pomocnicza: delegacja nie może istotnie opóźniać pracy.
+Claude domyślnie wykonuje każdą implementację wieloplikową, nowy workflow, większy refactor lub pracę szacowaną na ponad 30–45 minut, a także izolowane migracje, testy i audyty. Oszczędność tokenów jest pomocnicza: delegacja nie może istotnie opóźniać pracy. Liczba paczek nie jest ograniczona; ograniczony i jednoznaczny ma być zakres każdej paczki.
 
 ## Bramka przed kodowaniem
 
@@ -34,7 +34,7 @@ Codex utrzymuje krótki checkpoint: cel, wykonane elementy, status, zmienione pl
 
 ## Oszczędność i wyjątki
 
-- Jeden agent prowadzi spójny pakiet; równoległość tylko dla niezależnych plików.
+- Jedna sesja Claude prowadzi jeden spójny pakiet. Codex może uruchamiać wiele paczek sekwencyjnie lub równolegle; równoległość jest dozwolona wyłącznie dla niezależnych zakresów plików i kontraktów.
 - Agent dostaje ścieżki i kryteria zamiast kopii treści dostępnej w repo.
 - Po trzech nieudanych próbach Codex zatrzymuje podejście i rozstrzyga architekturę.
 - Codex nie deleguje kilkuwierszowego patcha, jeśli koszt przekazania i review jest większy.
