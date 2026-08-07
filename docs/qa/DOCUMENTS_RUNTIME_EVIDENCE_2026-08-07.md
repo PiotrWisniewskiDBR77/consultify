@@ -151,3 +151,41 @@ manual and template-to-workbook acceptance matrix remains open.
 
 This entry closes the tested Excel clean/manual and native XLSX export slice.
 The Excel template-to-workbook slice remains open.
+
+## Excel — approved template to independent workbook and native XLSX export
+
+- Railway deployment: `04c695d4-1ec3-4232-800d-e5a811cff7a3` (`SUCCESS`)
+- Chart-title fix commit: `c1c0810771`.
+- Approved template: `Dashboard KPI`
+- Template ID: `f5da6891-de3e-431d-8bc8-10e97b01609a`
+- Builder URL:
+  `https://demo.consultify.ai/presentations?tab=workbook_templates&workbookTemplateId=f5da6891-de3e-431d-8bc8-10e97b01609a`
+- Independent result workbook: `f6d4613c-f018-4ed1-8baa-1a9e60c0cdf6`
+- Result URL:
+  `https://demo.consultify.ai/excele?artifactId=f6d4613c-f018-4ed1-8baa-1a9e60c0cdf6`
+- Builder result: `Model verified ✓ (0 notes)`; the result uses a different ID
+  and editor route from the reusable template.
+- Final title: `Program Atlas KPI Dashboard — Template QA`.
+- Grounded content: target, actual, calculated variance and decision-oriented
+  trend for delivery (`75%`/`72%`), annual benefit (`EUR 2.0m`/`EUR 2.2m`),
+  spend (`EUR 1.40m`/`EUR 1.08m`) and decision readiness (`100%`/`67%`).
+  Variances are formulas in `D2:D5`; percentage and EUR formats were applied.
+- Chart: `Cel vs Wynik by Wskaźnik`, sourced from `A2:C5`. The deployed export
+  reads schema-backed column names rather than using the first data row as its
+  title.
+- Autosave/cold reopen: **PASS**. Final title, exact data, formulas, trends and
+  chart returned on the result URL.
+- Native Download button: **PASS**. A real browser download event produced
+  `/Users/piotrwisniewski/Downloads/Program_Atlas_KPI_Dashboard_Template_QA (1).xlsx`.
+- Independent artifact-tool readback: **PASS**. The XLSX contains 2 sheets
+  (`Sheet1`, `Info`), exact `A1:E5` data, formulas `D2:D5`, no formula-error
+  matches, and a 720x420 chart image anchored at row 7.
+- Visual verification: **PASS**. The rendered table shows 75.0%, 72.0%, -3.0%,
+  100.0%, 67.0%, -33.0% and two-decimal EUR values without raw floating-point
+  noise. The chart shows distinct `Cel` and `Wynik` series, all four complete
+  category labels, legend and the correct business title. The Info sheet retains
+  the final workbook title and template description.
+
+This entry closes the tested Excel approved-template-to-independent-workbook and
+native XLSX export slice. It does not by itself constitute acceptance of the
+complete Documents / Templates DoD.
