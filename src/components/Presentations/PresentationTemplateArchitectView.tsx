@@ -44,6 +44,7 @@ import {
   type TableRow,
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
+import { ConfirmModal } from '@/components/ui/primitives/Modal';
 import {
   approvePresentationTemplate,
   clonePresentationTemplate,
@@ -207,6 +208,7 @@ export const PresentationTemplateArchitectView: React.FC<
   const [drafting, setDrafting] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [deprecatingId, setDeprecatingId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -669,15 +671,16 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const handleDeleteDraft = async (): Promise<void> => {
     if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
-    if (!window.confirm('Delete this draft permanently? This action cannot be undone.')) return;
     setDeprecatingId(selectedTemplate.id);
     setError(null);
     try {
       await deletePresentationDraftTemplate(selectedTemplate.id);
+      setDeleteConfirmOpen(false);
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete draft template');
+      setDeleteConfirmOpen(false);
     } finally {
       setDeprecatingId(null);
     }
@@ -925,7 +928,7 @@ export const PresentationTemplateArchitectView: React.FC<
                   <Button
                     type="button"
                     variant="danger"
-                    onClick={() => void handleDeleteDraft()}
+                    onClick={() => setDeleteConfirmOpen(true)}
                     disabled={deprecatingId === selectedTemplate.id}
                   >
                     <span className="inline-flex items-center gap-1.5">
@@ -1710,6 +1713,23 @@ export const PresentationTemplateArchitectView: React.FC<
           </div>
         ) : null}
       </section>
+
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        onClose={() => {
+          if (!deprecatingId) setDeleteConfirmOpen(false);
+        }}
+        onConfirm={() => void handleDeleteDraft()}
+        title={t('presentations.templateArchitect.deleteDraftTitle', 'Delete draft template?')}
+        message={t(
+          'presentations.templateArchitect.deleteDraftWarning',
+          'This draft will be permanently deleted. This action cannot be undone.'
+        )}
+        confirmText={t('presentations.templateArchitect.deleteDraftConfirm', 'Delete draft')}
+        cancelText={t('common.cancel', 'Cancel')}
+        confirmVariant="danger"
+        loading={Boolean(deprecatingId)}
+      />
     </div>
   );
 };
