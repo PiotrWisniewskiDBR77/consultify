@@ -131,7 +131,10 @@ import type {
   DocumentVersionSnapshot,
   DocumentVersionSnapshotOrigin,
 } from './documentStudioTypes.js';
-import { documentSourceRefsEvidenceText } from './documentStudioTypes.js';
+import {
+  documentSourceRefEvidenceText,
+  documentSourceRefsEvidenceText,
+} from './documentStudioTypes.js';
 import {
   getTemplate as getRegisteredTemplate,
   isTemplateUsableForGeneration,
@@ -684,6 +687,95 @@ function premiumBusinessCaseBlocks(
   });
 }
 
+function splitEvidenceItems(value: string): string[] {
+  return value
+    .split(/;|(?<=[.!?])\s+(?=[A-Z])/)
+    .map((item) => item.trim().replace(/[.]$/, ''))
+    .filter(Boolean);
+}
+
+export function replaceTemplatePlaceholdersWithEvidence(
+  sourceRefs: DocumentSourceRef[],
+  sections: DocumentSection[]
+): void {
+  const boundSources = sourceRefs
+    .map((ref) => ({ ref, text: documentSourceRefEvidenceText(ref) }))
+    .filter((entry) => entry.text.length > 0);
+  if (boundSources.length === 0) return;
+
+  const findSource = (pattern: RegExp) =>
+    boundSources.find((entry) => pattern.test(String(entry.ref.sourceTitle || ''))) ?? null;
+  const kpis = findSource(/kpi|metric|performance|financial/i);
+  const decisions = findSource(/decision|approval/i);
+  const risks = findSource(/risk/i);
+  const allEvidence = boundSources.map((entry) => entry.text).join(' ');
+  const decisionItems = decisions ? splitEvidenceItems(decisions.text) : [];
+  const riskItems = risks ? splitEvidenceItems(risks.text) : [];
+
+  const mk = (
+    type: DocumentBlock['type'],
+    content: unknown,
+    source: (typeof boundSources)[number] | null
+  ): DocumentBlock => ({
+    blockId: `blk-${randomUUID()}`,
+    type,
+    content,
+    sourceRef: source?.ref,
+    isAssumption: false,
+  });
+
+  for (const section of sections) {
+    const hasPlaceholder = section.blocks.some((block) =>
+      /awaiting content|content removed|treść usunięta/i.test(JSON.stringify(block.content))
+    );
+    if (!hasPlaceholder) continue;
+    const title = section.title.toLowerCase();
+    let source: (typeof boundSources)[number] | null = null;
+    let blocks: DocumentBlock[] | null = null;
+
+    if (/decision|required approval/.test(title) && decisionItems.length > 0) {
+      source = decisions;
+      blocks = [mk('numbered_list', { items: decisionItems }, source)];
+    } else if (/risk/.test(title) && riskItems.length > 0) {
+      source = risks;
+      const rows = riskItems.map((item) => {
+        const [risk, mitigation = 'Mitigation required'] = item.split(/\s+[—–-]\s+mitigation:\s*/i);
+        return [risk.trim(), 'To assess', 'To assess', 'Owner required', mitigation.trim()];
+      });
+      blocks = [
+        mk(
+          'risk_table',
+          {
+            columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'],
+            rows,
+          },
+          source
+        ),
+      ];
+    } else if (/financial|portfolio|performance|status/.test(title) && kpis) {
+      source = kpis;
+      blocks = [mk('paragraph', { text: kpis.text }, source)];
+    } else if (/next step|action/.test(title) && decisionItems.length > 0) {
+      source = decisions;
+      blocks = [mk('numbered_list', { items: decisionItems }, source)];
+    } else if (/executive summary|summary|podsumowanie/.test(title)) {
+      source = kpis ?? decisions ?? boundSources[0];
+      blocks = [mk('paragraph', { text: allEvidence }, source)];
+    } else {
+      blocks = [
+        mk(
+          'paragraph',
+          { text: 'No additional evidence was supplied for this section.' },
+          null
+        ),
+      ];
+    }
+
+    section.blocks = blocks;
+    section.sourceRefs = source ? [source.ref] : [];
+  }
+}
+
 export async function materializeDocumentArtifact(
   params: MaterializeDocumentParams
 ): Promise<DocumentRunResult> {
@@ -893,6 +985,7 @@ export async function materializeDocumentArtifact(
       const heading = section.blocks.find((block) => block.type === 'heading');
       if (heading) heading.content = { text: governed.title };
     });
+    replaceTemplatePlaceholdersWithEvidence(sourceRefs, provisionalSchema.sections);
     premiumBusinessCaseBlocks(template, generationIntake, provisionalSchema.sections);
   }
 
