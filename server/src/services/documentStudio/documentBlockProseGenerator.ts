@@ -27,7 +27,12 @@
 import { generateChatResponse } from '../aiService.js';
 import { enforceBlockGrounding } from './documentBlockContentGenerator.js';
 import type { DocumentGenerationWarningCollector } from './documentGenerationWarnings.js';
-import type { DocumentIntake, DocumentSchema, DocumentSourceRef } from './documentStudioTypes.js';
+import {
+  documentSourceRefEvidenceText,
+  type DocumentIntake,
+  type DocumentSchema,
+  type DocumentSourceRef,
+} from './documentStudioTypes.js';
 
 /** Block types whose prose we enrich. Structured blocks are left alone. */
 const PROSE_BLOCK_TYPES = new Set(['paragraph', 'callout', 'bullet_list', 'numbered_list']);
@@ -192,10 +197,12 @@ function buildUserPrompt(
   const sources =
     sourceRefs.length > 0
       ? sourceRefs
-          .map(
-            (ref, i) =>
-              `[S${i + 1}] ${ref.sourceTitle ?? ref.sourceId ?? ref.sourceType ?? 'source'}`
-          )
+          .map((ref, i) => {
+            const evidence = documentSourceRefEvidenceText(ref);
+            return `[S${i + 1}] ${ref.sourceTitle ?? ref.sourceId ?? ref.sourceType ?? 'source'}${
+              evidence ? `\nEvidence: ${evidence}` : ''
+            }`;
+          })
           .join('\n')
       : '(no source pack attached — write confident consulting prose; mark ONLY specific unsupported numbers/dates/named values inline with "(założenie)"/"(assumption)", do NOT prefix sentences with "Assumption:")';
   return [
@@ -370,7 +377,13 @@ export async function generateBlockProse(
 
   // Deep clone so the caller's input schema is never mutated in place.
   const next = JSON.parse(JSON.stringify(schema)) as DocumentSchema;
-  const groundingSource = [intake.title, intake.description].filter(Boolean).join(' — ');
+  const groundingSource = [
+    intake.title,
+    intake.description,
+    ...sourceRefs.map(documentSourceRefEvidenceText),
+  ]
+    .filter(Boolean)
+    .join(' — ');
   for (const section of next.sections) {
     for (const block of section.blocks) {
       const payload = generated.get(block.blockId);

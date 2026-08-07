@@ -131,6 +131,7 @@ import type {
   DocumentVersionSnapshot,
   DocumentVersionSnapshotOrigin,
 } from './documentStudioTypes.js';
+import { documentSourceRefsEvidenceText } from './documentStudioTypes.js';
 import {
   getTemplate as getRegisteredTemplate,
   isTemplateUsableForGeneration,
@@ -737,6 +738,18 @@ export async function materializeDocumentArtifact(
   safeInvokeHook(params.hooks?.onPlan ? () => params.hooks!.onPlan!(outline) : undefined, 'onPlan');
 
   const sourceRefs = incomingSourceRefs;
+  const sourceEvidence = documentSourceRefsEvidenceText(sourceRefs);
+  // Required-source inputs used to be carried only as identity metadata. That
+  // let preflight pass while every downstream generator and the final
+  // deterministic guard saw only source titles, causing real KPI/risk/decision
+  // facts to be replaced as unsupported. Preserve identity separately, but
+  // enrich the generation brief with the curator-supplied evidence.
+  const generationIntake: DocumentIntake = sourceEvidence
+    ? {
+        ...params.intake,
+        description: `${params.intake.description}\n\nSupplied source evidence:\n${sourceEvidence}`,
+      }
+    : params.intake;
 
   // BUG-FIX (OXFORD/Word stale self-ref): generate the REAL wave5 artifact id
   // UP FRONT and thread it through both the schema (`schema.artifactId`) and the
@@ -752,7 +765,7 @@ export async function materializeDocumentArtifact(
   let provisionalSchema = await buildDocumentSchemaPremium(
     {
       artifactId: provisionalArtifactId,
-      intake: params.intake,
+      intake: generationIntake,
       outline,
       sourceRefs,
     },
@@ -818,7 +831,7 @@ export async function materializeDocumentArtifact(
   // deterministic schema unchanged, so materialization never fails
   // because the LLM was unavailable.
   if (params.useLlm) {
-    provisionalSchema = await generateBlockProse(provisionalSchema, params.intake, sourceRefs, {
+    provisionalSchema = await generateBlockProse(provisionalSchema, generationIntake, sourceRefs, {
       enable: true,
       warnings: warningsCollector,
     });
@@ -829,7 +842,7 @@ export async function materializeDocumentArtifact(
   // also recomputes EvidenceContract from the exact schema being persisted.
   provisionalSchema = enforceDocumentSchemaGrounding(
     provisionalSchema,
-    [params.intake.title, params.intake.description].filter(Boolean).join(' — ')
+    [params.intake.title, params.intake.description, sourceEvidence].filter(Boolean).join(' — ')
   );
 
   // Manual "Czysto" is an authoring canvas, not a grounded deterministic
@@ -880,7 +893,7 @@ export async function materializeDocumentArtifact(
       const heading = section.blocks.find((block) => block.type === 'heading');
       if (heading) heading.content = { text: governed.title };
     });
-    premiumBusinessCaseBlocks(template, params.intake, provisionalSchema.sections);
+    premiumBusinessCaseBlocks(template, generationIntake, provisionalSchema.sections);
   }
 
   const generationWarnings = warningsCollector.list();
