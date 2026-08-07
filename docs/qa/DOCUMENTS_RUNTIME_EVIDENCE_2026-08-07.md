@@ -321,5 +321,49 @@ the remaining create/edit/save/reopen acceptance of the three template builders.
   browser prompt was used.
 
 This proves the full draft/edit/save/cold-reopen/validate/approve/deprecate
-lifecycle in all three builders. Qualification of the nine board-ready reusable
-templates remains a separate content and visual acceptance gate.
+lifecycle in all three builders. The following final gate records the separate
+content and visual qualification of the nine reusable templates.
+
+## Final board-ready template qualification and deployment closure
+
+- Final code commit: `a11c20995f` (`fix(templates): remove KPI starter formula error`).
+- Railway deployment: `d0997799-c978-4b50-b3bf-064c215d3979` (`SUCCESS`).
+- Image digest: `sha256:8004cf6e7b3f13bd0e52299a1896824a0acaf4390e10b10a5c686ac54c0e3550`.
+- Durable Word structure saves are covered by commits `66cdc0a466` and
+  `748a8bde1f`; canonical Business Case validation is aligned by `8530ce3048`.
+  Runtime draft `doc-template-1786143357187-76xgal7w` persisted Indigo branding,
+  header/footer, five required sources and all nine guided sections before
+  approval. Independent database reads before and after approval confirmed the
+  same structure; the approved cold reopen retained it.
+- Commit `25853c4ab6` qualifies the exact nine-template set. Word contains 22
+  decision-oriented sections across Board Report, Business Case and Decision
+  Memo, each with guidance, key message, data needs and suggested evidence.
+  Excel supplies governed schemas for KPI, risk and roadmap workbooks. PPT
+  supplies 26 thesis-led slides across Steering, Assessment and Valuation,
+  including source requirements and recommended visuals.
+- Focused qualification tests pass `9/9`; the backend build passes. A
+  transactional real-demo-DB dry run applied and rolled back all nine updates
+  successfully before deployment.
+- The first generated KPI candidate exposed `#DZIEL/0!` in an empty percentage
+  starter formula and was rejected. Corrective migration
+  `20260808_documents_template_kpi_formula_repair.sql` leaves only safe formula
+  `D2=C2-B2` and adds `Decision / action`. Post-deploy DB readback returned
+  exactly `{"cells":{"D":{"formula":"C2-B2"}},"last_header":"Decision / action"}`.
+- Fresh runtime workbook `1515adbc-7b82-4cac-a781-e225cd12537c` was generated
+  from Dashboard KPI on the final deployment. It rendered all eight governed
+  columns, `Model verified (0 notes)`, D2=`0`, and no formula error. A full cold
+  reload retained the same ID, schema and result.
+- Rejestr ryzyk generated independent workbook
+  `b0b7b891-3fed-4560-9b1a-769325b55591`; Product Roadmap generated
+  `672fb49f-a907-46e5-852f-b74e0eb665e3`. Both rendered their full governed
+  schemas, formulas and `Model verified (0 notes)` without formula errors.
+- Authenticated final cold-reopen smoke on deployment `d0997799` passed for all
+  six accepted artifacts: both Word documents retained decision content and
+  embedded structures; both Excel workbooks retained values, formulas and
+  charts; both PPT decks retained their manual two-card and template eight-card
+  structures. Native DOCX/XLSX/PPTX exports and independent readbacks had
+  already passed for these exact immutable artifact IDs, as recorded above.
+
+This closes the Documents / Templates release scope: three governed builders,
+nine reusable board-ready templates and six independent final artifacts are
+deployed and runtime-proven with persistence boundaries intact.

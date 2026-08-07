@@ -15,15 +15,15 @@ required acceptance claim has not yet been proven.
 
 | Type | Template | Runtime status | Template artifact / builder ID | Use-template route | Generator + lineage | Builder acceptance | Visual/content acceptance |
 |---|---|---:|---|---|---:|---:|---:|
-| Word | `[System] board report (EN)` | Approved | `46301065-b8eb-4147-800e-4f3895643066` | `/document-studio?entry=template&templateArtifactId=46301065-b8eb-4147-800e-4f3895643066` | PASS | OPEN | PASS via grounded artifact |
-| Word | `[System] business case (EN)` | Approved | `fe66b811-70ba-48ad-830a-51ae3b00343a` | `/document-studio?entry=template&templateArtifactId=fe66b811-70ba-48ad-830a-51ae3b00343a` | PASS | OPEN | OPEN |
-| Word | `[System] decision memo (EN)` | Approved | `b7680449-bbf3-4335-88ad-9ed61654d43d` | `/document-studio?entry=template&templateArtifactId=b7680449-bbf3-4335-88ad-9ed61654d43d` | PASS | OPEN | OPEN |
-| Excel | `Dashboard KPI` | Approved | `f5da6891-de3e-431d-8bc8-10e97b01609a` | `/presentations?tab=workbook_templates&workbookTemplateId=f5da6891-de3e-431d-8bc8-10e97b01609a` | PASS | OPEN | PASS via grounded workbook |
-| Excel | `Rejestr ryzyk` | Approved | `3f36a34d-51d2-455e-a952-c984cc91853c` | `/presentations?tab=workbook_templates&workbookTemplateId=3f36a34d-51d2-455e-a952-c984cc91853c` | PASS | OPEN | OPEN |
-| Excel | `Product Roadmap` | Approved | `510a84dd-c9c9-4294-ac4a-20616792c785` | `/presentations?tab=workbook_templates&workbookTemplateId=510a84dd-c9c9-4294-ac4a-20616792c785` | PASS | OPEN | OPEN |
-| PowerPoint | `Steering Committee Update` | Published | `d59b4cee-9f75-4584-a59b-66bc2431819e` | `/prezentacje?templateArtifactId=d59b4cee-9f75-4584-a59b-66bc2431819e` | PASS | OPEN | PASS via grounded deck |
-| PowerPoint | `Assessment Summary` | Approved in Architect | `d00a34b9-71c7-41aa-a4c1-a2543f5dbaa1` | `/prezentacje?templateArtifactId=d00a34b9-71c7-41aa-a4c1-a2543f5dbaa1` | PASS | OPEN | OPEN |
-| PowerPoint | `Valuation Pack` | Approved in Architect | `1710cef4-24ee-4f22-ab62-976045f10371` | `/prezentacje?templateArtifactId=1710cef4-24ee-4f22-ab62-976045f10371` | PASS | OPEN | OPEN |
+| Word | `[System] board report (EN)` | Approved | `46301065-b8eb-4147-800e-4f3895643066` | `/document-studio?entry=template&templateArtifactId=46301065-b8eb-4147-800e-4f3895643066` | PASS | PASS | PASS — 7 guided board sections, 5 sources |
+| Word | `[System] business case (EN)` | Approved | `fe66b811-70ba-48ad-830a-51ae3b00343a` | `/document-studio?entry=template&templateArtifactId=fe66b811-70ba-48ad-830a-51ae3b00343a` | PASS | PASS | PASS — 9 guided investment sections, 5 sources |
+| Word | `[System] decision memo (EN)` | Approved | `b7680449-bbf3-4335-88ad-9ed61654d43d` | `/document-studio?entry=template&templateArtifactId=b7680449-bbf3-4335-88ad-9ed61654d43d` | PASS | PASS | PASS — 6 guided decision sections, 5 sources |
+| Excel | `Dashboard KPI` | Approved | `f5da6891-de3e-431d-8bc8-10e97b01609a` | `/presentations?tab=workbook_templates&workbookTemplateId=f5da6891-de3e-431d-8bc8-10e97b01609a` | PASS | PASS | PASS — safe formula, governance and cold reopen |
+| Excel | `Rejestr ryzyk` | Approved | `3f36a34d-51d2-455e-a952-c984cc91853c` | `/presentations?tab=workbook_templates&workbookTemplateId=3f36a34d-51d2-455e-a952-c984cc91853c` | PASS | PASS | PASS — 9 columns, exposure formula and controls |
+| Excel | `Product Roadmap` | Approved | `510a84dd-c9c9-4294-ac4a-20616792c785` | `/presentations?tab=workbook_templates&workbookTemplateId=510a84dd-c9c9-4294-ac4a-20616792c785` | PASS | PASS | PASS — 10 columns, schedule formula and controls |
+| PowerPoint | `Steering Committee Update` | Published | `d59b4cee-9f75-4584-a59b-66bc2431819e` | `/prezentacje?templateArtifactId=d59b4cee-9f75-4584-a59b-66bc2431819e` | PASS | PASS | PASS — 8 thesis-led decision slides |
+| PowerPoint | `Assessment Summary` | Approved in Architect | `d00a34b9-71c7-41aa-a4c1-a2543f5dbaa1` | `/prezentacje?templateArtifactId=d00a34b9-71c7-41aa-a4c1-a2543f5dbaa1` | PASS | PASS | PASS — 9 evidence-led assessment slides |
+| PowerPoint | `Valuation Pack` | Approved in Architect | `1710cef4-24ee-4f22-ab62-976045f10371` | `/prezentacje?templateArtifactId=1710cef4-24ee-4f22-ab62-976045f10371` | PASS | PASS | PASS — 9 valuation and decision slides |
 
 ### Runtime observations
 
@@ -58,9 +58,10 @@ required acceptance claim has not yet been proven.
   projection fix is deployed and runtime-verified: both rows now appear only
   after `Show drafts` and both render as `Draft`.
 
-These observations prove inventory, generator routing and the three builder
-lifecycle contracts. They do not yet prove the board-ready quality of the six
-templates whose visual/content acceptance remains `OPEN`.
+These observations prove inventory, generator routing, all three builder
+lifecycle contracts and the board-ready content qualification of the exact nine
+templates. Runtime materialization confirms that template use creates an
+independent artifact and does not mutate its reusable source.
 
 ## Six final artifact set
 
@@ -76,11 +77,14 @@ templates whose visual/content acceptance remains `OPEN`.
 The detailed URLs, steps, deployment IDs and independent readbacks are recorded
 in `docs/qa/DOCUMENTS_RUNTIME_EVIDENCE_2026-08-07.md`.
 
-## Remaining acceptance work
+## Final release gate
 
-- Perform visual and content acceptance for the two remaining templates of each
-  type; replace any template that cannot meet the board-ready bar.
-- Confirm that each of the nine templates remains reusable after builder edits
-  and that generating an artifact never mutates the template.
-- Re-run the six-artifact cold-reopen/export smoke on the final deployed HEAD
-  after the last builder/template fix.
+- Final code HEAD: `a11c20995f`.
+- Final runtime deployment: `d0997799-c978-4b50-b3bf-064c215d3979`
+  (`SUCCESS`, image digest
+  `sha256:8004cf6e7b3f13bd0e52299a1896824a0acaf4390e10b10a5c686ac54c0e3550`).
+- Final Dashboard materialization and cold reopen:
+  `1515adbc-7b82-4cac-a781-e225cd12537c`, `Model verified (0 notes)`, no formula
+  errors.
+- Six-artifact authenticated cold-reopen smoke: **PASS** on the final deployment.
+- Remaining acceptance work: **none for the agreed Documents / Templates DoD**.
