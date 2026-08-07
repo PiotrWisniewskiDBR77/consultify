@@ -13,6 +13,13 @@ const sql = fs.readFileSync(migrationPath, 'utf8');
 const jsonPayloads = [...sql.matchAll(/\$\$([\s\S]*?)\$\$::jsonb/g)].map((match) =>
   JSON.parse(match[1])
 );
+const formulaRepairSql = fs.readFileSync(
+  path.resolve(
+    process.cwd(),
+    'server/migrations/20260808_documents_template_kpi_formula_repair.sql'
+  ),
+  'utf8'
+);
 
 describe('board-ready Documents template migration', () => {
   it('contains the exact 3 Word, 3 workbook and 3 presentation qualification targets', () => {
@@ -56,6 +63,21 @@ describe('board-ready Documents template migration', () => {
         Object.values(sheet.rows[0].cells).some((cell: any) => typeof cell.formula === 'string')
       ).toBe(true);
     }
+  });
+
+  it('repairs the empty KPI starter row without any division formula', () => {
+    const payload = JSON.parse(
+      formulaRepairSql.match(/\$\$([\s\S]*?)\$\$::jsonb/)?.[1] ?? 'null'
+    );
+    const parsed = WorkbookSchemaValidator.safeParse(payload);
+    expect(parsed.success, parsed.success ? undefined : parsed.error.message).toBe(true);
+    const sheet = payload.sheets[0];
+    expect(sheet.columns.map((column: any) => column.header)).toContain('Decision / action');
+    const formulas = Object.values(sheet.rows[0].cells)
+      .map((cell: any) => cell.formula)
+      .filter(Boolean);
+    expect(formulas).toEqual(['C2-B2']);
+    expect(formulas.some((formula: string) => formula.includes('/'))).toBe(false);
   });
 
   it('gives every Word section an evidence-governed authoring brief', () => {
