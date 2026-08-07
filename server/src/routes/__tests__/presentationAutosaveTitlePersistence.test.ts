@@ -29,7 +29,8 @@ describe('presentation autosave title persistence', () => {
     const handler = autosaveHandler(await readRouterSource());
 
     expect(handler).toContain('SELECT id, title, version, deck_json');
-    expect(handler).toContain("typeof req.body?.title === 'string'");
+    expect(handler).toContain('canonicalizePresentationAutosaveDeck(req.body)');
+    expect(handler).toContain("typeof canonicalBody.title === 'string'");
     expect(handler).toMatch(
       /UPDATE presentation_decks SET title = \?, deck_json = \?, slide_count = \?, version = \?/
     );

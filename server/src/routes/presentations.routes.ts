@@ -105,6 +105,7 @@ import {
   resolveDeckContentCoherence,
   type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
+import { canonicalizePresentationAutosaveDeck } from '../services/presentationDeckAutosaveCanonicalizer.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
@@ -4079,18 +4080,20 @@ router.put(
       });
     }
 
-    const bodyStr = JSON.stringify(req.body);
+    const canonicalBody = canonicalizePresentationAutosaveDeck(req.body);
+    const bodyStr = JSON.stringify(canonicalBody);
     if (bodyStr.length > 10_000_000) {
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
 
     const newVersion = (deck.version || 1) + 1;
-    const canonicalSlideCount = Array.isArray(req.body?.cards) ? req.body.cards.length : 0;
+    const canonicalSlideCount = Array.isArray(canonicalBody.cards) ? canonicalBody.cards.length : 0;
     // The builder edits the deck title inside the same Deck document as slide
     // content. Persist it to the indexed row as part of the same CAS write;
     // otherwise GET /decks/:id prefers the stale row title on cold reopen and
     // makes a successful-looking rename disappear.
-    const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const requestedTitle =
+      typeof canonicalBody.title === 'string' ? canonicalBody.title.trim() : '';
     const canonicalTitle = requestedTitle || deck.title || 'Untitled presentation';
 
     if (deck.deck_json) {
