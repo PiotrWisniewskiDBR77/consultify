@@ -11,7 +11,7 @@ UPDATE tp_base_templates
          jsonb_build_array(jsonb_build_object(
            'event', 'approved_curated_system_template',
            'at', NOW(),
-           'actor', 'migration:946_approve_dbr77_workbook_templates',
+           'actor', 'migration:20260807_approve_dbr77_workbook_templates',
            'previous_status', status
          ))
  WHERE created_by IS NULL
