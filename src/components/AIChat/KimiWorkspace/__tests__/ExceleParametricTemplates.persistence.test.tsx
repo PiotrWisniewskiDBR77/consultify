@@ -110,8 +110,9 @@ describe('ExceleParametricTemplates durable custom build', () => {
       />
     );
 
-    await screen.findByText('Portfolio template');
-    fireEvent.click(screen.getByRole('button', { name: /Portfolio template/ }));
+    // initialTemplateId opens the form directly; the catalogue card is no
+    // longer present once the deep-link selection has been applied.
+    await screen.findByRole('heading', { name: 'Portfolio template' });
     fireEvent.click(screen.getByRole('button', { name: 'Build workbook' }));
     await screen.findByText(/Ready: Fresh Portfolio/);
     expect(screen.getByText(/Model verified.*0 notes/)).toBeInTheDocument();
