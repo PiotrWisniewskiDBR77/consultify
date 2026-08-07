@@ -164,6 +164,19 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     return entry?.details?.templateSnapshot as DocumentTemplate | undefined;
   }, [auditEntries, comparedAuditId]);
 
+  // Selecting a different template (row click, draft/restore/new-version)
+  // must drop any history/compare state left over from the previous
+  // selection — otherwise the history panel keeps showing another
+  // template's audit trail (and "Restore as draft" / "Compare" would act on
+  // an auditId that doesn't belong to the newly selected template).
+  // `handleHistory` re-populates these for the new template right after, so
+  // this only clears stale state for the common case (plain row click).
+  useEffect(() => {
+    setShowHistory(false);
+    setAuditEntries([]);
+    setComparedAuditId(null);
+  }, [selectedTemplateId]);
+
   // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default ON
   // since 79a75de14e, akcept Piotra 2026-07-22 po live-verify; UWAGA: decyzja
   // architekta D6 z 2026-07-24 postuluje OFF — konflikt do rozstrzygnięcia

@@ -12,6 +12,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  __recordTemplateAuditActionForTests,
   __resetTemplateRegistryForTests,
   approveTemplate,
   cloneTemplateAsDraft,
@@ -194,6 +195,75 @@ describe('documentTemplateService — registry CRUD', () => {
     expect(restored.status).toBe('draft');
     expect(restored.sectionBlueprint).toEqual(approved.sectionBlueprint);
     expect(getTemplate(approved.templateId, 'org-A')?.status).toBe('approved');
+  });
+
+  it('rejects restore of a non-existent audit id', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Restore-missing test', documentType: 'executive_memo' },
+    });
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: template.templateId,
+        auditId: 'audit-does-not-exist',
+        organizationId: 'org-A',
+        userId: 'editor',
+      })
+    ).toThrow('template_audit_not_found');
+  });
+
+  it('rejects restore of an audit entry that carries no template snapshot', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Restore-no-snapshot test', documentType: 'executive_memo' },
+    });
+    // `template_usage_recorded` entries (see `recordTemplateUsage`) never
+    // carry a `templateSnapshot` — only drafted/approved/deprecated do.
+    __recordTemplateAuditActionForTests(
+      template.templateId,
+      'org-A',
+      'template_usage_recorded',
+      'user-1'
+    );
+    const usageEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_usage_recorded'
+    );
+    expect(usageEntry).toBeDefined();
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: template.templateId,
+        auditId: usageEntry!.auditId,
+        organizationId: 'org-A',
+        userId: 'editor',
+      })
+    ).toThrow('template_snapshot_unavailable');
+  });
+
+  it('rejects restore against a template owned by a different tenant', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Cross-tenant restore test', documentType: 'executive_memo' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const approvedEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_approved'
+    );
+    expect(approvedEntry).toBeDefined();
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: approved.templateId,
+        auditId: approvedEntry!.auditId,
+        organizationId: 'org-B',
+        userId: 'attacker',
+      })
+    ).toThrow('template_not_found');
   });
 
   it('isolates templates across tenants', () => {
