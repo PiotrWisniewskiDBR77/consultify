@@ -4049,7 +4049,7 @@ router.put(
       : null;
 
     const deck = (await dbGet(
-      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      'SELECT id, title, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
     )) as any;
     if (!deck) {
@@ -4073,6 +4073,12 @@ router.put(
 
     const newVersion = (deck.version || 1) + 1;
     const canonicalSlideCount = Array.isArray(req.body?.cards) ? req.body.cards.length : 0;
+    // The builder edits the deck title inside the same Deck document as slide
+    // content. Persist it to the indexed row as part of the same CAS write;
+    // otherwise GET /decks/:id prefers the stale row title on cold reopen and
+    // makes a successful-looking rename disappear.
+    const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const canonicalTitle = requestedTitle || deck.title || 'Untitled presentation';
 
     if (deck.deck_json) {
       try {
@@ -4104,8 +4110,8 @@ router.put(
     // need to distinguish the two cases.
     const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [canonicalTitle, bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {
