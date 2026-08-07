@@ -1548,6 +1548,59 @@ router.get(
   })
 );
 
+router.delete(
+  '/templates/:id',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
+    const orgId = getOrgId(req);
+    const templateId = String(req.params.id || '');
+    const existing = await readBackOrgTemplate(templateId, orgId);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    const lifecycleState = String(existing.lifecycle_state || 'draft');
+    if (lifecycleState !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: 'Only draft templates can be deleted.',
+        code: 'TEMPLATE_DELETE_REQUIRES_DRAFT',
+        lifecycleState,
+      });
+    }
+    if (existing.is_system === true || existing.is_system === 1) {
+      return res.status(403).json({
+        success: false,
+        error: 'System templates cannot be deleted.',
+        code: 'SYSTEM_TEMPLATE_DELETE_FORBIDDEN',
+      });
+    }
+    const result = await dbRun(
+      `DELETE FROM presentation_templates
+        WHERE id = ? AND organization_id = ?
+          AND COALESCE(lifecycle_state, 'draft') = 'draft'
+          AND COALESCE(is_system, FALSE) = FALSE`,
+      [templateId, orgId]
+    );
+    if (!result?.changes) {
+      return res.status(409).json({
+        success: false,
+        error: 'Draft changed before deletion. Refresh and try again.',
+        code: 'TEMPLATE_DELETE_CONFLICT',
+      });
+    }
+    try {
+      await dbRun(
+        `DELETE FROM presentation_template_governance_events
+          WHERE template_id = ? AND organization_id = ?`,
+        [templateId, orgId]
+      );
+    } catch (cleanupError) {
+      logger.warn('[Presentations] Could not clean deleted draft governance events', cleanupError);
+    }
+    res.json({ success: true, data: { deletedTemplateId: templateId } });
+  })
+);
+
 router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {

@@ -13,14 +13,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const post = vi.fn();
+const del = vi.fn();
 
 vi.mock('@/services/api', () => ({
   Api: {
     post: (...a: unknown[]) => post(...a),
+    delete: (...a: unknown[]) => del(...a),
   },
 }));
 
-import { deprecatePresentationTemplate } from '../presentationTemplateArchitect';
+import {
+  deletePresentationDraftTemplate,
+  deprecatePresentationTemplate,
+} from '../presentationTemplateArchitect';
 
 describe('deprecatePresentationTemplate', () => {
   beforeEach(() => {
@@ -72,6 +77,22 @@ describe('deprecatePresentationTemplate', () => {
 
     await expect(deprecatePresentationTemplate('tpl_1', 'anything')).rejects.toThrow(
       'A non-empty `reason` is required to deprecate a template.'
+    );
+  });
+
+  it('DELETEs only through the dedicated draft endpoint and URL-encodes the id', async () => {
+    del.mockResolvedValue({ data: { data: { deletedTemplateId: 'draft with space' } } });
+
+    await deletePresentationDraftTemplate('draft with space');
+
+    expect(del).toHaveBeenCalledWith('/presentations/templates/draft%20with%20space');
+  });
+
+  it('propagates lifecycle refusal when the server rejects draft deletion', async () => {
+    del.mockRejectedValue(new Error('Only draft templates can be deleted.'));
+
+    await expect(deletePresentationDraftTemplate('approved-1')).rejects.toThrow(
+      'Only draft templates can be deleted.'
     );
   });
 });

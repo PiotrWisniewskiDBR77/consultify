@@ -45,25 +45,26 @@ import {
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
 import {
-  fetchTemplateLineage,
-  type ClientTemplateLineageNode,
-} from '@/services/presentationTemplateGovernance';
-import {
   approvePresentationTemplate,
   clonePresentationTemplate,
+  deletePresentationDraftTemplate,
   deprecatePresentationTemplate,
   getPresentationTemplate,
   listPresentationTemplates,
   planPresentationTemplate,
   PRESENTATION_SLIDE_INTENTS,
+  type PresentationCustomTemplateDefinition,
   type PresentationSlideIntent,
   type PresentationTemplate,
-  type PresentationCustomTemplateDefinition,
   type PresentationTemplateDraftInput,
   type PresentationTemplateLifecycleState,
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
 } from '@/services/presentationTemplateArchitect';
+import {
+  type ClientTemplateLineageNode,
+  fetchTemplateLineage,
+} from '@/services/presentationTemplateGovernance';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -666,6 +667,22 @@ export const PresentationTemplateArchitectView: React.FC<
     }
   };
 
+  const handleDeleteDraft = async (): Promise<void> => {
+    if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
+    if (!window.confirm('Delete this draft permanently? This action cannot be undone.')) return;
+    setDeprecatingId(selectedTemplate.id);
+    setError(null);
+    try {
+      await deletePresentationDraftTemplate(selectedTemplate.id);
+      setSelectedTemplateId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete draft template');
+    } finally {
+      setDeprecatingId(null);
+    }
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-6">
       <header>
@@ -908,7 +925,7 @@ export const PresentationTemplateArchitectView: React.FC<
                   <Button
                     type="button"
                     variant="danger"
-                    onClick={() => void handleDeprecate()}
+                    onClick={() => void handleDeleteDraft()}
                     disabled={deprecatingId === selectedTemplate.id}
                   >
                     <span className="inline-flex items-center gap-1.5">
@@ -917,10 +934,7 @@ export const PresentationTemplateArchitectView: React.FC<
                       ) : (
                         <Trash2 className="h-3.5 w-3.5" />
                       )}
-                      {t(
-                        'presentations.templateArchitect.deprecateTemplate',
-                        'Withdraw draft'
-                      )}
+                      {t('presentations.templateArchitect.deleteDraftTemplate', 'Delete draft')}
                     </span>
                   </Button>
                 ) : (

@@ -271,6 +271,10 @@ export async function clonePresentationTemplate(
   return unwrap<{ id: string }>(res);
 }
 
+export async function deletePresentationDraftTemplate(templateId: string): Promise<void> {
+  await Api.delete(`/presentations/templates/${encodeURIComponent(templateId)}`);
+}
+
 // ---------------------------------------------------------------------------
 // deprecatePresentationTemplate — POST /templates/:id/governance/deprecate
 // (existing governance surface, re-exported here so the architect view can

@@ -1,6 +1,6 @@
 # Zasada oszczędnej delegacji Claude — 7–12 sierpnia 2026
 
-**Status:** nadrzędna reguła wykonawcza. **Owner:** Codex jako CTO/Release Owner. **Priorytet nadrzędny:** dowiezienie sprawnego projektu dzisiaj; oszczędność tokenów nie może ograniczać tempa ani jakości.  
+**Status:** WYCOFANA decyzją właściciela produktu 2026-08-07. Codex jest jedynym wykonawcą prac nad modułem Documents/Templates aż do pełnego dowiezienia. Poniższe zasady pozostają wyłącznie zapisem historycznym i nie upoważniają do delegowania.
 **Preferowany wykonawca dużego kodowania:** Claude Code CLI z modelem Sonnet 5.0; gdy niedostępny, najbliższy dostępny Claude/Sonnet o porównywalnym koszcie. CLI jest preferowany wobec sesji przeglądarkowych, ponieważ izoluje połączenie od pracy innych agentów.
 
 ## Podział odpowiedzialności
