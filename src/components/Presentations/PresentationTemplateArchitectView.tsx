@@ -44,7 +44,7 @@ import {
   type TableRow,
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
-import { ConfirmModal } from '@/components/ui/primitives/Modal';
+import { ConfirmModal, Modal } from '@/components/ui/primitives/Modal';
 import {
   approvePresentationTemplate,
   clonePresentationTemplate,
@@ -209,6 +209,8 @@ export const PresentationTemplateArchitectView: React.FC<
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [deprecatingId, setDeprecatingId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deprecateConfirmOpen, setDeprecateConfirmOpen] = useState(false);
+  const [deprecateReason, setDeprecateReason] = useState('');
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
@@ -631,18 +633,7 @@ export const PresentationTemplateArchitectView: React.FC<
 
   const handleDeprecate = async (): Promise<void> => {
     if (!selectedTemplate) return;
-    const isDraft = selectedTemplate.lifecycle_state === 'draft';
-    const reason = window.prompt(
-      t(
-        'presentations.templateArchitect.deprecateReasonPrompt',
-        isDraft
-          ? 'Why are you withdrawing this draft? (required)'
-          : 'Why are you deprecating this published template? (required)'
-      ),
-      ''
-    );
-    if (reason === null) return; // user cancelled
-    const trimmedReason = reason.trim();
+    const trimmedReason = deprecateReason.trim();
     if (!trimmedReason) {
       setError(
         t(
@@ -656,6 +647,8 @@ export const PresentationTemplateArchitectView: React.FC<
     setError(null);
     try {
       await deprecatePresentationTemplate(selectedTemplate.id, trimmedReason);
+      setDeprecateConfirmOpen(false);
+      setDeprecateReason('');
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
@@ -951,7 +944,11 @@ export const PresentationTemplateArchitectView: React.FC<
                       <Button
                         type="button"
                         variant="danger"
-                        onClick={() => void handleDeprecate()}
+                        onClick={() => {
+                          setError(null);
+                          setDeprecateReason('');
+                          setDeprecateConfirmOpen(true);
+                        }}
                         disabled={deprecatingId === selectedTemplate.id}
                       >
                         <span className="inline-flex items-center gap-1.5">
@@ -1735,6 +1732,63 @@ export const PresentationTemplateArchitectView: React.FC<
         confirmVariant="danger"
         loading={Boolean(deprecatingId)}
       />
+      <Modal
+        open={deprecateConfirmOpen}
+        onClose={() => {
+          if (!deprecatingId) {
+            setDeprecateConfirmOpen(false);
+            setDeprecateReason('');
+          }
+        }}
+        title={t(
+          'presentations.templateArchitect.deprecatePublishedTitle',
+          'Deprecate published template?'
+        )}
+        description={t(
+          'presentations.templateArchitect.deprecatePublishedDescription',
+          'The template will no longer be available for new decks. Its history and existing decks are preserved.'
+        )}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeprecateConfirmOpen(false);
+                setDeprecateReason('');
+              }}
+              disabled={Boolean(deprecatingId)}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => void handleDeprecate()}
+              disabled={!deprecateReason.trim() || Boolean(deprecatingId)}
+              loading={Boolean(deprecatingId)}
+            >
+              {t('presentations.templateArchitect.deprecateConfirm', 'Deprecate template')}
+            </Button>
+          </>
+        }
+      >
+        <label className="flex flex-col gap-2 text-sm text-c-text">
+          <span className="font-medium">
+            {t('presentations.templateArchitect.deprecateReason', 'Reason')}
+          </span>
+          <textarea
+            autoFocus
+            value={deprecateReason}
+            onChange={(event) => setDeprecateReason(event.target.value)}
+            rows={3}
+            placeholder={t(
+              'presentations.templateArchitect.deprecateReasonPlaceholder',
+              'Explain why this template is being retired.'
+            )}
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          />
+        </label>
+      </Modal>
     </div>
   );
 };

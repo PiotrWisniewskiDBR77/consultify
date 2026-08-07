@@ -144,7 +144,11 @@ export const EntityStatusChip: React.FC<EntityStatusChipProps> = ({
   // status; falls back to the mechanical humanization (never a raw i18n
   // key) so unrecognized/new statuses still render something readable.
   const i18nKey = `${STATUS_I18N_PREFIX}.${normalized}`;
-  const translated = normalized ? t(i18nKey, { defaultValue: '' }) : '';
+  const translatedRaw = normalized ? t(i18nKey, { defaultValue: '' }) : '';
+  // Some i18next configurations return the key itself for a missing entry,
+  // even when an empty defaultValue was requested. A raw `statusChip.*` key is
+  // never a user-facing label; treat it as a miss and use the humanized status.
+  const translated = translatedRaw === i18nKey ? '' : translatedRaw;
   const resolvedLabel = label ?? (translated || humanize(status ?? ''));
   return (
     <StatusChip
