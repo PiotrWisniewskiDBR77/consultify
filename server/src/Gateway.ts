@@ -467,7 +467,10 @@ export class ApiGateway {
       app.use('/api/ai-agents', ...internalToolsGuard);
       app.use('/api/ai-outcomes', ...internalToolsGuard);
       app.use('/api/research', ...internalToolsGuard);
-      app.use('/api/artifacts', ...internalToolsGuard);
+      // Materials / Outputs is a customer-facing authenticated surface. Its
+      // router owns auth + V8 org/output gates below; applying the internal
+      // tools guard here makes every collection request return a deliberate
+      // production 404 when INTERNAL_TOOLS_ENABLED is off.
       app.use('/api/artifact-runs', ...internalToolsGuard);
       app.use('/api/work-canvas', workCanvasRoutes);
       app.use('/api/agents', ...internalToolsGuard);
