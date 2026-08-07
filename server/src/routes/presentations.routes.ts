@@ -565,6 +565,12 @@ interface CurrentPptxExportDependencies {
   }) => Promise<void>;
 }
 
+// A successful deployment may contain exporter fixes while the persisted deck
+// version is unchanged. Files on the Railway volume pre-date the new process;
+// treat them as stale once per process lifetime so downloads pick up the current
+// renderer instead of serving bytes produced by an older release indefinitely.
+const pptxExporterStartedAtMs = Date.now();
+
 /** Ensure the downloadable bytes represent the current persisted deck version. */
 export async function ensureCurrentPptxExport(
   deck: any,
@@ -597,8 +603,11 @@ export async function ensureCurrentPptxExport(
 
   try {
     let fileExists = false;
+    let fileModifiedAtMs = 0;
     try {
-      fileExists = fs.statSync(exportPath).isFile();
+      const fileStat = fs.statSync(exportPath);
+      fileExists = fileStat.isFile();
+      fileModifiedAtMs = fileStat.mtimeMs;
     } catch {
       fileExists = false;
     }
@@ -606,7 +615,11 @@ export async function ensureCurrentPptxExport(
     const exportedVersion = Number.isInteger(Number(deck?.exported_version))
       ? Number(deck.exported_version)
       : null;
-    const isCurrent = fileExists && exportedVersion !== null && exportedVersion === deckVersion;
+    const isCurrent =
+      fileExists &&
+      exportedVersion !== null &&
+      exportedVersion === deckVersion &&
+      fileModifiedAtMs >= pptxExporterStartedAtMs;
     if (isCurrent) return { ...deck, export_path: exportPath };
 
     const deckDocument = normalizeDeckDocument(deck);

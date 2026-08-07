@@ -267,6 +267,45 @@ describe('Generate -> PPTX download happy path', () => {
     expect(fs.readFileSync(exportPath)).toEqual(oldBytes);
   });
 
+  it('rerenders a previous-deployment export even when the deck version is unchanged', async () => {
+    const report = buildUnifiedReport();
+    const deckDocument = deckDocumentFromUnifiedJson({
+      deckId: 'previous-release-deck',
+      organizationId: 'org-1',
+      title: 'Previous release deck',
+      unifiedJson: report,
+    });
+    const exportPath = path.join(os.tmpdir(), `previous-release-deck-${Date.now()}.pptx`);
+    tmpFiles.push(exportPath);
+    fs.writeFileSync(exportPath, Buffer.from('bytes-from-previous-renderer'));
+    const previousReleaseTime = new Date(Date.now() - 60_000);
+    fs.utimesSync(exportPath, previousReleaseTime, previousReleaseTime);
+
+    const generate = vi.fn(async () => ({
+      buffer: Buffer.from('bytes-from-current-renderer'),
+      slideCount: deckDocument.cards.length,
+      warnings: [],
+    }));
+    const persist = vi.fn(async () => undefined);
+
+    await ensureCurrentPptxExport(
+      {
+        id: 'previous-release-deck',
+        organization_id: 'org-1',
+        export_path: exportPath,
+        version: 2,
+        exported_version: 2,
+        deck_json: JSON.stringify(deckDocument),
+        unified_json: JSON.stringify(report),
+      },
+      { generate, persist }
+    );
+
+    expect(generate).toHaveBeenCalledOnce();
+    expect(fs.readFileSync(exportPath).toString()).toBe('bytes-from-current-renderer');
+    expect(persist).toHaveBeenCalledWith(expect.objectContaining({ exportedVersion: 2 }));
+  });
+
   it('rerenders an autosave within two seconds and preserves the persisted custom master contract', async () => {
     const report = buildUnifiedReport();
     const deckDocument = deckDocumentFromUnifiedJson({
