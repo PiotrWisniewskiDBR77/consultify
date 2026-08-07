@@ -71,6 +71,25 @@ const DOC_STUDIO_ROW = {
   updated_at: '2026-07-02T10:00:00.000Z',
 };
 
+const SHEET_TEMPLATE_ROW = {
+  id: '7d5126c4-4cd8-47da-8e97-b5d1584c11d1',
+  organization_id: null,
+  name: 'Dashboard KPI',
+  description: 'Executive KPI workbook',
+  category: 'kpi',
+  schema_snapshot: {
+    fields: [
+      { name: 'Wskaźnik', type: 'text' },
+      { name: 'Wynik', type: 'number' },
+    ],
+  },
+  status: 'approved',
+  version: '1.0.0',
+  visibility: 'system',
+  created_by: null,
+  created_at: '2026-08-01T10:00:00.000Z',
+};
+
 function templateListItem(overrides: Partial<ArtifactListItem> = {}): ArtifactListItem {
   return {
     artifactId: 'art-1',
@@ -253,15 +272,56 @@ describe('backfill adapter — document_studio_templates → document_template',
     expect(docQuery![1]).toContain('__system__');
   });
 
-  it('does NOT pull tp_base_templates into the index as a sheet template', async () => {
-    mockDbAll.mockResolvedValue([]);
-    await ensureBackfilledOutputsForOrg('org-no-sheets');
+  it('indexes tp_base_templates as canonical sheet templates', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM tp_base_templates') && sql.includes('LEFT JOIN')) {
+        return [SHEET_TEMPLATE_ROW];
+      }
+      return [];
+    });
 
-    expect(allSql().some((sql) => sql.includes('tp_base_templates'))).toBe(false);
-    const runtimesWritten = mockDbRun.mock.calls
-      .filter((call) => String(call[0]).includes('INSERT INTO v8_artifact_origin_links'))
-      .flatMap((call) => call[1] as unknown[]);
-    expect(runtimesWritten).not.toContain('sheet_template');
+    await ensureBackfilledOutputsForOrg('org-with-sheets');
+
+    const sheetQuery = mockDbAll.mock.calls.find(
+      (call) =>
+        String(call[0]).includes('FROM tp_base_templates') &&
+        String(call[0]).includes('LEFT JOIN v8_artifact_origin_links')
+    );
+    expect(sheetQuery).toBeDefined();
+    expect(String(sheetQuery![0])).toContain("t.visibility = 'private'");
+    expect(String(sheetQuery![0])).toContain('t.organization_id = ?');
+
+    const linkInsert = mockDbRun.mock.calls.find(
+      (call) =>
+        String(call[0]).includes('INSERT INTO v8_artifact_origin_links') &&
+        (call[1] as unknown[]).includes('sheet_template')
+    );
+    expect(linkInsert).toBeDefined();
+    expect(linkInsert![1]).toContain(SHEET_TEMPLATE_ROW.id);
+
+    const artifactInsert = mockDbRun.mock.calls.find((call) => {
+      if (!String(call[0]).includes('INSERT INTO v8_output_artifacts')) return false;
+      return (call[1] as unknown[]).some(
+        (param) => typeof param === 'string' && param.includes(SHEET_TEMPLATE_ROW.id)
+      );
+    });
+    expect(artifactInsert).toBeDefined();
+    const summaryJson = String(
+      (artifactInsert![1] as unknown[]).find(
+        (param) => typeof param === 'string' && param.includes('"structureBlueprint"')
+      )
+    );
+    const summary = JSON.parse(summaryJson).template;
+    expect(summary.canonicalTemplateId).toBe(SHEET_TEMPLATE_ROW.id);
+    expect(summary.originRuntime).toBe('sheet_template');
+    expect(summary.source).toBe('canonical');
+    expect(summary.legacy).toBe(false);
+    expect(summary.scope).toBe('system');
+    expect(summary.status).toBe('approved');
+    expect(summary.structureBlueprint.columns).toEqual([
+      { key: 'Wskaźnik', header: 'Wskaźnik', type: 'text' },
+      { key: 'Wynik', header: 'Wynik', type: 'number' },
+    ]);
   });
 });
 
@@ -339,10 +399,11 @@ describe('orphan detection (measurement only)', () => {
     expect(counts.byRuntime.document_template).toBe(2);
     expect(counts.byRuntime.report_template).toBe(0);
     expect(counts.byRuntime.presentation_template).toBe(0);
-    // sheet_template has no canonical registry → unverifiable, never guessed.
-    expect(counts.unverifiable).toEqual(['sheet_template']);
-    expect(counts.byRuntime.sheet_template).toBe(0);
-    expect(counts.total).toBe(2);
+    // tp_base_templates is the canonical workbook registry, so a missing row
+    // is measurable just like the other template runtimes.
+    expect(counts.unverifiable).toEqual([]);
+    expect(counts.byRuntime.sheet_template).toBe(1);
+    expect(counts.total).toBe(3);
 
     // ★ Measurement only — zero writes.
     expect(mockDbRun).not.toHaveBeenCalled();
