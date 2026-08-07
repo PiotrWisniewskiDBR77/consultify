@@ -1853,6 +1853,78 @@ function isValidLifecycleState(value: unknown): value is TemplateLifecycleState 
   return typeof value === 'string' && VALID_LIFECYCLE_STATES.has(value as TemplateLifecycleState);
 }
 
+async function syncPresentationTemplateArtifactGovernance(params: {
+  organizationId: string;
+  templateId: string;
+  lifecycleState: TemplateLifecycleState;
+  actorId: string;
+}): Promise<void> {
+  const template = (await getTemplateForOrgOrSystem(
+    params.templateId,
+    params.organizationId
+  )) as any;
+  if (!template) return;
+
+  let outline: unknown = [];
+  try {
+    outline = JSON.parse(template.outline_json || '[]');
+  } catch {
+    outline = [];
+  }
+  const isDraft = params.lifecycleState === 'draft';
+  const artifact = await artifactRegistryService.registerArtifactOrigin({
+    organizationId: params.organizationId,
+    outputType: 'presentation',
+    artifactFamily: 'template',
+    originRuntime: 'presentation_template',
+    originRecordId: params.templateId,
+    titleSnapshot: template.name || 'Untitled presentation template',
+    ownerUserId: params.actorId,
+    createdBy: template.created_by || params.actorId,
+    deliveryState: isDraft ? 'draft' : 'ready',
+    visibilityScope: isDraft ? 'private' : 'organization',
+    originSummary: {
+      template: {
+        canonicalTemplateId: params.templateId,
+        originRuntime: 'presentation_template',
+        orphaned: false,
+        scope: template.is_system ? 'application' : 'organization',
+        status: params.lifecycleState === 'approved' ? 'published' : params.lifecycleState,
+        description: template.description || '',
+        deckType: template.deck_type || 'custom',
+        structureBlueprint: {
+          outline: Array.isArray(outline)
+            ? outline
+            : Array.isArray((outline as any)?.outline)
+              ? (outline as any).outline
+              : [],
+        },
+        metadata: {
+          createdBy: template.created_by || params.actorId,
+          createdAt: template.created_at,
+          updatedAt: template.updated_at,
+          legacyTemplateId: params.templateId,
+        },
+      },
+    },
+  });
+
+  if (artifact) {
+    await dbRun(
+      `UPDATE v8_output_artifacts
+       SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [
+        isDraft ? 'draft' : 'ready',
+        isDraft ? 'private' : 'organization',
+        isDraft ? 1 : 0,
+        artifact.artifactId,
+        params.organizationId,
+      ]
+    );
+  }
+}
+
 router.get(
   '/templates/:id/governance',
   asyncHandler(async (req, res) => {
@@ -1964,59 +2036,16 @@ router.post(
       });
     }
 
-    // An approved Architect template must be usable immediately from the
-    // canonical Template Library.  The generic artifact backfill is throttled
-    // and may already have run before this template was approved, leaving the
-    // newly-approved row invisible for the rest of the UI session.  Index the
-    // canonical presentation_templates row at the lifecycle boundary instead
-    // of waiting for a later best-effort sweep.
-    if (targetState === 'approved' && result.record) {
-      const approved = (await getTemplateForOrgOrSystem(templateId, orgId)) as any;
-      if (approved) {
-        let outline: unknown = [];
-        try {
-          outline = JSON.parse(approved.outline_json || '[]');
-        } catch {
-          outline = [];
-        }
-        const actorId = (req as any).user?.id || getUserId(req) || 'system';
-        await artifactRegistryService.registerArtifactOrigin({
-          organizationId: orgId,
-          outputType: 'presentation',
-          artifactFamily: 'template',
-          originRuntime: 'presentation_template',
-          originRecordId: templateId,
-          titleSnapshot: approved.name || 'Untitled presentation template',
-          ownerUserId: actorId,
-          createdBy: approved.created_by || actorId,
-          deliveryState: 'ready',
-          visibilityScope: 'organization',
-          originSummary: {
-            template: {
-              canonicalTemplateId: templateId,
-              originRuntime: 'presentation_template',
-              orphaned: false,
-              scope: approved.is_system ? 'application' : 'organization',
-              status: 'published',
-              description: approved.description || '',
-              deckType: approved.deck_type || 'custom',
-              structureBlueprint: {
-                outline: Array.isArray(outline)
-                  ? outline
-                  : Array.isArray((outline as any)?.outline)
-                    ? (outline as any).outline
-                    : [],
-              },
-              metadata: {
-                createdBy: approved.created_by || actorId,
-                createdAt: approved.created_at,
-                updatedAt: approved.updated_at,
-                legacyTemplateId: templateId,
-              },
-            },
-          },
-        });
-      }
+    // Keep the unified Template Library in lockstep with the Architect
+    // governance state. This applies to approved, draft and deprecated; a
+    // template moved back to draft must disappear from the default library.
+    if (result.record) {
+      await syncPresentationTemplateArtifactGovernance({
+        organizationId: orgId,
+        templateId,
+        lifecycleState: targetState,
+        actorId: (req as any).user?.id || getUserId(req) || 'system',
+      });
     }
 
     res.json({
@@ -2070,6 +2099,15 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
+      });
+    }
+
+    if (result.record) {
+      await syncPresentationTemplateArtifactGovernance({
+        organizationId: orgId,
+        templateId,
+        lifecycleState: 'deprecated',
+        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 

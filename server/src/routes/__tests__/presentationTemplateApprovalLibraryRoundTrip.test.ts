@@ -49,9 +49,9 @@ vi.mock('../../services/presentationAccessPolicyService.js', () => ({
   hasPresentationCapability: () => true,
 }));
 vi.mock('../../services/presentationTemplateGovernanceService.js', () => ({
-  applyLifecycleTransition: vi.fn(async () => ({
+  applyLifecycleTransition: vi.fn(async (input: any) => ({
     status: 'ok',
-    record: { lifecycleState: 'approved' },
+    record: { lifecycleState: input.targetState },
   })),
   assertEditableLifecycle: vi.fn(),
   computeLineageForClone: vi.fn(),
@@ -74,7 +74,7 @@ vi.mock('../../services/v8/artifactRegistryService.js', () => ({
       artifactId: 'artifact-ppt-template-1',
       ...params,
       resolvedTitle: params.titleSnapshot,
-      isDraft: params.titleSnapshot.includes('E2E'),
+      isDraft: params.deliveryState === 'draft',
       createdAt: '2026-08-06T12:00:00.000Z',
     };
     artifacts.splice(0, artifacts.length, row);
@@ -125,8 +125,8 @@ function app(): Express {
 
 beforeEach(() => artifacts.splice(0));
 
-describe('approved presentation template -> canonical Template Library query', () => {
-  it('indexes the approved template and returns it when Library includes drafts', async () => {
+describe('presentation template governance -> canonical Template Library query', () => {
+  it('indexes an approved template in the default and draft-inclusive Library', async () => {
     const instance = app();
     const approve = await request(instance)
       .post(`/api/presentations/templates/${template.id}/governance/transition`)
@@ -137,7 +137,7 @@ describe('approved presentation template -> canonical Template Library query', (
       '/api/artifacts?artifactFamily=template&outputType=presentation'
     );
     expect(defaultList.status).toBe(200);
-    expect(defaultList.body.data).toHaveLength(0);
+    expect(defaultList.body.data).toHaveLength(1);
 
     const libraryList = await request(instance).get(
       '/api/artifacts?artifactFamily=template&outputType=presentation&include=drafts'
@@ -162,5 +162,35 @@ describe('approved presentation template -> canonical Template Library query', (
     expect(libraryList.body.data[0].originSummary.template.structureBlueprint.outline).toHaveLength(
       8
     );
+  });
+
+  it('removes a template moved back to draft from the default Library', async () => {
+    const instance = app();
+    const approve = await request(instance)
+      .post(`/api/presentations/templates/${template.id}/governance/transition`)
+      .send({ targetState: 'approved' });
+    expect(approve.status).toBe(200);
+
+    const moveToDraft = await request(instance)
+      .post(`/api/presentations/templates/${template.id}/governance/transition`)
+      .send({ targetState: 'draft' });
+    expect(moveToDraft.status).toBe(200);
+
+    const defaultList = await request(instance).get(
+      '/api/artifacts?artifactFamily=template&outputType=presentation'
+    );
+    expect(defaultList.status).toBe(200);
+    expect(defaultList.body.data).toHaveLength(0);
+
+    const draftList = await request(instance).get(
+      '/api/artifacts?artifactFamily=template&outputType=presentation&include=drafts'
+    );
+    expect(draftList.status).toBe(200);
+    expect(draftList.body.data).toHaveLength(1);
+    expect(draftList.body.data[0]).toMatchObject({
+      deliveryState: 'draft',
+      visibilityScope: 'private',
+      originSummary: { template: { status: 'draft' } },
+    });
   });
 });

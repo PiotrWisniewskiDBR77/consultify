@@ -410,6 +410,7 @@ interface PresentationTemplateBackfillRow {
   outline_json: string | null;
   is_system: number | null;
   is_active: number | null;
+  lifecycle_state: string | null;
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -1989,16 +1990,12 @@ async function backfillReportTemplatesForOrg(organizationId: string): Promise<nu
 async function backfillPresentationTemplatesForOrg(organizationId: string): Promise<number> {
   const rows = await dbAll<PresentationTemplateBackfillRow>(
     `SELECT t.id, t.organization_id, t.name, t.description, t.deck_type, t.outline_json,
-            t.is_system, t.is_active, t.created_by, t.created_at, t.updated_at
+            t.is_system, t.is_active, t.lifecycle_state,
+            t.created_by, t.created_at, t.updated_at
      FROM presentation_templates t
-     LEFT JOIN v8_artifact_origin_links l
-       ON l.organization_id = ?
-      AND l.origin_runtime = 'presentation_template'
-      AND l.origin_record_id = t.id
      WHERE (t.organization_id IS NULL OR t.organization_id = ?)
-       AND (t.is_active IS NULL OR t.is_active = TRUE)
-       AND l.link_id IS NULL`,
-    [organizationId, organizationId],
+     ORDER BY t.updated_at DESC`,
+    [organizationId],
     { fallback: true }
   );
 
@@ -2006,6 +2003,15 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
   for (const row of rows || []) {
     try {
       const outline = safeJsonParse(row.outline_json, [] as any[]);
+      const lifecycleState =
+        toBool(row.is_active) === false
+          ? 'deprecated'
+          : row.lifecycle_state === 'approved'
+            ? 'approved'
+            : row.lifecycle_state === 'deprecated'
+              ? 'deprecated'
+              : 'draft';
+      const isDraft = lifecycleState === 'draft';
       const result = await registerArtifactOrigin({
         organizationId,
         outputType: 'presentation',
@@ -2015,18 +2021,18 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
         titleSnapshot: row.name || 'Untitled presentation template',
         ownerUserId: null,
         createdBy: row.created_by || FALLBACK_ACTOR,
-        deliveryState: 'ready',
-        visibilityScope: 'organization',
+        deliveryState: isDraft ? 'draft' : 'ready',
+        visibilityScope: isDraft ? 'private' : 'organization',
         originSummary: {
           template: {
-            // R11: locked identity block. `presentation_templates` likewise has
-            // no status column — `is_active` is the lifecycle signal.
+            // Governance is authoritative. `is_active` only adds the hard
+            // deprecated override for legacy rows.
             ...buildTemplateOriginSummaryFields({
               canonicalTemplateId: row.id,
               originRuntime: 'presentation_template',
               orphaned: false,
               scope: deriveTemplateScope(row),
-              status: toBool(row.is_active) === false ? 'deprecated' : 'published',
+              status: lifecycleState === 'approved' ? 'published' : lifecycleState,
             }),
             description: row.description || '',
             deckType: row.deck_type || 'custom',
@@ -2042,7 +2048,25 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
           },
         },
       });
-      if (result) inserted++;
+      if (result) {
+        // `registerArtifactOrigin` refreshes metadata for an existing link, but
+        // draft visibility in the collection is controlled by the artifact row.
+        // Reconcile those lifecycle columns as well so a template moved back to
+        // draft cannot remain falsely Published in the default Library view.
+        await dbRun(
+          `UPDATE v8_output_artifacts
+           SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
+           WHERE artifact_id = ? AND organization_id = ?`,
+          [
+            isDraft ? 'draft' : 'ready',
+            isDraft ? 'private' : 'organization',
+            isDraft ? 1 : 0,
+            result.artifactId,
+            organizationId,
+          ]
+        );
+        inserted++;
+      }
     } catch (err: any) {
       logger.warn(
         `${LOG_PREFIX} Failed to backfill presentation template ${row.id}: ${err?.message}`
