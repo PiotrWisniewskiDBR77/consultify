@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, DeckCard } from '../wizard/types';
 import type { HorizontalAlignment, VerticalAlignment } from './geometryOps';
+import { parseMetricStrip, serializeMetricStrip } from './metricStripEditor';
 
 type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
@@ -521,6 +522,14 @@ const BlockInspector: React.FC<{
                 .map((label) => (block.type === 'smart_diagram' ? { label } : label)),
             })
           }
+        />
+      )}
+      {block.type === 'metric_strip' && (
+        <InspectorField
+          label="Metrics (one per line: label | value | unit | trend | change)"
+          multiline
+          value={serializeMetricStrip(content.metrics)}
+          onChange={(value) => patchContent({ metrics: parseMetricStrip(value) })}
         />
       )}
       {block.type === 'table' && (
