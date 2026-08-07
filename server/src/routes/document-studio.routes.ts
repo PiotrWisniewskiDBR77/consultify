@@ -381,7 +381,7 @@ import {
   recordTemplateFeedback,
   recordTemplateUsage,
   restoreTemplateAuditSnapshotAsDraft,
-  reviseTemplateStructure,
+  reviseTemplateStructureDurably,
   validateTemplate,
 } from '../services/documentStudio/documentTemplateService.js';
 import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
@@ -1527,7 +1527,7 @@ router.patch(
         : undefined;
     await ensureTemplateRegistryHydrated(organizationId);
     try {
-      const template = reviseTemplateStructure({
+      const template = await reviseTemplateStructureDurably({
         templateId,
         organizationId,
         userId,

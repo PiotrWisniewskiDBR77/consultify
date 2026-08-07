@@ -918,6 +918,24 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
   return next;
 }
 
+/**
+ * HTTP-facing durable variant of the synchronous registry mutation above.
+ *
+ * The architect allows an author to save and immediately approve a draft. A
+ * fire-and-forget write lets that approval race the structural write, so a
+ * cold reopen can recover the pre-edit blueprint even though both requests
+ * returned success. Route handlers must await this variant before reporting a
+ * successful save.
+ */
+export async function reviseTemplateStructureDurably(
+  params: ReviseTemplateStructureParams
+): Promise<DocumentTemplate> {
+  const template = reviseTemplateStructure(params);
+  const persisted = await persistTemplate(template);
+  if (!persisted.ok) throw new Error('template_persist_failed');
+  return template;
+}
+
 export interface UpdateTemplateContentParams {
   templateId: string;
   organizationId: string;
