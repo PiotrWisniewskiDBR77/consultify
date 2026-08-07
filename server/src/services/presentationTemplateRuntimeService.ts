@@ -639,6 +639,17 @@ function groundedValueForLabel(label: string, sourceLines: string[]): string {
   return concise.length > 48 ? `${concise.slice(0, 45).trim()}…` : concise;
 }
 
+function labelledList(sourceLines: string[], label: RegExp): string[] {
+  const line = sourceLines.find((candidate) => label.test(candidate));
+  const value = line?.replace(/^[^:—–=-]+[:—–=-]\s*/i, '').trim();
+  return value
+    ? value
+        .split(/,|\band\b/gi)
+        .map((item) => item.trim().replace(/[.]$/, ''))
+        .filter(Boolean)
+    : [];
+}
+
 /**
  * Materialise an approved template into useful, audience-facing slide content.
  * The template stores instructions rather than source facts, so these blocks
@@ -655,7 +666,7 @@ function blocksForTemplateIntent(
   const keyMessage = String(item.keyMessage ?? item.key_message ?? '').trim();
   const hints = cleanStringList(item.contentHints ?? item.content_hints);
   const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
-  const headline = keyMessage || hints[0] || title;
+  const headline = keyMessage || hints[0] || briefLines[0] || title;
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
   const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
@@ -663,7 +674,7 @@ function blocksForTemplateIntent(
 
   switch (intent) {
     case 'cover':
-      return [heading, ...(keyMessage ? [paragraph] : [])];
+      return [heading, ...(headline !== title ? [paragraph] : [])];
     case 'executive_summary':
       return [
         heading,
@@ -743,8 +754,13 @@ function blocksForTemplateIntent(
             ],
           },
         },
+        ...(briefLines.length > 1
+          ? [{ type: 'bullet_list', content: { items: briefLines.slice(1, 5) } }]
+          : []),
       ];
     case 'risk_management':
+      const risks = labelledList(briefLines, /^(?:top\s+)?risks?\s*[:—–=-]/i);
+      const mitigations = labelledList(briefLines, /^mitigations?\s*[:—–=-]/i);
       return [
         heading,
         paragraph,
@@ -752,21 +768,34 @@ function blocksForTemplateIntent(
           type: 'table',
           content: {
             headers: ['Risk', 'Exposure', 'Mitigation', 'Owner'],
-            rows: [
-              [
-                'Adoption',
-                'Assess',
-                'Role-based enablement and adoption measures',
-                'Business owner',
-              ],
-              ['Controls', 'Assess', 'Human review for exceptions and audit trail', 'Risk owner'],
-              [
-                'Value leakage',
-                'Assess',
-                'Monthly benefit validation against baseline',
-                'Finance owner',
-              ],
-            ],
+            rows:
+              risks.length > 0
+                ? risks.slice(0, 4).map((risk, index) => [
+                    risk,
+                    'Open',
+                    mitigations[index] || mitigations[0] || 'Mitigation required',
+                    'Owner required',
+                  ])
+                : [
+                    [
+                      'Adoption',
+                      'Assess',
+                      'Role-based enablement and adoption measures',
+                      'Business owner',
+                    ],
+                    [
+                      'Controls',
+                      'Assess',
+                      'Human review for exceptions and audit trail',
+                      'Risk owner',
+                    ],
+                    [
+                      'Value leakage',
+                      'Assess',
+                      'Monthly benefit validation against baseline',
+                      'Finance owner',
+                    ],
+                  ],
           },
         },
       ];
@@ -778,7 +807,9 @@ function blocksForTemplateIntent(
         {
           type: 'bullet_list',
           content: {
-            items: (hints.length
+            items: (briefLines.length
+              ? briefLines
+              : hints.length
               ? hints
               : ['Decision rights', 'Value ownership', 'Control cadence']
             ).slice(0, 5),
@@ -786,13 +817,16 @@ function blocksForTemplateIntent(
         },
       ];
     case 'next_steps':
+      const decisions = labelledList(briefLines, /^decisions?(?:\s+required)?\s*[:—–=-]/i);
       return [
         heading,
         { type: 'callout', content: { variant: 'decision', text: headline } },
         {
           type: 'numbered_list',
           content: {
-            items: (hints.length
+            items: (decisions.length
+              ? decisions
+              : hints.length
               ? hints
               : [
                   'Confirm the decision and conditions',
@@ -834,7 +868,7 @@ export function mapOutlineBlueprintToDeckSlides(
 ): DeckSlideFromOutline[] {
   const items = Array.isArray(outlineBlueprint) ? outlineBlueprint : [];
   const briefLines = String(brief || '')
-    .split(/[\n;]/)
+    .split(/[\n;]+|(?<=[.!?])\s+(?=[A-Z])/)
     .map((line) => line.trim())
     .filter(Boolean);
   return items.map((raw, index) => {

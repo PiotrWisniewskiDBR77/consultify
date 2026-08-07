@@ -178,4 +178,22 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     expect(serialized).toContain('EUR 3.2m');
     expect(serialized).toContain('11 months');
   });
+
+  it('turns a prose steering brief into factual metrics, risks and decisions', () => {
+    const slides = mapOutlineBlueprintToDeckSlides(
+      [
+        { intent: 'performance_overview', title: 'Performance', dataNeeded: ['Annual benefit'] },
+        { intent: 'risk_management', title: 'Risks' },
+        { intent: 'next_steps', title: 'Decisions' },
+      ],
+      'Program Atlas. Annual benefit: EUR 2.2m. Top risks: data migration delay, adoption in two business units. Mitigations: parallel reconciliation, named local champions. Decisions required: lock phase-two scope by 15 August, confirm Operations owner.'
+    );
+
+    const serialized = JSON.stringify(slides);
+    expect(serialized).toContain('EUR 2.2m');
+    expect(serialized).toContain('data migration delay');
+    expect(serialized).toContain('parallel reconciliation');
+    expect(serialized).toContain('lock phase-two scope by 15 August');
+    expect(serialized).toContain('confirm Operations owner');
+  });
 });
