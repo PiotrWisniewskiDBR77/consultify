@@ -416,6 +416,32 @@ interface PresentationTemplateBackfillRow {
   updated_at: string | null;
 }
 
+export function resolvePresentationTemplateArtifactPosture(row: {
+  is_active: number | boolean | null;
+  is_system: number | boolean | null;
+  lifecycle_state: string | null;
+}): {
+  lifecycleState: 'draft' | 'approved' | 'deprecated';
+  isDraft: boolean;
+  visibilityScope: 'private' | 'organization';
+} {
+  const lifecycleState =
+    toBool(row.is_active) === false
+      ? 'deprecated'
+      : row.lifecycle_state === 'approved'
+        ? 'approved'
+        : row.lifecycle_state === 'deprecated'
+          ? 'deprecated'
+          : 'draft';
+  const isDraft = lifecycleState === 'draft';
+  const isSystemTemplate = toBool(row.is_system) === true;
+  return {
+    lifecycleState,
+    isDraft,
+    visibilityScope: isDraft && !isSystemTemplate ? 'private' : 'organization',
+  };
+}
+
 /**
  * R11 (doc slice) — canonical Document Studio template registry
  * (`document_studio_templates`, migration 769). Column names mirror the table
@@ -2003,15 +2029,8 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
   for (const row of rows || []) {
     try {
       const outline = safeJsonParse(row.outline_json, [] as any[]);
-      const lifecycleState =
-        toBool(row.is_active) === false
-          ? 'deprecated'
-          : row.lifecycle_state === 'approved'
-            ? 'approved'
-            : row.lifecycle_state === 'deprecated'
-              ? 'deprecated'
-              : 'draft';
-      const isDraft = lifecycleState === 'draft';
+      const { lifecycleState, isDraft, visibilityScope } =
+        resolvePresentationTemplateArtifactPosture(row);
       const result = await registerArtifactOrigin({
         organizationId,
         outputType: 'presentation',
@@ -2019,10 +2038,10 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
         originRuntime: 'presentation_template',
         originRecordId: row.id,
         titleSnapshot: row.name || 'Untitled presentation template',
-        ownerUserId: null,
+        ownerUserId: row.created_by || null,
         createdBy: row.created_by || FALLBACK_ACTOR,
         deliveryState: isDraft ? 'draft' : 'ready',
-        visibilityScope: isDraft ? 'private' : 'organization',
+        visibilityScope,
         originSummary: {
           template: {
             // Governance is authoritative. `is_active` only adds the hard
@@ -2059,7 +2078,7 @@ async function backfillPresentationTemplatesForOrg(organizationId: string): Prom
            WHERE artifact_id = ? AND organization_id = ?`,
           [
             isDraft ? 'draft' : 'ready',
-            isDraft ? 'private' : 'organization',
+            visibilityScope,
             isDraft ? 1 : 0,
             result.artifactId,
             organizationId,
