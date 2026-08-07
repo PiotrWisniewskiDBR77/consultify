@@ -411,6 +411,30 @@ describe('EditableSpreadsheetGrid manual operations', () => {
     await waitFor(() => expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-p1', expect.objectContaining({ type: 'addConditionalFormat', block: expect.objectContaining({ ref: 'D2:D3' }) })));
   });
 
+  it('renders persisted merges and unmerges the full range from its anchor', async () => {
+    const mergedSheets = [{ ...sheets[0], merges: [{ start: 'A2', end: 'B3' }] }];
+    render(
+      <EditableSpreadsheetGrid workbookId="wb-merged" sheets={mergedSheets} activeSheetIndex={0} />
+    );
+
+    const anchor = screen.getByTestId('workbook-cell-0-month');
+    expect(anchor).toHaveAttribute('rowspan', '2');
+    expect(anchor).toHaveAttribute('colspan', '2');
+    expect(screen.queryByTestId('workbook-cell-0-plan')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('workbook-cell-1-month')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('workbook-cell-1-plan')).not.toBeInTheDocument();
+
+    fireEvent.click(anchor);
+    fireEvent.click(screen.getByRole('button', { name: 'Unmerge selected cells' }));
+    await waitFor(() =>
+      expect(updateWorkbookSchema).toHaveBeenCalledWith('wb-merged', {
+        type: 'unmergeCells',
+        sheetIndex: 0,
+        range: 'A2:B3',
+      })
+    );
+  });
+
   it('rebases once on a version conflict and retries the command', async () => {
     updateWorkbookSchema.mockRejectedValueOnce(new Error('409 VERSION_CONFLICT'));
     render(<EditableSpreadsheetGrid workbookId="wb-conflict" sheets={sheets} activeSheetIndex={0} />);

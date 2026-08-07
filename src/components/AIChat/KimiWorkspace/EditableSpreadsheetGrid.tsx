@@ -200,6 +200,38 @@ function conditionalPresentationStyle(
   return {};
 }
 
+interface ParsedMergeRange {
+  range: string;
+  rowStart: number;
+  rowEnd: number;
+  colStart: number;
+  colEnd: number;
+}
+
+function columnLettersToIndex(letters: string): number {
+  return letters
+    .toUpperCase()
+    .split('')
+    .reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+}
+
+function parseMergeRanges(sheet: FormulaSheet): ParsedMergeRange[] {
+  const merges = Array.isArray((sheet as any).merges) ? (sheet as any).merges : [];
+  return merges.flatMap((merge: { start?: unknown; end?: unknown }) => {
+    const start = String(merge?.start || '').replace(/\$/g, '').toUpperCase();
+    const end = String(merge?.end || '').replace(/\$/g, '').toUpperCase();
+    const startMatch = start.match(/^([A-Z]+)(\d+)$/);
+    const endMatch = end.match(/^([A-Z]+)(\d+)$/);
+    if (!startMatch || !endMatch) return [];
+    const rowStart = Number(startMatch[2]) - 2;
+    const rowEnd = Number(endMatch[2]) - 2;
+    const colStart = columnLettersToIndex(startMatch[1]);
+    const colEnd = columnLettersToIndex(endMatch[1]);
+    if (rowStart < 0 || colStart < 0 || rowEnd < rowStart || colEnd < colStart) return [];
+    return [{ range: `${start}:${end}`, rowStart, rowEnd, colStart, colEnd }];
+  });
+}
+
 export const EditableSpreadsheetGrid: React.FC<Props> = ({
   workbookId,
   sheets,
@@ -821,6 +853,16 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const selectedRangeA1 = selectionRange
     ? `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`
     : '';
+  const parsedMerges = parseMergeRanges(activeRaw);
+  const selectedMerge = selectionRange
+    ? parsedMerges.find(
+        (merge) =>
+          merge.rowStart <= selectionRange.rowEnd &&
+          merge.rowEnd >= selectionRange.rowStart &&
+          merge.colStart <= selectionRange.colEnd &&
+          merge.colEnd >= selectionRange.colStart
+      )
+    : undefined;
 
   const formulaBarText =
     selected && editingValue !== null
@@ -944,7 +986,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'setColumnHidden', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, hidden: true })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.hideColumn', 'Hide selected column')}><Columns3 size={14} /><EyeOff size={9} className="inline" /></button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'unhideAll', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.unhideAll', 'Unhide all rows and columns')}><Eye size={14} /></button>
         <button type="button" disabled={!selectionRange || (selectionRange.rowStart === selectionRange.rowEnd && selectionRange.colStart === selectionRange.colEnd)} onClick={() => void runSchemaCommand({ type: 'mergeCells', sheetIndex: workingSheetIndex, range: selectedRangeA1 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.merge', 'Merge selected cells')}><Merge size={14} /></button>
-        <button type="button" disabled={!selectionRange} onClick={() => void runSchemaCommand({ type: 'unmergeCells', sheetIndex: workingSheetIndex, range: selectedRangeA1 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.unmerge', 'Unmerge selected cells')}><Merge size={14} className="rotate-180" /></button>
+        <button type="button" disabled={!selectedMerge} onClick={() => selectedMerge && void runSchemaCommand({ type: 'unmergeCells', sheetIndex: workingSheetIndex, range: selectedMerge.range })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.unmerge', 'Unmerge selected cells')}><Merge size={14} className="rotate-180" /></button>
         <button type="button" disabled={!selectionRange} onClick={() => void runSchemaCommand({ type: 'addConditionalFormat', sheetIndex: workingSheetIndex, block: { ref: selectedRangeA1, rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { bgColor: 'FDE8E8', fontColor: 'B42318', bold: true } }] } })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.negativeFormat', 'Highlight negative values')}><WandSparkles size={14} /></button>
         <button type="button" onClick={() => void runSchemaCommand({ type: 'clearConditionalFormats', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-[11px]" aria-label={t('kimi.excele.clearConditionalFormats', 'Clear conditional formats')}>CF×</button>
         <button
@@ -1560,6 +1602,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
             {visibleRows.map((row, ri) => (
               <tr key={ri} style={{ height: typeof activeRaw.rows?.[ri]?.height === 'number' ? `${activeRaw.rows[ri].height}px` : undefined, display: activeRaw.rows?.[ri]?.hidden ? 'none' : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                 {columns.map((col, ci) => {
+                  const merge = parsedMerges.find(
+                    (candidate) =>
+                      ri >= candidate.rowStart &&
+                      ri <= candidate.rowEnd &&
+                      ci >= candidate.colStart &&
+                      ci <= candidate.colEnd
+                  );
+                  if (merge && (ri !== merge.rowStart || ci !== merge.colStart)) return null;
                   const cell: ComputedCell | undefined = row.cells[col.key];
                   const rawCell = activeRaw.rows?.[ri]?.cells?.[col.key];
                   const isSelected = selected?.rowIndex === ri && selected?.colIndex === ci;
@@ -1571,6 +1621,8 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                   );
                   return (
                     <td
+                      rowSpan={merge ? merge.rowEnd - merge.rowStart + 1 : undefined}
+                      colSpan={merge ? merge.colEnd - merge.colStart + 1 : undefined}
                       role="gridcell"
                       aria-rowindex={ri + 2}
                       aria-colindex={ci + 1}
