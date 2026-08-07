@@ -45,8 +45,12 @@ required acceptance claim has not yet been proven.
 - The three blank builder entries route to distinct authoring surfaces: Document
   Template Architect (`/document-studio?tab=templates`), the three-step workbook
   template wizard, and Deck Template Architect
-  (`/presentations?tab=template_architect`). The workbook wizard reached schema
-  type and visibility steps without creating a throwaway template.
+  (`/presentations?tab=template_architect`). Full independent builder round trips
+  are now **PASS** for all three types: create, edit, save, cold reopen, validate
+  where applicable, approve and deprecate. Excel formula/schema/theme persistence
+  passed; Word and PowerPoint governance removed draft deletion after approval.
+  PowerPoint deprecation uses a governed reason modal rather than a native
+  browser prompt on deployment `2be6062b-be32-457a-a0d9-3df951e926a8`.
 - The Deck Template Architect exposed a governance discrepancy: Recommendation
   Deck and Investor Pitch were `Draft` there while the unified Library labelled
   them `Published`. They were rejected from this qualification set and replaced
@@ -54,9 +58,9 @@ required acceptance claim has not yet been proven.
   projection fix is deployed and runtime-verified: both rows now appear only
   after `Show drafts` and both render as `Draft`.
 
-These observations prove inventory and generator routing. They do not yet prove
-the three template builders or the board-ready quality of the six templates
-whose visual/content acceptance remains `OPEN`.
+These observations prove inventory, generator routing and the three builder
+lifecycle contracts. They do not yet prove the board-ready quality of the six
+templates whose visual/content acceptance remains `OPEN`.
 
 ## Six final artifact set
 
@@ -74,8 +78,6 @@ in `docs/qa/DOCUMENTS_RUNTIME_EVIDENCE_2026-08-07.md`.
 
 ## Remaining acceptance work
 
-- Prove create/edit/save/reopen/governance paths in the Word, Excel and
-  PowerPoint **template builders**, separately from `Use template` generation.
 - Perform visual and content acceptance for the two remaining templates of each
   type; replace any template that cannot meet the board-ready bar.
 - Confirm that each of the nine templates remains reusable after builder edits

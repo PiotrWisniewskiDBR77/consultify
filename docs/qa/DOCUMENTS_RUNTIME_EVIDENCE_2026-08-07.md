@@ -290,3 +290,36 @@ complete Documents / Templates DoD.
 
 This closes the false-Published lifecycle defect end-to-end. It does not waive
 the remaining create/edit/save/reopen acceptance of the three template builders.
+
+## Three template builders — governed authoring round trips
+
+- Railway deployment: `2be6062b-be32-457a-a0d9-3df951e926a8` (`SUCCESS`)
+- Image digest: `sha256:a8b895a929d2157710c8a9e9a5dd668b89734b9a0083b8ca0e1033a714db8ddc`
+- UI-fix commit: `9d7505a5a4` (`fix(templates): use governed deprecation dialog`)
+- Word builder: created `QA Board Decision Memo — Builder Roundtrip 2026-08-07`,
+  edited identity, Graphite branding, header/footer, required sources and section
+  guidance/data/evidence; saved, cold-reopened, validated, approved and
+  deprecated. Approved state removed draft deletion. Deployment
+  `2be6062b-be32-457a-a0d9-3df951e926a8` also cold-reloaded the registry with the
+  final `Deprecated` label instead of the raw `statusChip.deprecated` key.
+- Excel builder: created `QA Board Risk Tracker — Excel Builder Roundtrip
+  2026-08-07` (`b271c041-5d06-4d63-bf62-0d87c9d9634d`) with six typed columns,
+  list validation and exposure formula `=B2*C2`; saved, cold-reopened, updated,
+  approved as `1.0.0`, cold-reopened again and deprecated. Formula, values,
+  description and Navy Executive theme persisted. Approved state exposed
+  deprecation and did not expose draft deletion.
+- PowerPoint builder: created `QA Board Decision Deck — Builder Roundtrip
+  2026-08-07` with six governed slides, Graphite theme, decision guidance,
+  evidence requirements and required typed date variable `decision_deadline`;
+  saved, cold-reopened, validated and approved. The approved cold reopen retained
+  all content, disabled authoring and exposed deprecation without draft deletion.
+- PowerPoint deprecation on deployment `2be6062b-be32-457a-a0d9-3df951e926a8`:
+  **PASS**. A Consultify modal opened, explained preservation semantics, required
+  a reason, kept confirmation disabled while empty and accepted the reason
+  `Runtime QA completed after approved lifecycle verification on deployment
+  2be6062b.`. The registry then rendered the template as `Deprecated`; no native
+  browser prompt was used.
+
+This proves the full draft/edit/save/cold-reopen/validate/approve/deprecate
+lifecycle in all three builders. Qualification of the nine board-ready reusable
+templates remains a separate content and visual acceptance gate.
