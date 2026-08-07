@@ -45,8 +45,14 @@ substitute for an entry here.
 
 ## PowerPoint — template to grounded artifact
 
-- Railway deployment: `fba38bd8-3d83-417c-8e77-081bfd120ba6` (`SUCCESS`)
-- Commit: `5fd73c2bec` (`fix(presentations): ground template decks in brief`)
+- Initial grounding deployment: `fba38bd8-3d83-417c-8e77-081bfd120ba6`
+  (`SUCCESS`).
+- Final Railway demo deployment: `fa38eac6-b52f-45ce-a998-0ad9e162251d`
+  (`SUCCESS`).
+- Final deployed commit: `9fcc075bdd`
+  (`fix(presentations): canonicalize autosaved deck text`). The deployed history
+  also includes `c3fd0dca76`, `5d9165e5aa`, `66e02287d6` and `401df6c467` for
+  manual metric-strip editing and legacy title/thesis synchronization.
 - Template Library artifact: `d59b4cee-9f75-4584-a59b-66bc2431819e`
 - Template: `Steering Committee Update`
 - Result deck: `5baa656fc9b3467fb6c5f1aafae55322`
@@ -56,14 +62,38 @@ substitute for an entry here.
 - Grounding assertions visible in the editor and retained after cold reopen:
   `EUR 2.2m`, `EUR 1.08m`, `data migration delay`, `parallel reconciliation`,
   `lock phase-two scope by 15 August`, and `confirm Operations owner`.
-- Autosave/cold reopen: **PASS** on the exact result URL.
+- Final decision content visible in the editor and retained after cold reopen:
+  delivery is three points behind plan; contingency is conditional on migration
+  reconciliation; Operations owns data reconciliation; business-unit leaders
+  own adoption; the decision deadline is 15 August.
+- Autosave/cold reopen: **PASS** on the exact result URL. The four final slide
+  theses, risk table, named owners and actions all returned. No `Data required`
+  or `Owner required` content returned.
+- Runtime Quality Gates: **90/100**, `P0=0`, `P1=0`, `P2=2`, no errors. The
+  exact `DeckQualityGates` result is recorded in the logs of deployment
+  `fa38eac6-b52f-45ce-a998-0ad9e162251d` at `2026-08-07T16:10:24Z`. Native PPTX
+  export proceeded without an override.
+- Final native download:
+  `/Users/piotrwisniewski/Downloads/Steering Committee Update — Grounded QA (1).pptx`.
+  `unzip -t` reported no compressed-data errors. Independent XML/text inspection
+  found no unresolved-data/owner placeholders or mojibake.
+- Independent render: **PASS**. All 8 slides rendered to
+  `/Users/piotrwisniewski/Downloads/Steering Committee Update — Grounded QA final-1810`.
+  The full contact sheet and slides 4, 6, 7 and 8 were inspected at original
+  resolution. The deck has a consistent executive hierarchy, explicit metrics,
+  roadmap, named risk owners and a dated decision request.
+- Structural verifier: **PASS** (`Test passed. No overflow detected.`).
 - Defect found and fixed: prose briefs were split only on semicolons/newlines;
   risk and decision slides also used canned rows. Sentence-aware parsing and
   deterministic risk/mitigation/decision materialization now preserve the brief.
+  Follow-up fixes removed sparse placeholder cards, made metric strips editable,
+  synchronized duplicate legacy headings/theses and recursively decoded HTML
+  entities before persistence.
 
 ## Verification
 
-- Presentation autosave regression plus hook suite: 13/13 PASS.
+- Final autosave canonicalizer, route-source contract and manual-editing suites:
+  12/12 PASS.
 - Template runtime and route wiring suites: 21/21 PASS.
 - Frontend production build: PASS.
 - Backend production build: PASS.
