@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import { requireV8OrgContext } from '../middleware/v8Auth.middleware.js';
-import { v8OutputsGate } from '../middleware/v8FeatureGate.middleware.js';
 import activityService from '../services/ActivityService.js';
 import { resolveArtifactContent } from '../services/artifacts/artifactContentResolverService.js';
 import * as organizationService from '../services/organizationService.js';
@@ -42,7 +41,6 @@ const router = Router();
 
 router.use(verifyToken);
 router.use(requireV8OrgContext);
-router.use(v8OutputsGate);
 
 function getAuthContext(req: any): {
   userId: string;

@@ -13,6 +13,7 @@ describe('Gateway authenticated GET /api/artifacts collection wiring', () => {
     const source = fs.readFileSync(GATEWAY_PATH, 'utf8');
 
     expect(source).not.toContain("app.use('/api/artifacts', ...internalToolsGuard)");
-    expect(source).toContain("app.use('/api/artifacts', v8FeatureGate, artifactsRoutes)");
+    expect(source).toContain("app.use('/api/artifacts', artifactsRoutes)");
+    expect(source).not.toContain("app.use('/api/artifacts', v8FeatureGate, artifactsRoutes)");
   });
 });

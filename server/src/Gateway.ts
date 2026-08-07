@@ -899,7 +899,7 @@ export class ApiGateway {
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
-      app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
+      app.use('/api/artifacts', artifactsRoutes);
       // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
       // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
       //
