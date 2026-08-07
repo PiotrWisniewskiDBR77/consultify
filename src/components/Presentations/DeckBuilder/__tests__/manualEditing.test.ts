@@ -99,6 +99,21 @@ describe('manual PowerPoint editing helpers', () => {
     ).toBeUndefined();
   });
 
+  it('synchronizes legacy title blocks normalized as headings by the renderer', () => {
+    const legacyTitle = {
+      block_id: 'legacy-title',
+      type: 'title',
+      content: { text: 'Risks &amp; Mitigations' },
+    };
+
+    expect(
+      titleFromPrimaryHeadingUpdate([legacyTitle], legacyTitle.block_id, {
+        ...legacyTitle,
+        content: { text: 'Risks and Mitigations' },
+      })
+    ).toBe('Risks and Mitigations');
+  });
+
   it('only synchronizes key messages that duplicate the stale slide title', () => {
     expect(
       shouldSyncKeyMessageWithTitle('Risks &amp; Mitigations', 'Risks &amp; Mitigations')
