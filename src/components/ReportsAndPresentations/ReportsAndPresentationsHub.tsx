@@ -259,6 +259,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     initialEditWorkbookTemplateId
   );
   useEffect(() => {
+    // `Use template` navigates inside this already-mounted hub. Keep the
+    // selected template in sync with the URL so the form opens immediately;
+    // relying on useState's initializer made the same deep link work only
+    // after a full page reload.
+    setWorkbookTemplateId(initialWorkbookTemplateId);
+  }, [initialWorkbookTemplateId]);
+  useEffect(() => {
     const params = new URLSearchParams(location.search || '');
     setEditWorkbookTemplateId(params.get('editWorkbookTemplateId') || null);
   }, [location.search]);
