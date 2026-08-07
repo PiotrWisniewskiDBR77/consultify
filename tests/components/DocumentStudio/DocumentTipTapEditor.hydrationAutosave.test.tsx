@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,6 +8,7 @@ let currentEditor: any;
 let lastInsertedContent: any;
 
 vi.mock('@tiptap/react', () => ({
+  Extension: { create: (config: unknown) => config },
   EditorContent: () => <div data-testid="editor" />,
   useEditor: (options: any) => {
     editorOptions = options;
@@ -18,9 +19,11 @@ vi.mock('@tiptap/react', () => ({
       isActive: vi.fn(() => false),
       getAttributes: vi.fn(() => ({})),
       state: {
+        tr: { setMeta: vi.fn(function () { return this; }) },
         selection: { from: 0, to: 0 },
         doc: { descendants: vi.fn(), nodesBetween: vi.fn() },
       },
+      view: { dispatch: vi.fn() },
     };
     const chain: any = {
       focus: () => chain,
@@ -152,6 +155,70 @@ describe('DocumentTipTapEditor hydration autosave boundary', () => {
     await act(async () => vi.advanceTimersByTimeAsync(600));
 
     expect(saveMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('inserts a quote with an optional citation through the manual toolbar', async () => {
+    const schema = {
+      artifactId: 'artifact-manual-quote',
+      title: 'Manual quote',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-manual-quote" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wstaw: Cytat' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Treść cytatu' }), {
+      target: { value: 'Automatyzacja skróci cykl o dwa dni.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
+    const citeInput = await screen.findByRole('textbox', {
+      name: 'Autor lub źródło (opcjonalnie)',
+    });
+    fireEvent.change(citeInput, { target: { value: 'COO' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
+
+    await waitFor(() => expect(lastInsertedContent).toBeDefined());
+    expect(lastInsertedContent).toMatchObject({
+      type: 'docQuote',
+      attrs: { blockType: 'quote' },
+    });
+    expect(JSON.parse(lastInsertedContent.attrs.payloadJson)).toEqual({
+      text: 'Automatyzacja skróci cykl o dwa dni.',
+      cite: 'COO',
+    });
+  });
+
+  it('inserts a canonical bar chart from manually entered category/value pairs', async () => {
+    const schema = {
+      artifactId: 'artifact-manual-chart',
+      title: 'Manual chart',
+      updatedAt: '2026-08-06T12:00:00.000Z',
+      sections: [],
+    } as any;
+    render(<DocumentTipTapEditor schema={schema} artifactId="artifact-manual-chart" />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Wstaw: Wykres' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tytuł wykresu' }), {
+      target: { value: 'Realizacja programu' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
+    const dataInput = await screen.findByRole('textbox', {
+      name: 'Dane wykresu: kategoria|wartość; kategoria|wartość',
+    });
+    fireEvent.change(dataInput, { target: { value: 'Plan|100;Wykonanie|72' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Zastosuj' }));
+
+    await waitFor(() => expect(lastInsertedContent).toBeDefined());
+    expect(lastInsertedContent).toMatchObject({
+      type: 'docChart',
+      attrs: { blockType: 'chart' },
+    });
+    expect(JSON.parse(lastInsertedContent.attrs.payloadJson)).toEqual({
+      kind: 'bar',
+      title: 'Realizacja programu',
+      categories: ['Plan', 'Wykonanie'],
+      series: [{ label: 'Wartość', values: [100, 72] }],
+    });
   });
 
   it('refuses a block-format command that would consume a protected section marker', async () => {

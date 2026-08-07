@@ -42,7 +42,12 @@ import { DocumentInlineAIMenu } from '../inline-ai';
 import type { DocumentSchema } from '../types';
 import { setCollapsedSectionsMeta } from './collapsedSectionsExtension';
 import { getDocumentEditorExtensions } from './documentEditorExtensions';
-import { DOC_IMAGE_NODE_NAME, KPI_STRIP_NODE_NAME } from './nodeNames';
+import {
+  CHART_NODE_NAME,
+  DOC_IMAGE_NODE_NAME,
+  KPI_STRIP_NODE_NAME,
+  QUOTE_NODE_NAME,
+} from './nodeNames';
 import { schemaToProseMirror } from './schemaToTipTap';
 import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
 import { useManualPrompt } from './useManualPrompt';
@@ -309,7 +314,17 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   }, []);
 
   const insertStructuredBlock = useCallback(
-    async (blockType: 'table' | 'risk_table' | 'kpi_strip' | 'image' | 'roadmap' | 'callout') => {
+    async (
+      blockType:
+        | 'table'
+        | 'risk_table'
+        | 'kpi_strip'
+        | 'image'
+        | 'roadmap'
+        | 'callout'
+        | 'quote'
+        | 'chart'
+    ) => {
       if (!editor) return;
       const identity = {
         blockId: `blk-${crypto.randomUUID()}`,
@@ -328,6 +343,58 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             type: 'callout',
             attrs: { ...identity, variant: 'info' },
             content: [{ type: 'paragraph', content: [{ type: 'text', text: text.trim() }] }],
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'quote') {
+        const text = await requestText('Treść cytatu', 'Wpisz cytat lub ważną wypowiedź');
+        if (!text?.trim()) return;
+        const cite = (await requestText('Autor lub źródło (opcjonalnie)', ''))?.trim() ?? '';
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: QUOTE_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({ text: text.trim(), ...(cite ? { cite } : {}) }),
+            },
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'chart') {
+        const title = await requestText('Tytuł wykresu', 'Wyniki programu');
+        if (!title?.trim()) return;
+        const raw = await requestText(
+          'Dane wykresu: kategoria|wartość; kategoria|wartość',
+          'Plan|100;Wykonanie|72'
+        );
+        if (!raw?.trim()) return;
+        const points = raw
+          .split(';')
+          .map((row) => row.split('|').map((cell) => cell.trim()))
+          .filter(([category, value]) => Boolean(category) && Number.isFinite(Number(value)));
+        if (points.length === 0) return;
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: CHART_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({
+                kind: 'bar',
+                title: title.trim(),
+                categories: points.map(([category]) => category),
+                series: [
+                  { label: 'Wartość', values: points.map(([, value]) => Number(value)) },
+                ],
+              }),
+            },
           })
           .run();
         return;
@@ -654,6 +721,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
             ...(
               [
                 ['Wyróżnienie', 'callout'],
+                ['Cytat', 'quote'],
+                ['Wykres', 'chart'],
                 ['Tabela', 'table'],
                 ['KPI', 'kpi_strip'],
                 ['Ryzyka', 'risk_table'],
