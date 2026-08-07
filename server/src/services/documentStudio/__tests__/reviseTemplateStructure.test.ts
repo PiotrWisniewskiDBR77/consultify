@@ -63,6 +63,34 @@ describe('reviseTemplateStructure — author manual structure editor', () => {
     ).toThrow('business_case_assumptions_or_scenarios_required');
   });
 
+  it('accepts the canonical seeded Business Case headings used by the architect', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'user-1',
+      input: { purpose: 'Investment decision', documentType: 'business_case' },
+    });
+
+    const revised = reviseTemplateStructure({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'user-1',
+      sections: [
+        section('Executive Summary'),
+        section('Problem Statement'),
+        section('Proposed Initiative'),
+        section('Economic Analysis'),
+        section('Benefits and KPIs'),
+        section('Risks'),
+        section('Implementation Outline'),
+        section('Recommendation'),
+        section('Appendix'),
+      ],
+    });
+
+    expect(revised.sectionBlueprint.map((item) => item.title)).toContain('Proposed Initiative');
+    expect(revised.sectionBlueprint.map((item) => item.title)).toContain('Economic Analysis');
+  });
+
   it('accepts add / remove / reorder / rename on a draft and audits it', () => {
     const { template } = draftTemplate({
       organizationId: 'org-A',

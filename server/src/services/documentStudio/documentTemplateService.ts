@@ -257,11 +257,26 @@ function deriveBlueprintFromDocumentType(
 }
 
 function validateBusinessCaseBlueprint(sections: TemplateSectionBlueprint[]): void {
-  const titles = sections.map((section) => section.title.toLowerCase()).join(' | ');
-  if (!/(methodology|approach|scope)/i.test(titles)) {
+  // Validate semantic coverage, not one exact heading vocabulary. The seeded
+  // canonical blueprint deliberately uses "Proposed Initiative" and
+  // "Economic Analysis"; rejecting those headings made a system-generated
+  // Business Case impossible to save in its own architect. Author guidance is
+  // included so a custom title can still satisfy the gate explicitly.
+  const authoredSemantics = sections
+    .flatMap((section) => [
+      section.title,
+      section.purpose,
+      section.keyMessage,
+      ...(section.contentHints ?? []),
+      ...(section.dataNeeded ?? []),
+    ])
+    .filter((value): value is string => typeof value === 'string')
+    .join(' | ')
+    .toLowerCase();
+  if (!/(methodology|approach|scope|proposed initiative|proposed solution)/i.test(authoredSemantics)) {
     throw new Error('business_case_scope_or_approach_required');
   }
-  if (!/(assumption|scenario)/i.test(titles)) {
+  if (!/(assumption|scenario|sensitivity|economic analysis)/i.test(authoredSemantics)) {
     throw new Error('business_case_assumptions_or_scenarios_required');
   }
 }
