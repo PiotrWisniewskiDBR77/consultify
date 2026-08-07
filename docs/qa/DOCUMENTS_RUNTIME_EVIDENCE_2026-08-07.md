@@ -95,3 +95,21 @@ constitute acceptance of the complete Documents / Templates DoD.
 These entries close the tested Word manual, template-to-artifact and native DOCX
 export slices. They do not by themselves constitute acceptance of the complete
 Documents / Templates DoD.
+
+## Excel — deployed merge/unmerge regression and cold reopen
+
+- Railway deployment: `ad126b80-b517-4c7e-906b-0e9922d1593b` (`SUCCESS`)
+- Fix commit included in branch history: `cd4e17db73` (rowspan/colspan rendering
+  and full-range unmerge).
+- Workbook: `0b44c3cc-bcca-480c-a252-a117d64bf5ad`
+- URL: `https://demo.consultify.ai/excele?artifactId=0b44c3cc-bcca-480c-a252-a117d64bf5ad`
+- Steps: restore an earlier merge; select `A4:B5`; merge the 2x2 range; wait for
+  autosave; reopen the exact URL; select merged anchor `A4`; unmerge; wait for
+  autosave; reopen again.
+- Merge cold reopen: **PASS**. Only anchor `A4` rendered; covered cells `B4`,
+  `A5`, `B5` did not render, proving both row and column span were applied.
+- Unmerge cold reopen: **PASS**. `A4`, `B4`, `A5`, and `B5` all returned as
+  independent grid cells; pre-existing `A3 Plan` and `B3 -100` data remained.
+
+This entry closes only the deployed merge/unmerge regression. The broader Excel
+manual and template-to-workbook acceptance matrix remains open.
