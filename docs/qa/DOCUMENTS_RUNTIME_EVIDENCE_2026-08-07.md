@@ -18,6 +18,31 @@ substitute for an entry here.
 - Defect found and fixed: slide content persisted but the deck title reverted
   because autosave updated `deck_json` without updating `presentation_decks.title`.
 
+### Native PPTX export and independent visual readback
+
+- Final Railway deployment: `307a013d-9fe6-48ee-9a25-f4d6c9f62f2c` (`SUCCESS`).
+- Export fixes included in HEAD history: `f12e630148` (manual traceability is a
+  P2 warning), `1af5661c15` (edited headings and semantic message labels),
+  `92bae66ca0` (refresh exporter output after a renderer deployment),
+  `7da6574738`, `fafec7fe41`, and `746f3d39da` (legacy/manual cover title and
+  multiple-heading handling).
+- Final deck content: 2 slides. Slide 1 title is
+  `Transformation at a decision point`; slide 2 title is
+  `Three decisions unlock EUR 2.2m annual benefit`.
+- Autosave/cold reopen: **PASS** immediately before export on the exact deck URL;
+  both edited titles and `Saved` returned.
+- Native browser download: **PASS**. Final file:
+  `/Users/piotrwisniewski/Downloads/Board Transformation Update — Manual QA (4).pptx`.
+- Independent XML readback: **PASS**. `ppt/slides/slide1.xml` contains the edited
+  cover title and no longer contains `Nowa prezentacja` as the rendered title.
+- Independent render: **PASS**. Both slides were rendered to PNG and inspected
+  individually; the cover has a clean two-line hierarchy, slide 2 has two
+  readable message cards, no literal `paragraph` labels, and no clipped header.
+- Structural verifier: **PASS** (`Test passed. No overflow detected.`).
+- Defects found in deployed output and fixed: stale starter cover title,
+  `New Slide`, literal block-type labels, clipped long message headings, and
+  persisted exports surviving renderer deployments.
+
 ## PowerPoint — template to grounded artifact
 
 - Railway deployment: `fba38bd8-3d83-417c-8e77-081bfd120ba6` (`SUCCESS`)
@@ -45,6 +70,28 @@ substitute for an entry here.
 
 These entries close the tested PowerPoint slices only. They do not by themselves
 constitute acceptance of the complete Documents / Templates DoD.
+
+## Materials libraries — authenticated collection runtime
+
+- Railway deployment: `307a013d-9fe6-48ee-9a25-f4d6c9f62f2c` (`SUCCESS`).
+- URL: `https://demo.consultify.ai/presentations`.
+- Authenticated UI checks: **PASS** for `All`, `Documents`, `Presentations`,
+  `Sheets`, and `Template Library`; no 404, failed-load, or fallback message was
+  present in any checked view.
+- `Documents`: 5 runtime rows including the clean, grounded, template, and final
+  Program Atlas reports.
+- `Presentations`: 3 runtime rows including the 2-slide manual deck and both
+  8-slide template-derived decks.
+- `Sheets`: 2 runtime rows, including `Dashboard KPI` and `Pusty arkusz`, with
+  XLSX export capability visible.
+- `All`: one collection contained Sheet, Document, and Presentation rows
+  together.
+- `Template Library`: 100 table rows (header plus 99 templates), with 53
+  `Approved` and 46 `Published` shown by the runtime filters.
+
+This closes the original authenticated `/api/artifacts` collection 404 symptom
+at the deployed UI level; it does not substitute for the remaining template
+quality and builder acceptance work.
 
 ## Word — clean/manual authoring, autosave and cold reopen
 
