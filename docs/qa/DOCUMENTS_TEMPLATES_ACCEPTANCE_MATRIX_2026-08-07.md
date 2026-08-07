@@ -27,8 +27,10 @@ required acceptance claim has not yet been proven.
 
 ### Runtime observations
 
-- The deployed Template Library contains 99 templates: 53 `Approved` and 46
-  `Published`.
+- On deployment `4d1b56ed-d978-47bd-85c9-569a99b34371`, the default library
+  contains 91 templates: 53 `Approved`, 38 `Published`, 0 `Draft`. Enabling
+  `Show drafts` exposes 99 templates: the same 53 `Approved` and 38 `Published`
+  plus 8 `Draft`.
 - All nine selected templates are visible in the authenticated deployed library.
 - The three Word routes open the template-entry Document Studio and expose
   template-specific required source fields. Board report requires period KPIs,
@@ -48,8 +50,9 @@ required acceptance claim has not yet been proven.
 - The Deck Template Architect exposed a governance discrepancy: Recommendation
   Deck and Investor Pitch were `Draft` there while the unified Library labelled
   them `Published`. They were rejected from this qualification set and replaced
-  by genuinely `Approved` Architect templates. The lifecycle-index
-  reconciliation is tracked as a code/runtime fix, not waived as display noise.
+  by genuinely `Approved` Architect templates. The server-side lifecycle
+  projection fix is deployed and runtime-verified: both rows now appear only
+  after `Show drafts` and both render as `Draft`.
 
 These observations prove inventory and generator routing. They do not yet prove
 the three template builders or the board-ready quality of the six templates

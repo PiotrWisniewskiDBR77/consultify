@@ -266,3 +266,27 @@ The Excel template-to-workbook slice remains open.
 This entry closes the tested Excel approved-template-to-independent-workbook and
 native XLSX export slice. It does not by itself constitute acceptance of the
 complete Documents / Templates DoD.
+
+## Materials — presentation-template lifecycle projection
+
+- Commit: `5dcc6cf518` (`fix(templates): project deck lifecycle in materials`)
+- Railway deployment: `4d1b56ed-d978-47bd-85c9-569a99b34371` (`SUCCESS`)
+- Image digest: `sha256:cc09cb4fc83a8f6317a4fa110260ab38ea4e16cf0d201d64b84862f1a6bd201b`
+- URL: `https://demo.consultify.ai/presentations?tab=templates`
+- Root cause: read-time enrichment for `presentation_template` ignored
+  `presentation_templates.lifecycle_state` and classified every row with
+  `is_active=true` as `published`. That overwrote the correct draft snapshot on
+  every authenticated collection read.
+- Contract fix: lifecycle state is now authoritative for Draft/Deprecated;
+  Architect `approved` remains the unified-library `published` terminal state.
+  The fix is server-side; no frontend fallback was introduced.
+- Automated evidence: the focused registry/route suites pass **19/19**, including
+  explicit Draft/Approved/Deprecated projection; backend and frontend builds pass.
+- Default-view cold reload: **PASS** — 91 templates, Approved 53, Published 38,
+  Draft 0; system drafts are absent.
+- `Show drafts`: **PASS** — 99 templates, Approved 53, Published 38, Draft 8.
+  `Deck rekomendacji Minto (Recommendation Deck)` and `Investor pitch` both
+  render as Draft.
+
+This closes the false-Published lifecycle defect end-to-end. It does not waive
+the remaining create/edit/save/reopen acceptance of the three template builders.
