@@ -6,6 +6,7 @@ import {
   blockGeometryStyle,
   mergeStarterBlockContent,
   resolveBlankCardInsertionIndex,
+  titleFromPrimaryHeadingUpdate,
 } from '../manualEditing';
 
 describe('manual PowerPoint editing helpers', () => {
@@ -75,5 +76,25 @@ describe('manual PowerPoint editing helpers', () => {
       }
     );
     expect(blockGeometryStyle()).toEqual({});
+  });
+
+  it('synchronizes the slide title from an edited primary heading', () => {
+    const blocks = [
+      { block_id: 'heading-1', type: 'heading', content: { text: 'Risks &amp; Mitigations' } },
+      { block_id: 'heading-2', type: 'heading', content: { text: 'Secondary heading' } },
+    ];
+
+    expect(
+      titleFromPrimaryHeadingUpdate(blocks, 'heading-1', {
+        ...blocks[0],
+        content: { text: 'Risks and Mitigations' },
+      })
+    ).toBe('Risks and Mitigations');
+    expect(
+      titleFromPrimaryHeadingUpdate(blocks, 'heading-2', {
+        ...blocks[1],
+        content: { text: 'Edited secondary heading' },
+      })
+    ).toBeUndefined();
   });
 });

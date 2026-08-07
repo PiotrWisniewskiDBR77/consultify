@@ -89,4 +89,35 @@ export function mergeStarterBlockContent(
 ): Record<string, unknown> {
   return { ...defaults, ...(selection || {}) };
 }
+
+type HeadingLikeBlock = {
+  block_id?: string;
+  type?: string;
+  content?: Record<string, unknown>;
+};
+
+/**
+ * Keep the slide model title aligned with the heading the user actually edits.
+ * Quality gates, slide navigation and exporters read `card.title`, while the
+ * canvas renders the first heading block. Leaving those values independent
+ * makes a corrected heading look right in the editor but remain stale after
+ * export or quality validation.
+ */
+export function titleFromPrimaryHeadingUpdate(
+  blocks: HeadingLikeBlock[],
+  blockId: string,
+  updatedBlock: HeadingLikeBlock
+): string | undefined {
+  const primaryHeading = blocks.find((block) => block.type === 'heading');
+  if (
+    updatedBlock.type !== 'heading' ||
+    !primaryHeading ||
+    primaryHeading.block_id !== blockId
+  ) {
+    return undefined;
+  }
+
+  const text = String(updatedBlock.content?.text || '').trim();
+  return text || undefined;
+}
 import type { CSSProperties } from 'react';

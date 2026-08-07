@@ -60,7 +60,11 @@ import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
-import { mergeStarterBlockContent, resolveBlankCardInsertionIndex } from './manualEditing';
+import {
+  mergeStarterBlockContent,
+  resolveBlankCardInsertionIndex,
+  titleFromPrimaryHeadingUpdate,
+} from './manualEditing';
 import {
   alignBlocks,
   distributeBlocks,
@@ -536,11 +540,23 @@ export const DeckBuilder: React.FC = () => {
 
   const handleBlockUpdate = useCallback(
     (cardId: string, blockId: string, updates: Partial<CardBlock>) => {
-      applyBlockChange(cardId, (blocks) =>
-        blocks.map((b) => (b.block_id === blockId ? { ...b, ...updates } : b))
+      const card = deck?.cards.find((candidate) => candidate.card_id === cardId);
+      if (!card) return;
+      const currentBlock = card.blocks.find((block) => block.block_id === blockId);
+      if (!currentBlock) return;
+
+      const updatedBlock = { ...currentBlock, ...updates };
+      const nextBlocks = card.blocks.map((block) =>
+        block.block_id === blockId ? updatedBlock : block
       );
+      const title = titleFromPrimaryHeadingUpdate(card.blocks, blockId, updatedBlock);
+      updateCard(cardId, {
+        blocks: nextBlocks,
+        is_locked: true,
+        ...(title ? { title } : {}),
+      });
     },
-    [applyBlockChange]
+    [deck, updateCard]
   );
 
   const handleBlockDelete = useCallback(
