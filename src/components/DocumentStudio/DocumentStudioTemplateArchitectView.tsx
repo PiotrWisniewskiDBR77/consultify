@@ -64,6 +64,26 @@ import type {
   TemplateSectionBlueprint,
 } from './types';
 
+export function getTemplateStructureSaveErrorMessage(error: unknown): string {
+  const code = error instanceof Error ? error.message : String(error ?? '');
+  if (code.includes('business_case_scope_or_approach_required')) {
+    return 'Add a Scope, Approach or Proposed Initiative section before saving.';
+  }
+  if (code.includes('business_case_assumptions_or_scenarios_required')) {
+    return 'Add an Assumptions, Scenario, Sensitivity or Economic Analysis section before saving.';
+  }
+  if (code.includes('template_not_draft')) {
+    return 'Only draft templates can be edited. Create a new version first.';
+  }
+  if (code.includes('template_persist_failed')) {
+    return 'The template could not be saved durably. Try again.';
+  }
+  if (code.includes('template_sections_required')) {
+    return 'Add at least one section before saving.';
+  }
+  return 'Failed to save structure.';
+}
+
 function useDocumentTypeOptions(
   t: (key: string, def: string) => string
 ): { value: DocumentTypeKey; label: string }[] {
@@ -318,11 +338,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       );
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.templateArchitect.errReviseStructure', 'Failed to save structure')
-      );
+      setError(getTemplateStructureSaveErrorMessage(err));
     } finally {
       setSavingStructure(false);
     }
