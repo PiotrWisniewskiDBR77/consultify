@@ -1042,9 +1042,21 @@ function flattenedContentTypeForIntent(intent: unknown): 'cover' | 'appendix' | 
 }
 
 function cardDisplayTitle(card: DeckDocumentCard): string {
-  const heading = (card.blocks || []).find((block) => block.type === 'heading');
-  const headingText = String((heading?.content as any)?.text || '').trim();
-  return headingText || String(card.title || card.key_message || card.intent || 'Slide').trim();
+  const headingTexts = (card.blocks || [])
+    .filter((block) => block.type === 'heading')
+    .map((block) => textFromBlock(block).trim())
+    .filter(Boolean);
+  const storedTitle = String(card.title || '').trim();
+  // Blank/manual decks can retain the starter heading while the user adds a
+  // second, edited heading. Prefer the heading that diverges from stale card
+  // metadata; otherwise preserve the first authored heading.
+  const editedHeading = headingTexts.find((text) => text !== storedTitle);
+  return (
+    editedHeading ||
+    headingTexts[0] ||
+    storedTitle ||
+    String(card.key_message || card.intent || 'Slide').trim()
+  );
 }
 
 function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
@@ -1302,10 +1314,7 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
   const content: any = JSON.parse(JSON.stringify(base.content || {}));
 
   // Title edits: the FE edits the heading block; card.title is the fallback.
-  const headingText = String(
-    (firstBlockOfType(card, 'heading')?.content as any)?.text || ''
-  ).trim();
-  const editedTitle = headingText || String(card.title || '').trim();
+  const editedTitle = cardDisplayTitle(card);
   if (editedTitle) {
     // Write back into whichever field produced the card title (same priority
     // order as titleFromUnifiedSlide reads it).

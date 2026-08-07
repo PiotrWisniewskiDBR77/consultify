@@ -408,12 +408,21 @@ describe('stale-regen download path — renderable projection', () => {
     cover.title = 'Nowa prezentacja';
     cover.blocks = [
       {
+        block_id: 'manual-cover-starter-heading',
+        card_id: cover.card_id,
+        type: 'heading',
+        content: { text: 'Nowa prezentacja' },
+        is_refreshable: false,
+        position: { area: 'full', order: 0 },
+        ai_editable: true,
+      },
+      {
         block_id: 'manual-cover-heading',
         card_id: cover.card_id,
         type: 'heading',
         content: { text: 'Board Transformation Update' },
         is_refreshable: false,
-        position: { area: 'full', order: 0 },
+        position: { area: 'full', order: 1 },
         ai_editable: true,
       },
       {
@@ -422,7 +431,7 @@ describe('stale-regen download path — renderable projection', () => {
         type: 'paragraph',
         content: { text: 'Three executive decisions unlock the next phase.' },
         is_refreshable: false,
-        position: { area: 'full', order: 1 },
+        position: { area: 'full', order: 2 },
         ai_editable: true,
       },
     ];
