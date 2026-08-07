@@ -496,31 +496,69 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Chart canvas is unavailable');
     const chartColumns = activeRaw?.columns || [];
-    const labelColumn = activeComputed?.rows?.map((row) => formatComputedForDisplay(row.cells[chartColumns[selectionRange.colStart]?.key])) || [];
-    const valueColumn = activeComputed?.rows?.map((row) => Number(row.cells[chartColumns[selectionRange.colStart + 1]?.key]?.computed)) || [];
-    const labels = labelColumn.slice(selectionRange.rowStart, selectionRange.rowEnd + 1);
-    const values = valueColumn.slice(selectionRange.rowStart, selectionRange.rowEnd + 1).map((value) => Number.isFinite(value) ? value : 0);
-    const max = Math.max(1, ...values.map((value) => Math.abs(value)));
+    const rows = activeComputed?.rows || [];
+    const labelKey = chartColumns[selectionRange.colStart]?.key;
+    const selectedSeriesColumns = chartColumns.slice(
+      selectionRange.colStart + 1,
+      selectionRange.colEnd + 1
+    );
+    const headerRow = rows[selectionRange.rowStart];
+    const labelHeader = formatComputedForDisplay(headerRow?.cells?.[labelKey]) ||
+      chartColumns[selectionRange.colStart]?.header || 'Category';
+    const hasSemanticHeader = selectedSeriesColumns.some((column) => {
+      const value = headerRow?.cells?.[column.key]?.computed;
+      return typeof value === 'string' && value.trim().length > 0;
+    });
+    const dataStart = selectionRange.rowStart + (hasSemanticHeader ? 1 : 0);
+    const labels = rows
+      .slice(dataStart, selectionRange.rowEnd + 1)
+      .map((row) => formatComputedForDisplay(row.cells[labelKey]));
+    const series = selectedSeriesColumns.map((column) => ({
+      name: hasSemanticHeader
+        ? formatComputedForDisplay(headerRow?.cells?.[column.key]) || column.header
+        : column.header,
+      values: rows
+        .slice(dataStart, selectionRange.rowEnd + 1)
+        .map((row) => Number(row.cells[column.key]?.computed))
+        .map((value) => (Number.isFinite(value) ? value : 0)),
+    }));
+    const max = Math.max(1, ...series.flatMap((item) => item.values.map((value) => Math.abs(value))));
     context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = '#172033'; context.font = '600 22px sans-serif';
-    const title = `${chartColumns[selectionRange.colStart + 1]?.header || 'Values'} by ${chartColumns[selectionRange.colStart]?.header || 'Category'}`;
+    const title = `${series.map((item) => item.name).join(' vs ')} by ${labelHeader}`;
     context.fillText(title, 36, 38);
-    const plotTop = 70; const plotHeight = 280; const plotLeft = 55; const plotWidth = 620;
-    const slot = plotWidth / Math.max(1, values.length);
-    values.forEach((value, index) => {
-      const height = Math.abs(value) / max * plotHeight;
-      context.fillStyle = '#3267d6';
-      context.fillRect(plotLeft + index * slot + slot * 0.18, plotTop + plotHeight - height, slot * 0.64, height);
+    const colors = ['#3267d6', '#0f9f8f', '#d97706', '#7c3aed'];
+    const plotTop = 82; const plotHeight = 250; const plotLeft = 55; const plotWidth = 620;
+    const slot = plotWidth / Math.max(1, labels.length);
+    const groupWidth = slot * 0.72;
+    const barWidth = groupWidth / Math.max(1, series.length);
+    series.forEach((item, seriesIndex) => {
+      item.values.forEach((value, index) => {
+        const height = Math.abs(value) / max * plotHeight;
+        context.fillStyle = colors[seriesIndex % colors.length];
+        context.fillRect(
+          plotLeft + index * slot + slot * 0.14 + seriesIndex * barWidth,
+          plotTop + plotHeight - height,
+          Math.max(5, barWidth - 3),
+          height
+        );
+      });
+      context.fillStyle = colors[seriesIndex % colors.length];
+      context.fillRect(400 + seriesIndex * 120, 48, 12, 12);
       context.fillStyle = '#526077'; context.font = '12px sans-serif';
-      context.fillText(labels[index]?.slice(0, 12) || String(index + 1), plotLeft + index * slot + slot * 0.12, plotTop + plotHeight + 24);
+      context.fillText(item.name.slice(0, 14), 417 + seriesIndex * 120, 59);
+    });
+    labels.forEach((label, index) => {
+      context.fillStyle = '#526077'; context.font = '11px sans-serif';
+      context.fillText(label?.slice(0, 20) || String(index + 1), plotLeft + index * slot + slot * 0.06, plotTop + plotHeight + 24);
     });
     const sourceRange = `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`;
     await runSchemaCommand({
       type: 'upsertChartImage',
       sheetIndex: workingSheetIndex,
-      chart: { id: crypto.randomUUID(), title, chartType: 'bar', sourceRange, pngBase64: canvas.toDataURL('image/png'), anchorCell: `A${(activeRaw.rows?.length || 0) + 4}`, width: 720, height: 420 },
+      chart: { id: crypto.randomUUID(), title, chartType: 'bar', sourceRange, pngBase64: canvas.toDataURL('image/png'), anchorCell: `A${excelRowForDataRowIndex(selectionRange.rowEnd) + 2}`, width: 720, height: 420 },
     });
-  }, [activeComputed, activeRaw?.columns, activeRaw?.rows?.length, runSchemaCommand, selectionRange, workingSheetIndex]);
+  }, [activeComputed, activeRaw?.columns, runSchemaCommand, selectionRange, workingSheetIndex]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do

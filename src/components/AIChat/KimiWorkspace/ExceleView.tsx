@@ -594,7 +594,7 @@ export const ExceleView: React.FC = () => {
         preview={effectivePreview}
         onReplay={pipeline.handleReplay}
         onRemix={pipeline.handleRemix}
-        onDownload={pipeline.handleDownload}
+        onDownload={pipeline.currentRun ? pipeline.handleDownload : handlePreviewFile}
         onPreviewFile={handlePreviewFile}
         onAllFiles={handleAllFiles}
         onStartGeneration={pipeline.startGeneration}
@@ -612,7 +612,7 @@ export const ExceleView: React.FC = () => {
               isGenerating={pipeline.isGenerating}
               isFailed={pipeline.isFailed}
               failureReason={pipeline.failureReason}
-              onDownload={pipeline.handleDownload}
+              onDownload={pipeline.currentRun ? pipeline.handleDownload : handlePreviewFile}
               onPreviewFile={handlePreviewFile}
               onAllFiles={handleAllFiles}
               onOpenVersionHistory={handleOpenVersionHistory}
@@ -630,7 +630,7 @@ export const ExceleView: React.FC = () => {
               isGenerating={pipeline.isGenerating}
               isFailed={pipeline.isFailed}
               failureReason={pipeline.failureReason}
-              onDownload={pipeline.handleDownload}
+              onDownload={pipeline.currentRun ? pipeline.handleDownload : handlePreviewFile}
               onPreviewFile={handlePreviewFile}
               onAllFiles={handleAllFiles}
               onOpenVersionHistory={handleOpenVersionHistory}
