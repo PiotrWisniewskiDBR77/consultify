@@ -326,6 +326,60 @@ describe('backfill adapter — document_studio_templates → document_template',
 });
 
 describe('orphan detection (measurement only)', () => {
+  it('projects presentation lifecycle instead of treating every active row as published', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM presentation_templates')) {
+        return [
+          {
+            canonical_id: 'deck-draft',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'draft',
+            active_value: true,
+          },
+          {
+            canonical_id: 'deck-approved',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'approved',
+            active_value: true,
+          },
+          {
+            canonical_id: 'deck-deprecated',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'deprecated',
+            active_value: false,
+          },
+        ];
+      }
+      return [];
+    });
+
+    const makeDeck = (artifactId: string, originRecordId: string) =>
+      templateListItem({
+        artifactId,
+        outputType: 'presentation',
+        originRuntime: 'presentation_template',
+        originRecordId,
+      });
+    const results = await enrichTemplateOriginSummaries('org-alpha', [
+      makeDeck('art-draft', 'deck-draft'),
+      makeDeck('art-approved', 'deck-approved'),
+      makeDeck('art-deprecated', 'deck-deprecated'),
+    ]);
+
+    expect(results.map((item) => (item.originSummary as any).template.status)).toEqual([
+      'draft',
+      'published',
+      'deprecated',
+    ]);
+    expect(allSql().find((sql) => sql.includes('FROM presentation_templates'))).toContain(
+      't.lifecycle_state'
+    );
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('flags a template whose canonical record is gone and keeps a live one clean', async () => {
     mockDbAll.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM document_studio_templates')) {

@@ -2373,7 +2373,10 @@ const TEMPLATE_CANONICAL_REGISTRY: Record<
   presentation_template: {
     table: 'presentation_templates',
     idColumn: 'id',
-    statusColumn: null,
+    // Lifecycle governance is authoritative. `is_active` only tells us that a
+    // row has not been hard-disabled; it cannot distinguish Draft from an
+    // approved/published template.
+    statusColumn: 'lifecycle_state',
     activeColumn: 'is_active',
     isSystemColumn: 'is_system',
     visibilityColumn: null,
@@ -2443,7 +2446,15 @@ function statusFromCanonicalRow(
   row: CanonicalTemplateRow
 ): TemplateStatus {
   const registry = TEMPLATE_CANONICAL_REGISTRY[originRuntime];
-  if (registry?.statusColumn) return normalizeTemplateStatus(row.status_value);
+  if (registry?.statusColumn) {
+    const status = normalizeTemplateStatus(row.status_value);
+    // Presentation Architect calls its terminal governance state `approved`,
+    // while the unified Materials library historically exposes a consumable
+    // deck template as `published`. Preserve that public vocabulary, but keep
+    // draft/deprecated exact so active drafts can never be promoted on read.
+    if (originRuntime === 'presentation_template' && status === 'approved') return 'published';
+    return status;
+  }
   if (registry?.activeColumn) {
     const active = toBool(row.active_value);
     if (active === false) return 'deprecated';
