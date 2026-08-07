@@ -6,6 +6,7 @@ import {
   blockGeometryStyle,
   mergeStarterBlockContent,
   resolveBlankCardInsertionIndex,
+  shouldSyncKeyMessageWithTitle,
   titleFromPrimaryHeadingUpdate,
 } from '../manualEditing';
 
@@ -96,5 +97,17 @@ describe('manual PowerPoint editing helpers', () => {
         content: { text: 'Edited secondary heading' },
       })
     ).toBeUndefined();
+  });
+
+  it('only synchronizes key messages that duplicate the stale slide title', () => {
+    expect(
+      shouldSyncKeyMessageWithTitle('Risks &amp; Mitigations', 'Risks &amp; Mitigations')
+    ).toBe(true);
+    expect(
+      shouldSyncKeyMessageWithTitle(
+        'Risks &amp; Mitigations',
+        'Two operational risks require named owners'
+      )
+    ).toBe(false);
   });
 });

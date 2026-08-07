@@ -63,6 +63,7 @@ import { DeckThemeProvider } from './DeckThemeContext';
 import {
   mergeStarterBlockContent,
   resolveBlankCardInsertionIndex,
+  shouldSyncKeyMessageWithTitle,
   titleFromPrimaryHeadingUpdate,
 } from './manualEditing';
 import {
@@ -550,10 +551,13 @@ export const DeckBuilder: React.FC = () => {
         block.block_id === blockId ? updatedBlock : block
       );
       const title = titleFromPrimaryHeadingUpdate(card.blocks, blockId, updatedBlock);
+      const syncKeyMessage =
+        Boolean(title) && shouldSyncKeyMessageWithTitle(card.title, card.key_message);
       updateCard(cardId, {
         blocks: nextBlocks,
         is_locked: true,
         ...(title ? { title } : {}),
+        ...(syncKeyMessage ? { key_message: title } : {}),
       });
     },
     [deck, updateCard]

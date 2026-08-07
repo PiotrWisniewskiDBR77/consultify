@@ -120,4 +120,13 @@ export function titleFromPrimaryHeadingUpdate(
   const text = String(updatedBlock.content?.text || '').trim();
   return text || undefined;
 }
+
+export function shouldSyncKeyMessageWithTitle(
+  currentTitle: unknown,
+  currentKeyMessage: unknown
+): boolean {
+  const title = String(currentTitle || '').trim();
+  const keyMessage = String(currentKeyMessage || '').trim();
+  return Boolean(title && keyMessage && title === keyMessage);
+}
 import type { CSSProperties } from 'react';
