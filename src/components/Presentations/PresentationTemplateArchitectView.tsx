@@ -919,7 +919,7 @@ export const PresentationTemplateArchitectView: React.FC<
                       )}
                       {t(
                         'presentations.templateArchitect.deprecateTemplate',
-                        'Withdraw / delete draft'
+                        'Withdraw draft'
                       )}
                     </span>
                   </Button>

@@ -44,6 +44,7 @@ import {
   listDocumentStudioTemplateAudit,
   listDocumentStudioTemplates,
   planDocumentStudioTemplate,
+  restoreDocumentStudioTemplateSnapshotAsDraft,
   reviseDocumentStudioTemplateStructure,
   validateDocumentStudioTemplate,
 } from './api';
@@ -144,6 +145,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   }> | null>(null);
   const [auditEntries, setAuditEntries] = useState<TemplateAuditEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [comparedAuditId, setComparedAuditId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -157,6 +159,10 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     () => templates.find((tpl) => tpl.templateId === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
   );
+  const comparedSnapshot = useMemo(() => {
+    const entry = auditEntries.find((candidate) => candidate.auditId === comparedAuditId);
+    return entry?.details?.templateSnapshot as DocumentTemplate | undefined;
+  }, [auditEntries, comparedAuditId]);
 
   // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default ON
   // since 79a75de14e, akcept Piotra 2026-07-22 po live-verify; UWAGA: decyzja
@@ -536,6 +542,21 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     }
   };
 
+  const handleRestoreSnapshot = async (templateId: string, auditId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const draft = await restoreDocumentStudioTemplateSnapshotAsDraft(templateId, auditId);
+      await refresh();
+      setSelectedTemplateId(draft.templateId);
+      setShowHistory(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore template snapshot');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
   const handleDeleteDraft = async (templateId: string, templateName: string): Promise<void> => {
     const confirmed = await requestConfirm(
       `Delete draft “${templateName}”? This cannot be undone.`
@@ -793,12 +814,64 @@ export const DocumentStudioTemplateArchitectView: React.FC<
                 <div className="font-semibold text-c-text">Version history</div>
                 <ol className="mt-2 space-y-1 text-c-text-secondary">
                   {auditEntries.map((entry) => (
-                    <li key={entry.auditId}>
-                      {entry.action.replace(/_/g, ' ')} ·{' '}
-                      {new Date(entry.occurredAt).toLocaleString()}
+                    <li key={entry.auditId} className="flex items-center justify-between gap-3">
+                      <span>
+                        {entry.action.replace(/_/g, ' ')} ·{' '}
+                        {new Date(entry.occurredAt).toLocaleString()}
+                      </span>
+                      {entry.details?.templateSnapshot ? (
+                        <span className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setComparedAuditId(entry.auditId)}
+                          >
+                            Compare
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() =>
+                              void handleRestoreSnapshot(selectedTemplate.templateId, entry.auditId)
+                            }
+                          >
+                            Restore as draft
+                          </Button>
+                        </span>
+                      ) : (
+                        <span className="text-xs">Snapshot unavailable</span>
+                      )}
                     </li>
                   ))}
                 </ol>
+                {comparedSnapshot ? (
+                  <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+                    <div className="font-semibold text-c-text">Snapshot comparison</div>
+                    <dl className="mt-2 grid gap-1 text-xs">
+                      <div>
+                        Sections:{' '}
+                        {comparedSnapshot.sectionBlueprint
+                          .map((section) => section.title)
+                          .join(' → ')}{' '}
+                        →{' '}
+                        {selectedTemplate.sectionBlueprint
+                          .map((section) => section.title)
+                          .join(' → ')}
+                      </div>
+                      <div>
+                        Style:{' '}
+                        {JSON.stringify(comparedSnapshot.formattingSchema) ===
+                        JSON.stringify(selectedTemplate.formattingSchema)
+                          ? 'unchanged'
+                          : 'changed'}
+                      </div>
+                      <div>
+                        Variables: {comparedSnapshot.requiredInputs.join(', ') || 'none'} →{' '}
+                        {selectedTemplate.requiredInputs.join(', ') || 'none'}
+                      </div>
+                    </dl>
+                  </div>
+                ) : null}
               </div>
             ) : null}
             <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">

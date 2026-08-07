@@ -933,6 +933,21 @@ export async function createDocumentStudioTemplateVersion(
   return json.template;
 }
 
+export async function restoreDocumentStudioTemplateSnapshotAsDraft(
+  templateId: string,
+  auditId: string
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/${encodeURIComponent(templateId)}/audit/${encodeURIComponent(auditId)}/restore-as-draft`,
+    { method: 'POST', headers: getHeaders(), body: '{}' }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio restore template snapshot'
+  );
+  return json.template;
+}
+
 export async function deleteDocumentStudioDraftTemplate(templateId: string): Promise<void> {
   const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}`, {
     method: 'DELETE',

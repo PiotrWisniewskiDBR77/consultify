@@ -358,7 +358,7 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
     action: 'template_drafted',
     actorId: params.userId,
     occurredAt: now,
-    details: { documentType, category },
+    details: { documentType, category, templateSnapshot: structuredClone(template) },
   });
   return { template };
 }
@@ -678,7 +678,11 @@ export function approveTemplate(params: ApproveTemplateParams): DocumentTemplate
     action: 'template_approved',
     actorId: params.userId,
     occurredAt: now,
-    details: { previousStatus: template.status, version: next.version },
+    details: {
+      previousStatus: template.status,
+      version: next.version,
+      templateSnapshot: structuredClone(next),
+    },
   });
   return next;
 }
@@ -711,7 +715,11 @@ export function deprecateTemplate(params: DeprecateTemplateParams): DocumentTemp
     action: 'template_deprecated',
     actorId: params.userId,
     occurredAt: now,
-    details: { previousStatus: template.status, reason: params.reason },
+    details: {
+      previousStatus: template.status,
+      reason: params.reason,
+      templateSnapshot: structuredClone(next),
+    },
   });
   return next;
 }
@@ -903,6 +911,7 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
       previousSectionCount: template.sectionBlueprint.length,
       colorTemplateChanged: params.colorTemplateId !== undefined,
       formattingChanged: params.formattingSchema !== undefined,
+      templateSnapshot: structuredClone(next),
       requiredInputsChanged: params.requiredInputs !== undefined,
     },
   });
@@ -971,7 +980,7 @@ export function updateTemplateContent(params: UpdateTemplateContentParams): Docu
     action: 'template_updated',
     actorId: params.userId,
     occurredAt: now,
-    details: { source: 'template_library_content_edit' },
+    details: { source: 'template_library_content_edit', templateSnapshot: structuredClone(next) },
   });
   return next;
 }
@@ -1056,7 +1065,61 @@ export function cloneTemplateAsDraft(params: {
     action: 'template_drafted',
     actorId: params.userId,
     occurredAt: now,
-    details: { sourceTemplateId: source.templateId, sourceVersion: source.version },
+    details: {
+      sourceTemplateId: source.templateId,
+      sourceVersion: source.version,
+      templateSnapshot: structuredClone(draft),
+    },
+  });
+  return draft;
+}
+
+export function restoreTemplateAuditSnapshotAsDraft(params: {
+  templateId: string;
+  auditId: string;
+  organizationId: string;
+  userId: string;
+}): DocumentTemplate {
+  const source = getTemplate(params.templateId, params.organizationId);
+  if (!source) throw new Error('template_not_found');
+  const entry = listTemplateAuditEntries(params.templateId, params.organizationId).find(
+    (candidate) => candidate.auditId === params.auditId
+  );
+  const snapshot = entry?.details?.templateSnapshot as DocumentTemplate | undefined;
+  if (!entry) throw new Error('template_audit_not_found');
+  if (!snapshot?.templateId || !Array.isArray(snapshot.sectionBlueprint)) {
+    throw new Error('template_snapshot_unavailable');
+  }
+  const now = nowIso();
+  const draft: DocumentTemplate = {
+    ...structuredClone(snapshot),
+    templateId: makeId('doc-template'),
+    organizationId: params.organizationId,
+    status: 'draft',
+    version: '0.1',
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+    approvedBy: undefined,
+    approvedAt: undefined,
+    deprecatedBy: undefined,
+    deprecatedAt: undefined,
+    notes: `Restored from ${source.templateId} audit ${entry.auditId} (${entry.action})`,
+  };
+  registryStore.set(templateKey(params.organizationId, draft.templateId), draft);
+  void persistTemplate(draft).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: draft.templateId,
+    organizationId: params.organizationId,
+    action: 'template_drafted',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      restoredFromTemplateId: source.templateId,
+      restoredFromAuditId: entry.auditId,
+      templateSnapshot: structuredClone(draft),
+    },
   });
   return draft;
 }

@@ -45,13 +45,25 @@ describe('deprecatePresentationTemplate', () => {
   });
 
   it('URL-encodes the template id', async () => {
-    post.mockResolvedValue({ data: { data: { record: null } } });
+    post.mockResolvedValue({
+      data: { data: { record: { id: 'tpl with space', lifecycle_state: 'deprecated' } } },
+    });
 
     await deprecatePresentationTemplate('tpl with space', 'reason');
 
     expect(post).toHaveBeenCalledWith(
       '/presentations/templates/tpl%20with%20space/governance/deprecate',
       { reason: 'reason' }
+    );
+  });
+
+  it('rejects a successful HTTP response unless lifecycle readback confirms withdrawal', async () => {
+    post.mockResolvedValue({
+      data: { data: { record: { id: 'tpl_1', lifecycle_state: 'draft' } } },
+    });
+
+    await expect(deprecatePresentationTemplate('tpl_1', 'obsolete')).rejects.toThrow(
+      'Template withdrawal was not confirmed by server readback.'
     );
   });
 

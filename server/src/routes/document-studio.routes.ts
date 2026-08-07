@@ -380,6 +380,7 @@ import {
   listTemplates,
   recordTemplateFeedback,
   recordTemplateUsage,
+  restoreTemplateAuditSnapshotAsDraft,
   reviseTemplateStructure,
   validateTemplate,
 } from '../services/documentStudio/documentTemplateService.js';
@@ -1355,6 +1356,32 @@ router.post(
     } catch (err) {
       const message = err instanceof Error ? err.message : 'template_clone_failed';
       res.status(message === 'template_not_found' ? 404 : 400).json({ error: message });
+    }
+  })
+);
+
+router.post(
+  '/templates/:templateId/audit/:auditId/restore-as-draft',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const template = restoreTemplateAuditSnapshotAsDraft({
+        templateId: String(req.params.templateId || ''),
+        auditId: String(req.params.auditId || ''),
+        organizationId,
+        userId,
+      });
+      res.status(201).json({ template });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_restore_failed';
+      const status = message.endsWith('_not_found')
+        ? 404
+        : message === 'template_snapshot_unavailable'
+          ? 409
+          : 400;
+      res.status(status).json({ error: message });
     }
   })
 );

@@ -21,6 +21,7 @@ import {
   isTemplateUsableForGeneration,
   listTemplateAuditEntries,
   listTemplates,
+  restoreTemplateAuditSnapshotAsDraft,
   validateTemplate,
 } from '../documentTemplateService.js';
 
@@ -164,6 +165,35 @@ describe('documentTemplateService — registry CRUD', () => {
       expect.arrayContaining(['duplicate_section_title', 'duplicate_required_input'])
     );
     expect(validateTemplate(template)).toEqual([]);
+  });
+
+  it('restores an immutable audit snapshot as a new draft without overwriting approved', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Snapshot restore template', documentType: 'executive_memo' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const approvedEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_approved'
+    );
+    expect(approvedEntry).toBeDefined();
+    if (!approvedEntry) throw new Error('approved audit snapshot missing');
+    const restored = restoreTemplateAuditSnapshotAsDraft({
+      templateId: template.templateId,
+      auditId: approvedEntry.auditId,
+      organizationId: 'org-A',
+      userId: 'editor',
+    });
+
+    expect(restored.templateId).not.toBe(approved.templateId);
+    expect(restored.status).toBe('draft');
+    expect(restored.sectionBlueprint).toEqual(approved.sectionBlueprint);
+    expect(getTemplate(approved.templateId, 'org-A')?.status).toBe('approved');
   });
 
   it('isolates templates across tenants', () => {

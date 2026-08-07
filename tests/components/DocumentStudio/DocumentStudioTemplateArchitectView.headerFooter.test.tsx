@@ -14,6 +14,7 @@ const apiMocks = vi.hoisted(() => ({
   audit: vi.fn(),
   newVersion: vi.fn(),
   deleteDraft: vi.fn(),
+  restore: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -52,6 +53,7 @@ vi.mock('@/components/DocumentStudio/api', () => ({
   listDocumentStudioTemplateAudit: (...args: unknown[]) => apiMocks.audit(...args),
   createDocumentStudioTemplateVersion: (...args: unknown[]) => apiMocks.newVersion(...args),
   deleteDocumentStudioDraftTemplate: (...args: unknown[]) => apiMocks.deleteDraft(...args),
+  restoreDocumentStudioTemplateSnapshotAsDraft: (...args: unknown[]) => apiMocks.restore(...args),
 }));
 
 const makeTemplate = (): DocumentTemplate =>
@@ -103,6 +105,7 @@ describe('DocumentStudioTemplateArchitectView header/footer persistence', () => 
     apiMocks.audit.mockReset().mockResolvedValue([]);
     apiMocks.newVersion.mockReset();
     apiMocks.deleteDraft.mockReset();
+    apiMocks.restore.mockReset();
   });
 
   it('runs explicit validation and surfaces a passing result', async () => {
@@ -111,6 +114,24 @@ describe('DocumentStudioTemplateArchitectView header/footer persistence', () => 
 
     await waitFor(() => expect(apiMocks.validate).toHaveBeenCalledWith('template-1'));
     expect(await screen.findByText('Validation passed')).toBeInTheDocument();
+  });
+
+  it('compares an immutable history snapshot and offers restore as a new draft', async () => {
+    const snapshot = makeTemplate();
+    apiMocks.audit.mockResolvedValue([
+      {
+        auditId: 'audit-1',
+        action: 'template_approved',
+        occurredAt: '2026-08-06T10:02:00.000Z',
+        details: { templateSnapshot: snapshot },
+      },
+    ]);
+    render(<DocumentStudioTemplateArchitectView />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Version history' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Compare' }));
+
+    expect(await screen.findByText('Snapshot comparison')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restore as draft' })).toBeInTheDocument();
   });
 
   it('saves header/footer text and restores it after the registry refresh', async () => {

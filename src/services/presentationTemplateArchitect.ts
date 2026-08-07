@@ -287,7 +287,12 @@ export async function deprecatePresentationTemplate(
     `/presentations/templates/${encodeURIComponent(templateId)}/governance/deprecate`,
     { reason }
   );
-  return unwrap<{ record: unknown }>(res);
+  const payload = unwrap<{ record: unknown }>(res);
+  const record = payload?.record as { lifecycle_state?: unknown } | null;
+  if (!record || record.lifecycle_state !== 'deprecated') {
+    throw new Error('Template withdrawal was not confirmed by server readback.');
+  }
+  return payload;
 }
 
 // ---------------------------------------------------------------------------
