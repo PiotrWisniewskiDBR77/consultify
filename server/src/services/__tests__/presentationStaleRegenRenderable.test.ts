@@ -454,7 +454,9 @@ describe('stale-regen download path — renderable projection', () => {
         block_id: 'manual-content-body-2',
         card_id: content.card_id,
         type: 'paragraph',
-        content: { text: 'Mitigate data-migration delay through parallel reconciliation.' },
+        content: {
+          text: 'Mitigate data-migration delay through parallel reconciliation and weekly owner-level checkpoints before scope lock.',
+        },
         is_refreshable: false,
         position: { area: 'full', order: 2 },
         ai_editable: true,
@@ -469,9 +471,13 @@ describe('stale-regen download path — renderable projection', () => {
     expect(projectedContent.key_message).toBe('Three decisions unlock EUR 2.2m annual benefit');
     expect(projectedContent.content.messages.map((message: any) => message.title)).toEqual([
       'Approve phase-two scope by 15 August',
-      'Mitigate data-migration delay through parallel reconciliation.',
+      'Mitigate data-migration delay through parallel reconciliation…',
     ]);
     expect(JSON.stringify(projected)).not.toContain('"title":"paragraph"');
+
+    const renderable = deckDocumentToRenderableUnifiedJson(deck, report);
+    expect((renderable.slides[0] as any).content.title).toBe('Board Transformation Update');
+    expect((renderable.slides[0] as any).key_message).toBe('Board Transformation Update');
   });
 
   it('cards with a changed intent fall back to the renderable flattened shape', () => {

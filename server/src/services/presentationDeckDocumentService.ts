@@ -1050,14 +1050,16 @@ function cardDisplayTitle(card: DeckDocumentCard): string {
 function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
   const content = (block.content || {}) as Record<string, unknown>;
   const explicit = String(content.title || content.headline || content.label || '').trim();
-  if (explicit) return explicit.slice(0, 80);
+  if (explicit) return explicit.length > 64 ? `${explicit.slice(0, 63).trimEnd()}…` : explicit;
 
   const text = textFromBlock(block).trim();
   if (text && (block.type === 'paragraph' || block.type === 'callout')) {
     const firstClause = text.split(/(?<=[.!?])\s|[;:]/, 1)[0]?.trim() || text;
     const words = firstClause.split(/\s+/).filter(Boolean);
-    const concise = words.length > 9 ? `${words.slice(0, 9).join(' ')}…` : firstClause;
-    return concise.slice(0, 80);
+    const wordLimited = words.length > 7 ? `${words.slice(0, 7).join(' ')}…` : firstClause;
+    if (wordLimited.length <= 64) return wordLimited;
+    const withinWidth = wordLimited.slice(0, 63).replace(/\s+\S*$/, '').trimEnd();
+    return `${withinWidth || wordLimited.slice(0, 63).trimEnd()}…`;
   }
 
   const semanticFallbacks: Record<string, string> = {
@@ -1313,6 +1315,10 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
         break;
       }
     }
+    // CoverLayout reads `content.title` directly. Some legacy/manual base
+    // slides use a different title field, so the generic field loop above can
+    // leave the starter title intact even though the heading block was edited.
+    if (base.intent === 'cover') content.title = editedTitle;
   }
 
   overlayCardBlocksOntoContent(card, content);
@@ -1320,9 +1326,7 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
   const slide: UnifiedSlide = {
     ...base,
     intent: base.intent,
-    key_message: String(
-      card.key_message || card.title || base.key_message || card.intent || 'Slide'
-    ),
+    key_message: editedTitle || String(base.key_message || card.intent || 'Slide'),
     content,
   };
   (slide as any).slide_id = card.card_id;
