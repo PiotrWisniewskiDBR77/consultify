@@ -760,7 +760,11 @@ export function replaceTemplatePlaceholdersWithEvidence(
       blocks = [mk('numbered_list', { items: decisionItems }, source)];
     } else if (/executive summary|summary|podsumowanie/.test(title)) {
       source = kpis ?? decisions ?? boundSources[0];
-      blocks = [mk('paragraph', { text: allEvidence }, source)];
+      const recommendationLead =
+        decisionItems.length > 0
+          ? `We recommend approval of the following board decisions: ${decisionItems.join('; ')}. `
+          : '';
+      blocks = [mk('paragraph', { text: `${recommendationLead}${allEvidence}` }, source)];
     } else {
       blocks = [
         mk(

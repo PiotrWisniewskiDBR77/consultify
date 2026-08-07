@@ -56,6 +56,7 @@ describe('template evidence materialization', () => {
     expect(serialized).toContain('Lock scope by 15 August');
     expect(serialized).toContain('Data migration delay');
     expect(serialized).toContain('parallel reconciliation');
+    expect(serialized).toContain('We recommend approval of the following board decisions');
     expect(sections[1].blocks[0].type).toBe('numbered_list');
     expect(sections[3].blocks[0].type).toBe('risk_table');
     expect(sections[4].blocks[0].type).toBe('numbered_list');

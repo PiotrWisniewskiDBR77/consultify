@@ -1513,11 +1513,20 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
       const t = blockToText(b).trim();
       return t.length > 0;
     });
-    if (editable.length < 2) {
+    const actionableCount = editable.reduce((count, block) => {
+      if (block.type !== 'bullet_list' && block.type !== 'numbered_list') return count + 1;
+      const items = Array.isArray((block.content as { items?: unknown[] } | null)?.items)
+        ? (block.content as { items: unknown[] }).items.filter(
+            (item) => typeof item === 'string' && item.trim().length > 0
+          ).length
+        : 0;
+      return count + Math.max(items, 1);
+    }, 0);
+    if (actionableCount < 2) {
       findings.push(
         makeFinding(
           'medium',
-          `Decision section "${decisionSection.title}" has only ${editable.length} actionable block(s); should be ≥ 2.`,
+          `Decision section "${decisionSection.title}" has only ${actionableCount} actionable item(s); should be ≥ 2.`,
           'executive_thin_decision_section',
           { sectionId: decisionSection.sectionId }
         )
