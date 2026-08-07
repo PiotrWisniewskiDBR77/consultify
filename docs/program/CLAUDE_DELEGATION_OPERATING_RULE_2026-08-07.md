@@ -1,13 +1,13 @@
 # Zasada oszczędnej delegacji Claude — 7–12 sierpnia 2026
 
 **Status:** nadrzędna reguła wykonawcza. **Owner:** Codex jako CTO/Release Owner.  
-**Preferowany wykonawca dużego kodowania:** Claude Sonnet 5.0; gdy niedostępny, najbliższy dostępny Claude/Sonnet o porównywalnym koszcie.
+**Preferowany wykonawca dużego kodowania:** Claude Code CLI z modelem Sonnet 5.0; gdy niedostępny, najbliższy dostępny Claude/Sonnet o porównywalnym koszcie. CLI jest preferowany wobec sesji przeglądarkowych, ponieważ izoluje połączenie od pracy innych agentów.
 
 ## Podział odpowiedzialności
 
 Codex odpowiada za architekturę, priorytety, kryteria akceptacji, rozbicie pracy, review diffów, ochronę shared worktree, integrację, runtime QA, deployment i dowody. Sam pisze krótkie krytyczne patche, gdy delegacja byłaby wolniejsza lub ryzykowniejsza.
 
-Claude domyślnie wykonuje każdą implementację wieloplikową, nowy workflow, większy refactor lub pracę szacowaną na ponad 30–45 minut, a także izolowane migracje, testy i audyty.
+Claude domyślnie wykonuje każdą implementację wieloplikową, nowy workflow, większy refactor lub pracę szacowaną na ponad 30–45 minut, a także izolowane migracje, testy i audyty. Oszczędność tokenów jest pomocnicza: delegacja nie może istotnie opóźniać pracy.
 
 ## Bramka przed kodowaniem
 
@@ -22,11 +22,15 @@ Codex nie rozpoczyna sam dużego kodowania klasy B. Najpierw deleguje konkretny 
 
 ## Obowiązkowy kontrakt zadania Claude
 
-Każdy brief zawiera: cel i Definition of Done; dokładny zakres plików oraz aktywne cudze edycje; obowiązujące SSOT/API; wymagane testy i runtime proof; zakaz atrap/fake-success; małe commity bez push/deploy; raport SHA, plików, wyników, ryzyk i pozostałych luk.
+Każdy brief zawiera: jeden precyzyjny cel i Definition of Done; dokładny zakres plików oraz aktywne cudze edycje; obowiązujące SSOT/API; wymagane testy i kontrole negatywne; zakaz atrap/fake-success; zakaz rozszerzania zakresu; oczekiwany raport diffu, plików, testów, wyników, ryzyk i pozostałych luk.
+
+Claude nie może wykonywać `git commit`, `git push`, `git reset`, `git checkout`, `git clean` ani `git stash`. Nie może usuwać danych, baz, artefaktów ani zmian innych agentów. Wszystkie operacje git, integrację i publikację wykonuje wyłącznie Codex.
 
 ## Review i integracja
 
 Kod agenta nie jest automatycznie zaakceptowany. Codex sprawdza diff i zakres commita, potwierdza kanoniczny model, uruchamia proporcjonalne testy i `git diff --check`, wdraża wyłącznie czysty checkpoint i wykonuje manualny runtime proof. Test jednostkowy nie zastępuje przejścia UI.
+
+Codex utrzymuje krótki checkpoint: cel, wykonane elementy, status, zmienione pliki, walidacje, ryzyka oraz najbliższe pojedyncze zadanie. Po acceptance paczki natychmiast uruchamia następną. Podczas pracy Claude przygotowuje review, testy, dane i kolejne decyzje zamiast biernie czekać.
 
 ## Oszczędność i wyjątki
 
@@ -35,4 +39,3 @@ Kod agenta nie jest automatycznie zaakceptowany. Codex sprawdza diff i zakres co
 - Po trzech nieudanych próbach Codex zatrzymuje podejście i rozstrzyga architekturę.
 - Codex nie deleguje kilkuwierszowego patcha, jeśli koszt przekazania i review jest większy.
 - Większy kod może wykonać sam wyłącznie przy niedostępności/limicie Claude, incydencie P0 albo konflikcie integracyjnym shared worktree; powód musi zostać jawnie odnotowany.
-
