@@ -306,6 +306,20 @@ describe('PATCH /api/workbook/:id/schema-command', () => {
     }
   });
 
+  it('keeps the XLSX download filename aligned with a renamed workbook', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'renameWorkbook', title: 'Program Atlas — Board QA' } });
+
+    expect(res.status).toBe(200);
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE generated_workbooks SET schema_json')
+    );
+    expect(updateCall?.[1]?.[2]).toBe('Program_Atlas_Board_QA.xlsx');
+  });
+
   it('rejects deleting the last column and stale expectedVersion', async () => {
     const app = createApp();
     asUser(ORG);

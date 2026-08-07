@@ -2275,11 +2275,13 @@ router.patch(
       logger.warn(`[WorkbookRoutes] Could not snapshot schema command for ${id}:`, error);
     }
     const nextVersion = currentVersion + 1;
+    const nextFileName = `${parsed.data.title.replace(/[^a-zA-Z0-9._-]+/g, '_') || 'workbook'}.xlsx`;
     const result = await queryHelpers.queryRun(
-      `UPDATE generated_workbooks SET schema_json = ?, title = ?, sheet_count = ?, version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
+      `UPDATE generated_workbooks SET schema_json = ?, title = ?, file_name = ?, sheet_count = ?, version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
       [
         JSON.stringify(parsed.data),
         parsed.data.title,
+        nextFileName,
         parsed.data.sheets.length,
         nextVersion,
         id,
