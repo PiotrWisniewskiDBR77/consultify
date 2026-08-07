@@ -1,11 +1,11 @@
 # Zasada oszczędnej delegacji Claude — 7–12 sierpnia 2026
 
-**Status:** nadrzędna reguła wykonawcza. **Owner:** Codex jako CTO/Release Owner.  
+**Status:** nadrzędna reguła wykonawcza. **Owner:** Codex jako CTO/Release Owner. **Priorytet nadrzędny:** dowiezienie sprawnego projektu dzisiaj; oszczędność tokenów nie może ograniczać tempa ani jakości.  
 **Preferowany wykonawca dużego kodowania:** Claude Code CLI z modelem Sonnet 5.0; gdy niedostępny, najbliższy dostępny Claude/Sonnet o porównywalnym koszcie. CLI jest preferowany wobec sesji przeglądarkowych, ponieważ izoluje połączenie od pracy innych agentów.
 
 ## Podział odpowiedzialności
 
-Codex odpowiada za architekturę, priorytety, kryteria akceptacji, rozbicie pracy, review diffów, ochronę shared worktree, integrację, runtime QA, deployment i dowody. Sam pisze krótkie krytyczne patche, gdy delegacja byłaby wolniejsza lub ryzykowniejsza.
+Codex odpowiada za pełną analizę, architekturę, priorytety, kryteria akceptacji, rozbicie pracy, review diffów, ochronę shared worktree, integrację, runtime QA, deployment i dowody. Sam wykonuje proste oraz małe i średnie poprawki, gdy jest to szybsze niż delegacja; nie ogranicza swojej pracy do obserwowania i wydawania poleceń.
 
 Claude domyślnie wykonuje każdą implementację wieloplikową, nowy workflow, większy refactor lub pracę szacowaną na ponad 30–45 minut, a także izolowane migracje, testy i audyty. Oszczędność tokenów jest pomocnicza: delegacja nie może istotnie opóźniać pracy. Liczba paczek nie jest ograniczona; ograniczony i jednoznaczny ma być zakres każdej paczki.
 
