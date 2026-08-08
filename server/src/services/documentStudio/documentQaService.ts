@@ -1896,9 +1896,9 @@ function runDataQa(schema: DocumentSchema): DocumentQaCategoryReport {
               findings.push(
                 makeFinding(
                   'high',
-                  `Scenario investment "${investment}" conflicts with assessment text "${assessment}".`,
+                  `Scenario investment "${investment}" conflicts with assessment text "${assessment}" (row ${rowIndex + 1}).`,
                   'data_scenario_investment_assessment_mismatch',
-                  { sectionId: section.sectionId, blockId: block.blockId, rowIndex }
+                  { sectionId: section.sectionId, blockId: block.blockId }
                 )
               );
             }

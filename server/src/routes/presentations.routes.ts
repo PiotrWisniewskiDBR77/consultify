@@ -2595,7 +2595,7 @@ router.post(
     const customTemplate = resolved.customTemplate as any;
     if (customTemplate != null) {
       const validation = validatePresentationCustomTemplate(customTemplate);
-      if (!validation.ok) {
+      if (validation.ok === false) {
         throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
       }
     }
