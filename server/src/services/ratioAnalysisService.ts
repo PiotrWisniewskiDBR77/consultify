@@ -146,14 +146,14 @@ async function assertReadyStatement(statementId: string, organizationId: string)
   let stmt: any;
   try {
     stmt = await dbGet<any>(
-      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status, readiness_status
+      `SELECT id, organization_id, statement_pack_id, period_label, period_start, period_end, status, validation_status, readiness_status
        FROM financial_statements
        WHERE id = ? AND organization_id = ?`,
       [statementId, organizationId]
     );
   } catch {
     stmt = await dbGet<any>(
-      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status
+      `SELECT id, organization_id, statement_pack_id, period_label, period_start, period_end, status, validation_status
        FROM financial_statements
        WHERE id = ? AND organization_id = ?`,
       [statementId, organizationId]
@@ -880,8 +880,17 @@ export async function computeRatios(
   const valueRows = (await dbAll(
     `SELECT fsv.*, fsl.line_code FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
-     WHERE fsv.statement_id = ?`,
-    [statementId]
+     INNER JOIN financial_statements fs ON fs.id = fsv.statement_id
+     WHERE fs.organization_id = ?
+       AND (
+         fs.id = ?
+         OR fs.statement_pack_id = ?
+       )
+       AND (
+         LOWER(COALESCE(fs.readiness_status, 'pending')) = 'ready'
+         OR LOWER(COALESCE(fs.status, '')) IN ('confirmed', 'approved')
+       )`,
+    [organizationId, statementId, stmt.statement_pack_id || null]
   )) as any[];
 
   const values: Record<string, number> = {};

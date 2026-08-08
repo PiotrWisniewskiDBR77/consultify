@@ -131,6 +131,20 @@ describe('financialStatementService — contract tests', () => {
       expect(dupMsg?.type).toBe('warning');
     });
 
+    it('does not treat the same canonical line in different periods as a duplicate', () => {
+      const result = validateStatement(
+        [
+          { canonicalLineId: 'fsl-pl-revenue', value: 500, periodLabel: '2026' },
+          { canonicalLineId: 'fsl-pl-revenue', value: 300, periodLabel: '2025' },
+        ],
+        'P&L'
+      );
+
+      expect(result.messages.find((message) => message.code === 'DUPLICATE_CANONICAL_LINES')).toBe(
+        undefined
+      );
+    });
+
     it('excludes non-financial lines from validation', () => {
       const lines = [
         { canonicalLineId: 'fsl-bs-total-assets', value: 1000 },
@@ -147,6 +161,31 @@ describe('financialStatementService — contract tests', () => {
       const result = validateStatement([], 'P&L');
       expect(['pass', 'warnings', 'needs_review']).toContain(result.status);
       expect(Array.isArray(result.messages)).toBe(true);
+    });
+  });
+
+  describe('extractFinancialLines', () => {
+    it('parses comma-only UK thousands as whole report units', () => {
+      const text = Array.from({ length: 25 }, (_, index) =>
+        index === 8
+          ? 'Group balance sheet'
+          : index === 9
+            ? '28 February 2026 22 February 2025'
+            : index === 10
+              ? 'Property, plant and equipment 17,728 17,262'
+              : `filler ${index}`
+      ).join('\n');
+
+      const result = extractFinancialLines(text, 'BS', {
+        selectedPeriodLabel: '2026',
+        comparisonPeriodLabel: '2025',
+      });
+      const row = result.lines.find((line) =>
+        line.originalLabel.includes('Property, plant and equipment')
+      );
+
+      expect(row?.value).toBe(17728);
+      expect(row?.comparisonValue).toBe(17262);
     });
   });
 
