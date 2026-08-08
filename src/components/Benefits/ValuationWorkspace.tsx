@@ -17,6 +17,7 @@ import {
 } from '@/services/api/v8/financeCandidateHandoffValuation';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { isFinanceEvBasketEnabled } from '@/utils/financeEvBasketFlag';
+import { valuationDisplayMultiplier } from '@/utils/valuationMonetaryUnit';
 
 import { ExportButton } from '../Finance/ExportButton';
 import { FinanceCandidateHandoffModal } from '../Finance/shared/FinanceCandidateHandoffModal';
@@ -75,6 +76,15 @@ function sensitivityHeatmapColor(value: number, min: number, max: number): strin
 function safeNumber(v: unknown, fb: number): number {
   const n = typeof v === 'string' ? Number(v) : typeof v === 'number' ? v : NaN;
   return Number.isFinite(n) ? n : fb;
+}
+
+export function formatValuationImpact(
+  value: unknown,
+  formatter: Intl.NumberFormat,
+  multiplier = 1
+): string {
+  const numeric = safeNumber(value, NaN);
+  return Number.isFinite(numeric) ? formatter.format(numeric * multiplier) : String(value ?? '—');
 }
 
 function safeJson<T>(raw: any, fallback: T): T {
@@ -242,6 +252,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   }, [initialValuationId, valuations, selectedId]);
 
   const computed = safeJson<any>(selected?.results, {});
+  const displayMultiplier = valuationDisplayMultiplier(computed);
   const dcf = computed?.dcf;
   const advisory = safeJson<any>(selected?.advisory, null);
   const negotiationPack = safeJson<any>(selected?.negotiation_pack, null);
@@ -288,12 +299,8 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   }, [selected?.currency, i18n.language]);
 
   const fmtValue = useCallback(
-    (v: unknown): string => {
-      const n = safeNumber(v, NaN);
-      if (!Number.isFinite(n)) return String(v ?? '—');
-      return fmtCurrency.format(n);
-    },
-    [fmtCurrency]
+    (v: unknown): string => formatValuationImpact(v, fmtCurrency, displayMultiplier),
+    [displayMultiplier, fmtCurrency]
   );
 
   const validationError = useMemo(() => {
@@ -1149,6 +1156,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       basket={evBasket}
                       subjectLabel={selected?.title}
                       unitLabel={selected?.currency || 'PLN'}
+                      formatValue={fmtValue}
                       t={t as (key: string, defaultValue: string) => string}
                     />
                   )}
@@ -1524,7 +1532,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                                 sensitivityHeatmapColor(ev, minEv, maxEv),
                                               ].join(' ')}
                                             >
-                                              {fmtCell.format(ev)}
+                                              {fmtCell.format(ev * displayMultiplier)}
                                             </td>
                                           );
                                         })}

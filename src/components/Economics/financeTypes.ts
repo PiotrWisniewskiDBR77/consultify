@@ -463,6 +463,12 @@ export interface PreviewDataState {
     enterpriseValue: number | null;
     equityValue: number | null;
     evEbitda: number | null;
+    currency: string;
   } | null;
-  valuationPreviewDetail: { advisory: any; negotiationPack: any; sensitivity: any } | null;
+  valuationPreviewDetail: {
+    advisory: any;
+    negotiationPack: any;
+    sensitivity: any;
+    displayMultiplier: number;
+  } | null;
 }
