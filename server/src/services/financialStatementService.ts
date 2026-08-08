@@ -7568,6 +7568,7 @@ export async function backfillStatementValueSourcePages(statementId: string): Pr
       [statementId]
     )) as { ingest_run_id?: string | null } | undefined;
     const ingestRunId = latestRun?.ingest_run_id || null;
+    const candidateRunFilter = ingestRunId ? `AND row.ingest_run_id = ?` : '';
     const candidates = (await dbAll(
       `SELECT row.source_row, row.source_page, row.normalized_label,
               mapping.canonical_line_id
@@ -7576,9 +7577,9 @@ export async function backfillStatementValueSourcePages(statementId: string): Pr
          ON mapping.candidate_row_id = row.id AND mapping.is_selected = TRUE
        WHERE row.statement_id = ?
          AND row.source_page IS NOT NULL
-         AND (? IS NULL OR row.ingest_run_id = ?)
+         ${candidateRunFilter}
        ORDER BY row.created_at DESC`,
-      [statementId, ingestRunId, ingestRunId]
+      ingestRunId ? [statementId, ingestRunId] : [statementId]
     )) as Array<{
       source_row?: number | null;
       source_page?: number | null;
