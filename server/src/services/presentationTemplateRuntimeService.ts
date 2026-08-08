@@ -660,6 +660,14 @@ function labelledList(sourceLines: string[], label: RegExp): string[] {
     : [];
 }
 
+function compactSlideText(value: unknown, maxLength = 110): string {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) return text;
+  const clipped = text.slice(0, maxLength - 1);
+  const boundary = clipped.lastIndexOf(' ');
+  return `${clipped.slice(0, boundary > maxLength * 0.65 ? boundary : clipped.length).trim()}…`;
+}
+
 /**
  * Materialise an approved template into useful, audience-facing slide content.
  * The template stores instructions rather than source facts, so these blocks
@@ -681,7 +689,7 @@ function blocksForTemplateIntent(
   // newly-created deck full of placeholders even when a detailed brief was
   // supplied.  Prefer grounded brief content; the template still controls
   // structure, layout and evidence labels.
-  const headline = briefLines[0] || keyMessage || hints[0] || title;
+  const headline = compactSlideText(briefLines[0] || keyMessage || hints[0] || title, 120);
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
   const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
@@ -705,7 +713,7 @@ function blocksForTemplateIntent(
               .slice(0, 3)
               .map((label) => ({
                 title: label,
-                description: groundedValueForLabel(label, sourceLines),
+                description: compactSlideText(groundedValueForLabel(label, sourceLines), 72),
               })),
           },
         },
@@ -729,7 +737,7 @@ function blocksForTemplateIntent(
         },
       ];
     case 'comparison':
-      const comparisonFacts = briefLines.slice(0, 3);
+      const comparisonFacts = briefLines.slice(0, 3).map((line) => compactSlideText(line, 88));
       return [
         heading,
         paragraph,
@@ -757,23 +765,37 @@ function blocksForTemplateIntent(
               {
                 date: '0–3',
                 title: 'Mobilise',
-                description: briefLines[0] || 'Confirm baseline, owners and controls.',
+                description: compactSlideText(
+                  briefLines[0] || 'Confirm baseline, owners and controls.',
+                  72
+                ),
               },
               {
                 date: '4–9',
                 title: 'Prove',
-                description: briefLines[1] || 'Deliver priority use cases and validate value.',
+                description: compactSlideText(
+                  briefLines[1] || 'Deliver priority use cases and validate value.',
+                  72
+                ),
               },
               {
                 date: '10–18',
                 title: 'Scale',
-                description: briefLines[2] || 'Expand proven automation and lock in benefits.',
+                description: compactSlideText(
+                  briefLines[2] || 'Expand proven automation and lock in benefits.',
+                  72
+                ),
               },
             ],
           },
         },
         ...(briefLines.length > 1
-          ? [{ type: 'bullet_list', content: { items: briefLines.slice(1, 5) } }]
+          ? [
+              {
+                type: 'bullet_list',
+                content: { items: briefLines.slice(1, 3).map((line) => compactSlideText(line, 72)) },
+              },
+            ]
           : []),
       ];
     case 'risk_management':
@@ -788,10 +810,13 @@ function blocksForTemplateIntent(
             headers: ['Risk', 'Exposure', 'Mitigation', 'Owner'],
             rows:
               risks.length > 0
-                ? risks.slice(0, 4).map((risk, index) => [
-                    risk,
+                ? risks.slice(0, 3).map((risk, index) => [
+                    compactSlideText(risk, 48),
                     'Open',
-                    mitigations[index] || mitigations[0] || 'Mitigation required',
+                    compactSlideText(
+                      mitigations[index] || mitigations[0] || 'Mitigation required',
+                      58
+                    ),
                     'Owner required',
                   ])
                 : [
@@ -830,7 +855,9 @@ function blocksForTemplateIntent(
               : hints.length
               ? hints
               : ['Decision rights', 'Value ownership', 'Control cadence']
-            ).slice(0, 5),
+            )
+              .slice(0, 3)
+              .map((line) => compactSlideText(line, 76)),
           },
         },
       ];
@@ -851,7 +878,9 @@ function blocksForTemplateIntent(
                   'Nominate accountable owners',
                   'Launch the first control gate',
                 ]
-            ).slice(0, 5),
+            )
+              .slice(0, 3)
+              .map((line) => compactSlideText(line, 76)),
           },
         },
       ];
@@ -863,7 +892,11 @@ function blocksForTemplateIntent(
           ? [
               {
                 type: 'bullet_list',
-                content: { items: (briefLines.length > 1 ? briefLines : hints).slice(1, 6) },
+                content: {
+                  items: (briefLines.length > 1 ? briefLines : hints)
+                    .slice(1, 4)
+                    .map((line) => compactSlideText(line, 76)),
+                },
               },
             ]
           : []),
@@ -884,11 +917,17 @@ function briefLinesForOutlineItem(
     [/thesis|cover|venture/, ['thesis', 'company', 'product', 'version', 'audience']],
     [/problem|customer/, ['problem', 'customer', 'beachhead', 'trigger', 'workaround']],
     [/product|why now|workflow/, ['workflow', 'product', 'evidence', 'status', 'privacy']],
-    [/market|opportunit/, ['market', 'beachhead', 'customer', 'segment', 'adoption']],
+    [
+      /market|opportunit/,
+      ['market', 'beachhead', 'customer', 'segment', 'adoption', 'expansion', 'price', 'pricing'],
+    ],
     [/business model|gtm|go-to-market/, ['business model', 'pricing', 'subscription', 'revenue', 'gtm', 'channel']],
     [/evidence|economic|risk/, ['evidence', 'measure', 'risk', 'owner', 'mitigation', 'cogs']],
     [/competition|defensib/, ['defensibility', 'competition', 'proprietary', 'telemetry', 'distribution']],
-    [/financial|outlook/, ['financial', 'scenario', 'revenue', 'cogs', 'margin', 'ebitda', 'cash', 'runway']],
+    [
+      /financial|outlook/,
+      ['financial', 'scenario', 'revenue', 'cogs', 'margin', 'ebitda', 'cash', 'runway', 'headcount', 'opex'],
+    ],
     [/team|governance/, ['team', 'owner', 'governance', 'privacy', 'security', 'finance']],
     [/funding|ask|milestone|next step/, ['ask', 'pilot', 'milestone', 'decision', 'funding', '90-day']],
   ];
@@ -912,7 +951,7 @@ function briefLinesForOutlineItem(
         return { line, score: keywordScore - evidencePenalty, position };
       })
       .sort((a, b) => b.score - a.score || a.position - b.position)
-      .slice(0, 5)
+      .slice(0, 7)
       .map(({ line }) => line);
   }
 
