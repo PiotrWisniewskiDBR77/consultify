@@ -1,5 +1,5 @@
 import { ExternalLink, Package } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -43,7 +43,11 @@ import {
  * reconciled (see the T22 read-only preflight, R10). Do not treat T22-TABLE-
  * T00 / T22-PREVIEW-P01 as fully closed until that integration lands.
  */
-export const AssessmentOutputsTab: React.FC = () => {
+interface AssessmentOutputsTabProps {
+  onCountChange?: (count: number | null) => void;
+}
+
+export const AssessmentOutputsTab: React.FC<AssessmentOutputsTabProps> = ({ onCountChange }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const isPolish = !!i18n.language?.startsWith('pl');
@@ -58,13 +62,19 @@ export const AssessmentOutputsTab: React.FC = () => {
   // below) regardless of what failed or why.
   const [hasLoadError, setHasLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const onCountChangeRef = useRef(onCountChange);
+
+  useEffect(() => {
+    onCountChangeRef.current = onCountChange;
+  }, [onCountChange]);
 
   // Deliberately NO dependency on `t`: react-i18next's `t` is not guaranteed
   // referentially stable across renders (and isn't in this suite's mock),
   // so depending on it here would re-trigger the effect below on every
   // render — re-fetching and, worse, racing a freshly-selected row's data
   // out from under an open preview. `load` only closes over stable setState
-  // functions, so an empty dependency array is correct, not a lint escape.
+  // functions and the latest parent callback held in a ref, so an empty
+  // dependency array is correct, not a lint escape.
   const load = useCallback(() => {
     let cancelled = false;
     setLoading(true);
@@ -73,12 +83,14 @@ export const AssessmentOutputsTab: React.FC = () => {
       .then((rows) => {
         if (cancelled) return;
         setItems(rows);
+        onCountChangeRef.current?.(rows.length);
       })
       .catch(() => {
         if (cancelled) return;
         // Honest error state — no fallback to a fabricated/demo row set.
         setItems([]);
         setHasLoadError(true);
+        onCountChangeRef.current?.(null);
         // Do not log the raw exception: upstream messages can contain URLs,
         // SQL fragments, authorization headers, or other sensitive values.
         // eslint-disable-next-line no-console -- fixed diagnostic only.

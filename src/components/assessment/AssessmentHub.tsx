@@ -405,6 +405,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
   const [reports, setReports] = useState<ReportBuilderReportFromAPI[]>([]);
   const [initiatives, setInitiatives] = useState<any[]>([]);
+  const [outputsCount, setOutputsCount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
@@ -628,6 +629,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: 0 };
 
+    if (activeTab === 'outputs') {
+      counts.all = outputsCount ?? 0;
+      return counts;
+    }
+
     let data: any[] = [];
     switch (activeTab) {
       case 'list':
@@ -656,7 +662,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     });
 
     return counts;
-  }, [activeTab, assessments, reports, initiatives, importedReports]);
+  }, [activeTab, assessments, reports, initiatives, importedReports, outputsCount]);
 
   // Tab configuration — T22-INTEGRATION-SHELL: 5 stable tab ids behind
   // `assessmentFiveSurfacesV1`. OFF keeps the original 3 tabs verbatim (same
@@ -704,6 +710,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         id: 'outputs' as ModuleTab,
         label: 'Outputs',
         icon: <Package size={16} />,
+        count: outputsCount ?? undefined,
       },
       {
         id: 'reports' as ModuleTab,
@@ -718,7 +725,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         count: initiatives.length,
       },
     ];
-  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports]);
+  }, [
+    fiveSurfacesEnabled,
+    assessments.length,
+    reports,
+    initiatives,
+    importedReports,
+    outputsCount,
+  ]);
 
   // Table columns for assessments
   // Dynamic columns per active tab
@@ -1416,18 +1430,32 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const statusChipOptions = useMemo(() => getStatusesForModule(statusContext), [statusContext]);
   const statusFilterChips = useMemo(
     () =>
-      statusChipOptions.map((opt) => ({
-        id: `status-${opt.id}`,
-        label: isPolish ? opt.labelPL : opt.label,
-        badge: statusCounts[opt.id] ?? 0,
-        active: statusFilter === opt.id,
-        icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
-        onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
-        title: t('assessment.hub.statusFilterTooltip', 'Filter the list by status "{{status}}".', {
-          status: isPolish ? opt.labelPL : opt.label,
-        }),
-      })),
-    [isPolish, statusChipOptions, statusCounts, statusFilter, t]
+      activeTab === 'outputs'
+        ? [
+            {
+              id: 'status-all',
+              label: 'All',
+              badge: outputsCount ?? 0,
+              active: true,
+              title: t('assessment.hub.outputsCountTooltip', 'Outputs in the current list.'),
+            },
+          ]
+        : statusChipOptions.map((opt) => ({
+            id: `status-${opt.id}`,
+            label: isPolish ? opt.labelPL : opt.label,
+            badge: statusCounts[opt.id] ?? 0,
+            active: statusFilter === opt.id,
+            icon: <span className={`h-1.5 w-1.5 rounded-full ${opt.bgColor}`} />,
+            onClick: () => setStatusFilter(statusFilter === opt.id ? 'all' : opt.id),
+            title: t(
+              'assessment.hub.statusFilterTooltip',
+              'Filter the list by status "{{status}}".',
+              {
+                status: isPolish ? opt.labelPL : opt.label,
+              }
+            ),
+          })),
+    [activeTab, isPolish, outputsCount, statusChipOptions, statusCounts, statusFilter, t]
   );
 
   const hubMenu3InfoChips = useMemo(
@@ -1963,7 +1991,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
     if (activeTab === 'outputs') {
       return (
         <div className="h-full overflow-hidden">
-          <AssessmentOutputsTab />
+          <AssessmentOutputsTab onCountChange={setOutputsCount} />
         </div>
       );
     }

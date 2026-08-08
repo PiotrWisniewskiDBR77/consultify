@@ -253,7 +253,10 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces', () => {
   });
 
   it('flag ON: outputs tab renders the real, unmodified AssessmentOutputsTab (org-scoped, real row)', async () => {
-    isEnabledMock.mockImplementation((id: string) => id === 'assessmentFiveSurfacesV1');
+    isEnabledMock.mockImplementation(
+      (id: string) =>
+        id === 'assessmentFiveSurfacesV1' || id === 'assessmentMenu3StatusChips'
+    );
     apiMock.get.mockImplementation((url: string) => {
       if (String(url).startsWith('/artifacts')) {
         return Promise.resolve({
@@ -293,6 +296,8 @@ describe('T22-INTEGRATION-SHELL AssessmentHub five-surfaces', () => {
     );
 
     expect(await screen.findByText('Real Output From Registry')).toBeInTheDocument();
+    expect(screen.getByTitle('Outputs in the current list.')).toHaveTextContent('All1');
+    expect(screen.queryByRole('button', { name: /^Draft/ })).not.toBeInTheDocument();
   });
 
   it('flag ON: library tab shows an honest EmptyState placeholder — no rows, no fabricated data, no StandardTable', async () => {
@@ -329,9 +334,9 @@ describe('T22-INTEGRATION-SHELL source anchors (protects T20/T21/T23/T24 source-
     expect(source).not.toContain('<AssessmentLibraryTab');
   });
 
-  it('imports the real AssessmentOutputsTab unchanged, wired with zero props', () => {
+  it('wires the real AssessmentOutputsTab count callback without changing its data ownership', () => {
     expect(source).toContain("import { AssessmentOutputsTab } from './AssessmentOutputsTab';");
-    expect(source).toContain('<AssessmentOutputsTab />');
+    expect(source).toContain('<AssessmentOutputsTab onCountChange={setOutputsCount} />');
   });
 });
 

@@ -87,6 +87,20 @@ describe('T22-TABLE-PREVIEW-COMPONENT AssessmentOutputsTab', () => {
     expect(String(apiMock.get.mock.calls[0][0])).toContain('/artifacts');
   });
 
+  it('reports the truthful filtered row count to its parent, including empty and error states', async () => {
+    const onCountChange = vi.fn();
+    mockArtifactsResponse([ASSESSMENT_ROW, OTHER_ROW]);
+    const { unmount } = render(<AssessmentOutputsTab onCountChange={onCountChange} />);
+
+    await waitFor(() => expect(onCountChange).toHaveBeenLastCalledWith(1));
+    unmount();
+
+    vi.clearAllMocks();
+    apiMock.get.mockRejectedValueOnce(new Error('network down'));
+    render(<AssessmentOutputsTab onCountChange={onCountChange} />);
+    await waitFor(() => expect(onCountChange).toHaveBeenLastCalledWith(null));
+  });
+
   it('renders a populated table with real, non-fabricated fields', async () => {
     mockArtifactsResponse([ASSESSMENT_ROW]);
     render(<AssessmentOutputsTab />);
