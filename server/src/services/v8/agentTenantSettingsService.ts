@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { get as dbGet } from '../../utils/DbPromise.js';
 import { withPgTransaction } from '../../utils/queryHelpers.js';
+import { clearFlagCache } from './featureFlagService.js';
 
 export const A06_TENANT_SEED_VERSION = 'a06-t01-v1';
 export const A06_RATIFIED_TOOLS = [
@@ -52,6 +53,33 @@ async function countManagedA06Policies(
   );
 }
 
+async function enableV8ForTenant(
+  client: { query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> },
+  organizationId: string,
+  actorUserId: string
+): Promise<void> {
+  const relation = (
+    await client.query<{ namespaced: string | null; fallback: string | null }>(
+      `SELECT to_regclass('v8.v8_feature_flags')::text AS namespaced,
+              to_regclass('v8_feature_flags')::text AS fallback`
+    )
+  ).rows[0];
+  const table = relation?.namespaced
+    ? 'v8.v8_feature_flags'
+    : relation?.fallback
+      ? 'v8_feature_flags'
+      : null;
+  if (!table) throw new Error('AGENT_ACTIVATION_V8_FLAGS_NOT_FOUND');
+  await client.query(
+    `INSERT INTO ${table}
+       (flag_id,organization_id,module,enabled,updated_at,updated_by)
+     VALUES (?,?,'v8_enabled',1,NOW(),?)
+     ON CONFLICT (organization_id,module)
+     DO UPDATE SET enabled=1,updated_at=NOW(),updated_by=EXCLUDED.updated_by`,
+    [`${organizationId}:v8_enabled`, organizationId, actorUserId]
+  );
+}
+
 type AdminRole = 'ADMIN' | 'OWNER' | 'SUPERADMIN';
 function assertAuthority(role: string): asserts role is AdminRole {
   if (!['ADMIN', 'OWNER', 'SUPERADMIN'].includes(role.toUpperCase()))
@@ -98,7 +126,7 @@ export async function updateAgentTenantSettings(input: {
   await assertProject(input.organizationId, input.projectId ?? null);
   if (Object.values(input.autoActions).some(Boolean))
     throw new Error('AGENT_AUTO_ACTIONS_REQUIRE_POLICY');
-  return withPgTransaction(async (client) => {
+  const activation = await withPgTransaction(async (client) => {
     await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
       `agent-settings:${input.organizationId}:${input.projectId ?? ''}`,
     ]);
@@ -188,6 +216,7 @@ export async function activateA06ForTenant(input: {
     if (replay) {
       if (replay.request_digest !== requestDigest)
         throw new Error('AGENT_ACTIVATION_IDEMPOTENCY_CONFLICT');
+      await enableV8ForTenant(client, input.organizationId, input.actorUserId);
       const replayCount = await countManagedA06Policies(
         client,
         input.organizationId,
@@ -197,6 +226,7 @@ export async function activateA06ForTenant(input: {
         throw new Error('AGENT_ACTIVATION_READBACK_DRIFT');
       return { ...replay, idempotentReplay: true };
     }
+    await enableV8ForTenant(client, input.organizationId, input.actorUserId);
     for (const [name, riskClass, mutationType] of A06_RATIFIED_TOOLS) {
       const toolId = `a06-t01:${input.organizationId}:${name.replaceAll('.', ':')}`;
       await client.query(
@@ -273,4 +303,6 @@ export async function activateA06ForTenant(input: {
       idempotentReplay: false,
     };
   });
+  clearFlagCache(input.organizationId);
+  return activation;
 }

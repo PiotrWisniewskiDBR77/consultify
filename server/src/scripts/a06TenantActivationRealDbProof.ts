@@ -60,6 +60,7 @@ const proofDb = {
 async function main() {
   await pool.query('DROP SCHEMA public CASCADE; CREATE SCHEMA public');
   await pool.query(`CREATE TABLE organizations(id TEXT PRIMARY KEY);CREATE TABLE projects(id TEXT PRIMARY KEY,organization_id TEXT NOT NULL);
+    CREATE TABLE v8_feature_flags(flag_id TEXT PRIMARY KEY,organization_id TEXT NOT NULL,module TEXT NOT NULL,enabled INTEGER NOT NULL,updated_at TIMESTAMPTZ,updated_by TEXT,UNIQUE(organization_id,module));
     CREATE TABLE v8_tool_catalog(tool_id TEXT PRIMARY KEY,organization_id TEXT,name TEXT,description TEXT,category TEXT,risk_class TEXT,mutation_type TEXT,classification_status TEXT,default_approval_mode TEXT,classified_by TEXT,classified_at TIMESTAMPTZ,version TEXT,created_at TIMESTAMPTZ,updated_at TIMESTAMPTZ);
     CREATE TABLE v8_consumer_tool_policies(policy_id TEXT PRIMARY KEY,organization_id TEXT,project_id TEXT,consumer_class TEXT,tool_id TEXT,allowed INTEGER,approval_override TEXT,max_invocations_per_run INTEGER,effective_from TIMESTAMPTZ,created_at TIMESTAMPTZ,updated_at TIMESTAMPTZ);
     INSERT INTO organizations VALUES('org-admin');INSERT INTO projects VALUES('project-admin','org-admin');`);
@@ -157,10 +158,10 @@ async function main() {
   assert.equal([a, b].filter((x) => x.idempotentReplay).length, 1);
   const readback = (
     await pool.query(
-      `SELECT (SELECT COUNT(*)::int FROM v8_tool_catalog) tools,(SELECT COUNT(*)::int FROM v8_consumer_tool_policies) policies,(SELECT COUNT(*)::int FROM v8_agent_tenant_activation_receipts) receipts,(SELECT COUNT(*)::int FROM v8_agent_admin_audit_events) audits`
+      `SELECT (SELECT COUNT(*)::int FROM v8_tool_catalog) tools,(SELECT COUNT(*)::int FROM v8_consumer_tool_policies) policies,(SELECT COUNT(*)::int FROM v8_agent_tenant_activation_receipts) receipts,(SELECT COUNT(*)::int FROM v8_agent_admin_audit_events) audits,(SELECT enabled FROM v8_feature_flags WHERE organization_id='org-admin' AND module='v8_enabled') v8_enabled`
     )
   ).rows[0];
-  assert.deepEqual(readback, { tools: 17, policies: 17, receipts: 1, audits: 2 });
+  assert.deepEqual(readback, { tools: 17, policies: 17, receipts: 1, audits: 2, v8_enabled: 1 });
   console.log(
     JSON.stringify({
       proof: 'A06_TENANT_ADMIN_SETTINGS_REALDB_GREEN',
@@ -169,6 +170,7 @@ async function main() {
       versionConflictDenied: true,
       autoActionsDenied: true,
       concurrency2: { tools: 17, policies: 17, receipts: 1 },
+      tenantV8Enabled: true,
       retention: { detailDays: 30, aggregateMonths: 13 },
       exportEnabled: false,
       purgeEnabled: false,
