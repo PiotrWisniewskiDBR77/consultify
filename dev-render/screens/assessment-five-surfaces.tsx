@@ -75,7 +75,7 @@ const MOCK_REPORTS = [
   {
     id: 'report-1',
     name: 'DBR77 Digital Readiness — Raport zarządczy Q3 2026',
-    status: 'published',
+    status: 'approved',
     assessmentId: 'assess-1',
     assessmentName: 'DBR77 · Digital Readiness Diagnosis — Grupa',
     assessmentType: 'drd',
@@ -89,6 +89,34 @@ const MOCK_USERS = [
   { id: 'user-piotr-demo', firstName: 'Piotr', lastName: 'Wiśniewski' },
   { id: 'user-anna-demo', firstName: 'Anna', lastName: 'Kowalska' },
 ];
+
+const MOCK_INITIATIVES = [
+  {
+    id: 'initiative-assessment-1',
+    name: 'Stabilize production-data governance',
+    status: 'pending_review',
+    priority: 'high',
+    impact: 'high',
+    sourceType: 'assessment_report',
+    sourceId: 'report-1',
+    reportName: 'DBR77 Digital Readiness — Raport zarządczy Q3 2026',
+    createdBy: 'user-piotr-demo',
+    createdAt: '2026-07-10T12:15:00Z',
+    updatedAt: '2026-07-11T08:30:00Z',
+  },
+];
+
+const MOCK_REPORT_DETAIL = {
+  id: 'report-1',
+  name: 'DBR77 Digital Readiness — Raport zarządczy Q3 2026',
+  status: 'approved',
+  assessmentId: 'assess-1',
+  assessmentName: 'DBR77 · Digital Readiness Diagnosis — Grupa',
+  assessmentType: 'drd',
+  createdAt: '2026-07-05T09:00:00Z',
+  updatedAt: '2026-07-10T12:00:00Z',
+  createdBy: 'user-piotr-demo',
+};
 
 // Outputs Library rows — one fully-populated, one with several null fields
 // so the empty-placeholder path (QA-CORRECTION-1) shows too.
@@ -142,8 +170,10 @@ Api.getAssessmentReports = (async () => MOCK_REPORTS) as typeof Api.getAssessmen
 Api.listReportImports = (async () => ({ data: [] })) as typeof Api.listReportImports;
 const originalGet = Api.get.bind(Api);
 Api.get = (async (url: string, ...rest: unknown[]) => {
-  if (url.startsWith('/initiatives')) return [];
+  if (url === '/initiatives?source=assessment') return MOCK_INITIATIVES;
   if (url.startsWith('/artifacts')) return { data: MOCK_ARTIFACTS };
+  if (url === '/assessment-reports/report-1/full') return { report: MOCK_REPORT_DETAIL };
+  if (url === '/report-builder/report-1/exports') return { exports: [] };
   return (originalGet as any)(url, ...rest);
 }) as typeof Api.get;
 
