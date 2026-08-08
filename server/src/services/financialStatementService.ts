@@ -1404,13 +1404,19 @@ export function locateStatementSections(
         )
     ).length;
     const hasSegmentData = hasSegmentBreakdownHeaders || hasGeographicOrProductLines >= 3;
+    const repeatedImpairmentRows = (windowText.match(/impairment/g) || []).length >= 3;
 
     const contextPenalty =
       (isNotesOrMDASection ? 80 : 0) +
       (isMDASection ? 100 : 0) +
       (isSegmentSection ? 60 : 0) +
       (isNoteDetailSection ? 40 : 0) +
-      (hasSegmentData ? 120 : 0);
+      (hasSegmentData ? 120 : 0) +
+      // Notes often repeat a primary-statement heading inside a reconciliation
+      // table (for example an impairment note headed "Group income statement").
+      // Those tables can be denser than the real statement and used to win the
+      // score despite representing only one disclosure topic.
+      (repeatedImpairmentRows ? 180 : 0);
 
     const tooFewNumericLinesPenalty = numericLines < 5 ? (5 - numericLines) * 30 : 0;
 
