@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 
 /** Frozen Agent/T01 release order. Do not infer it from the filesystem. */
 const migrationNames = [
+  '20260806_v8_agent_template_version_prerequisite.sql',
   '20260807_agent_t01_transformation_case.sql',
   '20260807_v8_agent_adapter_orchestration.sql',
   '20260807_v8_agent_context_grounding.sql',
@@ -44,10 +45,7 @@ async function installCanonicalPrerequisites(pool: Pool): Promise<void> {
     CREATE TABLE projects (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, owner_id TEXT);
     CREATE TABLE initiatives (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, status TEXT, name TEXT);
     CREATE TABLE v8_execution_runs (run_id TEXT PRIMARY KEY, organization_id TEXT, created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE TABLE ai_playbook_template_versions (
-      id TEXT PRIMARY KEY, template_id TEXT NOT NULL, version INTEGER NOT NULL,
-      UNIQUE(template_id, version)
-    );
+    CREATE TABLE ai_playbook_templates (id TEXT PRIMARY KEY);
     CREATE TABLE wave8_agent_runs (
       run_id TEXT PRIMARY KEY, organization_id TEXT, agent_id TEXT, user_id TEXT,
       project_id TEXT, status TEXT, goal TEXT, requested_tools_json TEXT DEFAULT '[]',

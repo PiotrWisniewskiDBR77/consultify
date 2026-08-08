@@ -55,7 +55,7 @@ describe('Agent production build boundary', () => {
     const releaseMigrations = [
       ...proofSource.matchAll(/'(202608\d{2}_[^']+\.sql)'/g),
     ].map((match) => match[1]);
-    expect(releaseMigrations).toHaveLength(20);
+    expect(releaseMigrations).toHaveLength(21);
 
     const expectedCommand =
       'DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
