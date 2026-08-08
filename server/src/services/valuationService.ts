@@ -501,6 +501,29 @@ export function valuationMonetaryUnit(scaling: unknown): ValuationMonetaryUnit {
   };
 }
 
+export function financialModelForecastYear(
+  bucket: PeriodOutput[],
+  yearIndex: number
+): ForecastYear {
+  const sum = (section: 'pl' | 'cf', codes: string[]) =>
+    bucket.reduce((acc, period) => {
+      const value = codes
+        .map((code) => period?.[section]?.[code])
+        .find((candidate) => candidate !== null && candidate !== undefined);
+      return acc + Number(value ?? 0);
+    }, 0);
+  const revenue = sum('pl', ['REVENUE']);
+  const ebitda = sum('pl', ['EBITDA']);
+  const operatingCf = sum('cf', ['OPERATING_CF', 'OPERATING_CASH_FLOW']);
+  const capexCf = sum('cf', ['CAPEX_CF', 'CAPEX', 'CAPITAL_EXPENDITURES']);
+  return {
+    year: yearIndex + 1,
+    fcff: round(operatingCf + capexCf, 2),
+    revenue: round(revenue, 2),
+    ebitda: round(ebitda, 2),
+  };
+}
+
 async function loadForecastFromBudget(
   orgId: string,
   budgetId: string,
@@ -652,21 +675,9 @@ async function loadForecastFromFinancialModel(
     .sort((a, b) => Number(a) - Number(b))
     .slice(0, horizonYears);
 
-  const years = yearsSorted.map((year, idx) => {
-    const bucket = yearBuckets[year] || [];
-    const sum = (section: 'pl' | 'cf', code: string) =>
-      bucket.reduce((acc, period) => acc + Number(period?.[section]?.[code] || 0), 0);
-    const revenue = sum('pl', 'REVENUE');
-    const ebitda = sum('pl', 'EBITDA');
-    const operatingCf = sum('cf', 'OPERATING_CF');
-    const capexCf = sum('cf', 'CAPEX');
-    return {
-      year: idx + 1,
-      fcff: round(operatingCf + capexCf, 2),
-      revenue: round(revenue, 2),
-      ebitda: round(ebitda, 2),
-    };
-  });
+  const years = yearsSorted.map((year, idx) =>
+    financialModelForecastYear(yearBuckets[year] || [], idx)
+  );
 
   if (!years.length) {
     throw new Error('Financial model did not produce annual forecast years');
