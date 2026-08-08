@@ -884,13 +884,13 @@ export async function computeRatios(
      WHERE fs.organization_id = ?
        AND (
          fs.id = ?
-         OR (? IS NOT NULL AND fs.statement_pack_id = ?)
+         OR fs.statement_pack_id = ?
        )
        AND (
          LOWER(COALESCE(fs.readiness_status, 'pending')) = 'ready'
          OR LOWER(COALESCE(fs.status, '')) IN ('confirmed', 'approved')
        )`,
-    [organizationId, statementId, stmt.statement_pack_id || null, stmt.statement_pack_id || null]
+    [organizationId, statementId, stmt.statement_pack_id || null]
   )) as any[];
 
   const values: Record<string, number> = {};
