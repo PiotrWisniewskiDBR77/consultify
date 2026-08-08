@@ -752,7 +752,7 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             // Actions column is structural — shown as LOCKED (wzór My Work).
                             {
                               id: '__actions',
-                              label: t('common.actions'),
+                              label: t('common.actions', 'Actions'),
                               required: true,
                               visible: true,
                             },
@@ -783,14 +783,21 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
                             });
                           }}
                           onReset={resetColumns}
-                          resetLabel={t('common.resetColumns')}
+                          resetLabel={t('common.resetColumns', 'Reset columns')}
                           showDescription={rowDescription.show}
                           onToggleDescription={rowDescription.onToggle}
-                          label={rowDescription.settingsLabel ?? t('common.viewSettings')}
-                          columnsHeading={
-                            rowDescription.columnsHeading ?? t('common.visibleColumns')
+                          label={
+                            rowDescription.settingsLabel ??
+                            t('common.viewSettings', 'View settings')
                           }
-                          descriptionLabel={rowDescription.label ?? t('common.showRowDescription')}
+                          columnsHeading={
+                            rowDescription.columnsHeading ??
+                            t('common.visibleColumns', 'Visible columns')
+                          }
+                          descriptionLabel={
+                            rowDescription.label ??
+                            t('common.showRowDescription', 'Show row description')
+                          }
                         />
                       </div>
                     ) : enableColumnSettings ? (
