@@ -1361,7 +1361,7 @@ export async function upsertAtelierFinanceGoldenFlow(
   // client checked out of the exactly-authorised WRITE pool and proved not to be
   // in recovery. A refusal here has issued ZERO statements.
   const opened = await openDecisiveReadSession();
-  if (!opened.ok) {
+  if (opened.ok === false) {
     return incomplete(
       `refusing to run: ${opened.reason} (fail-closed, zero statements issued). Evidence: ${opened.evidence}`
     );
@@ -1834,9 +1834,10 @@ async function seedAtelierFinanceOnPrimary(
     });
     markerPreDigest = digestPromotionState(preOnPrimary);
     const previewPlan = await planAtelierPromotion(read, planContext);
-    markerIntendedDigest = previewPlan.ok
-      ? digestPromotionState(intendedPromotionState(previewPlan.writes))
-      : `no-plan: ${previewPlan.reason}`;
+    markerIntendedDigest =
+      previewPlan.ok === true
+        ? digestPromotionState(intendedPromotionState(previewPlan.writes))
+        : `no-plan: ${previewPlan.reason}`;
   } catch (error) {
     markerPreDigest = `unreadable: ${(error as Error).message}`;
   }
@@ -1940,7 +1941,7 @@ async function seedAtelierFinanceOnPrimary(
       });
 
       const plan = await planAtelierPromotion(read, planContext);
-      if (!plan.ok) return { ok: false, reason: plan.reason };
+      if (plan.ok === false) return { ok: false, reason: plan.reason };
       intendedState = intendedPromotionState(plan.writes);
       return {
         ok: true,
@@ -2078,7 +2079,7 @@ async function seedAtelierFinanceOnPrimary(
         // the statements, their VALUES and the analysis, which no column
         // comparison can stand in for.
         const coherence = await planAtelierPromotion(read, planContext);
-        if (!coherence.ok) {
+        if (coherence.ok === false) {
           return {
             verdict: 'indeterminate',
             detail: `all ${expected} records match the intended post-promotion state but the production verdict refuses the fixture: ${coherence.reason}`,
@@ -2287,7 +2288,7 @@ async function seedAtelierFinanceOnPrimary(
   );
 
   const plan = await planAtelierPromotion(read, planContext);
-  if (!plan.ok) {
+  if (plan.ok === false) {
     settleMarker('ROLLED_BACK', `the promotion plan refused before any write: ${plan.reason}`);
     return incomplete(
       plan.reason,
@@ -2417,7 +2418,7 @@ async function planAtelierPromotion(
       valueColumns: context.valueColumns,
     });
 
-    if (!verdict.ok) {
+    if (verdict.ok === false) {
       refused.push(`${statement.statementType}: ${verdict.reason}`);
       continue;
     }
@@ -2467,7 +2468,7 @@ async function planAtelierPromotion(
     analysisId: context.analysisId,
     analysisColumns: context.analysisColumns,
   });
-  if (!analysisVerdict.ok) {
+  if (analysisVerdict.ok === false) {
     return { ok: false, reason: `analysis read-back failed: ${analysisVerdict.reason}` };
   }
 
@@ -2480,7 +2481,7 @@ async function planAtelierPromotion(
     packColumns: context.packColumns,
     verifiedStatementIds,
   });
-  if (!packVerdict.ok) {
+  if (packVerdict.ok === false) {
     return { ok: false, reason: `pack read-back failed: ${packVerdict.reason}` };
   }
 
@@ -3430,7 +3431,7 @@ export async function verifyAtelierFinanceGoldenFlowComplete(
   }
 
   const rates = await resolveAtelierAppraisalRates(modelId, organizationId);
-  if (!rates.ok) {
+  if (rates.ok === false) {
     return {
       fixtureComplete: true,
       goldenFlowComplete: false,

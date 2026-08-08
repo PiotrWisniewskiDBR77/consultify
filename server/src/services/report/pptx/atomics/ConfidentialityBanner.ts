@@ -6,6 +6,7 @@ import type { DesignTokens, RenderedElement } from '../types.js';
 
 export interface ConfidentialityBannerProps {
   level: 'confidential' | 'internal' | 'public';
+  language?: string;
 }
 
 export function ConfidentialityBanner(
@@ -14,11 +15,18 @@ export function ConfidentialityBanner(
 ): RenderedElement {
   // Discreet classification mark — a quiet metadata label, not an alarm.
   // Spaced caps read as an editorial mark rather than a warning sticker.
-  const labels: Record<string, string> = {
-    confidential: 'C O N F I D E N T I A L',
-    internal: 'I N T E R N A L',
-    public: 'P U B L I C',
-  };
+  const isPolish = props.language?.toLowerCase().startsWith('pl') ?? false;
+  const labels: Record<string, string> = isPolish
+    ? {
+        confidential: 'P O U F N E',
+        internal: 'W E W N E T R Z N E',
+        public: 'P U B L I C Z N E',
+      }
+    : {
+        confidential: 'C O N F I D E N T I A L',
+        internal: 'I N T E R N A L',
+        public: 'P U B L I C',
+      };
 
   // No alarming red. The mark stays in a muted, neutral tone so it reads as a
   // subtle footer-like classification rather than a red warning. On a dark

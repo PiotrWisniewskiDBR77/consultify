@@ -1263,9 +1263,11 @@ function redactAiReviewSnapshotForAnonymity(
             score: r.score,
             maxScore: r.maxScore,
             // justification intentionally dropped — may quote the raw answer
+            justification: '',
           }))
         : qe.rubric,
       // feedback intentionally dropped — same reason
+      feedback: '',
     })),
     weakAnswerMap: (aiReview.weakAnswerMap || []).map((w: any) => ({
       key: w.key,
@@ -1281,12 +1283,14 @@ function redactAiReviewSnapshotForAnonymity(
             label: r.label,
             score: r.score,
             maxScore: r.maxScore,
+            justification: '',
           }))
         : w.rubric,
       // #48A — names a rubric criterion only (e.g. "Depth"), never quotes the
       // raw answer — safe to keep under the anonymity wall like rubric labels.
       depthHint: w.depthHint,
       // feedback intentionally dropped
+      feedback: '',
     })),
   };
 }
@@ -3608,7 +3612,6 @@ export const InterviewController = {
         sessionId,
         organizationId: user.organizationId,
         userId: user.id,
-        userRole: user.role,
         action,
       });
       if (result === 'ok') {
@@ -7357,7 +7360,7 @@ ${JSON.stringify(questions || [], null, 2)}
       updates.push('answer_text = ?');
       params.push(voiceTranscript.trim());
     }
-    if (status && QUESTION_STATUSES.includes(status)) {
+    if (status && (QUESTION_STATUSES as readonly string[]).includes(status)) {
       updates.push('status = ?');
       params.push(status);
       if (status === 'answered') {
@@ -9196,7 +9199,7 @@ ${JSON.stringify(questions || [], null, 2)}
         sectionOverrides,
         user.id
       );
-      if (!merged.ok) {
+      if (merged.ok === false) {
         res.status(400).json({ error: merged.error, code: merged.code });
         return;
       }
@@ -9305,7 +9308,9 @@ ${JSON.stringify(questions || [], null, 2)}
     if (requestedSectionIds.length > 0) {
       try {
         const interviewInsightService = await import('../services/InterviewInsightService.js');
-        const fullInsight = (await interviewInsightService.getById(id)) as FilterableInsight | null;
+        const fullInsight = (await interviewInsightService.getById(
+          id
+        )) as unknown as FilterableInsight | null;
         if (fullInsight) {
           const { filtered, matched, markdown } = filterInsightBySectionIds(
             fullInsight,

@@ -7,8 +7,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { all as pooledAll, get as pooledGet, run as pooledRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../utils/queryHelpers.js';
 import { exportsDir } from '../utils/storagePaths.js';
 import { materializePlannedVisual } from './ai/deckVisualsService.js';
 import {
@@ -42,7 +44,10 @@ import {
   applyBrandLayoutSystem,
   buildBrandLayoutSystem,
 } from './presentationBrandLayoutService.js';
-import { deckDocumentFromUnifiedJson } from './presentationDeckDocumentService.js';
+import {
+  type DeckDocument,
+  deckDocumentFromUnifiedJson,
+} from './presentationDeckDocumentService.js';
 import { generateDeckVariants } from './presentationLayoutVariantsService.js';
 import { buildPresentationNarrativePlan } from './presentationNarrativePlannerService.js';
 import { preflightPresentationSourcePack } from './presentationSourcePackService.js';
@@ -74,6 +79,239 @@ import * as artifactRegistryService from './v8/artifactRegistryService.js';
 // ============================================================
 // TYPES
 // ============================================================
+
+// ============================================================
+// U02 — TRANSACTION PINNING FOR THE PRESENTATION OWNER MODULE
+// ============================================================
+
+/**
+ * An orchestrator that already owns a `withPgTransaction` client donates it
+ * here; every deck query below then runs on that transaction instead of the
+ * pooled handle. Without a donated client the behaviour is unchanged.
+ *
+ * Note the `dbRun` asymmetry: the pooled `DbPromise.run` defaults to
+ * `fallback: true` and resolves `{success:false}` on error instead of
+ * rejecting (the documented cause of silently-lost deck writes). Inside a
+ * donated transaction that would let a caller COMMIT a deck that was never
+ * inserted, so the pinned path rejects instead.
+ */
+const presentationOwnerTransaction = createPinnedClientContext('presentation_owner');
+
+export function withPresentationOwnerClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return presentationOwnerTransaction.withClient(client, fn);
+}
+
+type PooledQueryOptions = { timeout?: number; fallback?: boolean };
+
+async function dbAll<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T[]> {
+  const pinned = presentationOwnerTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows || [];
+  return pooledAll<T>(sql, params, options);
+}
+
+async function dbGet<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T | undefined> {
+  const pinned = presentationOwnerTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows[0];
+  return pooledGet<T>(sql, params, options);
+}
+
+async function dbRun(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> {
+  const pinned = presentationOwnerTransaction.current();
+  if (pinned) {
+    const result = await pinned.query(sql, params);
+    return { success: true, changes: result.rowCount ?? 0 };
+  }
+  return pooledRun(sql, params, options);
+}
+
+// ============================================================
+// U02 — NATIVE (DETERMINISTIC) DECK CREATION
+// ============================================================
+
+export interface CreateNativeDeckParams {
+  organizationId: string;
+  title: string;
+  /** Deterministic render model, already projected from frozen facts. */
+  unifiedJson: UnifiedReportJSON;
+  sourceType: string;
+  sourceId: string;
+  createdBy: string;
+  createdAt: string;
+  theme?: 'corporate' | 'minimal' | 'modern';
+  language?: 'en' | 'pl';
+  confidentiality?: 'confidential' | 'internal' | 'public';
+  status?: 'draft' | 'ready';
+  projectId?: string | null;
+  contextSnapshotId?: string | null;
+  executionRunId?: string | null;
+  registerArtifact?: boolean;
+  originSummary?: Record<string, unknown>;
+}
+
+export interface CreateNativeDeckResult {
+  deckId: string;
+  deck: DeckDocument;
+  slideCount: number;
+  registryArtifactId: string | null;
+}
+
+/**
+ * U02 — create a native Presentation artifact from a caller-supplied deck model.
+ *
+ * Deliberately NOT `generateOutline` + `generateDeck`: those call the narrative
+ * engine and the visual director, so the same approved facts would produce a
+ * different deck on every run. A governed publication needs the opposite —
+ * given one facts digest, exactly one deck. The caller therefore projects the
+ * frozen facts into `UnifiedReportJSON` and this function only persists it.
+ *
+ * `deck_json` (the native, editable DeckDocument) and `unified_json` (the
+ * render model) are written together so a later PPTX export reads back the
+ * native model rather than re-deriving it.
+ */
+export async function createNativeDeck(
+  params: CreateNativeDeckParams
+): Promise<CreateNativeDeckResult> {
+  if (!params.organizationId) throw new Error('native_deck_organization_required');
+  if (!params.unifiedJson.slides.length) throw new Error('native_deck_slides_required');
+
+  const deckId = uuidv4().replace(/-/g, '');
+  const status = params.status ?? 'ready';
+  const deck = deckDocumentFromUnifiedJson({
+    deckId,
+    organizationId: params.organizationId,
+    title: params.title,
+    unifiedJson: params.unifiedJson,
+    status,
+    createdBy: params.createdBy,
+    createdAt: params.createdAt,
+    updatedAt: params.createdAt,
+  });
+  const slideCount = params.unifiedJson.slides.length;
+
+  await dbRun(
+    `INSERT INTO presentation_decks (
+       id, organization_id, project_id, title, template_id, deck_type, audience, goal, language,
+       confidentiality, theme, source_artifacts, outline_json, status, deck_json,
+       unified_json, slide_count, version, generated_by, source_type, source_id,
+       created_at, updated_at
+     ) VALUES (?, ?, ?, ?, 'default', 'custom', 'executive', 'inform', ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)`,
+    [
+      deckId,
+      params.organizationId,
+      params.projectId ?? null,
+      params.title,
+      params.language ?? 'pl',
+      params.confidentiality ?? 'confidential',
+      params.theme ?? 'corporate',
+      JSON.stringify([]),
+      JSON.stringify([]),
+      status,
+      JSON.stringify(deck),
+      JSON.stringify(params.unifiedJson),
+      slideCount,
+      params.createdBy,
+      params.sourceType,
+      params.sourceId,
+      params.createdAt,
+      params.createdAt,
+    ]
+  );
+
+  let registryArtifactId: string | null = null;
+  if (params.registerArtifact !== false) {
+    const artifact = await artifactRegistryService.registerArtifactOrigin({
+      organizationId: params.organizationId,
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: deckId,
+      titleSnapshot: params.title,
+      ownerUserId: params.createdBy,
+      createdBy: params.createdBy,
+      deliveryState: artifactRegistryService.mapPresentationStatusToDeliveryState(status),
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'presentation',
+        projectId: params.projectId ?? null,
+        ownerUserId: params.createdBy,
+      }),
+      projectId: params.projectId ?? null,
+      contextSnapshotId: params.contextSnapshotId ?? undefined,
+      executionRunId: params.executionRunId ?? undefined,
+      originSummary: {
+        sourceType: params.sourceType,
+        sourceId: params.sourceId,
+        nativeStatus: status,
+        sourceTable: 'presentation_decks',
+        ...(params.originSummary ?? {}),
+      },
+    });
+    if (!artifact) throw new Error('native_deck_artifact_registration_failed');
+    registryArtifactId = artifact.artifactId;
+  }
+
+  return { deckId, deck, slideCount, registryArtifactId };
+}
+
+export interface CreateNativeDeckVersionResult {
+  versionId: string;
+  version: number;
+}
+
+/**
+ * U02 — write the immutable version row for a native deck.
+ *
+ * Unlike the autosave path in `presentations.routes.ts` this is NOT wrapped in
+ * a swallowing try/catch: for a governed publication a missing version row is a
+ * failure, not an optional nicety. The `(deck_id, version)` uniqueness added by
+ * `20260810_t01_u02_native_final_outputs.sql` makes a duplicate fail closed.
+ */
+export async function createNativeDeckVersion(params: {
+  deckId: string;
+  organizationId: string;
+  version: number;
+  deck: DeckDocument;
+  slideCount: number;
+  createdBy: string;
+  createdAt: string;
+}): Promise<CreateNativeDeckVersionResult> {
+  const owner = await dbGet<{ id: string }>(
+    `SELECT id FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [params.deckId, params.organizationId]
+  );
+  if (!owner) throw new Error('native_deck_version_owner_not_found');
+
+  const versionId = uuidv4();
+  await dbRun(
+    `INSERT INTO presentation_deck_versions (
+       id, deck_id, version, deck_json_snapshot, slide_count, created_by, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      versionId,
+      params.deckId,
+      params.version,
+      JSON.stringify(params.deck),
+      params.slideCount,
+      params.createdBy,
+      params.createdAt,
+    ]
+  );
+  return { versionId, version: params.version };
+}
 
 /**
  * K5 (decyzja właściciela 07-19) — poziom szczegółowości generacji artefaktu.
@@ -2078,7 +2316,12 @@ export async function generateDeck(
           ((setup as any).presentationMode === 'document'
             ? 'Digital Transformation Read Deck'
             : 'Board Decision Deck'),
-        footerText: setup.confidentiality === 'public' ? 'Consultify' : 'Confidential · Consultify',
+        footerText:
+          setup.confidentiality === 'public'
+            ? 'Consultify'
+            : setup.language === 'pl'
+              ? 'Poufne · Consultify'
+              : 'Confidential · Consultify',
       })
     );
     const pipeline = new PptxPipelineService();

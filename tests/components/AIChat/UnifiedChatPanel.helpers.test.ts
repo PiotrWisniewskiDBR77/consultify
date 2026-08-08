@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { __private__ } from '../../../src/components/AIChat/UnifiedChatPanel';
+import {
+  __private__,
+  transformationCaseReadyMessage,
+  transformationIntakeMissingLabels,
+} from '../../../src/components/AIChat/UnifiedChatPanel';
 
 const { firstMatchIndex, isLikelyAiFailureText, extractSlashPayload, parseChatSaveIntent } =
   __private__;
@@ -19,9 +23,7 @@ describe('UnifiedChatPanel helpers (L2)', () => {
   });
 
   it('parseChatSaveIntent handles slash commands and save phrases', () => {
-    expect(parseChatSaveIntent('/note')).toEqual(
-      expect.objectContaining({ target: 'note' })
-    );
+    expect(parseChatSaveIntent('/note')).toEqual(expect.objectContaining({ target: 'note' }));
     expect(parseChatSaveIntent('/idea Build')).toEqual(
       expect.objectContaining({ target: 'idea', cleanPrompt: 'Build' })
     );
@@ -46,5 +48,21 @@ describe('UnifiedChatPanel helpers (L2)', () => {
     expect(isLikelyAiFailureText('')).toBe(true);
     expect(isLikelyAiFailureText('AI returned no output')).toBe(true);
     expect(isLikelyAiFailureText('All good')).toBe(false);
+  });
+
+  it('localizes transformation follow-up keys without hiding unknown fields', () => {
+    expect(transformationIntakeMissingLabels(['measurable_outcomes', 'scope'], 'pl')).toBe(
+      'mierzalny wynik, zakres'
+    );
+    expect(transformationIntakeMissingLabels(['sponsor', 'custom_field'], 'en')).toBe(
+      'sponsor, custom field'
+    );
+  });
+
+  it('builds localized Case links with encoded query values', () => {
+    const en = transformationCaseReadyMessage('case/with spaces&scope=1', 'en');
+    expect(en).toContain('The plan was created');
+    expect(en).toContain('/my-work?tab=agent&transformationCaseId=case%2Fwith+spaces%26scope%3D1');
+    expect(transformationCaseReadyMessage('case-1', 'pl')).toContain('Plan został utworzony');
   });
 });

@@ -7,6 +7,7 @@
  */
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import type { VerifyOptions } from 'jsonwebtoken';
 
 const MAX_JWT_STRING_CHARS = 8192;
 const MAX_AUTHORIZATION_VALUE_SCAN_CHARS = MAX_JWT_STRING_CHARS + 256;
@@ -15,7 +16,7 @@ const MAX_RATE_LIMIT_USER_ID_CHARS = 256;
 const MAX_AUTHORIZATION_HEADER_VALUES = 16;
 const DISALLOWED_TOKEN_CHARS = /[\u0000-\u001F\u007F]/;
 const COMPACT_JWS_TOKEN_BODY = /^[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2}$/;
-const RATE_LIMIT_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
+const RATE_LIMIT_JWT_VERIFY_OPTIONS: VerifyOptions = {
   algorithms: ['HS256'],
   clockTolerance: 30,
 };

@@ -431,7 +431,7 @@ function unsupportedClaimInString(
   allowedNumbers: ReadonlySet<string>,
   sourceTextUpper: string
 ): boolean {
-  const numericTokens = text.match(QUANT_TOKEN_RE) ?? [];
+  const numericTokens: string[] = text.match(QUANT_TOKEN_RE) ?? [];
   if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return true;
 
   // Catch obvious invented named market/entity claims such as "DACH". This is

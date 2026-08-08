@@ -8,6 +8,7 @@
 import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import jwt from 'jsonwebtoken';
+import type { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 
 import config from '../../config/Config.js';
@@ -211,12 +212,12 @@ function issueTokens(user: { id: string; email: string; role: string; organizati
       jti,
     },
     config.JWT_SECRET,
-    { expiresIn: config.JWT_EXPIRES_IN }
+    { expiresIn: config.JWT_EXPIRES_IN as SignOptions['expiresIn'] }
   );
   const refreshToken = jwt.sign(
     { id: user.id, type: 'refresh', jti: uuidv4() },
     config.JWT_SECRET,
-    { expiresIn: config.REFRESH_TOKEN_EXPIRES_IN }
+    { expiresIn: config.REFRESH_TOKEN_EXPIRES_IN as SignOptions['expiresIn'] }
   );
   return { accessToken, refreshToken, jti };
 }

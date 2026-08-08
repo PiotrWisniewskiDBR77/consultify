@@ -28,7 +28,9 @@ import {
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { all as pooledAll, get as pooledGet, run as pooledRun } from '../../utils/DbPromise.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 import type {
@@ -62,6 +64,63 @@ import {
   updateOperationContractLinks,
 } from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
+
+/**
+ * U02 — transaction pinning for the Artifact Registry owner module.
+ *
+ * `registerArtifactOrigin` writes `v8_output_artifacts` and
+ * `v8_artifact_origin_links` as two independent autocommit statements, and
+ * `DbPromise.run` swallows constraint violations by default — the documented
+ * cause of the 180 orphaned template artifacts on demo. When an orchestrator
+ * donates its transaction the two inserts become atomic with the caller's work,
+ * and errors surface instead of being swallowed.
+ */
+const artifactRegistryTransaction = createPinnedClientContext('artifact_registry');
+
+export function withArtifactRegistryClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return artifactRegistryTransaction.withClient(client, fn);
+}
+
+type PooledQueryOptions = { timeout?: number; fallback?: boolean };
+
+async function dbAll<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T[]> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows || [];
+  return pooledAll<T>(sql, params, options);
+}
+
+async function dbGet<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T | undefined> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows[0];
+  return pooledGet<T>(sql, params, options);
+}
+
+async function dbRun(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) {
+    // Inside a donated transaction a failed statement MUST reject: the pooled
+    // path's `fallback: true` would otherwise hide a constraint violation and
+    // let the caller commit a half-registered artifact.
+    const result = await pinned.query(sql, params);
+    return { success: true, changes: result.rowCount ?? 0 };
+  }
+  return pooledRun(sql, params, options);
+}
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
@@ -839,10 +898,9 @@ function buildStarterTableSeed(params: {
             name,
             fieldType:
               String(raw.fieldType || raw.type || 'singleLineText').trim() || 'singleLineText',
-            options:
-              raw.options && typeof raw.options === 'object'
-                ? (raw.options as Record<string, unknown>)
-                : undefined,
+            ...(raw.options && typeof raw.options === 'object'
+              ? { options: raw.options as Record<string, unknown> }
+              : {}),
           };
         })
         .filter((field): field is StarterTableField => Boolean(field))
@@ -1351,10 +1409,15 @@ export async function registerArtifactOrigin(
   }
   const record = mapArtifactRow(row);
 
-  // Fire-and-forget context notification (feature-flagged)
-  notifyContextOfNewArtifact(record).catch((err) =>
-    logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact failed: ${err}`)
-  );
+  // Fire-and-forget context notification (feature-flagged).
+  // Skipped under a donated transaction: this promise outlives the caller's
+  // COMMIT, so it would query a client that is already released — and being
+  // fire-and-forget the failure would be swallowed, producing a silent gap
+  // rather than an error. The orchestrator owns notification in that case.
+  if (!artifactRegistryTransaction.isPinned())
+    notifyContextOfNewArtifact(record).catch((err) =>
+      logger.warn(`${LOG_PREFIX} notifyContextOfNewArtifact failed: ${err}`)
+    );
 
   return record;
 }
@@ -4186,15 +4249,13 @@ export async function materializeArtifactRun(
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await presentationGeneratorService.generateDeck(
         outlined.deckId,
         outlined.outline,
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,

@@ -761,6 +761,34 @@ export const Scheduler = {
     });
     this.jobs.push(job39);
 
+    // 40. Durable Agent schedule worker — DB leases protect overlapping ticks
+    // and allow the next process to recover work after a worker restart.
+    const job40 = cron.schedule('* * * * *', async () => {
+      if (process.env.AGENT_SCHEDULE_CRON_ENABLED === 'false') return;
+      try {
+        const { runWave8AgentScheduleTick } = await import('../jobs/wave8AgentScheduleJob.js');
+        await runWave8AgentScheduleTick();
+      } catch (err: any) {
+        logger.error('[Scheduler] Durable Agent schedule tick failed:', err?.message || err);
+      }
+    });
+    this.jobs.push(job40);
+
+    const job41 = cron.schedule('* * * * *', async () => {
+      if (process.env.RECOVERY_EXPERIMENT_CRON_ENABLED === 'false') return;
+      try {
+        const { runRecoveryExperimentRemeasurementTick } =
+          await import('../jobs/recoveryExperimentRemeasurementJob.js');
+        await runRecoveryExperimentRemeasurementTick();
+      } catch (err: any) {
+        logger.error(
+          '[Scheduler] Recovery experiment remeasurement tick failed:',
+          err?.message || err
+        );
+      }
+    });
+    this.jobs.push(job41);
+
     logger.info(
       '[Scheduler] Jobs scheduled: Retention (Daily 3AM), Reconciliation (Weekly Sun 4AM), Trial/Demo (Daily 2:30AM), Metrics (Daily 2:45AM), SLA (Every 10min), Notifications (Every 10min), AI Budget (Monthly 1st), Scheduled Reports (Hourly), Scheduled Emails (Every 15min), AI Pattern Extraction (Every 6h), AI Consolidation (Daily 4:30AM), AI Cleanup (Weekly Mon 5AM), AI Memory Cleanup (Weekly Sun 2AM), Partial Response Cleanup (Hourly), Feedback Consolidation (Daily 4AM), Memory Cleanup (Every 6h), Webhook Retry (Every 5min), Auto Recovery (Every 2min), Invoice Reminders (Daily 9AM), Interview Reminders (Hourly), Idea Map Auto-Snapshots (Every 15min default), Agent Plan Scheduler (Every 2min), Artifact Lineage Reconciliation (Every 5min)'
     );

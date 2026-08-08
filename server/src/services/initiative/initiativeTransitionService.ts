@@ -41,6 +41,10 @@ import {
   resolveGateRequiredRoles,
   resolveInitiativeCapabilityContext,
 } from './initiativeCapabilityMatrix.js';
+import {
+  assertCurrentApprovedInitiativeLifecycleGateDecision,
+  type InitiativeLifecycleGateDomain,
+} from './initiativeLifecycleGateDecisionService.js';
 import { isInitiativeGateAiEnabled } from './initiativeGateAiConfig.js';
 import { getBlockingReadinessItems } from './initiativeGateReadinessService.js';
 import {
@@ -104,58 +108,13 @@ export class TransitionGateSupersededError extends Error {
 }
 
 /**
- * GO/NO-GO decision-currency check for a gate.
+ * Canonical lifecycle gate-decision currency check.
  *
- * ★ Decision-currency fix (2026-08-01): `decisions` has no `superseded`/`is_current`/
- * version column and no unique constraint on (organization_id, initiative_id,
- * pmo_domain) — decisionService always INSERTs a fresh row, it never supersedes an
- * older one for the same gate tuple. That means multiple decision rows for the same
- * gate legitimately accumulate over time (e.g. a rework cycle: GO → sent back to
- * REVIEW → a second decision for the same tuple comes back NO-GO or is still
- * pending). The PREVIOUS implementation used `.some()` over ALL rows for the tuple,
- * so a stale APPROVED row from a superseded round kept satisfying the gate forever,
- * regardless of what the newest decision actually says.
- *
- * FIX: only the MOST RECENT decision row for the tuple (by
- * `COALESCE(decided_at, created_at) DESC`) may satisfy the gate. If the latest row
- * is anything other than approved+owner+deadline (NO-GO, pending, escalated, …), the
- * gate is blocked even if an older approved row exists.
- *
- * Returns which decision satisfied the gate (`decisionId`) so callers can preserve a
- * decision reference in the transition history.
- *
- * ★ TOCTOU fix (2026-08-01, INI-005 decision-race follow-up): this now takes a
- * REQUIRED pinned `client` (the same `withPgTransaction` client that holds the
- * `initiatives` row lock in `executeInitiativeTransition`) instead of reading via
- * the shared connection pool (`queryHelpers.queryOne`). Previously this read was
- * invisible to the row lock — a concurrent write to `decisions` from
- * `DecisionController.ts` (which runs as a bare autocommit statement against the
- * shared pool, outside any lock) could land between this read and the transition's
- * write path without being detected.
- *
- * As the very first statement, on the SAME pinned client, we take a
- * transaction-scoped advisory lock keyed on (orgId, initiativeId, pmoDomain):
- * transaction-scoped because `pg_advisory_xact_lock` auto-releases on
- * COMMIT/ROLLBACK of the caller's transaction — no explicit unlock needed, no risk
- * of a leaked lock outliving the connection. This matches the house pattern already
- * used in `server/src/services/tablePlatform/RecordsService.ts:106`
- * (`pg_advisory_xact_lock(hashtext($1 || $2))`), just with `hashtextextended` over
- * three concatenated key parts instead of two.
- *
- * ★ HONEST SCOPE: this lock only protects transition-vs-transition races (two
- * concurrent `executeInitiativeTransition` calls for the same gate tuple) today —
- * it does NOT block `DecisionController.ts`'s writes (`createDecision`/`decide`/
- * `updateDecision`/`escalateDecision`/`deleteDecision`), because that file does not
- * (yet) take this same lock. A decision write can still race in between this call
- * and the transition's COMMIT undetected by the lock alone; the pre-commit recheck
- * in `executeInitiativeTransition` (see `decisionGatePmoDomain`/
- * `TransitionGateSupersededError` below) catches the subset of that race that lands
- * before the recheck runs, but a race landing between the recheck and COMMIT is
- * still an open, disclosed gap. See this module's DecisionController integration
- * contract (documented in the INI-005 decision-race handoff, not implemented here —
- * `DecisionController.ts` is out of scope for this change) for the required
- * follow-up: those five methods need to take the SAME advisory lock, in a pinned
- * transaction of their own.
+ * Only the highest immutable version in `initiative_lifecycle_gate_decisions`
+ * can satisfy a lifecycle gate. The owner read and every owner append acquire
+ * the same transaction-scoped advisory lock on the caller's pinned client, so
+ * a generic `decisions` row cannot unlock a transition and a new canonical
+ * version cannot land between this read and the transition commit.
  */
 export const hasApprovedGateDecision = async (
   orgId: string,
@@ -163,33 +122,16 @@ export const hasApprovedGateDecision = async (
   pmoDomain: string,
   client: PgTransactionClient
 ): Promise<GateDecisionCheck> => {
-  await client.query(
-    `SELECT pg_advisory_xact_lock(hashtextextended(? || ':' || ? || ':' || ?, 0))`,
-    [orgId, initiativeId, pmoDomain]
-  );
-
-  const sql = `
-        SELECT id, status, decision_maker_id, deadline
-        FROM decisions
-        WHERE organization_id = ?
-          AND initiative_id = ?
-          AND pmo_domain = ?
-        ORDER BY COALESCE(decided_at, created_at) DESC, id DESC
-        LIMIT 1
-    `;
-  const latestResult = await client.query<Record<string, unknown>>(sql, [
-    orgId,
-    initiativeId,
-    pmoDomain,
-  ]);
-  const latest = latestResult.rows[0];
-  if (!latest) return { ok: false, decisionId: null };
-
-  const status = String(latest.status || '').toLowerCase();
-  const hasOwner = !!latest.decision_maker_id;
-  const hasDueDate = !!latest.deadline;
-  const ok = status === 'approved' && hasOwner && hasDueDate;
-  return { ok, decisionId: ok ? String(latest.id) : null };
+  try {
+    const decision = await assertCurrentApprovedInitiativeLifecycleGateDecision(client, {
+      organizationId: orgId,
+      initiativeId,
+      pmoDomain: pmoDomain as InitiativeLifecycleGateDomain,
+    });
+    return { ok: true, decisionId: decision.decisionId };
+  } catch {
+    return { ok: false, decisionId: null };
+  }
 };
 
 export const getInitiativeNotificationRecipients = async (
@@ -371,8 +313,7 @@ interface GateBlockedNotify {
  * is a human-readable version used for the audit-trail `actorName`.
  */
 export type InitiativeTransitionActor =
-  | { kind: 'user' }
-  | { kind: 'system'; systemActorId: string; systemActorLabel: string };
+  { kind: 'user' } | { kind: 'system'; systemActorId: string; systemActorLabel: string };
 
 interface ExecuteInitiativeTransitionParams {
   orgId: string;
@@ -1106,6 +1047,72 @@ export async function executeInitiativeTransition(
         await syncHook('after-decision-read');
       }
 
+      // EXECUTING -> DONE is a material human closure decision, distinct from
+      // delivery completion and from the generic pending-decision scan below.
+      // Only the current immutable CLOSURE version in the canonical lifecycle
+      // owner can satisfy it; a legacy/generic approved `decisions` row is not
+      // consulted by `hasApprovedGateDecision`.
+      if (currentStatus === 'EXECUTING' && nextStatus === 'DONE') {
+        const closureDecision = await hasApprovedGateDecision(orgId, id, 'CLOSURE', client);
+        if (!closureDecision.ok) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'An approved Closure decision is required to complete this initiative',
+              rule: 'CLOSURE_GATE_DECISION_REQUIRED',
+            },
+          };
+        }
+        satisfyingDecisionId = closureDecision.decisionId;
+        decisionGatePmoDomain = 'CLOSURE';
+        await syncHook('after-decision-read');
+
+        // Keep the completion predicate on this pinned transaction and lock the
+        // existing child rows before counting. Query/schema failures propagate,
+        // so closure fails closed instead of treating an unreadable workload as
+        // complete.
+        await client.query(
+          `SELECT id FROM tasks
+           WHERE initiative_id=? AND organization_id=?
+           FOR SHARE`,
+          [id, orgId]
+        );
+        await client.query(
+          `SELECT id FROM initiative_milestones
+           WHERE initiative_id=? AND organization_id=?
+           FOR SHARE`,
+          [id, orgId]
+        );
+        const incomplete = (
+          await client.query<{ open_tasks: number; open_milestones: number }>(
+            `SELECT
+               (SELECT COUNT(*)::int FROM tasks
+                 WHERE initiative_id=? AND organization_id=?
+                   AND UPPER(COALESCE(status,'')) NOT IN ('DONE','COMPLETED')) AS open_tasks,
+               (SELECT COUNT(*)::int FROM initiative_milestones
+                 WHERE initiative_id=? AND organization_id=?
+                   AND UPPER(COALESCE(status,'')) <> 'COMPLETED') AS open_milestones`,
+            [id, orgId, id, orgId]
+          )
+        ).rows[0];
+        if (
+          Number(incomplete?.open_tasks || 0) > 0 ||
+          Number(incomplete?.open_milestones || 0) > 0
+        ) {
+          return {
+            kind: 'error',
+            statusCode: 400,
+            body: {
+              error: 'All Initiative tasks and milestones must be complete before closure',
+              rule: 'CLOSURE_WORK_INCOMPLETE',
+              openTasks: Number(incomplete?.open_tasks || 0),
+              openMilestones: Number(incomplete?.open_milestones || 0),
+            },
+          };
+        }
+      }
+
       // DEF-1 hardening (parytet z kanonicznym validateTransition): BLOCKED wymaga
       // powodu. Wcześniej handler zapisywał blocked_reason=null bez walidacji — co
       // rozjeżdżało się z modelem stanów. Dotyczy tylko PATCH /:id/status.
@@ -1205,20 +1212,10 @@ export async function executeInitiativeTransition(
         }
       }
 
-      // ★ PRE-COMMIT GATE-DECISION RECHECK (decision-race fix, 2026-08-01).
-      // The advisory lock inside `hasApprovedGateDecision` only serializes this
-      // transition against OTHER transitions — it does NOT block a concurrent
-      // `DecisionController.ts` write (that file runs bare autocommit statements
-      // against the shared pool and does not take this lock; see the honest-scope
-      // note on `hasApprovedGateDecision`). So even with the earlier read pinned
-      // to this transaction's client, a competing decision write (e.g. a NO-GO
-      // superseding the GO this transition read moments ago) can still land
-      // between that read and this point. Re-run the SAME check right before the
-      // write path commits, on the SAME pinned client: if the gate no longer
-      // resolves to the exact decision row this transition already validated
-      // against, THROW (not return — see `TransitionGateSupersededError`'s doc
-      // comment for why an early `return` here would let an already-executed
-      // schedule-baseline INSERT reach COMMIT anyway).
+      // Pre-commit defense in depth. The canonical decision owner already uses
+      // the same advisory lock as this read, so a new version cannot commit
+      // concurrently. Rechecking the exact immutable decision id also protects
+      // callers if this function is ever invoked with a non-conforming client.
       if (satisfyingDecisionId && decisionGatePmoDomain) {
         const recheck = await hasApprovedGateDecision(orgId, id, decisionGatePmoDomain, client);
         if (!recheck.ok || recheck.decisionId !== satisfyingDecisionId) {

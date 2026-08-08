@@ -6,6 +6,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import type { VerifyOptions } from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -37,7 +38,7 @@ const AUTH_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
 const MAX_AUTH_ORG_CONTEXT_ID_CHARS = 128;
 const ALLOWED_AUTH_JWT_ALGORITHM = 'HS256';
 const JWT_CLOCK_TOLERANCE_SEC = 0;
-const JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
+const JWT_VERIFY_OPTIONS: VerifyOptions = {
   algorithms: [ALLOWED_AUTH_JWT_ALGORITHM],
   clockTolerance: JWT_CLOCK_TOLERANCE_SEC,
 };
@@ -89,7 +90,7 @@ const verifyJwt = (
   const verifyFn = jwtLib.verify as unknown as (
     token: string,
     secret: string,
-    optionsOrCallback: jwt.VerifyOptions | ((err: any, decoded: any) => void),
+    optionsOrCallback: VerifyOptions | ((err: any, decoded: any) => void),
     maybeCallback?: (err: any, decoded: any) => void
   ) => void;
   if (verifyFn.length >= 4) {

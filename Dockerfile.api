@@ -15,11 +15,15 @@ COPY package.json package-lock.json ./
 COPY server/package.json server/package-lock.json ./server/
 
 # Install dependencies (ignore scripts as they're not needed in Docker builds)
-# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
-RUN npm ci --omit=dev --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --omit=dev --ignore-scripts)
-RUN cd server && npm ci --omit=dev --ignore-scripts || (echo "Server lock file out of sync, updating..." && cd server && npm install --omit=dev --ignore-scripts)
-# Install cookie-parser at root level (needed for runtime, installed in backend-builder for build)
-RUN npm install --save --omit=dev --ignore-scripts cookie-parser@^1.4.7 || true
+# Strict npm ci: a package-lock.json that is out of sync with package.json must
+# fail the build immediately. Silently falling back to `npm install` would ship
+# a non-deterministic dependency tree that doesn't match what's committed.
+RUN npm ci --omit=dev --ignore-scripts
+RUN cd server && npm ci --omit=dev --ignore-scripts
+# cookie-parser is a declared dependency of both package.json and
+# server/package.json (see their "dependencies"), so the strict npm ci calls
+# above already install it deterministically from each lock file. No separate
+# tolerant install needed.
 
 # ==========================================
 # STAGE 2: Frontend Builder
@@ -47,9 +51,10 @@ ENV VITE_ENABLE_DELIVERABLES_LIGHT=${VITE_ENABLE_DELIVERABLES_LIGHT}
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
-# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+# Strict npm ci for deterministic builds: an out-of-sync lock file must fail
+# the build loudly, not silently regenerate itself via npm install.
 # Ignore scripts (like husky) as they're not needed in Docker builds
-RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
+RUN npm ci --ignore-scripts
 
 # Copy remaining source and build
 COPY . .
@@ -84,27 +89,81 @@ WORKDIR /app
 
 # Copy root package files first (server dependencies are in root package.json due to monorepo/workspace setup)
 COPY package.json package-lock.json ./
-# Copy server package.json - some dependencies like cookie-parser are only in server/package.json
-COPY server/package.json ./server-package.json
-# Install dependencies from root package.json (includes most server runtime dependencies)
-# Install devDependencies too since we need TypeScript and type definitions for the build
-# Use npm ci for deterministic builds, fallback to npm install if lock file is out of sync
+# Copy server's OWN package.json + package-lock.json into an isolated subdirectory so its
+# dependency tree can be resolved strictly from ITS OWN lock file, never from a semver range
+# re-resolved against the registry.
+COPY server/package.json server/package-lock.json ./server-src/
+# Install dependencies from root package.json (includes most server runtime dependencies plus
+# build tooling like TypeScript, which only lives in root devDependencies).
+# Install devDependencies too since we need TypeScript and type definitions for the build.
+# Strict npm ci: an out-of-sync lock file must fail the build, never silently regenerate.
 # Ignore scripts (like husky) as they're not needed in Docker builds
-RUN npm ci --ignore-scripts || (echo "Lock file out of sync, updating..." && npm install --ignore-scripts)
-# Install server-specific dependencies from server/package.json
-# Copy server/package.json to current directory and install its dependencies
-RUN cp server-package.json ./server-package-temp.json && \
-    npm install --save --ignore-scripts --package-lock-only=false $(node -p "Object.keys(require('./server-package-temp.json').dependencies || {}).join(' ')") || true && \
-    rm -f server-package-temp.json
-# Explicitly install known server dependencies that might be missing
-RUN npm install --save --ignore-scripts cookie-parser@^1.4.7 @types/cookie-parser@^1.4.10 pptxgenjs@^4.0.1 rrule@^2.8.1 || true
-# Hardening (post-incident 2026-06-07): the bulk server-dep install above is tolerant (|| true)
-# and silently drops EVERY server dep if a single package errors — this shipped a prod image
-# missing 'rrule' and crashed the runtime. Sweep all declared server runtime deps: install any
-# missing one with its pinned spec, then FAIL THE BUILD (never prod runtime) if any remain absent.
-RUN MISSING="$(node -e "const d=require('./server-package.json').dependencies||{};const fs=require('fs');console.log(Object.entries(d).filter(([p])=>!fs.existsSync('node_modules/'+p)).map(([p,v])=>p+'@'+v).join(' '))")" && \
-    if [ -n "$MISSING" ]; then echo "Sweeping missing server deps: $MISSING" && npm install --save --ignore-scripts $MISSING; else echo "All declared server deps already present"; fi && \
-    node -e "const d=require('./server-package.json').dependencies||{};const fs=require('fs');const m=Object.keys(d).filter(p=>!fs.existsSync('node_modules/'+p));if(m.length){console.error('FATAL: server runtime deps missing from image: '+m.join(', '));process.exit(1);}console.log('OK: all '+Object.keys(d).length+' server runtime deps present in image')"
+RUN npm ci --ignore-scripts
+# Install server-specific dependencies strictly from server/package-lock.json (own isolated
+# install, exact resolved versions — not `npm install <name>` against a semver range, which
+# would silently re-resolve to whatever the registry has today).
+RUN cd server-src && npm ci --ignore-scripts
+# Deterministic merge, step 1 (fill gaps): copy any package that exists in server's resolved
+# tree but doesn't exist at all yet in the shared node_modules — this picks up transitive-only
+# packages that neither root nor server declare directly. This pass never overwrites an existing
+# entry; step 2 below handles the packages server directly declares, unconditionally.
+RUN node -e "\
+const fs=require('fs'); const path=require('path'); \
+function mergeMissing(srcDir, destDir) { \
+  if (!fs.existsSync(srcDir)) return; \
+  fs.mkdirSync(destDir, { recursive: true }); \
+  for (const name of fs.readdirSync(srcDir)) { \
+    const s = path.join(srcDir, name); const d = path.join(destDir, name); \
+    if (name.startsWith('@')) { mergeMissing(s, d); continue; } \
+    if (!fs.existsSync(d)) { fs.cpSync(s, d, { recursive: true }); } \
+  } \
+} \
+mergeMissing('server-src/node_modules', 'node_modules'); \
+console.log('Step 1: transitive-only server packages filled into shared node_modules where absent.'); \
+"
+# Deterministic merge, step 2 (server is authoritative for its own declared deps): for every
+# name server/package.json directly declares, server's OWN package-lock.json resolution wins,
+# unconditionally — even if root's package.json/lock also declares that name at a different
+# version (e.g. root resolves `ws`/`ioredis`/`docx`/`cheerio` etc. to versions that can legally
+# differ from server's lock). Delete whatever step 1 (or root's own npm ci) put at that path,
+# then copy server's exact resolved package over it. This is NOT "fill if missing" — it always
+# replaces, so server's lock is never silently shadowed by root's.
+RUN cp server-src/package.json ./server-package.json && \
+    node -e "\
+const fs=require('fs'); const path=require('path'); \
+const deps=Object.keys(require('./server-package.json').dependencies||{}); \
+for (const name of deps) { \
+  const s=path.join('server-src/node_modules', name); \
+  const d=path.join('node_modules', name); \
+  if (!fs.existsSync(s)) { console.error('FATAL: '+name+' not found in server-src/node_modules after server npm ci'); process.exit(1); } \
+  fs.rmSync(d, { recursive: true, force: true }); \
+  fs.mkdirSync(path.dirname(d), { recursive: true }); \
+  fs.cpSync(s, d, { recursive: true }); \
+} \
+console.log('Step 2: '+deps.length+' server-declared deps force-copied from server-src (server lock authoritative).'); \
+"
+# Exact version verification (not just existence): for every one of server's declared runtime
+# deps, compare the version actually sitting in the merged node_modules against the version
+# server's OWN npm ci resolved (still available in server-src/node_modules from step 2, read
+# BEFORE cleanup). A version string match is required — presence alone is not proof server's
+# lock file resolution shipped. Fails the build loudly on any mismatch.
+RUN node -e "\
+const fs=require('fs'); const path=require('path'); \
+const deps=Object.keys(require('./server-package.json').dependencies||{}); \
+const mismatches=[]; const report=[]; \
+for (const name of deps) { \
+  const expectedPkg=path.join('server-src/node_modules', name, 'package.json'); \
+  const actualPkg=path.join('node_modules', name, 'package.json'); \
+  const expected=JSON.parse(fs.readFileSync(expectedPkg,'utf8')).version; \
+  const actual=fs.existsSync(actualPkg) ? JSON.parse(fs.readFileSync(actualPkg,'utf8')).version : undefined; \
+  report.push(name+'='+actual+' (server lock expects '+expected+')'); \
+  if (actual !== expected) mismatches.push(name+': expected '+expected+' from server lock, got '+actual); \
+} \
+console.log(report.join('\n')); \
+if (mismatches.length) { console.error('FATAL: '+mismatches.length+' server dependency version mismatch(es):\n'+mismatches.join('\n')); process.exit(1); } \
+console.log('OK: all '+deps.length+' server runtime deps present AND version-exact vs server/package-lock.json (zero mismatches)'); \
+"
+RUN rm -rf server-src/node_modules
 
 # Copy TypeScript config files explicitly (needed for build)
 COPY server/tsconfig.json ./
@@ -122,16 +181,16 @@ RUN if [ ! -f src/utils/aiSchemaValidator.js ]; then \
       echo "Creating aiSchemaValidator.js re-export file..." && \
       printf '// Re-export from AISchemaValidator.js (compiled) for case-sensitive file systems\n// This file allows imports using lowercase '\''aiSchemaValidator'\'' to work on case-sensitive filesystems\nexport * from '\''./AISchemaValidator.js'\'';\n' > src/utils/aiSchemaValidator.js; \
     fi
-# Create tsconfig.build.json if it doesn't exist (fallback for git-untracked files)
-RUN if [ ! -f tsconfig.build.json ]; then \
-      echo '{"extends":"./tsconfig.json","compilerOptions":{"noUnusedLocals":false,"noUnusedParameters":false,"noImplicitReturns":false,"noImplicitAny":false,"strictNullChecks":false,"strictFunctionTypes":false,"strictBindCallApply":false,"strictPropertyInitialization":false,"noImplicitThis":false,"skipLibCheck":true}}' > tsconfig.build.json; \
-    fi
 # Verify tsconfig.build.json exists before building
 RUN test -f tsconfig.build.json || (echo "ERROR: tsconfig.build.json not found!" && ls -la tsconfig*.json && exit 1)
-# Build TypeScript - use --build flag with tsconfig.build.json to ensure proper compilation.
-# NOTE: We allow TS compile errors as long as dist/ is produced, because the runtime uses emitted JS.
-# The build still verifies that dist/index.js or dist/src/index.js exists later.
-RUN ./node_modules/.bin/tsc --build tsconfig.build.json || (echo "TypeScript build had errors (continuing if dist exists)..." && true)
+# Production backend compilation is fail-hard. `noEmitOnError` is enabled in
+# tsconfig.build.json, so a failed check can never leave a shippable partial dist.
+RUN rm -rf dist && NODE_OPTIONS="--max-old-space-size=3072" ./node_modules/.bin/tsc --build tsconfig.build.json
+RUN test -f dist/scripts/migrate.postgres.js || (echo "FATAL: strict Postgres migration runner missing from production dist" && exit 1)
+RUN if find dist -type f \( -path '*/scripts/*RealDbProof.js' -o -path '*/scripts/*RestartWorker.js' -o -path '*/scripts/t01BrowserFixtureServer.js' \) | grep -q .; then \
+      echo "FATAL: proof/fixture/restart-worker script emitted into production dist"; \
+      exit 1; \
+    fi
 # Copy .js re-export files to dist (TypeScript excludes .js files but we need them at runtime)
 # Note: Only copy lowercase re-export files - uppercase files are compiled outputs from TypeScript
 RUN mkdir -p dist/src/utils dist/src/services/ai && \

@@ -397,7 +397,7 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
     customTemplate: (() => {
       if (layoutPolicy?.customTemplate == null) return undefined;
       const validation = validatePresentationCustomTemplate(layoutPolicy.customTemplate);
-      if (!validation.ok)
+      if (validation.ok === false)
         throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
       return validation.value;
     })(),

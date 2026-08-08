@@ -234,7 +234,7 @@ async function attempt(
   }
 
   const semantics = validateSemantics(parsed.data, itemsById);
-  if (!semantics.ok) {
+  if (semantics.ok === false) {
     logger.warn(`[swotProposalService] semantic validation failed: ${semantics.reason}`);
     return { kind: 'invalid_response' };
   }

@@ -114,6 +114,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { FolderCreateDialog } from '@/components/shared/FolderCreateDialog';
 import { useHubBarSlot } from '@/components/shared/HubBarSlots';
@@ -142,6 +143,7 @@ import {
 import { Segmented } from '@/components/TemplateBuilder/templateBuilderFields';
 import { EntityStatusChip, MetaChip, StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { listAgentManifests } from '@/services/api/agentManifests.api';
 import {
   type AgentFolder,
@@ -160,8 +162,23 @@ import {
 
 import { readablePhaseName } from './AgentPlanPanel';
 import { AgentPlanWorkspace } from './AgentPlanWorkspace';
+import { AgentOperationsPanel } from './AgentOperationsPanel';
+import { AgentProcessTemplatesPanel } from './AgentProcessTemplatesPanel';
+import { TransformationCasesPanel } from './TransformationCasesPanel';
 
-type AgentHubTab = 'processes' | 'templates';
+type AgentHubTab =
+  'processes' | 'templates' | 'governed_templates' | 'transformations' | 'operations';
+
+function agentHubTabLabel(tab: AgentHubTab, isPolish: boolean): string {
+  const labels: Record<AgentHubTab, [string, string]> = {
+    processes: ['Przebiegi i historia', 'Runs and history'],
+    templates: ['Start i szablony', 'Start and templates'],
+    governed_templates: ['Governance szablonów', 'Template governance'],
+    transformations: ['Sprawy, akceptacje i wyniki', 'Cases, approvals and outputs'],
+    operations: ['Operacje i odzyskiwanie', 'Operations and recovery'],
+  };
+  return labels[tab][isPolish ? 0 : 1];
+}
 
 type TemplateKind = 'process' | 'manifest';
 
@@ -358,8 +375,28 @@ const PlanSummaryCard: React.FC<{
 export const AgentHubShell: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const currentUserRole = useAppStore((state) =>
+    String(state.currentUser?.role || '').toUpperCase()
+  );
+  const isOperator = ['ADMIN', 'OWNER', 'SUPERADMIN'].includes(currentUserRole);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [tab, setTab] = useState<AgentHubTab>('processes');
+  const requestedView = searchParams.get('agentView');
+  const unauthorizedOperationsRequest = requestedView === 'operations' && !isOperator;
+  const validRequestedView: AgentHubTab | null =
+    requestedView === 'processes' ||
+    requestedView === 'templates' ||
+    requestedView === 'governed_templates' ||
+    requestedView === 'transformations' ||
+    (requestedView === 'operations' && isOperator)
+      ? requestedView
+      : null;
+
+  const [tab, setTab] = useState<AgentHubTab>(
+    () =>
+      validRequestedView ??
+      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes')
+  );
   const [plans, setPlans] = useState<AgentPlan[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [previewPlanId, setPreviewPlanId] = useState<string | null>(null);
@@ -368,6 +405,48 @@ export const AgentHubShell: React.FC = () => {
   const [templates, setTemplates] = useState<TemplateRow[] | null>(null);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next =
+      validRequestedView ??
+      (searchParams.has('transformationCaseId') ? 'transformations' : 'processes');
+    setTab(next);
+  }, [searchParams, validRequestedView]);
+
+  const writeWorkspaceContext = useCallback(
+    (view: AgentHubTab, context?: { transformationCaseId?: string; canonicalRunId?: string }) => {
+      if (view === 'operations' && !isOperator) return;
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          next.set('tab', 'agent');
+          next.set('agentView', view);
+          if (context?.transformationCaseId) {
+            next.set('transformationCaseId', context.transformationCaseId);
+          }
+          if (context && 'canonicalRunId' in context) {
+            if (context.canonicalRunId) next.set('canonicalRunId', context.canonicalRunId);
+            else next.delete('canonicalRunId');
+          } else if (view !== 'operations') {
+            next.delete('canonicalRunId');
+          }
+          return next;
+        },
+        { replace: false }
+      );
+    },
+    [isOperator, setSearchParams]
+  );
+  const handleCanonicalContextChange = useCallback(
+    (context: { transformationCaseId: string; canonicalRunId?: string }) =>
+      writeWorkspaceContext('transformations', context),
+    [writeWorkspaceContext]
+  );
+  const handleOpenOperations = useCallback(
+    (context: { transformationCaseId: string; canonicalRunId: string }) =>
+      writeWorkspaceContext('operations', context),
+    [writeWorkspaceContext]
+  );
 
   // Triada MUST #7 — checkbox selection "Moje procesy" (patrz nagłówek pliku
   // ★ SELECTION/BULK). Wyczyszczane przy zmianie zakładki i po odświeżeniu listy.
@@ -913,7 +992,14 @@ export const AgentHubShell: React.FC = () => {
     if (tab !== 'processes' || activeItemId || selectedPlanIds.size === 0) return null;
     return (
       <div className="px-4 pt-3">
-        <div className={MENU_3_INNER_CLASS}>
+        <div
+          className={MENU_3_INNER_CLASS}
+          role="region"
+          aria-label={t(
+            'agentPlan.hub.bulk.actions',
+            isPolish ? 'Akcje dla zaznaczonych procesów' : 'Selected process actions'
+          )}
+        >
           <div className={MENU_3_LEFT_CLASS}>
             <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
               {t('agentPlan.hub.bulk.selected', {
@@ -1392,14 +1478,30 @@ export const AgentHubShell: React.FC = () => {
           options={[
             {
               value: 'processes',
-              label: t('agentPlan.hub.tabs.processes', isPolish ? 'Moje procesy' : 'My processes'),
+              label: agentHubTabLabel('processes', isPolish),
             },
             {
               value: 'templates',
-              label: t('agentPlan.hub.tabs.templates', isPolish ? 'Szablony' : 'Templates'),
+              label: agentHubTabLabel('templates', isPolish),
             },
+            {
+              value: 'governed_templates',
+              label: agentHubTabLabel('governed_templates', isPolish),
+            },
+            {
+              value: 'transformations',
+              label: agentHubTabLabel('transformations', isPolish),
+            },
+            ...(isOperator
+              ? [
+                  {
+                    value: 'operations' as const,
+                    label: agentHubTabLabel('operations', isPolish),
+                  },
+                ]
+              : []),
           ]}
-          onChange={(id) => setTab(id)}
+          onChange={(id) => writeWorkspaceContext(id)}
           testId="agent-hub-mode-switch"
         />
         {/* AGT-FOLDERS (2026-07-28) — filtr "Folder", TYLKO na "Moje procesy"
@@ -1469,6 +1571,7 @@ export const AgentHubShell: React.FC = () => {
     tab,
     activeItemId,
     isPolish,
+    isOperator,
     t,
     foldersAvailable,
     folders,
@@ -1498,7 +1601,7 @@ export const AgentHubShell: React.FC = () => {
       disabled: creating,
       testId: 'agent-hub-new-agent',
     };
-  }, [tab, activeItemId, creating, isPolish, handleNewProcess]);
+  }, [tab, activeItemId, creating, isPolish, handleNewProcess, t]);
 
   useHubBarSlot({
     filterControls: filterControlsNode,
@@ -1510,10 +1613,72 @@ export const AgentHubShell: React.FC = () => {
     onShowList: handleShowList,
   });
 
+  const workspaceBusy = Boolean(
+    (tab === 'processes' && !activeItemId && plans === null) ||
+    (tab === 'templates' && !activeItemId && templates === null) ||
+    (activeItemId && !activePlanDetail && !activePlanError)
+  );
+
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg">
+    <main
+      className="flex-1 flex flex-col h-full overflow-hidden bg-c-bg"
+      aria-label={isPolish ? 'Centrum Agenta' : 'Agent hub'}
+      aria-busy={workspaceBusy}
+    >
+      <section
+        className="shrink-0 border-b border-c-border bg-c-surface px-4 py-3"
+        aria-labelledby="agent-hub-workspace-title"
+        data-testid="agent-hub-workspace-summary"
+      >
+        <h1 id="agent-hub-workspace-title" className="text-sm font-semibold text-c-text">
+          {isPolish ? 'Agent Hub — wspólna przestrzeń pracy' : 'Agent Hub — shared workspace'}
+        </h1>
+        <p className="mt-1 text-xs text-c-text-secondary">
+          {isPolish
+            ? 'Teresa przygotowuje pracę; My Work przechowuje kanoniczne Sprawy i Przebiegi; akceptacje, wyniki, historia i bezpieczne odzyskiwanie pozostają w tym samym Hubie.'
+            : 'Teresa prepares the work; My Work keeps canonical Cases and Runs; approvals, outputs, history and safe recovery remain in this Hub.'}
+        </p>
+        <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {isPolish ? 'Bieżący obszar Agent Hub' : 'Current Agent Hub area'}:{' '}
+          {agentHubTabLabel(tab, isPolish)}.
+        </p>
+        <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-c-text-muted">
+          <div>
+            <dt className="inline font-semibold">{isPolish ? 'Sprawa' : 'Case'}: </dt>
+            <dd className="inline break-all">
+              {searchParams.get('transformationCaseId') ||
+                (isPolish ? 'nie wybrano' : 'not selected')}
+            </dd>
+          </div>
+          <div>
+            <dt className="inline font-semibold">{isPolish ? 'Przebieg' : 'Run'}: </dt>
+            <dd className="inline break-all">
+              {searchParams.get('canonicalRunId') || (isPolish ? 'nie wybrano' : 'not selected')}
+            </dd>
+          </div>
+        </dl>
+      </section>
       <div className="flex-1 min-h-0 overflow-y-auto">
-        {activeItemId ? (
+        {unauthorizedOperationsRequest ? (
+          <EmptyState
+            variant="forbidden"
+            title={isPolish ? 'Brak dostępu do operacji Agenta' : 'Agent Operations access denied'}
+            description={
+              isPolish
+                ? 'Diagnostyka i odzyskiwanie kanonicznego Przebiegu są dostępne tylko dla uprawnionej roli. Sprawa i pozostały kontekst URL nie zostały zmienione.'
+                : 'Canonical Run diagnostics and recovery require an authorized role. The Case and remaining URL context were not changed.'
+            }
+            primaryAction={{
+              label: isPolish ? 'Wróć do Spraw i akceptacji' : 'Return to Cases and approvals',
+              onClick: () =>
+                writeWorkspaceContext('transformations', {
+                  transformationCaseId: searchParams.get('transformationCaseId') || undefined,
+                  canonicalRunId: undefined,
+                }),
+            }}
+            className="h-full"
+          />
+        ) : activeItemId ? (
           <div className="flex h-full min-h-0 overflow-hidden">
             <div className="flex-1 min-w-0 overflow-y-auto p-4">
               {activePlanError ? (
@@ -1532,8 +1697,17 @@ export const AgentHubShell: React.FC = () => {
           </div>
         ) : tab === 'processes' ? (
           renderProcesses()
-        ) : (
+        ) : tab === 'templates' ? (
           renderTemplates()
+        ) : tab === 'governed_templates' ? (
+          <AgentProcessTemplatesPanel />
+        ) : tab === 'operations' ? (
+          <AgentOperationsPanel initialCanonicalRunId={searchParams.get('canonicalRunId')} />
+        ) : (
+          <TransformationCasesPanel
+            onCanonicalContextChange={handleCanonicalContextChange}
+            onOpenOperations={isOperator ? handleOpenOperations : undefined}
+          />
         )}
       </div>
 
@@ -1550,7 +1724,7 @@ export const AgentHubShell: React.FC = () => {
         errorMessage={folderDialogError}
         title={t('agentPlan.hub.folders.newFolder', isPolish ? 'Nowy folder…' : 'New folder…')}
       />
-    </div>
+    </main>
   );
 };
 

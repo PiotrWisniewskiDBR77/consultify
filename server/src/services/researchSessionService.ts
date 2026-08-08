@@ -2,7 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { conductDeepResearch, type DeepResearchOutput } from './ai/deepResearchService.js';
+import {
+  conductDeepResearch,
+  type DeepResearchOutput,
+  type Source as ResearchSource,
+} from './ai/deepResearchService.js';
 import {
   buildQaResearchChatResponse,
   buildQaWebSearchResults,
@@ -814,7 +818,7 @@ export async function persistEvidenceGraph(params: {
         title: source.title,
         url: source.url,
       }))) {
-    const source = sources[citation.sourceIndex] || {};
+    const source: Partial<ResearchSource> = sources[citation.sourceIndex] || {};
     const quote = String(citation.text || source.snippets?.[0] || source.title || '').slice(
       0,
       1200

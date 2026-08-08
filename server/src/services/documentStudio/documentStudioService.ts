@@ -304,7 +304,7 @@ async function persistProposalWriteThrough(
     degraded: outcome.degraded,
     reason: outcome.reason,
   };
-  if (!outcome.ok) {
+  if (outcome.ok === false) {
     const logFn = outcome.degraded === 'db_error' ? logger.error : logger.warn;
     logFn('[DocumentStudio] proposal durable write did not confirm', {
       proposalId: proposal.proposalId,
@@ -562,7 +562,7 @@ export async function materializeDocumentArtifact(
   const incomingSourceRefs = params.sourceRefs ?? [];
   if (template) {
     const preflight = preflightRequiredSources(template, incomingSourceRefs);
-    if (!preflight.ok) {
+    if (preflight.ok === false) {
       throw new MissingRequiredSourceError(preflight.missing);
     }
   }
@@ -810,7 +810,7 @@ export async function materializeDocumentArtifact(
     params.organizationId,
     finalSchema
   );
-  if (!finalOverlayPersistence.ok) {
+  if (finalOverlayPersistence.ok === false) {
     logger.warn('[DocumentStudio] final generated schema overlay did not persist', {
       artifactId,
       organizationId: params.organizationId,
@@ -2509,7 +2509,7 @@ export async function updateDocumentManualContent(
     const winner = await daoLoadSchemaOverlay(params.artifactId, params.organizationId);
     throw new DocumentManualSaveConflictError(winner?.updatedAt ?? current.updatedAt);
   }
-  if (!persistence.ok) {
+  if (persistence.ok === false) {
     throw new Error('manual_save_persistence_failed');
   }
   schemaOverlayStore.set(schemaOverlayKey(params.artifactId, params.organizationId), nextSchema);

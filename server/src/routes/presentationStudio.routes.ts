@@ -539,7 +539,7 @@ router.post(
       strict,
     });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       res.status(412).json({
         success: false,
         code: result.code,
@@ -656,7 +656,7 @@ router.post(
       userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       res.status(403).json({
         success: false,
         code: result.code,
@@ -841,7 +841,7 @@ router.post(
       overrides,
       reason,
     });
-    if (!result.ok) {
+    if (result.ok === false) {
       res.status(412).json({
         success: false,
         code: result.code,
@@ -931,7 +931,7 @@ router.post(
       userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       if (result.code === 'INVALID_OVERRIDES_PAYLOAD') {
         res.status(412).json({
           success: false,
@@ -1085,7 +1085,7 @@ router.post(
       userAgent: typeof req.headers?.['user-agent'] === 'string' ? req.headers['user-agent'] : null,
     });
 
-    if (!result.ok) {
+    if (result.ok === false) {
       res.status(403).json({
         success: false,
         code: result.code,

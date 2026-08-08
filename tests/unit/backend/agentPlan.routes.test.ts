@@ -27,9 +27,18 @@ const approveStep = vi.fn();
 const cancelPlan = vi.fn();
 const listPlans = vi.fn();
 const replaceSteps = vi.fn(); // AGT-009
+const executeGovernedEnqueue = vi.fn();
 
 vi.mock('../../../server/src/services/ai/agentPlannerService.js', () => ({
-  agentPlannerService: { createPlan, getPlan, approveStep, cancelPlan, listPlans, replaceSteps },
+  agentPlannerService: {
+    createPlan,
+    getPlan,
+    approveStep,
+    cancelPlan,
+    listPlans,
+    replaceSteps,
+    executeGovernedEnqueue,
+  },
 }));
 
 const getDiscoveryAgentManifest = vi.fn();
@@ -73,6 +82,10 @@ const basePlan = (overrides: Partial<Record<string, unknown>> = {}) => ({
 describe('Agent Plan Routes (HP-4 fundament)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    executeGovernedEnqueue.mockImplementation(async (input) => ({
+      replayed: false,
+      result: await input.enqueue(),
+    }));
   });
 
   describe('POST /', () => {

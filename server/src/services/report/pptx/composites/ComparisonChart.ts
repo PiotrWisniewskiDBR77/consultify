@@ -9,7 +9,6 @@
  *    (a confident closing element low on the slide), not a thin centred line.
  */
 import { BodyText } from '../atomics/BodyText.js';
-import { Bullet } from '../atomics/Bullet.js';
 import type { DesignTokens, ElementPosition, RenderedElement } from '../types.js';
 
 export interface ComparisonChartProps {
@@ -95,18 +94,31 @@ export function ComparisonChart(
       )
     );
 
-    // Bullets fill the card body (top-anchored under header, runs to card bottom).
+    // Comparison values are rendered as independent rows. A rich-text bullet
+    // box can apply a negative hanging indent that crosses the centre gutter
+    // (especially for the right column), causing visually overlapping text
+    // even though every shape remains inside the slide canvas.
     const bulletY = p.y + headerH + 0.18;
     const bulletH = colH - headerH - 0.36;
-    elements.push(
-      Bullet(
-        {
-          items: col.items.slice(0, 6),
-          position: { x: col.x + 0.2, y: bulletY, w: colW - 0.4, h: Math.max(0.4, bulletH) },
-        },
-        tokens
-      )
-    );
+    const items = col.items.slice(0, 6);
+    const rowH = Math.max(0.32, bulletH / Math.max(1, items.length));
+    items.forEach((item, index) => {
+      elements.push(
+        BodyText(
+          {
+            text: item,
+            position: {
+              x: col.x + 0.3,
+              y: bulletY + index * rowH,
+              w: colW - 0.6,
+              h: rowH,
+            },
+            valign: 'middle',
+          },
+          tokens
+        )
+      );
+    });
   }
 
   // Verdict — filled bar anchored at the bottom of the region.

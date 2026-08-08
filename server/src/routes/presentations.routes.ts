@@ -1388,7 +1388,7 @@ router.post(
     const useLlm = req.body?.useLlm === true;
     if (input.customTemplate !== undefined) {
       const validation = validatePresentationCustomTemplate(input.customTemplate);
-      if (!validation.ok) {
+      if (validation.ok === false) {
         return res
           .status(400)
           .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
@@ -1443,7 +1443,7 @@ router.post(
     // the read-back came back empty, so a rejected INSERT still looked like a
     // saved template.
     const planSettled = await settleTemplateWrite('template plan', id, orgId, insertAck);
-    if (!planSettled.ok) {
+    if (planSettled.ok === false) {
       logger.error('[Presentations] Template plan insert did not persist', {
         templateId: id,
         organizationId: orgId,
@@ -1557,7 +1557,7 @@ router.post(
     // that may never have been written. Settle against durable, org-owned state
     // before the best-effort lineage writes and before answering.
     const cloneSettled = await settleTemplateWrite('template clone', id, orgId, cloneAck);
-    if (!cloneSettled.ok) {
+    if (cloneSettled.ok === false) {
       logger.error('[Presentations] Template clone insert did not persist', {
         templateId: id,
         sourceTemplateId: String(req.params.id),
@@ -1654,7 +1654,7 @@ router.put(
     } = req.body;
     if (customTemplate !== undefined && customTemplate !== null) {
       const validation = validatePresentationCustomTemplate(customTemplate);
-      if (!validation.ok) {
+      if (validation.ok === false) {
         return res
           .status(400)
           .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
@@ -1719,7 +1719,7 @@ router.put(
       orgId,
       updateAck
     );
-    if (!updateSettled.ok) {
+    if (updateSettled.ok === false) {
       logger.error('[Presentations] Template update did not persist', {
         templateId: String(req.params.id),
         organizationId: orgId,
@@ -1826,7 +1826,7 @@ router.post(
         }
         if (customTemplate != null) {
           const validation = validatePresentationCustomTemplate(customTemplate);
-          if (!validation.ok)
+          if (validation.ok === false)
             return res
               .status(422)
               .json({
@@ -2616,7 +2616,7 @@ router.get(
       format: 'pptx',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(req.params.id || ''),
@@ -2667,7 +2667,7 @@ router.get(
 
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
-    if (!limitCheck.ok) {
+    if (limitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -2798,7 +2798,7 @@ router.get(
       format: 'pdf',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -2825,7 +2825,7 @@ router.get(
 
     const cards = getDeckCards(deck);
     const limitCheck = enforceExportLimits(deck, cards);
-    if (!limitCheck.ok) {
+    if (limitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -3204,7 +3204,7 @@ router.get(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const collaborators = await listCollaborators(req.params.id, orgId);
+    const collaborators = await listCollaborators(String(req.params.id), orgId);
     res.json({ success: true, data: { collaborators } });
   })
 );
@@ -3246,7 +3246,7 @@ router.post(
       : permissionToRole(body.permission);
 
     const result = await upsertCollaborator({
-      deckId: req.params.id,
+      deckId: String(req.params.id),
       organizationId: orgId,
       userId: targetUserId || null,
       invitedEmail: email || null,
@@ -3291,7 +3291,7 @@ router.delete(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const result = await revokeCollaborator(req.params.id, orgId, req.params.collaboratorId);
+    const result = await revokeCollaborator(String(req.params.id), orgId, String(req.params.collaboratorId));
     await (req as any).emitAuditEvent?.({
       actorType: 'USER',
       action: 'collaborator_revoke',
@@ -3578,7 +3578,7 @@ router.post(
       format: 'html',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -5462,7 +5462,7 @@ router.post(
     const userId = getUserId(req);
 
     const validation = validatePresetCreateInput(req.body);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       return res.status(400).json({
         success: false,
         error: validation.error,
@@ -7597,7 +7597,7 @@ router.post(
       format: 'png',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -7625,7 +7625,7 @@ router.post(
     const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
     const pngLimitCheck = enforceExportLimits(deck, cards);
-    if (!pngLimitCheck.ok) {
+    if (pngLimitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,

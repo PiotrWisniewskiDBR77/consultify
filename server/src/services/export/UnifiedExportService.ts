@@ -447,15 +447,35 @@ class UnifiedExportService {
     // Numbering definitions for ordered lists. Provide four levels for the
     // common nested-list case. Without a numbering config, docx's `numbering`
     // reference silently no-ops and the items render as plain paragraphs.
-    const numbering = {
+    const numbering: import('docx').INumberingOptions = {
       config: [
         {
           reference: 'canvas-numbered',
           levels: [
-            { level: 0, format: 'decimal', text: '%1.', alignment: docx.AlignmentType.START },
-            { level: 1, format: 'lowerLetter', text: '%2.', alignment: docx.AlignmentType.START },
-            { level: 2, format: 'lowerRoman', text: '%3.', alignment: docx.AlignmentType.START },
-            { level: 3, format: 'decimal', text: '%4.', alignment: docx.AlignmentType.START },
+            {
+              level: 0,
+              format: docx.LevelFormat.DECIMAL,
+              text: '%1.',
+              alignment: docx.AlignmentType.START,
+            },
+            {
+              level: 1,
+              format: docx.LevelFormat.LOWER_LETTER,
+              text: '%2.',
+              alignment: docx.AlignmentType.START,
+            },
+            {
+              level: 2,
+              format: docx.LevelFormat.LOWER_ROMAN,
+              text: '%3.',
+              alignment: docx.AlignmentType.START,
+            },
+            {
+              level: 3,
+              format: docx.LevelFormat.DECIMAL,
+              text: '%4.',
+              alignment: docx.AlignmentType.START,
+            },
           ],
         },
       ],
@@ -632,12 +652,10 @@ class UnifiedExportService {
           // Tables-in-slide-body: collapse to per-row text. A real pptxgenjs
           // table would need a separate `slide.addTable` placement and would
           // overflow the body region the caller laid out.
-          flushRuns(tok.header, { bold: true, fontSize: 11 });
+          flushRuns(([] as InlineRun[]).concat(...tok.header), { bold: true, fontSize: 11 });
           for (const row of tok.rows) {
-            flushRuns(
-              row.flatMap((cell) => cell),
-              { fontSize: 11 }
-            );
+            const rowRuns: InlineRun[] = ([] as InlineRun[]).concat(...row);
+            flushRuns(rowRuns, { fontSize: 11 });
           }
           break;
         }

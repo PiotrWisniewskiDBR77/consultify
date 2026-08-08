@@ -8,6 +8,7 @@ export const ArtifactOriginRuntimeValues = [
   'presentation',
   'sheet',
   'native_artifact',
+  'assessment_report',
   'report_template',
   'presentation_template',
   'sheet_template',
@@ -16,11 +17,7 @@ export const ArtifactOriginRuntimeValues = [
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 export type ArtifactVisibilityScope =
-  | 'private'
-  | 'project'
-  | 'organization'
-  | 'review_shared'
-  | 'demo';
+  'private' | 'project' | 'organization' | 'review_shared' | 'demo';
 export type ArtifactRunStatus =
   | 'planned'
   | 'proposal_created'

@@ -100,6 +100,26 @@ describe('Generate -> PPTX download happy path', () => {
     expect(result.slideCount).toBeGreaterThanOrEqual(3);
   });
 
+  it('localizes Polish confidentiality labels in rendered slide XML', async () => {
+    const input = buildUnifiedReport();
+    input.meta.language = 'pl';
+    input.meta.confidentiality = 'confidential';
+    const service = new PptxPipelineService();
+    const result = await service.generateFromUnifiedJson(input, { language: 'pl' });
+    const zip = await JSZip.loadAsync(result.buffer);
+    const slideXml = (
+      await Promise.all(
+        Object.values(zip.files)
+          .filter((entry) => /^ppt\/slides\/slide\d+\.xml$/.test(entry.name))
+          .map((entry) => entry.async('string'))
+      )
+    ).join('\n');
+
+    expect(slideXml).toContain('POUFNE · Consultify');
+    expect(slideXml).toContain('P O U F N E');
+    expect(slideXml).not.toContain('CONFIDENTIAL');
+  });
+
   it('round-trips through disk exactly as the download route serves it', async () => {
     const service = new PptxPipelineService();
     const result = await service.generateFromUnifiedJson(buildUnifiedReport());
