@@ -36,7 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { EmptyState, LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -87,6 +87,7 @@ import {
 } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
+import { AssessmentOutputsTab } from './AssessmentOutputsTab';
 import { AssessmentQualityReviewPanel } from './AssessmentQualityReviewPanel';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
@@ -417,6 +418,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const [assessments, setAssessments] = useState<AssessmentFromAPI[]>([]);
   const [reports, setReports] = useState<ReportBuilderReportFromAPI[]>([]);
   const [initiatives, setInitiatives] = useState<any[]>([]);
+  // Count of the org-wide Outputs Library (AssessmentOutputsTab, rendered
+  // below whenever no assessment is selected on the Processes tab) — drives
+  // the 'outputs' tab badge. `null` = load error, distinct from a genuine 0.
+  const [outputsCount, setOutputsCount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadWarning, setLoadWarning] = useState<string | null>(null);
   const [hubChatId, setHubChatId] = useState<string | null>(null);
@@ -716,6 +721,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         id: 'outputs' as ModuleTab,
         label: 'Outputs',
         icon: <Package size={16} />,
+        count: outputsCount ?? undefined,
       },
       {
         id: 'reports' as ModuleTab,
@@ -730,7 +736,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         count: initiatives.length,
       },
     ];
-  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports]);
+  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports, outputsCount]);
 
   // Table columns for assessments
   // Dynamic columns per active tab
@@ -1950,12 +1956,13 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
       );
     }
 
-    // ASM-005/006/007: 'outputs' now shows the evidence/scoring + manager
+    // ASM-005/006/007: 'outputs' shows the evidence/scoring + manager
     // accept/return + immutable accepted-output surface for the assessment
     // selected on the Processes tab (`selectedAssessmentId`, shared Hub
-    // state). No assessment selected yet -> keep the original honest empty
-    // state (ASM-001A placeholder), unchanged, rather than inventing new
-    // Hub chrome.
+    // state). No assessment selected yet -> the org-wide Outputs Library
+    // (AssessmentOutputsTab: `GET /api/artifacts`, filtered to assessment-
+    // origin rows) — a real, useful default rather than a static "pick one
+    // first" placeholder, and drives this tab's badge via `outputsCount`.
     if (activeTab === 'outputs') {
       if (selectedAssessmentId) {
         return (
@@ -1965,16 +1972,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
         );
       }
       return (
-        <div className="h-full overflow-auto p-6">
-          <EmptyState
-            variant="new"
-            icon={Package}
-            title={t('assessment.outputs.emptyState.title', 'Select an assessment first')}
-            description={t(
-              'assessment.outputs.emptyState.description',
-              'Pick an assessment on the Processes tab to review its evidence, accept or return it, and see its accepted output here.'
-            )}
-          />
+        <div className="h-full overflow-hidden">
+          <AssessmentOutputsTab onCountChange={setOutputsCount} />
         </div>
       );
     }
