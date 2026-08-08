@@ -273,7 +273,13 @@
       "approved": "Zatwierdzony",
       "rejected": "Odrzucony",
       "utilized": "Wykorzystany"
-    }
+    },
+    "filterColumnActive": "Filtruj {{column}} (aktywny: {{count}})",
+    "filterColumnInactive": "Filtruj {{column}}, brak aktywnego filtra",
+    "filterByColumn": "Filtruj wg {{column}}",
+    "list": "Lista",
+    "closeDocumentNamed": "Zamknij {{name}}",
+    "moreOpenDocuments": "Więcej otwartych dokumentów ({{count}})"
   },
   "superadmin": {
     "confirm": {
@@ -5606,7 +5612,30 @@
         "failed": "Błąd"
       },
       "confidenceLevelLabel": "Poziom pewności",
-      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
+      "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd",
+      "showTechnicalDetails": "Pokaż szczegóły techniczne ({{count}})",
+      "hideTechnicalDetails": "Ukryj szczegóły techniczne",
+      "confidenceHint": {
+        "high": "Wysoka pewność",
+        "medium": "Średnia pewność",
+        "low": "Niska pewność",
+        "insufficient": "Niewystarczające dane",
+        "contradicted": "Sprzeczne"
+      },
+      "followupType": {
+        "investigate": "Zbadaj",
+        "validate": "Zweryfikuj",
+        "split": "Podziel",
+        "collect_evidence": "Zbierz dowody",
+        "publish": "Opublikuj",
+        "reinterview": "Powtórz wywiad"
+      },
+      "sourceSectionType": {
+        "theme": "Motyw",
+        "issue": "Problem",
+        "opportunity": "Szansa",
+        "manual": "Ręczne"
+      }
     },
     "templateBuilder": {
       "freeTextAnswer": "Pole tekstowe na odpowiedź…",
@@ -6116,7 +6145,8 @@
       "selectedPeopleCount": "{{count}} wybranych osób",
       "sessionUnitOne": "sesja",
       "sessionUnitOther": "sesji",
-      "usedNTimes": "użyto {{count}}×"
+      "usedNTimes": "użyto {{count}}×",
+      "close": "Zamknij"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transkrypcja zatwierdzona.",
@@ -7087,6 +7117,111 @@
       "gapValue": "brak {{value}}",
       "currentLevel": "Poziom obecny",
       "fofThreshold": "Próg FoF ({{benchmark}})"
+    },
+    "workbench": {
+      "title": "Warsztat oceny",
+      "loadingRuntime": "Wczytywanie stanu",
+      "reload": "Odśwież",
+      "applyPreset": "Zastosuj profil DRD",
+      "start": "Rozpocznij",
+      "complete": "Zakończ",
+      "loadingWorkbench": "Wczytywanie warsztatu…",
+      "currentState": "Stan bieżący",
+      "reviewReadiness": "Gotowość przeglądu",
+      "reviewReadinessHint": "Przegląd pozostaje jawny. AI może pomóc przygotować propozycje, ale bramki akceptacji zawsze są tutaj.",
+      "downstreamStatus": "Status dalszych kroków",
+      "downstreamHint": "Raporty i pakiety inicjatyw powinny powstawać z tego przebiegu, aby zachować pochodzenie danych.",
+      "definitionReadOnly": "Opublikowana definicja `{{id}}` jest tylko do odczytu i wersjonowana.",
+      "pendingPromotionRetry": "Oczekująca ponowna próba przekazania dla `{{targetKind}}`: {{error}}",
+      "whatNext": "Co dalej",
+      "evidence": "Dowody",
+      "noEvidenceYet": "Brak jeszcze dowodów.",
+      "evidenceKindLabel": "Typ dowodu",
+      "evidenceRef": "Odniesienie do dowodu",
+      "evidenceLabel": "Opcjonalna etykieta",
+      "addEvidence": "Dodaj dowód",
+      "scoreProposal": "Propozycja oceny",
+      "scoringRationale": "Uzasadnienie oceny",
+      "scoreValues": "Wartości oceny",
+      "scoreConfidence": "Pewność 0-1",
+      "scoreAssumptions": "Założenia, jedno na linię",
+      "proposeScore": "Zaproponuj ocenę",
+      "acceptScore": "Zaakceptuj ocenę",
+      "rejectScore": "Odrzuć ocenę",
+      "overrideScore": "Nadpisz ocenę",
+      "overrideScoreValues": "Nadpisane wartości oceny",
+      "interpretationProposal": "Propozycja interpretacji",
+      "interpretationSummary": "Podsumowanie interpretacji",
+      "keyFindings": "Kluczowe wnioski, jeden na linię",
+      "limits": "Ograniczenia",
+      "nextActions": "Następne działania, jedno na linię",
+      "proposeInterpretation": "Zaproponuj interpretację",
+      "acceptInterpretation": "Zaakceptuj interpretację",
+      "rejectInterpretation": "Odrzuć interpretację",
+      "overrideInterpretation": "Nadpisz interpretację",
+      "overrideSummary": "Nadpisane podsumowanie",
+      "promotion": "Przekazanie",
+      "promotionTargetKindLabel": "Cel przekazania",
+      "promotionTargetRef": "Odniesienie celu",
+      "promotionAutoCreateHint": "Zostaw puste, aby automatycznie utworzyć szkic wniosku",
+      "promote": "Przekaż",
+      "defaultGuidance": "Przesuń przebieg naprzód, dołączając dowody, przeglądając propozycje i przekazując tylko zatwierdzone wyniki.",
+      "interpretationStatus": "Interpretacja: {{status}}",
+      "scoreStatus": "Ocena: {{status}}",
+      "reviewNotStarted": "Przegląd nierozpoczęty",
+      "downstreamHandoffs": "Zarejestrowano {{count}} dalszych przekazań",
+      "promotionRetryPending": "Oczekuje ponowna próba przekazania",
+      "noDownstreamHandoff": "Brak jeszcze dalszych przekazań",
+      "completedWithoutInterpretationReason": "Zaakceptowano zakończenie mimo braku interpretacji.",
+      "requestFailed": "Żądanie warsztatu nie powiodło się",
+      "runState": {
+        "draft": "Szkic",
+        "running": "W toku",
+        "awaitingEvidence": "Oczekuje na dowody",
+        "scoreProposed": "Zaproponowano ocenę",
+        "scoreReviewed": "Ocena sprawdzona",
+        "interpretationProposed": "Zaproponowano interpretację",
+        "interpretationReviewed": "Interpretacja sprawdzona",
+        "completed": "Zakończono",
+        "failed": "Nieudane"
+      },
+      "reviewStatus": {
+        "pending": "Oczekuje",
+        "accepted": "Zaakceptowano",
+        "rejected": "Odrzucono",
+        "overridden": "Nadpisano"
+      },
+      "evidenceKind": {
+        "document": "Dokument",
+        "interviewNote": "Notatka z wywiadu",
+        "surveyResponse": "Odpowiedź z ankiety",
+        "artifact": "Artefakt",
+        "externalUrl": "Link zewnętrzny"
+      },
+      "promotionTarget": {
+        "outputsArtifact": "Artefakt wyjściowy",
+        "interviewInsight": "Wniosek z wywiadu"
+      },
+      "toast": {
+        "presetApplied": "Zastosowano profil",
+        "workbenchStarted": "Warsztat rozpoczęty",
+        "runCompleted": "Przebieg zakończony",
+        "evidenceAdded": "Dodano dowód",
+        "scoreProposed": "Zaproponowano ocenę",
+        "scoreAccepted": "Zaakceptowano ocenę",
+        "scoreRejected": "Odrzucono ocenę",
+        "scoreOverridden": "Nadpisano ocenę",
+        "interpretationProposed": "Zaproponowano interpretację",
+        "interpretationAccepted": "Zaakceptowano interpretację",
+        "interpretationRejected": "Odrzucono interpretację",
+        "interpretationOverridden": "Nadpisano interpretację",
+        "promotionRecorded": "Zarejestrowano przekazanie"
+      },
+      "dimensionName": "Wymiar",
+      "dimensionValue": "Wartość",
+      "addDimension": "Dodaj wymiar",
+      "removeDimension": "Usuń wymiar",
+      "evidenceReferenceOnFile": "Odniesienie w aktach"
     }
   },
   "initiatives": {
@@ -7292,7 +7427,13 @@
       "sourceAxis": "Oś źródłowa",
       "timeline": "Harmonogram",
       "title": "Tytuł",
-      "titleTooShort": "Tytuł jest za krótki"
+      "titleTooShort": "Tytuł jest za krótki",
+      "levelTypeLabel": "Typ / poziom inicjatywy",
+      "levelDescQuickWin": "Minimalny nadzór. Może być zatwierdzona samodzielnie.",
+      "levelDescStandard": "Standardowy proces akceptacji. Wymaga właściciela, terminu i zadań.",
+      "levelDescStrategic": "Wymagana akceptacja zarządu. Pełny statut + analiza RAID.",
+      "levelDescTransformation": "Nadzór na poziomie zarządu. Pełny statut, komitet sterujący, bramki decyzyjne.",
+      "levelUpgradeOnlyNote": "Poziom można później podnieść, ale nie obniżyć."
     },
     "axis": {
       "operational": "Operacyjna",
@@ -7387,7 +7528,9 @@
         "balanced": "Obciążenie jest zrównoważone — żadne zmiany nie są potrzebne",
         "suggested": "podpowiedź",
         "reasonHasCapacity": "{{name}} ma zapas ({{load}})",
-        "reasonUnassigned": "{{name}} nie ma obecnie przypisań"
+        "reasonUnassigned": "{{name}} nie ma obecnie przypisań",
+        "filterRoleActive": "Filtruj wg roli (aktywny: {{role}})",
+        "filterRoleInactive": "Filtruj wg roli, brak aktywnego filtra"
       },
       "feasibility": {
         "title": "Wykonalność",
@@ -7495,7 +7638,16 @@
         "delayImpactAction": "Wpływ opóźnień",
         "reasonAfterDep": "po zakończeniu zależności ({{d}})",
         "reasonOwnerFree": "właściciel dostępny po {{d}}",
-        "reasonNoBlockers": "brak blokad — może ruszyć od razu"
+        "reasonNoBlockers": "brak blokad — może ruszyć od razu",
+        "editDatesFor": "Edytuj daty dla {{name}}",
+        "statusDelayed": "Opóźnione",
+        "statusAtRisk": "Zagrożone",
+        "statusNoDates": "Brak dat",
+        "statusOnSchedule": "Zgodnie z planem",
+        "saveDatesFor": "Zapisz daty dla {{name}}",
+        "cancelEditingDatesFor": "Anuluj edycję dat dla {{name}}",
+        "startDateFor": "Data rozpoczęcia dla {{name}}",
+        "endDateFor": "Data zakończenia dla {{name}}"
       },
       "completeness": {
         "title": "Kompletność",
@@ -8686,7 +8838,19 @@
       "noMilestonesYet": "Brak kamieni milowych",
       "milestonesLoading": "Wczytywanie kamieni milowych…",
       "milestonesLoadError": "Nie udało się wczytać kamieni milowych",
-      "taskCreated": "Zadanie utworzone"
+      "taskCreated": "Zadanie utworzone",
+      "columnTask": "Zadanie",
+      "columnStatus": "Status",
+      "columnPriority": "Priorytet",
+      "columnOwner": "Właściciel",
+      "columnDue": "Termin",
+      "columnSource": "Źródło",
+      "filterStatusLabel": "Filtruj zadania wg statusu",
+      "filterPriorityLabel": "Filtruj zadania wg priorytetu",
+      "filterOwnerLabel": "Filtruj zadania wg właściciela",
+      "filterDueLabel": "Filtruj zadania wg terminu",
+      "filterSourceLabel": "Filtruj zadania wg źródła",
+      "sourceAi": "AI"
     },
     "decisionsSection": {
       "missingInitiativeId": "Brak ID inicjatywy",
@@ -9373,7 +9537,8 @@
       "targetSuccessSuccessPlaceholder": "Kryterium sukcesu...",
       "targetSuccessDeliverablesTitle": "Produkty",
       "targetSuccessDeliverablesDesc": "Konkretne produkty i wyniki do dostarczenia",
-      "targetSuccessDeliverablesPlaceholder": "Deliverable..."
+      "targetSuccessDeliverablesPlaceholder": "Deliverable...",
+      "untitledSource": "Źródło bez tytułu"
     },
     "suggestedChangesPanel": {
       "title": "Sugerowane zmiany",
@@ -9574,6 +9739,13 @@
       "property": "Właściwość",
       "value": "Wartość",
       "actionsHiddenInReadMode": "Akcje są ukryte w trybie Podgląd"
+    },
+    "goals": {
+      "type": {
+        "scorecard": "Cel typu karta wyników",
+        "keyResult": "Kluczowy rezultat",
+        "objective": "Cel"
+      }
     }
   },
   "execution": {
@@ -9920,7 +10092,8 @@
       "initiative": "Inicjatywa",
       "selectAll": "Zaznacz wszystko",
       "selectRow": "Zaznacz wiersz",
-      "selectedCount": "Zaznaczono: {{count}}"
+      "selectedCount": "Zaznaczono: {{count}}",
+      "changeStatusFor": "Zmień status dla {{name}}"
     },
     "badges": {
       "done": "Ukończone",
@@ -10310,6 +10483,40 @@
       "savings": "Oszczędności",
       "title": "Zapisz wartość zrealizowaną",
       "valueType": "Typ wartości"
+    },
+    "whatIf": {
+      "title": "What-if — symulacja interwencji",
+      "healthBadge": "Zdrowie {{delta}}",
+      "reset": "Reset",
+      "emptyHint": "Wybierz interwencje powyżej, aby zobaczyć projekcję. Nic nie zostanie zapisane, dopóki nie podejmiesz działania.",
+      "intervention": {
+        "addResource": "+1 FTE",
+        "descope": "Zdejmij zakres",
+        "extendDeadline": "+14 dni",
+        "mitigateRisk": "Zamknij ryzyko",
+        "reprioritize": "Repriorytetyzuj"
+      },
+      "metric": {
+        "health": "Zdrowie",
+        "utilization": "Obłożenie %",
+        "fromBase": "(z {{base}})"
+      },
+      "explanation": {
+        "addResource": "Dodaj zasób (+{{magnitude}} FTE): wykorzystanie zespołu spada o ~{{utilDrop}} pkt, SPI rośnie lekko ku 1.0, zdrowie +{{healthDelta}}.",
+        "descope": "Zdejmij zakres (-{{magnitude}}): SPI rośnie (+{{spiDelta}}), zdrowie +{{healthDelta}}, wykorzystanie maleje o ~{{utilDrop}} pkt.",
+        "extendDeadline": "Wydłuż termin (+{{magnitude}} dni): opóźnienie harmonogramu maleje, SPI dryfuje ku 1.0, zdrowie lekko rośnie.",
+        "mitigateRisk": "Zamknij ryzyko (-{{magnitude}}): otwarte ryzyka wysokie {{before}} → {{after}}, zdrowie +{{healthDelta}}.",
+        "reprioritize": "Repriorytetyzuj (×{{magnitude}}): koszt (CPI) bez zmian, SPI lekko rośnie ku 1.0, zdrowie +{{healthDelta}}.",
+        "unknown": "Nieznana interwencja \"{{unknownType}}\": pominięta."
+      }
+    },
+    "intelligence": {
+      "unavailable": "Predykcja niedostępna chwilowo — kokpit działa normalnie.",
+      "title": "Predykcja ryzyka (EVM)",
+      "atRisk": "{{count}} zagrożonych",
+      "loading": "Ładowanie predykcji…",
+      "empty": "Brak inicjatyw o wysokim ryzyku — wszystko w normie.",
+      "suggestedActions": "Sugerowane działania"
     }
   },
   "benefits": {
@@ -15633,7 +15840,8 @@
       "submit": "Zgłoś",
       "sent": "Zgłoszenie wysłane do przeglądu.",
       "failed": "Nie udało się wysłać zgłoszenia. Spróbuj ponownie."
-    }
+    },
+    "conversationLandmark": "Rozmowa"
   },
   "aiChat": {
     "composer": {
@@ -21071,7 +21279,9 @@
       "empty": "Brak raportów KPI. Utwórz raport, aby przeglądać wyniki i działania korygujące.",
       "create": {
         "title": "Nowy raport KPI",
-        "titlePlaceholder": "np. Miesięczny przegląd KPI"
+        "titlePlaceholder": "np. Miesięczny przegląd KPI",
+        "searchKpis": "Szukaj KPI",
+        "template": "Szablon"
       },
       "tasks": {
         "title": "Utwórz zadania z planu działań",
@@ -21149,7 +21359,10 @@
       },
       "ai": {
         "askAi": "Teresa"
-      }
+      },
+      "closeFor": "Zamknij szczegóły {{name}}",
+      "kpiFallback": "KPI",
+      "title": "Szczegóły KPI"
     },
     "operational": {
       "totalTracked": "Łącznie śledzonych KPI",
@@ -21250,7 +21463,10 @@
       "openModal": {
         "search": "Wyszukiwanie",
         "empty": "Brak prezentacji."
-      }
+      },
+      "closeFor": "Zamknij szczegóły ROI dla {{name}}",
+      "detailTitle": "Szczegóły ROI",
+      "notes": "Notatki"
     },
     "reportingSchedules": {
       "approvalAuto": "Automatyczne",
@@ -21517,6 +21733,14 @@
         "nodes": "Węzły"
       },
       "noLinks": "Brak powiązań KPI z inicjatywami. Połącz KPI z inicjatywami w zakładce KPI."
+    },
+    "filters": {
+      "requiresReview": "Wymaga przeglądu",
+      "discrepancy": "Rozbieżność",
+      "onTarget": "W normie",
+      "belowTarget": "Poniżej celu",
+      "noData": "Brak danych",
+      "needsEntry": "Wymaga uzupełnienia"
     }
   },
   "traceability": {
@@ -24417,15 +24641,19 @@
         "submit": "Dodaj do canvas"
       },
       "selection": {
-        "title": "AI na zaznaczeniu",
-        "selected": "Zaznaczenie",
-        "empty": "Zaznacz fragment tekstu, aby użyć akcji AI.",
-        "expand": "Rozwiń myśl",
-        "shorten": "Skróć",
-        "rewrite": "Przepisz",
-        "suggest": "Daj sugestie",
-        "promptPlaceholder": "Instrukcja dla Teresy na zaznaczonym fragmencie...",
-        "preview": "Podgląd AI edit",
+        "turnSelectionIntoBlock": "Zamień zaznaczenie na blok",
+        "createTable": "Utwórz tabelę",
+        "createChart": "Utwórz wykres",
+        "createDiagram": "Utwórz diagram",
+        "createResearch": "Utwórz research",
+        "createDecision": "Utwórz decyzję",
+        "editSelectedText": "Edytuj zaznaczony tekst",
+        "useSelection": "Użyj zaznaczenia",
+        "actionList": "Lista działań",
+        "bulletSummary": "Podsumowanie punktowe",
+        "editReplacementLabel": "Zamiennik zaznaczenia",
+        "editReplacementPlaceholder": "Wpisz tutaj zamienny tekst Markdown...",
+        "previewEdit": "Podgląd zmiany",
         "clear": "Wyczyść"
       },
       "manualEdit": {
@@ -31681,7 +31909,10 @@
       ],
       "convertedFromSource": "Konwersja z {{typeLabel}}: {{title}}",
       "overdueDate": "Po terminie: {{date}}",
-      "itemTitlePlaceholder": "Nazwa {{typeLabelLower}}..."
+      "itemTitlePlaceholder": "Nazwa {{typeLabelLower}}...",
+      "deleteItemNamed": "Usuń {{title}}",
+      "deleteConfirmTitle": "Usuń wpis RAID",
+      "deleteConfirmMessage": "Usunąć „{{title}}”? Tej operacji nie można cofnąć."
     },
     "nModeCardState": {
       "aiDraftTooltip": "Wersja robocza AI — do weryfikacji",
@@ -35834,6 +36065,219 @@
     },
     "report": {
       "empty": "Raport dostępny po zakończeniu"
+    },
+    "launcher": {
+      "section": "Agenci",
+      "loading": "Wczytywanie agentów…",
+      "hint": "Wybierz gotowego agenta, aby uruchomić go jako plan w tle.",
+      "start": "Uruchom agenta",
+      "planTitlePrefix": "Agent",
+      "panelName": "Uruchamianie agenta",
+      "loadError": "Nie udało się wczytać listy agentów. Spróbuj ponownie.",
+      "startError": "Nie udało się uruchomić agenta. Spróbuj ponownie.",
+      "wave": {
+        "wave1": "Fala 1",
+        "wave2": "Fala 2",
+        "wave3": "Fala 3",
+        "reference": "Materiały referencyjne"
+      }
+    },
+    "catalog": {
+      "group": {
+        "moduly": {
+          "label": "Moduły",
+          "hint": "Etapy oparte o dane z modułów aplikacji."
+        },
+        "ai": {
+          "label": "AI / Teresa",
+          "hint": "Kroki, w których pracuje model."
+        },
+        "dane": {
+          "label": "Dane i Vault",
+          "hint": "Skąd agent bierze kontekst."
+        },
+        "automaty": {
+          "label": "Automaty",
+          "hint": "Kroki, które coś TWORZĄ. Każdy pyta o zgodę przed wykonaniem."
+        },
+        "kontrola": {
+          "label": "Kontrola przebiegu",
+          "hint": "Gdzie agent ma się zatrzymać i co ma być opisane."
+        },
+        "integracje": {
+          "label": "Integracje",
+          "hint": "Systemy poza Consultify."
+        }
+      },
+      "mod-assessment": {
+        "label": "Dane oceny",
+        "hint": "Czyta wyniki i luki z modułu Assessment."
+      },
+      "mod-initiatives": {
+        "label": "Status inicjatyw",
+        "hint": "Portfel inicjatyw: postęp, właściciele, ryzyka."
+      },
+      "mod-decisions": {
+        "label": "Podobne decyzje",
+        "hint": "Szuka wcześniejszych decyzji o zbliżonym kontekście."
+      },
+      "mod-stakeholders": {
+        "label": "Analiza interesariuszy",
+        "hint": "Mapa wpływu i nastawienia interesariuszy."
+      },
+      "mod-finance": {
+        "label": "Kalkulacja finansowa",
+        "hint": "ROI, NPV, okres zwrotu na danych projektu."
+      },
+      "mod-montecarlo": {
+        "label": "Symulacja Monte Carlo",
+        "hint": "Rozkład wyniku przy niepewnych założeniach."
+      },
+      "mod-benchmarks": {
+        "label": "Porównanie z benchmarkami",
+        "hint": "Zestawia wyniki z bazą benchmarków branżowych."
+      },
+      "mod-interview": {
+        "label": "Wywiad (Interview)",
+        "hint": "Pobranie odpowiedzi z ankiet i wywiadów.",
+        "soonReason": "Agent nie ma jeszcze dostępu do modułu Wywiadu — funkcja w przygotowaniu."
+      },
+      "mod-execution": {
+        "label": "Realizacja (Execution)",
+        "hint": "Kamienie milowe, zadania i blokery wdrożenia.",
+        "soonReason": "Agent dziś odczytuje tylko status inicjatywy — pełny dostęp do modułu Realizacji jest w przygotowaniu."
+      },
+      "mod-results": {
+        "label": "Rezultaty (Results)",
+        "hint": "Odczyt KPI i zrealizowanych korzyści.",
+        "soonReason": "Agent dziś porównuje tylko benchmarki — odczyt zrealizowanych KPI jest w przygotowaniu."
+      },
+      "mod-materials": {
+        "label": "Materiały / Deck",
+        "hint": "Złożenie prezentacji z gotowych sekcji.",
+        "soonReason": "Agent dziś generuje tylko opis sekcji, nie cały dokument — złożenie pełnej prezentacji jest w przygotowaniu."
+      },
+      "ai-web": {
+        "label": "Szukaj w sieci",
+        "hint": "Świeże dane rynkowe spoza organizacji."
+      },
+      "ai-report-section": {
+        "label": "Sekcja raportu",
+        "hint": "Przygotowuje sekcję raportu z podanych źródeł."
+      },
+      "ai-summary": {
+        "label": "Podsumowanie etapu",
+        "hint": "Streszczenie wyników poprzednich kroków planu.",
+        "soonReason": "Agent nie ma dziś kroku „podsumuj to, co zebrałeś\" — funkcja w przygotowaniu."
+      },
+      "vault-context": {
+        "label": "Vault — wybrany sejf",
+        "hint": "Ogranicza wiedzę agenta do jednego sejfu (Mój / Projekt / Organizacja)."
+      },
+      "kb-search": {
+        "label": "Szukaj w wiedzy",
+        "hint": "Przeszukuje dokumenty organizacji bez zawężania do sejfu."
+      },
+      "structured-query": {
+        "label": "Zapytanie do danych",
+        "hint": "Pytanie w języku naturalnym do danych tabelarycznych."
+      },
+      "auto-task": {
+        "label": "Utwórz zadanie",
+        "hint": "Zakłada zadanie w My Work."
+      },
+      "auto-task-update": {
+        "label": "Zaktualizuj zadanie",
+        "hint": "Zmienia status lub pola istniejącego zadania."
+      },
+      "auto-decision": {
+        "label": "Utwórz decyzję",
+        "hint": "Zakłada kartę decyzji do rozstrzygnięcia."
+      },
+      "auto-initiative": {
+        "label": "Szkic inicjatywy",
+        "hint": "Proponuje inicjatywę z opisem i szacunkiem ROI."
+      },
+      "auto-note": {
+        "label": "Wpis w Notatniku",
+        "hint": "Zapisuje ustalenia jako notatkę."
+      },
+      "auto-meeting": {
+        "label": "Propozycja spotkania",
+        "hint": "Proponuje termin i uczestników spotkania."
+      },
+      "ctrl-gate": {
+        "label": "Zgoda (bramka)",
+        "hint": "Plan zatrzymuje się i czeka na Twoje zatwierdzenie."
+      },
+      "ctrl-wait": {
+        "label": "Odczekaj (pauza)",
+        "hint": "Proces czeka określony czas, zanim przejdzie dalej."
+      },
+      "ctrl-note": {
+        "label": "Informacja (notatka)",
+        "hint": "Opis na schemacie. Nie jest wykonywana — porządkuje proces."
+      },
+      "ctrl-branch": {
+        "label": "Warunek (rozgałęzienie)",
+        "hint": "Różne ścieżki zależnie od wyniku poprzedniego kroku.",
+        "soonReason": "Plan jest dziś liniowy — kroki wykonują się po kolei, rozgałęzienia są w przygotowaniu."
+      },
+      "ctrl-loop": {
+        "label": "Pętla po liście",
+        "hint": "Powtórz krok dla każdego elementu (np. każdej inicjatywy).",
+        "soonReason": "Kroki wykonują się dziś jednorazowo, jako płaska lista — powtarzanie po liście jest w przygotowaniu."
+      },
+      "int-list": {
+        "label": "Lista konektorów",
+        "hint": "Sprawdza, które integracje są podłączone i świeże."
+      },
+      "int-search": {
+        "label": "Szukaj w konektorze",
+        "hint": "Odpytuje podłączony system firmowy przez bramę Wave 7."
+      },
+      "int-sharepoint": {
+        "label": "SharePoint",
+        "hint": "Pobranie dokumentów z biblioteki SharePoint.",
+        "soonReason": "Ten konektor jest już podłączony w katalogu integracji; agent sięga po niego dziś tylko ogólnym krokiem „Szukaj w konektorze\" — dedykowany krok jest w przygotowaniu."
+      },
+      "int-teams": {
+        "label": "Microsoft Teams",
+        "hint": "Kanały i wiadomości zespołu.",
+        "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
+      },
+      "int-slack": {
+        "label": "Slack",
+        "hint": "Kanały i wiadomości.",
+        "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
+      },
+      "int-jira": {
+        "label": "Jira",
+        "hint": "Zgłoszenia, sprinty i tablice.",
+        "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
+      },
+      "int-gdrive": {
+        "label": "Google Drive",
+        "hint": "Pliki i foldery z Dysku.",
+        "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
+      },
+      "int-outlook": {
+        "label": "Outlook / Kalendarz",
+        "hint": "Poczta i terminy.",
+        "soonReason": "Ten konektor jest w katalogu integracji, ale dedykowany krok agenta dla niego jest w przygotowaniu."
+      }
+    },
+    "palette": {
+      "ariaLabel": "Paleta klocków agenta",
+      "title": "Paleta klocków",
+      "searchPlaceholder": "Szukaj klocka…",
+      "searchAriaLabel": "Szukaj klocka w palecie",
+      "hintFrozen": "Plan już wystartował — schemat jest zamrożony.",
+      "hintActive": "Kliknij, żeby dodać na koniec. Przeciągnij, żeby wstawić w wybrane miejsce.",
+      "noResults": "Brak wyników",
+      "noMatch": "Żaden klocek nie pasuje do „{{query}}\".",
+      "comingSoon": "Wkrótce",
+      "approval": "zgoda"
     }
   },
   "views": {
@@ -35972,5 +36416,20 @@
       "byAt": "Ostatnia zmiana: {{who}}{{when}}",
       "someoneElse": "inny użytkownik"
     }
+  },
+  "initiativeStatus": {
+    "draft": "Szkic",
+    "pending_review": "Oczekuje na przegląd",
+    "review": "W przeglądzie",
+    "promoted": "Zatwierdzona",
+    "planning": "Planowanie",
+    "approved": "Zaakceptowana",
+    "scheduled": "Zaplanowana",
+    "executing": "W realizacji",
+    "blocked": "Zablokowana",
+    "done": "Zakończona",
+    "tracking": "Monitorowanie",
+    "cancelled": "Anulowana",
+    "archived": "Zarchiwizowana"
   }
 }
