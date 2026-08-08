@@ -460,6 +460,8 @@ export interface DeckCard {
   /** STEP 1b — optional B1 composition plan; absent → pure heuristic. */
   composition?: CardComposition | null;
   title: string;
+  /** Canonical slide thesis retained for round-trip title synchronization. */
+  key_message?: string;
   blocks: CardBlock[];
   source_refs: { artifact_id: string; artifact_type: string; artifact_name: string }[];
   speaker_notes?: string;

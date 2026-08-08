@@ -531,9 +531,11 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       .slice(dataStart, selectionRange.rowEnd + 1)
       .map((row) => formatComputedForDisplay(row.cells[labelKey]));
     const series = selectedSeriesColumns.map((column) => ({
-      name: hasSemanticHeader
-        ? formatComputedForDisplay(headerRow?.cells?.[column.key]) || column.header
-        : column.header,
+      name: String(
+        (hasSemanticHeader
+          ? formatComputedForDisplay(headerRow?.cells?.[column.key]) || column.header
+          : column.header) || column.key
+      ),
       values: rows
         .slice(dataStart, selectionRange.rowEnd + 1)
         .map((row) => Number(row.cells[column.key]?.computed))

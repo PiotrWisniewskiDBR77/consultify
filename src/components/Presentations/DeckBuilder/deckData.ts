@@ -173,6 +173,7 @@ export function deckFromUnifiedJson(params: {
       layout_id: layoutId,
       composition: composition ?? null,
       title: String(headingText),
+      key_message: slide?.key_message ? String(slide.key_message) : undefined,
       blocks,
       source_refs: Array.isArray(slide?.source_refs)
         ? slide.source_refs.map((ref: any) => ({

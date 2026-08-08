@@ -280,6 +280,7 @@ function deckFromUnifiedJson(params: {
       layout_id: layoutId,
       composition: composition ?? null,
       title: String(headingText || 'Slide'),
+      key_message: slide?.key_message ? String(slide.key_message) : undefined,
       blocks,
       source_refs: [],
       has_refreshable_data: hasRefreshable,
