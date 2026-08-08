@@ -154,8 +154,10 @@ interface BuildResult {
 interface Props {
   isPolish: boolean;
   initialTemplateId?: string | null;
+  /** Durable generated_workbooks id restored from the URL after a reload. */
+  initialWorkbookId?: string | null;
   /** Called after a successful build so the parent can refresh the Recent list. */
-  onBuilt?: () => void;
+  onBuilt?: (result: BuildResult) => void;
 }
 
 /** Percent params store a FRACTION (0.08); we show whole percents (8) in the form. */
@@ -203,6 +205,7 @@ const PREVIEW_ROW_CAP = 50;
 export const ExceleParametricTemplates: React.FC<Props> = ({
   isPolish,
   initialTemplateId,
+  initialWorkbookId,
   onBuilt,
 }) => {
   const [templates, setTemplates] = useState<TemplateEntry[]>([]);
@@ -286,6 +289,50 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
     initialSelectionApplied.current = id;
     openForm(match);
   }, [initialTemplateId, openForm, templates]);
+
+  const reopenedWorkbook = useRef<string | null>(null);
+  useEffect(() => {
+    const id = String(initialWorkbookId || '').trim();
+    if (!id || reopenedWorkbook.current === id) return;
+    if (result?.id === id) {
+      reopenedWorkbook.current = id;
+      return;
+    }
+    const templateId = String(initialTemplateId || '').trim();
+    if (templateId && selected?.id !== templateId) return;
+    reopenedWorkbook.current = id;
+    let alive = true;
+    setGridLoading(true);
+    setGridError(null);
+    Promise.all([Api.getWorkbook(id), Api.getWorkbookSchema(id)])
+      .then(([metadata, schema]) => {
+        if (!alive) return;
+        const sheets = Array.isArray(schema?.sheets) ? schema.sheets : [];
+        setResult({
+          id,
+          title: metadata?.title || schema?.title || 'Workbook',
+          fileName: metadata?.file_name || 'workbook.xlsx',
+          downloadUrl: metadata?.downloadUrl || `/api/workbook/${id}/download`,
+          sheetCount: sheets.length,
+          qualityReport: metadata?.qualityReport ?? null,
+        });
+        setGridSheets(buildWorkbookGridSheets(sheets));
+        setRawSheets(sheets as FormulaSheet[]);
+        setActiveSheet(0);
+        setShowAllRows(false);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        console.warn('[ExceleParametricTemplates] Failed to reopen workbook:', err);
+        setGridError(t('Nie udało się ponownie otworzyć skoroszytu.', 'Failed to reopen workbook.'));
+      })
+      .finally(() => {
+        if (alive) setGridLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [initialTemplateId, initialWorkbookId, result?.id, selected?.id, t]);
 
   // Mini bar chart (2026-07-23): poglądowa wizualizacja trendu/porównania nad
   // siatką — zawsze z PIERWSZEGO arkusza (gridSheets[0]), niezależnie od
@@ -410,7 +457,7 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
       setResult(built);
       setShowQualityIssues(false);
       toast.success(t('Skoroszyt zbudowany', 'Workbook built'));
-      onBuilt?.();
+      onBuilt?.(built);
 
       // Load the real cell/formula grid so the build result shows the actual
       // content inline instead of only a download link (same shape/endpoint as
@@ -508,6 +555,13 @@ export const ExceleParametricTemplates: React.FC<Props> = ({
                 <Download size={14} />
                 {result.fileName}
               </button>
+              <a
+                href={`/excele?artifactId=${encodeURIComponent(result.id)}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-c-border text-c-text-secondary text-xs font-medium hover:bg-c-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+              >
+                <FileSpreadsheet size={14} />
+                {t('Otwórz w Arkuszach', 'Open in Sheets')}
+              </a>
               <button
                 onClick={() => {
                   setResult(null);
