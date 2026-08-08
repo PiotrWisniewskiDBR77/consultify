@@ -191,6 +191,8 @@ describe('financialModelingService model seed periods', () => {
       { line_code: 'CASH', value: 500 },
       { line_code: 'TOTAL_ASSETS', value: 2000 },
       { line_code: 'TOTAL_EQUITY', value: 1200 },
+      { line_code: 'TOTAL_LIABILITIES', value: 700 },
+      { line_code: 'LONG_TERM_DEBT', value: 200 },
       { line_code: 'REVENUE', value: 3000 },
       { line_code: 'COGS', value: 1800 },
       { line_code: 'OPEX', value: 600 },
@@ -227,6 +229,10 @@ describe('financialModelingService model seed periods', () => {
     const assumptions = JSON.parse(assumptionsJson);
     expect(assumptions.initialCash).toBe(500);
     expect(assumptions.initialEquity).toBe(1200);
+    expect(assumptions.initialDebt).toBe(200);
+    expect(assumptions.sourceTotalLiabilities).toBe(700);
+    expect(assumptions.openingBalanceResidual).toBe(100);
+    expect(assumptions.initialOtherLiabilities).toBe(600);
     expect(assumptions.baseline.revenue).toBe(3000);
     expect(mockDb.all).toHaveBeenCalledTimes(1);
   });

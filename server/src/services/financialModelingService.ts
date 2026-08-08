@@ -367,7 +367,7 @@ async function buildSeededAssumptionsFromStatement(
   const cash = firstNonZero(valuesByCode, ['CASH']);
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
-  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
+  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT']);
   const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
   const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
@@ -400,7 +400,8 @@ async function buildSeededAssumptionsFromStatement(
     'DEPRECIATION_AMORTIZATION_CF',
   ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
-  const otherLiabilities = totalLiabilities - ap - debt;
+  const openingBalanceResidual = totalAssets - totalLiabilities - equity;
+  const otherLiabilities = totalAssets - equity - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
@@ -428,6 +429,8 @@ async function buildSeededAssumptionsFromStatement(
       initialDebt: debt,
       initialEquity: equity,
       sourceEquity: equity,
+      sourceTotalLiabilities: totalLiabilities,
+      openingBalanceResidual,
       initialOtherAssets: otherAssets,
       initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
@@ -491,7 +494,7 @@ async function buildSeededAssumptionsFromPack(
   const cash = firstNonZero(valuesByCode, ['CASH']);
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
-  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
+  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT']);
   const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
   const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
@@ -524,7 +527,8 @@ async function buildSeededAssumptionsFromPack(
     'DEPRECIATION_AMORTIZATION_CF',
   ]);
   const otherAssets = totalAssets - cash - ar - inventory - ppe;
-  const otherLiabilities = totalLiabilities - ap - debt;
+  const openingBalanceResidual = totalAssets - totalLiabilities - equity;
+  const otherLiabilities = totalAssets - equity - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
@@ -555,6 +559,8 @@ async function buildSeededAssumptionsFromPack(
       initialDebt: debt,
       initialEquity: equity,
       sourceEquity: equity,
+      sourceTotalLiabilities: totalLiabilities,
+      openingBalanceResidual,
       initialOtherAssets: otherAssets,
       initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
