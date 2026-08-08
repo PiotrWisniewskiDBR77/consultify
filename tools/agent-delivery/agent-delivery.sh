@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <validate|checkpoint|handoff> <v8|documents|report-b-ui> [commit message]" >&2
+  echo "Usage: $0 <validate|checkpoint|handoff> <v8|documents|finance|ux-table|ux-tools|report-b-ui> [commit message]" >&2
   exit 64
 }
 
@@ -19,6 +19,18 @@ case "$track" in
   documents)
     expected_branch="codex/recovery-documents-20260808"
     expected_owner="DOCUMENTS"
+    ;;
+  finance)
+    expected_branch="codex/recovery-finance-20260808"
+    exact_scope="track-scopes/finance.txt"
+    ;;
+  ux-table)
+    expected_branch="codex/recovery-ux-table-20260808"
+    exact_scope="track-scopes/ux-table.txt"
+    ;;
+  ux-tools)
+    expected_branch="codex/recovery-ux-tools-20260808"
+    exact_scope="track-scopes/ux-tools.txt"
     ;;
   report-b-ui)
     expected_branch="codex/recovery-report-b-ui-20260808"
@@ -54,6 +66,13 @@ validate_paths() {
   local changed_path owner
 
   while IFS= read -r -d '' changed_path; do
+    if [[ -n "${exact_scope:-}" ]]; then
+      if ! grep -Fqx -- "$changed_path" "$repo_root/docs/program/recovery-2026-08-08/$exact_scope"; then
+        echo "BLOCKED: '$changed_path' is outside the exact scope for '$track'." >&2
+        invalid=1
+      fi
+      continue
+    fi
     owner="$(awk -F '\t' -v candidate="$changed_path" '$1 == candidate { print $3; exit }' "$matrix")"
     if [[ -z "$owner" ]]; then
       echo "BLOCKED: '$changed_path' is absent from the ownership matrix." >&2
@@ -71,7 +90,7 @@ validate_paths
 
 case "$action" in
   validate)
-    echo "PASS: branch=$current_branch owner=$expected_owner changed=$(tr -cd '\0' < "$changed_file_list" | wc -c | tr -d ' ')"
+    echo "PASS: branch=$current_branch scope=${exact_scope:-$expected_owner} changed=$(tr -cd '\0' < "$changed_file_list" | wc -c | tr -d ' ')"
     ;;
   checkpoint)
     [[ -s "$changed_file_list" ]] || {
