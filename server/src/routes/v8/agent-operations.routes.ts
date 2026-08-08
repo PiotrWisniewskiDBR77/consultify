@@ -16,6 +16,7 @@ import {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
+export const agentOperationsBootstrapRouter = Router();
 
 const settingsSchema = z.object({
   projectId: z.string().min(1).max(256).nullable().optional(),
@@ -55,7 +56,7 @@ router.get(
   })
 );
 
-router.get(
+agentOperationsBootstrapRouter.get(
   '/settings',
   requireOperator,
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -83,7 +84,7 @@ router.get(
   })
 );
 
-router.put(
+agentOperationsBootstrapRouter.put(
   '/settings',
   requireOperator,
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -105,7 +106,7 @@ router.put(
   })
 );
 
-router.post(
+agentOperationsBootstrapRouter.post(
   '/activate',
   requireOperator,
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -168,5 +169,11 @@ router.post(
     }
   })
 );
+
+// Keep the standalone router contract used by focused tests and direct mounts.
+// In the production V8 index this bootstrap router is also mounted before the
+// tenant feature gate so an authorized operator can enable a tenant without a
+// circular "already enabled" prerequisite.
+router.use(agentOperationsBootstrapRouter);
 
 export default router;

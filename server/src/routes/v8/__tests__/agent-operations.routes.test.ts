@@ -34,6 +34,23 @@ async function app(role: string) {
   return server;
 }
 
+async function bootstrapApp(role: string) {
+  const { agentOperationsBootstrapRouter } = await import('../agent-operations.routes.js');
+  const server = express();
+  server.use(express.json());
+  server.use((req, _res, next) => {
+    (req as any).v8Context = {
+      organizationId: 'org-a',
+      userId: 'operator-a',
+      userRole: role,
+      isSuperAdmin: false,
+    };
+    next();
+  });
+  server.use('/api/v8/agent-operations', agentOperationsBootstrapRouter);
+  return server;
+}
+
 describe('agent operations routes', () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -160,5 +177,25 @@ describe('agent operations routes', () => {
       actorRole: 'ADMIN',
       idempotencyKey: 'activation-key',
     });
+  });
+
+  it('exposes only the authorized bootstrap contract before tenant V8 enablement', async () => {
+    getSettings.mockResolvedValue(null);
+
+    const settings = await request(await bootstrapApp('ADMIN')).get(
+      '/api/v8/agent-operations/settings'
+    );
+    expect(settings.status).toBe(200);
+
+    const denied = await request(await bootstrapApp('CONSULTANT')).get(
+      '/api/v8/agent-operations/settings'
+    );
+    expect(denied.status).toBe(403);
+
+    const runtimeRoute = await request(await bootstrapApp('ADMIN')).get(
+      '/api/v8/agent-operations/runs/run-1'
+    );
+    expect(runtimeRoute.status).toBe(404);
+    expect(getSnapshot).not.toHaveBeenCalled();
   });
 });

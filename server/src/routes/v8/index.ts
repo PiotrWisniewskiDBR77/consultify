@@ -11,7 +11,9 @@ import adminMetricsRoutes from './admin/metrics.routes.js';
 import shadowRoutes from './admin/shadow.routes.js';
 import advisoryRoutes from './advisory.routes.js';
 import agentProcessTemplateRoutes from './agent-process-templates.routes.js';
-import agentOperationsRoutes from './agent-operations.routes.js';
+import agentOperationsRoutes, {
+  agentOperationsBootstrapRouter,
+} from './agent-operations.routes.js';
 import agentQualityRoutes from './agent-quality.routes.js';
 import agentProposalRoutes from './agent-proposals.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
@@ -58,6 +60,17 @@ v8Router.use('/admin/flags', featureFlagRoutes);
 v8Router.use('/admin/health', adminHealthRoutes);
 v8Router.use('/admin/metrics', adminMetricsRoutes);
 v8Router.use('/admin/shadow', shadowRoutes);
+
+// Agent tenant activation is itself the action that makes v8OrgGate pass.
+// Keep only the ADMIN/OWNER/SUPERADMIN bootstrap contract before the gate;
+// run diagnostics and recovery remain mounted below it, behind v8OrgGate.
+v8Router.use(
+  '/agent-operations',
+  attachV8Context,
+  v8MetricsMiddleware,
+  mutationAbortCanary,
+  agentOperationsBootstrapRouter
+);
 
 // Partner Portal has its own partner-org authorization boundary. Keep the V8
 // partner bridge available even when the tenant-wide V8 flag is disabled, so
