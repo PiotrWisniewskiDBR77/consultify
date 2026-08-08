@@ -18,6 +18,7 @@ server/src/services/financialModelingService.ts
 server/src/services/financialStatementPackService.ts
 server/src/services/financialStatementService.ts
 server/src/services/financialStatementValueWriteService.ts
+server/src/services/openAIFinancialExtractionService.ts
 server/src/services/ratioAnalysisService.ts
 server/src/services/tablePlatform/migrationHistoricalChecksums.ts
 server/src/services/valuationExportService.ts
