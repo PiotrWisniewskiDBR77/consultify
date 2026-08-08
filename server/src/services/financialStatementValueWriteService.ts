@@ -276,6 +276,8 @@ export async function saveStatementValuesFlow(params: {
       originalLabel: value.originalLabel,
       mappingStatus: value.mappingStatus,
       isNonFinancial: value.isNonFinancial,
+      selectedPeriodLabel: value.periodLabel,
+      evidenceJson: value.evidenceJson,
     })),
     statement.statement_type
   );
