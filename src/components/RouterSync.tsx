@@ -14,11 +14,7 @@ import {
   isPilotAllowedPath,
   isPilotParticipantRole,
 } from '../utils/pilotAccess';
-import {
-  getDefaultAuthenticatedRoute,
-  isPilotRestrictedRole,
-  isSuperAdminRole,
-} from '../utils/roleGuards';
+import { getDefaultAuthenticatedRoute, isPilotRestrictedRole } from '../utils/roleGuards';
 
 /**
  * RouterSync
@@ -336,17 +332,6 @@ export const RouterSync: React.FC = () => {
     ) {
       isNavigatingRef.current = true;
       navigate(getPilotDefaultSettingsRoute(), { replace: true });
-      setTimeout(() => {
-        isNavigatingRef.current = false;
-      }, 50);
-      return;
-    }
-
-    // SUPERADMIN should not stay on /chat
-    if ((path === '/chat' || path.startsWith('/chat/')) && isSuperAdminRole(userRole)) {
-      console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
-      isNavigatingRef.current = true;
-      navigate('/superadmin', { replace: true });
       setTimeout(() => {
         isNavigatingRef.current = false;
       }, 50);
