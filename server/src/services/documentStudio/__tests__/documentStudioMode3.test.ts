@@ -27,8 +27,13 @@ vi.mock('../../wave5ArtifactRuntimeService.js', () => {
   };
 });
 
-import { materializeDocumentArtifact } from '../documentStudioService.js';
+import {
+  DocumentManualStructureMismatchError,
+  materializeDocumentArtifact,
+  updateDocumentManualContent,
+} from '../documentStudioService.js';
 import { renderDocumentSchemaToDocxBuffer } from '../documentDocxRenderer.js';
+import { runDocumentQa } from '../documentQaService.js';
 import type { DocumentIntake } from '../documentStudioTypes.js';
 import {
   __resetTemplateRegistryForTests,
@@ -48,6 +53,42 @@ const baseIntake: DocumentIntake = {
 describe('Document Studio Mode 3 (template-driven)', () => {
   beforeEach(() => {
     __resetTemplateRegistryForTests();
+  });
+
+  it('keeps the manual Czysto artifact genuinely blank even when org context was auto-attached', async () => {
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: {
+        title: 'Nowy dokument',
+        description: 'Pusty dokument roboczy do samodzielnej edycji.',
+        documentType: 'generic_document',
+        language: 'pl',
+      },
+      outline: {
+        documentType: 'generic_document',
+        title: 'Nowy dokument',
+        sections: [{ title: 'Sekcja 1', level: 1, purpose: '', expectedLengthHint: 'short' }],
+        recommendedDensity: 'concise',
+        recommendedRegister: 'professional',
+        recommendedLanguageStyle: 'formal',
+      },
+      sourceRefs: [
+        {
+          sourceType: 'organization_context',
+          sourceId: 'org-context-1',
+          sourceTitle: 'Kontekst organizacji',
+        },
+      ],
+    });
+
+    expect(result.schema.sourceRefs).toEqual([]);
+    expect(result.schema.sections).toHaveLength(1);
+    expect(result.schema.sections[0].title).toBe('Sekcja 1');
+    expect(result.schema.sections[0].sourceRefs).toEqual([]);
+    expect(result.schema.sections[0].blocks).toEqual([
+      expect.objectContaining({ type: 'paragraph', content: { text: '' }, isAssumption: false }),
+    ]);
   });
 
   it('hydrates outline + formatting from an approved template', async () => {
@@ -81,6 +122,195 @@ describe('Document Studio Mode 3 (template-driven)', () => {
     expect(result.schema.sections.map((s) => s.title)).toEqual(
       approved.sectionBlueprint.map((s) => s.title)
     );
+  });
+
+  it('treats the approved template as authoritative and rejects full-editor flattening', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Investment decision memo',
+        documentType: 'business_case',
+        purpose: 'Decision',
+      },
+    });
+    const governedTitles = [
+      'Executive Summary',
+      'Problem Statement',
+      'Scope and Approach',
+      'Proposed Initiative',
+      'Scenarios and Assumptions',
+      'Benefits and KPIs',
+      'Risks',
+      '30/60/90 Implementation Roadmap',
+      'Recommendation',
+    ];
+    const sections = governedTitles.map((title, index) => ({
+      title,
+      level: 1 as const,
+      purpose: `Decision guidance ${index + 1}`,
+      contentHints: [`Explain evidence ${index + 1}`],
+      keyMessage: `Investment thesis ${index + 1}`,
+      required: true,
+      expectedLengthHint: 'medium' as const,
+    }));
+    reviseTemplateStructure({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'author',
+      sections,
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const genericOutline = {
+      documentType: 'business_case' as const,
+      title: 'Generic plan',
+      sections: [
+        {
+          title: 'Generic deterministic section',
+          level: 1 as const,
+          purpose: 'Wrong',
+          expectedLengthHint: 'short' as const,
+        },
+      ],
+      recommendedDensity: 'standard' as const,
+      recommendedRegister: 'executive' as const,
+      recommendedLanguageStyle: 'concise' as const,
+    };
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      intake: baseIntake,
+      templateId: approved.templateId,
+      outline: genericOutline,
+    });
+
+    expect(result.schema.sections.map((section) => section.title)).toEqual(
+      sections.map((section) => section.title)
+    );
+    expect(result.schema.sections[0].purpose).toContain('Investment thesis 1');
+    await expect(
+      updateDocumentManualContent({
+        artifactId: result.schema.artifactId,
+        organizationId: 'org-A',
+        userId: 'consult-user',
+        expectedVersion: result.schema.updatedAt,
+        sections: [
+          { ...result.schema.sections[0], blocks: result.schema.sections.flatMap((s) => s.blocks) },
+        ],
+      })
+    ).rejects.toBeInstanceOf(DocumentManualStructureMismatchError);
+
+    const docx = await renderDocumentSchemaToDocxBuffer(result.schema);
+    const zip = await JSZip.loadAsync(docx);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    for (const section of sections) expect(documentXml).toContain(section.title);
+  });
+
+  it('materializes premium business-case blocks, passes blocking QA and renders DOCX structure', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Premium business case',
+        documentType: 'business_case',
+        purpose: 'Board investment decision',
+        language: 'en',
+      },
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      templateId: approved.templateId,
+      intake: {
+        ...baseIntake,
+        title: 'Nova Unified Commerce',
+        description:
+          'Approve Scenario B. Scenario A costs EUR 0.35m with limited benefits. Scenario B costs EUR 1.4m and is recommended. Scenario C costs EUR 2.2m with excessive risk. Current conversion is 2.1%, cancellation is 8.4%, inventory accuracy is 91%; targets are 3.0%, below 4%, and above 97%. Payback is 22-month payback. Risks are ERP integration, data quality and frontline adoption. Use an integration spike, six-week data cleansing sprint and store champion network. CIO owns delivery and COO owns adoption.',
+      },
+      sourceRefs: [
+        { sourceType: 'brief', sourceId: 'nova-board-brief', sourceTitle: 'Nova board brief' },
+      ],
+    });
+    expect(result.schema.sections).toHaveLength(9);
+    expect(result.schema.sections.map((section) => section.title)).toEqual(
+      expect.arrayContaining(['Scope and Approach', 'Scenarios and Assumptions'])
+    );
+    const blocks = result.schema.sections.flatMap((section) => section.blocks);
+    expect(blocks.map((block) => block.type)).toEqual(
+      expect.arrayContaining(['kpi_strip', 'callout', 'table', 'risk_table'])
+    );
+    expect(blocks.some((block) => JSON.stringify(block.content).includes('awaiting content'))).toBe(
+      false
+    );
+    const scenarioTable = blocks.find(
+      (block) => block.type === 'table' && JSON.stringify(block.content).includes('C — Big bang')
+    );
+    expect(scenarioTable).toBeDefined();
+    const scenarioRows = (scenarioTable!.content as { rows: string[][] }).rows;
+    expect(scenarioRows[2][1]).toBe('EUR 2.2m');
+    expect(scenarioRows[2][1]).not.toBe('EUR 0.9m');
+    expect(runDocumentQa(result.schema).categories.filter((category) => category.blocking)).toEqual(
+      []
+    );
+
+    const zip = await JSZip.loadAsync(await renderDocumentSchemaToDocxBuffer(result.schema));
+    const xml = await zip.file('word/document.xml')!.async('string');
+    for (const text of [
+      'Scope and Approach',
+      'Scenarios and Assumptions',
+      'Recommended investment',
+      'ERP integration',
+      '0–30 days',
+    ])
+      expect(xml).toContain(text);
+    expect((xml.match(/<w:tbl>/g) ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('does not invent premium risk, roadmap or recommendation facts absent from the intake', async () => {
+    const { template: draft } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: {
+        name: 'Evidence-safe business case',
+        documentType: 'business_case',
+        purpose: 'Board investment decision',
+        language: 'en',
+      },
+    });
+    const approved = approveTemplate({
+      templateId: draft.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+
+    const result = await materializeDocumentArtifact({
+      organizationId: 'org-A',
+      userId: 'consult-user',
+      templateId: approved.templateId,
+      intake: {
+        ...baseIntake,
+        title: 'Controlled investment decision',
+        description: 'Create a governed report using only supplied evidence.',
+      },
+      sourceRefs: [{ sourceType: 'brief', sourceId: 'safe-brief', sourceTitle: 'Safe brief' }],
+    });
+    const serialized = JSON.stringify(result.schema);
+
+    expect(serialized).not.toContain('ERP integration');
+    expect(serialized).not.toContain('Store champion network');
+    expect(serialized).not.toContain('Approve the recommended scenario');
+    expect(serialized).toContain('Risk data required');
+    expect(serialized).toContain('Action data required');
+    expect(serialized).toContain('Recommendation requires supplied evidence');
   });
 
   it('creates, versions, approves, reopens and consumes an exact Word template version through DOCX export', async () => {

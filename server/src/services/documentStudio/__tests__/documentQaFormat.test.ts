@@ -220,6 +220,31 @@ describe('Document QA — Format QA category', () => {
     expect(fmt.findings.map((f) => f.code)).not.toContain('format_table_without_header');
   });
 
+  it('accepts canonical `columns` as the rendered table header', () => {
+    const schema = makeSchema({
+      sections: [
+        {
+          sectionId: 's-columns',
+          title: 'Scenarios',
+          level: 1,
+          blocks: [
+            {
+              blockId: 'b-columns',
+              type: 'table',
+              content: {
+                columns: ['Scenario', 'Revenue', 'Margin'],
+                rows: [['Base', 'Assumption', 'Assumption']],
+              },
+            },
+          ],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const fmt = findFormat(runDocumentQa(schema));
+    expect(fmt.findings.map((f) => f.code)).not.toContain('format_table_without_header');
+  });
+
   it('flags consecutive empty paragraphs as a whitespace artifact', () => {
     const schema = makeSchema({
       sections: [

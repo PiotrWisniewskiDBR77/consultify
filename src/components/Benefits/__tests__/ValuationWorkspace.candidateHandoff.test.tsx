@@ -175,6 +175,41 @@ afterEach(() => {
 });
 
 describe('ValuationWorkspace — Send as Initiative Candidate', () => {
+  it('opens the requested valuation even when the sidebar list is empty or delayed', async () => {
+    global.fetch = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/economics/valuations/sources')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ sources: { budgets: [], financialModels: [] } }),
+        } as Response);
+      }
+      if (url.endsWith('/economics/valuations')) {
+        return Promise.resolve({ ok: true, json: async () => ({ valuations: [] }) } as Response);
+      }
+      if (url.endsWith(`/economics/valuations/${VALUATION_ID}`)) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ valuation: mockValuationDetail }),
+        } as Response);
+      }
+      return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
+    }) as unknown as typeof fetch;
+
+    render(
+      <MemoryRouter initialEntries={['/finance']}>
+        <ValuationWorkspace initialValuationId={VALUATION_ID} hideSidebar />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(mockValuationDetail.title)).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(`/economics/valuations/${VALUATION_ID}`),
+      expect.any(Object)
+    );
+    expect(screen.queryByText('Select a valuation to continue')).not.toBeInTheDocument();
+  });
+
   it('shows the real ineligible reason from the backend and offers no confirm action', async () => {
     previewMock.mockResolvedValue({
       eligible: false,

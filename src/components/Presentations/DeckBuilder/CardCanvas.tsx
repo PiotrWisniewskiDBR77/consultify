@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CardBlock, DeckCard } from '../wizard/types';
+import { CardFloatingToolbar } from './CardFloatingToolbar';
 import { CardRenderer } from './CardRenderer';
 
 interface CardCanvasProps {
@@ -10,7 +11,7 @@ interface CardCanvasProps {
   activeCardIndex: number;
   colorSetId?: string;
   onSelectCard: (index: number) => void;
-  onBlockClick?: (cardId: string, blockId: string) => void;
+  onBlockClick?: (cardId: string, blockId: string, additive?: boolean) => void;
   onAddCard?: (atIndex: number) => void;
   /**
    * R4 — Free-text AI rewrite of a single slide. `instruction` is the optional
@@ -19,15 +20,20 @@ interface CardCanvasProps {
    */
   onRewriteCard?: (cardIndex: number, instruction?: string) => Promise<void>;
   speakerNotes?: string;
+  onSpeakerNotesChange?: (value: string) => void;
   showNotes: boolean;
   animationsEnabled?: boolean;
   /** Fala 1 (manual mode) — selected block (id only; unique across the deck). */
   selectedBlockId?: string | null;
+  selectedBlockIds?: string[];
   onBlockUpdate?: (cardId: string, blockId: string, updates: Partial<CardBlock>) => void;
   onBlockDelete?: (cardId: string, blockId: string) => void;
   onBlockDuplicate?: (cardId: string, blockId: string) => void;
   onBlockMove?: (cardId: string, blockId: string, direction: 'up' | 'down') => void;
   onBlockRefresh?: (cardId: string, blockId: string) => void;
+  onBlockReplaceImage?: (cardId: string, blockId: string) => void;
+  onUpdateCard?: (cardId: string, updates: Partial<DeckCard>) => void;
+  onChooseBackgroundImage?: (cardId: string) => void;
 }
 
 export const CardCanvas: React.FC<CardCanvasProps> = ({
@@ -39,14 +45,19 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onAddCard,
   onRewriteCard,
   speakerNotes,
+  onSpeakerNotesChange,
   showNotes,
   animationsEnabled = true,
   selectedBlockId = null,
+  selectedBlockIds,
   onBlockUpdate,
   onBlockDelete,
   onBlockDuplicate,
   onBlockMove,
   onBlockRefresh,
+  onBlockReplaceImage,
+  onUpdateCard,
+  onChooseBackgroundImage,
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -109,14 +120,24 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
               onClick={() => onSelectCard(index)}
               className="max-w-4xl mx-auto cursor-pointer relative group"
             >
+              {index === activeCardIndex && onUpdateCard && (
+                <CardFloatingToolbar
+                  card={card}
+                  onUpdateCard={(updates) => onUpdateCard(card.card_id, updates)}
+                  onChooseBackgroundImage={() => onChooseBackgroundImage?.(card.card_id)}
+                />
+              )}
               <CardRenderer
                 card={card}
                 colorSetId={colorSetId}
                 isActive={index === activeCardIndex}
-                onBlockClick={(blockId) => onBlockClick?.(card.card_id, blockId)}
+                onBlockClick={(blockId, additive) =>
+                  onBlockClick?.(card.card_id, blockId, additive)
+                }
                 animationsEnabled={animationsEnabled}
                 editable
                 selectedBlockId={selectedBlockId}
+                selectedBlockIds={selectedBlockIds}
                 onBlockUpdate={(blockId, updates) =>
                   onBlockUpdate?.(card.card_id, blockId, updates)
                 }
@@ -126,6 +147,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                   onBlockMove?.(card.card_id, blockId, direction)
                 }
                 onBlockRefresh={(blockId) => onBlockRefresh?.(card.card_id, blockId)}
+                onBlockReplaceImage={(blockId) => onBlockReplaceImage?.(card.card_id, blockId)}
               />
               {onRewriteCard && (
                 <>
@@ -213,12 +235,13 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
           </p>
           <textarea
             value={speakerNotes || ''}
-            readOnly
+            onChange={(event) => onSpeakerNotesChange?.(event.target.value)}
+            readOnly={!onSpeakerNotesChange}
             placeholder={t(
               'presentations.builder.notesPlaceholder',
               'Speaker notes for this slide...'
             )}
-            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none"
+            className="w-full text-sm text-c-text-secondary bg-transparent border-none outline-none focus:ring-1 focus:ring-c-focus resize-none read-only:cursor-default"
             rows={4}
           />
         </div>

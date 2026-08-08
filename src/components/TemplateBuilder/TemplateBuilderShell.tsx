@@ -19,12 +19,7 @@ import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 import type { TopBarChipDescriptor } from '@/components/shared/ExecutiveModuleShell/ChipDescriptor';
 import type { RightRailToolDescriptor } from '@/components/shared/ExecutiveModuleShell/RightRail';
 
-import {
-  elementCount,
-  SCOPE_LABELS,
-  TEMPLATE_TYPE_LABELS,
-  type TemplateDraft,
-} from './templateBuilderModel';
+import { SCOPE_LABELS, TEMPLATE_TYPE_LABELS, type TemplateDraft } from './templateBuilderModel';
 import {
   TEMPLATE_RIGHT_TOOLS,
   TemplateRightPanel,
@@ -60,6 +55,17 @@ export interface TemplateBuilderShellProps {
   onSave: () => void;
   saving?: boolean;
   canSave?: boolean;
+  saveLabel?: string;
+  validationErrors?: string[];
+  lifecycle?: {
+    status: string;
+    version: string;
+    historyCount: number;
+    onValidate: () => void;
+    onApprove?: () => void;
+    onDeprecate?: () => void;
+    onDelete?: () => void;
+  };
 
   onBack?: () => void;
   persistRailState?: boolean;
@@ -82,6 +88,9 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
   onSave,
   saving = false,
   canSave = true,
+  saveLabel = 'Zapisz jako szablon',
+  validationErrors = [],
+  lifecycle,
   onBack,
   persistRailState = true,
 }) => {
@@ -117,16 +126,85 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
         tooltip: 'Motyw / branding organizacji (D19 — osobno od szablonu)',
       },
       {
+        id: 'validate-template',
+        label:
+          validationErrors.length === 0 ? 'Walidacja: OK' : `Błędy: ${validationErrors.length}`,
+        kind: 'standard',
+        group: 'secondary',
+        dotTone: validationErrors.length === 0 ? 'success' : 'danger',
+        onClick: lifecycle?.onValidate,
+        tooltip: validationErrors[0] || 'Szablon przeszedł walidację struktury',
+      },
+      ...(lifecycle
+        ? [
+            {
+              id: 'template-version',
+              label: `${lifecycle.version} · ${lifecycle.status} · ${lifecycle.historyCount} zmian`,
+              kind: 'standard' as const,
+              group: 'secondary' as const,
+              onClick: lifecycle.onValidate,
+              tooltip: 'Wersja i historia lifecycle',
+            },
+          ]
+        : []),
+      ...(lifecycle?.onDeprecate
+        ? [
+            {
+              id: 'deprecate-template',
+              label: 'Wycofaj',
+              kind: 'standard' as const,
+              group: 'secondary' as const,
+              onClick: lifecycle.onDeprecate,
+              tooltip: 'Wycofaj szablon z użycia bez utraty historii',
+            },
+          ]
+        : []),
+      ...(lifecycle?.onDelete
+        ? [
+            {
+              id: 'delete-template',
+              label: 'Usuń draft',
+              kind: 'standard' as const,
+              group: 'secondary' as const,
+              onClick: lifecycle.onDelete,
+              tooltip: 'Usuń nieopublikowany szablon',
+            },
+          ]
+        : []),
+      ...(lifecycle?.onApprove
+        ? [
+            {
+              id: 'approve-template',
+              label: 'Zatwierdź i opublikuj',
+              kind: 'primary' as const,
+              group: 'primary' as const,
+              onClick: lifecycle.onApprove,
+              tooltip: 'Zatwierdź szablon do użycia',
+            },
+          ]
+        : []),
+      {
         id: 'save-template',
-        label: saving ? 'Zapisywanie…' : 'Zapisz jako szablon',
+        label: saving ? 'Zapisywanie…' : saveLabel,
         kind: 'primary',
         group: 'primary',
         disabled: saving || !canSave,
         onClick: onSave,
-        tooltip: canSave ? 'Zapisz reużywalny szablon' : 'Uzupełnij nazwę szablonu',
+        tooltip: canSave ? 'Zapisz reużywalny szablon' : validationErrors[0] || 'Uzupełnij szablon',
       },
     ],
-    [draft.type, draft.scope, themeLabel, saving, canSave, onSave, onActiveRightToolChange]
+    [
+      draft.type,
+      draft.scope,
+      themeLabel,
+      saving,
+      canSave,
+      saveLabel,
+      validationErrors,
+      lifecycle,
+      onSave,
+      onActiveRightToolChange,
+    ]
   );
 
   const rightTools: RightRailToolDescriptor[] = useMemo(
@@ -157,7 +235,7 @@ export const TemplateBuilderShell: React.FC<TemplateBuilderShellProps> = ({
             backLabel="Wróć"
             topBarChips={chips}
             leftRailTitle={
-              draft.type === 'doc' ? 'Sekcje' : draft.type === 'deck' ? 'Slajdy' : 'Kolumny'
+              draft.type === 'doc' ? 'Sekcje' : draft.type === 'deck' ? 'Slajdy' : 'Arkusze'
             }
             leftRailContent={
               <TemplateStructureList

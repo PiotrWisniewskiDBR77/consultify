@@ -77,7 +77,12 @@ export function parsePresentationEditIntent(prompt: string): PresentationEditPla
     normalized.includes('podsum') ||
     normalized.includes('concise') ||
     normalized.includes('short') ||
-    normalized.includes('skró')
+    normalized.includes('skró') ||
+    normalized.includes('data required') ||
+    normalized.includes('fill') ||
+    normalized.includes('uzupeł') ||
+    normalized.includes('uzupeln') ||
+    /[^\n;:=]+\s*[:=]\s*[^\n;]+/.test(normalized)
   ) {
     mutationKinds.push('content');
   }
@@ -312,6 +317,74 @@ function extractBlockText(block: any): string {
   return '';
 }
 
+function extractExplicitValues(prompt: string): Map<string, string> {
+  const values = new Map<string, string>();
+  const normalizedPrompt = String(prompt || '').replace(
+    /^(?:fill|set|update|replace|uzupełnij|uzupelnij)\s+(?:the\s+)?(?:data\s+)?values?\s*:\s*/i,
+    ''
+  );
+  for (const segment of normalizedPrompt.split(/[\n;]/)) {
+    const match = segment.match(
+      /(?:replace|set|update|fill|uzupełnij|uzupelnij)?\s*([^:=]+?)\s*[:=]\s*(.+)$/i
+    );
+    if (!match) continue;
+    const label = match[1].trim().replace(/^(?:and|oraz|with|values?)\s+/i, '');
+    const value = match[2].trim().replace(/[.,]$/, '');
+    if (label && value) values.set(label.toLowerCase(), value);
+  }
+  return values;
+}
+
+function lookupExplicitValue(values: Map<string, string>, label: unknown): string | undefined {
+  const normalizedLabel = String(label || '')
+    .trim()
+    .toLowerCase();
+  if (!normalizedLabel) return undefined;
+  for (const [candidate, value] of values) {
+    if (
+      candidate === normalizedLabel ||
+      candidate.endsWith(normalizedLabel) ||
+      normalizedLabel.endsWith(candidate)
+    )
+      return value;
+  }
+  return undefined;
+}
+
+function fillExplicitDataRequired(card: any, values: Map<string, string>): number {
+  let changes = 0;
+  for (const block of Array.isArray(card?.blocks) ? card.blocks : []) {
+    const content = block?.content;
+    if (Array.isArray(content?.metrics)) {
+      content.metrics = content.metrics.map((metric: any) => {
+        const replacement = lookupExplicitValue(values, metric?.label);
+        if (String(metric?.value || '').toLowerCase() === 'data required' && replacement) {
+          changes += 1;
+          return { ...metric, value: replacement };
+        }
+        return metric;
+      });
+    }
+    if (Array.isArray(content?.items)) {
+      content.items = content.items.map((item: any) => {
+        if (!item || typeof item !== 'object') return item;
+        const replacement = lookupExplicitValue(values, item.title || item.label);
+        if (
+          String(item.description || item.value || '').toLowerCase() === 'data required' &&
+          replacement
+        ) {
+          changes += 1;
+          return 'description' in item
+            ? { ...item, description: replacement }
+            : { ...item, value: replacement };
+        }
+        return item;
+      });
+    }
+  }
+  return changes;
+}
+
 export function applyPresentationEditPlan(params: {
   deck: any;
   prompt: string;
@@ -337,6 +410,7 @@ export function applyPresentationEditPlan(params: {
   const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
   const appliedActions: string[] = [];
   const nowIso = new Date().toISOString();
+  const explicitValues = extractExplicitValues(prompt);
 
   // ★ Fala 2 (SPEC §3.3.3) — protect manually-locked cards from THIS
   // global/section-scoped edit, UNLESS the prompt explicitly names that slide
@@ -352,6 +426,22 @@ export function applyPresentationEditPlan(params: {
     const card = cards[index];
     return Boolean(card?.is_locked) && !explicitTargets.has(index);
   };
+
+  if (explicitValues.size > 0) {
+    let filled = 0;
+    cards.forEach((card: any, idx: number) => {
+      if (plan.targetSlides.length > 0 && !explicitTargets.has(idx)) return;
+      if (isProtected(idx)) {
+        skippedIndices.add(idx);
+        return;
+      }
+      filled += fillExplicitDataRequired(card, explicitValues);
+    });
+    if (filled > 0)
+      appliedActions.push(
+        isPolish ? `uzupełniono ${filled} pól danych` : `filled ${filled} data fields`
+      );
+  }
 
   if (
     normalized.includes('summary') ||

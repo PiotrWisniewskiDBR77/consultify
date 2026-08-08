@@ -11,6 +11,7 @@
  * Opened from `ExceleRightPanel`'s "Akcje" section (see `onOpenVersionHistory`
  * wiring in `ExceleView.tsx`). Tokens are `c-*` only (CLAUDE.md UI pkt 6).
  */
+import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -120,10 +121,11 @@ export const WorkbookVersionHistoryModal: React.FC<WorkbookVersionHistoryModalPr
           <button
             type="button"
             onClick={onClose}
-            className="text-c-text-muted hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--c-focus)] rounded"
+            className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-muted hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
             aria-label={t('common.close', 'Zamknij')}
+            title={t('common.close', 'Zamknij')}
           >
-            {'✕'}
+            <X size={16} aria-hidden />
           </button>
         </div>
 

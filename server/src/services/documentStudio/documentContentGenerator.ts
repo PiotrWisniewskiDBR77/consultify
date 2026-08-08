@@ -406,6 +406,45 @@ export function enforceDocumentSchemaGrounding(
     });
   }
 
+  // A business case whose declared goal is approval must open with an
+  // actionable recommendation. LLM prose can be descriptive despite an
+  // explicit approval brief, which made otherwise complete documents fail
+  // their own Executive QA. Add a short, fact-free decision sentence only
+  // when the generated Executive Summary contains no decision language.
+  if (
+    next.documentType === 'business_case' &&
+    /seek[_ -]?approval|drive[_ -]?decision|recommend/i.test(String(next.goal || ''))
+  ) {
+    const executive = next.sections.find((section) =>
+      /executive summary|streszczenie|podsumowanie zarz[aą]dcze/i.test(section.title)
+    );
+    if (executive) {
+      const executiveText = executive.blocks
+        .flatMap((block) => {
+          const content = block.content as Record<string, unknown> | undefined;
+          if (typeof content?.text === 'string') return [content.text];
+          if (Array.isArray(content?.items)) return content.items.map(String);
+          return [];
+        })
+        .join(' ');
+      // A generic "we recommend engaging" is still descriptive.  Approval
+      // business cases must state an explicit approve/decide action so the
+      // reader knows which governance gate is being requested.
+      if (!/\b(approv(?:e|ing)|decide|zatwierd|decyduj)/i.test(executiveText)) {
+        const decisionText = language === 'pl'
+          ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
+          : 'We recommend approving the next validation gate described in this business case.';
+        const insertAt = executive.blocks.findIndex((block) => block.type !== 'heading');
+        executive.blocks.splice(insertAt < 0 ? executive.blocks.length : insertAt, 0, {
+          blockId: uuidv4(),
+          type: 'paragraph',
+          content: { text: decisionText },
+          isAssumption: false,
+        });
+      }
+    }
+  }
+
   next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
   return next;
 }
@@ -592,6 +631,15 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
   const { artifactId, intake, outline, sourceRefs } = input;
   const now = new Date().toISOString();
   const hasSources = sourceRefs.length > 0;
+  // The manual "Czysto" entry is a real blank authoring surface, not a
+  // deterministic-generation request. Previously it received a generic
+  // English stub which the grounding boundary replaced with the alarming
+  // "Treść usunięta…" warning. Keep one empty paragraph so ProseMirror has a
+  // valid cursor target while presenting no generated/technical copy.
+  const isManualBlank =
+    intake.documentType === 'generic_document' &&
+    intake.description?.trim() === 'Pusty dokument roboczy do samodzielnej edycji.' &&
+    sourceRefs.length === 0;
 
   const sections: DocumentSection[] = outline.sections.map((outlineSection, index) => ({
     sectionId: uuidv4(),
@@ -599,7 +647,16 @@ export function buildDocumentSchema(input: BuildSchemaInput): DocumentSchema {
     level: outlineSection.level,
     title: outlineSection.title,
     purpose: outlineSection.purpose,
-    blocks: buildSectionBlocks(outlineSection.title, intake.description ?? '', hasSources),
+    blocks: isManualBlank
+      ? [
+          {
+            blockId: uuidv4(),
+            type: 'paragraph',
+            content: { text: '' },
+            isAssumption: false,
+          },
+        ]
+      : buildSectionBlocks(outlineSection.title, intake.description ?? '', hasSources),
     sourceRefs: sourceRefs.slice(0, 1),
   }));
 

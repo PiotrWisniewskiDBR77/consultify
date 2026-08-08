@@ -2,7 +2,7 @@
  * PrezentacjeRightRail — module-tools strip + panel registry for the
  * Prezentacje (deck GENERATOR) lane under the MELS shell.
  *
- * Scope note (⚠ no phantoms): `DeckBuilderMelsRightRail` exposes
+ * Scope note (no phantom controls): `DeckBuilderMelsRightRail` exposes
  * Blocks / Media / Comments / Activity because `DeckBuilder` owns LIVE
  * slide editing (block insertion, media library, comment threads).
  * `PrezentacjeView` is the chat GENERATOR screen upstream of the

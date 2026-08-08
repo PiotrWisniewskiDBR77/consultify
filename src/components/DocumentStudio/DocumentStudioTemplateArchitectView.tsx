@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  GitBranch,
+  History,
   Loader2,
   Plus,
   ShieldAlert,
@@ -36,12 +38,18 @@ import { isTemplateStructureEditorEnabled } from '@/utils/templateEditorFlag';
 
 import {
   approveDocumentStudioTemplate,
+  createDocumentStudioTemplateVersion,
+  deleteDocumentStudioDraftTemplate,
   deprecateDocumentStudioTemplate,
+  listDocumentStudioTemplateAudit,
   listDocumentStudioTemplates,
   planDocumentStudioTemplate,
+  restoreDocumentStudioTemplateSnapshotAsDraft,
   reviseDocumentStudioTemplateStructure,
+  validateDocumentStudioTemplate,
 } from './api';
 import { DocumentStructurePreview } from './DocumentStructurePreview';
+import { useManualPrompt } from './editor/useManualPrompt';
 import {
   insertSection,
   makeBlankSection,
@@ -51,9 +59,30 @@ import {
 import type {
   DocumentTemplate,
   DocumentTypeKey,
+  TemplateAuditEntry,
   TemplateDraftInput,
   TemplateSectionBlueprint,
 } from './types';
+
+export function getTemplateStructureSaveErrorMessage(error: unknown): string {
+  const code = error instanceof Error ? error.message : String(error ?? '');
+  if (code.includes('business_case_scope_or_approach_required')) {
+    return 'Add a Scope, Approach or Proposed Initiative section before saving.';
+  }
+  if (code.includes('business_case_assumptions_or_scenarios_required')) {
+    return 'Add an Assumptions, Scenario, Sensitivity or Economic Analysis section before saving.';
+  }
+  if (code.includes('template_not_draft')) {
+    return 'Only draft templates can be edited. Create a new version first.';
+  }
+  if (code.includes('template_persist_failed')) {
+    return 'The template could not be saved durably. Try again.';
+  }
+  if (code.includes('template_sections_required')) {
+    return 'Add at least one section before saving.';
+  }
+  return 'Failed to save structure.';
+}
 
 function useDocumentTypeOptions(
   t: (key: string, def: string) => string
@@ -120,6 +149,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   DocumentStudioTemplateArchitectViewProps
 > = ({ onTemplateApproved }) => {
   const { t } = useTranslation();
+  const { requestConfirm } = useManualPrompt();
   const documentTypeOptions = useDocumentTypeOptions(t);
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -128,6 +158,14 @@ export const DocumentStudioTemplateArchitectView: React.FC<
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
+  const [validationIssues, setValidationIssues] = useState<Array<{
+    code: string;
+    message: string;
+    blocking: boolean;
+  }> | null>(null);
+  const [auditEntries, setAuditEntries] = useState<TemplateAuditEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [comparedAuditId, setComparedAuditId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -141,6 +179,23 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     () => templates.find((tpl) => tpl.templateId === selectedTemplateId) ?? null,
     [templates, selectedTemplateId]
   );
+  const comparedSnapshot = useMemo(() => {
+    const entry = auditEntries.find((candidate) => candidate.auditId === comparedAuditId);
+    return entry?.details?.templateSnapshot as DocumentTemplate | undefined;
+  }, [auditEntries, comparedAuditId]);
+
+  // Selecting a different template (row click, draft/restore/new-version)
+  // must drop any history/compare state left over from the previous
+  // selection — otherwise the history panel keeps showing another
+  // template's audit trail (and "Restore as draft" / "Compare" would act on
+  // an auditId that doesn't belong to the newly selected template).
+  // `handleHistory` re-populates these for the new template right after, so
+  // this only clears stale state for the common case (plain row click).
+  useEffect(() => {
+    setShowHistory(false);
+    setAuditEntries([]);
+    setComparedAuditId(null);
+  }, [selectedTemplateId]);
 
   // C1 — manual structure editor (behind flag `?ff_tpl_editor=1`, default ON
   // since 79a75de14e, akcept Piotra 2026-07-22 po live-verify; UWAGA: decyzja
@@ -283,11 +338,7 @@ export const DocumentStudioTemplateArchitectView: React.FC<
       );
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : t('documentStudio.templateArchitect.errReviseStructure', 'Failed to save structure')
-      );
+      setError(getTemplateStructureSaveErrorMessage(err));
     } finally {
       setSavingStructure(false);
     }
@@ -348,6 +399,26 @@ export const DocumentStudioTemplateArchitectView: React.FC<
     if (!template) return [];
     const isBusy = busyTemplateId === template.templateId;
     const actions: RowAction[] = [];
+    actions.push({
+      id: 'validate',
+      label: t('documentStudio.templateArchitect.validate', 'Validate'),
+      icon: CheckCircle2,
+      onClick: () => void handleValidate(template.templateId),
+    });
+    actions.push({
+      id: 'history',
+      label: t('documentStudio.templateArchitect.history', 'Version history'),
+      icon: History,
+      onClick: () => void handleHistory(template.templateId),
+    });
+    if (template.status !== 'draft') {
+      actions.push({
+        id: 'new-version',
+        label: t('documentStudio.templateArchitect.newVersion', 'Create new version'),
+        icon: GitBranch,
+        onClick: () => void handleNewVersion(template.templateId),
+      });
+    }
     if (template.status === 'draft') {
       actions.push({
         id: 'approve',
@@ -369,6 +440,16 @@ export const DocumentStudioTemplateArchitectView: React.FC<
         variant: 'danger',
         divider: actions.length > 0,
         onClick: () => void handleDeprecate(template.templateId),
+      });
+    }
+    if (template.status === 'draft') {
+      actions.push({
+        id: 'delete',
+        label: t('documentStudio.templateArchitect.deleteDraft', 'Delete draft'),
+        icon: Trash2,
+        variant: 'danger',
+        divider: true,
+        onClick: () => void handleDeleteDraft(template.templateId, template.name),
       });
     }
     return actions;
@@ -443,6 +524,81 @@ export const DocumentStudioTemplateArchitectView: React.FC<
           ? err.message
           : t('documentStudio.templateArchitect.errApproveTemplate', 'Failed to approve template')
       );
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleValidate = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const result = await validateDocumentStudioTemplate(templateId);
+      setSelectedTemplateId(templateId);
+      setValidationIssues(result.issues);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to validate template');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleHistory = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      setSelectedTemplateId(templateId);
+      setAuditEntries(await listDocumentStudioTemplateAudit(templateId));
+      setShowHistory(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load version history');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleNewVersion = async (templateId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const draft = await createDocumentStudioTemplateVersion(templateId);
+      await refresh();
+      setSelectedTemplateId(draft.templateId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create a new version');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleRestoreSnapshot = async (templateId: string, auditId: string): Promise<void> => {
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      const draft = await restoreDocumentStudioTemplateSnapshotAsDraft(templateId, auditId);
+      await refresh();
+      setSelectedTemplateId(draft.templateId);
+      setShowHistory(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore template snapshot');
+    } finally {
+      setBusyTemplateId(null);
+    }
+  };
+
+  const handleDeleteDraft = async (templateId: string, templateName: string): Promise<void> => {
+    const confirmed = await requestConfirm(
+      `Delete draft “${templateName}”? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setBusyTemplateId(templateId);
+    setError(null);
+    try {
+      await deleteDocumentStudioDraftTemplate(templateId);
+      setSelectedTemplateId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete draft');
     } finally {
       setBusyTemplateId(null);
     }
@@ -668,6 +824,85 @@ export const DocumentStudioTemplateArchitectView: React.FC<
 
         {selectedTemplate ? (
           <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+            {validationIssues ? (
+              <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+                <div className="font-semibold text-c-text">
+                  {validationIssues.length === 0 ? 'Validation passed' : 'Validation issues'}
+                </div>
+                {validationIssues.length > 0 ? (
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-c-text-secondary">
+                    {validationIssues.map((issue) => (
+                      <li key={issue.code}>{issue.message}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+            {showHistory ? (
+              <div className="lg:col-span-2 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
+                <div className="font-semibold text-c-text">Version history</div>
+                <ol className="mt-2 space-y-1 text-c-text-secondary">
+                  {auditEntries.map((entry) => (
+                    <li key={entry.auditId} className="flex items-center justify-between gap-3">
+                      <span>
+                        {entry.action.replace(/_/g, ' ')} ·{' '}
+                        {new Date(entry.occurredAt).toLocaleString()}
+                      </span>
+                      {entry.details?.templateSnapshot ? (
+                        <span className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setComparedAuditId(entry.auditId)}
+                          >
+                            Compare
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() =>
+                              void handleRestoreSnapshot(selectedTemplate.templateId, entry.auditId)
+                            }
+                          >
+                            Restore as draft
+                          </Button>
+                        </span>
+                      ) : (
+                        <span className="text-xs">Snapshot unavailable</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+                {comparedSnapshot ? (
+                  <div className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3">
+                    <div className="font-semibold text-c-text">Snapshot comparison</div>
+                    <dl className="mt-2 grid gap-1 text-xs">
+                      <div>
+                        Sections:{' '}
+                        {comparedSnapshot.sectionBlueprint
+                          .map((section) => section.title)
+                          .join(' → ')}{' '}
+                        →{' '}
+                        {selectedTemplate.sectionBlueprint
+                          .map((section) => section.title)
+                          .join(' → ')}
+                      </div>
+                      <div>
+                        Style:{' '}
+                        {JSON.stringify(comparedSnapshot.formattingSchema) ===
+                        JSON.stringify(selectedTemplate.formattingSchema)
+                          ? 'unchanged'
+                          : 'changed'}
+                      </div>
+                      <div>
+                        Variables: {comparedSnapshot.requiredInputs.join(', ') || 'none'} →{' '}
+                        {selectedTemplate.requiredInputs.join(', ') || 'none'}
+                      </div>
+                    </dl>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div className="rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
               {isEditableDraft ? (
                 <>

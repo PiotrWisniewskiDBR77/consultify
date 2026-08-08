@@ -195,7 +195,7 @@ describe('resolveTemplateUsePath', () => {
         canonicalTemplateId: CANONICAL_ID,
         originRuntime: 'sheet_template',
       })
-    ).toBe(`/reports?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
+    ).toBe(`/presentations?tab=workbook_templates&workbookTemplateId=${CANONICAL_ID}`);
   });
 
   it('wpis osierocony NIE daje ścieżki użycia', () => {
@@ -269,6 +269,15 @@ describe('resolveTemplateEditPath / resolveTemplateClonePath — scalenie wejś�
     );
     expect(resolveTemplateClonePath(ARTIFACT_INDEX_ID, 'report')).toBe(
       `/reports/builder?new=true&templateArtifactId=${ARTIFACT_INDEX_ID}`
+    );
+  });
+
+  it('szablon SHEET (edit) → persisted Excel Template Builder z kanonicznym id', () => {
+    expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', CANONICAL_ID)).toBe(
+      `/presentations?tab=templates&editWorkbookTemplateId=${CANONICAL_ID}`
+    );
+    expect(resolveTemplateEditPath(ARTIFACT_INDEX_ID, 'sheet', null)).toBe(
+      '/presentations?tab=templates'
     );
   });
 });

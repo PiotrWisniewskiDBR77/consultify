@@ -24,14 +24,21 @@ export interface CustomWorkbookTemplateSummary {
 }
 
 export async function listCustomWorkbookTemplates(
-  organizationId: string
+  organizationId: string,
+  userId: string
 ): Promise<CustomWorkbookTemplateSummary[]> {
   return queryHelpers.queryAll<CustomWorkbookTemplateSummary>(
     `SELECT CAST(id AS TEXT) AS id, name, description
        FROM tp_base_templates
-      WHERE organization_id = ? AND created_by IS NOT NULL
+      WHERE (
+        created_by IS NULL
+        OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = ?)
+        OR (visibility = 'private' AND created_by = ?)
+      )
+        AND (status IS NULL OR status <> 'deprecated')
+        AND (created_by IS NOT NULL OR status IS NULL OR status IN ('approved', 'published'))
       ORDER BY created_at DESC, name ASC`,
-    [organizationId]
+    [organizationId, userId]
   );
 }
 
@@ -49,26 +56,63 @@ function legacyColumnsToSchema(
   name: string,
   description: string | null
 ): WorkbookSchema {
-  const columns = Array.isArray(snapshot.columns) ? snapshot.columns : [];
+  const table = Array.isArray(snapshot.tables) ? snapshot.tables[0] : null;
+  const columns = Array.isArray(snapshot.columns)
+    ? snapshot.columns
+    : Array.isArray(snapshot.fields)
+      ? snapshot.fields
+      : table &&
+          typeof table === 'object' &&
+          Array.isArray((table as Record<string, unknown>).fields)
+        ? ((table as Record<string, unknown>).fields as unknown[])
+        : [];
   if (columns.length === 0) {
     throw new CustomWorkbookTemplateInvalidError(
-      'Template schema_snapshot must contain WorkbookSchema.sheets or a non-empty columns array'
+      'Template schema_snapshot must contain WorkbookSchema.sheets, columns, fields, or tables[0].fields'
     );
   }
   const normalizedColumns = columns.map((raw, index) => {
     const col = (raw ?? {}) as Record<string, unknown>;
     const key = String(col.key ?? col.id ?? String.fromCharCode(65 + index));
-    const rawType = typeof col.type === 'string' ? col.type : undefined;
+    const rawType =
+      typeof col.type === 'string'
+        ? col.type
+        : typeof col.fieldType === 'string'
+          ? col.fieldType
+          : undefined;
+    const workbookType = (() => {
+      if (rawType === 'number' || rawType === 'currency' || rawType === 'percent') return rawType;
+      if (rawType === 'formula') return 'number';
+      if (rawType === 'date') return 'date';
+      if (rawType === 'checkbox' || rawType === 'boolean') return 'boolean';
+      if (rawType === 'rating') return 'rating';
+      return 'text';
+    })();
+    const choices = Array.isArray((col.options as any)?.choices)
+      ? (col.options as any).choices
+          .map((choice: unknown) =>
+            typeof choice === 'string'
+              ? choice
+              : choice && typeof choice === 'object'
+                ? String((choice as Record<string, unknown>).name ?? '')
+                : ''
+          )
+          .filter(Boolean)
+      : Array.isArray((col as any).options)
+        ? (col as any).options.map(String)
+        : [];
     return {
       key,
       header: String(col.header ?? col.name ?? key),
       ...(typeof col.width === 'number' ? { width: col.width } : {}),
-      ...(rawType ? { type: (rawType === 'formula' ? 'number' : rawType) as any } : {}),
+      type: workbookType as any,
       ...(typeof col.numberFormat === 'string' ? { numberFormat: col.numberFormat } : {}),
       ...(col.style && typeof col.style === 'object' ? { style: col.style as any } : {}),
-      ...(col.validation && typeof col.validation === 'object'
-        ? { validation: col.validation as any }
-        : {}),
+      ...(choices.length > 0
+        ? { validation: { type: 'list' as const, values: choices, allowBlank: true } }
+        : col.validation && typeof col.validation === 'object'
+          ? { validation: col.validation as any }
+          : {}),
       legacyFormula:
         rawType === 'formula' && typeof col.formula === 'string' && col.formula.trim()
           ? col.formula.trim().replace(/^=/, '')
@@ -85,7 +129,10 @@ function legacyColumnsToSchema(
     ...(description ? { description } : {}),
     sheets: [
       {
-        name: 'Sheet1',
+        name:
+          table && typeof table === 'object'
+            ? String((table as Record<string, unknown>).name || 'Sheet1')
+            : 'Sheet1',
         columns: normalizedColumns.map(({ legacyFormula: _legacyFormula, ...column }) => column),
         rows: Object.keys(starterCells).length > 0 ? [{ cells: starterCells }] : [],
       },
@@ -126,7 +173,8 @@ export function convertCustomTemplateSnapshot(
 
 export async function resolveCustomWorkbookTemplate(
   templateId: string,
-  organizationId: string
+  organizationId: string,
+  userId: string
 ): Promise<CustomWorkbookTemplate | null> {
   const row = await queryHelpers.queryOne<{
     id: string;
@@ -136,8 +184,15 @@ export async function resolveCustomWorkbookTemplate(
   }>(
     `SELECT CAST(id AS TEXT) AS id, name, description, schema_snapshot
       FROM tp_base_templates
-      WHERE CAST(id AS TEXT) = ? AND organization_id = ? AND created_by IS NOT NULL`,
-    [templateId, organizationId]
+      WHERE CAST(id AS TEXT) = ?
+        AND (
+          created_by IS NULL
+          OR (COALESCE(visibility, 'organization') <> 'private' AND organization_id = ?)
+          OR (visibility = 'private' AND created_by = ?)
+        )
+        AND (status IS NULL OR status <> 'deprecated')
+        AND (created_by IS NOT NULL OR status IS NULL OR status IN ('approved', 'published'))`,
+    [templateId, organizationId, userId]
   );
   if (!row) return null;
   return {

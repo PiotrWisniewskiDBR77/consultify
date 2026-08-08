@@ -7,6 +7,43 @@ import {
 } from '../documentContentGenerator.js';
 
 describe('premium document grounding and canonical shapes — DOC-DBR77-20260806-ALFA', () => {
+  it('adds an action-first executive sentence for an approval-seeking business case', () => {
+    const schema = {
+      documentId: 'business-case', artifactId: 'business-case', title: 'Partner Case',
+      documentType: 'business_case', language: 'en', audience: ['Partner'], goal: 'seek_approval',
+      communicationRegister: 'executive', density: 'detailed', languageStyle: 'consulting',
+      confidentiality: 'internal', formattingSchema: {}, sourceRefs: [], createdAt: '', updatedAt: '',
+      sections: [{ sectionId: 'exec', orderIndex: 0, level: 1, title: 'Executive Summary', purpose: '', sourceRefs: [], blocks: [{
+        blockId: 'p', type: 'paragraph', content: { text: 'The product addresses a governed release problem.' },
+      }] }],
+    } as any;
+
+    const result = enforceDocumentSchemaGrounding(schema, 'Partner Case — governed release problem');
+    const text = result.sections[0].blocks
+      .map((block: any) => String(block.content?.text || ''))
+      .join(' ');
+    expect(text).toContain('We recommend approving the next validation gate');
+    expect(result.sections[0].blocks[0].isAssumption).toBe(false);
+  });
+
+  it('does not mistake a generic engagement recommendation for an approval decision', () => {
+    const schema = {
+      documentId: 'business-case-2', artifactId: 'business-case-2', title: 'Partner Case',
+      documentType: 'business_case', language: 'en', audience: ['Partner'], goal: 'seek_approval',
+      communicationRegister: 'executive', density: 'detailed', languageStyle: 'consulting',
+      confidentiality: 'internal', formattingSchema: {}, sourceRefs: [], createdAt: '', updatedAt: '',
+      sections: [{ sectionId: 'exec', orderIndex: 0, level: 1, title: 'Executive Summary', purpose: '', sourceRefs: [], blocks: [{
+        blockId: 'p', type: 'paragraph', content: { text: 'We recommend partners engage with the platform.' },
+      }] }],
+    } as any;
+
+    const result = enforceDocumentSchemaGrounding(schema, 'Partner Case — governed release problem');
+    const text = result.sections[0].blocks
+      .map((block: any) => String(block.content?.text || ''))
+      .join(' ');
+    expect(text).toContain('We recommend approving the next validation gate');
+  });
+
   it('preserves risk_table identity and marks ungrounded premium content as an assumption', () => {
     const block = __contentBlockToDocumentBlockForTests(
       {

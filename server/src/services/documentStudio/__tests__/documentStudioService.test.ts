@@ -113,6 +113,45 @@ describe('Document Studio Mode 1', () => {
       const sectionWithRefs = schema.sections.find((section) => section.sourceRefs.length > 0);
       expect(sectionWithRefs).toBeDefined();
     });
+
+    it('creates an actually empty editable paragraph for the manual Czysto entry', () => {
+      const intake = baseIntake({
+        title: 'Nowy dokument',
+        description: 'Pusty dokument roboczy do samodzielnej edycji.',
+        documentType: 'generic_document',
+        language: 'pl',
+      });
+      const outline = {
+        documentType: 'generic_document',
+        title: 'Nowy dokument',
+        sections: [
+          {
+            title: 'Sekcja 1',
+            level: 1 as const,
+            purpose: '',
+            expectedLengthHint: 'short' as const,
+          },
+        ],
+        recommendedDensity: 'concise' as const,
+        recommendedRegister: 'professional' as const,
+        recommendedLanguageStyle: 'formal' as const,
+      };
+      const schema = buildDocumentSchema({
+        artifactId: 'artifact-blank-manual',
+        intake,
+        outline,
+        sourceRefs: [],
+      });
+
+      expect(schema.sections).toHaveLength(1);
+      expect(schema.sections[0].blocks).toEqual([
+        expect.objectContaining({
+          type: 'paragraph',
+          content: { text: '' },
+          isAssumption: false,
+        }),
+      ]);
+    });
   });
 
   describe('renderSchemaToMarkdown', () => {

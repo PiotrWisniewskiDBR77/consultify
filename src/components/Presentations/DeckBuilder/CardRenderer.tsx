@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
@@ -31,6 +31,8 @@ import {
   type VerticalFillMode,
   verticalFillMode,
 } from './layouts/LayoutEngine';
+import { blockFrameStyle, blockGeometryStyle } from './manualEditing';
+import { normalizeGeometry, patchGeometry, type BlockGeometry } from './geometryOps';
 import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
@@ -40,7 +42,7 @@ interface CardRendererProps {
   scale?: number;
   animationsEnabled?: boolean;
   recentLayoutIds?: string[];
-  onBlockClick?: (blockId: string) => void;
+  onBlockClick?: (blockId: string, additive?: boolean) => void;
   onSourceClick?: (ref: {
     artifact_id: string;
     artifact_type: string;
@@ -55,12 +57,111 @@ interface CardRendererProps {
    */
   editable?: boolean;
   selectedBlockId?: string | null;
+  selectedBlockIds?: string[];
   onBlockUpdate?: (blockId: string, updates: Partial<CardBlock>) => void;
   onBlockDelete?: (blockId: string) => void;
   onBlockDuplicate?: (blockId: string) => void;
   onBlockMove?: (blockId: string, direction: 'up' | 'down') => void;
   onBlockRefresh?: (blockId: string) => void;
+  onBlockReplaceImage?: (blockId: string) => void;
 }
+
+const FreeformBlockFrame: React.FC<{
+  geometry: BlockGeometry;
+  selected: boolean;
+  onCommit: (geometry: BlockGeometry) => void;
+  children: React.ReactNode;
+}> = ({ geometry, selected, onCommit, children }) => {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const [draft, setDraft] = useState<BlockGeometry | null>(null);
+  const visible = draft ?? geometry;
+
+  const startPointer = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    mode: 'move' | 'resize' | 'rotate'
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const frame = frameRef.current;
+    const surface = frame?.parentElement;
+    if (!frame || !surface) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const start = geometry;
+    const origin = { x: event.clientX, y: event.clientY };
+    const surfaceRect = surface.getBoundingClientRect();
+    const frameRect = frame.getBoundingClientRect();
+    let latest = start;
+    const move = (pointer: PointerEvent) => {
+      if (mode === 'rotate') {
+        const centerX = frameRect.left + frameRect.width / 2;
+        const centerY = frameRect.top + frameRect.height / 2;
+        const angle =
+          (Math.atan2(pointer.clientY - centerY, pointer.clientX - centerX) * 180) / Math.PI;
+        latest = patchGeometry(start, { rotation: Math.round(angle + 90) });
+      } else {
+        const dx = ((pointer.clientX - origin.x) / surfaceRect.width) * 100;
+        const dy = ((pointer.clientY - origin.y) / surfaceRect.height) * 100;
+        latest =
+          mode === 'move'
+            ? patchGeometry(start, { x: start.x + dx, y: start.y + dy })
+            : normalizeGeometry({ ...start, width: start.width + dx, height: start.height + dy });
+      }
+      setDraft(latest);
+    };
+    const finish = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      setDraft(null);
+      if (latest !== start) onCommit(latest);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish, { once: true });
+  };
+
+  const keyboardMove = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    const delta = event.shiftKey ? 5 : 1;
+    const patch: Partial<BlockGeometry> = {};
+    if (event.key === 'ArrowLeft') patch.x = visible.x - delta;
+    if (event.key === 'ArrowRight') patch.x = visible.x + delta;
+    if (event.key === 'ArrowUp') patch.y = visible.y - delta;
+    if (event.key === 'ArrowDown') patch.y = visible.y + delta;
+    if (Object.keys(patch).length === 0) return;
+    event.preventDefault();
+    onCommit(patchGeometry(visible, patch));
+  };
+
+  return (
+    <div ref={frameRef} style={blockGeometryStyle(visible)}>
+      {children}
+      {selected && (
+        <>
+          <button
+            type="button"
+            aria-label="Move selected block"
+            title="Drag to move; arrow keys move by 1%, Shift by 5%"
+            onPointerDown={(event) => startPointer(event, 'move')}
+            onKeyDown={keyboardMove}
+            className="absolute left-1/2 top-0 z-20 h-4 w-10 -translate-x-1/2 -translate-y-1/2 cursor-move rounded-full border border-c-focus bg-c-surface shadow"
+          />
+          <button
+            type="button"
+            aria-label="Rotate selected block"
+            title="Drag to rotate"
+            onPointerDown={(event) => startPointer(event, 'rotate')}
+            className="absolute left-1/2 -top-6 z-20 h-3 w-3 -translate-x-1/2 cursor-crosshair rounded-full border-2 border-c-focus bg-c-surface shadow"
+          />
+          <button
+            type="button"
+            aria-label="Resize selected block"
+            title="Drag to resize"
+            onPointerDown={(event) => startPointer(event, 'resize')}
+            className="absolute -bottom-1.5 -right-1.5 z-20 h-3 w-3 cursor-se-resize rounded-sm border border-c-focus bg-c-surface shadow"
+          />
+        </>
+      )}
+    </div>
+  );
+};
 
 const BLOCK_COMPONENTS: Record<
   string,
@@ -96,11 +197,13 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onSourceClick,
   editable = false,
   selectedBlockId = null,
+  selectedBlockIds,
   onBlockUpdate,
   onBlockDelete,
   onBlockDuplicate,
   onBlockMove,
   onBlockRefresh,
+  onBlockReplaceImage,
 }) => {
   const navigate = useNavigate();
   const deckTheme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
@@ -109,18 +212,22 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   // Tło karty (nie motyw aplikacji) decyduje o kolorze tekstu — patrz komentarz
   // przy `themeForCard`. Dla kart jasnych zwraca dokładnie `deckTheme`.
   const theme = useMemo(() => themeForCard(card, deckTheme), [card, deckTheme]);
+  const structuredBlocks = useMemo(
+    () => card.blocks.filter((block) => !block.geometry),
+    [card.blocks]
+  );
 
   const layout = useMemo(() => {
-    if (card.blocks.length === 0) return null;
-    return selectLayout(card, recentLayoutIds);
-  }, [card, recentLayoutIds]);
+    if (structuredBlocks.length === 0) return null;
+    return selectLayout({ ...card, blocks: structuredBlocks }, recentLayoutIds);
+  }, [card, recentLayoutIds, structuredBlocks]);
 
   const regionMap = useMemo(() => {
-    if (!layout || card.blocks.length === 0) return null;
+    if (!layout || structuredBlocks.length === 0) return null;
     // STEP 1b — pass B1's composition so the AI's area assignment is honoured;
     // absent → byte-identical to the prior preferred-block-type heuristic.
-    return assignBlocksToRegions(card.blocks, layout, card.composition);
-  }, [layout, card.blocks, card.composition]);
+    return assignBlocksToRegions(structuredBlocks, layout, card.composition);
+  }, [layout, structuredBlocks, card.composition]);
 
   const useGridLayout = layout && regionMap && layout.regions.length > 1;
 
@@ -129,14 +236,14 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   // is not glued to the top with a dead bottom.
   const stackedFillMode = useMemo(
     () =>
-      card.blocks.length
+      structuredBlocks.length
         ? verticalFillMode(
-            card.blocks as { type: string; content?: Record<string, unknown> }[],
+            structuredBlocks as { type: string; content?: Record<string, unknown> }[],
             undefined,
             card.intent
           )
         : 'top',
-    [card.blocks, card.intent]
+    [structuredBlocks, card.intent]
   );
 
   const handleSourceClick = (ref: {
@@ -199,7 +306,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     });
     const block = sanitizeDeckBlock(rawBlock);
     const blockBody = (
-      <>
+      <div style={blockFrameStyle(block.style_overrides)} data-block-frame={block.block_id}>
         <Component block={block} theme={theme} density={density} />
         {block.source_ref && (
           <BlockSourceBadge
@@ -207,7 +314,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             isRefreshable={block.is_refreshable ?? false}
           />
         )}
-      </>
+      </div>
     );
 
     // Fala 1 (manual mode) — EditableBlock adds selection ring, floating
@@ -215,7 +322,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
     // Operations read/write ONLY `card.blocks` via the raw (unsanitized)
     // block_id — the model stays a sequence of blocks (SPEC §2.1), never x/y.
     if (editable) {
-      return (
+      const isBlockSelected = (
+        selectedBlockIds ?? (selectedBlockId ? [selectedBlockId] : [])
+      ).includes(block.block_id);
+      const editableNode = (
         <AnimatedBlock
           key={block.block_id}
           blockType={block.type}
@@ -225,12 +335,15 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         >
           <EditableBlock
             block={block}
-            isSelected={selectedBlockId === block.block_id}
-            onSelect={() => onBlockClick?.(block.block_id)}
+            isSelected={isBlockSelected}
+            onSelect={(additive) => onBlockClick?.(block.block_id, additive)}
             onUpdate={(updates) => onBlockUpdate?.(block.block_id, updates)}
             onDelete={() => onBlockDelete?.(block.block_id)}
             onDuplicate={() => onBlockDuplicate?.(block.block_id)}
             onRefresh={block.is_refreshable ? () => onBlockRefresh?.(block.block_id) : undefined}
+            onReplaceImage={
+              block.type === 'image' ? () => onBlockReplaceImage?.(block.block_id) : undefined
+            }
             onMoveUp={() => onBlockMove?.(block.block_id, 'up')}
             onMoveDown={() => onBlockMove?.(block.block_id, 'down')}
             canMoveUp={canMoveBlock(card.blocks, block.block_id, 'up')}
@@ -239,6 +352,18 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
             {blockBody}
           </EditableBlock>
         </AnimatedBlock>
+      );
+      return block.geometry ? (
+        <FreeformBlockFrame
+          key={block.block_id}
+          geometry={block.geometry}
+          selected={isBlockSelected}
+          onCommit={(geometry) => onBlockUpdate?.(block.block_id, { geometry })}
+        >
+          {editableNode}
+        </FreeformBlockFrame>
+      ) : (
+        editableNode
       );
     }
 
@@ -305,7 +430,10 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
               return (
                 <div
                   key={region.area}
-                  style={{ gridArea: region.gridArea, justifyContent: justifyFor(regionFill) }}
+                  style={{
+                    gridArea: region.gridArea,
+                    justifyContent: justifyFor(card.content_alignment || regionFill),
+                  }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
                   {blocksInRegion.map((block, idx) =>
@@ -318,11 +446,23 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         ) : (
           <div
             className="flex-1 flex flex-col gap-3"
-            style={{ justifyContent: justifyFor(stackedFillMode) }}
+            style={{ justifyContent: justifyFor(card.content_alignment || stackedFillMode) }}
           >
-            {card.blocks
+            {structuredBlocks
               .sort((a, b) => a.position.order - b.position.order)
               .map((block, blockIndex) => renderBlockItem(block, blockIndex))}
+          </div>
+        )}
+
+        {card.blocks.some((block) => block.geometry) && (
+          <div className="absolute inset-8 pointer-events-none">
+            {card.blocks
+              .filter((block) => block.geometry)
+              .map((block, index) => (
+                <div key={block.block_id} className="pointer-events-auto">
+                  {renderBlockItem(block, index)}
+                </div>
+              ))}
           </div>
         )}
 

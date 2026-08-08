@@ -24,7 +24,10 @@ import {
   reviseTemplateStructure as reviseDocStudioTemplateStructure,
   updateTemplateContent as updateDocStudioTemplateContent,
 } from './documentStudio/documentTemplateService.js';
-import { registerArtifactOrigin } from './v8/artifactRegistryService.js';
+import {
+  registerArtifactOrigin,
+  removeTemplateArtifactByOrigin,
+} from './v8/artifactRegistryService.js';
 
 const LOG_PREFIX = '[deliverableTemplateService]';
 
@@ -781,6 +784,11 @@ async function registerBuilderTemplateArtifactBestEffort(params: {
         visibilityScope: 'organization',
         originSummary: {
           template: {
+            // `sheet_template` also contains historical entries. This record was
+            // authored by the current workbook builder, so persist its real
+            // lineage explicitly instead of inferring it from the runtime name.
+            source: 'canonical',
+            legacy: false,
             scope: 'org',
             status: 'draft',
             description: description || '',
@@ -885,6 +893,45 @@ async function registerBuilderTemplateArtifactBestEffort(params: {
       `${LOG_PREFIX} artifact-registry registration failed for builder template ${templateId} (type=${type}, template row still saved): ${err instanceof Error ? err.message : String(err)}`
     );
   }
+}
+
+/** Keep Template Library lifecycle metadata aligned with the canonical workbook row. */
+export async function syncWorkbookTemplateArtifactLifecycle(params: {
+  template: DeliverableTemplate;
+  status: 'draft' | 'approved' | 'deprecated';
+  version: string;
+  historyCount: number;
+  organizationId: string;
+  userId: string;
+}): Promise<void> {
+  const { template, status, version, historyCount, organizationId, userId } = params;
+  await registerArtifactOrigin({
+    organizationId,
+    outputType: 'sheet',
+    artifactFamily: 'template',
+    originRuntime: 'sheet_template',
+    originRecordId: template.id,
+    titleSnapshot: template.name,
+    ownerUserId: userId,
+    createdBy: userId,
+    deliveryState: status === 'approved' ? 'published' : status,
+    visibilityScope: 'organization',
+    originSummary: {
+      template: {
+        canonicalTemplateId: template.id,
+        originRuntime: 'sheet_template',
+        source: 'canonical',
+        legacy: false,
+        orphaned: false,
+        scope: 'organization',
+        status,
+        description: template.description ?? '',
+        structureBlueprint: template.meta.schema_snapshot ?? {},
+        metadata: { version, historyCount, updatedAt: new Date().toISOString() },
+      },
+      sourceTable: 'tp_base_templates',
+    },
+  });
 }
 
 /** Utwórz user-owned template w odpowiedniej tabeli. */
@@ -1069,11 +1116,17 @@ export async function updateDeliverableTemplate(
     );
   } else {
     // table
+    const schemaSnapshot =
+      metaObj.schema_snapshot !== undefined
+        ? typeof metaObj.schema_snapshot === 'string'
+          ? metaObj.schema_snapshot
+          : JSON.stringify(metaObj.schema_snapshot)
+        : JSON.stringify(existing.meta.schema_snapshot ?? {});
     await queryRun(
       `UPDATE tp_base_templates
-       SET name = $1, description = $2
-       WHERE id::text = $3 AND organization_id = $4 AND created_by IS NOT NULL`,
-      [newName, newDesc, id, orgId]
+       SET name = $1, description = $2, schema_snapshot = $3::jsonb
+       WHERE id::text = $4 AND organization_id = $5 AND created_by IS NOT NULL`,
+      [newName, newDesc, schemaSnapshot, id, orgId]
     );
   }
 
@@ -1135,5 +1188,14 @@ export async function deleteDeliverableTemplate(
     `DELETE FROM tp_base_templates WHERE id::text = $1 AND organization_id = $2 AND created_by IS NOT NULL`,
     [id, orgId]
   );
+  if (r.changes > 0) {
+    await removeTemplateArtifactByOrigin({
+      organizationId: orgId,
+      originRuntime: 'sheet_template',
+      originRecordId: id,
+    }).catch((err) =>
+      logger.warn(`${LOG_PREFIX} workbook template index cleanup failed`, { err, id })
+    );
+  }
   return r.changes > 0;
 }

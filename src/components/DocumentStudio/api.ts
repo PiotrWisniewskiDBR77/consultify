@@ -379,6 +379,8 @@ export async function saveDocumentStudioManualContent(
      * save the content autosave already uses instead of a new endpoint.
      */
     title?: string;
+    /** Optional artifact-level source registry for manual evidence management. */
+    sourceRefs?: DocumentSchema['sourceRefs'];
   }
 ): Promise<DocumentSchema> {
   const res = await fetchWithRetry(`${BASE}/${encodeURIComponent(artifactId)}/content`, {
@@ -884,6 +886,74 @@ export async function deprecateDocumentStudioTemplate(
     'DocumentStudio deprecate template'
   );
   return json.template;
+}
+
+export interface DocumentTemplateValidationIssue {
+  code: string;
+  message: string;
+  blocking: boolean;
+}
+
+export async function validateDocumentStudioTemplate(templateId: string): Promise<{
+  valid: boolean;
+  issues: DocumentTemplateValidationIssue[];
+}> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}/validate`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'DocumentStudio validate template');
+}
+
+export async function listDocumentStudioTemplateAudit(
+  templateId: string
+): Promise<TemplateAuditEntry[]> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}/audit`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
+  const json = await handleResponse<{ auditEntries: TemplateAuditEntry[] }>(
+    res,
+    'DocumentStudio template audit'
+  );
+  return json.auditEntries;
+}
+
+export async function createDocumentStudioTemplateVersion(
+  templateId: string
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/${encodeURIComponent(templateId)}/new-version`,
+    { method: 'POST', headers: getHeaders(), body: '{}' }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio create template version'
+  );
+  return json.template;
+}
+
+export async function restoreDocumentStudioTemplateSnapshotAsDraft(
+  templateId: string,
+  auditId: string
+): Promise<DocumentTemplate> {
+  const res = await fetchWithRetry(
+    `${BASE}/templates/${encodeURIComponent(templateId)}/audit/${encodeURIComponent(auditId)}/restore-as-draft`,
+    { method: 'POST', headers: getHeaders(), body: '{}' }
+  );
+  const json = await handleResponse<{ template: DocumentTemplate }>(
+    res,
+    'DocumentStudio restore template snapshot'
+  );
+  return json.template;
+}
+
+export async function deleteDocumentStudioDraftTemplate(templateId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE}/templates/${encodeURIComponent(templateId)}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  if (!res.ok) await handleResponse(res, 'DocumentStudio delete draft template');
 }
 
 /**

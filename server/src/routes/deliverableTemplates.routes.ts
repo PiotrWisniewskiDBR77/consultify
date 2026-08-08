@@ -21,6 +21,7 @@ import {
   deleteDeliverableTemplate,
   getDeliverableTemplate,
   listDeliverableTemplates,
+  syncWorkbookTemplateArtifactLifecycle,
   TemplateForbiddenError,
   TemplateNotFoundError,
   updateDeliverableTemplate,
@@ -156,6 +157,62 @@ router.put('/templates/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to update template' });
   }
 });
+
+// Org-owned workbook lifecycle facade. The system catalog endpoints remain
+// super-admin only; this path first proves tenant ownership, then delegates to
+// the existing lifecycle service (same transitions, history and audit trail).
+async function mutateWorkbookLifecycle(req: any, res: any, action: 'approve' | 'deprecate') {
+  try {
+    const existing = await getDeliverableTemplate(req.params.id, getOrgId(req));
+    if (!existing) return res.status(404).json({ error: 'Template not found' });
+    if (existing.type !== 'table')
+      return res.status(400).json({ error: 'Workbook template required' });
+    if (existing.isSystem || existing.organizationId !== getOrgId(req))
+      return res
+        .status(403)
+        .json({ error: 'Only an organization-owned workbook template can be changed' });
+    const lifecycleSvc = (await import('../services/tablePlatform/TemplateLifecycleService.js'))
+      .default;
+    const options = {
+      actorUserId: getUserId(req),
+      note: typeof req.body?.note === 'string' ? req.body.note : undefined,
+    };
+    const template =
+      action === 'approve'
+        ? await lifecycleSvc.approveTemplate(req.params.id, options)
+        : await lifecycleSvc.deprecateTemplate(req.params.id, options);
+    await syncWorkbookTemplateArtifactLifecycle({
+      template: existing,
+      status: template.status,
+      version: template.version,
+      historyCount: template.approval_history.length,
+      organizationId: getOrgId(req),
+      userId: getUserId(req),
+    });
+    return res.json(template);
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    if (code === 'INVALID_LIFECYCLE_TRANSITION')
+      return res.status(409).json({ error: (err as Error).message, code });
+    if (code === 'TEMPLATE_NOT_FOUND')
+      return res.status(404).json({ error: (err as Error).message, code });
+    logger.error('[deliverableTemplates] Workbook lifecycle transition failed', {
+      err,
+      id: req.params.id,
+      action,
+    });
+    return res.status(500).json({ error: `Failed to ${action} workbook template` });
+  }
+}
+
+router.post(
+  '/templates/:id/approve',
+  (req, res) => void mutateWorkbookLifecycle(req, res, 'approve')
+);
+router.post(
+  '/templates/:id/deprecate',
+  (req, res) => void mutateWorkbookLifecycle(req, res, 'deprecate')
+);
 
 // ── POST suggest ────────────────────────────────────────────
 router.post('/templates/suggest', async (req, res) => {

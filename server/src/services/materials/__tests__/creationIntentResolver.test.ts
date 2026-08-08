@@ -97,6 +97,8 @@ function presentationTemplateRow(overrides: Record<string, unknown> = {}) {
     is_system: true,
     is_active: true,
     lifecycle_state: 'approved',
+    theme: 'modern',
+    layout_policy_json: null,
     outline_json: JSON.stringify([
       { intent: 'cover', title: 'Steering Committee Update' },
       { intent: 'executive_summary', title: 'Executive Summary', keyMessage: 'Q3 on track' },
@@ -478,6 +480,33 @@ describe('resolvePresentationTemplateForCreation — canonical presentation temp
 
     expect(resolved.scope).toBe('organization');
     expect(resolved.canonicalTemplateId).toBe('pt-custom-1');
+  });
+
+  it('carries the custom theme/master contract fresh from the canonical registry', async () => {
+    const customTemplate = {
+      version: 2,
+      theme: { titleFont: 'Aptos Display', primaryColor: '#123456' },
+      layouts: { board: { masterName: 'Board Master' } },
+      layoutMapping: { cover: 'board' },
+    };
+    routeDb({
+      presentationTemplate: presentationTemplateRow({
+        theme: 'board-custom',
+        layout_policy_json: JSON.stringify({ customTemplate }),
+      }),
+    });
+
+    const resolved = await resolvePresentationTemplateForCreation(
+      {
+        kind: 'internal',
+        canonicalTemplateId: 'pt-steering',
+        originRuntime: 'presentation_template',
+      },
+      { organizationId: ORG }
+    );
+
+    expect(resolved.theme).toBe('board-custom');
+    expect(resolved.customTemplate).toEqual(customTemplate);
   });
 
   it('never writes to the database', async () => {

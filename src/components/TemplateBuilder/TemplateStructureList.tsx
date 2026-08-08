@@ -83,42 +83,45 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
                   <div className="text-[11px] text-c-text-muted truncate">{item.meta}</div>
                 </div>
               </div>
-              <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center justify-end gap-0.5 mt-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                 <button
                   type="button"
                   aria-label="Przesuń w górę"
+                  title="Przesuń w górę"
                   disabled={i === 0}
                   onClick={(e) => {
                     e.stopPropagation();
                     onMove(item.id, -1);
                   }}
-                  className="p-1 rounded text-c-text-muted hover:text-c-text hover:bg-c-bg disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-muted hover:text-c-text hover:bg-c-bg disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <ArrowUp className="w-3.5 h-3.5" />
+                  <ArrowUp className="w-3.5 h-3.5" aria-hidden />
                 </button>
                 <button
                   type="button"
                   aria-label="Przesuń w dół"
+                  title="Przesuń w dół"
                   disabled={i === items.length - 1}
                   onClick={(e) => {
                     e.stopPropagation();
                     onMove(item.id, 1);
                   }}
-                  className="p-1 rounded text-c-text-muted hover:text-c-text hover:bg-c-bg disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-muted hover:text-c-text hover:bg-c-bg disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <ArrowDown className="w-3.5 h-3.5" />
+                  <ArrowDown className="w-3.5 h-3.5" aria-hidden />
                 </button>
                 <button
                   type="button"
                   aria-label="Usuń"
+                  title="Usuń"
                   disabled={items.length <= 1}
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(item.id);
                   }}
-                  className="p-1 rounded text-c-text-muted hover:text-c-danger hover:bg-c-danger/10 disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-muted hover:text-c-danger hover:bg-c-danger/10 disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5" aria-hidden />
                 </button>
               </div>
             </div>
@@ -129,10 +132,11 @@ export const TemplateStructureList: React.FC<TemplateStructureListProps> = ({
         <button
           type="button"
           onClick={onAdd}
+          title={addLabel}
           className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-c-border px-3 py-2 text-sm font-medium text-c-text-muted hover:text-c-text hover:border-c-focus hover:bg-c-focus/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           data-testid="structure-add"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4" aria-hidden />
           {addLabel}
         </button>
       </div>

@@ -143,6 +143,19 @@ beforeEach(() => {
 });
 
 describe('POST /api/artifacts/register-chat (DEC-1 chat deliverable back-reference)', () => {
+  it('serves the authenticated Materials collection contract', async () => {
+    const response = await request(createApp())
+      .get('/api/artifacts?outputType=report&limit=200')
+      .set('Authorization', 'Bearer authenticated-user');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: [],
+      total: 0,
+      canonicalHome: 'outputs_library',
+    });
+  });
+
   it('registers a chat deck and it comes back from GET / with the back-reference', async () => {
     const app = createApp();
 

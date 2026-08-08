@@ -119,13 +119,13 @@ const DEFAULT_SECTIONS_BY_TYPE: Record<DocumentTypeKey, string[]> = {
   business_case: [
     'Executive Summary',
     'Problem Statement',
+    'Scope and Approach',
     'Proposed Initiative',
-    'Economic Analysis',
+    'Scenarios and Assumptions',
     'Benefits and KPIs',
     'Risks',
-    'Implementation Outline',
+    '30/60/90 Implementation Roadmap',
     'Recommendation',
-    'Appendix',
   ],
   sales_proposal: [
     'Executive Summary',

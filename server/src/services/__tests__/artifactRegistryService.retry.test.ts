@@ -67,7 +67,11 @@ vi.mock('../v8/executionSpineService.js', () => ({
   transitionRunState: mocks.transition,
 }));
 
-import { computeArtifactRunPreflight, retryArtifactRun } from '../v8/artifactRegistryService.js';
+import {
+  computeArtifactRunPreflight,
+  isArtifactRunLifecycleMaterializable,
+  retryArtifactRun,
+} from '../v8/artifactRegistryService.js';
 
 function makeRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -214,6 +218,32 @@ describe('artifactRegistryService.retryArtifactRun', () => {
     await retryArtifactRun({ runId: 'parent', organizationId: 'org-a', actorUserId: 'actor-1' });
     expect(mocks.cleanupReads).toBe(1);
   });
+});
+
+describe('artifactRegistryService materialization lifecycle reconciliation', () => {
+  it.each(['approved_for_apply', 'applying'])(
+    'accepts a stale planned lifecycle only when the execution spine is %s',
+    (executionState) => {
+      expect(isArtifactRunLifecycleMaterializable('planned', executionState)).toBe(true);
+      expect(isArtifactRunLifecycleMaterializable('retry_requested', executionState)).toBe(true);
+    }
+  );
+
+  it.each(['planning', 'proposals_ready', 'waiting_for_review'])(
+    'keeps a stale planned lifecycle fail-closed while the execution spine is %s',
+    (executionState) => {
+      expect(isArtifactRunLifecycleMaterializable('planned', executionState)).toBe(false);
+      expect(isArtifactRunLifecycleMaterializable('retry_requested', executionState)).toBe(false);
+    }
+  );
+
+  it.each(['rejected', 'failed', 'completed', 'cancelled'])(
+    'never reconciles terminal artifact lifecycle %s',
+    (artifactStatus) => {
+      expect(isArtifactRunLifecycleMaterializable(artifactStatus, 'approved_for_apply')).toBe(false);
+      expect(isArtifactRunLifecycleMaterializable(artifactStatus, 'applying')).toBe(false);
+    }
+  );
 });
 
 describe('artifactRegistryService.computeArtifactRunPreflight', () => {

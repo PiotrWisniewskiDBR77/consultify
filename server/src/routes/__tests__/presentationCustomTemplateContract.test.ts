@@ -10,6 +10,20 @@ const source = fs.readFileSync(
 );
 
 describe('presentation template custom master persistence wiring', () => {
+  it('deletes only organization-owned drafts and fails closed on lifecycle changes', () => {
+    const start = source.indexOf("router.delete(\n  '/templates/:id'");
+    const end = source.indexOf("router.post(\n  '/templates/:id/clone'", start);
+    const route = source.slice(start, end);
+    expect(start).toBeGreaterThan(-1);
+    expect(route).toContain('readBackOrgTemplate(templateId, orgId)');
+    expect(route).toContain("lifecycleState !== 'draft'");
+    expect(route).toContain("COALESCE(lifecycle_state, 'draft') = 'draft'");
+    expect(route).toContain('organization_id = ?');
+    expect(route).toContain('TEMPLATE_DELETE_REQUIRES_DRAFT');
+    expect(route).toContain('TEMPLATE_DELETE_CONFLICT');
+    expect(route).toContain('deletedTemplateId: templateId');
+  });
+
   it('persists the custom contract when a template is created', () => {
     const start = source.indexOf("'/templates/plan',");
     const end = source.indexOf("'/templates/:id/clone',", start);

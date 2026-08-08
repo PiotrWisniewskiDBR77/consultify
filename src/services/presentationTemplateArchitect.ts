@@ -92,9 +92,24 @@ export type PresentationTemplateLifecycleState = 'draft' | 'approved' | 'depreca
 
 export interface PresentationCustomTemplateDefinition {
   version: number;
+  variables?: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+    required: boolean;
+    defaultValue?: string | number | boolean;
+    description?: string;
+    options?: string[];
+  }>;
   theme: {
-    titleFont: string; bodyFont: string; primaryColor: string; backgroundColor: string;
-    surfaceColor: string; textColor: string; accentColor: string; logoDataUri?: string;
+    titleFont: string;
+    bodyFont: string;
+    primaryColor: string;
+    backgroundColor: string;
+    surfaceColor: string;
+    textColor: string;
+    accentColor: string;
+    logoDataUri?: string;
   };
   layouts: Record<string, { masterName: string; backgroundColor?: string; accentColor?: string }>;
   layoutMapping: Record<'cover' | 'content' | 'kpi' | 'table' | 'decision', string>;
@@ -256,6 +271,10 @@ export async function clonePresentationTemplate(
   return unwrap<{ id: string }>(res);
 }
 
+export async function deletePresentationDraftTemplate(templateId: string): Promise<void> {
+  await Api.delete(`/presentations/templates/${encodeURIComponent(templateId)}`);
+}
+
 // ---------------------------------------------------------------------------
 // deprecatePresentationTemplate — POST /templates/:id/governance/deprecate
 // (existing governance surface, re-exported here so the architect view can
@@ -272,5 +291,29 @@ export async function deprecatePresentationTemplate(
     `/presentations/templates/${encodeURIComponent(templateId)}/governance/deprecate`,
     { reason }
   );
-  return unwrap<{ record: unknown }>(res);
+  const payload = unwrap<{ record: unknown }>(res);
+  const record = payload?.record as { lifecycle_state?: unknown } | null;
+  if (!record || record.lifecycle_state !== 'deprecated') {
+    throw new Error('Template withdrawal was not confirmed by server readback.');
+  }
+  return payload;
+}
+
+// ---------------------------------------------------------------------------
+// approvePresentationTemplate — POST /templates/:id/governance/transition
+//
+// Tenant OWNER/ADMIN roles already own the server-side `template_approve`
+// capability.  Keep the Architect caller next to the other lifecycle helpers
+// so those users do not need access to the SUPERADMIN-only System module just
+// to publish an organization template.
+// ---------------------------------------------------------------------------
+
+export async function approvePresentationTemplate(
+  templateId: string
+): Promise<{ record: unknown; warnings?: string[] }> {
+  const res = await Api.post(
+    `/presentations/templates/${encodeURIComponent(templateId)}/governance/transition`,
+    { targetState: 'approved' }
+  );
+  return unwrap<{ record: unknown; warnings?: string[] }>(res);
 }

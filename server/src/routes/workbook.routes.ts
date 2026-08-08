@@ -11,6 +11,7 @@
 import { createHash } from 'crypto';
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
+import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 import { withPgTransaction } from '../database/PostgresDatabase.js';
@@ -41,7 +42,13 @@ import {
 } from '../services/workbook/workbookCsvExport.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
 import { critiqueWorkbook } from '../services/workbook/workbookQualityGate.js';
-import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
+import {
+  ChartImageSchema,
+  ConditionalFormattingBlockSchema,
+  type WorkbookSchema,
+  WorkbookSchemaValidator,
+} from '../services/workbook/WorkbookSchema.js';
+import { importWorkbookBuffer } from '../services/workbook/workbookImport.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -49,6 +56,11 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
 const router = Router();
+const workbookImportUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => callback(null, /\.(xlsx|csv)$/i.test(file.originalname)),
+});
 
 // ---------------------------------------------------------------------------
 // MAT-006 (2026-08-02) — public share reader. MUST be registered before
@@ -852,7 +864,7 @@ router.get(
       params: t.params,
       kind: 'parametric' as const,
     }));
-    const custom = (await listCustomWorkbookTemplates(user.organizationId)).map((t) => ({
+    const custom = (await listCustomWorkbookTemplates(user.organizationId, user.id)).map((t) => ({
       ...t,
       description: t.description ?? '',
       params: [],
@@ -888,7 +900,7 @@ router.post(
     let customTemplate = null;
     if (!entry) {
       try {
-        customTemplate = await resolveCustomWorkbookTemplate(id, user.organizationId);
+        customTemplate = await resolveCustomWorkbookTemplate(id, user.organizationId, user.id);
       } catch (err) {
         if (err instanceof CustomWorkbookTemplateInvalidError) {
           res.status(422).json({
@@ -1806,6 +1818,485 @@ router.patch(
 );
 
 /**
+ * POST /api/workbook/:id/import
+ *
+ * Parses a real XLSX/CSV file with ExcelJS and replaces the workbook's
+ * canonical schema. The previous schema is retained in version history.
+ */
+router.post(
+  '/:id/import',
+  workbookImportUpload.single('file'),
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) return void res.status(401).json({ error: 'Unauthorized' });
+    if (!req.file) return void res.status(400).json({ error: 'XLSX or CSV file is required' });
+    const { id } = req.params;
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, version FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) return void res.status(404).json({ error: 'Workbook not found' });
+    try {
+      const parsed = WorkbookSchemaValidator.parse(
+        await importWorkbookBuffer(req.file.buffer, req.file.originalname)
+      );
+      const currentVersion = Number(row.version) || 1;
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json, sheet_count, created_by)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          id,
+          currentVersion,
+          row.schema_json,
+          JSON.parse(row.schema_json).sheets?.length || 0,
+          user.id,
+        ]
+      );
+      const nextVersion = currentVersion + 1;
+      const updated = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET title = ?, schema_json = ?, version = ?
+         WHERE id = ? AND organization_id = ? AND version = ?`,
+        [parsed.title, JSON.stringify(parsed), nextVersion, id, user.organizationId, currentVersion]
+      );
+      if (!updated?.changes)
+        return void res.status(409).json({ error: 'Version conflict', code: 'VERSION_CONFLICT' });
+      workbookCache.delete(id);
+      res.json({ ok: true, schema: parsed, version: nextVersion });
+    } catch (error) {
+      res
+        .status(422)
+        .json({ error: error instanceof Error ? error.message : 'Workbook import failed' });
+    }
+  })
+);
+
+/**
+ * PATCH /api/workbook/:id/schema-command
+ *
+ * Canonical structural editor command. Unlike replacing schema_json from the
+ * browser, commands are validated and applied to the latest org-scoped schema,
+ * snapshot the pre-change version and use CAS for conflict-safe persistence.
+ */
+router.patch(
+  '/:id/schema-command',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) return void res.status(401).json({ error: 'Unauthorized' });
+    const { id } = req.params;
+    const { command, expectedVersion } = req.body || {};
+    if (!command || typeof command.type !== 'string') {
+      return void res.status(400).json({ error: 'command.type is required' });
+    }
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{
+      schema_json: string;
+      version: number;
+      title: string;
+    }>(
+      `SELECT schema_json, version, title FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [id, user.organizationId]
+    );
+    if (!row?.schema_json) return void res.status(404).json({ error: 'Workbook not found' });
+    const currentVersion = Number(row.version) || 1;
+    if (expectedVersion !== undefined && expectedVersion !== currentVersion) {
+      return void res
+        .status(409)
+        .json({
+          error: 'Version conflict',
+          code: 'VERSION_CONFLICT',
+          serverVersion: currentVersion,
+        });
+    }
+    const schema = JSON.parse(row.schema_json) as WorkbookSchema;
+    const sheetIndex = Number(command.sheetIndex ?? 0);
+    const sheet = schema.sheets[sheetIndex];
+    const requireSheet = () => {
+      if (!Number.isInteger(sheetIndex) || !sheet) throw new Error('Unknown sheetIndex');
+      return sheet;
+    };
+    try {
+      switch (command.type) {
+        case 'renameWorkbook': {
+          const title = String(command.title || '').trim();
+          if (!title) throw new Error('Workbook title is required');
+          schema.title = title.slice(0, 160);
+          break;
+        }
+        case 'addSheet': {
+          const base = String(command.name || `Sheet ${schema.sheets.length + 1}`).trim();
+          const names = new Set(schema.sheets.map((s) => s.name.toLowerCase()));
+          let name = base || `Sheet ${schema.sheets.length + 1}`;
+          let suffix = 2;
+          while (names.has(name.toLowerCase())) name = `${base} ${suffix++}`;
+          schema.sheets.push({
+            name,
+            columns: [{ key: 'A', header: 'Column A' }],
+            rows: [{ cells: { A: { value: null } } }],
+          });
+          break;
+        }
+        case 'renameSheet': {
+          const target = requireSheet();
+          const name = String(command.name || '').trim();
+          if (!name) throw new Error('Sheet name is required');
+          if (
+            schema.sheets.some(
+              (s, i) => i !== sheetIndex && s.name.toLowerCase() === name.toLowerCase()
+            )
+          )
+            throw new Error('Sheet name must be unique');
+          target.name = name.slice(0, 80);
+          break;
+        }
+        case 'duplicateSheet': {
+          const target = requireSheet();
+          const clone = JSON.parse(JSON.stringify(target));
+          clone.name = `${target.name} copy`;
+          schema.sheets.splice(sheetIndex + 1, 0, clone);
+          break;
+        }
+        case 'deleteSheet': {
+          requireSheet();
+          if (schema.sheets.length <= 1) throw new Error('Workbook must keep at least one sheet');
+          schema.sheets.splice(sheetIndex, 1);
+          break;
+        }
+        case 'moveSheet': {
+          requireSheet();
+          const toIndex = Number(command.toIndex);
+          if (!Number.isInteger(toIndex) || toIndex < 0 || toIndex >= schema.sheets.length)
+            throw new Error('Invalid toIndex');
+          const [moved] = schema.sheets.splice(sheetIndex, 1);
+          schema.sheets.splice(toIndex, 0, moved);
+          break;
+        }
+        case 'insertRow': {
+          const target = requireSheet();
+          const rowIndex = Math.max(
+            0,
+            Math.min(Number(command.rowIndex ?? target.rows.length), target.rows.length)
+          );
+          target.rows.splice(rowIndex, 0, {
+            cells: Object.fromEntries(target.columns.map((c) => [c.key, { value: null }])),
+          });
+          break;
+        }
+        case 'deleteRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= target.rows.length)
+            throw new Error('Invalid rowIndex');
+          target.rows.splice(rowIndex, 1);
+          break;
+        }
+        case 'insertColumn': {
+          const target = requireSheet();
+          const colIndex = Math.max(
+            0,
+            Math.min(Number(command.colIndex ?? target.columns.length), target.columns.length)
+          );
+          let key = String(command.key || `column_${Date.now()}`).replace(/[^A-Za-z0-9_]/g, '_');
+          while (target.columns.some((c) => c.key === key)) key += '_2';
+          target.columns.splice(colIndex, 0, {
+            key,
+            header: String(command.header || 'New column'),
+            width: 16,
+          });
+          target.rows.forEach((r) => {
+            r.cells[key] = { value: null };
+          });
+          break;
+        }
+        case 'deleteColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!Number.isInteger(colIndex) || colIndex < 0 || colIndex >= target.columns.length)
+            throw new Error('Invalid colIndex');
+          if (target.columns.length <= 1) throw new Error('Sheet must keep at least one column');
+          const [removed] = target.columns.splice(colIndex, 1);
+          target.rows.forEach((r) => {
+            delete r.cells[removed.key];
+          });
+          break;
+        }
+        case 'resizeColumn': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const width = Number(command.width);
+          if (!target.columns[colIndex] || !Number.isFinite(width) || width < 4 || width > 80)
+            throw new Error('Invalid column width');
+          target.columns[colIndex].width = width;
+          break;
+        }
+        case 'resizeRow': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const height = Number(command.height);
+          if (!target.rows[rowIndex] || !Number.isFinite(height) || height < 10 || height > 200)
+            throw new Error('Invalid row height');
+          target.rows[rowIndex].height = height;
+          break;
+        }
+        case 'resizeRowAndColumn': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const height = Number(command.height);
+          const width = Number(command.width);
+          if (
+            !target.rows[rowIndex] ||
+            !target.columns[colIndex] ||
+            !Number.isFinite(height) ||
+            !Number.isFinite(width) ||
+            height < 10 ||
+            height > 200 ||
+            width < 4 ||
+            width > 80
+          )
+            throw new Error('Invalid row or column size');
+          target.rows[rowIndex].height = height;
+          target.columns[colIndex].width = width;
+          break;
+        }
+        case 'setRowHidden': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          if (!target.rows[rowIndex]) throw new Error('Invalid rowIndex');
+          target.rows[rowIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'setColumnHidden': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          if (!target.columns[colIndex]) throw new Error('Invalid colIndex');
+          target.columns[colIndex].hidden = Boolean(command.hidden);
+          break;
+        }
+        case 'unhideAll': {
+          const target = requireSheet();
+          target.rows.forEach((rowValue) => {
+            rowValue.hidden = false;
+          });
+          target.columns.forEach((column) => {
+            column.hidden = false;
+          });
+          break;
+        }
+        case 'mergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          if (!/^\$?[A-Z]+\$?\d+:\$?[A-Z]+\$?\d+$/.test(range))
+            throw new Error('Invalid merge range');
+          const [start, end] = range.split(':');
+          target.merges = [
+            ...(target.merges || []).filter((item) => `${item.start}:${item.end}` !== range),
+            { start, end },
+          ];
+          break;
+        }
+        case 'unmergeCells': {
+          const target = requireSheet();
+          const range = String(command.range || '').toUpperCase();
+          target.merges = (target.merges || []).filter(
+            (item) => `${item.start}:${item.end}`.toUpperCase() !== range
+          );
+          break;
+        }
+        case 'addConditionalFormat': {
+          const target = requireSheet();
+          const block = command.block;
+          const parsed = ConditionalFormattingBlockSchema.parse(block);
+          target.conditionalFormatting = [...(target.conditionalFormatting || []), parsed];
+          break;
+        }
+        case 'clearConditionalFormats': {
+          const target = requireSheet();
+          target.conditionalFormatting = [];
+          break;
+        }
+        case 'formatCells': {
+          const target = requireSheet();
+          const rowIndexes = Array.isArray(command.rowIndexes) ? command.rowIndexes : [];
+          const colIndexes = Array.isArray(command.colIndexes) ? command.colIndexes : [];
+          const style = command.style && typeof command.style === 'object' ? command.style : {};
+          rowIndexes.forEach((ri: number) =>
+            colIndexes.forEach((ci: number) => {
+              const col = target.columns[ci];
+              const targetRow = target.rows[ri];
+              if (!col || !targetRow) return;
+              targetRow.cells[col.key] = {
+                ...(targetRow.cells[col.key] || {}),
+                style: { ...(targetRow.cells[col.key]?.style || {}), ...style },
+              };
+            })
+          );
+          break;
+        }
+        case 'sortRows': {
+          const target = requireSheet();
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          if (!col) throw new Error('Invalid colIndex');
+          const direction = command.direction === 'desc' ? -1 : 1;
+          const scalar = (row: (typeof target.rows)[number]) => row.cells[col.key]?.value ?? '';
+          const sorted = target.rows
+            .map((rowValue, oldIndex) => ({ rowValue, oldIndex }))
+            .sort(
+              (a, b) =>
+                String(scalar(a.rowValue)).localeCompare(String(scalar(b.rowValue)), undefined, {
+                  numeric: true,
+                }) * direction
+            );
+          target.rows = sorted.map(({ rowValue, oldIndex }, newIndex) => {
+            const delta = newIndex - oldIndex;
+            if (!delta) return rowValue;
+            const clone = JSON.parse(JSON.stringify(rowValue)) as typeof rowValue;
+            Object.values(clone.cells).forEach((cell) => {
+              if (typeof cell?.formula !== 'string') return;
+              cell.formula = cell.formula.replace(
+                /(\$?[A-Z]+)(\$?)(\d+)/g,
+                (_match, letters: string, absoluteRow: string, rowNumber: string) =>
+                  `${letters}${absoluteRow}${absoluteRow ? rowNumber : Math.max(1, Number(rowNumber) + delta)}`
+              );
+            });
+            return clone;
+          });
+          break;
+        }
+        case 'setFreeze': {
+          const target = requireSheet();
+          const freezeRow = Number(command.freezeRow ?? 0);
+          const freezeCol = Number(command.freezeCol ?? 0);
+          if (
+            !Number.isInteger(freezeRow) ||
+            !Number.isInteger(freezeCol) ||
+            freezeRow < 0 ||
+            freezeCol < 0
+          )
+            throw new Error('Invalid freeze panes');
+          target.freezeRow = freezeRow;
+          target.freezeCol = freezeCol;
+          break;
+        }
+        case 'setAutoFilter': {
+          const target = requireSheet();
+          target.autoFilter = Boolean(command.enabled);
+          break;
+        }
+        case 'setValidation': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = { ...current, validation: command.validation || undefined };
+          break;
+        }
+        case 'upsertChartImage': {
+          const target = requireSheet();
+          const chart = ChartImageSchema.parse(command.chart);
+          const charts = target.chartImages || [];
+          const existingIndex = chart.id ? charts.findIndex((item) => item.id === chart.id) : -1;
+          if (existingIndex >= 0) charts[existingIndex] = chart;
+          else charts.push({ ...chart, id: chart.id || uuidv4() });
+          target.chartImages = charts;
+          break;
+        }
+        case 'deleteChartImage': {
+          const target = requireSheet();
+          const chartId = String(command.chartId || '');
+          target.chartImages = (target.chartImages || []).filter((chart) => chart.id !== chartId);
+          break;
+        }
+        case 'setComment': {
+          const target = requireSheet();
+          const rowIndex = Number(command.rowIndex);
+          const colIndex = Number(command.colIndex);
+          const col = target.columns[colIndex];
+          const targetRow = target.rows[rowIndex];
+          if (!col || !targetRow) throw new Error('Invalid cell');
+          const current = targetRow.cells[col.key] || {};
+          targetRow.cells[col.key] = {
+            ...current,
+            comment: String(command.comment || '').trim() || undefined,
+          };
+          break;
+        }
+        case 'findReplace': {
+          const find = String(command.find || '');
+          const replacement = String(command.replacement ?? '');
+          if (!find) throw new Error('Find text is required');
+          const matchCase = Boolean(command.matchCase);
+          const normalize = (value: string) => (matchCase ? value : value.toLocaleLowerCase());
+          let replacements = 0;
+          schema.sheets.forEach((target) =>
+            target.rows.forEach((targetRow) =>
+              Object.values(targetRow.cells).forEach((cell) => {
+                if (typeof cell.value !== 'string') return;
+                const source = cell.value;
+                const sourceComparable = normalize(source);
+                const findComparable = normalize(find);
+                if (!sourceComparable.includes(findComparable)) return;
+                if (matchCase) cell.value = source.split(find).join(replacement);
+                else {
+                  const escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                  cell.value = source.replace(new RegExp(escaped, 'gi'), replacement);
+                }
+                replacements += 1;
+              })
+            )
+          );
+          (schema.metadata ||= {}).lastFindReplaceCount = replacements;
+          break;
+        }
+        default:
+          throw new Error(`Unsupported command ${command.type}`);
+      }
+    } catch (error) {
+      return void res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Invalid command' });
+    }
+    const parsed = WorkbookSchemaValidator.safeParse(schema);
+    if (!parsed.success)
+      return void res
+        .status(400)
+        .json({ error: 'Command produced invalid workbook schema', issues: parsed.error.issues });
+    try {
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_versions (id, workbook_id, version, schema_json_snapshot, sheet_count, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [uuidv4(), id, currentVersion, row.schema_json, schema.sheets.length, user.id]
+      );
+    } catch (error) {
+      logger.warn(`[WorkbookRoutes] Could not snapshot schema command for ${id}:`, error);
+    }
+    const nextVersion = currentVersion + 1;
+    const nextFileName = `${parsed.data.title.replace(/[^a-zA-Z0-9._-]+/g, '_') || 'workbook'}.xlsx`;
+    const result = await queryHelpers.queryRun(
+      `UPDATE generated_workbooks SET schema_json = ?, title = ?, file_name = ?, sheet_count = ?, version = ? WHERE id = ? AND organization_id = ? AND version = ?`,
+      [
+        JSON.stringify(parsed.data),
+        parsed.data.title,
+        nextFileName,
+        parsed.data.sheets.length,
+        nextVersion,
+        id,
+        user.organizationId,
+        currentVersion,
+      ]
+    );
+    if (!result?.changes)
+      return void res.status(409).json({ error: 'Version conflict', code: 'VERSION_CONFLICT' });
+    workbookCache.delete(id);
+    res.json({ ok: true, schema: parsed.data, version: nextVersion });
+  })
+);
+
+/**
  * GET /api/workbook/:id
  * Returns workbook metadata (for reopen/preview without downloading binary).
  * Must be registered after all specific GET paths (/list, /:id/download,
@@ -1853,6 +2344,10 @@ router.get(
     }
 
     const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
+    // critiqueWorkbook is deterministic over the persisted canonical schema.
+    // Recompute it on reopen so a cold reload restores the same QA badge even
+    // though older generated_workbooks rows predate a quality-report column.
+    const qualityReport = schemaJson ? critiqueWorkbook(schemaJson as WorkbookSchema) : null;
     res.json({
       id: row.id,
       title: row.title || schemaJson?.title,
@@ -1862,6 +2357,7 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      qualityReport,
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
       evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],

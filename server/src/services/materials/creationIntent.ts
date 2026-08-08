@@ -108,6 +108,10 @@ export interface ResolvedPresentationTemplate {
   legacy: boolean;
   /** Fresh from `presentation_templates.outline_json` — NOT from the index snapshot. */
   outlineBlueprint: unknown[];
+  /** Canonical visual identity selected by the Template Architect. */
+  theme: string;
+  /** Validated later by the presentation runtime; carried fresh from the registry. */
+  customTemplate?: unknown;
 }
 
 export type TemplateResolveErrorCode =
@@ -187,6 +191,19 @@ interface PresentationTemplateProbeRow {
   /** Migration 767 — CHECK (lifecycle_state IN ('draft','approved','deprecated')). */
   lifecycle_state: string | null;
   outline_json: string | null;
+  theme: string | null;
+  layout_policy_json: string | null;
+}
+
+function parseJsonObject(raw: unknown): Record<string, unknown> | null {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  if (raw === null || raw === undefined) return null;
+  try {
+    const parsed = JSON.parse(String(raw));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 // =============================================================================
@@ -454,7 +471,8 @@ export async function resolvePresentationTemplateForCreation(
   }
 
   const row = await dbGet<PresentationTemplateProbeRow>(
-    `SELECT id, organization_id, name, is_system, is_active, lifecycle_state, outline_json
+    `SELECT id, organization_id, name, is_system, is_active, lifecycle_state, outline_json,
+            theme, layout_policy_json
        FROM presentation_templates
       WHERE id = ?
       LIMIT 1`,
@@ -498,6 +516,7 @@ export async function resolvePresentationTemplateForCreation(
     });
   }
 
+  const layoutPolicy = parseJsonObject(row.layout_policy_json);
   return {
     originRuntime: 'presentation_template',
     canonicalTemplateId,
@@ -510,5 +529,7 @@ export async function resolvePresentationTemplateForCreation(
     // Blueprint FRESH from the canonical registry — never from the artifact
     // index snapshot, which can lag behind template edits.
     outlineBlueprint: parseJsonArray(row.outline_json),
+    theme: (row.theme ?? '').trim() || 'modern',
+    customTemplate: layoutPolicy?.customTemplate,
   };
 }

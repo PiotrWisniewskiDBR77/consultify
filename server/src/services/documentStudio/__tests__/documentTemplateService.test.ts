@@ -12,14 +12,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  __recordTemplateAuditActionForTests,
   __resetTemplateRegistryForTests,
   approveTemplate,
+  cloneTemplateAsDraft,
   deprecateTemplate,
   draftTemplate,
   getTemplate,
   isTemplateUsableForGeneration,
   listTemplateAuditEntries,
   listTemplates,
+  restoreTemplateAuditSnapshotAsDraft,
+  validateTemplate,
 } from '../documentTemplateService.js';
 
 describe('documentTemplateService — registry CRUD', () => {
@@ -120,6 +124,146 @@ describe('documentTemplateService — registry CRUD', () => {
       'template_approved',
       'template_deprecated',
     ]);
+  });
+
+  it('creates an exact editable draft from an approved or deprecated version', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Version source template', documentType: 'business_case' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const next = cloneTemplateAsDraft({
+      templateId: approved.templateId,
+      organizationId: 'org-A',
+      userId: 'editor',
+    });
+
+    expect(next.templateId).not.toBe(approved.templateId);
+    expect(next.status).toBe('draft');
+    expect(next.version).toBe('0.1');
+    expect(next.sectionBlueprint).toEqual(approved.sectionBlueprint);
+    expect(next.formattingSchema).toEqual(approved.formattingSchema);
+    expect(next.notes).toContain(`${approved.templateId} v1.0`);
+  });
+
+  it('returns actionable blocking validation issues', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Validation test template', documentType: 'executive_memo' },
+    });
+    const invalid = {
+      ...template,
+      sectionBlueprint: [template.sectionBlueprint[0], { ...template.sectionBlueprint[0] }],
+      requiredInputs: ['finance', 'Finance'],
+    };
+    expect(validateTemplate(invalid).map((issue) => issue.code)).toEqual(
+      expect.arrayContaining(['duplicate_section_title', 'duplicate_required_input'])
+    );
+    expect(validateTemplate(template)).toEqual([]);
+  });
+
+  it('restores an immutable audit snapshot as a new draft without overwriting approved', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Snapshot restore template', documentType: 'executive_memo' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const approvedEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_approved'
+    );
+    expect(approvedEntry).toBeDefined();
+    if (!approvedEntry) throw new Error('approved audit snapshot missing');
+    const restored = restoreTemplateAuditSnapshotAsDraft({
+      templateId: template.templateId,
+      auditId: approvedEntry.auditId,
+      organizationId: 'org-A',
+      userId: 'editor',
+    });
+
+    expect(restored.templateId).not.toBe(approved.templateId);
+    expect(restored.status).toBe('draft');
+    expect(restored.sectionBlueprint).toEqual(approved.sectionBlueprint);
+    expect(getTemplate(approved.templateId, 'org-A')?.status).toBe('approved');
+  });
+
+  it('rejects restore of a non-existent audit id', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Restore-missing test', documentType: 'executive_memo' },
+    });
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: template.templateId,
+        auditId: 'audit-does-not-exist',
+        organizationId: 'org-A',
+        userId: 'editor',
+      })
+    ).toThrow('template_audit_not_found');
+  });
+
+  it('rejects restore of an audit entry that carries no template snapshot', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Restore-no-snapshot test', documentType: 'executive_memo' },
+    });
+    // `template_usage_recorded` entries (see `recordTemplateUsage`) never
+    // carry a `templateSnapshot` — only drafted/approved/deprecated do.
+    __recordTemplateAuditActionForTests(
+      template.templateId,
+      'org-A',
+      'template_usage_recorded',
+      'user-1'
+    );
+    const usageEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_usage_recorded'
+    );
+    expect(usageEntry).toBeDefined();
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: template.templateId,
+        auditId: usageEntry!.auditId,
+        organizationId: 'org-A',
+        userId: 'editor',
+      })
+    ).toThrow('template_snapshot_unavailable');
+  });
+
+  it('rejects restore against a template owned by a different tenant', () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-A',
+      userId: 'author',
+      input: { purpose: 'Cross-tenant restore test', documentType: 'executive_memo' },
+    });
+    const approved = approveTemplate({
+      templateId: template.templateId,
+      organizationId: 'org-A',
+      userId: 'owner',
+    });
+    const approvedEntry = listTemplateAuditEntries(template.templateId, 'org-A').find(
+      (entry) => entry.action === 'template_approved'
+    );
+    expect(approvedEntry).toBeDefined();
+    expect(() =>
+      restoreTemplateAuditSnapshotAsDraft({
+        templateId: approved.templateId,
+        auditId: approvedEntry!.auditId,
+        organizationId: 'org-B',
+        userId: 'attacker',
+      })
+    ).toThrow('template_not_found');
   });
 
   it('isolates templates across tenants', () => {

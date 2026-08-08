@@ -1,6 +1,10 @@
-import { BarChart3, Image, LayoutGrid, Search, Share2, Type } from 'lucide-react';
+import { BarChart3, Image, LayoutGrid, Redo2, Search, Share2, Type, Undo2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import type { CardBlock, DeckCard } from '../wizard/types';
+import type { HorizontalAlignment, VerticalAlignment } from './geometryOps';
+import { parseMetricStrip, serializeMetricStrip } from './metricStripEditor';
 
 type ToolbarPanel = 'search' | 'basic' | 'images' | 'layouts' | 'diagrams' | 'charts' | null;
 
@@ -20,6 +24,19 @@ interface BlockToolbarProps {
    * panel, which already has a real file-upload flow built in.
    */
   onUpload?: () => void;
+  cards?: DeckCard[];
+  selectedBlock?: CardBlock | null;
+  selectedBlocks?: CardBlock[];
+  onSelectedBlockUpdate?: (updates: Partial<CardBlock>) => void;
+  onSelectCard?: (index: number) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  onAlign?: (alignment: HorizontalAlignment | VerticalAlignment) => void;
+  onDistribute?: (axis: 'horizontal' | 'vertical') => void;
 }
 
 const TOOLBAR_ITEMS: { id: ToolbarPanel; icon: React.FC<{ size?: number }>; labelKey: string }[] = [
@@ -37,6 +54,19 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
   onGenerateAiImage,
   isGeneratingAiImage,
   onUpload,
+  cards = [],
+  selectedBlock,
+  selectedBlocks = [],
+  onSelectedBlockUpdate,
+  onSelectCard,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
+  onGroup,
+  onUngroup,
+  onAlign,
+  onDistribute,
 }) => {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<ToolbarPanel>(null);
@@ -49,6 +79,24 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
     <div className="flex flex-shrink-0">
       {/* Icon strip */}
       <div className="w-14 border-l border-c-border-subtle bg-c-surface flex flex-col items-center py-3 gap-1">
+        <button
+          aria-label="Undo"
+          title="Undo (⌘Z)"
+          disabled={!canUndo}
+          onClick={onUndo}
+          className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
+        >
+          <Undo2 size={18} />
+        </button>
+        <button
+          aria-label="Redo"
+          title="Redo (⇧⌘Z)"
+          disabled={!canRedo}
+          onClick={onRedo}
+          className="w-10 h-10 rounded-lg flex items-center justify-center text-c-text-secondary hover:bg-c-surface-raised disabled:opacity-30"
+        >
+          <Redo2 size={18} />
+        </button>
         {TOOLBAR_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activePanel === item.id;
@@ -57,6 +105,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
               key={item.id}
               onClick={() => togglePanel(item.id)}
               title={t(item.labelKey, item.id || '')}
+              aria-label={t(item.labelKey, item.id || '')}
               className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
                 isActive
                   ? 'bg-c-accent-soft0 text-c-accent'
@@ -70,12 +119,14 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
       </div>
 
       {/* Expanded Panel */}
-      {activePanel && (
+      {(activePanel || selectedBlock) && (
         <div className="w-64 border-l border-c-border-subtle bg-c-surface overflow-y-auto">
           <div className="p-3">
-            <h3 className="text-sm font-semibold text-c-text mb-3">
-              {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
-            </h3>
+            {activePanel && (
+              <h3 className="text-sm font-semibold text-c-text mb-3">
+                {t(TOOLBAR_ITEMS.find((i) => i.id === activePanel)?.labelKey || '', activePanel)}
+              </h3>
+            )}
 
             {activePanel === 'basic' && <BasicBlocksPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'images' && (
@@ -89,11 +140,93 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({
             {activePanel === 'layouts' && <LayoutsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'diagrams' && <DiagramsPanel onInsertBlock={onInsertBlock} />}
             {activePanel === 'charts' && <ChartsPanel onInsertBlock={onInsertBlock} />}
-            {activePanel === 'search' && <SearchPanel />}
+            {activePanel === 'search' && <SearchPanel cards={cards} onSelectCard={onSelectCard} />}
+            {selectedBlocks.length > 1 && (
+              <SelectionTools
+                blocks={selectedBlocks}
+                onGroup={onGroup}
+                onUngroup={onUngroup}
+                onAlign={onAlign}
+                onDistribute={onDistribute}
+              />
+            )}
+            {selectedBlock && onSelectedBlockUpdate && (
+              <BlockInspector block={selectedBlock} onUpdate={onSelectedBlockUpdate} />
+            )}
           </div>
         </div>
       )}
     </div>
+  );
+};
+
+const SelectionTools: React.FC<{
+  blocks: CardBlock[];
+  onGroup?: () => void;
+  onUngroup?: () => void;
+  onAlign?: (alignment: HorizontalAlignment | VerticalAlignment) => void;
+  onDistribute?: (axis: 'horizontal' | 'vertical') => void;
+}> = ({ blocks, onGroup, onUngroup, onAlign, onDistribute }) => {
+  const geometryCount = blocks.filter((block) => block.geometry).length;
+  const hasGroup = blocks.some((block) => block.group_id);
+  const buttonClass =
+    'rounded-md border border-c-border-subtle px-2 py-1.5 text-[10px] font-medium text-c-text hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-35';
+  return (
+    <section aria-label="Multiple block selection tools" className="mb-4 space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-c-text">{blocks.length} blocks selected</h3>
+        <span className="text-[10px] text-c-text-secondary">Shift/⌘ click</span>
+      </div>
+      <div className="grid grid-cols-2 gap-1">
+        <button className={buttonClass} onClick={onGroup} aria-label="Group selected blocks">
+          Group
+        </button>
+        <button
+          className={buttonClass}
+          onClick={onUngroup}
+          disabled={!hasGroup}
+          aria-label="Ungroup selected blocks"
+        >
+          Ungroup
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-1" aria-label="Align selected blocks">
+        {(['left', 'center', 'right', 'top', 'middle', 'bottom'] as const).map((alignment) => (
+          <button
+            key={alignment}
+            className={buttonClass}
+            disabled={geometryCount < 2}
+            onClick={() => onAlign?.(alignment)}
+            aria-label={`Align ${alignment}`}
+          >
+            {alignment}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-1" aria-label="Distribute selected blocks">
+        <button
+          className={buttonClass}
+          disabled={geometryCount < 3}
+          onClick={() => onDistribute?.('horizontal')}
+          aria-label="Distribute horizontally"
+        >
+          Distribute H
+        </button>
+        <button
+          className={buttonClass}
+          disabled={geometryCount < 3}
+          onClick={() => onDistribute?.('vertical')}
+          aria-label="Distribute vertically"
+        >
+          Distribute V
+        </button>
+      </div>
+      {geometryCount < 2 && (
+        <p className="text-[10px] text-c-text-secondary">
+          Alignment becomes available for freeform-positioned blocks.
+        </p>
+      )}
+    </section>
   );
 };
 
@@ -270,13 +403,404 @@ const ImagesPanel: React.FC<{
   );
 };
 
-const SearchPanel: React.FC = () => (
-  <div>
-    <input
-      type="text"
-      placeholder="Search deck content..."
-      className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
-    />
-    <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all cards</p>
-  </div>
+const SearchPanel: React.FC<{ cards: DeckCard[]; onSelectCard?: (index: number) => void }> = ({
+  cards,
+  onSelectCard,
+}) => {
+  const [query, setQuery] = useState('');
+  const normalized = query.trim().toLowerCase();
+  const matches = normalized
+    ? cards.flatMap((card, cardIndex) => {
+        const haystack = [card.title, ...card.blocks.map((b) => JSON.stringify(b.content))]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(normalized) ? [{ card, cardIndex }] : [];
+      })
+    : [];
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Search deck content..."
+        aria-label="Search deck content"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-c-border-subtle bg-c-surface-raised text-sm"
+      />
+      {!normalized && (
+        <p className="text-[10px] text-c-text-secondary mt-2">Type to search across all slides</p>
+      )}
+      {normalized && matches.length === 0 && (
+        <p className="text-xs text-c-text-secondary mt-3">No matching slides</p>
+      )}
+      <div className="mt-2 space-y-1">
+        {matches.map(({ card, cardIndex }) => (
+          <button
+            key={card.card_id}
+            onClick={() => onSelectCard?.(cardIndex)}
+            className="w-full rounded-lg px-2 py-2 text-left hover:bg-c-surface-raised"
+            aria-label={`Go to slide ${cardIndex + 1}: ${card.title}`}
+          >
+            <span className="text-[10px] text-c-text-muted">Slide {cardIndex + 1}</span>
+            <p className="text-xs font-medium text-c-text truncate">{card.title || 'Untitled'}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const InspectorField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+}> = ({ label, value, onChange, multiline }) => (
+  <label className="block text-[10px] text-c-text-secondary">
+    <span>{label}</span>
+    {multiline ? (
+      <textarea
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 min-h-20 w-full rounded border border-c-border-subtle bg-c-surface-raised p-2 text-xs text-c-text"
+      />
+    ) : (
+      <input
+        aria-label={label}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs text-c-text"
+      />
+    )}
+  </label>
 );
+
+const BlockInspector: React.FC<{
+  block: CardBlock;
+  onUpdate: (updates: Partial<CardBlock>) => void;
+}> = ({ block, onUpdate }) => {
+  const content = block.content || {};
+  const textStyle = ((content.style as Record<string, unknown>) || {}) as Record<string, unknown>;
+  const frameStyle = block.style_overrides || {};
+  const patchContent = (patch: Record<string, unknown>) =>
+    onUpdate({ content: { ...content, ...patch } });
+  const dataText = Array.isArray(content.data) ? JSON.stringify(content.data, null, 2) : '';
+  const items = Array.isArray(content.items) ? content.items : [];
+  return (
+    <div
+      className="mt-4 border-t border-c-border-subtle pt-3 space-y-2"
+      data-testid="block-inspector"
+    >
+      <h4 className="text-xs font-semibold text-c-text">
+        Selected {block.type.replace(/_/g, ' ')}
+      </h4>
+      {(block.type === 'heading' || block.type === 'paragraph' || block.type === 'callout') && (
+        <InspectorField
+          label="Text"
+          multiline
+          value={String(content.text || '')}
+          onChange={(text) => patchContent({ text })}
+        />
+      )}
+      {(block.type === 'bullet_list' ||
+        block.type === 'numbered_list' ||
+        block.type === 'smart_diagram') && (
+        <InspectorField
+          label="Items (one per line)"
+          multiline
+          value={items
+            .map((x: unknown) =>
+              typeof x === 'string' ? x : String((x as any)?.label || (x as any)?.title || '')
+            )
+            .join('\n')}
+          onChange={(value) =>
+            patchContent({
+              items: value
+                .split('\n')
+                .filter(Boolean)
+                .map((label) => (block.type === 'smart_diagram' ? { label } : label)),
+            })
+          }
+        />
+      )}
+      {block.type === 'metric_strip' && (
+        <InspectorField
+          label="Metrics (one per line: label | value | unit | trend | change)"
+          multiline
+          value={serializeMetricStrip(content.metrics)}
+          onChange={(value) => patchContent({ metrics: parseMetricStrip(value) })}
+        />
+      )}
+      {block.type === 'table' && (
+        <>
+          <InspectorField
+            label="Headers (comma separated)"
+            value={(Array.isArray(content.headers) ? content.headers : []).join(', ')}
+            onChange={(value) => patchContent({ headers: value.split(',').map((x) => x.trim()) })}
+          />
+          <InspectorField
+            label="Rows (CSV, one row per line)"
+            multiline
+            value={(Array.isArray(content.rows) ? content.rows : [])
+              .map((r: unknown) => (Array.isArray(r) ? r.join(', ') : ''))
+              .join('\n')}
+            onChange={(value) =>
+              patchContent({
+                rows: value
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((row) => row.split(',').map((x) => x.trim())),
+              })
+            }
+          />
+        </>
+      )}
+      {block.type === 'chart' && (
+        <>
+          <InspectorField
+            label="Chart title"
+            value={String(content.title || '')}
+            onChange={(title) => patchContent({ title })}
+          />
+          <label className="block text-[10px] text-c-text-secondary">
+            Chart type
+            <select
+              aria-label="Chart type"
+              value={String(content.chartType || 'bar')}
+              onChange={(e) => patchContent({ chartType: e.target.value })}
+              className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+            >
+              <option value="bar">Bar</option>
+              <option value="line">Line</option>
+              <option value="area">Area</option>
+              <option value="pie">Pie</option>
+              <option value="donut">Donut</option>
+            </select>
+          </label>
+          <InspectorField
+            label="Chart data (JSON)"
+            multiline
+            value={dataText}
+            onChange={(value) => {
+              try {
+                patchContent({ data: JSON.parse(value) });
+              } catch {
+                /* keep editing until valid */
+              }
+            }}
+          />
+        </>
+      )}
+      {block.type === 'kpi_widget' && (
+        <>
+          <InspectorField
+            label="KPI label"
+            value={String(content.label || '')}
+            onChange={(label) => patchContent({ label })}
+          />
+          <InspectorField
+            label="KPI value"
+            value={String(content.value || '')}
+            onChange={(value) => patchContent({ value })}
+          />
+          <InspectorField
+            label="Trend"
+            value={String(content.trend || '')}
+            onChange={(trend) => patchContent({ trend })}
+          />
+        </>
+      )}
+      {block.type === 'image' && (
+        <>
+          <InspectorField
+            label="Image URL"
+            value={String(content.url || '')}
+            onChange={(url) => patchContent({ url })}
+          />
+          <InspectorField
+            label="Alt text"
+            value={String(content.alt || '')}
+            onChange={(alt) => patchContent({ alt })}
+          />
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <InspectorField
+          label="Font size"
+          value={String((content.style as any)?.fontSize || '')}
+          onChange={(fontSize) =>
+            patchContent({ style: { ...((content.style as any) || {}), fontSize } })
+          }
+        />
+        <InspectorField
+          label="Text color"
+          value={String((content.style as any)?.color || '')}
+          onChange={(color) =>
+            patchContent({ style: { ...((content.style as any) || {}), color } })
+          }
+        />
+      </div>
+      <label className="block text-[10px] text-c-text-secondary">
+        Font family
+        <select
+          aria-label="Font family"
+          value={String(textStyle.fontFamily || '')}
+          onChange={(e) => patchContent({ style: { ...textStyle, fontFamily: e.target.value } })}
+          className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+        >
+          <option value="">Theme default</option>
+          <option value="Inter">Inter</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Times New Roman">Times New Roman</option>
+        </select>
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block text-[10px] text-c-text-secondary">
+          Font weight
+          <select
+            aria-label="Font weight"
+            value={String(textStyle.fontWeight || 'normal')}
+            onChange={(e) => patchContent({ style: { ...textStyle, fontWeight: e.target.value } })}
+            className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+          >
+            <option value="normal">Regular</option>
+            <option value="500">Medium</option>
+            <option value="600">Semibold</option>
+            <option value="700">Bold</option>
+          </select>
+        </label>
+        <InspectorField
+          label="Line height"
+          value={String(textStyle.lineHeight || '')}
+          onChange={(lineHeight) => patchContent({ style: { ...textStyle, lineHeight } })}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <InspectorField
+          label="Letter spacing"
+          value={String(textStyle.letterSpacing || '')}
+          onChange={(letterSpacing) => patchContent({ style: { ...textStyle, letterSpacing } })}
+        />
+        <div className="flex items-end gap-3 pb-1">
+          <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
+            <input
+              aria-label="Italic"
+              type="checkbox"
+              checked={textStyle.fontStyle === 'italic'}
+              onChange={(e) =>
+                patchContent({
+                  style: { ...textStyle, fontStyle: e.target.checked ? 'italic' : 'normal' },
+                })
+              }
+            />
+            Italic
+          </label>
+          <label className="flex items-center gap-1 text-[10px] text-c-text-secondary">
+            <input
+              aria-label="Underline"
+              type="checkbox"
+              checked={textStyle.textDecoration === 'underline'}
+              onChange={(e) =>
+                patchContent({
+                  style: {
+                    ...textStyle,
+                    textDecoration: e.target.checked ? 'underline' : 'none',
+                  },
+                })
+              }
+            />
+            Underline
+          </label>
+        </div>
+      </div>
+      <label className="block text-[10px] text-c-text-secondary">
+        Alignment
+        <select
+          aria-label="Alignment"
+          value={String((content.style as any)?.textAlign || 'left')}
+          onChange={(e) =>
+            patchContent({
+              style: { ...((content.style as any) || {}), textAlign: e.target.value },
+            })
+          }
+          className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+        >
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </select>
+      </label>
+      <div className="mt-3 border-t border-c-border-subtle pt-3 space-y-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-c-text-secondary">
+          Position and size
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block text-[10px] text-c-text-secondary">
+            Layout region
+            <select
+              aria-label="Layout region"
+              value={block.position.area}
+              onChange={(e) =>
+                onUpdate({
+                  position: {
+                    ...block.position,
+                    area: e.target.value as CardBlock['position']['area'],
+                  },
+                })
+              }
+              className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+            >
+              <option value="full">Full</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="overlay">Overlay</option>
+            </select>
+          </label>
+          <InspectorField
+            label="Layer order"
+            value={String(block.position.order)}
+            onChange={(value) =>
+              onUpdate({
+                position: { ...block.position, order: Math.max(0, Number(value) || 0) },
+              })
+            }
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <InspectorField
+            label="Width (%)"
+            value={String(frameStyle.widthPercent || 100)}
+            onChange={(widthPercent) =>
+              onUpdate({ style_overrides: { ...frameStyle, widthPercent } })
+            }
+          />
+          <InspectorField
+            label="Minimum height (px)"
+            value={String(frameStyle.minHeight || '')}
+            onChange={(minHeight) => onUpdate({ style_overrides: { ...frameStyle, minHeight } })}
+          />
+        </div>
+        <label className="block text-[10px] text-c-text-secondary">
+          Horizontal placement
+          <select
+            aria-label="Horizontal placement"
+            value={String(frameStyle.alignSelf || 'stretch')}
+            onChange={(e) =>
+              onUpdate({ style_overrides: { ...frameStyle, alignSelf: e.target.value } })
+            }
+            className="mt-1 w-full rounded border border-c-border-subtle bg-c-surface-raised px-2 py-1.5 text-xs"
+          >
+            <option value="stretch">Stretch</option>
+            <option value="flex-start">Left</option>
+            <option value="center">Center</option>
+            <option value="flex-end">Right</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  );
+};
