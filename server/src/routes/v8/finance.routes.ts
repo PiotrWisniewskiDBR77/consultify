@@ -3400,16 +3400,53 @@ router.post(
       return res.status(500).json({ error: 'Workbook reopen verification failed' });
     }
 
-    const sourceManifest = sources.map((row) => ({
-      statementId: row.statement_id,
-      statementType: row.statement_type,
-      period: row.period_label,
-      sourceFileName: row.source_file_name || row.file_name || null,
-      sourceFilePath: row.source_file_path || row.storage_path || null,
-      sha256: row.sha256 || row.content_sha256 || null,
-      sourcePageStart: row.source_page_start || null,
-      sourcePageEnd: row.source_page_end || null,
-    }));
+    const sourceManifest = [] as Array<Record<string, unknown>>;
+    for (const statement of statements) {
+      const statementValues = values.filter((row) => row.statement_id === statement.id);
+      const pages = statementValues
+        .map((row) => Number(row.source_page))
+        .filter((page) => Number.isFinite(page) && page > 0);
+      const sourceArtifacts = sources
+        .filter((row) => row.statement_id === statement.id)
+        .map((row) => ({
+          artifactId: row.id,
+          artifactType: row.artifact_type,
+          stage: row.stage,
+          version: row.version_no,
+          contentSha256: sha256(
+            String(row.content_text || row.content_json || row.metadata_json || '')
+          ),
+        }));
+      let sourceFileSha256: string | null = null;
+      let sourceFileSizeBytes: number | null = null;
+      const sourceFilePath = String(statement.source_file_path || '');
+      const resolvedSourcePath = sourceFilePath ? path.resolve(sourceFilePath) : '';
+      if (resolvedSourcePath.startsWith(`${path.resolve('/data/uploads')}${path.sep}`)) {
+        try {
+          const sourceFile = await fs.readFile(resolvedSourcePath);
+          sourceFileSha256 = sha256(sourceFile);
+          sourceFileSizeBytes = sourceFile.length;
+        } catch {
+          sourceFileSha256 = null;
+          sourceFileSizeBytes = null;
+        }
+      }
+      sourceManifest.push({
+        statementId: statement.id,
+        statementType: statement.statement_type,
+        period: statement.period_label || statement.period_end,
+        currency: statement.currency,
+        scaling: statement.scaling,
+        sourceFileName: statement.source_file_name || null,
+        sourceFilePath: statement.source_file_path || null,
+        sourceFileSha256,
+        sourceFileSizeBytes,
+        sourcePageStart: pages.length ? Math.min(...pages) : null,
+        sourcePageEnd: pages.length ? Math.max(...pages) : null,
+        artifactCount: sourceArtifacts.length,
+        artifacts: sourceArtifacts,
+      });
+    }
     const readme = `# Consultify Finance acceptance package\n\n` +
       `Company: ${pack.entity_name}\n\nPack: ${packId}\n\nCurrency / scale: ${pack.currency} / ${pack.scaling}\n\n` +
       `Generated: ${generatedAt}\n\nThe workbook contains historical statements, 34-ratio catalogue output, ` +
@@ -3467,6 +3504,15 @@ router.post(
       acceptance,
     };
     await dbRun(
+      `UPDATE v8_output_artifacts
+       SET delivery_state = 'archived', last_transition_at = ?
+       WHERE organization_id = ? AND output_type = 'sheet'
+         AND delivery_state <> 'archived'
+         AND origin_summary_json LIKE '%finance_acceptance_package_v1%'
+         AND origin_summary_json LIKE ?`,
+      [generatedAt, organizationId, `%${packId}%`]
+    );
+    await dbRun(
       `INSERT INTO v8_output_artifacts
        (artifact_id, organization_id, output_type, delivery_state, artifact_family,
         title_snapshot, owner_user_id, canonical_home, visibility_scope,
@@ -3495,6 +3541,7 @@ router.get(
       `SELECT artifact_id, title_snapshot, delivery_state, origin_summary_json, created_at
        FROM v8_output_artifacts
        WHERE organization_id = ? AND output_type = 'sheet'
+         AND delivery_state <> 'archived'
          AND origin_summary_json LIKE '%finance_acceptance_package_v1%'
        ORDER BY created_at DESC`,
       [organizationId]
@@ -3516,7 +3563,8 @@ router.get(
     const { organizationId } = getV8Context(req);
     const row = await dbGet<any>(
       `SELECT origin_summary_json FROM v8_output_artifacts
-       WHERE artifact_id = ? AND organization_id = ? AND output_type = 'sheet'`,
+       WHERE artifact_id = ? AND organization_id = ? AND output_type = 'sheet'
+         AND delivery_state <> 'archived'`,
       [req.params.artifactId, organizationId]
     );
     if (!row) return res.status(404).json({ error: 'Finance package not found' });
