@@ -847,6 +847,9 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     baselineRatios.capex = (baseline.capex ?? 0) / baselineRevenue;
   }
   const useZeroChangeBaseline = events.length === 0 && baselineRevenue > 0;
+  const forecastDrivers = assumptions.forecastDrivers || {};
+  const hasForecastDrivers =
+    useZeroChangeBaseline && Number.isFinite(Number(forecastDrivers.revenueGrowthPct));
   // Monthly compute resolution (always 12 periods/year internally)
   const baselinePerPeriod = baselineRevenue / 12;
 
@@ -876,13 +879,32 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
       totalDividend = 0;
 
     if (useZeroChangeBaseline) {
-      totalRevenue = baselinePerPeriod;
-      totalCOGS = baselinePerPeriod * (baselineRatios.cogs || 0);
-      totalOPEX = baselinePerPeriod * (baselineRatios.opex || 0);
-      totalDepr = baselinePerPeriod * (baselineRatios.depreciation || 0);
-      totalInterest = baselinePerPeriod * (baselineRatios.interest || 0);
-      totalTax = baselinePerPeriod * (baselineRatios.tax || 0);
-      totalCapex = baselinePerPeriod * (baselineRatios.capex || 0);
+      const forecastYear = Math.floor(pi / 12) + 1;
+      const annualRevenue = hasForecastDrivers
+        ? baselineRevenue * Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
+        : baselineRevenue;
+      totalRevenue = annualRevenue / 12;
+      const grossMarginPct = Number(forecastDrivers.grossMarginPct);
+      const opexPctRevenue = Number(forecastDrivers.opexPctRevenue);
+      const depreciationPctRevenue = Number(forecastDrivers.depreciationPctRevenue);
+      const capexPctRevenue = Number(forecastDrivers.capexPctRevenue);
+      totalCOGS = totalRevenue *
+        (Number.isFinite(grossMarginPct) ? 1 - grossMarginPct / 100 : baselineRatios.cogs || 0);
+      totalOPEX = totalRevenue *
+        (Number.isFinite(opexPctRevenue) ? opexPctRevenue / 100 : baselineRatios.opex || 0);
+      totalDepr = totalRevenue *
+        (Number.isFinite(depreciationPctRevenue)
+          ? depreciationPctRevenue / 100
+          : baselineRatios.depreciation || 0);
+      totalInterest = Number.isFinite(Number(forecastDrivers.debtCostPct))
+        ? (runningDebt * Number(forecastDrivers.debtCostPct)) / 100 / 12
+        : baselinePerPeriod * (baselineRatios.interest || 0);
+      const preTaxIncome = totalRevenue - totalCOGS - totalOPEX - totalDepr - totalInterest;
+      totalTax = hasForecastDrivers
+        ? Math.max(0, preTaxIncome * numberOrZero(assumptions.taxRatePct ?? 0.21))
+        : baselinePerPeriod * (baselineRatios.tax || 0);
+      totalCapex = totalRevenue *
+        (Number.isFinite(capexPctRevenue) ? capexPctRevenue / 100 : baselineRatios.capex || 0);
     }
 
     for (const event of events) {
@@ -955,8 +977,25 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     runningRetainedEarnings += out.pl.NET_INCOME - totalDividend;
     runningEquityCapital += totalEquityInjection;
 
-    // WC changes affect AR/Inventory/AP (simplified: distribute proportionally)
-    if (totalWCChange !== 0) {
+    if (hasForecastDrivers) {
+      const annualRevenue = totalRevenue * 12;
+      const annualCogs = totalCOGS * 12;
+      const targetAR = Number.isFinite(Number(forecastDrivers.dsoDays))
+        ? (annualRevenue * Number(forecastDrivers.dsoDays)) / 365
+        : runningAR;
+      const targetInventory = Number.isFinite(Number(forecastDrivers.dioDays))
+        ? (annualCogs * Number(forecastDrivers.dioDays)) / 365
+        : runningInventory;
+      const targetAP = Number.isFinite(Number(forecastDrivers.dpoDays))
+        ? (annualCogs * Number(forecastDrivers.dpoDays)) / 365
+        : runningAP;
+      totalWCChange +=
+        targetAR - runningAR + (targetInventory - runningInventory) - (targetAP - runningAP);
+      runningAR = targetAR;
+      runningInventory = targetInventory;
+      runningAP = targetAP;
+    } else if (totalWCChange !== 0) {
+      // Event-driven WC changes affect AR/Inventory/AP proportionally.
       runningAR += totalWCChange * 0.4;
       runningInventory += totalWCChange * 0.3;
       runningAP -= totalWCChange * 0.3;

@@ -159,6 +159,52 @@ describe('financialModelingService.computeModel (T054)', () => {
     expect(feb?.cf.EQUITY_CF).toBe(500);
     expect(mar?.cf.EQUITY_CF).toBe(0);
   });
+
+  it('uses persisted forecast drivers to differentiate eventless scenarios', async () => {
+    const { computeModel } = await import(
+      '../../../../server/src/services/financialModelingService.js'
+    );
+    mockDb.get.mockResolvedValueOnce({
+      id: 'm3',
+      start_date: '2026-01-01',
+      horizon_months: 36,
+      granularity: 'annual',
+      assumptions_json: JSON.stringify({
+        initialCash: 100,
+        initialEquity: 100,
+        initialDebt: 0,
+        initialPPE: 0,
+        initialAR: 0,
+        initialInventory: 0,
+        initialAP: 0,
+        initialOtherAssets: 0,
+        initialOtherLiabilities: 0,
+        baseline: { revenue: 1200, cogs: 720, opex: 240 },
+        taxRatePct: 0.2,
+        forecastDrivers: {
+          revenueGrowthPct: 10,
+          grossMarginPct: 50,
+          opexPctRevenue: 20,
+          depreciationPctRevenue: 0,
+          capexPctRevenue: 0,
+          debtCostPct: 0,
+          dsoDays: 0,
+          dioDays: 0,
+          dpoDays: 0,
+        },
+      }),
+      scenario: 'optimistic',
+    });
+    mockDb.all.mockResolvedValueOnce([]);
+
+    const result = await computeModel('m3');
+    expect(result.periods[0]?.pl.REVENUE).toBeCloseTo(1320, 6);
+    expect(result.periods[1]?.pl.REVENUE).toBeCloseTo(1452, 6);
+    expect(result.periods[2]?.pl.REVENUE).toBeCloseTo(1597.2, 6);
+    expect(result.periods[0]?.pl.GROSS_PROFIT).toBe(660);
+    expect(result.periods[0]?.pl.OPEX).toBe(-264);
+    expect(result.validations.every((validation) => validation.status === 'pass')).toBe(true);
+  });
 });
 
 describe('financialModelingService model seed periods', () => {
