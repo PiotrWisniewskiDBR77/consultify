@@ -74,3 +74,9 @@ Jeżeli zakres, owner albo źródło wersji jest niejasne, agent kończy `BLOCKE
 ## Ochrona danych
 
 Pełny snapshot 14 brudnych worktree, bundle wszystkich referencji Git i checksumy pozostają w sejfie CTO poza tym branchem. Pakiet przekazania nie zawiera ciężkich artefaktów ani potencjalnych danych lokalnych. Stare drzewa mają status `QUARANTINE_DO_NOT_DELETE` do czasu odbioru rekonstrukcji.
+
+Po ponownym naruszeniu izolacji wykonano drugie zatrzymanie. Aktualnym punktem odzyskiwania jest zweryfikowany snapshot 17 brudnych worktree:
+
+`/Users/piotrwisniewski/Documents/Antygracity/DRD/consultify-snapshots/2026-08-08_181821_five-agent-stop`
+
+Pięć nowych rozmów należy uruchamiać wyłącznie promptami z `05_FIVE_AGENT_SAFE_RESTART.md`.
