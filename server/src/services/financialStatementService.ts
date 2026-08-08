@@ -7557,6 +7557,58 @@ export async function persistStatementCandidateRows(params: {
   }
 }
 
+export async function backfillStatementValueSourcePages(statementId: string): Promise<number> {
+  try {
+    const candidates = (await dbAll(
+      `SELECT source_row, source_page
+       FROM financial_statement_candidate_rows
+       WHERE statement_id = ? AND source_row IS NOT NULL AND source_page IS NOT NULL
+       ORDER BY created_at DESC`,
+      [statementId]
+    )) as Array<{ source_row?: number | null; source_page?: number | null }>;
+    const pageBySourceRow = new Map<number, number>();
+    for (const candidate of candidates || []) {
+      if (candidate.source_row == null || candidate.source_page == null) continue;
+      const sourceRow = Number(candidate.source_row);
+      if (!pageBySourceRow.has(sourceRow)) {
+        pageBySourceRow.set(sourceRow, Number(candidate.source_page));
+      }
+    }
+
+    const values = (await dbAll(
+      `SELECT id, source_row, evidence_json
+       FROM financial_statement_values
+       WHERE statement_id = ? AND source_page IS NULL AND source_row IS NOT NULL`,
+      [statementId]
+    )) as Array<{ id: string; source_row?: number | null; evidence_json?: string | null }>;
+    let updated = 0;
+    for (const value of values || []) {
+      const sourceRow = Number(value.source_row);
+      const sourcePage = pageBySourceRow.get(sourceRow);
+      if (sourcePage == null) continue;
+      let evidence: Record<string, unknown> = {};
+      try {
+        evidence = value.evidence_json ? JSON.parse(value.evidence_json) : {};
+      } catch {
+        evidence = {};
+      }
+      evidence.sourcePage = sourcePage;
+      await dbRun(
+        `UPDATE financial_statement_values
+         SET source_page = ?, evidence_json = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND statement_id = ? AND source_page IS NULL`,
+        [sourcePage, JSON.stringify(evidence), value.id, statementId],
+        { fallback: false }
+      );
+      updated += 1;
+    }
+    return updated;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return 0;
+  }
+}
+
 export async function loadPersistedStatementCandidateRows(params: {
   statementId: string;
   ingestRunId?: string | null;

@@ -88,6 +88,7 @@ import {
   finalizeIdempotentUpload,
   getIdempotencyKey,
   getLatestStatementIngestRun,
+  backfillStatementValueSourcePages,
   IdempotencyKeyTooLongError,
   learnStatementAliases,
   loadLatestStatementVersionSnapshot,
@@ -2002,6 +2003,7 @@ router.post(
       currency: effectiveCurrency,
       scaling: effectiveScaling,
     });
+    await backfillStatementValueSourcePages(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -2182,6 +2184,7 @@ router.post(
       currency: stmt.currency,
       scaling: stmt.scaling,
     });
+    await backfillStatementValueSourcePages(statementId);
     await persistStatementMappingCandidates({
       statementId,
       ingestRunId,
