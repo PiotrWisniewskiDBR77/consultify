@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 
 /** Frozen Agent/T01 release order. Do not infer it from the filesystem. */
 const migrationNames = [
+  '20260801_res003a_kpi_recovery_card.sql',
   '20260806_v8_agent_template_version_prerequisite.sql',
   '20260807_agent_t01_transformation_case.sql',
   '20260807_v8_agent_adapter_orchestration.sql',
@@ -73,9 +74,10 @@ async function installCanonicalPrerequisites(pool: Pool): Promise<void> {
       tool_id TEXT, allowed INTEGER, approval_override TEXT, max_invocations_per_run INTEGER,
       effective_from TIMESTAMPTZ, created_at TIMESTAMPTZ, updated_at TIMESTAMPTZ
     );
-    CREATE TABLE kpi_recovery_cards (
-      id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, confirmed_cause TEXT, version INTEGER DEFAULT 1
-    );
+    CREATE TABLE kpi_deviation_cases (id TEXT PRIMARY KEY);
+    CREATE TABLE initiative_kpis (id TEXT PRIMARY KEY);
+    CREATE TABLE tasks (id TEXT PRIMARY KEY);
+    CREATE TABLE kpi_time_series (id TEXT PRIMARY KEY);
     CREATE TABLE report_builder_versions (
       id TEXT PRIMARY KEY, report_id TEXT NOT NULL, version_number INTEGER NOT NULL,
       snapshot_json JSONB DEFAULT '{}'::jsonb
@@ -104,7 +106,8 @@ async function installCanonicalPrerequisites(pool: Pool): Promise<void> {
     INSERT INTO projects VALUES ('project-proof','org-proof','user-proof');
     INSERT INTO initiatives VALUES ('initiative-proof','org-proof','DRAFT','Proof');
     INSERT INTO v8_execution_runs(run_id,organization_id) VALUES ('run-proof','org-proof');
-    INSERT INTO kpi_recovery_cards(id,organization_id) VALUES ('recovery-proof','org-proof');
+    INSERT INTO kpi_deviation_cases(id) VALUES ('deviation-proof');
+    INSERT INTO initiative_kpis(id) VALUES ('kpi-proof');
     INSERT INTO report_builder_versions(id,report_id,version_number) VALUES ('report-version-proof','report-proof',1);
     INSERT INTO presentation_deck_versions(id,deck_id,version) VALUES ('deck-version-proof','deck-proof',1);
   `);
