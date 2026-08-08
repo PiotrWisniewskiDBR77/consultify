@@ -346,9 +346,10 @@ async function loadRecords(
 
 async function countRecords(tableId: string): Promise<number> {
   const db = getDatabase();
-  const { rows } = await db.query(`SELECT COUNT(*)::int AS n FROM tp_records WHERE table_id = $1`, [
-    tableId,
-  ]);
+  const { rows } = await db.query<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM tp_records WHERE table_id = $1`,
+    [tableId]
+  );
   return Number(rows?.[0]?.n ?? 0);
 }
 
@@ -364,7 +365,11 @@ async function loadSourceCoverage(tableId: string): Promise<SourceCoverageRow> {
   // run Block B's migration yet. In that case we report zero coverage rather
   // than crash the QA pipeline.
   try {
-    const { rows } = await db.query(
+    const { rows } = await db.query<{
+      verified_count: number;
+      total: number;
+      last_verified_at: string | Date | null;
+    }>(
       `WITH t AS (
          SELECT id FROM tp_records WHERE table_id = $1
        ),
@@ -387,7 +392,11 @@ async function loadSourceCoverage(tableId: string): Promise<SourceCoverageRow> {
          (SELECT last_verified_at FROM last)  AS last_verified_at`,
       [tableId]
     );
-    const row = rows?.[0] ?? {};
+    const row: Partial<{
+      verified_count: number;
+      total: number;
+      last_verified_at: string | Date | null;
+    }> = rows?.[0] ?? {};
     return {
       recordsWithVerifiedSource: Number(row.verified_count ?? 0),
       totalRecords: Number(row.total ?? 0),
@@ -417,7 +426,7 @@ async function loadGovernanceRules(
   if (!appliedTemplateId) return {};
   try {
     const db = getDatabase();
-    const { rows } = await db.query(
+    const { rows } = await db.query<{ governance_rules: unknown }>(
       `SELECT governance_rules FROM tp_base_templates WHERE id = $1 LIMIT 1`,
       [appliedTemplateId]
     );
@@ -1127,7 +1136,7 @@ const tableQaService = {
 
 async function persistReport(report: QaReport): Promise<string> {
   const db = getDatabase();
-  const { rows } = await db.query(
+  const { rows } = await db.query<{ id: string }>(
     `INSERT INTO tp_qa_reports
        (table_id, organization_id, workspace_id, computed_at, computed_by,
         trigger_kind, overall_score, axes, suggestions, computation_ms)

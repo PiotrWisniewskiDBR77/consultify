@@ -27,44 +27,89 @@ async function enqueueBackgroundExecution(payload: {
   planId: string;
   organizationId: string;
   userId: string;
-}): Promise<void> {
+  canonicalRunId?: string | null;
+  projectId?: string | null;
+  dispatchKey?: string;
+  beforeEnqueue?: () => Promise<void>;
+}): Promise<boolean> {
   try {
     const { default: aiQueue } = (await import('../queues/aiQueue.js')) as {
       default: { add: (name: string, data: unknown) => Promise<unknown> };
     };
-    await aiQueue.add('AGENT_BACKGROUND_TASK', {
-      taskType: 'AGENT_BACKGROUND_TASK',
-      payload,
-      userId: payload.userId,
-    });
+    const enqueue = async () => {
+      await payload.beforeEnqueue?.();
+      return aiQueue.add('AGENT_BACKGROUND_TASK', {
+        taskType: 'AGENT_BACKGROUND_TASK',
+        payload: {
+          planId: payload.planId,
+          organizationId: payload.organizationId,
+          userId: payload.userId,
+        },
+        userId: payload.userId,
+      });
+    };
+    if (payload.canonicalRunId) {
+      const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
+      await agentPlannerService.executeGovernedEnqueue({
+        planId: payload.planId,
+        organizationId: payload.organizationId,
+        userId: payload.userId,
+        dispatchKey: payload.dispatchKey || payload.planId,
+        enqueue,
+      });
+    } else {
+      await enqueue();
+    }
+    return true;
   } catch (error: unknown) {
     logger.warn('[AgentPlanScheduler] Background dispatch unavailable, plan left pending', {
       planId: payload.planId,
       error: error instanceof Error ? error.message : String(error),
     });
+    return false;
   }
 }
 
 export interface AgentPlanSchedulerResult {
   plansDispatched: number;
   waitStepsResumed: number;
+  contextBlocked: number;
   errors: number;
 }
 
 export async function runAgentPlanScheduler(force = false): Promise<AgentPlanSchedulerResult> {
   if (isTestEnv() && !force) {
-    return { plansDispatched: 0, waitStepsResumed: 0, errors: 0 };
+    return { plansDispatched: 0, waitStepsResumed: 0, contextBlocked: 0, errors: 0 };
   }
 
   const { agentPlannerService } = await import('../services/ai/agentPlannerService.js');
-  const result: AgentPlanSchedulerResult = { plansDispatched: 0, waitStepsResumed: 0, errors: 0 };
+  const result: AgentPlanSchedulerResult = {
+    plansDispatched: 0,
+    waitStepsResumed: 0,
+    contextBlocked: 0,
+    errors: 0,
+  };
 
   try {
     const duePlans = await agentPlannerService.listScheduledPlansDue();
     for (const plan of duePlans) {
       try {
-        await enqueueBackgroundExecution(plan);
-        result.plansDispatched++;
+        const contextGate = await agentPlannerService.gateScheduledWorkerDispatch({
+          planId: plan.id,
+          organizationId: plan.organizationId,
+          userId: plan.userId,
+        });
+        if (!contextGate.allowed) {
+          result.contextBlocked++;
+          continue;
+        }
+        const enqueued = await enqueueBackgroundExecution({
+          ...plan,
+          planId: plan.id,
+          dispatchKey: plan.id,
+        });
+        if (enqueued) result.plansDispatched++;
+        else result.errors++;
       } catch (err) {
         result.errors++;
         logger.error('[AgentPlanScheduler] Failed to dispatch scheduled plan', {
@@ -82,9 +127,23 @@ export async function runAgentPlanScheduler(force = false): Promise<AgentPlanSch
     const dueWaitSteps = await agentPlannerService.listWaitStepsDue();
     for (const step of dueWaitSteps) {
       try {
-        await agentPlannerService.resumeWaitStep(step.planId, step.stepIndex);
-        await enqueueBackgroundExecution(step);
-        result.waitStepsResumed++;
+        const contextGate = await agentPlannerService.gateScheduledWorkerDispatch({
+          planId: step.planId,
+          organizationId: step.organizationId,
+          userId: step.userId,
+          externalId: `${step.planId}:wait:${step.stepIndex}`,
+        });
+        if (!contextGate.allowed) {
+          result.contextBlocked++;
+          continue;
+        }
+        const enqueued = await enqueueBackgroundExecution({
+          ...step,
+          dispatchKey: `${step.planId}:wait:${step.stepIndex}`,
+          beforeEnqueue: () => agentPlannerService.resumeWaitStep(step.planId, step.stepIndex),
+        });
+        if (enqueued) result.waitStepsResumed++;
+        else result.errors++;
       } catch (err) {
         result.errors++;
         logger.error('[AgentPlanScheduler] Failed to resume wait step', {
@@ -99,7 +158,12 @@ export async function runAgentPlanScheduler(force = false): Promise<AgentPlanSch
     logger.error('[AgentPlanScheduler] Failed to list due wait steps', { err });
   }
 
-  if (result.plansDispatched > 0 || result.waitStepsResumed > 0 || result.errors > 0) {
+  if (
+    result.plansDispatched > 0 ||
+    result.waitStepsResumed > 0 ||
+    result.contextBlocked > 0 ||
+    result.errors > 0
+  ) {
     logger.info('[AgentPlanScheduler] Tick completed', result);
   }
 

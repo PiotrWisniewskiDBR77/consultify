@@ -787,7 +787,7 @@ export async function executePresentationStudioGenerate(
     expectedFingerprint,
     now: input.now,
   });
-  if (!consume.ok) {
+  if (consume.ok === false) {
     return { ok: false, code: 'INVALID_APPROVAL_TICKET', reason: consume.reason };
   }
 

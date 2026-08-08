@@ -649,10 +649,10 @@ function getClientIp(req: Request): string {
       if (candidate) return candidate;
     }
   }
-  const reqIp = normalizeClientIp(safeRead(() => req.ip, undefined as unknown) || '');
+  const reqIp = normalizeClientIp(safeRead<string | undefined>(() => req.ip, undefined) || '');
   if (reqIp) return reqIp;
   const socketIp = normalizeClientIp(
-    safeRead(() => req.socket?.remoteAddress, undefined as unknown) || ''
+    safeRead<string | undefined>(() => req.socket?.remoteAddress, undefined) || ''
   );
   return socketIp || 'unknown';
 }

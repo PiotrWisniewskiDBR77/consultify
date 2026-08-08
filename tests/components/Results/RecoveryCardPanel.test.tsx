@@ -58,6 +58,11 @@ vi.mock('../../../src/services/api/v8/results', () => ({
     closeRecoveryCard: vi.fn(),
     continueRecoveryCard: vi.fn(),
     escalateRecoveryCard: vi.fn(),
+    listRecoveryExperiments: vi.fn(),
+    createRecoveryExperiment: vi.fn(),
+    reviewRecoveryExperiment: vi.fn(),
+    decideRecoveryExperiment: vi.fn(),
+    confirmRecoveryCause: vi.fn(),
   },
 }));
 
@@ -133,7 +138,9 @@ function makeCard(overrides: Partial<V8ResultsKpiRecoveryCard> = {}): V8ResultsK
   };
 }
 
-function makeAction(overrides: Partial<V8ResultsKpiRecoveryAction> = {}): V8ResultsKpiRecoveryAction {
+function makeAction(
+  overrides: Partial<V8ResultsKpiRecoveryAction> = {}
+): V8ResultsKpiRecoveryAction {
   return {
     id: 'action-1',
     actionType: 'IMMEDIATE',
@@ -151,6 +158,65 @@ function makeAction(overrides: Partial<V8ResultsKpiRecoveryAction> = {}): V8Resu
 describe('RecoveryCardPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(V8ResultsApi.listRecoveryExperiments).mockResolvedValue([]);
+  });
+
+  it('projects the versioned experiment and keeps cause confirmation separate', async () => {
+    vi.mocked(V8ResultsApi.getRecoveryCard).mockResolvedValue(makeCard());
+    vi.mocked(V8ResultsApi.listRecoveryExperiments).mockResolvedValue([
+      {
+        id: 'experiment-1',
+        recoveryCardId: 'card-1',
+        version: 2,
+        intervention: 'New routing',
+        comparison: 'Prior routing',
+        baseline: '12 days',
+        measurementWindow: '30 days',
+        successCriterion: '< 8 days',
+        ownerUserId: 'owner-1',
+        remeasureAt: '2031-03-01T12:00:00.000Z',
+        approvalStatus: 'PENDING',
+        approvedBy: null,
+        approvedAt: null,
+        verdict: null,
+        verdictEvidence: null,
+        decision: null,
+        createdBy: 'user-1',
+        createdAt: '2031-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'experiment-approved',
+        recoveryCardId: 'card-1',
+        version: 1,
+        intervention: 'Approved routing',
+        comparison: null,
+        baseline: '12 days',
+        measurementWindow: '30 days',
+        successCriterion: '< 8 days',
+        ownerUserId: 'owner-1',
+        remeasureAt: '2099-03-01T12:00:00.000Z',
+        approvalStatus: 'APPROVED',
+        approvedBy: 'owner-1',
+        approvedAt: '2031-01-02T00:00:00.000Z',
+        verdict: null,
+        verdictEvidence: null,
+        decision: null,
+        createdBy: 'user-1',
+        createdAt: '2031-01-01T00:00:00.000Z',
+      },
+    ]);
+    renderPanel();
+    expect(await screen.findByText(/v2 · New routing/)).toBeInTheDocument();
+    expect(screen.getByText(/verdict never confirms a cause/i)).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'supported' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'not_supported' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'continue' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'close' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Record verdict' })).toBeDisabled();
+    expect(screen.getByText('Remeasurement is not due yet.')).toHaveClass('sr-only');
+    expect(
+      screen.getByRole('button', { name: /Confirm cause as a separate human decision/i })
+    ).toBeDisabled();
   });
 
   it('1. shows a loading indicator while the initial fetch is pending', () => {
@@ -255,7 +321,9 @@ describe('RecoveryCardPanel', () => {
         lifecycleStatus: 'UNDER_REVIEW',
         actions: [makeAction()],
         checkpoints: [{ id: 'cp-1', checkpointDate: '2026-08-15', status: 'PENDING', notes: null }],
-        dependencies: [{ description: 'Depends on Initiative Alpha', relatedId: 'INI-2', note: 'blocked' }],
+        dependencies: [
+          { description: 'Depends on Initiative Alpha', relatedId: 'INI-2', note: 'blocked' },
+        ],
         risks: [{ description: 'Might regress adoption' }],
       })
     );
@@ -267,7 +335,9 @@ describe('RecoveryCardPanel', () => {
     });
 
     expect(screen.getByText(rc.priority.HIGH, { selector: 'span' })).toBeInTheDocument();
-    expect(screen.getByText(rc.lifecycleStatus.UNDER_REVIEW, { selector: 'span' })).toBeInTheDocument();
+    expect(
+      screen.getByText(rc.lifecycleStatus.UNDER_REVIEW, { selector: 'span' })
+    ).toBeInTheDocument();
     expect(screen.getByText('Depends on Initiative Alpha')).toBeInTheDocument();
     expect(screen.getByText('Might regress adoption')).toBeInTheDocument();
   });
@@ -421,7 +491,11 @@ describe('RecoveryCardPanel', () => {
 
   it('12. Close success has zero optimistic UI: status only flips to CLOSED after the response resolves', async () => {
     const activeCard = makeCard({ lifecycleStatus: 'ACTIVE', version: 5 });
-    const closedCard = { ...activeCard, lifecycleStatus: 'CLOSED' as const, closedAt: '2026-08-01T12:00:00.000Z' };
+    const closedCard = {
+      ...activeCard,
+      lifecycleStatus: 'CLOSED' as const,
+      closedAt: '2026-08-01T12:00:00.000Z',
+    };
 
     vi.mocked(V8ResultsApi.getRecoveryCard).mockResolvedValue(activeCard);
     vi.mocked(V8ResultsApi.closeRecoveryCard).mockReturnValue(
@@ -451,11 +525,15 @@ describe('RecoveryCardPanel', () => {
     // Immediately after the click (well before the 50ms server delay elapses)
     // the UI must still show the pre-close lifecycle status — no optimistic flip.
     expect(screen.getByText(rc.lifecycleStatus.ACTIVE, { selector: 'span' })).toBeInTheDocument();
-    expect(screen.queryByText(rc.lifecycleStatus.CLOSED, { selector: 'span' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(rc.lifecycleStatus.CLOSED, { selector: 'span' })
+    ).not.toBeInTheDocument();
 
     await waitFor(
       () => {
-        expect(screen.getByText(rc.lifecycleStatus.CLOSED, { selector: 'span' })).toBeInTheDocument();
+        expect(
+          screen.getByText(rc.lifecycleStatus.CLOSED, { selector: 'span' })
+        ).toBeInTheDocument();
       },
       { timeout: 1000 }
     );

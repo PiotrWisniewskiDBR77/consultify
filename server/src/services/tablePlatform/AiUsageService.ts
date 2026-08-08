@@ -284,8 +284,18 @@ const aiUsageService = {
             updated_at = NOW()
       RETURNING workspace_id, ai_daily_token_budget, tokens_used_today, last_reset_at
     `;
-    const { rows } = await db.query(sql, [workspaceId]);
-    const row = rows?.[0] ?? {};
+    const { rows } = await db.query<{
+      workspace_id: string;
+      ai_daily_token_budget: number;
+      tokens_used_today: number;
+      last_reset_at: string | Date | null;
+    }>(sql, [workspaceId]);
+    const row: Partial<{
+      workspace_id: string;
+      ai_daily_token_budget: number;
+      tokens_used_today: number;
+      last_reset_at: string | Date | null;
+    }> = rows?.[0] ?? {};
     const budget = Number(row.ai_daily_token_budget) || DEFAULT_BUDGET;
     const used = Number(row.tokens_used_today) || 0;
     const lastReset =

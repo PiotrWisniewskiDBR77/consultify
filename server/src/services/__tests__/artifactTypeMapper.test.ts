@@ -8,7 +8,12 @@ import {
 
 describe('canonical Artifact Run type mapping', () => {
   it.each([
-    ['document', 'report', 'report', ['report', 'native_artifact', 'work_canvas']],
+    [
+      'document',
+      'report',
+      'report',
+      ['report', 'native_artifact', 'assessment_report', 'work_canvas'],
+    ],
     ['presentation', 'presentation', 'presentation', ['presentation']],
     ['sheet', 'sheet', 'sheet', ['sheet']],
     ['template', 'report', 'report', ['report_template', 'document_template']],

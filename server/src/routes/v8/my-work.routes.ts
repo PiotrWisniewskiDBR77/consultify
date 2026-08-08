@@ -1943,6 +1943,8 @@ router.get(
       projectName?: string | null;
       provider?: 'internal' | 'google' | 'microsoft';
       version?: string;
+      recurrenceRule?: string;
+      recurrenceSourceId?: string;
     }> = [];
 
     if (requestedSources.includes('task')) {

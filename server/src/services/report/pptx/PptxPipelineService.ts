@@ -112,16 +112,31 @@ function defineCustomMasterSlides(
   customTemplate?: PresentationCustomTemplateDefinition
 ): Map<string, string> {
   const masters = new Map<string, string>();
-  if (!customTemplate?.theme || !customTemplate.layouts || !customTemplate.layoutMapping) return masters;
+  if (!customTemplate?.theme || !customTemplate.layouts || !customTemplate.layoutMapping)
+    return masters;
   for (const [layoutId, definition] of Object.entries(customTemplate.layouts || {})) {
     const masterName = normalizeMasterName(definition.masterName || layoutId);
-    const backgroundColor = (definition.backgroundColor || tokens.colors.background).replace('#', '');
+    const backgroundColor = (definition.backgroundColor || tokens.colors.background).replace(
+      '#',
+      ''
+    );
     const accentColor = (definition.accentColor || tokens.colors.accent).replace('#', '');
     const objects: any[] = [
-      { rect: { x: 0, y: 0, w: 0.12, h: '100%', fill: { color: accentColor }, line: { color: accentColor } } },
+      {
+        rect: {
+          x: 0,
+          y: 0,
+          w: 0.12,
+          h: '100%',
+          fill: { color: accentColor },
+          line: { color: accentColor },
+        },
+      },
     ];
     if (/^data:image\/(?:png|jpeg);base64,/i.test(customTemplate.theme.logoDataUri || '')) {
-      objects.push({ image: { data: customTemplate.theme.logoDataUri, x: 8.35, y: 0.2, w: 1.15, h: 0.45 } });
+      objects.push({
+        image: { data: customTemplate.theme.logoDataUri, x: 8.35, y: 0.2, w: 1.15, h: 0.45 },
+      });
     }
     pptx.defineSlideMaster({ title: masterName, background: { color: backgroundColor }, objects });
     masters.set(layoutId, masterName);
@@ -350,7 +365,13 @@ export class PptxPipelineService {
     totalPages: number
   ): void {
     if (pageNumber === 1) return;
-    const confidentiality = String(meta.confidentiality || 'internal').toUpperCase();
+    const isPolish = meta.language === 'pl';
+    const confidentialityValue = String(meta.confidentiality || 'internal');
+    const confidentiality = isPolish
+      ? ({ confidential: 'POUFNE', internal: 'WEWNĘTRZNE', public: 'PUBLICZNE' }[
+          confidentialityValue
+        ] ?? confidentialityValue.toUpperCase())
+      : confidentialityValue.toUpperCase();
     const footer = `${confidentiality} · Consultify · ${pageNumber}/${totalPages}`;
     // PRAWA strona stopki — lewą zajmuje Footnote("client — project") z layoutu;
     // wcześniej oba startowały w tym samym x i NACHODZIŁY (garbled footer).

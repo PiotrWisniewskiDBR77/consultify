@@ -181,10 +181,15 @@ async function tryDispatchBackgroundExecution(payload: {
     const { default: aiQueue } = (await import('../../queues/aiQueue.js')) as {
       default: { add: (name: string, data: unknown) => Promise<unknown> };
     };
-    await aiQueue.add('AGENT_BACKGROUND_TASK', {
-      taskType: 'AGENT_BACKGROUND_TASK',
-      payload,
-      userId: payload.userId,
+    await agentPlannerService.executeGovernedEnqueue({
+      ...payload,
+      dispatchKey: `route:${payload.planId}`,
+      enqueue: () =>
+        aiQueue.add('AGENT_BACKGROUND_TASK', {
+          taskType: 'AGENT_BACKGROUND_TASK',
+          payload,
+          userId: payload.userId,
+        }),
     });
     return 'enqueued';
   } catch (error: unknown) {

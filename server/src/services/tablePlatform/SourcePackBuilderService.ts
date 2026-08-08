@@ -165,7 +165,7 @@ interface TenantRow {
 
 async function loadTenant(tableId: string): Promise<TenantRow | null> {
   const db = getDatabase();
-  const { rows } = await db.query(
+  const { rows } = await db.query<{ workspace_id: string; organization_id: string }>(
     `SELECT b.workspace_id, b.organization_id
        FROM tp_tables t
        JOIN tp_bases  b ON t.base_id = b.id
@@ -604,7 +604,7 @@ const sourcePackBuilderService = {
     if (!packId) throw new SourcePackError('PACK_ID_REQUIRED', 'packId is required');
     if (!organizationId) throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
     const db = getDatabase();
-    const { rows } = await db.query(
+    const { rows } = await db.query<Record<string, unknown> & { organization_id: string }>(
       `SELECT id, organization_id, workspace_id, owner_user_id, table_id,
               name, description, candidate_record_ids, v8_snapshot,
               created_at, updated_at, used_count, archived_at
@@ -675,7 +675,7 @@ const sourcePackBuilderService = {
     if (!packId) throw new SourcePackError('PACK_ID_REQUIRED', 'packId is required');
     if (!organizationId) throw new SourcePackError('ORG_ID_REQUIRED', 'organizationId is required');
     const db = getDatabase();
-    const { rows } = await db.query(
+    const { rows } = await db.query<{ id: string; used_count: number }>(
       `UPDATE tp_source_packs
           SET used_count = used_count + 1,
               updated_at = NOW()

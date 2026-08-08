@@ -56,6 +56,7 @@ export interface ContextRetrievalChunk {
   nativeSourceLocator: any;
   qualityFlags: string[];
   confidence: number | null;
+  relevance: number;
 }
 
 export interface ContextRetrievalDocument {
@@ -97,6 +98,8 @@ export interface ContextRetrievalInput {
   selectedDocumentIds?: string[];
   perDocumentChunkLimit?: number;
   totalChunkLimit?: number;
+  /** Required for the fail-closed Agent execution workflow. */
+  projectId?: string | null;
 }
 
 interface KnowledgeDocRow {
@@ -135,21 +138,26 @@ function dedupePreservingOrder(values: string[]): string[] {
 async function fetchAccessibleDocuments(
   ids: string[],
   organizationId: string,
-  userId: string
+  userId: string,
+  agentProjectId?: string | null
 ): Promise<{ accessible: KnowledgeDocRow[]; missingIds: string[] }> {
   if (ids.length === 0) return { accessible: [], missingIds: [] };
   const placeholders = ids.map(() => '?').join(',');
+  const agentScopeSql = agentProjectId
+    ? `AND ((scope = 'user' AND owner_id = ?) OR
+            (scope = 'project' AND project_id = ? AND EXISTS (
+              SELECT 1 FROM project_members pm WHERE pm.project_id = knowledge_docs.project_id AND pm.user_id = ?
+            )))`
+    : `AND (scope = 'project' OR (scope = 'user' AND owner_id = ?))`;
+  const scopeParams = agentProjectId ? [userId, agentProjectId, userId] : [userId];
   const rows = (await dbAll(
     `SELECT id, filename, status, scope, project_id, owner_id, version, created_at
      FROM knowledge_docs
      WHERE id IN (${placeholders})
        AND organization_id = ?
-       AND (deleted_at IS NULL OR deleted_at = '')
-       AND (
-         scope = 'project' OR
-         (scope = 'user' AND owner_id = ?)
-       )`,
-    [...ids, organizationId, userId],
+       AND deleted_at IS NULL
+       ${agentScopeSql}`,
+    [...ids, organizationId, ...scopeParams],
     { fallback: true } as any
   )) as KnowledgeDocRow[];
 
@@ -232,7 +240,8 @@ async function tryRagSearch(input: {
         confidence:
           typeof chunk?.metadata?.confidence === 'number'
             ? Number(chunk.metadata.confidence)
-            : null,
+              : null,
+        relevance: Number(chunk?.hybridScore ?? chunk?.score ?? chunk?.similarity ?? 0),
       };
     });
   } catch (error) {
@@ -288,6 +297,7 @@ async function loadFallbackChunks(input: {
         ? (metadata.qualityFlags as string[])
         : [],
       confidence: typeof metadata?.confidence === 'number' ? Number(metadata.confidence) : null,
+      relevance: 0,
     });
     perDocCounts.set(documentId, count + 1);
   }
@@ -308,7 +318,7 @@ async function fetchOrgApprovedContext(input: {
       `SELECT id, filename, status, scope, project_id, owner_id, version, created_at
        FROM knowledge_docs
        WHERE organization_id = ?
-         AND (deleted_at IS NULL OR deleted_at = '')
+         AND deleted_at IS NULL
          AND scope = 'project'
          AND status IN ('ready', 'indexed', 'complete', 'completed')
        ORDER BY created_at DESC
@@ -333,6 +343,10 @@ async function fetchOrgApprovedContext(input: {
 export async function retrieveContext(
   input: ContextRetrievalInput
 ): Promise<ContextRetrievalResult> {
+  const isAgentExecution = input.workflow === 'agent_execution';
+  if (isAgentExecution && !String(input.projectId || '').trim()) {
+    throw new Error('agent_context_project_required');
+  }
   const generatedAt = new Date().toISOString();
   const workflowMode = normalizeContextWorkflowMode(input.workflowMode);
   const requestedDocumentIds = dedupePreservingOrder(safeStringArray(input.selectedDocumentIds));
@@ -353,7 +367,8 @@ export async function retrieveContext(
   const { accessible: accessibleRows, missingIds } = await fetchAccessibleDocuments(
     requestedDocumentIds,
     input.organizationId,
-    input.userId
+    input.userId,
+    isAgentExecution ? input.projectId : undefined
   );
 
   for (const id of missingIds) {
@@ -511,6 +526,8 @@ export interface ContextLineageRecordInput {
   eventType: string;
   result: ContextRetrievalResult;
   metadata?: Record<string, unknown>;
+  lineageEventId?: string;
+  failClosed?: boolean;
 }
 
 export async function recordContextRetrievalLineage(
@@ -537,9 +554,10 @@ export async function recordContextRetrievalLineage(
        (id, organization_id, user_id, target_type, target_id, workflow, event_type,
         requested_document_ids_json, selected_document_ids_json, used_chunks_json,
         degraded, degraded_reasons_json, metadata_json, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
       [
-        uuidv4(),
+        input.lineageEventId ?? uuidv4(),
         input.organizationId,
         input.userId,
         input.targetType,
@@ -563,6 +581,7 @@ export async function recordContextRetrievalLineage(
       { fallback: true } as any
     );
   } catch (error) {
+    if (input.failClosed) throw error;
     logger.warn('[ContextRetrievalService] lineage write failed (non-fatal):', error);
   }
 }

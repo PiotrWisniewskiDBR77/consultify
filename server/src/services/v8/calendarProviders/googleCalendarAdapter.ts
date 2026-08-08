@@ -30,7 +30,7 @@ type GoogleCalendarEvent = {
   summary?: string | null;
   recurrence?: string[];
   start?: { dateTime?: string | null; date?: string | null; timeZone?: string | null };
-  end?: { dateTime?: string | null; date?: string | null };
+  end?: { dateTime?: string | null; date?: string | null; timeZone?: string | null };
   etag?: string | null;
   status?: string | null;
   organizer?: { email?: string | null; self?: boolean | null };

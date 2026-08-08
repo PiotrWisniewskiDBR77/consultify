@@ -374,11 +374,10 @@ function validateReferenceList(value: unknown, fieldName: string): RecoveryRefer
     if (note !== undefined && typeof note !== 'string') {
       throw serviceError('VALIDATION_ERROR', `${fieldName}[${idx}].note must be a string`);
     }
-    return {
-      description: description.trim(),
-      ...(relatedId !== undefined ? { relatedId } : {}),
-      ...(note !== undefined ? { note } : {}),
-    };
+    const cleanedItem: RecoveryReferenceItem = { description: description.trim() };
+    if (relatedId !== undefined) cleanedItem.relatedId = relatedId as string;
+    if (note !== undefined) cleanedItem.note = note as string;
+    return cleanedItem;
   });
   const byteSize = Buffer.byteLength(JSON.stringify(cleaned), 'utf8');
   if (byteSize > MAX_REFERENCE_LIST_BYTES) {

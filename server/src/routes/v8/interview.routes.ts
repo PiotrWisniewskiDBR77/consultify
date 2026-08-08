@@ -44,7 +44,10 @@ import {
 import { resolveInterviewManagerScope } from '../../services/interviewManagerScope.js';
 import contextDocumentService from '../../services/organizationContext/ContextDocumentService.js';
 import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
-import { listFindings as listP10Findings } from '../../services/v8/interviewInsightFindingsService.js';
+import {
+  listFindings as listP10Findings,
+  type P10Finding,
+} from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { getTableColumns } from '../../utils/dbSchema.js';
 import { decodeHtmlEntities } from '../../utils/htmlEntities.js';
@@ -721,7 +724,7 @@ router.patch(
         sectionOverrides,
         userId
       );
-      if (!merged.ok) {
+      if (merged.ok === false) {
         return res.status(400).json({ data: null, error: merged.error, code: merged.code });
       }
       await ensureInsightSectionOverridesColumn();
@@ -1626,7 +1629,7 @@ router.post(
     }
 
     const now = new Date().toISOString();
-    const p10Findings = await listP10Findings(id).catch(() => []);
+    const p10Findings: P10Finding[] = await listP10Findings(id).catch(() => [] as P10Finding[]);
     const boundedInsightPayload = {
       findings: p10Findings.map((finding) => ({
         id: finding.id,

@@ -9,6 +9,7 @@ import {
   listWave8AgentRuns,
   listWave8AgentSchedules,
   processDueWave8AgentSchedules,
+  transitionWave8AgentSchedule,
   upsertWave8AgentDefinition,
 } from '../services/wave8AgentRuntimeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -92,6 +93,9 @@ router.post(
       runId: req.body.runId || null,
       aiRunId: req.body.aiRunId || null,
       budgetApproved: req.body.budgetApproved === true,
+      resourceIdempotencyKey: req.body.resourceIdempotencyKey || null,
+      estimatedCostUsd:
+        typeof req.body.estimatedCostUsd === 'number' ? req.body.estimatedCostUsd : null,
     });
     return res.status(result.allowed ? 200 : 403).json({ success: result.allowed, ...result });
   })
@@ -130,6 +134,35 @@ router.post(
       now: req.body.now || undefined,
     });
     return res.json({ success: true, processed });
+  })
+);
+
+router.post(
+  [
+    '/schedules/:scheduleId/pause',
+    '/schedules/:scheduleId/resume',
+    '/schedules/:scheduleId/cancel',
+  ],
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    try {
+      const schedule = await transitionWave8AgentSchedule({
+        organizationId,
+        actorUserId: userId,
+        scheduleId: String(req.params.scheduleId),
+        action: req.path.endsWith('/pause')
+          ? 'pause'
+          : req.path.endsWith('/resume')
+            ? 'resume'
+            : 'cancel',
+      });
+      return res.json({ success: true, schedule });
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'schedule_transition_failed';
+      const status = code === 'schedule_not_found' ? 404 : 409;
+      return res.status(status).json({ success: false, code });
+    }
   })
 );
 

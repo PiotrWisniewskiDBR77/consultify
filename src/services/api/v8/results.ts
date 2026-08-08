@@ -105,11 +105,7 @@ export type V8ReconciliationStatus = 'pending' | 'reconciled' | 'disputed' | 'es
 
 /** O4.7 — market-vs-execution decomposition of a realized-vs-projected variance. */
 export type V8PostMortemVerdict =
-  | 'market-driven'
-  | 'execution-driven'
-  | 'mixed'
-  | 'on-plan'
-  | 'undetermined';
+  'market-driven' | 'execution-driven' | 'mixed' | 'on-plan' | 'undetermined';
 
 export interface V8ReconciliationPostMortem {
   projected: number;
@@ -667,13 +663,7 @@ export interface V8ResultsKpiForecastResponse {
 
 export interface V8ResultsRcaHypothesis {
   category:
-    | 'measurement'
-    | 'adoption'
-    | 'scope'
-    | 'external'
-    | 'capacity'
-    | 'data-quality'
-    | string;
+    'measurement' | 'adoption' | 'scope' | 'external' | 'capacity' | 'data-quality' | string;
   hypothesis: string;
   confidence: number;
 }
@@ -969,6 +959,48 @@ export const V8ResultsApi = {
       `/results/recovery-cards/${encodeURIComponent(cardId)}/escalate`,
       payload
     ),
+  listRecoveryExperiments: (cardId: string) =>
+    v8Get<V8ResultsRecoveryExperiment[]>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/experiments`
+    ),
+  createRecoveryExperiment: (
+    cardId: string,
+    payload: V8ResultsCreateRecoveryExperimentPayload,
+    idempotencyKey: string
+  ) =>
+    v8Post<V8ResultsRecoveryExperiment>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/experiments`,
+      payload,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
+  reviewRecoveryExperiment: (cardId: string, experimentId: string, approved: boolean) =>
+    v8Post<V8ResultsRecoveryExperiment>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/experiments/${encodeURIComponent(experimentId)}/review`,
+      { approved }
+    ),
+  decideRecoveryExperiment: (
+    cardId: string,
+    experimentId: string,
+    payload: {
+      verdict: V8ResultsRecoveryExperimentVerdict;
+      evidence: string;
+      decision: V8ResultsRecoveryExperimentDecision;
+    }
+  ) =>
+    v8Post<V8ResultsRecoveryExperiment>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/experiments/${encodeURIComponent(experimentId)}/verdict`,
+      payload
+    ),
+  confirmRecoveryCause: (
+    cardId: string,
+    payload: { cause: string; evidence: string },
+    idempotencyKey: string
+  ) =>
+    v8Post<{ id: string; confirmedCause: string }>(
+      `/results/recovery-cards/${encodeURIComponent(cardId)}/confirmed-cause`,
+      payload,
+      { extraHeaders: { 'Idempotency-Key': idempotencyKey } }
+    ),
   // RES-10 — Results-owned scorecards ("karty KPI"). Never confuse with the
   // Initiatives goals contract (src/services/api.ts `goals*`).
   getScorecards: () => v8Get<V8ResultsScorecardListResponse>('/results/scorecards'),
@@ -1018,22 +1050,46 @@ export type V8ResultsRecoveryCardPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICA
 export type V8ResultsRecoveryCardLifecycleStatus = 'DRAFT' | 'ACTIVE' | 'UNDER_REVIEW' | 'CLOSED';
 export type V8ResultsRecoveryCardDecision = 'CONTINUE' | 'ESCALATE' | 'CLOSE';
 export type V8ResultsRecoveryEffectivenessStatus =
-  | 'NOT_YET_DUE'
-  | 'PENDING_ASSESSMENT'
-  | 'ASSESSED';
+  'NOT_YET_DUE' | 'PENDING_ASSESSMENT' | 'ASSESSED';
 export type V8ResultsRecoveryEffectivenessRating =
-  | 'EFFECTIVE'
-  | 'PARTIALLY_EFFECTIVE'
-  | 'INEFFECTIVE';
+  'EFFECTIVE' | 'PARTIALLY_EFFECTIVE' | 'INEFFECTIVE';
 export type V8ResultsRecoveryActionType = 'IMMEDIATE' | 'DURABLE';
 export type V8ResultsRecoveryActionStatus = 'OPEN' | 'DONE' | 'CANCELLED';
 export type V8ResultsRecoveryTaskLinkStatus = 'NONE' | 'PENDING' | 'LINKED' | 'LINK_FAILED';
 export type V8ResultsRecoveryCheckpointStatus = 'PENDING' | 'MET' | 'MISSED' | 'CANCELLED';
+export type V8ResultsRecoveryExperimentVerdict = 'SUPPORTED' | 'NOT_SUPPORTED' | 'INCONCLUSIVE';
+export type V8ResultsRecoveryExperimentDecision = 'CONTINUE' | 'REVISE' | 'ESCALATE' | 'CLOSE';
+export interface V8ResultsRecoveryExperiment {
+  id: string;
+  recoveryCardId: string;
+  version: number;
+  intervention: string;
+  comparison: string | null;
+  baseline: string;
+  measurementWindow: string;
+  successCriterion: string;
+  ownerUserId: string;
+  remeasureAt: string;
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  approvedBy: string | null;
+  approvedAt: string | null;
+  verdict: V8ResultsRecoveryExperimentVerdict | null;
+  verdictEvidence: string | null;
+  decision: V8ResultsRecoveryExperimentDecision | null;
+  createdBy: string;
+  createdAt: string;
+}
+export interface V8ResultsCreateRecoveryExperimentPayload {
+  intervention: string;
+  comparison?: string | null;
+  baseline: string;
+  measurementWindow: string;
+  successCriterion: string;
+  ownerUserId: string;
+  remeasureAt: string;
+}
 export type V8ResultsCloseRecoveryCardBlockedReason =
-  | 'STILL_BREACHING'
-  | 'STALE_MEASUREMENT'
-  | 'MISSING_EVIDENCE'
-  | 'VERSION_CONFLICT';
+  'STILL_BREACHING' | 'STALE_MEASUREMENT' | 'MISSING_EVIDENCE' | 'VERSION_CONFLICT';
 
 export interface V8ResultsKpiRecoveryAction {
   id: string;

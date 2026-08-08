@@ -12,6 +12,7 @@ import TaskExecutor from './actionExecutors/taskExecutor.js';
 const db = getDatabase(); // Assuming this is the new way to get the db instance
 // New imports from the instruction
 import ActionProposalEngine from './actionProposalEngine.js';
+import { assertLegacyNoncanonicalExecution } from './legacyNoncanonicalExecution.js';
 
 /**
  * ActionExecution interface for type safety
@@ -67,6 +68,7 @@ const ActionExecutionAdapter = {
 
     const correlationId = decision.correlation_id || `corr - ${uuidv4()} `;
     const orgId = decision.organization_id;
+    await assertLegacyNoncanonicalExecution({ entrypoint: 'action_execution_adapter', organizationId: orgId, entityId: decisionId, payloads: [decision, decision.proposal_snapshot, options] });
 
     // 2. Validate state
     const validStates = ['APPROVED', 'MODIFIED'];

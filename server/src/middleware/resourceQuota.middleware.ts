@@ -54,7 +54,7 @@ const responseAlreadyCommitted = (res: Response): boolean =>
 const invokeNext = (next: NextFunction, phase: string): void => {
   if (typeof next !== 'function') return;
   try {
-    const result = next();
+    const result: unknown = next();
     if (result && typeof (result as PromiseLike<unknown>).then === 'function') {
       void Promise.resolve(result as PromiseLike<unknown>).catch((error) => {
         logger.warn('[ResourceQuota] next() rejected', { phase, error });

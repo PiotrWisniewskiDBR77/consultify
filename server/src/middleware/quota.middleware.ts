@@ -32,13 +32,13 @@ interface UsageService {
     tokens: number,
     action: string,
     metadata: Record<string, unknown>
-  ) => Promise<void>;
+  ) => Promise<unknown>;
   recordStorageUsage: (
     orgId: string,
     bytes: number,
     action: string,
     metadata: Record<string, unknown>
-  ) => Promise<void>;
+  ) => Promise<unknown>;
 }
 
 interface QuotaInfo {

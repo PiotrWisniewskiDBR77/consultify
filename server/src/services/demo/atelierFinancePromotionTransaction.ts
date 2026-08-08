@@ -994,7 +994,7 @@ export async function runPinnedPromotionTransaction(
 
     // ---- plan, over the locked rows --------------------------------------
     const plan = await request.plan(read);
-    if (!plan.ok) return await rolledBack(plan.reason);
+    if (plan.ok === false) return await rolledBack(plan.reason);
 
     // ---- write -----------------------------------------------------------
     for (const write of plan.writes) {
@@ -1004,7 +1004,7 @@ export async function runPinnedPromotionTransaction(
 
     // ---- final read-back, same client, before COMMIT ---------------------
     const verdict = await request.verify(read);
-    if (!verdict.ok) {
+    if (verdict.ok === false) {
       return await rolledBack(
         `post-write read-back refused the promotion: ${verdict.reason ?? 'no reason given'}`
       );
@@ -1255,7 +1255,7 @@ export async function proveDecisiveReadsGoToPrimary(): Promise<{
   identity: PrimaryIdentity | null;
 }> {
   const outcome = await openDecisiveReadSession();
-  if (!outcome.ok) return { proven: false, reason: outcome.reason, identity: null };
+  if (outcome.ok === false) return { proven: false, reason: outcome.reason, identity: null };
   try {
     if (outcome.session.seam !== 'primary') {
       return {

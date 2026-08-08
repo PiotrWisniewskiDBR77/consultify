@@ -258,6 +258,31 @@ const CreateLinkageSchema = z.object({
   status: z.enum(['not_started', 'in_progress', 'complete']).optional().default('not_started'),
 });
 
+function toCanonicalEconomicsLinkage(input: z.infer<typeof CreateLinkageSchema>): {
+  linkageType: 'budget' | 'forecast' | 'actual' | 'variance';
+  status:
+    | 'not_started'
+    | 'local_only'
+    | 'linked_to_finance_model'
+    | 'linked_to_finance_scenario'
+    | 'linked_to_roi_tracking'
+    | 'stale_vs_finance_model';
+} {
+  // This additive endpoint predates the canonical Finance integration contract:
+  // its `linkageType` describes the referenced artifact, while the owner service
+  // stores the economic series kind. Legacy model/analysis/valuation/investment
+  // references are forward-looking projections; never pass their labels through
+  // to the owner and rely on an unsafe cast (the owner validates at runtime).
+  const linkageType = input.linkageType === 'budget' ? 'budget' : 'forecast';
+  const status =
+    input.status === 'complete'
+      ? 'linked_to_finance_model'
+      : input.status === 'in_progress'
+        ? 'local_only'
+        : 'not_started';
+  return { linkageType, status };
+}
+
 router.post(
   '/:initiativeId/economics-links',
   requireOrgRole('user'),
@@ -280,12 +305,12 @@ router.post(
     const { financeModelRef, linkageType, status } = req.body as z.infer<
       typeof CreateLinkageSchema
     >;
+    const canonical = toCanonicalEconomicsLinkage({ financeModelRef, linkageType, status });
     const linkage = await createEconomicsLinkage({
       organizationId: orgId,
       initiativeId,
       financeModelRef,
-      linkageType,
-      status,
+      ...canonical,
     });
     res.status(201).json({ linkage });
   })

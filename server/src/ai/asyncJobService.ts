@@ -29,6 +29,7 @@ const aiQueue: QueueType = aiQueueModule.default || aiQueueModule;
 
 import * as auditLogger from '../utils/auditLogger.js';
 import actionErrors from './actionErrors.js';
+import { assertLegacyNoncanonicalExecution } from './legacyNoncanonicalExecution.js';
 const { ACTION_ERROR_CODES, classifyError } = actionErrors;
 
 /**
@@ -197,13 +198,11 @@ const AsyncJobService = {
    * @param {string} [params.createdBy] - User ID who created the job
    * @returns {Promise<Object>} Created or existing job record
    */
-  enqueueActionExecution: async ({
-    decisionId,
-    organizationId,
-    correlationId,
-    priority = 'normal',
-    createdBy,
-  }: any) => {
+  enqueueActionExecution: async (params: any) => {
+    const { decisionId, organizationId, correlationId, priority = 'normal', createdBy } = params;
+    await assertLegacyNoncanonicalExecution({
+      entrypoint: 'async_job_service', organizationId, entityId: decisionId, payloads: [params],
+    });
     // Step 11.1 - Deduplication: Check for existing active job
     const existingJob = await AsyncJobService.findActiveJob(JOB_TYPES.EXECUTE_DECISION, decisionId);
     if (existingJob) {
@@ -296,14 +295,11 @@ const AsyncJobService = {
   /**
    * Enqueue a playbook step advance job with deduplication.
    */
-  enqueuePlaybookAdvance: async ({
-    runId,
-    stepId,
-    organizationId,
-    correlationId,
-    priority = 'normal',
-    createdBy,
-  }: any) => {
+  enqueuePlaybookAdvance: async (params: any) => {
+    const { runId, stepId, organizationId, correlationId, priority = 'normal', createdBy } = params;
+    await assertLegacyNoncanonicalExecution({
+      entrypoint: 'async_job_service', organizationId, entityId: runId, payloads: [params],
+    });
     const entityId = stepId || runId;
 
     // Step 11.1 - Deduplication

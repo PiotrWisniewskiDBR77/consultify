@@ -877,31 +877,64 @@ function renderTableBlock(block: DocumentBlock, ctx: RenderContext): (Table | Pa
   return [table, caption];
 }
 
-function renderImagePlaceholder(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
-  const value = (block.content ?? {}) as { caption?: string; alt?: string };
+function renderImageBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
+  const value = (block.content ?? {}) as {
+    caption?: string;
+    alt?: string;
+    dataBase64?: string;
+    mimeType?: string;
+    widthCm?: number;
+  };
   ctx.figureCounter.value += 1;
   const captionLabel = `Figure ${ctx.figureCounter.value}`;
   const description = value.caption ? asString(value.caption) : (value.alt ?? 'Image');
   const captionText = `${captionLabel} — ${description}`;
-  // We do not embed the image bytes in MVP-4 (image embedding is
-  // deferred to a later epic); we still surface the caption + a
-  // typographic placeholder so the visual flow + counter are correct.
-  const placeholder = new Paragraph({
-    style: DOCX_STYLE_IDS.CAPTION,
-    children: [
-      new TextRun({
-        text: `[${captionLabel} placeholder — image asset not yet embedded]`,
-        font: ctx.bodyFont,
-      }),
-    ],
-  });
+  const raw = typeof value.dataBase64 === 'string' ? value.dataBase64 : '';
+  const base64 = raw.includes(',') ? raw.slice(raw.indexOf(',') + 1) : raw;
+  let buffer: Buffer | null = null;
+  try {
+    if (base64) buffer = Buffer.from(base64, 'base64');
+  } catch {
+    buffer = null;
+  }
+  let visual: Paragraph;
+  if (buffer?.length && (value.mimeType === 'image/png' || value.mimeType === 'image/jpeg')) {
+    const widthPx = Math.round(Math.min(Math.max(value.widthCm ?? 15, 2), 16) * 37.7953);
+    let heightPx = Math.round(widthPx * 0.625);
+    try {
+      const size = imageSize(buffer);
+      if (size.width && size.height) heightPx = Math.round((widthPx * size.height) / size.width);
+    } catch {
+      // Preserve the safe 16:10 fallback when dimensions cannot be decoded.
+    }
+    visual = new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new ImageRun({
+          data: buffer,
+          transformation: { width: widthPx, height: Math.min(heightPx, 520) },
+          type: value.mimeType === 'image/png' ? 'png' : 'jpg',
+        }),
+      ],
+    });
+  } else {
+    visual = new Paragraph({
+      style: DOCX_STYLE_IDS.CAPTION,
+      children: [
+        new TextRun({
+          text: `[${captionLabel} placeholder — image bytes unavailable]`,
+          font: ctx.bodyFont,
+        }),
+      ],
+    });
+  }
   const captionChildren: TextRun[] = [new TextRun({ text: captionText, font: ctx.bodyFont })];
   if (block.sourceRef) captionChildren.push(...buildCitationRuns(ctx, block.sourceRef));
   const caption = new Paragraph({
     style: DOCX_STYLE_IDS.CAPTION,
     children: captionChildren,
   });
-  return [placeholder, caption];
+  return [visual, caption];
 }
 
 function renderChartBlock(block: DocumentBlock, ctx: RenderContext): Paragraph[] {
@@ -1025,7 +1058,7 @@ function renderBlock(block: DocumentBlock, ctx: RenderContext): (Paragraph | Tab
     case 'kpi_strip':
       return renderKpiStripBlock(block, ctx);
     case 'image':
-      return renderImagePlaceholder(block, ctx);
+      return renderImageBlock(block, ctx);
     case 'chart':
       return renderChartBlock(block, ctx);
     case 'footnote':
@@ -1076,6 +1109,22 @@ function renderSection(
 
 function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {}): Paragraph[] {
   const schema = ctx.schema;
+  const isPolish = schema.language.toLowerCase().startsWith('pl');
+  const documentTypeLabel = isPolish
+    ? ({ steering_committee_report: 'raport komitetu sterującego' }[schema.documentType] ??
+      schema.documentType.replace(/_/g, ' '))
+    : schema.documentType.replace(/_/g, ' ');
+  const densityLabel = isPolish
+    ? ({ detailed: 'szczegółowy', concise: 'zwięzły' }[schema.density] ?? schema.density)
+    : schema.density;
+  const confidentialityLabel = isPolish
+    ? ({
+        client_confidential: 'poufne dla klienta',
+        confidential: 'poufne',
+        internal: 'wewnętrzne',
+        public: 'publiczne',
+      }[schema.confidentiality] ?? schema.confidentiality)
+    : schema.confidentiality;
   // Slice E15.5.formatting.render — when the schema carries the
   // `coverPageDetailed` E15.5 substrate, only render the lines whose
   // `include*` flag is true. Default (no override) keeps the legacy
@@ -1107,16 +1156,23 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
   // explicitly disables. Status = `<density> · <type-language>` line;
   // confidentiality = the `· internal/restricted/...` tail.
   const subtitleParts: string[] = [];
-  subtitleParts.push(schema.documentType.replace(/_/g, ' '));
+  subtitleParts.push(documentTypeLabel);
   subtitleParts.push(schema.language.toUpperCase());
   if (includeStatus) {
-    subtitleParts.push(schema.density);
+    subtitleParts.push(densityLabel);
   }
   if (includeConfidentiality) {
-    subtitleParts.push(schema.confidentiality);
+    subtitleParts.push(confidentialityLabel);
   }
   const subtitle = subtitleParts.join(' · ');
-  const audience = schema.audience.length > 0 ? schema.audience.join(', ') : 'Internal';
+  const audience =
+    schema.audience.length > 0
+      ? schema.audience
+          .map((item) => (isPolish && item === 'steering_committee' ? 'komitet sterujący' : item))
+          .join(', ')
+      : isPolish
+        ? 'Wewnętrzne'
+        : 'Internal';
   const generatedAt = new Date(schema.updatedAt || schema.createdAt || Date.now())
     .toISOString()
     .slice(0, 10);
@@ -1155,7 +1211,7 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `Audience: ${audience}`,
+            text: `${isPolish ? 'Odbiorcy' : 'Audience'}: ${audience}`,
             font: ctx.bodyFont,
           }),
         ],
@@ -1165,7 +1221,7 @@ function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {
         alignment: AlignmentType.CENTER,
         children: [
           new TextRun({
-            text: `Generated: ${generatedAt}`,
+            text: `${isPolish ? 'Wygenerowano' : 'Generated'}: ${generatedAt}`,
             font: ctx.bodyFont,
           }),
           // Hard page break — keeps the cover on its own page so the
@@ -1237,9 +1293,12 @@ function buildCoverLogoParagraph(
  * The terminal page break keeps body content on its own page.
  */
 function renderTocBlock(ctx: RenderContext): unknown[] {
+  const isPolish = ctx.schema.language.toLowerCase().startsWith('pl');
   const heading = new Paragraph({
     style: DOCX_STYLE_IDS.TOC_HEADING,
-    children: [new TextRun({ text: 'Table of Contents', font: ctx.headingFont })],
+    children: [
+      new TextRun({ text: isPolish ? 'Spis treści' : 'Table of Contents', font: ctx.headingFont }),
+    ],
   });
   // Slice E15.5.formatting.render — honor `tocConfig.maxDepth` when
   // the schema carries the E15.5 substrate. Default stays `1-3`
@@ -1276,10 +1335,16 @@ function renderTocBlock(ctx: RenderContext): unknown[] {
 
 function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
   const schema = ctx.schema;
+  const isPolish = schema.language.toLowerCase().startsWith('pl');
   const heading = new Paragraph({
     style: DOCX_STYLE_IDS.HEADING1,
     heading: HeadingLevel.HEADING_1,
-    children: [new TextRun({ text: 'Sources & traceability', font: ctx.headingFont })],
+    children: [
+      new TextRun({
+        text: isPolish ? 'Źródła i identyfikowalność' : 'Sources & traceability',
+        font: ctx.headingFont,
+      }),
+    ],
   });
   if (schema.sourceRefs.length === 0) {
     return [
@@ -1288,7 +1353,9 @@ function renderSources(ctx: RenderContext): (Paragraph | Table)[] {
         style: DOCX_STYLE_IDS.ASSUMPTION_BODY,
         children: [
           new TextRun({
-            text: 'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.',
+            text: isPolish
+              ? 'Nie dołączono źródeł. Merytoryczne bloki treści oznaczono jako założenia i przed dystrybucją do klienta wymagają pakietu źródłowego.'
+              : 'No sources attached. Substantive content blocks are flagged as assumptions and require a source pack before client distribution.',
             font: ctx.bodyFont,
           }),
         ],
@@ -1391,9 +1458,18 @@ export async function renderDocumentSchemaToDocxBuffer(
         new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont })
       );
     }
+    const confidentialityLabel = schema.language.toLowerCase().startsWith('pl')
+      ? ({
+          public: 'publiczne',
+          internal: 'wewnętrzne',
+          confidential: 'poufne',
+          client_confidential: 'poufne — tylko dla klienta',
+          restricted: 'zastrzeżone',
+        }[schema.confidentiality] ?? schema.confidentiality.replace(/_/g, ' '))
+      : schema.confidentiality.replace(/_/g, ' ');
     footerRuns.push(
       new TextRun({
-        text: schema.confidentiality.replace(/_/g, ' '),
+        text: confidentialityLabel,
         size: 16,
         color: DOCX_PALETTE.faint,
         font: ctx.bodyFont,
@@ -1444,9 +1520,15 @@ export async function renderDocumentSchemaToDocxBuffer(
         }
       }
     } else {
+      const defaultPageLabel = schema.language.toLowerCase().startsWith('pl') ? 'Strona ' : 'Page ';
       footerRuns.push(
         new TextRun({ text: '   |   ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
-        new TextRun({ text: 'Page ', size: 16, color: DOCX_PALETTE.faint, font: ctx.bodyFont }),
+        new TextRun({
+          text: defaultPageLabel,
+          size: 16,
+          color: DOCX_PALETTE.faint,
+          font: ctx.bodyFont,
+        }),
         new TextRun({
           children: [PageNumber.CURRENT],
           size: 16,
