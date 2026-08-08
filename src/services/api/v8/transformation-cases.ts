@@ -967,6 +967,11 @@ export const TransformationCasesApi = {
     v8Get<ProjectTeamBlueprintDto>(
       `/transformation-cases/${encodeURIComponent(transformationCaseId)}/team-blueprints/current`
     ),
+  bindProject: (transformationCaseId: string, projectId: string) =>
+    v8Post<TransformationCaseDto>(
+      `/transformation-cases/${encodeURIComponent(transformationCaseId)}/bind-project`,
+      { projectId }
+    ),
   proposeProjectTeam: (transformationCaseId: string, body: unknown, idempotencyKey: string) =>
     v8Post<unknown>(
       `/transformation-cases/${encodeURIComponent(transformationCaseId)}/team-blueprints`,

@@ -1427,6 +1427,89 @@ export async function getTransformationCase(
   return row ? rowToCase(row) : null;
 }
 
+export async function bindTransformationCaseProject(params: {
+  transformationCaseId: string;
+  organizationId: string;
+  actorUserId: string;
+  projectId: string;
+}): Promise<TransformationCase> {
+  const projectId = params.projectId.trim();
+  if (!projectId) {
+    throw new TransformationCaseOperationError(
+      'TRANSFORMATION_CASE_PROJECT_REQUIRED',
+      400,
+      'Project ID is required'
+    );
+  }
+
+  await withPgTransaction(async (client) => {
+    const result = await client.query<CaseRow>(
+      `SELECT * FROM transformation_cases
+       WHERE transformation_case_id = ? AND organization_id = ? FOR UPDATE`,
+      [params.transformationCaseId, params.organizationId]
+    );
+    const current = result.rows[0];
+    if (!current) {
+      throw new TransformationCaseOperationError(
+        'TRANSFORMATION_CASE_NOT_FOUND',
+        404,
+        'Transformation Case not found'
+      );
+    }
+    if (current.project_id && current.project_id !== projectId) {
+      throw new TransformationCaseOperationError(
+        'TRANSFORMATION_CASE_PROJECT_ALREADY_BOUND',
+        409,
+        'Transformation Case is already bound to another project'
+      );
+    }
+    if (current.project_id === projectId) return;
+
+    const project = await client.query<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ? FOR SHARE`,
+      [projectId, params.organizationId]
+    );
+    if (!project.rows[0]) {
+      throw new TransformationCaseOperationError(
+        'TRANSFORMATION_CASE_PROJECT_NOT_FOUND',
+        404,
+        'Project not found'
+      );
+    }
+
+    await client.query(
+      `UPDATE transformation_cases SET project_id = ?, updated_at = NOW()
+       WHERE transformation_case_id = ? AND organization_id = ?`,
+      [projectId, params.transformationCaseId, params.organizationId]
+    );
+    await client.query(
+      `UPDATE v8_context_snapshots SET project_id = ?
+       WHERE snapshot_id = ? AND organization_id = ?`,
+      [projectId, current.context_snapshot_id, params.organizationId]
+    );
+    await client.query(
+      `INSERT INTO transformation_case_audit_events (
+         audit_event_id, transformation_case_id, organization_id, plan_id, plan_version,
+         event_type, actor_user_id, correlation_id, payload_digest, detail_json, created_at
+       ) VALUES (?, ?, ?, ?, ?, 'transformation_case.project_bound', ?, NULL, ?, ?::jsonb, NOW())`,
+      [
+        uuidv4(),
+        current.transformation_case_id,
+        current.organization_id,
+        current.active_plan_id,
+        current.version,
+        params.actorUserId,
+        sha256Json({ projectId }),
+        JSON.stringify({ projectId, contextSnapshotId: current.context_snapshot_id }),
+      ]
+    );
+  });
+
+  const bound = await getTransformationCase(params.transformationCaseId, params.organizationId);
+  if (!bound) throw new Error('Bound Transformation Case is not readable');
+  return bound;
+}
+
 export async function listTransformationCases(
   organizationId: string,
   options: {

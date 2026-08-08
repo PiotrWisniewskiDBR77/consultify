@@ -2147,8 +2147,12 @@ export const TransformationCasesPanel: React.FC<{
               <ProjectTeamCard
                 caseId={item.transformationCaseId}
                 caseVersion={item.version}
+                projectId={item.projectId}
                 currentUserId={currentUserId}
                 isPolish={isPolish}
+                onProjectBound={async () => {
+                  await loadCases();
+                }}
               />
               {canonicalRuntime ? (
                 <div

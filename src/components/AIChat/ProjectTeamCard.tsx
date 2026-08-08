@@ -7,16 +7,32 @@ import {
 export const ProjectTeamCard: React.FC<{
   caseId: string;
   caseVersion: number;
+  projectId: string | null;
   currentUserId: string | null;
   isPolish: boolean;
-}> = ({ caseId, caseVersion, currentUserId, isPolish }) => {
+  onProjectBound?: () => Promise<void> | void;
+}> = ({ caseId, caseVersion, projectId, currentUserId, isPolish, onProjectBound }) => {
   const [team, setTeam] = useState<ProjectTeamBlueprintDto | null>(null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState<string | null>(null);
   const [sponsor, setSponsor] = useState(currentUserId ?? ''),
+    [projectInput, setProjectInput] = useState(projectId ?? ''),
     [humanId, setHumanId] = useState(''),
     [humanName, setHumanName] = useState(''),
     [agentBudget, setAgentBudget] = useState('0');
+  useEffect(() => setProjectInput(projectId ?? ''), [projectId]);
+  const bindProject = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await TransformationCasesApi.bindProject(caseId, projectInput);
+      await onProjectBound?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Project binding failed');
+    } finally {
+      setBusy(false);
+    }
+  };
   const load = async () => {
     try {
       setTeam(await TransformationCasesApi.getProjectTeam(caseId));
@@ -137,6 +153,25 @@ export const ProjectTeamCard: React.FC<{
           ? 'Teresa proponuje ludzi i agentów; UNKNOWN wymaga odpowiedzi przed zatwierdzeniem.'
           : 'Teresa proposes humans and agents; UNKNOWN requires an answer before approval.'}
       </p>
+      {!projectId && (
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            aria-label={isPolish ? 'ID projektu dla Case' : 'Project ID for Case'}
+            value={projectInput}
+            onChange={(e) => setProjectInput(e.target.value)}
+            placeholder={isPolish ? 'ID istniejącego projektu' : 'Existing project ID'}
+            className="min-w-0 flex-1 rounded border border-c-border bg-c-bg p-2 text-xs"
+          />
+          <button
+            type="button"
+            disabled={busy || !projectInput.trim()}
+            onClick={() => void bindProject()}
+            className="rounded border border-c-border px-3 py-2 text-xs text-c-text"
+          >
+            {isPolish ? 'Przypnij projekt' : 'Bind project'}
+          </button>
+        </div>
+      )}
       {!team && (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <input
@@ -169,7 +204,7 @@ export const ProjectTeamCard: React.FC<{
             className="rounded border border-c-border bg-c-bg p-2 text-xs"
           />
           <button
-            disabled={busy}
+            disabled={busy || !projectId}
             onClick={() => void propose()}
             className="rounded bg-c-text px-3 py-2 text-xs text-c-bg hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
           >

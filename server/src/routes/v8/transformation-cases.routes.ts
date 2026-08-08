@@ -1773,6 +1773,46 @@ router.get(
   })
 );
 
+router.post(
+  '/:transformationCaseId/bind-project',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const context = getV8Context(req);
+    const transformationCaseId = String(req.params.transformationCaseId || '').trim();
+    const projectId = String(req.body?.projectId || '').trim();
+    const current = await transformationCaseService.getTransformationCase(
+      transformationCaseId,
+      context.organizationId
+    );
+    if (!current || !(await canSeeCase(current, context))) {
+      return res.status(404).json({ code: 'TRANSFORMATION_CASE_NOT_FOUND' });
+    }
+    if (
+      !projectId ||
+      !(await canUseProject({
+        projectId,
+        organizationId: context.organizationId,
+        userId: context.userId,
+        isSuperAdmin: context.isSuperAdmin,
+      }))
+    ) {
+      return res.status(404).json({ code: 'TRANSFORMATION_CASE_PROJECT_NOT_FOUND' });
+    }
+    try {
+      const data = await transformationCaseService.bindTransformationCaseProject({
+        transformationCaseId,
+        organizationId: context.organizationId,
+        actorUserId: context.userId,
+        projectId,
+      });
+      return res.json({ data, meta: { version: 'v8' } });
+    } catch (error) {
+      const handled = errorResponse(error, res);
+      if (handled) return handled;
+      throw error;
+    }
+  })
+);
+
 router.get(
   '/:transformationCaseId/runtime',
   asyncHandler(async (req: AuthRequest, res: Response) => {
