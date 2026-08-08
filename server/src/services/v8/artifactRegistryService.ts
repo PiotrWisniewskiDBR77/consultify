@@ -28,7 +28,9 @@ import {
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { all as pooledAll, get as pooledGet, run as pooledRun } from '../../utils/DbPromise.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 import type {
@@ -62,6 +64,50 @@ import {
   updateOperationContractLinks,
 } from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
+
+const artifactRegistryTransaction = createPinnedClientContext('artifact_registry');
+
+export function withArtifactRegistryClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return artifactRegistryTransaction.withClient(client, fn);
+}
+
+type PooledQueryOptions = { timeout?: number; fallback?: boolean };
+
+async function dbAll<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T[]> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows || [];
+  return pooledAll<T>(sql, params, options);
+}
+
+async function dbGet<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T | undefined> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows[0];
+  return pooledGet<T>(sql, params, options);
+}
+
+async function dbRun(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) {
+    const result = await pinned.query(sql, params);
+    return { success: true, changes: result.rowCount ?? 0 };
+  }
+  return pooledRun(sql, params, options);
+}
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
