@@ -719,6 +719,7 @@ function blocksForTemplateIntent(
         },
       ];
     case 'comparison':
+      const comparisonFacts = briefLines.slice(0, 3);
       return [
         heading,
         paragraph,
@@ -726,9 +727,11 @@ function blocksForTemplateIntent(
           type: 'smart_layout',
           content: {
             layoutType: '3col',
-            items: ['Defer', 'Pilot', 'Scale'].map((scenario) => ({
+            items: ['Evidence', 'Economics', 'Decision'].map((scenario, index) => ({
               title: scenario,
-              description: `Compare value, investment, time to impact and risk for ${scenario.toLowerCase()}.`,
+              description:
+                comparisonFacts[index] ||
+                'Define the evidence, accountable owner and decision threshold.',
             })),
           },
         },
@@ -744,17 +747,17 @@ function blocksForTemplateIntent(
               {
                 date: '0–3',
                 title: 'Mobilise',
-                description: 'Confirm baseline, owners and controls.',
+                description: briefLines[0] || 'Confirm baseline, owners and controls.',
               },
               {
                 date: '4–9',
                 title: 'Prove',
-                description: 'Deliver priority use cases and validate value.',
+                description: briefLines[1] || 'Deliver priority use cases and validate value.',
               },
               {
                 date: '10–18',
                 title: 'Scale',
-                description: 'Expand proven automation and lock in benefits.',
+                description: briefLines[2] || 'Expand proven automation and lock in benefits.',
               },
             ],
           },
@@ -764,7 +767,7 @@ function blocksForTemplateIntent(
           : []),
       ];
     case 'risk_management':
-      const risks = labelledList(briefLines, /^(?:top\s+)?risks?\s*[:—–=-]/i);
+      const risks = labelledList(briefLines, /^(?:(?:top|key)\s+)?risks?\s*[:—–=-]/i);
       const mitigations = labelledList(briefLines, /^mitigations?\s*[:—–=-]/i);
       return [
         heading,
@@ -846,8 +849,13 @@ function blocksForTemplateIntent(
       return [
         heading,
         paragraph,
-        ...(hints.length > 1
-          ? [{ type: 'bullet_list', content: { items: hints.slice(1, 6) } }]
+        ...(briefLines.length > 1 || hints.length > 1
+          ? [
+              {
+                type: 'bullet_list',
+                content: { items: (briefLines.length > 1 ? briefLines : hints).slice(1, 6) },
+              },
+            ]
           : []),
       ];
   }
@@ -879,7 +887,24 @@ function briefLinesForOutlineItem(
     const lower = line.toLowerCase();
     return keywords.some((keyword) => lower.includes(keyword));
   });
-  if (matched.length > 0) return matched.slice(0, 5);
+  if (matched.length > 0) {
+    return matched
+      .map((line, position) => {
+        const lower = line.toLowerCase();
+        const keywordScore = keywords.reduce(
+          (score, keyword, keywordIndex) =>
+            score + (lower.includes(keyword) ? keywords.length - keywordIndex : 0),
+          0
+        );
+        const evidencePenalty = /do not invent|evidence needed|tbd|pending evidence/i.test(line)
+          ? 20
+          : 0;
+        return { line, score: keywordScore - evidencePenalty, position };
+      })
+      .sort((a, b) => b.score - a.score || a.position - b.position)
+      .slice(0, 5)
+      .map(({ line }) => line);
+  }
 
   // Custom intents and titles are allowed.  When no semantic keyword is
   // available, distribute the brief deterministically so every slide still
