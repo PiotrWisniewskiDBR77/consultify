@@ -117,10 +117,12 @@ const BS_LINES = [
   'PPE_GROSS',
   'ACCUM_DEPRECIATION',
   'PPE_NET',
+  'OTHER_ASSETS',
   'TOTAL_ASSETS',
   'AP',
   'CURRENT_LIABILITIES',
   'LONG_TERM_DEBT',
+  'OTHER_LIABILITIES',
   'TOTAL_LIABILITIES',
   'EQUITY_CAPITAL',
   'RETAINED_EARNINGS',
@@ -216,6 +218,19 @@ function firstNonZero(map: Map<string, number>, codes: string[]): number {
   return 0;
 }
 
+function sumAbsoluteCodes(map: Map<string, number>, codes: string[]): number {
+  return codes.reduce((sum, code) => sum + Math.abs(numberOrZero(map.get(code))), 0);
+}
+
+function latestPeriodRows<T extends { period_label?: string | null }>(rows: T[]): T[] {
+  const ranked = rows
+    .map((row) => ({ row, year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0) }))
+    .filter((entry) => entry.year > 0);
+  if (ranked.length === 0) return rows;
+  const latestYear = Math.max(...ranked.map((entry) => entry.year));
+  return ranked.filter((entry) => entry.year === latestYear).map((entry) => entry.row);
+}
+
 function mergeAssumptions(
   seeded: Record<string, any>,
   incoming?: Record<string, any>
@@ -235,8 +250,8 @@ function mergeAssumptions(
 
 async function loadSeedValueRows(
   statementIds: string[]
-): Promise<Array<{ line_code: string; value: number }>> {
-  const rowsFromSnapshots: Array<{ line_code: string; value: number }> = [];
+): Promise<Array<{ line_code: string; value: number; period_label?: string | null }>> {
+  const rowsFromSnapshots: Array<{ line_code: string; value: number; period_label?: string | null }> = [];
   let snapshotCoverage = 0;
 
   for (const statementId of statementIds) {
@@ -252,22 +267,24 @@ async function loadSeedValueRows(
       rowsFromSnapshots.push({
         line_code: lineCode,
         value: numberOrZero(value?.value),
+        period_label: value?.periodLabel || value?.evidenceJson?.periodLabel || null,
       });
     }
   }
 
   if (snapshotCoverage === statementIds.length && rowsFromSnapshots.length > 0) {
-    return rowsFromSnapshots;
+    return latestPeriodRows(rowsFromSnapshots);
   }
 
   const placeholders = statementIds.map(() => '?').join(',');
-  return (await dbAll<any>(
-    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value
+  const rows = (await dbAll<any>(
+    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value, fsv.period_label
      FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id IN (${placeholders})`,
     statementIds
-  )) as Array<{ line_code: string; value: number }>;
+  )) as Array<{ line_code: string; value: number; period_label?: string | null }>;
+  return latestPeriodRows(rows);
 }
 
 async function buildSeededAssumptionsFromStatement(
@@ -315,7 +332,8 @@ async function buildSeededAssumptionsFromStatement(
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
   const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
-  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PPE_GROSS']);
+  const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
+  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
   const inventory = firstNonZero(valuesByCode, ['INVENTORY']);
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
@@ -328,11 +346,30 @@ async function buildSeededAssumptionsFromStatement(
     throw new Error(`Statement missing critical lines: ${missingCritical.join(', ')}`);
   }
 
+  const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
+  const ebit = firstNonZero(valuesByCode, ['EBIT']);
+  const directOpex = firstNonZero(valuesByCode, ['OPEX']);
+  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
+    'RND',
+    'SGA',
+    'SELLING_EXPENSES',
+    'GENERAL_ADMIN_EXPENSES',
+    'OTHER_OPEX',
+  ]);
+  const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
+  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
+    'DEPRECIATION_PPE_CF',
+    'DEPRECIATION_ROU_CF',
+    'DEPRECIATION_INTANGIBLES_CF',
+    'DEPRECIATION_AMORTIZATION_CF',
+  ]);
+  const otherAssets = totalAssets - cash - ar - inventory - ppe;
+  const otherLiabilities = totalLiabilities - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
-    opex: Math.abs(firstNonZero(valuesByCode, ['OPEX'])),
-    depreciation: Math.abs(firstNonZero(valuesByCode, ['DEPRECIATION'])),
+    opex: Math.abs(baselineOpex),
+    depreciation: Math.abs(baselineDepreciation),
     interest: Math.abs(firstNonZero(valuesByCode, ['INTEREST_EXPENSE'])),
     tax: Math.abs(firstNonZero(valuesByCode, ['TAX', 'TAX_EXPENSE'])),
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
@@ -354,6 +391,9 @@ async function buildSeededAssumptionsFromStatement(
       initialAP: ap,
       initialDebt: debt,
       initialEquity: equity,
+      sourceEquity: equity,
+      initialOtherAssets: otherAssets,
+      initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
       seedSource: {
@@ -416,7 +456,8 @@ async function buildSeededAssumptionsFromPack(
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
   const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
-  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PPE_GROSS']);
+  const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
+  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
   const inventory = firstNonZero(valuesByCode, ['INVENTORY']);
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
@@ -429,11 +470,30 @@ async function buildSeededAssumptionsFromPack(
     throw new Error(`Statement pack missing critical lines: ${missingCritical.join(', ')}`);
   }
 
+  const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
+  const ebit = firstNonZero(valuesByCode, ['EBIT']);
+  const directOpex = firstNonZero(valuesByCode, ['OPEX']);
+  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
+    'RND',
+    'SGA',
+    'SELLING_EXPENSES',
+    'GENERAL_ADMIN_EXPENSES',
+    'OTHER_OPEX',
+  ]);
+  const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
+  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
+    'DEPRECIATION_PPE_CF',
+    'DEPRECIATION_ROU_CF',
+    'DEPRECIATION_INTANGIBLES_CF',
+    'DEPRECIATION_AMORTIZATION_CF',
+  ]);
+  const otherAssets = totalAssets - cash - ar - inventory - ppe;
+  const otherLiabilities = totalLiabilities - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
-    opex: Math.abs(firstNonZero(valuesByCode, ['OPEX'])),
-    depreciation: Math.abs(firstNonZero(valuesByCode, ['DEPRECIATION'])),
+    opex: Math.abs(baselineOpex),
+    depreciation: Math.abs(baselineDepreciation),
     interest: Math.abs(firstNonZero(valuesByCode, ['INTEREST_EXPENSE'])),
     tax: Math.abs(firstNonZero(valuesByCode, ['TAX', 'TAX_EXPENSE'])),
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
@@ -458,6 +518,9 @@ async function buildSeededAssumptionsFromPack(
       initialAP: ap,
       initialDebt: debt,
       initialEquity: equity,
+      sourceEquity: equity,
+      initialOtherAssets: otherAssets,
+      initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
       seedSource: {
@@ -714,6 +777,8 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
   const initialAR = assumptions.initialAR ?? 0;
   const initialInventory = assumptions.initialInventory ?? 0;
   const initialAP = assumptions.initialAP ?? 0;
+  const initialOtherAssets = assumptions.initialOtherAssets ?? 0;
+  const initialOtherLiabilities = assumptions.initialOtherLiabilities ?? 0;
 
   // Track running BS balances
   let runningCash = initialCash;
@@ -881,11 +946,14 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.bs.PPE_GROSS = runningPPEGross;
     out.bs.ACCUM_DEPRECIATION = -runningAccumDepr;
     out.bs.PPE_NET = runningPPEGross - runningAccumDepr;
-    out.bs.TOTAL_ASSETS = out.bs.CURRENT_ASSETS + out.bs.PPE_NET;
+    out.bs.OTHER_ASSETS = initialOtherAssets;
+    out.bs.TOTAL_ASSETS = out.bs.CURRENT_ASSETS + out.bs.PPE_NET + out.bs.OTHER_ASSETS;
     out.bs.AP = runningAP;
     out.bs.CURRENT_LIABILITIES = runningAP;
     out.bs.LONG_TERM_DEBT = runningDebt;
-    out.bs.TOTAL_LIABILITIES = out.bs.CURRENT_LIABILITIES + runningDebt;
+    out.bs.OTHER_LIABILITIES = initialOtherLiabilities;
+    out.bs.TOTAL_LIABILITIES =
+      out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
     out.bs.EQUITY_CAPITAL = runningEquityCapital;
     out.bs.RETAINED_EARNINGS = runningRetainedEarnings;
     out.bs.TOTAL_EQUITY = runningEquityCapital + runningRetainedEarnings;
