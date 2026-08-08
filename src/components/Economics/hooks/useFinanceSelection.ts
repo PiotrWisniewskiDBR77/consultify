@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
+import { valuationDisplayMultiplier, valuationDisplayValue } from '@/utils/valuationMonetaryUnit';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
 import {
@@ -821,12 +822,14 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           ? JSON.parse(v.negotiation_pack)
           : v?.negotiation_pack;
       const sensitivity = results?.sensitivity || null;
+      const displayMultiplier = valuationDisplayMultiplier(results);
 
       if (dcf) {
         setValuationPreviewResults({
-          enterpriseValue: dcf.enterpriseValue != null ? Number(dcf.enterpriseValue) : null,
-          equityValue: dcf.equityValue != null ? Number(dcf.equityValue) : null,
+          enterpriseValue: valuationDisplayValue(dcf.enterpriseValue, displayMultiplier),
+          equityValue: valuationDisplayValue(dcf.equityValue, displayMultiplier),
           evEbitda: dcf.impliedMultiple != null ? Number(dcf.impliedMultiple) : null,
+          currency: String(v?.currency || results?.currency || ''),
         });
       } else {
         setValuationPreviewResults(null);
@@ -836,6 +839,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         advisory: advisory || null,
         negotiationPack: negotiationPack || null,
         sensitivity: sensitivity || null,
+        displayMultiplier,
       });
     } catch {
       setValuationPreviewResults(null);
