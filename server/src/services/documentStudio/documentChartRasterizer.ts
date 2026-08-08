@@ -71,7 +71,7 @@ class NapiChartCanvas {
     // eksport degraduje do placeholdera, mimo że w produkcji (bez jsdom
     // globali) renderowanie działa poprawnie. Wymuszamy `BasicPlatform`
     // jawnie, żeby zachowanie było identyczne pod Vitest i w produkcji.
-    const chart = new ChartJS(ctx as unknown as CanvasRenderingContext2D, {
+    const chart = new ChartJS(ctx as unknown as ConstructorParameters<typeof ChartJS>[0], {
       ...configuration,
       platform: ChartJSModule.BasicPlatform as unknown as ChartConfiguration['platform'],
     });

@@ -151,7 +151,10 @@ export const mintGeminiLiveEphemeralToken = async ({
     return {
       clientToken,
       tokenType: 'ephemeral',
-      expiresAt: typeof token.expireTime === 'string' ? token.expireTime : expiresAt,
+      expiresAt:
+        typeof (token as { expireTime?: unknown }).expireTime === 'string'
+          ? ((token as { expireTime?: unknown }).expireTime as string)
+          : expiresAt,
       newSessionExpiresAt,
     };
   } catch (error) {

@@ -250,8 +250,8 @@ async function collectVEvents(
       continue;
     }
 
-    for (const component of Object.values(parsed)) {
-      if (!component || component.type !== 'VEVENT') continue;
+    for (const component of Object.values(parsed) as unknown[]) {
+      if (!component || (component as { type?: string }).type !== 'VEVENT') continue;
       const vevent = component as VEvent;
       const uid = vevent.uid;
       if (!uid) continue;

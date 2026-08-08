@@ -16,9 +16,9 @@ import createDOMPurify from 'dompurify';
 import { NextFunction, Response, Router } from 'express';
 import fs from 'fs';
 // jsdom ships no bundled types and we deliberately avoid adding @types/jsdom as a
-// dependency; the only structural shape we use is `new JSDOM('').window`.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error -- no type declarations for 'jsdom' (intentionally not adding @types/jsdom)
+// dependency; the only structural shape we use is `new JSDOM('').window`. With
+// noImplicitAny disabled in tsconfig.build.json this resolves to an implicit
+// `any` import without needing a suppression comment.
 import { JSDOM } from 'jsdom';
 import multer from 'multer';
 import path from 'path';

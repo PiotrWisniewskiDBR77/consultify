@@ -9,6 +9,7 @@
 
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import type { VerifyOptions } from 'jsonwebtoken';
 
 import config from '../config/Config.js';
 import { get as dbGet } from '../utils/DbPromise.js';
@@ -59,7 +60,7 @@ const MAX_SUPERADMIN_AUTHORIZATION_HEADER_VALUES = 32;
 const SUPERADMIN_JWS_COMPACT_TOKEN_PATTERN = /^[A-Za-z0-9._-]+$/;
 const SUPERADMIN_TOKEN_CONTROL_CHARS = /[\u0000-\u001F\u007F]/;
 const SUPERADMIN_TOKEN_DISALLOWED_UNICODE = /[\u2028\u2029\uFEFF]/;
-const SUPERADMIN_JWT_VERIFY_OPTIONS: jwt.VerifyOptions = {
+const SUPERADMIN_JWT_VERIFY_OPTIONS: VerifyOptions = {
   algorithms: ['HS256'],
   clockTolerance: 30,
 };
@@ -296,7 +297,7 @@ export const verifySuperAdmin = async (
   }
 
   try {
-    const verifyOptions: jwt.VerifyOptions = {
+    const verifyOptions: VerifyOptions = {
       ...SUPERADMIN_JWT_VERIFY_OPTIONS,
       ...(jwtIssuer ? { issuer: jwtIssuer } : {}),
       ...(jwtAudience ? { audience: jwtAudience } : {}),

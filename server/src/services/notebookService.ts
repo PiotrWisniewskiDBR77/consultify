@@ -261,7 +261,7 @@ class NotebookService {
     // capture columns (the historical migration lives under never-ran/).
     // Keep the canonical ingest path compatible with both schemas instead of
     // making Note handoff fail after approval.
-    const notebookColumns = await getTableColumns('notebook_pages', { fallback: false });
+    const notebookColumns = await getTableColumns('notebook_pages');
     const values: Record<string, unknown> = {
       id,
       owner_user_id: userId,

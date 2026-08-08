@@ -12,6 +12,8 @@ import type { IDatabase } from '../database/IDatabase.js';
 import { getDatabase } from '../database/index.js';
 import logger from '../utils/Logger.js';
 import { parseMaybeJson } from '../utils/pgFlags.js';
+import { createPinnedClientContext } from '../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../utils/queryHelpers.js';
 import { upsertAssessmentReportForBuilder } from './assessmentReportBuilderLinkService.js';
 import * as artifactRegistryService from './v8/artifactRegistryService.js';
 
@@ -50,7 +52,11 @@ export type ReportSourceType =
   // discriminant. Kompozyt nad PROGRAM_3AXIS + istniejące read-modele (ryzyka,
   // decyzje, capacity, cycle-time) — patrz `programManagementReportsService.ts`.
   // sourceId = projectId|programId|organizationId (jak PROGRAM_3AXIS).
-  | 'PROGRAM_MANAGEMENT';
+  | 'PROGRAM_MANAGEMENT'
+  // U02 — Transformation final outputs. The native Report Builder artifact is the
+  // canonical, editable truth for the closing report; DOCX is only its export.
+  // sourceId = transformation_case_id (patrz transformationFinalOutputService.ts).
+  | 'TRANSFORMATION_CASE';
 export type ReportStatus =
   | 'DRAFT'
   | 'CONFIGURING'
@@ -382,7 +388,31 @@ async function resolveReportSourceRefs(
   return refs;
 }
 
+/**
+ * U02 — transaction pinning for the Report Builder owner module.
+ *
+ * An orchestrator that already owns a `withPgTransaction` client (today: the
+ * Transformation final-output publisher) donates it here, and every query below
+ * runs on that transaction instead of the pooled handle. Without a donated
+ * client the behaviour is byte-for-byte the previous pooled behaviour, so all
+ * existing callers are unaffected.
+ */
+const reportBuilderTransaction = createPinnedClientContext('report_builder');
+
+export function withReportBuilderClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return reportBuilderTransaction.withClient(client, fn);
+}
+
+export function isReportBuilderTransactionPinned(): boolean {
+  return reportBuilderTransaction.isPinned();
+}
+
 function queryAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const pinned = reportBuilderTransaction.current();
+  if (pinned) return pinned.query<T>(sql, params).then((result) => result.rows || []);
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err: Error | null, rows: T[]) => {
       if (err) reject(err);
@@ -392,6 +422,8 @@ function queryAll<T>(sql: string, params: unknown[] = []): Promise<T[]> {
 }
 
 function queryOne<T>(sql: string, params: unknown[] = []): Promise<T | null> {
+  const pinned = reportBuilderTransaction.current();
+  if (pinned) return pinned.query<T>(sql, params).then((result) => result.rows[0] ?? null);
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err: Error | null, row: T | null) => {
       if (err) reject(err);
@@ -404,6 +436,9 @@ function queryRun(
   sql: string,
   params: unknown[] = []
 ): Promise<{ changes: number; lastID: number }> {
+  const pinned = reportBuilderTransaction.current();
+  if (pinned)
+    return pinned.query(sql, params).then((result) => ({ changes: result.rowCount ?? 0, lastID: 0 }));
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (this: { changes: number; lastID: number }, err: Error | null) {
       if (err) reject(err);
@@ -749,6 +784,180 @@ export async function getTemplateForSource(
 /**
  * Create a new report from source
  */
+// ==========================================
+// U02 — NATIVE (DETERMINISTIC) REPORT CREATION
+// ==========================================
+
+export interface NativeReportSectionInput {
+  sectionKey: string;
+  sectionType: SectionType;
+  title: string;
+  orderIndex: number;
+  /** Already-rendered markdown. Deterministic: no template lookup, no LLM. */
+  content: string;
+  required?: boolean;
+  renderKind?: string;
+  sourceRefs?: ReportSourceRef[];
+}
+
+export interface CreateNativeReportParams {
+  organizationId: string;
+  projectId?: string | null;
+  sourceType: ReportSourceType;
+  sourceId: string;
+  sourceName?: string | null;
+  title: string;
+  description?: string | null;
+  reportType: string;
+  status: ReportStatus;
+  createdBy: string;
+  createdAt: string;
+  config?: Record<string, unknown>;
+  sourceRefs?: ReportSourceRef[];
+  sections: NativeReportSectionInput[];
+  /** Registry receipt is required by U02; callers may disable it for pure unit contracts. */
+  registerArtifact?: boolean;
+  contextSnapshotId?: string | null;
+  executionRunId?: string | null;
+  originSummary?: Record<string, unknown>;
+}
+
+export interface CreateNativeReportResult {
+  reportId: string;
+  sectionIds: string[];
+  registryArtifactId: string | null;
+}
+
+/**
+ * U02 — create a Report Builder artifact from a caller-supplied, deterministic
+ * section list.
+ *
+ * Deliberately NOT `createReport`: that path resolves a template, reads the
+ * source module (assessment/finance/…) and derives content, none of which is
+ * reproducible for a governed publication. Here the caller has already frozen
+ * the numeric truth (the Transformation facts snapshot), so the same facts must
+ * always yield the same rows.
+ *
+ * Every write goes through `queryRun`, so when the caller pinned a transaction
+ * via `withReportBuilderClient` the report, its sections and the registry
+ * receipt live or die with the caller's COMMIT. That is why this function has
+ * no compensating DELETEs: hand-rolled compensation is what a real transaction
+ * boundary replaces.
+ */
+export async function createNativeReport(
+  params: CreateNativeReportParams
+): Promise<CreateNativeReportResult> {
+  if (!params.organizationId) throw new Error('native_report_organization_required');
+  if (!params.sections.length) throw new Error('native_report_sections_required');
+
+  const reportId = uuidv4();
+  const now = params.createdAt;
+  const projectId = params.projectId ?? null;
+  const sourceRefs = params.sourceRefs && params.sourceRefs.length ? params.sourceRefs : null;
+
+  await queryRun(
+    `
+      INSERT INTO report_builder_reports (
+        id, organization_id, project_id, source_type, source_id, source_name, source_framework,
+        title, description, report_type, template_id, config_json, company_context_json, status,
+        created_by, created_at, updated_at, generated_at, version, source_refs_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+    `,
+    [
+      reportId,
+      params.organizationId,
+      projectId,
+      params.sourceType,
+      params.sourceId,
+      params.sourceName ?? null,
+      null,
+      params.title,
+      params.description ?? null,
+      params.reportType,
+      null,
+      params.config ? JSON.stringify(params.config) : null,
+      null,
+      params.status,
+      params.createdBy,
+      now,
+      now,
+      now,
+      sourceRefs ? JSON.stringify(sourceRefs) : null,
+    ]
+  );
+
+  const sectionIds: string[] = [];
+  for (const section of params.sections) {
+    const sectionId = uuidv4();
+    sectionIds.push(sectionId);
+    await queryRun(
+      `
+        INSERT INTO report_builder_sections (
+          id, report_id, section_key, section_type, title, order_index,
+          enabled, required, length, language, content_format,
+          generated_content, generated_at, render_kind, source_refs_json,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'medium', 'business', 'markdown', ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        sectionId,
+        reportId,
+        section.sectionKey,
+        section.sectionType,
+        section.title,
+        section.orderIndex,
+        true,
+        section.required ?? true,
+        section.content,
+        now,
+        section.renderKind ?? 'markdown',
+        section.sourceRefs && section.sourceRefs.length
+          ? JSON.stringify(section.sourceRefs)
+          : sourceRefs
+            ? JSON.stringify(sourceRefs)
+            : null,
+        now,
+        now,
+      ]
+    );
+  }
+
+  let registryArtifactId: string | null = null;
+  if (params.registerArtifact !== false) {
+    const artifact = await artifactRegistryService.registerArtifactOrigin({
+      organizationId: params.organizationId,
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: reportId,
+      titleSnapshot: params.title,
+      ownerUserId: params.createdBy,
+      createdBy: params.createdBy,
+      deliveryState: artifactRegistryService.mapReportStatusToDeliveryState(params.status),
+      visibilityScope: artifactRegistryService.deriveArtifactVisibilityScope({
+        outputType: 'report',
+        projectId,
+        ownerUserId: params.createdBy,
+      }),
+      projectId,
+      contextSnapshotId: params.contextSnapshotId ?? undefined,
+      executionRunId: params.executionRunId ?? undefined,
+      originSummary: {
+        sourceType: params.sourceType,
+        sourceId: params.sourceId,
+        reportType: params.reportType,
+        nativeStatus: params.status,
+        sourceTable: 'report_builder_reports',
+        ...(params.originSummary ?? {}),
+      },
+    });
+    if (!artifact) throw new Error('native_report_artifact_registration_failed');
+    registryArtifactId = artifact.artifactId;
+  }
+
+  return { reportId, sectionIds, registryArtifactId };
+}
+
 export async function createReport(params: CreateReportParams): Promise<{
   report: ReportRecord;
   sections: SectionRecord[];

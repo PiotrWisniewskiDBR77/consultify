@@ -2312,9 +2312,9 @@ router.post(
       // T7b-2 (2026-07-19): backupService is now a REAL implementation
       // (finding_42_self_import_wrappers_services_2026-07-15). The 503 catch below is genuine
       // fail-soft, no longer a guaranteed-dead self-import wrapper.
-      const BackupService = await import('../services/backupService.js').then(
+      const BackupService = (await import('../services/backupService.js').then(
         (m) => m.default || m
-      );
+      )) as typeof import('../services/backupService.js')['default'];
       const backup = await BackupService.createBackup(
         req.body?.type || 'full',
         req.body?.reason || 'superadmin_manual'

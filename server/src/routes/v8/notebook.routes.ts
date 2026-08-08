@@ -444,7 +444,7 @@ router.put(
       id: string;
       owner_user_id: string;
       organization_id: string;
-      updated_at: string;
+      updated_at: string | Date;
     }>(
       `SELECT id, owner_user_id, organization_id, updated_at
        FROM notebook_pages

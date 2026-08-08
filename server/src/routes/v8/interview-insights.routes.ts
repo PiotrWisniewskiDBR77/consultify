@@ -961,7 +961,7 @@ router.post(
         activeEvidence.length
           ? `\n\nEvidence (${activeEvidence.length}):\n${activeEvidence
               .slice(0, 8)
-              .map((p) => `- ${String(p.excerpt || p.source_id || '').slice(0, 240)}`)
+              .map((p) => `- ${String(p.capturedExcerpt || p.sourceRef || '').slice(0, 240)}`)
               .join('\n')}`
           : '',
       ]

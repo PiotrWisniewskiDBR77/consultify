@@ -501,7 +501,7 @@ export function requireProjectCapability(
       return;
     }
 
-    let access: unknown;
+    let access: Awaited<ReturnType<typeof resolveEffectiveAccess>> | undefined;
     try {
       access = await resolveEffectiveAccess({
         userId,
@@ -682,7 +682,7 @@ export function requireAnyProjectCapability(
       return;
     }
 
-    let access: unknown;
+    let access: Awaited<ReturnType<typeof resolveEffectiveAccess>> | undefined;
     try {
       access = await resolveEffectiveAccess({
         userId,

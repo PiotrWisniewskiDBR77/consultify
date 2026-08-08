@@ -545,7 +545,7 @@ router.post(
       // Verify the user's password before scheduling an irreversible account
       // deletion. Keeps this route in lockstep with the settings deletion routes.
       const passwordCheck = await verifyUserPassword(userId, password);
-      if (!passwordCheck.ok) {
+      if (passwordCheck.ok === false) {
         return res.status(passwordCheck.status).json({ error: passwordCheck.error });
       }
 

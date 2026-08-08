@@ -31,6 +31,8 @@ import {
   ensureDeckCommentsHydrated,
   getDeckCommentCounts,
   listDeckCommentThreads,
+  persistDeckCommentNow,
+  refreshDeckCommentsFromPersistence,
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
@@ -103,6 +105,7 @@ import {
   resolveDeckContentCoherence,
   type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
+import { canonicalizePresentationAutosaveDeck } from '../services/presentationDeckAutosaveCanonicalizer.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
@@ -147,6 +150,7 @@ import {
   type OperationsHealthAnomaly,
   type OperationsHealthReport,
 } from '../services/presentationOperationsHealthService.js';
+import { drawPresentationPdfFooter } from '../services/presentationPdfLayoutService.js';
 import {
   buildPresentationRuntimeRollup,
   type PresentationRuntimeEventRow,
@@ -177,6 +181,7 @@ import {
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
 import {
+  materializeTemplateVariableBrief,
   mapOutlineBlueprintToDeckSlides,
   validatePresentationCustomTemplate,
 } from '../services/presentationTemplateRuntimeService.js';
@@ -561,6 +566,12 @@ interface CurrentPptxExportDependencies {
   }) => Promise<void>;
 }
 
+// A successful deployment may contain exporter fixes while the persisted deck
+// version is unchanged. Files on the Railway volume pre-date the new process;
+// treat them as stale once per process lifetime so downloads pick up the current
+// renderer instead of serving bytes produced by an older release indefinitely.
+const pptxExporterStartedAtMs = Date.now();
+
 /** Ensure the downloadable bytes represent the current persisted deck version. */
 export async function ensureCurrentPptxExport(
   deck: any,
@@ -593,8 +604,11 @@ export async function ensureCurrentPptxExport(
 
   try {
     let fileExists = false;
+    let fileModifiedAtMs = 0;
     try {
-      fileExists = fs.statSync(exportPath).isFile();
+      const fileStat = fs.statSync(exportPath);
+      fileExists = fileStat.isFile();
+      fileModifiedAtMs = fileStat.mtimeMs;
     } catch {
       fileExists = false;
     }
@@ -602,7 +616,11 @@ export async function ensureCurrentPptxExport(
     const exportedVersion = Number.isInteger(Number(deck?.exported_version))
       ? Number(deck.exported_version)
       : null;
-    const isCurrent = fileExists && exportedVersion !== null && exportedVersion === deckVersion;
+    const isCurrent =
+      fileExists &&
+      exportedVersion !== null &&
+      exportedVersion === deckVersion &&
+      fileModifiedAtMs >= pptxExporterStartedAtMs;
     if (isCurrent) return { ...deck, export_path: exportPath };
 
     const deckDocument = normalizeDeckDocument(deck);
@@ -742,7 +760,30 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
 
 function toPublicDeckRow(row: any) {
   const full = normalizeDeckRow(row);
-  return Object.fromEntries(Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k)));
+  const publicRow = Object.fromEntries(
+    Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k))
+  ) as Record<string, any>;
+
+  // Give the public viewer the same canonical document used by the builder,
+  // rather than making it reconstruct a deck from a mixture of legacy row
+  // columns. Keep `deck_json` for backwards-compatible clients, but derive it
+  // from the exact same sanitized object so the two representations cannot
+  // drift. In particular, canonical deck documents carry tenant/author fields
+  // of their own; stripping only the database row leaked those values inside
+  // the JSON string.
+  const canonicalDeck = resolveDeckContentCoherence(row).document;
+  if (canonicalDeck) {
+    const {
+      organization_id: _organizationId,
+      created_by: _createdBy,
+      updated_by: _updatedBy,
+      ...publicDeck
+    } = canonicalDeck as any;
+    publicRow.deck = publicDeck;
+    publicRow.deck_json = JSON.stringify(publicDeck);
+  }
+
+  return publicRow;
 }
 
 function parseDeckPayload(row: any): any {
@@ -1347,6 +1388,9 @@ router.post(
           source: resolved.source,
           legacy: resolved.legacy,
           slideCount: resolved.outlineBlueprint.length,
+          variables: Array.isArray((resolved.customTemplate as any)?.variables)
+            ? (resolved.customTemplate as any).variables
+            : [],
         },
       });
     } catch (err) {
@@ -1388,7 +1432,7 @@ router.post(
     const useLlm = req.body?.useLlm === true;
     if (input.customTemplate !== undefined) {
       const validation = validatePresentationCustomTemplate(input.customTemplate);
-      if (!validation.ok) {
+      if (validation.ok === false) {
         return res
           .status(400)
           .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
@@ -1443,7 +1487,7 @@ router.post(
     // the read-back came back empty, so a rejected INSERT still looked like a
     // saved template.
     const planSettled = await settleTemplateWrite('template plan', id, orgId, insertAck);
-    if (!planSettled.ok) {
+    if (planSettled.ok === false) {
       logger.error('[Presentations] Template plan insert did not persist', {
         templateId: id,
         organizationId: orgId,
@@ -1518,6 +1562,59 @@ router.get(
   })
 );
 
+router.delete(
+  '/templates/:id',
+  asyncHandler(async (req, res) => {
+    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
+    const orgId = getOrgId(req);
+    const templateId = String(req.params.id || '');
+    const existing = await readBackOrgTemplate(templateId, orgId);
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    const lifecycleState = String(existing.lifecycle_state || 'draft');
+    if (lifecycleState !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: 'Only draft templates can be deleted.',
+        code: 'TEMPLATE_DELETE_REQUIRES_DRAFT',
+        lifecycleState,
+      });
+    }
+    if (existing.is_system === true || existing.is_system === 1) {
+      return res.status(403).json({
+        success: false,
+        error: 'System templates cannot be deleted.',
+        code: 'SYSTEM_TEMPLATE_DELETE_FORBIDDEN',
+      });
+    }
+    const result = await dbRun(
+      `DELETE FROM presentation_templates
+        WHERE id = ? AND organization_id = ?
+          AND COALESCE(lifecycle_state, 'draft') = 'draft'
+          AND COALESCE(is_system, FALSE) = FALSE`,
+      [templateId, orgId]
+    );
+    if (!result?.changes) {
+      return res.status(409).json({
+        success: false,
+        error: 'Draft changed before deletion. Refresh and try again.',
+        code: 'TEMPLATE_DELETE_CONFLICT',
+      });
+    }
+    try {
+      await dbRun(
+        `DELETE FROM presentation_template_governance_events
+          WHERE template_id = ? AND organization_id = ?`,
+        [templateId, orgId]
+      );
+    } catch (cleanupError) {
+      logger.warn('[Presentations] Could not clean deleted draft governance events', cleanupError);
+    }
+    res.json({ success: true, data: { deletedTemplateId: templateId } });
+  })
+);
+
 router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {
@@ -1557,7 +1654,7 @@ router.post(
     // that may never have been written. Settle against durable, org-owned state
     // before the best-effort lineage writes and before answering.
     const cloneSettled = await settleTemplateWrite('template clone', id, orgId, cloneAck);
-    if (!cloneSettled.ok) {
+    if (cloneSettled.ok === false) {
       logger.error('[Presentations] Template clone insert did not persist', {
         templateId: id,
         sourceTemplateId: String(req.params.id),
@@ -1654,7 +1751,7 @@ router.put(
     } = req.body;
     if (customTemplate !== undefined && customTemplate !== null) {
       const validation = validatePresentationCustomTemplate(customTemplate);
-      if (!validation.ok) {
+      if (validation.ok === false) {
         return res
           .status(400)
           .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
@@ -1719,7 +1816,7 @@ router.put(
       orgId,
       updateAck
     );
-    if (!updateSettled.ok) {
+    if (updateSettled.ok === false) {
       logger.error('[Presentations] Template update did not persist', {
         templateId: String(req.params.id),
         organizationId: orgId,
@@ -1754,6 +1851,78 @@ const VALID_LIFECYCLE_STATES: ReadonlySet<TemplateLifecycleState> = new Set([
 
 function isValidLifecycleState(value: unknown): value is TemplateLifecycleState {
   return typeof value === 'string' && VALID_LIFECYCLE_STATES.has(value as TemplateLifecycleState);
+}
+
+async function syncPresentationTemplateArtifactGovernance(params: {
+  organizationId: string;
+  templateId: string;
+  lifecycleState: TemplateLifecycleState;
+  actorId: string;
+}): Promise<void> {
+  const template = (await getTemplateForOrgOrSystem(
+    params.templateId,
+    params.organizationId
+  )) as any;
+  if (!template) return;
+
+  let outline: unknown = [];
+  try {
+    outline = JSON.parse(template.outline_json || '[]');
+  } catch {
+    outline = [];
+  }
+  const isDraft = params.lifecycleState === 'draft';
+  const artifact = await artifactRegistryService.registerArtifactOrigin({
+    organizationId: params.organizationId,
+    outputType: 'presentation',
+    artifactFamily: 'template',
+    originRuntime: 'presentation_template',
+    originRecordId: params.templateId,
+    titleSnapshot: template.name || 'Untitled presentation template',
+    ownerUserId: params.actorId,
+    createdBy: template.created_by || params.actorId,
+    deliveryState: isDraft ? 'draft' : 'ready',
+    visibilityScope: isDraft ? 'private' : 'organization',
+    originSummary: {
+      template: {
+        canonicalTemplateId: params.templateId,
+        originRuntime: 'presentation_template',
+        orphaned: false,
+        scope: template.is_system ? 'application' : 'organization',
+        status: params.lifecycleState === 'approved' ? 'published' : params.lifecycleState,
+        description: template.description || '',
+        deckType: template.deck_type || 'custom',
+        structureBlueprint: {
+          outline: Array.isArray(outline)
+            ? outline
+            : Array.isArray((outline as any)?.outline)
+              ? (outline as any).outline
+              : [],
+        },
+        metadata: {
+          createdBy: template.created_by || params.actorId,
+          createdAt: template.created_at,
+          updatedAt: template.updated_at,
+          legacyTemplateId: params.templateId,
+        },
+      },
+    },
+  });
+
+  if (artifact) {
+    await dbRun(
+      `UPDATE v8_output_artifacts
+       SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
+       WHERE artifact_id = ? AND organization_id = ?`,
+      [
+        isDraft ? 'draft' : 'ready',
+        isDraft ? 'private' : 'organization',
+        isDraft ? 1 : 0,
+        artifact.artifactId,
+        params.organizationId,
+      ]
+    );
+  }
 }
 
 router.get(
@@ -1826,14 +1995,12 @@ router.post(
         }
         if (customTemplate != null) {
           const validation = validatePresentationCustomTemplate(customTemplate);
-          if (!validation.ok)
-            return res
-              .status(422)
-              .json({
-                success: false,
-                error: 'custom_template_invalid',
-                details: validation.errors,
-              });
+          if (validation.ok === false)
+            return res.status(422).json({
+              success: false,
+              error: 'custom_template_invalid',
+              details: validation.errors,
+            });
         }
       }
     }
@@ -1866,6 +2033,18 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
+      });
+    }
+
+    // Keep the unified Template Library in lockstep with the Architect
+    // governance state. This applies to approved, draft and deprecated; a
+    // template moved back to draft must disappear from the default library.
+    if (result.record) {
+      await syncPresentationTemplateArtifactGovernance({
+        organizationId: orgId,
+        templateId,
+        lifecycleState: targetState,
+        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 
@@ -1920,6 +2099,15 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
+      });
+    }
+
+    if (result.record) {
+      await syncPresentationTemplateArtifactGovernance({
+        organizationId: orgId,
+        templateId,
+        lifecycleState: 'deprecated',
+        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 
@@ -2169,6 +2357,19 @@ router.post(
       status: 'draft',
       createdBy: userId,
     });
+    if (source === 'teresa_deterministic_fallback') {
+      for (const card of canonicalDeckDocument.cards) {
+        card.source_refs = [
+          {
+            artifact_id: `teresa-request-${deckId}`,
+            artifact_type: 'chat_prompt',
+            artifact_name: 'Teresa user request',
+            confidence: 1,
+            readiness: 'user_supplied',
+          },
+        ];
+      }
+    }
     const deckJsonStr = JSON.stringify(canonicalDeckDocument);
 
     try {
@@ -2296,7 +2497,7 @@ router.post(
  * HERE via `resolvePresentationTemplateForCreation` — never trusted from a
  * prior `/templates/resolve` response.
  *
- * Body: { templateArtifactId: string, title?: string }
+ * Body: { templateArtifactId: string, title?: string, brief?: string }
  * Returns 201: { success: true, data: { id, title, slideCount } } — same
  * shape as `POST /decks` so the client can reuse its existing deck-created
  * handling.
@@ -2318,6 +2519,11 @@ router.post(
       return;
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const brief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
+    const variableValues =
+      req.body?.variableValues && typeof req.body.variableValues === 'object'
+        ? req.body.variableValues
+        : {};
 
     let resolved;
     try {
@@ -2340,22 +2546,114 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
+    const templateVariables = Array.isArray((resolved.customTemplate as any)?.variables)
+      ? (resolved.customTemplate as any).variables
+      : [];
+    const variableMaterialization = materializeTemplateVariableBrief(
+      templateVariables,
+      variableValues
+    );
+    if (variableMaterialization.missingRequired.length > 0) {
+      res.status(422).json({
+        success: false,
+        error: 'TEMPLATE_VARIABLES_REQUIRED',
+        details: variableMaterialization.missingRequired,
+      });
+      return;
+    }
+    const materializedBrief = [brief, ...variableMaterialization.lines].filter(Boolean).join('\n');
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
     // MAT-007/009 root-cause fix — see matching comment in `POST /decks`
     // above: persist canonical deck_json at creation so this row never lands
     // in the "Ready + slide_count>0, empty builder" state.
-    const canonicalDeckDocument = buildDeckDocumentFromStructuredSlides({
+    const templateSourceRef = {
+      artifact_id: templateArtifactId,
+      artifact_type: 'presentation_template',
+      artifact_name: resolved.name || 'Presentation template',
+      confidence: 1,
+      readiness: 'approved_template',
+      freshness_days: 0,
+      captured_at: new Date().toISOString(),
+      lineage: { canonicalTemplateId: resolved.canonicalTemplateId, origin: 'template_library' },
+    };
+    const baseDeckDocument = buildDeckDocumentFromStructuredSlides({
       deckId,
       organizationId: orgId,
       title,
-      theme: 'modern',
+      theme: resolved.theme,
       slides: slides as StructuredSlideInput[],
       status: 'draft',
       createdBy: userId,
     });
+    // A deterministic template copy is grounded in the approved template
+    // itself. Preserve that lineage on every card (and block), and carry the
+    // Template Architect's custom visual contract into the canonical deck so
+    // quality gates and exporters see the same brand/header-footer metadata.
+    const customTemplate = resolved.customTemplate as any;
+    if (customTemplate != null) {
+      const validation = validatePresentationCustomTemplate(customTemplate);
+      if (validation.ok === false) {
+        throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
+      }
+    }
+    const customTheme = customTemplate?.theme;
+    const canonicalDeckDocument = {
+      ...baseDeckDocument,
+      theme_id: resolved.theme,
+      color_set_id: customTheme ? 'custom_template' : baseDeckDocument.color_set_id,
+      source_refs: [templateSourceRef],
+      meta: {
+        ...baseDeckDocument.meta,
+        theme: resolved.theme,
+        templateId: resolved.canonicalTemplateId,
+        customTemplate: customTemplate || undefined,
+        templateVersion: customTemplate?.version || null,
+      },
+      cards: baseDeckDocument.cards.map((card, index) => ({
+        ...card,
+        source_refs: [templateSourceRef],
+        blocks: card.blocks.map((block) => ({ ...block, source_ref: templateSourceRef })),
+        header_footer:
+          index === 0
+            ? undefined
+            : {
+                confidentiality: baseDeckDocument.meta.confidentiality || 'internal',
+                pageNumber: index + 1,
+                totalPages: baseDeckDocument.cards.length,
+                footerText: resolved.name || 'Consultify presentation',
+                showPageNumbers: true,
+              },
+      })),
+      delivery: {
+        ...baseDeckDocument.delivery,
+        brandLayoutSystem: {
+          templateFamily: resolved.name || resolved.theme,
+          source: customTheme ? 'custom_template' : 'template_theme',
+          brand: customTheme || { themeId: resolved.theme },
+          customTemplate: customTemplate || null,
+          headerFooter: {
+            enabled: true,
+            hideOnCover: true,
+            showPageNumbers: true,
+            showConfidentiality: true,
+          },
+        },
+      },
+      traceability: {
+        sourceRefs: [templateSourceRef],
+        sourceArtifacts: [
+          {
+            artifactId: templateArtifactId,
+            artifactType: 'presentation_template',
+            name: resolved.name,
+            canonicalTemplateId: resolved.canonicalTemplateId,
+          },
+        ],
+      },
+    };
     const deckJsonStr = JSON.stringify(canonicalDeckDocument);
     try {
       await ensureDeckLineageSchema();
@@ -2364,16 +2662,18 @@ router.post(
       // insert can answer 201 for a deck row that was never written.
       const deckInsertResult = await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
           title,
+          resolved.theme,
           slideCount,
           JSON.stringify({
             source: 'template_library',
             templateArtifactId,
             canonicalTemplateId: resolved.canonicalTemplateId,
+            briefProvided: Boolean(brief),
           }),
           deckJsonStr,
         ]
@@ -2616,7 +2916,7 @@ router.get(
       format: 'pptx',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(req.params.id || ''),
@@ -2667,7 +2967,7 @@ router.get(
 
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
-    if (!limitCheck.ok) {
+    if (limitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -2798,7 +3098,7 @@ router.get(
       format: 'pdf',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -2825,7 +3125,7 @@ router.get(
 
     const cards = getDeckCards(deck);
     const limitCheck = enforceExportLimits(deck, cards);
-    if (!limitCheck.ok) {
+    if (limitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -2920,15 +3220,11 @@ router.get(
         });
         const footer = card.header_footer;
         if (footer) {
-          doc
-            .fillColor('#666')
-            .fontSize(8)
-            .text(
-              `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
-              48,
-              doc.page.height - 42,
-              { align: 'center' }
-            );
+          drawPresentationPdfFooter(
+            doc,
+            `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
+            pdfMargin
+          );
         }
       });
 
@@ -3204,7 +3500,7 @@ router.get(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const collaborators = await listCollaborators(req.params.id, orgId);
+    const collaborators = await listCollaborators(String(req.params.id), orgId);
     res.json({ success: true, data: { collaborators } });
   })
 );
@@ -3246,7 +3542,7 @@ router.post(
       : permissionToRole(body.permission);
 
     const result = await upsertCollaborator({
-      deckId: req.params.id,
+      deckId: String(req.params.id),
       organizationId: orgId,
       userId: targetUserId || null,
       invitedEmail: email || null,
@@ -3291,7 +3587,7 @@ router.delete(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const result = await revokeCollaborator(req.params.id, orgId, req.params.collaboratorId);
+    const result = await revokeCollaborator(String(req.params.id), orgId, String(req.params.collaboratorId));
     await (req as any).emitAuditEvent?.({
       actorType: 'USER',
       action: 'collaborator_revoke',
@@ -3354,6 +3650,9 @@ router.get(
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
     await ensureDeckCommentsHydrated(orgId);
+    // Comments are shared review state. Refresh the local cache on every read
+    // so a GET served by a different Railway instance sees recent mutations.
+    await refreshDeckCommentsFromPersistence(orgId);
     const slideId =
       typeof req.query.slideId === 'string' && req.query.slideId.trim()
         ? String(req.query.slideId).trim()
@@ -3410,6 +3709,7 @@ router.post(
             body: text,
             slideId: typeof body.slideId === 'string' ? body.slideId : null,
           });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: parentCommentId ? 'deck_comment_reply' : 'deck_comment_add',
@@ -3449,6 +3749,7 @@ router.patch(
         commentId,
         resolved,
       });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: resolved ? 'deck_comment_resolve' : 'deck_comment_reopen',
@@ -3486,6 +3787,7 @@ router.delete(
         userId,
         commentId,
       });
+      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: 'deck_comment_delete',
@@ -3578,7 +3880,7 @@ router.post(
       format: 'html',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -3799,7 +4101,7 @@ router.put(
       : null;
 
     const deck = (await dbGet(
-      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      'SELECT id, title, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
     )) as any;
     if (!deck) {
@@ -3816,13 +4118,21 @@ router.put(
       });
     }
 
-    const bodyStr = JSON.stringify(req.body);
+    const canonicalBody = canonicalizePresentationAutosaveDeck(req.body);
+    const bodyStr = JSON.stringify(canonicalBody);
     if (bodyStr.length > 10_000_000) {
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
 
     const newVersion = (deck.version || 1) + 1;
-    const canonicalSlideCount = Array.isArray(req.body?.cards) ? req.body.cards.length : 0;
+    const canonicalSlideCount = Array.isArray(canonicalBody.cards) ? canonicalBody.cards.length : 0;
+    // The builder edits the deck title inside the same Deck document as slide
+    // content. Persist it to the indexed row as part of the same CAS write;
+    // otherwise GET /decks/:id prefers the stale row title on cold reopen and
+    // makes a successful-looking rename disappear.
+    const requestedTitle =
+      typeof canonicalBody.title === 'string' ? canonicalBody.title.trim() : '';
+    const canonicalTitle = requestedTitle || deck.title || 'Untitled presentation';
 
     if (deck.deck_json) {
       try {
@@ -3854,8 +4164,8 @@ router.put(
     // need to distinguish the two cases.
     const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [canonicalTitle, bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {
@@ -5462,7 +5772,7 @@ router.post(
     const userId = getUserId(req);
 
     const validation = validatePresetCreateInput(req.body);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       return res.status(400).json({
         success: false,
         error: validation.error,
@@ -7597,7 +7907,7 @@ router.post(
       format: 'png',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (!quality.ok) {
+    if (quality.ok === false) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -7625,7 +7935,7 @@ router.post(
     const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
     const pngLimitCheck = enforceExportLimits(deck, cards);
-    if (!pngLimitCheck.ok) {
+    if (pngLimitCheck.ok === false) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,

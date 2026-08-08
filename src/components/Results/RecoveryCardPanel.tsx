@@ -41,6 +41,9 @@ import {
   type V8ResultsRecoveryActionType,
   type V8ResultsRecoveryCardPriority,
   type V8ResultsRecoveryEffectivenessRating,
+  type V8ResultsRecoveryExperiment,
+  type V8ResultsRecoveryExperimentDecision,
+  type V8ResultsRecoveryExperimentVerdict,
   type V8ResultsRecoveryListItem,
 } from '@/services/api/v8/results';
 
@@ -423,6 +426,28 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
   const [escalateTo, setEscalateTo] = useState('');
   const [continuing, setContinuing] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [experiments, setExperiments] = useState<V8ResultsRecoveryExperiment[]>([]);
+  const [experimentBusy, setExperimentBusy] = useState(false);
+  const [experimentDraft, setExperimentDraft] = useState({
+    intervention: '',
+    comparison: '',
+    baseline: '',
+    measurementWindow: '',
+    successCriterion: '',
+    ownerUserId: '',
+    remeasureAt: '',
+  });
+  const [verdictDraft, setVerdictDraft] = useState<Record<string, string>>({});
+  const [assessmentDraft, setAssessmentDraft] = useState<
+    Record<
+      string,
+      {
+        verdict: V8ResultsRecoveryExperimentVerdict;
+        decision: V8ResultsRecoveryExperimentDecision;
+      }
+    >
+  >({});
+  const [causeDraft, setCauseDraft] = useState({ cause: '', evidence: '' });
 
   const fetchCard = useCallback(
     async (options?: { background?: boolean }) => {
@@ -456,6 +481,76 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
     void fetchCard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviationCaseId]);
+
+  useEffect(() => {
+    if (!card?.id) return;
+    void V8ResultsApi.listRecoveryExperiments(card.id)
+      .then(setExperiments)
+      .catch(() => setExperiments([]));
+  }, [card?.id]);
+
+  const createExperiment = useCallback(async () => {
+    if (!card) return;
+    setExperimentBusy(true);
+    try {
+      await V8ResultsApi.createRecoveryExperiment(
+        card.id,
+        { ...experimentDraft, comparison: experimentDraft.comparison || null },
+        crypto.randomUUID()
+      );
+      setExperiments(await V8ResultsApi.listRecoveryExperiments(card.id));
+    } catch (error: any) {
+      toast.error(
+        error?.message ||
+          t('results.recoveryCard.experimentFailed', 'Experiment could not be saved.')
+      );
+    } finally {
+      setExperimentBusy(false);
+    }
+  }, [card, experimentDraft, t]);
+
+  const reviewExperiment = useCallback(
+    async (experimentId: string, approved: boolean) => {
+      if (!card) return;
+      setExperimentBusy(true);
+      try {
+        await V8ResultsApi.reviewRecoveryExperiment(card.id, experimentId, approved);
+        setExperiments(await V8ResultsApi.listRecoveryExperiments(card.id));
+      } finally {
+        setExperimentBusy(false);
+      }
+    },
+    [card]
+  );
+
+  const assessExperiment = useCallback(
+    async (experimentId: string) => {
+      if (!card) return;
+      setExperimentBusy(true);
+      try {
+        await V8ResultsApi.decideRecoveryExperiment(card.id, experimentId, {
+          verdict: assessmentDraft[experimentId]?.verdict ?? 'INCONCLUSIVE',
+          evidence: verdictDraft[experimentId] || '',
+          decision: assessmentDraft[experimentId]?.decision ?? 'REVISE',
+        });
+        setExperiments(await V8ResultsApi.listRecoveryExperiments(card.id));
+      } finally {
+        setExperimentBusy(false);
+      }
+    },
+    [assessmentDraft, card, verdictDraft]
+  );
+
+  const confirmCause = useCallback(async () => {
+    if (!card) return;
+    setExperimentBusy(true);
+    try {
+      await V8ResultsApi.confirmRecoveryCause(card.id, causeDraft, crypto.randomUUID());
+      await fetchCard({ background: true });
+    } finally {
+      setExperimentBusy(false);
+    }
+  }, [card, causeDraft, fetchCard]);
 
   // Sync the edit draft from the server card whenever the card changes and we
   // are NOT mid-edit — entering edit mode below takes an explicit snapshot, so
@@ -1602,6 +1697,215 @@ export const RecoveryCardPanel: React.FC<RecoveryCardPanelProps> = ({
           ) : null}
         </div>
       ) : null}
+
+      <section className={cardShellCls} aria-labelledby="recovery-experiments-heading">
+        <h3 id="recovery-experiments-heading" className="text-sm font-semibold text-c-text">
+          {t('results.recoveryCard.experiments', 'Recovery experiments')}
+        </h3>
+        <p className="text-xs text-c-text-secondary">
+          {t(
+            'results.recoveryCard.experimentTruth',
+            'A verdict never confirms a cause. Confirmed cause requires a separate human evidence decision.'
+          )}
+        </p>
+        <div className="grid gap-2 md:grid-cols-2">
+          {(
+            [
+              'intervention',
+              'comparison',
+              'baseline',
+              'measurementWindow',
+              'successCriterion',
+              'ownerUserId',
+            ] as const
+          ).map((field) => (
+            <input
+              key={field}
+              className={inputCls}
+              value={experimentDraft[field]}
+              aria-label={t(
+                `results.recoveryCard.experiment.${field}`,
+                field.replace(/([A-Z])/g, ' $1')
+              )}
+              placeholder={t(
+                `results.recoveryCard.experiment.${field}`,
+                field.replace(/([A-Z])/g, ' $1')
+              )}
+              onChange={(event) =>
+                setExperimentDraft((current) => ({ ...current, [field]: event.target.value }))
+              }
+            />
+          ))}
+          <input
+            type="datetime-local"
+            className={inputCls}
+            value={experimentDraft.remeasureAt}
+            aria-label={t('results.recoveryCard.experiment.remeasureAt', 'Remeasure at')}
+            onChange={(event) =>
+              setExperimentDraft((current) => ({ ...current, remeasureAt: event.target.value }))
+            }
+          />
+          <button
+            type="button"
+            className={primaryPillCls}
+            disabled={experimentBusy}
+            onClick={() => void createExperiment()}
+          >
+            {t('results.recoveryCard.experiment.create', 'Create versioned experiment')}
+          </button>
+        </div>
+        <ul className="space-y-2">
+          {experiments.map((experiment) => (
+            <li
+              key={experiment.id}
+              className="rounded-lg border border-c-border p-3 text-xs text-c-text-secondary"
+            >
+              <strong className="text-c-text">
+                v{experiment.version} · {experiment.intervention}
+              </strong>
+              <div>
+                {experiment.baseline} → {experiment.successCriterion}
+              </div>
+              <div>
+                {experiment.measurementWindow} · {new Date(experiment.remeasureAt).toLocaleString()}{' '}
+                · {experiment.approvalStatus}
+              </div>
+              {experiment.verdict ? (
+                <div>
+                  {experiment.verdict} · {experiment.decision}
+                </div>
+              ) : null}
+              {experiment.approvalStatus === 'PENDING' ? (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    className={primaryPillCls}
+                    disabled={experimentBusy}
+                    onClick={() => void reviewExperiment(experiment.id, true)}
+                  >
+                    {t('common.approve', 'Approve')}
+                  </button>
+                  <button
+                    type="button"
+                    className={secondaryPillCls}
+                    disabled={experimentBusy}
+                    onClick={() => void reviewExperiment(experiment.id, false)}
+                  >
+                    {t('common.reject', 'Reject')}
+                  </button>
+                </div>
+              ) : null}
+              {experiment.approvalStatus === 'APPROVED' && !experiment.verdict ? (
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <select
+                    className={inputCls}
+                    aria-label={t('results.recoveryCard.experiment.verdict', 'Verdict')}
+                    value={assessmentDraft[experiment.id]?.verdict ?? 'INCONCLUSIVE'}
+                    onChange={(event) =>
+                      setAssessmentDraft((current) => ({
+                        ...current,
+                        [experiment.id]: {
+                          verdict: event.target.value as V8ResultsRecoveryExperimentVerdict,
+                          decision: current[experiment.id]?.decision ?? 'REVISE',
+                        },
+                      }))
+                    }
+                  >
+                    <option value="SUPPORTED">supported</option>
+                    <option value="NOT_SUPPORTED">not_supported</option>
+                    <option value="INCONCLUSIVE">inconclusive</option>
+                  </select>
+                  <select
+                    className={inputCls}
+                    aria-label={t('results.recoveryCard.experiment.decision', 'Recovery decision')}
+                    value={assessmentDraft[experiment.id]?.decision ?? 'REVISE'}
+                    onChange={(event) =>
+                      setAssessmentDraft((current) => ({
+                        ...current,
+                        [experiment.id]: {
+                          verdict: current[experiment.id]?.verdict ?? 'INCONCLUSIVE',
+                          decision: event.target.value as V8ResultsRecoveryExperimentDecision,
+                        },
+                      }))
+                    }
+                  >
+                    <option value="CONTINUE">continue</option>
+                    <option value="REVISE">revise</option>
+                    <option value="ESCALATE">escalate</option>
+                    <option value="CLOSE">close</option>
+                  </select>
+                  <input
+                    className={inputCls}
+                    value={verdictDraft[experiment.id] || ''}
+                    aria-label={t(
+                      'results.recoveryCard.experiment.verdictEvidence',
+                      'Remeasurement evidence'
+                    )}
+                    onChange={(event) =>
+                      setVerdictDraft((current) => ({
+                        ...current,
+                        [experiment.id]: event.target.value,
+                      }))
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={secondaryPillCls}
+                    disabled={
+                      experimentBusy ||
+                      !verdictDraft[experiment.id]?.trim() ||
+                      new Date(experiment.remeasureAt).getTime() > Date.now()
+                    }
+                    aria-describedby={`experiment-${experiment.id}-disabled-reason`}
+                    onClick={() => void assessExperiment(experiment.id)}
+                  >
+                    {t('results.recoveryCard.experiment.recordVerdict', 'Record verdict')}
+                  </button>
+                  <span id={`experiment-${experiment.id}-disabled-reason`} className="sr-only">
+                    {new Date(experiment.remeasureAt).getTime() > Date.now()
+                      ? t('results.recoveryCard.experiment.notDue', 'Remeasurement is not due yet.')
+                      : !verdictDraft[experiment.id]?.trim()
+                        ? t(
+                            'results.recoveryCard.experiment.evidenceRequired',
+                            'Remeasurement evidence is required.'
+                          )
+                        : ''}
+                  </span>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div className="grid gap-2 border-t border-c-border pt-3 sm:grid-cols-2">
+          <input
+            className={inputCls}
+            value={causeDraft.cause}
+            aria-label={t('results.recoveryCard.confirmedCause', 'Confirmed cause')}
+            onChange={(event) =>
+              setCauseDraft((current) => ({ ...current, cause: event.target.value }))
+            }
+          />
+          <input
+            className={inputCls}
+            value={causeDraft.evidence}
+            aria-label={t('results.recoveryCard.causeEvidence', 'Human evidence for cause')}
+            onChange={(event) =>
+              setCauseDraft((current) => ({ ...current, evidence: event.target.value }))
+            }
+          />
+          <button
+            type="button"
+            className={secondaryPillCls}
+            disabled={experimentBusy || !causeDraft.cause.trim() || !causeDraft.evidence.trim()}
+            onClick={() => void confirmCause()}
+          >
+            {t(
+              'results.recoveryCard.confirmCauseDecision',
+              'Confirm cause as a separate human decision'
+            )}
+          </button>
+        </div>
+      </section>
 
       {/* History — static, no dedicated audit-log endpoint in this round (known gap). */}
       <div className={cardShellCls}>

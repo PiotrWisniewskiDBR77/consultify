@@ -488,8 +488,7 @@ export async function convertNotebookPage(params: {
           },
         ],
       },
-      orgId,
-      userId
+      orgId
     );
     createdEntity = {
       id: String(outline.deckId),

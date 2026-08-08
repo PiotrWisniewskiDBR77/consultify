@@ -218,7 +218,9 @@ export function CoverLayout(
 
   // Confidentiality
   if (meta.confidentiality && meta.confidentiality !== 'public') {
-    elements.push(ConfidentialityBanner({ level: meta.confidentiality }, tokens));
+    elements.push(
+      ConfidentialityBanner({ level: meta.confidentiality, language: meta.language }, tokens)
+    );
   }
 
   return {

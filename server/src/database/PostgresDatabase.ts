@@ -21,6 +21,15 @@ const SLOW_QUERY_THRESHOLD_MS = 1000;
 let ensuredMissingDatabaseOnce = false;
 let testDatabaseOverride: string | null = null;
 
+export function resolveNotificationReadColumn(
+  columns: Iterable<string>
+): 'is_read' | 'read' | null {
+  const available = new Set(columns);
+  if (available.has('is_read')) return 'is_read';
+  if (available.has('read')) return 'read';
+  return null;
+}
+
 function getPrimaryDbName(): string | null {
   const cfg = databaseConfig.postgres as PoolConfig | undefined;
   const name = (cfg as any)?.database ? String((cfg as any).database) : '';
@@ -3678,9 +3687,28 @@ export async function initDb(): Promise<void> {
       [],
       'Skipping user_id index on activity_logs'
     );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, read, created_at DESC)`
+    const notificationReadColumn = resolveNotificationReadColumn(
+      (
+        await Promise.all(
+          ['is_read', 'read'].map(
+            async (column) => [column, await columnExists('notifications', column)] as const
+          )
+        )
+      )
+        .filter(([, exists]) => exists)
+        .map(([column]) => column)
     );
+    if (notificationReadColumn) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, ${notificationReadColumn}, created_at DESC)`,
+        [],
+        `Skipping ${notificationReadColumn} index on notifications`
+      );
+    } else {
+      logger.warn(
+        '[Postgres] Skipping idx_notifications_user_read: notifications has neither is_read nor legacy read column'
+      );
+    }
     await query(`CREATE INDEX IF NOT EXISTS idx_feedback_user ON feedback(user_id)`);
 
     // AI & Customizations

@@ -1494,7 +1494,11 @@ export async function createInitiative(params: {
   let duplicateOfInitiativeId: string | null = null;
   try {
     const dup = await findDuplicateInitiative(
-      { queryAll: (sql, p) => queryHelpers.queryAll(sql, p) },
+      {
+        queryAll: (sql, p) => queryHelpers.queryAll(sql, p),
+        queryOne: (sql, p) => queryHelpers.queryOne(sql, p),
+        queryRun: (sql, p) => queryHelpers.queryRun(sql, p),
+      },
       orgId,
       title
     );

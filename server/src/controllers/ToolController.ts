@@ -2699,7 +2699,7 @@ export class ToolController {
         quadrantFocus: req.body?.quadrantFocus,
       });
 
-      if (!generation.ok) {
+      if (generation.ok === false) {
         try {
           await auditEventsService.log({
             actorType: 'AI',

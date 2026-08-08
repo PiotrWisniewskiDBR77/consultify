@@ -20,7 +20,7 @@ const CANONICAL_MAPPINGS = {
     artifactFamily: 'document',
     outputType: 'report',
     publishArtifactType: 'report',
-    allowedOriginRuntimes: ['report', 'native_artifact', 'work_canvas'],
+    allowedOriginRuntimes: ['report', 'native_artifact', 'assessment_report', 'work_canvas'],
   },
   'presentation:presentation': {
     artifactFamily: 'presentation',

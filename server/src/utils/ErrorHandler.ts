@@ -85,7 +85,7 @@ function getErrorMessage(err: unknown): string {
   return 'Unknown error';
 }
 
-function detectBodyParserContractError(err: Error & { status?: number; type?: string }): {
+function detectBodyParserContractError(err: Error & { status?: number | string; type?: string }): {
   statusCode: number;
   code: string;
   message: string;
