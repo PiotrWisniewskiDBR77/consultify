@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { ADMAAssessmentEditor } from '@/components/assessment/adma/ADMAAssessmentEditor';
@@ -41,6 +42,7 @@ import { Api } from '@/services/api';
 import { V8AssessmentApi } from '@/services/api/v8';
 import { CMMI_PRACTICE_AREAS } from '@/services/cmmiStructure';
 import { DRD_STRUCTURE } from '@/services/drdStructure';
+import { type FrameworkId, isFrameworkComingSoon } from '@/services/frameworkRegistry';
 import { SIRI_DIMENSIONS } from '@/services/siriStructure';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
@@ -79,6 +81,26 @@ type DRDPosition = {
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
+}
+
+/**
+ * CB-04/RB-006 — the ONE lifecycle invariant editability derives from:
+ * an APPROVED assessment is terminal and never editable (matches the server's
+ * `409 ASSESSMENT_ALREADY_ACCEPTED` guard — ASM-006/007), a viewer without
+ * edit permission is always read-only regardless of any manual lock state,
+ * and otherwise the explicit manual lock toggle decides. Exported so the
+ * boundary the audit couldn't prove without a fixture (status/progress/edit
+ * lock disagreeing) is directly testable.
+ */
+export function isAssessmentReadOnly(opts: {
+  status: string | undefined;
+  manuallyLocked: boolean;
+  canEdit: boolean;
+}): boolean {
+  const accepted = String(opts.status || '').toUpperCase() === 'APPROVED';
+  if (accepted) return true;
+  if (!opts.canEdit) return true;
+  return opts.manuallyLocked;
 }
 
 function calcConfidenceAvgFromCompletion(completionPercent: number): number {
@@ -316,6 +338,8 @@ function calcCompletionPercent(framework: string, answers: Record<string, any>):
 
 export const AssessmentSessionEditorView: React.FC = () => {
   const navigate = useNavigate();
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl') ?? false;
   const { framework: frameworkParam, assessmentId } = useParams();
   // NOTE (React 19 + useSyncExternalStore):
   // Avoid selectors returning new objects/arrays each call (even with shallow),
@@ -628,7 +652,20 @@ export const AssessmentSessionEditorView: React.FC = () => {
   // user is stopped before an autosave can fail. Reopening is an explicit
   // reviewer send-back (review action "return"), which returns it to DRAFT.
   const isAccepted = String(assessment?.status || '').toUpperCase() === 'APPROVED';
-  const isReadOnly = isLocked || isAccepted;
+  // CB-04/RB-006: single lifecycle invariant for editability — `isReadOnly`
+  // used to be `isLocked || isAccepted`, which never factored `canEditEffective`
+  // in: if any future code path ever set `isLocked` to `false` without first
+  // checking edit permission (the manual toggle at the Edit button already
+  // does, but that guard living far from this derivation is exactly the kind
+  // of drift the audit flagged as "plausible but unproven"), a
+  // permission-less viewer would read as editable. `isAssessmentReadOnly`
+  // makes accepted-is-terminal and permission-gated explicit and testable in
+  // one place instead of splitting the invariant across effects/handlers.
+  const isReadOnly = isAssessmentReadOnly({
+    status: assessment?.status,
+    manuallyLocked: isLocked,
+    canEdit: canEditEffective,
+  });
 
   // Admins shouldn't need a lock toggle: keep editing enabled — unless the
   // assessment has already been accepted.
@@ -838,8 +875,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
             };
           }
           const resp = (await updateCoreAssessmentSession(payload)) as
-            | { updatedAt?: string }
-            | undefined;
+            { updatedAt?: string } | undefined;
           if (!isMountedRef.current) return;
           const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
           setLastSavedAt(ts);
@@ -932,8 +968,7 @@ export const AssessmentSessionEditorView: React.FC = () => {
         payload.navigation = { axisId: currentAxisId, areaId: currentAreaId, level: currentLevel };
       }
       const resp = (await updateCoreAssessmentSession(payload)) as
-        | { updatedAt?: string }
-        | undefined;
+        { updatedAt?: string } | undefined;
       const ts = resp?.updatedAt ? new Date(resp.updatedAt) : new Date();
       setLastSavedAt(ts);
       setServerUpdatedAt(ts);
@@ -1708,6 +1743,34 @@ export const AssessmentSessionEditorView: React.FC = () => {
   }
 
   const renderEditor = () => {
+    // RB-021: availability parity — the library/picker gate (isFrameworkComingSoon,
+    // decision D-B) must be honored on this direct route too, including for
+    // legacy sessions that predate the gate. Without this check, a legacy or
+    // directly-navigated CMMI/LEAN assessmentId reached an editable form here
+    // even though every other entry point (library card, AI picker) blocks it.
+    if (framework && isFrameworkComingSoon(framework.toUpperCase() as FrameworkId)) {
+      return (
+        <div className="p-6">
+          <div className="bg-white dark:bg-navy-900 border border-c-border rounded-xl p-6 text-center max-w-lg mx-auto">
+            <div className="text-c-text-secondary font-medium mb-1">
+              {isPolish ? 'Ten framework jest wkrótce dostępny' : 'This framework is coming soon'}
+            </div>
+            <div className="text-sm text-c-text-muted mb-4">
+              {isPolish
+                ? 'Nie można jeszcze edytować sesji tego frameworku — wróć do Assessment.'
+                : 'Sessions for this framework cannot be edited yet — return to Assessment.'}
+            </div>
+            <button
+              onClick={() => navigate('/assessment/overview')}
+              className="px-4 py-2 rounded-lg bg-navy-900 text-white hover:bg-navy-800 transition-colors"
+            >
+              {isPolish ? 'Wróć do Assessment' : 'Back to Assessment'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (framework === 'drd') {
       const drdData: DRDFormData = answers?.drd || {};
 

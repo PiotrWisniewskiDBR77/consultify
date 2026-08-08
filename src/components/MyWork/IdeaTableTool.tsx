@@ -76,6 +76,8 @@ import {
 } from '@/utils/ideaTableGuidedBarFlag';
 
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
+import { getCanvasEdgeKindLabel } from './canvas/canvasEdgeKindVocabulary';
+import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
 import {
   EMPTY_SELECTION,
   IDEA_GRAPH_UPDATE_EVENT,
@@ -484,6 +486,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
+  // RB-018: Edges view showed raw node ids for Source/Target — resolve to the
+  // node's domain label instead (falls back to the id only if the node is
+  // gone, e.g. a stale edge pointing at a deleted node).
+  const edgeNodeLabelById = useMemo(
+    () => new Map(effectiveNodes.map((n) => [n.id, n.data?.label || n.id])),
+    [effectiveNodes]
+  );
   const effectiveProcessedRows =
     (usePlatform ? platformIntegration.processedRows : processedRows) ?? [];
   const effectiveGroupedRows = usePlatform ? platformIntegration.groupedRows : groupedRows;
@@ -1743,8 +1752,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   }}
                 >
                   {col.key === 'type' ? (
-                    <span className="text-[11px] text-c-text-muted capitalize">
-                      {(row.data?.nodeType || row.type || 'idea').replace(/_/g, ' ')}
+                    <span className="text-[11px] text-c-text-muted">
+                      {getCanvasNodeTypeLabel(row.data?.nodeType || row.type, isPl)}
                     </span>
                   ) : (
                     <CellRenderer
@@ -3892,7 +3901,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                               {t('ideas.table.target', 'Target')}
                             </th>
                             <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-c-text-muted w-28">
-                              Kind
+                              {t('ideas.table.edgeKind', 'Kind')}
                             </th>
                           </tr>
                         </thead>
@@ -3900,13 +3909,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           {edges.map((e) => (
                             <tr key={e.id} className="border-b border-c-border-subtle">
                               <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {e.source}
+                                {edgeNodeLabelById.get(e.source) ?? e.source}
                               </td>
                               <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {e.target}
+                                {edgeNodeLabelById.get(e.target) ?? e.target}
                               </td>
                               <td className="px-3 py-1.5 text-[11px] text-c-text-muted">
-                                {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
+                                {getCanvasEdgeKindLabel(
+                                  e?.data?.kind ? String(e.data.kind) : e.type,
+                                  isPl
+                                )}
                               </td>
                             </tr>
                           ))}

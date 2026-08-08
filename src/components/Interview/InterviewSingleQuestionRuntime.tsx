@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { Api, API_URL, getHeaders } from '@/services/api';
 import type { ArtifactType } from '@/utils/artifactLinks';
 import { buildArtifactCode, getArtifactLabel } from '@/utils/artifactLinks';
+import { stripInternalTextSuffix } from '@/utils/stripInternalTextSuffix';
 
 import {
   ArtifactAttachPopover,
@@ -1342,7 +1343,9 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                         {answered ? <Check size={10} /> : idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-c-text-secondary truncate">{q.questionText}</p>
+                        <p className="text-sm text-c-text-secondary truncate">
+                          {stripInternalTextSuffix(q.questionText)}
+                        </p>
                         {snippet && (
                           <p className="text-xs text-c-text-secondary truncate mt-0.5">{snippet}</p>
                         )}
@@ -1404,7 +1407,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm text-c-text-secondary truncate">
-                                {q.questionText}
+                                {stripInternalTextSuffix(q.questionText)}
                               </p>
                               {snippet && (
                                 <p className="text-xs text-c-text-secondary truncate mt-0.5">
@@ -1542,7 +1545,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             : 'text-c-text-secondary font-medium'
                       }`}
                     >
-                      {q.questionText}
+                      {stripInternalTextSuffix(q.questionText)}
                     </span>
                     {isAnswered && q.answerText && (
                       <span className="text-[10px] text-c-text-muted truncate block mt-0.5">
@@ -1810,7 +1813,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                             : 'text-2xl md:text-3xl'
                       }`}
                     >
-                      {currentQuestion.questionText}
+                      {stripInternalTextSuffix(currentQuestion.questionText)}
                     </h2>
 
                     {/* Pulsing guidance affordance — "press me" hint icon */}

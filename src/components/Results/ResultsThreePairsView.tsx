@@ -71,9 +71,19 @@ export interface ResultsThreePairsViewProps {
   onOpenKpi?: (id: string) => void;
   onOpenRoi?: (initiativeId: string) => void;
   onOpenObjective?: (id: string) => void;
+  /**
+   * RV-023 (CB-02): which pair (KPI/ROI/OKR) is shown. Optional and
+   * uncontrolled by default (falls back to internal state, `'kpi'`) so any
+   * other caller of this view keeps working unchanged. `ResultsHub` passes
+   * this so the selection gets a canonical route identity (`?pair=`) and
+   * survives direct entry, refresh, and back/forward instead of always
+   * resetting to KPI.
+   */
+  activePair?: ResultsPair;
+  onActivePairChange?: (pair: ResultsPair) => void;
 }
 
-type ResultsPair = 'kpi' | 'roi' | 'okr';
+export type ResultsPair = 'kpi' | 'roi' | 'okr';
 
 // ── Formatery ───────────────────────────────────────────────────────────────
 function fmtNum(v: number | null | undefined): string {
@@ -212,9 +222,21 @@ export const ResultsThreePairsView: React.FC<ResultsThreePairsViewProps> = ({
   onOpenKpi,
   onOpenRoi,
   onOpenObjective,
+  activePair: activePairProp,
+  onActivePairChange,
 }) => {
   const tr = (pl: string, en: string) => (isPolish ? pl : en);
-  const [activePair, setActivePair] = useState<ResultsPair>('kpi');
+  const [internalActivePair, setInternalActivePair] = useState<ResultsPair>(
+    activePairProp ?? 'kpi'
+  );
+  // RV-023: controlled when the caller passes `activePair` (ResultsHub does,
+  // for route identity); otherwise falls back to the old uncontrolled
+  // behavior so no other caller of this view breaks.
+  const activePair = activePairProp ?? internalActivePair;
+  const setActivePair = (pair: ResultsPair) => {
+    onActivePairChange?.(pair);
+    if (activePairProp === undefined) setInternalActivePair(pair);
+  };
 
   // ── Para 1: KPI ───────────────────────────────────────────────────────────
   const kpiAgg = useMemo(() => {

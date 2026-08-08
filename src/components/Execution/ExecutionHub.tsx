@@ -67,7 +67,7 @@ import {
   type StandardRowMenu,
   StandardTable,
 } from '@/components/standard';
-import { DueChip, EntityStatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { DueChip, statusChipTone } from '@/components/ui/primitives/chips';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import {
@@ -123,6 +123,7 @@ import { StandardModuleBar } from '../standard/StandardModuleBar';
 import ExecutionChangeSignalsPanel from './ExecutionChangeSignalsPanel';
 import { isExecutionFlagEnabled } from './executionFeatureFlags';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
+import { ExecutionInitiativeStatusControl } from './ExecutionInitiativeStatusControl';
 import ExecutionIntelligencePanel from './ExecutionIntelligencePanel';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -634,6 +635,36 @@ const isPastDue = (date?: string): boolean => {
   if (!date) return false;
   return new Date(date).getTime() < new Date().setHours(0, 0, 0, 0);
 };
+
+/**
+ * CB-04/RB-008 — ONE overdue-aware health predicate for initiatives, used by
+ * every surface that needs to know whether an initiative is overdue: the
+ * attention-preset filter, the summary table's progress-bar color, and the
+ * Attention/Summary panel's action center. Before this fix each surface had
+ * its own inline computation:
+ *  - matchesAttentionPreset('overdue'): slaDeadline||plannedEndDate, DONE
+ *    and ARCHIVED both terminal — the CORRECT definition.
+ *  - the table's progress-column color: plannedEndDate ONLY, DONE terminal
+ *    but NOT archived — silently disagreed with the filter chip.
+ *  - actionCenter (Summary/Attention panel): no overdue-initiatives concept
+ *    at all — an overdue initiative that wasn't also BLOCKED never appeared
+ *    in Attention, reading as implicitly on-track by omission (the actual
+ *    P0: the fallback health surface never classified it as anything BUT
+ *    on-track, because it never classified it at all).
+ * `now` is injectable so tests can assert exact boundary behavior with a
+ * fixed clock instead of real wall-clock time.
+ */
+export function isInitiativeOverdue(
+  initiative: Pick<FullInitiative, 'slaDeadline' | 'plannedEndDate' | 'status'>,
+  now: number = Date.now()
+): boolean {
+  const deadline = initiative.slaDeadline || initiative.plannedEndDate;
+  if (!deadline) return false;
+  const terminal =
+    initiative.status === InitiativeStatus.DONE || initiative.status === InitiativeStatus.ARCHIVED;
+  if (terminal) return false;
+  return new Date(deadline).getTime() < now;
+}
 
 interface ExecutionHubProps {
   initialTab?: ModuleTab;
@@ -1641,13 +1672,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         return !initiative.plannedStartDate || !initiative.plannedEndDate;
       }
       if (attention === 'overdue') {
-        if (!initiative.plannedEndDate && !initiative.slaDeadline) return false;
-        const deadline = initiative.slaDeadline || initiative.plannedEndDate!;
-        const isOverdue = new Date(deadline) < new Date();
-        const terminal =
-          initiative.status === InitiativeStatus.DONE ||
-          initiative.status === InitiativeStatus.ARCHIVED;
-        return isOverdue && !terminal;
+        return isInitiativeOverdue(initiative);
       }
       if (attention === 'overdue_decisions') {
         const related = decisionsByInitiative[initiative.id] || [];
@@ -1698,11 +1723,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           matchesAttentionPreset(
             i,
             (isMissingDatesFilter ? 'missing_dates' : filter.value) as
-              | 'blocked'
-              | 'missing_dates'
-              | 'overdue'
-              | 'overdue_decisions'
-              | 'due_soon_tasks'
+              'blocked' | 'missing_dates' | 'overdue' | 'overdue_decisions' | 'due_soon_tasks'
           )
         );
       }
@@ -2137,37 +2158,14 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             color: meta?.dotColor || 'bg-slate-400',
           };
         }),
-        render: (row) => {
-          const meta = STATUS_METADATA[row.status as InitiativeStatus];
-          const actions = getStatusActions(row.status as InitiativeStatus);
-          const canMutateStatus = !isPilotParticipant && actions.length > 0;
-          return (
-            <div className="relative group">
-              <EntityStatusChip
-                status={String(row.status)}
-                label={meta?.label || String(row.status)}
-              />
-              {canMutateStatus && (
-                <select
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleInlineStatusChange(row.id, e.target.value);
-                    }
-                  }}
-                >
-                  <option value="">{meta?.label || row.status}</option>
-                  {actions.map((a) => (
-                    <option key={a.targetStatus} value={a.targetStatus}>
-                      {a.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          );
-        },
+        render: (row) => (
+          <ExecutionInitiativeStatusControl
+            initiativeName={row.name}
+            currentStatus={row.status as InitiativeStatus}
+            onChange={(nextStatus) => handleInlineStatusChange(row.id, nextStatus)}
+            disabled={isPilotParticipant}
+          />
+        ),
       },
       {
         id: 'assignee',
@@ -2200,10 +2198,11 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const progress = row.progress || 0;
           // §4.3/§4.0: progress fill is NEVER danger/crimson. info (in-progress)
           // → success @100%; amber only for the explicit "at-risk" (overdue) signal.
-          const isOverdue =
-            row.plannedEndDate &&
-            new Date(row.plannedEndDate) < new Date() &&
-            row.status !== InitiativeStatus.DONE;
+          // CB-04/RB-008: shared isInitiativeOverdue() — this column used to
+          // compute its own overdue flag from plannedEndDate only (ignoring
+          // slaDeadline and ARCHIVED), silently disagreeing with the
+          // "Overdue" attention filter chip for the same row.
+          const isOverdue = isInitiativeOverdue(row);
           const color = isOverdue
             ? 'bg-amber-500'
             : progress >= 100
@@ -3292,11 +3291,27 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
       })
       .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
 
+    // CB-04/RB-008: the Summary/Attention panel had no overdue-initiatives
+    // concept at all — an overdue-but-not-blocked initiative never appeared
+    // here, which is what made the fallback health read as "on-track" for
+    // overdue work (it wasn't classified as anything). Uses the SAME
+    // isInitiativeOverdue() predicate as the attention filter chip and the
+    // table's progress-bar color, so this list, that chip's count, and that
+    // bar can never disagree about the same initiative again.
+    const overdueInitiatives = dashboardBaseInitiatives
+      .filter((i) => isInitiativeOverdue(i, now))
+      .sort((a, b) =>
+        (a.plannedEndDate || a.slaDeadline || '').localeCompare(
+          b.plannedEndDate || b.slaDeadline || ''
+        )
+      );
+
     return {
       blocked,
       missingDates,
       overdueDecisions,
       dueSoonTasks,
+      overdueInitiatives,
     };
   }, [dashboardBaseInitiatives, decisions, tasks]);
 
@@ -3820,7 +3835,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 ? t('execution.attention.overdueDecisions', 'Overdue decisions')
                 : attention === 'due_soon_tasks'
                   ? t('execution.attention.dueSoonTasks', 'Due soon tasks')
-                  : t('execution.attention.attention', 'Attention'),
+                  : attention === 'overdue'
+                    ? t('execution.attention.overdue', 'Overdue')
+                    : t('execution.attention.attention', 'Attention'),
           color:
             attention === 'missing_dates'
               ? 'text-amber-500'
@@ -3828,7 +3845,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 ? 'text-danger-500'
                 : attention === 'due_soon_tasks'
                   ? 'text-blue-500'
-                  : 'text-c-text-muted',
+                  : attention === 'overdue'
+                    ? 'text-danger-500'
+                    : 'text-c-text-muted',
         },
       ]);
     },
@@ -3895,12 +3914,17 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     const overdueDecisionsCount = actionCenter.overdueDecisions.length;
     const missingDatesCount = actionCenter.missingDates.length;
     const dueSoonTasksCount = actionCenter.dueSoonTasks.length;
+    // CB-04/RB-008: previously computed nowhere in this command row — an
+    // overdue-but-not-blocked initiative had no chip, no count, no click
+    // target anywhere in Execution.
+    const overdueCount = actionCenter.overdueInitiatives.length;
     const allCount = dashboardBaseInitiatives.length;
     const allActive =
       !activeStatusFilter &&
       !isAttentionActive('overdue_decisions') &&
       !isAttentionActive('missing_dates') &&
-      !isAttentionActive('due_soon_tasks');
+      !isAttentionActive('due_soon_tasks') &&
+      !isAttentionActive('overdue');
     const executionPresets = [
       {
         id: 'all',
@@ -3924,6 +3948,24 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             return;
           }
           openInitiativesWithAttention('blocked');
+        },
+      },
+      {
+        // CB-04/RB-008: the missing chip — same isInitiativeOverdue()
+        // predicate that already drove the table's progress-bar color and
+        // (now) the Attention panel's overdueInitiatives list.
+        id: 'overdue',
+        label: t('execution.attention.overdue', 'Overdue'),
+        count: overdueCount,
+        active: isAttentionActive('overdue'),
+        disabled: overdueCount === 0,
+        icon: <AlertTriangle size={14} className="text-danger-400" />,
+        onClick: () => {
+          if (isAttentionActive('overdue')) {
+            resetExecutionCommandRow();
+            return;
+          }
+          openInitiativesWithAttention('overdue');
         },
       },
       {
@@ -5003,8 +5045,7 @@ Please return:
       const selectedReportPreviewId = reportPreviewId;
       const selectedReport = selectedReportPreviewId
         ? ((filteredReportCatalog.find((r) => r.id === selectedReportPreviewId) as
-            | ReportRow
-            | undefined) ?? null)
+            ReportRow | undefined) ?? null)
         : null;
       const rag = selectedReport ? computeRAG(selectedReport) : null;
       const ragConf = rag ? RAG_CONFIG[rag] : null;

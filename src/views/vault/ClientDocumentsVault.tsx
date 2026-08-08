@@ -58,27 +58,113 @@
  */
 
 import { Search } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 
 import { useHubBarSlot } from '../../components/shared/HubBarSlots';
+import { Api } from '../../services/api';
 import { isClientVaultEnabled } from '../../utils/clientVaultFlag';
 import { VaultDocumentsView } from './VaultDocumentsView';
 import { type VaultSafe, VaultSafesTable } from './VaultSafesTable';
 
+// RB-029/RV-010 (CB-02) — the opened safe is now canonical route state
+// (`?safeId=`), not just local component state, so direct entry, refresh,
+// and browser back/forward restore it instead of silently returning to the
+// safe list. Scoped to its own param so it composes with whatever tab/other
+// query state the host route (MyWorkHub) already owns.
+const SAFE_ID_PARAM = 'safeId';
+
 export const ClientDocumentsVault: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const safeIdParam = searchParams.get(SAFE_ID_PARAM);
   const [openSafe, setOpenSafe] = useState<VaultSafe | null>(null);
+  const [isResolvingSafe, setIsResolvingSafe] = useState(false);
+  const [safeResolutionDenied, setSafeResolutionDenied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   // Patrz „★ PUŁAPKA WSPÓŁDZIELONEGO SLOTU" w nagłówku pliku.
   const [resyncTick, setResyncTick] = useState(0);
 
-  const handleOpenSafe = useCallback((safe: VaultSafe) => setOpenSafe(safe), []);
+  const clearSafeIdParam = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete(SAFE_ID_PARAM);
+        return next;
+      },
+      { replace: true }
+    );
+  }, [setSearchParams]);
+
+  const handleOpenSafe = useCallback(
+    (safe: VaultSafe) => {
+      setOpenSafe(safe);
+      setSafeResolutionDenied(false);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set(SAFE_ID_PARAM, safe.id);
+          return next;
+        },
+        { replace: false }
+      );
+    },
+    [setSearchParams]
+  );
   const handleBackToSafes = useCallback(() => {
     setOpenSafe(null);
+    setSafeResolutionDenied(false);
     setResyncTick((v) => v + 1);
-  }, []);
+    clearSafeIdParam();
+  }, [clearSafeIdParam]);
+
+  // URL -> state: direct entry / refresh / back-forward restores the
+  // selected safe by re-resolving `safeId` against the real safes list
+  // (permission-safe: `Api.getVaultSafes()` only ever returns safes this org
+  // member can read, so a deleted/denied id simply won't be found).
+  useEffect(() => {
+    if (!safeIdParam) {
+      setOpenSafe(null);
+      // Deliberately NOT resetting `safeResolutionDenied` here: this branch
+      // also runs right after `clearSafeIdParam()` removes an unresolvable
+      // id, and resetting it here would erase the "denied/deleted" message
+      // before the user ever sees it. It only clears on a fresh open attempt.
+      return;
+    }
+    if (openSafe?.id === safeIdParam) return;
+    let cancelled = false;
+    setIsResolvingSafe(true);
+    setSafeResolutionDenied(false);
+    Api.getVaultSafes()
+      .then((safes: VaultSafe[]) => {
+        if (cancelled) return;
+        const match = (safes || []).find((s) => s.id === safeIdParam);
+        if (match) {
+          setOpenSafe(match);
+        } else {
+          // Deleted or denied safe: honest fallback to the safe list rather
+          // than a stale URL that permanently claims an unopenable safe.
+          setSafeResolutionDenied(true);
+          setOpenSafe(null);
+          clearSafeIdParam();
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSafeResolutionDenied(true);
+        setOpenSafe(null);
+        clearSafeIdParam();
+      })
+      .finally(() => {
+        if (!cancelled) setIsResolvingSafe(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [safeIdParam]);
 
   const filterControlsNode = useMemo(
     () => (
@@ -116,8 +202,28 @@ export const ClientDocumentsVault: React.FC = () => {
     return <VaultDocumentsView safe={openSafe} onBack={handleBackToSafes} />;
   }
 
+  // RB-029/RV-010: resolving `?safeId=` from a direct entry/refresh — show a
+  // neutral loading state rather than flashing the safe list first.
+  if (isResolvingSafe) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-c-text-muted">
+        {t('vault.safes.resolving', isPolish ? 'Otwieranie sejfu…' : 'Opening safe…')}
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
+      {safeResolutionDenied && (
+        <div className="mx-4 mt-4 rounded-lg border border-c-border bg-c-surface-raised px-4 py-3 text-sm text-c-text-secondary">
+          {t(
+            'vault.safes.notFound',
+            isPolish
+              ? 'Ten sejf nie istnieje lub nie masz do niego dostępu. Wróciliśmy do listy sejfów.'
+              : "This safe doesn't exist or you don't have access to it. Returned to the safe list."
+          )}
+        </div>
+      )}
       <div className="flex-1 min-h-0 overflow-auto">
         <VaultSafesTable onOpenSafe={handleOpenSafe} searchQuery={searchQuery} />
       </div>

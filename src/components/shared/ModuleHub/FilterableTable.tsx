@@ -15,7 +15,7 @@ import {
   Maximize2,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
@@ -169,8 +169,11 @@ const FilterDropdown: React.FC<{
   activeValues: string[];
   onApply: (values: string[]) => void;
 }> = ({ column, activeValues, onApply }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>(activeValues);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = (value: string) => {
     setSelected((prev) =>
@@ -189,23 +192,81 @@ const FilterDropdown: React.FC<{
     setIsOpen(false);
   };
 
+  const closeAndReturnFocus = useCallback(() => {
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  // A11y (RV-009/RB decision #4, CODEX pass 2): this is a non-modal
+  // disclosure popover, NOT a dialog — it must never trap Tab. Escape closes
+  // it and returns focus to the trigger; Tab is left completely alone so it
+  // moves focus in the normal document order (which, once it leaves the
+  // panel, closes the popover via the blur handler below instead of leaving
+  // a stale open panel with focus elsewhere on the page).
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        closeAndReturnFocus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, closeAndReturnFocus]);
+
+  // Closing on blur-out (Tab leaving the panel) — focus is left wherever the
+  // browser's normal Tab order sends it; only the popover's open state is
+  // cleared, so this never fights the trigger's Escape/click focus-return.
+  const handlePanelBlur = useCallback((event: React.FocusEvent<HTMLDivElement>) => {
+    const nextFocusTarget = event.relatedTarget as Node | null;
+    if (nextFocusTarget && event.currentTarget.contains(nextFocusTarget)) return;
+    setIsOpen(false);
+  }, []);
+
   if (!column.filterable || !column.filterOptions) return null;
+
+  const activeCount = activeValues.length;
+  const filterButtonLabel =
+    activeCount > 0
+      ? t('common.filterColumnActive', 'Filter {{column}} (active: {{count}})', {
+          column: column.label,
+          count: activeCount,
+        })
+      : t('common.filterColumnInactive', 'Filter {{column}}, no filter applied', {
+          column: column.label,
+        });
+  const panelHeadingId = `filter-panel-${column.id}`;
 
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={filterButtonLabel}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
         className={`p-1 rounded-md hover:bg-state-hover transition-colors ${
           activeValues.length > 0 ? 'text-slate-900 dark:text-slate-100' : 'text-slate-500'
         }`}
       >
-        <ChevronDown size={14} />
+        <ChevronDown size={14} aria-hidden="true" />
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden">
+          <div className="fixed inset-0 z-40" onClick={closeAndReturnFocus} />
+          <div
+            ref={panelRef}
+            role="group"
+            aria-labelledby={panelHeadingId}
+            onBlur={handlePanelBlur}
+            className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white dark:bg-navy-900 border border-slate-200/70 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden"
+          >
+            <h3 id={panelHeadingId} className="sr-only">
+              {t('common.filterByColumn', 'Filter by {{column}}', { column: column.label })}
+            </h3>
             <div className="max-h-[200px] overflow-y-auto p-2">
               {column.filterOptions.map((option) => (
                 <label
@@ -227,16 +288,18 @@ const FilterDropdown: React.FC<{
             </div>
             <div className="flex items-center justify-between p-2 border-t border-slate-200/70 dark:border-white/[0.08]">
               <button
+                type="button"
                 onClick={handleClear}
                 className="text-xs font-medium text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white transition-colors"
               >
-                Clear
+                {t('common.clear', 'Clear')}
               </button>
               <button
+                type="button"
                 onClick={handleApply}
                 className="px-3 py-1 text-xs font-medium bg-c-text text-c-bg rounded-lg hover:bg-c-text-secondary transition-colors"
               >
-                Apply
+                {t('common.apply', 'Apply')}
               </button>
             </div>
           </div>

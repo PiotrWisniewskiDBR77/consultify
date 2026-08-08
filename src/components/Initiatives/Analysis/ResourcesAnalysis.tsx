@@ -714,14 +714,31 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     <SortIcon column="role" currentCol={sortCol} currentDir={sortDir} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setShowRoleDropdown((v) => !v)}
+                    aria-haspopup="true"
+                    aria-expanded={showRoleDropdown}
+                    aria-label={
+                      roleFilter !== 'all'
+                        ? t(
+                            'initiatives.analysis.resources.filterRoleActive',
+                            'Filter by role (active: {{role}})',
+                            {
+                              role: roleFilter,
+                            }
+                          )
+                        : t(
+                            'initiatives.analysis.resources.filterRoleInactive',
+                            'Filter by role, no filter applied'
+                          )
+                    }
                     className={`p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors ${
                       roleFilter !== 'all'
                         ? 'text-c-info dark:text-c-info'
                         : 'text-slate-600 dark:text-slate-500'
                     }`}
                   >
-                    <Filter size={12} />
+                    <Filter size={12} aria-hidden="true" />
                   </button>
                 </div>
                 {showRoleDropdown && (

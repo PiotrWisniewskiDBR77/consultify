@@ -1283,27 +1283,57 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           type="date"
                           value={editStart}
                           onChange={(e) => setEditStart(e.target.value)}
+                          aria-label={t(
+                            'initiatives.analysis.timeline.startDateFor',
+                            'Start date for {{name}}',
+                            {
+                              name: bar.initiativeName,
+                            }
+                          )}
                           className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                         />
-                        <span className="text-xs text-slate-600">→</span>
+                        <span className="text-xs text-slate-600" aria-hidden="true">
+                          →
+                        </span>
                         <input
                           type="date"
                           value={editEnd}
                           onChange={(e) => setEditEnd(e.target.value)}
+                          aria-label={t(
+                            'initiatives.analysis.timeline.endDateFor',
+                            'End date for {{name}}',
+                            {
+                              name: bar.initiativeName,
+                            }
+                          )}
                           className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                         />
                         <button
+                          type="button"
                           onClick={() => handleSaveDates(bar.initiativeId)}
                           disabled={saving}
+                          aria-label={t(
+                            'initiatives.analysis.timeline.saveDatesFor',
+                            'Save dates for {{name}}',
+                            {
+                              name: bar.initiativeName,
+                            }
+                          )}
                           className="p-1 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
                         >
-                          <Check size={14} />
+                          <Check size={14} aria-hidden="true" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setEditingId(null)}
+                          aria-label={t(
+                            'initiatives.analysis.timeline.cancelEditingDatesFor',
+                            'Cancel editing dates for {{name}}',
+                            { name: bar.initiativeName }
+                          )}
                           className="p-1 rounded text-slate-600 hover:bg-slate-200 dark:hover:bg-navy-700"
                         >
-                          <X size={14} />
+                          <X size={14} aria-hidden="true" />
                         </button>
                       </div>
                     ) : (
@@ -1339,19 +1369,30 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                             }`}
                           >
                             {bar.status === 'delayed'
-                              ? 'Delayed'
+                              ? t('initiatives.analysis.timeline.statusDelayed', 'Delayed')
                               : bar.status === 'at-risk'
-                                ? 'At risk'
+                                ? t('initiatives.analysis.timeline.statusAtRisk', 'At risk')
                                 : bar.status === 'no-dates'
-                                  ? 'No dates'
-                                  : 'On schedule'}
+                                  ? t('initiatives.analysis.timeline.statusNoDates', 'No dates')
+                                  : t(
+                                      'initiatives.analysis.timeline.statusOnSchedule',
+                                      'On schedule'
+                                    )}
                           </span>
                           {onQuickUpdate && (
                             <button
+                              type="button"
                               onClick={() => startEditing(bar)}
+                              aria-label={t(
+                                'initiatives.analysis.timeline.editDatesFor',
+                                'Edit dates for {{name}}',
+                                {
+                                  name: bar.initiativeName,
+                                }
+                              )}
                               className="p-1 rounded text-slate-600 hover:text-c-info hover:bg-c-info/10 transition-colors"
                             >
-                              <Calendar size={14} />
+                              <Calendar size={14} aria-hidden="true" />
                             </button>
                           )}
                         </div>

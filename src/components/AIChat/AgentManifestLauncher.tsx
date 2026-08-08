@@ -65,8 +65,13 @@ export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({ on
         if (!cancelled) setManifests(fetched);
       })
       .catch((error) => {
+        // Diagnostic detail stays in the console for support/engineering;
+        // the user only ever sees the safe, localized product message.
+        console.error('[AgentManifestLauncher] Failed to load agent manifests:', error);
         if (!cancelled) {
-          setLoadError(error instanceof Error ? error.message : 'Failed to load agent manifests');
+          setLoadError(
+            t('agentPlan.launcher.loadError', 'We could not load the agent list. Please try again.')
+          );
         }
       });
     return () => {
@@ -108,7 +113,10 @@ export const AgentManifestLauncher: React.FC<AgentManifestLauncherProps> = ({ on
       });
       onPlanCreated(plan.id);
     } catch (error) {
-      setStartError(error instanceof Error ? error.message : 'Failed to start agent');
+      console.error('[AgentManifestLauncher] Failed to start agent:', error);
+      setStartError(
+        t('agentPlan.launcher.startError', 'We could not start this agent. Please try again.')
+      );
     } finally {
       setStarting(false);
     }

@@ -1,11 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 
 import {
   V8AssessmentApi,
   type V8AssessmentDefinitionRecord,
+  type V8AssessmentRunState,
   type V8AssessmentWorkbench,
 } from '@/services/api/v8/assessment';
+import {
+  looksLikeApiInstructionText,
+  looksLikeInternalIdentifierText,
+} from '@/utils/detectInternalIdentifierText';
 
 interface AssessmentWorkbenchPanelProps {
   assessmentId: string;
@@ -16,13 +22,102 @@ interface AssessmentWorkbenchPanelProps {
   };
 }
 
-function parseJsonRecord(raw: string, fallback: Record<string, number>): Record<string, number> {
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, number>) : fallback;
-  } catch {
-    return fallback;
-  }
+type ReviewStatus = 'pending' | 'accepted' | 'rejected' | 'overridden';
+type EvidenceKind = 'document' | 'interview_note' | 'survey_response' | 'artifact' | 'external_url';
+type PromotionTargetKind = 'outputs_artifact' | 'interview_insight';
+
+// CB-06 / RV-016 — every raw enum value the backend returns or the UI lets
+// the user pick must resolve to a canonical PL/EN display label; the stored
+// value passed back to the API always stays the raw enum below.
+const RUN_STATE_LABEL_KEY: Record<V8AssessmentRunState, string> = {
+  draft: 'assessment.workbench.runState.draft',
+  running: 'assessment.workbench.runState.running',
+  awaiting_evidence: 'assessment.workbench.runState.awaitingEvidence',
+  score_proposed: 'assessment.workbench.runState.scoreProposed',
+  score_reviewed: 'assessment.workbench.runState.scoreReviewed',
+  interpretation_proposed: 'assessment.workbench.runState.interpretationProposed',
+  interpretation_reviewed: 'assessment.workbench.runState.interpretationReviewed',
+  completed: 'assessment.workbench.runState.completed',
+  failed: 'assessment.workbench.runState.failed',
+};
+
+const RUN_STATE_LABEL_FALLBACK: Record<V8AssessmentRunState, string> = {
+  draft: 'Draft',
+  running: 'Running',
+  awaiting_evidence: 'Awaiting evidence',
+  score_proposed: 'Score proposed',
+  score_reviewed: 'Score reviewed',
+  interpretation_proposed: 'Interpretation proposed',
+  interpretation_reviewed: 'Interpretation reviewed',
+  completed: 'Completed',
+  failed: 'Failed',
+};
+
+const REVIEW_STATUS_LABEL_KEY: Record<ReviewStatus, string> = {
+  pending: 'assessment.workbench.reviewStatus.pending',
+  accepted: 'assessment.workbench.reviewStatus.accepted',
+  rejected: 'assessment.workbench.reviewStatus.rejected',
+  overridden: 'assessment.workbench.reviewStatus.overridden',
+};
+
+const REVIEW_STATUS_LABEL_FALLBACK: Record<ReviewStatus, string> = {
+  pending: 'Pending',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  overridden: 'Overridden',
+};
+
+const EVIDENCE_KIND_LABEL_KEY: Record<EvidenceKind, string> = {
+  document: 'assessment.workbench.evidenceKind.document',
+  interview_note: 'assessment.workbench.evidenceKind.interviewNote',
+  survey_response: 'assessment.workbench.evidenceKind.surveyResponse',
+  artifact: 'assessment.workbench.evidenceKind.artifact',
+  external_url: 'assessment.workbench.evidenceKind.externalUrl',
+};
+
+const EVIDENCE_KIND_LABEL_FALLBACK: Record<EvidenceKind, string> = {
+  document: 'Document',
+  interview_note: 'Interview note',
+  survey_response: 'Survey response',
+  artifact: 'Artifact',
+  external_url: 'External link',
+};
+
+const PROMOTION_TARGET_LABEL_KEY: Record<PromotionTargetKind, string> = {
+  outputs_artifact: 'assessment.workbench.promotionTarget.outputsArtifact',
+  interview_insight: 'assessment.workbench.promotionTarget.interviewInsight',
+};
+
+const PROMOTION_TARGET_LABEL_FALLBACK: Record<PromotionTargetKind, string> = {
+  outputs_artifact: 'Output artifact',
+  interview_insight: 'Interview insight',
+};
+
+// CB-06 / RV-016 — score values are edited as normal UI rows (dimension name
+// + numeric value), never as a raw JSON blob the user has to hand-type. The
+// payload sent to the API is still a plain `Record<string, number>`; only
+// the display/edit surface changed.
+interface ScoreDimensionRow {
+  id: string;
+  key: string;
+  value: string;
+}
+
+let scoreDimensionRowSeq = 0;
+function nextScoreDimensionRowId(): string {
+  scoreDimensionRowSeq += 1;
+  return `dim-${scoreDimensionRowSeq}`;
+}
+
+function dimensionRowsToRecord(rows: ScoreDimensionRow[]): Record<string, number> {
+  const record: Record<string, number> = {};
+  rows.forEach((row) => {
+    const key = row.key.trim();
+    if (!key) return;
+    const numeric = Number(row.value);
+    record[key] = Number.isFinite(numeric) ? numeric : 0;
+  });
+  return record;
 }
 
 function splitLines(value: string): string[] {
@@ -32,14 +127,47 @@ function splitLines(value: string): string[] {
     .filter(Boolean);
 }
 
-function getErrorMessage(error: any): string {
-  return error?.error || error?.message || 'Workbench request failed';
-}
-
 export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> = ({
   assessmentId,
   permissions,
 }) => {
+  const { t } = useTranslation();
+
+  const getErrorMessage = useCallback(
+    (error: any): string =>
+      error?.error ||
+      error?.message ||
+      t('assessment.workbench.requestFailed', 'Workbench request failed'),
+    [t]
+  );
+
+  const runStateLabel = useCallback(
+    (state: V8AssessmentRunState | string) => {
+      const known = RUN_STATE_LABEL_KEY[state as V8AssessmentRunState];
+      if (!known) return state;
+      return t(known, RUN_STATE_LABEL_FALLBACK[state as V8AssessmentRunState]);
+    },
+    [t]
+  );
+
+  const reviewStatusLabel = useCallback(
+    (status: ReviewStatus | string) => {
+      const known = REVIEW_STATUS_LABEL_KEY[status as ReviewStatus];
+      if (!known) return status;
+      return t(known, REVIEW_STATUS_LABEL_FALLBACK[status as ReviewStatus]);
+    },
+    [t]
+  );
+
+  const evidenceKindLabel = useCallback(
+    (kind: EvidenceKind | string) => {
+      const known = EVIDENCE_KIND_LABEL_KEY[kind as EvidenceKind];
+      if (!known) return kind;
+      return t(known, EVIDENCE_KIND_LABEL_FALLBACK[kind as EvidenceKind]);
+    },
+    [t]
+  );
+
   const [workbench, setWorkbench] = useState<V8AssessmentWorkbench | null>(null);
   const [definition, setDefinition] = useState<V8AssessmentDefinitionRecord | null>(null);
   const [whatNext, setWhatNext] = useState<string[]>([]);
@@ -49,16 +177,45 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
   const [isLoading, setIsLoading] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
 
-  const [evidenceKind, setEvidenceKind] = useState('document');
+  const [evidenceKind, setEvidenceKind] = useState<EvidenceKind>('document');
   const [evidenceRef, setEvidenceRef] = useState('');
   const [evidenceLabel, setEvidenceLabel] = useState('');
 
   const [scoreRationale, setScoreRationale] = useState('');
-  const [scoreValuesRaw, setScoreValuesRaw] = useState('{"readiness":3}');
+  const [scoreDimensions, setScoreDimensions] = useState<ScoreDimensionRow[]>([
+    { id: nextScoreDimensionRowId(), key: 'readiness', value: '3' },
+  ]);
   const [scoreConfidence, setScoreConfidence] = useState('0.7');
   const [scoreAssumptions, setScoreAssumptions] = useState('');
   const [selectedEvidenceIds, setSelectedEvidenceIds] = useState<string[]>([]);
-  const [overrideScoreRaw, setOverrideScoreRaw] = useState('{"readiness":4}');
+  const [overrideDimensions, setOverrideDimensions] = useState<ScoreDimensionRow[]>([
+    { id: nextScoreDimensionRowId(), key: 'readiness', value: '4' },
+  ]);
+
+  const updateDimensionRow = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<ScoreDimensionRow[]>>,
+      id: string,
+      patch: Partial<Pick<ScoreDimensionRow, 'key' | 'value'>>
+    ) => {
+      setter((rows) => rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+    },
+    []
+  );
+
+  const addDimensionRow = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<ScoreDimensionRow[]>>) => {
+      setter((rows) => [...rows, { id: nextScoreDimensionRowId(), key: '', value: '0' }]);
+    },
+    []
+  );
+
+  const removeDimensionRow = useCallback(
+    (setter: React.Dispatch<React.SetStateAction<ScoreDimensionRow[]>>, id: string) => {
+      setter((rows) => (rows.length > 1 ? rows.filter((row) => row.id !== id) : rows));
+    },
+    []
+  );
 
   const [interpretationSummary, setInterpretationSummary] = useState('');
   const [interpretationFindings, setInterpretationFindings] = useState('');
@@ -66,11 +223,9 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
   const [interpretationActions, setInterpretationActions] = useState('');
   const [overrideSummary, setOverrideSummary] = useState('');
 
-  const [promotionTargetKind, setPromotionTargetKind] = useState<
-    'outputs_artifact' | 'interview_insight'
-  >('outputs_artifact');
+  const [promotionTargetKind, setPromotionTargetKind] =
+    useState<PromotionTargetKind>('outputs_artifact');
   const [promotionTargetRef, setPromotionTargetRef] = useState('');
-  const canViewUi = permissions?.canView ?? true;
   const canEditUi = permissions?.canEdit ?? true;
   const canApproveUi = permissions?.canApprove ?? true;
 
@@ -101,7 +256,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
     } finally {
       setIsLoading(false);
     }
-  }, [assessmentId]);
+  }, [assessmentId, getErrorMessage]);
 
   useEffect(() => {
     void loadWorkbench();
@@ -124,7 +279,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
         setIsBusy(false);
       }
     },
-    [loadWorkbench]
+    [loadWorkbench, getErrorMessage]
   );
 
   const evidenceOptions = workbench?.evidencePointers || [];
@@ -136,26 +291,37 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
   }, [workbench?.runState]);
 
   const businessSummary = useMemo(() => {
-    const runStateLabel = String(workbench?.runState || 'draft').replace(/_/g, ' ');
+    // CB-06 / RV-016: never surface a raw HTTP-call instruction as the
+    // headline state guidance — fall through to the safe default instead.
+    const firstSafeWhatNext = whatNext.find((line) => !looksLikeApiInstructionText(line));
     const primaryGuidance =
       workbench?.degraded?.message ||
-      whatNext[0] ||
-      'Move the run forward by attaching evidence, reviewing proposals, and promoting only approved outputs.';
+      firstSafeWhatNext ||
+      t(
+        'assessment.workbench.defaultGuidance',
+        'Move the run forward by attaching evidence, reviewing proposals, and promoting only approved outputs.'
+      );
 
     const reviewState = workbench?.interpretationReview?.status
-      ? `Interpretation ${workbench.interpretationReview.status}`
+      ? t('assessment.workbench.interpretationStatus', 'Interpretation: {{status}}', {
+          status: reviewStatusLabel(workbench.interpretationReview.status),
+        })
       : workbench?.scoreReview?.status
-        ? `Score ${workbench.scoreReview.status}`
-        : 'Review not started';
+        ? t('assessment.workbench.scoreStatus', 'Score: {{status}}', {
+            status: reviewStatusLabel(workbench.scoreReview.status),
+          })
+        : t('assessment.workbench.reviewNotStarted', 'Review not started');
 
     const promotionState = workbench?.promotionTraces?.length
-      ? `${workbench.promotionTraces.length} downstream handoff(s) recorded`
+      ? t('assessment.workbench.downstreamHandoffs', '{{count}} downstream handoff(s) recorded', {
+          count: workbench.promotionTraces.length,
+        })
       : workbench?.pendingPromotion
-        ? 'Promotion retry pending'
-        : 'No downstream handoff yet';
+        ? t('assessment.workbench.promotionRetryPending', 'Promotion retry pending')
+        : t('assessment.workbench.noDownstreamHandoff', 'No downstream handoff yet');
 
     return {
-      runStateLabel,
+      runStateLabel: runStateLabel(workbench?.runState || 'draft'),
       primaryGuidance,
       reviewState,
       promotionState,
@@ -168,6 +334,9 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
     workbench?.promotionTraces,
     workbench?.runState,
     workbench?.scoreReview?.status,
+    t,
+    runStateLabel,
+    reviewStatusLabel,
   ]);
 
   if (!assessmentId) return null;
@@ -180,12 +349,12 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-            Assessment Workbench
+            {t('assessment.workbench.title', 'Assessment Workbench')}
           </div>
           <div className="mt-1 text-sm text-c-text-secondary">
             {workbench
-              ? `${workbench.runState} • ${workbench.assessmentDefinitionRef.methodologyId} v${workbench.assessmentDefinitionRef.version}`
-              : 'Loading runtime'}
+              ? `${runStateLabel(workbench.runState)} • ${workbench.assessmentDefinitionRef.methodologyId} v${workbench.assessmentDefinitionRef.version}`
+              : t('assessment.workbench.loadingRuntime', 'Loading runtime')}
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -195,7 +364,7 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
             onClick={() => void loadWorkbench()}
             disabled={isLoading || isBusy || !canEditUi}
           >
-            Reload
+            {t('assessment.workbench.reload', 'Reload')}
           </button>
           <button
             type="button"
@@ -203,12 +372,12 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
             onClick={() =>
               void runAction(
                 () => V8AssessmentApi.applyWorkbenchPreset(assessmentId, 'DRD'),
-                'Preset applied'
+                t('assessment.workbench.toast.presetApplied', 'Preset applied')
               )
             }
             disabled={isLoading || isBusy || !canEditUi}
           >
-            Apply DRD preset
+            {t('assessment.workbench.applyPreset', 'Apply DRD preset')}
           </button>
           <button
             type="button"
@@ -216,12 +385,12 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
             onClick={() =>
               void runAction(
                 () => V8AssessmentApi.transitionWorkbench(assessmentId, { toState: 'running' }),
-                'Workbench started'
+                t('assessment.workbench.toast.workbenchStarted', 'Workbench started')
               )
             }
             disabled={isLoading || isBusy || !canEditUi}
           >
-            Start
+            {t('assessment.workbench.start', 'Start')}
           </button>
           <button
             type="button"
@@ -233,25 +402,32 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                     toState: 'completed',
                     reason:
                       workbench?.runState === 'score_reviewed'
-                        ? 'Accepted for completion with missing interpretation.'
+                        ? t(
+                            'assessment.workbench.completedWithoutInterpretationReason',
+                            'Accepted for completion with missing interpretation.'
+                          )
                         : undefined,
                   }),
-                'Run completed'
+                t('assessment.workbench.toast.runCompleted', 'Run completed')
               )
             }
             disabled={isLoading || isBusy || !canComplete || !canApproveUi}
           >
-            Complete
+            {t('assessment.workbench.complete', 'Complete')}
           </button>
         </div>
       </div>
 
-      {isLoading ? <div className="mt-4 text-sm text-c-text-muted">Loading workbench…</div> : null}
+      {isLoading ? (
+        <div className="mt-4 text-sm text-c-text-muted">
+          {t('assessment.workbench.loadingWorkbench', 'Loading workbench…')}
+        </div>
+      ) : null}
 
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-            Current State
+            {t('assessment.workbench.currentState', 'Current State')}
           </div>
           <div className="mt-1 text-sm font-medium text-c-text">
             {businessSummary.runStateLabel}
@@ -262,23 +438,28 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
         </div>
         <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-            Review Readiness
+            {t('assessment.workbench.reviewReadiness', 'Review Readiness')}
           </div>
           <div className="mt-1 text-sm font-medium text-c-text">{businessSummary.reviewState}</div>
           <div className="mt-2 text-sm text-c-text-secondary">
-            Review remains explicit. AI can help prepare proposals, but approval gates still live
-            here.
+            {t(
+              'assessment.workbench.reviewReadinessHint',
+              'Review remains explicit. AI can help prepare proposals, but approval gates still live here.'
+            )}
           </div>
         </div>
         <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-3">
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-            Downstream Status
+            {t('assessment.workbench.downstreamStatus', 'Downstream Status')}
           </div>
           <div className="mt-1 text-sm font-medium text-c-text">
             {businessSummary.promotionState}
           </div>
           <div className="mt-2 text-sm text-c-text-secondary">
-            Reports and initiative packs should be created from this run so provenance stays intact.
+            {t(
+              'assessment.workbench.downstreamHint',
+              'Reports and initiative packs should be created from this run so provenance stays intact.'
+            )}
           </div>
         </div>
       </div>
@@ -287,7 +468,11 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
         <div className="mt-4 rounded-xl border border-c-border-subtle bg-c-surface-raised p-3 text-sm">
           <div className="font-medium text-c-text">{definition.title}</div>
           <div className="mt-1 text-c-text-secondary">
-            Published definition `{definition.id}` is read-only and versioned.
+            {t(
+              'assessment.workbench.definitionReadOnly',
+              'Published definition `{{id}}` is read-only and versioned.',
+              { id: definition.id }
+            )}
           </div>
         </div>
       ) : null}
@@ -301,42 +486,61 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
 
       {workbench?.pendingPromotion ? (
         <div className="mt-4 rounded-xl border border-danger-300/70 bg-danger-50/70 dark:bg-danger-500/10 p-3 text-sm text-danger-900 dark:text-danger-200">
-          Pending promotion retry for `{workbench.pendingPromotion.targetKind}`:{' '}
-          {workbench.pendingPromotion.error}
+          {t(
+            'assessment.workbench.pendingPromotionRetry',
+            'Pending promotion retry for `{{targetKind}}`: {{error}}',
+            {
+              targetKind: workbench.pendingPromotion.targetKind,
+              error: workbench.pendingPromotion.error,
+            }
+          )}
         </div>
       ) : null}
 
       {inlineError ? (
         <div className="mt-4 rounded-xl border border-danger-300/70 bg-danger-50/70 dark:bg-danger-500/10 p-3 text-sm text-danger-900 dark:text-danger-200">
           <div className="font-medium">{inlineError}</div>
-          {inlineErrorSteps.length ? (
-            <ul className="mt-2 space-y-1">
-              {inlineErrorSteps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ul>
-          ) : null}
+          {(() => {
+            const safeSteps = inlineErrorSteps.filter((step) => !looksLikeApiInstructionText(step));
+            return safeSteps.length ? (
+              <ul className="mt-2 space-y-1">
+                {safeSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ul>
+            ) : null;
+          })()}
         </div>
       ) : null}
 
-      {whatNext.length ? (
-        <div className="mt-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
-            What Next
+      {(() => {
+        // CB-06 / RV-016: the backend's "what next" guidance can leak raw
+        // HTTP-call instructions (e.g. "Call POST .../workbench/transition
+        // with { toState: "running" }") instead of a human next step —
+        // dropped here rather than shown verbatim; the real governed action
+        // is the Start/Complete buttons above.
+        const guidanceLines = whatNext.filter((line) => !looksLikeApiInstructionText(line));
+        return guidanceLines.length ? (
+          <div className="mt-4">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-c-text-muted">
+              {t('assessment.workbench.whatNext', 'What Next')}
+            </div>
+            <ul className="mt-2 space-y-1 text-sm text-c-text-secondary">
+              {guidanceLines.map((line) => (
+                <li key={line} className="rounded-lg bg-c-surface-raised px-3 py-2">
+                  {line}
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="mt-2 space-y-1 text-sm text-c-text-secondary">
-            {whatNext.map((line) => (
-              <li key={line} className="rounded-lg bg-c-surface-raised px-3 py-2">
-                {line}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+        ) : null;
+      })()}
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <div className="font-medium text-c-text">Evidence</div>
+          <div className="font-medium text-c-text">
+            {t('assessment.workbench.evidence', 'Evidence')}
+          </div>
           <div className="mt-3 space-y-2">
             {evidenceOptions.map((pointer) => (
               <label
@@ -354,39 +558,70 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                     )
                   }
                 />
-                <span>
-                  <span className="font-medium text-c-text">{pointer.kind}</span> {pointer.ref}
-                  {pointer.label ? (
-                    <span className="text-c-text-muted"> • {pointer.label}</span>
-                  ) : null}
-                </span>
+                {(() => {
+                  // CB-06 / RV-016: never show a raw internal identifier
+                  // (UUID / snake_case system key) as the evidence pointer's
+                  // display identity — fall back to a safe placeholder. The
+                  // real `pointer.ref` still travels in the payload
+                  // (checkbox selection → proposeWorkbenchScore).
+                  const safeRef = looksLikeInternalIdentifierText(pointer.ref) ? null : pointer.ref;
+                  const primaryIdentity =
+                    pointer.label ||
+                    safeRef ||
+                    t('assessment.workbench.evidenceReferenceOnFile', 'Reference on file');
+                  const showRefAsSecondary = pointer.label && safeRef;
+                  return (
+                    <span>
+                      <span className="font-medium text-c-text">
+                        {evidenceKindLabel(pointer.kind)}
+                      </span>{' '}
+                      {primaryIdentity}
+                      {showRefAsSecondary ? (
+                        <span className="text-c-text-muted"> • {safeRef}</span>
+                      ) : null}
+                    </span>
+                  );
+                })()}
               </label>
             ))}
             {!evidenceOptions.length ? (
-              <div className="text-sm text-c-text-muted">No evidence pointers yet.</div>
+              <div className="text-sm text-c-text-muted">
+                {t('assessment.workbench.noEvidenceYet', 'No evidence pointers yet.')}
+              </div>
             ) : null}
           </div>
           <div className="mt-4 grid gap-2">
             <select
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={evidenceKind}
-              onChange={(event) => setEvidenceKind(event.target.value)}
+              onChange={(event) => setEvidenceKind(event.target.value as EvidenceKind)}
+              aria-label={t('assessment.workbench.evidenceKindLabel', 'Evidence type')}
             >
-              <option value="document">document</option>
-              <option value="interview_note">interview_note</option>
-              <option value="survey_response">survey_response</option>
-              <option value="artifact">artifact</option>
-              <option value="external_url">external_url</option>
+              {(
+                [
+                  'document',
+                  'interview_note',
+                  'survey_response',
+                  'artifact',
+                  'external_url',
+                ] as const
+              ).map((kind) => (
+                <option key={kind} value={kind}>
+                  {evidenceKindLabel(kind)}
+                </option>
+              ))}
             </select>
             <input
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Evidence ref"
+              placeholder={t('assessment.workbench.evidenceRef', 'Evidence reference')}
+              aria-label={t('assessment.workbench.evidenceRef', 'Evidence reference')}
               value={evidenceRef}
               onChange={(event) => setEvidenceRef(event.target.value)}
             />
             <input
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Optional label"
+              placeholder={t('assessment.workbench.evidenceLabel', 'Optional label')}
+              aria-label={t('assessment.workbench.evidenceLabel', 'Optional label')}
               value={evidenceLabel}
               onChange={(event) => setEvidenceLabel(event.target.value)}
             />
@@ -404,41 +639,85 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                         label: evidenceLabel.trim() || undefined,
                       },
                     ]),
-                  'Evidence added'
+                  t('assessment.workbench.toast.evidenceAdded', 'Evidence added')
                 ).then(() => {
                   setEvidenceRef('');
                   setEvidenceLabel('');
                 })
               }
             >
-              Add evidence
+              {t('assessment.workbench.addEvidence', 'Add evidence')}
             </button>
           </div>
         </div>
 
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <div className="font-medium text-c-text">Score Proposal</div>
+          <div className="font-medium text-c-text">
+            {t('assessment.workbench.scoreProposal', 'Score Proposal')}
+          </div>
           <div className="mt-3 grid gap-2">
             <textarea
               className="min-h-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Scoring rationale"
+              placeholder={t('assessment.workbench.scoringRationale', 'Scoring rationale')}
+              aria-label={t('assessment.workbench.scoringRationale', 'Scoring rationale')}
               value={scoreRationale}
               onChange={(event) => setScoreRationale(event.target.value)}
             />
-            <textarea
-              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
-              value={scoreValuesRaw}
-              onChange={(event) => setScoreValuesRaw(event.target.value)}
-            />
+            <div
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-2 space-y-2"
+              role="group"
+              aria-label={t('assessment.workbench.scoreValues', 'Score values')}
+            >
+              {scoreDimensions.map((row) => (
+                <div key={row.id} className="flex items-center gap-2">
+                  <input
+                    className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-1.5 text-sm"
+                    value={row.key}
+                    onChange={(event) =>
+                      updateDimensionRow(setScoreDimensions, row.id, { key: event.target.value })
+                    }
+                    placeholder={t('assessment.workbench.dimensionName', 'Dimension')}
+                    aria-label={t('assessment.workbench.dimensionName', 'Dimension')}
+                  />
+                  <input
+                    type="number"
+                    className="w-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-1.5 text-sm"
+                    value={row.value}
+                    onChange={(event) =>
+                      updateDimensionRow(setScoreDimensions, row.id, { value: event.target.value })
+                    }
+                    aria-label={t('assessment.workbench.dimensionValue', 'Value')}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-c-text-muted hover:text-c-text-secondary disabled:opacity-40"
+                    onClick={() => removeDimensionRow(setScoreDimensions, row.id)}
+                    disabled={scoreDimensions.length <= 1}
+                    aria-label={t('assessment.workbench.removeDimension', 'Remove dimension')}
+                  >
+                    {t('assessment.workbench.removeDimension', 'Remove dimension')}
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-xs font-medium text-c-info hover:underline"
+                onClick={() => addDimensionRow(setScoreDimensions)}
+              >
+                {t('assessment.workbench.addDimension', 'Add dimension')}
+              </button>
+            </div>
             <input
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={scoreConfidence}
               onChange={(event) => setScoreConfidence(event.target.value)}
-              placeholder="Confidence 0-1"
+              placeholder={t('assessment.workbench.scoreConfidence', 'Confidence 0-1')}
+              aria-label={t('assessment.workbench.scoreConfidence', 'Confidence 0-1')}
             />
             <textarea
               className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Assumptions, one per line"
+              placeholder={t('assessment.workbench.scoreAssumptions', 'Assumptions, one per line')}
+              aria-label={t('assessment.workbench.scoreAssumptions', 'Assumptions, one per line')}
               value={scoreAssumptions}
               onChange={(event) => setScoreAssumptions(event.target.value)}
             />
@@ -450,17 +729,17 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                 void runAction(
                   () =>
                     V8AssessmentApi.proposeWorkbenchScore(assessmentId, {
-                      scoreValues: parseJsonRecord(scoreValuesRaw, { readiness: 3 }),
+                      scoreValues: dimensionRowsToRecord(scoreDimensions),
                       scoringRationale: scoreRationale.trim(),
                       evidencePointerIds: selectedEvidenceIds,
                       assumptions: splitLines(scoreAssumptions),
                       confidence: Number(scoreConfidence || 0.7),
                     }),
-                  'Score proposed'
+                  t('assessment.workbench.toast.scoreProposed', 'Score proposed')
                 )
               }
             >
-              Propose score
+              {t('assessment.workbench.proposeScore', 'Propose score')}
             </button>
             <div className="flex gap-2 flex-wrap">
               <button
@@ -470,11 +749,11 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                 onClick={() =>
                   void runAction(
                     () => V8AssessmentApi.reviewWorkbenchScore(assessmentId, { action: 'accept' }),
-                    'Score accepted'
+                    t('assessment.workbench.toast.scoreAccepted', 'Score accepted')
                   )
                 }
               >
-                Accept score
+                {t('assessment.workbench.acceptScore', 'Accept score')}
               </button>
               <button
                 type="button"
@@ -483,11 +762,11 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                 onClick={() =>
                   void runAction(
                     () => V8AssessmentApi.reviewWorkbenchScore(assessmentId, { action: 'reject' }),
-                    'Score rejected'
+                    t('assessment.workbench.toast.scoreRejected', 'Score rejected')
                   )
                 }
               >
-                Reject score
+                {t('assessment.workbench.rejectScore', 'Reject score')}
               </button>
               <button
                 type="button"
@@ -498,47 +777,97 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                     () =>
                       V8AssessmentApi.reviewWorkbenchScore(assessmentId, {
                         action: 'override',
-                        overrideScoreValues: parseJsonRecord(overrideScoreRaw, { readiness: 4 }),
+                        overrideScoreValues: dimensionRowsToRecord(overrideDimensions),
                       }),
-                    'Score overridden'
+                    t('assessment.workbench.toast.scoreOverridden', 'Score overridden')
                   )
                 }
               >
-                Override score
+                {t('assessment.workbench.overrideScore', 'Override score')}
               </button>
             </div>
-            <textarea
-              className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm font-mono"
-              value={overrideScoreRaw}
-              onChange={(event) => setOverrideScoreRaw(event.target.value)}
-            />
+            <div
+              className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] p-2 space-y-2"
+              role="group"
+              aria-label={t('assessment.workbench.overrideScoreValues', 'Override score values')}
+            >
+              {overrideDimensions.map((row) => (
+                <div key={row.id} className="flex items-center gap-2">
+                  <input
+                    className="flex-1 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-1.5 text-sm"
+                    value={row.key}
+                    onChange={(event) =>
+                      updateDimensionRow(setOverrideDimensions, row.id, { key: event.target.value })
+                    }
+                    placeholder={t('assessment.workbench.dimensionName', 'Dimension')}
+                    aria-label={t('assessment.workbench.dimensionName', 'Dimension')}
+                  />
+                  <input
+                    type="number"
+                    className="w-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-1.5 text-sm"
+                    value={row.value}
+                    onChange={(event) =>
+                      updateDimensionRow(setOverrideDimensions, row.id, {
+                        value: event.target.value,
+                      })
+                    }
+                    aria-label={t('assessment.workbench.dimensionValue', 'Value')}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-c-text-muted hover:text-c-text-secondary disabled:opacity-40"
+                    onClick={() => removeDimensionRow(setOverrideDimensions, row.id)}
+                    disabled={overrideDimensions.length <= 1}
+                    aria-label={t('assessment.workbench.removeDimension', 'Remove dimension')}
+                  >
+                    {t('assessment.workbench.removeDimension', 'Remove dimension')}
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-xs font-medium text-c-info hover:underline"
+                onClick={() => addDimensionRow(setOverrideDimensions)}
+              >
+                {t('assessment.workbench.addDimension', 'Add dimension')}
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <div className="font-medium text-c-text">Interpretation Proposal</div>
+          <div className="font-medium text-c-text">
+            {t('assessment.workbench.interpretationProposal', 'Interpretation Proposal')}
+          </div>
           <div className="mt-3 grid gap-2">
             <textarea
               className="min-h-20 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Interpretation summary"
+              placeholder={t(
+                'assessment.workbench.interpretationSummary',
+                'Interpretation summary'
+              )}
+              aria-label={t('assessment.workbench.interpretationSummary', 'Interpretation summary')}
               value={interpretationSummary}
               onChange={(event) => setInterpretationSummary(event.target.value)}
             />
             <textarea
               className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Key findings, one per line"
+              placeholder={t('assessment.workbench.keyFindings', 'Key findings, one per line')}
+              aria-label={t('assessment.workbench.keyFindings', 'Key findings, one per line')}
               value={interpretationFindings}
               onChange={(event) => setInterpretationFindings(event.target.value)}
             />
             <textarea
               className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Limits"
+              placeholder={t('assessment.workbench.limits', 'Limits')}
+              aria-label={t('assessment.workbench.limits', 'Limits')}
               value={interpretationLimits}
               onChange={(event) => setInterpretationLimits(event.target.value)}
             />
             <textarea
               className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Next actions, one per line"
+              placeholder={t('assessment.workbench.nextActions', 'Next actions, one per line')}
+              aria-label={t('assessment.workbench.nextActions', 'Next actions, one per line')}
               value={interpretationActions}
               onChange={(event) => setInterpretationActions(event.target.value)}
             />
@@ -555,11 +884,11 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                       limits: interpretationLimits.trim(),
                       nextActions: splitLines(interpretationActions),
                     }),
-                  'Interpretation proposed'
+                  t('assessment.workbench.toast.interpretationProposed', 'Interpretation proposed')
                 )
               }
             >
-              Propose interpretation
+              {t('assessment.workbench.proposeInterpretation', 'Propose interpretation')}
             </button>
             <div className="flex gap-2 flex-wrap">
               <button
@@ -572,11 +901,14 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                       V8AssessmentApi.reviewWorkbenchInterpretation(assessmentId, {
                         action: 'accept',
                       }),
-                    'Interpretation accepted'
+                    t(
+                      'assessment.workbench.toast.interpretationAccepted',
+                      'Interpretation accepted'
+                    )
                   )
                 }
               >
-                Accept interpretation
+                {t('assessment.workbench.acceptInterpretation', 'Accept interpretation')}
               </button>
               <button
                 type="button"
@@ -588,11 +920,14 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                       V8AssessmentApi.reviewWorkbenchInterpretation(assessmentId, {
                         action: 'reject',
                       }),
-                    'Interpretation rejected'
+                    t(
+                      'assessment.workbench.toast.interpretationRejected',
+                      'Interpretation rejected'
+                    )
                   )
                 }
               >
-                Reject interpretation
+                {t('assessment.workbench.rejectInterpretation', 'Reject interpretation')}
               </button>
               <button
                 type="button"
@@ -605,16 +940,20 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                         action: 'override',
                         overrideSummary: overrideSummary.trim(),
                       }),
-                    'Interpretation overridden'
+                    t(
+                      'assessment.workbench.toast.interpretationOverridden',
+                      'Interpretation overridden'
+                    )
                   )
                 }
               >
-                Override interpretation
+                {t('assessment.workbench.overrideInterpretation', 'Override interpretation')}
               </button>
             </div>
             <textarea
               className="min-h-16 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
-              placeholder="Override summary"
+              placeholder={t('assessment.workbench.overrideSummary', 'Override summary')}
+              aria-label={t('assessment.workbench.overrideSummary', 'Override summary')}
               value={overrideSummary}
               onChange={(event) => setOverrideSummary(event.target.value)}
             />
@@ -622,26 +961,33 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
         </div>
 
         <div className="rounded-xl border border-c-border-subtle p-4">
-          <div className="font-medium text-c-text">Promotion</div>
+          <div className="font-medium text-c-text">
+            {t('assessment.workbench.promotion', 'Promotion')}
+          </div>
           <div className="mt-3 grid gap-2">
             <select
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               value={promotionTargetKind}
               onChange={(event) =>
-                setPromotionTargetKind(
-                  event.target.value as 'outputs_artifact' | 'interview_insight'
-                )
+                setPromotionTargetKind(event.target.value as PromotionTargetKind)
               }
+              aria-label={t('assessment.workbench.promotionTargetKindLabel', 'Promotion target')}
             >
-              <option value="outputs_artifact">outputs_artifact</option>
-              <option value="interview_insight">interview_insight</option>
+              {(['outputs_artifact', 'interview_insight'] as const).map((kind) => (
+                <option key={kind} value={kind}>
+                  {t(PROMOTION_TARGET_LABEL_KEY[kind], PROMOTION_TARGET_LABEL_FALLBACK[kind])}
+                </option>
+              ))}
             </select>
             <input
               className="rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus focus:border-c-focus-solid px-3 py-2 text-sm"
               placeholder={
                 promotionTargetKind === 'interview_insight'
-                  ? 'Leave blank to auto-create draft insight proposal'
-                  : 'Target ref'
+                  ? t(
+                      'assessment.workbench.promotionAutoCreateHint',
+                      'Leave blank to auto-create draft insight proposal'
+                    )
+                  : t('assessment.workbench.promotionTargetRef', 'Target reference')
               }
               value={promotionTargetRef}
               onChange={(event) => setPromotionTargetRef(event.target.value)}
@@ -666,11 +1012,11 @@ export const AssessmentWorkbenchPanel: React.FC<AssessmentWorkbenchPanelProps> =
                       targetKind: promotionTargetKind,
                       targetRef: promotionTargetRef.trim() || undefined,
                     }),
-                  'Promotion recorded'
+                  t('assessment.workbench.toast.promotionRecorded', 'Promotion recorded')
                 )
               }
             >
-              Promote
+              {t('assessment.workbench.promote', 'Promote')}
             </button>
           </div>
         </div>

@@ -2841,7 +2841,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           semanticKit={semanticKit}
           availableShapes={availableShapes}
           addNode={addNode}
-          addLane={addLane}
           insertBetween={insertBetween}
           splitPath={splitPath}
           runValidation={runValidation}

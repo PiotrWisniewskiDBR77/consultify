@@ -135,6 +135,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { TEXT_L1 } from '@/styles/typography';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
+import { looksLikeInternalIdentifierText } from '@/utils/detectInternalIdentifierText';
 import { getHandoffLandingPath } from '@/utils/initiativeLinks';
 
 // MIGRACJA (D-8): kompozycja kart Insight płynie z WIĄŻĄCEGO kontraktu karty
@@ -1220,6 +1221,53 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const { currentUser, currentOrganization, currentProjectId } = useAppStore();
 
+  // CB-06 / RV-015: candidate.confidence_hint / followup_type /
+  // source_section_type are raw backend enum values (e.g. "theme",
+  // "contradicted", "collect_evidence") — every surface that displays a
+  // V8InsightCandidate (candidate-triage chips, hypothesis-board cards) must
+  // go through these, never render the raw field.
+  const confidenceHintLabel = useCallback(
+    (value: V8InsightCandidate['confidence_hint']): string => {
+      const fallback: Record<V8InsightCandidate['confidence_hint'], string> = {
+        high: 'High confidence',
+        medium: 'Medium confidence',
+        low: 'Low confidence',
+        insufficient: 'Insufficient data',
+        contradicted: 'Contradicted',
+      };
+      return t(`interview.insightViewer.confidenceHint.${value}`, fallback[value] ?? value);
+    },
+    [t]
+  );
+
+  const followupTypeLabel = useCallback(
+    (value: V8InsightCandidate['followup_type']): string => {
+      const fallback: Record<V8InsightCandidate['followup_type'], string> = {
+        investigate: 'Investigate',
+        validate: 'Validate',
+        split: 'Split',
+        collect_evidence: 'Collect evidence',
+        publish: 'Publish',
+        reinterview: 'Re-interview',
+      };
+      return t(`interview.insightViewer.followupType.${value}`, fallback[value] ?? value);
+    },
+    [t]
+  );
+
+  const sourceSectionTypeLabel = useCallback(
+    (value: V8InsightCandidate['source_section_type']): string => {
+      const fallback: Record<V8InsightCandidate['source_section_type'], string> = {
+        theme: 'Theme',
+        issue: 'Issue',
+        opportunity: 'Opportunity',
+        manual: 'Manual',
+      };
+      return t(`interview.insightViewer.sourceSectionType.${value}`, fallback[value] ?? value);
+    },
+    [t]
+  );
+
   // ── REZULTATY tego wniosku (prawy panel, sekcja `results`) ─────────────────
   // Decyzja właściciela nr 2 (2026-07-23): kafelki tworzenia artefaktów zjechały
   // z centrum DO tej sekcji panelu (pozycja 5 wg §7.2) i w centrum ich już nie
@@ -1229,6 +1277,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   // (server/src/routes/artifact-conversions.routes.ts). Zero nowego backendu,
   // zero zmyślonych liczb: gdy zapytanie padnie, sekcja jest uczciwie pusta.
   const [producedResults, setProducedResults] = useState<ArtifactConversion[]>([]);
+  // CB-06 / RV-015: report-pack "limitations" text is backend-authored
+  // freeform copy and can leak raw worksheet keys/UUIDs. Those items are
+  // routed out of the primary list into this support-only disclosure rather
+  // than shown (or rewritten, since their exact meaning isn't known here).
+  const [showTechnicalLimitations, setShowTechnicalLimitations] = useState(false);
+  const canSeeTechnicalLimitations =
+    currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN';
 
   useEffect(() => {
     let alive = true;
@@ -4245,20 +4300,62 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       <h4 className="text-sm font-semibold text-c-text">
                         {t('interview.insightViewer.materialLimitations')}
                       </h4>
-                      {quality.limitations.length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
-                          {quality.limitations.map((item) => (
-                            <li key={item} className="flex gap-2">
-                              <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-3 text-sm text-c-text-muted">
-                          {t('interview.insightViewer.noExplicitLimitationsBeyondNormal')}
-                        </p>
-                      )}
+                      {(() => {
+                        const visibleLimitations = quality.limitations.filter(
+                          (item) => !looksLikeInternalIdentifierText(item)
+                        );
+                        const technicalLimitations = quality.limitations.filter((item) =>
+                          looksLikeInternalIdentifierText(item)
+                        );
+                        return (
+                          <>
+                            {visibleLimitations.length > 0 ? (
+                              <ul className="mt-3 space-y-2 text-sm text-c-text-secondary">
+                                {visibleLimitations.map((item) => (
+                                  <li key={item} className="flex gap-2">
+                                    <AlertTriangle
+                                      size={15}
+                                      className="mt-0.5 shrink-0 text-amber-400"
+                                    />
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="mt-3 text-sm text-c-text-muted">
+                                {t('interview.insightViewer.noExplicitLimitationsBeyondNormal')}
+                              </p>
+                            )}
+                            {technicalLimitations.length > 0 && canSeeTechnicalLimitations && (
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowTechnicalLimitations((v) => !v)}
+                                  className="text-xs font-medium text-c-text-muted hover:text-c-text underline underline-offset-2"
+                                >
+                                  {showTechnicalLimitations
+                                    ? t(
+                                        'interview.insightViewer.hideTechnicalDetails',
+                                        'Hide technical details'
+                                      )
+                                    : t(
+                                        'interview.insightViewer.showTechnicalDetails',
+                                        'Show technical details ({{count}})',
+                                        { count: technicalLimitations.length }
+                                      )}
+                                </button>
+                                {showTechnicalLimitations && (
+                                  <ul className="mt-2 space-y-1.5 rounded-lg border border-c-border-subtle bg-c-surface p-2.5 font-mono text-[11px] text-c-text-muted">
+                                    {technicalLimitations.map((item) => (
+                                      <li key={item}>{item}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <div className="rounded-2xl border border-c-border-subtle bg-c-surface-raised p-4">
@@ -6244,14 +6341,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 {statusMeta.label}
                               </span>
                               <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
-                                {candidate.confidence_hint}
+                                {confidenceHintLabel(candidate.confidence_hint)}
                               </span>
                               <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
-                                {candidate.followup_type}
+                                {followupTypeLabel(candidate.followup_type)}
                               </span>
                               {candidate.source_section_type && (
                                 <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-c-text-muted/10 text-c-text-secondary">
-                                  {candidate.source_section_type}
+                                  {sourceSectionTypeLabel(candidate.source_section_type)}
                                 </span>
                               )}
                             </div>
@@ -7346,7 +7443,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                       >
                         <div className="text-sm text-c-text">{c.candidate_statement}</div>
                         <div className="mt-1 text-[10px] uppercase tracking-wide text-c-text-muted">
-                          {c.confidence_hint}
+                          {confidenceHintLabel(c.confidence_hint)}
                         </div>
                       </div>
                     ))}

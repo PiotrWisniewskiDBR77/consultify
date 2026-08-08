@@ -5,16 +5,18 @@
  */
 
 import { BarChart3, Calendar, DollarSign, Lock, Plus, TrendingUp, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { isFinanceFlagEnabled } from '@/components/Economics/financeFeatureFlags';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyResults,
   V8ResultsApi,
   type V8ResultsRoiInitiativeDetail,
 } from '@/services/api/v8/results';
+import { useAppStore } from '@/store/useAppStore';
 
 import { PostInvestmentActualForm } from './PostInvestmentActualForm';
 import { PostInvestmentReviewPanel } from './PostInvestmentReviewPanel';
@@ -52,6 +54,30 @@ interface RealizedEntry {
   created_at?: string;
 }
 
+// CB-04/RB-015 — the API's `recordedBy` is a bare string with no
+// accompanying display-name field in the contract (see
+// V8ResultsRoiInitiativeDetail.realized in services/api/v8/results.ts) —
+// there is no name-resolution endpoint to call, so this does NOT invent
+// one. What it DOES fix: never render a raw internal UUID directly (the
+// pre-fix behavior) — resolve to "You" when it's the viewer, and to an
+// honest "system-recorded" label instead of an opaque ID when it looks
+// like a raw UUID. A real display name (already a name/email string, not a
+// UUID) still renders as-is.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function resolveRoiActorDisplay(
+  recordedBy: string | null | undefined,
+  currentUserId: string | null | undefined,
+  t: (key: string, fallback: string) => string
+): string {
+  if (!recordedBy) return t('results.roi.actorUnknown', 'Unknown');
+  if (currentUserId && recordedBy === currentUserId) return t('results.roi.actorYou', 'You');
+  if (UUID_RE.test(recordedBy.trim())) {
+    return t('results.roi.actorSystemRecorded', 'System-recorded');
+  }
+  return recordedBy;
+}
+
 function normalizeVarianceData(
   variance: V8ResultsRoiInitiativeDetail['variance'] | VarianceData | null | undefined
 ): VarianceData | null {
@@ -84,6 +110,9 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   lockState = 'open',
 }) => {
   const { t } = useTranslation();
+  const drawerContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: drawerContainerRef });
+  const currentUser = useAppStore((s) => s.currentUser);
   const readOnly = lockState !== 'open';
   const [varianceData, setVarianceData] = useState<VarianceData | null>(null);
   const [assumptions, setAssumptions] = useState<ROIAssumptionsData | null>(null);
@@ -282,7 +311,14 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-navy-950/40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden">
+      <div
+        ref={drawerContainerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={initiativeName || t('results.roi.detailTitle', 'ROI details')}
+        tabIndex={-1}
+        className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-navy-900 border-l border-navy-700 shadow-2xl flex flex-col overflow-hidden outline-none"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-navy-700 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -307,10 +343,14 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t('results.roi.closeFor', 'Close {{name}} ROI details', {
+              name: initiativeName || t('results.drawer.kpiFallback', 'initiative'),
+            })}
             className="p-1.5 rounded-lg hover:bg-navy-700 text-slate-500 transition-colors"
           >
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -428,10 +468,14 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                   <form onSubmit={handleRecordRealized} className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">
+                        <label
+                          htmlFor="roi-drawer-new-period"
+                          className="block text-xs text-slate-500 mb-1"
+                        >
                           {t('results.roi.period', 'Period')}
                         </label>
                         <input
+                          id="roi-drawer-new-period"
                           className={inputCls}
                           type="month"
                           value={newPeriod}
@@ -439,10 +483,14 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">
+                        <label
+                          htmlFor="roi-drawer-new-amount"
+                          className="block text-xs text-slate-500 mb-1"
+                        >
                           {t('results.roi.amount', 'Amount')}
                         </label>
                         <input
+                          id="roi-drawer-new-amount"
                           className={inputCls}
                           type="number"
                           step="any"
@@ -450,15 +498,25 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                           onChange={(e) => setNewAmount(e.target.value)}
                           placeholder="0"
                           required
+                          aria-required="true"
                         />
                       </div>
                     </div>
-                    <input
-                      className={inputCls}
-                      value={newNotes}
-                      onChange={(e) => setNewNotes(e.target.value)}
-                      placeholder={t('results.roi.notesPlaceholder', 'Notes (optional)')}
-                    />
+                    <div>
+                      <label
+                        htmlFor="roi-drawer-new-notes"
+                        className="block text-xs text-slate-500 mb-1"
+                      >
+                        {t('results.roi.notes', 'Notes')}
+                      </label>
+                      <input
+                        id="roi-drawer-new-notes"
+                        className={inputCls}
+                        value={newNotes}
+                        onChange={(e) => setNewNotes(e.target.value)}
+                        placeholder={t('results.roi.notesPlaceholder', 'Notes (optional)')}
+                      />
+                    </div>
                     <button
                       type="submit"
                       disabled={!newAmount || submitting}
@@ -561,7 +619,7 @@ export const ROIDetailDrawer: React.FC<ROIDetailDrawerProps> = ({
                                   {r.variance_notes || '—'}
                                 </td>
                                 <td className="px-3 py-2 text-slate-500 text-xs">
-                                  {r.recorded_by || '—'}
+                                  {resolveRoiActorDisplay(r.recorded_by, currentUser?.id, t)}
                                 </td>
                                 <td className="px-3 py-2 text-slate-500 text-xs">
                                   {r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}

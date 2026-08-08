@@ -71,22 +71,10 @@ export type SWOTCardStatus = 'accepted' | 'proposed';
 export type ProposalStatus = 'ai-proposed' | 'accepted' | 'rejected' | 'rethinking';
 export type SessionGenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
 export type CanonicalToolSessionStatus =
-  | 'DRAFT'
-  | 'IN_PROGRESS'
-  | 'REVIEW'
-  | 'FINALIZED'
-  | 'FAILED'
-  | 'APPROVED'
-  | 'GENERATED';
+  'DRAFT' | 'IN_PROGRESS' | 'REVIEW' | 'FINALIZED' | 'FAILED' | 'APPROVED' | 'GENERATED';
 
 export type ProposalCardType =
-  | 'signal'
-  | 'item'
-  | 'tension'
-  | 'move'
-  | 'correlation'
-  | 'output-candidate'
-  | 'conclusion';
+  'signal' | 'item' | 'tension' | 'move' | 'correlation' | 'output-candidate' | 'conclusion';
 export type SWOTOutputReadiness =
   | 'ready-for-initiative'
   | 'ready-for-presentation'
@@ -146,10 +134,7 @@ export interface SWOTDecomposition {
 export type SWOTItemEvidenceStatus = 'confirmed' | 'declared' | 'missing';
 
 export type SWOTStrengthClassification =
-  | 'core-competency'
-  | 'niche-strength'
-  | 'claimed-strength'
-  | 'table-stakes';
+  'core-competency' | 'niche-strength' | 'claimed-strength' | 'table-stakes';
 
 export interface SWOTItem {
   id: string;
@@ -257,11 +242,7 @@ export interface SWOTData {
 
 // Porter's Forces types
 export type PorterForceId =
-  | 'rivalry'
-  | 'newEntrants'
-  | 'substitutes'
-  | 'buyerPower'
-  | 'supplierPower';
+  'rivalry' | 'newEntrants' | 'substitutes' | 'buyerPower' | 'supplierPower';
 
 /** K1/K2/K3 staircase for a single Porter force (see config/porter/porterInsightStaircase). */
 export interface PorterForceStaircaseData {
@@ -471,11 +452,7 @@ export interface ValueLever {
   activityIds: ValueActivityId[];
   insight: string;
   leverType:
-    | 'cost-reduction'
-    | 'value-enhancement'
-    | 'linkage-optimization'
-    | 'outsource'
-    | 'integrate';
+    'cost-reduction' | 'value-enhancement' | 'linkage-optimization' | 'outsource' | 'integrate';
   marginImpact: 'high' | 'medium' | 'low';
   urgency: 'high' | 'medium' | 'low';
   recommendation: string;
@@ -939,10 +916,7 @@ export interface NarrativeEngineData {
 
 // Growth Paths (Ansoff) types
 export type GrowthQuadrantId =
-  | 'marketPenetration'
-  | 'marketDevelopment'
-  | 'productDevelopment'
-  | 'diversification';
+  'marketPenetration' | 'marketDevelopment' | 'productDevelopment' | 'diversification';
 
 export interface GrowthPathItem {
   id: string;
@@ -2407,6 +2381,10 @@ interface ToolStoreState {
     status?: string;
     answers?: Record<string, unknown>;
     completionPercent?: number;
+    // RB-023: persisted lifecycle payload — resolves the step the user was on
+    // when they last saved, so reopening a session restores it instead of
+    // silently defaulting to step 1.
+    wizardState?: { currentStep?: string } | null;
   }) => void;
 
   // Data updates
@@ -4199,8 +4177,20 @@ export const useToolStore = create<ToolStoreState>()(
       hydrateSessionFromApi: (payload) => {
         const steps = TOOL_STEP_DEFINITIONS[payload.toolType] || PORTER_STEPS;
         const answers = payload.answers || {};
+        // RB-023: resolve the persisted step. Prefer an explicit numeric
+        // currentStep (legacy/back-compat callers); otherwise resolve the
+        // wizardState step-id string persisted by ToolDocumentView against
+        // this tool's own step definitions so reopen lands on the same step.
+        const wizardStepId = payload.wizardState?.currentStep;
+        const wizardStepIndex = wizardStepId
+          ? steps.findIndex((step) => step.id === wizardStepId) + 1
+          : 0;
         const currentStepFromApi =
-          typeof (payload as any).currentStep === 'number' ? (payload as any).currentStep : 1;
+          typeof (payload as any).currentStep === 'number'
+            ? (payload as any).currentStep
+            : wizardStepIndex > 0
+              ? wizardStepIndex
+              : 1;
 
         const normalizedAnswers = mergeToolAnswersWithInitialData(payload.toolType, answers);
         const isDynamicSwot = payload.toolType === 'dynamic-swot';

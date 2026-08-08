@@ -58,12 +58,7 @@ export const VALID_TRANSITIONS: Record<InitiativeStatus, InitiativeStatus[]> = {
  * Module identifiers for routing
  */
 export type ModuleId =
-  | 'tools'
-  | 'assessment'
-  | 'initiatives'
-  | 'execution'
-  | 'benefits'
-  | 'reporting';
+  'tools' | 'assessment' | 'initiatives' | 'execution' | 'benefits' | 'reporting';
 
 /**
  * Module configuration
@@ -317,6 +312,20 @@ const FALLBACK_STATUS_META: StatusMeta = {
 
 export function getStatusMeta(status: InitiativeStatus): StatusMeta {
   return STATUS_METADATA[status] ?? FALLBACK_STATUS_META;
+}
+
+/**
+ * Canonical PL/EN label for an initiative status, shared by every consumer
+ * that displays InitiativeStatus (Initiatives, Execution, Results) — CB-06 /
+ * RB-035. `STATUS_METADATA[status].label` stays as the English default so
+ * existing English-only callers are unaffected; pass a `t()` to localize.
+ */
+export function getLocalizedStatusLabel(
+  status: InitiativeStatus,
+  t: (key: string, defaultValue: string) => string
+): string {
+  const fallback = STATUS_METADATA[status]?.label ?? status;
+  return t(`initiativeStatus.${status.toLowerCase()}`, fallback);
 }
 
 /**

@@ -776,7 +776,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       );
       return;
     }
-    if (action === 'mm_ai_expand') handlers.handleAIExpand();
+    // RB-011/CB-05: the action registry (idea.ai.expand_map) forwards an explicit
+    // `ctx.params.nodeId` for this exact runtime string (RUNTIME_AI_EXPAND =
+    // 'mm_ai_expand'), and `targetNodeId` above already parses it from
+    // `detail.nodeId`. It must reach handleAIExpand — silently expanding from
+    // selection/root when a caller named a specific node is the bug this closes.
+    if (action === 'mm_ai_expand') handlers.handleAIExpand(targetNodeId);
     if (action === 'mm_ai_expand_node')
       handlers.handleAIExpand(detail?.nodeId as string | undefined);
     if (action === 'mm_ai_suggest') {

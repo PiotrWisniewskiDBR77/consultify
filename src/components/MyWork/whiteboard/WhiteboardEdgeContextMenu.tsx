@@ -13,7 +13,9 @@
  * ta pozycja świadomie NIE występuje — zamiast atrapy.
  */
 import { ArrowLeftRight, ArrowRight, Paintbrush, Trash2, Type } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect } from 'react';
+
+import { useAccessibleMenu } from '../canvas/useAccessibleMenu';
 
 interface WhiteboardEdgeContextMenuProps {
   x: number;
@@ -55,7 +57,10 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
   onReverse,
   onDelete,
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  // CB-05/RB-042/RV-003: same accessible menu contract as the node menu
+  // (focus entry, arrows/Home/End, focus return); Escape is handled below via
+  // the existing document keydown listener → onClose → unmount → cleanup.
+  const ref = useAccessibleMenu<HTMLDivElement>(true);
 
   useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -129,6 +134,8 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
   return (
     <div
       ref={ref}
+      role="menu"
+      aria-label={isPl ? 'Akcje połączenia' : 'Connection actions'}
       className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
       style={{ left: clampedX, top: clampedY }}
     >
@@ -141,6 +148,7 @@ export const WhiteboardEdgeContextMenu: React.FC<WhiteboardEdgeContextMenuProps>
             )}
             <button
               type="button"
+              role="menuitem"
               disabled={isLocked}
               onClick={() => handleClick(item.run)}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${

@@ -120,6 +120,14 @@ export const SHAPES_BY_SEMANTIC_KIT: Partial<Record<ProcessFlowSemanticKit, Flow
   org: ORG_SHAPES,
 };
 
+// CB-05/RB-017/RV-007: the left rail (CanvasLeftToolbar PF_CONTEXT_SLOTS) owns
+// exactly these four shapes as one-click primary create commands, across every
+// flow mode/kit — decision #2/#3. The horizontal build palette below renders
+// `availableShapes` MINUS this set, so it only ever shows the shapes genuinely
+// specific to the active mode/kit that the rail has no equivalent for (End,
+// the automation/VSM/BPMN/System/Org shapes, …).
+const RAIL_OWNED_SHAPES = new Set<FlowShape>(['start', 'action', 'decision']);
+
 // ── Props ────────────────────────────────────────────────────────────────────
 
 export interface ProcessFlowToolbarProps {
@@ -130,7 +138,6 @@ export interface ProcessFlowToolbarProps {
   semanticKit: string;
   availableShapes: FlowShape[];
   addNode: (shape: FlowShape) => void;
-  addLane: () => void;
   insertBetween: () => void;
   splitPath: () => void;
   runValidation: () => void;
@@ -191,7 +198,6 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
   semanticKit,
   availableShapes,
   addNode,
-  addLane,
   insertBetween,
   splitPath,
   runValidation,
@@ -334,37 +340,31 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
 
         {/* ── Main toolbar: build palette · edit · save · Więcej ─────────── */}
         <div className="flex flex-wrap items-center gap-1.5">
-          {/* Build palette (always visible) */}
-          {availableShapes.map((shape) => {
-            const cfg = SHAPE_CONFIG[shape];
-            const Icon = cfg.icon;
-            return (
-              <button
-                key={shape}
-                type="button"
-                onClick={() => addNode(shape)}
-                disabled={locked}
-                className={BTN}
-                title={isPl ? cfg.labelPl : cfg.label}
-              >
-                <Icon size={14} />
-                {isPl ? cfg.labelPl : cfg.label}
-              </button>
-            );
-          })}
+          {/* Build palette — mode/kit-specific shapes only. Start/Action/Decision
+              (and Lane, below) are the left rail's job (RB-017/RV-007); showing
+              them here too was the duplicate-ownership finding. */}
+          {availableShapes
+            .filter((shape) => !RAIL_OWNED_SHAPES.has(shape))
+            .map((shape) => {
+              const cfg = SHAPE_CONFIG[shape];
+              const Icon = cfg.icon;
+              return (
+                <button
+                  key={shape}
+                  type="button"
+                  onClick={() => addNode(shape)}
+                  disabled={locked}
+                  className={BTN}
+                  title={isPl ? cfg.labelPl : cfg.label}
+                >
+                  <Icon size={14} />
+                  {isPl ? cfg.labelPl : cfg.label}
+                </button>
+              );
+            })}
 
           <div className="mx-0.5 h-5 w-px bg-c-border-subtle" />
 
-          <button
-            type="button"
-            onClick={addLane}
-            disabled={locked}
-            className={BTN}
-            title={t('processFlow.toolbar.addLane', 'Add lane')}
-          >
-            <Plus size={14} />
-            Lane
-          </button>
           <button
             type="button"
             onClick={insertBetween}

@@ -63,6 +63,74 @@ import {
 } from './DecisionPreviewPanel';
 import { DelegationModal } from './shared/DelegationModal';
 
+// CB-04/RB-020 — one canonical, finality-aware timing model shared by the
+// Decisions table (DecisionsPanelContent) and Kanban (DecisionsKanbanBoard)
+// views. Previously each view re-implemented `isOverdue`/`daysWaiting`
+// independently: the table gated overdue on `status === 'PENDING'` only
+// (never ESCALATED, which is also un-decided and can be overdue), and the
+// "days waiting" label used `createdAt` unconditionally, so an already
+// decided item kept counting days "waiting" forever instead of reporting
+// how long ago it was decided.
+//
+// Kept local to this file (rather than a shared ./decisionTiming module) so
+// it has no dependency outside this file's recovery scope.
+
+/** A decision is final once it has an outcome recorded; PENDING/ESCALATED are still awaiting one. */
+function isDecisionFinal(status: string | undefined): boolean {
+  const s = status?.toUpperCase();
+  return s === 'APPROVED' || s === 'REJECTED' || s === 'DEFERRED';
+}
+
+/**
+ * A decision can only be "overdue" while it is still awaiting an outcome.
+ * Gated on non-final status (PENDING or ESCALATED), not on PENDING alone.
+ */
+function isDecisionOverdue(
+  dueDateStr: string | undefined,
+  status: string | undefined,
+  now: number = Date.now()
+): boolean {
+  if (!dueDateStr) return false;
+  if (isDecisionFinal(status)) return false;
+  const due = new Date(dueDateStr);
+  if (Number.isNaN(due.getTime())) return false;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return due < today;
+}
+
+interface DecisionWaitDescriptor {
+  /** Number of days between the reference instant and the relevant timestamp. */
+  days: number;
+  /** Whether this describes time waited-for-a-decision (open) or time-since-decided (final). */
+  kind: 'waiting' | 'decided';
+}
+
+/**
+ * Finality-aware "days" descriptor: open decisions report days waited since
+ * creation; final decisions report days since `decidedAt` (falling back to
+ * `createdAt` only if `decidedAt` is missing, since it must still resolve
+ * to *some* value while the domain contract remains free to be filled in).
+ */
+function describeDecisionDays(
+  decision: { status: string | undefined; createdAt: string; decidedAt?: string },
+  now: number = Date.now()
+): DecisionWaitDescriptor {
+  if (isDecisionFinal(decision.status)) {
+    const ref = decision.decidedAt || decision.createdAt;
+    const refTime = new Date(ref).getTime();
+    const days = Number.isNaN(refTime)
+      ? 0
+      : Math.max(0, Math.floor((now - refTime) / (1000 * 60 * 60 * 24)));
+    return { days, kind: 'decided' };
+  }
+  const createdTime = new Date(decision.createdAt).getTime();
+  const days = Number.isNaN(createdTime)
+    ? 0
+    : Math.max(0, Math.floor((now - createdTime) / (1000 * 60 * 60 * 24)));
+  return { days, kind: 'waiting' };
+}
+
 type ViewMode = 'all' | 'my' | 'awaiting';
 type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
@@ -269,20 +337,9 @@ const formatDate = (dateStr?: string): string => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const isOverdue = (dateStr?: string): boolean => {
-  if (!dateStr) return false;
-  const date = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return date < today;
-};
-
-// Days waiting calculation
-const getDaysWaiting = (createdAt: string): number => {
-  const created = new Date(createdAt);
-  const now = new Date();
-  return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
-};
+// Overdue/waiting timing is derived from the shared, finality-aware
+// `decisionTiming` module (isDecisionOverdue/describeDecisionDays) so this
+// table view and the Kanban view can never diverge — see RB-020.
 
 const getInitials = (name?: string) => {
   if (!name) return '?';
@@ -371,14 +428,19 @@ const buildDecisionColumns = (
     render: (row: TableRow) => {
       const d = row as unknown as Decision;
       const dueDate = d.dueDate || d.deadline;
-      const overdue = isOverdue(dueDate) && d.status?.toUpperCase() === 'PENDING';
-      const daysWaiting = getDaysWaiting(d.createdAt);
+      const overdue = isDecisionOverdue(dueDate, d.status);
+      const daysDescriptor = describeDecisionDays(d);
       return dueDate ? (
         <DueChip label={formatDate(dueDate)} risk={overdue ? 'overdue' : 'none'} showIcon />
       ) : (
         <MetaChip
           icon={Clock}
-          label={t('myWork.decisionsPanel.daysWaiting', { days: daysWaiting })}
+          label={t(
+            daysDescriptor.kind === 'decided'
+              ? 'myWork.decisionsPanel.daysSinceDecided'
+              : 'myWork.decisionsPanel.daysWaiting',
+            { days: daysDescriptor.days }
+          )}
         />
       );
     },
@@ -581,7 +643,7 @@ const buildAwaitingKebabSections = (
 ): RowActionSection[] => {
   const dueDate = decision.dueDate || decision.deadline;
   const isPending = decision.status?.toUpperCase() === 'PENDING';
-  const overdue = isOverdue(dueDate) && isPending;
+  const overdue = isDecisionOverdue(dueDate, decision.status);
   return [
     // ── §6.4 grupa 1: NAWIGACJA (Otwórz/Podgląd) + akcje stanu (Remind/Escalate) ──
     {

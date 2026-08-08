@@ -119,6 +119,72 @@ import { useAppStore } from '@/store/useAppStore';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { isM03InboxStandardTableEnabled } from '@/utils/m03InboxStandardTableFlag';
 
+// duplicateIdentity — CB-04/RB-019/RV-029.
+//
+// Shared "semantic duplicate" grouping for Personal Tasks and Inbox: neither
+// list had ANY business-identity concept beyond the raw row id, so two rows
+// with the exact same title, urgency, status, section, and source rendered
+// as indistinguishable independent items with no grouping and no warning —
+// a user could not tell a genuine duplicate assignment from two
+// legitimately distinct pieces of work that just happen to share a title.
+//
+// This does NOT collapse or hide rows (every row still renders — hiding
+// data a user might need to act on is worse than a cluttered list). It only
+// computes, per item, how many OTHER items share the same identity key, so
+// callers can render a visible "possible duplicate" grouping/warning.
+//
+// Kept local to this file (rather than a shared ./duplicateIdentity module)
+// so it has no dependency outside this file's recovery scope.
+
+/** Lowercases, trims, and collapses whitespace so trivial formatting
+ * differences ("Fix bug" vs "fix   bug") don't defeat grouping. */
+function normalizeIdentityTitle(title: string | null | undefined): string {
+  return String(title || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+/** Joins a normalized title with additional disambiguating context (e.g.
+ * project id, source, section) into one identity key. Two items are only
+ * flagged as semantic duplicates when BOTH the title AND the context match —
+ * matching title alone over-flags legitimately distinct same-named items in
+ * different projects/sources. */
+function buildDuplicateIdentityKey(
+  title: string | null | undefined,
+  ...context: Array<string | null | undefined>
+): string {
+  const normalizedContext = context
+    .map((c) =>
+      String(c || '')
+        .trim()
+        .toLowerCase()
+    )
+    .join('::');
+  return `${normalizeIdentityTitle(title)}::${normalizedContext}`;
+}
+
+interface DuplicateGroupCounts {
+  /** identityKey -> how many items share it. */
+  counts: Map<string, number>;
+  /** identityKey -> the ids of every item sharing it (for "N duplicates" UI). */
+  idsByKey: Map<string, string[]>;
+}
+
+function computeDuplicateGroups(
+  items: Array<{ id: string; identityKey: string }>
+): DuplicateGroupCounts {
+  const idsByKey = new Map<string, string[]>();
+  for (const item of items) {
+    const existing = idsByKey.get(item.identityKey);
+    if (existing) existing.push(item.id);
+    else idsByKey.set(item.identityKey, [item.id]);
+  }
+  const counts = new Map<string, number>();
+  for (const [key, ids] of idsByKey) counts.set(key, ids.length);
+  return { counts, idsByKey };
+}
+
 export type InboxUrgency = 'critical' | 'high' | 'normal' | 'low';
 export type InboxItemType =
   | 'new_assignment'
@@ -2484,6 +2550,26 @@ export const InboxContent: React.FC<InboxContentProps> = ({
     return flattenInboxDisplayGroups(displayItems);
   }, [displayItems, useInboxStandardTable]);
 
+  // CB-04/RV-029 — SEMANTIC duplicate warning, distinct from the "×N similar"
+  // badge above. That badge groups by `_key` (sourceEntityType:sourceEntityId)
+  // — the SAME underlying record surfaced through multiple channels. It does
+  // NOT catch two genuinely DIFFERENT records that just happen to share a
+  // title/section/source (e.g. "Submit Compliance Documentation" filed
+  // twice) — exactly the RV-029 repro. Computed over group-header rows only
+  // (children of an existing exact-entity group aren't separate business
+  // records, so they're excluded to avoid double-flagging).
+  const inboxSemanticDuplicateGroups = useMemo(() => {
+    const headerRows = inboxStandardRows.filter(
+      (r) => (r as unknown as InboxStandardRow).__isGroupHeader
+    ) as unknown as InboxStandardRow[];
+    return computeDuplicateGroups(
+      headerRows.map((r) => ({
+        id: r.__groupKey,
+        identityKey: buildDuplicateIdentityKey(r.title, r.section, r.source),
+      }))
+    );
+  }, [inboxStandardRows]);
+
   // ── StandardTable columns (kanon TRIADA §27) — cell markup 1:1 z legacy
   // `renderRow` (title/status/urgency/type/section/source/received/sla).
   // `row as unknown as InboxStandardRow` at each render/sortAccessor boundary
@@ -2535,6 +2621,28 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   {r.__groupExpanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                 </button>
               )}
+              {/* CB-04/RV-029: SEMANTIC duplicate — a different underlying
+                  record (different sourceEntityId, so the ×N badge above
+                  never catches it) with the same title/section/source.
+                  Never hides/merges rows — only warns. */}
+              {r.__isGroupHeader &&
+                (inboxSemanticDuplicateGroups.counts.get(
+                  buildDuplicateIdentityKey(r.title, r.section, r.source)
+                ) ?? 1) > 1 && (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-amber-400/40 bg-amber-500/10 text-[10px] font-medium text-amber-600 dark:text-amber-300"
+                    title={t(
+                      'myWork.inboxContent.possibleDuplicateHint',
+                      'Another item with the same title, section, and source exists — check it is not a duplicate.'
+                    )}
+                  >
+                    {t('myWork.inboxContent.possibleDuplicate', 'Possible duplicate ({{count}})', {
+                      count: inboxSemanticDuplicateGroups.counts.get(
+                        buildDuplicateIdentityKey(r.title, r.section, r.source)
+                      ),
+                    })}
+                  </span>
+                )}
             </div>
           );
         },
@@ -2696,7 +2804,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         },
       },
     ];
-  }, [t, isPolish, useInboxStandardTable, toggleGroupExpanded]);
+  }, [t, isPolish, useInboxStandardTable, toggleGroupExpanded, inboxSemanticDuplicateGroups]);
 
   // ── Triage ──
   const triage = useCallback(

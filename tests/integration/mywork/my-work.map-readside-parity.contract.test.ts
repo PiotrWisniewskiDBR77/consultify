@@ -152,6 +152,36 @@ describe('Read-side parity — metrics/export-csv/artifacts vs GET /map', () => 
       expect(ownerFiltered).toBe(false);
     });
 
+    // RV-008 (CB-03 Codex review pass 2): a tolerant "most recent row" fallback
+    // was added and then reverted here on review — it directly contradicted
+    // `selectCanonicalMapRow`'s documented contract (ideaMapAccess.ts) that
+    // "no canonical row exists" must be treated the same as not-found, never
+    // silently served from a different (possibly wrong-user) row. This test
+    // locks in the correct, current behavior so that unsafe fallback cannot
+    // be silently reintroduced: when no row is flagged canonical, GET /map
+    // returns the default/empty map and issues NO further my_idea_maps query.
+    it('GET /map returns the default map (never a fallback row) when no row is flagged canonical', async () => {
+      mockQueryOne
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Shared', ownerUserId: 'owner-9' }) // GET /map's own idea lookup
+        .mockResolvedValueOnce({ id: IDEA_ID }) // assertIdeaMembership: idea exists
+        .mockResolvedValueOnce({ id: 'member-1' }) // assertIdeaMembership: ACTIVE member → canRead=true
+        .mockResolvedValueOnce(null); // selectCanonicalMapRow-equivalent: no is_canonical row yet
+
+      const res = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.isDefault).toBe(true);
+      expect(res.body.map?.preferredTool ?? null).toBeNull();
+      // Exactly 4 queryOne calls: idea lookup, membership x2, canonical
+      // select. A 5th call would mean a fallback query was reintroduced.
+      expect(mockQueryOne).toHaveBeenCalledTimes(4);
+      const myIdeaMapsCalls = mockQueryOne.mock.calls.filter(([sql]) =>
+        /FROM my_idea_maps/i.test(String(sql))
+      );
+      expect(myIdeaMapsCalls).toHaveLength(1);
+      expect(String(myIdeaMapsCalls[0][0])).toMatch(/is_canonical\s*=\s*TRUE/i);
+    });
+
     it('GET metrics/map queries is_canonical = TRUE, not the owner join', async () => {
       const res = await request(buildApp()).get(
         `/api/my-work/my-ideas/metrics/map?ids=${IDEA_ID}`
@@ -246,6 +276,72 @@ describe('Read-side parity — metrics/export-csv/artifacts vs GET /map', () => 
       const dataCall = mockQueryOne.mock.calls[1];
       expect(String(dataCall?.[0])).toMatch(/user_id = \?/i);
       expect(dataCall?.[1]).toContain('owner-9');
+    });
+  });
+
+  // RV-008 (CB-03 Codex re-review) — the Ideas list ("Tool" badge) and
+  // GET /map (Open) now resolve `preferredTool` through the exact same
+  // function, `selectReadableMapRow` (ideaMapAccess.ts). These tests exercise
+  // BOTH endpoints against the same fixture idea and assert they land on the
+  // identical truthful answer — never a list badge the Open action can't
+  // deliver.
+  describe('list ↔ Open parity (RV-008)', () => {
+    beforeEach(() => {
+      mockGetTableColumns.mockResolvedValue(SHARED_COLUMNS);
+    });
+
+    it('list shows no preferredTool (not a guessed "table") and Open shows the honest default when no row is canonical yet', async () => {
+      // --- List: base ideas query, then one selectReadableMapRow lookup per row.
+      mockQueryAll.mockResolvedValueOnce([{ id: IDEA_ID, title: 'Sales map', tags: null }]);
+      mockQueryOne.mockResolvedValueOnce(null); // no canonical my_idea_maps row
+
+      const listRes = await request(buildApp()).get('/api/my-work/my-ideas');
+      expect(listRes.status).toBe(200);
+      expect(listRes.body[0]?.preferredTool ?? null).toBeNull();
+
+      // --- Open: same idea, same underlying resolver, same "no canonical row" fact.
+      mockQueryOne
+        .mockReset()
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Sales map', ownerUserId: 'user-1' }) // GET /map's own idea lookup
+        .mockResolvedValueOnce({ id: IDEA_ID }) // assertIdeaMembership: idea exists
+        .mockResolvedValueOnce({ id: 'member-1' }) // assertIdeaMembership: ACTIVE member
+        .mockResolvedValueOnce(null); // selectReadableMapRow: no canonical row
+
+      const openRes = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);
+      expect(openRes.status).toBe(200);
+      expect(openRes.body.isDefault).toBe(true);
+      expect(openRes.body.map?.preferredTool ?? null).toBeNull();
+
+      // Both surfaces agree: neither claims a tool this idea can't actually open as.
+      expect(listRes.body[0]?.preferredTool ?? null).toBe(openRes.body.map?.preferredTool ?? null);
+    });
+
+    it('list and Open both resolve "table" when a real canonical row says so', async () => {
+      mockQueryAll.mockResolvedValueOnce([{ id: IDEA_ID, title: 'Sales map', tags: null }]);
+      mockQueryOne.mockResolvedValueOnce({ preferredTool: 'table' }); // canonical row exists
+
+      const listRes = await request(buildApp()).get('/api/my-work/my-ideas');
+      expect(listRes.status).toBe(200);
+      expect(listRes.body[0]?.preferredTool).toBe('table');
+
+      mockQueryOne
+        .mockReset()
+        .mockResolvedValueOnce({ id: IDEA_ID, title: 'Sales map', ownerUserId: 'user-1' })
+        .mockResolvedValueOnce({ id: IDEA_ID })
+        .mockResolvedValueOnce({ id: 'member-1' })
+        .mockResolvedValueOnce({
+          id: 'map-1',
+          nodesJson: '[]',
+          edgesJson: '[]',
+          version: 1,
+          preferredTool: 'table',
+        });
+
+      const openRes = await request(buildApp()).get(`/api/my-work/my-ideas/${IDEA_ID}/map`);
+      expect(openRes.status).toBe(200);
+      expect(openRes.body.map?.preferredTool).toBe('table');
+
+      expect(listRes.body[0]?.preferredTool).toBe(openRes.body.map?.preferredTool);
     });
   });
 });

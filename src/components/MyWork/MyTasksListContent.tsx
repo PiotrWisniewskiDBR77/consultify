@@ -98,6 +98,72 @@ import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { SavedViewsMenu, type TaskViewPreset } from './shared/SavedViewsMenu';
 import { usePersistedColumnWidths } from './shared/usePersistedColumnWidths';
 
+// duplicateIdentity — CB-04/RB-019/RV-029.
+//
+// Shared "semantic duplicate" grouping for Personal Tasks and Inbox: neither
+// list had ANY business-identity concept beyond the raw row id, so two rows
+// with the exact same title, urgency, status, section, and source rendered
+// as indistinguishable independent items with no grouping and no warning —
+// a user could not tell a genuine duplicate assignment from two
+// legitimately distinct pieces of work that just happen to share a title.
+//
+// This does NOT collapse or hide rows (every row still renders — hiding
+// data a user might need to act on is worse than a cluttered list). It only
+// computes, per item, how many OTHER items share the same identity key, so
+// callers can render a visible "possible duplicate" grouping/warning.
+//
+// Kept local to this file (rather than a shared ./duplicateIdentity module)
+// so it has no dependency outside this file's recovery scope.
+
+/** Lowercases, trims, and collapses whitespace so trivial formatting
+ * differences ("Fix bug" vs "fix   bug") don't defeat grouping. */
+function normalizeIdentityTitle(title: string | null | undefined): string {
+  return String(title || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+/** Joins a normalized title with additional disambiguating context (e.g.
+ * project id, source, section) into one identity key. Two items are only
+ * flagged as semantic duplicates when BOTH the title AND the context match —
+ * matching title alone over-flags legitimately distinct same-named items in
+ * different projects/sources. */
+function buildDuplicateIdentityKey(
+  title: string | null | undefined,
+  ...context: Array<string | null | undefined>
+): string {
+  const normalizedContext = context
+    .map((c) =>
+      String(c || '')
+        .trim()
+        .toLowerCase()
+    )
+    .join('::');
+  return `${normalizeIdentityTitle(title)}::${normalizedContext}`;
+}
+
+interface DuplicateGroupCounts {
+  /** identityKey -> how many items share it. */
+  counts: Map<string, number>;
+  /** identityKey -> the ids of every item sharing it (for "N duplicates" UI). */
+  idsByKey: Map<string, string[]>;
+}
+
+function computeDuplicateGroups(
+  items: Array<{ id: string; identityKey: string }>
+): DuplicateGroupCounts {
+  const idsByKey = new Map<string, string[]>();
+  for (const item of items) {
+    const existing = idsByKey.get(item.identityKey);
+    if (existing) existing.push(item.id);
+    else idsByKey.set(item.identityKey, [item.id]);
+  }
+  const counts = new Map<string, number>();
+  for (const [key, ids] of idsByKey) counts.set(key, ids.length);
+  return { counts, idsByKey };
+}
+
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent' | 'new';
 type TaskTimeGroup = 'all' | 'overdue' | 'today' | 'week' | 'later' | 'no-date';
 
@@ -796,6 +862,11 @@ const TaskTableRow: React.FC<{
   hiddenColumns?: Set<string>;
   focusState?: Record<string, string>;
   showRowDescription: boolean;
+  /** CB-04/RB-019: >1 when another visible task shares this one's business
+   * identity (title + project). Rows are never hidden/merged — this only
+   * adds a visible warning so the user can tell a real duplicate from
+   * coincidence. */
+  duplicateCount?: number;
 }> = ({
   task,
   isSelected,
@@ -816,6 +887,7 @@ const TaskTableRow: React.FC<{
   hiddenColumns: hiddenCols,
   focusState,
   showRowDescription,
+  duplicateCount = 1,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -893,6 +965,21 @@ const TaskTableRow: React.FC<{
                   : focusState[task.id] === 'thisWeek'
                     ? 'This Week'
                     : 'Later'}
+              </span>
+            )}
+            {/* CB-04/RB-019: visible semantic-duplicate warning — never
+                hides the row, just flags it. */}
+            {duplicateCount > 1 && (
+              <span
+                className="ml-1.5 shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-amber-400/40 bg-amber-500/10 text-amber-600 dark:text-amber-300"
+                title={t(
+                  'myWork.tasksList.possibleDuplicateHint',
+                  'Another task with the same title and project exists — check it is not a duplicate.'
+                )}
+              >
+                {t('myWork.tasksList.possibleDuplicate', 'Possible duplicate ({{count}})', {
+                  count: duplicateCount,
+                })}
               </span>
             )}
           </div>
@@ -2118,6 +2205,22 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
     return result;
   }, [groupedTasks, tableFilters, smartSort, sortConfig]);
 
+  // CB-04/RB-019: same-title tasks had NO semantic-duplicate grouping or
+  // warning — two rows with identical titles rendered as indistinguishable
+  // independent items. Identity = title + project (source context), so
+  // legitimately distinct same-named tasks in different projects are never
+  // over-flagged — only genuinely repeated business identity is.
+  const taskDuplicateGroups = useMemo(
+    () =>
+      computeDuplicateGroups(
+        allFilteredTasks.map((task) => ({
+          id: task.id,
+          identityKey: buildDuplicateIdentityKey(task.title, task.projectName),
+        }))
+      ),
+    [allFilteredTasks]
+  );
+
   const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
 
   const previewTask = useMemo(
@@ -3015,6 +3118,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           isFocused={focusedTask?.id === task.id}
                           isPreviewed={previewTaskId === task.id}
                           isNew={isNewTask(task)}
+                          duplicateCount={
+                            taskDuplicateGroups.counts.get(
+                              buildDuplicateIdentityKey(task.title, task.projectName)
+                            ) ?? 1
+                          }
                           onSelect={handleSelectTask}
                           onToggleComplete={handleToggleComplete}
                           onSetStatus={handleSetStatus}

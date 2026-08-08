@@ -11,6 +11,7 @@
 
 import { ChevronDown, List as ListIcon, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import {
   MENU_3_CHIP_ACTIVE,
@@ -122,6 +123,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   onShowList,
   rightContent,
 }) => {
+  const { t } = useTranslation();
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
 
   // Split documents into visible and overflow
@@ -151,9 +153,14 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
       <div className={MENU_3_INNER_CLASS}>
         <div className="flex min-w-0 items-center gap-2">
           {/* List button - same style as tabs */}
-          <button onClick={onShowList} className={isListActive ? TAB_ACTIVE : TAB_INACTIVE}>
-            <ListIcon size={14} />
-            <span>List</span>
+          <button
+            type="button"
+            onClick={onShowList}
+            aria-label={t('common.backToList', 'Back to list')}
+            className={isListActive ? TAB_ACTIVE : TAB_INACTIVE}
+          >
+            <ListIcon size={14} aria-hidden="true" />
+            <span>{t('common.list', 'List')}</span>
           </button>
 
           {/* Separator */}
@@ -196,17 +203,19 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
 
                 {/* Close Button */}
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCloseDocument(doc.id);
                   }}
+                  aria-label={t('common.closeDocumentNamed', 'Close {{name}}', { name: doc.name })}
                   className="
-                p-0.5 rounded opacity-0 group-hover:opacity-100
+                p-0.5 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus:opacity-100
                 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600
                 transition-all
               "
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             );
@@ -216,11 +225,21 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           {overflowDocs.length > 0 && (
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setShowOverflowMenu(!showOverflowMenu)}
+                aria-haspopup="true"
+                aria-expanded={showOverflowMenu}
+                aria-label={t('common.moreOpenDocuments', 'More open documents ({{count}})', {
+                  count: overflowDocs.length,
+                })}
                 className={activeInOverflow ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
-                <span>+{overflowDocs.length}</span>
-                <ChevronDown size={14} className={showOverflowMenu ? 'rotate-180' : ''} />
+                <span aria-hidden="true">+{overflowDocs.length}</span>
+                <ChevronDown
+                  size={14}
+                  aria-hidden="true"
+                  className={showOverflowMenu ? 'rotate-180' : ''}
+                />
               </button>
 
               {/* Dropdown Menu */}
@@ -254,13 +273,17 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
                           <span className="flex-1 truncate">{doc.name}</span>
                           <span className={`w-2 h-2 rounded-full ${statusColor}`} />
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onCloseDocument(doc.id);
                             }}
+                            aria-label={t('common.closeDocumentNamed', 'Close {{name}}', {
+                              name: doc.name,
+                            })}
                             className="p-0.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600"
                           >
-                            <X size={14} />
+                            <X size={14} aria-hidden="true" />
                           </button>
                         </div>
                       );

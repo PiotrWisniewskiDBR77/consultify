@@ -14,7 +14,6 @@ import StarterKit from '@tiptap/starter-kit';
 import {
   AlertTriangle,
   Archive,
-  BookOpen,
   CheckCircle2,
   CheckSquare,
   ChevronLeft,
@@ -30,7 +29,6 @@ import {
   Pen,
   Pin,
   Play,
-  Plus,
   RefreshCw,
   Sparkles,
   Tag,
@@ -49,7 +47,6 @@ import { useNavigate } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/primitives/Button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/useDeviceType';
 import { Api } from '@/services/api';
 import * as apiModule from '@/services/api';
@@ -121,6 +118,7 @@ import {
   type SlashMenuState,
 } from './notebook/SlashMenu';
 import { useNotebookPresence } from './notebook/useNotebookPresence';
+import { NotebookHeaderActions } from './NotebookHeaderActions';
 import { buildAskAIMessage } from './shared/askAiHelper';
 
 interface NotebookContentProps {
@@ -2624,26 +2622,10 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           <div className="px-4 py-3 border-b border-c-border-subtle">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2.5 min-w-0">
-                {onBackToLibrary ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={onBackToLibrary}
-                        data-testid="notebook-back-to-library"
-                        className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised text-c-text-secondary flex items-center justify-center hover:bg-c-surface-raised transition-colors"
-                      >
-                        <ChevronLeft size={16} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {t('notebook.notebookContent.label26', 'All notebooks')}
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <div className="w-7 h-7 shrink-0 rounded-lg bg-c-surface-raised flex items-center justify-center">
-                    <BookOpen size={14} className="text-c-text-muted" />
-                  </div>
-                )}
+                <NotebookHeaderActions
+                  onBack={onBackToLibrary}
+                  onNewPage={() => setTemplateModalOpen(true)}
+                />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-c-text truncate">
                     {notebookTitle || t('myWork.notebook.title', 'Notebook')}
@@ -2653,18 +2635,6 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                   </div>
                 </div>
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setTemplateModalOpen(true)}
-                    data-testid="notebook-new-page-button"
-                    className="p-1.5 rounded-lg bg-c-accent-soft text-c-accent hover:bg-c-accent-soft hover:brightness-110 transition-colors"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{t('myWork.notebook.new', 'New page')}</TooltipContent>
-              </Tooltip>
             </div>
           </div>
 

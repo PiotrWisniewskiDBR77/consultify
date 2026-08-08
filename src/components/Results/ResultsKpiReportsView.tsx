@@ -1,5 +1,5 @@
 import { ChevronRight, ExternalLink, FileText, MessageCircle, Sparkles, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
@@ -69,6 +70,12 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   const [refreshingReportId, setRefreshingReportId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const createDialogRef = useRef<HTMLDivElement>(null);
+  const closeCreateDialog = useCallback(() => {
+    setCreateOpen(false);
+    setAiNarrativeHint('');
+  }, []);
+  useDialogA11y({ open: createOpen, onClose: closeCreateDialog, containerRef: createDialogRef });
 
   const [availableKpis, setAvailableKpis] = useState<
     Array<{ id: string; name: string; initiativeName?: string | null }>
@@ -91,6 +98,15 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   const [tasksCreating, setTasksCreating] = useState(false);
   const [tasksReportRow, setTasksReportRow] = useState<TableRow | null>(null);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const tasksDialogRef = useRef<HTMLDivElement>(null);
+  const closeTasksDialog = useCallback(() => {
+    if (!tasksCreating) setTasksModalOpen(false);
+  }, [tasksCreating]);
+  useDialogA11y({
+    open: tasksModalOpen,
+    onClose: closeTasksDialog,
+    containerRef: tasksDialogRef,
+  });
 
   const [periodStart, setPeriodStart] = useState(() => {
     const d = new Date();
@@ -822,37 +838,43 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-c-bg/60 backdrop-blur-sm"
-            onClick={() => {
-              setCreateOpen(false);
-              setAiNarrativeHint('');
-            }}
+            onClick={closeCreateDialog}
           />
-          <div className="relative w-full max-w-lg mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl">
+          <div
+            ref={createDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="kpi-report-create-heading"
+            tabIndex={-1}
+            className="relative w-full max-w-lg mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl outline-none"
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-c-info/10">
                   <FileText size={16} className="text-c-info" />
                 </div>
-                <h2 className="text-lg font-semibold text-c-text">
+                <h2 id="kpi-report-create-heading" className="text-lg font-semibold text-c-text">
                   {t('results.kpiReports.create.title', 'New KPI report')}
                 </h2>
               </div>
               <button
-                onClick={() => {
-                  setCreateOpen(false);
-                  setAiNarrativeHint('');
-                }}
+                type="button"
+                onClick={closeCreateDialog}
+                aria-label={t('common.close', 'Close')}
                 className="p-1.5 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted transition-colors"
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className={labelCls}>{t('common.name', 'Name')}</label>
+                <label htmlFor="kpi-report-create-name" className={labelCls}>
+                  {t('common.name', 'Name')}
+                </label>
                 <div className="flex gap-2">
                   <input
+                    id="kpi-report-create-name"
                     className={inputCls}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -877,10 +899,11 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div>
-                  <label className={labelCls}>
+                  <label htmlFor="kpi-report-create-template" className={labelCls}>
                     {t('results.kpiReports.create.template', 'Template')}
                   </label>
                   <select
+                    id="kpi-report-create-template"
                     className={inputCls}
                     value={reportTemplate}
                     onChange={(e) => setReportTemplate(e.target.value)}
@@ -1003,18 +1026,25 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>{t('common.periodStart', 'Period start')}</label>
+                  <label htmlFor="kpi-report-create-period-start" className={labelCls}>
+                    {t('common.periodStart', 'Period start')}
+                  </label>
                   <input
+                    id="kpi-report-create-period-start"
                     className={inputCls}
                     type="date"
                     value={periodStart}
                     onChange={(e) => setPeriodStart(e.target.value)}
                     required
+                    aria-required="true"
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>{t('common.periodEnd', 'Period end')}</label>
+                  <label htmlFor="kpi-report-create-period-end" className={labelCls}>
+                    {t('common.periodEnd', 'Period end')}
+                  </label>
                   <input
+                    id="kpi-report-create-period-end"
                     className={inputCls}
                     type="date"
                     value={periodEnd}
@@ -1052,6 +1082,7 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                   value={kpiSearch}
                   onChange={(e) => setKpiSearch(e.target.value)}
                   placeholder={t('common.search', 'Search')}
+                  aria-label={t('results.kpiReports.create.searchKpis', 'Search KPIs')}
                 />
 
                 <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-c-border-subtle dark:border-c-border-subtle bg-c-surface-raised/40 dark:bg-c-surface-raised/40">
@@ -1124,18 +1155,27 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-c-bg/60 backdrop-blur-sm"
-            onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
+            onClick={closeTasksDialog}
           />
-          <div className="relative w-full max-w-2xl mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl">
+          <div
+            ref={tasksDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="kpi-report-tasks-heading"
+            tabIndex={-1}
+            className="relative w-full max-w-2xl mx-4 bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-2xl shadow-2xl outline-none"
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-c-border-subtle dark:border-c-border-subtle">
-              <h2 className="text-lg font-semibold text-c-text">
+              <h2 id="kpi-report-tasks-heading" className="text-lg font-semibold text-c-text">
                 {t('results.kpiReports.tasks.title', 'Create tasks from action plan')}
               </h2>
               <button
-                onClick={() => (tasksCreating ? null : setTasksModalOpen(false))}
+                type="button"
+                onClick={closeTasksDialog}
+                aria-label={t('common.close', 'Close')}
                 className="p-1.5 rounded-lg hover:bg-c-surface-raised dark:hover:bg-c-surface-raised text-c-text-muted transition-colors"
               >
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </button>
             </div>
 

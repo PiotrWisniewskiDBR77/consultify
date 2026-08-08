@@ -23,7 +23,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
@@ -53,11 +53,18 @@ export interface CorrectiveAction {
 }
 
 interface CorrectiveActionsProps {
-  projectId: string;
+  // CB-03 Codex pass 2: NOT guessed by callers — a real project/initiative id
+  // (e.g. the URL's `?initiativeId=`) or omitted entirely. This component
+  // never fabricates one (no org id, no 'all' sentinel): without a real id it
+  // renders an honest "no project context" unavailable state instead of
+  // calling the service with a made-up identity.
+  projectId?: string;
   actions?: CorrectiveAction[];
   onCreateAction?: () => void;
   onUpdateAction?: (actionId: string, updates: Partial<CorrectiveAction>) => void;
 }
+
+type LoadState = 'loading' | 'no-context' | 'error' | 'loaded';
 
 const STATUS_CONFIG: Record<
   ActionStatus,
@@ -105,34 +112,49 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
   const [filter, setFilter] = useState<'all' | ActionStatus>('all');
   const [selectedAction, setSelectedAction] = useState<CorrectiveAction | null>(null);
   const [localActions, setLocalActions] = useState<CorrectiveAction[]>(actions);
-  const [isLoading, setIsLoading] = useState(!actions.length);
+  // CB-03 Codex pass 2: a service failure (non-2xx, network error) is a
+  // distinct `error` state, never silently folded into `[]` + the "on track"
+  // empty-state copy — that previously made an outage indistinguishable from
+  // a genuinely healthy queue. `no-context` fires only when no real project
+  // id was supplied at all (nothing to even call).
+  const [loadState, setLoadState] = useState<LoadState>(
+    actions.length > 0 ? 'loaded' : projectId ? 'loading' : 'no-context'
+  );
+  const [retryNonce, setRetryNonce] = useState(0);
 
-  // Fetch corrective actions from API when props don't provide them
-  React.useEffect(() => {
+  const fetchActions = useCallback(async (pid: string) => {
+    setLoadState('loading');
+    try {
+      const response = await fetch(`/api/pmo/projects/${pid}/corrective-actions`);
+      if (!response.ok) {
+        setLoadState('error');
+        return;
+      }
+      const data = await response.json();
+      setLocalActions(Array.isArray(data) ? data : data?.actions || []);
+      setLoadState('loaded');
+    } catch {
+      console.warn('[CorrectiveActions] Failed to reach the corrective-action service');
+      setLoadState('error');
+    }
+  }, []);
+
+  useEffect(() => {
     if (actions.length > 0) {
       setLocalActions(actions);
-      setIsLoading(false);
+      setLoadState('loaded');
       return;
     }
-    const fetchActions = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/pmo/projects/${projectId}/corrective-actions`);
-        if (response.ok) {
-          const data = await response.json();
-          setLocalActions(Array.isArray(data) ? data : data?.actions || []);
-        } else {
-          setLocalActions([]);
-        }
-      } catch {
-        console.warn('[CorrectiveActions] No corrective actions data available from API');
-        setLocalActions([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchActions();
-  }, [projectId, actions]);
+    if (!projectId) {
+      setLoadState('no-context');
+      return;
+    }
+    void fetchActions(projectId);
+    // `actions.length` (not `actions`) — the `actions = []` default parameter
+    // is a NEW array reference on every render, which would otherwise re-run
+    // this effect (and re-fetch) on every state update this component makes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, actions.length, fetchActions, retryNonce]);
 
   const filteredActions =
     filter === 'all' ? localActions : localActions.filter((a) => a.status === filter);
@@ -155,7 +177,7 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
     );
   };
 
-  if (isLoading) {
+  if (loadState === 'loading') {
     return (
       <div className="space-y-6">
         <div>
@@ -166,6 +188,59 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Loading actions...</p>
         </div>
         <LoadingState variant="spinner" label="Loading actions..." />
+      </div>
+    );
+  }
+
+  // CB-03 Codex pass 2: no real project/initiative id was supplied — do not
+  // guess one (no org id, no 'all'). Distinct from both the loading and the
+  // "on track" empty state: this tells the user WHY nothing loaded instead of
+  // implying their KPIs are healthy.
+  if (loadState === 'no-context') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <Target className="text-danger-500" size={24} />
+            Corrective Actions
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track and manage remediation activities for off-target KPIs
+          </p>
+        </div>
+        <EmptyState
+          icon={<AlertTriangle />}
+          title="No project context"
+          description="Corrective Action needs a specific initiative or project. Open it from an initiative to use this tool."
+        />
+      </div>
+    );
+  }
+
+  // CB-03 Codex pass 2: the request failed (non-2xx or network error) — a
+  // distinct, retryable unavailable state, never silently mapped to the
+  // healthy-empty copy below.
+  if (loadState === 'error') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xl font-bold text-navy-900 dark:text-white flex items-center gap-2">
+            <Target className="text-danger-500" size={24} />
+            Corrective Actions
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track and manage remediation activities for off-target KPIs
+          </p>
+        </div>
+        <EmptyState
+          icon={<AlertTriangle />}
+          title="Corrective Action is unavailable"
+          description="The corrective-action service could not be reached. Your KPI status is unaffected — try again."
+          action={{
+            label: 'Retry',
+            onClick: () => setRetryNonce((n) => n + 1),
+          }}
+        />
       </div>
     );
   }
@@ -185,7 +260,13 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
           </div>
           <button
             onClick={onCreateAction}
-            className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg text-sm font-medium transition-colors"
+            disabled={!onCreateAction}
+            title={
+              onCreateAction
+                ? undefined
+                : 'Not available yet — no corrective-action service is connected'
+            }
+            className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={16} />
             New Action
@@ -215,7 +296,13 @@ export const CorrectiveActions: React.FC<CorrectiveActionsProps> = ({
         </div>
         <button
           onClick={onCreateAction}
-          className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg text-sm font-medium transition-colors"
+          disabled={!onCreateAction}
+          title={
+            onCreateAction
+              ? undefined
+              : 'Not available yet — no corrective-action service is connected'
+          }
+          className="flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus size={16} />
           New Action

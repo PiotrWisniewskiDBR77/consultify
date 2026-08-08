@@ -29,6 +29,8 @@ import { CHIP_TONE_VAR, ChipDot } from '@/components/ui/primitives/chips/chipBas
 import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChip';
 // Neutral preview meta-pill keeps a status-colored signal dot (canon-allowed); chip bg stays neutral.
 import { getStatusStyle } from '@/constants/statusColors';
+import { getLocalizedStatusLabel } from '@/services/initiativeLifecycle';
+import type { InitiativeStatus } from '@/types/core';
 import { formatRelativeTime } from '@/utils/initiativeHelpers';
 
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -55,6 +57,10 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
   const { t } = useTranslation();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const statusLabel = (status: string | null | undefined) =>
+    status
+      ? getLocalizedStatusLabel(status as InitiativeStatus, t)
+      : t('common.unknown', 'Unknown');
   const statusOptions = useMemo(
     () => [
       'DRAFT',
@@ -278,7 +284,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
               icon: ListChecks,
             },
             {
-              label: initiative.initiativeStatus,
+              label: statusLabel(initiative.initiativeStatus),
               className: 'bg-slate-500/10 text-slate-600 dark:text-slate-300',
               dot: getStatusStyle(initiative.initiativeStatus).dot,
               editable: Boolean(onChangeInitiativeStatus),
@@ -303,7 +309,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                                 : 'text-c-text-secondary hover:bg-c-surface'
                             }`}
                           >
-                            {status}
+                            {statusLabel(status)}
                           </button>
                         ))}
                       </div>
@@ -392,7 +398,8 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs text-c-text-muted">
                     <div className="rounded-lg bg-c-surface-raised px-3 py-2">
-                      {t('results.initiatives.status', 'Status')}: {initiative.initiativeStatus}
+                      {t('results.initiatives.status', 'Status')}:{' '}
+                      {statusLabel(initiative.initiativeStatus)}
                     </div>
                     <div className="rounded-lg bg-c-surface-raised px-3 py-2">
                       {t('results.initiatives.kpis', 'Tracked KPI')}: {initiative.trackedKpiCount}
@@ -597,7 +604,7 @@ export const ResultsInitiativesView: React.FC<ResultsInitiativesViewProps> = ({
                           >
                             {statusOptions.map((status) => (
                               <option key={status} value={status}>
-                                {status}
+                                {statusLabel(status)}
                               </option>
                             ))}
                           </select>
