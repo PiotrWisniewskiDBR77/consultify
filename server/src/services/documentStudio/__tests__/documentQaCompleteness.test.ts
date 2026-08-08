@@ -106,6 +106,32 @@ function findCompleteness(report: ReturnType<typeof runDocumentQa>) {
 }
 
 describe('Document QA — Completeness QA category', () => {
+  it('recognizes a singular Recommendation section in a business case', () => {
+    const schema = makeSchema({
+      documentType: 'business_case',
+      sections: [
+        {
+          sectionId: 's-exec',
+          title: 'Executive Summary',
+          level: 1,
+          blocks: [makeParagraph('b-exec', 'We recommend approving the next validation gate.')],
+          sourceRefs: [],
+        },
+        {
+          sectionId: 's-rec',
+          title: 'Recommendation',
+          level: 1,
+          blocks: [makeParagraph('b-rec', 'Approve the pilot and nominate an accountable owner.')],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const completeness = findCompleteness(runDocumentQa(schema));
+    expect(completeness.findings.map((finding) => finding.code)).not.toContain(
+      'completeness_missing_decision_section'
+    );
+  });
+
   it('returns a clean completeness category for a well-formed approval-gated document', () => {
     const schema = makeSchema({
       sections: [

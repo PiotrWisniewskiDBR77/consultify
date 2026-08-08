@@ -458,6 +458,7 @@ const EXEC_SUMMARY_HINTS: ReadonlyArray<string> = [
 ];
 
 const DECISION_SECTION_HINTS: ReadonlyArray<string> = [
+  'recommendation',
   'recommendations',
   'recommended actions',
   'next steps',
@@ -1693,8 +1694,29 @@ function runRiskQa(schema: DocumentSchema): DocumentQaCategoryReport {
         )
       );
     }
-  } else if (populatedEditableBlocks.length > 0) {
-    const sectionText = populatedEditableBlocks.map((b) => blockToText(b)).join(' ');
+  } else if (populatedEditableBlocks.length > 0 || nonEmptyRiskTables.length > 0) {
+    // Risk tables are canonical risk content, not decoration. The previous QA
+    // path ignored their columns and rows whenever the section also contained
+    // prose, so a complete Risk / Severity / Mitigation / Owner table could
+    // still score 71/100. Assess the rendered structured content together with
+    // narrative text.
+    const structuredRiskText = nonEmptyRiskTables
+      .map((block) => {
+        const content = block.content as Record<string, unknown> | undefined;
+        const columns = Array.isArray(content?.columns) ? content.columns : [];
+        const header = Array.isArray(content?.header) ? content.header : [];
+        const rows = Array.isArray(content?.rows) ? content.rows : [];
+        return [...columns, ...header, ...rows.flatMap((row) => (Array.isArray(row) ? row : []))]
+          .map((value) => String(value ?? ''))
+          .join(' ');
+      })
+      .join(' ');
+    const sectionText = [
+      populatedEditableBlocks.map((b) => blockToText(b)).join(' '),
+      structuredRiskText,
+    ]
+      .filter(Boolean)
+      .join(' ');
     const lower = normalizeForHints(sectionText);
     const severityHints =
       schema.language === 'pl' ? RISK_SEVERITY_HINTS_PL : RISK_SEVERITY_HINTS_EN;
@@ -2071,9 +2093,12 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
           );
         }
       } else if (type === 'table') {
-        const content = block.content as { header?: unknown; rows?: unknown } | undefined;
+        const content = block.content as
+          | { header?: unknown; columns?: unknown; rows?: unknown }
+          | undefined;
         const hasHeader =
-          Array.isArray(content?.header) && (content?.header as unknown[]).length > 0;
+          (Array.isArray(content?.header) && (content?.header as unknown[]).length > 0) ||
+          (Array.isArray(content?.columns) && (content?.columns as unknown[]).length > 0);
         if (!hasHeader) {
           findings.push(
             makeFinding(

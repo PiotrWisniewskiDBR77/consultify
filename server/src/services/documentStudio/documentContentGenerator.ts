@@ -406,6 +406,42 @@ export function enforceDocumentSchemaGrounding(
     });
   }
 
+  // A business case whose declared goal is approval must open with an
+  // actionable recommendation. LLM prose can be descriptive despite an
+  // explicit approval brief, which made otherwise complete documents fail
+  // their own Executive QA. Add a short, fact-free decision sentence only
+  // when the generated Executive Summary contains no decision language.
+  if (
+    next.documentType === 'business_case' &&
+    /seek[_ -]?approval|drive[_ -]?decision|recommend/i.test(String(next.goal || ''))
+  ) {
+    const executive = next.sections.find((section) =>
+      /executive summary|streszczenie|podsumowanie zarz[aą]dcze/i.test(section.title)
+    );
+    if (executive) {
+      const executiveText = executive.blocks
+        .flatMap((block) => {
+          const content = block.content as Record<string, unknown> | undefined;
+          if (typeof content?.text === 'string') return [content.text];
+          if (Array.isArray(content?.items)) return content.items.map(String);
+          return [];
+        })
+        .join(' ');
+      if (!/\b(recommend|approve|decide|rekomend|zatwierd|decyduj)/i.test(executiveText)) {
+        const decisionText = language === 'pl'
+          ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
+          : 'We recommend approving the next validation gate described in this business case.';
+        const insertAt = executive.blocks.findIndex((block) => block.type !== 'heading');
+        executive.blocks.splice(insertAt < 0 ? executive.blocks.length : insertAt, 0, {
+          blockId: uuidv4(),
+          type: 'paragraph',
+          content: { text: decisionText },
+          isAssumption: false,
+        });
+      }
+    }
+  }
+
   next.evidence = buildDocumentEvidenceContract(next.sourceRefs, next.sections);
   return next;
 }

@@ -225,6 +225,33 @@ describe('Document QA — Risk QA category', () => {
     expect(finding?.blockId).toBe('b-rt');
   });
 
+  it('uses canonical risk-table columns and rows for severity, mitigation and owner QA', () => {
+    const schema = makeSchema({
+      documentType: 'business_case',
+      sections: [
+        {
+          sectionId: 's-risks',
+          title: 'Risks',
+          level: 1,
+          blocks: [
+            {
+              blockId: 'b-rt',
+              type: 'risk_table',
+              content: {
+                columns: ['Risk', 'Severity', 'Mitigation', 'Owner'],
+                rows: [['Store rejection', 'High', 'Pre-submission control', 'Product owner']],
+              },
+            },
+          ],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const risk = findRisk(runDocumentQa(schema));
+    expect(risk.findings).toHaveLength(0);
+    expect(risk.score).toBe(100);
+  });
+
   it('Polish heuristics: "Ryzyka" with "krytyczny" / "mitygacja" / "sponsor" satisfies all checks', () => {
     const schema = makeSchema({
       language: 'pl',

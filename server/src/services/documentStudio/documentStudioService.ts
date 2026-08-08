@@ -980,7 +980,18 @@ export async function materializeDocumentArtifact(
   // also recomputes EvidenceContract from the exact schema being persisted.
   provisionalSchema = enforceDocumentSchemaGrounding(
     provisionalSchema,
-    [params.intake.title, params.intake.description, sourceEvidence].filter(Boolean).join(' — ')
+    [
+      params.intake.title,
+      params.intake.description,
+      sourceEvidence,
+      // Canonical outline metadata is generated and approved by this runtime.
+      // Excluding it from the allow-list caused the final grounding boundary
+      // to redact its own structural labels such as "30/60/90" even though no
+      // user-facing claim had been invented.
+      ...outline.sections.flatMap((section) => [section.title, section.purpose]),
+    ]
+      .filter(Boolean)
+      .join(' — ')
   );
 
   // Manual "Czysto" is an authoring canvas, not a grounded deterministic
