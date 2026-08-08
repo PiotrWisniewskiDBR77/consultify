@@ -22,6 +22,7 @@ import { AnalysisWorkspacePanel } from './AnalysisWorkspacePanel';
 import { CompletenessAnalysis } from './CompletenessAnalysis';
 import { FeasibilityAnalysis } from './FeasibilityAnalysis';
 import { LogicAnalysis } from './LogicAnalysis';
+import { PortfolioAnalysisTable } from './PortfolioAnalysisTable';
 import { ResourcesAnalysis } from './ResourcesAnalysis';
 import { TimelineAnalysis } from './TimelineAnalysis';
 import type {
@@ -212,6 +213,12 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {/* T26 R13 — canonical table (real initiatives). The five analysis
+          subviews below are relocated, not deleted (surfaceRegister.ts T26
+          relocateFromList: kpi-cards/portfolio-charts). */}
+      <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-navy-700">
+        <PortfolioAnalysisTable initiatives={initiatives} onOpenInitiative={onOpenInitiative} />
+      </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex h-full overflow-hidden">
           <div

@@ -24,6 +24,8 @@ import { ExternalLink, type LucideIcon, Pin, PinOff } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { assertContractInDev } from '@/contracts/tableSurface/validators';
+
 import {
   type DetailsAction,
   type MetaPill,
@@ -40,6 +42,7 @@ import {
   SKELETON_LINE_3,
   SKELETON_LINE_4,
 } from '../shared/PreviewPane';
+import { validatePreviewContract } from '../shared/PreviewPane/previewContract';
 import { PreviewPaneShell } from '../ui/ResizableTable/PreviewPaneShell';
 import { ArtifactPropertiesTable, type ArtifactPropertyRow } from './ArtifactPropertiesTable';
 
@@ -308,68 +311,85 @@ export const StandardPreview: React.FC<StandardPreviewProps> = ({
 
   const actionRows = orderPreviewActionRows(actions);
 
-  const footer =
-    ai || relations || actionRows.length > 0 || whatsNext ? (
-      // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
-      <div className="space-y-2.5">
-        {/* Blok 4 — ramka AI */}
-        {ai ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <PreviewAIHintStrip {...ai} />
-          </div>
-        ) : null}
+  // R03-1: kontrakt sprawdzany na żywych propsach; w dev głośno ostrzega,
+  // w produkcji jest bezkosztowy. Nie rzuca — patrz `assertContractInDev`.
+  assertContractInDev(
+    `StandardPreview(${title})`,
+    validatePreviewContract({ rows: actionRows, details })
+  );
 
-        {/* Blok 5 — Relations */}
-        {relations ? (
-          <PreviewRelations
-            items={relations}
-            emptyLabel={
-              relationsEmptyLabel ??
-              t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
-            }
-          />
-        ) : null}
+  /*
+   * Blok 5 — Relations jest OBOWIĄZKOWY (§6: „Pozostałe bloki są obowiązkowe;
+   * Details i Relations pokazują kanoniczny empty state"; REPAIR_MASTER_PLAN
+   * R03: „Relations zawsze jako blok, także empty state").
+   *
+   * Do R03-1 blok znikał całkowicie, gdy ekran nie podał propa `relations` —
+   * i to jest źródło części werdyktów FAIL na odbiorze PREVIEW: panel po prostu
+   * nie miał gdzie pokazać, że powiązań nie ma. Teraz brak propa znaczy „zero
+   * relacji", a nie „brak bloku".
+   */
+  const relationItems = relations ?? [];
 
-        {/* Blok 6 — pełny blok akcji na dole */}
-        {actionRows.length > 0 ? (
-          <div className="space-y-2.5 py-1">
-            {actionRows.map((row, idx) => (
-              <ActionGridRow key={idx} actions={row} />
-            ))}
-          </div>
-        ) : null}
+  // Stopka jest teraz ZAWSZE renderowana, bo zawiera obowiązkowy blok Relations.
+  const footer = (
+    // canon §7.3 — footer cards stacked space-y-2.5, bez dividerów między kartami.
+    <div className="space-y-2.5">
+      {/* Blok 4 — ramka AI */}
+      {ai ? (
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+          <PreviewAIHintStrip {...ai} />
+        </div>
+      ) : null}
 
-        {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
+      {/* Blok 5 — Relations: obowiązkowy, także pusty (§6). */}
+      <PreviewRelations
+        items={relationItems}
+        emptyLabel={
+          relationsEmptyLabel ??
+          t('common.noRelations', isPolish ? 'Brak powiązań' : 'No relations')
+        }
+      />
+
+      {/* Blok 6 — pełny blok akcji na dole */}
+      {actionRows.length > 0 ? (
+        <div className="space-y-2.5 py-1">
+          {actionRows.map((row, idx) => (
+            <ActionGridRow key={idx} actions={row} />
+          ))}
+        </div>
+      ) : null}
+
+      {/* Blok opcjonalny — WHAT'S NEXT (ANEKS #4). Chipy zamiast ściśniętej
             tabelki; JEDEN dopisek dla całej grupy pod chipami, nie per-pozycja. */}
-        {whatsNext ? (
-          <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
-              {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {whatsNext.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={item.onClick}
-                    disabled={item.disabled}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-                  >
-                    {Icon ? <Icon size={12} /> : null}
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-            {whatsNext.note ? (
-              <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
-            ) : null}
+      {whatsNext ? (
+        <div className="rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+            {whatsNext.label ?? t('common.whatsNext', isPolish ? 'Co dalej' : "What's next")}
           </div>
-        ) : null}
-      </div>
-    ) : undefined;
+          <div className="flex flex-wrap gap-1.5">
+            {whatsNext.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={item.onClick}
+                  disabled={item.disabled}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-c-border bg-c-surface px-2.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-raised disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                >
+                  {Icon ? <Icon size={12} /> : null}
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          {whatsNext.note ? (
+            <div className="mt-1.5 text-[10px] text-c-text-muted">{whatsNext.note}</div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <PreviewPaneShell

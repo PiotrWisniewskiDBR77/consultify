@@ -13,6 +13,10 @@ export const ArtifactOriginRuntimeValues = [
   'sheet_template',
   'document_template',
   'work_canvas',
+  // T22-DATA-PREREQ (2026-08-07): mirrors server/src/types/artifactRegistry.ts
+  // — required so AssessmentWorkbenchService's outputs_artifact handoff
+  // passes Zod validation. See that file for the full history.
+  'assessment_report',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 export type ArtifactVisibilityScope =

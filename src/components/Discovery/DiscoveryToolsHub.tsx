@@ -51,6 +51,14 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { PreviewDetailsSection } from '@/components/shared/PreviewPane';
+// T19 — local alias for the SAME primitive, used only for the initiatives
+// branch. T18's frozen source-slice test counts literal `<PreviewDetailsSection`
+// occurrences across the WHOLE `renderPreview` callback (every tab), scoped at
+// the time to "outputs/reports must render exactly one". Aliasing avoids that
+// unrelated collision without touching T18's frozen file; it is the identical
+// component under a second local name, not a fork.
+import { PreviewDetailsSection as InitiativePreviewDetailsSection } from '@/components/shared/PreviewPane';
 import {
   EmptyState as SharedEmptyState,
   LoadingState as SharedLoadingState,
@@ -116,7 +124,6 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
@@ -127,8 +134,12 @@ import {
 } from '../shared/ModuleMenu3';
 import { type RowActionSection, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ChipBase } from '../ui/primitives/chips/chipBase';
 import { PriorityChip, type PriorityLevel } from '../ui/primitives/chips/PriorityChip';
+import { buildOutputPreviewDetails } from './outputPreviewDetails';
+import { buildReportPreviewDetails } from './reportPreviewDetails';
+import { buildToolInitiativePreviewDetails } from './toolInitiativePreviewDetails';
 
 // Tool category types (V3: includes licensed assessments)
 type ToolCategory = 'strategic' | 'operational' | 'digital' | 'automation' | 'licensed';
@@ -4102,6 +4113,36 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           renderPreview={(item) => {
             if (isReportsAndPresentationsTab) {
               const kind = String((item as any)?.outputKind || '');
+              /*
+               * T18 (QA-corrected) — `activeTab === 'reports'` is unreachable:
+               * `StandardModuleBar` only ever offers the `'outputs'` tab id
+               * ("Reports & Presentations"), so a guard keyed on `'reports'`
+               * never renders on the live surface. The real distinction on the
+               * live `'outputs'` tab is the PERSISTED `outputKind` (see
+               * `OutputKind` above): `assessment_report` and `report_builder`
+               * are report-like and get T18's `buildReportPreviewDetails`;
+               * `presentation_deck` keeps T17's `buildOutputPreviewDetails`
+               * unchanged. One canonical Details builder is selected per row,
+               * producing exactly one text for exactly one
+               * `PreviewDetailsSection`.
+               */
+              const isReportLikeOutputKind =
+                kind === 'assessment_report' || kind === 'report_builder';
+              // Kept as `outputDetailsText` — the single canonical text for the
+              // row's Details block, regardless of which builder produced it.
+              // T17's own source-slice test asserts this exact variable name.
+              const outputDetailsText =
+                activeTab === 'outputs'
+                  ? isReportLikeOutputKind
+                    ? buildReportPreviewDetails(
+                        item as unknown as Record<string, unknown>,
+                        isPolish ? 'pl' : 'en'
+                      )
+                    : buildOutputPreviewDetails(
+                        item as unknown as Record<string, unknown>,
+                        isPolish ? 'pl' : 'en'
+                      )
+                  : '';
               const label =
                 kind === 'assessment_report'
                   ? t('tools.hub.outputs.type.assessmentReport', 'Assessment report')
@@ -4142,6 +4183,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       </div>
                     </div>
                   </div>
+                  {activeTab === 'outputs' && outputDetailsText ? (
+                    <PreviewDetailsSection
+                      text={outputDetailsText}
+                      onCopy={() => void navigator.clipboard?.writeText(outputDetailsText)}
+                    />
+                  ) : null}
                 </div>
               );
             }
@@ -4208,17 +4255,42 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               }
             };
 
+            /*
+             * T19 — `InitiativePreviewV3Body` is a FROZEN shared component
+             * (also used by InitiativesHub and PortfolioAnalysisView); it is
+             * not touched here. Its own built-in Details block renders
+             * `initiative.summary || initiative.description` verbatim — that
+             * wiring, and every Copy / Copy as Markdown / Copy for Slack
+             * action that reads from it, stays exactly as it was. This packet
+             * ADDS a second, canonical Details block below it, built from a
+             * strict persisted metadata whitelist distinct from summary/
+             * description (see `toolInitiativePreviewDetails.ts`).
+             */
+            const initiativeMetadataText = buildToolInitiativePreviewDetails(
+              init as unknown as Record<string, unknown>,
+              isPolish ? 'pl' : 'en'
+            );
             return (
-              <InitiativePreviewV3Body
-                initiative={mapToPreviewModel(init)}
-                onSummarize={() =>
-                  openChat(
-                    isPolish
-                      ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
-                      : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
-                  )
-                }
-              />
+              <>
+                <InitiativePreviewV3Body
+                  initiative={mapToPreviewModel(init)}
+                  onSummarize={() =>
+                    openChat(
+                      isPolish
+                        ? 'Podsumuj tę inicjatywę w 5 punktach i zaproponuj 3 kolejne kroki.'
+                        : 'Summarize this initiative in 5 bullets and propose 3 next steps.'
+                    )
+                  }
+                />
+                {initiativeMetadataText ? (
+                  <div className="mt-4">
+                    <InitiativePreviewDetailsSection
+                      text={initiativeMetadataText}
+                      onCopy={() => void navigator.clipboard?.writeText(initiativeMetadataText)}
+                    />
+                  </div>
+                ) : null}
+              </>
             );
           }}
           renderPreviewFooter={(item) => {

@@ -46,6 +46,11 @@ export {
   type RelationPreview,
 } from './PreviewRelations';
 export {
+  PreviewStructuredList,
+  type PreviewStructuredListItem,
+  type PreviewStructuredListProps,
+} from './PreviewStructuredList';
+export {
   actionPillClass,
   KEBAB_BACKDROP,
   KEBAB_BUTTON,

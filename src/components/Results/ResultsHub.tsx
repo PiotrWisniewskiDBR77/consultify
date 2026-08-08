@@ -44,7 +44,6 @@ import { mapHubLoadFailureToPresentation } from '@/utils/errors/mapHubLoadFailur
 import { Banner } from '../shared/Banner';
 import { HubWorkAreaLoadError } from '../shared/ModuleHub';
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
@@ -57,6 +56,7 @@ import {
   MENU_3_RIGHT_CLASS,
   Menu3Chip,
 } from '../shared/ModuleMenu3';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import AIInsightsPanel from './AIInsightsPanel';
 import { KPICreateModal } from './KPICreateModal';
 import {
@@ -81,11 +81,14 @@ import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
 import { ResultsGridView } from './ResultsKPITable';
+import { ResultsOkrSetsTable } from './ResultsOkrSetsTable';
 import {
   ResultsKpiConnectorsView,
   ResultsReportSchedulesView,
   ResultsWallboardsView,
 } from './ResultsReportingEnterpriseViews';
+import { ResultsRoiReviewsTable } from './ResultsRoiReviewsTable';
+import { ResultsScorecardsTable } from './ResultsScorecardsTable';
 import { createResultsShowcaseSnapshot } from './resultsShowcaseData';
 import {
   ResultsThreePairsView,
@@ -232,11 +235,7 @@ export const ResultsHub: React.FC = () => {
   >(
     (VALID_REPORT_MODES as readonly string[]).includes(searchParams.get('rmode') || '')
       ? (searchParams.get('rmode') as
-          | 'tracked'
-          | 'reports'
-          | 'schedules'
-          | 'wallboards'
-          | 'connectors')
+          'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')
       : 'tracked'
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -512,7 +511,6 @@ export const ResultsHub: React.FC = () => {
         id: 'results_kpi' as ModuleTab,
         label: t('results.tabs.kpi', 'KPI'),
         icon: <Target size={16} />,
-        count: kpis.length,
       },
       {
         id: 'results_reports' as ModuleTab,
@@ -544,7 +542,7 @@ export const ResultsHub: React.FC = () => {
           ]
         : []),
     ],
-    [t, kpis.length, trackedInitiatives.length]
+    [t]
   );
 
   const lifecycleScopedKpis = useMemo(
@@ -2211,25 +2209,34 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'results_benefits_inbox' ? (
           <M14HandoffInbox onPromoted={() => void refreshResultsTruth()} />
         ) : activeTab === 'results_strategic' ? (
-          <div className="p-4 overflow-auto space-y-6">
-            {isResultsFlagEnabled('strategicLayer') ? (
-              <StrategicLayerPanel projectId="all" />
-            ) : (
-              <div className="text-sm text-c-text-muted py-8 text-center">
-                {t(
-                  'results.strategic.disabled',
-                  'Strategic layer disabled — enable the ff_strategicLayer flag.'
-                )}
-              </div>
-            )}
-            {isResultsFlagEnabled('valueDriverTree') && (
-              <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
-                <h3 className="text-sm font-semibold text-c-text mb-3">
-                  {t('results.driverTree.title', 'Value Driver Tree')}
-                </h3>
-                <ValueDriverTree projectId="all" />
-              </div>
-            )}
+          <div className="flex h-full flex-col overflow-hidden">
+            {/* T38 R15: canonical OKR Sets table on top (real Objectives from
+                /results-strategic/:projectId/okr); StrategicLayerPanel and
+                Value Driver Tree relocated below — not deleted
+                (surfaceRegister.ts T38 relocateFromList). */}
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsOkrSetsTable projectId="all" />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto p-4 space-y-6">
+              {isResultsFlagEnabled('strategicLayer') ? (
+                <StrategicLayerPanel projectId="all" />
+              ) : (
+                <div className="text-sm text-c-text-muted py-8 text-center">
+                  {t(
+                    'results.strategic.disabled',
+                    'Strategic layer disabled — enable the ff_strategicLayer flag.'
+                  )}
+                </div>
+              )}
+              {isResultsFlagEnabled('valueDriverTree') && (
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
+                  <h3 className="text-sm font-semibold text-c-text mb-3">
+                    {t('results.driverTree.title', 'Value Driver Tree')}
+                  </h3>
+                  <ValueDriverTree projectId="all" />
+                </div>
+              )}
+            </div>
           </div>
         ) : activeTab === 'results_ai' ? (
           <div className="p-4 overflow-auto space-y-6">
@@ -2287,7 +2294,18 @@ export const ResultsHub: React.FC = () => {
             />
           )
         ) : activeTab === 'roi' ? (
-          <ROITrackingView refreshNonce={roiRefreshNonce} />
+          <div className="flex h-full flex-col overflow-hidden">
+            {/* T37 R15: canonical ROI Reviews table on top (real
+                ROIInitiativeItem[] rows); ROITrackingView's bespoke
+                table+cards relocated below — not deleted (surfaceRegister.ts
+                T37 relocateFromList). */}
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsRoiReviewsTable />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto">
+              <ROITrackingView refreshNonce={roiRefreshNonce} />
+            </div>
+          </div>
         ) : loading ? (
           <div className="p-4">
             <SharedLoadingState template="list" rows={6} />
@@ -2327,12 +2345,23 @@ export const ResultsHub: React.FC = () => {
             onCreateSheet={handleCreateSignalSheet}
           />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
-          <ResultsKpiScorecardsView
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            createNonce={kpiScorecardCreateNonce}
-            initiatives={filteredInitiatives}
-          />
+          <div className="flex h-full flex-col overflow-hidden">
+            {/* T36 R15: canonical KPI Scorecards table on top (real Goal
+                records via Api.goalsGet); ResultsKpiScorecardsView's create
+                tool relocated below — not deleted (surfaceRegister.ts T36
+                relocateFromList). */}
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsScorecardsTable />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto">
+              <ResultsKpiScorecardsView
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                createNonce={kpiScorecardCreateNonce}
+                initiatives={filteredInitiatives}
+              />
+            </div>
+          </div>
         ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): KPI
           // catalog tab → StandardTable + StandardPreview, 1:1 with the

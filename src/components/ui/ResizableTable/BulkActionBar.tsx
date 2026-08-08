@@ -1,12 +1,32 @@
 /**
  * BulkActionBar - Action bar for bulk operations on selected items
  * Appears when items are selected in the table
+ *
+ * ── R02-B ───────────────────────────────────────────────────────────────────
+ *
+ * Ten plik jest odtąd CIENKĄ FASADĄ: zachowuje własne API (`selectedCount`,
+ * `onClearSelection`, `actions`, `className`), własne UMIEJSCOWIENIE (pływający
+ * pill na dole, `data-testid="bulk-action-bar"`) i własne przesunięcie nad
+ * mobilną nawigację — a zawartość klastra renderuje przez wspólny, kanoniczny
+ * `BulkSelectionCluster`.
+ *
+ * Co zniknęło razem z lokalnym markupem:
+ *   · własny Clear jako goła ikona X bez etykiety — §4 Formuła 2 wymaga X ORAZ
+ *     etykiety, i to była jedna z dwóch niezgodnych implementacji Clear w repo;
+ *   · lokalne menu „More" dla akcji powyżej czterech — trzeci równoległy popover
+ *     w kodzie. Kanon zabrania chowania realnych akcji, a klaster zawija je
+ *     bez clippingu. Jedyna żywa ścieżka (`createNotificationBulkActions`)
+ *     deklaruje trzy akcje, więc overflow i tak nigdy się nie uruchamiał.
+ *
+ * Fabryki `create*BulkActions` są NIETKNIĘTE — to API biznesowe konsumentów
+ * (`MyWork/NotificationsContent`, `MyWork/MyTasksListContent`).
  */
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { Archive, Calendar, CheckCircle, Flag, MoreHorizontal, Trash2, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { Archive, Calendar, CheckCircle, Flag, Trash2 } from 'lucide-react';
+import React from 'react';
 
+import { BulkSelectionCluster } from '@/components/shared/BulkSelectionCluster';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
 export interface BulkAction {
@@ -31,14 +51,9 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   actions,
   className = '',
 }) => {
-  const [showMoreActions, setShowMoreActions] = useState(false);
   const { isMobile, safeAreaInsets } = useDeviceType();
 
   const mobileBottomOffset = isMobile ? 64 + (safeAreaInsets.bottom || 0) + 12 : null;
-
-  // Split actions into visible and overflow
-  const visibleActions = actions.slice(0, 4);
-  const overflowActions = actions.slice(4);
 
   return (
     <AnimatePresence>
@@ -59,97 +74,19 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
           `}
           style={mobileBottomOffset ? { bottom: `${mobileBottomOffset}px` } : undefined}
         >
-          {/* Selection Count */}
-          <div className="flex items-center gap-2 pr-3 border-r border-slate-200 dark:border-navy-600">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-navy-900 text-white text-xs font-medium dark:bg-white dark:text-navy-950">
-              {selectedCount}
-            </span>
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">selected</span>
-            <button
-              onClick={onClearSelection}
-              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-              title="Clear selection"
-            >
-              <X size={14} />
-            </button>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {visibleActions.map((action) => (
-              <button
-                key={action.id}
-                onClick={action.onClick}
-                disabled={action.disabled}
-                className={`
-                  flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium
-                  transition-colors
-                  ${
-                    action.variant === 'danger'
-                      ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-700'
-                  }
-                  ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
-                title={action.label}
-              >
-                {action.icon}
-                <span className="hidden sm:inline">{action.label}</span>
-              </button>
-            ))}
-
-            {/* More Actions */}
-            {overflowActions.length > 0 && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowMoreActions(!showMoreActions)}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700"
-                >
-                  <MoreHorizontal size={16} />
-                </button>
-
-                <AnimatePresence>
-                  {showMoreActions && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-sticky"
-                        onClick={() => setShowMoreActions(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        className="absolute bottom-full right-0 mb-2 z-dropdown min-w-[160px] bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg shadow-xl overflow-hidden"
-                      >
-                        {overflowActions.map((action) => (
-                          <button
-                            key={action.id}
-                            onClick={() => {
-                              action.onClick();
-                              setShowMoreActions(false);
-                            }}
-                            disabled={action.disabled}
-                            className={`
-                              w-full flex items-center gap-2 px-3 py-2 text-sm text-left
-                              ${
-                                action.variant === 'danger'
-                                  ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-500/10'
-                                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700'
-                              }
-                              ${action.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                            `}
-                          >
-                            {action.icon}
-                            {action.label}
-                          </button>
-                        ))}
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
+          <BulkSelectionCluster
+            tone="floating"
+            count={selectedCount}
+            onClear={onClearSelection}
+            actions={actions.map((action) => ({
+              id: action.id,
+              label: action.label,
+              icon: action.icon,
+              disabled: action.disabled,
+              variant: action.variant === 'danger' ? ('danger' as const) : ('neutral' as const),
+              onClick: action.onClick,
+            }))}
+          />
         </motion.div>
       )}
     </AnimatePresence>

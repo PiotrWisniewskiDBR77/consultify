@@ -57,10 +57,37 @@ export interface TableSelectionApi {
 }
 
 /**
+ * R04-1 — tryb selection wg deskryptora capability (§1, §5, §10).
+ *
+ * Kanon: checkbox nagłówka i wiersza istnieją WYŁĄCZNIE przy `selection: 'bulk'`;
+ * `selection: 'none'` znaczy „brak obu", a nie „checkboxy, których nikt nie
+ * używa". Do R04-1 hook nie miał o tym pojęcia i zawsze oddawał pełne API,
+ * więc jedyną obroną było to, że ekran go nie zawoła.
+ *
+ * Tryb `'none'` neutralizuje selection u ŹRÓDŁA: przełączniki są no-opami,
+ * a zbiór zaznaczeń nie może urosnąć. Nawet źle podpięta tabela nie zbierze
+ * zaznaczenia, którego encja nie deklaruje.
+ *
+ * Parametr jest opcjonalny i domyślnie `'bulk'` — publiczne API dwóch obecnych
+ * konsumentów pozostaje bez zmiany.
+ */
+export type TableSelectionMode = 'bulk' | 'none';
+
+export interface UseTableSelectionOptions {
+  mode?: TableSelectionMode;
+}
+
+/**
  * @param visibleIds ids of the rows currently visible (post-filter). Used for
  *   select-all semantics and to prune stale selections on filter/scope changes.
+ * @param options `mode: 'none'` wyłącza selection zgodnie z deskryptorem encji.
  */
-export function useTableSelection(visibleIds: string[]): TableSelectionApi {
+export function useTableSelection(
+  visibleIds: string[],
+  options: UseTableSelectionOptions = {}
+): TableSelectionApi {
+  const { mode = 'bulk' } = options;
+  const canSelect = mode === 'bulk';
   const { t } = useTranslation();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
@@ -82,22 +109,29 @@ export function useTableSelection(visibleIds: string[]): TableSelectionApi {
     visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(String(id)));
   const isIndeterminate = selectedIds.size > 0 && !isAllSelected;
 
-  const toggleRow = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      const key = String(id);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
+  const toggleRow = useCallback(
+    (id: string) => {
+      // `selection: 'none'` — przełącznik istnieje w API, ale nic nie robi,
+      // więc zaznaczenie nie może powstać nawet przy źle podpiętej tabeli.
+      if (!canSelect) return;
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        const key = String(id);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+    },
+    [canSelect]
+  );
 
   const toggleAll = useCallback(() => {
+    if (!canSelect) return;
     setSelectedIds((prev) => {
       const all = visibleIds.length > 0 && visibleIds.every((id) => prev.has(String(id)));
       return all ? new Set<string>() : new Set(visibleIds.map(String));
     });
-  }, [visibleIds]);
+  }, [visibleIds, canSelect]);
 
   const clear = useCallback(() => setSelectedIds(new Set()), []);
 

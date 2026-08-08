@@ -94,11 +94,9 @@ import { TaskDetailView } from '../MyWork/TaskDetailView';
 import { InitiativeGridCard } from '../Portfolio/InitiativeGridCard';
 // Portfolio view components
 import { type KanbanScope, PortfolioKanbanView } from '../Portfolio/PortfolioKanbanView';
-import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 // ModuleHub components
 import { FilterChip, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { StandardModuleBar } from '../standard/StandardModuleBar';
 import {
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
@@ -111,9 +109,11 @@ import {
   MENU_3_RIGHT_CLASS,
 } from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
-import { type AcceptCandidatePayload, CandidatesPanel } from './CandidatesPanel';
+import { type AcceptCandidatePayload } from './CandidatesPanel';
+import { CandidatesTable } from './CandidatesTable';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -121,14 +121,19 @@ import {
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
+import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
+import { buildInitiativePreviewDetails } from './initiativePreviewDetails';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
+import { InitiativesGoalsTable } from './InitiativesGoalsTable';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
+import { PortfolioHealthTable } from './PortfolioHealthTable';
 import PortfolioHealthView from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
@@ -576,7 +581,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     activeTab === 'analysis' ||
     activeTab === 'observability' ||
     activeTab === 'candidates' ||
-    activeTab === 'portfolioHealth'
+    activeTab === 'portfolioHealth' ||
+    activeTab === 'goals'
       ? []
       : ['table', 'kanban', 'timeline', 'grid'];
 
@@ -610,6 +616,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         id: 'portfolioHealth' as ModuleTab,
         label: t('initiatives.tabs.portfolioHealth', 'Portfolio Health'),
         icon: <Activity size={16} />,
+      },
+      {
+        // T30 R13-CORRECTION — real Goal records (Api.goalsGet, /initiatives-v4/goals)
+        id: 'goals' as ModuleTab,
+        label: t('initiatives.tabs.goals', 'Goals'),
+        icon: <Target size={16} />,
       },
     ],
     [t]
@@ -1444,27 +1456,60 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
+    // T27 R11: Observability tab — canonical table+preview (real initiatives +
+    // lineage) on top, funnel/cycle-time/lineage-picker dashboard below —
+    // relocated, not deleted (surfaceRegister.ts T27 relocateFromList).
     if (activeTab === 'observability') {
-      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
-    }
-    // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
-    if (activeTab === 'candidates') {
-      return <CandidatesPanel onAccept={handleAcceptCandidate} />;
-    }
-    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
-    if (activeTab === 'portfolioHealth') {
       return (
-        <PortfolioHealthView
-          onOpenInitiative={(id, title) =>
-            handleOpenDocument({
-              id,
-              type: 'initiative',
-              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
-            })
-          }
-        />
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <InitiativeObservabilityTable
+              onOpenInitiative={(id, title) =>
+                handleOpenDocument({
+                  id,
+                  type: 'initiative',
+                  name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+                })
+              }
+            />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />
+          </div>
+        </div>
       );
+    }
+    // T28 R11: Candidates tab — canonical table+preview (real Scan/Accept/Dismiss).
+    // Replaces CandidatesPanel's card list as the canonical surface; CandidatesPanel.tsx
+    // itself is untouched (its useCandidates hook is reused here, not duplicated).
+    if (activeTab === 'candidates') {
+      return <CandidatesTable onAccept={handleAcceptCandidate} />;
+    }
+    // T29 R11: Portfolio health tab — canonical table+preview (real readyToLaunch
+    // rows) on top, KPI/coverage/gaps/balance/duplicates dashboard below —
+    // relocated, not deleted (surfaceRegister.ts T29 relocateFromList).
+    if (activeTab === 'portfolioHealth') {
+      const openInitiative = (id: string, title: string) =>
+        handleOpenDocument({
+          id,
+          type: 'initiative',
+          name: title || t('initiatives.document.untitled', 'Untitled initiative'),
+        });
+      return (
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <PortfolioHealthTable onOpenInitiative={openInitiative} />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <PortfolioHealthView onOpenInitiative={openInitiative} />
+          </div>
+        </div>
+      );
+    }
+    // T30 R13-CORRECTION: Goals tab — canonical table+preview over real Goal
+    // records (Api.goalsGet). No dashboard existed for Goals to relocate.
+    if (activeTab === 'goals') {
+      return <InitiativesGoalsTable />;
     }
     // V3-F02: Analysis tab — portfolio quality gate
     if (activeTab === 'analysis') {
@@ -1864,6 +1909,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ];
 
     const selectedTableRow: PortfolioInitiative | null = selectedInit;
+    const tablePreviewDetailsText = buildInitiativePreviewDetails(
+      selectedTableRow,
+      i18n.language?.startsWith('pl') ? 'pl' : 'en'
+    );
 
     const tablePreviewActions: StandardPreviewActions | undefined = selectedTableRow
       ? {
@@ -1998,14 +2047,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     ),
                   }}
                   details={{
-                    text:
-                      selectedTableRow.summary ||
-                      selectedTableRow.description ||
-                      t('initiatives.noDescription', 'No description.'),
+                    text: tablePreviewDetailsText,
                     onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedTableRow.name} — ${selectedTableRow.status}`
-                      );
+                      void navigator.clipboard?.writeText(tablePreviewDetailsText);
                     },
                   }}
                   ai={{

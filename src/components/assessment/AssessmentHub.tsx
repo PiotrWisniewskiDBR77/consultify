@@ -1,6 +1,8 @@
 /**
  * AssessmentHub
- * New simplified Assessment module with 3 tabs (Assessment, Reports, Initiatives)
+ * New simplified Assessment module with 3 tabs (Assessment, Reports, Initiatives).
+ * Behind `assessmentFiveSurfacesV1` (T22-INTEGRATION-SHELL): 5 stable, URL-synced
+ * tab ids (Library/Processes/Outputs/Reports/Initiatives) — see `fiveSurfacesEnabled`.
  * Uses shared ModuleHub components
  */
 
@@ -19,9 +21,11 @@ import {
   FileText,
   Globe,
   Layers,
+  Library,
   Lightbulb,
   Loader2,
   Monitor,
+  Package,
   Presentation,
   Trash2,
   Upload,
@@ -32,7 +36,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { LoadingState as SharedLoadingState } from '@/components/shared/states';
+import { EmptyState, LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   StandardPreview,
   type StandardPreviewActions,
@@ -74,15 +78,15 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import { Menu3BulkRow } from '../shared/ModuleMenu3';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
-import {
-  MENU_3_ACTION_DANGER,
-  MENU_3_INNER_CLASS,
-  MENU_3_LEFT_CLASS,
-  MENU_3_RIGHT_CLASS,
-  Menu3Chip,
-} from '../shared/ModuleMenu3';
 import { AssessmentMenu3ActionBar } from './AssessmentMenu3ActionBar';
+import { AssessmentOutputsTab } from './AssessmentOutputsTab';
+import {
+  buildAssessmentInitiativePreviewDetails,
+  buildAssessmentPreviewDetails,
+  buildAssessmentReportPreviewDetails,
+} from './assessmentPreviewDetails';
 import { ImportedReportDetailView } from './ImportedReportDetailView';
 import { InitiativesGenerationWizardModal } from './InitiativesGenerationWizardModal';
 import { NewAssessmentReportModal } from './modals/NewAssessmentReportModal';
@@ -93,22 +97,11 @@ type AssessmentFramework = 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
 
 // Assessment workflow statuses (own lifecycle)
 type AssessmentStatusType =
-  | 'DRAFT'
-  | 'IN_REVIEW'
-  | 'AWAITING_APPROVAL'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'ARCHIVED';
+  'DRAFT' | 'IN_REVIEW' | 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
 
 // Report statuses (own lifecycle)
 type ReportStatusType =
-  | 'DRAFT'
-  | 'GENERATING'
-  | 'FINAL'
-  | 'PENDING_APPROVAL'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'UTILIZED';
+  'DRAFT' | 'GENERATING' | 'FINAL' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'UTILIZED';
 
 // Initiative statuses (canonical 13)
 type InitiativeStatusType =
@@ -301,7 +294,28 @@ interface AssessmentHubProps {
   initialTab?: ModuleTab;
 }
 
-export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list' }) => {
+// T22-INTEGRATION-SHELL: the 5 stable tab ids behind `assessmentFiveSurfacesV1`.
+// `list` is the pre-shell id ('processes' content is byte-identical) — kept
+// as a compat target so old bookmarks/links (`?tab=list`) keep working, and
+// as the catch-all for any other unrecognized `?tab=` value.
+const FIVE_SURFACES_TAB_IDS = new Set<string>([
+  'library',
+  'processes',
+  'outputs',
+  'reports',
+  'initiatives',
+]);
+
+function resolveFiveSurfacesTabFromUrl(raw: string | null): ModuleTab | null {
+  if (!raw) return null;
+  if (raw === 'list') return 'processes';
+  if (FIVE_SURFACES_TAB_IDS.has(raw)) return raw as ModuleTab;
+  // Unknown value (typo'd link, stale bookmark from a future tab id, etc.) —
+  // fall back to the closest living equivalent of the old default tab.
+  return 'processes';
+}
+
+export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -315,8 +329,50 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const addChatMessage = useConversationStore((s) => s.addMessage);
   const wizardEnabled = isEnabled('assessmentInitiativesWizard');
+  // T22-INTEGRATION-SHELL: five-surface Hub (Library/Processes/Outputs/Reports/
+  // Initiatives, `?tab=` as source of truth). OFF (default) = today's exact
+  // 3-tab behavior — resolveFiveSurfacesTabFromUrl and the effect below are
+  // both no-ops when this is false.
+  const fiveSurfacesEnabled = isEnabled('assessmentFiveSurfacesV1');
   // State
-  const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [activeTab, setActiveTabState] = useState<ModuleTab>(() => {
+    if (initialTab) return initialTab;
+    if (!fiveSurfacesEnabled) return 'list';
+    return resolveFiveSurfacesTabFromUrl(searchParams.get('tab')) || 'library';
+  });
+  // Tab changes go through this wrapper so the URL stays the source of truth
+  // when the flag is ON; when it's OFF this is byte-identical to calling the
+  // state setter directly (no `?tab=` read/write at all).
+  const setActiveTab = useCallback(
+    (tab: ModuleTab) => {
+      setActiveTabState(tab);
+      if (!fiveSurfacesEnabled) return;
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', String(tab));
+      setSearchParams(next);
+    },
+    [fiveSurfacesEnabled, searchParams, setSearchParams]
+  );
+  // Keeps `activeTab` in sync with the URL for cases `setActiveTab` doesn't
+  // cover itself: browser back/forward, a shared link landing directly on a
+  // tab, and a first mount with no `?tab=` at all (canonicalized here so the
+  // URL always reflects what's on screen once the flag is ON).
+  useEffect(() => {
+    if (!fiveSurfacesEnabled) return;
+    const raw = searchParams.get('tab');
+    const mapped = resolveFiveSurfacesTabFromUrl(raw) || 'library';
+    // Canonicalize: missing (`?tab=` absent) or legacy/unknown values get
+    // rewritten to the resolved tab id, so the URL is always the single
+    // source of truth once the flag is ON.
+    if (!raw || mapped !== raw) {
+      const next = new URLSearchParams(searchParams);
+      next.set('tab', String(mapped));
+      setSearchParams(next, { replace: true });
+    }
+    if (mapped !== activeTab) {
+      setActiveTabState(mapped);
+    }
+  }, [fiveSurfacesEnabled, searchParams, activeTab, setSearchParams]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
@@ -575,6 +631,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     let data: any[] = [];
     switch (activeTab) {
       case 'list':
+      case 'processes':
         data = assessments;
         break;
       case 'reports':
@@ -601,21 +658,57 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     return counts;
   }, [activeTab, assessments, reports, initiatives, importedReports]);
 
-  // Tab configuration
-  const tabs = useMemo(
-    () => [
+  // Tab configuration — T22-INTEGRATION-SHELL: 5 stable tab ids behind
+  // `assessmentFiveSurfacesV1`. OFF keeps the original 3 tabs verbatim (same
+  // ids/labels/counts as before this change).
+  const tabs = useMemo(() => {
+    if (!fiveSurfacesEnabled) {
+      return [
+        {
+          id: 'list' as ModuleTab,
+          label: 'Assessment',
+          icon: <FileText size={16} />,
+          count: assessments.length,
+        },
+        {
+          id: 'reports' as ModuleTab,
+          label: 'Reports',
+          icon: <FileText size={16} />,
+          // Count all report documents (APPROVED + legacy FINAL),
+          // while the default filter still shows APPROVED only.
+          count: reports.length + importedReports.length,
+        },
+        {
+          id: 'initiatives' as ModuleTab,
+          label: 'Initiatives',
+          icon: <Lightbulb size={16} />,
+          count: initiatives.length,
+        },
+      ];
+    }
+    return [
       {
-        id: 'list' as ModuleTab,
-        label: 'Assessment',
+        id: 'library' as ModuleTab,
+        label: 'Library',
+        icon: <Library size={16} />,
+      },
+      {
+        // Former 'list' — identical content (same table, columns, preview),
+        // only the tab id + label changed.
+        id: 'processes' as ModuleTab,
+        label: 'Processes',
         icon: <FileText size={16} />,
         count: assessments.length,
+      },
+      {
+        id: 'outputs' as ModuleTab,
+        label: 'Outputs',
+        icon: <Package size={16} />,
       },
       {
         id: 'reports' as ModuleTab,
         label: 'Reports',
         icon: <FileText size={16} />,
-        // Count all report documents (APPROVED + legacy FINAL),
-        // while the default filter still shows APPROVED only.
         count: reports.length + importedReports.length,
       },
       {
@@ -624,9 +717,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         icon: <Lightbulb size={16} />,
         count: initiatives.length,
       },
-    ],
-    [assessments.length, reports, initiatives, importedReports]
-  );
+    ];
+  }, [fiveSurfacesEnabled, assessments.length, reports, initiatives, importedReports]);
 
   // Table columns for assessments
   // Dynamic columns per active tab
@@ -1099,13 +1191,17 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
     switch (activeTab) {
       case 'list':
+      case 'processes':
         data = assessments.map((item) => ({
           id: item.id,
           name: item.name,
           framework: mapApiFramework(item.type),
           status: mapAssessmentApiStatus(item.status),
           progress: item.progress ?? 0,
-          updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
+          overallScore: item.overallScore,
+          description: item.description,
+          createdAt: item.createdAt ? new Date(item.createdAt) : undefined,
+          updatedAt: item.updatedAt ? new Date(item.updatedAt) : undefined,
           // #69: raw list rows are `SELECT *` — createdBy arrives as snake_case.
           createdBy: item.createdBy || item.created_by,
         }));
@@ -1199,7 +1295,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   }, [currentData]);
 
   const emptyStateMessage =
-    activeTab === 'list' && loadWarning
+    (activeTab === 'list' || activeTab === 'processes') && loadWarning
       ? 'Assessment list is temporarily unavailable. Retry or create a new assessment while staging recovers.'
       : 'No assessments found. Create your first assessment to get started.';
 
@@ -1252,7 +1348,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         title: `Assessment Hub: ${tabs.find((tab) => tab.id === activeTab)?.label || 'Assessment'}`,
         projectId: currentProjectId || undefined,
         pmoContext: {
-          assessmentId: activeTab === 'list' ? assessments[0]?.id : undefined,
+          assessmentId:
+            activeTab === 'list' || activeTab === 'processes' ? assessments[0]?.id : undefined,
         },
       });
       convId = conversation.id;
@@ -1346,7 +1443,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             ? 'Reports'
             : activeTab === 'initiatives'
               ? 'Initiatives'
-              : 'Assessment',
+              : activeTab === 'library'
+                ? 'Library'
+                : activeTab === 'outputs'
+                  ? 'Outputs'
+                  : 'Assessment',
         badge: currentData.length,
         active: true,
         title: t(
@@ -1432,29 +1533,35 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     setSelectedListIds(new Set());
   }, [selectedListIds, currentData, handleRowAction]);
 
+  // T20-MENU_1_2_3-M14 — was a hand-rolled cluster (raw MENU_3_* style
+  // constants + bare buttons), same anti-pattern R02-A-FIX-2 removed from
+  // InterviewHub this session: no enforced N-selected → Clear → neutral →
+  // danger-last anatomy, no data-menu3-bulk/data-menu3-clear hooks. Migrated
+  // to the canonical primitive; guard and Select all/Clear/Delete semantics
+  // unchanged.
   const bulkCommandRowContent =
-    activeTab === 'list' && selectedListIds.size > 0 ? (
-      <div className={MENU_3_INNER_CLASS}>
-        <div className={MENU_3_LEFT_CLASS}>
-          <span className="inline-flex h-7 items-center rounded-full px-2.5 text-[11px] font-semibold text-c-text whitespace-nowrap">
-            {`${selectedListIds.size} selected`}
-          </span>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}>
-            Select all
-          </Menu3Chip>
-          <Menu3Chip onClick={() => setSelectedListIds(new Set())}>Clear</Menu3Chip>
-        </div>
-        <div className={MENU_3_RIGHT_CLASS}>
-          <button
-            type="button"
-            onClick={() => void handleBulkDeleteList()}
-            className={MENU_3_ACTION_DANGER}
-          >
-            <Trash2 size={12} />
-            Delete
-          </button>
-        </div>
-      </div>
+    // T22-INTEGRATION-SHELL: OR-of-ANDs (not a factored `(list||processes) &&`)
+    // so the literal substring "activeTab === 'list' && selectedListIds.size > 0"
+    // — the exact text tests/components/assessment/AssessmentHub.menu3BulkRow.t20.test.tsx
+    // asserts on verbatim — survives unchanged.
+    (activeTab === 'list' && selectedListIds.size > 0) ||
+    (activeTab === 'processes' && selectedListIds.size > 0) ? (
+      <Menu3BulkRow
+        selectedLabel={`${selectedListIds.size} selected`}
+        selectAllLabel="Select all"
+        onSelectAll={() => setSelectedListIds(new Set(currentData.map((r: any) => r.id)))}
+        clearLabel="Clear"
+        onClear={() => setSelectedListIds(new Set())}
+        actions={[
+          {
+            id: 'delete',
+            label: 'Delete',
+            icon: Trash2,
+            onClick: () => void handleBulkDeleteList(),
+            variant: 'danger',
+          },
+        ]}
+      />
     ) : null;
 
   const hubCommandRowContent = useMemo(
@@ -1513,10 +1620,7 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 onClick: () => setShowInitiativesWizard(true),
               },
             ],
-            note: t(
-              'assessment.whatsNext.note',
-              'Uses this assessment as the source.'
-            ),
+            note: t('assessment.whatsNext.note', 'Uses this assessment as the source.'),
           }
         : undefined,
     [selectedListRow, t]
@@ -1632,28 +1736,27 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
   // Esc closes preview; single-key shortcuts (O) active while preview open
   // (kanon B.24/B.31) — generalized across all 3 tabs (#73).
   useEffect(() => {
-    const selectedRowId =
-      activeTab === 'list'
-        ? selectedAssessmentId
-        : activeTab === 'reports'
-          ? selectedReportRowId
-          : activeTab === 'initiatives'
-            ? selectedInitiativeRowId
-            : null;
+    const isProcessesTab = activeTab === 'list' || activeTab === 'processes';
+    const selectedRowId = isProcessesTab
+      ? selectedAssessmentId
+      : activeTab === 'reports'
+        ? selectedReportRowId
+        : activeTab === 'initiatives'
+          ? selectedInitiativeRowId
+          : null;
     if (!selectedRowId) return;
-    const actions =
-      activeTab === 'list'
-        ? listPreviewActions
-        : activeTab === 'reports'
-          ? reportPreviewActions
-          : initiativePreviewActions;
+    const actions = isProcessesTab
+      ? listPreviewActions
+      : activeTab === 'reports'
+        ? reportPreviewActions
+        : initiativePreviewActions;
     const shortcuts = standardPreviewShortcuts(actions);
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable)
         return;
       if (e.key === 'Escape') {
-        if (activeTab === 'list') setSelectedAssessmentId(null);
+        if (isProcessesTab) setSelectedAssessmentId(null);
         else if (activeTab === 'reports') setSelectedReportRowId(null);
         else if (activeTab === 'initiatives') setSelectedInitiativeRowId(null);
         return;
@@ -1828,12 +1931,52 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
       );
     }
 
+    // T22-INTEGRATION-SHELL: 'library' — honest EmptyState placeholder only.
+    // AssessmentLibraryTab does not exist in this codebase (demo-only); this
+    // does NOT close T20 (Assessment/Library in the 45-table audit) — no
+    // rows, no fabricated data, table structure intentionally absent rather
+    // than faked. Rendered ahead of the grid/list branches since it has no
+    // relation to `currentData`/`viewMode` (those drive 'processes'/
+    // 'reports'/'initiatives').
+    if (activeTab === 'library') {
+      return (
+        <div className="h-full overflow-auto p-6">
+          <EmptyState
+            variant="new"
+            icon={Library}
+            title={t('assessment.library.emptyState.title', 'Library is not built yet')}
+            description={t(
+              'assessment.library.emptyState.description',
+              'The published-definition catalog for this surface has not been implemented in this environment.'
+            )}
+          />
+        </div>
+      );
+    }
+
+    // T22-INTEGRATION-SHELL: 'outputs' — the accepted, isolated
+    // AssessmentOutputsTab (T22-TABLE-PREVIEW-COMPONENT). Self-contained:
+    // fetches the org-scoped Outputs Library itself, filtered to
+    // originRuntime === 'assessment_report'. No props threaded from this Hub
+    // (no selectedAssessmentId dependency) — rendered unchanged from its
+    // accepted core.
+    if (activeTab === 'outputs') {
+      return (
+        <div className="h-full overflow-hidden">
+          <AssessmentOutputsTab />
+        </div>
+      );
+    }
+
     // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): Assessment
     // 'list' tab → StandardTable + StandardPreview. Moduł deklaruje TYLKO
     // dane + kontrakt kebaba/akcji; cały chrome pochodzi z fasad Standard*.
-    if (activeTab === 'list') {
+    // T22-INTEGRATION-SHELL: 'processes' is the five-surfaces alias for this
+    // same tab, identical body.
+    if (activeTab === 'list' || activeTab === 'processes') {
       const selectedRow = selectedListRow;
       const previewActions = listPreviewActions;
+      const previewDetailsText = buildAssessmentPreviewDetails(selectedRow, isPolish ? 'pl' : 'en');
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -1872,7 +2015,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 ],
                 universalHandlers: {
                   preview: () => setSelectedAssessmentId(String((row as any).id)),
-                  edit: () => handleOpenDocument(row as any),
+                  // T20-KEBAB-K10 — `edit` used to duplicate `primary`'s Open
+                  // (identical `handleOpenDocument(row)` handler under a second
+                  // label). Assessments have no separate edit mode distinct
+                  // from opening the editor, so per the canonical pattern
+                  // (InterviewHub omits `edit` rather than duplicating a
+                  // handler; AssessmentHub's own `reports` tab gives `edit` a
+                  // genuinely different target) this key is omitted, not
+                  // duplicated.
                   // Brak API archiwizacji assessmentu — pozycja disabled z notą (StandardTable dokłada ją sama).
                 },
                 destructive: {
@@ -1908,30 +2058,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
-                    },
-                    {
-                      id: 'progress',
-                      label: t('assessment.table.progress', 'Progress'),
-                      value: `${selectedRow.progress ?? 0}%`,
-                      mono: true,
-                    },
-                  ],
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status} (${selectedRow.progress ?? 0}%)`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 ai={{
@@ -1944,7 +2073,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 }}
                 relations={[]}
                 actions={previewActions}
-                whatsNext={activeTab === 'list' ? listPreviewWhatsNext : undefined}
+                whatsNext={
+                  activeTab === 'list' || activeTab === 'processes'
+                    ? listPreviewWhatsNext
+                    : undefined
+                }
               />
             </aside>
           ) : null}
@@ -1960,6 +2093,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeTab === 'reports') {
       const selectedRow = selectedReportRow;
       const previewActions = reportPreviewActions;
+      const previewDetailsText = selectedRow
+        ? buildAssessmentReportPreviewDetails(selectedRow, isPolish ? 'pl' : 'en')
+        : '';
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -2045,38 +2181,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
-                    },
-                    ...(selectedRow.assessmentName
-                      ? [
-                          {
-                            id: 'source',
-                            label: t('assessment.reports.source', 'Source assessment'),
-                            value: selectedRow.assessmentName,
-                          },
-                        ]
-                      : []),
-                    {
-                      id: 'author',
-                      label: t('assessment.hub.table.author', 'Author'),
-                      value: getAuthorLabel(selectedRow.createdBy) || '—',
-                    },
-                  ],
+                  // T23-PREVIEW-P25: was a Property/Value dump (same N-52
+                  // anti-pattern T21 removed from the 'list'/'processes' tab)
+                  // — now factual prose from a strict persisted-field
+                  // whitelist (assessmentPreviewDetails.ts), consistent with
+                  // the List tab's Details block.
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status}`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 relations={[]}
@@ -2106,6 +2218,9 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
     if (activeTab === 'initiatives') {
       const selectedRow = selectedInitiativeRow;
       const previewActions = initiativePreviewActions;
+      const previewDetailsText = selectedRow
+        ? buildAssessmentInitiativePreviewDetails(selectedRow, isPolish ? 'pl' : 'en')
+        : '';
 
       return (
         <div className="h-full flex overflow-hidden">
@@ -2178,38 +2293,14 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                   ),
                 }}
                 details={{
-                  // N-52 / przeglad 128 zrzutow: to sa WLASCIWOSCI, nie tresc —
-                  // szly dotad jako sklejony akapit w bloku na proze.
-                  propertyLabel: isPolish ? 'Wlasciwosc' : 'Property',
-                  valueLabel: isPolish ? 'Wartosc' : 'Value',
-                  properties: [
-                    {
-                      id: 'type',
-                      label: t('assessment.table.type', 'Type'),
-                      value:
-                      FRAMEWORK_META[selectedRow.framework as AssessmentFramework]?.name ||
-                      selectedRow.framework ||
-                      '—',
-                    },
-                    ...(selectedRow.sourceReport
-                      ? [
-                          {
-                            id: 'source-report',
-                            label: t('assessment.initiatives.sourceReport', 'Source report'),
-                            value: selectedRow.sourceReport,
-                          },
-                        ]
-                      : []),
-                    {
-                      id: 'author',
-                      label: t('assessment.hub.table.author', 'Author'),
-                      value: getAuthorLabel(selectedRow.createdBy) || '—',
-                    },
-                  ],
+                  // T24-PREVIEW-P25: was a Property/Value dump (same N-52
+                  // anti-pattern T21/T23 removed from the 'list'/'processes'
+                  // and 'reports' tabs) — now factual prose from a strict
+                  // persisted-field whitelist (assessmentPreviewDetails.ts),
+                  // consistent with the List and Reports Details blocks.
+                  text: previewDetailsText,
                   onCopy: () => {
-                    void navigator.clipboard?.writeText(
-                      `${selectedRow.name} — ${selectedRow.status}`
-                    );
+                    void navigator.clipboard?.writeText(previewDetailsText);
                   },
                 }}
                 relations={[]}
@@ -2364,9 +2455,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={handleNewItem}
+        onNewItem={activeTab === 'library' || activeTab === 'outputs' ? undefined : handleNewItem}
         newItemLabel={getNewItemLabel()}
-        filterControls={statusDropdownControl}
+        filterControls={
+          activeTab === 'library' || activeTab === 'outputs' ? undefined : statusDropdownControl
+        }
         commandRowContent={hubCommandRowContent}
       >
         {/* min-h-0 flex-1 overflow-hidden: without this the 'list' tab's
@@ -2375,7 +2468,11 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
             fix already applied in InitiativesHub. */}
         <div className="min-h-0 flex-1 overflow-hidden space-y-3">
           {loadWarning &&
-            !(activeTab === 'list' && !activeDocumentId && assessments.length === 0) && (
+            !(
+              (activeTab === 'list' || activeTab === 'processes') &&
+              !activeDocumentId &&
+              assessments.length === 0
+            ) && (
               <div className="mx-4 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
@@ -2391,7 +2488,10 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
                 </div>
               </div>
             )}
-          {loadWarning && activeTab === 'list' && !activeDocumentId && assessments.length === 0 ? (
+          {loadWarning &&
+          (activeTab === 'list' || activeTab === 'processes') &&
+          !activeDocumentId &&
+          assessments.length === 0 ? (
             // Hard failure (no cached data): show ErrorState with retry instead of the
             // empty-list CTA, which would falsely imply the user has 0 assessments.
             <ErrorState message={loadWarning} retry={() => void refreshData()} />

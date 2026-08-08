@@ -19,6 +19,7 @@ import { statusChipTone } from '@/components/ui/primitives/chips/EntityStatusChi
 import { Api } from '@/services/api';
 import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 
+import { buildToolSessionDetails } from './toolSessionDetailsBuilder';
 import { getToolCategoryLabel } from './ToolSessionPreview';
 
 /**
@@ -179,12 +180,8 @@ export const ToolSessionPreviewV3Body: React.FC<{
   );
 
   const detailsText = useMemo(() => {
-    if (!details) return '';
-    const approvedSnapshot = (details.contextSnapshot as any)?.approvedSnapshot;
-    if (!approvedSnapshot) return '';
-    const safe = safeJsonString(approvedSnapshot, 2000);
-    return safe ? `${t('preview.approvalSnapshot', 'Approval snapshot')}:\n${safe}` : '';
-  }, [details, t]);
+    return buildToolSessionDetails(details, isPolish ? 'pl' : 'en');
+  }, [details, isPolish]);
 
   const handleCopyDetails = useCallback(async () => {
     try {
@@ -224,8 +221,7 @@ export const ToolSessionPreviewV3Body: React.FC<{
       : []),
   ];
 
-  const detailsDisplayText =
-    detailsText || t('preview.useAiHints', 'Use AI hints in the footer to generate a brief.');
+  const detailsDisplayText = detailsText;
 
   return (
     <div className="space-y-4">
