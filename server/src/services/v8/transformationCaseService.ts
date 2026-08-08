@@ -1499,7 +1499,7 @@ export async function bindTransformationCaseProject(params: {
         current.active_plan_id,
         current.version,
         params.actorUserId,
-        sha256Json({ projectId }),
+        createHash('sha256').update(JSON.stringify({ projectId })).digest('hex'),
         JSON.stringify({ projectId, contextSnapshotId: current.context_snapshot_id }),
       ]
     );
