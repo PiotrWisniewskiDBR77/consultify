@@ -18,6 +18,9 @@ if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
 fi
 
 if [ "$#" -gt 0 ]; then
+  if [ "$#" -eq 1 ]; then
+    exec su-exec nodejs dumb-init -- sh -c "$1"
+  fi
   exec su-exec nodejs dumb-init -- "$@"
 fi
 
