@@ -82,6 +82,26 @@ export interface ExtractionResult {
   warnings: string[];
 }
 
+const PDF_PAGE_MARKER = /^--\s*(\d+)\s+of\s+\d+\s*--$/i;
+
+/**
+ * pdf-parse v2 inserts `-- N of M --` between pages. Keep a page number for
+ * every source-text row so later section scoping can retain exact PDF lineage.
+ */
+function buildPdfPageByLine(text: string): Array<number | null> {
+  const sourceLines = String(text || '').split(/\r?\n/);
+  const pageByLine: Array<number | null> = [];
+  let currentPage: number | null = sourceLines.length > 0 ? 1 : null;
+  for (let index = 0; index < sourceLines.length; index += 1) {
+    const marker = sourceLines[index].trim().match(PDF_PAGE_MARKER);
+    pageByLine.push(currentPage);
+    // pdf-parse emits the marker after the page body, so subsequent lines
+    // belong to the following page.
+    if (marker) currentPage = Number(marker[1]) + 1;
+  }
+  return pageByLine;
+}
+
 export interface ValidationMessage {
   type: 'error' | 'warning' | 'info';
   code: string;
@@ -1619,6 +1639,7 @@ export function extractFinancialLines(
   const lines: ExtractedLine[] = [];
   const warnings: string[] = [];
   const { scopedText, lineOffset, sections } = extractRelevantStatementSection(text, detectedType);
+  const pdfPageByLine = buildPdfPageByLine(text);
   const columnSelection = resolveStatementColumnSelection(scopedText, {
     periodLabel: options?.selectedPeriodLabel || undefined,
   });
@@ -2050,6 +2071,7 @@ export function extractFinancialLines(
       rawValue,
       selectedPeriodLabel: targetPeriodLabel || undefined,
       comparisonPeriodLabel: comparisonPeriodLabel || undefined,
+      sourcePage: pdfPageByLine[lineOffset + i] ?? undefined,
       sourceRow: lineOffset + i + 1,
       rowType: lineClassification.isNonFinancial ? 'nonFinancial' : deriveRowType(label),
       hierarchyDepth: Math.max(0, (rawLines[i].match(/^\s+/)?.[0].length || 0) / 2),
@@ -7484,8 +7506,8 @@ export async function persistStatementCandidateRows(params: {
       const candidateRowId = uuidv4();
       await dbRun(
         `INSERT INTO financial_statement_candidate_rows
-          (id, statement_id, ingest_run_id, section_id, row_key, row_label, normalized_label, source_row, selected_period_label, raw_value, normalized_value, currency, scaling, confidence, classification_reason, metadata_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, statement_id, ingest_run_id, section_id, row_key, row_label, normalized_label, source_row, source_page, selected_period_label, raw_value, normalized_value, currency, scaling, confidence, classification_reason, metadata_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           candidateRowId,
           params.statementId,
@@ -7495,6 +7517,7 @@ export async function persistStatementCandidateRows(params: {
           row.originalLabel,
           normalizeAliasText(row.originalLabel),
           row.sourceRow || null,
+          row.sourcePage || null,
           row.selectedPeriodLabel || null,
           row.rawValue || null,
           Number.isFinite(row.value) ? row.value : null,

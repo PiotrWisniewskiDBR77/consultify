@@ -16,6 +16,7 @@ import { describe, expect, it } from 'vitest';
 import {
   detectContainedStatementTypes,
   detectStatementType,
+  extractFinancialLines,
   resolveDuplicateSuggestedMappings,
   validateStatement,
 } from '../financialStatementService.js';
@@ -146,6 +147,24 @@ describe('financialStatementService — contract tests', () => {
       const result = validateStatement([], 'P&L');
       expect(['pass', 'warnings', 'needs_review']).toContain(result.status);
       expect(Array.isArray(result.messages)).toBe(true);
+    });
+  });
+
+  describe('extractFinancialLines PDF lineage', () => {
+    it('preserves the pdf-parse page marker on extracted rows', () => {
+      const pageSeven = extractFinancialLines(
+        ['Income Statement 2025 2024', '-- 6 of 40 --', 'Revenue 1,200 1,000'].join('\n'),
+        'P&L',
+        { selectedPeriodLabel: '2025', comparisonPeriodLabel: '2024' }
+      );
+      const pageEight = extractFinancialLines(
+        ['Income Statement 2025 2024', '-- 7 of 40 --', 'Revenue 1,200 1,000'].join('\n'),
+        'P&L',
+        { selectedPeriodLabel: '2025', comparisonPeriodLabel: '2024' }
+      );
+
+      expect(pageSeven.lines[0]?.sourcePage).toBe(7);
+      expect(pageEight.lines[0]?.sourcePage).toBe(8);
     });
   });
 
