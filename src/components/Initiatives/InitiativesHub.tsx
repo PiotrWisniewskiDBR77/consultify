@@ -113,7 +113,8 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
-import { type AcceptCandidatePayload, CandidatesPanel } from './CandidatesPanel';
+import { type AcceptCandidatePayload } from './CandidatesPanel';
+import { CandidatesTable } from './CandidatesTable';
 import {
   getCreatedInitiativeRevealState,
   normalizeInitiativeForPortfolio,
@@ -122,6 +123,7 @@ import {
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativeGoalsView } from './InitiativeGoalsView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
+import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -130,8 +132,10 @@ import {
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { InitiativesGoalsTable } from './InitiativesGoalsTable';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import PortfolioHealthView from './PortfolioHealthView';
+import { PortfolioHealthTable } from './PortfolioHealthTable';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 // CB-01 pass 3 — stable identifier for the empty-portfolio "New Initiative"
@@ -1578,38 +1582,42 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const renderContent = () => {
     // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
     if (activeTab === 'observability') {
-      return <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />;
+      return (
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <InitiativeObservabilityTable
+              onOpenInitiative={(id, title) =>
+                handleOpenDocument({ id, type: 'initiative', name: title || t('initiatives.document.untitled', 'Untitled initiative') })
+              }
+            />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <InitiativeObservabilityPanel initialInitiativeId={previewInitiativeId} />
+          </div>
+        </div>
+      );
     }
     // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
     if (activeTab === 'candidates') {
-      return <CandidatesPanel onAccept={handleAcceptCandidate} />;
+      return <CandidatesTable onAccept={handleAcceptCandidate} />;
     }
     // RES-10: Initiatives-owned goals/OKR (goals table). Never Results' kpi_scorecards.
     if (activeTab === 'goals') {
-      return (
-        <InitiativeGoalsView
-          activeFilters={activeFilters}
-          onFilterChange={setActiveFilters}
-          initiatives={initiatives.map((initiative) => ({
-            initiativeId: initiative.id,
-            initiativeName: initiative.name,
-            initiativeStatus: String(initiative.status),
-          }))}
-        />
-      );
+      return <InitiativesGoalsTable />;
     }
     // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
     if (activeTab === 'portfolioHealth') {
+      const openInitiative = (id: string, title: string) =>
+        handleOpenDocument({ id, type: 'initiative', name: title || t('initiatives.document.untitled', 'Untitled initiative') });
       return (
-        <PortfolioHealthView
-          onOpenInitiative={(id, title) =>
-            handleOpenDocument({
-              id,
-              type: 'initiative',
-              name: title || t('initiatives.document.untitled', 'Untitled initiative'),
-            })
-          }
-        />
+        <div className="flex h-full flex-col overflow-hidden">
+          <div className="h-1/2 min-h-[320px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+            <PortfolioHealthTable onOpenInitiative={openInitiative} />
+          </div>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <PortfolioHealthView onOpenInitiative={openInitiative} />
+          </div>
+        </div>
       );
     }
     // V3-F02: Analysis tab — portfolio quality gate

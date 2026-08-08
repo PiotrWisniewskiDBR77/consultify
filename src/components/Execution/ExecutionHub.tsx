@@ -2716,12 +2716,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     (report: ReportDef): StandardRowMenu => ({
       primary: [
         {
-          id: 'open_preview',
-          label: t('common.openPreview', 'Otwórz podgląd'),
-          icon: ChevronRight,
-          onClick: () => setReportPreviewId(report.id),
-        },
-        {
           id: 'open_full',
           label: t('common.openFull', 'Otwórz pełny widok'),
           icon: FileText,
@@ -5667,25 +5661,8 @@ Please return:
 
       return (
         <div className="flex h-full flex-col overflow-hidden">
-          {isExecutionFlagEnabled('intelligence') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
-            </div>
-          )}
-          {isExecutionFlagEnabled('changeSignals') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionChangeSignalsPanel />
-            </div>
-          )}
-          {isExecutionFlagEnabled('whatIfSandbox') && (
-            <div className="shrink-0 px-4 pt-3">
-              <ExecutionWhatIfSandbox
-                baseline={{
-                  healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
-                }}
-              />
-            </div>
-          )}
+          {/* T32 R14: EVM/what-if analytics panels moved BELOW the canonical
+              table (T32-TABLE-T13) — relocated, not deleted. */}
           {bulkConfirmDialog}
           <div className="min-h-0 flex-1 flex overflow-hidden">
             <div className="flex-1 min-w-0 overflow-auto pl-4 pr-1.5 pt-3 pb-4">
@@ -5796,6 +5773,23 @@ Please return:
               </aside>
             ) : null}
           </div>
+          {(isExecutionFlagEnabled('intelligence') ||
+            isExecutionFlagEnabled('changeSignals') ||
+            isExecutionFlagEnabled('whatIfSandbox')) && (
+            <div className="shrink-0 max-h-[45%] space-y-3 overflow-auto border-t border-slate-200 px-4 py-3 dark:border-slate-700">
+              {isExecutionFlagEnabled('intelligence') && (
+                <ExecutionIntelligencePanel projectId={currentProjectId || 'all'} />
+              )}
+              {isExecutionFlagEnabled('changeSignals') && <ExecutionChangeSignalsPanel />}
+              {isExecutionFlagEnabled('whatIfSandbox') && (
+                <ExecutionWhatIfSandbox
+                  baseline={{
+                    healthScore: portfolioMetrics?.healthScore ?? executionHealth?.healthScore ?? 0,
+                  }}
+                />
+              )}
+            </div>
+          )}
         </div>
       );
     }

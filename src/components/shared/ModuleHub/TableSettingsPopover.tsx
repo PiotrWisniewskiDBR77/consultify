@@ -11,10 +11,21 @@
  */
 
 import { ChevronDown, ChevronUp, RotateCcw, Settings2 } from 'lucide-react';
-import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 
+import { CANON_ICON } from '@/contracts/tableSurface/canon';
 import { cn } from '@/utils/cn';
+
+import { isAlwaysLockedColumn } from './tableSettingsLocks';
 
 const PANEL_WIDTH = 256; // w-64
 const GAP = 8; // mt-2
@@ -77,8 +88,8 @@ const PANEL_CLASS =
 
 const ROW_CLASS =
   'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-c-text ' +
-  'transition-colors hover:bg-c-accent-soft cursor-pointer ' +
-  'focus-within:bg-c-accent-soft';
+  'transition-colors hover:bg-state-hover cursor-pointer ' +
+  'focus-within:bg-state-hover';
 
 const HEADING_CLASS =
   'px-2 pb-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-c-text-muted';
@@ -97,7 +108,7 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
   onReset,
   resetLabel = 'Reset columns',
   label = 'Table settings',
-  columnsHeading = 'Columns',
+  columnsHeading = 'Visible columns',
   descriptionLabel = 'Show row description',
   className,
   align = 'right',
@@ -169,9 +180,22 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
     }
   }, [open]);
 
+  /**
+   * Kolumny po wymuszeniu kanonicznych blokad. `required` wywołującego jest
+   * respektowane, ale NIE MOŻE odblokować identyfikatora ani kolumny akcji.
+   */
+  const lockedColumns = useMemo(
+    () =>
+      columns.map((column, index) => ({
+        ...column,
+        required: column.required || isAlwaysLockedColumn(column.id, index),
+      })),
+    [columns]
+  );
+
   const handleColumnToggle = useCallback(
-    (column: TableSettingsColumn) => {
-      if (column.required) return;
+    (column: TableSettingsColumn, index: number) => {
+      if (column.required || isAlwaysLockedColumn(column.id, index)) return;
       onToggle(column.id, !column.visible);
     },
     [onToggle]
@@ -188,7 +212,7 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
         title={label}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <Settings2 size={14} />
+        <Settings2 size={CANON_ICON.default} />
       </button>
 
       {open
@@ -203,14 +227,14 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
             >
               <div className={HEADING_CLASS}>{columnsHeading}</div>
               <div className="max-h-64 overflow-y-auto">
-                {columns.map((column, idx) => (
+                {lockedColumns.map((column, idx) => (
                   <label key={column.id} className={ROW_CLASS}>
                     <input
                       type="checkbox"
                       className={CHECKBOX_CLASS}
                       checked={column.visible}
                       disabled={column.required}
-                      onChange={() => handleColumnToggle(column)}
+                      onChange={() => handleColumnToggle(column, idx)}
                     />
                     <span className="min-w-0 flex-1 truncate">{column.label}</span>
                     {column.required ? (
@@ -227,7 +251,7 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                             onMove(column.id, 'up');
                           }}
                           disabled={idx === 0}
-                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text disabled:opacity-30"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-state-hover hover:text-c-text disabled:opacity-30"
                           aria-label={`Move ${column.label} up`}
                         >
                           <ChevronUp size={12} />
@@ -238,8 +262,8 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                             e.preventDefault();
                             onMove(column.id, 'down');
                           }}
-                          disabled={idx === columns.length - 1}
-                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text disabled:opacity-30"
+                          disabled={idx === lockedColumns.length - 1}
+                          className="inline-flex h-5 w-5 items-center justify-center rounded text-c-text-muted transition-colors hover:bg-state-hover hover:text-c-text disabled:opacity-30"
                           aria-label={`Move ${column.label} down`}
                         >
                           <ChevronDown size={12} />
@@ -250,9 +274,30 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                 ))}
               </div>
 
+              {onReset ? (
+                <>
+                  <div className="my-1 h-px bg-c-border-subtle" />
+                  <button
+                    type="button"
+                    onClick={onReset}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-c-text-muted transition-colors hover:bg-state-hover hover:text-c-text"
+                  >
+                    <RotateCcw size={13} className="shrink-0" />
+                    <span className="min-w-0 flex-1 truncate text-left">{resetLabel}</span>
+                  </button>
+                </>
+              ) : null}
+
+              {/*
+                R04-1 — „Show row description" jest OSTATNIM elementem popovera
+                (§5 Settings2). Wcześniej stał przed opcjonalnym „Reset columns",
+                więc kolejność zależała od tego, czy ekran podał `onReset` —
+                dwa ekrany, dwa różne układy tego samego popovera. Teraz pozycja
+                jest stała niezależnie od przekazanych propsów.
+              */}
               <div className="my-1 h-px bg-c-border-subtle" />
 
-              <label className={ROW_CLASS} htmlFor={descId}>
+              <label className={ROW_CLASS} htmlFor={descId} data-settings-row="description">
                 <span className="min-w-0 flex-1 truncate">{descriptionLabel}</span>
                 <input
                   id={descId}
@@ -262,20 +307,6 @@ export const TableSettingsPopover: React.FC<TableSettingsPopoverProps> = ({
                   onChange={(event) => onToggleDescription(event.target.checked)}
                 />
               </label>
-
-              {onReset ? (
-                <>
-                  <div className="my-1 h-px bg-c-border-subtle" />
-                  <button
-                    type="button"
-                    onClick={onReset}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-c-text-muted transition-colors hover:bg-c-accent-soft hover:text-c-text"
-                  >
-                    <RotateCcw size={13} className="shrink-0" />
-                    <span className="min-w-0 flex-1 truncate text-left">{resetLabel}</span>
-                  </button>
-                </>
-              ) : null}
             </div>,
             document.body
           )

@@ -81,6 +81,9 @@ import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { ResultsInitiativesView } from './ResultsInitiativesView';
 import { ResultsKpiReportsView } from './ResultsKpiReportsView';
 import { ResultsKpiScorecardsView } from './ResultsKpiScorecardsView';
+import { ResultsOkrSetsTable } from './ResultsOkrSetsTable';
+import { ResultsRoiReviewsTable } from './ResultsRoiReviewsTable';
+import { ResultsScorecardsTable } from './ResultsScorecardsTable';
 import { ResultsGridView } from './ResultsKPITable';
 import {
   ResultsKpiConnectorsView,
@@ -2289,25 +2292,25 @@ export const ResultsHub: React.FC = () => {
         ) : activeTab === 'results_benefits_inbox' ? (
           <M14HandoffInbox onPromoted={() => void refreshResultsTruth()} />
         ) : activeTab === 'results_strategic' ? (
-          <div className="p-4 overflow-auto space-y-6">
-            {isResultsFlagEnabled('strategicLayer') ? (
-              <StrategicLayerPanel projectId="all" />
-            ) : (
-              <div className="text-sm text-c-text-muted py-8 text-center">
-                {t(
-                  'results.strategic.disabled',
-                  'Strategic layer disabled — enable the ff_strategicLayer flag.'
-                )}
-              </div>
-            )}
-            {isResultsFlagEnabled('valueDriverTree') && (
-              <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
-                <h3 className="text-sm font-semibold text-c-text mb-3">
-                  {t('results.driverTree.title', 'Value Driver Tree')}
-                </h3>
-                <ValueDriverTree projectId="all" />
-              </div>
-            )}
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsOkrSetsTable projectId="all" />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto p-4 space-y-6">
+              {isResultsFlagEnabled('strategicLayer') ? (
+                <StrategicLayerPanel projectId="all" />
+              ) : (
+                <div className="text-sm text-c-text-muted py-8 text-center">
+                  {t('results.strategic.disabled', 'Strategic layer disabled — enable the ff_strategicLayer flag.')}
+                </div>
+              )}
+              {isResultsFlagEnabled('valueDriverTree') && (
+                <div className="rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface/40 p-4">
+                  <h3 className="text-sm font-semibold text-c-text mb-3">{t('results.driverTree.title', 'Value Driver Tree')}</h3>
+                  <ValueDriverTree projectId="all" />
+                </div>
+              )}
+            </div>
           </div>
         ) : activeTab === 'results_ai' ? (
           <div className="p-4 overflow-auto space-y-6">
@@ -2365,7 +2368,14 @@ export const ResultsHub: React.FC = () => {
             />
           )
         ) : activeTab === 'roi' ? (
-          <ROITrackingView refreshNonce={roiRefreshNonce} />
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsRoiReviewsTable />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto">
+              <ROITrackingView refreshNonce={roiRefreshNonce} />
+            </div>
+          </div>
         ) : loading ? (
           <div className="p-4">
             <SharedLoadingState template="list" rows={6} />
@@ -2413,12 +2423,19 @@ export const ResultsHub: React.FC = () => {
           // contract) can pass it directly; see CorrectiveActions.tsx.
           <CorrectiveActions />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
-          <ResultsKpiScorecardsView
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            createNonce={kpiScorecardCreateNonce}
-            initiatives={filteredInitiatives}
-          />
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="h-1/2 min-h-[280px] shrink-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+              <ResultsScorecardsTable />
+            </div>
+            <div className="flex-1 min-h-0 overflow-auto">
+              <ResultsKpiScorecardsView
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                createNonce={kpiScorecardCreateNonce}
+                initiatives={filteredInitiatives}
+              />
+            </div>
+          </div>
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'signals' ? (
           // Relocated here from the former `mode=queue` slot (now Corrective
           // Action, see above) — this below-target KPI signal-entry-sheet tool

@@ -22,6 +22,8 @@ import { useTranslation } from 'react-i18next';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useDeviceType } from '@/hooks/useDeviceType';
 
+import { PREVIEW_PANE_WIDTH } from './PreviewPane/previewGeometry';
+
 export interface PreviewableItem {
   id: string;
   title: string;
@@ -158,8 +160,23 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
     }
   }, [selectedId, controlledPreviewOpen, autoOpenPreview]);
 
+  /**
+   * R03-2 — focus return (§6 Kontener i otwieranie: „Esc i × zamykają, focus
+   * wraca do rekordu").
+   *
+   * Zapamiętujemy element, który miał focus w chwili otwarcia preview — czyli
+   * zwykle wiersz albo kontrolkę, z której użytkownik przyszedł. Zamknięcie
+   * oddaje focus tam, zamiast zostawiać go w nicości: bez tego po Escape focus
+   * wypadał poza kontener, a razem z nim przestawała działać nawigacja j/k,
+   * bo listener klawiatury wisi właśnie na kontenerze.
+   */
+  const openerRef = useRef<HTMLElement | null>(null);
+
   const handleSelect = useCallback(
     (id: string) => {
+      // Ostatni aktywny element PRZED przejęciem uwagi przez preview.
+      const active = typeof document !== 'undefined' ? document.activeElement : null;
+      if (active instanceof HTMLElement) openerRef.current = active;
       if (selectedId && selectedId !== id) pushHistory(selectedId);
       onSelect(id);
       if (autoOpenPreview) {
@@ -172,6 +189,16 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
   const handleClose = useCallback(() => {
     setInternalPreviewOpen(false);
     onSelect(null);
+
+    const opener = openerRef.current;
+    openerRef.current = null;
+    // Element mógł zniknąć razem z przefiltrowaną listą — wtedy focus wraca na
+    // kontener (ma `tabIndex={0}`), żeby skróty klawiszowe nadal działały.
+    if (opener && document.contains(opener)) {
+      opener.focus();
+      return;
+    }
+    containerRef.current?.focus();
   }, [onSelect]);
 
   // Keyboard navigation
@@ -434,7 +461,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
+              style={{ width: PREVIEW_PANE_WIDTH }}
             >
               <PreviewPaneShell
                 title={t('common.batchOperations', 'Batch Operations')}
@@ -452,7 +479,7 @@ export function TableWithPreviewLayout<T extends PreviewableItem>({
               exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3 pointer-events-auto"
-              style={{ width: 'clamp(340px, 28%, 480px)' }}
+              style={{ width: PREVIEW_PANE_WIDTH }}
             >
               <PreviewPaneShell
                 title={selectedItem.title}

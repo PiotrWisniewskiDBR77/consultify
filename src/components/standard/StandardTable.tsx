@@ -27,6 +27,11 @@ import { Archive, Eye, type LucideIcon, Pencil, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { TABLE_SURFACE_REGISTER } from '@/contracts/tableSurface/surfaceRegister';
+import type { ContractViolation, TableSurfaceId } from '@/contracts/tableSurface/types';
+import { toResult } from '@/contracts/tableSurface/types';
+import { assertContractInDev } from '@/contracts/tableSurface/validators';
+
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import {
   FilterableTable,
@@ -39,12 +44,9 @@ import { EmptyState, LoadingState } from '../shared/states';
 export type { TableColumn, TableRow } from '../shared/ModuleHub/FilterableTable';
 export type { RowAction, RowActionSection } from '../shared/RowActionsMenu';
 
-// ── Kebab wiersza — kontrakt 5 bloków (ANEKS #4, _STANDARD_TRIADA_NOTATKA) ──
-//
-// Moduł deklaruje TYLKO bloki 1-3; bloki 4 (Open preview · Edit · Archive)
-// i 5 (Delete/Reject — czerwony, ostatni, oddzielony) StandardTable dokłada
-// SAM — zawsze obecne. Brak handlera ⇒ pozycja disabled z dopiskiem
-// (np. „Coming soon (backend)"), NIGDY ukryta.
+// ── Kebab wiersza — zamknięty kontrakt 3 stref ─────────────────────────────
+// context → manage → danger. Puste strefy znikają. Funkcja bez handlera i bez
+// prawdziwego business-lock reason nie jest renderowana jako atrapa.
 
 export interface StandardRowMenuAction {
   id: string;
@@ -75,7 +77,7 @@ export interface StandardRowMenu {
    * (addytywne — moduły bez `convertActions` renderują się identycznie).
    */
   convertActions?: StandardRowMenuAction[];
-  /** Blok 4: handlery uniwersalne; brak handlera = disabled z notą. */
+  /** Strefa manage: handlery capabilities; nota oznacza realny business lock. */
   universalHandlers?: {
     preview?: () => void;
     previewNote?: string;
@@ -84,7 +86,7 @@ export interface StandardRowMenu {
     archive?: () => void;
     archiveNote?: string;
   };
-  /** Blok 5: akcja destrukcyjna (Delete/Reject). Brak = disabled z notą. */
+  /** Strefa danger: akcja destrukcyjna. Brak deklaracji = capability N/D. */
   destructive?: {
     label?: string;
     icon?: React.ElementType;
@@ -105,6 +107,32 @@ const toRowAction = (action: StandardRowMenuAction): RowAction => ({
   submenu: action.submenu?.map(toRowAction),
 });
 
+/**
+ * Low-level compatibility seam: every legacy section is folded into the same
+ * three visual zones as `rowMenu`, without changing action order or handlers.
+ */
+export function normalizeRowActionSections(sections: RowActionSection[]): RowActionSection[] {
+  const zones: Record<'context' | 'manage' | 'danger', RowAction[]> = {
+    context: [],
+    manage: [],
+    danger: [],
+  };
+
+  for (const section of sections) {
+    const zone =
+      section.kind === 'danger' || section.id === 'danger'
+        ? 'danger'
+        : section.kind === 'context' || section.kind === 'open' || section.id === 'context'
+          ? 'context'
+          : 'manage';
+    zones[zone].push(...section.actions);
+  }
+
+  return (['context', 'manage', 'danger'] as const)
+    .filter((zone) => zones[zone].length > 0)
+    .map((zone) => ({ id: zone, kind: zone, actions: zones[zone] }));
+}
+
 export interface StandardTableEmpty {
   title: string;
   description?: string;
@@ -122,11 +150,38 @@ export interface StandardTableProps {
   columns: TableColumn[];
   data: TableRow[];
 
+  /**
+   * ── R04-2B · powiązanie z kontraktem powierzchni ──────────────────────────
+   *
+   * Identyfikator jednej z 45 powierzchni audytu (`TABLE_SURFACE_REGISTER`,
+   * pakiet R00). Gdy podany, fasada bierze z kontraktu to, czego ekran nie musi
+   * już powtarzać:
+   *
+   *  · `persistKey` — 45 kluczy jest w rejestrze i są UNIKALNE (test R00),
+   *    więc ekran nie może przypadkiem współdzielić ustawień kolumn z innym;
+   *  · `capabilities.selection` — `none` znaczy „bez checkboxów", i fasada
+   *    to egzekwuje, zamiast ufać, że ekran nie poda propa `selection`;
+   *  · `columns.required` — brak wymaganej kolumny jest raportowany w dev.
+   *
+   * BRAK `surfaceId` jest w pełni wspierany i NIE jest błędem: 100 istniejących
+   * konsumentów nie ma go i mają działać bez zmian. Fasada zachowuje się wtedy
+   * dokładnie jak dotąd, a jedyną różnicą jest brak weryfikacji kontraktowej —
+   * odnotowany jawnie w trybie dev, żeby „powierzchnia bez kontraktu" była
+   * widoczna, a nie cicha.
+   */
+  surfaceId?: TableSurfaceId;
+
   /** Stany (MUST #9) — shared/states, nie ad-hoc teksty. */
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
   empty?: StandardTableEmpty;
+  /**
+   * R04-2C: treść `tbody` w stanie pustym, gdy ekran nie deklaruje `empty`.
+   * `ReactNode` — zwykły tekst nadal działa. Nie zastępuje tabeli: nagłówek
+   * i geometria zostają (§5).
+   */
+  emptyMessage?: React.ReactNode;
 
   /** Podświetlenie wiersza (layout Table+Preview). */
   selectedRowId?: string | null;
@@ -134,10 +189,8 @@ export interface StandardTableProps {
   onRowDoubleClick?: (row: TableRow) => void;
 
   /**
-   * MUST #6 / ANEKS #4 — KONTRAKT kebaba (preferowany): moduł deklaruje bloki
-   * 1-3 (primary / statusTransitions / timeActions), a StandardTable SAM
-   * dokłada zawsze obecne bloki 4 (Open preview · Edit · Archive) i 5
-   * (Delete/Reject — czerwony, ostatni, oddzielony separatorem).
+   * MUST #6 — kontrakt kebaba (preferowany): fasada mapuje deklaracje modułu
+   * do maksymalnie trzech stref context/manage/danger.
    */
   rowMenu?: (row: TableRow) => StandardRowMenu;
   /**
@@ -182,10 +235,12 @@ const readStoredFlag = (key: string | null): boolean => {
 export const StandardTable: React.FC<StandardTableProps> = ({
   columns,
   data,
+  surfaceId,
   loading = false,
   error = null,
   onRetry,
   empty,
+  emptyMessage,
   selectedRowId,
   onRowClick,
   onRowDoubleClick,
@@ -204,57 +259,35 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   const { t, i18n } = useTranslation();
   const isPolish = !!i18n.language?.startsWith('pl');
 
-  // ── Kebab: kontrakt 5 bloków → RowActionSection[] (ANEKS #4) ─────────────
-  const comingSoon = t('common.comingSoonBackend', 'Coming soon (backend)');
+  // ── Kebab: deklaracje domeny → maks. 3 strefy wizualne ───────────────────
   const buildSections = useCallback(
     (menu: StandardRowMenu): RowActionSection[] => {
       const sections: RowActionSection[] = [];
-      if (menu.primary?.length) {
-        sections.push({ id: 'primary', kind: 'open', actions: menu.primary.map(toRowAction) });
+      const contextActions = [...(menu.primary ?? []), ...(menu.statusTransitions ?? [])];
+      if (contextActions.length) {
+        sections.push({ id: 'context', kind: 'context', actions: contextActions.map(toRowAction) });
       }
-      if (menu.statusTransitions?.length) {
-        sections.push({
-          id: 'status',
-          kind: 'manage',
-          actions: menu.statusTransitions.map(toRowAction),
-        });
-      }
-      if (menu.timeActions?.length) {
-        sections.push({ id: 'time', kind: 'manage', actions: menu.timeActions.map(toRowAction) });
-      }
-      /**
-       * Blok 4 — uniwersalny (Otwórz podgląd · Edytuj · Archiwizuj).
-       *
-       * Do 2026-07-28 blok był „ZAWSZE obecny; brak handlera = disabled z notą,
-       * nigdy ukryty" i to właśnie ta reguła produkowała kebaby-atrapy, na które
-       * Piotr zwrócił uwagę dwa razy — P-17 (Sejf: 3 z 4 pozycji martwe) i P-18
-       * (Run agent: to samo). Moduł, który nie ma czym obsłużyć archiwizacji,
-       * dostawał ją wyrenderowaną z dopiskiem „Coming soon (backend)".
-       *
-       * Teraz rozstrzyga POWÓD braku:
-       *   - moduł podał własną notę (`archiveNote`: „Archive first",
-       *     „AI-generated — read-only") → pozycja ZOSTAJE, wyłączona z powodem.
-       *     To reguła produktu i warto ją pokazać;
-       *   - brak handlera i brak noty → funkcji po prostu nie ma, więc menu
-       *     jej nie obiecuje. Pozycja się nie renderuje.
-       *
-       * `Otwórz podgląd` jest wyjątkiem: to nie jest funkcja do zbudowania,
-       * tylko sposób otwarcia wiersza — zostaje nawet bez handlera, żeby kebab
-       * nigdy nie stracił wejścia do encji.
-       */
+
       const u = menu.universalHandlers ?? {};
-      const universalne: StandardRowMenuAction[] = [
-        {
+      const manageActions: StandardRowMenuAction[] = [];
+      if (u.preview) {
+        manageActions.push({
           id: 'open-preview',
           label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
           icon: Eye,
-          onClick: u.preview ?? NOOP,
-          disabled: !u.preview,
-          note: u.preview ? undefined : (u.previewNote ?? comingSoon),
-        },
-      ];
+          onClick: u.preview,
+        });
+      } else if (u.previewNote) {
+        manageActions.push({
+          id: 'open-preview',
+          label: t('common.openPreview', isPolish ? 'Otwórz podgląd' : 'Open preview'),
+          icon: Eye,
+          disabled: true,
+          note: u.previewNote,
+        });
+      }
       if (u.edit || u.editNote) {
-        universalne.push({
+        manageActions.push({
           id: 'edit',
           label: t('common.edit', isPolish ? 'Edytuj' : 'Edit'),
           icon: Pencil,
@@ -264,7 +297,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
         });
       }
       if (u.archive || u.archiveNote) {
-        universalne.push({
+        manageActions.push({
           id: 'archive',
           label: t('common.archive', isPolish ? 'Archiwizuj' : 'Archive'),
           icon: Archive,
@@ -273,46 +306,42 @@ export const StandardTable: React.FC<StandardTableProps> = ({
           note: u.archive ? undefined : u.archiveNote,
         });
       }
-      sections.push({
-        id: 'universal',
-        kind: 'context',
-        actions: universalne.map(toRowAction),
-      });
-      // Blok CONVERT TO — opcjonalny (ANEKS #3a), MIĘDZY universal i danger.
-      // Brak deklaracji ⇒ push pominięty, sekcja nie istnieje (addytywne).
-      if (menu.convertActions?.length) {
+      manageActions.push(...(menu.timeActions ?? []), ...(menu.convertActions ?? []));
+      if (manageActions.length) {
         sections.push({
-          id: 'convert',
-          kind: 'convert',
-          label: t('common.convertTo', isPolish ? 'Konwertuj na' : 'Convert to'),
-          actions: menu.convertActions.map(toRowAction),
+          id: 'manage',
+          kind: 'manage',
+          actions: manageActions.map(toRowAction),
         });
       }
-      // Blok 5 — ZAWSZE ostatni, czerwony, oddzielony separatorem sekcji.
-      const d = menu.destructive ?? {};
-      sections.push({
-        id: 'danger',
-        kind: 'danger',
-        actions: [
-          {
-            id: 'destructive',
-            label: d.label ?? t('common.delete', isPolish ? 'Usuń' : 'Delete'),
-            icon: d.icon ?? Trash2,
-            variant: 'danger',
-            onClick: d.onClick ?? NOOP,
-            disabled: !d.onClick,
-            description: d.onClick ? undefined : (d.note ?? comingSoon),
-          },
-        ],
-      });
+
+      const d = menu.destructive;
+      if (d) {
+        sections.push({
+          id: 'danger',
+          kind: 'danger',
+          actions: [
+            {
+              id: 'destructive',
+              label: d.label ?? t('common.delete', isPolish ? 'Usuń' : 'Delete'),
+              icon: d.icon ?? Trash2,
+              variant: 'danger',
+              onClick: d.onClick ?? NOOP,
+              disabled: !d.onClick,
+              description: d.note,
+            },
+          ],
+        });
+      }
       return sections;
     },
-    [t, isPolish, comingSoon]
+    [t, isPolish]
   );
 
   const getSections = useMemo(() => {
     if (rowMenu) return (row: TableRow) => buildSections(rowMenu(row));
-    return rowActions;
+    if (rowActions) return (row: TableRow) => normalizeRowActionSections(rowActions(row));
+    return undefined;
   }, [rowMenu, rowActions, buildSections]);
 
   // ── Lejki kolumn: controlled ↔ internal ──────────────────────────────────
@@ -326,8 +355,33 @@ export const StandardTable: React.FC<StandardTableProps> = ({
     [onFilterChange]
   );
 
+  /**
+   * R04-2B — kontrakt powierzchni. `undefined` gdy ekran nie deklaruje
+   * `surfaceId`; wtedy fasada działa dokładnie jak dotąd.
+   */
+  const surfaceContract = surfaceId ? TABLE_SURFACE_REGISTER[surfaceId] : undefined;
+
+  /**
+   * `persistKey` z kontraktu, gdy ekran go nie podał. Rejestr gwarantuje 45
+   * kluczy UNIKALNYCH (test R00), więc dwie powierzchnie nie mogą nadpisać
+   * sobie ustawień kolumn. Jawny prop ekranu ma pierwszeństwo — nie odbieramy
+   * nikomu kontroli, tylko dajemy poprawną wartość domyślną.
+   */
+  const effectivePersistKey = persistKey ?? surfaceContract?.capabilities.persistKey;
+
+  /**
+   * §1/§10: `selection: 'none'` znaczy „brak checkboxów", nie „checkboxy,
+   * których nikt nie używa". Gdy kontrakt tak mówi, fasada odcina selection
+   * niezależnie od tego, co podał ekran — to samo zabezpieczenie, które
+   * `useTableSelection` dostał w R04-1, tyle że po stronie renderu.
+   */
+  const selectionAllowed = surfaceContract
+    ? surfaceContract.capabilities.selection === 'bulk'
+    : true;
+  const effectiveSelection = selectionAllowed ? selection : undefined;
+
   // ── „Show row description" — persistowane per persistKey ────────────────
-  const descKey = persistKey ? `standardTable.rowDesc.${persistKey}` : null;
+  const descKey = effectivePersistKey ? `standardTable.rowDesc.${effectivePersistKey}` : null;
   const [showRowDescription, setShowRowDescription] = useState<boolean>(() =>
     readStoredFlag(descKey)
   );
@@ -359,40 +413,115 @@ export const StandardTable: React.FC<StandardTableProps> = ({
   const isIndeterminate =
     !!selectedIds && !isAllSelected && visibleIds.some((id) => selectedIds.has(id));
 
+  // Weryfikacja kontraktowa — raportuje, nigdy nie blokuje renderu (bramka G1).
+  const contractCheck = useMemo(() => {
+    const violations: ContractViolation[] = [];
+    if (!surfaceContract) {
+      return toResult(violations);
+    }
+
+    const declared = new Set(columns.map((column) => column.id));
+    for (const required of surfaceContract.capabilities.columns.required) {
+      if (!declared.has(required)) {
+        violations.push({
+          code: 'TABLE_MISSING_REQUIRED_COLUMN',
+          message:
+            `${surfaceContract.id} (${surfaceContract.surface}) wymaga kolumny "${required}", ` +
+            'a ekran jej nie deklaruje. §5: brak właściwości kluczowej dla decyzji jest ' +
+            'FAIL tak samo jak brak elementu graficznego.',
+          clause: 'contract §5 Kompletność informacyjna kolumn',
+          path: `columns[${required}]`,
+        });
+      }
+    }
+    if (!declared.has(surfaceContract.capabilities.columns.identifier)) {
+      violations.push({
+        code: 'TABLE_MISSING_IDENTIFIER_COLUMN',
+        message: `${surfaceContract.id}: brak kolumny identyfikującej "${surfaceContract.capabilities.columns.identifier}".`,
+        clause: 'contract §5 Obowiązkowa anatomia',
+        path: 'columns.identifier',
+      });
+    }
+    if (selection && !selectionAllowed) {
+      violations.push({
+        code: 'TABLE_SELECTION_NOT_DECLARED',
+        message: `${surfaceContract.id} deklaruje selection: 'none', a ekran podał prop selection — checkboxy zostały odcięte.`,
+        clause: 'contract §1, §10 Selection',
+        path: 'selection',
+      });
+    }
+    return toResult(violations);
+  }, [surfaceContract, columns, selection, selectionAllowed]);
+
+  assertContractInDev(`StandardTable(${surfaceId ?? 'bez surfaceId'})`, contractCheck);
+
   const effectiveColumns = useMemo<TableColumn[]>(
     () =>
-      selection
+      effectiveSelection
         ? [{ id: '__select', label: '', type: 'select' as const, width: '44px' }, ...columns]
         : columns,
-    [selection, columns]
+    [effectiveSelection, columns]
   );
 
   const selectionDriver = useMemo(() => {
-    if (!selection) return undefined;
+    if (!effectiveSelection) return undefined;
     return {
-      selectedIds: selection.selectedIds,
+      selectedIds: effectiveSelection.selectedIds,
       onToggleRow: (id: string) => {
-        const next = new Set(selection.selectedIds);
+        const next = new Set(effectiveSelection.selectedIds);
         if (next.has(id)) next.delete(id);
         else next.add(id);
-        selection.onChange(next);
+        effectiveSelection.onChange(next);
       },
       onToggleAll: () => {
-        selection.onChange(isAllSelected ? new Set<string>() : new Set(visibleIds));
+        effectiveSelection.onChange(isAllSelected ? new Set<string>() : new Set(visibleIds));
       },
       isAllSelected,
       isIndeterminate,
     };
-  }, [selection, isAllSelected, isIndeterminate, visibleIds]);
+  }, [effectiveSelection, isAllSelected, isIndeterminate, visibleIds]);
 
   // ── Stany (MUST #9) ──────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className={canvasClassName} data-testid="standard-table-loading">
-        <LoadingState template="list" rows={6} />
-      </div>
-    );
-  }
+  /**
+   * ── R04-2C · empty i loading BEZ utraty nagłówka ──────────────────────────
+   *
+   * Do R04-2C obie sytuacje robiły wczesny `return` i renderowały `EmptyState`
+   * / `LoadingState` ZAMIAST tabeli — nagłówek, szerokości kolumn i geometria
+   * znikały całkowicie. To jest wprost sprzeczne z §5: „empty state zachowuje
+   * nagłówek i geometrię tabeli" oraz „loading zachowuje liczbę i przybliżone
+   * szerokości kolumn".
+   *
+   * Teraz oba stany jadą tą samą, JEDNĄ ścieżką renderu: tabela powstaje
+   * normalnie (nagłówek, kolumny, 56 px), a treść stanu ląduje w `tbody` przez
+   * `emptyMessage`. Renderer nie jest dublowany — fasada nadal niczego nie
+   * rysuje sama.
+   *
+   * `data-testid` obu stanów zostają, bo opierają się na nich istniejące testy.
+   */
+  const stateContent: React.ReactNode = loading ? (
+    <div data-testid="standard-table-loading">
+      <LoadingState template="list" rows={3} />
+    </div>
+  ) : data.length === 0 && filters.length === 0 && empty ? (
+    <div data-testid="standard-table-empty">
+      <EmptyState
+        variant="new"
+        icon={empty.icon}
+        title={empty.title}
+        description={empty.description}
+        primaryAction={
+          empty.actionLabel && empty.onAction
+            ? { label: empty.actionLabel, onClick: empty.onAction }
+            : undefined
+        }
+      />
+    </div>
+  ) : (
+    emptyMessage
+  );
+
+  // Podczas ładowania `tbody` nie pokazuje starych wierszy — nagłówek zostaje.
+  const tableData = loading ? [] : data;
 
   if (error) {
     return (
@@ -406,28 +535,10 @@ export const StandardTable: React.FC<StandardTableProps> = ({
     );
   }
 
-  if (data.length === 0 && filters.length === 0 && empty) {
-    return (
-      <div className={canvasClassName} data-testid="standard-table-empty">
-        <EmptyState
-          variant="new"
-          icon={empty.icon}
-          title={empty.title}
-          description={empty.description}
-          primaryAction={
-            empty.actionLabel && empty.onAction
-              ? { label: empty.actionLabel, onClick: empty.onAction }
-              : undefined
-          }
-        />
-      </div>
-    );
-  }
-
   return (
     <FilterableTable
       columns={effectiveColumns}
-      data={data}
+      data={tableData}
       selectedRowId={selectedRowId}
       onRowClick={onRowClick}
       onRowDoubleClick={onRowDoubleClick}
@@ -436,6 +547,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
          z 5 no-op pozycjami (onRowAction nie jest forwardowany) — martwe
          kliknięcia. Kebab tylko gdy moduł zadeklarował akcje. */
       hideRowActions={!getSections}
+      emptyMessage={stateContent}
       activeFilters={filters}
       onFilterChange={handleFilterChange}
       canvasClassName={canvasClassName}
@@ -448,7 +560,7 @@ export const StandardTable: React.FC<StandardTableProps> = ({
         onToggle: handleToggleDescription,
       }}
       defaultSort={defaultSort ?? null}
-      persistKey={persistKey}
+      persistKey={effectivePersistKey}
       selection={selectionDriver}
       rowClassName={rowClassName}
     />

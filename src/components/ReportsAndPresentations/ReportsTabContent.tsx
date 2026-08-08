@@ -24,6 +24,7 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 
 import { type FilterChip, type GridItem, GridView, type ViewMode } from '../shared/ModuleHub';
 import { appendArtifactOpenAction, resolveArtifactOpenPath } from './artifactNavigation';
+import { MATERIAL_FILE_FORMATS } from './materialFileFormat';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
@@ -77,11 +78,18 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     let data = reports;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      data = data.filter((item) => item.title.toLowerCase().includes(q));
+      data = data.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          (item.fileFormat || 'Unknown').toLowerCase().includes(q)
+      );
     }
     for (const f of activeFilters) {
       if (f.column === 'reportType') data = data.filter((item) => item.reportType === f.value);
       if (f.column === 'status') data = data.filter((item) => item.status === f.value);
+      if (f.column === 'fileFormat') {
+        data = data.filter((item) => (item.fileFormat || 'Unknown') === f.value);
+      }
     }
     return data;
   }, [reports, searchQuery, activeFilters]);
@@ -126,6 +134,21 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
             </span>
           );
         },
+      },
+      {
+        id: 'fileFormat',
+        label: t('rap.outputs.columns.format', 'Format'),
+        width: '110px',
+        sortable: true,
+        sortAccessor: (rawRow: Record<string, unknown>) =>
+          MATERIAL_FILE_FORMATS.indexOf((rawRow as unknown as ReportItem).fileFormat || 'Unknown'),
+        filterable: true,
+        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({ value: format, label: format })),
+        render: (rawRow: Record<string, unknown>) => (
+          <span className="text-xs font-medium text-c-text-secondary">
+            {(rawRow as unknown as ReportItem).fileFormat || 'Unknown'}
+          </span>
+        ),
       },
       {
         id: 'status',

@@ -39,6 +39,9 @@ export interface PreviewRelationsProps {
 
 const HOVER_DELAY = 300;
 
+/** §6 Relations: maks. 4 widoczne pille, reszta w jednym `+N`. */
+const RELATIONS_VISIBLE_MAX = 4;
+
 const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx }) => {
   // Lucide ≥0.400 uses React.forwardRef → typeof === 'object', not 'function'.
   // Accept both plain function components and forwardRef/memo objects ($$typeof).
@@ -116,22 +119,32 @@ const RelationChip: React.FC<{ item: RelationItem; idx: number }> = ({ item, idx
 
 export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
   items,
+  title,
   emptyLabel,
   groupByType,
 }) => {
   const { t } = useTranslation();
 
+  let content: React.ReactNode;
+
   if (!items.length) {
-    return (
-      <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-        <span className="text-xs text-slate-600 dark:text-slate-500 italic py-1.5">
-          {emptyLabel ?? t('sharedComponents.previewRelations.noLinkedDocuments')}
+    content = (
+      <div
+        data-relations-empty
+        className="min-h-16 flex flex-wrap items-start content-start gap-2 py-1"
+      >
+        <span className="py-1.5 text-[11px] italic text-c-text-muted">
+          {/*
+            R03-3 — kanoniczny empty state (§6 Relations: „Brak relacji renderuje
+            kanoniczne `No relations`"). Wcześniej klucz i18n szedł BEZ fallbacku,
+            więc przy braku tłumaczenia użytkownik widział surowy klucz
+            `sharedComponents.previewRelations.noLinkedDocuments` zamiast zdania.
+          */}
+          {emptyLabel ?? t('common.noRelations', 'No relations')}
         </span>
       </div>
     );
-  }
-
-  if (groupByType && items.length > 5) {
+  } else if (groupByType && items.length > 5) {
     const groups = new Map<string, RelationItem[]>();
     for (const item of items) {
       const type = item.type ?? 'other';
@@ -140,20 +153,52 @@ export const PreviewRelations: React.FC<PreviewRelationsProps> = ({
       groups.set(type, list);
     }
 
-    return (
-      <div className="min-h-[4.5rem] py-1 space-y-2">
+    content = (
+      <div className="min-h-[3rem] py-1 space-y-2">
         {Array.from(groups.entries()).map(([type, groupItems]) => (
           <RelationGroup key={type} type={type} items={groupItems} />
         ))}
       </div>
     );
+  } else {
+    /*
+     * R03-3 — §6 Relations: „maks. 4 widoczne pille i `+N` dla nadmiaru".
+     * Do tej pory blok renderował WSZYSTKIE relacje, więc rekord z kilkunastoma
+     * powiązaniami rozpychał kartę i psuł stałą wysokość 64 px całego bloku.
+     *
+     * `groupByType` zostaje nietknięte — to jawnie włączany, inny układ dla
+     * dużych zbiorów, a nie obejście limitu.
+     */
+    const visible = items.slice(0, RELATIONS_VISIBLE_MAX);
+    const hidden = items.slice(RELATIONS_VISIBLE_MAX);
+
+    content = (
+      <div className="min-h-16 flex flex-wrap items-start content-start gap-2 py-1">
+        {visible.map((item, idx) => (
+          <RelationChip key={`${item.label}-${idx}`} item={item} idx={idx} />
+        ))}
+        {hidden.length ? (
+          <span
+            data-relations-overflow
+            className={`${PREVIEW_RELATION_CHIP} text-c-text-muted`}
+            title={hidden.map((item) => item.title ?? item.label).join(', ')}
+          >
+            +{hidden.length}
+          </span>
+        ) : null}
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-      {items.map((item, idx) => (
-        <RelationChip key={`${item.label}-${idx}`} item={item} idx={idx} />
-      ))}
+    <div
+      data-preview-block="relations"
+      className="min-h-16 rounded-xl border border-c-border-subtle bg-c-surface-raised p-2.5"
+    >
+      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-c-text-muted">
+        {title ?? t('common.relations', 'Relations')}
+      </div>
+      {content}
     </div>
   );
 };

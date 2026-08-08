@@ -31,7 +31,17 @@ export const ArtifactOriginRuntimeValues = [
   // (`document_studio_templates`). DB CHECK extended by
   // server/migrations/20260724_origin_runtime_document_template.sql.
   'document_template',
+  // T22-DATA-PREREQ (2026-08-07): the DB CHECK is brought back into parity
+  // with this already-supported runtime by the assessment_report migration.
   'work_canvas',
+  // T22-DATA-PREREQ (2026-08-07): AssessmentWorkbenchService.recordPromotion
+  // (server/src/services/assessment/AssessmentWorkbenchService.ts) has always
+  // called registerArtifactOrigin with this value for the P28 "promote to
+  // Outputs Library" handoff, but it was never in this enum (nor in the DB
+  // CHECK it mirrors), so every assessment promotion failed Zod validation
+  // before reaching the database and silently degraded. DB CHECK extended by
+  // server/migrations/20260807_origin_runtime_assessment_report.sql.
+  'assessment_report',
 ] as const;
 export type ArtifactOriginRuntime = (typeof ArtifactOriginRuntimeValues)[number];
 
