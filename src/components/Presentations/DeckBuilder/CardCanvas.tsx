@@ -33,6 +33,7 @@ interface CardCanvasProps {
   onBlockRefresh?: (cardId: string, blockId: string) => void;
   onBlockReplaceImage?: (cardId: string, blockId: string) => void;
   onUpdateCard?: (cardId: string, updates: Partial<DeckCard>) => void;
+  onChooseBackgroundImage?: (cardId: string) => void;
 }
 
 export const CardCanvas: React.FC<CardCanvasProps> = ({
@@ -56,6 +57,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
   onBlockRefresh,
   onBlockReplaceImage,
   onUpdateCard,
+  onChooseBackgroundImage,
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -122,6 +124,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
                 <CardFloatingToolbar
                   card={card}
                   onUpdateCard={(updates) => onUpdateCard(card.card_id, updates)}
+                  onChooseBackgroundImage={() => onChooseBackgroundImage?.(card.card_id)}
                 />
               )}
               <CardRenderer

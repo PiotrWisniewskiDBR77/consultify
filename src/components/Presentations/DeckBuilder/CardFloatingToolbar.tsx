@@ -21,6 +21,7 @@ import type { DeckCard } from '../wizard/types';
 interface CardFloatingToolbarProps {
   card: DeckCard;
   onUpdateCard: (updates: Partial<DeckCard>) => void;
+  onChooseBackgroundImage?: () => void;
 }
 
 const LAYOUTS = [
@@ -39,7 +40,11 @@ const BG_TYPES = [
   { id: 'image', label: 'Background image' },
 ];
 
-export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, onUpdateCard }) => {
+export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
+  card,
+  onUpdateCard,
+  onChooseBackgroundImage,
+}) => {
   const [expandedPanel, setExpandedPanel] = useState<'layout' | 'bg' | null>(null);
 
   const togglePanel = (panel: 'layout' | 'bg') => {
@@ -113,6 +118,11 @@ export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, 
                 <button
                   key={bg.id}
                   onClick={() => {
+                    if (bg.id === 'image' && onChooseBackgroundImage) {
+                      onChooseBackgroundImage();
+                      setExpandedPanel(null);
+                      return;
+                    }
                     onUpdateCard({
                       background: { type: bg.id as DeckCard['background']['type'] },
                     });
