@@ -23,7 +23,7 @@ import { FinanceCandidateHandoffModal } from '../Finance/shared/FinanceCandidate
 
 type ValuationSourceType = 'financial_model' | 'budget' | 'manual';
 type TerminalMethod = 'gordon' | 'exit_multiple';
-type ExitMultipleMetric = 'EV/EBITDA' | 'EV/Revenue';
+type ExitMultipleMetric = 'EV/EBITDA' | 'EV/EBIT' | 'EV/Revenue';
 
 interface ValuationListItem {
   id: string;
@@ -75,6 +75,14 @@ function sensitivityHeatmapColor(value: number, min: number, max: number): strin
 function safeNumber(v: unknown, fb: number): number {
   const n = typeof v === 'string' ? Number(v) : typeof v === 'number' ? v : NaN;
   return Number.isFinite(n) ? n : fb;
+}
+
+export function formatValuationImpact(
+  value: unknown,
+  formatter: Intl.NumberFormat
+): string {
+  const numeric = safeNumber(value, NaN);
+  return Number.isFinite(numeric) ? formatter.format(numeric) : String(value ?? '—');
 }
 
 function safeJson<T>(raw: any, fallback: T): T {
@@ -215,7 +223,11 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
       setSelected(v);
       if (!v) return;
       setAssumptions({ ...DEFAULT_ASSUMPTIONS, ...safeJson(v.assumptions, DEFAULT_ASSUMPTIONS) });
-      setMultiples({ ...DEFAULT_MULTIPLES, ...safeJson(v.peers, DEFAULT_MULTIPLES) });
+      const persistedPeers = safeJson<any>(v.peers, DEFAULT_MULTIPLES);
+      setMultiples({
+        ...DEFAULT_MULTIPLES,
+        ...(Array.isArray(persistedPeers) ? persistedPeers[0] : persistedPeers),
+      });
     } catch {
       // ignore
     }
@@ -232,14 +244,19 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   }, [fetchValuation, selectedId]);
 
   useEffect(() => {
-    if (initialValuationId && valuations.length > 0 && !selectedId) {
-      const match = valuations.find((v) => v.id === initialValuationId);
-      if (match) {
-        setSelectedId(match.id);
-        setActiveStep('assumptions');
-      }
-    }
-  }, [initialValuationId, valuations, selectedId]);
+    const requestedId = String(initialValuationId || '').trim();
+    if (!requestedId || requestedId === selectedId) return;
+
+    // A full-workspace row already carries the canonical valuation id. Do not
+    // gate opening it on the sidebar list: list refresh can lag, be filtered,
+    // or be intentionally hidden by FinanceHub. Waiting for a list match left
+    // the document header open while the workspace stayed on "Select a
+    // valuation to continue". Selecting the requested id directly also makes
+    // switching between two already-open valuation documents deterministic.
+    setSelected(null);
+    setSelectedId(requestedId);
+    setActiveStep('assumptions');
+  }, [initialValuationId, selectedId]);
 
   const computed = safeJson<any>(selected?.results, {});
   const dcf = computed?.dcf;
@@ -288,11 +305,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
   }, [selected?.currency, i18n.language]);
 
   const fmtValue = useCallback(
-    (v: unknown): string => {
-      const n = safeNumber(v, NaN);
-      if (!Number.isFinite(n)) return String(v ?? '—');
-      return fmtCurrency.format(n);
-    },
+    (v: unknown): string => formatValuationImpact(v, fmtCurrency),
     [fmtCurrency]
   );
 
@@ -949,6 +962,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 className="mt-1 w-full px-3 py-2 rounded-lg border border-c-border-strong dark:border-c-border-strong bg-white dark:bg-c-surface text-sm text-c-text dark:text-white"
                               >
                                 <option value="EV/EBITDA">EV/EBITDA</option>
+                                <option value="EV/EBIT">EV/EBIT</option>
                                 <option value="EV/Revenue">EV/Revenue</option>
                               </select>
                             </div>
@@ -1063,7 +1077,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       {t('valuation.results.empty', 'Compute the valuation to see results')}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <div className="bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.summary', 'Valuation summary')}
@@ -1107,32 +1121,29 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                         <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
                           {t('valuation.results.comps', 'Comparable range (if set)')}
                         </div>
-                        {computed?.comps?.impliedEnterpriseValue ? (
+                        {(Array.isArray(computed?.comps)
+                          ? computed.comps.some(
+                              (item: any) =>
+                                item?.impliedEnterpriseValue || item?.impliedEquityValue
+                            )
+                          : computed?.comps?.impliedEnterpriseValue) ? (
                           <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-c-text-muted">
-                                {t('valuation.results.compsMin', 'Min')}
-                              </span>
-                              <span className="font-mono text-c-text dark:text-white">
-                                {fmtValue(computed.comps.impliedEnterpriseValue.min)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-c-text-muted">
-                                {t('valuation.results.compsMedian', 'Median')}
-                              </span>
-                              <span className="font-mono text-c-text dark:text-white">
-                                {fmtValue(computed.comps.impliedEnterpriseValue.median)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-c-text-muted">
-                                {t('valuation.results.compsMax', 'Max')}
-                              </span>
-                              <span className="font-mono text-c-text dark:text-white">
-                                {fmtValue(computed.comps.impliedEnterpriseValue.max)}
-                              </span>
-                            </div>
+                            {(Array.isArray(computed.comps) ? computed.comps : [computed.comps]).map(
+                              (item: any) => {
+                                const range =
+                                  item?.impliedEnterpriseValue || item?.impliedEquityValue;
+                                if (!range) return null;
+                                return (
+                                  <div key={item.metric} className="flex justify-between gap-3">
+                                    <span className="text-c-text-muted">{item.metric}</span>
+                                    <span className="font-mono text-c-text dark:text-white text-right">
+                                      {fmtValue(range.min)} / {fmtValue(range.median)} /{' '}
+                                      {fmtValue(range.max)}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                            )}
                           </div>
                         ) : (
                           <div className="text-sm text-c-text-muted dark:text-c-text-muted">
@@ -1140,6 +1151,26 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           </div>
                         )}
                       </div>
+                      {computed?.dcfMethods && (
+                        <div className="lg:col-span-2 bg-c-surface-raised dark:bg-c-surface-raised border border-c-border-subtle dark:border-c-border-subtle rounded-xl p-4">
+                          <div className="text-sm font-semibold text-c-text dark:text-white mb-2">
+                            {t('valuation.results.terminalCrossCheck', 'Terminal value cross-check')}
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            {[
+                              ['Gordon growth', computed.dcfMethods.gordon],
+                              ['Exit multiple', computed.dcfMethods.exitMultiple],
+                            ].map(([label, method]: any) => (
+                              <div key={label} className="flex justify-between gap-3">
+                                <span className="text-c-text-muted">{label}</span>
+                                <span className="font-mono text-c-text dark:text-white">
+                                  {fmtValue(method?.enterpriseValue)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1560,7 +1591,7 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                           <ul className="list-disc pl-5 text-xs text-c-text-secondary dark:text-c-text-secondary space-y-1">
                             {computed.tornado.slice(0, 8).map((d: any, idx: number) => (
                               <li key={idx}>
-                                {String(d?.driver || 'Driver')}: {String(d?.swing ?? '—')}
+                                {String(d?.driver || 'Driver')}: {fmtValue(d?.swing)}
                               </li>
                             ))}
                           </ul>
