@@ -196,4 +196,29 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     expect(serialized).toContain('lock phase-two scope by 15 August');
     expect(serialized).toContain('confirm Operations owner');
   });
+
+  it('replaces generic custom VC guidance with slide-specific brief facts', () => {
+    const slides = mapOutlineBlueprintToDeckSlides(
+      [
+        {
+          intent: 'content',
+          title: 'Problem & Customer',
+          keyMessage: 'A specific customer segment has an urgent problem.',
+        },
+        {
+          intent: 'content',
+          title: 'Financial Outlook',
+          keyMessage: 'The model creates an investable path.',
+        },
+      ],
+      'Customer: solo founders with agent-generated mobile prototypes. Problem: they cannot safely ship production systems. Financial scenarios: active apps, USD 20 subscription, hosting COGS, EBITDA, cash and runway.'
+    );
+
+    const problem = JSON.stringify(slides[0]);
+    const financial = JSON.stringify(slides[1]);
+    expect(problem).toContain('solo founders');
+    expect(problem).not.toContain('specific customer segment');
+    expect(financial).toContain('USD 20 subscription');
+    expect(financial).not.toContain('creates an investable path');
+  });
 });

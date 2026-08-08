@@ -666,7 +666,12 @@ function blocksForTemplateIntent(
   const keyMessage = String(item.keyMessage ?? item.key_message ?? '').trim();
   const hints = cleanStringList(item.contentHints ?? item.content_hints);
   const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
-  const headline = keyMessage || hints[0] || briefLines[0] || title;
+  // A creation brief contains the user's facts for this particular deck.
+  // Template copy used to prefer the generic architect guidance, leaving a
+  // newly-created deck full of placeholders even when a detailed brief was
+  // supplied.  Prefer grounded brief content; the template still controls
+  // structure, layout and evidence labels.
+  const headline = briefLines[0] || keyMessage || hints[0] || title;
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
   const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
@@ -848,6 +853,41 @@ function blocksForTemplateIntent(
   }
 }
 
+function briefLinesForOutlineItem(
+  title: string,
+  intent: string,
+  briefLines: string[],
+  index: number,
+  total: number
+): string[] {
+  if (briefLines.length === 0) return [];
+  const topic = `${title} ${intent}`.toLowerCase();
+  const topicGroups: Array<[RegExp, string[]]> = [
+    [/thesis|cover|venture/, ['thesis', 'company', 'product', 'version', 'audience']],
+    [/problem|customer/, ['problem', 'customer', 'beachhead', 'trigger', 'workaround']],
+    [/product|why now|workflow/, ['workflow', 'product', 'evidence', 'status', 'privacy']],
+    [/market|opportunit/, ['market', 'beachhead', 'customer', 'segment', 'adoption']],
+    [/business model|gtm|go-to-market/, ['business model', 'pricing', 'subscription', 'revenue', 'gtm', 'channel']],
+    [/evidence|economic|risk/, ['evidence', 'measure', 'risk', 'owner', 'mitigation', 'cogs']],
+    [/competition|defensib/, ['defensibility', 'competition', 'proprietary', 'telemetry', 'distribution']],
+    [/financial|outlook/, ['financial', 'scenario', 'revenue', 'cogs', 'margin', 'ebitda', 'cash', 'runway']],
+    [/team|governance/, ['team', 'owner', 'governance', 'privacy', 'security', 'finance']],
+    [/funding|ask|milestone|next step/, ['ask', 'pilot', 'milestone', 'decision', 'funding', '90-day']],
+  ];
+  const keywords = topicGroups.find(([matcher]) => matcher.test(topic))?.[1] || [];
+  const matched = briefLines.filter((line) => {
+    const lower = line.toLowerCase();
+    return keywords.some((keyword) => lower.includes(keyword));
+  });
+  if (matched.length > 0) return matched.slice(0, 5);
+
+  // Custom intents and titles are allowed.  When no semantic keyword is
+  // available, distribute the brief deterministically so every slide still
+  // receives grounded user content instead of repeating the first sentence.
+  const start = Math.floor((index * briefLines.length) / Math.max(total, 1));
+  return briefLines.slice(start, Math.min(start + 4, briefLines.length));
+}
+
 /**
  * R11 deck slice (2026-07-26) — deterministic outline→slide mapping for
  * `POST /presentations/decks/from-template`.
@@ -875,7 +915,8 @@ export function mapOutlineBlueprintToDeckSlides(
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const intent = String(item.intent || 'content');
     const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
-    const blocks = blocksForTemplateIntent(item, title, intent, briefLines);
+    const slideBriefLines = briefLinesForOutlineItem(title, intent, briefLines, index, items.length);
+    const blocks = blocksForTemplateIntent(item, title, intent, slideBriefLines);
     return { type: intent, content: { title, intent, blocks } };
   });
 }
