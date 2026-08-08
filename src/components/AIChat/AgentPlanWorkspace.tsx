@@ -44,7 +44,7 @@ export const AgentPlanWorkspace: React.FC<AgentPlanWorkspaceProps> = ({
   if (!planId) {
     return (
       <ArtifactRightPanel
-        ariaLabel="Agent launcher"
+        ariaLabel={t('agentPlan.launcher.panelName', 'Agent launcher')}
         sections={[
           {
             id: 'launcher',

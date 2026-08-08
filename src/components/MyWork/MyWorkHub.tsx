@@ -497,6 +497,24 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
 // (otwarta wcześniej na Ideas) wisiała nad Run agent, gdzie nie ma sensu.
 const OPEN_DOCUMENT_TABS: ModuleTab[] = ['tasks', 'ideas', 'decisions', 'inbox'];
 
+// RV-002 (CB-02) — canonical route-state contract for My Work's tab-scoped
+// object params: each of these query keys identifies an object that only
+// makes sense while its OWNING tab is active. `handleSelectTab` below clears
+// every key not owned by the tab being switched TO, so a stale param (e.g.
+// `?notebook=<id>` left over after clicking "Ideas") can never cause a later
+// action (like Open on a Whiteboard idea) to be misinterpreted as "reopen
+// that notebook" — the exact RV-002 repro (stale Notebook identity blocking
+// Whiteboard from opening). Unrelated query state (anything not in this map)
+// is left untouched.
+const TAB_OWNED_PARAM_KEYS: Partial<Record<ModuleTab, string[]>> = {
+  ideas: ['ideaId', 'idea'],
+  tasks: ['taskId', 'task'],
+  decisions: ['decisionId', 'decision'],
+  notebook: ['notebook'],
+  vault: ['safeId'],
+};
+const ALL_TAB_OWNED_PARAM_KEYS = Array.from(new Set(Object.values(TAB_OWNED_PARAM_KEYS).flat()));
+
 function getInitialMyWorkTab(
   searchParams: URLSearchParams,
   _canViewManager: boolean,
@@ -513,31 +531,93 @@ function getInitialMyWorkTab(
   const tabParam = searchParams.get('tab');
   if (tabParam === 'vault' && isClientVaultEnabled()) return 'vault';
   if (tabParam === 'agent' && isAgentPlanEnabled()) return 'agent';
+  // RB-029/RV-010 (CB-02): a direct entry/refresh/back-forward carrying
+  // `?safeId=` (ClientDocumentsVault's own canonical safe-selection param)
+  // must land on the Vault tab even without an explicit `tab=vault` —
+  // otherwise the safe-restoration fix below is unreachable on reload.
+  if (searchParams.get('safeId') && isClientVaultEnabled()) return 'vault';
+
+  // RB-016 (CB-02 pass 2): a bare legacy `?tab=<tab>&tool=<tool>` link (the
+  // pre-path-based deep-link format, e.g. `?tab=ideas&tool=table`) used to
+  // fall all the way through to the default tab because only `vault`/`agent`
+  // were special-cased above — every other tab silently required an
+  // owning-object param (`ideaId`/`taskId`/...) to be recognized. Resolve
+  // any other KNOWN, currently-available tab canonically instead of losing
+  // the link's intent.
+  if (tabParam && isKnownMyWorkTab(tabParam)) {
+    if (tabParam === 'ideas' && allowIdeas) return 'ideas';
+    if (tabParam === 'manager' && _canViewManager) return 'manager';
+    if (
+      tabParam === 'tasks' ||
+      tabParam === 'decisions' ||
+      tabParam === 'notebook' ||
+      tabParam === 'inbox' ||
+      tabParam === 'calendar'
+    ) {
+      return tabParam;
+    }
+    // 'home' (only when Radar is enabled), a gate-failed 'ideas'/'manager', or
+    // an already-handled 'vault'/'agent' whose flag is off: fall through to
+    // the honest default below instead of landing on a hidden/unavailable tab.
+  }
 
   return RADAR_ENABLED ? 'home' : MY_WORK_FALLBACK_TAB;
+}
+
+const KNOWN_MY_WORK_TABS: ReadonlySet<string> = new Set<ModuleTab>([
+  'home',
+  'ideas',
+  'notebook',
+  'inbox',
+  'calendar',
+  'tasks',
+  'decisions',
+  'manager',
+  'vault',
+  'agent',
+]);
+
+function isKnownMyWorkTab(value: string): value is ModuleTab {
+  return KNOWN_MY_WORK_TABS.has(value);
+}
+
+// RB-016 (CB-02 pass 2): legacy `?tool=` query param (paired with
+// `?tab=ideas`) resolved with the same segment parser as the modern
+// path-based deep link, so `?tab=ideas&tool=table` opens the Table canvas
+// tool directly instead of always landing on the default (Mind Map).
+function getInitialIdeaTool(searchParams: URLSearchParams): CanvasToolType | null {
+  if (searchParams.get('tab') !== 'ideas') return null;
+  return parseIdeaToolSegment(searchParams.get('tool')) ?? null;
+}
+
+// RB-016 (CB-02 pass 2): shared segment/query-value -> tool parser. Used both
+// by the modern path-based deep link (`/my-work/ideas/<id>/workspace/table`)
+// and by `getInitialIdeaTool` below for the legacy query-string form
+// (`?tab=ideas&tool=table`) so the two formats resolve identically instead
+// of the legacy one falling back to the default canvas tool.
+function parseIdeaToolSegment(segment?: string | null): CanvasToolType | undefined {
+  switch (segment) {
+    case 'mind-map':
+    case 'mindmap':
+      return 'mindmap';
+    case 'whiteboard':
+      return 'whiteboard';
+    case 'process-flow':
+    case 'process_flow':
+    case 'flow':
+      return 'process_flow';
+    case 'table':
+      return 'table';
+    default:
+      return undefined;
+  }
 }
 
 function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
 ): { tab: ModuleTab; doc?: OpenDocument; notebookPageId?: string } | null {
-  const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
-    switch (segment) {
-      case 'mind-map':
-      case 'mindmap':
-        return 'mindmap';
-      case 'whiteboard':
-        return 'whiteboard';
-      case 'process-flow':
-      case 'process_flow':
-      case 'flow':
-        return 'process_flow';
-      case 'table':
-        return 'table';
-      default:
-        return undefined;
-    }
-  };
+  const parseIdeaTool = parseIdeaToolSegment;
   const normalized = pathname.replace(/\/+$/, '');
   if (!normalized.startsWith('/my-work')) return null;
   const segments = normalized.split('/').filter(Boolean);
@@ -814,7 +894,33 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('table');
-  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
+  const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>(
+    () => getInitialIdeaTool(searchParams) ?? 'mindmap'
+  );
+
+  // RB-016 (CB-02 pass 2): keeps the legacy `?tab=<tab>&tool=<tool>` link in
+  // sync with `activeTab` after mount too — browser back/forward that lands
+  // on a URL carrying this legacy pair resolves canonically instead of
+  // relying only on the initial-mount lazy state above. Skipped while a
+  // document is open (its own restore effects own tab identity then) and
+  // skipped for tabs already covered by an owning-object param (ideaId/
+  // taskId/...), which have their own dedicated restore effects.
+  useEffect(() => {
+    if (activeDocumentId) return;
+    const tabParam = searchParams.get('tab');
+    if (!tabParam || !isKnownMyWorkTab(tabParam)) return;
+    const resolvedTab = getInitialMyWorkTab(searchParams, canViewManager, !isPilotParticipant);
+    if (resolvedTab !== activeTab) {
+      setActiveTab(resolvedTab);
+    }
+    if (resolvedTab === 'ideas') {
+      const resolvedTool = getInitialIdeaTool(searchParams);
+      if (resolvedTool && resolvedTool !== ideaActiveTool) {
+        setIdeaActiveTool(resolvedTool);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [ideaLocked, setIdeaLocked] = useState(true);
@@ -974,6 +1080,65 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(
     () => restoredDocumentState.activeDocumentId
   );
+
+  // RV-002 (CB-02 pass 2): the SINGLE canonical tab-transition function.
+  // Every place in this component that switches `activeTab` — Menu 1 clicks,
+  // programmatic redirects, chat/command-row shortcuts, empty-state CTAs —
+  // goes through this instead of calling `setActiveTab` directly, so
+  // `activeTab` and the URL's tab-owned object params (see
+  // TAB_OWNED_PARAM_KEYS) can never drift apart. Clears every tab-owned
+  // param except the ones the destination tab itself owns, so a previous
+  // tab's deep-link identity (e.g. `?notebook=<id>`) never survives into a
+  // different tab and gets misread by a later URL -> state reconciliation
+  // effect (the exact RV-002 repro: a stale Notebook identity blocking
+  // Whiteboard from opening after switching to Ideas). Leaves all other
+  // (unowned) query state intact. Deliberately does NOT touch
+  // `activeDocumentId` — callers that are restoring/opening a document set
+  // that separately; callers that are navigating AWAY from a document use
+  // `handleSelectTab` below, which clears it explicitly.
+  const changeMyWorkTab = useCallback(
+    (tabId: ModuleTab) => {
+      setActiveTab(tabId);
+      const ownedByTarget = new Set(TAB_OWNED_PARAM_KEYS[tabId] || []);
+      const keysToClear = ALL_TAB_OWNED_PARAM_KEYS.filter((key) => !ownedByTarget.has(key));
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          let changed = false;
+          keysToClear.forEach((key) => {
+            if (next.has(key)) {
+              next.delete(key);
+              changed = true;
+            }
+          });
+          // RB-016 (CB-02 pass 2): also write `?tab=` explicitly — several
+          // tabs (tasks/decisions/notebook/inbox/calendar/manager without a
+          // specific object open) have no owning identity param at all, so
+          // without this a refresh/direct-entry on e.g. plain "Tasks" had
+          // nothing in the URL to restore from and fell back to the default
+          // tab.
+          if (next.get('tab') !== tabId) {
+            next.set('tab', tabId);
+            changed = true;
+          }
+          return changed ? next : prev;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams, setActiveTab]
+  );
+
+  // User-initiated navigation (Menu 1 tab clicks): switches tab AND closes
+  // whatever document was open, since the user is explicitly leaving it.
+  const handleSelectTab = useCallback(
+    (tabId: ModuleTab) => {
+      changeMyWorkTab(tabId);
+      setActiveDocumentId(null);
+    },
+    [changeMyWorkTab, setActiveDocumentId]
+  );
+
   const [pendingDocument, setPendingDocument] = useState<OpenDocument | null>(null);
   const [pendingUrlCleanup, setPendingUrlCleanup] = useState<{
     documentId: string;
@@ -1155,7 +1320,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       return [...prev, doc];
     });
     programmaticTabSwitchRef.current = true;
-    setActiveTab(getDocumentTab(doc.type));
+    changeMyWorkTab(getDocumentTab(doc.type));
     setActiveDocumentId(doc.id);
   }, []);
 
@@ -1339,7 +1504,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         clearMyWorkIntent();
         return;
       }
-      setActiveTab(targetTab);
+      changeMyWorkTab(targetTab);
     }
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
@@ -1433,7 +1598,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         notebook: 'notebook',
         initiative: 'tasks',
       };
-      if (tabMap[type]) setActiveTab(tabMap[type]);
+      if (tabMap[type]) changeMyWorkTab(tabMap[type]);
       if (type === 'notebook') {
         setNotebookOpenPageId(String(id));
         return;
@@ -1480,7 +1645,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name4', 'Task'),
         status: 'todo',
       };
-      setActiveTab('tasks');
+      changeMyWorkTab('tasks');
       if (activeTab === 'tasks') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
@@ -1493,7 +1658,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name5', 'Decision'),
         status: 'pending',
       };
-      setActiveTab('decisions');
+      changeMyWorkTab('decisions');
       if (activeTab === 'decisions') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
@@ -1506,7 +1671,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         name: t('myWork.hub.name6', 'Idea'),
         status: 'idea',
       };
-      setActiveTab('ideas');
+      changeMyWorkTab('ideas');
       if (activeTab === 'ideas') handleOpenDocument(nextDoc);
       else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
@@ -1526,7 +1691,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       setNotebookOpenTitle('');
       return;
     }
-    setActiveTab('notebook');
+    changeMyWorkTab('notebook');
     setNotebookOpenId(nbId);
     setNotebookOpenTitle('');
     setNotebookOpenPageId(null);
@@ -1548,7 +1713,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
-    setActiveTab(intent.tab);
+    changeMyWorkTab(intent.tab);
     // /my-work/notebook/<pageId> opens the page editor directly (bypasses the
     // notebooks library, which knows nothing about container-less ingested
     // pages such as canvas save-as-note materializations).
@@ -2345,22 +2510,22 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       switch (action.type) {
         case 'create':
           if (action.target === 'idea') {
-            setActiveTab('ideas');
+            changeMyWorkTab('ideas');
             handleCreateIdea();
             return;
           }
           if (action.target === 'note') {
-            setActiveTab('notebook');
+            changeMyWorkTab('notebook');
             setNotebookCreateReqId((value) => value + 1);
             return;
           }
           if (action.target === 'task') {
-            setActiveTab('tasks');
+            changeMyWorkTab('tasks');
             handleCreateTask();
             return;
           }
           if (action.target === 'decision') {
-            setActiveTab('decisions');
+            changeMyWorkTab('decisions');
             handleCreateDecision();
             return;
           }
@@ -2378,7 +2543,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             navigate(`/presentations?tab=${presentationsTabQueryForHomeBridge('outputs_review')}`);
             return;
           }
-          setActiveTab(action.target);
+          changeMyWorkTab(action.target);
           return;
         case 'open':
           if (action.target === 'idea') {
@@ -2386,7 +2551,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             return;
           }
           if (action.target === 'note') {
-            setActiveTab('notebook');
+            changeMyWorkTab('notebook');
             setNotebookOpenPageId(action.id);
             return;
           }
@@ -2458,11 +2623,11 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           if (result) {
             const mod = action.targetModule;
             if (mod === 'initiatives' || mod === 'Inicjatywy') {
-              setActiveTab('ideas');
+              changeMyWorkTab('ideas');
             } else if (mod === 'execution' || mod === 'Wdrożenia') {
-              setActiveTab('tasks');
+              changeMyWorkTab('tasks');
             } else if (mod === 'notebook' || mod === 'Notatki') {
-              setActiveTab('notebook');
+              changeMyWorkTab('notebook');
               setNotebookCreateReqId((value) => value + 1);
             }
           }
@@ -3644,7 +3809,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label49', 'Overdue'),
         count: taskFilterCounts.overdue,
         onClick: () => {
-          setActiveTab('tasks');
+          changeMyWorkTab('tasks');
           setTaskFilter('overdue');
           setActiveDocumentId(null);
         },
@@ -3654,7 +3819,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label50', 'Urgent'),
         count: taskFilterCounts.urgent,
         onClick: () => {
-          setActiveTab('tasks');
+          changeMyWorkTab('tasks');
           setTaskFilter('urgent');
           setActiveDocumentId(null);
         },
@@ -3664,7 +3829,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label51', 'Decisions (pending)'),
         count: decisionFilterCounts.my + decisionFilterCounts.awaiting,
         onClick: () => {
-          setActiveTab('decisions');
+          changeMyWorkTab('decisions');
           setDecisionFilter('my');
           setActiveDocumentId(null);
         },
@@ -3674,7 +3839,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: t('myWork.hub.label52', 'Inbox'),
         count: tabCounts.inbox,
         onClick: () => {
-          setActiveTab('inbox');
+          changeMyWorkTab('inbox');
           setActiveDocumentId(null);
         },
       },
@@ -3831,15 +3996,15 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <ExecutiveDashboard
               onNavigate={(section, options) => {
                 if (section === 'tasks') {
-                  setActiveTab('tasks');
+                  changeMyWorkTab('tasks');
                   if (options?.filter) setTaskFilter(options.filter as TaskFilter);
                 }
                 if (section === 'decisions') {
-                  setActiveTab('decisions');
+                  changeMyWorkTab('decisions');
                   if (options?.filter === 'pending') setDecisionFilter('my');
                 }
-                if (section === 'focus') setActiveTab('home');
-                if (section === 'inbox') setActiveTab('inbox');
+                if (section === 'focus') changeMyWorkTab('home');
+                if (section === 'inbox') changeMyWorkTab('inbox');
               }}
               refreshTrigger={refreshTrigger}
             />
@@ -4117,29 +4282,25 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 pre-existing flat single-row bar unchanged. */}
             {isMyWorkTwoLevelNavEnabled() ? (
               <MyWorkNav
-                tabs={tabs.map(
-                  (tab): MyWorkNavTab => ({
-                    id: tab.id,
-                    label: tab.label,
-                    icon: tab.icon,
-                    navGroup: tab.navGroup,
-                    count: 'count' in tab ? tab.count : undefined,
-                    isLocked: 'isLocked' in tab ? tab.isLocked : undefined,
-                    lockedReason:
-                      'isLocked' in tab && tab.isLocked
-                        ? 'betaLocked' in tab && tab.betaLocked
-                          ? t('access.blocked.BETA_LOCKED')
-                          : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
-                        : undefined,
-                  })
-                )}
+                tabs={tabs.map((tab): MyWorkNavTab => ({
+                  id: tab.id,
+                  label: tab.label,
+                  icon: tab.icon,
+                  navGroup: tab.navGroup,
+                  count: 'count' in tab ? tab.count : undefined,
+                  isLocked: 'isLocked' in tab ? tab.isLocked : undefined,
+                  lockedReason:
+                    'isLocked' in tab && tab.isLocked
+                      ? 'betaLocked' in tab && tab.betaLocked
+                        ? t('access.blocked.BETA_LOCKED')
+                        : getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                      : undefined,
+                }))}
                 activeTabId={activeTab}
                 groupLabels={myWorkNavGroupLabels}
                 groupsAriaLabel={t('myWork.hub.navGroup.ariaLabel', 'My Work navigation groups')}
                 onSelectTab={(tabId) => {
-                  setActiveTab(tabId as ModuleTab);
-                  // Close document when switching tabs to show list view
-                  setActiveDocumentId(null);
+                  handleSelectTab(tabId as ModuleTab);
                 }}
                 onBlockedTab={handleBlockedNavTab}
                 activeChipClassName={BUTTON_ACTIVE}
@@ -4165,9 +4326,7 @@ const MyWorkHubInner: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                           }
                           return;
                         }
-                        setActiveTab(tab.id);
-                        // Close document when switching tabs to show list view
-                        setActiveDocumentId(null);
+                        handleSelectTab(tab.id);
                       }}
                       className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                       data-testid={`mywork-tab-${tab.id}`}

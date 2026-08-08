@@ -4478,6 +4478,13 @@ function MindMapInner({
         toast(t('mindmap.aiRequiresBackend') as any);
         return;
       }
+      if (targetNodeId && !nodes.find((n: any) => n?.id === targetNodeId)) {
+        // CB-05/decyzja 5: jawny node target, którego nie ma na płótnie, musi
+        // zostać jawnie odrzucony — nigdy po cichu nie spada na
+        // zaznaczenie/root.
+        toast.error(t('mindmap.aiExpandTargetNodeMissing') as any);
+        return;
+      }
       setSaving(true);
       try {
         const anchor = targetNodeId

@@ -42,6 +42,16 @@
  * DOROBKA C 2026-07-23) — teraz redundantny z domyślną bramką dla tych trzech,
  * ale zostawiony: jawny override jest odporny na przyszłe zmiany w
  * `SIDE_EFFECT_TOOLS` i nie ma kosztu. Kierunek bezpieczny: pytamy częściej, nie rzadziej.
+ *
+ * ── CB-06 / RB-028 — LOKALIZACJA ─────────────────────────────────────────────
+ * `label`/`hint`/`soonReason` poniżej są ANGIELSKIM DOMYŚLNYM tekstem (fallback
+ * dla `t()`), nie językiem wyświetlania — to samo id daje klucz tłumaczenia
+ * `agentPlan.catalog.<id>.label` / `.hint` / `.soonReason` (patrz
+ * `catalogLabelKey`/`catalogHintKey`/`catalogSoonReasonKey` niżej), realne PL
+ * żyje w `public/locales/pl/translation.json`. Konsument (AgentWorkshopPalette)
+ * MUSI wołać `t(catalogLabelKey(entry), entry.label)`, nigdy `entry.label`
+ * wprost, żeby paleta nie była zamrożona na jednym języku niezależnie od
+ * locale użytkownika.
  */
 
 /**
@@ -112,11 +122,11 @@ export function forcesApproval(kind: PlanBlockKind): boolean {
 
 /** Jedna pozycja palety = jeden klocek do wstawienia w schemat. */
 export interface AgentBlockCatalogEntry {
-  /** Stabilny id pozycji palety (nie mylić z id klocka w schemacie). */
+  /** Stabilny id pozycji palety (nie mylić z id klocka w schemacie). Także rdzeń klucza tłumaczenia. */
   id: string;
-  /** Czytelna nazwa PO POLSKU — to ona ląduje na klocku, nie snake_case. */
+  /** Angielski tekst domyślny (fallback dla `t()`) — NIE renderuj wprost, patrz nagłówek pliku. */
   label: string;
-  /** Jedno zdanie: co ten klocek robi. */
+  /** Jedno zdanie: co ten klocek robi (angielski fallback). */
   hint: string;
   kind: PlanBlockKind;
   /** Nazwa narzędzia 1:1 z `AI_TOOLS`. Brak = klocek nie jest krokiem (informacja) lub pozycja 'soon'. */
@@ -124,7 +134,7 @@ export interface AgentBlockCatalogEntry {
   /** Moduł/obszar aplikacji pokazywany na klocku pod nazwą. */
   module?: string;
   status: 'active' | 'soon';
-  /** Wypełnione TYLKO dla 'soon' — czego konkretnie brakuje w rejestrze. */
+  /** Wypełnione TYLKO dla 'soon' — angielski fallback tego, czego brakuje w rejestrze. */
   soonReason?: string;
   /** true = backend zatrzyma plan na tym kroku (SIDE_EFFECT_TOOLS lub jawny override). */
   approval?: boolean;
@@ -132,22 +142,35 @@ export interface AgentBlockCatalogEntry {
 
 export interface AgentBlockCatalogGroup {
   id: string;
+  /** Angielski tekst domyślny — patrz `catalogGroupLabelKey`. */
   label: string;
-  /** Jedno zdanie pod nagłówkiem grupy. */
+  /** Jedno zdanie pod nagłówkiem grupy (angielski fallback). */
   hint: string;
   entries: AgentBlockCatalogEntry[];
 }
 
+/** CB-06 / RB-028 — translation-key builders, id-derived so every new catalog entry gets one for free. */
+export const catalogGroupLabelKey = (group: { id: string }): string =>
+  `agentPlan.catalog.group.${group.id}.label`;
+export const catalogGroupHintKey = (group: { id: string }): string =>
+  `agentPlan.catalog.group.${group.id}.hint`;
+export const catalogLabelKey = (entry: { id: string }): string =>
+  `agentPlan.catalog.${entry.id}.label`;
+export const catalogHintKey = (entry: { id: string }): string =>
+  `agentPlan.catalog.${entry.id}.hint`;
+export const catalogSoonReasonKey = (entry: { id: string }): string =>
+  `agentPlan.catalog.${entry.id}.soonReason`;
+
 export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
   {
     id: 'moduly',
-    label: 'Moduły',
-    hint: 'Etapy oparte o dane z modułów aplikacji.',
+    label: 'Modules',
+    hint: 'Steps based on data from application modules.',
     entries: [
       {
         id: 'mod-assessment',
-        label: 'Dane oceny',
-        hint: 'Czyta wyniki i luki z modułu Assessment.',
+        label: 'Assessment data',
+        hint: 'Reads results and gaps from the Assessment module.',
         kind: 'etap-modul',
         toolName: 'get_assessment_data',
         module: 'Assessment',
@@ -155,8 +178,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-initiatives',
-        label: 'Status inicjatyw',
-        hint: 'Portfel inicjatyw: postęp, właściciele, ryzyka.',
+        label: 'Initiative status',
+        hint: 'Initiative portfolio: progress, owners, risks.',
         kind: 'etap-modul',
         toolName: 'get_initiative_status',
         module: 'Initiatives',
@@ -164,17 +187,17 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-decisions',
-        label: 'Podobne decyzje',
-        hint: 'Szuka wcześniejszych decyzji o zbliżonym kontekście.',
+        label: 'Similar decisions',
+        hint: 'Searches for earlier decisions with a similar context.',
         kind: 'etap-modul',
         toolName: 'find_similar_decisions',
-        module: 'My Work · Decyzje',
+        module: 'My Work · Decisions',
         status: 'active',
       },
       {
         id: 'mod-stakeholders',
-        label: 'Analiza interesariuszy',
-        hint: 'Mapa wpływu i nastawienia interesariuszy.',
+        label: 'Stakeholder analysis',
+        hint: 'Map of stakeholder influence and sentiment.',
         kind: 'etap-modul',
         toolName: 'get_stakeholder_analysis',
         module: 'Initiatives',
@@ -182,8 +205,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-finance',
-        label: 'Kalkulacja finansowa',
-        hint: 'ROI, NPV, okres zwrotu na danych projektu.',
+        label: 'Financial calculation',
+        hint: 'ROI, NPV, payback period on project data.',
         kind: 'etap-modul',
         toolName: 'calculate_financial',
         module: 'Finance',
@@ -191,8 +214,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-montecarlo',
-        label: 'Symulacja Monte Carlo',
-        hint: 'Rozkład wyniku przy niepewnych założeniach.',
+        label: 'Monte Carlo simulation',
+        hint: 'Outcome distribution under uncertain assumptions.',
         kind: 'etap-modul',
         toolName: 'run_monte_carlo',
         module: 'Finance',
@@ -200,8 +223,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-benchmarks',
-        label: 'Porównanie z benchmarkami',
-        hint: 'Zestawia wyniki z bazą benchmarków branżowych.',
+        label: 'Benchmark comparison',
+        hint: 'Compares results against the industry benchmark base.',
         kind: 'etap-modul',
         toolName: 'compare_benchmarks',
         module: 'Results',
@@ -209,55 +232,55 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'mod-interview',
-        label: 'Wywiad (Interview)',
-        hint: 'Pobranie odpowiedzi z ankiet i wywiadów.',
+        label: 'Interview',
+        hint: 'Retrieves answers from surveys and interviews.',
         kind: 'etap-modul',
         module: 'Interview',
         status: 'soon',
         soonReason:
-          'Brak narzędzia Interview w AI_TOOLS (toolDefinitions.ts) — nie ma czego wywołać.',
+          "The agent doesn't have access to the Interview module yet — this feature is in progress.",
       },
       {
         id: 'mod-execution',
-        label: 'Realizacja (Execution)',
-        hint: 'Kamienie milowe, zadania i blokery wdrożenia.',
+        label: 'Execution',
+        hint: 'Milestones, tasks, and delivery blockers.',
         kind: 'etap-modul',
         module: 'Execution',
         status: 'soon',
         soonReason:
-          'Brak narzędzia Execution w AI_TOOLS — istnieje tylko get_initiative_status (Initiatives).',
+          'Today the agent only reads initiative status — full access to the Execution module is in progress.',
       },
       {
         id: 'mod-results',
-        label: 'Rezultaty (Results)',
-        hint: 'Odczyt KPI i zrealizowanych korzyści.',
+        label: 'Results',
+        hint: 'Reads KPIs and realized benefits.',
         kind: 'etap-modul',
         module: 'Results',
         status: 'soon',
         soonReason:
-          'Brak narzędzia KPI/Results w AI_TOOLS — compare_benchmarks nie czyta realizacji.',
+          'Today the agent only compares benchmarks — reading realized KPIs is in progress.',
       },
       {
         id: 'mod-materials',
-        label: 'Materiały / Deck',
-        hint: 'Złożenie prezentacji z gotowych sekcji.',
+        label: 'Materials / Deck',
+        hint: 'Assembles a presentation from ready sections.',
         kind: 'etap-modul',
         module: 'Materials',
         status: 'soon',
         soonReason:
-          'Brak narzędzia generującego Deck w AI_TOOLS — generate_report_section zwraca opis sekcji, nie dokument.',
+          'Today the agent only generates a section description, not the whole document — assembling a full presentation is in progress.',
       },
     ],
   },
   {
     id: 'ai',
     label: 'AI / Teresa',
-    hint: 'Kroki, w których pracuje model.',
+    hint: 'Steps where the model does the work.',
     entries: [
       {
         id: 'ai-web',
-        label: 'Szukaj w sieci',
-        hint: 'Świeże dane rynkowe spoza organizacji.',
+        label: 'Search the web',
+        hint: 'Fresh market data from outside the organization.',
         kind: 'ai-teresa',
         toolName: 'search_web',
         module: 'Teresa',
@@ -265,8 +288,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'ai-report-section',
-        label: 'Sekcja raportu',
-        hint: 'Przygotowuje sekcję raportu z podanych źródeł.',
+        label: 'Report section',
+        hint: 'Prepares a report section from the given sources.',
         kind: 'ai-teresa',
         toolName: 'generate_report_section',
         module: 'Materials',
@@ -275,25 +298,25 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'ai-summary',
-        label: 'Podsumowanie etapu',
-        hint: 'Streszczenie wyników poprzednich kroków planu.',
+        label: 'Stage summary',
+        hint: "Summary of the previous plan steps' results.",
         kind: 'ai-teresa',
         module: 'Teresa',
         status: 'soon',
         soonReason:
-          'Brak narzędzia podsumowującego wyniki kroków w AI_TOOLS — agent nie ma dziś kroku „podsumuj to, co zebrałeś".',
+          'The agent doesn\'t have a "summarize what you\'ve gathered" step today — this feature is in progress.',
       },
     ],
   },
   {
     id: 'dane',
-    label: 'Dane i Vault',
-    hint: 'Skąd agent bierze kontekst.',
+    label: 'Data & Vault',
+    hint: 'Where the agent gets its context from.',
     entries: [
       {
         id: 'vault-context',
-        label: 'Vault — wybrany sejf',
-        hint: 'Ogranicza wiedzę agenta do jednego sejfu (Mój / Projekt / Organizacja).',
+        label: 'Vault — selected safe',
+        hint: "Limits the agent's knowledge to one safe (Mine / Project / Organization).",
         kind: 'vault-kontekst',
         toolName: 'search_knowledge_base',
         module: 'Vault',
@@ -301,8 +324,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'kb-search',
-        label: 'Szukaj w wiedzy',
-        hint: 'Przeszukuje dokumenty organizacji bez zawężania do sejfu.',
+        label: 'Search knowledge',
+        hint: "Searches the organization's documents without narrowing to a safe.",
         kind: 'etap-modul',
         toolName: 'search_knowledge_base',
         module: 'Vault',
@@ -310,11 +333,11 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'structured-query',
-        label: 'Zapytanie do danych',
-        hint: 'Pytanie w języku naturalnym do danych tabelarycznych.',
+        label: 'Data query',
+        hint: 'A natural-language question against tabular data.',
         kind: 'etap-modul',
         toolName: 'query_structured_data',
-        module: 'Tabele',
+        module: 'Tables',
         status: 'active',
         approval: true,
       },
@@ -322,13 +345,13 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
   },
   {
     id: 'automaty',
-    label: 'Automaty',
-    hint: 'Kroki, które coś TWORZĄ. Każdy pyta o zgodę przed wykonaniem.',
+    label: 'Automations',
+    hint: 'Steps that CREATE something. Each one asks for approval before running.',
     entries: [
       {
         id: 'auto-task',
-        label: 'Utwórz zadanie',
-        hint: 'Zakłada zadanie w My Work.',
+        label: 'Create task',
+        hint: 'Creates a task in My Work.',
         kind: 'automat',
         toolName: 'create_task',
         module: 'My Work',
@@ -337,8 +360,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'auto-task-update',
-        label: 'Zaktualizuj zadanie',
-        hint: 'Zmienia status lub pola istniejącego zadania.',
+        label: 'Update task',
+        hint: 'Changes the status or fields of an existing task.',
         kind: 'automat',
         toolName: 'update_task',
         module: 'My Work',
@@ -347,8 +370,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'auto-decision',
-        label: 'Utwórz decyzję',
-        hint: 'Zakłada kartę decyzji do rozstrzygnięcia.',
+        label: 'Create decision',
+        hint: 'Creates a decision card to be resolved.',
         kind: 'automat',
         toolName: 'create_decision',
         module: 'My Work',
@@ -357,8 +380,8 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'auto-initiative',
-        label: 'Szkic inicjatywy',
-        hint: 'Proponuje inicjatywę z opisem i szacunkiem ROI.',
+        label: 'Initiative draft',
+        hint: 'Proposes an initiative with a description and ROI estimate.',
         kind: 'automat',
         toolName: 'create_initiative_draft',
         module: 'Initiatives',
@@ -367,18 +390,18 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
       },
       {
         id: 'auto-note',
-        label: 'Wpis w Notatniku',
-        hint: 'Zapisuje ustalenia jako notatkę.',
+        label: 'Notebook entry',
+        hint: 'Saves findings as a note.',
         kind: 'automat',
         toolName: 'create_notebook_entry',
-        module: 'Notatnik',
+        module: 'Notebook',
         status: 'active',
         approval: true,
       },
       {
         id: 'auto-meeting',
-        label: 'Propozycja spotkania',
-        hint: 'Proponuje termin i uczestników spotkania.',
+        label: 'Meeting proposal',
+        hint: 'Proposes a meeting time and attendees.',
         kind: 'automat',
         toolName: 'schedule_meeting',
         module: 'Meeting',
@@ -389,136 +412,139 @@ export const AGENT_BLOCK_CATALOG: AgentBlockCatalogGroup[] = [
   },
   {
     id: 'kontrola',
-    label: 'Kontrola przebiegu',
-    hint: 'Gdzie agent ma się zatrzymać i co ma być opisane.',
+    label: 'Flow control',
+    hint: 'Where the agent should stop and what should be documented.',
     entries: [
       {
         id: 'ctrl-gate',
-        label: 'Zgoda (bramka)',
-        hint: 'Plan zatrzymuje się i czeka na Twoje zatwierdzenie.',
+        label: 'Approval (gate)',
+        hint: 'The plan stops and waits for your approval.',
         kind: 'brama-akceptu',
         toolName: 'search_knowledge_base',
-        module: 'Kontrola',
+        module: 'Control',
         status: 'active',
         approval: true,
       },
       {
         id: 'ctrl-wait',
-        label: 'Odczekaj (pauza)',
-        hint: 'Proces czeka określony czas, zanim przejdzie dalej.',
+        label: 'Wait (pause)',
+        hint: 'The process waits a set time before continuing.',
         kind: 'pauza',
         toolName: 'wait_until',
-        module: 'Kontrola',
+        module: 'Control',
         status: 'active',
         approval: true,
       },
       {
         id: 'ctrl-note',
-        label: 'Informacja (notatka)',
-        hint: 'Opis na schemacie. Nie jest wykonywana — porządkuje proces.',
+        label: 'Note (info)',
+        hint: 'A description on the diagram. Not executed — organizes the process.',
         kind: 'informacja',
-        module: 'Kontrola',
+        module: 'Control',
         status: 'active',
       },
       {
         id: 'ctrl-branch',
-        label: 'Warunek (rozgałęzienie)',
-        hint: 'Różne ścieżki zależnie od wyniku poprzedniego kroku.',
+        label: 'Condition (branch)',
+        hint: "Different paths depending on the previous step's result.",
         kind: 'brama-akceptu',
-        module: 'Kontrola',
+        module: 'Control',
         status: 'soon',
-        soonReason:
-          'Plan jest LINIOWY (decyzja DEC-002, v1) — backend wykonuje kroki po kolei, nie ma modelu rozgałęzień.',
+        soonReason: 'The plan is linear today — steps run in order; branching is in progress.',
       },
       {
         id: 'ctrl-loop',
-        label: 'Pętla po liście',
-        hint: 'Powtórz krok dla każdego elementu (np. każdej inicjatywy).',
+        label: 'Loop over a list',
+        hint: 'Repeat a step for each item (e.g. each initiative).',
         kind: 'brama-akceptu',
-        module: 'Kontrola',
+        module: 'Control',
         status: 'soon',
-        soonReason:
-          'Brak modelu iteracji w agentPlannerService — kroki są płaską listą wykonywaną raz.',
+        soonReason: 'Steps run once today, as a flat list — looping over a list is in progress.',
       },
     ],
   },
   {
     id: 'integracje',
-    label: 'Integracje',
-    hint: 'Systemy poza Consultify.',
+    label: 'Integrations',
+    hint: 'Systems outside Consultify.',
     entries: [
       {
         id: 'int-list',
-        label: 'Lista konektorów',
-        hint: 'Sprawdza, które integracje są podłączone i świeże.',
+        label: 'Connector list',
+        hint: 'Checks which integrations are connected and fresh.',
         kind: 'etap-modul',
         toolName: 'list_enterprise_connectors',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'active',
       },
       {
         id: 'int-search',
-        label: 'Szukaj w konektorze',
-        hint: 'Odpytuje podłączony system firmowy przez bramę Wave 7.',
+        label: 'Search a connector',
+        hint: 'Queries a connected company system through the Wave 7 gateway.',
         kind: 'etap-modul',
         toolName: 'search_enterprise_connector',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'active',
       },
       {
         id: 'int-sharepoint',
         label: 'SharePoint',
-        hint: 'Pobranie dokumentów z biblioteki SharePoint.',
+        hint: 'Retrieves documents from the SharePoint library.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
         soonReason:
-          'Konektor jest w katalogu integracji (integrationHubService CONNECTORS), ale nie ma własnego narzędzia w AI_TOOLS — agent sięga po niego tylko ogólnym „Szukaj w konektorze".',
+          'This connector is already connected in the integrations catalog; today the agent reaches it only through the generic "Search a connector" step — a dedicated step is in progress.',
       },
       {
         id: 'int-teams',
         label: 'Microsoft Teams',
-        hint: 'Kanały i wiadomości zespołu.',
+        hint: 'Team channels and messages.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
-        soonReason: 'Konektor w katalogu integracji, bez dedykowanego narzędzia w AI_TOOLS.',
+        soonReason:
+          'This connector is in the integrations catalog, but a dedicated agent step for it is in progress.',
       },
       {
         id: 'int-slack',
         label: 'Slack',
-        hint: 'Kanały i wiadomości.',
+        hint: 'Channels and messages.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
-        soonReason: 'Konektor w katalogu integracji, bez dedykowanego narzędzia w AI_TOOLS.',
+        soonReason:
+          'This connector is in the integrations catalog, but a dedicated agent step for it is in progress.',
       },
       {
         id: 'int-jira',
         label: 'Jira',
-        hint: 'Zgłoszenia, sprinty i tablice.',
+        hint: 'Issues, sprints, and boards.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
-        soonReason: 'Konektor w katalogu integracji, bez dedykowanego narzędzia w AI_TOOLS.',
+        soonReason:
+          'This connector is in the integrations catalog, but a dedicated agent step for it is in progress.',
       },
       {
         id: 'int-gdrive',
         label: 'Google Drive',
-        hint: 'Pliki i foldery z Dysku.',
+        hint: 'Files and folders from Drive.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
-        soonReason: 'Konektor w katalogu integracji, bez dedykowanego narzędzia w AI_TOOLS.',
+        soonReason:
+          'This connector is in the integrations catalog, but a dedicated agent step for it is in progress.',
       },
       {
         id: 'int-outlook',
-        label: 'Outlook / Kalendarz',
-        hint: 'Poczta i terminy.',
+        label: 'Outlook / Calendar',
+        hint: 'Mail and appointments.',
         kind: 'etap-modul',
-        module: 'Integracje',
+        module: 'Integrations',
         status: 'soon',
-        soonReason: 'Konektor w katalogu integracji, bez dedykowanego narzędzia w AI_TOOLS.',
+        soonReason:
+          'This connector is in the integrations catalog, but a dedicated agent step for it is in progress.',
       },
     ],
   },
@@ -540,6 +566,11 @@ export const AGENT_BLOCK_ENTRIES: AgentBlockCatalogEntry[] = AGENT_BLOCK_CATALOG
  * wyspecjalizowane (`vault-kontekst`, `brama-akceptu`) są przy budowie mapy
  * pomijane — inaczej krok wyszukujący w wiedzy nazywałby się „Vault — wybrany
  * sejf" wszędzie tam, gdzie nie jest klockiem Vault.
+ *
+ * Uwaga lokalizacyjna: ta mapa (i `TOOL_CATALOG` niżej) osadza etykietę w
+ * momencie WSTAWIENIA klocka do schematu (dane biznesowe, zapisywane) — to
+ * inna warstwa niż live-render palety (patrz `catalogLabelKey`), więc celowo
+ * zostaje angielskim domyślnym tekstem niezależnie od bieżącego locale UI.
  */
 export const TOOL_LABEL_BY_NAME: Record<string, string> = AGENT_BLOCK_ENTRIES.reduce<
   Record<string, string>
@@ -576,7 +607,7 @@ export const TOOL_CATALOG: ToolCatalogEntry[] = (() => {
     seen.add(entry.toolName);
     out.push({
       name: entry.toolName,
-      label: entry.approval ? `${entry.label} (zgoda)` : entry.label,
+      label: entry.approval ? `${entry.label} (approval)` : entry.label,
     });
   });
   return out;

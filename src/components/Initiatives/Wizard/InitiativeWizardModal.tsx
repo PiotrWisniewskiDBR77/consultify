@@ -40,6 +40,7 @@ import {
   WizardStepper,
 } from '@/components/shared/WizardModal';
 import { Button } from '@/components/ui/primitives';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
 import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
 import { createInitiativeWriteTruth } from '@/services/initiativeWriteTruth';
@@ -677,6 +678,8 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const wizardDialogRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: isOpen, onClose, containerRef: wizardDialogRef });
   const [step, setStep] = useState<WizardStep>('insights');
   const [mode, setMode] = useState(initialMode);
   const [targetCount, setTargetCount] = useState(initialTargetCount);
@@ -2471,11 +2474,15 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
     <div
       className="fixed inset-0 z-overlay flex items-center justify-center bg-slate-950/55 backdrop-blur-sm"
       data-testid="initiative-wizard-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="initiative-wizard-title"
     >
-      <div className="mx-4 flex h-[640px] w-[1080px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
+      <div
+        ref={wizardDialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="initiative-wizard-title"
+        tabIndex={-1}
+        className="mx-4 flex h-[640px] w-[1080px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900 outline-none"
+      >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
           <h2
@@ -2488,9 +2495,10 @@ export const InitiativeWizardModal: React.FC<InitiativeWizardModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label={language === 'pl' ? 'Zamknij' : 'Close'}
             className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 

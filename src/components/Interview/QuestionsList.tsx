@@ -42,6 +42,7 @@ import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayo
 import { LoadingState } from '@/components/ui/primitives';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
+import { stripInternalTextSuffix } from '@/utils/stripInternalTextSuffix';
 
 import TeresaMark from '../shared/TeresaMark';
 import type { InterviewCategory } from './CategorySidebar';
@@ -1021,7 +1022,7 @@ Rules:
                           <td className="px-4 py-3">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-c-text dark:text-white truncate">
-                                {question.questionText}
+                                {stripInternalTextSuffix(question.questionText)}
                               </div>
                               <div className="mt-1 text-xs text-c-text-muted truncate">
                                 {question.answerText
@@ -1247,7 +1248,7 @@ Rules:
                     {t('interview.questionsList.chatForQuestion')}
                   </div>
                   <div className="text-xs text-c-text-secondary truncate">
-                    {chatQuestion.questionText}
+                    {stripInternalTextSuffix(chatQuestion.questionText)}
                   </div>
                 </div>
               </div>

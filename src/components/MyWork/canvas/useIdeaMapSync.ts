@@ -333,6 +333,31 @@ export function useIdeaMapSync({
       inFlightRef.current = true;
       setSaving(true);
       setSyncState('saving');
+      // CB-05/RV-006 — shared version invariant, not a toast mask.
+      // Mind Map and Process Flow share ONE `useWorkspaceGraphRuntime` instance
+      // that stays mounted (and `open`) for the whole workspace session,
+      // independent of which representation is on screen. Whiteboard and Table
+      // each own a SEPARATE `useIdeaMapSync` instance that is only open while
+      // their own component is mounted. `globalIdeaVersions` (module-level,
+      // above) is the one thing every instance writes to on every successful
+      // save/conflict — but each instance's own `serverVersionRef` is a plain
+      // ref that does NOT react when a SIBLING instance bumps that map. So the
+      // always-mounted shared instance can sit there with a version that is
+      // now behind whatever Whiteboard/Table just wrote while the user was on
+      // that tab, and its next flush (e.g. triggered by switching back) races
+      // a stale baseVersion into a spurious same-tab 409 — the repeated
+      // "Change conflict" notifications on plain representation switching.
+      // Catching up to the freshest KNOWN version right before every network
+      // write closes that gap: it only ever moves the version forward (never
+      // regresses it, so it cannot cause a data-loss reorder), and it changes
+      // nothing about how a REAL conflict (a different browser tab/user, whose
+      // write this tab's `globalIdeaVersions` map never saw) is detected or
+      // recovered — that still 409s and still runs the existing self-heal
+      // retry / onConflict path below untouched.
+      const knownVersion = globalIdeaVersions.get(ideaId);
+      if (typeof knownVersion === 'number' && knownVersion > serverVersionRef.current) {
+        serverVersionRef.current = knownVersion;
+      }
       try {
         const response = await Api.syncMyIdeaMap(ideaId, {
           ...payload,

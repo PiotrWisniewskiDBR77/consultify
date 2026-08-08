@@ -11,6 +11,7 @@
  * placeholders. PostgresDatabase.ts:377 translates `?` → `$1, $2, ...`
  * SEQUENTIALLY per query; never mix `?` and `$n` in the same SQL string.
  */
+import { featureFlags } from '../config/FeatureFlags.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 
@@ -98,6 +99,67 @@ export async function selectCanonicalMapRow(
      WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
      LIMIT 1`,
     [ideaId, organizationId]
+  );
+  return row ?? null;
+}
+
+/**
+ * True when shared/canonical idea maps are BOTH enabled by flag AND
+ * physically available (the `is_canonical` column exists). Mirrors
+ * `selectCanonicalMapRow`'s own column guard so every caller in this module
+ * agrees on when the canonical-row strategy applies.
+ */
+export function isSharedIdeaMapsActive(mapCols: { has(col: string): boolean }): boolean {
+  return featureFlags.ENABLE_SHARED_IDEA_MAPS === true && mapCols.has('is_canonical');
+}
+
+/**
+ * RV-008 — single, tenant/user-scoped read-side resolver for "which
+ * `my_idea_maps` row is truthful for this idea", used by BOTH the Ideas list
+ * (the "Tool" badge) and `GET /my-ideas/:id/map` (Open). Before this, the
+ * list resolved a row with a tolerant `is_canonical DESC NULLS LAST` fallback
+ * while `GET /map` required a strict `is_canonical = TRUE` match with no
+ * fallback — so a Table-labelled idea whose map was never flagged canonical
+ * (e.g. before the DP-3 T2 migration ran) opened as Mind Map instead. Both
+ * call sites now resolve through this one function so they can never diverge
+ * again: `null` means "no truthful row exists yet" for BOTH surfaces, which
+ * must show/open the same honest default (Mind Map) rather than one of them
+ * guessing.
+ *
+ * `columnsSql` lets each caller select only the columns it needs (the list
+ * only wants `preferred_tool`; `GET /map` wants the full row) while sharing
+ * the exact same WHERE-clause/scoping logic.
+ */
+export async function selectReadableMapRow<T = Record<string, unknown>>(
+  db: IDatabase,
+  ideaId: string,
+  ownerUserId: string | null,
+  organizationId: string,
+  columnsSql: string
+): Promise<T | null> {
+  if (!db || !ideaId || !organizationId) return null;
+
+  const mapCols = await getTableColumns('my_idea_maps');
+
+  if (isSharedIdeaMapsActive(mapCols)) {
+    const row = await db.get<T>(
+      `SELECT ${columnsSql} FROM my_idea_maps
+       WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
+       LIMIT 1`,
+      [ideaId, organizationId]
+    );
+    return row ?? null;
+  }
+
+  // Legacy/fallback mode: the idea OWNER's row (same row PUT/sync writes to
+  // — see resolveCanonicalMapOwner in my-work.routes.ts). Requires a real
+  // owner id; without one there is no safe row to read.
+  if (!ownerUserId) return null;
+  const row = await db.get<T>(
+    `SELECT ${columnsSql} FROM my_idea_maps
+     WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+     LIMIT 1`,
+    [ideaId, ownerUserId, organizationId]
   );
   return row ?? null;
 }

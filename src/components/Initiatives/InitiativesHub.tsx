@@ -54,6 +54,7 @@ import {
   type PriorityLevel,
   statusChipTone,
 } from '@/components/ui/primitives/chips';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api, shouldAllowDemoData } from '@/services/api';
@@ -132,6 +133,12 @@ import { InitiativesTimelineView } from './InitiativesTimelineView';
 import { DEFAULT_INITIATIVES_VIEW_MODE } from './initiativesViewDefaults';
 import PortfolioHealthView from './PortfolioHealthView';
 import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
+
+// CB-01 pass 3 — stable identifier for the empty-portfolio "New Initiative"
+// CTA, used to re-resolve a live focus-return target if the button's DOM
+// node was replaced (e.g. a loading-state flash) while the inline creation
+// dialog it opens was itself open.
+const NEW_INITIATIVE_EMPTY_CTA_TESTID = 'initiatives-new-modal-empty-cta';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
@@ -218,6 +225,42 @@ interface InitiativesHubProps {
   initialTab?: ModuleTab;
 }
 
+// CB-02 pass 2 (RB-030/RV-018 follow-up): the exact 6 tabs this hub actually
+// renders (see the `tabs` useMemo below) — kept as an explicit allowlist so
+// `?tab=` is validated against reality instead of being trusted blindly. An
+// unrecognized/stale tab id used to be written straight into `activeTab`,
+// which the `tabs` list doesn't render a matching entry for — nothing in the
+// nav would highlight and the workspace fell through to whatever the default
+// switch-case branch does, an unintended "recovery" rather than a real one.
+const INITIATIVES_TAB_IDS: ModuleTab[] = [
+  'list',
+  'analysis',
+  'observability',
+  'candidates',
+  'portfolioHealth',
+  'goals',
+];
+const INITIATIVES_DEFAULT_TAB: ModuleTab = 'list';
+
+function isKnownInitiativesTab(value: string): value is ModuleTab {
+  return (INITIATIVES_TAB_IDS as string[]).includes(value);
+}
+
+// CB-02 pass 2: resolves the canonical tab from the URL, shared by the
+// mount-time lazy state initializer and the URL->state effect below. Using
+// a lazy initializer (not effect-only hydration) matters: on the very first
+// render, the state->URL effect runs in the SAME commit as the URL->state
+// effect, using this render's (not the post-effect) `activeTab` — an
+// effect-only hydration left a one-commit gap where `activeTab` was still
+// the `initialTab` prop default while the URL already had a different
+// `?tab=`, so the state->URL effect saw a "mismatch" and rewrote the URL
+// back to the default before the URL->state effect's own update ever
+// landed — the exact race this pattern hit in StrategicToolsView.tsx.
+function resolveInitiativesTab(searchParams: URLSearchParams): ModuleTab {
+  const tabParam = searchParams.get('tab');
+  return tabParam && isKnownInitiativesTab(tabParam) ? tabParam : INITIATIVES_DEFAULT_TAB;
+}
+
 export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'list' }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -230,7 +273,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // View state
   const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_INITIATIVES_VIEW_MODE);
-  const [activeTab, setActiveTab] = useState<ModuleTab>(initialTab);
+  const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
+    const tabParam = searchParams.get('tab');
+    return tabParam ? resolveInitiativesTab(searchParams) : initialTab;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   // V3-A02: Persistent dynamic tabs via sessionStorage
@@ -243,12 +289,70 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [scope, setScope] = useState<KanbanScope>('active');
 
   // Analysis sub-view state (lifted so chips render in Menu 3 via commandRowContent)
-  const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>('resources');
+  // RB-030/RV-018 (CB-02): initialize from the canonical `subview` query
+  // param when present (direct entry/refresh/back-forward), else the old
+  // 'resources' default.
+  const ANALYSIS_SUBVIEW_IDS: AnalysisSubview[] = [
+    'resources',
+    'feasibility',
+    'logic',
+    'timeline',
+    'completeness',
+  ];
+  const [analysisSubview, setAnalysisSubview] = useState<AnalysisSubview>(() => {
+    const sv = searchParams.get('subview') as AnalysisSubview | null;
+    return sv && ANALYSIS_SUBVIEW_IDS.includes(sv) ? sv : 'resources';
+  });
   const [analysisActionButtons, setAnalysisActionButtons] = useState<React.ReactNode>(null);
   const registerAnalysisActions = useCallback(
     (node: React.ReactNode) => setAnalysisActionButtons(node),
     []
   );
+
+  // RB-030/RV-018 (CB-02): canonical route-state contract for the module tab
+  // and (when on Analysis) the selected analysis subview — direct entry,
+  // refresh, and browser back/forward restore both instead of always
+  // resetting to Portfolio/Resources. Object deep links already carried in
+  // `searchParams` (handled elsewhere in this component) are untouched: this
+  // effect only ever sets `tab`/`subview` keys, never clears others.
+  useEffect(() => {
+    // CB-02 pass 2: validate against the actual tab allowlist instead of
+    // trusting any string. An unknown/stale `?tab=` (typo'd, or a link to a
+    // tab that no longer exists) resolves to the default Portfolio tab —
+    // honest recovery instead of setting `activeTab` to a value nothing in
+    // the nav renders. A URL with NO `tab=` at all (e.g. browsing back past
+    // this route's history, or a bookmarked pre-route-state link) also
+    // restores the default rather than leaving whatever tab happened to be
+    // showing.
+    const resolvedTab = resolveInitiativesTab(searchParams);
+    if (resolvedTab !== activeTab) {
+      setActiveTab(resolvedTab);
+    }
+    if (resolvedTab === 'analysis') {
+      const subviewParam = searchParams.get('subview') as AnalysisSubview | null;
+      if (
+        subviewParam &&
+        ANALYSIS_SUBVIEW_IDS.includes(subviewParam) &&
+        subviewParam !== analysisSubview
+      ) {
+        setAnalysisSubview(subviewParam);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => {
+    const currentTabParam = searchParams.get('tab');
+    const currentSubviewParam = searchParams.get('subview');
+    const desiredSubviewParam = activeTab === 'analysis' ? analysisSubview : null;
+    if (currentTabParam === activeTab && currentSubviewParam === desiredSubviewParam) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', activeTab);
+    if (desiredSubviewParam) next.set('subview', desiredSubviewParam);
+    else next.delete('subview');
+    setSearchParams(next, { replace: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, analysisSubview]);
 
   // Data state
   const [initiatives, setInitiatives] = useState<PortfolioInitiative[]>([]);
@@ -271,6 +375,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
+  const newModalDialogRef = useRef<HTMLDivElement>(null);
   const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -288,6 +393,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [newLevel, setNewLevel] = useState<InitiativeLevel>('standard');
   const [newSummary, setNewSummary] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const closeNewModal = useCallback(() => {
+    if (!isCreating) setShowNewModal(false);
+  }, [isCreating]);
+  // CODEX pass 3 — the empty-state CTA that opens this overlay can be
+  // remounted as a fresh DOM node by an intervening re-render (e.g. a
+  // loading-state flash) while the dialog is open, detaching the exact
+  // element useDialogA11y captured at open-time. Re-query a LIVE equivalent
+  // by its stable testid instead of silently losing focus to <body>.
+  const getNewModalFallbackFocusTarget = useCallback(
+    () => document.querySelector<HTMLElement>(`[data-testid="${NEW_INITIATIVE_EMPTY_CTA_TESTID}"]`),
+    []
+  );
+  useDialogA11y({
+    open: showNewModal,
+    onClose: closeNewModal,
+    containerRef: newModalDialogRef,
+    getFallbackFocusTarget: getNewModalFallbackFocusTarget,
+  });
 
   // Preview pane state (V3 Table+Preview)
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
@@ -1609,6 +1732,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   label: t('initiatives.form.newInitiative'),
                   onClick: () => setShowNewModal(true),
                   icon: Plus,
+                  testId: NEW_INITIATIVE_EMPTY_CTA_TESTID,
                 }
           }
         />
@@ -2579,29 +2703,48 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-c-text mb-4">
+          <div
+            ref={newModalDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="initiatives-new-modal-heading"
+            tabIndex={-1}
+            className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto outline-none"
+          >
+            <h2
+              id="initiatives-new-modal-heading"
+              className="text-lg font-semibold text-c-text mb-4"
+            >
               {t('initiatives.form.createNew')}
             </h2>
             <div className="space-y-4">
               {/* Title */}
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
+                <label
+                  htmlFor="initiatives-new-modal-title"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
                   {t('initiatives.form.titleRequired')}
                 </label>
                 <input
+                  id="initiatives-new-modal-title"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
                   placeholder={t('initiatives.form.titlePlaceholder')}
+                  required
+                  aria-required="true"
                   autoFocus
                 />
               </div>
 
               {/* D1.1: Initiative Type/Level selector */}
-              <div>
-                <label className="block text-xs text-c-text-muted mb-2">
-                  Initiative Type / Level *
+              <div role="group" aria-labelledby="initiatives-new-modal-level-label">
+                <label
+                  id="initiatives-new-modal-level-label"
+                  className="block text-xs text-c-text-muted mb-2"
+                >
+                  {t('initiatives.form.levelTypeLabel')} *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {INITIATIVE_LEVELS.map((level) => (
@@ -2609,6 +2752,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       key={level.id}
                       type="button"
                       onClick={() => setNewLevel(level.id)}
+                      aria-pressed={newLevel === level.id}
                       className={`
                         relative p-3 rounded-lg border text-left transition-[background-color,border-color,box-shadow] duration-200
                         ${
@@ -2633,10 +2777,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Axis */}
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
+                <label
+                  htmlFor="initiatives-new-modal-axis"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
                   {t('initiatives.form.axis')}
                 </label>
                 <select
+                  id="initiatives-new-modal-axis"
                   value={newAxis}
                   onChange={(e) => setNewAxis(e.target.value as any)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text"
@@ -2650,10 +2798,14 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
               {/* Summary */}
               <div>
-                <label className="block text-xs text-c-text-muted mb-1">
+                <label
+                  htmlFor="initiatives-new-modal-summary"
+                  className="block text-xs text-c-text-muted mb-1"
+                >
                   {t('initiatives.form.summary')}
                 </label>
                 <textarea
+                  id="initiatives-new-modal-summary"
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
                   className="w-full px-3 py-2 bg-c-bg border border-c-border-subtle rounded-lg text-sm text-c-text resize-none"
@@ -2671,16 +2823,13 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       {INITIATIVE_LEVELS.find((l) => l.id === newLevel)?.label}
                     </span>
                     {' — '}
-                    {newLevel === 'quick_win' && 'Minimal governance. Can be self-approved.'}
-                    {newLevel === 'standard' &&
-                      'Standard approval flow. Requires owner + deadline + tasks.'}
-                    {newLevel === 'strategic' &&
-                      'Executive approval required. Full charter + RAID analysis.'}
-                    {newLevel === 'transformation' &&
-                      'Board-level governance. Full charter, steering committee, gate reviews.'}
+                    {newLevel === 'quick_win' && t('initiatives.form.levelDescQuickWin')}
+                    {newLevel === 'standard' && t('initiatives.form.levelDescStandard')}
+                    {newLevel === 'strategic' && t('initiatives.form.levelDescStrategic')}
+                    {newLevel === 'transformation' && t('initiatives.form.levelDescTransformation')}
                     <br />
                     <span className="text-c-text-muted italic">
-                      Level can be upgraded later but not downgraded.
+                      {t('initiatives.form.levelUpgradeOnlyNote')}
                     </span>
                   </div>
                 </div>

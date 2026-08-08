@@ -107,6 +107,10 @@ import {
   useObjectEditBarSlot,
 } from './canvas/objectEditBarDock';
 import { MenuListPopover } from './canvas/ObjectEditBarPopovers';
+import {
+  isContextMenuKey,
+  resolveKeyboardContextMenuTarget,
+} from './canvas/resolveKeyboardContextMenuTarget';
 import { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
 import { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
 import { IdeaProposalReview } from './IdeaProposalReview';
@@ -860,6 +864,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   >([]);
   const [outlineImportOpen, setOutlineImportOpen] = useState(false);
   const [outlineImportValue, setOutlineImportValue] = useState('');
+  // CB-05/RB-042/RV-003: scopes the Shift+F10/ContextMenu keyboard-invocation
+  // listener (below, near handleEdgeContextMenu) to this tool's own region
+  // instead of the whole document.
+  const wbKeyboardMenuContainerRef = useRef<HTMLDivElement>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
   const [contextMenuTarget, setContextMenuTarget] = useState<{
     nodeId?: string;
@@ -3097,6 +3105,54 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     setEdgeContextMenu({ edgeId, x: e.clientX, y: e.clientY });
   }, []);
 
+  // CB-05/RB-042/RV-003: keyboard invocation for the node/edge/background
+  // context menus. Until this, the menus only opened via pointer right-click
+  // — Shift+F10 (and the Windows "ContextMenu" key) on a keyboard-focused
+  // node opened nothing, because ReactFlow's own node/edge onKeyDown never
+  // handles those keys (confirmed against @reactflow/core — it only wires
+  // Escape/selection keys). Anchors the menu on the focused element's own
+  // bounding rect instead of pointer coordinates.
+  useEffect(() => {
+    const el = wbKeyboardMenuContainerRef.current;
+    if (!el) return;
+    const handler = (e: KeyboardEvent) => {
+      if (!isContextMenuKey(e)) return;
+      const target = resolveKeyboardContextMenuTarget(el, document.activeElement as HTMLElement);
+      if (!target) return;
+      e.preventDefault();
+      if (target.kind === 'node') {
+        const node = nodes.find((n) => n.id === target.nodeId);
+        if (!node) return;
+        setEdgeContextMenu(null);
+        setContextMenuPos({ x: target.rect.right, y: target.rect.top });
+        setContextMenuTarget({
+          nodeId: target.nodeId,
+          nodeLabel: node.data?.label,
+          nodeType: node.data?.semanticType || node.data?.type,
+          nodeLocked: Boolean(node.data?.locked),
+        });
+        setNodes((nds: Node[]) => {
+          const alreadySelected = nds.some((n) => n.id === target.nodeId && n.selected);
+          if (alreadySelected) return nds;
+          return nds.map((n) => ({ ...n, selected: n.id === target.nodeId }));
+        });
+      } else if (target.kind === 'edge') {
+        setContextMenuPos(null);
+        setEdgeContextMenu({ edgeId: target.edgeId, x: target.rect.left, y: target.rect.top });
+      } else {
+        // Background — open centered on the canvas region.
+        setEdgeContextMenu(null);
+        setContextMenuPos({
+          x: target.rect.left + target.rect.width / 2,
+          y: target.rect.top + target.rect.height / 2,
+        });
+        setContextMenuTarget({});
+      }
+    };
+    el.addEventListener('keydown', handler);
+    return () => el.removeEventListener('keydown', handler);
+  }, [nodes, setNodes]);
+
   // edge.set_label — realny handler: aktualizuje data.label, autosave przez
   // onGraphChange, realtime przez collab update_edge.
   const handleEdgeEditLabel = useCallback(() => {
@@ -3855,6 +3911,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   return (
     <div
+      ref={wbKeyboardMenuContainerRef}
       className="w-full h-full flex flex-col bg-c-surface"
       role="region"
       aria-label={t('myWork.whiteboard.regionLabel')}
@@ -3865,7 +3922,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         hideSaveIndicator={hideSaveIndicator}
         saving={saving}
         loading={loading}
-        whiteboardMode={whiteboardMode}
         sessionState={sessionState}
         sharePolicy={sharePolicy}
         presenceUsers={presenceUsers}
@@ -3875,9 +3931,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         shortcutsHelpOpen={shortcutsHelpOpen}
         canUndo={undoStackRef.current.length > 0}
         canRedo={redoStackRef.current.length > 0}
-        whiteboardModeCopy={whiteboardModeCopy}
         onAddElement={(kind, extraData) => addElement(kind as WbNodeKind, extraData)}
-        onSetBoardMode={setBoardMode}
         onClearDrawings={async () => {
           const ok = await showConfirm({
             title: t('myWorkIdeas.whiteboardTool.clearDrawings'),
@@ -3887,6 +3941,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             variant: 'danger',
           });
           if (!ok) return;
+          // CB-05 re-review: Clear Drawings is destructive (RB-043/§9) — it
+          // must go through the same undo stack as every other mutation so
+          // Ctrl/Cmd+Z (or the rail's Undo button) actually brings the
+          // drawings back. Snapshot BEFORE clearing, exactly like every
+          // other mutating handler in this file (see pushUndoSnapshot's
+          // other call sites).
+          pushUndoSnapshot();
           setDrawingPaths([]);
           toast.success(t('myWork.whiteboard.drawingsCleared'));
         }}

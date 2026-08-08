@@ -2,7 +2,6 @@ import {
   Circle,
   Diamond,
   ExternalLink,
-  Frame,
   Grid3X3,
   Hexagon,
   Image as ImageIcon,
@@ -11,17 +10,12 @@ import {
   Link2,
   Loader2,
   MoreHorizontal,
-  Pen,
-  Plus,
   Redo2,
   Save,
   Shapes,
-  Square,
-  StickyNote,
   ThumbsUp,
   Trash2,
   TrendingUp,
-  Type,
   Undo2,
   Workflow,
 } from 'lucide-react';
@@ -32,7 +26,6 @@ import { useTranslation } from 'react-i18next';
 import { isCanvasUndoInRailOnlyEnabled } from '@/utils/canvasUndoInRailOnlyFlag';
 
 import type { CanvasBgPattern } from '../ideaSelectionTypes';
-import { STICKY_COLORS } from './nodes/whiteboardNodeHelpers';
 import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { ToolbarBtn, ToolbarDropdown } from './WhiteboardToolbarPrimitives';
 
@@ -41,7 +34,6 @@ export interface WhiteboardToolbarProps {
   locked: boolean;
   saving: boolean;
   loading: boolean;
-  whiteboardMode: 'board' | 'draw';
   sessionState: WhiteboardSessionState;
   sharePolicy: WhiteboardSharePolicy;
   presenceUsers: Array<{ userId: string; userName?: string }>;
@@ -51,7 +43,6 @@ export interface WhiteboardToolbarProps {
   shortcutsHelpOpen: boolean;
   canUndo: boolean;
   canRedo: boolean;
-  whiteboardModeCopy: { toggleLabel: string; modeLabel: string; exitHint: string; helper: string };
   /** When true (Menu 1 owns the save indicator in the mels canvas shell), the
    *  toolbar hides its own Save button to avoid duplicating the identity-row
    *  save state. Save mechanics (autosave + onSave) are untouched. Default OFF
@@ -59,7 +50,6 @@ export interface WhiteboardToolbarProps {
   hideSaveIndicator?: boolean;
 
   onAddElement: (kind: string, extraData?: Record<string, unknown>) => void;
-  onSetBoardMode: (mode: 'board' | 'draw') => void;
   onClearDrawings: () => void;
   onToggleVoting: () => void;
   onCycleRole: () => void;
@@ -187,16 +177,13 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
   locked,
   saving,
   loading,
-  whiteboardMode,
   sessionState,
   bgPattern,
   drawingPathCount,
   saveStatusLabel,
   canUndo,
   canRedo,
-  whiteboardModeCopy,
   onAddElement,
-  onSetBoardMode,
   onClearDrawings,
   onToggleVoting,
   onCycleRole,
@@ -223,36 +210,19 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
         {t('myWork.whiteboard.toolbarExtra.title')}
       </div>
 
+      {/*
+       * CB-05/RB-041/RV-005: Sticky/Text/Shape(rectangle)/Frame/Draw are now
+       * owned exclusively by the left rail (CanvasLeftToolbar WB_CONTEXT_SLOTS
+       * + the shared pointer-mode slot) — decision #2/#3/#4. This dropdown
+       * keeps only what the rail has no equivalent for: the extra shape
+       * variants, Image and Link. Renamed from "Create" to "Insert" so it
+       * reads as a supplement, not a second main creation surface.
+       */}
       <ToolbarDropdown
-        icon={Plus}
-        label={t('myWork.whiteboard.toolbarExtra.create')}
+        icon={ImageIcon}
+        label={t('myWork.whiteboard.toolbarExtra.insert')}
         disabled={locked}
         items={[
-          ...STICKY_COLORS.map((c, i) => ({
-            id: `sticky-${i}`,
-            label: t('myWork.whiteboard.toolbar.sticky'),
-            icon: StickyNote,
-            swatch: c.hex,
-            onClick: () => onAddElement('sticky', { colorIndex: i }),
-          })),
-          {
-            id: 'text',
-            label: t('myWork.whiteboard.toolbar.text'),
-            icon: Type,
-            onClick: () => onAddElement('text'),
-          },
-          {
-            id: 'frame',
-            label: t('myWork.whiteboard.toolbar.frame'),
-            icon: Frame,
-            onClick: () => onAddElement('frame'),
-          },
-          {
-            id: 'shape_rectangle',
-            label: t('myWork.whiteboard.shapes.rectangle'),
-            icon: Square,
-            onClick: () => onAddElement('shape_rectangle'),
-          },
           {
             id: 'shape_circle',
             label: t('myWork.whiteboard.shapes.circle'),
@@ -284,25 +254,8 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
             onClick: () => onAddElement('link'),
           },
         ]}
-        onMainClick={() => onAddElement('sticky')}
+        onMainClick={() => onAddElement('image')}
       />
-      <ToolbarBtn
-        icon={Pen}
-        label={whiteboardModeCopy.toggleLabel}
-        onClick={() => onSetBoardMode(whiteboardMode === 'draw' ? 'board' : 'draw')}
-        disabled={locked}
-        active={whiteboardMode === 'draw'}
-        ariaPressed={whiteboardMode === 'draw'}
-      />
-      {drawingPathCount > 0 && (
-        <ToolbarBtn
-          icon={Trash2}
-          label={t('myWork.whiteboard.toolbar.clearDrawings')}
-          onClick={onClearDrawings}
-          disabled={locked}
-          danger
-        />
-      )}
 
       {/*
        * Sprzątanie C (2026-07-28, flaga `ff_canvasUndoInRailOnly`, domyślnie OFF):
@@ -415,7 +368,10 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
       {/* Z9: gdy Menu 1 (mels canvas shell) niesie własny wskaźnik zapisu
           (IdeaSaveIndicator), toolbar chowa WŁASNY przycisk Zapisz — zero dubli.
           hideSaveIndicator=false (legacy) → renderuje jak dotąd. Mechanika
-          zapisu (autosave + onSave) bez zmian. */}
+          zapisu (autosave + onSave) bez zmian.
+          CB-05/RB-043/RV-004: Save moved BEFORE the destructive group below —
+          Clear Drawings must be the true final, visually separated action in
+          the row, not preceded by anything (including the primary CTA). */}
       {!hideSaveIndicator && (
         <button
           type="button"
@@ -437,6 +393,24 @@ export const WhiteboardToolbar: React.FC<WhiteboardToolbarProps> = ({
       )}
       {/* #6c: "Saved Xs ago" tekst usunięty — autosave ma być cichy (dublet z Mind Map #6b/#6c).
           Mechanika sync (saveStatusLabel prop) zostaje niezmieniona, tylko nie renderujemy jej. */}
+
+      {/* CB-05/RB-043/RV-004: destructive group — the LAST thing in the row,
+          visually separated by a divider, only rendered when there's
+          something to clear. `onClearDrawings` already runs a Cancel/Confirm
+          dialog upstream (IdeaWhiteboardTool.tsx showConfirm) — this only
+          fixes WHERE it sits in the row, not the confirmation itself. */}
+      {drawingPathCount > 0 && (
+        <>
+          <div className="w-px h-5 bg-c-surface-raised mx-0.5 shrink-0" />
+          <ToolbarBtn
+            icon={Trash2}
+            label={t('myWork.whiteboard.toolbar.clearDrawings')}
+            onClick={onClearDrawings}
+            disabled={locked}
+            danger
+          />
+        </>
+      )}
     </div>
   );
 };

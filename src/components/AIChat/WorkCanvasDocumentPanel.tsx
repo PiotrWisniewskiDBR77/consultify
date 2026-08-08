@@ -61,9 +61,9 @@ import { isCanvasNewDocOptionsEnabled } from '@/utils/canvasNewDocOptionsFlag';
 
 import { CanvasArtifactBlockRenderer } from './CanvasArtifactBlockRenderer';
 import { CanvasArtifactSwitcher, type CanvasMountSelection } from './CanvasArtifactSwitcher';
+import { markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
 import { CanvasRichEditor } from './CanvasEditor/CanvasRichEditor';
 import { CanvasVersionHistory } from './CanvasEditor/CanvasVersionHistory';
-import { markdownToHtml } from './CanvasEditor/canvasMarkdownConversion';
 import { getInitialCanvasMode, persistCanvasMode } from './CanvasEditor/canvasViewMode';
 import { useCanvasAIStream } from './CanvasEditor/useCanvasAIStream';
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
@@ -1652,7 +1652,9 @@ function WorkCanvasMarkdownDocumentPanel({
         // A save landed, so any earlier conflict is resolved.
         setCanvasConflict(null);
         const savedAt =
-          typeof savedDraft?.updatedAt === 'string' ? savedDraft.updatedAt : new Date().toISOString();
+          typeof savedDraft?.updatedAt === 'string'
+            ? savedDraft.updatedAt
+            : new Date().toISOString();
         // Keep echoing the server's merged provenance on subsequent saves (C3/D-C-2).
         if (savedDraft?.provenance && typeof savedDraft.provenance === 'object') {
           draftOriginProvenanceRef.current = savedDraft.provenance as Record<string, unknown>;
@@ -3138,7 +3140,7 @@ function WorkCanvasMarkdownDocumentPanel({
       data-testid="canvas-selection-block-actions"
     >
       <div className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-300">
-        Turn selection into a block
+        {t('canvas.panel.selection.turnSelectionIntoBlock', 'Turn selection into a block')}
       </div>
       <div className="flex flex-wrap gap-2">
         <button
@@ -3146,35 +3148,35 @@ function WorkCanvasMarkdownDocumentPanel({
           className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
           onClick={() => createArtifactBlockFromSelection('table')}
         >
-          Create table
+          {t('canvas.panel.selection.createTable', 'Create table')}
         </button>
         <button
           type="button"
           className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
           onClick={() => createArtifactBlockFromSelection('chart')}
         >
-          Create chart
+          {t('canvas.panel.selection.createChart', 'Create chart')}
         </button>
         <button
           type="button"
           className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
           onClick={() => createArtifactBlockFromSelection('diagram')}
         >
-          Create diagram
+          {t('canvas.panel.selection.createDiagram', 'Create diagram')}
         </button>
         <button
           type="button"
           className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
           onClick={() => createArtifactBlockFromSelection('research')}
         >
-          Create research
+          {t('canvas.panel.selection.createResearch', 'Create research')}
         </button>
         <button
           type="button"
           className="rounded-full bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:bg-white/10 dark:text-slate-200"
           onClick={() => createArtifactBlockFromSelection('decision')}
         >
-          Create decision
+          {t('canvas.panel.selection.createDecision', 'Create decision')}
         </button>
       </div>
       <div
@@ -3182,7 +3184,7 @@ function WorkCanvasMarkdownDocumentPanel({
         data-testid="canvas-selection-edit-panel"
       >
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-700 dark:text-primary-200">
-          Edit selected text
+          {t('canvas.panel.selection.editSelectedText', 'Edit selected text')}
         </div>
         <div className="mt-1 line-clamp-2 text-xs text-primary-900/70 dark:text-primary-100/70">
           {canvasSelection.selectedText}
@@ -3193,28 +3195,34 @@ function WorkCanvasMarkdownDocumentPanel({
             onClick={() => applySelectionEditShortcut('use_selection')}
             className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
           >
-            Use selection
+            {t('canvas.panel.selection.useSelection', 'Use selection')}
           </button>
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('action_list')}
             className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
           >
-            Action list
+            {t('canvas.panel.selection.actionList', 'Action list')}
           </button>
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('bullet_summary')}
             className="rounded-full bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800 hover:bg-primary-200 dark:bg-primary-300/10 dark:text-primary-100 dark:hover:bg-primary-300/20"
           >
-            Bullet summary
+            {t('canvas.panel.selection.bulletSummary', 'Bullet summary')}
           </button>
         </div>
         <textarea
           value={selectionEditDraft}
           onChange={(event) => setSelectionEditDraft(event.target.value)}
-          aria-label="Selection edit replacement"
-          placeholder="Write the replacement Markdown here..."
+          aria-label={t(
+            'canvas.panel.selection.editReplacementLabel',
+            'Selection edit replacement'
+          )}
+          placeholder={t(
+            'canvas.panel.selection.editReplacementPlaceholder',
+            'Write the replacement Markdown here...'
+          )}
           className="mt-3 min-h-24 w-full resize-y rounded-2xl border border-primary-200 bg-white p-3 text-sm leading-6 text-slate-800 outline-none focus:border-primary-400 dark:border-primary-300/20 dark:bg-navy-950 dark:text-slate-100"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -3228,14 +3236,14 @@ function WorkCanvasMarkdownDocumentPanel({
                 : 'cursor-not-allowed rounded-full bg-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-500'
             }
           >
-            Preview edit
+            {t('canvas.panel.selection.previewEdit', 'Preview edit')}
           </button>
           <button
             type="button"
             onClick={() => setSelectionEditDraft('')}
             className="rounded-full px-3 py-1.5 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:text-primary-200 dark:hover:bg-primary-300/10"
           >
-            Clear
+            {t('canvas.panel.selection.clear', 'Clear')}
           </button>
         </div>
       </div>

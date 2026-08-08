@@ -5920,7 +5920,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         ) {
           return [];
         }
-        const sourceTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
+        // CB-06 / RV-015: never fall back to the raw internal source_id (a
+        // UUID like "ii_<uuid>") as the user-facing label — show a plain
+        // localized placeholder instead when no title was captured.
+        const sourceTitle =
+          initiative?.source_title ||
+          initiative?.sourceTitle ||
+          t('initiatives.initiativeDocumentView.untitledSource', 'Untitled source');
         const sourcePath =
           normalizedSourceType === 'interview' ||
           normalizedSourceType === 'interview_insight' ||
@@ -8211,10 +8217,19 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
         // ── V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Tools ──
         case 'used-in': {
+          // CB-06 / RV-015: the backlinks list has no human-readable title
+          // for the linked item (only type + internal id) — never show the
+          // raw id as a navigation name; the localized type label is the
+          // safe identity shown to the user, the raw id stays payload-only
+          // (used to open the item, never rendered).
           const openBacklinkItem = (sourceType: string, sourceId: string) => {
             window.dispatchEvent(
               new CustomEvent('mywork-open-item', {
-                detail: { type: sourceType, id: sourceId, name: `${sourceType} ${sourceId}` },
+                detail: {
+                  type: sourceType,
+                  id: sourceId,
+                  name: getSourceDisplayLabel(sourceType, isPolish),
+                },
               })
             );
           };
@@ -8241,7 +8256,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                         <div className="text-[11px] font-medium text-c-text truncate">
                           {getSourceDisplayLabel(bl.sourceType, isPolish)}
                         </div>
-                        <div className="text-[10px] text-c-text-muted truncate">{bl.sourceId}</div>
                       </div>
                       <button
                         onClick={() => openBacklinkItem(bl.sourceType, bl.sourceId)}

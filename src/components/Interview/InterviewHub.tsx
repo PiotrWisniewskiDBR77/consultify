@@ -200,17 +200,11 @@ const ASSIGNMENT_STATUS_OPTION_ORDER = [
   'accepted',
 ];
 
-// L-07 / D-03 — canonical pipeline stage numerals ①–⑥ over the flat tabs. Lifted
-// to module scope so both the `tabs` labels (withStep) and the `pipelineSteps`
-// stepper (D-03) derive from one source. Sessions has no numeral (side view).
-const INTERVIEW_PIPELINE_NUMERAL: Record<string, string> = {
-  templates: '①',
-  managed: '②',
-  my_assignments: '③',
-  pending_review: '④',
-  insights: '⑤',
-  initiatives: '⑥',
-};
+// L-07 / D-03 — canonical pipeline stage numerals ①–⑥ over the flat tabs.
+// Sessions has no numeral (side view). Numerals themselves are computed
+// dynamically per visible-stage-set by `buildInterviewPipelineNumerals`
+// below (RV-011) rather than a static id→numeral map, so hiding a stage
+// never produces a gap in the sequence.
 // Pipeline stage order (left→right) for the D-03 stepper.
 const INTERVIEW_PIPELINE_STAGE_ORDER = [
   'templates',
@@ -220,6 +214,28 @@ const INTERVIEW_PIPELINE_STAGE_ORDER = [
   'insights',
   'initiatives',
 ] as const;
+
+// RV-011 — the static INTERVIEW_PIPELINE_NUMERAL map above assigns each
+// stage a FIXED numeral by id. When a stage is hidden (pending_review is
+// flag-gated OFF by default), the visible tab row skipped straight from ③ to
+// ⑤ — a numbered sequence that looks broken rather than intentional. Assign
+// numerals densely, in canonical order, over only the stages that are
+// actually visible right now, so the numbering the user sees is always a
+// continuous run starting at ①.
+const CIRCLED_PIPELINE_NUMERALS = ['①', '②', '③', '④', '⑤', '⑥'];
+
+function buildInterviewPipelineNumerals(
+  visibleStageIds: readonly string[]
+): Record<string, string> {
+  const numerals: Record<string, string> = {};
+  const visibleInCanonicalOrder = INTERVIEW_PIPELINE_STAGE_ORDER.filter((id) =>
+    visibleStageIds.includes(id)
+  );
+  visibleInCanonicalOrder.forEach((id, idx) => {
+    numerals[id] = CIRCLED_PIPELINE_NUMERALS[idx] ?? String(idx + 1);
+  });
+  return numerals;
+}
 
 // (Sessions/Templates/Assignments/Initiatives column-visibility + width
 // defaults + persistence keys + hidden-columns/boolean-setting/column-width
@@ -597,6 +613,27 @@ export const InterviewHub: React.FC = () => {
 
   // State - domyślnie Inbox (moje przydziały)
   const [activeTab, setActiveTab] = useState<InterviewTab>('my_assignments');
+
+  // CB-02 pass 2 (RV-026/RB-022 follow-up): canonical tab-transition function.
+  // Every place in this component that switches the Interview tab goes
+  // through here so `?tab=` always reflects `activeTab` — direct entry,
+  // refresh, and browser back/forward restore the same tab instead of
+  // always landing on the Inbox default. Merges with (never replaces) the
+  // rest of the query string.
+  const changeInterviewTab = useCallback(
+    (tab: InterviewTab, opts?: { replace?: boolean }) => {
+      setActiveTab(tab);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', tab);
+          return next;
+        },
+        { replace: opts?.replace ?? false }
+      );
+    },
+    [setSearchParams]
+  );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [assignmentsViewMode, setAssignmentsViewMode] = useState<'list' | 'cards'>('list');
   const [initiativesViewMode, setInitiativesViewMode] = useState<'table' | 'cards'>('table');
@@ -730,6 +767,11 @@ export const InterviewHub: React.FC = () => {
   // #7b — Manager "Change due date" inline modal.
   const [showDueDateModal, setShowDueDateModal] = useState(false);
   const [dueDateDraft, setDueDateDraft] = useState<string>('');
+  // RV-025 — "New session" launcher: collects the name and requires an
+  // explicit Create before the POST fires, so a stray click never persists.
+  const [showNewSessionModal, setShowNewSessionModal] = useState(false);
+  const [newSessionNameDraft, setNewSessionNameDraft] = useState<string>('');
+  const [creatingSession, setCreatingSession] = useState(false);
   const [manageAssignmentBusy, setManageAssignmentBusy] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<Set<string>>(new Set());
@@ -957,19 +999,59 @@ export const InterviewHub: React.FC = () => {
     }
   }, [activeDocumentId]);
 
+  // CB-02 pass 2 — canonical URL -> state tab restoration. Runs
+  // `resolveInterviewTabFromSearchParams` (previously a unit-tested but
+  // unwired pure function) against the current `?tab=` on mount, on
+  // back/forward, and whenever permissions finish loading — direct entry,
+  // refresh, and browser back/forward now land on the requested tab instead
+  // of always defaulting to the Inbox. A restricted tab (e.g. `?tab=managed`
+  // for a viewer without manager permission) resolves to the safe
+  // `my_assignments` fallback, and the URL is corrected to match (honest
+  // recovery — the address bar never claims a tab that isn't actually
+  // rendered).
   useEffect(() => {
-    if (tabFromUrl === 'initiatives') {
-      setActiveTab('initiatives');
+    if (permissionsLoading) return;
+    const requestedTab = searchParams.get('tab');
+    if (!requestedTab) return;
+    const resolved = resolveInterviewTabFromSearchParams(searchParams, {
+      canViewManaged,
+      canViewTemplates,
+      canViewInsights,
+    });
+    // CB-02 pass 3: `resolved === null` means the requested tab isn't a
+    // recognized InterviewTab at all (typo'd, stale, or a removed tab) — NOT
+    // only the permission-denied case handled below. Previously this early
+    // `return` left the bogus `?tab=` sitting in the address bar forever
+    // while `activeTab` silently stayed on whatever it already was (the
+    // Inbox default on a fresh mount) — the URL and the rendered surface
+    // disagreed indefinitely. Canonicalize both to the same safe default the
+    // permission-denied path already uses.
+    const canonicalTab = resolved ?? 'my_assignments';
+    if (canonicalTab !== activeTab) {
+      setActiveTab(canonicalTab);
       setActiveDocumentId(null);
     }
-  }, [tabFromUrl, setActiveDocumentId]);
+    if (canonicalTab !== requestedTab) {
+      // Permission gating demoted the requested tab, or it wasn't a
+      // recognized tab at all — correct the URL either way.
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', canonicalTab);
+          return next;
+        },
+        { replace: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, permissionsLoading, canViewManaged, canViewTemplates, canViewInsights]);
 
   useEffect(() => {
     if (!initiativeIdFromUrl) return;
-    setActiveTab('initiatives');
+    changeInterviewTab('initiatives', { replace: true });
     setActiveDocumentId(null);
     setSelectedInterviewInitiativeId(initiativeIdFromUrl);
-  }, [initiativeIdFromUrl, setActiveDocumentId]);
+  }, [initiativeIdFromUrl, setActiveDocumentId, changeInterviewTab]);
 
   useEffect(() => {
     // Templates: selection exists only in list mode (no document open)
@@ -1651,10 +1733,16 @@ export const InterviewHub: React.FC = () => {
       ['in_progress', 'submitted', 'sent_back', 'approved', 'completed'].includes(
         assignment.status
       );
-    setActiveTab(shouldOpenInSessions ? 'sessions' : isManagerView ? 'managed' : 'my_assignments');
+    const resolvedTab = shouldOpenInSessions
+      ? 'sessions'
+      : isManagerView
+        ? 'managed'
+        : 'my_assignments';
+    setActiveTab(resolvedTab);
     void openInterviewAssignmentFull(assignment, isManagerView);
     const next = new URLSearchParams(searchParams);
     next.delete('assignmentId');
+    next.set('tab', resolvedTab);
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignmentIdFromUrl, myAssignments, managedAssignments, searchParams, setSearchParams]);
@@ -2166,8 +2254,20 @@ export const InterviewHub: React.FC = () => {
     // PREVIEW: the numbering is an advisory ordering over the existing flat tabs;
     // a dedicated ④ "Dopuszczenie" inbox is not yet a standalone backed view, so
     // the review stage is reached via the Przydzielone tab's approve/send-back.
+    // RV-011 — numerals are dense over the stages actually visible right now
+    // (permissions + the pending_review flag), never a fixed id→numeral map,
+    // so the tab row never skips a number.
+    const visiblePipelineStageIds = INTERVIEW_PIPELINE_STAGE_ORDER.filter((id) => {
+      if (id === 'templates') return canViewTemplates;
+      if (id === 'managed') return canViewManaged;
+      if (id === 'my_assignments') return true;
+      if (id === 'pending_review') return canViewInsights && isInterviewPendingReviewTabEnabled();
+      if (id === 'insights' || id === 'initiatives') return canViewInsights;
+      return false;
+    });
+    const pipelineNumerals = buildInterviewPipelineNumerals(visiblePipelineStageIds);
     const withStep = (id: string, label: string): string =>
-      INTERVIEW_PIPELINE_NUMERAL[id] ? `${INTERVIEW_PIPELINE_NUMERAL[id]} ${label}` : label;
+      pipelineNumerals[id] ? `${pipelineNumerals[id]} ${label}` : label;
 
     const baseTabs: Array<{
       id: ModuleTab;
@@ -2269,7 +2369,7 @@ export const InterviewHub: React.FC = () => {
       if (!tab) return null;
       return {
         id: tab.id,
-        numeral: INTERVIEW_PIPELINE_NUMERAL[id] ?? '',
+        numeral: tab.label.match(/^[①②③④⑤⑥]/)?.[0] ?? '',
         label: tab.label.replace(/^[①②③④⑤⑥]\s*/, ''),
         count: tab.count,
       };
@@ -2292,8 +2392,24 @@ export const InterviewHub: React.FC = () => {
   }, [currentProjectId, setCurrentProjectId]);
 
   // Handlers
-  const handleNewSession = useCallback(async () => {
+  // RV-025 — launcher only: opens the confirm modal pre-filled with the
+  // default name, but does NOT persist anything. The POST only fires from
+  // `handleConfirmNewSession` after the user explicitly clicks Create.
+  const handleNewSession = useCallback(() => {
+    setNewSessionNameDraft(`Interview ${formatListDate(new Date())}`);
+    setShowNewSessionModal(true);
+  }, [isPolish]);
+
+  const handleCancelNewSession = useCallback(() => {
+    setShowNewSessionModal(false);
+    setNewSessionNameDraft('');
+  }, []);
+
+  const handleConfirmNewSession = useCallback(async () => {
     const toastId = INTERVIEW_CREATE_SESSION_TOAST_ID;
+    const name = newSessionNameDraft.trim();
+    if (!name) return;
+    setCreatingSession(true);
     try {
       const projectId = await ensureProjectId();
       if (!projectId) {
@@ -2305,7 +2421,7 @@ export const InterviewHub: React.FC = () => {
       });
       const newSession = await Api.post('/interview/sessions', {
         projectId,
-        name: `Interview ${formatListDate(new Date())}`,
+        name,
       });
 
       setSessions((prev) => [newSession as InterviewSession, ...prev]);
@@ -2327,14 +2443,18 @@ export const InterviewHub: React.FC = () => {
       toast.success(t('interview.hub.newInterviewSessionStarted'), {
         id: toastId,
       });
+      setShowNewSessionModal(false);
+      setNewSessionNameDraft('');
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
       toast.error(
         getSafeInterviewErrorMessage(error, t('interview.hub.failedToCreateSessionPlease')),
         { id: toastId, duration: 6000 }
       );
+    } finally {
+      setCreatingSession(false);
     }
-  }, [ensureProjectId, isPolish]);
+  }, [ensureProjectId, isPolish, newSessionNameDraft]);
 
   const handleSessionComplete = useCallback(
     async (sessionId: string) => {
@@ -3095,14 +3215,14 @@ export const InterviewHub: React.FC = () => {
         setInsights(Array.isArray(insightsRes) ? insightsRes : []);
 
         // Switch to insights tab
-        setActiveTab('insights');
+        changeInterviewTab('insights');
       } catch (error) {
         toast.dismiss();
         toast.error(t('interview.hub.failedToGenerateInsights'));
         console.error('[InterviewHub] Failed to generate insight:', error);
       }
     },
-    [isPolish]
+    [isPolish, changeInterviewTab]
   );
 
   const handleUpdateInterviewInitiativeStatus = useCallback(
@@ -4481,7 +4601,7 @@ export const InterviewHub: React.FC = () => {
           description: t('interview.hub.startYourFirstStakeholderInterview'),
           actionLabel: t('interview.hub.useATemplate'),
           onAction: () => {
-            setActiveTab('templates');
+            changeInterviewTab('templates');
             setActiveDocumentId(null);
           },
         }}
@@ -7944,7 +8064,7 @@ Return ONLY the answer text (no markdown fences).`;
                       onAction:
                         interviewInitiatives.length === 0
                           ? () => {
-                              setActiveTab('insights');
+                              changeInterviewTab('insights');
                               setActiveDocumentId(null);
                             }
                           : undefined,
@@ -8998,13 +9118,13 @@ Return ONLY the answer text (no markdown fences).`;
 
   const handleMainTabChange = useCallback(
     (tab: ModuleTab) => {
-      setActiveTab(tab as InterviewTab);
+      changeInterviewTab(tab as InterviewTab);
       if (tab === 'managed') {
         setAssignmentStatusFilter('all');
       }
       setActiveDocumentId(null);
     },
-    [setActiveDocumentId]
+    [setActiveDocumentId, changeInterviewTab]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -9463,7 +9583,7 @@ Return ONLY the answer text (no markdown fences).`;
               });
               return Array.from(byId.values());
             });
-            setActiveTab('initiatives');
+            changeInterviewTab('initiatives');
             setSelectedInterviewInitiativeId(created[0].id);
           }
           await loadInterviewInitiatives();
@@ -9900,6 +10020,69 @@ Return ONLY the answer text (no markdown fences).`;
         </div>
       )}
 
+      {/* RV-025 — New session launcher: name is collected here and the POST
+          only fires from an explicit Create click; Cancel/backdrop/× all
+          discard the draft without persisting anything. */}
+      {showNewSessionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-c-surface border border-slate-200/60 dark:border-white/[0.03] rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-c-border-subtle">
+              <h2 className="text-lg font-semibold text-c-text flex items-center gap-2">
+                <MessageSquare size={18} className="text-c-info" />
+                {t('interview.hub.newSessionModalTitle')}
+              </h2>
+              <button
+                onClick={handleCancelNewSession}
+                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-700 text-c-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <label
+                htmlFor="interview-new-session-name"
+                className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5"
+              >
+                {t('interview.hub.sessionNameLabel')}
+              </label>
+              <input
+                id="interview-new-session-name"
+                type="text"
+                autoFocus
+                value={newSessionNameDraft}
+                onChange={(e) => setNewSessionNameDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newSessionNameDraft.trim() && !creatingSession) {
+                    void handleConfirmNewSession();
+                  }
+                }}
+                className="w-full px-3 py-2 mb-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleCancelNewSession}
+                  className="flex-1 px-4 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  {t('interview.hub.cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmNewSession}
+                  disabled={creatingSession || !newSessionNameDraft.trim()}
+                  className="flex-1 px-4 py-2 rounded-lg bg-navy-900 hover:bg-navy-800 text-white dark:bg-slate-50 dark:text-navy-950 dark:hover:bg-slate-200 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {creatingSession ? (
+                    <Loader2 size={16} className="inline mr-2 animate-spin" />
+                  ) : null}
+                  {t('interview.hub.create')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Analytics Modal (Placeholder) */}
       {showAnalytics && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -10034,6 +10217,7 @@ Return ONLY the answer text (no markdown fences).`;
 export const __private__ = {
   isInterviewTab,
   resolveInterviewTabFromSearchParams,
+  buildInterviewPipelineNumerals,
 };
 
 export default InterviewHub;

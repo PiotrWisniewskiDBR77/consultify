@@ -38,6 +38,7 @@ import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { TeresaMark } from '@/components/shared/TeresaMark';
 import { type WizardStep, WizardStepper } from '@/components/shared/WizardModal';
 import { Button, LoadingState } from '@/components/ui/primitives';
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { Api } from '@/services/api';
 import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
@@ -69,8 +70,7 @@ type InsightAnalysisMode =
   | 'between_the_lines';
 
 type InsightContextMode =
-  | 'selected_interview_material_only'
-  | 'selected_material_plus_approved_org_knowledge';
+  'selected_interview_material_only' | 'selected_material_plus_approved_org_knowledge';
 type CreatorStepId = 'define' | 'material' | 'refine';
 
 interface CompletedSession {
@@ -538,6 +538,14 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const dialogContainerRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  useDialogA11y({
+    open: isOpen,
+    onClose,
+    containerRef: dialogContainerRef,
+    initialFocusRef: titleInputRef,
+  });
 
   // State
   const [title, setTitle] = useState('');
@@ -962,9 +970,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 
         if (sessionsResult.status === 'rejected') {
           const reason = sessionsResult.reason as
-            | { status?: number; message?: string }
-            | Error
-            | undefined;
+            { status?: number; message?: string } | Error | undefined;
           const status = (reason as { status?: number } | undefined)?.status;
           setLoadError(t('interview.insightCreatorModal.insightGeneratorUnavailable'));
         }
@@ -1674,9 +1680,11 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 
   const renderTypeRow = (type: AnalysisType) => {
     const isSelected = selectedTypes.includes(type.id);
+    const inputId = `insight-creator-output-type-${type.id}`;
     return (
       <label
         key={type.id}
+        htmlFor={inputId}
         className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
           isSelected
             ? 'border-c-info/60 bg-c-info/10 dark:border-c-info/40 dark:bg-c-info/15'
@@ -1684,6 +1692,7 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
         }`}
       >
         <input
+          id={inputId}
           type="checkbox"
           checked={isSelected}
           onChange={() => toggleAnalysisType(type.id)}
@@ -1722,14 +1731,21 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
     return (
       <div className="space-y-5">
         <div>
-          <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label
+            htmlFor="insight-creator-title"
+            className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+          >
             {t('interview.insightCreatorModal.insightTitle')} *
           </label>
           <input
+            id="insight-creator-title"
+            ref={titleInputRef}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t('interview.insightCreatorModal.eGDigitalTransformationAnalysis')}
+            required
+            aria-required="true"
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-slate-900 placeholder-slate-400 transition focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
           />
           {renderSimilarWarning()}
@@ -2559,20 +2575,32 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm">
-      <div className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
+      <div
+        ref={dialogContainerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="insight-creator-heading"
+        tabIndex={-1}
+        className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900 outline-none"
+      >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <h2
+            id="insight-creator-heading"
+            className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
+          >
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-crimson-50 text-crimson-700 dark:bg-crimson-500/15 dark:text-crimson-300">
               <TeresaMark size={16} />
             </span>
             {t('interview.insightCreatorModal.aiInsightCreator')}
           </h2>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t('interview.insightCreatorModal.close', 'Close')}
             className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
           >
-            <X size={20} />
+            <X size={20} aria-hidden="true" />
           </button>
         </div>
 

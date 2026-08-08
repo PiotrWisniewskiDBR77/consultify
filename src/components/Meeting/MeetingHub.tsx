@@ -37,11 +37,11 @@ import {
 } from '@/components/standard';
 import { StandardModuleBar } from '@/components/standard/StandardModuleBar';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
-import { EntityStatusChip, StatusChip, statusChipTone } from '@/components/ui/primitives/chips';
+import { StatusChip } from '@/components/ui/primitives/chips';
 import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
-type MeetingStatus = 'scheduled' | 'completed';
+export type MeetingStatus = 'scheduled' | 'completed';
 
 interface FollowUpItem {
   id: string;
@@ -50,7 +50,7 @@ interface FollowUpItem {
   status: FollowUpStatus;
 }
 
-interface MeetingItem {
+export interface MeetingItem {
   id: string;
   projectId?: string | null;
   title: string;
@@ -161,7 +161,13 @@ export const MeetingHub: React.FC = () => {
       // (isUpcoming), otherwise the chip advertises N and the table shows M.
       // Previously the chip counted by date but filtered by status='scheduled'.
       if (filter.column === 'upcoming') {
-        data = data.filter(isUpcoming);
+        data = data.filter((m) => isUpcoming(m));
+      }
+      // CB-04/RB-009/RV-024: same M12-F02 discipline for the new "Past — needs
+      // update" chip — filter by the identical deriveMeetingLifecycle() call
+      // the chip's own count and the row badge use.
+      if (filter.column === 'pastNeedsUpdate') {
+        data = data.filter((m) => deriveMeetingLifecycle(m) === 'past_needs_update');
       }
     }
 
@@ -183,6 +189,10 @@ export const MeetingHub: React.FC = () => {
         ...item,
         upcoming: isUpcoming(item) ? 'true' : 'false',
         followUp: item.followUps.some((x) => x.status === 'open') ? 'open' : 'none',
+        // CB-04/RB-009/RV-024: materialize onto the row for the same reason
+        // `upcoming`/`followUp` are — FilterableTable's second filtering pass
+        // reads `row[filter.column]` literally.
+        pastNeedsUpdate: deriveMeetingLifecycle(item) === 'past_needs_update' ? 'true' : 'false',
       })),
     [filteredMeetings]
   );
@@ -270,9 +280,14 @@ export const MeetingHub: React.FC = () => {
   const counts = useMemo(() => {
     return {
       all: meetings.length,
-      upcoming: meetings.filter(isUpcoming).length,
+      upcoming: meetings.filter((m) => isUpcoming(m)).length,
       followUp: meetings.filter((item) => item.followUps.some((x) => x.status === 'open')).length,
       completed: meetings.filter((item) => item.status === 'completed').length,
+      // CB-04/RB-009/RV-024: past meetings never auto-marked completed —
+      // distinct from `followUp` (open action-item follow-ups on ANY
+      // meeting) and from `completed` (genuinely closed out).
+      pastNeedsUpdate: meetings.filter((m) => deriveMeetingLifecycle(m) === 'past_needs_update')
+        .length,
     };
   }, [meetings]);
 
@@ -328,17 +343,33 @@ export const MeetingHub: React.FC = () => {
             color: 'bg-emerald-400',
           },
         ],
-        // canon §4.1 — EntityStatusChip maps scheduled→info, completed→success via statusChipTone()
-        render: (row: MeetingItem) => (
-          <EntityStatusChip
-            status={row.status}
-            label={
-              row.status === 'completed'
-                ? t('meeting.status.completed', 'Completed')
-                : t('meeting.status.scheduled', 'Scheduled')
-            }
-          />
-        ),
+        // CB-04/RB-009/RV-024: three DISPLAY states over the two real
+        // `status` values — a past-but-still-`scheduled` meeting gets its
+        // own honest warning-tone label instead of reading as identical to
+        // a genuinely future one (canon §4.1 EntityStatusChip pattern, but
+        // via StatusChip directly since the tone here is lifecycle-derived,
+        // not a straight raw-status lookup).
+        render: (row: MeetingItem) => {
+          const lifecycle = deriveMeetingLifecycle(row);
+          return (
+            <StatusChip
+              tone={
+                lifecycle === 'completed'
+                  ? 'success'
+                  : lifecycle === 'past_needs_update'
+                    ? 'warning'
+                    : 'info'
+              }
+              label={
+                lifecycle === 'completed'
+                  ? t('meeting.status.completed', 'Completed')
+                  : lifecycle === 'past_needs_update'
+                    ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
+                    : t('meeting.status.scheduled', 'Scheduled')
+              }
+            />
+          );
+        },
       },
       {
         id: 'followUps',
@@ -376,6 +407,24 @@ export const MeetingHub: React.FC = () => {
               column: 'upcoming',
               value: 'true',
               label: t('meeting.counters.upcoming', 'Upcoming'),
+            },
+          ]),
+      },
+      {
+        // CB-04/RB-009/RV-024: distinct from `followUp` below (open
+        // action-item follow-ups on any meeting) — this is meetings whose
+        // time has passed but were never marked completed.
+        id: 'pastNeedsUpdate',
+        label: t('meeting.counters.pastNeedsUpdate', 'Past — needs update'),
+        count: counts.pastNeedsUpdate,
+        active: activeFilters.some((f) => f.column === 'pastNeedsUpdate'),
+        onClick: () =>
+          setActiveFilters([
+            {
+              id: 'pastNeedsUpdate:true',
+              column: 'pastNeedsUpdate',
+              value: 'true',
+              label: t('meeting.counters.pastNeedsUpdate', 'Past — needs update'),
             },
           ]),
       },
@@ -831,13 +880,23 @@ export const MeetingHub: React.FC = () => {
                   onOpenFull={() => openMeetingDocument(selectedMeeting)}
                   meta={{
                     pills: [
-                      {
-                        label:
-                          selectedMeeting.status === 'completed'
-                            ? t('meeting.status.completed', 'Completed')
-                            : t('meeting.status.scheduled', 'Scheduled'),
-                        tone: statusChipTone(selectedMeeting.status),
-                      },
+                      (() => {
+                        const lifecycle = deriveMeetingLifecycle(selectedMeeting);
+                        return {
+                          label:
+                            lifecycle === 'completed'
+                              ? t('meeting.status.completed', 'Completed')
+                              : lifecycle === 'past_needs_update'
+                                ? t('meeting.status.pastNeedsUpdate', 'Past — needs update')
+                                : t('meeting.status.scheduled', 'Scheduled'),
+                          tone:
+                            lifecycle === 'completed'
+                              ? ('success' as const)
+                              : lifecycle === 'past_needs_update'
+                                ? ('warning' as const)
+                                : ('info' as const),
+                        };
+                      })(),
                     ],
                     trailing: (
                       <span className="text-[11px] font-semibold text-c-text-secondary">
@@ -1701,9 +1760,11 @@ const MeetingCalendarView: React.FC<{
                     onClick={() => onSelectMeeting(meeting)}
                     title={meeting.title}
                     className={`block w-full truncate rounded-md px-1.5 py-0.5 text-left text-[11px] font-medium transition-colors ${
-                      meeting.status === 'completed'
+                      deriveMeetingLifecycle(meeting) === 'completed'
                         ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 dark:text-emerald-300'
-                        : 'bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300'
+                        : deriveMeetingLifecycle(meeting) === 'past_needs_update'
+                          ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 dark:text-amber-300'
+                          : 'bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300'
                     }`}
                   >
                     {new Date(meeting.startAt).toLocaleTimeString(locale, {
@@ -1752,15 +1813,40 @@ function toLocalInput(value: string): string {
 }
 
 /**
+ * CB-04/RB-009/RV-024 — the persisted `status` column only ever holds
+ * 'scheduled' | 'completed' (no DB change here), but a meeting whose end
+ * time has already passed and was never marked completed is neither
+ * genuinely upcoming nor actually done — displaying it as plain "Scheduled"
+ * (the pre-fix behavior everywhere in this file) is what made every past
+ * meeting in the RV-024 repro read as identical to a real future one, and
+ * made the Completed counter read 0 even with ten months-old rows.
+ *
+ * This is a DISPLAY-only derived lifecycle — the real `status` field and the
+ * scheduled/completed filter values are untouched. `now` is injectable so
+ * tests can assert exact boundary behavior with a fixed clock instead of
+ * real wall-clock time.
+ */
+export type MeetingLifecycle = 'scheduled' | 'past_needs_update' | 'completed';
+
+export function deriveMeetingLifecycle(
+  meeting: MeetingItem,
+  now: number = Date.now()
+): MeetingLifecycle {
+  if (meeting.status === 'completed') return 'completed';
+  const end = new Date(meeting.endAt || meeting.startAt).getTime();
+  if (Number.isNaN(end)) return 'scheduled';
+  return end < now ? 'past_needs_update' : 'scheduled';
+}
+
+/**
  * A meeting is "upcoming" when it has not been closed AND has not passed yet.
  * Both the Menu 3 badge and the Menu 3 filter go through this one predicate —
- * that is the whole point (M12-F02).
+ * that is the whole point (M12-F02). Now expressed in terms of the same
+ * lifecycle derivation the status badges use, so "Upcoming" and "Scheduled"
+ * can never silently disagree about the same meeting again.
  */
-function isUpcoming(meeting: MeetingItem): boolean {
-  if (meeting.status === 'completed') return false;
-  const end = new Date(meeting.endAt || meeting.startAt).getTime();
-  if (Number.isNaN(end)) return true;
-  return end >= Date.now();
+function isUpcoming(meeting: MeetingItem, now: number = Date.now()): boolean {
+  return deriveMeetingLifecycle(meeting, now) === 'scheduled';
 }
 
 function splitLines(value: string): string[] {

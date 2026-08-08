@@ -25,12 +25,14 @@ export const CONSULTING_TOOL_SESSION_SECTIONS = [
 
 export type ConsultingToolSessionSection = (typeof CONSULTING_TOOL_SESSION_SECTIONS)[number];
 
-export const CONSULTING_TOOL_STANDARD_OUTPUTS = [
-  'initiative',
-  'report',
-  'presentation',
-  'idea',
-] as const;
+// RB-025: narrowed to the one output type ToolDocumentView actually delivers
+// end-to-end (generate → generatedInitiatives list → reopen via
+// onOpenInitiative → lineage back to the source session). 'report',
+// 'presentation' and 'idea' were declared here but had no generating,
+// created, failed/retry, reopen or lineage implementation anywhere in the
+// codebase (outputsScaffolding.ts's report/deck outlines have zero callers) —
+// advertising them let the UI promise output types it could not deliver.
+export const CONSULTING_TOOL_STANDARD_OUTPUTS = ['initiative'] as const;
 
 export type ConsultingToolOutputType = (typeof CONSULTING_TOOL_STANDARD_OUTPUTS)[number];
 
