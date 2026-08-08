@@ -1441,6 +1441,7 @@ export async function updateModel(
     'granularity',
     'scenario',
     'status',
+    'source_statement_pack_id',
   ];
   // Approval-state guard (mass-assignment defense): the `approved` lifecycle
   // state may ONLY be reached via approveModel(), which recomputes + validates,
