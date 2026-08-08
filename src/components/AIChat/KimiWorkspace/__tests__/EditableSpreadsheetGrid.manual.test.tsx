@@ -314,7 +314,7 @@ describe('EditableSpreadsheetGrid manual operations', () => {
   );
 
   it.each(['light', 'dark'])(
-    'uses the high-contrast %s-theme foreground for an imported fill without fontColor',
+    'uses a fill-aware high-contrast foreground in the %s theme',
     (theme) => {
       document.documentElement.classList.toggle('dark', theme === 'dark');
       const importedFillSheets = [
@@ -343,8 +343,8 @@ describe('EditableSpreadsheetGrid manual operations', () => {
 
       expect(screen.getByTestId('workbook-cell-0-plan')).toHaveStyle({
         backgroundColor: '#DCEFEA',
-        color: 'var(--c-text)',
-        WebkitTextFillColor: 'var(--c-text)',
+        color: '#0F172A',
+        WebkitTextFillColor: '#0F172A',
         fontWeight: '700',
       });
       document.documentElement.classList.remove('dark');

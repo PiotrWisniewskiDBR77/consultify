@@ -113,17 +113,32 @@ function cssColor(value: unknown): string | undefined {
   return normalized.startsWith('#') ? normalized : `#${normalized}`;
 }
 
+function readableForeground(backgroundColor: string | undefined): string | undefined {
+  const match = backgroundColor?.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return backgroundColor ? 'var(--c-text)' : undefined;
+  const rgb = [0, 2, 4].map((offset) => parseInt(match[1].slice(offset, offset + 2), 16));
+  const [red, green, blue] = rgb.map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  });
+  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  return luminance > 0.42 ? '#0F172A' : '#F8FAFC';
+}
+
 function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').FormulaCellRaw | undefined): React.CSSProperties {
   const style = cell?.style as Record<string, unknown> | undefined;
   if (!style) return {};
   const borderWidth = style.border === 'thick' ? 3 : style.border === 'medium' ? 2 : style.border === 'thin' ? 1 : 0;
   const backgroundColor = cssColor(style.bgColor);
   const explicitFontColor = cssColor(style.fontColor);
-  const themeForeground = backgroundColor && !explicitFontColor ? 'var(--c-text)' : undefined;
+  const themeForeground = !explicitFontColor ? readableForeground(backgroundColor) : undefined;
+  const foreground = explicitFontColor ?? themeForeground;
   return {
     backgroundColor,
-    color: explicitFontColor ?? themeForeground,
-    WebkitTextFillColor: themeForeground,
+    color: foreground,
+    WebkitTextFillColor: foreground,
     fontWeight: style.bold ? 700 : undefined,
     fontStyle: style.italic ? 'italic' : undefined,
     textDecoration: style.underline ? 'underline' : undefined,
