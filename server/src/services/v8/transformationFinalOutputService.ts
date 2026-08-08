@@ -68,6 +68,10 @@ interface FactsRow {
   kpi_direction: string | null;
   open_recovery_count: number;
   unresolved_experiment_count: number;
+  idea_facts_json: unknown;
+  interview_facts_json: unknown;
+  drd_fact_json: unknown;
+  decision_fact_json: unknown;
 }
 
 export interface TransformationFinalOutputFacts {
@@ -77,6 +81,10 @@ export interface TransformationFinalOutputFacts {
   lineageId: string;
   mandate: string;
   lifecycleStage: 'final_outputs';
+  ideas: Array<{ title: string; body: string }>;
+  interviewInsights: Array<{ title: string; content: string }>;
+  drd: { name: string; status: string; completionPercent: number; acceptedSnapshot: unknown };
+  portfolioDecision: { selectedOption: 'go' | 'no_go'; rationale: string };
   initiative: { name: string; status: string };
   execution: {
     tasks: { completed: number; total: number };
@@ -195,6 +203,10 @@ async function loadFacts(
             (SELECT k.direction FROM transformation_case_artifact_links lk JOIN initiative_kpis k ON k.id=lk.artifact_id AND k.organization_id=lk.organization_id WHERE lk.transformation_case_id=c.transformation_case_id AND lk.organization_id=c.organization_id AND lk.artifact_type='initiative_kpi' LIMIT 1) kpi_direction,
             (SELECT COUNT(DISTINCT rc.id)::int FROM transformation_case_artifact_links lk JOIN kpi_recovery_cards rc ON rc.kpi_id=lk.artifact_id AND rc.organization_id=lk.organization_id WHERE lk.transformation_case_id=c.transformation_case_id AND lk.organization_id=c.organization_id AND lk.artifact_type='initiative_kpi' AND rc.lifecycle_status<>'CLOSED') open_recovery_count,
             (SELECT COUNT(DISTINCT ex.id)::int FROM transformation_case_artifact_links lk JOIN kpi_recovery_cards rc ON rc.kpi_id=lk.artifact_id AND rc.organization_id=lk.organization_id JOIN kpi_recovery_experiments ex ON ex.recovery_card_id=rc.id AND ex.organization_id=rc.organization_id WHERE lk.transformation_case_id=c.transformation_case_id AND lk.organization_id=c.organization_id AND lk.artifact_type='initiative_kpi' AND ex.verdict IS NULL) unresolved_experiment_count
+            ,(SELECT COALESCE(jsonb_agg(jsonb_build_object('title',mi.title,'body',COALESCE(mi.body,'')) ORDER BY mi.title),'[]'::jsonb) FROM transformation_case_artifact_links l JOIN my_ideas mi ON mi.id=l.artifact_id AND mi.organization_id=l.organization_id WHERE l.transformation_case_id=c.transformation_case_id AND l.organization_id=c.organization_id AND l.artifact_type='my_idea') idea_facts_json
+            ,(SELECT COALESCE(jsonb_agg(jsonb_build_object('title',ii.title,'content',COALESCE(ii.content,'')) ORDER BY ii.title),'[]'::jsonb) FROM transformation_case_artifact_links l JOIN interview_insights ii ON ii.id=l.artifact_id AND ii.organization_id=l.organization_id WHERE l.transformation_case_id=c.transformation_case_id AND l.organization_id=c.organization_id AND l.artifact_type='interview_insight') interview_facts_json
+            ,(SELECT jsonb_build_object('name',a.name,'status',COALESCE(a.status,'UNKNOWN'),'completionPercent',COALESCE(a.completion_percent,0),'acceptedSnapshot',s.snapshot_json) FROM transformation_case_artifact_links l JOIN assessments a ON a.id=l.artifact_id AND a.organization_id=l.organization_id LEFT JOIN assessment_accepted_snapshots s ON s.assessment_id=a.id AND s.organization_id=a.organization_id AND s.is_current=TRUE WHERE l.transformation_case_id=c.transformation_case_id AND l.organization_id=c.organization_id AND l.artifact_type='drd_assessment' LIMIT 1) drd_fact_json
+            ,(SELECT jsonb_build_object('selectedOption',r.selected_option,'rationale',r.rationale) FROM transformation_portfolio_decision_receipts r WHERE r.transformation_case_id=c.transformation_case_id AND r.organization_id=c.organization_id ORDER BY r.created_at DESC LIMIT 1) decision_fact_json
        FROM transformation_cases c
        LEFT JOIN transformation_case_artifact_links li ON li.transformation_case_id=c.transformation_case_id AND li.organization_id=c.organization_id AND li.artifact_type='initiative'
        LEFT JOIN initiatives i ON i.id=li.artifact_id AND i.organization_id=li.organization_id
@@ -220,9 +232,19 @@ async function loadFacts(
       'Sustained value must be accepted before final outputs'
     );
   const hasOpenRecovery = Number(row.open_recovery_count ?? 0) > 0;
+  const ideas = Array.isArray(row.idea_facts_json) ? row.idea_facts_json : [];
+  const interviewInsights = Array.isArray(row.interview_facts_json)
+    ? row.interview_facts_json
+    : [];
+  const drd = row.drd_fact_json as Record<string, unknown> | null;
+  const portfolioDecision = row.decision_fact_json as Record<string, unknown> | null;
   if (
     !row.active_plan_id ||
     !row.initiative_name ||
+    ideas.length < 1 ||
+    interviewInsights.length < 1 ||
+    !drd ||
+    !portfolioDecision ||
     Number(row.benefit_total) < 1 ||
     (!hasOpenRecovery &&
       (Number(row.verified_measurements) < 2 || Number(row.measurement_window_days ?? 0) < 30))
@@ -250,6 +272,21 @@ async function loadFacts(
     lineageId: row.lineage_id,
     mandate: row.mandate,
     lifecycleStage: 'final_outputs',
+    ideas: ideas.map((idea: any) => ({ title: String(idea.title), body: String(idea.body) })),
+    interviewInsights: interviewInsights.map((insight: any) => ({
+      title: String(insight.title),
+      content: String(insight.content),
+    })),
+    drd: {
+      name: String(drd!.name),
+      status: String(drd!.status),
+      completionPercent: Number(drd!.completionPercent),
+      acceptedSnapshot: drd!.acceptedSnapshot,
+    },
+    portfolioDecision: {
+      selectedOption: String(portfolioDecision!.selectedOption) as 'go' | 'no_go',
+      rationale: String(portfolioDecision!.rationale),
+    },
     initiative: { name: row.initiative_name, status: row.initiative_status ?? 'UNKNOWN' },
     execution: {
       tasks: { completed: Number(row.task_completed), total: Number(row.task_total) },
@@ -303,6 +340,8 @@ export function buildFinalDocument(
     facts.initiative.status === 'DONE' ? 'ZAKOŃCZONA' : facts.initiative.status;
   const financeStatusPl =
     facts.finance.status.toUpperCase() === 'APPROVED' ? 'ZATWIERDZONA' : facts.finance.status;
+  const drdStatusPl =
+    facts.drd.status.toUpperCase() === 'APPROVED' ? 'ZATWIERDZONE' : facts.drd.status;
   const kpiDirectionPl =
     facts.kpi.direction === 'LOWER_IS_BETTER'
       ? 'MNIEJ ZNACZY LEPIEJ'
@@ -348,12 +387,40 @@ export function buildFinalDocument(
         0
       ),
       section(
+        'Idee',
+        facts.ideas.map((idea) => `${idea.title}: ${idea.body || 'UNKNOWN'}.`),
+        1
+      ),
+      section(
+        'Ustalenia Interview',
+        facts.interviewInsights.map(
+          (insight) => `${insight.title}: ${insight.content || 'UNKNOWN'}.`
+        ),
+        2
+      ),
+      section(
+        'DRD — zatwierdzony wynik',
+        [
+          `${facts.drd.name}: status ${drdStatusPl}; kompletność ${facts.drd.completionPercent}%.`,
+          `Zatwierdzony snapshot: ${JSON.stringify(facts.drd.acceptedSnapshot)}.`,
+        ],
+        3
+      ),
+      section(
+        'Decyzja portfelowa',
+        [
+          `Autoryzowana decyzja: ${facts.portfolioDecision.selectedOption.toUpperCase()}.`,
+          `Uzasadnienie: ${facts.portfolioDecision.rationale}.`,
+        ],
+        4
+      ),
+      section(
         'Realizacja',
         [
           `Zadania: ${facts.execution.tasks.completed}/${facts.execution.tasks.total}.`,
           `Kamienie milowe: ${facts.execution.milestones.completed}/${facts.execution.milestones.total}.`,
         ],
-        1
+        5
       ),
       section(
         'Korzyści i trwałość',
@@ -361,7 +428,7 @@ export function buildFinalDocument(
           `Potwierdzone korzyści: ${facts.benefits.verified}/${facts.benefits.total}.`,
           `Zweryfikowane pomiary: ${facts.benefits.verifiedMeasurements}; okno: ${facts.benefits.measurementWindowDays} dni.`,
         ],
-        2
+        6
       ),
       section(
         'Analiza finansowa',
@@ -369,7 +436,7 @@ export function buildFinalDocument(
           `Status analizy: ${financeStatusPl}. CAPEX: ${facts.finance.capex.toLocaleString('pl-PL')} ${facts.finance.currency}; roczny OPEX: ${facts.finance.opexAnnual.toLocaleString('pl-PL')} ${facts.finance.currency}.`,
           `Roczna korzyść: plan ${facts.finance.forecastBenefitAnnual.toLocaleString('pl-PL')} ${facts.finance.currency}; wynik ${facts.finance.actualBenefitAnnual.toLocaleString('pl-PL')} ${facts.finance.currency}, czyli ${facts.finance.actualVsForecastPct}% planu.`,
         ],
-        3
+        7
       ),
       section(
         'Karta KPI',
@@ -377,7 +444,7 @@ export function buildFinalDocument(
           `${facts.kpi.name}: wartość bazowa ${facts.kpi.baseline} ${kpiUnitPl}; cel ${facts.kpi.target} ${kpiUnitPl}; wynik ${facts.kpi.actual} ${kpiUnitPl}.`,
           `Kierunek: ${kpiDirectionPl}; ocena: ${facts.kpi.status === 'on_target' ? 'cel osiągnięty' : 'cel nieosiągnięty'}.`,
         ],
-        4
+        8
       ),
       section(
         'Otwarte działania naprawcze',
@@ -386,7 +453,7 @@ export function buildFinalDocument(
             ? `Wynik nie jest potwierdzonym sukcesem: ${facts.recovery.openCards} aktywnych Recovery Card i ${facts.recovery.unresolvedExperiments} nierozstrzygniętych eksperymentów pozostaje otwartych.`
             : 'Brak otwartych Recovery Card.',
         ],
-        5
+        9
       ),
       section(
         'Lineage i dowody',
@@ -394,7 +461,7 @@ export function buildFinalDocument(
           `Lineage: ${facts.lineageId}.`,
           `Zdarzenia audytowe: ${facts.evidence.auditEvents}. Digest faktów: ${factsDigest}.`,
         ],
-        6
+        10
       ),
     ],
     sourceRefs: [sourceRef],
@@ -411,6 +478,8 @@ export function buildFinalDeck(
 ): UnifiedReportJSON {
   const financeStatusPl =
     facts.finance.status.toUpperCase() === 'APPROVED' ? 'ZATWIERDZONA' : facts.finance.status;
+  const drdStatusPl =
+    facts.drd.status.toUpperCase() === 'APPROVED' ? 'ZATWIERDZONE' : facts.drd.status;
   const kpiDirectionPl =
     facts.kpi.direction === 'LOWER_IS_BETTER'
       ? 'MNIEJ ZNACZY LEPIEJ'
@@ -463,6 +532,47 @@ export function buildFinalDeck(
             facts.recovery.status === 'unresolved'
               ? `Nie deklarować sukcesu; domknąć ${facts.recovery.openCards} Recovery Card.`
               : 'Utrzymać monitoring korzyści.',
+        },
+      },
+      {
+        intent: 'executive_summary',
+        key_message: 'Idee zostały zapisane w kanonicznym module Ideas',
+        content: {
+          type: 'executive_summary',
+          headline: 'Idee transformacyjne',
+          key_findings: facts.ideas.map((idea) => `${idea.title}: ${idea.body || 'UNKNOWN'}`),
+          recommendation: 'Utrzymać lineage idei do Case i zaakceptowanej inicjatywy.',
+        },
+      },
+      {
+        intent: 'executive_summary',
+        key_message: 'Ustalenia Interview wróciły do tego samego Case',
+        content: {
+          type: 'executive_summary',
+          headline: 'Zweryfikowane ustalenia Interview',
+          key_findings: facts.interviewInsights.map(
+            (insight) => `${insight.title}: ${insight.content || 'UNKNOWN'}`
+          ),
+          recommendation: 'Traktować wyłącznie zatwierdzone insighty jako podstawę DRD.',
+        },
+      },
+      {
+        intent: 'comparison',
+        key_message: `DRD zatwierdzone z kompletnością ${facts.drd.completionPercent}%`,
+        content: {
+          type: 'comparison',
+          left_label: 'DRD',
+          right_label: 'Decyzja portfelowa',
+          left_items: [
+            facts.drd.name,
+            `Status: ${drdStatusPl}`,
+            `Kompletność: ${facts.drd.completionPercent}%`,
+          ],
+          right_items: [
+            `Wynik: ${facts.portfolioDecision.selectedOption.toUpperCase()}`,
+            facts.portfolioDecision.rationale,
+          ],
+          verdict: 'Decyzja opiera się na zatwierdzonym pakiecie dowodowym.',
         },
       },
       {

@@ -18,6 +18,17 @@ const facts: TransformationFinalOutputFacts = {
   lineageId: 'lineage-1',
   mandate: 'Skrócić czas akceptacji.',
   lifecycleStage: 'final_outputs',
+  ideas: [{ title: 'Skrócić kolejkę', body: 'Hipoteza automatyzacji przekazań' }],
+  interviewInsights: [
+    { title: 'Wąskie gardło', content: 'Ręczne przekazanie wydłuża akceptację' },
+  ],
+  drd: {
+    name: 'DRD czasu akceptacji',
+    status: 'APPROVED',
+    completionPercent: 100,
+    acceptedSnapshot: { scoring: { completionPercent: 100 } },
+  },
+  portfolioDecision: { selectedOption: 'go', rationale: 'Korzyść przewyższa koszt' },
   initiative: { name: 'Szybsza akceptacja', status: 'DONE' },
   execution: { tasks: { completed: 3, total: 3 }, milestones: { completed: 3, total: 3 } },
   benefits: { total: 1, verified: 1, verifiedMeasurements: 2, measurementWindowDays: 31 },

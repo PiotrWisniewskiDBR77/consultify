@@ -16,6 +16,17 @@ const facts: TransformationFinalOutputFacts = {
   lineageId: 'lineage-1',
   mandate: 'Skrócić czas akceptacji.',
   lifecycleStage: 'final_outputs',
+  ideas: [{ title: 'Skrócić kolejkę', body: 'Hipoteza automatyzacji przekazań' }],
+  interviewInsights: [
+    { title: 'Wąskie gardło', content: 'Ręczne przekazanie wydłuża akceptację' },
+  ],
+  drd: {
+    name: 'DRD czasu akceptacji',
+    status: 'APPROVED',
+    completionPercent: 100,
+    acceptedSnapshot: { scoring: { completionPercent: 100 } },
+  },
+  portfolioDecision: { selectedOption: 'go', rationale: 'Korzyść przewyższa koszt' },
   initiative: { name: 'Szybsza akceptacja', status: 'DONE' },
   execution: {
     tasks: { completed: 3, total: 3 },
@@ -62,8 +73,11 @@ describe('transformation final output builders', () => {
     expect(document.sourceRefs[0]?.sourceVersion).toBe(factsDigest);
     expect(JSON.stringify(document)).toContain(factsDigest);
     expect(JSON.stringify(deck)).toContain(factsDigest);
-    expect(document.sections).toHaveLength(7);
-    expect(deck.slides).toHaveLength(7);
+    expect(document.sections).toHaveLength(11);
+    expect(deck.slides).toHaveLength(10);
+    expect(JSON.stringify(document)).toContain('Wąskie gardło');
+    expect(JSON.stringify(document)).toContain('DRD czasu akceptacji');
+    expect(JSON.stringify(deck)).toContain('Korzyść przewyższa koszt');
     expect(JSON.stringify(document)).toContain('330\u00a0000');
     expect(JSON.stringify(document)).toContain('Czas akceptacji');
     expect(JSON.stringify(deck)).toContain('Plan finansowy');
