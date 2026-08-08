@@ -1,0 +1,44 @@
+name: Recovery ownership gate
+
+on:
+  pull_request:
+    branches:
+      - demo
+
+jobs:
+  ownership:
+    if: startsWith(github.head_ref, 'codex/recovery-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate recovery ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ github.head_ref }}" in
+            codex/recovery-agent-v8-20260808) expected_owner=AGENT_V8 ;;
+            codex/recovery-documents-20260808) expected_owner=DOCUMENTS ;;
+            codex/recovery-report-b-ui-20260808) expected_owner=REPORT_B_UI ;;
+            *) echo "Unsupported recovery branch"; exit 2 ;;
+          esac
+
+          matrix=docs/program/recovery-2026-08-08/FILE_OWNERSHIP_MATRIX.tsv
+          git fetch origin codex/recovery-control-20260808
+          control_sha="$(git rev-parse origin/codex/recovery-control-20260808)"
+          git merge-base --is-ancestor "$control_sha" "${{ github.event.pull_request.head.sha }}" || {
+            echo "Recovery branch does not contain the canonical control pack."
+            exit 3
+          }
+          git diff --name-only -z "$control_sha...${{ github.event.pull_request.head.sha }}" > changed.z
+          invalid=0
+          while IFS= read -r -d '' changed_path; do
+            owner="$(awk -F '\t' -v candidate="$changed_path" '$1 == candidate { print $3; exit }' "$matrix")"
+            if [[ -z "$owner" || "$owner" != "$expected_owner" ]]; then
+              echo "Ownership violation: $changed_path owner=${owner:-MISSING} expected=$expected_owner"
+              invalid=1
+            fi
+          done < changed.z
+          test "$invalid" -eq 0
