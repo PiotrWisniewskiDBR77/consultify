@@ -41,6 +41,7 @@ import {
   type PreviewDataState,
 } from './financeTypes';
 import { FinanceVersionTimeline } from './FinanceVersionTimeline';
+import { normalizeSensitivityGrid } from './normalizeSensitivityGrid';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -792,8 +793,12 @@ export function useFinancePreview({
               {valuationPreviewDetail?.sensitivity &&
                 (() => {
                   const sens = valuationPreviewDetail.sensitivity;
-                  const matrix = sens?.matrix || sens?.grid;
-                  if (!Array.isArray(matrix) || matrix.length === 0) return null;
+                  const normalized = normalizeSensitivityGrid(sens);
+                  if (!normalized) return null;
+                  const { columnHeaders, rowHeaders, values: matrix } = normalized;
+                  const finiteValues = matrix.flat().filter((value): value is number => value != null);
+                  const maxVal = Math.max(...finiteValues);
+                  const minVal = Math.min(...finiteValues);
                   return (
                     <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
                       <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
@@ -807,20 +812,25 @@ export function useFinancePreview({
                               <th className="text-left text-slate-500 py-0.5 pr-1">WACC \ g</th>
                               {(matrix[0] || []).map((_: any, ci: number) => (
                                 <th key={ci} className="text-center text-slate-500 py-0.5 px-1">
-                                  {sens?.colHeaders?.[ci] ?? `${ci + 1}`}
+                                  {columnHeaders[ci] ?? `${ci + 1}`}
                                 </th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {matrix.map((matRow: number[], ri: number) => (
+                            {matrix.map((matRow, ri: number) => (
                               <tr key={ri}>
                                 <td className="text-slate-500 py-0.5 pr-1 font-medium">
-                                  {sens?.rowHeaders?.[ri] ?? `${ri + 1}`}
+                                  {rowHeaders[ri] ?? `${ri + 1}`}
                                 </td>
-                                {matRow.map((val: number, ci: number) => {
-                                  const maxVal = Math.max(...matrix.flat());
-                                  const minVal = Math.min(...matrix.flat());
+                                {matRow.map((val, ci: number) => {
+                                  if (val == null) {
+                                    return (
+                                      <td key={ci} className="text-center py-0.5 px-1 text-slate-400">
+                                        —
+                                      </td>
+                                    );
+                                  }
                                   const norm =
                                     maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
                                   const bg =
