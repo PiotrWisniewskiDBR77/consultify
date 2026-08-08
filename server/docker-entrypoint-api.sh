@@ -17,4 +17,8 @@ if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
   chown -R nodejs:nodejs "$TARGET_DIR" 2>/dev/null || true
 fi
 
+if [ "$#" -gt 0 ]; then
+  exec su-exec nodejs dumb-init -- "$@"
+fi
+
 exec su-exec nodejs dumb-init -- sh /app/server/start.sh
