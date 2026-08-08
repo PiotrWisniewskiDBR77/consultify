@@ -13,14 +13,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const post = vi.fn();
+const del = vi.fn();
 
 vi.mock('@/services/api', () => ({
   Api: {
     post: (...a: unknown[]) => post(...a),
+    delete: (...a: unknown[]) => del(...a),
   },
 }));
 
-import { deprecatePresentationTemplate } from '../presentationTemplateArchitect';
+import {
+  deletePresentationDraftTemplate,
+  deprecatePresentationTemplate,
+} from '../presentationTemplateArchitect';
 
 describe('deprecatePresentationTemplate', () => {
   beforeEach(() => {
@@ -45,7 +50,9 @@ describe('deprecatePresentationTemplate', () => {
   });
 
   it('URL-encodes the template id', async () => {
-    post.mockResolvedValue({ data: { data: { record: null } } });
+    post.mockResolvedValue({
+      data: { data: { record: { id: 'tpl with space', lifecycle_state: 'deprecated' } } },
+    });
 
     await deprecatePresentationTemplate('tpl with space', 'reason');
 
@@ -55,11 +62,37 @@ describe('deprecatePresentationTemplate', () => {
     );
   });
 
+  it('rejects a successful HTTP response unless lifecycle readback confirms withdrawal', async () => {
+    post.mockResolvedValue({
+      data: { data: { record: { id: 'tpl_1', lifecycle_state: 'draft' } } },
+    });
+
+    await expect(deprecatePresentationTemplate('tpl_1', 'obsolete')).rejects.toThrow(
+      'Template withdrawal was not confirmed by server readback.'
+    );
+  });
+
   it('propagates a rejection when the request fails (e.g. missing capability / 400 empty reason)', async () => {
     post.mockRejectedValue(new Error('A non-empty `reason` is required to deprecate a template.'));
 
     await expect(deprecatePresentationTemplate('tpl_1', 'anything')).rejects.toThrow(
       'A non-empty `reason` is required to deprecate a template.'
+    );
+  });
+
+  it('DELETEs only through the dedicated draft endpoint and URL-encodes the id', async () => {
+    del.mockResolvedValue({ data: { data: { deletedTemplateId: 'draft with space' } } });
+
+    await deletePresentationDraftTemplate('draft with space');
+
+    expect(del).toHaveBeenCalledWith('/presentations/templates/draft%20with%20space');
+  });
+
+  it('propagates lifecycle refusal when the server rejects draft deletion', async () => {
+    del.mockRejectedValue(new Error('Only draft templates can be deleted.'));
+
+    await expect(deletePresentationDraftTemplate('approved-1')).rejects.toThrow(
+      'Only draft templates can be deleted.'
     );
   });
 });

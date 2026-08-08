@@ -31,6 +31,23 @@ interface ShareModalProps {
   onExport?: (format: 'pdf' | 'pptx' | 'png') => void;
 }
 
+function unwrapApiEnvelope<T>(response: unknown): T | undefined {
+  if (!response || (typeof response !== 'object' && typeof response !== 'function')) {
+    return undefined;
+  }
+  const exposedData = (response as { data?: unknown }).data;
+  // The shared Api transport returns a Proxy whose `data` getter points back
+  // to the whole server payload. Its real `{ success, data: ... }` envelope is
+  // still available through the own-property descriptor.
+  if (exposedData === response) {
+    return Object.getOwnPropertyDescriptor(response, 'data')?.value as T | undefined;
+  }
+  if (exposedData && typeof exposedData === 'object' && 'data' in exposedData) {
+    return (exposedData as { data?: T }).data;
+  }
+  return exposedData as T | undefined;
+}
+
 export const ShareModal: React.FC<ShareModalProps> = ({
   isOpen,
   onClose,
@@ -62,9 +79,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     setGeneratingLink(true);
     try {
       const res = await Api.post(`/presentations/decks/${deckId}/share`, { expiresInDays: 7 });
-      const payload = res?.data;
-      const data =
-        payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+      const data = unwrapApiEnvelope<{ shareToken?: string }>(res);
       if (data?.shareToken) {
         setShareToken(data.shareToken);
         setPublicLink(true);
@@ -105,9 +120,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           email,
           role: invitePermission,
         });
-        const payload = res?.data;
-        const data =
-          payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+        const data = unwrapApiEnvelope<{ degraded?: boolean; collaborator?: unknown }>(res);
         degraded = !!data?.degraded || !data?.collaborator;
       } catch {
         // Membership layer unreachable — fall through to the share-link hand-off.

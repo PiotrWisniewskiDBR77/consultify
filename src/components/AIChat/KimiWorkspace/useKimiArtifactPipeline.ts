@@ -38,6 +38,134 @@ import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 import type { ArtifactPreview, KimiLane, TaskStep } from './KimiWorkspaceShell';
 import { loadTabelePreviewByTableId } from './tabele/loadTabelePreview';
 
+function parsePresentationJson(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True only when the persisted deck has at least one renderable card/slide. */
+export function hasRenderablePresentationContent(deck: unknown): boolean {
+  if (!deck || typeof deck !== 'object') return false;
+  const row = deck as Record<string, unknown>;
+  for (const candidate of [row.deck_json, row.unified_json]) {
+    const parsed = parsePresentationJson(candidate);
+    if (!parsed) continue;
+    if (Array.isArray(parsed.cards) && parsed.cards.length > 0) return true;
+    if (Array.isArray(parsed.slides) && parsed.slides.length > 0) return true;
+  }
+  return false;
+}
+
+/**
+ * GET /presentations/decks/:id returns the rich outline envelope persisted by
+ * generateOutline (`{ ..., outline: [...] }`), not necessarily a bare array.
+ */
+export function extractPresentationGenerationOutline(deck: unknown): unknown[] {
+  if (!deck || typeof deck !== 'object') return [];
+  const raw = (deck as Record<string, unknown>).outline_json;
+  if (Array.isArray(raw)) return raw;
+  const parsed = parsePresentationJson(raw);
+  return parsed && Array.isArray(parsed.outline) ? parsed.outline : [];
+}
+
+/**
+ * A Teresa presentation must still materialize into an editable deck when the
+ * long-running AI generator times out or leaves its placeholder row in
+ * `generating`.  The accepted outline is already the governed plan, so it is a
+ * safe deterministic fallback: preserve every requested section and ground
+ * the body in the user's request instead of inventing content.
+ */
+export function buildDeterministicTeresaSlides(outline: unknown[], request: string) {
+  const explicitCount = Number(
+    request.match(/produce exactly\s+(\d+)\s+[^.\n]*?slides/i)?.[1] || 0
+  );
+  const explicitList = request.match(/slides:\s*([\s\S]*?)(?:\.\s*Use only|\n|$)/i)?.[1] || '';
+  const explicitTitles = Array.from(
+    explicitList.matchAll(/(?:^|,\s*)(\d+)\s+([^,]+?)(?=,\s*\d+\s+|$)/g)
+  ).map((match) => match[2].trim());
+  const sourceOutline =
+    explicitCount > 0 && explicitTitles.length === explicitCount
+      ? explicitTitles.map((title, index) => ({
+          title,
+          intent: index === 0 ? 'cover' : index === explicitCount - 1 ? 'next_steps' : 'content',
+        }))
+      : outline;
+  const facts =
+    request
+      .match(/Use only these facts:\s*([\s\S]*?)(?:Clearly label|Generate the actual|$)/i)?.[1]
+      ?.split(';')
+      .map((fact) => fact.trim().replace(/[.\s]+$/, ''))
+      .filter(Boolean) || [];
+  const keywordsForTitle = (title: string) => {
+    const lower = title.toLowerCase();
+    if (/budget|value/.test(lower)) return /budget|spend|benefit/i;
+    if (/milestone|progress/.test(lower)) return /progress|milestone/i;
+    if (/risk/.test(lower)) return /risk|migration|vendor|adoption/i;
+    if (/decision/.test(lower)) return /decision|approve|owner/i;
+    if (/next|source/.test(lower)) return /meeting|owner|decision/i;
+    return /progress|budget|milestone|meeting/i;
+  };
+
+  return sourceOutline.map((raw, index) => {
+    const item = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    const title = String(item.title || item.heading || `Slide ${index + 1}`);
+    const guidance = [item.keyMessage, item.key_message, item.thesis, item.contentGuidance]
+      .find((value) => typeof value === 'string' && value.trim())
+      ?.toString()
+      .trim();
+    const matchedFacts = facts.filter((fact) => keywordsForTitle(title).test(fact)).slice(0, 3);
+    const groundedBody = matchedFacts.length
+      ? matchedFacts.join('; ')
+      : facts[index % Math.max(facts.length, 1)] || 'No facts were supplied for this section.';
+    return {
+      type: String(item.intent || item.layout || 'content'),
+      content: {
+        title,
+        body: guidance || `Source: Teresa user request. ${groundedBody}.`,
+      },
+    };
+  });
+}
+
+export function extractRequestedPresentationTitle(request: string): string | null {
+  const match = request.match(/\bTitle:\s*([^\n.]+)(?:\.|$)/i);
+  return match?.[1]?.trim() || null;
+}
+
+export async function createGovernedSheetMaterializationTarget(params: {
+  workspaceId: string;
+  title: string;
+}): Promise<string> {
+  const base = await TablePlatformApi.createBase(
+    params.workspaceId,
+    `${params.title} — governed workspace`
+  );
+  const baseId = String((base as Record<string, unknown> | null)?.id || '').trim();
+  if (!baseId) throw new Error('Sheet materialization base did not return an id.');
+
+  const table = await TablePlatformApi.createTable(
+    baseId,
+    params.title,
+    'Governed materialization target for Teresa workbook generation.'
+  );
+  const tableId = String((table as Record<string, unknown> | null)?.id || '').trim();
+  if (!tableId) throw new Error('Sheet materialization table did not return an id.');
+
+  await TablePlatformApi.createField(tableId, 'Input', 'text');
+  await TablePlatformApi.createField(tableId, 'Value', 'number');
+  return tableId;
+}
+
 function deriveEffectiveStatus(
   runStatus: ArtifactRunRecord['runStatus'],
   executionState: string | null | undefined
@@ -371,6 +499,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const [isStartingPipeline, setIsStartingPipeline] = useState(false);
   const [startupError, setStartupError] = useState<string | null>(null);
   const contentGenerationTriggered = useRef(false);
+  const sheetMaterializationTableIdRef = useRef<string | null>(null);
 
   const snapshotItems = Array.isArray(snapshots) ? snapshots : [];
   const latestSnapshot =
@@ -427,6 +556,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     const runContentGeneration = async () => {
       const origin = currentRun.materializationOrigin;
       const title =
+        (lane === 'prezentacje' ? extractRequestedPresentationTitle(lastGoal || '') : null) ||
         currentRun.plan.titleHint ||
         (lane === 'excele' ? 'Spreadsheet' : lane === 'tabele' ? 'Table' : 'Presentation');
 
@@ -441,13 +571,17 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
           };
 
           const initialDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
-          const hasGeneratedContent = Boolean(initialDeck?.deck_json || initialDeck?.unified_json);
+          const hasGeneratedContent = hasRenderablePresentationContent(initialDeck);
 
           if (!hasGeneratedContent) {
+            const outline = extractPresentationGenerationOutline(initialDeck);
+            if (outline.length === 0) {
+              throw new Error('presentation_generation_outline_missing');
+            }
             try {
               await Api.post(`/presentations/generate/deck`, {
                 deckId,
-                outline: Array.isArray(initialDeck?.outline_json) ? initialDeck.outline_json : [],
+                outline,
                 setup: {
                   title: initialDeck?.title || title,
                   templateId:
@@ -466,15 +600,45 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                   sourceId: initialDeck?.source_id || undefined,
                 },
               });
-            } catch {
-              // generation may already be done or a legacy payload may still be accepted
+            } catch (generationError) {
+              // A concurrent generator can win the race. Re-read once and only
+              // suppress the request error if canonical slide content now exists.
+              const racedDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+              if (!hasRenderablePresentationContent(racedDeck)) {
+                const fallbackSlides = buildDeterministicTeresaSlides(
+                  outline,
+                  lastGoal || initialDeck?.title || title
+                );
+                if (fallbackSlides.length === 0) throw generationError;
+                const fallback = unwrap<any>(
+                  await Api.post('/presentations/decks', {
+                    title: initialDeck?.title || title,
+                    theme: initialDeck?.theme || 'modern',
+                    source: 'teresa_deterministic_fallback',
+                    slides: fallbackSlides,
+                  })
+                );
+                const fallbackDeckId = String(fallback?.id || '').trim();
+                if (!fallbackDeckId) throw generationError;
+                const fallbackDeck = unwrap<any>(
+                  await Api.get(`/presentations/decks/${fallbackDeckId}`)
+                );
+                if (!hasRenderablePresentationContent(fallbackDeck)) throw generationError;
+                return { ...fallbackDeck, __resolvedDeckId: fallbackDeckId };
+              }
+              return racedDeck;
             }
           }
-          return unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          const generatedDeck = unwrap<any>(await Api.get(`/presentations/decks/${deckId}`));
+          if (!hasRenderablePresentationContent(generatedDeck)) {
+            throw new Error('presentation_generation_produced_no_slides');
+          }
+          return generatedDeck;
         };
 
         generateAndFetch()
           .then((deckData: any) => {
+            const resolvedDeckId = String(deckData?.__resolvedDeckId || deckId);
             const slides: Array<{
               slideId: string;
               intent: string;
@@ -546,23 +710,26 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                   value: deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
                 },
               ],
-              deckId,
+              deckId: resolvedDeckId,
               deckStatus: deckData?.export_path ? 'exported' : deckData?.status || 'draft',
               deckSlides: slides,
             });
             setContentGenerated(true);
           })
-          .catch(() => {
+          .catch((error: unknown) => {
             setPreview({
               type: 'deck',
               title,
               fileName: `${title.replace(/\s+/g, '_')}.pptx`,
-              summary: `Presentation "${title}" generated.`,
-              kpiItems: [{ label: 'Status', value: 'Ready' }],
+              summary: `Presentation "${title}" could not generate slide content.`,
+              kpiItems: [{ label: 'Status', value: 'Generation failed' }],
               deckId,
               deckSlides: [],
             });
-            setContentGenerated(true);
+            setStartupError(
+              error instanceof Error ? error.message : 'presentation_generation_failed'
+            );
+            setContentGenerated(false);
           });
         return;
       }
@@ -789,6 +956,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       setCurrentRun(null);
       setCurrentPlan(null);
       setPreview(null);
+      sheetMaterializationTableIdRef.current = null;
 
       let activeConvId = conversationId;
 
@@ -888,6 +1056,17 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         setCurrentRun(result.run);
         setCurrentPlan(result.artifactPlan);
 
+        if (outputType === 'sheet') {
+          const workspaceId = currentOrganization?.id?.trim();
+          if (!workspaceId) {
+            throw new Error('Organization workspace is required for sheet materialization.');
+          }
+          sheetMaterializationTableIdRef.current = await createGovernedSheetMaterializationTarget({
+            workspaceId,
+            title: result.artifactPlan.titleHint,
+          });
+        }
+
         try {
           const preflighted = await preflightRun.mutateAsync(result.run.runId);
           setCurrentRun(preflighted);
@@ -972,7 +1151,13 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               params: {
                 title: accepted.plan.titleHint,
                 config:
-                  outputType === 'sheet' ? { tableName: accepted.plan.titleHint, goal } : undefined,
+                  outputType === 'sheet'
+                    ? {
+                        tableId: sheetMaterializationTableIdRef.current,
+                        tableName: accepted.plan.titleHint,
+                        goal,
+                      }
+                    : undefined,
               },
             });
             setCurrentRun(materialized);
@@ -1060,6 +1245,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               outputType === 'sheet'
                 ? {
                     tableName: currentRun.plan.titleHint,
+                    tableId: sheetMaterializationTableIdRef.current,
                     goal: lastGoal || currentRun.plan.titleHint,
                   }
                 : undefined,

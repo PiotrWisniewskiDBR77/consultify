@@ -116,9 +116,7 @@ function allBlockTypesFixture(): DocumentSchema {
     orderIndex: 1,
     level: 2,
     title: 'Recommendations',
-    blocks: [
-      { blockId: 'b2-para', type: 'paragraph', content: { text: 'Proceed to pilot.' } },
-    ],
+    blocks: [{ blockId: 'b2-para', type: 'paragraph', content: { text: 'Proceed to pilot.' } }],
     sourceRefs: [],
   };
 
@@ -227,6 +225,25 @@ describe('R1 FT-1 — schema ↔ ProseMirror round-trip', () => {
     expect(byId.get('b-bullet')?.content).toEqual({ items: ['Alpha', 'Beta', 'Gamma'] });
     expect(byId.get('b-num')?.content).toEqual({ items: ['First', 'Second'] });
     expect(byId.get('b-callout')?.content).toEqual({ variant: 'warning', text: 'Budget at risk' });
+  });
+
+  it('preserves canonical bold, italic and link marks on editable text', () => {
+    const original = allBlockTypesFixture();
+    original.sections[0].blocks[1].content = {
+      text: 'Approve the pilot now',
+      richText: [
+        { type: 'text', text: 'Approve', marks: [{ type: 'bold' }] },
+        { type: 'text', text: ' the pilot ', marks: [{ type: 'italic' }] },
+        {
+          type: 'text',
+          text: 'now',
+          marks: [{ type: 'link', attrs: { href: 'https://example.com/evidence' } }],
+        },
+      ],
+    };
+
+    const back = roundTrip(original);
+    expect(back.sections[0].blocks[1].content).toEqual(original.sections[0].blocks[1].content);
   });
 
   it('preserves footnote / citation block types (not flattened to paragraph)', () => {

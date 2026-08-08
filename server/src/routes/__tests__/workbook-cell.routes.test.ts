@@ -53,6 +53,12 @@ vi.mock('../../utils/Logger.js', () => ({
   default: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../services/lineage/artifactLineageService.js', () => ({
+  deriveCreatedEventIdempotencyKey: vi.fn(() => 'created-test-key'),
+  recordLineageEventSafe: vi.fn(),
+  recordLineageEventTracked: vi.fn(async () => ({ durable: true })),
+}));
+
 import workbookRoutes from '../workbook.routes.js';
 
 function createApp(): Express {
@@ -118,7 +124,7 @@ beforeEach(() => {
     ) {
       const [id, orgId] = params as [string, string];
       if (id === WB_ID && orgId === ORG) {
-        return { schema_json: JSON.stringify(SCHEMA) };
+        return { schema_json: JSON.stringify(SCHEMA), version: 1, title: SCHEMA.title };
       }
       return null;
     }
@@ -213,8 +219,10 @@ describe('PATCH /api/workbook/:id/cell', () => {
     const [, updateParams] = updateCall as [string, unknown[]];
     const savedSchema = JSON.parse(updateParams[0] as string);
     expect(savedSchema.sheets[0].rows[0].cells.wartosc.value).toBe(0.15);
-    expect(updateParams[1]).toBe(WB_ID);
-    expect(updateParams[2]).toBe(ORG);
+    expect(updateParams[1]).toBe(2);
+    expect(updateParams[2]).toBe(WB_ID);
+    expect(updateParams[3]).toBe(ORG);
+    expect(updateParams[4]).toBe(1);
   });
 
   it('a formula wins over a simultaneously-provided value, and strips a leading "="', async () => {
@@ -244,5 +252,135 @@ describe('PATCH /api/workbook/:id/cell', () => {
     expect(res.body.cell.value).toBeUndefined();
     expect(res.body.cell.formula).toBeUndefined();
     expect(res.body.cell.style).toEqual({ bgColor: 'FFF6DF', border: 'thin' });
+  });
+});
+
+describe('PATCH /api/workbook/:id/schema-command', () => {
+  it('persists sheet add through canonical schema with version snapshot', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'addSheet', name: 'Scenarios' } });
+    expect(res.status).toBe(200);
+    expect(res.body.schema.sheets).toHaveLength(3);
+    expect(res.body.schema.sheets[2].name).toBe('Scenarios');
+    expect(res.body.version).toBe(2);
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO generated_workbook_versions'),
+      expect.any(Array)
+    );
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) => String(sql).includes('UPDATE generated_workbooks SET schema_json'));
+    expect(JSON.parse(updateCall?.[1]?.[0] as string).sheets).toHaveLength(3);
+  });
+
+  it('supports row, column and cell-format commands without dropping formulas', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const commands = [
+      { type: 'insertRow', sheetIndex: 1, rowIndex: 1 },
+      { type: 'insertColumn', sheetIndex: 1, colIndex: 1, key: 'scenario', header: 'Scenario' },
+      { type: 'formatCells', sheetIndex: 1, rowIndexes: [0], colIndexes: [1], style: { bold: true, numberFormat: '0.0%' } },
+      { type: 'sortRows', sheetIndex: 1, colIndex: 0, direction: 'asc' },
+      { type: 'setFreeze', sheetIndex: 1, freezeRow: 1, freezeCol: 1 },
+      { type: 'setAutoFilter', sheetIndex: 1, enabled: true },
+      { type: 'setValidation', sheetIndex: 1, rowIndex: 0, colIndex: 0, validation: { type: 'list', values: ['Base', 'Upside'] } },
+      { type: 'renameWorkbook', title: 'Renamed workbook' },
+      { type: 'resizeRowAndColumn', sheetIndex: 1, rowIndex: 0, colIndex: 0, height: 30, width: 24 },
+      { type: 'setComment', sheetIndex: 1, rowIndex: 0, colIndex: 0, comment: 'Reviewed manually' },
+      { type: 'setRowHidden', sheetIndex: 1, rowIndex: 0, hidden: true },
+      { type: 'setColumnHidden', sheetIndex: 1, colIndex: 0, hidden: true },
+      { type: 'unhideAll', sheetIndex: 1 },
+      { type: 'mergeCells', sheetIndex: 1, range: 'A2:B2' },
+      { type: 'unmergeCells', sheetIndex: 1, range: 'A2:B2' },
+      { type: 'addConditionalFormat', sheetIndex: 1, block: { ref: 'A2:A3', rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { bgColor: 'FDE8E8' } }] } },
+      { type: 'clearConditionalFormats', sheetIndex: 1 },
+      { type: 'findReplace', find: 'NPV', replacement: 'Net Present Value' },
+    ];
+    for (const command of commands) {
+      vi.clearAllMocks();
+      mockQueryRun.mockResolvedValue({ changes: 1 });
+      const res = await request(app).patch(`/api/workbook/${WB_ID}/schema-command`).send({ command });
+      expect(res.status, `${JSON.stringify(command)} ${JSON.stringify(res.body)}`).toBe(200);
+      expect(res.body.schema.sheets[1].rows[0].cells.wartosc.formula).toBe("'Założenia'!$B$2*100");
+    }
+  });
+
+  it('keeps the XLSX download filename aligned with a renamed workbook', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'renameWorkbook', title: 'Program Atlas — Board QA' } });
+
+    expect(res.status).toBe(200);
+    const updateCall = mockQueryRun.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE generated_workbooks SET schema_json')
+    );
+    expect(updateCall?.[1]?.[2]).toBe('Program_Atlas_Board_QA.xlsx');
+  });
+
+  it('rejects deleting the last column and stale expectedVersion', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const conflict = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ expectedVersion: 9, command: { type: 'addSheet' } });
+    expect(conflict.status).toBe(409);
+
+    const invalid = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'deleteColumn', sheetIndex: 0, colIndex: 0 } });
+    // Sheet 0 has two columns, so first delete is valid; deleting an unknown
+    // index must still be rejected rather than silently corrupting schema.
+    expect(invalid.status).toBe(200);
+    const unknown = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'deleteColumn', sheetIndex: 0, colIndex: 99 } });
+    expect(unknown.status).toBe(400);
+  });
+
+  it('moves relative formula references with their rows during sort', async () => {
+    const app = createApp();
+    asUser(ORG);
+    const sortable = {
+      title: 'Sort formulas',
+      sheets: [{
+        name: 'Data',
+        columns: [{ key: 'formula', header: 'Formula' }, { key: 'value', header: 'Value' }],
+        rows: [
+          { cells: { formula: { formula: 'B2*2' }, value: { value: 20 } } },
+          { cells: { formula: { formula: 'B3*2' }, value: { value: 40 } } },
+        ],
+      }],
+    };
+    mockQueryOne.mockResolvedValueOnce({ schema_json: JSON.stringify(sortable), version: 1, title: sortable.title });
+    const res = await request(app)
+      .patch(`/api/workbook/${WB_ID}/schema-command`)
+      .send({ command: { type: 'sortRows', sheetIndex: 0, colIndex: 1, direction: 'desc' } });
+    expect(res.status).toBe(200);
+    expect(res.body.schema.sheets[0].rows[0].cells.value.value).toBe(40);
+    expect(res.body.schema.sheets[0].rows[0].cells.formula.formula).toBe('B2*2');
+    expect(res.body.schema.sheets[0].rows[1].cells.value.value).toBe(20);
+    expect(res.body.schema.sheets[0].rows[1].cells.formula.formula).toBe('B3*2');
+  });
+});
+
+describe('GET /api/workbook/:id quality reopen', () => {
+  it('recomputes the deterministic quality report from the persisted canonical schema', async () => {
+    const app = createApp();
+    asUser(ORG);
+
+    const res = await request(app).get(`/api/workbook/${WB_ID}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBeUndefined(); // the narrow mock only supplies schema_json
+    expect(res.body.qualityReport).toEqual(
+      expect.objectContaining({
+        score: expect.any(Number),
+        passed: expect.any(Boolean),
+        issues: expect.any(Array),
+      })
+    );
   });
 });

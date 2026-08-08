@@ -7,9 +7,21 @@
  * `TemplateBuilderFlow` niżej spina wizard START + builder pod realną app.
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { saveTemplate } from './templateBuilderApi';
+import {
+  getTemplate as getWorkbookLifecycle,
+  type LifecycleTemplate,
+} from '@/services/api/templateLifecycle.api';
+
+import {
+  deleteTemplate,
+  loadTemplate,
+  recordToDraft,
+  saveTemplate,
+  transitionWorkbookTemplate,
+  updateTemplate,
+} from './templateBuilderApi';
 import {
   type DeckSlide,
   DOC_BLOCK_LABELS,
@@ -22,6 +34,7 @@ import {
   type TemplateDraft,
   type TemplateScope,
   type TemplateType,
+  validateTemplateDraft,
   type WorkbookTemplateSheet,
 } from './templateBuilderModel';
 import { TemplateBuilderShell } from './TemplateBuilderShell';
@@ -45,6 +58,8 @@ export interface TemplateBuilderProps {
   /** wstrzyknięcie zapisu (dev-render / testy). Domyślnie żywa fasada. */
   saveFn?: (draft: TemplateDraft) => Promise<{ id: string }>;
   persistRailState?: boolean;
+  /** Canonical id switches Save from create to persisted update. */
+  templateId?: string;
 }
 
 export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
@@ -54,6 +69,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   onClose,
   saveFn = saveTemplate,
   persistRailState = true,
+  templateId,
 }) => {
   const [builderState, setBuilderState] = useState(() => ({
     draft: initialDraft,
@@ -75,6 +91,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [activeRightTool, setActiveRightTool] = useState<TemplateRightTool | null>('properties');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [lifecycle, setLifecycle] = useState<LifecycleTemplate | null>(null);
+
+  const refreshLifecycle = useCallback(async () => {
+    if (!templateId || draft.type !== 'table') return;
+    try {
+      setLifecycle(await getWorkbookLifecycle(templateId));
+    } catch {
+      setLifecycle(null);
+    }
+  }, [templateId, draft.type]);
+
+  useEffect(() => {
+    void refreshLifecycle();
+  }, [refreshLifecycle]);
 
   const patchDraft = useCallback((patch: Partial<TemplateDraft>) => {
     setDraft((d) => ({ ...d, ...patch }));
@@ -200,20 +231,70 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   }, [draft, selectedId]);
 
   // ── Zapis ─────────────────────────────────────────────────────────────────
-  const canSave = draft.name.trim().length > 0;
+  const validation = useMemo(() => validateTemplateDraft(draft), [draft]);
+  const canSave = validation.valid;
   const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
     setError(null);
+    setNotice(null);
     try {
-      const res = await saveFn(draft);
+      const res = templateId ? await updateTemplate(templateId, draft) : await saveFn(draft);
       onSaved?.(res.id);
+      setNotice(templateId ? 'Zmiany zapisane w wersji roboczej.' : 'Szablon zapisany jako draft.');
+      await refreshLifecycle();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Zapis nie powiódł się');
     } finally {
       setSaving(false);
     }
-  }, [canSave, saving, saveFn, draft, onSaved]);
+  }, [canSave, saving, saveFn, draft, onSaved, templateId, refreshLifecycle]);
+
+  const handleApprove = useCallback(async () => {
+    if (!templateId || !validation.valid) return;
+    try {
+      setError(null);
+      setLifecycle(
+        await transitionWorkbookTemplate(
+          templateId,
+          'approve',
+          'Approved in manual template builder'
+        )
+      );
+      setNotice('Szablon został zatwierdzony i jest gotowy do użycia.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Publikacja nie powiodła się');
+    }
+  }, [templateId, validation.valid]);
+
+  const handleDeprecate = useCallback(async () => {
+    if (!templateId) return;
+    try {
+      setError(null);
+      setLifecycle(
+        await transitionWorkbookTemplate(
+          templateId,
+          'deprecate',
+          'Deprecated in manual template builder'
+        )
+      );
+      setNotice('Szablon wycofano. Historia i wersje zostały zachowane.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Wycofanie nie powiodło się');
+    }
+  }, [templateId]);
+
+  const handleDeleteTemplate = useCallback(async () => {
+    if (!templateId || lifecycle?.status === 'approved') return;
+    if (!window.confirm('Usunąć ten draft szablonu? Tej operacji nie można cofnąć.')) return;
+    try {
+      setError(null);
+      await deleteTemplate(templateId);
+      onClose?.();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Usunięcie nie powiodło się');
+    }
+  }, [templateId, lifecycle?.status, onClose]);
 
   return (
     <>
@@ -223,6 +304,14 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
           role="alert"
         >
           {error}
+        </div>
+      )}
+      {notice && !error && (
+        <div
+          role="status"
+          className="absolute top-2 left-1/2 -translate-x-1/2 z-toast rounded-lg border border-c-success/30 bg-c-success/10 px-4 py-2 text-sm text-c-success"
+        >
+          {notice}
         </div>
       )}
       <TemplateBuilderShell
@@ -242,6 +331,26 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         onSave={handleSave}
         saving={saving}
         canSave={canSave}
+        saveLabel={templateId ? 'Zapisz zmiany' : 'Zapisz jako szablon'}
+        validationErrors={validation.errors}
+        lifecycle={
+          templateId && draft.type === 'table'
+            ? {
+                status: lifecycle?.status ?? 'draft',
+                version: lifecycle?.version ?? 'v0.1',
+                historyCount: lifecycle?.approval_history.length ?? 0,
+                onValidate: () =>
+                  setNotice(
+                    validation.valid
+                      ? 'Walidacja zakończona: szablon jest gotowy do publikacji.'
+                      : validation.errors.join(' ')
+                  ),
+                onApprove: lifecycle?.status === 'draft' ? handleApprove : undefined,
+                onDeprecate: lifecycle?.status === 'approved' ? handleDeprecate : undefined,
+                onDelete: lifecycle?.status === 'draft' ? handleDeleteTemplate : undefined,
+              }
+            : undefined
+        }
         onBack={onClose}
         persistRailState={persistRailState}
       />
@@ -312,3 +421,53 @@ export const TemplateBuilderFlow: React.FC<TemplateBuilderFlowProps> = ({
 };
 
 export default TemplateBuilder;
+
+export interface PersistedTemplateBuilderProps extends Omit<
+  TemplateBuilderProps,
+  'initialDraft' | 'templateId' | 'saveFn'
+> {
+  templateId: string;
+}
+
+/** Opens the canonical persisted record instead of relying on an in-memory draft. */
+export const PersistedTemplateBuilder: React.FC<PersistedTemplateBuilderProps> = ({
+  templateId,
+  ...props
+}) => {
+  const [state, setState] = useState<{ draft: TemplateDraft | null; error: string | null }>({
+    draft: null,
+    error: null,
+  });
+
+  useEffect(() => {
+    let active = true;
+    setState({ draft: null, error: null });
+    loadTemplate(templateId)
+      .then((record) => active && setState({ draft: recordToDraft(record), error: null }))
+      .catch(
+        (error) =>
+          active &&
+          setState({
+            draft: null,
+            error: error instanceof Error ? error.message : 'Nie udało się otworzyć szablonu',
+          })
+      );
+    return () => {
+      active = false;
+    };
+  }, [templateId]);
+
+  if (state.error)
+    return (
+      <div role="alert" className="p-6 text-sm text-c-danger">
+        {state.error}
+      </div>
+    );
+  if (!state.draft)
+    return (
+      <div role="status" className="p-6 text-sm text-c-muted">
+        Otwieranie szablonu…
+      </div>
+    );
+  return <TemplateBuilder {...props} initialDraft={state.draft} templateId={templateId} />;
+};

@@ -29,7 +29,38 @@
  * wierszach/kolumnach wygenerowanego skoroszytu.
  */
 
-import { AlertTriangle, Check, Loader2 } from 'lucide-react';
+import {
+  AlignLeft,
+  AlertTriangle,
+  ArrowDownAZ,
+  ArrowUpAZ,
+  BarChart3,
+  Bold,
+  Check,
+  ChevronsDown,
+  Columns3,
+  Copy,
+  Filter,
+  FileUp,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Italic,
+  ListChecks,
+  Loader2,
+  MessageSquare,
+  Merge,
+  PaintBucket,
+  Plus,
+  Rows3,
+  Ruler,
+  Search,
+  Snowflake,
+  Trash2,
+  Underline,
+  WandSparkles,
+  WrapText,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -44,12 +75,20 @@ import {
   rawCellToEditText,
   recalcWorkbook,
 } from '@/utils/workbookFormulaEngine';
+import { isNegativeVarianceCell } from '@/utils/workbookGridPreview';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 interface Selection {
   rowIndex: number;
   colIndex: number;
+}
+
+interface CellChange {
+  rowIndex: number;
+  colIndex: number;
+  before: import('@/utils/workbookFormulaEngine').FormulaCellRaw;
+  after: import('@/utils/workbookFormulaEngine').FormulaCellRaw;
 }
 
 interface Props {
@@ -68,6 +107,146 @@ function cloneSheets(sheets: FormulaSheet[]): FormulaSheet[] {
   return JSON.parse(JSON.stringify(sheets));
 }
 
+function cssColor(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const normalized = value.trim();
+  return normalized.startsWith('#') ? normalized : `#${normalized}`;
+}
+
+function readableForeground(backgroundColor: string | undefined): string | undefined {
+  const match = backgroundColor?.match(/^#([0-9a-f]{6})$/i);
+  if (!match) return backgroundColor ? 'var(--c-text)' : undefined;
+  const rgb = [0, 2, 4].map((offset) => parseInt(match[1].slice(offset, offset + 2), 16));
+  const [red, green, blue] = rgb.map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  });
+  const luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  return luminance > 0.42 ? '#0F172A' : '#F8FAFC';
+}
+
+function cellPresentationStyle(cell: import('@/utils/workbookFormulaEngine').FormulaCellRaw | undefined): React.CSSProperties {
+  const style = cell?.style as Record<string, unknown> | undefined;
+  if (!style) return {};
+  const borderWidth = style.border === 'thick' ? 3 : style.border === 'medium' ? 2 : style.border === 'thin' ? 1 : 0;
+  const backgroundColor = cssColor(style.bgColor);
+  const explicitFontColor = cssColor(style.fontColor);
+  const themeForeground = !explicitFontColor ? readableForeground(backgroundColor) : undefined;
+  const foreground = explicitFontColor ?? themeForeground;
+  return {
+    backgroundColor,
+    color: foreground,
+    WebkitTextFillColor: foreground,
+    fontWeight: style.bold ? 700 : undefined,
+    fontStyle: style.italic ? 'italic' : undefined,
+    textDecoration: style.underline ? 'underline' : undefined,
+    fontSize: typeof style.fontSize === 'number' ? `${style.fontSize}px` : undefined,
+    textAlign:
+      style.alignment === 'center' || style.alignment === 'right'
+        ? style.alignment
+        : style.alignment === 'left'
+          ? 'left'
+          : undefined,
+    whiteSpace: style.wrapText ? 'normal' : undefined,
+    overflowWrap: style.wrapText ? 'anywhere' : undefined,
+    border: borderWidth ? `${borderWidth}px solid var(--color-border-subtle, #cbd5e1)` : undefined,
+  };
+}
+
+function conditionalPresentationStyle(
+  sheet: FormulaSheet,
+  rowIndex: number,
+  colIndex: number,
+  value: unknown
+): React.CSSProperties {
+  const addressRow = rowIndex + 2;
+  const blocks = Array.isArray((sheet as any).conditionalFormatting)
+    ? (sheet as any).conditionalFormatting
+    : [];
+  for (const block of blocks) {
+    const match = String(block.ref || '').match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i);
+    if (!match) continue;
+    const toIndex = (letters: string) =>
+      letters
+        .toUpperCase()
+        .split('')
+        .reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+    if (
+      colIndex < toIndex(match[1]) ||
+      colIndex > toIndex(match[3]) ||
+      addressRow < Number(match[2]) ||
+      addressRow > Number(match[4])
+    )
+      continue;
+    for (const rule of block.rules || []) {
+      const threshold = Number(rule.formulae?.[0]);
+      const numeric = Number(value);
+      const applies =
+        rule.type === 'cellIs' &&
+        Number.isFinite(numeric) &&
+        ((rule.operator === 'lessThan' && numeric < threshold) ||
+          (rule.operator === 'greaterThan' && numeric > threshold) ||
+          (rule.operator === 'equal' && numeric === threshold));
+      if (applies) {
+        // Spreadsheet CF colors are often authored for a white Excel canvas.
+        // Resolve the web preview through theme-aware semantic tokens so a
+        // pale imported fill cannot pair with illegible text in dark mode.
+        const tone =
+          rule.operator === 'lessThan'
+            ? 'danger'
+            : rule.operator === 'greaterThan'
+              ? 'success'
+              : 'warning';
+        return {
+          backgroundColor: `color-mix(in srgb, var(--c-${tone}) 18%, var(--c-surface))`,
+          // The high-contrast theme foreground is emitted inline in the real
+          // grid-cell branch, so neither imported fontColor nor a utility
+          // class can turn pale text against a pale conditional fill.
+          color: 'var(--c-text)',
+          WebkitTextFillColor: 'var(--c-text)',
+          fontWeight: rule.style?.bold ? 700 : undefined,
+          fontStyle: rule.style?.italic ? 'italic' : undefined,
+        };
+      }
+    }
+  }
+  return {};
+}
+
+interface ParsedMergeRange {
+  range: string;
+  rowStart: number;
+  rowEnd: number;
+  colStart: number;
+  colEnd: number;
+}
+
+function columnLettersToIndex(letters: string): number {
+  return letters
+    .toUpperCase()
+    .split('')
+    .reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
+}
+
+function parseMergeRanges(sheet: FormulaSheet): ParsedMergeRange[] {
+  const merges = Array.isArray((sheet as any).merges) ? (sheet as any).merges : [];
+  return merges.flatMap((merge: { start?: unknown; end?: unknown }) => {
+    const start = String(merge?.start || '').replace(/\$/g, '').toUpperCase();
+    const end = String(merge?.end || '').replace(/\$/g, '').toUpperCase();
+    const startMatch = start.match(/^([A-Z]+)(\d+)$/);
+    const endMatch = end.match(/^([A-Z]+)(\d+)$/);
+    if (!startMatch || !endMatch) return [];
+    const rowStart = Number(startMatch[2]) - 2;
+    const rowEnd = Number(endMatch[2]) - 2;
+    const colStart = columnLettersToIndex(startMatch[1]);
+    const colEnd = columnLettersToIndex(endMatch[1]);
+    if (rowStart < 0 || colStart < 0 || rowEnd < rowStart || colEnd < colStart) return [];
+    return [{ range: `${start}:${end}`, rowStart, rowEnd, colStart, colEnd }];
+  });
+}
+
 export const EditableSpreadsheetGrid: React.FC<Props> = ({
   workbookId,
   sheets,
@@ -77,32 +256,72 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const { t } = useTranslation();
   const [localSheets, setLocalSheets] = useState<FormulaSheet[]>(() => cloneSheets(sheets));
   const [selected, setSelected] = useState<Selection | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<Selection | null>(null);
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [showAllRows, setShowAllRows] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [pendingOfflineCount, setPendingOfflineCount] = useState(0);
+  const [rebaseNotice, setRebaseNotice] = useState<string | null>(null);
+  const [dialogMode, setDialogMode] = useState<
+    | 'rename'
+    | 'renameWorkbook'
+    | 'delete'
+    | 'validation'
+    | 'findReplace'
+    | 'resize'
+    | 'comment'
+    | 'help'
+    | null
+  >(null);
+  const [dialogValue, setDialogValue] = useState('');
+  const [dialogValue2, setDialogValue2] = useState('');
+  const [workingSheetIndex, setWorkingSheetIndex] = useState(activeSheetIndex);
   const inputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const editFocusTargetRef = useRef<'cell' | 'formula'>('cell');
+  const undoStackRef = useRef<CellChange[][]>([]);
+  const redoStackRef = useRef<CellChange[][]>([]);
+  const lastSchemaCommandRef = useRef<Record<string, unknown> | null>(null);
+  const offlineQueueKey = `consultify:workbook:${workbookId}:pending-schema-commands`;
 
   // Nowy skoroszyt (reopen na inny id) → zacznij od świeżych danych serwera;
   // edycje w toku dla POPRZEDNIEGO workbookId nigdy nie mieszają się z nowym.
   useEffect(() => {
     setLocalSheets(cloneSheets(sheets));
     setSelected(null);
+    setSelectionEnd(null);
     setEditingValue(null);
     setSaveState('idle');
+    setSaveError(null);
+    setWorkingSheetIndex(activeSheetIndex);
+    undoStackRef.current = [];
+    redoStackRef.current = [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workbookId]);
 
   // Zmiana zakładki arkusza → zaznaczenie z poprzedniego arkusza nie ma sensu.
   useEffect(() => {
+    setWorkingSheetIndex(activeSheetIndex);
     setSelected(null);
+    setSelectionEnd(null);
     setEditingValue(null);
   }, [activeSheetIndex]);
 
   const computedSheets = useMemo(() => recalcWorkbook(localSheets), [localSheets]);
-  const activeRaw = localSheets[activeSheetIndex];
-  const activeComputed = computedSheets[activeSheetIndex];
+  const activeRaw = localSheets[workingSheetIndex];
+  const activeComputed = computedSheets[workingSheetIndex];
+  const selectionRange = useMemo(() => {
+    if (!selected) return null;
+    const end = selectionEnd || selected;
+    return {
+      rowStart: Math.min(selected.rowIndex, end.rowIndex),
+      rowEnd: Math.max(selected.rowIndex, end.rowIndex),
+      colStart: Math.min(selected.colIndex, end.colIndex),
+      colEnd: Math.max(selected.colIndex, end.colIndex),
+    };
+  }, [selected, selectionEnd]);
 
   useEffect(() => {
     // Starting an edit from the formula bar must not steal focus into the
@@ -112,6 +331,253 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       inputRef.current?.focus();
     }
   }, [editingValue]);
+
+  const persistChanges = useCallback(
+    async (changes: CellChange[], direction: 'after' | 'before') => {
+      setSaveState('saving');
+      setSaveError(null);
+      try {
+        // Cell updates are versioned server-side. Keep them sequential so a
+        // multi-cell paste cannot create avoidable compare-and-swap races.
+        for (const change of changes) {
+          const col = localSheets[workingSheetIndex]?.columns?.[change.colIndex];
+          if (!col) continue;
+          const cell = change[direction];
+          const payload = {
+            sheetIndex: workingSheetIndex,
+            rowIndex: change.rowIndex,
+            columnKey: col.key,
+            value: cell.value,
+            formula: cell.formula,
+          };
+          try {
+            await Api.updateWorkbookCell(workbookId, payload);
+          } catch (cellError) {
+            const message = cellError instanceof Error ? cellError.message : String(cellError);
+            if (/409|conflict/i.test(message)) {
+              const latest = await Api.getWorkbook(workbookId);
+              const latestSheets = latest?.schema?.sheets || latest?.schema_json?.sheets || latest?.sheets;
+              if (Array.isArray(latestSheets) && latestSheets.length) setLocalSheets(cloneSheets(latestSheets));
+              setRebaseNotice(t('kimi.excele.rebased', 'Workbook changed elsewhere. Rebased on the latest version and retried your edit.'));
+              await Api.updateWorkbookCell(workbookId, payload);
+            } else throw cellError;
+          }
+        }
+        setSaveState('saved');
+      } catch (error) {
+        setSaveState('error');
+        const message = error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+        const isOffline = typeof navigator !== 'undefined' && (!navigator.onLine || /network|fetch/i.test(message));
+        if (isOffline) {
+          try {
+            const queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+            for (const change of changes) {
+              const col = localSheets[workingSheetIndex]?.columns?.[change.colIndex];
+              if (!col) continue;
+              const cell = change[direction];
+              queued.push({ kind: 'cell', payload: { sheetIndex: workingSheetIndex, rowIndex: change.rowIndex, columnKey: col.key, value: cell.value, formula: cell.formula } });
+            }
+            localStorage.setItem(offlineQueueKey, JSON.stringify(queued));
+            setPendingOfflineCount(queued.length);
+          } catch { /* ignored */ }
+        }
+        setSaveError(isOffline ? t('kimi.excele.offlineQueued', 'Offline: edit queued and will retry after reconnecting.') : message);
+      }
+    },
+    [localSheets, offlineQueueKey, t, workbookId, workingSheetIndex]
+  );
+
+  const applyChanges = useCallback(
+    (changes: CellChange[], direction: 'after' | 'before') => {
+      setLocalSheets((prev) => {
+        const clone = cloneSheets(prev);
+        const sheet = clone[workingSheetIndex];
+        if (!sheet) return prev;
+        for (const change of changes) {
+          const col = sheet.columns?.[change.colIndex];
+          const row = sheet.rows?.[change.rowIndex];
+          if (!col || !row) continue;
+          if (!row.cells) row.cells = {};
+          row.cells[col.key] = { ...change[direction] };
+        }
+        return clone;
+      });
+      void persistChanges(changes, direction);
+    },
+    [persistChanges, workingSheetIndex]
+  );
+
+  const runSchemaCommand = useCallback(
+    async (command: Record<string, unknown>) => {
+      lastSchemaCommandRef.current = command;
+      setSaveState('saving');
+      setSaveError(null);
+      try {
+        let result;
+        try {
+          result = await Api.updateWorkbookSchema(workbookId, command);
+        } catch (firstError) {
+          const firstMessage = firstError instanceof Error ? firstError.message : String(firstError);
+          if (/409|conflict/i.test(firstMessage)) {
+            const latest = await Api.getWorkbook(workbookId);
+            const latestSheets = latest?.schema?.sheets || latest?.schema_json?.sheets || latest?.sheets;
+            if (Array.isArray(latestSheets) && latestSheets.length) setLocalSheets(cloneSheets(latestSheets));
+            setRebaseNotice(t('kimi.excele.rebased', 'Workbook changed elsewhere. Rebased on the latest version and retried your edit.'));
+            result = await Api.updateWorkbookSchema(workbookId, command);
+          } else throw firstError;
+        }
+        const nextSheets = result?.schema?.sheets;
+        if (Array.isArray(nextSheets) && nextSheets.length) {
+          setLocalSheets(cloneSheets(nextSheets));
+          setWorkingSheetIndex((current) => Math.min(current, nextSheets.length - 1));
+          setSelected(null);
+          setSelectionEnd(null);
+        }
+        undoStackRef.current = [];
+        redoStackRef.current = [];
+        setSaveState('saved');
+      } catch (error) {
+        setSaveState('error');
+        const message =
+          error instanceof Error ? error.message : t('kimi.excele.saveFailed', 'Save failed');
+        const isOffline = typeof navigator !== 'undefined' && (!navigator.onLine || /network|fetch/i.test(message));
+        if (isOffline) {
+          try {
+            const queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+            queued.push({ kind: 'schema', payload: command });
+            localStorage.setItem(offlineQueueKey, JSON.stringify(queued));
+            setPendingOfflineCount(queued.length);
+          } catch { /* localStorage can be unavailable in hardened browsers */ }
+        }
+        setSaveError(
+          isOffline
+            ? t('kimi.excele.offlineQueued', 'Offline: edit queued and will retry after reconnecting.')
+            : message.includes('409') || /conflict/i.test(message)
+            ? t(
+                'kimi.excele.conflict',
+                'This workbook changed in another session. Reload, then retry your edit.'
+              )
+            : message
+        );
+      }
+    },
+    [offlineQueueKey, t, workbookId]
+  );
+
+  useEffect(() => {
+    try { setPendingOfflineCount(JSON.parse(localStorage.getItem(offlineQueueKey) || '[]').length); } catch { setPendingOfflineCount(0); }
+    const replay = async () => {
+      let queued: Record<string, unknown>[] = [];
+      try {
+        queued = JSON.parse(localStorage.getItem(offlineQueueKey) || '[]');
+        localStorage.removeItem(offlineQueueKey);
+        setPendingOfflineCount(0);
+      } catch { return; }
+      for (const entry of queued as any[]) {
+        if (entry?.kind === 'cell') await Api.updateWorkbookCell(workbookId, entry.payload);
+        else await runSchemaCommand(entry?.payload || entry);
+      }
+    };
+    window.addEventListener('online', replay);
+    return () => window.removeEventListener('online', replay);
+  }, [offlineQueueKey, runSchemaCommand, workbookId]);
+
+  const importWorkbook = useCallback(async (file: File) => {
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      const result = await Api.importWorkbook(workbookId, file);
+      if (!Array.isArray(result?.schema?.sheets) || !result.schema.sheets.length) throw new Error('Imported workbook has no sheets');
+      setLocalSheets(cloneSheets(result.schema.sheets));
+      setWorkingSheetIndex(0);
+      setSelected(null);
+      setSelectionEnd(null);
+      undoStackRef.current = [];
+      redoStackRef.current = [];
+      setSaveState('saved');
+    } catch (error) {
+      setSaveState('error');
+      setSaveError(error instanceof Error ? error.message : t('kimi.excele.importFailed', 'Import failed'));
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = '';
+    }
+  }, [t, workbookId]);
+
+  const createChartFromSelection = useCallback(async () => {
+    if (!selectionRange || selectionRange.colEnd <= selectionRange.colStart) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 420;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Chart canvas is unavailable');
+    const chartColumns = activeRaw?.columns || [];
+    const rows = activeComputed?.rows || [];
+    const labelKey = chartColumns[selectionRange.colStart]?.key;
+    const selectedSeriesColumns = chartColumns.slice(
+      selectionRange.colStart + 1,
+      selectionRange.colEnd + 1
+    );
+    const headerRow = rows[selectionRange.rowStart];
+    const hasSemanticHeader = selectedSeriesColumns.some((column) => {
+      const value = headerRow?.cells?.[column.key]?.computed;
+      return typeof value === 'string' && value.trim().length > 0;
+    });
+    const labelHeader = hasSemanticHeader
+      ? formatComputedForDisplay(headerRow?.cells?.[labelKey]) ||
+        chartColumns[selectionRange.colStart]?.header || 'Category'
+      : chartColumns[selectionRange.colStart]?.header || 'Category';
+    const dataStart = selectionRange.rowStart + (hasSemanticHeader ? 1 : 0);
+    const labels = rows
+      .slice(dataStart, selectionRange.rowEnd + 1)
+      .map((row) => formatComputedForDisplay(row.cells[labelKey]));
+    const series = selectedSeriesColumns.map((column) => ({
+      name: String(
+        (hasSemanticHeader
+          ? formatComputedForDisplay(headerRow?.cells?.[column.key]) || column.header
+          : column.header) || column.key
+      ),
+      values: rows
+        .slice(dataStart, selectionRange.rowEnd + 1)
+        .map((row) => Number(row.cells[column.key]?.computed))
+        .map((value) => (Number.isFinite(value) ? value : 0)),
+    }));
+    const max = Math.max(1, ...series.flatMap((item) => item.values.map((value) => Math.abs(value))));
+    context.fillStyle = '#ffffff'; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#172033'; context.font = '600 22px sans-serif';
+    const title = `${series.map((item) => item.name).join(' vs ')} by ${labelHeader}`;
+    context.fillText(title, 36, 38);
+    const colors = ['#3267d6', '#0f9f8f', '#d97706', '#7c3aed'];
+    const plotTop = 82; const plotHeight = 250; const plotLeft = 55; const plotWidth = 620;
+    const slot = plotWidth / Math.max(1, labels.length);
+    const groupWidth = slot * 0.72;
+    const barWidth = groupWidth / Math.max(1, series.length);
+    series.forEach((item, seriesIndex) => {
+      item.values.forEach((value, index) => {
+        const height = Math.abs(value) / max * plotHeight;
+        context.fillStyle = colors[seriesIndex % colors.length];
+        context.fillRect(
+          plotLeft + index * slot + slot * 0.14 + seriesIndex * barWidth,
+          plotTop + plotHeight - height,
+          Math.max(5, barWidth - 3),
+          height
+        );
+      });
+      context.fillStyle = colors[seriesIndex % colors.length];
+      context.fillRect(400 + seriesIndex * 120, 48, 12, 12);
+      context.fillStyle = '#526077'; context.font = '12px sans-serif';
+      context.fillText(item.name.slice(0, 14), 417 + seriesIndex * 120, 59);
+    });
+    labels.forEach((label, index) => {
+      context.fillStyle = '#526077'; context.font = '11px sans-serif';
+      context.fillText(label?.slice(0, 20) || String(index + 1), plotLeft + index * slot + slot * 0.06, plotTop + plotHeight + 24);
+    });
+    const sourceRange = `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`;
+    await runSchemaCommand({
+      type: 'upsertChartImage',
+      sheetIndex: workingSheetIndex,
+      chart: { id: crypto.randomUUID(), title, chartType: 'bar', sourceRange, pngBase64: canvas.toDataURL('image/png'), anchorCell: `A${excelRowForDataRowIndex(selectionRange.rowEnd) + 2}`, width: 720, height: 420 },
+    });
+  }, [activeComputed, activeRaw?.columns, runSchemaCommand, selectionRange, workingSheetIndex]);
 
   // Naprawa odkryta w render-verify (2026-07-28): po Escape/zatwierdzeniu
   // edycji React odmontowuje `<input>` komórki, ale fokus NIE wraca sam do
@@ -131,27 +597,37 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       const col = activeRaw.columns[selected.colIndex];
       if (!col) return;
       const parsed = parseCellInput(nextRaw);
+      const oldCell = activeRaw.rows?.[selected.rowIndex]?.cells?.[col.key] ?? {};
+      const afterCell = {
+        style: (oldCell as Record<string, unknown>).style,
+        comment: (oldCell as Record<string, unknown>).comment,
+        validation: (oldCell as Record<string, unknown>).validation,
+        ...parsed,
+      };
+      undoStackRef.current.push([
+        {
+          rowIndex: selected.rowIndex,
+          colIndex: selected.colIndex,
+          before: { ...oldCell },
+          after: afterCell,
+        },
+      ]);
+      redoStackRef.current = [];
 
       setLocalSheets((prev) => {
         const clone = cloneSheets(prev);
-        const sheet = clone[activeSheetIndex];
+        const sheet = clone[workingSheetIndex];
         if (!sheet.rows) sheet.rows = [];
         const targetRow = sheet.rows[selected.rowIndex];
         if (!targetRow) return prev;
         if (!targetRow.cells) targetRow.cells = {};
-        const oldCell = targetRow.cells[col.key] ?? {};
-        targetRow.cells[col.key] = {
-          style: (oldCell as Record<string, unknown>).style,
-          comment: (oldCell as Record<string, unknown>).comment,
-          validation: (oldCell as Record<string, unknown>).validation,
-          ...parsed,
-        };
+        targetRow.cells[col.key] = afterCell;
         return clone;
       });
 
       setSaveState('saving');
       Api.updateWorkbookCell(workbookId, {
-        sheetIndex: activeSheetIndex,
+        sheetIndex: workingSheetIndex,
         rowIndex: selected.rowIndex,
         columnKey: col.key,
         ...parsed,
@@ -175,7 +651,7 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
         });
       }
     },
-    [selected, activeRaw, activeSheetIndex, workbookId]
+    [selected, activeRaw, workbookId, workingSheetIndex]
   );
 
   const startEditing = useCallback(
@@ -216,6 +692,23 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const handleNavigationKey = useCallback(
     (key: string, modifiers: { ctrlKey: boolean; metaKey: boolean; altKey: boolean }): boolean => {
       if (editingValue !== null || !selected) return false;
+      const command = modifiers.ctrlKey || modifiers.metaKey;
+      if (command && key.toLowerCase() === 'z') {
+        const changes = undoStackRef.current.pop();
+        if (changes) {
+          redoStackRef.current.push(changes);
+          applyChanges(changes, 'before');
+        }
+        return true;
+      }
+      if (command && key.toLowerCase() === 'y') {
+        const changes = redoStackRef.current.pop();
+        if (changes) {
+          undoStackRef.current.push(changes);
+          applyChanges(changes, 'after');
+        }
+        return true;
+      }
       switch (key) {
         case 'ArrowUp':
           moveSelection(-1, 0);
@@ -245,7 +738,86 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           return false;
       }
     },
-    [editingValue, selected, moveSelection, startEditing, commit]
+    [editingValue, selected, moveSelection, startEditing, commit, applyChanges]
+  );
+
+  const handleCopy = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      if (!selectionRange) return;
+      const lines: string[] = [];
+      for (let ri = selectionRange.rowStart; ri <= selectionRange.rowEnd; ri += 1) {
+        const values: string[] = [];
+        for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
+          const col = activeRaw?.columns?.[ci];
+          values.push(rawCellToEditText(col ? activeRaw?.rows?.[ri]?.cells?.[col.key] : undefined));
+        }
+        lines.push(values.join('\t'));
+      }
+      e.clipboardData.setData('text/plain', lines.join('\n'));
+      e.preventDefault();
+    },
+    [activeRaw, selectionRange]
+  );
+
+  const fillDown = useCallback(() => {
+    if (!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart || !activeRaw) return;
+    const changes: CellChange[] = [];
+    for (let ci = selectionRange.colStart; ci <= selectionRange.colEnd; ci += 1) {
+      const col = activeRaw.columns?.[ci];
+      if (!col) continue;
+      const source = activeRaw.rows?.[selectionRange.rowStart]?.cells?.[col.key] ?? {};
+      for (let ri = selectionRange.rowStart + 1; ri <= selectionRange.rowEnd; ri += 1) {
+        const before = activeRaw.rows?.[ri]?.cells?.[col.key] ?? {};
+        const delta = ri - selectionRange.rowStart;
+        const after = { ...source };
+        if (typeof after.formula === 'string') {
+          after.formula = after.formula.replace(
+            /(\$?[A-Z]+)(\$?)(\d+)/g,
+            (_match, letters: string, absoluteRow: string, row: string) =>
+              `${letters}${absoluteRow}${absoluteRow ? row : Number(row) + delta}`
+          );
+        }
+        changes.push({ rowIndex: ri, colIndex: ci, before: { ...before }, after });
+      }
+    }
+    if (!changes.length) return;
+    undoStackRef.current.push(changes);
+    redoStackRef.current = [];
+    applyChanges(changes, 'after');
+  }, [activeRaw, applyChanges, selectionRange]);
+
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      if (!selected || editingValue !== null || !activeRaw?.columns?.length) return;
+      const matrix = e.clipboardData
+        .getData('text/plain')
+        .replace(/\r/g, '')
+        .split('\n')
+        .map((line) => line.split('\t'));
+      const changes: CellChange[] = [];
+      matrix.forEach((values, rowOffset) =>
+        values.forEach((raw, colOffset) => {
+          const rowIndex = selected.rowIndex + rowOffset;
+          const colIndex = selected.colIndex + colOffset;
+          const col = activeRaw.columns?.[colIndex];
+          const row = activeRaw.rows?.[rowIndex];
+          if (!col || !row) return;
+          const before = row.cells?.[col.key] ?? {};
+          changes.push({
+            rowIndex,
+            colIndex,
+            before: { ...before },
+            after: { ...before, ...parseCellInput(raw) },
+          });
+        })
+      );
+      if (!changes.length) return;
+      undoStackRef.current.push(changes);
+      redoStackRef.current = [];
+      applyChanges(changes, 'after');
+      e.preventDefault();
+    },
+    [activeRaw, applyChanges, editingValue, selected]
   );
 
   const handleContainerKeyDown = useCallback(
@@ -335,6 +907,19 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
   const columns = activeRaw.columns;
   const rows = activeComputed?.rows ?? [];
   const visibleRows = showAllRows ? rows : rows.slice(0, rowCap);
+  const selectedRangeA1 = selectionRange
+    ? `${colIndexToLetter(selectionRange.colStart)}${excelRowForDataRowIndex(selectionRange.rowStart)}:${colIndexToLetter(selectionRange.colEnd)}${excelRowForDataRowIndex(selectionRange.rowEnd)}`
+    : '';
+  const parsedMerges = parseMergeRanges(activeRaw);
+  const selectedMerge = selectionRange
+    ? parsedMerges.find(
+        (merge) =>
+          merge.rowStart <= selectionRange.rowEnd &&
+          merge.rowEnd >= selectionRange.rowStart &&
+          merge.colStart <= selectionRange.colEnd &&
+          merge.colEnd >= selectionRange.colStart
+      )
+    : undefined;
 
   const formulaBarText =
     selected && editingValue !== null
@@ -350,6 +935,637 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
 
   return (
     <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+      <div
+        className="flex flex-wrap items-center gap-1.5 px-3 py-2 border-b border-c-border-subtle bg-c-surface-raised"
+        role="toolbar"
+        aria-label={t('kimi.excele.structureToolbar', 'Workbook editing tools')}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue('');
+            setDialogMode('renameWorkbook');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+        >
+          {t('kimi.excele.renameWorkbook', 'Rename workbook')}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue('');
+            setDialogValue2('');
+            setDialogMode('findReplace');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.findReplace', 'Find and replace')}
+        >
+          <Search size={14} />
+        </button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+          className="sr-only"
+          aria-label={t('kimi.excele.importFile', 'Import XLSX or CSV')}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void importWorkbook(file);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => importInputRef.current?.click()}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.importFile', 'Import XLSX or CSV')}
+        >
+          <FileUp size={14} />
+        </button>
+        <label className="sr-only" htmlFor={`workbook-sheet-${workbookId}`}>
+          {t('kimi.excele.activeSheet', 'Active sheet')}
+        </label>
+        <select
+          id={`workbook-sheet-${workbookId}`}
+          value={workingSheetIndex}
+          onChange={(e) => {
+            setWorkingSheetIndex(Number(e.target.value));
+            setSelected(null);
+          }}
+          className="h-8 max-w-44 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs text-c-text"
+        >
+          {localSheets.map((sheet, index) => (
+            <option key={`${sheet.name}-${index}`} value={index}>
+              {sheet.name || `Sheet ${index + 1}`}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({ type: 'addSheet', name: `Sheet ${localSheets.length + 1}` })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+          aria-label={t('kimi.excele.addSheet', 'Add sheet')}
+        >
+          <Plus size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setDialogValue(activeRaw?.name || '');
+            setDialogMode('rename');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-xs"
+        >
+          {t('kimi.excele.rename', 'Rename')}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({ type: 'duplicateSheet', sheetIndex: workingSheetIndex })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.duplicateSheet', 'Duplicate sheet')}
+        >
+          <Copy size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={localSheets.length <= 1}
+          onClick={() => setDialogMode('delete')}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteSheet', 'Delete sheet')}
+        >
+          <Trash2 size={14} />
+        </button>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'setRowHidden', sheetIndex: workingSheetIndex, rowIndex: selected.rowIndex, hidden: true })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.hideRow', 'Hide selected row')}><EyeOff size={14} /></button>
+        <button type="button" disabled={!selected} onClick={() => selected && void runSchemaCommand({ type: 'setColumnHidden', sheetIndex: workingSheetIndex, colIndex: selected.colIndex, hidden: true })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.hideColumn', 'Hide selected column')}><Columns3 size={14} /><EyeOff size={9} className="inline" /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'unhideAll', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle" aria-label={t('kimi.excele.unhideAll', 'Unhide all rows and columns')}><Eye size={14} /></button>
+        <button type="button" disabled={!selectionRange || (selectionRange.rowStart === selectionRange.rowEnd && selectionRange.colStart === selectionRange.colEnd)} onClick={() => void runSchemaCommand({ type: 'mergeCells', sheetIndex: workingSheetIndex, range: selectedRangeA1 })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.merge', 'Merge selected cells')}><Merge size={14} /></button>
+        <button type="button" disabled={!selectedMerge} onClick={() => selectedMerge && void runSchemaCommand({ type: 'unmergeCells', sheetIndex: workingSheetIndex, range: selectedMerge.range })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.unmerge', 'Unmerge selected cells')}><Merge size={14} className="rotate-180" /></button>
+        <button type="button" disabled={!selectionRange} onClick={() => void runSchemaCommand({ type: 'addConditionalFormat', sheetIndex: workingSheetIndex, block: { ref: selectedRangeA1, rules: [{ type: 'cellIs', operator: 'lessThan', formulae: ['0'], style: { bgColor: 'FDE8E8', fontColor: 'B42318', bold: true } }] } })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40" aria-label={t('kimi.excele.negativeFormat', 'Highlight negative values')}><WandSparkles size={14} /></button>
+        <button type="button" onClick={() => void runSchemaCommand({ type: 'clearConditionalFormats', sheetIndex: workingSheetIndex })} className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle text-[11px]" aria-label={t('kimi.excele.clearConditionalFormats', 'Clear conditional formats')}>CF×</button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'insertRow',
+              sheetIndex: workingSheetIndex,
+              rowIndex: selected?.rowIndex ?? activeRaw.rows?.length ?? 0,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.insertRow', 'Insert row')}
+        >
+          <Rows3 size={14} />
+          <Plus size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'deleteRow',
+              sheetIndex: workingSheetIndex,
+              rowIndex: selected.rowIndex,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteRow', 'Delete selected row')}
+        >
+          <Rows3 size={14} />
+          <Trash2 size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'insertColumn',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected?.colIndex ?? activeRaw.columns?.length ?? 0,
+              header: t('kimi.excele.newColumn', 'New column'),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.insertColumn', 'Insert column')}
+        >
+          <Columns3 size={14} />
+          <Plus size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected || (activeRaw.columns?.length ?? 0) <= 1}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'deleteColumn',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-danger/10 disabled:opacity-40"
+          aria-label={t('kimi.excele.deleteColumn', 'Delete selected column')}
+        >
+          <Columns3 size={14} />
+          <Trash2 size={9} className="inline" />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            setDialogValue(String(activeRaw.columns?.[selected?.colIndex || 0]?.width || 16));
+            setDialogValue2(String(activeRaw.rows?.[selected?.rowIndex || 0]?.height || 20));
+            setDialogMode('resize');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.resize', 'Resize selected row and column')}
+        >
+          <Ruler size={14} />
+        </button>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: {
+                bold: !Boolean(
+                  (activeRaw.rows?.[selected.rowIndex]?.cells?.[
+                    activeRaw.columns?.[selected.colIndex]?.key || ''
+                  ]?.style as Record<string, unknown> | undefined)?.bold
+                ),
+              },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.bold', 'Toggle bold')}
+        >
+          <Bold size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { italic: true },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.italic', 'Toggle italic')}
+        >
+          <Italic size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { underline: true },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.underline', 'Toggle underline')}
+        >
+          <Underline size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { bgColor: 'FFF2CC' },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.fillColor', 'Apply highlight fill')}
+        >
+          <PaintBucket size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'formatCells',
+              sheetIndex: workingSheetIndex,
+              rowIndexes: [selected.rowIndex],
+              colIndexes: [selected.colIndex],
+              style: { wrapText: true, border: 'thin' },
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.wrapBorder', 'Wrap text and apply border')}
+        >
+          <WrapText size={14} />
+        </button>
+        <select
+          aria-label={t('kimi.excele.alignment', 'Text alignment')}
+          disabled={!selected}
+          defaultValue=""
+          onChange={(e) => {
+            if (selected && e.target.value)
+              void runSchemaCommand({
+                type: 'formatCells',
+                sheetIndex: workingSheetIndex,
+                rowIndexes: [selected.rowIndex],
+                colIndexes: [selected.colIndex],
+                style: { alignment: e.target.value },
+              });
+            e.target.value = '';
+          }}
+          className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40"
+        >
+          <option value="">{t('kimi.excele.align', 'Align')}</option>
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+        </select>
+        <select
+          aria-label={t('kimi.excele.numberFormat', 'Number format')}
+          disabled={!selected}
+          defaultValue=""
+          onChange={(e) => {
+            if (selected && e.target.value)
+              void runSchemaCommand({
+                type: 'formatCells',
+                sheetIndex: workingSheetIndex,
+                rowIndexes: [selected.rowIndex],
+                colIndexes: [selected.colIndex],
+                style: { numberFormat: e.target.value },
+              });
+            e.target.value = '';
+          }}
+          className="h-8 rounded-hig-xs border border-c-border-subtle bg-c-surface px-2 text-xs disabled:opacity-40"
+        >
+          <option value="">{t('kimi.excele.format', 'Format')}</option>
+          <option value="# ##0.00">Number</option>
+          <option value="# ##0.00 [$EUR]">EUR</option>
+          <option value="0.0%">%</option>
+          <option value="yyyy-mm-dd">Date</option>
+        </select>
+        <span className="mx-1 h-5 w-px bg-c-border-subtle" aria-hidden="true" />
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'sortRows',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+              direction: 'asc',
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.sortAsc', 'Sort ascending')}
+        >
+          <ArrowDownAZ size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() =>
+            selected &&
+            void runSchemaCommand({
+              type: 'sortRows',
+              sheetIndex: workingSheetIndex,
+              colIndex: selected.colIndex,
+              direction: 'desc',
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.sortDesc', 'Sort descending')}
+        >
+          <ArrowUpAZ size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'setAutoFilter',
+              sheetIndex: workingSheetIndex,
+              enabled: !Boolean((activeRaw as any).autoFilter),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.toggleFilter', 'Toggle header filters')}
+          aria-pressed={Boolean((activeRaw as any).autoFilter)}
+        >
+          <Filter size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            void runSchemaCommand({
+              type: 'setFreeze',
+              sheetIndex: workingSheetIndex,
+              freezeRow: (activeRaw as any).freezeRow ? 0 : 1,
+              freezeCol: Number((activeRaw as any).freezeCol || 0),
+            })
+          }
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.toggleFreeze', 'Toggle frozen header')}
+          aria-pressed={Boolean((activeRaw as any).freezeRow)}
+        >
+          <Snowflake size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            setDialogValue('Yes,No');
+            setDialogMode('validation');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.validation', 'Set dropdown validation')}
+        >
+          <ListChecks size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selected}
+          onClick={() => {
+            const col = selected ? activeRaw.columns?.[selected.colIndex] : null;
+            setDialogValue(
+              col && selected
+                ? String(activeRaw.rows?.[selected.rowIndex]?.cells?.[col.key]?.comment || '')
+                : ''
+            );
+            setDialogMode('comment');
+          }}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.comment', 'Add or edit comment')}
+        >
+          <MessageSquare size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selectionRange || selectionRange.rowEnd <= selectionRange.rowStart}
+          onClick={fillDown}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.fillDown', 'Fill selected range down')}
+        >
+          <ChevronsDown size={14} />
+        </button>
+        <button
+          type="button"
+          disabled={!selectionRange || selectionRange.colEnd <= selectionRange.colStart}
+          onClick={() => void createChartFromSelection()}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle disabled:opacity-40"
+          aria-label={t('kimi.excele.createChart', 'Create chart from selected range')}
+        >
+          <BarChart3 size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setDialogMode('help')}
+          className="h-8 px-2 rounded-hig-xs hover:bg-c-border-subtle"
+          aria-label={t('kimi.excele.shortcutHelp', 'Keyboard shortcuts')}
+        >
+          <HelpCircle size={14} />
+        </button>
+      </div>
+      {(pendingOfflineCount > 0 || rebaseNotice) && (
+        <div role="status" className="flex items-center justify-between gap-3 border-b border-c-border-subtle bg-c-surface-raised px-3 py-2 text-xs text-c-text-secondary">
+          <span>{pendingOfflineCount > 0 ? t('kimi.excele.pendingOffline', '{{count}} edit(s) waiting for connection.', { count: pendingOfflineCount }) : rebaseNotice}</span>
+          {rebaseNotice ? <button type="button" className="underline" onClick={() => setRebaseNotice(null)}>{t('common.dismiss', 'Dismiss')}</button> : null}
+        </div>
+      )}
+      {dialogMode && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="workbook-command-title"
+          className="border-b border-c-border-subtle bg-c-surface px-4 py-3"
+        >
+          <h3 id="workbook-command-title" className="text-sm font-semibold text-c-text">
+            {dialogMode === 'rename'
+              ? t('kimi.excele.renameSheet', 'Rename sheet')
+              : dialogMode === 'renameWorkbook'
+                ? t('kimi.excele.renameWorkbook', 'Rename workbook')
+                : dialogMode === 'delete'
+                  ? t('kimi.excele.deleteSheet', 'Delete sheet')
+                  : dialogMode === 'findReplace'
+                    ? t('kimi.excele.findReplace', 'Find and replace')
+                    : dialogMode === 'resize'
+                      ? t('kimi.excele.resize', 'Resize selected row and column')
+                      : dialogMode === 'comment'
+                        ? t('kimi.excele.comment', 'Add or edit comment')
+                        : dialogMode === 'help'
+                          ? t('kimi.excele.shortcutHelp', 'Keyboard shortcuts')
+                          : t('kimi.excele.validation', 'Set dropdown validation')}
+          </h3>
+          {dialogMode === 'help' ? (
+            <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs text-c-text-secondary">
+              <li>Enter / F2 — Edit cell</li>
+              <li>Esc — Cancel edit</li>
+              <li>Arrow keys — Move selection</li>
+              <li>Shift+click — Select range</li>
+              <li>Cmd/Ctrl+C — Copy</li>
+              <li>Cmd/Ctrl+V — Paste</li>
+              <li>Cmd/Ctrl+Z — Undo</li>
+              <li>Cmd/Ctrl+Y — Redo</li>
+              <li>Delete — Clear cell</li>
+              <li>Tab — Save and move right</li>
+            </ul>
+          ) : dialogMode === 'delete' ? (
+            <p className="mt-1 text-xs text-c-text-secondary">
+              {t(
+                'kimi.excele.deleteSheetConfirm',
+                'Delete this sheet? This action can be restored from version history.'
+              )}
+            </p>
+          ) : (
+            <label className="mt-2 block text-xs text-c-text-secondary">
+              {dialogMode === 'rename'
+                ? t('kimi.excele.sheetName', 'Sheet name')
+                : dialogMode === 'renameWorkbook'
+                  ? t('kimi.excele.workbookName', 'Workbook name')
+                  : dialogMode === 'findReplace'
+                    ? t('kimi.excele.find', 'Find')
+                    : dialogMode === 'resize'
+                      ? t('kimi.excele.columnWidth', 'Column width')
+                      : dialogMode === 'comment'
+                        ? t('kimi.excele.commentText', 'Comment')
+                        : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')}
+              <input
+                autoFocus
+                aria-label={
+                  dialogMode === 'rename'
+                    ? t('kimi.excele.sheetName', 'Sheet name')
+                    : dialogMode === 'renameWorkbook'
+                      ? t('kimi.excele.workbookName', 'Workbook name')
+                      : dialogMode === 'findReplace'
+                        ? t('kimi.excele.find', 'Find')
+                        : dialogMode === 'resize'
+                          ? t('kimi.excele.columnWidth', 'Column width')
+                          : dialogMode === 'comment'
+                            ? t('kimi.excele.commentText', 'Comment')
+                            : t('kimi.excele.allowedValues', 'Allowed values, separated by commas')
+                }
+                value={dialogValue}
+                onChange={(e) => setDialogValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setDialogMode(null);
+                }}
+                className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+              />
+              {(dialogMode === 'findReplace' || dialogMode === 'resize') && (
+                <>
+                  <span className="mt-2 block">
+                    {dialogMode === 'findReplace'
+                      ? t('kimi.excele.replaceWith', 'Replace with')
+                      : t('kimi.excele.rowHeight', 'Row height')}
+                  </span>
+                  <input
+                    aria-label={
+                      dialogMode === 'findReplace'
+                        ? t('kimi.excele.replaceWith', 'Replace with')
+                        : t('kimi.excele.rowHeight', 'Row height')
+                    }
+                    value={dialogValue2}
+                    onChange={(e) => setDialogValue2(e.target.value)}
+                    className="mt-1 h-8 w-full rounded-hig-xs border border-c-border-subtle bg-c-surface-raised px-2 text-sm text-c-text focus:outline-none focus:ring-2 focus:ring-c-focus"
+                  />
+                </>
+              )}
+            </label>
+          )}
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setDialogMode(null)}
+              className="h-8 rounded-hig-xs px-3 text-xs hover:bg-c-border-subtle"
+            >
+              {t('common.cancel', 'Cancel')}
+            </button>
+            {dialogMode !== 'help' && (
+              <button
+                type="button"
+                disabled={
+                  dialogMode !== 'delete' && dialogMode !== 'comment' && !dialogValue.trim()
+                }
+                onClick={() => {
+                  if (dialogMode === 'rename')
+                    void runSchemaCommand({
+                      type: 'renameSheet',
+                      sheetIndex: workingSheetIndex,
+                      name: dialogValue.trim(),
+                    });
+                  else if (dialogMode === 'renameWorkbook')
+                    void runSchemaCommand({ type: 'renameWorkbook', title: dialogValue.trim() });
+                  else if (dialogMode === 'delete')
+                    void runSchemaCommand({ type: 'deleteSheet', sheetIndex: workingSheetIndex });
+                  else if (dialogMode === 'validation' && selected)
+                    void runSchemaCommand({
+                      type: 'setValidation',
+                      sheetIndex: workingSheetIndex,
+                      rowIndex: selected.rowIndex,
+                      colIndex: selected.colIndex,
+                      validation: {
+                        type: 'list',
+                        values: dialogValue
+                          .split(',')
+                          .map((v) => v.trim())
+                          .filter(Boolean),
+                      },
+                    });
+                  else if (dialogMode === 'findReplace')
+                    void runSchemaCommand({
+                      type: 'findReplace',
+                      find: dialogValue,
+                      replacement: dialogValue2,
+                    });
+                  else if (dialogMode === 'resize' && selected) {
+                    void runSchemaCommand({
+                      type: 'resizeRowAndColumn',
+                      sheetIndex: workingSheetIndex,
+                      colIndex: selected.colIndex,
+                      rowIndex: selected.rowIndex,
+                      width: Number(dialogValue),
+                      height: Number(dialogValue2),
+                    });
+                  } else if (dialogMode === 'comment' && selected)
+                    void runSchemaCommand({
+                      type: 'setComment',
+                      sheetIndex: workingSheetIndex,
+                      rowIndex: selected.rowIndex,
+                      colIndex: selected.colIndex,
+                      comment: dialogValue,
+                    });
+                  setDialogMode(null);
+                }}
+                className="h-8 rounded-hig-xs bg-c-primary px-3 text-xs font-medium text-white disabled:opacity-40"
+              >
+                {dialogMode === 'delete' ? t('common.delete', 'Delete') : t('common.save', 'Save')}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       {/* Pasek formuły — pokazuje, co REALNIE siedzi w komórce (wartość vs
           formuła), nie wynik. To jest sedno dla właściciela — patrz nagłówek
           pliku i specyfikacja zadania. */}
@@ -394,7 +1610,18 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           {saveState === 'error' && (
             <>
               <AlertTriangle size={11} className="text-c-danger" />
-              {t('kimi.excele.saveFailed', 'Błąd zapisu')}
+              <span title={saveError || undefined}>
+                {saveError || t('kimi.excele.saveFailed', 'Błąd zapisu')}
+              </span>
+              {lastSchemaCommandRef.current && (
+                <button
+                  type="button"
+                  onClick={() => void runSchemaCommand(lastSchemaCommandRef.current!)}
+                  className="underline font-medium"
+                >
+                  {t('kimi.excele.retry', 'Retry')}
+                </button>
+              )}
             </>
           )}
         </span>
@@ -403,17 +1630,24 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
       <div
         data-testid="editable-spreadsheet-grid"
         ref={containerRef}
+        role="grid"
+        aria-label={t('kimi.excele.grid', 'Editable spreadsheet grid')}
+        aria-rowcount={(activeRaw.rows?.length ?? 0) + 1}
+        aria-colcount={columns.length}
         className="overflow-x-auto max-h-[520px] overflow-y-auto focus:outline-none"
         onKeyDown={handleContainerKeyDown}
+        onCopy={handleCopy}
+        onPaste={handlePaste}
         tabIndex={0}
       >
         {/* prettier-ignore */}
-        <table className="w-full text-xs" /* §27-exempt: edytor komorkowy/arkusz, edycja cell-by-cell — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
+        <table role="presentation" className="w-full text-xs" /* §27-exempt: edytor komorkowy/arkusz, edycja cell-by-cell — docs/ui-standards/DOKTRYNA_TABELA_NIE_EXCEL.md */>
           <thead className="sticky top-0 z-10">
             <tr className="bg-c-surface-raised">
               {columns.map((col, ci) => (
                 <th
                   key={`${col.key}-${ci}`}
+                  style={{ width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined, display: col.hidden ? 'none' : undefined }}
                   className="px-3 py-2 text-left font-medium text-c-text-secondary border-b border-c-border-subtle whitespace-nowrap"
                 >
                   {col.header || col.key}
@@ -423,17 +1657,45 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </thead>
           <tbody>
             {visibleRows.map((row, ri) => (
-              <tr key={ri} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
+              <tr key={ri} style={{ height: typeof activeRaw.rows?.[ri]?.height === 'number' ? `${activeRaw.rows[ri].height}px` : undefined, display: activeRaw.rows?.[ri]?.hidden ? 'none' : undefined }} className="border-b border-c-border-subtle hover:bg-c-surface-raised">
                 {columns.map((col, ci) => {
+                  const merge = parsedMerges.find(
+                    (candidate) =>
+                      ri >= candidate.rowStart &&
+                      ri <= candidate.rowEnd &&
+                      ci >= candidate.colStart &&
+                      ci <= candidate.colEnd
+                  );
+                  if (merge && (ri !== merge.rowStart || ci !== merge.colStart)) return null;
                   const cell: ComputedCell | undefined = row.cells[col.key];
+                  const rawCell = activeRaw.rows?.[ri]?.cells?.[col.key];
                   const isSelected = selected?.rowIndex === ri && selected?.colIndex === ci;
                   const isEditingThis = isSelected && editingValue !== null;
+                  const isNegativeVariance = isNegativeVarianceCell(
+                    activeRaw.name || '',
+                    col.header || col.key,
+                    cell?.computed
+                  );
                   return (
                     <td
+                      rowSpan={merge ? merge.rowEnd - merge.rowStart + 1 : undefined}
+                      colSpan={merge ? merge.colEnd - merge.colStart + 1 : undefined}
+                      role="gridcell"
+                      aria-rowindex={ri + 2}
+                      aria-colindex={ci + 1}
+                      aria-selected={selectionRange ? ri >= selectionRange.rowStart && ri <= selectionRange.rowEnd && ci >= selectionRange.colStart && ci <= selectionRange.colEnd : false}
+                      aria-label={`${colIndexToLetter(ci)}${excelRowForDataRowIndex(ri)} ${formatComputedForDisplay(cell)}`}
                       data-testid={`workbook-cell-${ri}-${col.key}`}
+                      style={{
+                        width: typeof col.width === 'number' ? `${col.width * 8}px` : undefined,
+                        display: col.hidden ? 'none' : undefined,
+                        ...cellPresentationStyle(rawCell),
+                        ...conditionalPresentationStyle(activeRaw, ri, ci, cell?.computed),
+                      }}
                       key={`${col.key}-${ci}`}
-                      onClick={() => {
-                        setSelected({ rowIndex: ri, colIndex: ci });
+                      onClick={(event) => {
+                        if (event.shiftKey && selected) setSelectionEnd({ rowIndex: ri, colIndex: ci });
+                        else { setSelected({ rowIndex: ri, colIndex: ci }); setSelectionEnd(null); }
                         // Fokus SYNCHRONICZNIE w momencie kliknięcia (nie
                         // czekając na useEffect po renderze) — <td> nie jest
                         // fokusowalny, więc bez tego strzałka/Enter naciśnięte
@@ -443,12 +1705,14 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                       }}
                       onDoubleClick={() => startEditing(ri, ci)}
                       className={`relative px-3 py-1.5 whitespace-nowrap max-w-[220px] truncate cursor-cell ${
-                        cell?.error
+                        isNegativeVariance
+                          ? 'bg-c-danger/10 text-c-danger font-semibold'
+                          : cell?.error
                           ? 'text-c-danger font-mono'
                           : cell?.isFormula
                             ? 'font-mono text-c-text-secondary'
                             : 'text-c-text'
-                      } ${isSelected ? 'outline outline-2 outline-c-focus outline-offset-[-2px]' : ''}`}
+                      } ${selectionRange && ri >= selectionRange.rowStart && ri <= selectionRange.rowEnd && ci >= selectionRange.colStart && ci <= selectionRange.colEnd ? 'outline outline-2 outline-c-focus outline-offset-[-2px]' : ''}`}
                     >
                       {isEditingThis ? (
                         <input
@@ -461,7 +1725,16 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
                           className="absolute inset-0 w-full h-full px-3 bg-c-surface text-c-text text-xs font-mono focus:outline-none"
                         />
                       ) : (
-                        formatComputedForDisplay(cell)
+                        <>
+                          {formatComputedForDisplay(cell)}
+                          {rawCell?.comment ? (
+                            <span
+                              aria-label={t('kimi.excele.hasComment', 'Has comment')}
+                              title={String(rawCell.comment)}
+                              className="absolute right-0 top-0 h-0 w-0 border-l-[7px] border-l-transparent border-t-[7px] border-t-c-focus"
+                            />
+                          ) : null}
+                        </>
                       )}
                     </td>
                   );
@@ -471,6 +1744,21 @@ export const EditableSpreadsheetGrid: React.FC<Props> = ({
           </tbody>
         </table>
       </div>
+
+      {Array.isArray((activeRaw as any).chartImages) && (activeRaw as any).chartImages.length > 0 && (
+        <section aria-label={t('kimi.excele.charts', 'Charts')} className="grid gap-3 border-t border-c-border-subtle p-3 md:grid-cols-2">
+          {(activeRaw as any).chartImages.map((chart: any, index: number) => (
+            <figure key={chart.id || index} className="rounded-hig-sm border border-c-border-subtle bg-c-surface-raised p-2">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <figcaption className="text-xs font-medium text-c-text">{chart.title || `Chart ${index + 1}`}</figcaption>
+                <button type="button" aria-label={t('kimi.excele.deleteChart', 'Delete chart')} className="rounded-hig-xs p-1 hover:bg-c-border-subtle" onClick={() => void runSchemaCommand({ type: 'deleteChartImage', sheetIndex: workingSheetIndex, chartId: chart.id })}><Trash2 size={13} /></button>
+              </div>
+              <img src={chart.pngBase64.startsWith('data:') ? chart.pngBase64 : `data:image/png;base64,${chart.pngBase64}`} alt={chart.title || `Chart ${index + 1}`} className="h-auto w-full" />
+              {chart.sourceRange ? <p className="mt-1 text-[11px] text-c-text-secondary">{chart.sourceRange}</p> : null}
+            </figure>
+          ))}
+        </section>
+      )}
 
       {rows.length > rowCap && (
         <div className="px-3 py-2 flex items-center justify-center gap-3 text-xs text-c-text-secondary border-t border-c-border-subtle">

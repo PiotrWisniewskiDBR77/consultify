@@ -118,6 +118,7 @@ function applyStyle(cell: ExcelJS.Cell, style?: CellStyle): void {
   const font: Partial<ExcelJS.Font> = {};
   if (style.bold) font.bold = true;
   if (style.italic) font.italic = true;
+  if (style.underline) font.underline = true;
   if (style.fontSize) font.size = style.fontSize;
   if (style.fontColor) font.color = { argb: hexToArgb(style.fontColor) };
   if (Object.keys(font).length > 0) cell.font = { ...cell.font, ...font };
@@ -998,7 +999,14 @@ export async function buildWorkbookBuffer(
       key: col.key,
       header: col.header,
       width: col.width ?? 16,
+      hidden: col.hidden || undefined,
     }));
+    if (sheetDef.autoFilter && sheetDef.columns.length > 0) {
+      ws.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: Math.max(sheetDef.rows.length + 1, 1), column: sheetDef.columns.length },
+      };
+    }
 
     // Style header row — brand navy default (crimson NEVER as a fill).
     const headerRow = ws.getRow(1);
@@ -1220,6 +1228,7 @@ export async function buildWorkbookBuffer(
         excelRow.eachCell((cell) => applyStyle(cell, rowDef.style));
       }
       if (rowDef.height) excelRow.height = rowDef.height;
+      if (rowDef.hidden) excelRow.hidden = true;
 
       // Summary row styling
       if (rowDef.isSummary) {

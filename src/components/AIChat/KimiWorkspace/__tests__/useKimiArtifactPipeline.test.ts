@@ -20,6 +20,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // but for regression we just need stable, fast-resolving stubs.
 // ---------------------------------------------------------------------------
 const mockExecutionData = vi.hoisted(() => ({ current: null as any }));
+const mockTablePlatform = vi.hoisted(() => ({
+  createBase: vi.fn(),
+  createTable: vi.fn(),
+  createField: vi.fn(),
+}));
 const mockV8 = vi.hoisted(() => ({
   acceptPlan: vi.fn(),
   approveRun: vi.fn(),
@@ -65,6 +70,9 @@ vi.mock('@/services/api', () => ({
 }));
 
 vi.mock('@/services/api/tablePlatform.api', () => ({
+  createBase: mockTablePlatform.createBase,
+  createTable: mockTablePlatform.createTable,
+  createField: mockTablePlatform.createField,
   getTable: vi.fn().mockResolvedValue({ name: 'Table', fields: [] }),
   listRecords: vi.fn().mockResolvedValue({ records: [], total: 0 }),
   listSchemaProposals: vi.fn().mockResolvedValue([]),
@@ -113,6 +121,7 @@ vi.mock('@/utils/sheetArtifactOpen', () => ({
 // ---------------------------------------------------------------------------
 import type { KimiLane } from '../KimiWorkspaceShell';
 import {
+  createGovernedSheetMaterializationTarget,
   resolveTabeleMaterializedTableId,
   useKimiArtifactPipeline,
 } from '../useKimiArtifactPipeline';
@@ -151,6 +160,40 @@ describe('useKimiArtifactPipeline — 3-lane regression (L2.4)', () => {
       plan: { titleHint: 'Board Update' },
       materializationOrigin: { originRuntime: 'presentation', originRecordId: 'deck-1' },
     });
+    mockTablePlatform.createBase.mockResolvedValue({ id: 'base-1' });
+    mockTablePlatform.createTable.mockResolvedValue({ id: 'table-1' });
+    mockTablePlatform.createField.mockResolvedValue({ id: 'field-1' });
+  });
+
+  it('creates a governed two-field materialization target for a workbook run', async () => {
+    await expect(
+      createGovernedSheetMaterializationTarget({
+        workspaceId: 'org-1',
+        title: 'Initiative Budget',
+      })
+    ).resolves.toBe('table-1');
+
+    expect(mockTablePlatform.createBase).toHaveBeenCalledWith(
+      'org-1',
+      'Initiative Budget — governed workspace'
+    );
+    expect(mockTablePlatform.createTable).toHaveBeenCalledWith(
+      'base-1',
+      'Initiative Budget',
+      'Governed materialization target for Teresa workbook generation.'
+    );
+    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(
+      1,
+      'table-1',
+      'Input',
+      'text'
+    );
+    expect(mockTablePlatform.createField).toHaveBeenNthCalledWith(
+      2,
+      'table-1',
+      'Value',
+      'number'
+    );
   });
 
   for (const lane of LANES) {

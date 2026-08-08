@@ -40,6 +40,11 @@ import { z } from 'zod';
 
 import type { WorkbookSchema } from '../WorkbookSchema.js';
 import {
+  BENEFITS_REALIZATION_DEFAULTS,
+  buildBenefitsRealizationSchema,
+  type BenefitsRealizationParams,
+} from './benefitsRealization.js';
+import {
   BREAK_EVEN_DRIVER_DEFAULTS,
   BREAK_EVEN_GENERAL_DEFAULTS,
   type BreakEvenParams,
@@ -100,7 +105,8 @@ export type WorkbookTemplateId =
   | 'cashflow12m'
   | 'unitEconomics'
   | 'loanAmortization'
-  | 'projectViability';
+  | 'projectViability'
+  | 'benefitsRealization';
 
 /** A FE-renderable, zod-validatable parameter type. */
 export type WorkbookTemplateParamType =
@@ -824,6 +830,18 @@ function buildProjectViabilityParams(): WorkbookTemplateParam[] {
 // Registry
 // ---------------------------------------------------------------------------
 
+const BENEFITS_REALIZATION_PARAMS: WorkbookTemplateParam[] = [
+  { name: 'programName', label: 'Nazwa programu', type: 'text', default: BENEFITS_REALIZATION_DEFAULTS.programName, group: 'Ogólne' },
+  { name: 'currencyCode', label: 'Waluta', type: 'enum', options: ['PLN', 'EUR', 'USD'], default: BENEFITS_REALIZATION_DEFAULTS.currencyCode, group: 'Ogólne' },
+  { name: 'investment', label: 'Nakład inwestycyjny', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.investment, min: 0, group: 'Wartość' },
+  { name: 'implementationCost', label: 'Koszt wdrożenia', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.implementationCost, min: 0, group: 'Wartość' },
+  { name: 'revenueBenefit', label: 'Korzyść przychodowa', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.revenueBenefit, min: 0, group: 'Wartość' },
+  { name: 'costBenefit', label: 'Redukcja kosztów', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.costBenefit, min: 0, group: 'Wartość' },
+  { name: 'workingCapitalBenefit', label: 'Kapitał obrotowy', type: 'currency', default: BENEFITS_REALIZATION_DEFAULTS.workingCapitalBenefit, min: 0, group: 'Wartość' },
+  { name: 'confidencePct', label: 'Pewność estymacji', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.confidencePct, min: 0, max: 1, group: 'Kontrola' },
+  { name: 'realizationPct', label: 'Realizacja planu YTD', type: 'percent', default: BENEFITS_REALIZATION_DEFAULTS.realizationPct, min: 0, max: 1, group: 'Kontrola' },
+];
+
 /** The registry map: `templateId → entry`. */
 export const WORKBOOK_TEMPLATES: {
   threeScenarioPnL: WorkbookTemplateEntry<ThreeScenarioPnLParams>;
@@ -834,6 +852,7 @@ export const WORKBOOK_TEMPLATES: {
   unitEconomics: WorkbookTemplateEntry<UnitEconomicsParams>;
   loanAmortization: WorkbookTemplateEntry<LoanAmortizationParams>;
   projectViability: WorkbookTemplateEntry<ProjectViabilityParams>;
+  benefitsRealization: WorkbookTemplateEntry<BenefitsRealizationParams>;
 } = {
   threeScenarioPnL: {
     id: 'threeScenarioPnL',
@@ -911,6 +930,13 @@ export const WORKBOOK_TEMPLATES: {
       'arkusze Przepływy, Wyniki i Wrażliwość.',
     params: buildProjectViabilityParams(),
     build: buildProjectViabilitySchema,
+  },
+  benefitsRealization: {
+    id: 'benefitsRealization',
+    title: 'Benefits Realization — wartość programu',
+    description: 'Board-ready model korzyści: kontrolowane założenia i właściciele dowodów, plan risk-adjusted, realizacja YTD, luka, ROI oraz jednokartkowe Executive Summary.',
+    params: BENEFITS_REALIZATION_PARAMS,
+    build: buildBenefitsRealizationSchema,
   },
 };
 

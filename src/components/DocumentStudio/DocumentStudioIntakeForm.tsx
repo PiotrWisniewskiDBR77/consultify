@@ -261,6 +261,7 @@ export const DocumentStudioIntakeForm: React.FC<DocumentStudioIntakeFormProps> =
               // Exact requirement label is intentional: the backend preflight
               // matches the declared dependency against this explicit binding.
               sourceTitle: requirement,
+              sourceExcerpt: source.kind === 'text' ? source.value.trim() : undefined,
             };
           })
         : undefined,

@@ -98,7 +98,9 @@ describe('POST /presentations/decks/from-template — wiring', () => {
     const src = await readRouterSource();
     const block = sliceHandler(src, "'/decks/from-template',").replace(/\s+/g, ' ');
 
-    expect(/mapOutlineBlueprintToDeckSlides\(resolved\.outlineBlueprint\)/.test(block)).toBe(true);
+    expect(
+      /mapOutlineBlueprintToDeckSlides\(resolved\.outlineBlueprint, materializedBrief\)/.test(block)
+    ).toBe(true);
     // The route must consume resolved.outlineBlueprint, not the request body.
     expect(block).not.toMatch(/req\.body\?\.outline/);
   });

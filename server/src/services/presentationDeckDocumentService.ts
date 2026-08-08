@@ -235,6 +235,73 @@ function titleFromUnifiedSlide(slide: UnifiedSlide): string {
   );
 }
 
+const CANONICAL_VIEWER_LAYOUTS: Record<string, string> = {
+  cover: 'cover-client-gradient',
+  executive_summary: 'executive-summary-three-column',
+  performance_overview: 'dashboard-kpi-strip',
+  initiative_portfolio: 'portfolio-table-client',
+  prioritization_matrix: 'impact-effort-matrix',
+  roadmap: 'governance-roadmap',
+  risk_management: 'raid-table',
+  next_steps: 'decision-and-next-steps',
+};
+
+const TECHNICAL_SOURCE_LINE = /^\s*(?:source|sources|źródło|źródła)\s*:\s*/i;
+
+function sourceNotes(refs: DeckSourceRef[]): string {
+  if (!refs.length) return '';
+  return `[Sources]\n${refs
+    .map(
+      (ref) =>
+        `- ${ref.artifact_name} (${ref.artifact_type}${ref.artifact_id ? `; ${ref.artifact_id}` : ''})`
+    )
+    .join('\n')}\n[/Sources]`;
+}
+
+/** Keep producer/process language off the canvas and provenance in notes. */
+export function normalizeAudienceFacingSlide(
+  slide: UnifiedSlide,
+  deckTitle: string,
+  refs: DeckSourceRef[]
+): UnifiedSlide {
+  const content = { ...((slide.content || {}) as Record<string, unknown>) };
+  let keyMessage = String(slide.key_message || '').trim();
+  const movedLines: string[] = [];
+  if (TECHNICAL_SOURCE_LINE.test(keyMessage)) {
+    movedLines.push(keyMessage);
+    keyMessage = '';
+  }
+  for (const key of ['subtitle', 'description']) {
+    const value = typeof content[key] === 'string' ? String(content[key]).trim() : '';
+    if (TECHNICAL_SOURCE_LINE.test(value)) {
+      movedLines.push(value);
+      delete content[key];
+    }
+  }
+  if (slide.intent === 'cover') {
+    const currentTitle = String(content.title || '').trim();
+    if (!currentTitle || /^(?:cover|title|okładka)$/i.test(currentTitle)) content.title = deckTitle;
+    if (!keyMessage) keyMessage = String(content.title || deckTitle);
+  }
+  const existingNotes =
+    typeof (slide as any).speaker_notes === 'string'
+      ? String((slide as any).speaker_notes).trim()
+      : '';
+  const notes = [
+    existingNotes,
+    movedLines.length ? `[Sources]\n${movedLines.join('\n')}\n[/Sources]` : '',
+    sourceNotes(refs),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  return {
+    ...slide,
+    key_message: keyMessage,
+    content: content as any,
+    ...(notes ? { speaker_notes: notes } : {}),
+  };
+}
+
 function blocksFromUnifiedSlide(
   deckId: string,
   cardId: string,
@@ -398,11 +465,12 @@ export function deckDocumentFromUnifiedJson(params: {
   const nowIso = new Date().toISOString();
   const setup = params.setup || {};
   const baseSourceRefs = sourceRefsFromUnknown(params.sourceRefs);
-  const cards = params.unifiedJson.slides.map((slide, index) => {
+  const cards = params.unifiedJson.slides.map((rawSlide, index) => {
     const slideRefs = uniqueSourceRefs([
       ...baseSourceRefs,
-      ...sourceRefsFromUnknown((slide as any).source_refs),
+      ...sourceRefsFromUnknown((rawSlide as any).source_refs),
     ]);
+    const slide = normalizeAudienceFacingSlide(rawSlide, params.title, slideRefs);
     const cardId =
       (slide as any).slide_id || (slide as any).card_id || `card-${params.deckId}-${index}`;
     const blocks = blocksFromUnifiedSlide(params.deckId, cardId, slide, index, slideRefs);
@@ -420,14 +488,10 @@ export function deckDocumentFromUnifiedJson(params: {
       deck_id: params.deckId,
       order_index: index,
       intent: slide.intent,
-      layout_id:
-        slide.intent === 'cover'
-          ? 'cover_centered'
-          : slide.intent === 'performance_overview'
-            ? 'data_grid'
-            : slide.intent === 'initiative_portfolio'
-              ? 'table_full'
-              : 'content_full',
+      // Use the same semantic layout identity as the PPTX/master pipeline.
+      // applyBrandLayoutSystem may enrich this later, but chat/template/manual
+      // materializers already render professionally before that optional pass.
+      layout_id: CANONICAL_VIEWER_LAYOUTS[String(slide.intent)] || 'content_full',
       title: titleFromUnifiedSlide(slide),
       key_message: slide.key_message,
       blocks,
@@ -521,7 +585,9 @@ export function normalizeDeckDocument(row: any): DeckDocument | null {
   const unifiedJson = safeJsonParse<UnifiedReportJSON | null>(row?.unified_json, null);
   const unifiedSlides = Array.isArray(unifiedJson?.slides) ? unifiedJson.slides : [];
   if (deckJson?.schemaVersion === 1 && Array.isArray(deckJson.cards)) {
-    const cards = Array.isArray(deckJson.cards) ? deckJson.cards : [];
+    const cards = repairStructuredBlocksInCards(
+      (Array.isArray(deckJson.cards) ? deckJson.cards : []) as DeckDocumentCard[]
+    );
     if (cards.length === 0 && unifiedSlides.length > 0 && unifiedJson) {
       return deckDocumentFromUnifiedJson({
         deckId: String(row?.id || ''),
@@ -598,6 +664,100 @@ export interface StructuredSlideInput {
   content?: Record<string, unknown> | null;
 }
 
+const CANONICAL_DECK_BLOCK_TYPES = new Set([
+  'heading',
+  'paragraph',
+  'bullet_list',
+  'numbered_list',
+  'table',
+  'chart',
+  'image',
+  'kpi_widget',
+  'metric_strip',
+  'smart_layout',
+  'smart_diagram',
+  'callout',
+  'quote_block',
+  'timeline_block',
+  'artifact_embed',
+  'divider',
+  'icon_row',
+]);
+
+function inferStructuredBlockType(
+  content: Record<string, unknown>,
+  intent: string,
+  fallback = 'paragraph'
+): string {
+  if (Array.isArray(content.metrics)) return 'metric_strip';
+  if (typeof content.layoutType === 'string') return 'smart_layout';
+  if (Array.isArray(content.headers) && Array.isArray(content.rows)) return 'table';
+  if (typeof content.variant === 'string' && typeof content.text === 'string') return 'callout';
+  if (Array.isArray(content.items)) {
+    const first = content.items[0];
+    if (first && typeof first === 'object' && ('date' in first || 'phase' in first)) {
+      return 'timeline_block';
+    }
+    if (intent === 'next_steps') return 'numbered_list';
+    if (intent === 'executive_summary' || intent.startsWith('recommendation')) {
+      return 'bullet_list';
+    }
+  }
+  return fallback;
+}
+
+function normalizeStructuredBlock(
+  raw: unknown,
+  intent: string
+): { type: string; content: Record<string, unknown> } | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const block = raw as Record<string, unknown>;
+  const declaredType = String(block.type || '').trim();
+  let content = block.content;
+  if (typeof content === 'string') {
+    const trimmed = content.trim();
+    if (!trimmed) return null;
+    try {
+      const parsed = JSON.parse(trimmed);
+      content = parsed && typeof parsed === 'object' ? parsed : { text: trimmed };
+    } catch {
+      content = { text: trimmed };
+    }
+  }
+  if (!content || typeof content !== 'object' || Array.isArray(content)) return null;
+  let canonicalContent = content as Record<string, unknown>;
+  // Compatibility for decks created by the former from-template mapper: it
+  // wrapped JSON.stringify(block.content) inside paragraph.content.text.
+  if (
+    declaredType === 'paragraph' &&
+    typeof canonicalContent.text === 'string' &&
+    /^\s*[\[{]/.test(canonicalContent.text)
+  ) {
+    try {
+      const parsed = JSON.parse(canonicalContent.text);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) canonicalContent = parsed;
+    } catch {
+      // Genuine audience text beginning with a bracket remains a paragraph.
+    }
+  }
+  const fallbackType = CANONICAL_DECK_BLOCK_TYPES.has(declaredType) ? declaredType : 'paragraph';
+  const type =
+    declaredType === 'paragraph' || !CANONICAL_DECK_BLOCK_TYPES.has(declaredType)
+      ? inferStructuredBlockType(canonicalContent, intent, fallbackType)
+      : declaredType;
+  return { type, content: canonicalContent };
+}
+
+function repairStructuredBlocksInCards(cards: DeckDocumentCard[]): DeckDocumentCard[] {
+  return cards.map((card) => ({
+    ...card,
+    blocks: (Array.isArray(card.blocks) ? card.blocks : []).map((block) => {
+      const normalized = normalizeStructuredBlock(block, String(card.intent || 'content'));
+      return normalized ? { ...block, type: normalized.type, content: normalized.content } : block;
+    }),
+  }));
+}
+
 function structuredSlideToCard(
   deckId: string,
   slide: StructuredSlideInput,
@@ -633,14 +793,8 @@ function structuredSlideToCard(
   const nestedBlocks = Array.isArray((content as any).blocks) ? (content as any).blocks : null;
   if (nestedBlocks && nestedBlocks.length) {
     for (const b of nestedBlocks) {
-      const btype = b && (b as any).type === 'heading' ? 'heading' : 'paragraph';
-      const btext =
-        typeof (b as any)?.content === 'string'
-          ? (b as any).content
-          : (b as any)?.content != null
-            ? JSON.stringify((b as any).content)
-            : '';
-      if (btext) pushBlock(btype, { text: btext });
+      const normalized = normalizeStructuredBlock(b, intent);
+      if (normalized) pushBlock(normalized.type, normalized.content);
     }
   } else {
     pushBlock('heading', { text: title, level: 2 });
@@ -858,7 +1012,18 @@ function deckDocumentFromLegacyDeckJson(row: any, deckJson: any): DeckDocument {
 function textFromBlock(block: DeckCardBlock): string {
   const content = block.content || {};
   if (typeof content.text === 'string') return content.text;
-  if (Array.isArray(content.items)) return content.items.map(String).join(' · ');
+  if (Array.isArray(content.items)) {
+    return content.items
+      .map((item: any) => {
+        if (!item || typeof item !== 'object') return String(item ?? '');
+        return [item.date || item.phase, item.title || item.label, item.description]
+          .filter(Boolean)
+          .map(String)
+          .join(': ');
+      })
+      .filter(Boolean)
+      .join(' · ');
+  }
   if (Array.isArray((content as any).metrics)) {
     return (content as any).metrics
       .map((metric: any) => `${metric.label || metric.name}: ${metric.value ?? ''}`)
@@ -876,9 +1041,57 @@ function flattenedContentTypeForIntent(intent: unknown): 'cover' | 'appendix' | 
   return intent === 'cover' ? 'cover' : intent === 'appendix' ? 'appendix' : 'key_messages';
 }
 
+function cardDisplayTitle(card: DeckDocumentCard): string {
+  const headingTexts = (card.blocks || [])
+    .filter((block) => block.type === 'heading')
+    .map((block) => textFromBlock(block).trim())
+    .filter(Boolean);
+  const storedTitle = String(card.title || '').trim();
+  // Blank/manual decks can retain the starter heading while the user adds a
+  // second, edited heading. Prefer the heading that diverges from stale card
+  // metadata; otherwise preserve the first authored heading.
+  const editedHeading = headingTexts.find((text) => text !== storedTitle);
+  return (
+    editedHeading ||
+    headingTexts[0] ||
+    storedTitle ||
+    String(card.key_message || card.intent || 'Slide').trim()
+  );
+}
+
+function messageTitleFromBlock(block: DeckCardBlock, index: number): string {
+  const content = (block.content || {}) as Record<string, unknown>;
+  const explicit = String(content.title || content.headline || content.label || '').trim();
+  if (explicit) return explicit.length > 64 ? `${explicit.slice(0, 63).trimEnd()}…` : explicit;
+
+  const text = textFromBlock(block).trim();
+  if (text && (block.type === 'paragraph' || block.type === 'callout')) {
+    const firstClause = text.split(/(?<=[.!?])\s|[;:]/, 1)[0]?.trim() || text;
+    const words = firstClause.split(/\s+/).filter(Boolean);
+    const wordLimited = words.length > 7 ? `${words.slice(0, 7).join(' ')}…` : firstClause;
+    if (wordLimited.length <= 64) return wordLimited;
+    const withinWidth = wordLimited.slice(0, 63).replace(/\s+\S*$/, '').trimEnd();
+    return `${withinWidth || wordLimited.slice(0, 63).trimEnd()}…`;
+  }
+
+  const semanticFallbacks: Record<string, string> = {
+    bullet_list: 'Key points',
+    numbered_list: 'Actions',
+    table: 'Evidence',
+    chart: 'Performance',
+    metric_strip: 'Key metrics',
+    kpi_widget: 'Key metric',
+    timeline_block: 'Timeline',
+    smart_diagram: 'Operating model',
+    image: 'Supporting visual',
+  };
+  return semanticFallbacks[block.type] || `Key point ${index + 1}`;
+}
+
 function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMeta): UnifiedSlide {
   const bodyBlocks = (card.blocks || []).filter((block) => block.type !== 'heading');
   const firstText = bodyBlocks.map(textFromBlock).find(Boolean) || card.key_message || card.title;
+  const displayTitle = cardDisplayTitle(card);
   const sourceRefs = uniqueSourceRefs([
     ...sourceRefsFromUnknown(card.source_refs),
     ...sourceRefsFromUnknown(bodyBlocks.map((block) => block.source_ref).filter(Boolean)),
@@ -895,26 +1108,26 @@ function flattenCardToUnifiedSlide(card: DeckDocumentCard, meta: UnifiedReportMe
     // download path (8/12 slides in the proof deck). The original card intent is
     // preserved as `source_intent` for traceability.
     intent: contentType as SlideIntent,
-    key_message: String(card.key_message || card.title || card.intent || 'Slide'),
+    key_message: displayTitle,
     content: {
       type: contentType,
       ...(contentType === 'cover'
         ? {
-            title: card.title,
+            title: displayTitle,
             subtitle: firstText,
             organization: meta.client,
             date: meta.date,
             confidentiality: meta.confidentiality,
           }
         : contentType === 'appendix'
-          ? { title: card.title, body: firstText }
+          ? { title: displayTitle, body: firstText }
           : {
               messages: bodyBlocks.length
-                ? bodyBlocks.map((block) => ({
-                    title: block.type.replace(/_/g, ' '),
+                ? bodyBlocks.map((block, index) => ({
+                    title: messageTitleFromBlock(block, index),
                     description: textFromBlock(block),
                   }))
-                : [{ title: card.title, description: firstText }],
+                : [{ title: displayTitle, description: firstText }],
             }),
     } as any,
   };
@@ -1101,10 +1314,7 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
   const content: any = JSON.parse(JSON.stringify(base.content || {}));
 
   // Title edits: the FE edits the heading block; card.title is the fallback.
-  const headingText = String(
-    (firstBlockOfType(card, 'heading')?.content as any)?.text || ''
-  ).trim();
-  const editedTitle = headingText || String(card.title || '').trim();
+  const editedTitle = cardDisplayTitle(card);
   if (editedTitle) {
     // Write back into whichever field produced the card title (same priority
     // order as titleFromUnifiedSlide reads it).
@@ -1114,6 +1324,10 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
         break;
       }
     }
+    // CoverLayout reads `content.title` directly. Some legacy/manual base
+    // slides use a different title field, so the generic field loop above can
+    // leave the starter title intact even though the heading block was edited.
+    if (content.type === 'cover') content.title = editedTitle;
   }
 
   overlayCardBlocksOntoContent(card, content);
@@ -1121,9 +1335,7 @@ function mergeCardOntoBaseSlide(card: DeckDocumentCard, base: UnifiedSlide): Uni
   const slide: UnifiedSlide = {
     ...base,
     intent: base.intent,
-    key_message: String(
-      card.key_message || card.title || base.key_message || card.intent || 'Slide'
-    ),
+    key_message: editedTitle || String(base.key_message || card.intent || 'Slide'),
     content,
   };
   (slide as any).slide_id = card.card_id;

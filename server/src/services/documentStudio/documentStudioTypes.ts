@@ -228,8 +228,31 @@ export interface DocumentSourceRef {
   sourceType: string;
   sourceId: string;
   sourceTitle?: string;
+  /** Human-readable source content used for generation and grounding. */
+  sourceExcerpt?: string;
   sourceVersion?: string;
   sourceSnapshotId?: string;
+}
+
+/** Extract bounded inline evidence, including the legacy text-in-sourceId shape. */
+export function documentSourceRefEvidenceText(ref: DocumentSourceRef): string {
+  const explicit = typeof ref.sourceExcerpt === 'string' ? ref.sourceExcerpt.trim() : '';
+  if (explicit) return explicit.slice(0, 12_000);
+  if (String(ref.sourceType || '').toLowerCase() !== 'text') return '';
+  const title = String(ref.sourceTitle || '').trim();
+  const prefix = title ? `text:${title}:` : '';
+  if (!prefix || !String(ref.sourceId || '').startsWith(prefix)) return '';
+  return String(ref.sourceId).slice(prefix.length).trim().slice(0, 12_000);
+}
+
+export function documentSourceRefsEvidenceText(sourceRefs: DocumentSourceRef[]): string {
+  return sourceRefs
+    .map((ref) => {
+      const evidence = documentSourceRefEvidenceText(ref);
+      return evidence ? `${ref.sourceTitle || ref.sourceType}: ${evidence}` : '';
+    })
+    .filter(Boolean)
+    .join('\n');
 }
 
 /**

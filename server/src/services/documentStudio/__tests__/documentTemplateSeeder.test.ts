@@ -119,6 +119,27 @@ describe('documentTemplateSeeder — system catalogue', () => {
     expect(byLang.pl).toEqual(byLang.en);
   });
 
+  it('gives board-grade templates a rich visual and evidence contract', async () => {
+    await seedSystemDocumentTemplates();
+    for (const type of ['business_case', 'board_report', 'project_status_report']) {
+      const template = persistTemplateMock.records.find(
+        (r) => r.template.documentType === type && r.template.language === 'en'
+      )?.template as any;
+      expect(template).toBeTruthy();
+      expect(template.formattingSchema.coverPageDetailed).toMatchObject({
+        enabled: true,
+        includeLogo: true,
+        includeConfidentiality: true,
+      });
+      expect(template.formattingSchema.tocConfig).toEqual({ enabled: true, maxDepth: 2 });
+      const richSections = template.sectionBlueprint.filter(
+        (section: any) => section.formattingStyle && section.requiredData?.length
+      );
+      expect(richSections.length).toBeGreaterThanOrEqual(2);
+      expect(richSections.some((section: any) => /kpi/i.test(section.formattingStyle))).toBe(true);
+    }
+  });
+
   it('seedSystemDocumentTemplates is idempotent across consecutive calls in the same process', async () => {
     await seedSystemDocumentTemplates();
     persistTemplateMock.mockClear();

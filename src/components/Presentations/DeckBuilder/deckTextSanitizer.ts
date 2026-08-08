@@ -36,6 +36,8 @@ export function sanitizeDeckDisplayText(text: string): string {
   // `Data gap: X requires additional evidence` → drop the internal prefix;
   // the rest of the sentence carries the meaning in either language.
   out = out.replace(/^(\s*)Data gap:\s*/gim, '$1');
+  // Provenance lives in notes/metadata and source chips, never in audience copy.
+  out = out.replace(/^\s*(?:Source|Sources|Źródło|Źródła)\s*:\s*.*$/gim, '');
   return out.replace(/[ \t]{2,}/g, ' ').trim();
 }
 

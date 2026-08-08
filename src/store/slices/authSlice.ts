@@ -98,6 +98,24 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       isSidebarOpen: false,
       activeSidePanel: null,
 
+      // Demo Reset
+      // Demo state is persisted together with the root Zustand store. Clearing
+      // localStorage alone does not clear the live in-memory state, so a user
+      // who logs out of the public demo and signs into a real workspace can
+      // otherwise keep sending the stale demo organization header until the
+      // next full reload.
+      isDemoMode: false,
+      demoSessionOrgId: null,
+      demoExperienceType: null,
+      demoLocale: null,
+      demoOrganization: null,
+      demoStats: null,
+      demoHints: [],
+      isDemoLoading: false,
+      demoError: null,
+      activeTour: null,
+      availableTours: [],
+
       // Chat Reset
       activeChatMessages: [],
       currentStreamContent: '',

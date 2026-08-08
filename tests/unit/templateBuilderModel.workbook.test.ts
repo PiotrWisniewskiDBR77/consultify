@@ -5,12 +5,15 @@ import {
   emptyDraft,
   newSheetColumn,
   newWorkbookSheet,
+  validateTemplateDraft,
 } from '../../src/components/TemplateBuilder/templateBuilderModel';
+import { recordToDraft } from '../../src/components/TemplateBuilder/templateBuilderApi';
 
 describe('TemplateBuilder workbook payload', () => {
   it('serializes a complete multi-sheet WorkbookSchema snapshot', () => {
     const draft = emptyDraft('table', 'Plan operacyjny', 'org');
     draft.description = 'Plan i realizacja';
+    draft.themeRef = 'brand-navy';
     draft.table[0].name = 'Plan';
     draft.table[0].columns[0] = {
       ...draft.table[0].columns[0],
@@ -43,6 +46,8 @@ describe('TemplateBuilder workbook payload', () => {
         schema_snapshot: {
           title: 'Plan operacyjny',
           description: 'Plan i realizacja',
+          themeRef: 'brand-navy',
+          scope: 'org',
           sheets: [
             {
               name: 'Plan',
@@ -72,5 +77,74 @@ describe('TemplateBuilder workbook payload', () => {
         },
       },
     });
+  });
+
+  it('hydrates a persisted workbook and preserves formulas, values and validation', () => {
+    const draft = recordToDraft({
+      id: 'tpl-1',
+      type: 'table',
+      name: 'Budget',
+      description: 'FY plan',
+      isSystem: false,
+      organizationId: 'org-1',
+      meta: {
+        scope: 'private',
+        theme_ref: 'brand-navy',
+        schema_snapshot: {
+          sheets: [
+            {
+              name: 'Plan',
+              columns: [
+                {
+                  key: 'A',
+                  header: 'Owner',
+                  type: 'text',
+                  validation: { type: 'list', values: ['Ops', 'Sales'] },
+                },
+                { key: 'B', header: 'Total', type: 'number', numberFormat: '#,##0' },
+              ],
+              rows: [{ cells: { A: { value: 'Ops' }, B: { formula: 'SUM(C2:C4)' } } }],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(draft).toMatchObject({
+      name: 'Budget',
+      description: 'FY plan',
+      scope: 'private',
+      themeRef: 'brand-navy',
+      table: [
+        {
+          name: 'Plan',
+          columns: [
+            {
+              name: 'Owner',
+              type: 'text',
+              starterValue: 'Ops',
+              validation: { type: 'list', values: 'Ops, Sales' },
+            },
+            { name: 'Total', type: 'formula', formula: '=SUM(C2:C4)', numberFormat: '#,##0' },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('blocks duplicate columns and incomplete formula/list rules before publish', () => {
+    const draft = emptyDraft('table', 'Controlled workbook', 'org');
+    draft.table[0].columns[0].name = 'Owner';
+    const duplicate = newSheetColumn();
+    duplicate.name = 'owner';
+    duplicate.type = 'formula';
+    duplicate.validation = { type: 'list', values: '', min: '', max: '' };
+    draft.table[0].columns.push(duplicate);
+
+    const result = validateTemplateDraft(draft);
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(' ')).toContain('powtórzona');
+    expect(result.errors.join(' ')).toContain('wymaga formuły');
+    expect(result.errors.join(' ')).toContain('nie ma wartości');
   });
 });

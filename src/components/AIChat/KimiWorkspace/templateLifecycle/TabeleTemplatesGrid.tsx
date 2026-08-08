@@ -22,7 +22,7 @@
  *     navigation behaviour stays consistent with the other lanes.
  */
 
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, Star } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -113,8 +113,14 @@ export const TabeleTemplatesGrid: React.FC<TabeleTemplatesGridProps> = ({
                 <p className="text-xs text-c-text-secondary mt-1 line-clamp-2">{tpl.description}</p>
               )}
               {(tpl.usage_count > 0 || tpl.is_featured) && (
-                <p className="mt-2 text-[10px] text-c-text-secondary tabular-nums">
-                  {tpl.is_featured && t('kimi.template.grid.featured', '⭐ Featured · ')}
+                <p className="mt-2 flex items-center gap-1 text-[10px] text-c-text-secondary tabular-nums">
+                  {tpl.is_featured && (
+                    <>
+                      <Star size={11} aria-hidden />
+                      <span>{t('kimi.template.grid.featured', 'Featured')}</span>
+                      <span aria-hidden>·</span>
+                    </>
+                  )}
                   {t('kimi.template.grid.used', 'Used')}: {tpl.usage_count}
                 </p>
               )}

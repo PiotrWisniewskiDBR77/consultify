@@ -45,6 +45,8 @@
  *     stop "0 sources", not good enough for a reviewable evidence trail.
  */
 
+import { createHash } from 'node:crypto';
+
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import AIContextBuilder from '../aiContextBuilder.js';
@@ -212,7 +214,8 @@ export function applyOrgContextGrounding(
         {
           sourceType: 'intake',
           sourceId: 'explicit-user-brief',
-          sourceTitle: `Jawny brief użytkownika: ${explicitDescription}`,
+          sourceTitle: 'Jawny brief użytkownika',
+          sourceVersion: `sha256:${createHash('sha256').update(explicitDescription, 'utf8').digest('hex')}`,
         },
       ],
       autoGrounded: false,

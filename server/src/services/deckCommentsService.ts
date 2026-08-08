@@ -198,7 +198,7 @@ async function daoLoadForOrg(organizationId: string): Promise<DeckComment[]> {
   }
 }
 
-async function daoPersist(c: DeckComment): Promise<void> {
+async function daoPersist(c: DeckComment, options: { throwOnError?: boolean } = {}): Promise<void> {
   if (!c.id || !c.deckId || !c.organizationId) return;
   try {
     await dbRun(
@@ -248,7 +248,20 @@ async function daoPersist(c: DeckComment): Promise<void> {
       organizationId: c.organizationId,
       message: err instanceof Error ? err.message : String(err),
     });
+    if (options.throwOnError) throw err;
   }
+}
+
+/**
+ * Wait until a comment mutation is visible in the shared database.
+ *
+ * Normal writes remain write-through for backwards compatibility, but HTTP
+ * mutation routes await this function before reporting success. Otherwise a
+ * following GET routed to another application instance can legitimately see
+ * zero threads while the UI has already shown "Comment added".
+ */
+export async function persistDeckCommentNow(comment: DeckComment): Promise<void> {
+  await daoPersist(comment, { throwOnError: true });
 }
 
 // =============================================================================
@@ -283,6 +296,22 @@ async function ensureHydrated(organizationId: string): Promise<void> {
   } finally {
     hydrationInflight.delete(organizationId);
   }
+}
+
+/** Merge the latest persisted rows into this process' cache (multi-instance safe). */
+export async function refreshDeckCommentsFromPersistence(organizationId: string): Promise<void> {
+  const comments = await daoLoadForOrg(organizationId);
+  for (const c of comments) {
+    const k = key(c.organizationId, c.deckId);
+    const list = commentStore.get(k) ?? [];
+    const idx = list.findIndex((existing) => existing.id === c.id);
+    if (idx >= 0) list[idx] = c;
+    else list.push(c);
+    list.sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+    commentStore.set(k, list);
+    commentIndex.set(c.id, c);
+  }
+  hydratedOrgs.add(organizationId);
 }
 
 export async function ensureDeckCommentsHydrated(organizationId: string): Promise<void> {

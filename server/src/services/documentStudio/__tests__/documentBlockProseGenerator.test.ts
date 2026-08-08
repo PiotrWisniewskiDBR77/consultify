@@ -35,7 +35,12 @@ const intake: DocumentIntake = {
 };
 
 const sourceRefs: DocumentSourceRef[] = [
-  { sourceType: 'interview', sourceId: 's1', sourceTitle: 'CFO interview transcript' },
+  {
+    sourceType: 'interview',
+    sourceId: 's1',
+    sourceTitle: 'CFO interview transcript',
+    sourceExcerpt: 'The CFO confirms annual benefit of EUR 2.2m and EUR 1.08m spend.',
+  },
 ];
 
 function makeSchema(): DocumentSchema {
@@ -157,6 +162,28 @@ describe('generateBlockProse', () => {
       'unsupported claim'
     );
     expect(result.sections[0].blocks[0].isAssumption).toBe(true);
+  });
+
+  it('passes source evidence to the model and preserves claims grounded in that evidence', async () => {
+    generateChatResponseMock.mockResolvedValue({
+      content: JSON.stringify({
+        blocks: [
+          {
+            blockId: 'blk-para',
+            text: 'Annual benefit is EUR 2.2m with EUR 1.08m spent.',
+          },
+        ],
+      }),
+    });
+
+    const result = await generateBlockProse(makeSchema(), intake, sourceRefs, { enable: true });
+    const prompt = String(generateChatResponseMock.mock.calls[0]?.[0]?.messages?.[0]?.content || '');
+
+    expect(prompt).toContain('Evidence: The CFO confirms annual benefit of EUR 2.2m');
+    expect((result.sections[0].blocks[0].content as { text: string }).text).toBe(
+      'Annual benefit is EUR 2.2m with EUR 1.08m spent.'
+    );
+    expect(result.sections[0].blocks[0].isAssumption).toBe(false);
   });
 
   it('ignores unknown blockIds in the response', async () => {

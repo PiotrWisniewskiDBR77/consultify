@@ -21,7 +21,16 @@
  * or deprecated.
  */
 
-import { ArrowDown, ArrowUp, Copy, Loader2, Plus, ShieldAlert, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  Plus,
+  ShieldAlert,
+  Trash2,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -35,20 +44,28 @@ import {
   type TableRow,
 } from '@/components/shared/ModuleHub';
 import Button from '@/components/ui/primitives/Button';
+import { ConfirmModal, Modal } from '@/components/ui/primitives/Modal';
 import {
+  approvePresentationTemplate,
   clonePresentationTemplate,
+  deletePresentationDraftTemplate,
   deprecatePresentationTemplate,
   getPresentationTemplate,
   listPresentationTemplates,
   planPresentationTemplate,
   PRESENTATION_SLIDE_INTENTS,
+  type PresentationCustomTemplateDefinition,
   type PresentationSlideIntent,
   type PresentationTemplate,
-  type PresentationCustomTemplateDefinition,
   type PresentationTemplateDraftInput,
+  type PresentationTemplateLifecycleState,
   type PresentationTemplateOutlineItem,
   updatePresentationTemplate,
 } from '@/services/presentationTemplateArchitect';
+import {
+  type ClientTemplateLineageNode,
+  fetchTemplateLineage,
+} from '@/services/presentationTemplateGovernance';
 
 const DECK_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   {
@@ -113,15 +130,27 @@ const THEME_OPTIONS: { value: 'corporate' | 'minimal' | 'modern'; fallback: stri
 const DEFAULT_CUSTOM_TEMPLATE: PresentationCustomTemplateDefinition = {
   version: 1,
   theme: {
-    titleFont: 'Inter', bodyFont: 'Inter', primaryColor: '123B5D',
-    backgroundColor: 'FFFFFF', surfaceColor: 'F3F6F8', textColor: '172B3A', accentColor: '00A67E',
+    titleFont: 'Inter',
+    bodyFont: 'Inter',
+    primaryColor: '123B5D',
+    backgroundColor: 'FFFFFF',
+    surfaceColor: 'F3F6F8',
+    textColor: '172B3A',
+    accentColor: '00A67E',
   },
   layouts: Object.fromEntries(
     ['cover', 'content', 'kpi', 'table', 'decision'].map((role) => [
-      role, { masterName: `Consultify ${role}` },
+      role,
+      { masterName: `Consultify ${role}` },
     ])
   ),
-  layoutMapping: { cover: 'cover', content: 'content', kpi: 'kpi', table: 'table', decision: 'decision' },
+  layoutMapping: {
+    cover: 'cover',
+    content: 'content',
+    kpi: 'kpi',
+    table: 'table',
+    decision: 'decision',
+  },
 };
 
 const INTENT_FALLBACK_LABELS: Record<PresentationSlideIntent, string> = {
@@ -163,6 +192,11 @@ export interface PresentationTemplateArchitectViewProps {
   onTemplateSaved?: (template: PresentationTemplate) => void;
 }
 
+/** Approved records stay immutable but must remain governable from this surface. */
+export const canDeprecatePublishedPresentationTemplate = (
+  lifecycleState: PresentationTemplateLifecycleState
+): boolean => lifecycleState === 'approved';
+
 export const PresentationTemplateArchitectView: React.FC<
   PresentationTemplateArchitectViewProps
 > = ({ onTemplateSaved }) => {
@@ -174,8 +208,15 @@ export const PresentationTemplateArchitectView: React.FC<
   const [drafting, setDrafting] = useState(false);
   const [cloningId, setCloningId] = useState<string | null>(null);
   const [deprecatingId, setDeprecatingId] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deprecateConfirmOpen, setDeprecateConfirmOpen] = useState(false);
+  const [deprecateReason, setDeprecateReason] = useState('');
+  const [approvingId, setApprovingId] = useState<string | null>(null);
   const [savingOutline, setSavingOutline] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [lineage, setLineage] = useState<ClientTemplateLineageNode[]>([]);
+  const [versionComparison, setVersionComparison] = useState<string | null>(null);
+  const [validationIssues, setValidationIssues] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
@@ -204,9 +245,8 @@ export const PresentationTemplateArchitectView: React.FC<
   // generation time. Independent of the outline — a template can carry
   // colors, structure, or both (see `ColorPatternPicker`).
   const [editColorTemplateId, setEditColorTemplateId] = useState('');
-  const [editCustomTemplate, setEditCustomTemplate] = useState<PresentationCustomTemplateDefinition>(
-    DEFAULT_CUSTOM_TEMPLATE
-  );
+  const [editCustomTemplate, setEditCustomTemplate] =
+    useState<PresentationCustomTemplateDefinition>(DEFAULT_CUSTOM_TEMPLATE);
   const brandKitColors = useBrandKitColors();
 
   const selectedTemplate = useMemo(
@@ -296,6 +336,17 @@ export const PresentationTemplateArchitectView: React.FC<
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      setLineage([]);
+      setVersionComparison(null);
+      return;
+    }
+    void fetchTemplateLineage(selectedTemplateId).then((result) => {
+      setLineage(result.status === 'ok' ? result.chain : []);
+    });
+  }, [selectedTemplateId]);
 
   const handleDraft = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -409,6 +460,33 @@ export const PresentationTemplateArchitectView: React.FC<
     ]);
   };
 
+  const addTemplateVariable = (): void => {
+    setEditCustomTemplate((current) => ({
+      ...current,
+      variables: [
+        ...(current.variables ?? []),
+        {
+          key: `field_${(current.variables?.length ?? 0) + 1}`,
+          label: 'New field',
+          type: 'text',
+          required: false,
+        },
+      ],
+    }));
+  };
+
+  const updateTemplateVariable = (
+    index: number,
+    patch: Partial<NonNullable<PresentationCustomTemplateDefinition['variables']>[number]>
+  ): void => {
+    setEditCustomTemplate((current) => ({
+      ...current,
+      variables: (current.variables ?? []).map((variable, i) =>
+        i === index ? { ...variable, ...patch } : variable
+      ),
+    }));
+  };
+
   const handleSave = async (): Promise<void> => {
     if (!selectedTemplate) return;
     setSavingOutline(true);
@@ -463,17 +541,99 @@ export const PresentationTemplateArchitectView: React.FC<
     }
   };
 
+  const handleRestoreVersionAsDraft = async (version: ClientTemplateLineageNode): Promise<void> => {
+    setCloningId(version.id);
+    setError(null);
+    try {
+      const result = await clonePresentationTemplate(
+        version.id,
+        `${version.name} — restored v${version.lineageVersion}`
+      );
+      await refresh();
+      setSelectedTemplateId(result.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to restore version as a new draft');
+    } finally {
+      setCloningId(null);
+    }
+  };
+
+  const handleCompareVersion = async (version: ClientTemplateLineageNode): Promise<void> => {
+    if (!selectedTemplate) return;
+    try {
+      const candidate = await getPresentationTemplate(version.id);
+      const currentTitles = selectedTemplate.outline_json.map((item) => item.title);
+      const candidateTitles = candidate.outline_json.map((item) => item.title);
+      const changed =
+        Math.max(currentTitles.length, candidateTitles.length) -
+        currentTitles.filter((title, index) => title === candidateTitles[index]).length;
+      setVersionComparison(
+        `v${version.lineageVersion} vs v${selectedTemplate.lineage_version || 1}: ${candidateTitles.length} → ${currentTitles.length} slides; ${Math.max(0, changed)} position(s) changed.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to compare template versions');
+    }
+  };
+
+  const handleApprove = async (): Promise<void> => {
+    if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
+    const issues = validateCurrentTemplate();
+    setValidationIssues(issues);
+    if (issues.length > 0) return;
+    setApprovingId(selectedTemplate.id);
+    setError(null);
+    try {
+      await approvePresentationTemplate(selectedTemplate.id);
+      await refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : t(
+              'presentations.templateArchitect.errApproveTemplate',
+              'Failed to approve and publish template'
+            )
+      );
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const validateCurrentTemplate = (): string[] => {
+    const issues: string[] = [];
+    if (editName.trim().length < 3)
+      issues.push('Template name must contain at least 3 characters.');
+    if (editDescription.trim().length < 8)
+      issues.push('Description must explain the template purpose.');
+    if (editOutline.length < 2) issues.push('Add at least two slides.');
+    editOutline.forEach((slide, index) => {
+      if (!slide.title.trim()) issues.push(`Slide ${index + 1} needs a title.`);
+    });
+    for (const intent of selectedTemplate?.must_have_intents ?? []) {
+      if (!editOutline.some((slide) => slide.intent === intent)) {
+        issues.push(`Add the mandatory “${intentLabel(intent)}” slide.`);
+      }
+    }
+    if (!editCustomTemplate.theme.titleFont.trim() || !editCustomTemplate.theme.bodyFont.trim()) {
+      issues.push('Choose both title and body fonts.');
+    }
+    const variableKeys = new Set<string>();
+    (editCustomTemplate.variables ?? []).forEach((variable, index) => {
+      const key = variable.key.trim();
+      if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key))
+        issues.push(`Variable ${index + 1} needs a valid key.`);
+      if (variableKeys.has(key)) issues.push(`Variable key “${key}” is duplicated.`);
+      variableKeys.add(key);
+      if (!variable.label.trim()) issues.push(`Variable ${index + 1} needs a label.`);
+      if (variable.type === 'enum' && (variable.options ?? []).length === 0)
+        issues.push(`Enum variable “${key}” needs options.`);
+    });
+    return issues;
+  };
+
   const handleDeprecate = async (): Promise<void> => {
     if (!selectedTemplate) return;
-    const reason = window.prompt(
-      t(
-        'presentations.templateArchitect.deprecateReasonPrompt',
-        'Why are you withdrawing this draft? (required)'
-      ),
-      ''
-    );
-    if (reason === null) return; // user cancelled
-    const trimmedReason = reason.trim();
+    const trimmedReason = deprecateReason.trim();
     if (!trimmedReason) {
       setError(
         t(
@@ -487,6 +647,8 @@ export const PresentationTemplateArchitectView: React.FC<
     setError(null);
     try {
       await deprecatePresentationTemplate(selectedTemplate.id, trimmedReason);
+      setDeprecateConfirmOpen(false);
+      setDeprecateReason('');
       setSelectedTemplateId(null);
       await refresh();
     } catch (err) {
@@ -495,6 +657,23 @@ export const PresentationTemplateArchitectView: React.FC<
           ? err.message
           : t('presentations.templateArchitect.errDeprecateTemplate', 'Failed to withdraw template')
       );
+    } finally {
+      setDeprecatingId(null);
+    }
+  };
+
+  const handleDeleteDraft = async (): Promise<void> => {
+    if (!selectedTemplate || selectedTemplate.lifecycle_state !== 'draft') return;
+    setDeprecatingId(selectedTemplate.id);
+    setError(null);
+    try {
+      await deletePresentationDraftTemplate(selectedTemplate.id);
+      setDeleteConfirmOpen(false);
+      setSelectedTemplateId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete draft template');
+      setDeleteConfirmOpen(false);
     } finally {
       setDeprecatingId(null);
     }
@@ -718,6 +897,11 @@ export const PresentationTemplateArchitectView: React.FC<
           data={tableRows}
           selectedRowId={selectedTemplateId}
           onRowClick={(row) => void handleSelectRow(row)}
+          // Lifecycle-aware actions live in the selected-template editor below.
+          // Without this flag FilterableTable injects its generic Open/Edit/Delete
+          // menu even though no onRowAction handler exists, exposing no-op and
+          // misleading destructive actions for approved templates.
+          hideRowActions
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
           emptyMessage={
@@ -742,7 +926,7 @@ export const PresentationTemplateArchitectView: React.FC<
                   <Button
                     type="button"
                     variant="danger"
-                    onClick={() => void handleDeprecate()}
+                    onClick={() => setDeleteConfirmOpen(true)}
                     disabled={deprecatingId === selectedTemplate.id}
                   >
                     <span className="inline-flex items-center gap-1.5">
@@ -751,28 +935,51 @@ export const PresentationTemplateArchitectView: React.FC<
                       ) : (
                         <Trash2 className="h-3.5 w-3.5" />
                       )}
-                      {t(
-                        'presentations.templateArchitect.deprecateTemplate',
-                        'Withdraw / delete draft'
-                      )}
+                      {t('presentations.templateArchitect.deleteDraftTemplate', 'Delete draft')}
                     </span>
                   </Button>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void handleCloneAsDraft()}
-                    disabled={cloningId === selectedTemplate.id}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      {cloningId === selectedTemplate.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                      )}
-                      {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
-                    </span>
-                  </Button>
+                  <>
+                    {canDeprecatePublishedPresentationTemplate(lifecycleState) ? (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        onClick={() => {
+                          setError(null);
+                          setDeprecateReason('');
+                          setDeprecateConfirmOpen(true);
+                        }}
+                        disabled={deprecatingId === selectedTemplate.id}
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          {deprecatingId === selectedTemplate.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                          {t(
+                            'presentations.templateArchitect.deprecatePublishedTemplate',
+                            'Deprecate published template'
+                          )}
+                        </span>
+                      </Button>
+                    ) : null}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => void handleCloneAsDraft()}
+                      disabled={cloningId === selectedTemplate.id}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        {cloningId === selectedTemplate.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                        {t('presentations.templateArchitect.cloneAsDraft', 'Clone as new draft')}
+                      </span>
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -786,6 +993,63 @@ export const PresentationTemplateArchitectView: React.FC<
                 )}
               </p>
             ) : null}
+
+            <section
+              className="mt-3 rounded-lg border border-c-border-subtle bg-c-surface p-3"
+              aria-label="Template version history"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs font-semibold text-c-text">Version history</h4>
+                <span className="text-[10px] text-c-text-secondary">
+                  {lineage.length} version(s)
+                </span>
+              </div>
+              {lineage.length === 0 ? (
+                <p className="mt-2 text-[11px] text-c-text-secondary">
+                  No lineage versions available.
+                </p>
+              ) : (
+                <div className="mt-2 space-y-1.5">
+                  {lineage.map((version) => (
+                    <div
+                      key={version.id}
+                      className="flex items-center justify-between gap-2 rounded-md border border-c-border-subtle px-2 py-1.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium text-c-text">
+                          v{version.lineageVersion} · {version.name}
+                        </p>
+                        <p className="text-[10px] text-c-text-secondary">
+                          {version.lifecycleState}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => void handleCompareVersion(version)}
+                        >
+                          Compare
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          disabled={cloningId === version.id}
+                          onClick={() => void handleRestoreVersionAsDraft(version)}
+                        >
+                          Restore as draft
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {versionComparison ? (
+                <p role="status" className="mt-2 text-[11px] text-c-text-secondary">
+                  {versionComparison}
+                </p>
+              ) : null}
+            </section>
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1 text-xs">
@@ -872,31 +1136,54 @@ export const PresentationTemplateArchitectView: React.FC<
               </div>
               <div className="col-span-1 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 sm:col-span-2">
                 <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
-                  {t('presentations.templateArchitect.customMasterTheme', 'Custom PowerPoint theme and masters')}
+                  {t(
+                    'presentations.templateArchitect.customMasterTheme',
+                    'Custom PowerPoint theme and masters'
+                  )}
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {(['titleFont', 'bodyFont'] as const).map((key) => (
-                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                    <label
+                      key={key}
+                      className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                    >
                       {key}
                       <input
                         value={editCustomTemplate.theme[key]}
                         disabled={!isEditable}
-                        onChange={(e) => setEditCustomTemplate((current) => ({
-                          ...current, theme: { ...current.theme, [key]: e.target.value },
-                        }))}
+                        onChange={(e) =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            theme: { ...current.theme, [key]: e.target.value },
+                          }))
+                        }
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                       />
                     </label>
                   ))}
-                  {(['primaryColor', 'backgroundColor', 'surfaceColor', 'textColor', 'accentColor'] as const).map((key) => (
-                    <label key={key} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                  {(
+                    [
+                      'primaryColor',
+                      'backgroundColor',
+                      'surfaceColor',
+                      'textColor',
+                      'accentColor',
+                    ] as const
+                  ).map((key) => (
+                    <label
+                      key={key}
+                      className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                    >
                       {key}
                       <input
                         value={editCustomTemplate.theme[key]}
                         disabled={!isEditable}
-                        onChange={(e) => setEditCustomTemplate((current) => ({
-                          ...current, theme: { ...current.theme, [key]: e.target.value.replace('#', '') },
-                        }))}
+                        onChange={(e) =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            theme: { ...current.theme, [key]: e.target.value.replace('#', '') },
+                          }))
+                        }
                         className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 font-mono text-xs text-c-text"
                       />
                     </label>
@@ -906,35 +1193,178 @@ export const PresentationTemplateArchitectView: React.FC<
                     <input
                       value={editCustomTemplate.theme.logoDataUri || ''}
                       disabled={!isEditable}
-                      onChange={(e) => setEditCustomTemplate((current) => ({
-                        ...current, theme: { ...current.theme, logoDataUri: e.target.value || undefined },
-                      }))}
+                      onChange={(e) =>
+                        setEditCustomTemplate((current) => ({
+                          ...current,
+                          theme: { ...current.theme, logoDataUri: e.target.value || undefined },
+                        }))
+                      }
                       placeholder="data:image/png;base64,…"
                       className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                     />
                   </label>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-5">
-                  {(Object.keys(editCustomTemplate.layoutMapping) as Array<keyof typeof editCustomTemplate.layoutMapping>).map((role) => {
+                  {(
+                    Object.keys(editCustomTemplate.layoutMapping) as Array<
+                      keyof typeof editCustomTemplate.layoutMapping
+                    >
+                  ).map((role) => {
                     const layoutId = editCustomTemplate.layoutMapping[role];
                     return (
-                      <label key={role} className="flex flex-col gap-1 text-[11px] text-c-text-secondary">
+                      <label
+                        key={role}
+                        className="flex flex-col gap-1 text-[11px] text-c-text-secondary"
+                      >
                         {role} master
                         <input
                           value={editCustomTemplate.layouts[layoutId]?.masterName || ''}
                           disabled={!isEditable}
-                          onChange={(e) => setEditCustomTemplate((current) => ({
-                            ...current,
-                            layouts: {
-                              ...current.layouts,
-                              [layoutId]: { ...current.layouts[layoutId], masterName: e.target.value },
-                            },
-                          }))}
+                          onChange={(e) =>
+                            setEditCustomTemplate((current) => ({
+                              ...current,
+                              layouts: {
+                                ...current.layouts,
+                                [layoutId]: {
+                                  ...current.layouts[layoutId],
+                                  masterName: e.target.value,
+                                },
+                              },
+                            }))
+                          }
                           className="rounded border border-c-border-subtle bg-c-surface px-2 py-1.5 text-xs text-c-text"
                         />
                       </label>
                     );
                   })}
+                </div>
+              </div>
+              <div className="col-span-1 rounded-lg border border-c-border-subtle bg-c-surface-raised p-3 sm:col-span-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-c-text-secondary">
+                      Template variables
+                    </div>
+                    <p className="text-[11px] text-c-text-secondary">
+                      Typed fields are persisted in the template schema and become the
+                      deck-generation data requirements.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!isEditable}
+                    onClick={addTemplateVariable}
+                  >
+                    Add variable
+                  </Button>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {(editCustomTemplate.variables ?? []).map((variable, index) => (
+                    <div
+                      key={`${variable.key}-${index}`}
+                      className="grid grid-cols-1 gap-2 rounded-md border border-c-border-subtle p-2 sm:grid-cols-6"
+                    >
+                      <input
+                        aria-label={`Variable ${index + 1} key`}
+                        value={variable.key}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { key: event.target.value })
+                        }
+                        placeholder="key"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <input
+                        aria-label={`Variable ${index + 1} label`}
+                        value={variable.label}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { label: event.target.value })
+                        }
+                        placeholder="Label"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <select
+                        aria-label={`Variable ${index + 1} type`}
+                        value={variable.type}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, {
+                            type: event.target.value as typeof variable.type,
+                          })
+                        }
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      >
+                        {['text', 'number', 'date', 'boolean', 'enum'].map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        aria-label={`Variable ${index + 1} default`}
+                        value={String(variable.defaultValue ?? '')}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { defaultValue: event.target.value })
+                        }
+                        placeholder="Default"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs"
+                      />
+                      <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+                        <input
+                          type="checkbox"
+                          checked={variable.required}
+                          disabled={!isEditable}
+                          onChange={(event) =>
+                            updateTemplateVariable(index, { required: event.target.checked })
+                          }
+                        />
+                        Required
+                      </label>
+                      <button
+                        type="button"
+                        disabled={!isEditable}
+                        onClick={() =>
+                          setEditCustomTemplate((current) => ({
+                            ...current,
+                            variables: (current.variables ?? []).filter((_, i) => i !== index),
+                          }))
+                        }
+                        className="text-xs text-danger-600 disabled:opacity-40"
+                      >
+                        Remove
+                      </button>
+                      <input
+                        aria-label={`Variable ${index + 1} description`}
+                        value={variable.description ?? ''}
+                        disabled={!isEditable}
+                        onChange={(event) =>
+                          updateTemplateVariable(index, { description: event.target.value })
+                        }
+                        placeholder="Description"
+                        className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
+                      />
+                      {variable.type === 'enum' ? (
+                        <input
+                          aria-label={`Variable ${index + 1} options`}
+                          value={(variable.options ?? []).join(', ')}
+                          disabled={!isEditable}
+                          onChange={(event) =>
+                            updateTemplateVariable(index, {
+                              options: event.target.value
+                                .split(',')
+                                .map((item) => item.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          placeholder="Options, comma separated"
+                          className="rounded border border-c-border-subtle bg-c-surface px-2 py-1 text-xs sm:col-span-3"
+                        />
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
               </div>
               <label className="col-span-1 flex flex-col gap-1 text-xs sm:col-span-2">
@@ -1211,7 +1641,61 @@ export const PresentationTemplateArchitectView: React.FC<
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end">
+            {validationIssues ? (
+              <div
+                role="status"
+                className={`mt-3 rounded-lg border p-3 text-xs ${validationIssues.length === 0 ? 'border-success-500/30 bg-success-500/10 text-success-700' : 'border-danger-500/30 bg-danger-500/10 text-danger-700'}`}
+              >
+                {validationIssues.length === 0 ? (
+                  <p className="font-medium">Validation passed. This draft is ready to publish.</p>
+                ) : (
+                  <>
+                    <p className="font-medium">
+                      Resolve {validationIssues.length} issue(s) before publishing:
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                      {validationIssues.map((issue) => (
+                        <li key={issue}>{issue}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            ) : null}
+
+            <div className="mt-4 flex justify-end gap-2">
+              {selectedTemplate.lifecycle_state === 'draft' ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setValidationIssues(validateCurrentTemplate())}
+                  >
+                    Validate
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void handleApprove()}
+                    disabled={savingOutline || approvingId === selectedTemplate.id}
+                  >
+                    {approvingId === selectedTemplate.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t('presentations.templateArchitect.approving', 'Publishing…')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" />
+                        {t(
+                          'presentations.templateArchitect.approveAndPublish',
+                          'Approve & publish'
+                        )}
+                      </span>
+                    )}
+                  </Button>
+                </>
+              ) : null}
               <Button
                 type="button"
                 variant="primary"
@@ -1231,6 +1715,80 @@ export const PresentationTemplateArchitectView: React.FC<
           </div>
         ) : null}
       </section>
+
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        onClose={() => {
+          if (!deprecatingId) setDeleteConfirmOpen(false);
+        }}
+        onConfirm={() => void handleDeleteDraft()}
+        title={t('presentations.templateArchitect.deleteDraftTitle', 'Delete draft template?')}
+        message={t(
+          'presentations.templateArchitect.deleteDraftWarning',
+          'This draft will be permanently deleted. This action cannot be undone.'
+        )}
+        confirmText={t('presentations.templateArchitect.deleteDraftConfirm', 'Delete draft')}
+        cancelText={t('common.cancel', 'Cancel')}
+        confirmVariant="danger"
+        loading={Boolean(deprecatingId)}
+      />
+      <Modal
+        open={deprecateConfirmOpen}
+        onClose={() => {
+          if (!deprecatingId) {
+            setDeprecateConfirmOpen(false);
+            setDeprecateReason('');
+          }
+        }}
+        title={t(
+          'presentations.templateArchitect.deprecatePublishedTitle',
+          'Deprecate published template?'
+        )}
+        description={t(
+          'presentations.templateArchitect.deprecatePublishedDescription',
+          'The template will no longer be available for new decks. Its history and existing decks are preserved.'
+        )}
+        size="sm"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeprecateConfirmOpen(false);
+                setDeprecateReason('');
+              }}
+              disabled={Boolean(deprecatingId)}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => void handleDeprecate()}
+              disabled={!deprecateReason.trim() || Boolean(deprecatingId)}
+              loading={Boolean(deprecatingId)}
+            >
+              {t('presentations.templateArchitect.deprecateConfirm', 'Deprecate template')}
+            </Button>
+          </>
+        }
+      >
+        <label className="flex flex-col gap-2 text-sm text-c-text">
+          <span className="font-medium">
+            {t('presentations.templateArchitect.deprecateReason', 'Reason')}
+          </span>
+          <textarea
+            autoFocus
+            value={deprecateReason}
+            onChange={(event) => setDeprecateReason(event.target.value)}
+            rows={3}
+            placeholder={t(
+              'presentations.templateArchitect.deprecateReasonPlaceholder',
+              'Explain why this template is being retired.'
+            )}
+            className="rounded-lg border border-c-border-subtle bg-c-surface px-3 py-2 text-sm text-c-text focus:border-c-focus-solid focus:outline-none focus:ring-2 focus:ring-c-focus"
+          />
+        </label>
+      </Modal>
     </div>
   );
 };

@@ -271,6 +271,43 @@ function isEditableBlock(block: DocumentBlock): boolean {
   );
 }
 
+function blockHasRenderableContent(block: DocumentBlock): boolean {
+  if (isEditableBlock(block)) return blockToText(block).trim().length > 0;
+  const content = block.content as Record<string, unknown> | null | undefined;
+  if (!content) return false;
+  const type = String(block.type || '').toLowerCase();
+  if (type === 'table' || type === 'risk_table') {
+    const rows = Array.isArray(content.rows) ? content.rows : [];
+    return rows.some((row) =>
+      Array.isArray(row) ? row.some((cell) => String(cell ?? '').trim().length > 0) : false
+    );
+  }
+  if (type === 'kpi_strip') {
+    const items = Array.isArray(content.items) ? content.items : [];
+    return items.some((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const value = item as Record<string, unknown>;
+      return (
+        String(value.label ?? '').trim().length > 0 || String(value.value ?? '').trim().length > 0
+      );
+    });
+  }
+  if (type === 'image') {
+    return ['src', 'url', 'data', 'assetId'].some(
+      (key) => String(content[key] ?? '').trim().length > 0
+    );
+  }
+  if (type === 'chart') {
+    return Array.isArray(content.series) && content.series.length > 0;
+  }
+  if (type === 'footnote' || type === 'citation') {
+    return ['text', 'label', 'title', 'citation'].some(
+      (key) => String(content[key] ?? '').trim().length > 0
+    );
+  }
+  return false;
+}
+
 function countWords(text: string): number {
   if (!text) return 0;
   return text
@@ -421,6 +458,7 @@ const EXEC_SUMMARY_HINTS: ReadonlyArray<string> = [
 ];
 
 const DECISION_SECTION_HINTS: ReadonlyArray<string> = [
+  'recommendation',
   'recommendations',
   'recommended actions',
   'next steps',
@@ -1104,12 +1142,7 @@ function runSourceDriftQa(
 
 function isSectionEmpty(section: DocumentSchema['sections'][number]): boolean {
   if (!Array.isArray(section.blocks) || section.blocks.length === 0) return true;
-  for (const block of section.blocks) {
-    if (!isEditableBlock(block)) continue;
-    const text = blockToText(block);
-    if (text.trim().length > 0) return false;
-  }
-  return true;
+  return !section.blocks.some(blockHasRenderableContent);
 }
 
 function runCompletenessQa(
@@ -1405,6 +1438,14 @@ const EXEC_TIME_ANCHORS =
 
 const EXEC_SUMMARY_WORD_BUDGET = 220;
 
+const EXPLICIT_NO_DECISION_PATTERNS: ReadonlyArray<RegExp> = [
+  /\bbrief nie wskazuje decyzji do zatwierdzenia\b/i,
+  /\bbrak decyzji do (?:podjecia|zatwierdzenia)\b/i,
+  /\bnie (?:jest )?wymagana zadna decyzja\b/i,
+  /\bno decision (?:is )?(?:requested|required)\b/i,
+  /\bthe brief identifies no decision (?:for approval|to approve)\b/i,
+];
+
 function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
   const findings: DocumentQaFinding[] = [];
 
@@ -1418,6 +1459,7 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
   }
 
   const execSection = findSectionByHints(schema, EXEC_SUMMARY_HINTS);
+  const decisionSection = findSectionByHints(schema, DECISION_SECTION_HINTS);
   if (!execSection) {
     findings.push(
       makeFinding(
@@ -1446,7 +1488,16 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     const verbs = schema.language === 'pl' ? EXEC_ACTION_VERBS_PL : EXEC_ACTION_VERBS_EN;
     const lower = normalizeForHints(summaryText);
     const hasActionVerb = verbs.some((verb) => lower.includes(normalizeForHints(verb)));
-    if (!hasActionVerb && summaryText.length > 0) {
+    const decisionTextForAbsence = decisionSection
+      ? decisionSection.blocks.map((block) => blockToText(block)).join(' ')
+      : '';
+    const explicitNoDecisionText = normalizeForHints(
+      `${summaryText} ${decisionTextForAbsence}`.trim()
+    );
+    const explicitlyNoDecision = EXPLICIT_NO_DECISION_PATTERNS.some((pattern) =>
+      pattern.test(explicitNoDecisionText)
+    );
+    if (!hasActionVerb && !explicitlyNoDecision && summaryText.length > 0) {
       findings.push(
         makeFinding(
           'high',
@@ -1458,17 +1509,25 @@ function runExecutiveQa(schema: DocumentSchema): DocumentQaCategoryReport {
     }
   }
 
-  const decisionSection = findSectionByHints(schema, DECISION_SECTION_HINTS);
   if (decisionSection) {
     const editable = decisionSection.blocks.filter(isEditableBlock).filter((b) => {
       const t = blockToText(b).trim();
       return t.length > 0;
     });
-    if (editable.length < 2) {
+    const actionableCount = editable.reduce((count, block) => {
+      if (block.type !== 'bullet_list' && block.type !== 'numbered_list') return count + 1;
+      const items = Array.isArray((block.content as { items?: unknown[] } | null)?.items)
+        ? (block.content as { items: unknown[] }).items.filter(
+            (item) => typeof item === 'string' && item.trim().length > 0
+          ).length
+        : 0;
+      return count + Math.max(items, 1);
+    }, 0);
+    if (actionableCount < 2) {
       findings.push(
         makeFinding(
           'medium',
-          `Decision section "${decisionSection.title}" has only ${editable.length} actionable block(s); should be ≥ 2.`,
+          `Decision section "${decisionSection.title}" has only ${actionableCount} actionable item(s); should be ≥ 2.`,
           'executive_thin_decision_section',
           { sectionId: decisionSection.sectionId }
         )
@@ -1635,8 +1694,29 @@ function runRiskQa(schema: DocumentSchema): DocumentQaCategoryReport {
         )
       );
     }
-  } else if (populatedEditableBlocks.length > 0) {
-    const sectionText = populatedEditableBlocks.map((b) => blockToText(b)).join(' ');
+  } else if (populatedEditableBlocks.length > 0 || nonEmptyRiskTables.length > 0) {
+    // Risk tables are canonical risk content, not decoration. The previous QA
+    // path ignored their columns and rows whenever the section also contained
+    // prose, so a complete Risk / Severity / Mitigation / Owner table could
+    // still score 71/100. Assess the rendered structured content together with
+    // narrative text.
+    const structuredRiskText = nonEmptyRiskTables
+      .map((block) => {
+        const content = block.content as Record<string, unknown> | undefined;
+        const columns = Array.isArray(content?.columns) ? content.columns : [];
+        const header = Array.isArray(content?.header) ? content.header : [];
+        const rows = Array.isArray(content?.rows) ? content.rows : [];
+        return [...columns, ...header, ...rows.flatMap((row) => (Array.isArray(row) ? row : []))]
+          .map((value) => String(value ?? ''))
+          .join(' ');
+      })
+      .join(' ');
+    const sectionText = [
+      populatedEditableBlocks.map((b) => blockToText(b)).join(' '),
+      structuredRiskText,
+    ]
+      .filter(Boolean)
+      .join(' ');
     const lower = normalizeForHints(sectionText);
     const severityHints =
       schema.language === 'pl' ? RISK_SEVERITY_HINTS_PL : RISK_SEVERITY_HINTS_EN;
@@ -1785,6 +1865,45 @@ function runDataQa(schema: DocumentSchema): DocumentQaCategoryReport {
           );
         }
         continue;
+      }
+      if (String(block.type) === 'table') {
+        const content = block.content as { columns?: unknown[]; rows?: unknown[][] } | undefined;
+        const columns = Array.isArray(content?.columns)
+          ? content.columns.map((value) => String(value).toLowerCase())
+          : [];
+        const investmentIndex = columns.findIndex((value) => /investment|cost|budget/.test(value));
+        const assessmentIndex = columns.findIndex((value) =>
+          /assessment|description|rationale/.test(value)
+        );
+        if (investmentIndex >= 0 && assessmentIndex >= 0 && Array.isArray(content?.rows)) {
+          for (const [rowIndex, row] of content.rows.entries()) {
+            if (!Array.isArray(row)) continue;
+            const investment = String(row[investmentIndex] ?? '');
+            const assessment = String(row[assessmentIndex] ?? '');
+            const amountPattern = /(?:EUR|USD|GBP|PLN|CHF)\s*\d+(?:[.,]\d+)?(?:m|k)?/giu;
+            const cellAmount = investment
+              .match(amountPattern)?.[0]
+              ?.replace(/\s+/g, '')
+              .toLowerCase();
+            const assessmentAmounts = (assessment.match(amountPattern) ?? []).map((value) =>
+              value.replace(/\s+/g, '').toLowerCase()
+            );
+            if (
+              cellAmount &&
+              assessmentAmounts.length > 0 &&
+              !assessmentAmounts.includes(cellAmount)
+            ) {
+              findings.push(
+                makeFinding(
+                  'high',
+                  `Scenario investment "${investment}" conflicts with assessment text "${assessment}" (row ${rowIndex + 1}).`,
+                  'data_scenario_investment_assessment_mismatch',
+                  { sectionId: section.sectionId, blockId: block.blockId }
+                )
+              );
+            }
+          }
+        }
       }
       if (!isEditableBlock(block)) continue;
       const text = blockToText(block);
@@ -1974,9 +2093,12 @@ function runFormatQa(schema: DocumentSchema): DocumentQaCategoryReport {
           );
         }
       } else if (type === 'table') {
-        const content = block.content as { header?: unknown; rows?: unknown } | undefined;
+        const content = block.content as
+          | { header?: unknown; columns?: unknown; rows?: unknown }
+          | undefined;
         const hasHeader =
-          Array.isArray(content?.header) && (content?.header as unknown[]).length > 0;
+          (Array.isArray(content?.header) && (content?.header as unknown[]).length > 0) ||
+          (Array.isArray(content?.columns) && (content?.columns as unknown[]).length > 0);
         if (!hasHeader) {
           findings.push(
             makeFinding(

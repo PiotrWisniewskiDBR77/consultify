@@ -76,18 +76,16 @@ const MODE_WORD_LIMITS: Record<string, { min: number; max: number }> = {
   workshop: { min: 5, max: 40 },
 };
 
+// Evidence on every slide is covered by the deck-wide traceability gate. This
+// narrower set is intentionally reserved for slides that themselves ask for a
+// choice/approval; summaries, status, risks and roadmaps are not decisions just
+// because they may inform one.
 const DECISION_INTENTS = new Set([
-  'executive_summary',
-  'performance_overview',
-  'single_insight',
-  'comparison',
-  'assessment',
+  'decision',
+  'decision_request',
   'recommendation_portfolio',
   'recommendation_single',
   'prioritization_matrix',
-  'roadmap',
-  'risk_management',
-  'next_steps',
 ]);
 
 const PLACEHOLDER_TOKENS = [
@@ -96,8 +94,11 @@ const PLACEHOLDER_TOKENS = [
   'do uzupelnienia',
   'do uzupełnienia',
   'placeholder',
+  'add a clear slide title',
+  'add the key message or supporting evidence',
   '[object object]',
 ];
+const UNRESOLVED_DATA_TOKENS = ['data required', 'evidence required'];
 
 const ENCODING_ARTEFACTS = ['&amp;', '&nbsp;', 'â€™', 'â€“', '�'];
 
@@ -181,6 +182,23 @@ const REQUIRED_DECISION_CONTENT_INTENTS = new Set([
   'roadmap',
   'next_steps',
 ]);
+
+const LAYOUT_EVIDENCE_BLOCKS: Record<string, Set<string>> = {
+  executive_summary: new Set(['callout', 'metric_strip', 'smart_layout', 'bullet_list']),
+  performance_overview: new Set(['metric_strip', 'kpi_widget', 'chart']),
+  comparison: new Set(['smart_layout', 'table', 'chart']),
+  roadmap: new Set(['timeline_block', 'smart_diagram']),
+  risk_management: new Set(['table', 'chart', 'smart_layout']),
+  recommendation_single: new Set(['callout', 'bullet_list', 'smart_layout']),
+  recommendation_portfolio: new Set(['callout', 'bullet_list', 'smart_layout']),
+  next_steps: new Set(['numbered_list', 'bullet_list', 'timeline_block', 'callout']),
+};
+
+function substantiveBlockTypes(card: DeckCard): string[] {
+  return (card.blocks || [])
+    .map((block) => String(block.type || '').trim())
+    .filter((type) => type && type !== 'heading' && type !== 'divider');
+}
 
 function cardAggregateText(card: DeckCard): string {
   return [
@@ -313,6 +331,53 @@ export async function checkDeckQualityGates(
     }
   }
 
+  // Gate 4b: visual information sufficiency. A title plus one thesis sentence
+  // is technically non-empty but still produces the blank, unpresentable canvas
+  // that this gate exists to stop. Decision layouts must also carry native
+  // evidence blocks (KPI/chart/scenarios/timeline/risks/actions) appropriate to
+  // their declared intent; the intent label alone is not evidence.
+  const sparseCards: number[] = [];
+  const layoutEvidenceMissing: number[] = [];
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i];
+    const intent = String(card.intent || 'content');
+    if (intent === 'cover' || intent === 'section_divider') continue;
+    const bodyBlocks = substantiveBlockTypes(card);
+    const aggregateWords = cardAggregateText(card)
+      .replace(String(card.title || ''), '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+    if (bodyBlocks.length < 2 || aggregateWords < 8) sparseCards.push(i);
+
+    const expected = LAYOUT_EVIDENCE_BLOCKS[intent];
+    if (expected && !bodyBlocks.some((type) => expected.has(type))) {
+      layoutEvidenceMissing.push(i);
+    }
+  }
+  if (sparseCards.length > 0) {
+    pushGate({
+      id: 'qg-low-information-slides',
+      gateType: 'LOW_INFORMATION_SLIDES',
+      severity: 'error',
+      priority: 'P1',
+      message: `${sparseCards.length} slide(s) contain only a heading or a single low-information statement. Add audience-ready evidence and visual structure.`,
+      cardIndex: sparseCards[0],
+      category: 'content',
+    });
+  }
+  if (layoutEvidenceMissing.length > 0) {
+    pushGate({
+      id: 'qg-layout-evidence-missing',
+      gateType: 'LAYOUT_EVIDENCE_MISSING',
+      severity: 'error',
+      priority: 'P1',
+      message: `${layoutEvidenceMissing.length} slide(s) are missing layout-specific evidence blocks (KPI/chart/scenarios/steps/risks/actions).`,
+      cardIndex: layoutEvidenceMissing[0],
+      category: 'quality',
+    });
+  }
+
   // Gate 5: Brand consistency
   const brandKit = await dbGet(`SELECT id FROM brand_kits WHERE organization_id = ?`, [
     organizationId,
@@ -359,8 +424,8 @@ export async function checkDeckQualityGates(
       pushGate({
         id: 'qg-low-traceability',
         gateType: 'LOW_TRACEABILITY',
-        severity: 'error',
-        priority: 'P1',
+        severity: 'warning',
+        priority: 'P2',
         message: `Only ${Math.round(coverage * 100)}% of cards have source references. Traceability improves trust.`,
         category: 'traceability',
       });
@@ -400,6 +465,7 @@ export async function checkDeckQualityGates(
 
   // Gate 6b: Placeholder / encoding hard gate (P0)
   const placeholderCards: number[] = [];
+  const unresolvedDataCards: number[] = [];
   const encodingCards: number[] = [];
   const thesisMissingCards: number[] = [];
   cards.forEach((card, index) => {
@@ -415,6 +481,7 @@ export async function checkDeckQualityGates(
       .filter(Boolean)
       .join(' ');
     if (textContainsAny(aggregate, PLACEHOLDER_TOKENS)) placeholderCards.push(index);
+    if (textContainsAny(aggregate, UNRESOLVED_DATA_TOKENS)) unresolvedDataCards.push(index);
     if (textContainsAny(aggregate, ENCODING_ARTEFACTS)) encodingCards.push(index);
     if (DECISION_INTENTS.has(String(card.intent || ''))) {
       const thesis = String(card.key_message || card.title || '').trim();
@@ -429,6 +496,17 @@ export async function checkDeckQualityGates(
       priority: 'P0',
       message: `Placeholder content detected on ${placeholderCards.length} decision-critical slide(s).`,
       cardIndex: placeholderCards[0],
+      category: 'content',
+    });
+  }
+  if (unresolvedDataCards.length > 0) {
+    pushGate({
+      id: 'qg-unresolved-data',
+      gateType: 'PLACEHOLDER_CONTENT',
+      severity: 'warning',
+      priority: 'P2',
+      message: `Data required on ${unresolvedDataCards.length} slide(s); replace explicit gaps with grounded evidence before final delivery.`,
+      cardIndex: unresolvedDataCards[0],
       category: 'content',
     });
   }

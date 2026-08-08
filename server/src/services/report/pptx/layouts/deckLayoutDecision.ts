@@ -494,7 +494,7 @@ function estimateBlockWeight(block: { type: string; content?: Record<string, unk
     case 'table':
       return 2 + arr(c.rows).length * 0.6;
     case 'timeline_block':
-      return 1 + arr(c.events).length * 0.8;
+      return 1 + Math.max(arr(c.items).length, arr(c.events).length) * 0.8;
     case 'smart_diagram':
     case 'smart_layout':
       return 3;

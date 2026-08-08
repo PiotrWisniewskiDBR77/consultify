@@ -402,6 +402,104 @@ describe('stale-regen download path — renderable projection', () => {
     }
   });
 
+  it('exports manually edited headings and semantic message labels instead of starter metadata', () => {
+    const deck = buildDeckDocument(report);
+    const cover = deck.cards[0];
+    cover.title = 'Nowa prezentacja';
+    cover.blocks = [
+      {
+        block_id: 'manual-cover-starter-heading',
+        card_id: cover.card_id,
+        type: 'heading',
+        content: { text: 'Nowa prezentacja' },
+        is_refreshable: false,
+        position: { area: 'full', order: 0 },
+        ai_editable: true,
+      },
+      {
+        block_id: 'manual-cover-heading',
+        card_id: cover.card_id,
+        type: 'heading',
+        content: { text: 'Board Transformation Update' },
+        is_refreshable: false,
+        position: { area: 'full', order: 1 },
+        ai_editable: true,
+      },
+      {
+        block_id: 'manual-cover-body',
+        card_id: cover.card_id,
+        type: 'paragraph',
+        content: { text: 'Three executive decisions unlock the next phase.' },
+        is_refreshable: false,
+        position: { area: 'full', order: 2 },
+        ai_editable: true,
+      },
+    ];
+
+    const content = deck.cards[1];
+    content.title = 'New Slide';
+    content.key_message = 'New Slide';
+    content.intent = 'key_messages';
+    content.blocks = [
+      {
+        block_id: 'manual-content-heading',
+        card_id: content.card_id,
+        type: 'heading',
+        content: { text: 'Three decisions unlock EUR 2.2m annual benefit' },
+        is_refreshable: false,
+        position: { area: 'full', order: 0 },
+        ai_editable: true,
+      },
+      {
+        block_id: 'manual-content-body-1',
+        card_id: content.card_id,
+        type: 'paragraph',
+        content: { text: 'Approve phase-two scope by 15 August; confirm Operations ownership.' },
+        is_refreshable: false,
+        position: { area: 'full', order: 1 },
+        ai_editable: true,
+      },
+      {
+        block_id: 'manual-content-body-2',
+        card_id: content.card_id,
+        type: 'paragraph',
+        content: {
+          text: 'Mitigate data-migration delay through parallel reconciliation and weekly owner-level checkpoints before scope lock.',
+        },
+        is_refreshable: false,
+        position: { area: 'full', order: 2 },
+        ai_editable: true,
+      },
+    ];
+
+    const projected = deckDocumentToUnifiedJson(deck);
+    const projectedCover = projected.slides[0] as any;
+    const projectedContent = projected.slides[1] as any;
+
+    expect(projectedCover.content.title).toBe('Board Transformation Update');
+    expect(projectedContent.key_message).toBe('Three decisions unlock EUR 2.2m annual benefit');
+    expect(projectedContent.content.messages.map((message: any) => message.title)).toEqual([
+      'Approve phase-two scope by 15 August',
+      'Mitigate data-migration delay through parallel reconciliation…',
+    ]);
+    expect(JSON.stringify(projected)).not.toContain('"title":"paragraph"');
+
+    const renderable = deckDocumentToRenderableUnifiedJson(deck, report);
+    expect((renderable.slides[0] as any).content.title).toBe('Board Transformation Update');
+    expect((renderable.slides[0] as any).key_message).toBe('Board Transformation Update');
+
+    // Legacy manual decks use the `title` intent with cover-shaped content.
+    // The renderer resolves that to CoverLayout, so content shape—not intent
+    // spelling—is the authoritative signal for writing the edited title back.
+    const legacyBase = JSON.parse(JSON.stringify(report)) as UnifiedReportJSON;
+    (legacyBase.slides[0] as any).intent = 'title';
+    cover.intent = 'title';
+    const legacyRenderable = deckDocumentToRenderableUnifiedJson(deck, legacyBase);
+    expect((legacyRenderable.slides[0] as any).content.title).toBe(
+      'Board Transformation Update'
+    );
+  });
+
   it('cards with a changed intent fall back to the renderable flattened shape', () => {
     const deck = buildDeckDocument(report);
     const kpiCard = deck.cards.find((card) => card.intent === 'performance_overview')!;
