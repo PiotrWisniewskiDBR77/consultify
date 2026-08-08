@@ -19,7 +19,12 @@ Dozwolone wartości `<track>`:
 
 - `v8`
 - `documents`
+- `finance`
+- `ux-table`
+- `ux-tools`
 - `report-b-ui`
+
+Tory `finance`, `ux-table` i `ux-tools` korzystają z zamkniętych list plików w `track-scopes/`. Nawet plik należący historycznie do szerokiego ownera UI zostanie odrzucony, jeśli nie znajduje się na liście konkretnego toru.
 
 ## Co mechanizm wymusza
 
@@ -30,6 +35,6 @@ Dozwolone wartości `<track>`:
 - czyste worktree przed handoffem;
 - identyczny SHA lokalny i na GitHubie;
 - brak automatycznego merge i deployu.
+- brak zmian poza dokładną listą toru dla Finance i dwóch torów UX.
 
 Plik nieobecny w macierzy albo należący do integratora blokuje checkpoint. Agent zgłasza wtedy `BLOCKED`; nie omija kontroli.
-
