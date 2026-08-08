@@ -372,6 +372,47 @@ export async function planDocumentAsync(
   return { outline: refined };
 }
 
+function businessCaseSectionKind(title: string): string {
+  const value = title.toLowerCase();
+  if (/executive|podsumowanie/.test(value)) return 'executive';
+  if (/problem|pain/.test(value)) return 'problem';
+  if (/scope|methodolog|approach|zakres|metodolog/.test(value)) return 'scope';
+  if (/proposed initiative|solution|inicjatyw|rozwiąz/.test(value)) return 'initiative';
+  if (/scenario|assumption|założ|scenarius/.test(value)) return 'assumptions';
+  if (/benefit|kpi|korzy/.test(value)) return 'benefits';
+  if (/risk|ryzyk/.test(value)) return 'risks';
+  if (/implementation|roadmap|30\/60\/90|wdroż/.test(value)) return 'roadmap';
+  if (/recommend|decision|rekomend/.test(value)) return 'recommendation';
+  return `other:${value.replace(/\W+/g, ' ').trim()}`;
+}
+
+/**
+ * The UI may submit an older saved business-case outline.  The same runtime
+ * QA requires Scope/Methodology and Assumptions/Scenarios, so silently using
+ * that stale outline created documents that could never pass their own export
+ * gate. Preserve user-authored sections, but merge in the current canonical
+ * structural requirements before prose generation.
+ */
+export function mergeBusinessCaseOutlineRequirements(
+  intake: DocumentIntake,
+  outline: DocumentOutline
+): DocumentOutline {
+  if (intake.documentType !== 'business_case') return outline;
+  const canonical = planDocumentOutline(intake);
+  const byKind = new Map(outline.sections.map((section) => [businessCaseSectionKind(section.title), section]));
+  const used = new Set<string>();
+  const required = canonical.sections.map((section) => {
+    const kind = businessCaseSectionKind(section.title);
+    const existing = byKind.get(kind);
+    if (existing) used.add(kind);
+    return existing || section;
+  });
+  const extras = outline.sections.filter(
+    (section) => !used.has(businessCaseSectionKind(section.title))
+  );
+  return { ...outline, sections: [...required, ...extras] };
+}
+
 export interface MaterializeDocumentParams {
   organizationId: string;
   userId: string;
@@ -828,6 +869,7 @@ export async function materializeDocumentArtifact(
       outline = await refineOutlineWithLlm(outline, params.intake, { enable: true });
     }
   }
+  outline = mergeBusinessCaseOutlineRequirements(params.intake, outline);
 
   // C1 — emit the resolved outline immediately so the streaming FE can paint
   // the section skeleton before the (potentially slow) prose LLM call runs.

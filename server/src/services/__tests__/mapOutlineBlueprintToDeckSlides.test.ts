@@ -221,4 +221,12 @@ describe('mapOutlineBlueprintToDeckSlides', () => {
     expect(financial).toContain('USD 20 subscription');
     expect(financial).not.toContain('creates an investable path');
   });
+
+  it('decodes safe HTML entities in Template Architect slide titles', () => {
+    const [slide] = mapOutlineBlueprintToDeckSlides([
+      { intent: 'content', title: 'Problem &amp; Customer' },
+    ]);
+    expect(slide.content.title).toBe('Problem & Customer');
+    expect(JSON.stringify(slide)).not.toContain('&amp;');
+  });
 });

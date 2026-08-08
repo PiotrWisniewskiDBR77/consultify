@@ -611,6 +611,16 @@ function cleanStringList(value: unknown): string[] {
   return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
 }
 
+function decodeTemplateText(value: unknown): string {
+  return String(value || '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
 function groundedValueForLabel(label: string, sourceLines: string[]): string {
   const labelTerms = label
     .toLowerCase()
@@ -939,7 +949,11 @@ export function mapOutlineBlueprintToDeckSlides(
   return items.map((raw, index) => {
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const intent = String(item.intent || 'content');
-    const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
+    // Template Architect inputs may arrive HTML-escaped from a rich-text
+    // control. Persisting those entities literally creates visible "&amp;"
+    // titles and correctly trips the export encoding gate. Decode only the
+    // small safe entity set at the template-to-artifact boundary.
+    const title = decodeTemplateText(item.title || item.workingTitle || `Slide ${index + 1}`);
     const slideBriefLines = briefLinesForOutlineItem(title, intent, briefLines, index, items.length);
     const blocks = blocksForTemplateIntent(item, title, intent, slideBriefLines);
     return { type: intent, content: { title, intent, blocks } };
