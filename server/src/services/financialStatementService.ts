@@ -7559,32 +7559,83 @@ export async function persistStatementCandidateRows(params: {
 
 export async function backfillStatementValueSourcePages(statementId: string): Promise<number> {
   try {
-    const candidates = (await dbAll(
-      `SELECT source_row, source_page
+    const latestRun = (await dbGet(
+      `SELECT ingest_run_id
        FROM financial_statement_candidate_rows
-       WHERE statement_id = ? AND source_row IS NOT NULL AND source_page IS NOT NULL
-       ORDER BY created_at DESC`,
+       WHERE statement_id = ? AND ingest_run_id IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
       [statementId]
-    )) as Array<{ source_row?: number | null; source_page?: number | null }>;
+    )) as { ingest_run_id?: string | null } | undefined;
+    const ingestRunId = latestRun?.ingest_run_id || null;
+    const candidates = (await dbAll(
+      `SELECT row.source_row, row.source_page, row.normalized_label,
+              mapping.canonical_line_id
+       FROM financial_statement_candidate_rows row
+       LEFT JOIN financial_statement_mapping_candidates mapping
+         ON mapping.candidate_row_id = row.id AND mapping.is_selected = TRUE
+       WHERE row.statement_id = ?
+         AND row.source_page IS NOT NULL
+         AND (? IS NULL OR row.ingest_run_id = ?)
+       ORDER BY row.created_at DESC`,
+      [statementId, ingestRunId, ingestRunId]
+    )) as Array<{
+      source_row?: number | null;
+      source_page?: number | null;
+      normalized_label?: string | null;
+      canonical_line_id?: string | null;
+    }>;
     const pageBySourceRow = new Map<number, number>();
+    const pagesByCanonicalLine = new Map<string, Set<number>>();
+    const pagesByNormalizedLabel = new Map<string, Set<number>>();
     for (const candidate of candidates || []) {
-      if (candidate.source_row == null || candidate.source_page == null) continue;
-      const sourceRow = Number(candidate.source_row);
-      if (!pageBySourceRow.has(sourceRow)) {
-        pageBySourceRow.set(sourceRow, Number(candidate.source_page));
+      if (candidate.source_page == null) continue;
+      const sourcePage = Number(candidate.source_page);
+      if (candidate.source_row != null) {
+        const sourceRow = Number(candidate.source_row);
+        if (!pageBySourceRow.has(sourceRow)) pageBySourceRow.set(sourceRow, sourcePage);
+      }
+      if (candidate.canonical_line_id) {
+        const pages = pagesByCanonicalLine.get(candidate.canonical_line_id) || new Set<number>();
+        pages.add(sourcePage);
+        pagesByCanonicalLine.set(candidate.canonical_line_id, pages);
+      }
+      if (candidate.normalized_label) {
+        const pages = pagesByNormalizedLabel.get(candidate.normalized_label) || new Set<number>();
+        pages.add(sourcePage);
+        pagesByNormalizedLabel.set(candidate.normalized_label, pages);
       }
     }
 
     const values = (await dbAll(
-      `SELECT id, source_row, evidence_json
+      `SELECT id, source_row, original_label, canonical_line_id, evidence_json
        FROM financial_statement_values
-       WHERE statement_id = ? AND source_page IS NULL AND source_row IS NOT NULL`,
+       WHERE statement_id = ? AND source_page IS NULL`,
       [statementId]
-    )) as Array<{ id: string; source_row?: number | null; evidence_json?: string | null }>;
+    )) as Array<{
+      id: string;
+      source_row?: number | null;
+      original_label?: string | null;
+      canonical_line_id?: string | null;
+      evidence_json?: string | null;
+    }>;
     let updated = 0;
     for (const value of values || []) {
-      const sourceRow = Number(value.source_row);
-      const sourcePage = pageBySourceRow.get(sourceRow);
+      const exactRowPage =
+        value.source_row != null ? pageBySourceRow.get(Number(value.source_row)) : undefined;
+      const canonicalPages = value.canonical_line_id
+        ? pagesByCanonicalLine.get(value.canonical_line_id)
+        : undefined;
+      const normalizedLabel = value.original_label
+        ? normalizeAliasText(value.original_label)
+        : '';
+      const labelPages = normalizedLabel
+        ? pagesByNormalizedLabel.get(normalizedLabel)
+        : undefined;
+      const sourcePage =
+        exactRowPage ??
+        (canonicalPages?.size === 1 ? [...canonicalPages][0] : undefined) ??
+        (labelPages?.size === 1 ? [...labelPages][0] : undefined);
       if (sourcePage == null) continue;
       let evidence: Record<string, unknown> = {};
       try {
