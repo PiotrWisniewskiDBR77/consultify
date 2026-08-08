@@ -744,8 +744,9 @@ export const AppRoutes: React.FC = () => {
   );
   const internalToolsEnabled = canUseInternalTools(currentUser);
 
-  // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
-  // This makes "login → superadmin" stable even when the app restores the last route (/chat).
+  // If user is SUPERADMIN, ensure they land in SuperAdmin on the root landing only.
+  // `/chat` is an explicit workspace destination exposed by the main navigation;
+  // redirecting it made Teresa unreachable for authenticated SuperAdmins.
   React.useEffect(() => {
     if (!currentUser?.isAuthenticated) return;
     if (!isSuperAdminRole(currentUser?.role)) return;
@@ -754,7 +755,7 @@ export const AppRoutes: React.FC = () => {
     const isAlreadyInSuperAdmin = path === '/superadmin' || path.startsWith('/superadmin/');
     if (isAlreadyInSuperAdmin) return;
 
-    const isGenericLanding = path === '/' || path === '/chat' || path.startsWith('/chat/');
+    const isGenericLanding = path === '/';
     if (isGenericLanding) {
       navigate('/superadmin', { replace: true });
     }
