@@ -416,6 +416,7 @@ export const DeckBuilder: React.FC = () => {
   // R4 — animations toggle UI removed; deck animations stay on by default.
   const [animationsEnabled] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  const [backgroundImageCardId, setBackgroundImageCardId] = useState<string | null>(null);
   // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
   const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
@@ -1092,7 +1093,11 @@ export const DeckBuilder: React.FC = () => {
 
   const handleInsertMediaImage = useCallback(
     (item: { storage_url: string; original_name: string }) => {
-      if (activeCard && selectedBlock?.type === 'image') {
+      if (backgroundImageCardId) {
+        updateCard(backgroundImageCardId, {
+          background: { type: 'image', value: item.storage_url },
+        });
+      } else if (activeCard && selectedBlock?.type === 'image') {
         handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, {
           content: {
             ...selectedBlock.content,
@@ -1107,9 +1112,17 @@ export const DeckBuilder: React.FC = () => {
           fit: 'cover',
         });
       }
+      setBackgroundImageCardId(null);
       setMediaLibraryOpen(false);
     },
-    [activeCard, handleBlockUpdate, handleInsertBlock, selectedBlock]
+    [
+      activeCard,
+      backgroundImageCardId,
+      handleBlockUpdate,
+      handleInsertBlock,
+      selectedBlock,
+      updateCard,
+    ]
   );
 
   const handleExport = useCallback(
@@ -1581,11 +1594,13 @@ export const DeckBuilder: React.FC = () => {
             comments: (
               <DeckCommentsPanel
                 deckId={deckId || deck?.deck_id || ''}
-                slides={deck.cards.map((c, idx): DeckSlideRef => ({
-                  id: c.card_id,
-                  title: c.title || '',
-                  index: idx,
-                }))}
+                slides={deck.cards.map(
+                  (c, idx): DeckSlideRef => ({
+                    id: c.card_id,
+                    title: c.title || '',
+                    index: idx,
+                  })
+                )}
                 activeSlideId={activeCard?.card_id ?? null}
                 onJumpToSlide={(slideId) => {
                   const idx = deck.cards.findIndex((c) => c.card_id === slideId);
@@ -1654,9 +1669,14 @@ export const DeckBuilder: React.FC = () => {
               onBlockRefresh={handleBlockRefresh}
               onBlockReplaceImage={(_cardId, blockId) => {
                 setSelectedBlockIds([blockId]);
+                setBackgroundImageCardId(null);
                 setMediaLibraryOpen(true);
               }}
               onUpdateCard={updateCard}
+              onChooseBackgroundImage={(cardId) => {
+                setBackgroundImageCardId(cardId);
+                setMediaLibraryOpen(true);
+              }}
             />
           }
           aiEntrySlot={
@@ -1790,7 +1810,10 @@ export const DeckBuilder: React.FC = () => {
               />
               <MediaLibraryBrowser
                 isOpen={mediaLibraryOpen}
-                onClose={() => setMediaLibraryOpen(false)}
+                onClose={() => {
+                  setMediaLibraryOpen(false);
+                  setBackgroundImageCardId(null);
+                }}
                 onSelect={handleInsertMediaImage}
               />
               <DeckQualityGatesPanel
@@ -2048,9 +2071,14 @@ export const DeckBuilder: React.FC = () => {
             onBlockRefresh={handleBlockRefresh}
             onBlockReplaceImage={(_cardId, blockId) => {
               setSelectedBlockIds([blockId]);
+              setBackgroundImageCardId(null);
               setMediaLibraryOpen(true);
             }}
             onUpdateCard={updateCard}
+            onChooseBackgroundImage={(cardId) => {
+              setBackgroundImageCardId(cardId);
+              setMediaLibraryOpen(true);
+            }}
           />
 
           {/* Right: Block Toolbar */}
@@ -2105,7 +2133,10 @@ export const DeckBuilder: React.FC = () => {
           {/* Media Library Browser */}
           <MediaLibraryBrowser
             isOpen={mediaLibraryOpen}
-            onClose={() => setMediaLibraryOpen(false)}
+            onClose={() => {
+              setMediaLibraryOpen(false);
+              setBackgroundImageCardId(null);
+            }}
             onSelect={handleInsertMediaImage}
           />
 
