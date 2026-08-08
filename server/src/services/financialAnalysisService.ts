@@ -448,6 +448,8 @@ export async function listAnalyses(
   if (filters?.status) {
     sql += ' AND status=?';
     p.push(filters.status);
+  } else {
+    sql += ` AND UPPER(COALESCE(status, '')) <> 'ARCHIVED'`;
   }
   if (filters?.projectId) {
     sql += ' AND project_id=?';
@@ -455,6 +457,16 @@ export async function listAnalyses(
   }
   sql += ' ORDER BY created_at DESC';
   return (await dbAll<any>(sql, p)).map(mapRow);
+}
+
+export async function archiveAnalysis(orgId: string, id: string): Promise<boolean> {
+  const result = await dbRun(
+    `UPDATE financial_analyses
+     SET status = 'ARCHIVED', updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ?`,
+    [id, orgId]
+  );
+  return Number((result as any)?.changes ?? (result as any)?.rowCount ?? 0) > 0;
 }
 export async function updateAnalysis(
   orgId: string,

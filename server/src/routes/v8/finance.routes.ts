@@ -30,6 +30,7 @@ import { serializeRowPeriodFields } from '../../services/financePeriodFormat.js'
 import { buildStatementAnalytics } from '../../services/financeStatementAnalyticsService.js';
 import {
   approveAnalysis,
+  archiveAnalysis,
   createAnalysis,
   getAnalysisInsights,
   getAnalysisRatios,
@@ -2889,6 +2890,20 @@ router.post(
     await approveAnalysis(organizationId, analysisId, userId);
     return res.json({
       data: { success: true },
+      meta: financeMeta(),
+    });
+  })
+);
+
+router.post(
+  '/analyses/:analysisId/archive',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const analysisId = String(req.params.analysisId || '');
+    const archived = await archiveAnalysis(organizationId, analysisId);
+    if (!archived) return res.status(404).json({ error: 'Analysis not found' });
+    return res.json({
+      data: { success: true, analysisId, status: 'ARCHIVED' },
       meta: financeMeta(),
     });
   })
