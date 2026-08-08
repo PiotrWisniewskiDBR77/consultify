@@ -886,7 +886,10 @@ export async function computeRatios(
          fs.id = ?
          OR (? IS NOT NULL AND fs.statement_pack_id = ?)
        )
-       AND LOWER(COALESCE(fs.readiness_status, 'pending')) = 'ready'`,
+       AND (
+         LOWER(COALESCE(fs.readiness_status, 'pending')) = 'ready'
+         OR LOWER(COALESCE(fs.status, '')) IN ('confirmed', 'approved')
+       )`,
     [organizationId, statementId, stmt.statement_pack_id || null, stmt.statement_pack_id || null]
   )) as any[];
 
