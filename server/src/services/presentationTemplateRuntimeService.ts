@@ -693,7 +693,10 @@ function blocksForTemplateIntent(
   const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
   const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
   const heading = { type: 'heading', content: { text: title, level: 1 } };
-  const paragraph = { type: 'paragraph', content: { text: headline } };
+  const visualLead = {
+    type: 'callout',
+    content: { variant: 'info', text: compactSlideText(headline, 48) },
+  };
 
   switch (intent) {
     case 'cover':
@@ -741,16 +744,16 @@ function blocksForTemplateIntent(
     case 'performance_overview':
       return [
         heading,
-        paragraph,
+        visualLead,
         {
           type: 'metric_strip',
           content: {
             metrics: (evidenceLabels.length
               ? evidenceLabels
-              : ['Investment', 'Run-rate benefit', 'Payback', 'NPV']
-            ).map((label) => ({
+              : ['Investment', 'Run-rate benefit', 'Payback']
+            ).slice(0, 3).map((label) => ({
               label,
-              value: groundedValueForLabel(label, sourceLines),
+              value: compactSlideText(groundedValueForLabel(label, sourceLines), 38),
               trend: 'stable',
             })),
           },
@@ -760,6 +763,7 @@ function blocksForTemplateIntent(
       const comparisonFacts = briefLines.slice(0, 3).map((line) => compactSlideText(line, 58));
       return [
         heading,
+        visualLead,
         {
           type: 'smart_layout',
           content: {
@@ -776,6 +780,7 @@ function blocksForTemplateIntent(
     case 'roadmap':
       return [
         heading,
+        visualLead,
         {
           type: 'timeline_block',
           content: {
@@ -813,6 +818,7 @@ function blocksForTemplateIntent(
       const mitigations = labelledList(briefLines, /^mitigations?\s*[:—–=-]/i);
       return [
         heading,
+        visualLead,
         {
           type: 'table',
           content: {
@@ -896,6 +902,7 @@ function blocksForTemplateIntent(
     default:
       return [
         heading,
+        visualLead,
         ...(briefLines.length > 1 || hints.length > 1
           ? [
               {
@@ -907,7 +914,21 @@ function blocksForTemplateIntent(
                 },
               },
             ]
-          : [paragraph]),
+          : [
+              {
+                type: 'smart_layout',
+                content: {
+                  layoutType: '3col',
+                  items: ['Signal', 'Implication', 'Action'].map((label, index) => ({
+                    title: label,
+                    description: compactSlideText(
+                      briefLines[index + 1] || hints[index] || headline,
+                      42
+                    ),
+                  })),
+                },
+              },
+            ]),
       ];
   }
 }
