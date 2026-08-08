@@ -126,7 +126,7 @@ export async function updateAgentTenantSettings(input: {
   await assertProject(input.organizationId, input.projectId ?? null);
   if (Object.values(input.autoActions).some(Boolean))
     throw new Error('AGENT_AUTO_ACTIONS_REQUIRE_POLICY');
-  const activation = await withPgTransaction(async (client) => {
+  return withPgTransaction(async (client) => {
     await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
       `agent-settings:${input.organizationId}:${input.projectId ?? ''}`,
     ]);
@@ -203,7 +203,7 @@ export async function activateA06ForTenant(input: {
     projectId: input.projectId ?? null,
     seed: A06_TENANT_SEED_VERSION,
   });
-  return withPgTransaction(async (client) => {
+  const activation = await withPgTransaction(async (client) => {
     await client.query(`SELECT pg_advisory_xact_lock(hashtext(?))`, [
       `agent-activation:${input.organizationId}:${input.idempotencyKey}`,
     ]);
