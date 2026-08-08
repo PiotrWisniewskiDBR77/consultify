@@ -131,6 +131,20 @@ describe('financialStatementService — contract tests', () => {
       expect(dupMsg?.type).toBe('warning');
     });
 
+    it('does not treat the same canonical line in different periods as a duplicate', () => {
+      const result = validateStatement(
+        [
+          { canonicalLineId: 'fsl-pl-revenue', value: 500, periodLabel: '2026' },
+          { canonicalLineId: 'fsl-pl-revenue', value: 300, periodLabel: '2025' },
+        ],
+        'P&L'
+      );
+
+      expect(result.messages.find((message) => message.code === 'DUPLICATE_CANONICAL_LINES')).toBe(
+        undefined
+      );
+    });
+
     it('excludes non-financial lines from validation', () => {
       const lines = [
         { canonicalLineId: 'fsl-bs-total-assets', value: 1000 },

@@ -2315,7 +2315,7 @@ router.post(
     let valueRows: any[];
     try {
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial"
+        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial", evidence_json as "evidenceJson"
          FROM financial_statement_values WHERE statement_id = ?`,
         [statementId],
         { fallback: false }
@@ -2328,6 +2328,18 @@ router.post(
         [statementId]
       )) as any[];
     }
+    valueRows = valueRows.map((row) => {
+      let evidence: any = {};
+      try {
+        evidence =
+          typeof row.evidenceJson === 'string'
+            ? JSON.parse(row.evidenceJson)
+            : row.evidenceJson || {};
+      } catch {
+        evidence = {};
+      }
+      return { ...row, periodLabel: evidence.periodLabel || null };
+    });
 
     const result = validateStatement(valueRows, stmt.statement_type);
     const ingestRunId = await ensureIngestRun({
@@ -2436,7 +2448,7 @@ router.post(
     let valueRows: any[];
     try {
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial"
+        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial", evidence_json as "evidenceJson"
          FROM financial_statement_values
          WHERE statement_id = ?`,
         [statementId],
@@ -2451,6 +2463,18 @@ router.post(
         [statementId]
       )) as any[];
     }
+    valueRows = valueRows.map((row) => {
+      let evidence: any = {};
+      try {
+        evidence =
+          typeof row.evidenceJson === 'string'
+            ? JSON.parse(row.evidenceJson)
+            : row.evidenceJson || {};
+      } catch {
+        evidence = {};
+      }
+      return { ...row, periodLabel: evidence.periodLabel || null };
+    });
     const validationMessages = stmt.validation_messages ? JSON.parse(stmt.validation_messages) : [];
     const readiness = evaluateStatementReadiness({
       rawStatus: stmt.status,

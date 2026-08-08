@@ -6884,6 +6884,7 @@ export function validateStatement(
     originalLabel?: string;
     mappingStatus?: string;
     isNonFinancial?: boolean;
+    periodLabel?: string | null;
   }>,
   statementType: string
 ): { status: 'pass' | 'warnings' | 'needs_review'; messages: ValidationMessage[] } {
@@ -6901,12 +6902,14 @@ export function validateStatement(
     return values.reduce((sum, value) => sum + value, 0);
   };
 
+  const duplicateKeys = activeLines
+    .filter((line) => line.canonicalLineId)
+    .map((line) => `${String(line.canonicalLineId)}::${String(line.periodLabel || '')}`);
   const duplicateCodes = Array.from(
     new Set(
-      activeLines
-        .filter((line) => line.canonicalLineId)
-        .map((line) => String(line.canonicalLineId))
-        .filter((lineId, index, arr) => arr.indexOf(lineId) !== index)
+      duplicateKeys
+        .filter((key, index, arr) => arr.indexOf(key) !== index)
+        .map((key) => key.split('::')[0])
     )
   );
   if (duplicateCodes.length > 0) {
