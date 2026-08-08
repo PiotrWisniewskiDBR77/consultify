@@ -449,7 +449,8 @@ export async function listAnalyses(
     sql += ' AND status=?';
     p.push(filters.status);
   } else {
-    sql += ` AND UPPER(COALESCE(status, '')) <> 'ARCHIVED'`;
+    sql += ` AND UPPER(COALESCE(status, '')) <> 'ARCHIVED'
+             AND LOWER(COALESCE(analysis_type, '')) <> 'archived'`;
   }
   if (filters?.projectId) {
     sql += ' AND project_id=?';
@@ -467,7 +468,7 @@ export async function archiveAnalysis(orgId: string, id: string): Promise<boolea
   if (!existing) return false;
   await dbRun(
     `UPDATE financial_analyses
-     SET status = 'ARCHIVED', updated_at = CURRENT_TIMESTAMP
+     SET analysis_type = 'archived', updated_at = CURRENT_TIMESTAMP
      WHERE id = ? AND organization_id = ?`,
     [id, orgId]
   );

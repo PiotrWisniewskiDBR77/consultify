@@ -7,6 +7,11 @@
 
 import type { Response } from 'express';
 import { Router } from 'express';
+import crypto from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
@@ -129,6 +134,74 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 
 const router = Router();
+
+const FINANCE_PACKAGE_ROOT = process.env.FINANCE_PACKAGE_ROOT || '/data/finance-packages';
+
+function parseObject(value: unknown): Record<string, any> {
+  if (!value) return {};
+  if (typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function safePackageName(value: unknown): string {
+  return String(value || 'finance')
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'finance';
+}
+
+function jsonText(value: unknown): string {
+  return JSON.stringify(value ?? null, null, 2);
+}
+
+function sha256(value: Buffer | string): string {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function addRowsSheet(
+  workbook: ExcelJS.Workbook,
+  name: string,
+  rows: Array<Record<string, unknown>>
+): void {
+  const sheet = workbook.addWorksheet(name.slice(0, 31), {
+    views: [{ state: 'frozen', ySplit: 1 }],
+    properties: { defaultRowHeight: 18 },
+  });
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+  sheet.columns = (keys.length ? keys : ['status']).map((key) => ({
+    header: key,
+    key,
+    width: Math.min(48, Math.max(14, key.length + 2)),
+  }));
+  if (rows.length === 0) sheet.addRow({ status: 'No records' });
+  for (const row of rows) {
+    sheet.addRow(
+      Object.fromEntries(
+        Object.entries(row).map(([key, value]) => [
+          key,
+          value && typeof value === 'object' ? JSON.stringify(value) : value,
+        ])
+      )
+    );
+  }
+  const header = sheet.getRow(1);
+  header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF243B53' } };
+  header.alignment = { vertical: 'middle' };
+  sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: Math.max(1, keys.length) } };
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1 && rowNumber % 2 === 0) {
+      row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF4F8' } };
+    }
+    row.alignment = { vertical: 'top', wrapText: true };
+  });
+}
 
 /** Stable contract id for V8 Finance read responses. */
 export const V8_FINANCE_READ_CONTRACT = 'finance_runtime_read_v1';
@@ -3165,6 +3238,302 @@ router.get(
     const { checkKpiLinkageCoherence } = await import('../../services/v8/financeLaneService.js');
     const result = await checkKpiLinkageCoherence(organizationId, runId);
     return res.json({ data: result, meta: { version: 'v8', contract: 'finance_lane_v1' } });
+  })
+);
+
+/**
+ * Durable, tenant-scoped Finance acceptance package. The ZIP is materialized on
+ * the persistent /data volume while its ownership, checksum and lineage are
+ * registered in v8_output_artifacts. No database values are rewritten.
+ */
+router.post(
+  '/exports/packages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const packId = String(req.body?.packId || '').trim();
+    if (!packId) return res.status(400).json({ error: 'packId required' });
+
+    const pack = await dbGet<any>(
+      `SELECT * FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+      [packId, organizationId]
+    );
+    if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
+
+    const statements = await dbAll<any>(
+      `SELECT * FROM financial_statements
+       WHERE statement_pack_id = ? AND organization_id = ? AND COALESCE(status, '') <> 'archived'
+       ORDER BY statement_type, period_end`,
+      [packId, organizationId]
+    );
+    const statementIds = statements.map((row) => String(row.id));
+    if (!statements.some((row) => row.statement_type === 'P&L')) {
+      return res.status(422).json({ error: 'A ready P&L statement is required for ratio export' });
+    }
+    const values = statementIds.length
+      ? await dbAll<any>(
+          `SELECT fsv.*, fsl.line_code, fsl.line_name, fs.statement_type, fs.period_label,
+                  fs.currency, fs.scaling
+           FROM financial_statement_values fsv
+           JOIN financial_statements fs ON fs.id = fsv.statement_id
+           LEFT JOIN financial_statement_lines fsl ON fsl.id = fsv.canonical_line_id
+           WHERE fs.organization_id = ? AND fs.statement_pack_id = ?
+           ORDER BY fs.statement_type, fs.period_end, fsl.sort_order, fsv.source_row`,
+          [organizationId, packId]
+        )
+      : [];
+    const sources = statementIds.length
+      ? await dbAll<any>(
+          `SELECT a.*, fs.statement_type, fs.period_label
+           FROM financial_statement_source_artifacts a
+           JOIN financial_statements fs ON fs.id = a.statement_id
+           WHERE fs.organization_id = ? AND fs.statement_pack_id = ?
+           ORDER BY a.created_at`,
+          [organizationId, packId]
+        )
+      : [];
+    const models = await dbAll<any>(
+      `SELECT * FROM financial_models
+       WHERE organization_id = ? AND source_statement_pack_id = ? AND COALESCE(status, '') <> 'archived'
+       ORDER BY scenario, name`,
+      [organizationId, packId]
+    );
+    const modelIds = models.map((row) => String(row.id));
+    const outputs = modelIds.length
+      ? await dbAll<any>(
+          `SELECT o.* FROM financial_model_outputs o
+           JOIN financial_models m ON m.id = o.model_id
+           WHERE m.organization_id = ? AND m.source_statement_pack_id = ?
+           ORDER BY m.scenario, o.period_date, o.statement_type, o.line_code`,
+          [organizationId, packId]
+        )
+      : [];
+    const validations = modelIds.length
+      ? await dbAll<any>(
+          `SELECT v.* FROM financial_model_validations v
+           JOIN financial_models m ON m.id = v.model_id
+           WHERE m.organization_id = ? AND m.source_statement_pack_id = ?
+           ORDER BY m.scenario, v.period_date, v.check_code`,
+          [organizationId, packId]
+        )
+      : [];
+    const valuations = modelIds.length
+      ? await dbAll<any>(
+          `SELECT v.* FROM valuations v
+           JOIN financial_models m ON m.id = v.source_id
+           WHERE v.organization_id = ? AND v.source_type = 'financial_model'
+             AND m.organization_id = ? AND m.source_statement_pack_id = ?
+           ORDER BY v.title`,
+          [organizationId, organizationId, packId]
+        )
+      : [];
+    const valuationSnapshots = valuations.length
+      ? await dbAll<any>(
+          `SELECT s.* FROM valuation_snapshots s
+           JOIN valuations v ON v.id = s.valuation_id
+           JOIN financial_models m ON m.id = v.source_id
+           WHERE v.organization_id = ? AND m.organization_id = ? AND m.source_statement_pack_id = ?
+           ORDER BY s.valuation_id, s.version`,
+          [organizationId, organizationId, packId]
+        )
+      : [];
+    const analyses = await dbAll<any>(
+      `SELECT * FROM financial_analyses
+       WHERE organization_id = ? AND source_statement_pack_id = ? AND COALESCE(status, '') <> 'ARCHIVED'
+       ORDER BY updated_at DESC`,
+      [organizationId, packId]
+    );
+
+    const ratioAnchor = statements.find((row) => row.statement_type === 'P&L');
+    const ratioResult = await computeRatios(String(ratioAnchor.id), organizationId);
+    const generatedAt = new Date().toISOString();
+    const acceptance = {
+      generatedAt,
+      organizationId,
+      packId,
+      entityName: pack.entity_name,
+      sourceStatementCount: statements.length,
+      statementTypes: Array.from(new Set(statements.map((row) => row.statement_type))),
+      periods: Array.from(new Set(statements.map((row) => row.period_label || row.period_end))),
+      ratioCoverage: ratioResult.coverageSummary,
+      modelCount: models.length,
+      scenarios: Array.from(new Set(models.map((row) => row.scenario))),
+      valuationCount: valuations.length,
+      failedModelChecks: validations.filter((row) => row.status === 'fail').length,
+      nonFiniteRatios: ratioResult.ratios.filter(
+        (row) => row.value !== null && !Number.isFinite(Number(row.value))
+      ).length,
+      monetaryUnits: Array.from(
+        new Set(valuations.map((row) => parseObject(row.results).monetaryUnit).filter(Boolean))
+      ),
+    };
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Consultify Finance';
+    workbook.created = new Date(generatedAt);
+    workbook.modified = new Date(generatedAt);
+    workbook.properties.date1904 = false;
+    addRowsSheet(workbook, 'README', [
+      {
+        company: pack.entity_name,
+        packId,
+        currency: pack.currency,
+        scale: pack.scaling,
+        generatedAt,
+        note: 'Amounts retain the source currency and scale. Missing values remain unavailable, never silent zero.',
+      },
+    ]);
+    addRowsSheet(workbook, 'Historicals', values);
+    addRowsSheet(workbook, 'Ratios 34', ratioResult.ratios as any);
+    addRowsSheet(workbook, 'Scenarios', models);
+    addRowsSheet(workbook, 'Forecast P&L BS CF', outputs);
+    addRowsSheet(workbook, 'Checks', validations);
+    addRowsSheet(workbook, 'Valuations', valuations);
+    addRowsSheet(workbook, 'Valuation Snapshots', valuationSnapshots);
+    addRowsSheet(workbook, 'Sources Audit', sources);
+    addRowsSheet(workbook, 'Analyses', analyses);
+    const workbookBuffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+    // Reopen in-process before publication: a corrupt workbook never becomes a durable export.
+    const reopenedWorkbook = new ExcelJS.Workbook();
+    await reopenedWorkbook.xlsx.load(workbookBuffer as any);
+    if (reopenedWorkbook.worksheets.length !== workbook.worksheets.length) {
+      return res.status(500).json({ error: 'Workbook reopen verification failed' });
+    }
+
+    const sourceManifest = sources.map((row) => ({
+      statementId: row.statement_id,
+      statementType: row.statement_type,
+      period: row.period_label,
+      sourceFileName: row.source_file_name || row.file_name || null,
+      sourceFilePath: row.source_file_path || row.storage_path || null,
+      sha256: row.sha256 || row.content_sha256 || null,
+      sourcePageStart: row.source_page_start || null,
+      sourcePageEnd: row.source_page_end || null,
+    }));
+    const readme = `# Consultify Finance acceptance package\n\n` +
+      `Company: ${pack.entity_name}\n\nPack: ${packId}\n\nCurrency / scale: ${pack.currency} / ${pack.scaling}\n\n` +
+      `Generated: ${generatedAt}\n\nThe workbook contains historical statements, 34-ratio catalogue output, ` +
+      `Base/Bull/Bear models, assumptions, forecast P&L/BS/CF, validations, valuations, sensitivity/tornado data, sources and audit lineage. ` +
+      `Unavailable inputs are explicitly represented as null/NA.\n\n` +
+      `## Tenant-scoped restore\n\nUse this ZIP only while authenticated to organization ${organizationId}. ` +
+      `Verify MANIFEST.sha256.json and the ZIP checksum returned by the Finance package API before restoration. ` +
+      `Restore through the normal statement upload and Finance model/valuation endpoints; do not write directly to the database. ` +
+      `The source-manifest.json identifiers and audit-backup.json provide the ordered reconstruction inputs.\n`;
+    const files: Record<string, Buffer> = {
+      'finance-workbook.xlsx': workbookBuffer,
+      'README.md': Buffer.from(readme),
+      'source-manifest.json': Buffer.from(jsonText(sourceManifest)),
+      'historicals.json': Buffer.from(jsonText({ statements, values })),
+      'ratios.json': Buffer.from(jsonText(ratioResult)),
+      'scenarios.json': Buffer.from(jsonText({ models, outputs })),
+      'assumptions.json': Buffer.from(
+        jsonText(models.map((row) => ({ modelId: row.id, scenario: row.scenario, assumptions: parseObject(row.assumptions_json) })))
+      ),
+      'valuations.json': Buffer.from(jsonText({ valuations, valuationSnapshots })),
+      'checks.json': Buffer.from(jsonText(validations)),
+      'evidence-acceptance.json': Buffer.from(jsonText(acceptance)),
+      'audit-backup.json': Buffer.from(
+        jsonText({ organizationId, pack, statements, values, sources, analyses, models, outputs, validations, valuations, valuationSnapshots })
+      ),
+    };
+    const manifest = {
+      algorithm: 'SHA-256',
+      generatedAt,
+      organizationId,
+      packId,
+      files: Object.fromEntries(Object.entries(files).map(([name, data]) => [name, sha256(data)])),
+    };
+    files['MANIFEST.sha256.json'] = Buffer.from(jsonText(manifest));
+    const zip = new JSZip();
+    for (const [name, data] of Object.entries(files)) zip.file(name, data);
+    const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+    const zipChecksum = sha256(zipBuffer);
+    const artifactId = uuidv4();
+    const exportId = uuidv4();
+    const orgDir = path.join(FINANCE_PACKAGE_ROOT, safePackageName(organizationId));
+    await fs.mkdir(orgDir, { recursive: true });
+    const fileName = `${safePackageName(pack.entity_name)}-${artifactId}.zip`;
+    const filePath = path.join(orgDir, fileName);
+    await fs.writeFile(filePath, zipBuffer, { mode: 0o600 });
+    const metadata = {
+      kind: 'finance_acceptance_package_v1',
+      packId,
+      entityName: pack.entity_name,
+      fileName,
+      filePath,
+      zipSha256: zipChecksum,
+      manifestSha256: sha256(files['MANIFEST.sha256.json']),
+      sizeBytes: zipBuffer.length,
+      acceptance,
+    };
+    await dbRun(
+      `INSERT INTO v8_output_artifacts
+       (artifact_id, organization_id, output_type, delivery_state, artifact_family,
+        title_snapshot, owner_user_id, canonical_home, visibility_scope,
+        origin_summary_json, created_by, created_at, last_transition_at)
+       VALUES (?, ?, 'sheet', 'ready', 'sheet', ?, ?, 'outputs_library', 'private', ?, ?, ?, ?)`,
+      [artifactId, organizationId, `${pack.entity_name} Finance package`, userId, jsonText(metadata), userId, generatedAt, generatedAt]
+    );
+    await dbRun(
+      `INSERT INTO v8_output_exports
+       (export_id, artifact_id, organization_id, format, requested_by, status, created_at, completed_at)
+       VALUES (?, ?, ?, 'zip', ?, 'completed', ?, ?)`,
+      [exportId, artifactId, organizationId, userId, generatedAt, generatedAt]
+    );
+    return res.status(201).json({
+      data: { artifactId, exportId, ...metadata, filePath: undefined },
+      meta: { ...financeMeta(), contract: 'finance_acceptance_package_v1' },
+    });
+  })
+);
+
+router.get(
+  '/exports/packages',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const rows = await dbAll<any>(
+      `SELECT artifact_id, title_snapshot, delivery_state, origin_summary_json, created_at
+       FROM v8_output_artifacts
+       WHERE organization_id = ? AND output_type = 'sheet'
+         AND origin_summary_json LIKE '%finance_acceptance_package_v1%'
+       ORDER BY created_at DESC`,
+      [organizationId]
+    );
+    return res.json({
+      data: rows.map((row) => {
+        const metadata = parseObject(row.origin_summary_json);
+        delete metadata.filePath;
+        return { artifactId: row.artifact_id, title: row.title_snapshot, status: row.delivery_state, createdAt: row.created_at, ...metadata };
+      }),
+      meta: { ...financeMeta(), contract: 'finance_acceptance_package_v1' },
+    });
+  })
+);
+
+router.get(
+  '/exports/packages/:artifactId/download',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const row = await dbGet<any>(
+      `SELECT origin_summary_json FROM v8_output_artifacts
+       WHERE artifact_id = ? AND organization_id = ? AND output_type = 'sheet'`,
+      [req.params.artifactId, organizationId]
+    );
+    if (!row) return res.status(404).json({ error: 'Finance package not found' });
+    const metadata = parseObject(row.origin_summary_json);
+    const expectedDir = path.resolve(FINANCE_PACKAGE_ROOT, safePackageName(organizationId));
+    const resolvedPath = path.resolve(String(metadata.filePath || ''));
+    if (!resolvedPath.startsWith(`${expectedDir}${path.sep}`)) {
+      return res.status(409).json({ error: 'Invalid package storage path' });
+    }
+    const data = await fs.readFile(resolvedPath);
+    if (sha256(data) !== metadata.zipSha256) {
+      return res.status(409).json({ error: 'Finance package checksum mismatch' });
+    }
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${safePackageName(String(metadata.fileName).replace(/\.zip$/i, ''))}.zip"`);
+    res.setHeader('X-Content-SHA256', String(metadata.zipSha256));
+    return res.send(data);
   })
 );
 
