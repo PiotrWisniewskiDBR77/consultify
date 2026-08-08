@@ -460,13 +460,18 @@ export async function listAnalyses(
 }
 
 export async function archiveAnalysis(orgId: string, id: string): Promise<boolean> {
-  const result = await dbRun(
+  const existing = await dbGet<{ id: string }>(
+    `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+    [id, orgId]
+  );
+  if (!existing) return false;
+  await dbRun(
     `UPDATE financial_analyses
      SET status = 'ARCHIVED', updated_at = CURRENT_TIMESTAMP
      WHERE id = ? AND organization_id = ?`,
     [id, orgId]
   );
-  return Number((result as any)?.changes ?? (result as any)?.rowCount ?? 0) > 0;
+  return true;
 }
 export async function updateAnalysis(
   orgId: string,
