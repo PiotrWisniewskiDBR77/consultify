@@ -1235,6 +1235,62 @@ router.post(
         };
       }
 
+      // The UI's smart-upload path must preserve the same PDF-page lineage as
+      // the staged extract/map flow. Prefer the model-provided page, then
+      // reconcile it against the deterministic local parser. If neither can
+      // prove a page, fail closed before creating any Statement rows.
+      const normalizeLineageLabel = (value: unknown) =>
+        String(value || '')
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/\b(?:19|20)\d{2}\b/g, '')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+      const analysisWithLineage = {
+        ...analysis,
+        sections: analysis.sections.map((section) => {
+          const localLines = extractFinancialLines(text, section.statementType, {
+            selectedPeriodLabel: analysis.periodLabel,
+          }).lines;
+          return {
+            ...section,
+            lines: section.lines.map((line) => {
+              if (line.sourcePage != null) return line;
+              const normalizedLabel = normalizeLineageLabel(line.originalLabel);
+              const matched = localLines.find(
+                (candidate) =>
+                  normalizeLineageLabel(candidate.originalLabel) === normalizedLabel &&
+                  Math.abs(Number(candidate.value) - Number(line.value)) < 0.000001
+              );
+              return matched
+                ? {
+                    ...line,
+                    sourcePage: matched.sourcePage,
+                    sourceRow: line.sourceRow ?? matched.sourceRow,
+                  }
+                : line;
+            }),
+          };
+        }),
+      };
+      const missingPageLineage = analysisWithLineage.sections.flatMap((section) =>
+        section.lines
+          .filter((line) => line.sourcePage == null)
+          .map((line) => ({ statementType: section.statementType, label: line.originalLabel }))
+      );
+      if (missingPageLineage.length > 0) {
+        return {
+          statusCode: 422,
+          body: {
+            error: 'PDF page lineage is incomplete; no financial statements were created.',
+            code: 'SOURCE_PAGE_LINEAGE_INCOMPLETE',
+            missingCount: missingPageLineage.length,
+            missing: missingPageLineage.slice(0, 20),
+          },
+        };
+      }
+
       // 3. Create statements for each section found by LLM
       const createdStatements: Array<{
         statementId: string;
@@ -1243,7 +1299,7 @@ router.post(
       }> = [];
       let packId: string | null = null;
 
-      for (const section of analysis.sections) {
+      for (const section of analysisWithLineage.sections) {
         const statementId = await createStatement({
           organizationId: orgId,
           statementType: section.statementType,
@@ -1305,6 +1361,7 @@ router.post(
           originalLabel: line.originalLabel,
           value: line.value,
           confidence: line.confidence,
+          sourcePage: line.sourcePage,
           sourceRow: line.sourceRow ?? idx + 1,
           suggestedCanonicalId: line.suggestedCanonicalId || undefined,
           suggestedCanonicalLabel: undefined as string | undefined,
@@ -1330,10 +1387,10 @@ router.post(
           originalLabel: l.originalLabel,
           value: l.value,
           confidence: l.confidence,
+          sourcePage: l.sourcePage,
           sourceRow: l.sourceRow,
           mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-            | 'auto'
-            | 'unmapped',
+            'auto' | 'unmapped',
           isNonFinancial: !!(l as any).isNonFinancial,
         }));
 

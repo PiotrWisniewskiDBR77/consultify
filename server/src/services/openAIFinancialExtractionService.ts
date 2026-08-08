@@ -153,6 +153,7 @@ export interface DocumentSection {
     originalLabel: string;
     value: number;
     confidence: number;
+    sourcePage?: number;
     sourceRow?: number;
     suggestedCanonicalId?: string;
   }>;
@@ -185,6 +186,7 @@ CRITICAL RULES:
 - Keep values in the document's native scaling (if the document says "in millions", return the numbers as shown, e.g. 1040 means 1040 million).
 - Keep negative numbers negative. Values in parentheses are negative.
 - For each line, include the original label exactly as it appears in the document.
+- For each line, include the 1-based PDF page number in sourcePage. Never invent a page number.
 - Do NOT skip subtotals or totals — include them (e.g. Total Assets, Net Income, Operating Cash Flow).
 - Ignore page headers, footers, notes, EPS rows, share counts, and narrative text.
 - If a section is not present in the document, omit it from the sections array.
@@ -203,22 +205,22 @@ Return ONLY valid JSON in this exact shape:
     {
       "statementType": "P&L",
       "lines": [
-        { "originalLabel": "Przychody ze sprzedaży", "value": 3200, "confidence": 0.95, "sourceRow": 1 },
-        { "originalLabel": "Koszty sprzedanych produktów", "value": -2100, "confidence": 0.93, "sourceRow": 2 }
+        { "originalLabel": "Przychody ze sprzedaży", "value": 3200, "confidence": 0.95, "sourcePage": 12, "sourceRow": 1 },
+        { "originalLabel": "Koszty sprzedanych produktów", "value": -2100, "confidence": 0.93, "sourcePage": 12, "sourceRow": 2 }
       ],
       "warnings": []
     },
     {
       "statementType": "BS",
       "lines": [
-        { "originalLabel": "Aktywa razem", "value": 5400, "confidence": 0.97, "sourceRow": 1 }
+        { "originalLabel": "Aktywa razem", "value": 5400, "confidence": 0.97, "sourcePage": 14, "sourceRow": 1 }
       ],
       "warnings": []
     },
     {
       "statementType": "CF",
       "lines": [
-        { "originalLabel": "Przepływy z działalności operacyjnej", "value": 450, "confidence": 0.90, "sourceRow": 1 }
+        { "originalLabel": "Przepływy z działalności operacyjnej", "value": 450, "confidence": 0.90, "sourcePage": 16, "sourceRow": 1 }
       ],
       "warnings": []
     }
@@ -249,6 +251,10 @@ function normalizeFullDocumentAnalysis(
             originalLabel,
             value,
             confidence: Math.max(0, Math.min(Number(line?.confidence ?? 0.75), 1)),
+            sourcePage:
+              Number.isInteger(Number(line?.sourcePage)) && Number(line.sourcePage) > 0
+                ? Number(line.sourcePage)
+                : undefined,
             sourceRow: Number.isFinite(Number(line?.sourceRow))
               ? Number(line.sourceRow)
               : undefined,

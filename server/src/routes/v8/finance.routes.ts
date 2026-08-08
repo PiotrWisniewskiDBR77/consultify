@@ -1408,6 +1408,58 @@ router.post(
         };
       }
 
+      const normalizeLineageLabel = (value: unknown) =>
+        String(value || '')
+          .normalize('NFKD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .replace(/\b(?:19|20)\d{2}\b/g, '')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+      const analysisWithLineage = {
+        ...analysis,
+        sections: analysis.sections.map((section) => {
+          const localLines = extractFinancialLines(text, section.statementType, {
+            selectedPeriodLabel: analysis.periodLabel,
+          }).lines;
+          return {
+            ...section,
+            lines: section.lines.map((line) => {
+              if (line.sourcePage != null) return line;
+              const normalizedLabel = normalizeLineageLabel(line.originalLabel);
+              const matched = localLines.find(
+                (candidate) =>
+                  normalizeLineageLabel(candidate.originalLabel) === normalizedLabel &&
+                  Math.abs(Number(candidate.value) - Number(line.value)) < 0.000001
+              );
+              return matched
+                ? {
+                    ...line,
+                    sourcePage: matched.sourcePage,
+                    sourceRow: line.sourceRow ?? matched.sourceRow,
+                  }
+                : line;
+            }),
+          };
+        }),
+      };
+      const missingPageLineage = analysisWithLineage.sections.flatMap((section) =>
+        section.lines
+          .filter((line) => line.sourcePage == null)
+          .map((line) => ({ statementType: section.statementType, label: line.originalLabel }))
+      );
+      if (missingPageLineage.length > 0) {
+        return {
+          statusCode: 422,
+          body: {
+            error: 'PDF page lineage is incomplete; no financial statements were created.',
+            code: 'SOURCE_PAGE_LINEAGE_INCOMPLETE',
+            missingCount: missingPageLineage.length,
+            missing: missingPageLineage.slice(0, 20),
+          },
+        };
+      }
+
       const createdStatements: Array<{
         statementId: string;
         statementType: string;
@@ -1415,7 +1467,7 @@ router.post(
       }> = [];
       let packId: string | null = null;
 
-      for (const section of analysis.sections) {
+      for (const section of analysisWithLineage.sections) {
         const statementId = await createStatement({
           organizationId,
           statementType: section.statementType,
@@ -1475,6 +1527,7 @@ router.post(
           originalLabel: line.originalLabel,
           value: line.value,
           confidence: line.confidence,
+          sourcePage: line.sourcePage,
           sourceRow: line.sourceRow ?? idx + 1,
           suggestedCanonicalId: line.suggestedCanonicalId || undefined,
           suggestedCanonicalLabel: undefined as string | undefined,
@@ -1500,10 +1553,10 @@ router.post(
           originalLabel: line.originalLabel,
           value: line.value,
           confidence: line.confidence,
+          sourcePage: line.sourcePage,
           sourceRow: line.sourceRow,
           mappingStatus: ((line as any).suggestedCanonicalId ? 'auto' : 'unmapped') as
-            | 'auto'
-            | 'unmapped',
+            'auto' | 'unmapped',
           isNonFinancial: !!(line as any).isNonFinancial,
         }));
 
