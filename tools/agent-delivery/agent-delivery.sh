@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <validate|checkpoint|handoff> <v8|documents|finance|ux-table|ux-tools|report-b-ui> [commit message]" >&2
+  echo "Usage: $0 <validate|checkpoint|handoff> <v8|documents|finance|finance-demo|ux-table|ux-tools|report-b-ui> [commit message]" >&2
   exit 64
 }
 
@@ -22,6 +22,10 @@ case "$track" in
     ;;
   finance)
     expected_branch="codex/recovery-finance-20260808"
+    exact_scope="track-scopes/finance.txt"
+    ;;
+  finance-demo)
+    expected_branch="codex/finance-demo-readiness-20260808"
     exact_scope="track-scopes/finance.txt"
     ;;
   ux-table)
