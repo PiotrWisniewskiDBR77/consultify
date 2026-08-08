@@ -427,7 +427,10 @@ export function enforceDocumentSchemaGrounding(
           return [];
         })
         .join(' ');
-      if (!/\b(recommend|approve|decide|rekomend|zatwierd|decyduj)/i.test(executiveText)) {
+      // A generic "we recommend engaging" is still descriptive.  Approval
+      // business cases must state an explicit approve/decide action so the
+      // reader knows which governance gate is being requested.
+      if (!/\b(approv(?:e|ing)|decide|zatwierd|decyduj)/i.test(executiveText)) {
         const decisionText = language === 'pl'
           ? 'Rekomendujemy zatwierdzenie kolejnego etapu walidacji opisanego w tym business case.'
           : 'We recommend approving the next validation gate described in this business case.';
