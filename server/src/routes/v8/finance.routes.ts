@@ -802,6 +802,16 @@ router.put(
     // 409 VERSION_CONFLICT with the current server version, never a silent
     // overwrite.
     const body = req.body ?? {};
+    if (body.sourceStatementPackId) {
+      const sourcePack = await dbGet<{ id: string }>(
+        `SELECT id FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+        [String(body.sourceStatementPackId), organizationId]
+      );
+      if (!sourcePack) {
+        return res.status(404).json({ error: 'Source statement pack not found' });
+      }
+      body.source_statement_pack_id = sourcePack.id;
+    }
     const expectedVersionRaw = body.expectedVersion ?? req.headers['x-model-version'];
     const expectedVersion =
       expectedVersionRaw !== undefined && expectedVersionRaw !== null && expectedVersionRaw !== ''
