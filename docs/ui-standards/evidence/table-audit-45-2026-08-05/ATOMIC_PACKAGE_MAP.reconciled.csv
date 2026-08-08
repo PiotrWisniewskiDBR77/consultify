@@ -1,0 +1,323 @@
+atomic_id,table_id,area,checkpoint_id,severity,primary_package,rationale,status,accepted_sha,qa_evidence,disposition,candidate_sha,evidence
+T01-KEBAB-K04,T01,KEBAB,K04,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-KEBAB-K14,T01,KEBAB,K14,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-KEBAB-K15,T01,KEBAB,K15,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-KEBAB-K18,T01,KEBAB,K18,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-KEBAB-K19,T01,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-MENU_1_2_3-M16,T01,MENU_1_2_3,M16,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-MENU_1_2_3-M26,T01,MENU_1_2_3,M26,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PPM-C01,T01,PPM,C01,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PPM-C16,T01,PPM,C16,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PREVIEW-P08,T01,PREVIEW,P08,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PREVIEW-P13,T01,PREVIEW,P13,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PREVIEW-P25,T01,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-PREVIEW-P30,T01,PREVIEW,P30,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T01-TABLE-T09,T01,TABLE,T09,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-KEBAB-K15,T02,KEBAB,K15,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-KEBAB-K18,T02,KEBAB,K18,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-KEBAB-K19,T02,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-KEBAB-K20,T02,KEBAB,K20,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-MENU_1_2_3-M26,T02,MENU_1_2_3,M26,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-PPM-C12,T02,PPM,C12,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-PREVIEW-P01,T02,PREVIEW,P01,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-PREVIEW-P03,T02,PREVIEW,P03,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T02-TABLE-T27,T02,TABLE,T27,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-KEBAB-K18,T03,KEBAB,K18,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-KEBAB-K19,T03,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-KEBAB-K24,T03,KEBAB,K24,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-MENU_1_2_3-M16,T03,MENU_1_2_3,M16,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-MENU_1_2_3-M26,T03,MENU_1_2_3,M26,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-PPM-C12,T03,PPM,C12,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-PREVIEW-P25,T03,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-PREVIEW-P30,T03,PREVIEW,P30,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T03-TABLE-T01,T03,TABLE,T01,P0,R19,P0 responsive overflow package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-KEBAB-K01,T04,KEBAB,K01,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-KEBAB-K05,T04,KEBAB,K05,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-MENU_1_2_3-M25,T04,MENU_1_2_3,M25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-PPM-C01,T04,PPM,C01,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-PPM-C16,T04,PPM,C16,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-PREVIEW-P01,T04,PREVIEW,P01,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-PREVIEW-P03,T04,PREVIEW,P03,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-TABLE-T25,T04,TABLE,T25,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T04-TABLE-T28,T04,TABLE,T28,P0,R17,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-KEBAB-K18,T05,KEBAB,K18,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-KEBAB-K19,T05,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-MENU_1_2_3-M16,T05,MENU_1_2_3,M16,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-PPM-C12,T05,PPM,C12,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-PREVIEW-P25,T05,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T05-TABLE-T11,T05,TABLE,T11,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-KEBAB-K11,T06,KEBAB,K11,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-KEBAB-K18,T06,KEBAB,K18,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-KEBAB-K19,T06,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-MENU_1_2_3-M16,T06,MENU_1_2_3,M16,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-MENU_1_2_3-M26,T06,MENU_1_2_3,M26,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-PPM-C05,T06,PPM,C05,P0,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-PPM-C12,T06,PPM,C12,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-PREVIEW-P25,T06,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T06-TABLE-T01,T06,TABLE,T01,P0,R19,P0 responsive overflow package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-KEBAB-K19,T07,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-KEBAB-K20,T07,KEBAB,K20,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-MENU_1_2_3-M14,T07,MENU_1_2_3,M14,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-PPM-C12,T07,PPM,C12,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-PREVIEW-P13,T07,PREVIEW,P13,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T07-PREVIEW-P25,T07,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-KEBAB-K19,T08,KEBAB,K19,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-KEBAB-K20,T08,KEBAB,K20,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-MENU_1_2_3-M16,T08,MENU_1_2_3,M16,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-PPM-C12,T08,PPM,C12,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-PREVIEW-P13,T08,PREVIEW,P13,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T08-PREVIEW-P25,T08,PREVIEW,P25,P1,R20,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-KEBAB-K18,T09,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-KEBAB-K19,T09,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-MENU_1_2_3-M04,T09,MENU_1_2_3,M04,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-MENU_1_2_3-M16,T09,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-PPM-C12,T09,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-PREVIEW-P25,T09,PREVIEW,P25,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-PREVIEW-P30,T09,PREVIEW,P30,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T09-TABLE-T27,T09,TABLE,T27,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-KEBAB-K18,T10,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-KEBAB-K19,T10,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-KEBAB-K20,T10,KEBAB,K20,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-MENU_1_2_3-M05,T10,MENU_1_2_3,M05,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-MENU_1_2_3-M16,T10,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-MENU_1_2_3-M26,T10,MENU_1_2_3,M26,P0,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-PPM-C12,T10,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-PREVIEW-P29,T10,PREVIEW,P29,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T10-TABLE-T08,T10,TABLE,T08,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-KEBAB-K18,T11,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-KEBAB-K19,T11,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-MENU_1_2_3-M05,T11,MENU_1_2_3,M05,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-MENU_1_2_3-M16,T11,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-MENU_1_2_3-M26,T11,MENU_1_2_3,M26,P0,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-PPM-C12,T11,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-PREVIEW-P25,T11,PREVIEW,P25,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-PREVIEW-P29,T11,PREVIEW,P29,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T11-TABLE-T01,T11,TABLE,T01,P0,R19,P0 responsive overflow package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-KEBAB-K10,T12,KEBAB,K10,P2,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-KEBAB-K18,T12,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-KEBAB-K19,T12,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-MENU_1_2_3-M05,T12,MENU_1_2_3,M05,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-MENU_1_2_3-M16,T12,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-PPM-C12,T12,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-PREVIEW-P25,T12,PREVIEW,P25,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T12-PREVIEW-P29,T12,PREVIEW,P29,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-KEBAB-K10,T13,KEBAB,K10,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-KEBAB-K18,T13,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-KEBAB-K19,T13,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-MENU_1_2_3-M05,T13,MENU_1_2_3,M05,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-MENU_1_2_3-M16,T13,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-PPM-C12,T13,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-PREVIEW-P25,T13,PREVIEW,P25,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T13-PREVIEW-P29,T13,PREVIEW,P29,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-KEBAB-K18,T14,KEBAB,K18,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-KEBAB-K19,T14,KEBAB,K19,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-MENU_1_2_3-M05,T14,MENU_1_2_3,M05,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-MENU_1_2_3-M16,T14,MENU_1_2_3,M16,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-PPM-C12,T14,PPM,C12,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-PREVIEW-P25,T14,PREVIEW,P25,P0,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T14-PREVIEW-P29,T14,PREVIEW,P29,P1,R21,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T15-KEBAB-K18,T15,KEBAB,K18,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-KEBAB-K19,T15,KEBAB,K19,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-MENU_1_2_3-M14,T15,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-PPM-C12,T15,PPM,C12,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-PREVIEW-P01,T15,PREVIEW,P01,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-PREVIEW-P25,T15,PREVIEW,P25,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-PREVIEW-P29,T15,PREVIEW,P29,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T15-TABLE-T08,T15,TABLE,T08,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-KEBAB-K18,T16,KEBAB,K18,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-KEBAB-K19,T16,KEBAB,K19,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-MENU_1_2_3-M14,T16,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-MENU_1_2_3-M26,T16,MENU_1_2_3,M26,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-PPM-C12,T16,PPM,C12,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-PREVIEW-P25,T16,PREVIEW,P25,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22 row: T16-T19 Details P25 + all 10 T20 atoms accepted with numbered scoped-test evidence (77/77, 83/83) and diff-check"
+T16-PREVIEW-P29,T16,PREVIEW,P29,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T16-TABLE-T01,T16,TABLE,T01,P0,R19,P0 responsive overflow package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T16-TABLE-T08,T16,TABLE,T08,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-KEBAB-K18,T17,KEBAB,K18,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-KEBAB-K19,T17,KEBAB,K19,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-MENU_1_2_3-M14,T17,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-PPM-C12,T17,PPM,C12,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-PREVIEW-P25,T17,PREVIEW,P25,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22 row: T16-T19 Details P25 + all 10 T20 atoms accepted with numbered scoped-test evidence (77/77, 83/83) and diff-check"
+T17-PREVIEW-P29,T17,PREVIEW,P29,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T17-TABLE-T08,T17,TABLE,T08,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-KEBAB-K18,T18,KEBAB,K18,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-KEBAB-K19,T18,KEBAB,K19,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-MENU_1_2_3-M14,T18,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-PPM-C12,T18,PPM,C12,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-PREVIEW-P25,T18,PREVIEW,P25,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22 row: T16-T19 Details P25 + all 10 T20 atoms accepted with numbered scoped-test evidence (77/77, 83/83) and diff-check"
+T18-PREVIEW-P29,T18,PREVIEW,P29,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T18-TABLE-T08,T18,TABLE,T08,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-KEBAB-K18,T19,KEBAB,K18,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-KEBAB-K19,T19,KEBAB,K19,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-MENU_1_2_3-M14,T19,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-PPM-C12,T19,PPM,C12,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-PREVIEW-P25,T19,PREVIEW,P25,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22 row: T16-T19 Details P25 + all 10 T20 atoms accepted with numbered scoped-test evidence (77/77, 83/83) and diff-check"
+T19-PREVIEW-P29,T19,PREVIEW,P29,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T19-TABLE-T08,T19,TABLE,T08,P1,R22,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T20-KEBAB-K10,T20,KEBAB,K10,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22: 83/83 scoped tests + negative control, lint 0 errors, typecheck PASS"
+T20-KEBAB-K18,T20,KEBAB,K18,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22: PASS/DUPLICATE, shared RowActionsMenu geometry"
+T20-KEBAB-K19,T20,KEBAB,K19,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22: PASS/DUPLICATE, shared RowActionsMenu geometry"
+T20-MENU_1_2_3-M14,T20,MENU_1_2_3,M14,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"real Menu3BulkRow bulk implementation, 77/77 scoped tests, not a selection:none case"
+T20-PPM-C12,T20,PPM,C12,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22: PASS/DUPLICATE, identical kebab/PPM renderer"
+T20-PREVIEW-P01,T20,PREVIEW,P01,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R22: accepted as existing canonical coverage
+T20-PREVIEW-P25,T20,PREVIEW,P25,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R22: accepted as existing canonical coverage (T21 Details reused)
+T20-PREVIEW-P29,T20,PREVIEW,P29,P0,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R22: accepted as existing canonical coverage
+T20-TABLE-T08,T20,TABLE,T08,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R22: accepted as existing canonical coverage
+T20-TABLE-T12,T20,TABLE,T12,P1,R22,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R22: accepted as existing canonical coverage; standard selection column confirmed, no Start action"
+T21-KEBAB-K18,T21,KEBAB,K18,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T21-KEBAB-K19,T21,KEBAB,K19,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T21-MENU_1_2_3-M16,T21,MENU_1_2_3,M16,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T21-PPM-C12,T21,PPM,C12,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T21-PREVIEW-P25,T21,PREVIEW,P25,P0,R23,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R23 row: independent scoped Vitest 155/155 for T21/T23/T24 PREVIEW-P25 only
+T21-PREVIEW-P29,T21,PREVIEW,P29,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T22-KEBAB-K01,T22,KEBAB,K01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,Initiatives tab rendered empty this session so its row kebab could not be exercised; needs a dedicated re-check
+T22-MENU_1_2_3-M14,T22,MENU_1_2_3,M14,P0,R10,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint for Assessment Outputs/Processes"
+T22-PPM-C01,T22,PPM,C01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,R10 scoped tests; right-click specifically not part of this session's visual pass
+T22-PREVIEW-P01,T22,PREVIEW,P01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,row-click preview panel not confirmed to open in this session's harness pass (Reports row click produced no visible change); needs a dedicated re-check
+T22-TABLE-T00,T22,TABLE,T00,P0,R10,P0 registry/semantic package,OPEN,,,TECH_PASS,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,five-surface implementation and Outputs count ownership pass scoped tests; exact-final-SHA runtime evidence is recorded separately at closeout
+T23-KEBAB-K18,T23,KEBAB,K18,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-KEBAB-K19,T23,KEBAB,K19,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-MENU_1_2_3-M01,T23,MENU_1_2_3,M01,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-MENU_1_2_3-M14,T23,MENU_1_2_3,M14,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-PPM-C12,T23,PPM,C12,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-PREVIEW-P25,T23,PREVIEW,P25,P0,R23,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R23 row: independent scoped Vitest 155/155 for T21/T23/T24 PREVIEW-P25 only
+T23-PREVIEW-P29,T23,PREVIEW,P29,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-TABLE-T08,T23,TABLE,T08,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T23-TABLE-T12,T23,TABLE,T12,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-KEBAB-K18,T24,KEBAB,K18,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-KEBAB-K19,T24,KEBAB,K19,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-MENU_1_2_3-M01,T24,MENU_1_2_3,M01,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-MENU_1_2_3-M14,T24,MENU_1_2_3,M14,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-MENU_1_2_3-M26,T24,MENU_1_2_3,M26,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-PPM-C12,T24,PPM,C12,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-PREVIEW-P25,T24,PREVIEW,P25,P0,R23,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R23 row: independent scoped Vitest 155/155 for T21/T23/T24 PREVIEW-P25 only
+T24-PREVIEW-P29,T24,PREVIEW,P29,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T24-TABLE-T01,T24,TABLE,T01,P0,R19,P0 responsive overflow package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T24-TABLE-T12,T24,TABLE,T12,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T25-KEBAB-K18,T25,KEBAB,K18,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T25-KEBAB-K19,T25,KEBAB,K19,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T25-KEBAB-K20,T25,KEBAB,K20,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T25-PPM-C12,T25,PPM,C12,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T25-PREVIEW-P25,T25,PREVIEW,P25,P1,R24,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,REPAIR_STATUS R24 row: 120/120 tests for T25 PREVIEW-P25
+T25-PREVIEW-P29,T25,PREVIEW,P29,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T26-KEBAB-K01,T26,KEBAB,K01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T26-MENU_1_2_3-M14,T26,MENU_1_2_3,M14,P0,R13,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T26-PPM-C01,T26,PPM,C01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T26-PREVIEW-P01,T26,PREVIEW,P01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T26-TABLE-T03,T26,TABLE,T03,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T26-TABLE-T08,T26,TABLE,T08,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T26-TABLE-T12,T26,TABLE,T12,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T27-KEBAB-K01,T27,KEBAB,K01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T27-MENU_1_2_3-M14,T27,MENU_1_2_3,M14,P0,R11,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T27-PPM-C01,T27,PPM,C01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T27-PREVIEW-P01,T27,PREVIEW,P01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T27-TABLE-T00,T27,TABLE,T00,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T28-KEBAB-K01,T28,KEBAB,K01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T28-MENU_1_2_3-M14,T28,MENU_1_2_3,M14,P0,R11,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T28-PPM-C01,T28,PPM,C01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T28-PREVIEW-P01,T28,PREVIEW,P01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T28-TABLE-T00,T28,TABLE,T00,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T29-KEBAB-K01,T29,KEBAB,K01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T29-MENU_1_2_3-M14,T29,MENU_1_2_3,M14,P0,R11,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T29-PPM-C01,T29,PPM,C01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T29-PREVIEW-P01,T29,PREVIEW,P01,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T29-TABLE-T00,T29,TABLE,T00,P0,R11,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 408/408, Codex reran 179/179 scoped + diff-check PASS, candidate 64856e790a"
+T30-KEBAB-K01,T30,KEBAB,K01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T30-MENU_1_2_3-M14,T30,MENU_1_2_3,M14,P0,R13,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T30-PPM-C01,T30,PPM,C01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T30-PREVIEW-P01,T30,PREVIEW,P01,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T30-TABLE-T03,T30,TABLE,T03,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T30-TABLE-T08,T30,TABLE,T08,P1,R24,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T30-TABLE-T12,T30,TABLE,T12,P0,R13,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 425/425, Codex reran 316/316 scoped + diff-check PASS; T30 corrected via real /initiatives-v4/goals API, candidate 64856e790a"
+T31-KEBAB-K01,T31,KEBAB,K01,P0,R14,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 280/280, Codex reran 178/178 scoped + diff-check PASS for the 6 closed atoms, candidate 64856e790a"
+T31-MENU_1_2_3-M14,T31,MENU_1_2_3,M14,P0,R14,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint"
+T31-PPM-C01,T31,PPM,C01,P0,R14,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 280/280, Codex reran 178/178 scoped + diff-check PASS for the 6 closed atoms, candidate 64856e790a"
+T31-PREVIEW-P01,T31,PREVIEW,P01,P0,R14,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 280/280, Codex reran 178/178 scoped + diff-check PASS for the 6 closed atoms, candidate 64856e790a"
+T31-TABLE-T03,T31,TABLE,T03,P0,R14,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 280/280, Codex reran 178/178 scoped + diff-check PASS for the 6 closed atoms, candidate 64856e790a"
+T31-TABLE-T13,T31,TABLE,T13,P0,R14,P0 registry/semantic package,OPEN,,,BLOCKED_PRODUCT,,overlaps T32 Summary scope; needs a product decision on which surface owns this column before implementation
+T32-KEBAB-K18,T32,KEBAB,K18,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T32-MENU_1_2_3-M16,T32,MENU_1_2_3,M16,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T32-PPM-C12,T32,PPM,C12,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T32-PREVIEW-P25,T32,PREVIEW,P25,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T32-PREVIEW-P29,T32,PREVIEW,P29,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T32-TABLE-T13,T32,TABLE,T13,P0,R14,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 280/280, Codex reran 178/178 scoped + diff-check PASS for the 6 closed atoms, candidate 64856e790a"
+T33-KEBAB-K18,T33,KEBAB,K18,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T33-MENU_1_2_3-M16,T33,MENU_1_2_3,M16,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T33-PPM-C12,T33,PPM,C12,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T33-PREVIEW-P25,T33,PREVIEW,P25,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T33-PREVIEW-P29,T33,PREVIEW,P29,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T33-TABLE-T13,T33,TABLE,T13,P0,R14,P0 registry/semantic package,OPEN,,,OPEN_CONFIRMED,,"R14 report: stale/unverified against current source, needs a fresh preflight, not touched this session"
+T33-TABLE-T14,T33,TABLE,T14,P0,R14,P0 registry/semantic package,OPEN,,,BLOCKED_ROUTING,,"shared setSearchParams({...}, {replace:true}) call prevents tab history; architecture-level fix outside R14's file ownership"
+T34-KEBAB-K05,T34,KEBAB,K05,P0,R25,module migration,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"REPAIR_STATUS R25 row: T34-KEBAB-K05 closed (counter 8/1 in source was an impossible test-count-in-atomic-column error, corrected to 1/1)"
+T34-KEBAB-K18,T34,KEBAB,K18,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T34-MENU_1_2_3-M16,T34,MENU_1_2_3,M16,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T34-PPM-C12,T34,PPM,C12,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T34-PREVIEW-P30,T34,PREVIEW,P30,P1,R25,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
+T35-KEBAB-K01,T35,KEBAB,K01,P0,R12,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author gates PASS, Codex reran 165/165 scoped + diff-check PASS, candidate 64856e790a"
+T35-MENU_1_2_3-M14,T35,MENU_1_2_3,M14,P0,R12,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T35-PPM-C01,T35,PPM,C01,P0,R12,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author gates PASS, Codex reran 165/165 scoped + diff-check PASS, candidate 64856e790a"
+T35-PREVIEW-P01,T35,PREVIEW,P01,P0,R12,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author gates PASS, Codex reran 165/165 scoped + diff-check PASS, candidate 64856e790a"
+T35-TABLE-T13,T35,TABLE,T13,P0,R12,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author gates PASS, Codex reran 165/165 scoped + diff-check PASS, candidate 64856e790a"
+T36-KEBAB-K01,T36,KEBAB,K01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T36-MENU_1_2_3-M05,T36,MENU_1_2_3,M05,P1,R26,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T36-MENU_1_2_3-M14,T36,MENU_1_2_3,M14,P0,R15,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T36-PPM-C01,T36,PPM,C01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T36-PREVIEW-P01,T36,PREVIEW,P01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T36-TABLE-T03,T36,TABLE,T03,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T36-TABLE-T13,T36,TABLE,T13,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T37-KEBAB-K01,T37,KEBAB,K01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T37-MENU_1_2_3-M05,T37,MENU_1_2_3,M05,P1,R26,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T37-MENU_1_2_3-M14,T37,MENU_1_2_3,M14,P0,R15,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T37-PPM-C01,T37,PPM,C01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T37-PREVIEW-P01,T37,PREVIEW,P01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T37-TABLE-T03,T37,TABLE,T03,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T37-TABLE-T13,T37,TABLE,T13,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T38-KEBAB-K01,T38,KEBAB,K01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T38-MENU_1_2_3-M05,T38,MENU_1_2_3,M05,P1,R26,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T38-MENU_1_2_3-M14,T38,MENU_1_2_3,M14,P0,R15,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint (ACCEPTED_NA_CONTRACT)"
+T38-PPM-C01,T38,PPM,C01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T38-PREVIEW-P01,T38,PREVIEW,P01,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T38-TABLE-T03,T38,TABLE,T03,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T38-TABLE-T13,T38,TABLE,T13,P0,R15,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"author 288/288, Codex reran 181/181 scoped + diff-check PASS, candidate 64856e790a"
+T39-KEBAB-K18,T39,KEBAB,K18,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T39-MENU_1_2_3-M16,T39,MENU_1_2_3,M16,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T39-PPM-C12,T39,PPM,C12,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T39-PREVIEW-P25,T39,PREVIEW,P25,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T39-PREVIEW-P29,T39,PREVIEW,P29,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-KEBAB-K06,T40,KEBAB,K06,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-KEBAB-K18,T40,KEBAB,K18,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-MENU_1_2_3-M16,T40,MENU_1_2_3,M16,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-PPM-C12,T40,PPM,C12,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-PREVIEW-P25,T40,PREVIEW,P25,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-PREVIEW-P30,T40,PREVIEW,P30,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T40-TABLE-T13,T40,TABLE,T13,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-KEBAB-K18,T41,KEBAB,K18,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-MENU_1_2_3-M16,T41,MENU_1_2_3,M16,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-PPM-C12,T41,PPM,C12,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-PREVIEW-P25,T41,PREVIEW,P25,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-PREVIEW-P30,T41,PREVIEW,P30,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T41-TABLE-T13,T41,TABLE,T13,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-KEBAB-K18,T42,KEBAB,K18,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-MENU_1_2_3-M16,T42,MENU_1_2_3,M16,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-PPM-C12,T42,PPM,C12,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-PREVIEW-P25,T42,PREVIEW,P25,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-PREVIEW-P30,T42,PREVIEW,P30,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T42-TABLE-T13,T42,TABLE,T13,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-KEBAB-K18,T43,KEBAB,K18,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-MENU_1_2_3-M16,T43,MENU_1_2_3,M16,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-PPM-C12,T43,PPM,C12,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-PREVIEW-P25,T43,PREVIEW,P25,P1,R27,module migration,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-PREVIEW-P30,T43,PREVIEW,P30,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T43-TABLE-T13,T43,TABLE,T13,P0,R16,P0 registry/semantic package,OPEN,,,BLOCKED_OWNERSHIP,,protected domain (Finance/MyWork/Calendar/Interview) or entangled with un-isolated shared diffs (R19)
+T44-KEBAB-K18,T44,KEBAB,K18,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T44-MENU_1_2_3-M16,T44,MENU_1_2_3,M16,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T44-PPM-C12,T44,PPM,C12,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T44-PREVIEW-P25,T44,PREVIEW,P25,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T44-PREVIEW-P29,T44,PREVIEW,P29,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T44-TABLE-T12,T44,TABLE,T12,P0,R18,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,R18 P0 registry technically closed (T44/T45 TABLE-T12); populated/empty visual+deployed-data verification still pending
+T45-KEBAB-K18,T45,KEBAB,K18,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T45-MENU_1_2_3-M16,T45,MENU_1_2_3,M16,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T45-PPM-C12,T45,PPM,C12,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T45-PREVIEW-P25,T45,PREVIEW,P25,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T45-PREVIEW-P29,T45,PREVIEW,P29,P1,R28,module migration,OPEN,,,OPEN_CONFIRMED,,no concrete evidence for this table under this package
+T45-TABLE-T12,T45,TABLE,T12,P0,R18,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,R18 P0 registry technically closed (T44/T45 TABLE-T12); populated/empty visual+deployed-data verification still pending

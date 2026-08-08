@@ -56,7 +56,6 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
-const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
 const AssessmentQualityReviewPanelScreen = React.lazy(
   () => import('./screens/assessment-quality-review-panel')
 );
@@ -326,11 +325,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
-  },
-  'tools-sesja-wyjscie': {
-    label:
-      'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
-    render: () => <ToolsSesjaWyjscieScreen />,
   },
   'assessment-quality-review-panel': {
     label:

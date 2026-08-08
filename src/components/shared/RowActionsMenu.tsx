@@ -29,13 +29,7 @@ export interface RowAction {
 }
 
 export type RowActionSectionKind =
-  | 'context'
-  | 'open'
-  | 'ai'
-  | 'convert'
-  | 'output'
-  | 'manage'
-  | 'danger';
+  'context' | 'open' | 'ai' | 'convert' | 'output' | 'manage' | 'danger';
 
 export interface RowActionSection {
   id: string;
