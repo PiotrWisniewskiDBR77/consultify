@@ -58,7 +58,7 @@ describe('Agent production build boundary', () => {
     expect(releaseMigrations).toHaveLength(22);
 
     const expectedCommand =
-      'DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
+      'DATABASE_URL=$DATABASE_PUBLIC_URL DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
       releaseMigrations.join(',');
 
     for (const filename of ['railway.json', 'railway.api.json']) {
