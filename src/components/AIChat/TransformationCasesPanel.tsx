@@ -1276,15 +1276,17 @@ export const TransformationCasesPanel: React.FC<{
         !['pending_review', 'approved'].includes(ideasProposal.status)
       )
         return;
-      const confirmed = window.confirm(
-        decision === 'approve'
-          ? isPolish
-            ? `Zatwierdzić i utworzyć ${ideasProposal.candidates.length} idei w My Ideas?`
-            : `Approve and create ${ideasProposal.candidates.length} items in My Ideas?`
-          : isPolish
-            ? 'Odrzucić tę propozycję idei?'
-            : 'Reject this Ideas proposal?'
-      );
+      const confirmed =
+        ideasProposal.status === 'approved' ||
+        window.confirm(
+          decision === 'approve'
+            ? isPolish
+              ? `Zatwierdzić i utworzyć ${ideasProposal.candidates.length} idei w My Ideas?`
+              : `Approve and create ${ideasProposal.candidates.length} items in My Ideas?`
+            : isPolish
+              ? 'Odrzucić tę propozycję idei?'
+              : 'Reject this Ideas proposal?'
+        );
       if (!confirmed) return;
       setStageAction(`review-${decision}`);
       setError(null);
@@ -1353,15 +1355,17 @@ export const TransformationCasesPanel: React.FC<{
         !['pending_review', 'approved'].includes(interviewsProposal.status)
       )
         return;
-      const confirmed = window.confirm(
-        decision === 'approve'
-          ? isPolish
-            ? `Zatwierdzić i utworzyć ${interviewsProposal.candidates.length} zadań Interview?`
-            : `Approve and create ${interviewsProposal.candidates.length} Interview assignments?`
-          : isPolish
-            ? 'Odrzucić plan rozmów?'
-            : 'Reject the Interview plan?'
-      );
+      const confirmed =
+        interviewsProposal.status === 'approved' ||
+        window.confirm(
+          decision === 'approve'
+            ? isPolish
+              ? `Zatwierdzić i utworzyć ${interviewsProposal.candidates.length} zadań Interview?`
+              : `Approve and create ${interviewsProposal.candidates.length} Interview assignments?`
+            : isPolish
+              ? 'Odrzucić plan rozmów?'
+              : 'Reject the Interview plan?'
+        );
       if (!confirmed) return;
       setStageAction(`review-interviews-${decision}`);
       setError(null);
@@ -1454,15 +1458,17 @@ export const TransformationCasesPanel: React.FC<{
         !['pending_review', 'approved'].includes(drdProposal.status)
       )
         return;
-      const confirmed = window.confirm(
-        decision === 'approve'
-          ? isPolish
-            ? 'Zatwierdzić zakres i utworzyć assessment DRD?'
-            : 'Approve the scope and create the DRD assessment?'
-          : isPolish
-            ? 'Odrzucić propozycję DRD?'
-            : 'Reject the DRD proposal?'
-      );
+      const confirmed =
+        drdProposal.status === 'approved' ||
+        window.confirm(
+          decision === 'approve'
+            ? isPolish
+              ? 'Zatwierdzić zakres i utworzyć assessment DRD?'
+              : 'Approve the scope and create the DRD assessment?'
+            : isPolish
+              ? 'Odrzucić propozycję DRD?'
+              : 'Reject the DRD proposal?'
+        );
       if (!confirmed) return;
       setStageAction(`review-drd-${decision}`);
       setError(null);
@@ -1545,15 +1551,17 @@ export const TransformationCasesPanel: React.FC<{
         !['pending_review', 'approved'].includes(synthesisProposal.status)
       )
         return;
-      const confirmed = window.confirm(
-        decision === 'approve'
-          ? isPolish
-            ? 'Zatwierdzić syntezę i utworzyć kanonicznego kandydata inicjatywy?'
-            : 'Approve synthesis and create the canonical Initiative Candidate?'
-          : isPolish
-            ? 'Odrzucić syntezę szans?'
-            : 'Reject opportunity synthesis?'
-      );
+      const confirmed =
+        synthesisProposal.status === 'approved' ||
+        window.confirm(
+          decision === 'approve'
+            ? isPolish
+              ? 'Zatwierdzić syntezę i utworzyć kanonicznego kandydata inicjatywy?'
+              : 'Approve synthesis and create the canonical Initiative Candidate?'
+            : isPolish
+              ? 'Odrzucić syntezę szans?'
+              : 'Reject opportunity synthesis?'
+        );
       if (!confirmed) return;
       setStageAction(`review-synthesis-${decision}`);
       setError(null);
@@ -1647,6 +1655,7 @@ export const TransformationCasesPanel: React.FC<{
       )
         return;
       if (
+        financeProposal.status !== 'approved' &&
         !window.confirm(
           decision === 'approve'
             ? isPolish
@@ -1752,6 +1761,7 @@ export const TransformationCasesPanel: React.FC<{
       )
         return;
       if (
+        portfolioProposal.status !== 'approved' &&
         !window.confirm(
           decision === 'approve'
             ? isPolish
@@ -1839,6 +1849,7 @@ export const TransformationCasesPanel: React.FC<{
       )
         return;
       if (
+        mobilizationProposal.status !== 'approved' &&
         !window.confirm(
           decision === 'approve'
             ? isPolish
