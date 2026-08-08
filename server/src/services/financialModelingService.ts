@@ -231,6 +231,25 @@ function latestPeriodRows<T extends { period_label?: string | null }>(rows: T[])
   return ranked.filter((entry) => entry.year === latestYear).map((entry) => entry.row);
 }
 
+function parseJsonObject(value: unknown): Record<string, any> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, any>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function seedPeriodLabel(value: Record<string, any>): string | null {
+  const evidence = parseJsonObject(value.evidenceJson ?? value.evidence_json);
+  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  return label == null || String(label).trim() === '' ? null : String(label);
+}
+
 function mergeAssumptions(
   seeded: Record<string, any>,
   incoming?: Record<string, any>
@@ -267,7 +286,7 @@ async function loadSeedValueRows(
       rowsFromSnapshots.push({
         line_code: lineCode,
         value: numberOrZero(value?.value),
-        period_label: value?.periodLabel || value?.evidenceJson?.periodLabel || null,
+        period_label: seedPeriodLabel(value),
       });
     }
   }
@@ -278,13 +297,18 @@ async function loadSeedValueRows(
 
   const placeholders = statementIds.map(() => '?').join(',');
   const rows = (await dbAll<any>(
-    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value, fsv.period_label
+    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value, fsv.period_label, fsv.evidence_json
      FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id IN (${placeholders})`,
     statementIds
-  )) as Array<{ line_code: string; value: number; period_label?: string | null }>;
-  return latestPeriodRows(rows);
+  )) as Array<{
+    line_code: string;
+    value: number;
+    period_label?: string | null;
+    evidence_json?: unknown;
+  }>;
+  return latestPeriodRows(rows.map((row) => ({ ...row, period_label: seedPeriodLabel(row) })));
 }
 
 async function buildSeededAssumptionsFromStatement(
