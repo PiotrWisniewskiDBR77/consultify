@@ -6,6 +6,7 @@ const mockDb = vi.hoisted(() => ({
   all: vi.fn(),
   run: vi.fn(),
 }));
+const mockLoadLatestStatementVersionSnapshot = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../../server/src/utils/DbPromise.js', async () => {
   const actual = await vi.importActual<any>('../../../../server/src/utils/DbPromise.js');
@@ -18,7 +19,7 @@ vi.mock('../../../../server/src/utils/DbPromise.js', async () => {
 });
 
 vi.mock('../../../../server/src/services/financialStatementService.js', () => ({
-  loadLatestStatementVersionSnapshot: vi.fn().mockResolvedValue(null),
+  loadLatestStatementVersionSnapshot: mockLoadLatestStatementVersionSnapshot,
 }));
 
 vi.mock('../../../../server/src/services/financeCanonicalResolver.js', () => ({
@@ -165,6 +166,16 @@ describe('financialModelingService model seed periods', () => {
     const { createModel } = await import(
       '../../../../server/src/services/financialModelingService.js'
     );
+    mockLoadLatestStatementVersionSnapshot.mockResolvedValueOnce({
+      versionNo: 6,
+      snapshot: {
+        values: [
+          { lineCode: 'CASH', value: 999 },
+          { lineCode: 'TOTAL_ASSETS', value: 9999 },
+          { lineCode: 'TOTAL_EQUITY', value: 9999 },
+        ],
+      },
+    });
     mockDb.get.mockResolvedValueOnce({
       id: 'stmt-1',
       period_label: 'FY2025',
@@ -217,5 +228,6 @@ describe('financialModelingService model seed periods', () => {
     expect(assumptions.initialCash).toBe(500);
     expect(assumptions.initialEquity).toBe(1200);
     expect(assumptions.baseline.revenue).toBe(3000);
+    expect(mockDb.all).toHaveBeenCalledTimes(1);
   });
 });

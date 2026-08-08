@@ -279,15 +279,27 @@ async function loadSeedValueRows(
       ? snapshotVersion?.snapshot?.values
       : [];
     if (snapshotValues.length === 0) continue;
-    snapshotCoverage += 1;
+    const statementRows: Array<{
+      line_code: string;
+      value: number;
+      period_label?: string | null;
+    }> = [];
     for (const value of snapshotValues) {
       const lineCode = normalizeCanonicalLineCode(String(value?.lineCode || ''));
       if (!lineCode) continue;
-      rowsFromSnapshots.push({
+      statementRows.push({
         line_code: lineCode,
         value: numberOrZero(value?.value),
         period_label: seedPeriodLabel(value),
       });
+    }
+    // Older approved snapshots contain canonical totals but omit period lineage.
+    // They cannot safely seed a multi-period model because duplicate line codes
+    // would be summed. In that case use the value rows, where evidence_json keeps
+    // the source period, instead of silently manufacturing a combined period.
+    if (statementRows.length > 0 && statementRows.every((row) => row.period_label)) {
+      snapshotCoverage += 1;
+      rowsFromSnapshots.push(...statementRows);
     }
   }
 
