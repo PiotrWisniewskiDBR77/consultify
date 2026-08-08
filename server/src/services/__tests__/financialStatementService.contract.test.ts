@@ -164,6 +164,31 @@ describe('financialStatementService — contract tests', () => {
     });
   });
 
+  describe('extractFinancialLines', () => {
+    it('parses comma-only UK thousands as whole report units', () => {
+      const text = Array.from({ length: 25 }, (_, index) =>
+        index === 8
+          ? 'Group balance sheet'
+          : index === 9
+            ? '28 February 2026 22 February 2025'
+            : index === 10
+              ? 'Property, plant and equipment 17,728 17,262'
+              : `filler ${index}`
+      ).join('\n');
+
+      const result = extractFinancialLines(text, 'BS', {
+        selectedPeriodLabel: '2026',
+        comparisonPeriodLabel: '2025',
+      });
+      const row = result.lines.find((line) =>
+        line.originalLabel.includes('Property, plant and equipment')
+      );
+
+      expect(row?.value).toBe(17728);
+      expect(row?.comparisonValue).toBe(17262);
+    });
+  });
+
   describe('extractFinancialLines PDF lineage', () => {
     it('preserves the pdf-parse page marker on extracted rows', () => {
       const pageSeven = extractFinancialLines(

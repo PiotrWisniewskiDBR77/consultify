@@ -1672,7 +1672,12 @@ export function extractFinancialLines(
     s = s.replace(/\s/g, '');
     const lastComma = s.lastIndexOf(',');
     const lastDot = s.lastIndexOf('.');
-    if (lastComma > lastDot) {
+    const commaOnlyThousands = lastComma >= 0 && lastDot < 0 && /^\d{1,3}(?:,\d{3})+$/.test(s);
+    if (commaOnlyThousands) {
+      // English-language reports use commas as thousands separators even
+      // when no decimal point is present (e.g. Tesco £m: "5,092").
+      s = s.replace(/,/g, '');
+    } else if (lastComma > lastDot) {
       // European: 1.234,56
       s = s.replace(/\./g, '').replace(',', '.');
     } else {
