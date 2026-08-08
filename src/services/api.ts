@@ -15604,6 +15604,82 @@ export const Api = {
     return handleResponse(res, 'Failed to load Wave 8 agent catalog');
   },
 
+  listAgentProcessTemplates: async () => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-process-templates`);
+    return handleResponse(res, 'Failed to load governed agent process templates');
+  },
+
+  getAgentProcessTemplateGovernance: async (templateId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-process-templates/${templateId}`);
+    return handleResponse(res, 'Failed to load agent process template governance history');
+  },
+
+  getAgentRunOperationalSnapshot: async (runId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-operations/runs/${runId}`);
+    return handleResponse(res, 'Failed to load Agent operational snapshot');
+  },
+
+  getAgentTenantSettings: async (projectId?: string | null) => {
+    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-operations/settings${query}`);
+    return handleResponse(res, 'Failed to load Agent settings');
+  },
+
+  updateAgentTenantSettings: async (payload: Record<string, unknown>) => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-operations/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update Agent settings');
+  },
+
+  activateA06ForTenant: async (projectId: string | null, idempotencyKey: string) => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-operations/activate`, {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({ projectId }),
+    });
+    return handleResponse(res, 'Failed to activate Agent execution policies');
+  },
+
+  recoverAgentRunTarget: async (
+    runId: string,
+    payload: {
+      targetId: string;
+      action:
+        'retry_failed_branch' | 'recover_expired_lease' | 'cancel_graph' | 'expire_stale_review';
+      reason: string;
+    },
+    idempotencyKey: string
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/v8/agent-operations/runs/${runId}/recover`, {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to recover Agent target');
+  },
+
+  transitionAgentProcessTemplate: async (
+    templateId: string,
+    action: 'publish' | 'deprecate',
+    reason: string
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/agent-process-templates/${templateId}/${action}`,
+      { method: 'POST', body: JSON.stringify({ reason }) }
+    );
+    return handleResponse(res, `Failed to ${action} agent process template`);
+  },
+
+  instantiateAgentProcessTemplate: async (templateId: string, executionRunId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/agent-process-templates/${templateId}/instantiate`,
+      { method: 'POST', body: JSON.stringify({ executionRunId }) }
+    );
+    return handleResponse(res, 'Failed to instantiate agent process template');
+  },
+
   upsertWave8AgentDefinition: async (definition: Record<string, unknown>) => {
     const res = await fetchWithRetry(`${API_URL}/ai-agents/definitions`, {
       method: 'POST',
@@ -16405,16 +16481,10 @@ export const Api = {
     return {
       preferences: {
         tone: (userSettings?.writing_tone || 'professional') as
-          | 'professional'
-          | 'friendly'
-          | 'casual'
-          | 'academic',
+          'professional' | 'friendly' | 'casual' | 'academic',
         formality: (userSettings?.formality || 'balanced') as 'formal' | 'balanced' | 'informal',
         verbosity: (userSettings?.verbosity || 'concise') as
-          | 'minimal'
-          | 'concise'
-          | 'detailed'
-          | 'comprehensive',
+          'minimal' | 'concise' | 'detailed' | 'comprehensive',
       },
     };
   },

@@ -14,16 +14,18 @@ import auditEventsService from '../services/AuditEventsService.js';
 import logger from '../utils/Logger.js';
 import type { AuthRequest } from './auth.middleware.js';
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    emitAuditEvent?: (
-      input: Omit<
-        AuditEventInput,
-        'actorId' | 'organizationId' | 'ip' | 'userAgent' | 'actorType'
-      > & {
-        actorType?: AuditEventInput['actorType'];
-      }
-    ) => Promise<string>;
+declare global {
+  namespace Express {
+    interface Request {
+      emitAuditEvent?: (
+        input: Omit<
+          AuditEventInput,
+          'actorId' | 'organizationId' | 'ip' | 'userAgent' | 'actorType'
+        > & {
+          actorType?: AuditEventInput['actorType'];
+        }
+      ) => Promise<string>;
+    }
   }
 }
 

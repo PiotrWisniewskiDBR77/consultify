@@ -26,6 +26,8 @@ interface PlanRow {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  execution_owner_token?: string | null;
+  execution_fencing_token?: number;
 }
 
 interface StepRow {
@@ -116,8 +118,14 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     }
 
     if (s.startsWith('INSERT INTO ai_agent_plan_steps')) {
-      const [id, plan_id, step_index, tool_name, tool_input_json, requires_approval] =
-        params as [string, string, number, string, string, number];
+      const [id, plan_id, step_index, tool_name, tool_input_json, requires_approval] = params as [
+        string,
+        string,
+        number,
+        string,
+        string,
+        number,
+      ];
       const arr = db.steps.get(plan_id) || [];
       arr.push({
         id,
@@ -168,7 +176,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         // literal (not a bound param) — mirror that here, otherwise the gate
         // (`!step.approvedAt`) re-fires on the very next executePlan call.
         if (step)
-          Object.assign(step, { status: 'pending', approved_by, approved_at: new Date().toISOString() });
+          Object.assign(step, {
+            status: 'pending',
+            approved_by,
+            approved_at: new Date().toISOString(),
+          });
         return { changes: 1 };
       }
       const [status, id] = params as [string, string];
@@ -186,6 +198,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     }
 
     if (s.startsWith('UPDATE ai_agent_plans')) {
+      if (s.includes('execution_fencing_token = COALESCE')) {
+        const [ownerToken, id] = params as [string, string];
+        const plan = db.plans.get(id);
+        if (!plan) return { changes: 0 };
+        plan.status = 'executing';
+        plan.execution_owner_token = ownerToken;
+        plan.execution_fencing_token = Number(plan.execution_fencing_token || 0) + 1;
+        return { changes: 1 };
+      }
       if (s.includes('result_summary = ?') && s.includes('error_message = ?')) {
         const [status, result_summary, error_message, id] = params as [
           string,
@@ -206,7 +227,8 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       let idx = 0;
       const status = params[idx++] as string;
       const updates: Partial<PlanRow> = { status };
-      if (s.includes('current_step_index = ?')) updates.current_step_index = params[idx++] as number;
+      if (s.includes('current_step_index = ?'))
+        updates.current_step_index = params[idx++] as number;
       if (s.includes('error_message = ?')) updates.error_message = params[idx++] as string;
       const id = params[idx] as string;
       const plan = db.plans.get(id);
@@ -222,6 +244,14 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 
     if (s.startsWith('SELECT * FROM ai_agent_plans WHERE id = ?')) {
       return db.plans.get(params[0] as string) || undefined;
+    }
+
+    if (s.startsWith('SELECT execution_fencing_token FROM ai_agent_plans')) {
+      const [planId, ownerToken] = params as [string, string];
+      const plan = db.plans.get(planId);
+      return plan?.execution_owner_token === ownerToken
+        ? { execution_fencing_token: plan.execution_fencing_token }
+        : undefined;
     }
 
     if (s.includes('FROM ai_agent_plan_steps') && s.includes("status = 'awaiting_approval'")) {
@@ -243,7 +273,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 
     if (s.includes('FROM ai_agent_plans') && s.includes("status = 'scheduled'")) {
       return [...db.plans.values()]
-        .filter((p) => p.status === 'scheduled' && p.scheduled_at && p.scheduled_at <= new Date().toISOString())
+        .filter(
+          (p) =>
+            p.status === 'scheduled' && p.scheduled_at && p.scheduled_at <= new Date().toISOString()
+        )
         .map((p) => ({ id: p.id, organization_id: p.organization_id, user_id: p.user_id }));
     }
 
@@ -277,9 +310,8 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
 }));
 
-const { agentPlannerService } = await import(
-  '../../../server/src/services/ai/agentPlannerService.js'
-);
+const { agentPlannerService } =
+  await import('../../../server/src/services/ai/agentPlannerService.js');
 
 describe('agentPlannerService.schedulePlan — Harmonogram (Fala 1, 2026-07-26)', () => {
   beforeEach(() => {
@@ -310,9 +342,9 @@ describe('agentPlannerService.schedulePlan — Harmonogram (Fala 1, 2026-07-26)'
     });
     await agentPlannerService.schedulePlan(plan.id, new Date().toISOString());
 
-    await expect(agentPlannerService.schedulePlan(plan.id, new Date().toISOString())).rejects.toThrow(
-      /not schedulable/
-    );
+    await expect(
+      agentPlannerService.schedulePlan(plan.id, new Date().toISOString())
+    ).rejects.toThrow(/not schedulable/);
   });
 
   it('listScheduledPlansDue returns only plans whose scheduled_at has passed', async () => {
@@ -330,7 +362,10 @@ describe('agentPlannerService.schedulePlan — Harmonogram (Fala 1, 2026-07-26)'
       title: 'Not due yet',
       steps: [{ toolName: 'search_web', toolInput: {} }],
     });
-    await agentPlannerService.schedulePlan(future.id, new Date(Date.now() + 3600_000).toISOString());
+    await agentPlannerService.schedulePlan(
+      future.id,
+      new Date(Date.now() + 3600_000).toISOString()
+    );
 
     const due = await agentPlannerService.listScheduledPlansDue();
     expect(due.map((p) => p.id)).toEqual([past.id]);
@@ -390,7 +425,14 @@ describe('agentPlannerService — Odczekaj (pauza, Fala 1, 2026-07-26)', () => {
 
     const due = await agentPlannerService.listWaitStepsDue();
     expect(due).toEqual([
-      { planId: plan.id, stepIndex: 0, organizationId: 'org-1', userId: 'user-1' },
+      {
+        planId: plan.id,
+        stepIndex: 0,
+        organizationId: 'org-1',
+        userId: 'user-1',
+        canonicalRunId: null,
+        projectId: null,
+      },
     ]);
   });
 

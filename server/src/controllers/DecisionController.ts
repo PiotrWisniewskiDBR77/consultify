@@ -480,7 +480,7 @@ const refreshInitiativeDecisionBlock = async (input: {
     return;
   }
 
-  if (!result.ok) {
+  if (result.ok === false) {
     const rule = (result.body as { rule?: string }).rule;
     if (rule === 'GATE_DECISION_REQUIRED') {
       // CORRECT, EXPECTED outcome: all decision-blockers resolved, but there
@@ -1214,7 +1214,7 @@ export class DecisionController {
         initiativeId: initiativeIdValue,
         taskId: taskIdValue,
       });
-      if (!relatedObjectsCheck.ok) {
+      if (relatedObjectsCheck.ok === false) {
         res
           .status(400)
           .json({ error: relatedObjectsCheck.message, field: relatedObjectsCheck.field });
@@ -1425,7 +1425,7 @@ export class DecisionController {
                 decisionId: id,
                 reason: `${tag} Blocked by decision: ${decodedTitle}`,
               });
-              if (!blockResult.ok) {
+              if (blockResult.ok === false) {
                 // Not found / terminal-status / unrecognized-status refusal
                 // — correct, EXPECTED outcomes, not errors: the Decision is
                 // still created, it just doesn't block that particular

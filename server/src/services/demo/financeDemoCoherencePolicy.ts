@@ -1228,7 +1228,7 @@ export function assertManifestIntegrity(manifest: CleanupManifest, key: Manifest
     manifest.signature,
     key
   );
-  if (result.ok) return;
+  if (result.ok === true) return;
 
   switch (result.failure) {
     case 'missing':

@@ -20,7 +20,7 @@
  * (`insufficient` i `contradicted` pozostają jak w §2.3.2.)
  */
 
-import type { P10ConfidenceLevel, P10EvidencePointer, P10EvidencePointerType } from './interviewInsightCanon';
+import type { P10ConfidenceLevel, P10EvidencePointer, P10EvidencePointerType } from './interviewInsightCanon.js';
 
 /**
  * „Strong artifact" = pointer niosący materiał źródłowy, który sam w sobie daje

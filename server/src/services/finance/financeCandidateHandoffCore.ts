@@ -260,7 +260,7 @@ export async function previewFinanceCandidateHandoff<T>(
   params: PreviewFinanceCandidateHandoffParams<T>
 ): Promise<FinanceCandidatePreviewResult> {
   const resolved = await params.resolveEligibleSource();
-  if (!resolved.ok) {
+  if (resolved.ok === false) {
     return { eligible: false, reason: resolved.reason };
   }
 
@@ -350,7 +350,7 @@ export async function confirmFinanceCandidateHandoff<T>(
     // defense: the source could have become ineligible since an earlier
     // preview call, which ran with no lock at all).
     const resolved = await params.resolveEligibleSource();
-    if (!resolved.ok) {
+    if (resolved.ok === false) {
       throw new FinanceCandidateHandoffError(
         'SOURCE_NOT_ELIGIBLE',
         409,

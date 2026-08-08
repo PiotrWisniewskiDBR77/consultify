@@ -131,7 +131,7 @@ export async function autoStartScheduledInitiatives(options: { limit?: number } 
         actor: SYSTEM_ACTOR,
       });
 
-      if (result.ok) {
+      if (result.ok === true) {
         started++;
         continue;
       }

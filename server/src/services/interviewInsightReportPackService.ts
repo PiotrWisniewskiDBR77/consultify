@@ -87,11 +87,11 @@ export function evaluateReportCitationGate(insight: ReportPackSourceInsight): st
         signals: insight.signals,
         evidence_map: evidenceMap,
         key_findings:
-          (insight as Record<string, unknown>).keyFindings ??
-          (insight as Record<string, unknown>).key_findings,
+          (insight as unknown as Record<string, unknown>).keyFindings ??
+          (insight as unknown as Record<string, unknown>).key_findings,
         quote_bank:
-          (insight as Record<string, unknown>).quoteBank ??
-          (insight as Record<string, unknown>).quote_bank,
+          (insight as unknown as Record<string, unknown>).quoteBank ??
+          (insight as unknown as Record<string, unknown>).quote_bank,
       },
       { reportPath: true }
     );

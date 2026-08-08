@@ -47,6 +47,7 @@ import type {
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
+import { TransformationCasesApi } from '@/services/api/v8/transformation-cases';
 import {
   deckTitleFromIntent,
   type DeliverableGenerationPlanItem,
@@ -139,6 +140,7 @@ import {
   getTeresaStartFailureMessage,
 } from './teresaRuntimeCopy';
 import { TeresaTTSPlayer } from './TeresaTTSPlayer';
+import { detectTransformationPlanIntent } from './transformationIntentDetector';
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
@@ -648,6 +650,32 @@ export const __private__ = {
   resolveWorkspaceArtifactKind,
 };
 
+const TRANSFORMATION_INTAKE_KEY_LABELS: Record<string, { pl: string; en: string }> = {
+  measurable_outcomes: { pl: 'mierzalny wynik', en: 'measurable outcome' },
+  sponsor: { pl: 'sponsor', en: 'sponsor' },
+  scope: { pl: 'zakres', en: 'scope' },
+  horizon: { pl: 'horyzont', en: 'horizon' },
+};
+
+export function transformationIntakeMissingLabels(keys: string[], language: 'pl' | 'en'): string {
+  return keys
+    .map((key) => TRANSFORMATION_INTAKE_KEY_LABELS[key]?.[language] ?? key.replaceAll('_', ' '))
+    .join(', ');
+}
+
+export function transformationCaseReadyMessage(
+  transformationCaseId: string,
+  language: 'pl' | 'en'
+): string {
+  const query = new URLSearchParams({
+    tab: 'agent',
+    transformationCaseId,
+  }).toString();
+  return language === 'pl'
+    ? `Plan został utworzony po doprecyzowaniu mandatu.\n\n[Otwórz plan w My Work](/my-work?${query})`
+    : `The plan was created after the mandate was clarified.\n\n[Open the plan in My Work](/my-work?${query})`;
+}
+
 interface UnifiedChatPanelProps {
   /** Display mode: full-screen or split-screen */
   mode?: ChatDisplayMode;
@@ -827,8 +855,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   useEffect(() => {
     const onPatchResult = (event: Event) => {
       const detail = (event as CustomEvent).detail as
-        | { status?: 'applied' | 'fallback'; opsApplied?: number }
-        | undefined;
+        { status?: 'applied' | 'fallback'; opsApplied?: number } | undefined;
       if (!detail?.status) return;
       const uiLang = (i18n.language || 'en').split('-')[0];
       const content =
@@ -858,6 +885,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // when the matching tool is actually open; otherwise it falls through to
   // the normal LLM flow instead of silently no-op'ing.
   const [activeIdeaWorkspaceTool, setActiveIdeaWorkspaceTool] = useState<string | null>(null);
+  const [pendingTransformationIntakeId, setPendingTransformationIntakeId] = useState<string | null>(
+    null
+  );
   useEffect(() => {
     const onActiveIdeaTool = (event: Event) => {
       const detail = (event as CustomEvent).detail as { tool?: string | null } | undefined;
@@ -2387,6 +2417,132 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // M2: Chat commands for MyWork actions
       const text = content.trim();
+      if (pendingTransformationIntakeId) {
+        const field = (label: string) =>
+          text.match(new RegExp(`(?:^|\\n)${label}\\s*:\\s*(.+)`, 'i'))?.[1]?.trim();
+        const outcome = field('(?:Cel|Outcome)');
+        const intake = await TransformationCasesApi.answerPlanningIntake(
+          pendingTransformationIntakeId,
+          {
+            measurableOutcomes: outcome ? [outcome] : undefined,
+            sponsor: field('Sponsor'),
+            scope: field('(?:Zakres|Scope)'),
+            horizon: field('(?:Horyzont|Horizon)'),
+          }
+        );
+        if (intake.status === 'ready') {
+          const converted = await TransformationCasesApi.convertPlanningIntake(intake.intakeId);
+          setPendingTransformationIntakeId(null);
+          addChatMessage({
+            id: `transformation-ai-${Date.now()}`,
+            role: 'ai',
+            content: transformationCaseReadyMessage(
+              converted.transformationCaseId,
+              effectiveChatLanguage === 'pl' ? 'pl' : 'en'
+            ),
+            timestamp: new Date(),
+          });
+        } else {
+          const language = effectiveChatLanguage === 'pl' ? 'pl' : 'en';
+          const missing = transformationIntakeMissingLabels(intake.missingKeys, language);
+          addChatMessage({
+            id: `transformation-ai-${Date.now()}`,
+            role: 'ai',
+            content:
+              language === 'pl'
+                ? `Nadal potrzebuję: ${missing}. Odpowiedz w formacie Cel:, Sponsor:, Zakres:, Horyzont:.`
+                : `I still need: ${missing}. Reply using Outcome:, Sponsor:, Scope:, Horizon:.`,
+            timestamp: new Date(),
+          });
+        }
+        return;
+      }
+      if (detectTransformationPlanIntent(text)) {
+        let conversationId = useConversationStore.getState().activeConversationId;
+        if (!conversationId) {
+          try {
+            const conversation = await createConversation();
+            conversationId = conversation.id;
+          } catch (error) {
+            console.error('[TransformationCase] Failed to create conversation:', error);
+            toast.error(
+              effectiveChatLanguage === 'pl'
+                ? 'Nie udało się rozpocząć planu transformacji.'
+                : 'Could not start the transformation plan.'
+            );
+            return;
+          }
+        }
+
+        const userMessage: ChatMessage = {
+          id: `transformation-user-${Date.now()}`,
+          role: 'user',
+          content: text,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+        try {
+          await addMessageToConversation({
+            conversationId,
+            role: 'user',
+            content: text,
+            messageType: 'text',
+          });
+        } catch {
+          // The durable Transformation Case remains canonical if chat persistence is degraded.
+        }
+
+        try {
+          const intake = await TransformationCasesApi.startPlanningIntake(
+            {
+              mandate: text,
+              projectId: workspaceContext?.projectId || null,
+              conversationId,
+              desiredOutcomes: [],
+              assumptions: [],
+              missingInputs: [],
+            },
+            `teresa-${conversationId}-${userMessage.id}`
+          );
+          setPendingTransformationIntakeId(intake.intakeId);
+          const responseContent =
+            effectiveChatLanguage === 'pl'
+              ? 'Zanim utworzę Case i plan, doprecyzuj mandat. Odpowiedz w czterech liniach: Cel: (mierzalny wynik), Sponsor:, Zakres:, Horyzont:. Nic wykonawczego nie zostało jeszcze utworzone.'
+              : 'Before I create a Case and plan, clarify the mandate in four lines: Outcome:, Sponsor:, Scope:, Horizon:. No execution record has been created yet.';
+          const aiMessage: ChatMessage = {
+            id: `transformation-ai-${Date.now()}`,
+            role: 'ai',
+            content: responseContent,
+            timestamp: new Date(),
+          };
+          addChatMessage(aiMessage);
+          try {
+            await addMessageToConversation({
+              conversationId,
+              role: 'ai',
+              content: responseContent,
+              messageType: 'text',
+            });
+          } catch {
+            // Case/plan write already succeeded and is discoverable from My Work.
+          }
+          onMessageSent?.(content);
+          return;
+        } catch (error) {
+          console.error('[TransformationCase] Creation failed:', error);
+          addChatMessage({
+            id: `transformation-error-${Date.now()}`,
+            role: 'ai',
+            content:
+              effectiveChatLanguage === 'pl'
+                ? 'Nie udało się utworzyć trwałego planu transformacji. Nic nie zostało uruchomione ani częściowo zapisane.'
+                : 'The durable transformation plan could not be created. Nothing was run or partially persisted.',
+            timestamp: new Date(),
+          });
+          return;
+        }
+      }
+
       if (text.startsWith('/task ') || text.startsWith('/decision ')) {
         const isTask = text.startsWith('/task ');
         const title = text.replace(/^\/(task|decision)\s+/, '').trim();
@@ -3083,9 +3239,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               // ekstraktory dla tych typów).
               const ENTITY_SOURCE_TYPES = ['initiative', 'task', 'decision', 'report'];
               const wsCtx = workspaceContext as
-                | { type?: string; entityId?: string; entityName?: string }
-                | null
-                | undefined;
+                { type?: string; entityId?: string; entityName?: string } | null | undefined;
               const entitySourceRefs =
                 wsCtx?.entityId && ENTITY_SOURCE_TYPES.includes(String(wsCtx.type || ''))
                   ? [
@@ -5233,44 +5387,45 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // real backend contract this maps onto.
   // ------------------------------------------------------------------------
   const [branchList, setBranchList] = useState<ConversationBranch[]>([]);
-  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(
-    null
-  );
+  const [branchParentConversationId, setBranchParentConversationId] = useState<string | null>(null);
   const [branchSelfName, setBranchSelfName] = useState<string | null>(null);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
   const [branchCreating, setBranchCreating] = useState(false);
 
-  const refreshBranches = useCallback(async (conversationId: string) => {
-    setBranchesLoading(true);
-    setBranchesError(null);
-    try {
-      const res: any = await Api.getConversationBranches(conversationId);
-      const mapped: ConversationBranch[] = Array.isArray(res?.branches)
-        ? res.branches.map((b: any) => ({
-            id: b.id,
-            conversationId: b.conversationId,
-            parentBranchId: b.parentBranchId ?? null,
-            forkMessageId: b.forkMessageId,
-            name: b.branchName || 'Branch',
-            messageCount: b.messageCount,
-            createdAt: b.createdAt,
-            createdBy: b.createdBy,
-          }))
-        : [];
-      setBranchList(mapped);
-      setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
-      setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
-    } catch (err) {
-      console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
-      setBranchList([]);
-      setBranchParentConversationId(null);
-      setBranchSelfName(null);
-      setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
-    } finally {
-      setBranchesLoading(false);
-    }
-  }, [t]);
+  const refreshBranches = useCallback(
+    async (conversationId: string) => {
+      setBranchesLoading(true);
+      setBranchesError(null);
+      try {
+        const res: any = await Api.getConversationBranches(conversationId);
+        const mapped: ConversationBranch[] = Array.isArray(res?.branches)
+          ? res.branches.map((b: any) => ({
+              id: b.id,
+              conversationId: b.conversationId,
+              parentBranchId: b.parentBranchId ?? null,
+              forkMessageId: b.forkMessageId,
+              name: b.branchName || 'Branch',
+              messageCount: b.messageCount,
+              createdAt: b.createdAt,
+              createdBy: b.createdBy,
+            }))
+          : [];
+        setBranchList(mapped);
+        setBranchParentConversationId(res?.isBranch ? res?.parentConversationId || null : null);
+        setBranchSelfName(res?.isBranch ? res?.branchName || null : null);
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to load conversation branches:', err);
+        setBranchList([]);
+        setBranchParentConversationId(null);
+        setBranchSelfName(null);
+        setBranchesError(t('branch.loadFailed', 'Could not load branches.'));
+      } finally {
+        setBranchesLoading(false);
+      }
+    },
+    [t]
+  );
 
   useEffect(() => {
     if (!activeConversationId || String(activeConversationId).startsWith('local-')) {
@@ -5313,7 +5468,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       // the latest message in the thread so far (server falls back to "no
       // messages" only when the source conversation is truly empty).
       const msgs = useConversationStore.getState().activeMessages || [];
-      const lastRealMsg = [...msgs].reverse().find((m: any) => !String(m.id || '').startsWith('local-'));
+      const lastRealMsg = [...msgs]
+        .reverse()
+        .find((m: any) => !String(m.id || '').startsWith('local-'));
       setBranchCreating(true);
       try {
         const res: any = await Api.branchConversation(sourceId, lastRealMsg?.id, name);
@@ -5765,83 +5922,83 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const renderMessage = (msg: ChatMessage, index: number) => (
     <div key={msg.id} data-message-anchor={msg.id}>
       <MessageRenderer
-      msg={msg}
-      index={index}
-      displayMessages={displayMessages}
-      isCompact={isCompact}
-      isDisabled={isDisabled}
-      activeConversationId={activeConversationId}
-      thinkingSteps={thinkingSteps}
-      streamStartedAt={streamStartedAt}
-      streamCompletedSignal={streamCompletedSignal}
-      retryInfo={retryInfo}
-      abortFeedback={abortFeedback}
-      agentAuditState={agentAuditState}
-      agentAuditBusy={agentAuditBusy}
-      agentRegistryById={agentRegistryById}
-      agentReviewProgressByAgentId={agentReviewProgressByAgentId}
-      agentSourcesByAgentId={agentSourcesByAgentId}
-      agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
-      setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
-      deepThinkingHint={deepThinkingHint}
-      dtHintDismissed={dtHintDismissed}
-      dtPendingConfirm={dtPendingConfirm}
-      setDtPendingConfirm={setDtPendingConfirm}
-      dtConfirmBusy={dtConfirmBusy}
-      dtSavingDecision={dtSavingDecision}
-      dtDecisionSaved={dtDecisionSaved}
-      interimInsight={interimInsight}
-      aiConfig={aiConfig}
-      editingMessageId={editingMessageId}
-      editingText={editingText}
-      editBusy={editBusy}
-      setEditingText={setEditingText}
-      hoveredMessageId={hoveredMessageId}
-      setHoveredMessageId={setHoveredMessageId}
-      copiedMessageId={copiedMessageId}
-      contextSaveBusyMessageId={contextSaveBusyMessageId}
-      contextSavedMessageIds={contextSavedMessageIds}
-      selectedMultiOptions={selectedMultiOptions}
-      voiceState={voiceState}
-      handleCopyMessage={handleCopyMessage}
-      handleStartEditMessage={handleStartEditMessage}
-      handleBranchFromMessage={handleBranchFromMessage}
-      handleCancelEditMessage={handleCancelEditMessage}
-      handleCommitEditMessage={handleCommitEditMessage}
-      handleViewArtifacts={handleViewArtifacts}
-      onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
-      onEmitArtifactFromMessage={handleEmitArtifactFromMessage}
-      handleFeedback={handleFeedback}
-      handleSendMessage={handleSendMessage}
-      handleEnableDeepThinking={handleEnableDeepThinking}
-      handleDeepThinkingProceed={handleDeepThinkingProceed}
-      handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
-      handleSaveAsDecision={handleSaveAsDecision}
-      handleSaveAsIdea={handleSaveAsIdea}
-      handleSaveAsNote={handleSaveAsNote}
-      handleSaveToContext={handleSaveToContext}
-      handleRunDirectedDeepening={handleRunDirectedDeepening}
-      handleMultiSelectToggle={handleMultiSelectToggle}
-      handleMultiSelectConfirm={handleMultiSelectConfirm}
-      refreshAgentAuditSuggestionsOnly={refreshAgentAuditSuggestionsOnly}
-      speak={speak}
-      stopSpeaking={stopSpeaking}
-      setDtHintDismissed={setDtHintDismissed}
-      addArtifact={addArtifact}
-      toggleArtifactsPanel={toggleArtifactsPanel}
-      exportArtifact={exportArtifact}
-      handleAgentAuditAccept={handleAgentAuditAccept}
-      onOptionSelect={onOptionSelect}
-      isRtlChatLanguage={isRtlChatLanguage}
-      onProposalApprove={handleProposalApprove}
-      onProposalReject={handleProposalReject}
-      onProposalExecute={handleProposalExecute}
-      onProposalInspect={handleProposalInspect}
-      proposalBusyById={proposalBusyById}
-      teresaPendingConfirm={teresaPendingConfirm}
-      teresaConfirmBusy={teresaConfirmBusy}
-      onTeresaConfirmProceed={handleTeresaConfirmProceed}
-      onTeresaConfirmCancel={handleTeresaConfirmCancel}
+        msg={msg}
+        index={index}
+        displayMessages={displayMessages}
+        isCompact={isCompact}
+        isDisabled={isDisabled}
+        activeConversationId={activeConversationId}
+        thinkingSteps={thinkingSteps}
+        streamStartedAt={streamStartedAt}
+        streamCompletedSignal={streamCompletedSignal}
+        retryInfo={retryInfo}
+        abortFeedback={abortFeedback}
+        agentAuditState={agentAuditState}
+        agentAuditBusy={agentAuditBusy}
+        agentRegistryById={agentRegistryById}
+        agentReviewProgressByAgentId={agentReviewProgressByAgentId}
+        agentSourcesByAgentId={agentSourcesByAgentId}
+        agentAuditActiveTabByMessageId={agentAuditActiveTabByMessageId}
+        setAgentAuditActiveTabByMessageId={setAgentAuditActiveTabByMessageId}
+        deepThinkingHint={deepThinkingHint}
+        dtHintDismissed={dtHintDismissed}
+        dtPendingConfirm={dtPendingConfirm}
+        setDtPendingConfirm={setDtPendingConfirm}
+        dtConfirmBusy={dtConfirmBusy}
+        dtSavingDecision={dtSavingDecision}
+        dtDecisionSaved={dtDecisionSaved}
+        interimInsight={interimInsight}
+        aiConfig={aiConfig}
+        editingMessageId={editingMessageId}
+        editingText={editingText}
+        editBusy={editBusy}
+        setEditingText={setEditingText}
+        hoveredMessageId={hoveredMessageId}
+        setHoveredMessageId={setHoveredMessageId}
+        copiedMessageId={copiedMessageId}
+        contextSaveBusyMessageId={contextSaveBusyMessageId}
+        contextSavedMessageIds={contextSavedMessageIds}
+        selectedMultiOptions={selectedMultiOptions}
+        voiceState={voiceState}
+        handleCopyMessage={handleCopyMessage}
+        handleStartEditMessage={handleStartEditMessage}
+        handleBranchFromMessage={handleBranchFromMessage}
+        handleCancelEditMessage={handleCancelEditMessage}
+        handleCommitEditMessage={handleCommitEditMessage}
+        handleViewArtifacts={handleViewArtifacts}
+        onOpenDeliverableArtifact={handleOpenDeliverableArtifact}
+        onEmitArtifactFromMessage={handleEmitArtifactFromMessage}
+        handleFeedback={handleFeedback}
+        handleSendMessage={handleSendMessage}
+        handleEnableDeepThinking={handleEnableDeepThinking}
+        handleDeepThinkingProceed={handleDeepThinkingProceed}
+        handleDeepThinkingReconfirm={handleDeepThinkingReconfirm}
+        handleSaveAsDecision={handleSaveAsDecision}
+        handleSaveAsIdea={handleSaveAsIdea}
+        handleSaveAsNote={handleSaveAsNote}
+        handleSaveToContext={handleSaveToContext}
+        handleRunDirectedDeepening={handleRunDirectedDeepening}
+        handleMultiSelectToggle={handleMultiSelectToggle}
+        handleMultiSelectConfirm={handleMultiSelectConfirm}
+        refreshAgentAuditSuggestionsOnly={refreshAgentAuditSuggestionsOnly}
+        speak={speak}
+        stopSpeaking={stopSpeaking}
+        setDtHintDismissed={setDtHintDismissed}
+        addArtifact={addArtifact}
+        toggleArtifactsPanel={toggleArtifactsPanel}
+        exportArtifact={exportArtifact}
+        handleAgentAuditAccept={handleAgentAuditAccept}
+        onOptionSelect={onOptionSelect}
+        isRtlChatLanguage={isRtlChatLanguage}
+        onProposalApprove={handleProposalApprove}
+        onProposalReject={handleProposalReject}
+        onProposalExecute={handleProposalExecute}
+        onProposalInspect={handleProposalInspect}
+        proposalBusyById={proposalBusyById}
+        teresaPendingConfirm={teresaPendingConfirm}
+        teresaConfirmBusy={teresaConfirmBusy}
+        onTeresaConfirmProceed={handleTeresaConfirmProceed}
+        onTeresaConfirmCancel={handleTeresaConfirmCancel}
       />
     </div>
   );

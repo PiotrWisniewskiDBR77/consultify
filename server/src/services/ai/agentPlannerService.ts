@@ -9,6 +9,9 @@ import { randomUUID } from 'node:crypto';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import { projectCanonicalRunAfterExternalTransition } from '../v8/agentCanonicalRunService.js';
+import { revalidateCanonicalRunContextForWorker } from '../v8/agentContextGroundingService.js';
+import { executeWithAgentResourceReservation } from '../v8/agentResourceGovernanceService.js';
 import { SIDE_EFFECT_TOOLS } from './sideEffectTools.js';
 
 // Re-exported for backward compatibility with any existing import of
@@ -27,12 +30,7 @@ export type PlanStatus =
   | 'failed'
   | 'cancelled';
 export type StepStatus =
-  | 'pending'
-  | 'awaiting_approval'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'skipped';
+  'pending' | 'awaiting_approval' | 'running' | 'completed' | 'failed' | 'skipped';
 
 export interface PlanStep {
   id: string;
@@ -54,6 +52,7 @@ export interface PlanStep {
 
 export interface AgentPlan {
   id: string;
+  canonicalRunId?: string | null;
   organizationId: string;
   conversationId?: string;
   userId: string;
@@ -129,6 +128,98 @@ class AgentPlannerService {
   private readonly executionLeaseSeconds = 300;
   private readonly heartbeatIntervalMs = 60_000;
 
+  async executeGovernedEnqueue<T>(input: {
+    planId: string;
+    organizationId: string;
+    userId: string;
+    dispatchKey: string;
+    enqueue: () => Promise<T>;
+  }): Promise<{ replayed: boolean; result?: T }> {
+    const plan = await this.getPlan(input.planId);
+    if (!plan || plan.organizationId !== input.organizationId || plan.userId !== input.userId) {
+      throw new Error('planner_enqueue_scope_mismatch');
+    }
+    if (!plan.canonicalRunId) return { replayed: false, result: await input.enqueue() };
+    const scope = (await dbGet(
+      `SELECT c.project_id FROM transformation_cases c
+       WHERE c.execution_run_id = ? AND c.organization_id = ?`,
+      [plan.canonicalRunId, input.organizationId]
+    )) as { project_id?: string | null } | null;
+    if (!scope?.project_id) throw new Error('planner_resource_project_scope_missing');
+    const governed = await executeWithAgentResourceReservation({
+      organizationId: input.organizationId,
+      projectId: scope.project_id,
+      runId: plan.canonicalRunId,
+      userId: input.userId,
+      agentId: 'agent-plan-dispatcher',
+      toolName: 'agent_plan.enqueue',
+      idempotencyKey: `planner-enqueue:${plan.canonicalRunId}:${input.dispatchKey}`,
+      estimatedCostUsd: 0,
+      execute: input.enqueue,
+    });
+    if (!governed.allowed) throw new Error(governed.reason);
+    return { replayed: governed.replayed, result: governed.result };
+  }
+
+  private async projectCanonicalPlanTransition(
+    planId: string,
+    actorUserId: string | null,
+    reason: string
+  ): Promise<void> {
+    const ownership = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [planId])) as
+      { canonical_run_id?: string | null; organization_id?: string; user_id?: string } | undefined;
+    if (!ownership?.canonical_run_id) return;
+    if (!ownership.organization_id) throw new Error('agent_plan_organization_missing');
+    await projectCanonicalRunAfterExternalTransition({
+      canonicalRunId: ownership.canonical_run_id,
+      organizationId: ownership.organization_id,
+      aliasType: 'agent_plan',
+      externalId: planId,
+      actorUserId: actorUserId || ownership.user_id || 'system:agent-planner',
+      reason,
+    });
+  }
+
+  async gateScheduledWorkerDispatch(input: {
+    planId: string;
+    organizationId: string;
+    userId: string;
+    externalId?: string;
+  }): Promise<{ allowed: boolean; decision: string; reason: string }> {
+    const plan = (await dbGet(`SELECT * FROM ai_agent_plans WHERE id = ?`, [input.planId])) as
+      any | undefined;
+    if (!plan || plan.organization_id !== input.organizationId || plan.user_id !== input.userId) {
+      return { allowed: false, decision: 'blocked_scope', reason: 'Planner ownership mismatch' };
+    }
+    if (!plan.canonical_run_id) {
+      return { allowed: true, decision: 'legacy_noncanonical', reason: 'No canonical binding' };
+    }
+    const decision = await revalidateCanonicalRunContextForWorker({
+      canonicalRunId: plan.canonical_run_id,
+      organizationId: input.organizationId,
+      actorUserId: input.userId,
+      workerKind: 'agent_plan_scheduler',
+      externalId: input.externalId || input.planId,
+    });
+    if (decision.decision !== 'allowed') {
+      await dbRun(
+        `UPDATE ai_agent_plans
+            SET status = 'paused', error_message = ?, updated_at = datetime('now')
+          WHERE id = ? AND organization_id = ? AND status IN ('scheduled', 'awaiting_approval', 'paused')`,
+        [
+          `context_revalidation:${decision.decision}:${decision.reason}`,
+          input.planId,
+          input.organizationId,
+        ]
+      );
+    }
+    return {
+      allowed: decision.decision === 'allowed',
+      decision: decision.decision,
+      reason: decision.reason,
+    };
+  }
+
   async claimExecution(planId: string, ownerToken = randomUUID()): Promise<ExecutionLease | null> {
     const result = await dbRun(
       `UPDATE ai_agent_plans
@@ -156,6 +247,7 @@ class AgentPlannerService {
       [planId, ownerToken]
     )) as { execution_fencing_token?: number } | undefined;
     if (!claimed) throw new AgentExecutionLeaseLostError(planId);
+    await this.projectCanonicalPlanTransition(planId, null, 'Agent plan execution lease claimed.');
     return {
       planId,
       ownerToken,
@@ -271,6 +363,7 @@ class AgentPlannerService {
   async createPlan(input: {
     organizationId: string;
     userId: string;
+    canonicalRunId?: string | null;
     conversationId?: string;
     title: string;
     description?: string;
@@ -307,8 +400,8 @@ class AgentPlannerService {
       `INSERT INTO ai_agent_plans
         (id, organization_id, conversation_id, user_id, title, description,
          status, total_steps, completed_steps, current_step_index, plan_json,
-         is_background, scheduled_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 'planning', ?, 0, 0, ?, ?, ?, datetime('now'), datetime('now'))`,
+         is_background, scheduled_at, canonical_run_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'planning', ?, 0, 0, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
       [
         planId,
         input.organizationId,
@@ -320,6 +413,7 @@ class AgentPlannerService {
         JSON.stringify(steps),
         input.isBackground ? 1 : 0,
         input.scheduledAt || null,
+        input.canonicalRunId || null,
       ]
     );
 
@@ -340,8 +434,15 @@ class AgentPlannerService {
       );
     }
 
+    await this.projectCanonicalPlanTransition(
+      planId,
+      input.userId,
+      'Agent plan created in planning state.'
+    );
+
     return {
       id: planId,
+      canonicalRunId: input.canonicalRunId || null,
       organizationId: input.organizationId,
       conversationId: input.conversationId,
       userId: input.userId,
@@ -590,6 +691,7 @@ class AgentPlannerService {
        WHERE id = ?`,
       [userId, step.id]
     );
+    await this.projectCanonicalPlanTransition(planId, userId, 'Agent plan step approved.');
   }
 
   /**
@@ -611,6 +713,7 @@ class AgentPlannerService {
        WHERE id = ?`,
       [scheduledAt, planId]
     );
+    await this.projectCanonicalPlanTransition(planId, plan.userId, 'Agent plan scheduled.');
     const updated = await this.getPlan(planId);
     if (!updated) throw new Error('Plan disappeared after schedule');
     return updated;
@@ -618,16 +721,28 @@ class AgentPlannerService {
 
   /** Plany `scheduled`, których `scheduled_at` już minął — do dispatchu przez cron. */
   async listScheduledPlansDue(): Promise<
-    Array<{ id: string; organizationId: string; userId: string }>
+    Array<{
+      id: string;
+      organizationId: string;
+      userId: string;
+      canonicalRunId?: string | null;
+      projectId?: string | null;
+    }>
   > {
     const rows = (await dbAll(
-      `SELECT id, organization_id, user_id FROM ai_agent_plans
-       WHERE status = 'scheduled' AND scheduled_at IS NOT NULL AND scheduled_at <= datetime('now')`
+      `SELECT p.id, p.organization_id, p.user_id, p.canonical_run_id, c.project_id
+         FROM ai_agent_plans p
+         LEFT JOIN transformation_cases c
+           ON c.execution_run_id = p.canonical_run_id AND c.organization_id = p.organization_id
+        WHERE p.status = 'scheduled' AND p.scheduled_at IS NOT NULL
+          AND p.scheduled_at <= datetime('now')`
     )) as any[];
     return (rows || []).map((r) => ({
       id: r.id,
       organizationId: r.organization_id,
       userId: r.user_id,
+      canonicalRunId: r.canonical_run_id || null,
+      projectId: r.project_id || null,
     }));
   }
 
@@ -640,12 +755,22 @@ class AgentPlannerService {
    * historia), więc pełny skan `awaiting_approval` + filtr w pamięci jest tani.
    */
   async listWaitStepsDue(): Promise<
-    Array<{ planId: string; stepIndex: number; organizationId: string; userId: string }>
+    Array<{
+      planId: string;
+      stepIndex: number;
+      organizationId: string;
+      userId: string;
+      canonicalRunId?: string | null;
+      projectId?: string | null;
+    }>
   > {
     const rows = (await dbAll(
-      `SELECT s.plan_id, s.step_index, s.tool_input_json, p.organization_id, p.user_id
+      `SELECT s.plan_id, s.step_index, s.tool_input_json, p.organization_id, p.user_id,
+              p.canonical_run_id, c.project_id
        FROM ai_agent_plan_steps s
        JOIN ai_agent_plans p ON p.id = s.plan_id
+       LEFT JOIN transformation_cases c
+         ON c.execution_run_id = p.canonical_run_id AND c.organization_id = p.organization_id
        WHERE s.status = 'awaiting_approval' AND s.tool_name = 'wait_until'`
     )) as any[];
     const now = Date.now();
@@ -654,6 +779,8 @@ class AgentPlannerService {
       stepIndex: number;
       organizationId: string;
       userId: string;
+      canonicalRunId?: string | null;
+      projectId?: string | null;
     }> = [];
     for (const r of rows || []) {
       let resumeAt: string | undefined;
@@ -668,6 +795,8 @@ class AgentPlannerService {
           stepIndex: r.step_index,
           organizationId: r.organization_id,
           userId: r.user_id,
+          canonicalRunId: r.canonical_run_id || null,
+          projectId: r.project_id || null,
         });
       }
     }
@@ -688,6 +817,11 @@ class AgentPlannerService {
        WHERE id = ?`,
       ['system:scheduler', step.id]
     );
+    await this.projectCanonicalPlanTransition(
+      planId,
+      'system:scheduler',
+      'Agent plan wait checkpoint resumed.'
+    );
   }
 
   async cancelPlan(planId: string): Promise<void> {
@@ -697,6 +831,7 @@ class AgentPlannerService {
        WHERE plan_id = ? AND status IN ('pending', 'awaiting_approval')`,
       [planId]
     );
+    await this.projectCanonicalPlanTransition(planId, null, 'Agent plan cancelled.');
   }
 
   /**
@@ -769,6 +904,7 @@ class AgentPlannerService {
        WHERE id = ?`,
       [JSON.stringify(newSteps), newSteps.length, planId]
     );
+    await this.projectCanonicalPlanTransition(planId, plan.userId, 'Agent plan steps replaced.');
 
     const updated = await this.getPlan(planId);
     if (!updated) throw new Error('Plan disappeared after step replace');
@@ -800,6 +936,7 @@ class AgentPlannerService {
 
     return {
       id: row.id,
+      canonicalRunId: row.canonical_run_id || null,
       organizationId: row.organization_id,
       conversationId: row.conversation_id || undefined,
       userId: row.user_id,
@@ -834,6 +971,7 @@ class AgentPlannerService {
 
     return (rows || []).map((row: any) => ({
       id: row.id,
+      canonicalRunId: row.canonical_run_id || null,
       organizationId: row.organization_id,
       conversationId: row.conversation_id || undefined,
       userId: row.user_id,
@@ -888,13 +1026,46 @@ class AgentPlannerService {
     }
     const { executeToolCall } = await import('./toolDefinitions.js');
 
+    const resourceScope = plan.canonicalRunId
+      ? ((await dbGet(
+          `SELECT c.project_id
+             FROM transformation_cases c
+            WHERE c.execution_run_id = ? AND c.organization_id = ?`,
+          [plan.canonicalRunId, payload.organizationId]
+        )) as { project_id?: string | null } | null)
+      : null;
+    if (plan.canonicalRunId && !resourceScope?.project_id) {
+      throw new Error('planner_resource_project_scope_missing');
+    }
+
     const executor: PlanToolExecutor = async (toolName, input, execution) => {
-      return executeToolCall(toolName, input, {
+      if (!plan.canonicalRunId) {
+        return executeToolCall(toolName, input, {
+          organizationId: payload.organizationId,
+          userId: payload.userId,
+          conversationId: plan.conversationId,
+          sessionId: execution?.operationKey,
+        });
+      }
+      const resourceExecution = await executeWithAgentResourceReservation({
         organizationId: payload.organizationId,
+        projectId: resourceScope!.project_id,
+        runId: plan.canonicalRunId,
         userId: payload.userId,
-        conversationId: plan.conversationId,
-        sessionId: execution?.operationKey,
+        agentId: 'agent-planner',
+        toolName,
+        idempotencyKey: `planner:${plan.canonicalRunId}:${execution?.operationKey || `${plan.id}:${toolName}`}`,
+        estimatedCostUsd: 0,
+        execute: () =>
+          executeToolCall(toolName, input, {
+            organizationId: payload.organizationId,
+            userId: payload.userId,
+            conversationId: plan.conversationId,
+            sessionId: execution?.operationKey,
+          }),
       });
+      if (!resourceExecution.allowed) throw new Error(resourceExecution.reason);
+      return resourceExecution.result;
     };
 
     return this.executePlan(payload.planId, executor);
@@ -944,6 +1115,11 @@ class AgentPlannerService {
            execution_lease_expires_at = NULL, execution_heartbeat_at = NULL
        WHERE id = ? AND ${this.leasePredicate()}`,
       [status, resultSummary, errorMessage || null, planId]
+    );
+    await this.projectCanonicalPlanTransition(
+      planId,
+      null,
+      `Agent plan finalized with status ${status}.`
     );
   }
 
@@ -995,6 +1171,11 @@ class AgentPlannerService {
            execution_heartbeat_at = NULL
        WHERE id = ? AND ${this.leasePredicate()}`,
       [status, currentStep, lease.planId]
+    );
+    await this.projectCanonicalPlanTransition(
+      lease.planId,
+      null,
+      `Agent plan paused at checkpoint with status ${status}.`
     );
   }
 
