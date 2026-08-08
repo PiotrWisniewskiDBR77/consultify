@@ -19,6 +19,31 @@ interface MediaItem {
   usage_count: number;
 }
 
+export function normalizeMediaTags(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((tag) => typeof tag === 'string' || typeof tag === 'number')
+      .map((tag) => String(tag).trim())
+      .filter(Boolean);
+  }
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((tag) => typeof tag === 'string' || typeof tag === 'number')
+        .map((tag) => String(tag).trim())
+        .filter(Boolean);
+    }
+  } catch {
+    // Legacy rows may contain a plain comma-separated value instead of JSON.
+  }
+  return value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
 interface MediaLibraryBrowserProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,7 +82,12 @@ export const MediaLibraryBrowser: React.FC<MediaLibraryBrowserProps> = ({
       });
       if (response.ok) {
         const data = await response.json();
-        setItems(data.items || []);
+        setItems(
+          (Array.isArray(data.items) ? data.items : []).map((item: MediaItem) => ({
+            ...item,
+            ai_tags: normalizeMediaTags(item.ai_tags),
+          }))
+        );
       }
     } catch {
       /* silent fail */
