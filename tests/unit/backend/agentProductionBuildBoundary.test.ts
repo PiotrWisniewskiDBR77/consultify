@@ -48,13 +48,24 @@ describe('Agent production build boundary', () => {
   });
 
   it('runs the packaged strict Postgres migrator before the Railway API starts', () => {
+    const proofSource = fs.readFileSync(
+      path.join(root, 'server/src/scripts/agentMigrationsIdempotencyRealDbProof.ts'),
+      'utf8'
+    );
+    const releaseMigrations = [
+      ...proofSource.matchAll(/'(202608\d{2}_[^']+\.sql)'/g),
+    ].map((match) => match[1]);
+    expect(releaseMigrations).toHaveLength(20);
+
+    const expectedCommand =
+      'DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations --only ' +
+      releaseMigrations.join(',');
+
     for (const filename of ['railway.json', 'railway.api.json']) {
       const config = JSON.parse(fs.readFileSync(path.join(root, filename), 'utf8')) as {
         deploy?: { preDeployCommand?: string };
       };
-      expect(config.deploy?.preDeployCommand).toBe(
-        'DB_TYPE=postgres node dist/scripts/migrate.postgres.js --dir migrations'
-      );
+      expect(config.deploy?.preDeployCommand).toBe(expectedCommand);
       expect(config.deploy?.preDeployCommand).not.toContain('--safe');
     }
   });
