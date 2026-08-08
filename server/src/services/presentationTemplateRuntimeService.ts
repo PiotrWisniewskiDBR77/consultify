@@ -697,7 +697,27 @@ function blocksForTemplateIntent(
 
   switch (intent) {
     case 'cover':
-      return [heading, ...(headline !== title ? [paragraph] : [])];
+      return [
+        heading,
+        ...(headline !== title
+          ? [{ type: 'callout', content: { variant: 'recommendation', text: headline } }]
+          : []),
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: ['Opportunity', 'Proof', 'Ask'].map((label, index) => ({
+              title: label,
+              description: compactSlideText(
+                briefLines[index + 1] ||
+                  hints[index] ||
+                  ['Define the investable wedge', 'Show the evidence', 'State the decision'][index],
+                58
+              ),
+            })),
+          },
+        },
+      ];
     case 'executive_summary':
       return [
         heading,
@@ -737,10 +757,9 @@ function blocksForTemplateIntent(
         },
       ];
     case 'comparison':
-      const comparisonFacts = briefLines.slice(0, 3).map((line) => compactSlideText(line, 88));
+      const comparisonFacts = briefLines.slice(0, 3).map((line) => compactSlideText(line, 58));
       return [
         heading,
-        paragraph,
         {
           type: 'smart_layout',
           content: {
@@ -757,7 +776,6 @@ function blocksForTemplateIntent(
     case 'roadmap':
       return [
         heading,
-        paragraph,
         {
           type: 'timeline_block',
           content: {
@@ -789,21 +807,12 @@ function blocksForTemplateIntent(
             ],
           },
         },
-        ...(briefLines.length > 1
-          ? [
-              {
-                type: 'bullet_list',
-                content: { items: briefLines.slice(1, 3).map((line) => compactSlideText(line, 72)) },
-              },
-            ]
-          : []),
       ];
     case 'risk_management':
       const risks = labelledList(briefLines, /^(?:(?:top|key)\s+)?risks?\s*[:—–=-]/i);
       const mitigations = labelledList(briefLines, /^mitigations?\s*[:—–=-]/i);
       return [
         heading,
-        paragraph,
         {
           type: 'table',
           content: {
@@ -887,7 +896,6 @@ function blocksForTemplateIntent(
     default:
       return [
         heading,
-        paragraph,
         ...(briefLines.length > 1 || hints.length > 1
           ? [
               {
@@ -895,11 +903,11 @@ function blocksForTemplateIntent(
                 content: {
                   items: (briefLines.length > 1 ? briefLines : hints)
                     .slice(1, 4)
-                    .map((line) => compactSlideText(line, 76)),
+                    .map((line) => compactSlideText(line, 58)),
                 },
               },
             ]
-          : []),
+          : [paragraph]),
       ];
   }
 }
