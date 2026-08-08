@@ -25,6 +25,33 @@ export const A06_RATIFIED_TOOLS = [
   ['transformation.final_outputs.publish', 'high_risk', 'bounded_write'],
 ] as const;
 
+export function managedA06PolicyIds(organizationId: string, projectId: string | null): string[] {
+  return A06_RATIFIED_TOOLS.map(
+    ([name]) =>
+      `a06-t01-policy:${organizationId}:${projectId ?? 'all'}:${name.replaceAll('.', ':')}`
+  );
+}
+
+async function countManagedA06Policies(
+  client: { query<T = any>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> },
+  organizationId: string,
+  projectId: string | null
+): Promise<number> {
+  const policyIds = managedA06PolicyIds(organizationId, projectId);
+  const placeholders = policyIds.map(() => '?').join(',');
+  return Number(
+    (
+      await client.query<{ count: number }>(
+        `SELECT COUNT(*)::int count FROM v8_consumer_tool_policies
+         WHERE organization_id=? AND COALESCE(project_id,'')=COALESCE(?,'')
+           AND policy_id IN (${placeholders})
+           AND allowed=1 AND approval_override='force_policy_gate'`,
+        [organizationId, projectId, ...policyIds]
+      )
+    ).rows[0]?.count ?? 0
+  );
+}
+
 type AdminRole = 'ADMIN' | 'OWNER' | 'SUPERADMIN';
 function assertAuthority(role: string): asserts role is AdminRole {
   if (!['ADMIN', 'OWNER', 'SUPERADMIN'].includes(role.toUpperCase()))
@@ -161,19 +188,10 @@ export async function activateA06ForTenant(input: {
     if (replay) {
       if (replay.request_digest !== requestDigest)
         throw new Error('AGENT_ACTIVATION_IDEMPOTENCY_CONFLICT');
-      const replayCount = Number(
-        (
-          await client.query<{ count: number }>(
-            `SELECT COUNT(*)::int count FROM v8_consumer_tool_policies
-          WHERE organization_id=? AND COALESCE(project_id,'')=COALESCE(?,'')
-            AND policy_id LIKE ? AND allowed=1 AND approval_override='force_policy_gate'`,
-            [
-              input.organizationId,
-              input.projectId ?? null,
-              `a06-t01-policy:${input.organizationId}:%`,
-            ]
-          )
-        ).rows[0]?.count ?? 0
+      const replayCount = await countManagedA06Policies(
+        client,
+        input.organizationId,
+        input.projectId ?? null
       );
       if (replayCount !== Number(replay.policy_count) || replayCount !== A06_RATIFIED_TOOLS.length)
         throw new Error('AGENT_ACTIVATION_READBACK_DRIFT');
@@ -213,19 +231,10 @@ export async function activateA06ForTenant(input: {
         ]
       );
     }
-    const count = Number(
-      (
-        await client.query<{ count: number }>(
-          `SELECT COUNT(*)::int count FROM v8_consumer_tool_policies
-        WHERE organization_id=? AND COALESCE(project_id,'')=COALESCE(?,'')
-          AND policy_id LIKE ? AND allowed=1 AND approval_override='force_policy_gate'`,
-          [
-            input.organizationId,
-            input.projectId ?? null,
-            `a06-t01-policy:${input.organizationId}:%`,
-          ]
-        )
-      ).rows[0]?.count ?? 0
+    const count = await countManagedA06Policies(
+      client,
+      input.organizationId,
+      input.projectId ?? null
     );
     if (count !== A06_RATIFIED_TOOLS.length) throw new Error('AGENT_ACTIVATION_READBACK_DRIFT');
     const receiptId = `agent-activation-${uuidv4()}`;
