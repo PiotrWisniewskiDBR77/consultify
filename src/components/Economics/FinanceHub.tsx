@@ -3051,8 +3051,6 @@ export const FinanceHub: React.FC = () => {
     statementsTableWithPreview,
     showImportWizard,
     handleImportWizardComplete,
-    valueOfficeInitiatives,
-    valueOfficeDriverTree,
   ]);
 
   // ---- Render ----
