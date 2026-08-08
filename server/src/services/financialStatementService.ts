@@ -122,12 +122,7 @@ export type StatementQualityStage =
   | 'benchmark';
 export type StatementQualityResultStatus = 'pass' | 'warning' | 'fail' | 'info';
 export type StatementDocumentClass =
-  | 'unknown'
-  | 'native_pdf'
-  | 'scan_pdf'
-  | 'spreadsheet'
-  | 'csv'
-  | 'mixed_report';
+  'unknown' | 'native_pdf' | 'scan_pdf' | 'spreadsheet' | 'csv' | 'mixed_report';
 
 export interface StatementDocumentProfile {
   documentClass: StatementDocumentClass;
@@ -7563,6 +7558,7 @@ export async function loadPersistedStatementCandidateRows(params: {
       `SELECT
          row.row_label as row_label,
          row.source_row as source_row,
+         row.source_page as source_page,
          row.selected_period_label as selected_period_label,
          row.raw_value as raw_value,
          row.normalized_value as normalized_value,
@@ -7576,6 +7572,7 @@ export async function loadPersistedStatementCandidateRows(params: {
     )) as Array<{
       row_label?: string;
       source_row?: number | null;
+      source_page?: number | null;
       selected_period_label?: string | null;
       raw_value?: string | null;
       normalized_value?: number | null;
@@ -7595,6 +7592,7 @@ export async function loadPersistedStatementCandidateRows(params: {
         originalLabel: String(row.row_label || ''),
         value: Number(row.normalized_value || 0),
         confidence: Number(row.confidence || 0),
+        sourcePage: row.source_page != null ? Number(row.source_page) : undefined,
         sourceRow: row.source_row != null ? Number(row.source_row) : undefined,
         sectionKey: metadata.sectionKey || undefined,
         rawValue: row.raw_value || undefined,
@@ -8417,8 +8415,7 @@ export function parseFailedAttemptRecord(raw: string | null): FailedAttemptRecor
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const envelope = parsed?.[FAILED_ATTEMPT_ENVELOPE_KEY] as
-      | { statementIds?: unknown; result?: unknown }
-      | undefined;
+      { statementIds?: unknown; result?: unknown } | undefined;
     if (!envelope || !Array.isArray(envelope.statementIds)) return null;
     const statementIds = (envelope.statementIds as unknown[]).filter(
       (id): id is string => typeof id === 'string' && id.length > 0
