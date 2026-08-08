@@ -436,11 +436,11 @@ router.post(
       }
 
       logger.info(
-        `[Documents] Upload: ${req.file.originalname}, scope: ${scope}, owner: ${ownerId}`
+        `[Documents] Upload: ${uploadedFile.originalname}, scope: ${scope}, owner: ${ownerId}`
       );
 
       const document = await contextDocumentService.uploadAndIngest({
-        file: req.file,
+        file: uploadedFile,
         organizationId,
         projectId: scope === 'project' ? String(projectId) : null,
         ownerId,

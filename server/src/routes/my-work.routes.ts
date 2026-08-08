@@ -281,7 +281,7 @@ async function applyInboxTriageSideEffects({
     );
     const transition = validateTaskStatusTransition(task?.status, 'done');
     if (!transition.allowed) {
-      throw new Error(transition.message);
+      throw new Error('message' in transition ? transition.message : 'Invalid task status transition');
     }
     await queryHelpers.queryRun(
       `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
@@ -5711,7 +5711,7 @@ router.post(
       edges: z.array(z.any()),
       // Optional tool-specific state so restore rolls back the whole tool
       // (whiteboard drawings/scenes, process-flow lanes, table config).
-      extensions: z.record(z.any()).optional(),
+      extensions: z.record(z.string(), z.any()).optional(),
     });
 
     const parsed = schema.safeParse(req.body);

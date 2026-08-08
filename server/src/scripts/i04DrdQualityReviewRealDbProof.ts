@@ -12,10 +12,10 @@ process.env.NODE_ENV = 'test';
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   all(sql: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows), cb);
+    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows), (error) => cb(error as Error, []));
   },
   get(sql: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows[0] ?? null), cb);
+    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows[0] ?? null), (error) => cb(error as Error, null));
   },
   run(sql: string, params: unknown[], cb: (error: Error | null) => void) {
     void pool.query(adaptQuery(sql), params).then(
@@ -107,7 +107,7 @@ async function main() {
     [ids.assessment, ids.organization, JSON.stringify({ drd: { areas } }), ids.owner]
   );
 
-  const permissions = await import('../services/AssessmentPermissionService.js');
+  const permissions = await import('../services/assessmentPermissionService.js');
   const scoring = await import('../services/assessment/drdEvidenceScoring.js');
   const review = await import('../services/assessment/drdQualityReview.js');
   const snapshots = await import('../services/assessment/drdAcceptedSnapshot.js');

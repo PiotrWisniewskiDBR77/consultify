@@ -304,9 +304,10 @@ export async function approveProjectTeam(
       !row.governed_proposal_version_id
     )
       throw new Error('PROJECT_TEAM_NOT_APPROVABLE');
+    const governedProposalVersionId = row.governed_proposal_version_id;
     const reviewed = await withProposalGovernanceClient(client, () =>
       reviewProposalScope({
-        proposalVersionId: row.governed_proposal_version_id,
+        proposalVersionId: governedProposalVersionId,
         organizationId: input.organizationId,
         scopeKey: 'project_team',
         decision: 'approved',

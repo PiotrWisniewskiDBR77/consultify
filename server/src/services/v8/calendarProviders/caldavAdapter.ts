@@ -275,7 +275,8 @@ function buildProviderEvent(
   calendarId: string,
   recurrenceExceptions: Array<{ event: VEvent; calObj: DAVObject }> | undefined
 ): ProviderEvent {
-  const uid = vevent.uid;
+  const uid = String(vevent.uid ?? '').trim();
+  if (!uid) throw new Error('CALDAV_EVENT_UID_REQUIRED');
   const rruleStr = extractRRule(vevent);
   const isSeriesMaster = rruleStr != null;
 

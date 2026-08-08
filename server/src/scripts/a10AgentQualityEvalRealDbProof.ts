@@ -7,7 +7,7 @@ import { Pool } from 'pg';
 import { adaptQuery } from '../database/PostgresDatabase.js';
 
 const databaseUrl = process.env.DATABASE_URL;
-const candidateSha = process.env.CANDIDATE_SHA;
+const candidateSha = process.env.CANDIDATE_SHA ?? '';
 if (!databaseUrl) throw new Error('DATABASE_URL is required');
 if (!candidateSha) throw new Error('CANDIDATE_SHA is required');
 const pool = new Pool({ connectionString: databaseUrl });

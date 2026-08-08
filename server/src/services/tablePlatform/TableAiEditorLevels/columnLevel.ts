@@ -165,7 +165,7 @@ export const proposeColumnEdit: LevelHandler = async (input): Promise<LevelStubO
       if (after === null || after === undefined) return null;
       return { recordId: rid, before, after };
     })
-    .filter((c): c is { recordId: string; before: unknown; after: unknown } => c !== null);
+    .filter((c) => c !== null);
 
   if (cells.length === 0) {
     return {

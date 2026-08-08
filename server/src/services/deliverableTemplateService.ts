@@ -1193,7 +1193,7 @@ export async function deleteDeliverableTemplate(
       organizationId: orgId,
       originRuntime: 'sheet_template',
       originRecordId: id,
-    }).catch((err) =>
+    }).catch((err: unknown) =>
       logger.warn(`${LOG_PREFIX} workbook template index cleanup failed`, { err, id })
     );
   }

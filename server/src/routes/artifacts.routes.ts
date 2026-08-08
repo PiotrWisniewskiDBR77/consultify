@@ -838,7 +838,7 @@ async function assertArtifactExportable(
     res.status(404).json({ success: false, error: 'Artifact not found' });
     return null;
   }
-  if (!(EXPORTABLE_STATES as readonly string[]).includes(artifact.publishState)) {
+  if (!(EXPORTABLE_STATES as readonly string[]).includes(artifact.publishState ?? '')) {
     res.status(403).json({
       success: false,
       error: 'Artifact must be approved before export',

@@ -1110,20 +1110,25 @@ function renderSection(
 function renderCoverBlock(ctx: RenderContext, options: DocumentRenderOptions = {}): Paragraph[] {
   const schema = ctx.schema;
   const isPolish = schema.language.toLowerCase().startsWith('pl');
+  const documentTypeLabels: Record<string, string> = {
+    steering_committee_report: 'raport komitetu sterującego',
+  };
+  const densityLabels: Record<string, string> = { detailed: 'szczegółowy', concise: 'zwięzły' };
+  const confidentialityLabels: Record<string, string> = {
+    client_confidential: 'poufne dla klienta',
+    confidential: 'poufne',
+    internal: 'wewnętrzne',
+    public: 'publiczne',
+  };
   const documentTypeLabel = isPolish
-    ? ({ steering_committee_report: 'raport komitetu sterującego' }[schema.documentType] ??
+    ? (documentTypeLabels[schema.documentType] ??
       schema.documentType.replace(/_/g, ' '))
     : schema.documentType.replace(/_/g, ' ');
   const densityLabel = isPolish
-    ? ({ detailed: 'szczegółowy', concise: 'zwięzły' }[schema.density] ?? schema.density)
+    ? (densityLabels[schema.density] ?? schema.density)
     : schema.density;
   const confidentialityLabel = isPolish
-    ? ({
-        client_confidential: 'poufne dla klienta',
-        confidential: 'poufne',
-        internal: 'wewnętrzne',
-        public: 'publiczne',
-      }[schema.confidentiality] ?? schema.confidentiality)
+    ? (confidentialityLabels[schema.confidentiality] ?? schema.confidentiality)
     : schema.confidentiality;
   // Slice E15.5.formatting.render — when the schema carries the
   // `coverPageDetailed` E15.5 substrate, only render the lines whose

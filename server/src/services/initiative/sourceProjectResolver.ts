@@ -18,11 +18,13 @@
  * Fail-soft by construction: any DB/schema hiccup returns null rather than
  * throwing, mirroring every other lookup in the zwornik funnel.
  */
+import type { QueryResultRow } from 'pg';
+
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
 export interface ProjectSourceDb {
-  queryOne<T = any>(sql: string, params?: unknown[]): Promise<T | null>;
+  queryOne<T extends QueryResultRow = any>(sql: string, params?: unknown[]): Promise<T | null>;
 }
 
 const defaultDb: ProjectSourceDb = {

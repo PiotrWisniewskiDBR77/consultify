@@ -19,6 +19,7 @@ export const ArtifactOriginRuntimeValues = [
   'presentation',
   'sheet',
   'native_artifact',
+  'assessment_report',
   'report_template',
   'presentation_template',
   // Fala B (2026-07-22): DB CHECK constraint already extended for this value

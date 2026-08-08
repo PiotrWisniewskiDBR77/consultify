@@ -8,10 +8,16 @@ if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   all(sql: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows), cb);
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows),
+      (error) => cb(error as Error, [])
+    );
   },
   get(sql: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows[0] ?? null), cb);
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows[0] ?? null),
+      (error) => cb(error as Error, null)
+    );
   },
   run(sql: string, params: unknown[], cb: (error: Error | null) => void) {
     void pool.query(adaptQuery(sql), params).then(
@@ -89,8 +95,11 @@ async function main(): Promise<void> {
     candidates,
   });
   assert.equal(clean.decision, 'allowed');
+  if (!('admitted' in clean) || !('denied' in clean)) {
+    throw new Error('Expected allowed context decision with admitted and denied candidates');
+  }
   assert.deepEqual(
-    clean.admitted.map((item) => item.sourceRef),
+    clean.admitted.map((item: { sourceRef: string }) => item.sourceRef),
     ['vault:allowed']
   );
   assert.equal(clean.denied[0].reason, 'module_not_allowed');

@@ -123,7 +123,7 @@ async function dbGet<T = any>(
 ): Promise<T | undefined> {
   const pinned = presentationOwnerTransaction.current();
   if (pinned) return (await pinned.query<T>(sql, params)).rows[0];
-  return pooledGet<T>(sql, params, options);
+  return (await pooledGet<T>(sql, params, options)) ?? undefined;
 }
 
 async function dbRun(

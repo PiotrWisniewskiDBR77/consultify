@@ -384,7 +384,7 @@ async function recordStageShadowParity(
     legacyStatus: 'approved' | 'rejected';
     governedStatus: string | null;
     actorUserId: string;
-    correlationId?: string;
+    correlationId?: string | null;
     now: string;
   }
 ) {
@@ -534,7 +534,7 @@ async function completeResultGate(
     mapping: ResultGateMappingRow;
     result: Record<string, unknown>;
     actorUserId: string;
-    correlationId?: string;
+    correlationId?: string | null;
     now: string;
   }
 ) {
@@ -6082,6 +6082,13 @@ export async function reviewMobilizationBlueprint(
           )
         );
       }
+      if (!blueprintId) {
+        throw new TransformationCaseOperationError(
+          'TRANSFORMATION_MOBILIZATION_BLUEPRINT_MISSING',
+          409,
+          'Blueprint creation did not return a durable identifier'
+        );
+      }
       existing = await getMobilizationBlueprintProposal(
         params.transformationCaseId,
         params.organizationId
@@ -6165,9 +6172,9 @@ export async function reviewMobilizationBlueprint(
       );
       if (
         !receipt?.blueprintId ||
-        !receipt.taskIds.length ||
-        !receipt.milestoneIds.length ||
-        !receipt.resourceIds.length ||
+        !receipt.taskIds?.length ||
+        !receipt.milestoneIds?.length ||
+        !receipt.resourceIds?.length ||
         !ownerReceipt
       )
         return null;
@@ -7561,7 +7568,7 @@ async function dispatchT01ResultGate<T extends AcceptedResultGate>(input: {
           ]
         );
         if (!mapping || mapping.status !== 'applied' || !mapping.result_json) return null;
-        const result = jsonValue<T>(mapping.result_json, null as T);
+        const result = jsonValue<T | null>(mapping.result_json, null);
         const caseReadback = await queryOne<{ lifecycle_stage: string; version: number }>(
           `SELECT lifecycle_stage,version FROM transformation_cases
             WHERE transformation_case_id=? AND organization_id=?`,

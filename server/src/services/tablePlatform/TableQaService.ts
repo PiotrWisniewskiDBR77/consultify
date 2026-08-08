@@ -210,7 +210,7 @@ async function loadTenant(tableId: string): Promise<TenantRow | null> {
         LIMIT 1`,
       [tableId]
     );
-    rows = r.rows ?? [];
+    rows = (r.rows ?? []) as typeof rows;
   } catch {
     // Schema variant without `applied_template_id` — fall back to a slimmer query.
     const r = await db.query(
@@ -221,7 +221,7 @@ async function loadTenant(tableId: string): Promise<TenantRow | null> {
         LIMIT 1`,
       [tableId]
     );
-    rows = r.rows ?? [];
+    rows = (r.rows ?? []) as typeof rows;
   }
   const row = rows[0];
   if (!row?.workspace_id || !row?.organization_id) return null;

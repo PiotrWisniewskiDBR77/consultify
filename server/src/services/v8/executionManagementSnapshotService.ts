@@ -12,7 +12,7 @@ type QueryDeps = {
 };
 
 const defaultDeps: QueryDeps = {
-  get: (sql, params = []) => dbGet(sql, params),
+  get: async (sql, params = []) => (await dbGet(sql, params)) ?? undefined,
   all: (sql, params = []) => dbAll(sql, params),
   now: () => new Date(),
 };

@@ -7,10 +7,16 @@ if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   all(sql: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows), cb);
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows),
+      (error) => cb(error as Error, [])
+    );
   },
   get(sql: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) {
-    void pool.query(adaptQuery(sql), params).then((result) => cb(null, result.rows[0] ?? null), cb);
+    void pool.query(adaptQuery(sql), params).then(
+      (result) => cb(null, result.rows[0] ?? null),
+      (error) => cb(error as Error, null)
+    );
   },
   run(sql: string, params: unknown[], cb: (error: Error | null) => void) {
     void pool.query(adaptQuery(sql), params).then(

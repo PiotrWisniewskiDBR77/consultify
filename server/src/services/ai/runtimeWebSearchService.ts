@@ -89,7 +89,7 @@ class DuckDuckGoWebSearchService {
     const results: RuntimeWebSearchResult[] = [];
     const seenUrls = new Set<string>();
 
-    $('.result').each((_, element) => {
+    $('.result').each((_: number, element: any) => {
       if (results.length >= maxResults) return;
       const container = $(element);
       const linkEl = container.find('a.result__a, .result__title a, a.result-link').first();
@@ -109,7 +109,7 @@ class DuckDuckGoWebSearchService {
     });
 
     if (results.length === 0) {
-      $('a[href]').each((_, element) => {
+      $('a[href]').each((_: number, element: any) => {
         if (results.length >= maxResults) return;
         const linkEl = $(element);
         const title = cleanText(linkEl.text());

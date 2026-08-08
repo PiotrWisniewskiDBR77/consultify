@@ -8,8 +8,8 @@ if (!databaseUrl) throw new Error('DATABASE_URL is required');
 const pool = new Pool({ connectionString: databaseUrl });
 const db = {
   query: (text: string, params: unknown[] = []) => pool.query(adaptQuery(text), params),
-  get(text: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) { void pool.query(adaptQuery(text), params).then((r) => cb(null, r.rows[0] ?? null), cb); },
-  all(text: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) { void pool.query(adaptQuery(text), params).then((r) => cb(null, r.rows), cb); },
+  get(text: string, params: unknown[], cb: (error: Error | null, row: unknown) => void) { void pool.query(adaptQuery(text), params).then((r) => cb(null, r.rows[0] ?? null), (error) => cb(error as Error, null)); },
+  all(text: string, params: unknown[], cb: (error: Error | null, rows: unknown[]) => void) { void pool.query(adaptQuery(text), params).then((r) => cb(null, r.rows), (error) => cb(error as Error, [])); },
   run(text: string, params: unknown[], cb: (error: Error | null) => void) { void pool.query(adaptQuery(text), params).then((r) => cb.call({ changes: r.rowCount ?? 0 }, null), (e) => cb.call({ changes: 0 }, e)); },
   serialize(cb: () => void) { cb(); },
 };
@@ -50,6 +50,7 @@ async function main() {
   const policy = { allowedModules: ['Knowledge'], allowedArtifactIds: [], projectId: 'project-a', maxResults: 5, maxWorkingMemoryChars: 12 };
   const first = await retrieveAndRevalidateTransformationContext({ transformationCaseId: 'case-a', organizationId: 'org-a', actorUserId: 'user-a', policy, client });
   assert.equal(first.decision, 'allowed');
+  if (!('admitted' in first)) throw new Error('Expected allowed retrieval with admitted candidates');
   assert.deepEqual(first.admitted.map((item: any) => item.artifactId), ['doc-allowed']);
   const second = await retrieveAndRevalidateTransformationContext({ transformationCaseId: 'case-a', organizationId: 'org-a', actorUserId: 'user-a', policy, client });
   assert.equal(second.decision, 'allowed');

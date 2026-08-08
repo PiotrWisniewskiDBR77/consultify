@@ -264,7 +264,7 @@ export function normalizeAudienceFacingSlide(
   deckTitle: string,
   refs: DeckSourceRef[]
 ): UnifiedSlide {
-  const content = { ...((slide.content || {}) as Record<string, unknown>) };
+  const content = { ...((slide.content || {}) as unknown as Record<string, unknown>) };
   let keyMessage = String(slide.key_message || '').trim();
   const movedLines: string[] = [];
   if (TECHNICAL_SOURCE_LINE.test(keyMessage)) {

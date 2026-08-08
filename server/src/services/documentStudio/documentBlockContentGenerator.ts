@@ -209,7 +209,7 @@ export function normalizeTableContent(raw: unknown): Record<string, unknown> {
   const rows = keyedRows.map((row: any) => {
     if (Array.isArray(row)) return row.map((value: unknown) => String(value ?? ''));
     const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
-    return columns.map((key) => {
+    return columns.map((key: string) => {
       const value = (cells as Record<string, unknown>)[key];
       return String(
         value && typeof value === 'object' && 'value' in value
