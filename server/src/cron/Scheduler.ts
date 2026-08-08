@@ -730,6 +730,7 @@ export const Scheduler = {
     // and auto-resumes 'wait_until' pause steps whose resumeAt has passed
     // (Odczekaj). See server/src/jobs/agentPlanSchedulerJob.ts header.
     const job38 = cron.schedule('*/2 * * * *', async () => {
+      if (process.env.AGENT_PLAN_SCHEDULER_ENABLED === 'false') return;
       try {
         const { runAgentPlanScheduler } = await import('../jobs/agentPlanSchedulerJob.js');
         await runAgentPlanScheduler();
