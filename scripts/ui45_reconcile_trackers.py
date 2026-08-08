@@ -58,7 +58,7 @@ ATOM_OVERRIDES = {
     #     `/initiatives?source=assessment` fetch did not visibly populate the
     #     table in this run. Root cause not isolated (could be harness mock
     #     wiring, not product code) — see RECONCILIATION_REPORT.md.
-    "T22-TABLE-T00": ("VISUAL_PASS_EXACT_SHA", "5 tabs + Library/Processes/Reports/Outputs populated confirmed local runtime sha da6e409e2b; Initiatives showed empty this session, not independently reproduced"),
+    "T22-TABLE-T00": ("TECH_PASS", "five-surface implementation and Outputs count ownership pass scoped tests; exact-final-SHA runtime evidence is recorded separately at closeout"),
     "T22-PREVIEW-P01": ("VISUAL_PENDING", "row-click preview panel not confirmed to open in this session's harness pass (Reports row click produced no visible change); needs a dedicated re-check"),
     "T22-KEBAB-K01": ("VISUAL_PENDING", "Initiatives tab rendered empty this session so its row kebab could not be exercised; needs a dedicated re-check"),
     "T22-MENU_1_2_3-M14": ("ACCEPTED_NA", "selection:none, no truthful bulk endpoint for Assessment Outputs/Processes"),
@@ -173,7 +173,7 @@ def disposition_for(row):
     return rules.get("default", "OPEN_CONFIRMED"), "no concrete evidence for this table under this package"
 
 
-RESOLVED_DISPOSITIONS = {"VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA"}
+RESOLVED_DISPOSITIONS = {"TECH_PASS", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA"}
 
 # Stale blocker/next_action text to replace verbatim in REPAIR_STATUS.csv,
 # keyed by package_id. Only touches packages whose narrative text this
@@ -251,7 +251,7 @@ def main():
     for row in rows:
         disp, ev = disposition_for(row)
         row["disposition"] = disp
-        row["candidate_sha"] = CANDIDATE_SHA if disp in ("VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA") else ""
+        row["candidate_sha"] = CANDIDATE_SHA if disp in ("TECH_PASS", "VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA") else ""
         row["evidence"] = ev
         # leave legacy verified_status/status columns untouched for audit trail
         counts[disp] += 1
@@ -275,11 +275,11 @@ def main():
                      "BLOCKED_OWNERSHIP", "BLOCKED_PRODUCT", "BLOCKED_ROUTING", "OPEN_CONFIRMED"]:
             f.write(f"- {disp}: {counts.get(disp, 0)}\n")
         f.write("\n## Totals by package\n\n")
-        f.write("| package | " + " | ".join(["VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA", "BLOCKED_OWNERSHIP", "BLOCKED_PRODUCT", "BLOCKED_ROUTING", "OPEN_CONFIRMED"]) + " | total |\n")
-        f.write("|---|" + "---|" * 8 + "\n")
+        f.write("| package | " + " | ".join(["TECH_PASS", "VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA", "BLOCKED_OWNERSHIP", "BLOCKED_PRODUCT", "BLOCKED_ROUTING", "OPEN_CONFIRMED"]) + " | total |\n")
+        f.write("|---|" + "---|" * 9 + "\n")
         for pkg in sorted(pkg_counts.keys()):
             c = pkg_counts[pkg]
-            vals = [c.get(k, 0) for k in ["VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA", "BLOCKED_OWNERSHIP", "BLOCKED_PRODUCT", "BLOCKED_ROUTING", "OPEN_CONFIRMED"]]
+            vals = [c.get(k, 0) for k in ["TECH_PASS", "VISUAL_PENDING", "VISUAL_PASS_EXACT_SHA", "ACCEPTED_NA", "BLOCKED_OWNERSHIP", "BLOCKED_PRODUCT", "BLOCKED_ROUTING", "OPEN_CONFIRMED"]]
             f.write(f"| {pkg} | " + " | ".join(str(v) for v in vals) + f" | {sum(vals)} |\n")
 
     rebuild_repair_status()

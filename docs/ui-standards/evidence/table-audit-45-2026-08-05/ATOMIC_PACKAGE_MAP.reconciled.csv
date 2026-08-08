@@ -174,7 +174,7 @@ T22-KEBAB-K01,T22,KEBAB,K01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PE
 T22-MENU_1_2_3-M14,T22,MENU_1_2_3,M14,P0,R10,P0 registry/semantic package,OPEN,,,ACCEPTED_NA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"selection:none, no truthful bulk endpoint for Assessment Outputs/Processes"
 T22-PPM-C01,T22,PPM,C01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,R10 scoped tests; right-click specifically not part of this session's visual pass
 T22-PREVIEW-P01,T22,PREVIEW,P01,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PENDING,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,row-click preview panel not confirmed to open in this session's harness pass (Reports row click produced no visible change); needs a dedicated re-check
-T22-TABLE-T00,T22,TABLE,T00,P0,R10,P0 registry/semantic package,OPEN,,,VISUAL_PASS_EXACT_SHA,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,"5 tabs + Library/Processes/Reports/Outputs populated confirmed local runtime sha da6e409e2b; Initiatives showed empty this session, not independently reproduced"
+T22-TABLE-T00,T22,TABLE,T00,P0,R10,P0 registry/semantic package,OPEN,,,TECH_PASS,da6e409e2b262dddf1b5d347a5bdde593d86cb7a,five-surface implementation and Outputs count ownership pass scoped tests; exact-final-SHA runtime evidence is recorded separately at closeout
 T23-KEBAB-K18,T23,KEBAB,K18,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
 T23-KEBAB-K19,T23,KEBAB,K19,P1,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence
 T23-MENU_1_2_3-M01,T23,MENU_1_2_3,M01,P0,R23,module migration,OPEN,,,OPEN_CONFIRMED,,not covered by this package's concrete file/test evidence

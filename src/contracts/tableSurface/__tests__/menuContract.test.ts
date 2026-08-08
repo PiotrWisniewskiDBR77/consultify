@@ -238,8 +238,11 @@ describe('Menu — referencyjne buildery dla wszystkich 45 powierzchni', () => {
   it.each(TABLE_SURFACE_IDS)('%s: Menu 3 (bulk) przechodzi walidator', (id) => {
     const contract = TABLE_SURFACE_REGISTER[id];
     const state = buildMenu3Bulk(contract, 2);
-    // Wszystkie 45 powierzchni deklarują selection: 'bulk', więc `null` byłby
-    // sygnałem regresji w rejestrze — asercja jest celowa, nie defensywna.
+    if (contract.capabilities.selection === 'none') {
+      expect(state).toBeNull();
+      expect(contract.capabilities.selectionNoneReason?.trim()).toBeTruthy();
+      return;
+    }
     expect(state).not.toBeNull();
     expect(validateMenu3(state!, contract.capabilities).violations).toEqual([]);
   });

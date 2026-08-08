@@ -61,13 +61,7 @@ export interface RowAction {
 }
 
 export type RowActionSectionKind =
-  | 'context'
-  | 'open'
-  | 'ai'
-  | 'convert'
-  | 'output'
-  | 'manage'
-  | 'danger';
+  'context' | 'open' | 'ai' | 'convert' | 'output' | 'manage' | 'danger';
 
 export interface RowActionSection {
   id: string;
@@ -626,25 +620,16 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                             role="menuitem"
                             aria-disabled={action.disabled || undefined}
                             aria-expanded={hasSub ? expanded : undefined}
-                            title={action.disabled ? undefined : action.description}
+                            title={action.description}
                           >
                             {Icon && <Icon size={16} className="shrink-0" />}
                             <span className="min-w-0 flex-1">
                               <span className="block truncate">{action.label}</span>
-                              {/*
-                                POWÓD BLOKADY NIE JEST PREZENTOWANY (§1, §7, §10).
-                                Decyzja zarządzająca R01 (2026-08-06) rozstrzygnęła
-                                konflikt na korzyść kanonu i jest NADRZĘDNA wobec
-                                P-17/P-18 z 2026-07-28: pozycja ograniczona regułą
-                                zostaje widoczna i jaśniejsza, ale bez dopisku i bez
-                                tooltipa. Powód nadal PRZYCHODZI w `action.description`
-                                i pozostaje dostępny deskryptorowi capability oraz
-                                audytowi — usunięta jest wyłącznie jego PREZENTACJA,
-                                nie stan biznesowy ani sama blokada.
-                                Atrapy („Coming soon") tu nie docierają — odsiewa je
-                                `czyAtrapa` w `normalizeZones`.
-                              */}
-                              {action.description && !action.disabled ? (
+                              {/* A real disabled action stays visible together with
+                                  its product/business reason. Placeholder actions
+                                  ("Coming soon") never reach this renderer because
+                                  `czyAtrapa` removes them in `normalizeZones`. */}
+                              {action.description ? (
                                 <span className="mt-0.5 block truncate text-[10px] font-normal text-c-text-muted">
                                   {action.description}
                                 </span>

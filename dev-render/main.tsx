@@ -56,7 +56,6 @@ const DocumentStudioSaveAsTemplateScreen = React.lazy(
   () => import('./screens/document-studio-save-as-template')
 );
 const MenuCanonSidebarCheckScreen = React.lazy(() => import('./screens/menu-canon-sidebar-check'));
-const ToolsSesjaWyjscieScreen = React.lazy(() => import('./screens/tools-sesja-wyjscie'));
 
 // TEST-ONLY: must import before `../src/i18n` — see file header. Opt-in via
 // `?slowLocale=<ms>`; no effect otherwise.
@@ -309,11 +308,6 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     label:
       'AUDYTY — zakładka „Raporty DRD" (ff_drd_report) + DRDAuditReportView. ?variant=list|report',
     render: () => <AudytyDrdReportScreen />,
-  },
-  'tools-sesja-wyjscie': {
-    label:
-      'NARZĘDZIA — otwarta sesja narzędzia: wyjście z sesji (Menu 3 „List" + chip z ×, akcje cyklu życia, Menu 2 wyprowadza z karty)',
-    render: () => <ToolsSesjaWyjscieScreen />,
   },
   'menu-canon-sidebar-check': {
     label:
@@ -810,8 +804,7 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
     render: () => <ExceleEdytowalnaSiatkaScreen />,
   },
   'excele-prawy-panel-standard': {
-    label:
-      'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
+    label: 'DOKUMENTY — Excel PRAWY PANEL = szyna ikon jak Word (NPV/IRR, za ff_excele_right_rail)',
     render: () => <ExcelePrawyPanelStandardScreen />,
   },
 };

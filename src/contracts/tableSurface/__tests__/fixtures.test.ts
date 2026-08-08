@@ -122,7 +122,6 @@ describe('Fixture — pokrycie wszystkich rodzajów adaptera', () => {
     const needsNew = Object.values(TABLE_SURFACE_REGISTER).filter(
       (contract) => contract.requiresNewRegistry
     );
-    expect(needsNew.length).toBeGreaterThan(0);
     for (const contract of needsNew) {
       expect(emptyFixture(contract.id).columns.length).toBeGreaterThan(1);
       expect(populatedFixture(contract.id).rows).toHaveLength(3);

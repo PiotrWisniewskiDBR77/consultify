@@ -257,11 +257,10 @@ describe('R01 · kolory i stany', () => {
 
   /**
    * Decyzja zarządzająca R01 (2026-08-06), NADRZĘDNA wobec P-17/P-18
-   * z 2026-07-28: pozycja wyłączona zostaje widoczna i jaśniejsza, ale powód
-   * blokady NIE jest prezentowany — ani jako dopisek, ani jako tooltip.
-   * Stan biznesowy i sama blokada pozostają nietknięte.
+   * z 2026-07-28: pozycja wyłączona zostaje widoczna i jaśniejsza razem z
+   * prawdziwym powodem blokady. Atrapy nadal są odfiltrowane osobno.
    */
-  it('powód blokady NIE jest prezentowany — ani dopiskiem, ani tooltipem (§1, §7, §10)', () => {
+  it('prezentuje prawdziwy powód blokady jako dopisek i tooltip (§1, §7, §10)', () => {
     render(
       <RowActionsMenu
         sections={[
@@ -282,15 +281,13 @@ describe('R01 · kolory i stany', () => {
     openKebab();
     const archive = screen.getByText('Archive').closest('button')!;
 
-    // Blokada działa i jest widoczna…
     expect(archive).toBeDisabled();
-    // …ale powód nigdzie nie wycieka do UI.
-    expect(screen.queryByText(/Finish or cancel it first/)).toBeNull();
-    expect(archive.getAttribute('title')).toBeNull();
-    expect(archive.textContent).toBe('Archive');
+    expect(screen.getByText(/Finish or cancel it first/)).toBeInTheDocument();
+    expect(archive).toHaveAttribute('title', 'Finish or cancel it first');
+    expect(archive.textContent).toContain('Archive');
   });
 
-  it('opis pozycji AKTYWNEJ nadal się renderuje — usunięta jest tylko prezentacja POWODU', () => {
+  it('opis pozycji aktywnej nadal się renderuje', () => {
     render(
       <RowActionsMenu
         sections={[
