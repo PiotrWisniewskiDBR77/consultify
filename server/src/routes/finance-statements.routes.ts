@@ -2184,7 +2184,6 @@ router.post(
       currency: stmt.currency,
       scaling: stmt.scaling,
     });
-    await backfillStatementValueSourcePages(statementId);
     await persistStatementMappingCandidates({
       statementId,
       ingestRunId,
@@ -2195,6 +2194,7 @@ router.post(
           .map((row) => [Number(row.sourceRow), row.candidateRowId])
       ),
     });
+    await backfillStatementValueSourcePages(statementId);
 
     await updateStatementStatus(statementId, 'mapped');
     await recordStatementSourceArtifact({
