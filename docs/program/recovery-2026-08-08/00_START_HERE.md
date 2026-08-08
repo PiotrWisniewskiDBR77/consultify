@@ -18,6 +18,7 @@ Ten katalog jest jedynym kanonicznym pakietem przekazania dla sprzątania trzech
 4. właściwy pakiet z `03_AGENT_RECOVERY_PACKETS.md`
 5. `FILE_OWNERSHIP_MATRIX.tsv`
 6. jeżeli plik jest współdzielony: `SHARED_FILE_INTEGRATOR_SCOPE.tsv`
+7. przed pierwszym commitem: `04_AGENT_DELIVERY_GATE.md`
 
 ## Zasada startowa
 
@@ -73,4 +74,3 @@ Jeżeli zakres, owner albo źródło wersji jest niejasne, agent kończy `BLOCKE
 ## Ochrona danych
 
 Pełny snapshot 14 brudnych worktree, bundle wszystkich referencji Git i checksumy pozostają w sejfie CTO poza tym branchem. Pakiet przekazania nie zawiera ciężkich artefaktów ani potencjalnych danych lokalnych. Stare drzewa mają status `QUARANTINE_DO_NOT_DELETE` do czasu odbioru rekonstrukcji.
-
