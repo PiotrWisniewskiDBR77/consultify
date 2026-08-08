@@ -2231,7 +2231,7 @@ router.post(
     const extractionRaw =
       aiExtraction && aiExtraction.lines.length > 0
         ? aiExtraction
-        : extractFinancialLines(scopedText, effectiveStatementType, {
+        : extractFinancialLines(text, effectiveStatementType, {
             selectedPeriodLabel: columnSelection.selectedPeriodLabel,
             comparisonPeriodLabel: columnSelection.comparisonPeriodLabel,
           });
