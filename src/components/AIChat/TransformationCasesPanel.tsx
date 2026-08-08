@@ -1270,7 +1270,12 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewIdeas = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !ideasProposal || ideasProposal.status !== 'pending_review') return;
+      if (
+        !selectedRow ||
+        !ideasProposal ||
+        !['pending_review', 'approved'].includes(ideasProposal.status)
+      )
+        return;
       const confirmed = window.confirm(
         decision === 'approve'
           ? isPolish
@@ -1342,7 +1347,11 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewInterviews = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !interviewsProposal || interviewsProposal.status !== 'pending_review')
+      if (
+        !selectedRow ||
+        !interviewsProposal ||
+        !['pending_review', 'approved'].includes(interviewsProposal.status)
+      )
         return;
       const confirmed = window.confirm(
         decision === 'approve'
@@ -1439,7 +1448,12 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewDrd = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !drdProposal || drdProposal.status !== 'pending_review') return;
+      if (
+        !selectedRow ||
+        !drdProposal ||
+        !['pending_review', 'approved'].includes(drdProposal.status)
+      )
+        return;
       const confirmed = window.confirm(
         decision === 'approve'
           ? isPolish
@@ -1525,7 +1539,11 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewSynthesis = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !synthesisProposal || synthesisProposal.status !== 'pending_review')
+      if (
+        !selectedRow ||
+        !synthesisProposal ||
+        !['pending_review', 'approved'].includes(synthesisProposal.status)
+      )
         return;
       const confirmed = window.confirm(
         decision === 'approve'
@@ -1622,7 +1640,12 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewFinance = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !financeProposal || financeProposal.status !== 'pending_review') return;
+      if (
+        !selectedRow ||
+        !financeProposal ||
+        !['pending_review', 'approved'].includes(financeProposal.status)
+      )
+        return;
       if (
         !window.confirm(
           decision === 'approve'
@@ -1722,7 +1745,11 @@ export const TransformationCasesPanel: React.FC<{
 
   const handleReviewPortfolio = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !portfolioProposal || portfolioProposal.status !== 'pending_review')
+      if (
+        !selectedRow ||
+        !portfolioProposal ||
+        !['pending_review', 'approved'].includes(portfolioProposal.status)
+      )
         return;
       if (
         !window.confirm(
@@ -1805,7 +1832,11 @@ export const TransformationCasesPanel: React.FC<{
   }, [mobilizationInputs, replaceCase, selectedRow]);
   const handleReviewMobilization = useCallback(
     async (decision: 'approve' | 'reject') => {
-      if (!selectedRow || !mobilizationProposal || mobilizationProposal.status !== 'pending_review')
+      if (
+        !selectedRow ||
+        !mobilizationProposal ||
+        !['pending_review', 'approved'].includes(mobilizationProposal.status)
+      )
         return;
       if (
         !window.confirm(
@@ -3118,20 +3149,30 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction)}
                 />
               ) : null}
-              {ideasProposal?.status === 'pending_review' ? (
+              {ideasProposal && ['pending_review', 'approved'].includes(ideasProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
-                    label={isPolish ? 'Zatwierdź i utwórz Ideas' : 'Approve and create Ideas'}
+                    label={
+                      ideasProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów tworzenie Ideas'
+                          : 'Resume Ideas materialization'
+                        : isPolish
+                          ? 'Zatwierdź i utwórz Ideas'
+                          : 'Approve and create Ideas'
+                    }
                     onClick={() => void handleReviewIdeas('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
-                    onClick={() => void handleReviewIdeas('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {ideasProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć propozycję' : 'Reject proposal'}
+                      onClick={() => void handleReviewIdeas('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {ideasProposal?.status === 'applied' && interviewsProposal === null ? (
@@ -3147,22 +3188,31 @@ export const TransformationCasesPanel: React.FC<{
                   }
                 />
               ) : null}
-              {interviewsProposal?.status === 'pending_review' ? (
+              {interviewsProposal &&
+              ['pending_review', 'approved'].includes(interviewsProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
                     label={
-                      isPolish ? 'Zatwierdź i przypisz Interview' : 'Approve and assign Interviews'
+                      interviewsProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów przypisanie Interview'
+                          : 'Resume Interview assignment'
+                        : isPolish
+                          ? 'Zatwierdź i przypisz Interview'
+                          : 'Approve and assign Interviews'
                     }
                     onClick={() => void handleReviewInterviews('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
-                    onClick={() => void handleReviewInterviews('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {interviewsProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć plan Interview' : 'Reject Interview plan'}
+                      onClick={() => void handleReviewInterviews('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {interviewsProposal?.status === 'applied' &&
@@ -3184,20 +3234,30 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction) || !drdName.trim()}
                 />
               ) : null}
-              {drdProposal?.status === 'pending_review' ? (
+              {drdProposal && ['pending_review', 'approved'].includes(drdProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
-                    label={isPolish ? 'Zatwierdź i utwórz DRD' : 'Approve and create DRD'}
+                    label={
+                      drdProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów tworzenie DRD'
+                          : 'Resume DRD materialization'
+                        : isPolish
+                          ? 'Zatwierdź i utwórz DRD'
+                          : 'Approve and create DRD'
+                    }
                     onClick={() => void handleReviewDrd('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
-                    onClick={() => void handleReviewDrd('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {drdProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć propozycję DRD' : 'Reject DRD proposal'}
+                      onClick={() => void handleReviewDrd('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {drdProposal?.status === 'applied' &&
@@ -3218,22 +3278,31 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction)}
                 />
               ) : null}
-              {synthesisProposal?.status === 'pending_review' ? (
+              {synthesisProposal &&
+              ['pending_review', 'approved'].includes(synthesisProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
                     label={
-                      isPolish ? 'Zatwierdź i utwórz Candidate' : 'Approve and create Candidate'
+                      synthesisProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów tworzenie Candidate'
+                          : 'Resume Candidate materialization'
+                        : isPolish
+                          ? 'Zatwierdź i utwórz Candidate'
+                          : 'Approve and create Candidate'
                     }
                     onClick={() => void handleReviewSynthesis('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
-                    onClick={() => void handleReviewSynthesis('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {synthesisProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć syntezę' : 'Reject synthesis'}
+                      onClick={() => void handleReviewSynthesis('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {synthesisProposal?.status === 'applied' &&
@@ -3256,20 +3325,31 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction)}
                 />
               ) : null}
-              {financeProposal?.status === 'pending_review' ? (
+              {financeProposal &&
+              ['pending_review', 'approved'].includes(financeProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
-                    label={isPolish ? 'Zatwierdź Finance i KPI' : 'Approve Finance and KPI'}
+                    label={
+                      financeProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów Finance i KPI'
+                          : 'Resume Finance and KPI'
+                        : isPolish
+                          ? 'Zatwierdź Finance i KPI'
+                          : 'Approve Finance and KPI'
+                    }
                     onClick={() => void handleReviewFinance('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
-                    onClick={() => void handleReviewFinance('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {financeProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć Finance i KPI' : 'Reject Finance and KPI'}
+                      onClick={() => void handleReviewFinance('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {financeProposal?.status === 'applied' &&
@@ -3294,20 +3374,31 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction) || !decisionMakerId.trim()}
                 />
               ) : null}
-              {portfolioProposal?.status === 'pending_review' ? (
+              {portfolioProposal &&
+              ['pending_review', 'approved'].includes(portfolioProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
-                    label={isPolish ? 'Zatwierdź i utwórz decyzję' : 'Approve and create decision'}
+                    label={
+                      portfolioProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów tworzenie decyzji'
+                          : 'Resume decision materialization'
+                        : isPolish
+                          ? 'Zatwierdź i utwórz decyzję'
+                          : 'Approve and create decision'
+                    }
                     onClick={() => void handleReviewPortfolio('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
-                    onClick={() => void handleReviewPortfolio('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {portfolioProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć pakiet decyzji' : 'Reject decision packet'}
+                      onClick={() => void handleReviewPortfolio('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {portfolioProposal?.status === 'applied' &&
@@ -3332,24 +3423,31 @@ export const TransformationCasesPanel: React.FC<{
                   disabled={Boolean(stageAction) || !mobilizationInputs.ownerUserId.trim()}
                 />
               ) : null}
-              {mobilizationProposal?.status === 'pending_review' ? (
+              {mobilizationProposal &&
+              ['pending_review', 'approved'].includes(mobilizationProposal.status) ? (
                 <>
                   <PreviewActionButton
                     variant="positive"
                     label={
-                      isPolish
-                        ? 'Zatwierdź i utwórz plan wykonania'
-                        : 'Approve and create execution plan'
+                      mobilizationProposal.status === 'approved'
+                        ? isPolish
+                          ? 'Wznów tworzenie planu wykonania'
+                          : 'Resume execution-plan materialization'
+                        : isPolish
+                          ? 'Zatwierdź i utwórz plan wykonania'
+                          : 'Approve and create execution plan'
                     }
                     onClick={() => void handleReviewMobilization('approve')}
                     disabled={Boolean(stageAction)}
                   />
-                  <PreviewActionButton
-                    variant="warning"
-                    label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
-                    onClick={() => void handleReviewMobilization('reject')}
-                    disabled={Boolean(stageAction)}
-                  />
+                  {mobilizationProposal.status === 'pending_review' && (
+                    <PreviewActionButton
+                      variant="warning"
+                      label={isPolish ? 'Odrzuć mobilizację' : 'Reject mobilization'}
+                      onClick={() => void handleReviewMobilization('reject')}
+                      disabled={Boolean(stageAction)}
+                    />
+                  )}
                 </>
               ) : null}
               {mobilizationProposal?.status === 'applied' &&
