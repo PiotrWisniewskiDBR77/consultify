@@ -55,7 +55,8 @@
         "spreadsheet-one-left-no-local-right",
         "spreadsheet-keyboard-context-menu-e2e",
         "document-presentation-keyboard-context-menu-e2e",
-        "cross-format-axe-runtime"
+        "cross-format-axe-runtime",
+        "cross-format-screen-reader-landmarks-runtime"
       ],
       "missing": ["screen-reader"]
     },
@@ -252,8 +253,8 @@
         "audit",
         "rollback"
       ],
-      "verified": [],
-      "missing": ["two-stable-release-windows", "telemetry", "rollback-rehearsal", "legacy-removal"]
+      "verified": ["cross-format-v2-legacy-v2-rollback-rehearsal"],
+      "missing": ["two-stable-release-windows", "telemetry", "legacy-removal"]
     }
   ]
 }
