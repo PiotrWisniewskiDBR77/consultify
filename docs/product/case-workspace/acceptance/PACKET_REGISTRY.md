@@ -77,7 +77,33 @@ resolutions:
 8. **`putViewState` last-write-wins, no OCC** — accepted; layout-only,
    reasonable default, revisit only if concurrent multi-tab editing proves it
    matters.
-| CW-P03 | E3 | E0 | `toolGovernanceService.ts`/`toolGovernance.ts` (EXTEND, strongest foundation); `CommandBus.ts` (EXTEND); `toolChainExecutor.ts` DAG executor (KEEP) | Consolidate the 3 duplicate command-creation paths onto one Capability Registry; resolve the 4-way "capability" naming collision before scoping | subset of 119 |
+| CW-P03 | E3 | E0 | `toolGovernanceService.ts`/`toolGovernance.ts` (EXTEND, strongest foundation); `CommandBus.ts` (EXTEND); `toolChainExecutor.ts` DAG executor (KEEP); `ApprovalClass` from `executionSpine.ts` (reused by reference) | `case_workspace_capabilities` + `case_workspace_capability_idempotency_keys`, `capabilityRegistryService.ts`, 7 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+5-file-zero-diff verified**, commit `84535b61d6`. Naming collision resolved: namespaced under `case_workspace_*`, not renamed the canon term. | subset of 119 |
+
+## CW-P03 (E3 Capability Registry) — design decisions accepted 2026-08-09
+
+1. **Platform-global registry (no org_id/case_id column)** — accepted;
+   matches CW-GR-015's schema, which lists no tenant field. An org-level
+   enablement overlay, if needed, is an additive future table, not a rename.
+2. **`capability_version` vs OCC `version`** — accepted; same split CW-P02
+   established for `plan_number`/`version`.
+3. **CW-GR-020 attributes (effective scope, error taxonomy) in open-ended
+   `metadata` JSON only** — accepted; canon names these fields but never
+   gives them a concrete shape, so guessing one would be worse than an
+   explicit extension point.
+4. **Locally-invented enums for `health`/`data_classification`/
+   `idempotency_strategy`/`reversibility`** — accepted as placeholders;
+   flagged here for product to confirm exact vocabularies before any UI
+   renders them as fixed choices.
+5. **Adapter-side "active" gate not enforceable yet** — accepted; adapters
+   (InternalCommandAdapter/MCP/HTTP/Connector/Agent) are explicitly later E3
+   work, out of this packet's scope.
+6. **No idempotency-key completion/TTL** — accepted as a known gap; the
+   packet that builds the real command dispatcher (an adapter packet) owns
+   adding completion/expiry once it knows real execution outcomes.
+7. **`owning_command_ref` not runtime-enforced** — accepted; enforcement
+   ("human UI and Teresa call the same owning command") belongs to whichever
+   packet wires routes/dispatcher through this registry, not to registry
+   persistence itself.
 | CW-P04 | E4 | E2, E3 | `v8_execution_runs` (KEEP, already the Run entity); `v8_agent_work_graphs`/`v8_agent_branch_tasks` (KEEP, already NodeRun); `agentOperatorConsoleService.ts` (KEEP, recovery already exists) | CasePlanVersion binding (CREATE — does not exist); pre-E4 hand-port of `v8-full-done`'s 3 commits (session task #8) | 29 (authority-v8-runtime) |
 | CW-P05 | E5 | E4 | `operationClaimService.ts` + `artifactLineageService.ts` (EXTEND, lineage/claim patterns) | durable wait claims, human task queue, callback auth/dedupe, outbox/inbox | subset of 70 (security-legacy) |
 | CW-P06 | E6 | E1, E2 | autonomy policy concepts already documented in canon (00/08) | server-enforced A0-A4 ceilings, explicit A2/A3/A4 controls, revalidation | 109 (governance-history-decisions) |
