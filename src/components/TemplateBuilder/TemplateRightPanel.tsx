@@ -1,22 +1,20 @@
 /**
  * TemplateRightPanel — prawy rail wspólnej powłoki builderów (#83d).
  *
- * Dwa narzędzia (≤5 sekcji, kanon §2 PRAWA):
- *   - Właściwości: meta szablonu (nazwa, opis, zakres, motyw org).
- *   - Teresa: jedno wejście AI (F4) — placeholder "Omów z Teresą".
+ * Jedno rzeczywiste narzędzie (kanon §2 PRAWA): Właściwości szablonu.
+ * Teresa wróci dopiero razem z bezpiecznym handlerem UnifiedChat — prawy rail
+ * nie może eksponować martwego CTA ani obiecywać niewdrożonej funkcji.
  *
  * Branding = motyw org OSOBNO od template'u (D19); tu tylko ref/picker.
  */
 
-import type { LucideIcon } from 'lucide-react';
-import { Sparkles } from 'lucide-react';
-import { Settings2 } from 'lucide-react';
+import { type LucideIcon, Settings2 } from 'lucide-react';
 import React from 'react';
 
 import { Field, Segmented, Select, TextArea, TextInput } from './templateBuilderFields';
 import { SCOPE_LABELS, type TemplateDraft, type TemplateScope } from './templateBuilderModel';
 
-export type TemplateRightTool = 'properties' | 'teresa';
+export type TemplateRightTool = 'properties';
 
 export interface TemplateRightRailToolDef {
   id: TemplateRightTool;
@@ -26,7 +24,6 @@ export interface TemplateRightRailToolDef {
 
 export const TEMPLATE_RIGHT_TOOLS: TemplateRightRailToolDef[] = [
   { id: 'properties', label: 'Właściwości', icon: Settings2 },
-  { id: 'teresa', label: 'Omów z Teresą', icon: Sparkles },
 ];
 
 /** Motywy org (Brand Kit) — w realu z themeRegistry/brandIngestion; tu przykładowe. */
@@ -40,34 +37,7 @@ export const TemplateRightPanel: React.FC<{
   draft: TemplateDraft;
   themeOptions: ThemeOption[];
   onDraftChange: (patch: Partial<TemplateDraft>) => void;
-}> = ({ activeTool, draft, themeOptions, onDraftChange }) => {
-  if (activeTool === 'teresa') {
-    return (
-      <div className="p-4 space-y-3" data-testid="template-teresa-panel">
-        <div className="flex items-center gap-2 text-c-text">
-          <Sparkles className="w-4 h-4 text-c-focus" />
-          <span className="text-sm font-semibold">Teresa</span>
-        </div>
-        <p className="text-sm text-c-text-muted">
-          Poproś Teresę o zaproponowanie struktury szablonu, przeredagowanie sekcji albo dobranie
-          archetypów slajdów.
-        </p>
-        <div className="rounded-lg border border-dashed border-c-border bg-c-bg p-3 text-[13px] text-c-text-muted">
-          Wejście AI (F4) — jeden byt asystenta. Podłączenie do UnifiedChatPanel poza zakresem tego
-          kroku (buildery struktury).
-        </div>
-        <button
-          type="button"
-          disabled
-          className="w-full rounded-lg bg-c-surface border border-c-border px-3 py-2 text-sm font-medium text-c-text-muted opacity-60 cursor-not-allowed"
-        >
-          Otwórz rozmowę z Teresą
-        </button>
-      </div>
-    );
-  }
-
-  // properties (default)
+}> = ({ draft, themeOptions, onDraftChange }) => {
   const scopeOpts = (Object.keys(SCOPE_LABELS) as TemplateScope[]).map((k) => ({
     value: k,
     label: SCOPE_LABELS[k],

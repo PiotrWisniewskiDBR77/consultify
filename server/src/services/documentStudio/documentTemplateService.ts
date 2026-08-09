@@ -45,6 +45,7 @@ import { DEFAULT_CONSULTING_FORMATTING_SCHEMA } from './documentStudioTypes.js';
 import { refineTemplateWithLlm } from './documentTemplateRefiner.js';
 import {
   __resetTemplateRegistryDaoForTests,
+  deleteTemplateRecord,
   loadAuditForTemplate,
   loadTemplatesForOrg,
   persistAuditEntry,
@@ -219,16 +220,65 @@ function deriveBlueprintFromDocumentType(
     density,
   };
   const outline = planDocumentOutline(probeIntake);
-  return outline.sections.map((section) => ({
-    title: section.title,
-    level: section.level,
-    purpose: section.purpose,
-    required:
-      section.title.toLowerCase().includes('executive summary') ||
-      section.title.toLowerCase() === 'next steps' ||
-      section.title.toLowerCase() === 'recommendations',
-    expectedLengthHint: section.expectedLengthHint,
-  }));
+  return outline.sections.map((section) => {
+    const normalized = section.title.toLowerCase();
+    const premiumBusinessCase =
+      documentType === 'business_case'
+        ? normalized.includes('executive summary')
+          ? {
+              formattingStyle: 'executive_kpi_strip_with_recommendation_callout',
+              contentHints: ['Lead with the investment decision', 'Show value, cost and timing'],
+            }
+          : normalized.includes('scenario')
+            ? {
+                formattingStyle: 'scenario_comparison_table_with_assumptions',
+                contentHints: ['Compare investment, value and delivery risk by scenario'],
+              }
+            : normalized.includes('risk')
+              ? { formattingStyle: 'risk_table_with_owner_and_mitigation' }
+              : normalized.includes('30/60/90')
+                ? { formattingStyle: 'thirty_sixty_ninety_day_roadmap' }
+                : normalized.includes('recommendation')
+                  ? { formattingStyle: 'decision_callout_with_conditions' }
+                  : {}
+        : {};
+    return {
+      title: section.title,
+      level: section.level,
+      purpose: section.purpose,
+      required:
+        section.title.toLowerCase().includes('executive summary') ||
+        section.title.toLowerCase() === 'next steps' ||
+        section.title.toLowerCase() === 'recommendations',
+      expectedLengthHint: section.expectedLengthHint,
+      ...premiumBusinessCase,
+    };
+  });
+}
+
+function validateBusinessCaseBlueprint(sections: TemplateSectionBlueprint[]): void {
+  // Validate semantic coverage, not one exact heading vocabulary. The seeded
+  // canonical blueprint deliberately uses "Proposed Initiative" and
+  // "Economic Analysis"; rejecting those headings made a system-generated
+  // Business Case impossible to save in its own architect. Author guidance is
+  // included so a custom title can still satisfy the gate explicitly.
+  const authoredSemantics = sections
+    .flatMap((section) => [
+      section.title,
+      section.purpose,
+      section.keyMessage,
+      ...(section.contentHints ?? []),
+      ...(section.dataNeeded ?? []),
+    ])
+    .filter((value): value is string => typeof value === 'string')
+    .join(' | ')
+    .toLowerCase();
+  if (!/(methodology|approach|scope|proposed initiative|proposed solution)/i.test(authoredSemantics)) {
+    throw new Error('business_case_scope_or_approach_required');
+  }
+  if (!/(assumption|scenario|sensitivity|economic analysis)/i.test(authoredSemantics)) {
+    throw new Error('business_case_assumptions_or_scenarios_required');
+  }
 }
 
 function defaultLanguageStyleFor(category: TemplateCategory): DocumentLanguageStyle {
@@ -323,7 +373,7 @@ export function draftTemplate(params: DraftTemplateParams): DraftTemplateResult 
     action: 'template_drafted',
     actorId: params.userId,
     occurredAt: now,
-    details: { documentType, category },
+    details: { documentType, category, templateSnapshot: structuredClone(template) },
   });
   return { template };
 }
@@ -643,7 +693,11 @@ export function approveTemplate(params: ApproveTemplateParams): DocumentTemplate
     action: 'template_approved',
     actorId: params.userId,
     occurredAt: now,
-    details: { previousStatus: template.status, version: next.version },
+    details: {
+      previousStatus: template.status,
+      version: next.version,
+      templateSnapshot: structuredClone(next),
+    },
   });
   return next;
 }
@@ -676,7 +730,11 @@ export function deprecateTemplate(params: DeprecateTemplateParams): DocumentTemp
     action: 'template_deprecated',
     actorId: params.userId,
     occurredAt: now,
-    details: { previousStatus: template.status, reason: params.reason },
+    details: {
+      previousStatus: template.status,
+      reason: params.reason,
+      templateSnapshot: structuredClone(next),
+    },
   });
   return next;
 }
@@ -832,6 +890,7 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
   }
 
   const sectionBlueprint = params.sections.map(sanitizeAuthoredSection);
+  if (template.documentType === 'business_case') validateBusinessCaseBlueprint(sectionBlueprint);
   const now = nowIso();
   // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). `undefined` leaves the
   // existing formattingSchema untouched; `null`/`''` clears the pattern.
@@ -867,10 +926,29 @@ export function reviseTemplateStructure(params: ReviseTemplateStructureParams): 
       previousSectionCount: template.sectionBlueprint.length,
       colorTemplateChanged: params.colorTemplateId !== undefined,
       formattingChanged: params.formattingSchema !== undefined,
+      templateSnapshot: structuredClone(next),
       requiredInputsChanged: params.requiredInputs !== undefined,
     },
   });
   return next;
+}
+
+/**
+ * HTTP-facing durable variant of the synchronous registry mutation above.
+ *
+ * The architect allows an author to save and immediately approve a draft. A
+ * fire-and-forget write lets that approval race the structural write, so a
+ * cold reopen can recover the pre-edit blueprint even though both requests
+ * returned success. Route handlers must await this variant before reporting a
+ * successful save.
+ */
+export async function reviseTemplateStructureDurably(
+  params: ReviseTemplateStructureParams
+): Promise<DocumentTemplate> {
+  const template = reviseTemplateStructure(params);
+  const persisted = await persistTemplate(template);
+  if (!persisted.ok) throw new Error('template_persist_failed');
+  return template;
 }
 
 export interface UpdateTemplateContentParams {
@@ -935,7 +1013,7 @@ export function updateTemplateContent(params: UpdateTemplateContentParams): Docu
     action: 'template_updated',
     actorId: params.userId,
     occurredAt: now,
-    details: { source: 'template_library_content_edit' },
+    details: { source: 'template_library_content_edit', templateSnapshot: structuredClone(next) },
   });
   return next;
 }
@@ -945,6 +1023,152 @@ export function listTemplateAuditEntries(
   organizationId: string
 ): TemplateAuditEntry[] {
   return [...(auditStore.get(templateKey(organizationId, templateId)) ?? [])];
+}
+
+export interface TemplateValidationIssue {
+  code: string;
+  message: string;
+  blocking: boolean;
+}
+
+export function validateTemplate(template: DocumentTemplate): TemplateValidationIssue[] {
+  const issues: TemplateValidationIssue[] = [];
+  if (!template.name.trim())
+    issues.push({ code: 'name_required', message: 'Template name is required.', blocking: true });
+  if (template.purpose.trim().length < 8)
+    issues.push({
+      code: 'purpose_required',
+      message: 'Purpose must contain at least 8 characters.',
+      blocking: true,
+    });
+  if (template.sectionBlueprint.length === 0)
+    issues.push({ code: 'section_required', message: 'Add at least one section.', blocking: true });
+  const titles = template.sectionBlueprint.map((section) => section.title.trim().toLowerCase());
+  if (titles.some((title) => !title))
+    issues.push({
+      code: 'section_title_required',
+      message: 'Every section needs a title.',
+      blocking: true,
+    });
+  if (new Set(titles).size !== titles.length)
+    issues.push({
+      code: 'duplicate_section_title',
+      message: 'Section titles must be unique.',
+      blocking: true,
+    });
+  const inputs = template.requiredInputs.map((input) => input.trim().toLowerCase()).filter(Boolean);
+  if (new Set(inputs).size !== inputs.length)
+    issues.push({
+      code: 'duplicate_required_input',
+      message: 'Required source inputs must be unique.',
+      blocking: true,
+    });
+  return issues;
+}
+
+export function cloneTemplateAsDraft(params: {
+  templateId: string;
+  organizationId: string;
+  userId: string;
+}): DocumentTemplate {
+  const source = getTemplate(params.templateId, params.organizationId);
+  if (!source) throw new Error('template_not_found');
+  const now = nowIso();
+  const draft: DocumentTemplate = {
+    ...structuredClone(source),
+    templateId: makeId('doc-template'),
+    organizationId: params.organizationId,
+    status: 'draft',
+    version: '0.1',
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+    approvedBy: undefined,
+    approvedAt: undefined,
+    deprecatedBy: undefined,
+    deprecatedAt: undefined,
+    notes: `New version from ${source.templateId} v${source.version}`,
+  };
+  registryStore.set(templateKey(params.organizationId, draft.templateId), draft);
+  void persistTemplate(draft).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: draft.templateId,
+    organizationId: params.organizationId,
+    action: 'template_drafted',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      sourceTemplateId: source.templateId,
+      sourceVersion: source.version,
+      templateSnapshot: structuredClone(draft),
+    },
+  });
+  return draft;
+}
+
+export function restoreTemplateAuditSnapshotAsDraft(params: {
+  templateId: string;
+  auditId: string;
+  organizationId: string;
+  userId: string;
+}): DocumentTemplate {
+  const source = getTemplate(params.templateId, params.organizationId);
+  if (!source) throw new Error('template_not_found');
+  const entry = listTemplateAuditEntries(params.templateId, params.organizationId).find(
+    (candidate) => candidate.auditId === params.auditId
+  );
+  const snapshot = entry?.details?.templateSnapshot as DocumentTemplate | undefined;
+  if (!entry) throw new Error('template_audit_not_found');
+  if (!snapshot?.templateId || !Array.isArray(snapshot.sectionBlueprint)) {
+    throw new Error('template_snapshot_unavailable');
+  }
+  const now = nowIso();
+  const draft: DocumentTemplate = {
+    ...structuredClone(snapshot),
+    templateId: makeId('doc-template'),
+    organizationId: params.organizationId,
+    status: 'draft',
+    version: '0.1',
+    createdBy: params.userId,
+    createdAt: now,
+    updatedAt: now,
+    approvedBy: undefined,
+    approvedAt: undefined,
+    deprecatedBy: undefined,
+    deprecatedAt: undefined,
+    notes: `Restored from ${source.templateId} audit ${entry.auditId} (${entry.action})`,
+  };
+  registryStore.set(templateKey(params.organizationId, draft.templateId), draft);
+  void persistTemplate(draft).catch(() => undefined);
+  pushAudit({
+    auditId: makeId('doc-template-audit'),
+    templateId: draft.templateId,
+    organizationId: params.organizationId,
+    action: 'template_drafted',
+    actorId: params.userId,
+    occurredAt: now,
+    details: {
+      restoredFromTemplateId: source.templateId,
+      restoredFromAuditId: entry.auditId,
+      templateSnapshot: structuredClone(draft),
+    },
+  });
+  return draft;
+}
+
+export async function deleteDraftTemplate(params: {
+  templateId: string;
+  organizationId: string;
+}): Promise<void> {
+  const template = getTemplate(params.templateId, params.organizationId);
+  if (!template) throw new Error('template_not_found');
+  if (template.organizationId !== params.organizationId) throw new Error('template_forbidden');
+  if (template.status !== 'draft') throw new Error('template_not_draft');
+  const persisted = await deleteTemplateRecord(params.templateId, params.organizationId);
+  if (!persisted.ok) throw new Error('template_delete_failed');
+  registryStore.delete(templateKey(params.organizationId, params.templateId));
+  auditStore.delete(templateKey(params.organizationId, params.templateId));
 }
 
 /**

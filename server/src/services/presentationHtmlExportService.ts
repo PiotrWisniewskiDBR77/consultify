@@ -120,6 +120,19 @@ function renderBlockHtml(
     }
     case 'callout':
       return `<div class="block block-callout animate-block" style="border-left:3px solid ${theme.accent};background:${theme.surface};padding:12px 16px;border-radius:8px"><p style="color:${theme.textPrimary}">${escapeHtml(String(c.text || ''))}</p></div>`;
+    case 'smart_layout': {
+      const items = (c.items as Array<{ title?: string; description?: string }>) || [];
+      return `<div class="block block-smart-layout animate-block">${items.map((item) => `<div class="smart-card" style="border-left:3px solid ${theme.accent};background:${theme.surface}"><strong style="color:${theme.heading}">${escapeHtml(String(item.title || ''))}</strong><p style="color:${theme.textSecondary}">${escapeHtml(String(item.description || ''))}</p></div>`).join('')}</div>`;
+    }
+    case 'timeline_block': {
+      const items = (c.items as Array<{ date?: string; title?: string; description?: string }>) || [];
+      return `<div class="block block-timeline animate-block">${items.map((item) => `<div class="timeline-item"><span style="color:${theme.accent}">${escapeHtml(String(item.date || ''))}</span><strong style="color:${theme.heading}">${escapeHtml(String(item.title || ''))}</strong><p style="color:${theme.textSecondary}">${escapeHtml(String(item.description || ''))}</p></div>`).join('')}</div>`;
+    }
+    case 'table': {
+      const headers = (c.headers as string[]) || [];
+      const rows = (c.rows as unknown[][]) || [];
+      return `<table class="block block-table animate-block"><thead><tr>${headers.map((header) => `<th style="color:${theme.heading}">${escapeHtml(String(header))}</th>`).join('')}</tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td style="color:${theme.textPrimary}">${escapeHtml(String(cell ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    }
     case 'image':
       return `<div class="block block-image animate-block"><img src="${escapeHtml(String(c.src || c.url || ''))}" alt="${escapeHtml(String(c.alt || ''))}" style="max-width:100%;border-radius:8px"></div>`;
     case 'divider':

@@ -192,6 +192,17 @@ const TARGET_LABELS: Record<HandoffTargetModule, string> = {
   notebook: 'Notebook',
   interview: 'Interview Insights',
   excele: 'Excele Workbooks',
+  ideas: 'Ideas',
+  results: 'Results',
+  kpi: 'KPI',
+  roi: 'ROI',
+  execution: 'Execution',
+  finance: 'Finance',
+  meeting: 'Meetings',
+  outputs: 'Reports and Presentations',
+  documents: 'Documents',
+  tables: 'Tables',
+  presentations: 'Presentations',
 };
 
 // ---------------------------------------------------------------------------

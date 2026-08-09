@@ -123,11 +123,11 @@ const tableSyncService = {
     const stats: SyncStats = { created: 0, updated: 0, errors: 0 };
 
     try {
-      const sync = await this.getSync(syncId);
+      const sync = await tableSyncService.getSync(syncId);
       if (!sync) throw new Error(`Sync config not found: ${syncId}`);
       if (!sync.is_active) throw new Error(`Sync is not active: ${syncId}`);
 
-      await this._syncDirection(
+      await tableSyncService._syncDirection(
         sync.source_table_id,
         sync.target_table_id,
         sync.field_mapping,
@@ -140,7 +140,7 @@ const tableSyncService = {
         for (const [src, tgt] of Object.entries(sync.field_mapping)) {
           reverseMapping[tgt] = src;
         }
-        await this._syncDirection(
+        await tableSyncService._syncDirection(
           sync.target_table_id,
           sync.source_table_id,
           reverseMapping,

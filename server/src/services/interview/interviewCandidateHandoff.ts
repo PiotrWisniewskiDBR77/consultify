@@ -64,7 +64,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { withPinnedPostgresTransaction } from '../../database/PostgresDatabase.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-import { createCandidateFromSource } from '../initiative/initiativeCandidateService.js';
+import {
+  createCandidateFromSource,
+  type CandidateDb,
+} from '../initiative/initiativeCandidateService.js';
 
 import { canonicalStatusToken } from './interviewStatusNormalization.js';
 
@@ -204,7 +207,7 @@ function toHandoffRecord(row: HandoffRow): InterviewHandoffRecord {
  * gets a plain (non-locking) read.
  */
 async function resolveEligibleSource(
-  db: { queryOne: <T = any>(sql: string, params?: unknown[]) => Promise<T | null> },
+  db: Pick<CandidateDb, 'queryOne'>,
   organizationId: string,
   source: InterviewCandidateSource,
   opts: { forUpdate: boolean }

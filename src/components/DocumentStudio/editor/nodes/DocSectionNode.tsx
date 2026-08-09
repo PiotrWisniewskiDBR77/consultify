@@ -19,6 +19,10 @@ export const DocSectionNode = Node.create({
   name: 'docSection',
   group: 'block',
   content: 'inline*',
+  // Section markers are structural titles, not rich body content. Disallow
+  // marks at schema level so keyboard shortcuts cannot bypass the toolbar
+  // guard and decorate/corrupt a section marker.
+  marks: '',
   defining: true,
 
   addAttributes() {

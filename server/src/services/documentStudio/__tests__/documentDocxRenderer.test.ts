@@ -114,6 +114,39 @@ async function unzipDocx(buffer: Buffer): Promise<{ document: string; styles: st
 }
 
 describe('documentDocxRenderer — named styles', () => {
+  it('localizes Polish system labels in cover, TOC, sources and footer', async () => {
+    const schema = makeSchema({
+      title: 'Raport transformacji',
+      documentType: 'steering_committee_report',
+      language: 'pl',
+      audience: ['steering_committee'],
+      density: 'detailed',
+      confidentiality: 'client_confidential',
+      formattingSchema: makeFormattingSchema({ toc: true }),
+      sourceRefs: [],
+    });
+    const buffer = await renderDocumentSchemaToDocxBuffer(schema);
+    const zip = await JSZip.loadAsync(buffer);
+    const visibleXml = (
+      await Promise.all(
+        Object.values(zip.files)
+          .filter((entry) => /^word\/(?:document|footer\d+)\.xml$/.test(entry.name))
+          .map((entry) => entry.async('string'))
+      )
+    ).join('\n');
+
+    expect(visibleXml).toContain('raport komitetu sterującego');
+    expect(visibleXml).toContain('Odbiorcy: komitet sterujący');
+    expect(visibleXml).toContain('Wygenerowano:');
+    expect(visibleXml).toContain('Spis treści');
+    expect(visibleXml).toContain('Źródła i identyfikowalność');
+    expect(visibleXml).toContain('poufne — tylko dla klienta');
+    expect(visibleXml).toContain('Strona ');
+    expect(visibleXml).not.toContain('Page ');
+    expect(visibleXml).not.toContain('Table of Contents');
+    expect(visibleXml).not.toContain('Sources &amp; traceability');
+  });
+
   it('decodes common HTML entities before writing visible DOCX text', async () => {
     const schema = makeSchema({
       sections: [
@@ -127,7 +160,9 @@ describe('documentDocxRenderer — named styles', () => {
             {
               blockId: 'entity-paragraph',
               type: 'paragraph',
-              content: { text: 'Decision &amp;quot;approved&amp;quot;&#58;&nbsp;owner&#x27;s action &amp; evidence &#x2713;.' } as unknown,
+              content: {
+                text: 'Decision &amp;quot;approved&amp;quot;&#58;&nbsp;owner&#x27;s action &amp; evidence &#x2713;.',
+              } as unknown,
             },
           ],
           sourceRefs: [],
@@ -136,7 +171,9 @@ describe('documentDocxRenderer — named styles', () => {
     });
     const buffer = await renderDocumentSchemaToDocxBuffer(schema);
     const { document } = await unzipDocx(buffer);
-    expect(document).toContain('Decision &quot;approved&quot;: owner&apos;s action &amp; evidence ✓.');
+    expect(document).toContain(
+      'Decision &quot;approved&quot;: owner&apos;s action &amp; evidence ✓.'
+    );
     expect(document).not.toContain('&amp;quot;');
     expect(document).not.toContain('&amp;#x27;');
     expect(document).not.toContain('&amp;nbsp;');
@@ -410,11 +447,20 @@ describe('documentDocxRenderer — KPI and risk tables', () => {
       formattingSchema: makeFormattingSchema({ coverPage: false }),
       sections: [
         {
-          sectionId: 'kpis', orderIndex: 0, level: 1, title: 'KPIs', sourceRefs: [],
-          blocks: [{
-            blockId: 'wide-kpi', type: 'kpi_strip',
-            content: { items: ['A', 'B', 'C', 'D'].map((label) => ({ label, value: '1' })) } as unknown,
-          }],
+          sectionId: 'kpis',
+          orderIndex: 0,
+          level: 1,
+          title: 'KPIs',
+          sourceRefs: [],
+          blocks: [
+            {
+              blockId: 'wide-kpi',
+              type: 'kpi_strip',
+              content: {
+                items: ['A', 'B', 'C', 'D'].map((label) => ({ label, value: '1' })),
+              } as unknown,
+            },
+          ],
         },
       ],
     });
@@ -426,13 +472,19 @@ describe('documentDocxRenderer — KPI and risk tables', () => {
   it('prunes empty KPI and risk shells instead of emitting technical placeholders', async () => {
     const schema = makeSchema({
       formattingSchema: makeFormattingSchema({ coverPage: false }),
-      sections: [{
-        sectionId: 'empty', orderIndex: 0, level: 1, title: 'Honest no-data state', sourceRefs: [],
-        blocks: [
-          { blockId: 'empty-kpi', type: 'kpi_strip', content: { items: [] } as unknown },
-          { blockId: 'empty-risk', type: 'risk_table', content: { rows: [] } as unknown },
-        ],
-      }],
+      sections: [
+        {
+          sectionId: 'empty',
+          orderIndex: 0,
+          level: 1,
+          title: 'Honest no-data state',
+          sourceRefs: [],
+          blocks: [
+            { blockId: 'empty-kpi', type: 'kpi_strip', content: { items: [] } as unknown },
+            { blockId: 'empty-risk', type: 'risk_table', content: { rows: [] } as unknown },
+          ],
+        },
+      ],
     });
     const { document } = await unzipDocx(await renderDocumentSchemaToDocxBuffer(schema));
     expect(document).not.toContain('placeholder');

@@ -141,7 +141,7 @@ function toPersistedRatioCategory(category: string): string {
   }
 }
 
-function safeJsonParse(raw: string | null | undefined, fb: any = {}): any {
+function safeJsonParse(raw: unknown, fb: any = {}): any {
   if (!raw) return fb;
   if (typeof raw !== 'string') return raw;
   try {
@@ -149,6 +149,12 @@ function safeJsonParse(raw: string | null | undefined, fb: any = {}): any {
   } catch {
     return fb;
   }
+}
+
+function analysisPeriodLabel(value: Record<string, any>): string | null {
+  const evidence = safeJsonParse(value.evidenceJson ?? value.evidence_json, {});
+  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  return label == null || String(label).trim() === '' ? null : String(label);
 }
 function mapRow(row: any): FinancialAnalysis {
   return {
@@ -206,6 +212,7 @@ async function loadAnalysisStatementRows(statementIds: string[]): Promise<
     line_code: string;
     line_name: string;
     statement_type: string;
+    period_label: string | null;
   }>
 > {
   const rowsFromSnapshots: Array<{
@@ -214,6 +221,7 @@ async function loadAnalysisStatementRows(statementIds: string[]): Promise<
     line_code: string;
     line_name: string;
     statement_type: string;
+    period_label: string | null;
   }> = [];
   let snapshotCoverage = 0;
 
@@ -223,17 +231,22 @@ async function loadAnalysisStatementRows(statementIds: string[]): Promise<
       ? snapshotVersion?.snapshot?.values
       : [];
     if (snapshotValues.length === 0) continue;
-    snapshotCoverage += 1;
+    const statementRows: typeof rowsFromSnapshots = [];
     for (const value of snapshotValues) {
       const lineCode = normalizeCanonicalLineCode(String(value?.lineCode || ''));
       if (!lineCode) continue;
-      rowsFromSnapshots.push({
+      statementRows.push({
         statement_id: statementId,
         value: Number(value?.value || 0),
         line_code: lineCode,
         line_name: String(value?.lineName || lineCode),
         statement_type: String(value?.statementType || ''),
+        period_label: analysisPeriodLabel(value),
       });
+    }
+    if (statementRows.length > 0 && statementRows.every((row) => row.period_label)) {
+      snapshotCoverage += 1;
+      rowsFromSnapshots.push(...statementRows);
     }
   }
 
@@ -243,7 +256,8 @@ async function loadAnalysisStatementRows(statementIds: string[]): Promise<
 
   const placeholders = statementIds.map(() => '?').join(',');
   const rows = (await dbAll<any>(
-    `SELECT fsv.statement_id, fsv.value, fsl.line_code, fsl.line_name, fsl.statement_type
+    `SELECT fsv.statement_id, fsv.value, fsv.period_label, fsv.evidence_json,
+            fsl.line_code, fsl.line_name, fsl.statement_type
      FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id IN (${placeholders})`,
@@ -254,10 +268,13 @@ async function loadAnalysisStatementRows(statementIds: string[]): Promise<
     line_code: string;
     line_name: string;
     statement_type: string;
+    period_label: string | null;
+    evidence_json?: unknown;
   }>;
   return rows.map((row) => ({
     ...row,
     line_code: normalizeCanonicalLineCode(row.line_code),
+    period_label: analysisPeriodLabel(row),
   }));
 }
 
@@ -431,6 +448,9 @@ export async function listAnalyses(
   if (filters?.status) {
     sql += ' AND status=?';
     p.push(filters.status);
+  } else {
+    sql += ` AND UPPER(COALESCE(status, '')) <> 'ARCHIVED'
+             AND LOWER(COALESCE(analysis_type, '')) <> 'archived'`;
   }
   if (filters?.projectId) {
     sql += ' AND project_id=?';
@@ -438,6 +458,21 @@ export async function listAnalyses(
   }
   sql += ' ORDER BY created_at DESC';
   return (await dbAll<any>(sql, p)).map(mapRow);
+}
+
+export async function archiveAnalysis(orgId: string, id: string): Promise<boolean> {
+  const existing = await dbGet<{ id: string }>(
+    `SELECT id FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+    [id, orgId]
+  );
+  if (!existing) return false;
+  await dbRun(
+    `UPDATE financial_analyses
+     SET analysis_type = 'archived', updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND organization_id = ?`,
+    [id, orgId]
+  );
+  return true;
 }
 export async function updateAnalysis(
   orgId: string,
@@ -1029,9 +1064,13 @@ async function buildStatementDataFromStatements(
     String(s.period_end || '').slice(0, 10) ||
     String(s.id).slice(0, 8);
 
-  const periods = Array.from(new Set((stmts || []).map(periodKey))).sort();
-
   const valueRows = await loadAnalysisStatementRows(ids);
+  const periodsFromValues = valueRows
+    .map((row) => String(row.period_label || '').trim())
+    .filter(Boolean);
+  const periods = Array.from(
+    new Set(periodsFromValues.length > 0 ? periodsFromValues : (stmts || []).map(periodKey))
+  ).sort();
 
   const stmtById = new Map<string, any>();
   for (const s of stmts || []) stmtById.set(String(s.id), s);
@@ -1059,7 +1098,7 @@ async function buildStatementDataFromStatements(
     const stmtId = String(r.statement_id);
     const stmt = stmtById.get(stmtId);
     if (!stmt) continue;
-    const p = periodKey(stmt);
+    const p = String(r.period_label || '').trim() || periodKey(stmt);
     const st = String(r.statement_type || stmt.statement_type || '').toUpperCase();
     const code = String(r.line_code || '').toUpperCase();
     const name = String(r.line_name || code);

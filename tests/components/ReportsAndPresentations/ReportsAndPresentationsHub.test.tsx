@@ -12,6 +12,7 @@ const navigateMock = vi.fn();
 let lastOnTabChange: ((tab: string) => void) | null = null;
 let lastTabs: Array<{ id: string; label: string }> | null = null;
 let lastWorkbookTemplateId: string | null | undefined;
+let lastWorkbookId: string | null | undefined;
 
 // Kanon 2026-07-26 (docs/product/MATERIALS_TARGET_STATE_AND_TEMPLATE_CANON_2026-07-24.md
 // §3): Menu 1 must stay at exactly 5 tabs REGARDLESS of these flags — the
@@ -157,9 +158,23 @@ vi.mock('../../../src/components/Presentations/PresentationTemplateArchitectView
   ),
 }));
 vi.mock('../../../src/components/AIChat/KimiWorkspace/ExceleParametricTemplates', () => ({
-  ExceleParametricTemplates: ({ initialTemplateId }: { initialTemplateId?: string | null }) => {
+  ExceleParametricTemplates: ({
+    initialTemplateId,
+    initialWorkbookId,
+    onBuilt,
+  }: {
+    initialTemplateId?: string | null;
+    initialWorkbookId?: string | null;
+    onBuilt?: (result: { id: string }) => void;
+  }) => {
     lastWorkbookTemplateId = initialTemplateId;
-    return <div data-testid="workbook-templates-view">workbook-templates</div>;
+    lastWorkbookId = initialWorkbookId;
+    return (
+      <div data-testid="workbook-templates-view">
+        workbook-templates
+        <button onClick={() => onBuilt?.({ id: 'built-workbook-99' })}>mock-build</button>
+      </div>
+    );
   },
 }));
 vi.mock('../../../src/components/TemplateBuilder', () => ({
@@ -188,6 +203,25 @@ describe('ReportsAndPresentationsHub', () => {
 
     expect(screen.getByTestId('workbook-templates-view')).toBeInTheDocument();
     expect(lastWorkbookTemplateId).toBe('sheet-template-42');
+  });
+
+  it('rehydrates a built workbook id and retains it in the canonical template URL', () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          '/reports?tab=workbook_templates&workbookTemplateId=sheet-template-42&workbookId=workbook-42',
+        ]}
+      >
+        <ReportsAndPresentationsHub />
+      </MemoryRouter>
+    );
+
+    expect(lastWorkbookId).toBe('workbook-42');
+    screen.getByRole('button', { name: 'mock-build' }).click();
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/reports?tab=workbook_templates&workbookTemplateId=sheet-template-42&workbookId=built-workbook-99',
+      { replace: true }
+    );
   });
 
   it('preserves artifactId query param when switching tabs', () => {

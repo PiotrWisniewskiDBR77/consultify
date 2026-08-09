@@ -2426,7 +2426,7 @@ router.put(
     const actor = await getAdminActor(req, res, ['billing:write']);
     if (!actor) return;
     const outcome = await assignBillingPlan(actor.orgId, req.body || {});
-    if (!outcome.ok) {
+    if (outcome.ok === false) {
       return res.status(400).json({
         error: 'Validation failed',
         code: 'VALIDATION_ERROR',

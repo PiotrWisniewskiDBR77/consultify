@@ -82,6 +82,26 @@ export interface ExtractionResult {
   warnings: string[];
 }
 
+const PDF_PAGE_MARKER = /^--\s*(\d+)\s+of\s+\d+\s*--$/i;
+
+/**
+ * pdf-parse v2 inserts `-- N of M --` between pages. Keep a page number for
+ * every source-text row so later section scoping can retain exact PDF lineage.
+ */
+function buildPdfPageByLine(text: string): Array<number | null> {
+  const sourceLines = String(text || '').split(/\r?\n/);
+  const pageByLine: Array<number | null> = [];
+  let currentPage: number | null = sourceLines.length > 0 ? 1 : null;
+  for (let index = 0; index < sourceLines.length; index += 1) {
+    const marker = sourceLines[index].trim().match(PDF_PAGE_MARKER);
+    pageByLine.push(currentPage);
+    // pdf-parse emits the marker after the page body, so subsequent lines
+    // belong to the following page.
+    if (marker) currentPage = Number(marker[1]) + 1;
+  }
+  return pageByLine;
+}
+
 export interface ValidationMessage {
   type: 'error' | 'warning' | 'info';
   code: string;
@@ -102,12 +122,7 @@ export type StatementQualityStage =
   | 'benchmark';
 export type StatementQualityResultStatus = 'pass' | 'warning' | 'fail' | 'info';
 export type StatementDocumentClass =
-  | 'unknown'
-  | 'native_pdf'
-  | 'scan_pdf'
-  | 'spreadsheet'
-  | 'csv'
-  | 'mixed_report';
+  'unknown' | 'native_pdf' | 'scan_pdf' | 'spreadsheet' | 'csv' | 'mixed_report';
 
 export interface StatementDocumentProfile {
   documentClass: StatementDocumentClass;
@@ -1389,13 +1404,19 @@ export function locateStatementSections(
         )
     ).length;
     const hasSegmentData = hasSegmentBreakdownHeaders || hasGeographicOrProductLines >= 3;
+    const repeatedImpairmentRows = (windowText.match(/impairment/g) || []).length >= 3;
 
     const contextPenalty =
       (isNotesOrMDASection ? 80 : 0) +
       (isMDASection ? 100 : 0) +
       (isSegmentSection ? 60 : 0) +
       (isNoteDetailSection ? 40 : 0) +
-      (hasSegmentData ? 120 : 0);
+      (hasSegmentData ? 120 : 0) +
+      // Notes often repeat a primary-statement heading inside a reconciliation
+      // table (for example an impairment note headed "Group income statement").
+      // Those tables can be denser than the real statement and used to win the
+      // score despite representing only one disclosure topic.
+      (repeatedImpairmentRows ? 180 : 0);
 
     const tooFewNumericLinesPenalty = numericLines < 5 ? (5 - numericLines) * 30 : 0;
 
@@ -1619,6 +1640,7 @@ export function extractFinancialLines(
   const lines: ExtractedLine[] = [];
   const warnings: string[] = [];
   const { scopedText, lineOffset, sections } = extractRelevantStatementSection(text, detectedType);
+  const pdfPageByLine = buildPdfPageByLine(text);
   const columnSelection = resolveStatementColumnSelection(scopedText, {
     periodLabel: options?.selectedPeriodLabel || undefined,
   });
@@ -1650,7 +1672,12 @@ export function extractFinancialLines(
     s = s.replace(/\s/g, '');
     const lastComma = s.lastIndexOf(',');
     const lastDot = s.lastIndexOf('.');
-    if (lastComma > lastDot) {
+    const commaOnlyThousands = lastComma >= 0 && lastDot < 0 && /^\d{1,3}(?:,\d{3})+$/.test(s);
+    if (commaOnlyThousands) {
+      // English-language reports use commas as thousands separators even
+      // when no decimal point is present (e.g. Tesco £m: "5,092").
+      s = s.replace(/,/g, '');
+    } else if (lastComma > lastDot) {
       // European: 1.234,56
       s = s.replace(/\./g, '').replace(',', '.');
     } else {
@@ -2050,6 +2077,7 @@ export function extractFinancialLines(
       rawValue,
       selectedPeriodLabel: targetPeriodLabel || undefined,
       comparisonPeriodLabel: comparisonPeriodLabel || undefined,
+      sourcePage: pdfPageByLine[lineOffset + i] ?? undefined,
       sourceRow: lineOffset + i + 1,
       rowType: lineClassification.isNonFinancial ? 'nonFinancial' : deriveRowType(label),
       hierarchyDepth: Math.max(0, (rawLines[i].match(/^\s+/)?.[0].length || 0) / 2),
@@ -6861,6 +6889,7 @@ export function validateStatement(
     originalLabel?: string;
     mappingStatus?: string;
     isNonFinancial?: boolean;
+    periodLabel?: string | null;
   }>,
   statementType: string
 ): { status: 'pass' | 'warnings' | 'needs_review'; messages: ValidationMessage[] } {
@@ -6878,12 +6907,14 @@ export function validateStatement(
     return values.reduce((sum, value) => sum + value, 0);
   };
 
+  const duplicateKeys = activeLines
+    .filter((line) => line.canonicalLineId)
+    .map((line) => `${String(line.canonicalLineId)}::${String(line.periodLabel || '')}`);
   const duplicateCodes = Array.from(
     new Set(
-      activeLines
-        .filter((line) => line.canonicalLineId)
-        .map((line) => String(line.canonicalLineId))
-        .filter((lineId, index, arr) => arr.indexOf(lineId) !== index)
+      duplicateKeys
+        .filter((key, index, arr) => arr.indexOf(key) !== index)
+        .map((key) => key.split('::')[0])
     )
   );
   if (duplicateCodes.length > 0) {
@@ -7484,8 +7515,8 @@ export async function persistStatementCandidateRows(params: {
       const candidateRowId = uuidv4();
       await dbRun(
         `INSERT INTO financial_statement_candidate_rows
-          (id, statement_id, ingest_run_id, section_id, row_key, row_label, normalized_label, source_row, selected_period_label, raw_value, normalized_value, currency, scaling, confidence, classification_reason, metadata_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, statement_id, ingest_run_id, section_id, row_key, row_label, normalized_label, source_row, source_page, selected_period_label, raw_value, normalized_value, currency, scaling, confidence, classification_reason, metadata_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           candidateRowId,
           params.statementId,
@@ -7495,6 +7526,7 @@ export async function persistStatementCandidateRows(params: {
           row.originalLabel,
           normalizeAliasText(row.originalLabel),
           row.sourceRow || null,
+          row.sourcePage || null,
           row.selectedPeriodLabel || null,
           row.rawValue || null,
           Number.isFinite(row.value) ? row.value : null,
@@ -7525,6 +7557,110 @@ export async function persistStatementCandidateRows(params: {
   }
 }
 
+export async function backfillStatementValueSourcePages(statementId: string): Promise<number> {
+  try {
+    const latestRun = (await dbGet(
+      `SELECT ingest_run_id
+       FROM financial_statement_candidate_rows
+       WHERE statement_id = ? AND ingest_run_id IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [statementId]
+    )) as { ingest_run_id?: string | null } | undefined;
+    const ingestRunId = latestRun?.ingest_run_id || null;
+    const candidateRunFilter = ingestRunId ? `AND row.ingest_run_id = ?` : '';
+    const candidates = (await dbAll(
+      `SELECT row.source_row, row.source_page, row.normalized_label,
+              mapping.canonical_line_id
+       FROM financial_statement_candidate_rows row
+       LEFT JOIN financial_statement_mapping_candidates mapping
+         ON mapping.candidate_row_id = row.id AND mapping.is_selected = TRUE
+       WHERE row.statement_id = ?
+         AND row.source_page IS NOT NULL
+         ${candidateRunFilter}
+       ORDER BY row.created_at DESC`,
+      ingestRunId ? [statementId, ingestRunId] : [statementId]
+    )) as Array<{
+      source_row?: number | null;
+      source_page?: number | null;
+      normalized_label?: string | null;
+      canonical_line_id?: string | null;
+    }>;
+    const pageBySourceRow = new Map<number, number>();
+    const pagesByCanonicalLine = new Map<string, Set<number>>();
+    const pagesByNormalizedLabel = new Map<string, Set<number>>();
+    for (const candidate of candidates || []) {
+      if (candidate.source_page == null) continue;
+      const sourcePage = Number(candidate.source_page);
+      if (candidate.source_row != null) {
+        const sourceRow = Number(candidate.source_row);
+        if (!pageBySourceRow.has(sourceRow)) pageBySourceRow.set(sourceRow, sourcePage);
+      }
+      if (candidate.canonical_line_id) {
+        const pages = pagesByCanonicalLine.get(candidate.canonical_line_id) || new Set<number>();
+        pages.add(sourcePage);
+        pagesByCanonicalLine.set(candidate.canonical_line_id, pages);
+      }
+      if (candidate.normalized_label) {
+        const pages = pagesByNormalizedLabel.get(candidate.normalized_label) || new Set<number>();
+        pages.add(sourcePage);
+        pagesByNormalizedLabel.set(candidate.normalized_label, pages);
+      }
+    }
+
+    const values = (await dbAll(
+      `SELECT id, source_row, original_label, canonical_line_id, evidence_json
+       FROM financial_statement_values
+       WHERE statement_id = ? AND source_page IS NULL`,
+      [statementId]
+    )) as Array<{
+      id: string;
+      source_row?: number | null;
+      original_label?: string | null;
+      canonical_line_id?: string | null;
+      evidence_json?: string | null;
+    }>;
+    let updated = 0;
+    for (const value of values || []) {
+      const exactRowPage =
+        value.source_row != null ? pageBySourceRow.get(Number(value.source_row)) : undefined;
+      const canonicalPages = value.canonical_line_id
+        ? pagesByCanonicalLine.get(value.canonical_line_id)
+        : undefined;
+      const normalizedLabel = value.original_label
+        ? normalizeAliasText(value.original_label)
+        : '';
+      const labelPages = normalizedLabel
+        ? pagesByNormalizedLabel.get(normalizedLabel)
+        : undefined;
+      const sourcePage =
+        exactRowPage ??
+        (canonicalPages?.size === 1 ? [...canonicalPages][0] : undefined) ??
+        (labelPages?.size === 1 ? [...labelPages][0] : undefined);
+      if (sourcePage == null) continue;
+      let evidence: Record<string, unknown> = {};
+      try {
+        evidence = value.evidence_json ? JSON.parse(value.evidence_json) : {};
+      } catch {
+        evidence = {};
+      }
+      evidence.sourcePage = sourcePage;
+      await dbRun(
+        `UPDATE financial_statement_values
+         SET source_page = ?, evidence_json = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND statement_id = ? AND source_page IS NULL`,
+        [sourcePage, JSON.stringify(evidence), value.id, statementId],
+        { fallback: false }
+      );
+      updated += 1;
+    }
+    return updated;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return 0;
+  }
+}
+
 export async function loadPersistedStatementCandidateRows(params: {
   statementId: string;
   ingestRunId?: string | null;
@@ -7540,6 +7676,7 @@ export async function loadPersistedStatementCandidateRows(params: {
       `SELECT
          row.row_label as row_label,
          row.source_row as source_row,
+         row.source_page as source_page,
          row.selected_period_label as selected_period_label,
          row.raw_value as raw_value,
          row.normalized_value as normalized_value,
@@ -7553,6 +7690,7 @@ export async function loadPersistedStatementCandidateRows(params: {
     )) as Array<{
       row_label?: string;
       source_row?: number | null;
+      source_page?: number | null;
       selected_period_label?: string | null;
       raw_value?: string | null;
       normalized_value?: number | null;
@@ -7572,6 +7710,7 @@ export async function loadPersistedStatementCandidateRows(params: {
         originalLabel: String(row.row_label || ''),
         value: Number(row.normalized_value || 0),
         confidence: Number(row.confidence || 0),
+        sourcePage: row.source_page != null ? Number(row.source_page) : undefined,
         sourceRow: row.source_row != null ? Number(row.source_row) : undefined,
         sectionKey: metadata.sectionKey || undefined,
         rawValue: row.raw_value || undefined,
@@ -8394,8 +8533,7 @@ export function parseFailedAttemptRecord(raw: string | null): FailedAttemptRecor
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     const envelope = parsed?.[FAILED_ATTEMPT_ENVELOPE_KEY] as
-      | { statementIds?: unknown; result?: unknown }
-      | undefined;
+      { statementIds?: unknown; result?: unknown } | undefined;
     if (!envelope || !Array.isArray(envelope.statementIds)) return null;
     const statementIds = (envelope.statementIds as unknown[]).filter(
       (id): id is string => typeof id === 'string' && id.length > 0

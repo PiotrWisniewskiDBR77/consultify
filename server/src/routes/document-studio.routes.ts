@@ -302,6 +302,7 @@ import {
   DocumentLifecycleTransitionError,
   DocumentManualSaveConflictError,
   DocumentManualSaveNotFoundError,
+  DocumentManualStructureMismatchError,
   DocumentRollbackError,
   ensureDocumentCommentsHydrated,
   ensureDocumentLifecycleHydrated,
@@ -367,7 +368,9 @@ import type {
 } from '../services/documentStudio/documentStudioTypes.js';
 import {
   approveTemplate,
+  cloneTemplateAsDraft,
   createTemplateFromArtifact,
+  deleteDraftTemplate,
   deprecateTemplate,
   draftTemplate,
   draftTemplateAsync,
@@ -377,7 +380,9 @@ import {
   listTemplates,
   recordTemplateFeedback,
   recordTemplateUsage,
-  reviseTemplateStructure,
+  restoreTemplateAuditSnapshotAsDraft,
+  reviseTemplateStructureDurably,
+  validateTemplate,
 } from '../services/documentStudio/documentTemplateService.js';
 import { loadSnapshotById } from '../services/documentStudio/documentVersionSnapshotRegistryDao.js';
 // MAT-010 — canonical artifact lineage (fail-open hooks only).
@@ -400,6 +405,7 @@ import {
   resolveDocumentTemplateForCreation,
   type TemplateResolveErrorCode,
 } from '../services/materials/creationIntent.js';
+import { removeTemplateArtifactByOrigin } from '../services/v8/artifactRegistryService.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -1321,6 +1327,94 @@ router.get(
   })
 );
 
+router.get(
+  '/templates/:templateId/validate',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    const template = getTemplate(String(req.params.templateId || ''), organizationId);
+    if (!template) return void res.status(404).json({ error: 'template_not_found' });
+    const issues = validateTemplate(template);
+    res.json({ valid: !issues.some((issue) => issue.blocking), issues });
+  })
+);
+
+router.post(
+  '/templates/:templateId/new-version',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const template = cloneTemplateAsDraft({
+        templateId: String(req.params.templateId || ''),
+        organizationId,
+        userId,
+      });
+      res.status(201).json({ template });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_clone_failed';
+      res.status(message === 'template_not_found' ? 404 : 400).json({ error: message });
+    }
+  })
+);
+
+router.post(
+  '/templates/:templateId/audit/:auditId/restore-as-draft',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      const template = restoreTemplateAuditSnapshotAsDraft({
+        templateId: String(req.params.templateId || ''),
+        auditId: String(req.params.auditId || ''),
+        organizationId,
+        userId,
+      });
+      res.status(201).json({ template });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_restore_failed';
+      const status = message.endsWith('_not_found')
+        ? 404
+        : message === 'template_snapshot_unavailable'
+          ? 409
+          : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
+router.delete(
+  '/templates/:templateId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, organizationId, userRole } = getAuthContext(req as AuthRequest);
+    if (!userId || !organizationId) return void res.status(401).json({ error: 'Unauthorized' });
+    if (!['admin', 'owner', 'superadmin'].includes(userRole.toLowerCase())) {
+      return void res
+        .status(403)
+        .json({ error: 'Admin or owner role required to delete templates' });
+    }
+    const templateId = String(req.params.templateId || '');
+    await ensureTemplateRegistryHydrated(organizationId);
+    try {
+      await deleteDraftTemplate({ templateId, organizationId });
+      await removeTemplateArtifactByOrigin({
+        organizationId,
+        originRuntime: 'document_template',
+        originRecordId: templateId,
+      });
+      res.status(204).send();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'template_delete_failed';
+      const status =
+        message === 'template_not_found' ? 404 : message === 'template_not_draft' ? 409 : 400;
+      res.status(status).json({ error: message });
+    }
+  })
+);
+
 router.post(
   '/templates/:templateId/approve',
   asyncHandler(async (req: Request, res: Response) => {
@@ -1340,6 +1434,12 @@ router.post(
     }
     const notes = typeof req.body?.notes === 'string' ? req.body.notes : undefined;
     try {
+      const current = getTemplate(templateId, organizationId);
+      if (!current) return void res.status(404).json({ error: 'template_not_found' });
+      const issues = validateTemplate(current);
+      if (issues.some((issue) => issue.blocking)) {
+        return void res.status(422).json({ error: 'template_validation_failed', issues });
+      }
       const template = approveTemplate({ templateId, organizationId, userId, notes });
       res.json({ template });
     } catch (err) {
@@ -1427,7 +1527,7 @@ router.patch(
         : undefined;
     await ensureTemplateRegistryHydrated(organizationId);
     try {
-      const template = reviseTemplateStructure({
+      const template = await reviseTemplateStructureDurably({
         templateId,
         organizationId,
         userId,
@@ -4499,6 +4599,7 @@ router.put(
       // P-10 (2026-07-28): optional title rename riding along the same
       // durable content save — see `updateDocumentManualContent` doc-comment.
       title?: unknown;
+      sourceRefs?: unknown;
     };
     if (!Array.isArray(body.sections)) {
       res.status(400).json({ error: 'sections_required', code: 'DOC_CONTENT_SECTIONS_REQUIRED' });
@@ -4514,6 +4615,12 @@ router.put(
       res.status(400).json({ error: 'title_must_be_string', code: 'DOC_CONTENT_TITLE_INVALID' });
       return;
     }
+    if (body.sourceRefs !== undefined && !Array.isArray(body.sourceRefs)) {
+      res
+        .status(400)
+        .json({ error: 'sourceRefs_must_be_array', code: 'DOC_CONTENT_SOURCE_REFS_INVALID' });
+      return;
+    }
     try {
       const result = await updateDocumentManualContent({
         artifactId,
@@ -4522,6 +4629,9 @@ router.put(
         sections: body.sections as DocumentSchema['sections'],
         expectedVersion: body.expectedVersion,
         title: typeof body.title === 'string' ? body.title : undefined,
+        sourceRefs: Array.isArray(body.sourceRefs)
+          ? (body.sourceRefs as DocumentSchema['sourceRefs'])
+          : undefined,
       });
 
       // MAT-010 lineage hook (fail-safe). The Document type's real
@@ -4562,6 +4672,15 @@ router.put(
             yourVersion: body.expectedVersion,
             serverVersion: err.serverVersion,
           },
+        });
+        return;
+      }
+      if (err instanceof DocumentManualStructureMismatchError) {
+        res.status(422).json({
+          error: err.code,
+          code: 'DOC_CONTENT_TEMPLATE_STRUCTURE_MISMATCH',
+          expectedSectionCount: err.expectedSectionCount,
+          receivedSectionCount: err.receivedSectionCount,
         });
         return;
       }

@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { CorrectiveActions } from '@/components/Execution/CorrectiveActions';
 import { LoadingState as SharedLoadingState } from '@/components/shared/states';
 import {
   type MetaPill,
@@ -188,8 +189,15 @@ const VALID_TABS: ModuleTab[] = [
   'roi' as ModuleTab,
   'roi_analysis' as ModuleTab,
   'results_strategic' as ModuleTab,
+  // RB-031/RV-021: 'results_initiatives' (Results Review) is a real render
+  // branch (renders `ResultsInitiativesView`, see below) reachable from
+  // internal actions (e.g. the KPI drawer), but was missing from this
+  // whitelist — so the canonical direct-entry URL
+  // `results?tab=results_initiatives` was silently discarded by the
+  // URL→activeTab resolution and fell back to `results_kpi`.
+  'results_initiatives' as ModuleTab,
 ];
-const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards'] as const;
+const VALID_KPI_MODES = ['overview', 'queue', 'catalog', 'scorecards', 'signals'] as const;
 const VALID_REPORT_MODES = ['tracked', 'reports', 'schedules', 'wallboards', 'connectors'] as const;
 
 export const ResultsHub: React.FC = () => {
@@ -221,10 +229,10 @@ export const ResultsHub: React.FC = () => {
     'all' | 'attached' | 'unattached'
   >('all');
   const [kpiWorkspaceMode, setKpiWorkspaceModeRaw] = useState<
-    'overview' | 'queue' | 'catalog' | 'scorecards'
+    'overview' | 'queue' | 'catalog' | 'scorecards' | 'signals'
   >(
     (VALID_KPI_MODES as readonly string[]).includes(searchParams.get('mode') || '')
-      ? (searchParams.get('mode') as 'overview' | 'queue' | 'catalog' | 'scorecards')
+      ? (searchParams.get('mode') as 'overview' | 'queue' | 'catalog' | 'scorecards' | 'signals')
       : 'catalog'
   );
   const [reportWorkspaceMode, setReportWorkspaceModeRaw] = useState<
@@ -232,11 +240,7 @@ export const ResultsHub: React.FC = () => {
   >(
     (VALID_REPORT_MODES as readonly string[]).includes(searchParams.get('rmode') || '')
       ? (searchParams.get('rmode') as
-          | 'tracked'
-          | 'reports'
-          | 'schedules'
-          | 'wallboards'
-          | 'connectors')
+          'tracked' | 'reports' | 'schedules' | 'wallboards' | 'connectors')
       : 'tracked'
   );
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -302,7 +306,7 @@ export const ResultsHub: React.FC = () => {
   );
 
   const setKpiWorkspaceMode = useCallback(
-    (mode: 'overview' | 'queue' | 'catalog' | 'scorecards') => {
+    (mode: 'overview' | 'queue' | 'catalog' | 'scorecards' | 'signals') => {
       setKpiWorkspaceModeRaw(mode);
       const next = new URLSearchParams(searchParams);
       next.set('mode', mode);
@@ -1363,7 +1367,10 @@ export const ResultsHub: React.FC = () => {
             kpiWorkspaceMode === 'catalog'
           )}
           {actionButton(
-            t('results.kpi.workspace.queue', 'Data / Signals'),
+            // RB-031/RV-021: `mode=queue` is the CT audit's canonical entry for
+            // "Corrective Action" (see CODEX_SOURCE_MOUNT_AND_ABSENCE_PROOF.md#A043)
+            // — mount the real workspace there instead of inventing a new mode.
+            t('results.kpi.workspace.queue', 'Corrective Action'),
             () => setKpiWorkspaceMode('queue'),
             kpiWorkspaceMode === 'queue'
           )}
@@ -1376,6 +1383,14 @@ export const ResultsHub: React.FC = () => {
             t('results.kpi.workspace.scorecards', 'Scorecards'),
             () => setKpiWorkspaceMode('scorecards'),
             kpiWorkspaceMode === 'scorecards'
+          )}
+          {actionButton(
+            // The former `mode=queue` tool (below-target KPI signal-entry
+            // sheets) is not part of the audited canonical denominator; kept
+            // reachable under its own non-canonical mode so it isn't lost.
+            t('results.kpi.workspace.signals', 'Data / Signals'),
+            () => setKpiWorkspaceMode('signals'),
+            kpiWorkspaceMode === 'signals'
           )}
           {actionButton(
             t('results.actions.recordValue', 'Record value'),
@@ -1962,7 +1977,29 @@ export const ResultsHub: React.FC = () => {
     );
   }
 
-  if (threePairsOn) {
+  // RB-031/RV-021: ResultsThreePairsView is a single monolithic KPI-centric
+  // cockpit that ignores `tab`/`mode`/`rmode` entirely — with `threePairs`
+  // default-ON on demo/stage/dev, every canonical Results deep link
+  // (Scorecards, Corrective Action, Results Review, Reports) rendered this
+  // same generic KPI view while the URL kept its requested query, exactly as
+  // RV-021 documented. A URL that explicitly asks for one of those canonical
+  // surfaces must bypass the three-pairs landing cockpit and fall through to
+  // the tab/mode-driven rendering below, which mounts the real distinct view.
+  const requestedMode = searchParams.get('mode');
+  const requestedTab = searchParams.get('tab');
+  const requestedRmode = searchParams.get('rmode');
+  // RV-023: which of the three-pairs cockpit's tables (KPI/ROI/OKR) is
+  // selected — read here (not just inside the JSX below) so it can also
+  // participate in the deep-link decision if that's ever needed.
+  const requestedPair = searchParams.get('pair');
+  const isCanonicalResultsDeepLink =
+    requestedMode === 'scorecards' ||
+    requestedMode === 'signals' ||
+    requestedMode === 'queue' ||
+    requestedTab === 'results_initiatives' ||
+    (requestedTab === 'results_reports' && requestedRmode === 'reports');
+
+  if (threePairsOn && !isCanonicalResultsDeepLink) {
     return (
       <>
         <ResultsThreePairsView
@@ -1979,6 +2016,19 @@ export const ResultsHub: React.FC = () => {
             setRoiDrawer({ id: initiativeId, name: item?.initiativeName || initiativeId });
           }}
           onOpenObjective={() => setShowOkrManage(true)}
+          // RV-023 (CB-02): the KPI/ROI/OKR pair selection gets canonical
+          // route identity (`?pair=`) instead of resetting to KPI on every
+          // refresh/direct-entry/back-forward.
+          activePair={requestedPair === 'roi' || requestedPair === 'okr' ? requestedPair : 'kpi'}
+          onActivePairChange={(pair) => {
+            const next = new URLSearchParams(searchParams);
+            if (pair === 'kpi') {
+              next.delete('pair');
+            } else {
+              next.set('pair', pair);
+            }
+            setSearchParams(next, { replace: false });
+          }}
         />
 
         {showCreateModal && (
@@ -2344,6 +2394,36 @@ export const ResultsHub: React.FC = () => {
             onOpenKpi={(kpiId) => openKpiDrawer(kpiId, 'summary')}
           />
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue' ? (
+          // RB-031/RV-021 (Codex pass 2): `mode=queue` is the audited canonical
+          // entry for "Corrective Action" (CODEX_SOURCE_MOUNT_AND_ABSENCE_PROOF.md
+          // #A043 names this exact tab+mode combination) — mount the real
+          // corrective-action workspace here rather than inventing a separate
+          // mode.
+          //
+          // RV-008/blocker-3 (Codex re-review): `scopedInitiativeId` (URL
+          // `?initiativeId=`) is real and user-supplied, but it is NOT a
+          // confirmed project identity — nothing here verifies it is the kind
+          // of id `/api/pmo/projects/:id/corrective-actions` expects, so
+          // passing it through would still be a guess, just a less obvious
+          // one. Until an explicit project/initiative-identity resolver or
+          // service contract exists, this canonical entry deliberately never
+          // supplies a `projectId` — `CorrectiveActions` renders its honest
+          // "no project context" state and never calls the service. A caller
+          // that DOES have a confirmed project id (verified against a real
+          // contract) can pass it directly; see CorrectiveActions.tsx.
+          <CorrectiveActions />
+        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
+          <ResultsKpiScorecardsView
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            createNonce={kpiScorecardCreateNonce}
+            initiatives={filteredInitiatives}
+          />
+        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'signals' ? (
+          // Relocated here from the former `mode=queue` slot (now Corrective
+          // Action, see above) — this below-target KPI signal-entry-sheet tool
+          // is not part of the audited canonical denominator, so it moved to
+          // its own non-canonical mode instead of being dropped.
           <KpiQueueView
             kpis={filteredKpis}
             activeFilters={activeFilters}
@@ -2353,13 +2433,6 @@ export const ResultsHub: React.FC = () => {
             createNonce={signalSheetCreateNonce}
             manualSheets={manualSignalSheets}
             onCreateSheet={handleCreateSignalSheet}
-          />
-        ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'scorecards' ? (
-          <ResultsKpiScorecardsView
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            createNonce={kpiScorecardCreateNonce}
-            initiatives={filteredInitiatives}
           />
         ) : activeTab === 'results_kpi' && viewMode === 'table' ? (
           // Triada standard (docs/ui-standards/TRIADA_KANON.md A4-A7): KPI

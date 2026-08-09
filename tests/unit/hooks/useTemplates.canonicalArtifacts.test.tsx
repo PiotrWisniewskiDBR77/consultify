@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useTemplates } from '../../../src/components/ReportsAndPresentations/useRapData';
@@ -180,6 +180,29 @@ describe('useTemplates (canonical artifacts)', () => {
     expect(result.current.templates).toEqual([]);
   });
 
+  it('opts the canonical Template Library queries into draft visibility on refresh', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as Response);
+
+    const { result } = renderHook(() => useTemplates());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    fetchMock.mockClear();
+
+    await act(async () => {
+      await result.current.fetchTemplates(true);
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    for (const [url] of fetchMock.mock.calls) {
+      const parsed = new URL(String(url), 'http://localhost');
+      expect(parsed.pathname).toBe('/api/artifacts');
+      expect(parsed.searchParams.get('artifactFamily')).toBe('template');
+      expect(parsed.searchParams.get('include')).toBe('drafts');
+    }
+  });
+
   it('preserves deprecated status distinctly from archived (P24-D: G4 deprecation)', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: any) => {
       const url = String(input);
@@ -240,4 +263,3 @@ describe('useTemplates (canonical artifacts)', () => {
     );
   });
 });
-

@@ -20,7 +20,11 @@ import { type AuthRequest, requireRole, verifyToken } from '../middleware/auth.m
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
-import { assertIdeaMembership, selectCanonicalMapRow } from '../realtime/ideaMapAccess.js';
+import {
+  assertIdeaMembership,
+  selectCanonicalMapRow,
+  selectReadableMapRow,
+} from '../realtime/ideaMapAccess.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { createIdeaMapSnapshot } from '../services/ideaMapSnapshotService.js';
 import { InboxAiAssistItemSchema, runInboxAiAssist } from '../services/inboxAiAssistService.js';
@@ -277,7 +281,7 @@ async function applyInboxTriageSideEffects({
     );
     const transition = validateTaskStatusTransition(task?.status, 'done');
     if (!transition.allowed) {
-      throw new Error(transition.message);
+      throw new Error('message' in transition ? transition.message : 'Invalid task status transition');
     }
     await queryHelpers.queryRun(
       `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
@@ -2669,19 +2673,16 @@ router.get(
         : 'NULL as "lastOpenedAt"',
     ].join(',\n          ');
 
-    // Each idea's real tool lives in my_idea_maps.preferred_tool (my_ideas has NO
-    // tool column). Without this the list can't tell a whiteboard/process_flow/
-    // table idea from a mind map: the "Tool" badge defaults to Recommendation map
-    // for ALL rows, and opening the idea can't seed the right tool (handleIdeaClick
-    // reads this preferredTool). Pull it from the canonical map row (fallback: most
-    // recent), guarded so the list still works before the my_idea_maps migration.
+    // RV-008: `preferredTool` is resolved AFTER the base query below, one
+    // idea at a time, through `selectReadableMapRow` — the exact same
+    // tenant/user-scoped resolver `GET /my-ideas/:id/map` uses to decide what
+    // Open actually shows. This list previously used a tolerant
+    // `is_canonical DESC NULLS LAST` fallback while `GET /map` required a
+    // strict canonical match with no fallback, so a Table-labelled idea whose
+    // map was never flagged canonical opened as Mind Map instead. Sharing one
+    // resolver makes that divergence structurally impossible.
     const listMapCols = await getTableColumns('my_idea_maps');
-    const preferredToolSelect = listMapCols.has('preferred_tool')
-      ? `(SELECT mim.preferred_tool FROM my_idea_maps mim
-             WHERE mim.idea_id = my_ideas.id
-             ORDER BY ${listMapCols.has('is_canonical') ? 'mim.is_canonical DESC NULLS LAST, ' : ''}mim.updated_at DESC
-             LIMIT 1) as "preferredTool"`
-      : 'NULL as "preferredTool"';
+    const canResolvePreferredTool = listMapCols.has('preferred_tool');
 
     const folder = req.query.folder ? String(req.query.folder).trim() : '';
     const favoriteOnly =
@@ -2734,7 +2735,6 @@ router.get(
           promoted_to as "promotedTo",
           ${lineageSelect},
           ${homeSelect},
-          ${preferredToolSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -2746,12 +2746,30 @@ router.get(
         params
       )) || [];
 
+    // RV-008: every row here already belongs to `userId` (the WHERE clause
+    // above), so `userId` IS each row's owner for the legacy-mode resolver
+    // branch — no extra `user_id` column needed in the SELECT.
+    const preferredTools = canResolvePreferredTool
+      ? await Promise.all(
+          rows.map((r: any) =>
+            selectReadableMapRow<{ preferredTool: string | null }>(
+              ideaMapAccessDb,
+              String(r.id),
+              userId,
+              orgId,
+              'preferred_tool as "preferredTool"'
+            )
+          )
+        )
+      : rows.map(() => null);
+
     res.json(
-      rows.map((r: any) =>
+      rows.map((r: any, i: number) =>
         decorateIdeaLineage({
           ...r,
           tags: parseTagsArray(r?.tags),
           isFavorite: !!r?.isFavorite,
+          preferredTool: preferredTools[i]?.preferredTool ?? null,
         })
       )
     );
@@ -4235,41 +4253,27 @@ router.get(
       ? `, schema_version as "schemaVersion"`
       : `, 1 as "schemaVersion"`;
 
-    let row: any = null;
-
-    // DP-3 (T4) shared/canonical READ path — flag ON + is_canonical present.
+    // RV-008: membership must still gate shared-mode reads before touching
+    // the row at all (a non-member gets the same 404 the legacy path returns
+    // for an unknown idea).
     if (sharedIdeaMapsActive(mapCols)) {
-      // Membership gate: an ACTIVE org member may read the shared board; a
-      // non-member gets the same 404 the legacy path returns for an unknown idea.
       const membership = await assertIdeaMembership(ideaMapAccessDb, orgId, userId, ideaId);
       if (!membership.canRead) return res.status(404).json({ error: 'Idea not found' });
-
-      // Canonical row is selected by is_canonical (not user_id) so every member
-      // reads the single shared board regardless of who last edited it.
-      const canonicalMapSelectSql = `
-        SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
-        FROM my_idea_maps
-        WHERE idea_id = ? AND organization_id = ? AND is_canonical = TRUE
-        LIMIT 1
-      `;
-      row = await queryHelpers.queryOne<any>(canonicalMapSelectSql, [ideaId, orgId]);
-    } else {
-      const mapSelectSql = `
-        SELECT id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}
-        FROM my_idea_maps
-        WHERE idea_id = ? AND user_id = ? AND organization_id = ?
-        LIMIT 1
-      `;
-
-      // A1 (D-WB-2): flag-OFF path reads the canonical (idea-owner's) row — the same
-      // row PUT/sync now write to (see resolveCanonicalMapOwner). The owner reading
-      // their own idea is unaffected (ownerUserId === userId). A non-owner org member
-      // sees the SAME shared board they just wrote to, instead of a stale per-user copy.
-      const canonicalUserId = idea.ownerUserId ? String(idea.ownerUserId) : null;
-      row = canonicalUserId
-        ? await queryHelpers.queryOne<any>(mapSelectSql, [ideaId, canonicalUserId, orgId])
-        : null;
     }
+
+    // RV-008: resolved through the SAME tenant/user-scoped resolver the
+    // Ideas list uses for its "Tool" badge (`selectReadableMapRow` in
+    // ideaMapAccess.ts) — so list and Open can never disagree about which
+    // row (or "no row yet") is truthful for this idea. A1 (D-WB-2): the
+    // legacy/flag-OFF branch reads the idea OWNER's row — the same row
+    // PUT/sync writes to — never a non-owner's stale copy.
+    const row = await selectReadableMapRow<any>(
+      ideaMapAccessDb,
+      ideaId,
+      idea.ownerUserId ? String(idea.ownerUserId) : null,
+      orgId,
+      `id, nodes_json as "nodesJson", edges_json as "edgesJson", version, updated_at as "updatedAt"${preferredToolSelect}${extensionsSelect}${schemaVersionSelect}`
+    );
 
     if (!row) {
       const def = buildDefaultIdeaMap({ id: ideaId, title: String(idea?.title || '') }, isPl);
@@ -5707,7 +5711,7 @@ router.post(
       edges: z.array(z.any()),
       // Optional tool-specific state so restore rolls back the whole tool
       // (whiteboard drawings/scenes, process-flow lanes, table config).
-      extensions: z.record(z.any()).optional(),
+      extensions: z.record(z.string(), z.any()).optional(),
     });
 
     const parsed = schema.safeParse(req.body);

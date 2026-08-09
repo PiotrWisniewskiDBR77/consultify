@@ -220,7 +220,7 @@ export const ArtifactModuleHome: React.FC<ArtifactModuleHomeProps> = ({ lane }) 
                 server registry. Only /excele; mounted here (a really-rendered
                 component) to avoid the phantom-UI trap. */}
             {lane === 'excele' && (
-              <ExceleParametricTemplates isPolish={isPolish} onBuilt={refetchRecent} />
+              <ExceleParametricTemplates isPolish={isPolish} onBuilt={() => void refetchRecent()} />
             )}
             <TemplatesGrid
               templates={templates}

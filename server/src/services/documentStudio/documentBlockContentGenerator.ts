@@ -209,7 +209,7 @@ export function normalizeTableContent(raw: unknown): Record<string, unknown> {
   const rows = keyedRows.map((row: any) => {
     if (Array.isArray(row)) return row.map((value: unknown) => String(value ?? ''));
     const cells = row.cells && typeof row.cells === 'object' ? row.cells : row;
-    return columns.map((key) => {
+    return columns.map((key: string) => {
       const value = (cells as Record<string, unknown>)[key];
       return String(
         value && typeof value === 'object' && 'value' in value
@@ -431,7 +431,7 @@ function unsupportedClaimInString(
   allowedNumbers: ReadonlySet<string>,
   sourceTextUpper: string
 ): boolean {
-  const numericTokens = text.match(QUANT_TOKEN_RE) ?? [];
+  const numericTokens: string[] = text.match(QUANT_TOKEN_RE) ?? [];
   if (numericTokens.some((token) => !allowedNumbers.has(token.replace(',', '.')))) return true;
 
   // Catch obvious invented named market/entity claims such as "DACH". This is

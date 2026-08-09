@@ -42,9 +42,9 @@ router.get('/', async (req, res) => {
   // (finding_42_self_import_wrappers_services_2026-07-15). The 503 fallback below is genuine
   // fail-soft (e.g. missing backup schema), no longer a guaranteed-dead self-import wrapper.
   try {
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const backups = await BackupService.listBackups({
       includeExpired: req.query.includeExpired === 'true',
     });
@@ -62,9 +62,9 @@ router.get('/', async (req, res) => {
  */
 router.get('/status', async (req, res) => {
   try {
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const status = await BackupService.getBackupStatus();
     return res.json(status);
   } catch (error: any) {
@@ -81,9 +81,9 @@ router.get('/status', async (req, res) => {
 router.get('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const backups = await BackupService.listBackups({ includeExpired: true });
     const backup = backups.find((b: any) => b.id === id);
 
@@ -113,9 +113,9 @@ router.get('/:id/status', async (req, res) => {
  */
 router.post('/restore', verifySuperAdmin, async (req, res) => {
   try {
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const { backupId } = req.body;
     // Restore execution is v2. Answer 501 (honest "not implemented") with the
     // read-only restore-info describing what a restore WOULD do — never a
@@ -146,9 +146,9 @@ router.post('/restore', verifySuperAdmin, async (req, res) => {
  */
 router.delete('/:id', verifySuperAdmin, async (req, res) => {
   try {
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const { id } = req.params;
     await BackupService.deleteBackup(id);
     return res.json({ success: true });
@@ -169,9 +169,9 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
  */
 router.post('/manual', verifySuperAdmin, async (req, res) => {
   try {
-    const BackupService = await import('../../services/backupService.js').then(
+    const BackupService = (await import('../../services/backupService.js').then(
       (m) => m.default || m
-    );
+    )) as typeof import('../../services/backupService.js')['default'];
     const { type = 'full', reason = 'manual' } = req.body;
     const backup = await BackupService.createBackup(type, reason);
     return res.json({ success: true, backup });

@@ -10,7 +10,15 @@ import { Network } from 'lucide-react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { deriveDueRisk, DueChip, MetaChip, PriorityChip, StatusChip, ToolChip } from '../index';
+import {
+  deriveDueRisk,
+  DueChip,
+  EntityStatusChip,
+  MetaChip,
+  PriorityChip,
+  StatusChip,
+  ToolChip,
+} from '../index';
 
 describe('canonical chips', () => {
   it('StatusChip renders label with status role', () => {
@@ -31,6 +39,12 @@ describe('canonical chips', () => {
     const { container } = render(<StatusChip label="Failed" tone="danger" />);
     const dot = container.querySelector('[aria-hidden="true"]') as HTMLElement;
     expect(dot.style.backgroundColor).toContain('--c-danger');
+  });
+
+  it('EntityStatusChip never exposes a missing statusChip i18n key', () => {
+    render(<EntityStatusChip status="deprecated" />);
+    expect(screen.getByRole('status')).toHaveTextContent('Deprecated');
+    expect(screen.queryByText('statusChip.deprecated')).not.toBeInTheDocument();
   });
 
   it('PriorityChip falls back to a capitalized level label', () => {

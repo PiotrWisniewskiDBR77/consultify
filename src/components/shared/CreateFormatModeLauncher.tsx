@@ -19,8 +19,20 @@
  * (np. ReportsAndPresentationsHub), żeby ten plik pozostał reużywalny.
  */
 import type { LucideIcon } from 'lucide-react';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+
+import {
+  getMaterialVisualIdentity,
+  type MaterialKind,
+} from './materialsVisualIdentity';
+
+function resolveFormatIcon(id: string, fallback: LucideIcon): LucideIcon {
+  if (id === 'document' || id === 'presentation' || id === 'spreadsheet') {
+    return getMaterialVisualIdentity(id as MaterialKind).icon;
+  }
+  return fallback;
+}
 
 export interface FormatTileConfig<F extends string> {
   id: F;
@@ -120,6 +132,7 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-format-mode-launcher-title"
+        aria-describedby={stepOneHint || stepTwoHint ? `${testId}-description` : undefined}
         data-testid={testId}
         className="mx-4 w-[640px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-c-border bg-c-surface shadow-2xl"
       >
@@ -157,30 +170,45 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
         {!format ? (
           <>
             {stepOneHint ? (
-              <p className="px-4 pt-3 text-xs text-c-text-secondary">{stepOneHint}</p>
+              <p id={`${testId}-description`} className="px-4 pt-4 text-sm text-c-text-secondary">
+                {stepOneHint}
+              </p>
             ) : null}
-            <div className="grid grid-cols-1 gap-2.5 p-4 sm:grid-cols-3">
-              {formatTiles.map(({ id, icon: Icon, title: tileTitle, hint }) => (
-                <button
+            <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+              {formatTiles.map(({ id, icon, title: tileTitle, hint }) => {
+                const Icon = resolveFormatIcon(id, icon);
+                return (
+                  <button
                   key={id}
                   type="button"
                   data-testid={`${testId}-format-${id}`}
                   onClick={() => setFormat(id)}
-                  className="flex flex-col items-start gap-2 rounded-xl border border-c-border bg-c-bg p-3.5 text-left transition-colors hover:border-c-border-strong hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+                  aria-label={hint ? `${tileTitle}. ${hint}` : tileTitle}
+                  className="group flex min-h-40 flex-col items-start rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-c-border-strong hover:bg-c-surface-raised hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
                 >
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-c-text text-c-surface">
-                    <Icon size={18} />
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-c-border-subtle bg-c-surface-raised text-c-text transition-colors group-hover:border-c-border-strong">
+                    <Icon size={21} strokeWidth={1.8} aria-hidden />
                   </span>
-                  <span className="text-sm font-semibold text-c-text">{tileTitle}</span>
-                  {hint ? <span className="text-xs text-c-text-secondary">{hint}</span> : null}
-                </button>
-              ))}
+                  <span className="mt-4 text-sm font-semibold text-c-text">{tileTitle}</span>
+                  {hint ? (
+                    <span className="mt-1 text-xs leading-relaxed text-c-text-secondary">
+                      {hint}
+                    </span>
+                  ) : null}
+                  <span className="mt-auto flex w-full items-center justify-end pt-3 text-c-text-muted transition-colors group-hover:text-c-text">
+                    <ArrowRight size={16} aria-hidden />
+                  </span>
+                  </button>
+                );
+              })}
             </div>
           </>
         ) : (
           <>
             {stepTwoHint ? (
-              <p className="px-4 pt-3 text-xs text-c-text-secondary">{stepTwoHint(format)}</p>
+              <p id={`${testId}-description`} className="px-4 pt-4 text-sm text-c-text-secondary">
+                {stepTwoHint(format)}
+              </p>
             ) : null}
             <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
               {resolvedModeTiles.map(
@@ -188,6 +216,7 @@ export function CreateFormatModeLauncher<F extends string, M extends string>({
                   <button
                     key={id}
                     type="button"
+                    aria-label={`${modeTitle}. ${desc}`}
                     data-testid={modeTestId ?? `${testId}-mode-${id}`}
                     onClick={() => onSelect(format, id)}
                     className="group flex h-full flex-col items-start gap-3 rounded-2xl border border-c-border-subtle bg-c-surface p-4 text-left transition-all hover:border-c-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"

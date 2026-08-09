@@ -84,7 +84,7 @@ export interface RemixDeckOptions extends PlanDeckLayoutOptions {
 // ──────────────────────────────────────────────────────────────
 
 function summarizeSlideForLlm(slide: UnifiedSlide, index: number): string {
-  const content = (slide?.content ?? {}) as Record<string, unknown>;
+  const content = (slide?.content ?? {}) as unknown as Record<string, unknown>;
   const km = slide?.key_message ? ` key_message="${String(slide.key_message).slice(0, 160)}"` : '';
   const currentIntent = isValidLayoutIntent(slide?.intent) ? slide.intent : '(none)';
   const hintKeys = ['title', 'headline', 'section_title', 'problem', 'verdict', 'closing_message'];

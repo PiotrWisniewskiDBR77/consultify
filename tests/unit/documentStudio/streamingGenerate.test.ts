@@ -238,6 +238,12 @@ describe('Document Studio — streaming generation contract (C1)', () => {
     const qa = runDocumentQa(reopened!);
     expect(qa.anyBlocking).toBe(false);
     expect(qa.categories.filter((category) => category.blocking)).toEqual([]);
+    const qaCodes = qa.categories.flatMap((category) =>
+      category.findings.map((finding) => finding.code)
+    );
+    expect(qaCodes).not.toContain('completeness_empty_section');
+    expect(qaCodes).not.toContain('executive_summary_missing_action_verb');
+    expect(qaCodes).not.toContain('source_drift_unpinned');
   });
 
   it('fires hooks in order plan → section* and never before its schema is ready', async () => {

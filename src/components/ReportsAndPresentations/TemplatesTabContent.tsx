@@ -348,18 +348,21 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       // która po kliknięciu i tak nie miałaby czego wygenerować.
       (() => {
         const usePath = resolveUsePath(row);
+        const isDeprecated = String(row.status).toLowerCase() === 'deprecated';
         return {
           id: 'use',
           label: t('rap.actions.useTemplate', 'Użyj wzorca'),
           icon: Play,
-          disabled: !usePath,
-          note: usePath
-            ? undefined
-            : t(
-                'rap.templates.useBlocked',
-                'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
-              ),
-          onClick: usePath ? () => navigate(usePath) : undefined,
+          disabled: !usePath || isDeprecated,
+          note: isDeprecated
+            ? t('rap.templates.deprecatedUseBlocked', 'Wycofany wzorzec nie może być użyty.')
+            : usePath
+              ? undefined
+              : t(
+                  'rap.templates.useBlocked',
+                  'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+                ),
+          onClick: usePath && !isDeprecated ? () => navigate(usePath) : undefined,
         };
       })(),
       {
@@ -413,7 +416,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     ],
     universalHandlers: {
       preview: () => setSelectedId(row.id),
-      edit: () => navigate(resolveTemplateEditPath(row.id, row.type)),
+      edit: () => navigate(resolveTemplateEditPath(row.id, row.type, row.canonicalTemplateId)),
       // Brak API archiwizacji wzorca — pozycja disabled z notą (StandardTable dokłada ją sama).
     },
     // Brak API kasowania wzorca — blok 5 disabled z notą (StandardTable dokłada ją sama).
@@ -450,7 +453,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
                 icon: Play,
                 shortcut: 'O',
                 // Sierota → akcja wyłączona (bez cichego fallbacku).
-                disabled: !resolveUsePath(selectedItem),
+                disabled:
+                  !resolveUsePath(selectedItem) ||
+                  String(selectedItem.status).toLowerCase() === 'deprecated',
                 onClick: () => {
                   const usePath = resolveUsePath(selectedItem);
                   if (usePath) navigate(usePath);
@@ -634,7 +639,8 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             if (usePath) navigate(usePath);
           }
           if (actionId === 'duplicate') navigate(resolveTemplateClonePath(tpl.id, tpl.type));
-          if (actionId === 'edit') navigate(resolveTemplateEditPath(tpl.id, tpl.type));
+          if (actionId === 'edit')
+            navigate(resolveTemplateEditPath(tpl.id, tpl.type, tpl.canonicalTemplateId));
         }}
         emptyMessage={t('rap.empty.templates', 'Brak wzorców')}
         newItemLabel={t('rap.actions.newTemplate', 'Nowy wzorzec')}

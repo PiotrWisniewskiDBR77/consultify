@@ -28,17 +28,17 @@ interface UsageService {
   }>;
   recordTokenUsage: (
     orgId: string,
-    userId: string | undefined,
+    userId: string,
     tokens: number,
     action: string,
-    metadata: Record<string, unknown>
-  ) => Promise<void>;
+    metadata?: Record<string, unknown>
+  ) => Promise<unknown>;
   recordStorageUsage: (
     orgId: string,
     bytes: number,
     action: string,
-    metadata: Record<string, unknown>
-  ) => Promise<void>;
+    metadata?: Record<string, unknown>
+  ) => Promise<unknown>;
 }
 
 interface QuotaInfo {
@@ -546,7 +546,7 @@ export async function recordTokenUsageAfterResponse(
     const userId = safeUserId(req);
     const body = safeBody(req);
 
-    if (!orgId) return;
+    if (!orgId || !userId) return;
     if (orgId.length > ORG_ID_MAX_LEN) return;
 
     const rawTokens = Number(tokens);

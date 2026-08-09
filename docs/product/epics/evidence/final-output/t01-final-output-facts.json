@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "consultify.transformation.final-output.v1",
+  "generatedAt": "2026-08-08T02:35:00.000Z",
+  "transformationCaseId": "tc-t01-i03",
+  "lineageId": "0bfe2e32-30d1-41d9-8818-fbb6341f5dfe",
+  "mandate": "Przygotuj i przeprowadź plan transformacji operacyjnej",
+  "executiveConclusion": "Kontrolowany proces doprowadził od mandatu Teresy do dostarczonej Initiative, zmierzonej korzyści i odrębnej weryfikacji trwałości. Każda materializacja i przejście o wysokim wpływie pozostały za bramką człowieka.",
+  "status": "LOCAL_REALDB_VERIFIED_BROWSER_PENDING",
+  "stages": [
+    "Mandate i plan",
+    "Ideas",
+    "Interviews",
+    "DRD",
+    "Opportunity synthesis",
+    "Initiative",
+    "Finance i KPI",
+    "GO/NO-GO",
+    "Mobilization",
+    "Execution",
+    "Delivery",
+    "Benefits",
+    "Sustainability",
+    "Final outputs"
+  ],
+  "outputs": {
+    "ideas": 5,
+    "interviewAssignments": 1,
+    "acceptedInsights": 1,
+    "drdAssessments": 1,
+    "initiatives": 1,
+    "tasks": 3,
+    "milestones": 3,
+    "decisions": 1,
+    "kpis": 1,
+    "benefits": 1,
+    "verifiedBenefitMeasurements": 2
+  },
+  "finance": {
+    "currency": "PLN",
+    "capex": 800000,
+    "opexAnnual": 120000,
+    "forecastBenefitAnnual": 900000,
+    "actualBenefitAnnual": 840000,
+    "actualVsForecastPct": 93.3,
+    "classification": "partial"
+  },
+  "kpi": {
+    "name": "Approval lead time",
+    "unit": "days",
+    "direction": "LOWER_IS_BETTER",
+    "baseline": 8,
+    "target": 3,
+    "deliveryActual": 3,
+    "sustainabilityActual": 2.8,
+    "windowDays": 31,
+    "status": "sustained"
+  },
+  "governance": {
+    "autonomy": "A1_prepare",
+    "initiativeFinalStatus": "DONE",
+    "portfolioDecision": "GO",
+    "effectiveness": "confirmed",
+    "sustainabilityConclusion": "sustained",
+    "humanApprovalRequired": true
+  },
+  "evidence": [
+    "T01-I01 transformation identity and plan",
+    "T01-I02 Ideas adapter",
+    "T01-I03 Interviews adapter",
+    "T01-I04 DRD adapter",
+    "T01-I05 synthesis and Initiative",
+    "T01-I06 Finance and KPI",
+    "T01-I07 GO/NO-GO",
+    "T01-I08 mobilization",
+    "T01-I09 execution and delivery",
+    "T01-I10 benefits and sustainability",
+    "T01-I11 A05/A06-governed Word and PowerPoint publication",
+    "A10 canonical live-readback quality evaluation: 5/5, score 1.0"
+  ],
+  "evidenceLimitations": [
+    "Wartości raportu pochodzą z izolowanego, powtarzalnego scenariusza PostgreSQL realDB, a nie z produkcyjnych danych klienta.",
+    "Publikacja A06, fizyczny rehash DOCX/PPTX, replay bez duplikatów, tenant isolation i A10 5/5 zostały potwierdzone lokalnie.",
+    "Same-SHA deployment, pełny browser/RBAC proof, provider actual usage i pomiar outcome w produkcji pozostają wymaganiami końcowego DOD."
+  ]
+}

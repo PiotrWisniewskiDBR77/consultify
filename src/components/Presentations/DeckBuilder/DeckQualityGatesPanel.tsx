@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Info,
   Shield,
+  X,
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -277,10 +278,13 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
           </h3>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="text-c-text-secondary hover:text-c-text-secondary text-sm"
+          aria-label={t('common.close', 'Close')}
+          title={t('common.close', 'Close')}
+          className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
         >
-          ✕
+          <X size={16} aria-hidden />
         </button>
       </div>
 

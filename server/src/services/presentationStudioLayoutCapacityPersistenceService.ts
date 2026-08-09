@@ -563,12 +563,13 @@ export function loadPersistedOverrides(): LoadPersistedOverridesResult {
     };
   }
   const obj = parsed as Partial<PersistedOverridesFile>;
-  if (obj.schemaVersion !== 1 && obj.schemaVersion !== 2) {
+  const schemaVersion: unknown = obj.schemaVersion;
+  if (schemaVersion !== 1 && schemaVersion !== 2) {
     return {
       ok: false,
       reason: 'unsupported_schema',
       sourcePath,
-      details: `expected schemaVersion=1 or 2, got ${String(obj.schemaVersion)}`,
+      details: `expected schemaVersion=1 or 2, got ${String(schemaVersion)}`,
     };
   }
   if (
@@ -606,7 +607,7 @@ export function loadPersistedOverrides(): LoadPersistedOverridesResult {
     }
   }
   const signature = verifyPersistedOverridesSignature(obj);
-  if (!signature.ok) {
+  if (signature.ok === false) {
     return {
       ok: false,
       reason: 'signature_mismatch',
@@ -746,7 +747,7 @@ export type RestoreLoadOutcome =
  */
 export function restorePersistedOverrides(): RestoreLoadOutcome {
   const load = loadPersistedOverrides();
-  if (!load.ok) {
+  if (load.ok === false) {
     if (load.reason === 'missing') {
       return { status: 'no_persisted_file', sourcePath: load.sourcePath };
     }
@@ -761,7 +762,7 @@ export function restorePersistedOverrides(): RestoreLoadOutcome {
   // (the persisted payload is the FULL accumulated state, not a delta).
   resetToDefaults();
   const applyResult = applyOverrides(load.payload);
-  if (!applyResult.ok) {
+  if (applyResult.ok === false) {
     // Roll back: registry already had defaults at this point but the
     // partial apply would have been short-circuited by the validator
     // (apply is all-or-nothing). Defaults remain.
@@ -774,7 +775,7 @@ export function restorePersistedOverrides(): RestoreLoadOutcome {
   }
   for (const [organizationId, snapshot] of Object.entries(load.tenantPayloadsByOrganizationId)) {
     const tenantApply = applyOverrides(snapshot, organizationId);
-    if (!tenantApply.ok) {
+    if (tenantApply.ok === false) {
       resetToDefaults();
       return {
         status: 'rejected_by_validator',
@@ -850,7 +851,7 @@ export function initializeLayoutCapacityPersistence(): RestoreLoadOutcome {
         familyAliasByDeckType: getCurrentRegistrySnapshot().familyAliasByDeckType,
       };
       const result = savePersistedOverrides(payload);
-      if (!result.ok) {
+      if (result.ok === false) {
         // Surface as a load-warning so the admin GET shows the
         // honest "we could not persist your last write" state. We
         // intentionally do NOT throw — the in-memory apply already
@@ -874,7 +875,7 @@ export function initializeLayoutCapacityPersistence(): RestoreLoadOutcome {
             familyAliasByDeckType: getCurrentRegistrySnapshot().familyAliasByDeckType,
           })
         : clearPersistedOverrides();
-      if (!cleared.ok) {
+      if (cleared.ok === false) {
         setRegistryLoadWarning({
           reason: 'io_error',
           sourcePath: cleared.sourcePath,

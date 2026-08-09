@@ -90,6 +90,32 @@ export interface RatioAnalysisResult {
   compositeScores?: CompositeScoresSummary;
 }
 
+function ratioRowPeriodLabel(row: Record<string, any>): string | null {
+  let evidence: Record<string, any> = {};
+  const rawEvidence = row.evidenceJson ?? row.evidence_json;
+  if (rawEvidence && typeof rawEvidence === 'object') evidence = rawEvidence;
+  else if (typeof rawEvidence === 'string') {
+    try {
+      const parsed = JSON.parse(rawEvidence);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) evidence = parsed;
+    } catch {
+      evidence = {};
+    }
+  }
+  const label = row.periodLabel ?? row.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  return label == null || String(label).trim() === '' ? null : String(label);
+}
+
+function rowsForRatioPeriod<T extends Record<string, any>>(rows: T[], targetPeriod: unknown): T[] {
+  const target = String(targetPeriod || '').match(/(?:19|20)\d{2}/)?.[0];
+  if (!target) return rows;
+  const labeled = rows.filter((row) => ratioRowPeriodLabel(row));
+  if (labeled.length === 0) return rows;
+  return labeled.filter(
+    (row) => String(ratioRowPeriodLabel(row)).match(/(?:19|20)\d{2}/)?.[0] === target
+  );
+}
+
 function deriveStatementReadiness(row: {
   readiness_status?: unknown;
   status?: unknown;
@@ -146,14 +172,14 @@ async function assertReadyStatement(statementId: string, organizationId: string)
   let stmt: any;
   try {
     stmt = await dbGet<any>(
-      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status, readiness_status
+      `SELECT id, organization_id, statement_pack_id, period_label, period_start, period_end, status, validation_status, readiness_status
        FROM financial_statements
        WHERE id = ? AND organization_id = ?`,
       [statementId, organizationId]
     );
   } catch {
     stmt = await dbGet<any>(
-      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status
+      `SELECT id, organization_id, statement_pack_id, period_label, period_start, period_end, status, validation_status
        FROM financial_statements
        WHERE id = ? AND organization_id = ?`,
       [statementId, organizationId]
@@ -880,12 +906,21 @@ export async function computeRatios(
   const valueRows = (await dbAll(
     `SELECT fsv.*, fsl.line_code FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
-     WHERE fsv.statement_id = ?`,
-    [statementId]
+     INNER JOIN financial_statements fs ON fs.id = fsv.statement_id
+     WHERE fs.organization_id = ?
+       AND (
+         fs.id = ?
+         OR fs.statement_pack_id = ?
+       )
+       AND (
+         LOWER(COALESCE(fs.readiness_status, 'pending')) = 'ready'
+         OR LOWER(COALESCE(fs.status, '')) IN ('confirmed', 'approved')
+       )`,
+    [organizationId, statementId, stmt.statement_pack_id || null]
   )) as any[];
 
   const values: Record<string, number> = {};
-  for (const row of valueRows) {
+  for (const row of rowsForRatioPeriod(valueRows, stmt.period_label || stmt.period_end)) {
     const canonicalCode = normalizeCanonicalLineCode(row.line_code);
     if (canonicalCode && row.value !== null) {
       values[canonicalCode] = Number(row.value || 0);
@@ -1000,13 +1035,16 @@ export async function computeGrowthRatios(
 
   const loadValues = async (sid: string) => {
     const rows = (await dbAll(
-      `SELECT fsl.line_code, fsv.value FROM financial_statement_values fsv
+      `SELECT fsl.line_code, fsv.value, fsv.period_label, fsv.evidence_json, fs.period_label AS statement_period_label
+       FROM financial_statement_values fsv
        LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+       INNER JOIN financial_statements fs ON fs.id = fsv.statement_id
        WHERE fsv.statement_id = ? AND fsl.line_code IS NOT NULL`,
       [sid]
     )) as any[];
     const map: Record<string, number> = {};
-    for (const r of rows) {
+    const targetPeriod = rows[0]?.statement_period_label;
+    for (const r of rowsForRatioPeriod(rows, targetPeriod)) {
       const canonicalCode = normalizeCanonicalLineCode(r.line_code);
       if (canonicalCode && r.value !== null) map[canonicalCode] = Number(r.value || 0);
     }

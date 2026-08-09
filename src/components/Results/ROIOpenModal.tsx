@@ -4,7 +4,16 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
-type Initiative = { id: string; name: string };
+type Initiative = {
+  id: string;
+  name: string;
+  // CB-04/RB-012: business-safe disambiguation fields — all already returned
+  // by GET /initiatives (server/src/routes/initiatives.routes.ts), no new
+  // backend contract needed.
+  status?: string;
+  category?: string;
+  createdAt?: string;
+};
 
 interface ROIOpenModalProps {
   onClose: () => void;
@@ -22,11 +31,25 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
       try {
         const res: any = await Api.get('/initiatives');
         const data = (res?.data ?? res) as any;
-        const mapped = (data || []).map((i: any) => ({
+        const mapped: Initiative[] = (data || []).map((i: any) => ({
           id: String(i.id),
           name: String(i.name || i.title || i.id),
+          status: i.status ? String(i.status) : undefined,
+          category: i.category ? String(i.category) : undefined,
+          createdAt: i.createdAt ? String(i.createdAt) : undefined,
         }));
-        setInitiatives(mapped);
+        // CB-04/RB-012: the source endpoint has produced exact-ID duplicate
+        // rows before (e.g. a join fan-out) — dedupe by business ID (first
+        // occurrence wins) so the same initiative never appears as two
+        // indistinguishable picker rows.
+        const seenIds = new Set<string>();
+        const deduped: Initiative[] = [];
+        for (const i of mapped) {
+          if (seenIds.has(i.id)) continue;
+          seenIds.add(i.id);
+          deduped.push(i);
+        }
+        setInitiatives(deduped);
       } catch {
         setInitiatives([]);
       }
@@ -38,6 +61,33 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
     if (!q) return initiatives;
     return initiatives.filter((i) => i.name.toLowerCase().includes(q));
   }, [initiatives, query]);
+
+  // CB-04/RB-012: names that repeat across DIFFERENT ids are legitimate
+  // distinct initiatives sharing a title — the picker must disambiguate
+  // them with business context, not by falling back to a raw internal ID.
+  const duplicateNameCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const i of initiatives) {
+      const key = i.name.trim().toLowerCase();
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return counts;
+  }, [initiatives]);
+
+  function formatDisambiguator(i: Initiative): string | null {
+    const key = i.name.trim().toLowerCase();
+    if ((duplicateNameCounts.get(key) || 0) <= 1) return null;
+    const parts: string[] = [];
+    if (i.category) parts.push(i.category);
+    if (i.status) parts.push(i.status);
+    if (i.createdAt) {
+      const d = new Date(i.createdAt);
+      if (!Number.isNaN(d.getTime())) {
+        parts.push(d.toLocaleDateString());
+      }
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }
 
   const handleSelect = useCallback(
     (initiative: Initiative) => {
@@ -94,22 +144,30 @@ export const ROIOpenModal: React.FC<ROIOpenModalProps> = ({ onClose, onSelect, t
               </div>
             ) : (
               <ul className="divide-y divide-slate-200 dark:divide-navy-700">
-                {filtered.slice(0, 200).map((i) => (
-                  <li key={i.id}>
-                    <button
-                      type="button"
-                      onClick={() => handleSelect(i)}
-                      className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {i.name}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                        {i.id}
-                      </div>
-                    </button>
-                  </li>
-                ))}
+                {filtered.slice(0, 200).map((i) => {
+                  const disambiguator = formatDisambiguator(i);
+                  return (
+                    <li key={i.id}>
+                      <button
+                        type="button"
+                        onClick={() => handleSelect(i)}
+                        className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {i.name}
+                        </div>
+                        {/* CB-04/RB-012: business-safe disambiguation (category
+                            · status · created date) for same-name initiatives
+                            — never the raw internal ID a user can't act on. */}
+                        {disambiguator && (
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                            {disambiguator}
+                          </div>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

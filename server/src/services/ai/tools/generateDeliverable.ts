@@ -633,6 +633,10 @@ export async function generateDeliverable(
           audience: deckBrief?.audience ?? 'internal',
           goal: deckBrief?.goal ?? 'inform',
           theme: 'corporate',
+          // Teresa enters the same governed layout runtime as Studio/manual
+          // generation. Without a family the generic outline can flatten to a
+          // title + paragraph fallback in the web viewer.
+          templateFamily: 'Board Decision Deck',
           confidentiality: 'internal',
           sourceArtifacts: [],
           // Temat z prośby → Narrative Engine (user_instruction) w generateDeck,

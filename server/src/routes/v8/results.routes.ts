@@ -58,6 +58,16 @@ import {
   updateRecoveryCard,
 } from '../../services/results/kpiRecoveryCardService.js';
 import {
+  approveRecoveryExperiment,
+  confirmRecoveryCause,
+  createRecoveryExperiment,
+  decideRecoveryExperiment,
+  listRecoveryExperiments,
+  RecoveryExperimentError,
+  type RecoveryExperimentDecision,
+  type RecoveryExperimentVerdict,
+} from '../../services/results/kpiRecoveryExperimentService.js';
+import {
   createKpiReportSnapshot,
   getKpiReportSnapshot,
   ResultsKpiReportSnapshotError,
@@ -135,6 +145,12 @@ function mapRecoveryServiceError(err: unknown, res: Response): boolean {
   };
   const status = statusByCode[err.code] || 500;
   res.status(status).json({ error: err.message, code: `RESULTS_RECOVERY_${err.code}` });
+  return true;
+}
+
+function mapRecoveryExperimentError(err: unknown, res: Response): boolean {
+  if (!(err instanceof RecoveryExperimentError)) return false;
+  res.status(err.status).json({ error: err.message, code: err.code });
   return true;
 }
 
@@ -2285,7 +2301,7 @@ router.post(
         effectivenessRating,
         actorUserId: userId || null,
       });
-      if (!result.closed) {
+      if (result.closed === false) {
         const fresh = await getRecoveryCardDTO(buildRecoveryDb(), organizationId, cardId);
         return res.status(409).json({
           error: 'Recovery card could not be closed',
@@ -2303,9 +2319,116 @@ router.post(
   })
 );
 
-/**
- * POST /api/v8/results/recovery-cards/:id/continue
- */
+router.get(
+  '/recovery-cards/:id/experiments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const cardId = String(req.params.id || '').trim();
+    try {
+      return res.json({
+        data: await listRecoveryExperiments(buildRecoveryDb(), organizationId, cardId),
+        meta: resultsMeta(),
+      });
+    } catch (err) {
+      if (mapRecoveryExperimentError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/recovery-cards/:id/experiments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    const cardId = String(req.params.id || '').trim();
+    try {
+      const data = await createRecoveryExperiment({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        cardId,
+        actorUserId: userId,
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+        ...req.body,
+      });
+      return res.status(201).json({ data, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryExperimentError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/recovery-cards/:id/experiments/:experimentId/review',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await approveRecoveryExperiment(
+        buildRecoveryDb(),
+        organizationId,
+        String(req.params.id),
+        String(req.params.experimentId),
+        userId,
+        req.body?.approved === true
+      );
+      return res.json({ data, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryExperimentError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/recovery-cards/:id/experiments/:experimentId/verdict',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await decideRecoveryExperiment(
+        buildRecoveryDb(),
+        organizationId,
+        String(req.params.id),
+        String(req.params.experimentId),
+        userId,
+        String(req.body?.verdict) as RecoveryExperimentVerdict,
+        String(req.body?.evidence || ''),
+        String(req.body?.decision) as RecoveryExperimentDecision
+      );
+      return res.json({ data, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryExperimentError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/recovery-cards/:id/confirmed-cause',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (!(await p04AssertKpiPermission(req, res, 'manage_deviation'))) return;
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const data = await confirmRecoveryCause({
+        db: buildRecoveryDb(),
+        orgId: organizationId,
+        cardId: String(req.params.id),
+        actorUserId: userId,
+        cause: String(req.body?.cause || ''),
+        evidence: String(req.body?.evidence || ''),
+        idempotencyKey: String(req.header('Idempotency-Key') || ''),
+      });
+      return res.json({ data, meta: resultsWriteMeta() });
+    } catch (err) {
+      if (mapRecoveryExperimentError(err, res)) return;
+      throw err;
+    }
+  })
+);
+
+/** POST /api/v8/results/recovery-cards/:id/continue */
 router.post(
   '/recovery-cards/:id/continue',
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -3133,9 +3256,9 @@ router.get(
       severity: String(d.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(d.deviation_summary || `Deviation on KPI ${d.kpi_id}`),
       detectedAt: d.detected_at
-        ? new Date(d.detected_at).toISOString()
+        ? new Date(d.detected_at as string | number | Date).toISOString()
         : d.created_at
-          ? new Date(d.created_at).toISOString()
+          ? new Date(d.created_at as string | number | Date).toISOString()
           : '',
     }));
 
@@ -3238,10 +3361,7 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            | 'pending'
-            | 'reconciled'
-            | 'disputed'
-            | 'escalated')
+            'pending' | 'reconciled' | 'disputed' | 'escalated')
         : null,
     });
 
@@ -3251,7 +3371,7 @@ router.get(
       signalType: 'deviation' as const,
       severity: String(s.severity || 'medium').toLowerCase() as KpiSignal['severity'],
       summary: String(s.deviation_summary || 'Deviation detected'),
-      detectedAt: s.detected_at ? new Date(s.detected_at).toISOString() : '',
+      detectedAt: s.detected_at ? new Date(s.detected_at as string | number | Date).toISOString() : '',
     }));
 
     return res.json({
@@ -3559,10 +3679,7 @@ router.get(
       financeLinked: !!reconciliation,
       reconciliationStatus: reconciliation
         ? (String(reconciliation.reconciliation_status) as
-            | 'pending'
-            | 'reconciled'
-            | 'disputed'
-            | 'escalated')
+            'pending' | 'reconciled' | 'disputed' | 'escalated')
         : null,
     });
 

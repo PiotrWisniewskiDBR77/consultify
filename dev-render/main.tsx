@@ -92,6 +92,7 @@ const AssessmentInitiativesPanelScreen = React.lazy(
 const AssessmentInitiativesTableScreen = React.lazy(
   () => import('./screens/assessment-initiatives-table')
 );
+const AssessmentFiveSurfacesScreen = React.lazy(() => import('./screens/assessment-five-surfaces'));
 const AssessmentListScreen = React.lazy(() => import('./screens/assessment-list'));
 const StandardModuleBarChildrenScreen = React.lazy(
   () => import('./screens/standard-module-bar-children')
@@ -607,6 +608,10 @@ const SCREENS: Record<string, { label: string; render: () => React.ReactElement 
   'assessment-list': {
     label: 'Assessment list (TRIADA: StandardModuleBar + StandardTable)',
     render: () => <AssessmentListScreen />,
+  },
+  'assessment-five-surfaces': {
+    label: 'T22 final closeout — real AssessmentHub with five surfaces forced ON',
+    render: () => <AssessmentFiveSurfacesScreen />,
   },
   'standard-module-bar-children': {
     label:

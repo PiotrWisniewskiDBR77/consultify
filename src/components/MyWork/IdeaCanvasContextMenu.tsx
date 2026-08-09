@@ -31,13 +31,15 @@ import {
   Trash2,
   Unlock,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import i18n from '@/i18n';
 import { Api } from '@/services/api';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 
+import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
+import { useAccessibleMenu } from './canvas/useAccessibleMenu';
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
 interface ContextMenuPosition {
@@ -121,6 +123,9 @@ interface BaseMenuItem {
   danger?: boolean;
 }
 
+// CB-05/RB-043/RV-004: destructive ops must be the FINAL, visually separated
+// group — split out of the base ops so `Delete` never renders mid-menu ahead
+// of the AI/collaboration group below it.
 const BASE_NODE_ACTIONS: BaseMenuItem[] = [
   { id: 'base_edit', kind: 'edit', icon: Pencil, labelPl: 'Edytuj', labelEn: 'Edit' },
   {
@@ -146,6 +151,9 @@ const BASE_NODE_ACTIONS: BaseMenuItem[] = [
     labelEn: 'Layer: send to back',
   },
   { id: 'base_lock', kind: 'lock', icon: Lock, labelPl: 'Zablokuj', labelEn: 'Lock' },
+];
+
+const DESTRUCTIVE_NODE_ACTIONS: BaseMenuItem[] = [
   {
     id: 'base_delete',
     kind: 'delete',
@@ -305,7 +313,10 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
-  const menuRef = useRef<HTMLDivElement>(null);
+  // CB-05/RB-042/RV-003: shared accessible menu contract (focus entry, arrows/
+  // Home/End, focus return) — `menuRef` stays the container ref used by the
+  // existing outside-click/Escape listener below.
+  const menuRef = useAccessibleMenu<HTMLDivElement>(!!position);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -472,16 +483,28 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     (item) => !item.tools || item.tools.includes(activeTool)
   );
 
+  const nodeHeaderTypeLabel = getCanvasNodeTypeLabel(target.nodeType, isPl);
+  const menuAriaLabel = isOnNode
+    ? t('myWorkIdeas.canvasContextMenu.nodeMenuAriaLabel', {
+        defaultValue: `${nodeHeaderTypeLabel} actions`,
+        type: nodeHeaderTypeLabel,
+      })
+    : t('myWorkIdeas.canvasContextMenu.backgroundMenuAriaLabel', {
+        defaultValue: 'Canvas actions',
+      });
+
   return (
     <div
       ref={menuRef}
+      role="menu"
+      aria-label={menuAriaLabel}
       className="fixed z-toast bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-xl py-1.5 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
       style={{ left: position.x, top: position.y }}
     >
       {isOnNode && target.nodeLabel && (
         <div className="px-3 py-1.5 border-b border-slate-200/30 dark:border-white/[0.04]">
           <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            {target.nodeType || 'Node'}
+            {nodeHeaderTypeLabel}
           </div>
           <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
             {target.nodeLabel}
@@ -489,9 +512,10 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
         </div>
       )}
 
-      {/* K1 base ops (Miro parity) — plain canvas operations, above the AI
-          section below; every click reuses an existing handler (see
-          handleBaseAction). */}
+      {/* K1 base ops (Miro parity) — plain, non-destructive canvas operations.
+          Delete moved out to its own final group below (RB-043/RV-004: the
+          destructive group must be last and visually separated, not embedded
+          ahead of the AI/collaboration group). */}
       {isOnNode && (
         <div className="py-1 border-b border-slate-200/30 dark:border-white/[0.04]">
           {BASE_NODE_ACTIONS.map((item) => {
@@ -512,6 +536,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
               <button
                 key={item.id}
                 type="button"
+                role="menuitem"
                 onClick={() => handleBaseAction(item)}
                 disabled={locked}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 ${
@@ -547,6 +572,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           <button
             key={item.id}
             type="button"
+            role="menuitem"
             onClick={() => handleAction(item)}
             disabled={!isAccepted || !!loadingId}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-c-info/10 transition-colors disabled:opacity-40"
@@ -560,6 +586,29 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           </button>
         );
       })}
+
+      {/* RB-043/RV-004: destructive group — final position, visually
+          separated (top border + tinted background), never mixed ahead of
+          the AI group above. Undo stays reliable/visible: delete still goes
+          through the same handler wired to the canvas's local undo stack
+          (LOCAL_STACK_UNDO), and the rail's Undo button is always on screen. */}
+      {isOnNode && (
+        <div className="py-1 border-t border-slate-200/30 dark:border-white/[0.04] bg-danger-50/40 dark:bg-danger-900/10">
+          {DESTRUCTIVE_NODE_ACTIONS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              onClick={() => handleBaseAction(item)}
+              disabled={locked}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors disabled:opacity-40 text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20"
+            >
+              <item.icon size={14} className="shrink-0" />
+              <span>{isPl ? item.labelPl : item.labelEn}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {!isAccepted && (
         <div className="px-3 py-1.5 text-[10px] text-amber-600 dark:text-amber-400 border-t border-slate-200/30 dark:border-white/[0.04]">

@@ -14,6 +14,12 @@
  * fixed fixture.
  */
 
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join } from 'node:path';
+
+import * as mammoth from 'mammoth';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 interface StoredArtifact {
@@ -405,5 +411,76 @@ describe('Document Studio generate -> export happy path', () => {
       qa.categories.filter((category) => category.blocking).map((category) => category.category)
     ).toEqual([]);
     expect(qa.anyBlocking).toBe(false);
+
+    // Release proof for the same seven-section canonical schema used by the
+    // SIGMA runtime acceptance artifact. This deliberately exercises the
+    // public service boundary (base64 payload), writes the bytes back to a
+    // .docx, and reopens them with an independent Word parser. ZIP magic
+    // alone is not sufficient evidence that the exported document is usable.
+    const exported = await exportDocumentArtifact(run.artifactId, 'org-sigma-2', 'docx');
+    const docxBuffer = Buffer.from(String(exported.contentBase64), 'base64');
+    const reopenedDocx = await mammoth.extractRawText({ buffer: docxBuffer });
+    const reopenedText = reopenedDocx.value.replace(/\s+/g, ' ').trim();
+    expect(exported.filename).toMatch(/\.docx$/);
+    expect(docxBuffer.subarray(0, 4)).toEqual(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+    expect(reopenedDocx.messages.filter((message) => message.type === 'error')).toEqual([]);
+    for (const title of [
+      'Podsumowanie zarządcze',
+      'Wymagane decyzje',
+      'Do wiadomości',
+      'Status portfela',
+      'Podsumowanie finansowe',
+      'Ryzyka',
+      'Następne kroki',
+    ]) {
+      expect(reopenedText).toContain(title);
+    }
+    expect(reopenedText).toContain('72%');
+    expect(reopenedText).toContain('1,4 mln EUR');
+    expect(reopenedText).toContain('18/21');
+    expect(reopenedText).not.toMatch(
+      /DACH|8 inicjatyw|Realizacja budżetu 72%|Budżet wykorzystany|\[PLACEHOLDER\]|Lorem ipsum|TODO|TBD/i
+    );
+
+    // Opt-in visual QA is kept in this regression instead of a one-off shell
+    // script. Release runners set DOCX_VISUAL_QA=1; LibreOffice reopens the
+    // generated Word file, renders it to PDF, Poppler inspects every page's
+    // text, and the first page is rasterized to prove the render is non-empty.
+    if (process.env.DOCX_VISUAL_QA === '1') {
+      const qaDir = mkdtempSync(join(tmpdir(), 'consultify-sigma-docx-qa-'));
+      try {
+        const docxPath = join(qaDir, exported.filename);
+        writeFileSync(docxPath, docxBuffer);
+        execFileSync('soffice', ['--headless', '--convert-to', 'pdf', '--outdir', qaDir, docxPath]);
+        const pdfPath = join(qaDir, `${basename(exported.filename, '.docx')}.pdf`);
+        const renderedText = execFileSync('pdftotext', [pdfPath, '-'], {
+          encoding: 'utf8',
+        }).replace(/\s+/g, ' ');
+        const pdfInfo = execFileSync('pdfinfo', [pdfPath], { encoding: 'utf8' });
+        execFileSync('pdftoppm', [
+          '-f',
+          '1',
+          '-singlefile',
+          '-png',
+          '-r',
+          '96',
+          pdfPath,
+          join(qaDir, 'page-1'),
+        ]);
+        expect(pdfInfo).toMatch(/^Pages:\s+[1-9]\d*$/m);
+        expect(readFileSync(pdfPath).subarray(0, 5).toString('ascii')).toBe('%PDF-');
+        expect(statSync(join(qaDir, 'page-1.png')).size).toBeGreaterThan(1_000);
+        expect(renderedText).toContain('Podsumowanie zarządcze');
+        expect(renderedText).toContain('Następne kroki');
+        expect(renderedText).toContain('72%');
+        expect(renderedText).toContain('1,4 mln EUR');
+        expect(renderedText).toContain('18/21');
+        expect(renderedText).not.toMatch(
+          /DACH|8 inicjatyw|Realizacja budżetu 72%|Budżet wykorzystany|\[PLACEHOLDER\]|Lorem ipsum|TODO|TBD/i
+        );
+      } finally {
+        rmSync(qaDir, { recursive: true, force: true });
+      }
+    }
   });
 });

@@ -173,11 +173,12 @@ const aiUsageService = {
     //   4. Returns the post-increment row.
     //
     // If RETURNING is empty, the budget would have been exceeded.
-    let row: {
+    type BudgetUsageRow = {
       tokens_used_today: number;
       ai_daily_token_budget: number;
       previous_used: number;
-    } | null = null;
+    };
+    let row: BudgetUsageRow | null = null;
     try {
       const sql = `
         WITH ensured AS (
@@ -205,7 +206,7 @@ const aiUsageService = {
                   (tokens_used_today - $2) AS previous_used
       `;
       const result = await db.query(sql, [input.workspaceId, total]);
-      row = (result.rows?.[0] as typeof row) ?? null;
+      row = (result.rows?.[0] as BudgetUsageRow | undefined) ?? null;
     } catch (e) {
       logger.error('[AiUsageService] consume failed (db error)', {
         workspaceId: input.workspaceId,
@@ -284,8 +285,18 @@ const aiUsageService = {
             updated_at = NOW()
       RETURNING workspace_id, ai_daily_token_budget, tokens_used_today, last_reset_at
     `;
-    const { rows } = await db.query(sql, [workspaceId]);
-    const row = rows?.[0] ?? {};
+    const { rows } = await db.query<{
+      workspace_id: string;
+      ai_daily_token_budget: number;
+      tokens_used_today: number;
+      last_reset_at: string | Date | null;
+    }>(sql, [workspaceId]);
+    const row: Partial<{
+      workspace_id: string;
+      ai_daily_token_budget: number;
+      tokens_used_today: number;
+      last_reset_at: string | Date | null;
+    }> = rows?.[0] ?? {};
     const budget = Number(row.ai_daily_token_budget) || DEFAULT_BUDGET;
     const used = Number(row.tokens_used_today) || 0;
     const lastReset =

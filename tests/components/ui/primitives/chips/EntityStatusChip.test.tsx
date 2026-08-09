@@ -24,6 +24,7 @@ const PL_DICT: Record<string, string> = {
   'statusChip.planning': 'Planowanie',
   'statusChip.awaiting_approval': 'Czeka na zgodę',
   'statusChip.failed': 'Błąd',
+  'statusChip.deprecated': 'Wycofane',
 };
 
 vi.mock('react-i18next', async () => {
@@ -60,6 +61,12 @@ describe('EntityStatusChip (TAB-003 i18n)', () => {
     render(<EntityStatusChip status="failed" label="Custom label" />);
     expect(screen.getByText('Custom label')).toBeInTheDocument();
     expect(screen.queryByText('Błąd')).not.toBeInTheDocument();
+  });
+
+  it('renders the governed deprecated lifecycle status instead of leaking an i18n key', () => {
+    render(<EntityStatusChip status="deprecated" />);
+    expect(screen.getByText('Wycofane')).toBeInTheDocument();
+    expect(screen.queryByText('statusChip.deprecated')).not.toBeInTheDocument();
   });
 
   it('handles a null/empty status without crashing', () => {

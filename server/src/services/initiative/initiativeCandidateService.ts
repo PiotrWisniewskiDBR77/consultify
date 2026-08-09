@@ -20,6 +20,8 @@
  * dzięki czemu logika jest testowalna z mock-DB bez realnej bazy.
  */
 
+import type { QueryResultRow } from 'pg';
+
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 import { createInitiative as funnelCreateInitiative } from './createInitiativeService.js';
@@ -34,8 +36,8 @@ import { resolveProjectIdFromSource } from './sourceProjectResolver.js';
 // ---------------------------------------------------------------------------
 
 export interface CandidateDb {
-  queryAll<T = any>(sql: string, params?: unknown[]): Promise<T[]>;
-  queryOne<T = any>(sql: string, params?: unknown[]): Promise<T | null>;
+  queryAll<T extends QueryResultRow = any>(sql: string, params?: unknown[]): Promise<T[]>;
+  queryOne<T extends QueryResultRow = any>(sql: string, params?: unknown[]): Promise<T | null>;
   queryRun(sql: string, params?: unknown[]): Promise<{ lastID?: number; changes: number }>;
 }
 

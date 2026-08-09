@@ -467,6 +467,61 @@ export interface ForecastBundle {
     sourceId?: string | null;
     sourceStatus?: string;
   };
+  monetaryUnit: ValuationMonetaryUnit;
+}
+
+export interface ValuationMonetaryUnit {
+  sourceScaling: 'units' | 'thousands' | 'millions' | 'billions';
+  multiplier: 1 | 1000 | 1000000 | 1000000000;
+  storageUnit: 'source_report_unit';
+  displayUnit: 'currency_unit';
+}
+
+export function valuationMonetaryUnit(scaling: unknown): ValuationMonetaryUnit {
+  const normalized = String(scaling || 'units')
+    .trim()
+    .toLowerCase();
+  const sourceScaling =
+    normalized === 'thousands' || normalized === 'millions' || normalized === 'billions'
+      ? normalized
+      : 'units';
+  const multiplier =
+    sourceScaling === 'billions'
+      ? 1000000000
+      : sourceScaling === 'millions'
+        ? 1000000
+        : sourceScaling === 'thousands'
+          ? 1000
+          : 1;
+  return {
+    sourceScaling,
+    multiplier,
+    storageUnit: 'source_report_unit',
+    displayUnit: 'currency_unit',
+  };
+}
+
+export function financialModelForecastYear(
+  bucket: PeriodOutput[],
+  yearIndex: number
+): ForecastYear {
+  const sum = (section: 'pl' | 'cf', codes: string[]) =>
+    bucket.reduce((acc, period) => {
+      const value = codes
+        .map((code) => period?.[section]?.[code])
+        .find((candidate) => candidate !== null && candidate !== undefined);
+      return acc + Number(value ?? 0);
+    }, 0);
+  const revenue = sum('pl', ['REVENUE']);
+  const ebitda = sum('pl', ['EBITDA']);
+  const operatingCf = sum('cf', ['OPERATING_CF', 'OPERATING_CASH_FLOW']);
+  const capexCf = sum('cf', ['CAPEX_CF', 'CAPEX', 'CAPITAL_EXPENDITURES']);
+  return {
+    year: yearIndex + 1,
+    fcff: round(operatingCf + capexCf, 2),
+    revenue: round(revenue, 2),
+    ebitda: round(ebitda, 2),
+  };
 }
 
 async function loadForecastFromBudget(
@@ -541,6 +596,7 @@ async function loadForecastFromBudget(
       sourceId: budgetId,
       sourceStatus: String(budget.status || ''),
     },
+    monetaryUnit: valuationMonetaryUnit('units'),
   };
 }
 
@@ -555,6 +611,16 @@ async function loadForecastFromFinancialModel(
   }
   if (normalizeStatus(model.status) !== 'APPROVED') {
     throw new Error('Financial model must be approved before valuation can use it');
+  }
+
+  const pack = model.source_statement_pack_id
+    ? await dbGet<{ scaling?: string | null }>(
+        `SELECT scaling FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+        [model.source_statement_pack_id, orgId]
+      )
+    : null;
+  if (model.source_statement_pack_id && !pack) {
+    throw new Error('Financial model source statement pack not found');
   }
 
   let periods: PeriodOutput[] =
@@ -609,21 +675,9 @@ async function loadForecastFromFinancialModel(
     .sort((a, b) => Number(a) - Number(b))
     .slice(0, horizonYears);
 
-  const years = yearsSorted.map((year, idx) => {
-    const bucket = yearBuckets[year] || [];
-    const sum = (section: 'pl' | 'cf', code: string) =>
-      bucket.reduce((acc, period) => acc + Number(period?.[section]?.[code] || 0), 0);
-    const revenue = sum('pl', 'REVENUE');
-    const ebitda = sum('pl', 'EBITDA');
-    const operatingCf = sum('cf', 'OPERATING_CF');
-    const capexCf = sum('cf', 'CAPEX');
-    return {
-      year: idx + 1,
-      fcff: round(operatingCf + capexCf, 2),
-      revenue: round(revenue, 2),
-      ebitda: round(ebitda, 2),
-    };
-  });
+  const years = yearsSorted.map((year, idx) =>
+    financialModelForecastYear(yearBuckets[year] || [], idx)
+  );
 
   if (!years.length) {
     throw new Error('Financial model did not produce annual forecast years');
@@ -638,6 +692,7 @@ async function loadForecastFromFinancialModel(
       sourceId: modelId,
       sourceStatus: String(model.status || ''),
     },
+    monetaryUnit: valuationMonetaryUnit(pack?.scaling),
   };
 }
 
@@ -647,7 +702,7 @@ async function loadForecastFromFinancialAnalysis(
   horizonYears: number
 ): Promise<ForecastBundle> {
   const analysis = await dbGet<any>(
-    `SELECT id, status, periods, statement_data
+    `SELECT id, status, periods, statement_data, source_statement_pack_id
      FROM financial_analyses
      WHERE id = ? AND organization_id = ?`,
     [analysisId, orgId]
@@ -655,6 +710,15 @@ async function loadForecastFromFinancialAnalysis(
   if (!analysis) throw new Error('Source financial analysis not found');
   if (normalizeAnalysisStatus(analysis.status) !== 'APPROVED') {
     throw new Error('Financial analysis must be approved before valuation can use it');
+  }
+  const pack = analysis.source_statement_pack_id
+    ? await dbGet<{ scaling?: string | null }>(
+        `SELECT scaling FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+        [analysis.source_statement_pack_id, orgId]
+      )
+    : null;
+  if (analysis.source_statement_pack_id && !pack) {
+    throw new Error('Financial analysis source statement pack not found');
   }
 
   const periods = safeJsonParse<string[]>(analysis.periods, []).slice(0, horizonYears);
@@ -701,6 +765,7 @@ async function loadForecastFromFinancialAnalysis(
       sourceId: analysisId,
       sourceStatus: String(analysis.status || ''),
     },
+    monetaryUnit: valuationMonetaryUnit(pack?.scaling),
   };
 }
 
@@ -731,6 +796,7 @@ function loadForecastFromManual(
     years: yearsSorted,
     sourceQuality: { sourceType: 'manual' },
     companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
+    monetaryUnit: valuationMonetaryUnit('units'),
   };
 }
 
@@ -1007,6 +1073,7 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
     computedAt: new Date().toISOString(),
     currency: val.currency,
     source: { type: val.source_type, id: val.source_id, quality: forecast.sourceQuality },
+    monetaryUnit: forecast.monetaryUnit,
     forecast: { horizonYears, years: forecast.years },
     dcf,
     comps,

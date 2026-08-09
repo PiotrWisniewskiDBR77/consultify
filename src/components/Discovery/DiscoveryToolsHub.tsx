@@ -2128,13 +2128,38 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         return [...prev, doc];
       });
       setActiveDocumentId(row.id);
+      // RV-027 (CB-02 pass 3): a user explicitly opening a document is a
+      // real navigation the user expects Back to undo — push a new history
+      // entry instead of leaving it to the passive state->URL reconciliation
+      // effect below, which uses `replace:true` (that effect exists to
+      // correct/hydrate, e.g. removing an invalid `docId` or restoring from
+      // a deep link — not to represent user-initiated "visits"). Switching
+      // from one open document straight to another therefore leaves a real
+      // Back target at the first document, not the whole page.
+      //
+      // `handleOpenDocument` is ALSO called from `openDocumentById` while
+      // resolving a `docId` that's already in the URL (initial hydration,
+      // browser back/forward, a shared/bookmarked link) — `urlOpenAttemptRef`
+      // is non-null for the duration of exactly that call. Pushing here too
+      // would add a spurious duplicate history entry on every refresh/deep
+      // link; the URL is already correct in that case; skip the push.
+      if (!urlOpenAttemptRef.current) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set('docId', row.id);
+            return next;
+          },
+          { replace: false }
+        );
+      }
 
       // If it's an initiative, fetch full details with tasks
       if (isInitiative) {
         fetchInitiativeDetails(row.id);
       }
     },
-    [fetchInitiativeDetails]
+    [fetchInitiativeDetails, setSearchParams]
   );
 
   const openOutput = useCallback(
@@ -2157,37 +2182,44 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     [navigate]
   );
 
+  // RV-027 (CB-02 pass 3): returns whether a matching document was actually
+  // found and opened. The URL->state effect below uses this — NOT a ref
+  // synced to `activeDocumentId` via a separate effect, which lags behind
+  // the `setActiveDocumentId` call in `handleOpenDocument` here (that ref
+  // only updates once React re-renders and runs its own sync effect, which
+  // hasn't happened yet by the time this async function's `.finally()`
+  // fires) — to decide whether resolution genuinely failed.
   const openDocumentById = useCallback(
-    async (id: string) => {
+    async (id: string): Promise<boolean> => {
       const existing = openDocuments.find((d) => d.id === id);
       if (existing) {
         setActiveDocumentId(existing.id);
-        return;
+        return true;
       }
 
       const outputMatch = outputs.find((r: OutputItem) => r.id === id);
       if (outputMatch) {
         openOutput(outputMatch);
-        return;
+        return true;
       }
 
       const initiativeMatch = initiatives.find((i) => i.id === id);
       if (initiativeMatch) {
         handleOpenDocument(initiativeMatch);
-        return;
+        return true;
       }
 
       const sessionMatch = discoveries.find((d) => d.id === id);
       if (sessionMatch) {
         handleOpenDocument(sessionMatch);
-        return;
+        return true;
       }
 
       try {
         const session = await Api.getToolSession(id);
         if (session?.id) {
           handleOpenDocument(transformToolSession(session));
-          return;
+          return true;
         }
       } catch {
         // Best-effort deep-link hydration
@@ -2206,10 +2238,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             status: mapStatusToUppercase(String(row.status || 'DRAFT')),
             apiToolType: 'initiative',
           });
+          return true;
         }
       } catch {
         // Ignore invalid deep-link ids.
       }
+      return false;
     },
     [
       openDocuments,
@@ -2250,9 +2284,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         return [...prev, doc];
       });
       setActiveDocumentId(docId);
+      // RV-027 (CB-02 pass 3): same as handleOpenDocument — a real user
+      // "visit", push a history entry instead of leaving this to the
+      // replace-only reconciliation effect.
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('docId', docId);
+          return next;
+        },
+        { replace: false }
+      );
       trackFunnelEvent('tool_preview_opened', { toolType });
     },
-    [isPolish, setOpenDocuments]
+    [isPolish, setOpenDocuments, setSearchParams]
   );
 
   const handleKnownToolSessionCreated = useCallback(
@@ -2271,9 +2316,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       setActiveTab('sessions');
       setActiveDocumentId(sessionId);
       setPreviewItemId(sessionId);
+      // RV-027 (CB-02 pass 3): starting a new tool session is a real user
+      // "visit" (the whole point of the action), push a history entry.
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('docId', sessionId);
+          return next;
+        },
+        { replace: false }
+      );
       fetchData(true);
     },
-    [fetchData]
+    [fetchData, setSearchParams]
   );
 
   const handleCloseDocument = useCallback(
@@ -2293,6 +2348,28 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     setSelectedInitiative(null);
     setInitiativeTasks([]);
   }, []);
+
+  // RV-027 (CB-02 pass 3): switching to a different ALREADY-OPEN document via
+  // its tab chip (Menu 3 open-items strip) is a real, deliberate navigation
+  // just like opening a fresh one — push a history entry so Back returns to
+  // the document the user switched away from, instead of silently replacing
+  // the URL (previously this was a bare `setActiveDocumentId`, no URL write
+  // of its own — it depended entirely on the passive `replace:true`
+  // reconciliation effect).
+  const handleSelectOpenDocument = useCallback(
+    (id: string) => {
+      setActiveDocumentId(id);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('docId', id);
+          return next;
+        },
+        { replace: false }
+      );
+    },
+    [setSearchParams]
+  );
 
   /**
    * Menu 2 MUSI wyprowadzać z otwartej karty (zgłoszenie Piotra 2026-07-27:
@@ -2331,16 +2408,32 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (!docIdParam) return;
     if (docIdParam === activeDocumentId) return;
     urlOpenAttemptRef.current = docIdParam;
-    void openDocumentById(docIdParam).finally(() => {
-      if (urlOpenAttemptRef.current === docIdParam) {
-        urlOpenAttemptRef.current = null;
-        // `openDocumentById` may resolve without changing activeDocumentId
-        // (invalid/foreign id). Force one reconciliation pass so that case can
-        // remove the stale parameter; a successful open keeps it because state
-        // and URL now match.
-        finishUrlOpenAttempt((value) => value + 1);
-      }
-    });
+    void openDocumentById(docIdParam)
+      .catch(() => false)
+      .then((resolved) => {
+        if (urlOpenAttemptRef.current === docIdParam) {
+          urlOpenAttemptRef.current = null;
+          // RV-027 (CB-02 pass 3): `resolved` is `openDocumentById`'s own
+          // report of whether it actually found and opened something — not a
+          // ref sampled from `activeDocumentId` (that lags: it only updates
+          // once React re-renders and runs a separate sync effect, which
+          // hasn't happened yet at this point in the same microtask chain, so
+          // it always read as stale/unset and wiped out every successful
+          // open). When resolution genuinely fails, explicitly clear any
+          // STALE previously-open document too — without this, the
+          // state->URL effect below would silently rewrite the user's (or a
+          // bookmarked/shared link's) invalid `?docId=` back to whatever
+          // document happened to already be open, masking the failure
+          // instead of surfacing honest "not found" recovery.
+          if (!resolved) {
+            setActiveDocumentId(null);
+          }
+          // Force one reconciliation pass so the state->URL effect can
+          // remove the stale parameter; a successful open keeps it because
+          // state and URL now match.
+          finishUrlOpenAttempt((value) => value + 1);
+        }
+      });
     // docIdParam is intentionally the only reactive dependency here — the
     // state->URL direction below owns reacting to activeDocumentId changes;
     // including it here too would cause both effects to fight/re-trigger
@@ -3518,6 +3611,47 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         const toolType = String(doc.subType || '');
 
         if (hasDedicatedToolDocumentView(toolType)) {
+          // RV-028 (Codex final re-review): `hasDedicatedToolDocumentView` only
+          // proves a real renderer EXISTS for this toolType — it says nothing
+          // about whether the tool is currently released. An existing/restored
+          // session (doc.type='tool') for one of the inactive Consulting Tools
+          // bypassed the library's Open/Start gate entirely and mounted a fully
+          // working ToolDocumentView. This gate checks the SAME source of truth
+          // the library already fetched (`knownTools`, from `Api.getKnownTools`
+          // — server's `ACTIVE_KNOWN_TOOL_TYPES`), so a tool that is inactive in
+          // the catalog cannot be entered via an existing document either.
+          if (isKnownToolsLoading && knownTools.length === 0) {
+            return (
+              <div className="h-full overflow-auto p-6">
+                <SharedLoadingState
+                  template="card"
+                  count={3}
+                  label={
+                    isPolish ? 'Sprawdzanie dostępności narzędzia…' : 'Checking tool availability…'
+                  }
+                />
+              </div>
+            );
+          }
+          const knownTool = knownTools.find((t) => t.toolType === toolType);
+          const isToolCurrentlyActive = knownTool ? knownTool.isActive !== false : true;
+          if (!isToolCurrentlyActive) {
+            return (
+              <SharedEmptyState
+                variant="forbidden"
+                title={isPolish ? 'Narzędzie jest nieaktywne' : 'This tool is inactive'}
+                description={
+                  isPolish
+                    ? 'To narzędzie jest jeszcze w przygotowaniu (wkrótce dostępne). Ta sesja nie może zostać otwarta jako pełny workflow.'
+                    : 'This tool is still coming soon. This session cannot be opened as a working workflow yet.'
+                }
+                primaryAction={{
+                  label: isPolish ? 'Wróć do biblioteki' : 'Back to library',
+                  onClick: handleShowList,
+                }}
+              />
+            );
+          }
           // Use new ToolDocumentView - canonical two-column layout
           return (
             <ToolDocumentView
@@ -5151,7 +5285,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
          * Biblioteki na długo po zamknięciu sesji. Na liście = jak dotąd. */
         openItems={activeDocumentId ? openDocuments : []}
         activeItemId={activeDocumentId}
-        onSelectItem={setActiveDocumentId}
+        onSelectItem={handleSelectOpenDocument}
         onCloseItem={handleCloseDocument}
         onShowList={handleShowList}
         activeFilters={activeFilters}

@@ -112,6 +112,7 @@ export async function saveStatementValuesFlow(params: {
   });
   const candidateRowLookup = await loadCandidateRowLookup(statementId);
   const selectedMappingLookup = await loadSelectedMappingLookup(statementId);
+  const allowedMappingStatuses = new Set(['auto', 'suggested', 'manual', 'unmapped']);
 
   const normalizedValues: Array<{
     canonicalLineId: string | null;
@@ -138,8 +139,28 @@ export async function saveStatementValuesFlow(params: {
     const sourceRow = value.sourceRow != null ? Number(value.sourceRow) : undefined;
     const candidate = sourceRow != null ? candidateRowLookup.get(sourceRow) : undefined;
     const canonicalLineId = value.canonicalLineId || null;
-    const mappingStatus = String(value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped'));
     const isNonFinancial = Boolean(value.isNonFinancial);
+    const requestedMappingStatus = String(
+      value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped')
+    );
+    const mappingStatus =
+      isNonFinancial && !allowedMappingStatuses.has(requestedMappingStatus)
+        ? 'unmapped'
+        : requestedMappingStatus;
+    if (!allowedMappingStatuses.has(mappingStatus)) {
+      throw new Error(`Unsupported financial statement mapping status: ${requestedMappingStatus}`);
+    }
+    if (value.value === null || value.value === undefined || value.value === '') {
+      throw new Error(
+        `Missing financial statement value for source row ${sourceRow ?? 'unknown'}; zero substitution is forbidden`
+      );
+    }
+    const numericValue = Number(value.value);
+    if (!Number.isFinite(numericValue)) {
+      throw new Error(
+        `Invalid financial statement value for source row ${sourceRow ?? 'unknown'}; a finite number is required`
+      );
+    }
     const valueOrigin = (String(value.valueOrigin || '').trim() ||
       (mappingStatus === 'manual'
         ? 'manual'
@@ -174,7 +195,7 @@ export async function saveStatementValuesFlow(params: {
     return {
       canonicalLineId,
       originalLabel: String(value.originalLabel || ''),
-      value: Number(value.value || 0),
+      value: numericValue,
       confidence: Number(value.confidence || 0),
       sourcePage:
         value.sourcePage != null ? Number(value.sourcePage) : (candidate?.sourcePage ?? null),
@@ -194,11 +215,7 @@ export async function saveStatementValuesFlow(params: {
       periodLabel: value.periodLabel ? String(value.periodLabel) : null,
       periodIndex: value.periodIndex != null ? Number(value.periodIndex) : 0,
       lineageType: (value.lineageType ? String(value.lineageType) : 'direct') as
-        | 'direct'
-        | 'aggregated'
-        | 'split'
-        | 'derived'
-        | 'manual_note',
+        'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note',
       derivedFromLineCodes: Array.isArray(value.derivedFromLineCodes)
         ? value.derivedFromLineCodes.map((code: unknown) => String(code))
         : [],
@@ -230,11 +247,7 @@ export async function saveStatementValuesFlow(params: {
             ? String(evidence.candidateRowId)
             : row.sourceCandidateRowId || null,
           evidenceType: String(evidence.evidenceType || normalized?.lineageType || 'direct') as
-            | 'direct'
-            | 'aggregated'
-            | 'split'
-            | 'derived'
-            | 'manual_note',
+            'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note',
           weight: evidence.weight != null ? Number(evidence.weight) : 1,
           contributionValue:
             evidence.contributionValue != null ? Number(evidence.contributionValue) : row.value,
@@ -263,6 +276,7 @@ export async function saveStatementValuesFlow(params: {
       originalLabel: value.originalLabel,
       mappingStatus: value.mappingStatus,
       isNonFinancial: value.isNonFinancial,
+      periodLabel: value.periodLabel,
     })),
     statement.statement_type
   );

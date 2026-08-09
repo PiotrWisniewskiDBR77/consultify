@@ -84,13 +84,53 @@ describe('R1 — converter edge cases', () => {
     expect(pmNodeToBlock({ type: 'docSection', attrs: { sectionId: 's' } })).toBeNull();
   });
 
+  it('round-trips advanced inline typography and paragraph alignment', () => {
+    const block = pmNodeToBlock({
+      type: 'paragraph',
+      attrs: { blockId: 'styled', textAlign: 'center' },
+      content: [
+        {
+          type: 'text',
+          text: 'Styled',
+          marks: [
+            { type: 'underline' },
+            { type: 'strike' },
+            { type: 'textStyle', attrs: { color: '#123456', fontSize: '18px' } },
+            { type: 'highlight', attrs: { color: '#fde68a' } },
+          ],
+        },
+      ],
+    });
+    expect(block?.content).toMatchObject({
+      textAlign: 'center',
+      richText: [
+        {
+          marks: [
+            { type: 'underline' },
+            { type: 'strike' },
+            { type: 'textStyle', attrs: { color: '#123456', fontSize: '18px' } },
+            { type: 'highlight', attrs: { color: '#fde68a' } },
+          ],
+        },
+      ],
+    });
+    expect(blockToPMNodes(block!, 'sec')[0]).toMatchObject({
+      attrs: { textAlign: 'center' },
+      content: [{ marks: expect.arrayContaining([{ type: 'underline' }, { type: 'strike' }]) }],
+    });
+  });
+
   it('groups blocks appearing before any section into a synthetic section (no drop)', () => {
     const schema = emptySchema();
     const back = proseMirrorToSchema(
       {
         type: 'doc',
         content: [
-          { type: 'paragraph', attrs: { blockId: 'p1' }, content: [{ type: 'text', text: 'lead' }] },
+          {
+            type: 'paragraph',
+            attrs: { blockId: 'p1' },
+            content: [{ type: 'text', text: 'lead' }],
+          },
         ],
       },
       schema

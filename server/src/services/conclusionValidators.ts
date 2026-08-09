@@ -161,7 +161,7 @@ function containsAny(haystack: string, needles: string[]): boolean {
  * ordinals used for enumeration (1-5) are excluded to avoid false positives on
  * "pierwsza akcja" / "3 rekomendacje" style enumeration language. */
 function extractMeaningfulNumbers(text: string): string[] {
-  const matches = text.match(/\d+[.,]?\d*/g) || [];
+  const matches: string[] = text.match(/\d+[.,]?\d*/g) || [];
   return matches.filter((m) => {
     const normalized = m.replace(',', '.');
     const n = Number(normalized);

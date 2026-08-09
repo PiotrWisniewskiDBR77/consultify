@@ -7,6 +7,7 @@
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import { FOCUS_RING } from './motionTokens';
 
@@ -55,6 +56,7 @@ export const CanvasToolbarDropdown: React.FC<{
   items: CanvasDropdownItem[];
   onMainClick: () => void;
 }> = ({ icon: Icon, label, disabled, items, onMainClick }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -117,7 +119,10 @@ export const CanvasToolbarDropdown: React.FC<{
           className={`inline-flex items-center rounded-r-lg px-0.5 py-1.5 text-c-text-secondary hover:bg-c-surface-raised transition-colors disabled:opacity-40 ${FOCUS_RING}`}
           aria-haspopup="true"
           aria-expanded={open}
-          aria-label={`${label} options`}
+          aria-label={t('canvas.toolbarPrimitives.moreOptionsFor', {
+            label,
+            defaultValue: `More options: ${label}`,
+          })}
         >
           <ChevronDown size={10} />
         </button>

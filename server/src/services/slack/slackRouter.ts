@@ -242,7 +242,7 @@ async function postViaBot(
   });
 
   const data = (await response.json().catch(() => ({}))) as SlackApiResponse;
-  if (!response.ok || !data.ok) {
+  if (response.ok === false || data.ok === false) {
     logger.warn('[SlackRouter] Bot transport failed', {
       channel: event.channel,
       channelId,
@@ -275,7 +275,7 @@ async function postViaWebhook(
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
+  if (response.ok === false) {
     logger.warn('[SlackRouter] Webhook transport failed', {
       channel: event.channel,
       httpStatus: response.status,
@@ -368,7 +368,7 @@ export async function routeToSlack(rawEvent: RouteToSlackEvent): Promise<RouteTo
   } catch (err) {
     // Absolute fail-soft guard: never throw to caller.
     logger.error('[SlackRouter] Unexpected failure (fail-soft)', {
-      channel: event.channel,
+      channel: rawEvent.channel,
       error: err instanceof Error ? err.message : String(err),
     });
     return { ok: false, transport: 'none' };

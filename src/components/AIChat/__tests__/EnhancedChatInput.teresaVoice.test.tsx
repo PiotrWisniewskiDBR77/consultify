@@ -100,6 +100,26 @@ vi.mock('../../../components/AIChat/NextModelChip', () => ({ NextModelChip: () =
 vi.mock('../../../components/AIChat/VoiceModeLegend', () => ({ VoiceModeLegend: () => null }));
 
 describe('EnhancedChatInput — Teresa voice CTA', () => {
+  it('always exposes an accessible Send button and dispatches Enter', async () => {
+    const onSend = vi.fn();
+    renderInput(<EnhancedChatInput onSend={onSend} teresaVoiceAvailable={false} />);
+
+    const send = screen.getByRole('button', { name: 'Send' });
+    expect((send as HTMLButtonElement).disabled).toBe(true);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'Keep this a presentation{enter}');
+    expect(onSend).toHaveBeenCalledWith('Keep this a presentation', undefined);
+  });
+
+  it('uses Shift+Enter for a newline without dispatching', async () => {
+    const onSend = vi.fn();
+    renderInput(<EnhancedChatInput onSend={onSend} teresaVoiceAvailable={false} />);
+    const input = screen.getByRole('textbox');
+    await userEvent.type(input, 'NPV{shift>}{enter}{/shift}scenario');
+    expect(onSend).not.toHaveBeenCalled();
+    expect((input as HTMLTextAreaElement).value).toBe('NPV\nscenario');
+  });
+
   it('renders the voice button and fires onTeresaVoiceToggle when clicked', async () => {
     const onTeresaVoiceToggle = vi.fn();
     renderInput(

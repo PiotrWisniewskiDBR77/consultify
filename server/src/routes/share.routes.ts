@@ -27,7 +27,11 @@ import crypto from 'crypto';
 import { Request, Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-import { optionalAuth, verifyToken as authenticate } from '../middleware/auth.middleware.js';
+import {
+  type AuthRequest,
+  optionalAuth,
+  verifyToken as authenticate,
+} from '../middleware/auth.middleware.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { decodeHtmlEntities } from '../utils/htmlEntities.js';
 import logger from '../utils/Logger.js';
@@ -275,7 +279,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
           userId,
           conversation.organization_id,
           'create_share_link',
-          { conversationOwnerId: conversation.user_id }
+          { isCreator: conversation.user_id === userId }
         );
         if (!check.allowed) {
           return res.status(403).json({
@@ -351,7 +355,7 @@ router.post('/conversations/:id/share', authenticate, async (req: Request, res: 
 // GET SHARE INFO
 // ==========================================
 
-router.get('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
+router.get('/conversations/:id/share', authenticate, async (req: AuthRequest, res: Response) => {
   const { id: conversationId } = req.params;
   const userId = req.user?.id;
 
@@ -402,7 +406,7 @@ router.get('/conversations/:id/share', authenticate, async (req: Request, res: R
  * verifies. Rate-limited per (token, IP).
  */
 router.post('/share/:token/unlock', async (req: Request, res: Response) => {
-  const { token } = req.params;
+  const token = String(req.params.token);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const password = String((req.body as any)?.password || '');
   const ip = String(req.ip || req.headers['x-forwarded-for'] || 'unknown');
@@ -421,7 +425,7 @@ router.post('/share/:token/unlock', async (req: Request, res: Response) => {
     if (!settings.passwordHash)
       return res.status(400).json({ error: 'Share is not password-protected' });
     const verdict = await verifyPasscode(password, String(settings.passwordHash));
-    if (!verdict.ok) {
+    if (verdict.ok === false) {
       return res.status(401).json({ error: 'Incorrect password' });
     }
     if (verdict.needsUpgrade) {
@@ -454,7 +458,7 @@ router.post('/share/:token/unlock', async (req: Request, res: Response) => {
 });
 
 router.get('/share/:token', optionalAuth, async (req: Request, res: Response) => {
-  const { token } = req.params;
+  const token = String(req.params.token);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const legacyQueryPassword = (req.query as any)?.password;
 
@@ -499,7 +503,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
           String(legacyQueryPassword),
           String(settings.passwordHash)
         );
-        if (!verdict.ok) {
+        if (verdict.ok === false) {
           return res.status(401).json({ error: 'Incorrect password' });
         }
         // Don't auto-upgrade via legacy path — only on the proper POST.
@@ -573,7 +577,7 @@ router.get('/share/:token', optionalAuth, async (req: Request, res: Response) =>
 // UPDATE SHARE
 // ==========================================
 
-router.patch('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
+router.patch('/conversations/:id/share', authenticate, async (req: AuthRequest, res: Response) => {
   const { id: conversationId } = req.params;
   const userId = req.user?.id;
   const { title: rawTitle, description: rawDescription, expiresIn, settings } = req.body;
@@ -642,7 +646,7 @@ router.patch('/conversations/:id/share', authenticate, async (req: Request, res:
 // DELETE SHARE
 // ==========================================
 
-router.delete('/conversations/:id/share', authenticate, async (req: Request, res: Response) => {
+router.delete('/conversations/:id/share', authenticate, async (req: AuthRequest, res: Response) => {
   const { id: conversationId } = req.params;
   const userId = req.user?.id;
 
@@ -679,7 +683,7 @@ router.delete('/conversations/:id/share', authenticate, async (req: Request, res
 // LIST USER'S SHARES
 // ==========================================
 
-router.get('/shares', authenticate, async (req: Request, res: Response) => {
+router.get('/shares', authenticate, async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
 
   try {

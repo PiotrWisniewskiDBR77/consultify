@@ -153,7 +153,7 @@ export const proposeRecordEdit: LevelHandler = async (input): Promise<LevelStubO
       if (after === null || after === undefined) return null;
       return { fieldId: fid, before, after };
     })
-    .filter((c): c is { fieldId: string; before: unknown; after: unknown } => c !== null);
+    .filter((c) => c !== null);
 
   if (fieldChanges.length === 0) {
     return {

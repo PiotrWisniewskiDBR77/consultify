@@ -122,7 +122,7 @@ export function registerNotebookTopicsRoutes(router: Router): void {
       if (!pageId) return res.status(400).json({ error: 'page id required' });
 
       const gate = await loadOwnedPage(pageId, organizationId, userId);
-      if (!gate.ok) return res.status(gate.status).json({ error: gate.error });
+      if (gate.ok === false) return res.status(gate.status).json({ error: gate.error });
 
       let topicId = String(req.body?.topicId ?? '').trim();
       const topicName = String(req.body?.topicName ?? '').trim();
@@ -168,7 +168,7 @@ export function registerNotebookTopicsRoutes(router: Router): void {
       }
 
       const gate = await loadOwnedPage(pageId, organizationId, userId);
-      if (!gate.ok) return res.status(gate.status).json({ error: gate.error });
+      if (gate.ok === false) return res.status(gate.status).json({ error: gate.error });
 
       await notebookTopicService.unpinPageFromTopic(pageId, topicId);
       return res.json({ data: { pageId, topicId, unpinned: true } });

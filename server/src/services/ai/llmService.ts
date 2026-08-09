@@ -421,9 +421,20 @@ function getModel(modelConfig: ModelConfig) {
     // json_schema (every nested object must list `required` for ALL properties + additionalProperties
     // false). Zod→json_schema conversion does not satisfy strict for nested arrays/objects, so the
     // upstream (OpenAI/Azure via OpenRouter) rejects it with code 400 "Invalid schema for
-    // response_format" → surfaced as a generic "Provider returned error". Disable strict structured
-    // outputs so generateObject uses the compatible json_object path (still Zod-validated by us).
-    return provider.chat(modelId, { structuredOutputs: false });
+    // response_format" → surfaced as a generic "Provider returned error".
+    //
+    // TS-REMEDIATION NOTE (2026-08-08): the installed @ai-sdk/openai@3.0.90 provider's
+    // `chat(modelId)` type signature takes ONLY `modelId` — the `structuredOutputs` second
+    // argument (and the option itself) no longer exists anywhere in this package's type
+    // definitions. That means this `{ structuredOutputs: false }` argument was ALREADY a
+    // silent no-op at runtime before this fix (plain JS ignores the extra argument) — the
+    // comment's described mitigation has not actually been in effect under this SDK version.
+    // Removing the argument here is type-only and changes no runtime behavior. The underlying
+    // "Invalid schema for response_format" risk this comment describes is a real,
+    // pre-existing functional gap that needs its own product/engineering decision (e.g. finding
+    // the v3-equivalent knob, or fixing the Zod→json_schema conversion for strict mode) —
+    // flagged here, not silently fixed.
+    return provider.chat(modelId);
   }
   return provider(modelId);
 }

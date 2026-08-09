@@ -589,12 +589,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     (_serverVersion: number, _serverMap?: any) => {
       const settled = Date.now() - workspaceMountedAtRef.current > CONFLICT_TOAST_SETTLE_MS;
       if (settled) {
-        toast(t('mindmap.changeConflictDetectedRefreshingMapFrom'), { icon: '⚠️' });
+        // CB-05/RV-006: useIdeaMapSync's self-heal retries this flush up to twice
+        // more on a repeated 409 (conflictRetryRef < 2) — without a stable id,
+        // each retry's onConflict call opened a NEW stacked toast, so a single
+        // representation switch could show the same sentence three times at
+        // once. A per-idea id makes react-hot-toast update the one toast in
+        // place instead of stacking duplicates; the server reconcile below is
+        // unaffected either way.
+        toast(t('mindmap.changeConflictDetectedRefreshingMapFrom'), {
+          icon: '⚠️',
+          id: `graph-conflict-${ideaId}`,
+        });
       }
       // Always reconcile from the server, toast or not.
       conflictRefreshRef.current?.();
     },
-    [isPolish]
+    [ideaId, isPolish]
   );
 
   const graphRuntime = useWorkspaceGraphRuntime({

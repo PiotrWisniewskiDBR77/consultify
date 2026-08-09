@@ -474,6 +474,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         status: sessionData.status,
         answers: sessionData.answers || {},
         completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
+        wizardState: sessionData.wizardState ?? null,
       });
       hydratedSessionObjectRef.current = useToolStore.getState().currentSession;
 
@@ -712,6 +713,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleApprove = async () => {
     if (!toolSessionId) return;
+    // RB-024: Approve must use the same readiness invariant as Request review —
+    // otherwise a session can be approved while completionItems still show gaps.
+    if (!completionReady) {
+      toast.error(t('discoveryToolsMain.toolDocumentView.completeAllRequiredItemsFirst'));
+      return;
+    }
     try {
       const result = await Api.approveTool(toolSessionId);
       setToolStatus((result.status || 'APPROVED').toUpperCase() as any);
@@ -1925,9 +1932,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             <button
               type="button"
               onClick={handleApprove}
-              disabled={toolPermissions.canApproveTool === false}
+              disabled={!completionReady || toolPermissions.canApproveTool === false}
               className={getMenu3AiButtonClass(false)}
-              title={t('discoveryToolsMain.toolDocumentView.approveThisSession')}
+              title={
+                completionReady
+                  ? t('discoveryToolsMain.toolDocumentView.approveThisSession')
+                  : t('discoveryToolsMain.toolDocumentView.requestReviewTitleNotReady')
+              }
             >
               <CheckCircle2 size={12} />
               {t('discoveryToolsMain.toolDocumentView.approve')}

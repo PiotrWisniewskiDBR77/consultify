@@ -31,7 +31,12 @@ import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ReconciliationPanel } from './ReconciliationPanel';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 
-export type ROIStatus = 'on-track' | 'below' | 'above';
+// CB-04/RB-003: 'not-evaluable' is distinct from 'on-track' — an initiative
+// with no realized benefit yet, or a zero projected baseline, has not been
+// measured at all. Silently reporting that as "on track" (the pre-fix
+// behavior) is a false positive: it tells the user a plan is succeeding
+// when it has never actually been evaluated.
+export type ROIStatus = 'on-track' | 'below' | 'above' | 'not-evaluable';
 
 export interface ROIInitiativeItem {
   initiativeId: string;
@@ -91,10 +96,15 @@ const STATUS_STYLES: Record<ROIStatus, { bg: string; text: string; dot: string }
   },
   below: { bg: 'bg-danger-500/10', text: 'text-danger-400', dot: 'bg-danger-500' },
   above: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
+  'not-evaluable': {
+    bg: 'bg-c-surface-raised/10',
+    text: 'text-c-text-muted',
+    dot: 'bg-c-text-muted',
+  },
 };
 
-function deriveROIStatus(item: ROIInitiativeItem): ROIStatus {
-  if (!item.hasRealized || item.projectedBenefit === 0) return 'on-track';
+export function deriveROIStatus(item: ROIInitiativeItem): ROIStatus {
+  if (!item.hasRealized || item.projectedBenefit === 0) return 'not-evaluable';
   const pct =
     item.projectedBenefit !== 0
       ? ((item.realizedBenefit - item.projectedBenefit) / Math.abs(item.projectedBenefit)) * 100
@@ -195,7 +205,13 @@ const StatusBadge: React.FC<{ status: ROIStatus }> = ({ status }) => {
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-      {status === 'above' ? 'Above plan' : status === 'below' ? 'Below plan' : 'On track'}
+      {status === 'above'
+        ? 'Above plan'
+        : status === 'below'
+          ? 'Below plan'
+          : status === 'not-evaluable'
+            ? 'Not evaluable yet'
+            : 'On track'}
     </span>
   );
 };
@@ -360,6 +376,11 @@ export const ROITrackingView: React.FC<ROITrackingViewProps> = ({ refreshNonce }
     },
     { value: 'below', label: t('results.roi.statusBelow', 'Below plan'), color: 'bg-danger-500' },
     { value: 'above', label: t('results.roi.statusAbove', 'Above plan'), color: 'bg-emerald-500' },
+    {
+      value: 'not-evaluable',
+      label: t('results.roi.statusNotEvaluable', 'Not evaluable yet'),
+      color: 'bg-c-text-muted',
+    },
   ];
 
   if (loading) {

@@ -18,6 +18,13 @@ describe('Migration Runner', () => {
     expect(isRuntimeMigrationFile('20260802c_mat010_operation_claims_table.sql')).toBe(true);
   });
 
+  it('runtime discovery includes the curated workbook lifecycle repair', async () => {
+    const { isRuntimeMigrationFile } = await import('../migrationIdentity.js');
+
+    expect(isRuntimeMigrationFile('20260807_approve_dbr77_workbook_templates.sql')).toBe(true);
+    expect(isRuntimeMigrationFile('946_approve_dbr77_workbook_templates.sql')).toBe(false);
+  });
+
   it('all 27 migration files exist (700-726)', () => {
     const migrationsDir = path.resolve(process.cwd(), 'server/migrations');
     const files = fs.readdirSync(migrationsDir).filter((f) => /^7\d{2}_.*\.sql$/.test(f));

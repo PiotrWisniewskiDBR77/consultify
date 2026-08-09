@@ -23,21 +23,33 @@ vi.mock('../../../server/src/utils/queryHelpers.js', () => ({
 }));
 
 vi.mock('../../../server/src/middleware/auth.middleware.js', () => ({
-  verifyToken: (_req: any, _res: any, next: any) => { next(); },
-  isAuthenticated: (_req: any, _res: any, next: any) => { next(); },
+  verifyToken: (_req: any, _res: any, next: any) => {
+    next();
+  },
+  isAuthenticated: (_req: any, _res: any, next: any) => {
+    next();
+  },
 }));
 
 vi.mock('../../../server/src/middleware/rbac.middleware.js', () => ({
-  requireOrgAccess: () => (_req: any, _res: any, next: any) => { next(); },
-  requireOrgRole: () => (_req: any, _res: any, next: any) => { next(); },
+  requireOrgAccess: () => (_req: any, _res: any, next: any) => {
+    next();
+  },
+  requireOrgRole: () => (_req: any, _res: any, next: any) => {
+    next();
+  },
 }));
 
 vi.mock('../../../server/src/middleware/validation.middleware.js', () => ({
-  validateBody: () => (_req: any, _res: any, next: any) => { next(); },
+  validateBody: () => (_req: any, _res: any, next: any) => {
+    next();
+  },
 }));
 
 vi.mock('../../../server/src/middleware/permissionMiddleware.js', () => ({
-  requirePermission: () => (_req: any, _res: any, next: any) => { next(); },
+  requirePermission: () => (_req: any, _res: any, next: any) => {
+    next();
+  },
 }));
 
 // Additional mocks for other services imported by the router
@@ -61,6 +73,7 @@ vi.mock('../../../server/src/services/initiative/suggestedChangesService.js', ()
 }));
 
 import additivesRouter from '../../../server/src/routes/initiatives-additive.routes.js';
+import { createEconomicsLinkage } from '../../../server/src/services/v8/financeIntegrationService.js';
 
 const authState: { organizationId: string | null } = { organizationId: 'org-1' };
 
@@ -95,6 +108,13 @@ describe('initiative economics-links routes (M16 integration)', () => {
       financeModelRef: 'model-1',
       linkageType: 'financial_model',
     });
+    expect(createEconomicsLinkage).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      initiativeId: 'init-1',
+      financeModelRef: 'model-1',
+      linkageType: 'forecast',
+      status: 'not_started',
+    });
   });
 
   it('POST /:initiativeId/economics-links returns 401 when no auth', async () => {
@@ -108,8 +128,7 @@ describe('initiative economics-links routes (M16 integration)', () => {
   });
 
   it('GET /:initiativeId/economics-links returns 200 with links array when initiative exists', async () => {
-    const res = await request(createApp())
-      .get('/api/initiatives/init-1/economics-links');
+    const res = await request(createApp()).get('/api/initiatives/init-1/economics-links');
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('links');

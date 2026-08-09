@@ -467,7 +467,10 @@ export class ApiGateway {
       app.use('/api/ai-agents', ...internalToolsGuard);
       app.use('/api/ai-outcomes', ...internalToolsGuard);
       app.use('/api/research', ...internalToolsGuard);
-      app.use('/api/artifacts', ...internalToolsGuard);
+      // Materials / Outputs is a customer-facing authenticated surface. Its
+      // router owns auth + V8 org/output gates below; applying the internal
+      // tools guard here makes every collection request return a deliberate
+      // production 404 when INTERNAL_TOOLS_ENABLED is off.
       app.use('/api/artifact-runs', ...internalToolsGuard);
       app.use('/api/work-canvas', workCanvasRoutes);
       app.use('/api/agents', ...internalToolsGuard);
@@ -896,7 +899,7 @@ export class ApiGateway {
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
-      app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
+      app.use('/api/artifacts', artifactsRoutes);
       // Consultify Document Studio (MVP-1, Mode 1) — productized Document runtime
       // above the V8.1 substrate. See docs/product/CONSULTIFY_DOCUMENT_STUDIO_V1_SSOT.md
       //

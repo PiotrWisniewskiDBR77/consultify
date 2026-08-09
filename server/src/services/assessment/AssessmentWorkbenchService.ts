@@ -1159,7 +1159,7 @@ export class AssessmentWorkbenchService {
       });
     }
     const validation = assertPromotionPayloadShape(state);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       throw Object.assign(new Error('Promotion payload invalid'), {
         code: 'P28_PROMOTION_PAYLOAD_INVALID',
         validationErrors: validation.errors,

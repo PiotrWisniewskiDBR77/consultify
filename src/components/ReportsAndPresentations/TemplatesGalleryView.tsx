@@ -192,7 +192,8 @@ const TemplateTile: React.FC<{
 }> = ({ item, usePath, scopeLabel, onUse, onPreview }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
-  const disabledUse = !usePath;
+  const isDeprecated = String(item.status).toLowerCase() === 'deprecated';
+  const disabledUse = !usePath || isDeprecated;
   const meta = TEMPLATE_TYPE_META[item.type];
   const IconFormat = TYPE_ICON[item.type];
 
@@ -243,10 +244,12 @@ const TemplateTile: React.FC<{
               {t('rap.actions.useTemplate', 'Użyj wzorca')}
             </button>
             <p className="mt-2 text-[11px] leading-4 text-c-text-muted">
-              {t(
-                'rap.templates.useBlocked',
-                'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
-              )}
+              {isDeprecated
+                ? t('rap.templates.deprecatedUseBlocked', 'Wycofany wzorzec nie może być użyty.')
+                : t(
+                    'rap.templates.useBlocked',
+                    'Brak kanonicznego rekordu wzorca — nie ma czego użyć.'
+                  )}
             </p>
           </div>
         ) : (

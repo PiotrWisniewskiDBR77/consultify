@@ -2,15 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { executeToolCall } from './ai/toolDefinitions.js';
+import { authorizeAgentToolExecution } from './v8/agentToolExecutionGovernanceService.js';
+import {
+  executeWithAgentResourceReservation,
+} from './v8/agentResourceGovernanceService.js';
+import { projectCanonicalRunAfterExternalTransition } from './v8/agentCanonicalRunService.js';
+import { revalidateCanonicalRunContextForWorker } from './v8/agentContextGroundingService.js';
 
 export type Wave8AgentRisk = 'low' | 'medium' | 'high';
 export type Wave8AgentRunStatus =
-  | 'planned'
-  | 'blocked'
-  | 'scheduled'
-  | 'running'
-  | 'completed'
-  | 'failed';
+  'planned' | 'blocked' | 'scheduled' | 'running' | 'completed' | 'failed';
 
 export interface Wave8AgentDefinition {
   agentId: string;
@@ -52,6 +53,8 @@ type Wave8AgentDefinitionListItem = Wave8AgentDefinition & {
 export interface LaunchWave8AgentInput {
   organizationId: string;
   userId: string;
+  /** Canonical transformation run owning this bounded agent execution. */
+  canonicalRunId?: string | null;
   agentId: string;
   goal: string;
   projectId?: string | null;
@@ -60,6 +63,9 @@ export interface LaunchWave8AgentInput {
     cadence: 'once' | 'daily' | 'weekly';
     nextRunAt?: string | null;
     ownerUserId?: string | null;
+    timezone?: string | null;
+    timeoutSeconds?: number | null;
+    maxAttempts?: number | null;
   } | null;
   swarm?: {
     enabled: boolean;
@@ -78,8 +84,18 @@ export interface LaunchWave8AgentInput {
   } | null;
   schedulerContext?: {
     scheduleId?: string | null;
-    trigger: 'launch_request' | 'manual_process_due';
+    trigger: 'launch_request' | 'manual_process_due' | 'durable_cron_worker';
   } | null;
+}
+
+function deterministicTokenCount(value: unknown): number {
+  const text = typeof value === 'string' ? value : safeJsonStringify(value);
+  return text.trim()
+    ? text
+        .trim()
+        .split(/\s+|(?=[{}[\],:])/u)
+        .filter(Boolean).length
+    : 0;
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -104,6 +120,103 @@ function safeJsonStringify(value: unknown): string {
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+type LocalDateTimeParts = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
+function localParts(instant: Date, timezone: string): LocalDateTimeParts {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  const values = Object.fromEntries(
+    formatter.formatToParts(instant).map((part) => [part.type, part.value])
+  );
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  };
+}
+
+function localDateTimeToUtc(parts: LocalDateTimeParts, timezone: string): Date {
+  const targetAsUtc = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second
+  );
+  let candidate = targetAsUtc;
+  for (let iteration = 0; iteration < 4; iteration += 1) {
+    const observed = localParts(new Date(candidate), timezone);
+    const observedAsUtc = Date.UTC(
+      observed.year,
+      observed.month - 1,
+      observed.day,
+      observed.hour,
+      observed.minute,
+      observed.second
+    );
+    const correction = targetAsUtc - observedAsUtc;
+    candidate += correction;
+    if (correction === 0) break;
+  }
+  return new Date(candidate);
+}
+
+export function calculateNextScheduleRun(
+  afterIso: string,
+  cadence: 'once' | 'daily' | 'weekly',
+  timezone: string
+): string | null {
+  if (cadence === 'once') return null;
+  const after = new Date(afterIso);
+  if (!Number.isFinite(after.getTime())) throw new Error('invalid_schedule_instant');
+  let current: LocalDateTimeParts;
+  try {
+    current = localParts(after, timezone);
+  } catch {
+    throw new Error('invalid_schedule_timezone');
+  }
+  const calendar = new Date(
+    Date.UTC(
+      current.year,
+      current.month - 1,
+      current.day + (cadence === 'daily' ? 1 : 7),
+      current.hour,
+      current.minute,
+      current.second
+    )
+  );
+  return localDateTimeToUtc(
+    {
+      year: calendar.getUTCFullYear(),
+      month: calendar.getUTCMonth() + 1,
+      day: calendar.getUTCDate(),
+      hour: current.hour,
+      minute: current.minute,
+      second: current.second,
+    },
+    timezone
+  ).toISOString();
 }
 
 const AGENT_DEFINITIONS: Wave8AgentDefinition[] = [
@@ -328,6 +441,7 @@ function mapRun(row: any): any {
   if (!row) return null;
   return {
     runId: row.run_id,
+    canonicalRunId: row.canonical_run_id || null,
     organizationId: row.organization_id,
     agentId: row.agent_id,
     userId: row.user_id,
@@ -348,7 +462,11 @@ function mapRun(row: any): any {
 export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
-    await dbRun(`
+    const strictRun = async (sql: string): Promise<void> => {
+      const result = await dbRun(sql, [], { fallback: false });
+      if (!result.success) throw new Error(result.error || 'wave8_schema_write_failed');
+    };
+    await strictRun(`
       CREATE TABLE IF NOT EXISTS wave8_agent_definitions (
         agent_id TEXT PRIMARY KEY,
         organization_id TEXT,
@@ -370,7 +488,7 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await dbRun(`
+    await strictRun(`
       CREATE TABLE IF NOT EXISTS wave8_agent_runs (
         run_id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
@@ -389,7 +507,10 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
         completed_at TEXT
       )
     `);
-    await dbRun(`
+    await dbRun(
+      `ALTER TABLE wave8_agent_runs ADD COLUMN IF NOT EXISTS canonical_run_id TEXT`
+    ).catch(() => undefined);
+    await strictRun(`
       CREATE TABLE IF NOT EXISTS wave8_agent_notifications (
         notification_id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
@@ -400,33 +521,94 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await dbRun(`
+    await strictRun(`
+      CREATE TABLE IF NOT EXISTS wave8_agent_tool_governance_events (
+        event_id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        agent_id TEXT NOT NULL,
+        tool_id TEXT,
+        tool_name TEXT NOT NULL,
+        project_id TEXT,
+        run_id TEXT,
+        decision TEXT NOT NULL CHECK (decision IN ('allowed', 'denied')),
+        reason TEXT NOT NULL,
+        policy_ref TEXT,
+        input_digest TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await strictRun(`
       CREATE TABLE IF NOT EXISTS wave8_agent_schedules (
         schedule_id TEXT PRIMARY KEY,
         organization_id TEXT NOT NULL,
         agent_id TEXT NOT NULL,
         owner_user_id TEXT NOT NULL,
         cadence TEXT NOT NULL,
+        goal TEXT NOT NULL DEFAULT '',
+        project_id TEXT,
+        timezone TEXT NOT NULL DEFAULT 'UTC',
         next_run_at TEXT,
-        scheduler_mode TEXT NOT NULL DEFAULT 'manual_process_due_endpoint',
+        scheduler_mode TEXT NOT NULL DEFAULT 'durable_cron_worker',
         status TEXT NOT NULL,
+        lease_owner TEXT,
+        lease_expires_at TEXT,
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        mandate_version INTEGER NOT NULL DEFAULT 1,
+        mandate_json TEXT NOT NULL DEFAULT '{}',
+        timeout_seconds INTEGER NOT NULL DEFAULT 900,
+        max_attempts INTEGER NOT NULL DEFAULT 3,
+        retry_at TEXT,
+        blocked_reason TEXT,
+        last_run_at TEXT,
+        last_error TEXT,
+        cancelled_at TEXT,
+        cancelled_by TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
     await dbRun(
-      `ALTER TABLE wave8_agent_schedules ADD COLUMN scheduler_mode TEXT DEFAULT 'manual_process_due_endpoint'`
+      `ALTER TABLE wave8_agent_schedules ADD COLUMN IF NOT EXISTS canonical_run_id TEXT`
     ).catch(() => undefined);
     await dbRun(
+      `ALTER TABLE wave8_agent_schedules ADD COLUMN IF NOT EXISTS scheduler_mode TEXT DEFAULT 'durable_cron_worker'`
+    ).catch(() => undefined);
+    for (const column of [
+      "goal TEXT NOT NULL DEFAULT ''",
+      'project_id TEXT',
+      "timezone TEXT NOT NULL DEFAULT 'UTC'",
+      'lease_owner TEXT',
+      'lease_expires_at TEXT',
+      'attempt_count INTEGER NOT NULL DEFAULT 0',
+      'mandate_version INTEGER NOT NULL DEFAULT 1',
+      "mandate_json TEXT NOT NULL DEFAULT '{}'",
+      'timeout_seconds INTEGER NOT NULL DEFAULT 900',
+      'max_attempts INTEGER NOT NULL DEFAULT 3',
+      'retry_at TEXT',
+      'blocked_reason TEXT',
+      'last_run_at TEXT',
+      'last_error TEXT',
+      'cancelled_at TEXT',
+      'cancelled_by TEXT',
+    ]) {
+      await dbRun(`ALTER TABLE wave8_agent_schedules ADD COLUMN IF NOT EXISTS ${column}`).catch(
+        () => undefined
+      );
+    }
+    await strictRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_definitions_org ON wave8_agent_definitions(organization_id, role)`
     );
-    await dbRun(
+    await strictRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_runs_org ON wave8_agent_runs(organization_id, created_at)`
     );
-    await dbRun(
+    await strictRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_schedules_org ON wave8_agent_schedules(organization_id, status)`
     );
-    await dbRun(
+    await strictRun(
+      `CREATE INDEX IF NOT EXISTS idx_wave8_tool_governance_run ON wave8_agent_tool_governance_events(organization_id, run_id, tool_name, created_at)`
+    );
+    await strictRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_notifications_org ON wave8_agent_notifications(organization_id, created_at)`
     );
   })().catch((err) => {
@@ -462,8 +644,7 @@ export async function listWave8AgentDefinitions(params?: {
             ...(definition as Wave8AgentDefinition),
             editable: Boolean((definition as Wave8AgentDefinition).editable),
             source: ((definition as Wave8AgentDefinition).source || 'database') as
-              | 'code'
-              | 'database',
+              'code' | 'database',
             updatedBy: (definition as Wave8AgentDefinition).updatedBy || null,
           }) satisfies Wave8AgentDefinitionListItem
       );
@@ -615,21 +796,28 @@ function buildSchedulerAudit(input: LaunchWave8AgentInput): Record<string, unkno
     return {
       requested: true,
       status: 'registered',
-      schedulerMode: 'manual_process_due_endpoint',
-      cronBacked: false,
+      schedulerMode: 'durable_cron_worker',
+      cronBacked: true,
       trigger: 'launch_request',
       cadence: input.schedule.cadence,
       nextRunAt: input.schedule.nextRunAt || null,
-      note: 'Schedule is registered for explicit process-due sweeps; no background cron is implied here.',
+      timezone: input.schedule.timezone || 'UTC',
+      note: 'Schedule is persisted and claimed by the central cron worker using a durable lease.',
     };
   }
-  if (input.schedulerContext?.trigger === 'manual_process_due') {
+  if (
+    input.schedulerContext?.trigger === 'manual_process_due' ||
+    input.schedulerContext?.trigger === 'durable_cron_worker'
+  ) {
     return {
       requested: false,
       status: 'triggered',
-      schedulerMode: 'manual_process_due_endpoint',
-      cronBacked: false,
-      trigger: 'manual_process_due',
+      schedulerMode:
+        input.schedulerContext.trigger === 'durable_cron_worker'
+          ? 'durable_cron_worker'
+          : 'manual_process_due_endpoint',
+      cronBacked: input.schedulerContext.trigger === 'durable_cron_worker',
+      trigger: input.schedulerContext.trigger,
       scheduleId: input.schedulerContext.scheduleId || null,
     };
   }
@@ -729,6 +917,7 @@ function validateOutputSchema(definition: Wave8AgentDefinition, output: any): bo
 }
 
 export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<any> {
+  const startedAtMs = Date.now();
   await ensureWave8AgentRuntimeSchema();
   const definition = await getDefinition(input.agentId, input.organizationId);
   if (!definition) throw new Error(`Unknown Wave 8 agent: ${input.agentId}`);
@@ -759,14 +948,24 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
     telemetry: {
       launchedAt: nowIso(),
       requestedToolCount: requestedTools.length,
+      usage: {
+        inputTokens: deterministicTokenCount({ goal: input.goal, requestedTools }),
+        outputTokens: deterministicTokenCount(output),
+        totalTokens:
+          deterministicTokenCount({ goal: input.goal, requestedTools }) +
+          deterministicTokenCount(output),
+        costUsd: 0,
+        durationMs: Math.max(0, Date.now() - startedAtMs),
+        source: 'deterministic_local_runtime',
+      },
     },
   };
   await dbRun(
     `INSERT INTO wave8_agent_runs (
       run_id, organization_id, agent_id, user_id, project_id, status, goal,
       requested_tools_json, output_json, schema_valid, audit_json, schedule_json,
-      owner_user_id, completed_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      owner_user_id, completed_at, canonical_run_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       runId,
       input.organizationId,
@@ -782,24 +981,72 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
       input.schedule ? safeJsonStringify(input.schedule) : null,
       input.schedule?.ownerUserId || input.userId,
       status === 'completed' || status === 'blocked' ? nowIso() : null,
+      input.canonicalRunId || null,
     ]
   );
+  if (input.canonicalRunId) {
+    await projectCanonicalRunAfterExternalTransition({
+      canonicalRunId: input.canonicalRunId,
+      organizationId: input.organizationId,
+      aliasType: 'wave8_run',
+      externalId: runId,
+      actorUserId: input.userId,
+      reason: `Wave8 agent run persisted with status ${status}.`,
+    });
+  }
   if (status === 'scheduled' && input.schedule) {
+    const scheduleId = `sched8-${uuidv4()}`;
     await dbRun(
       `INSERT INTO wave8_agent_schedules (
-        schedule_id, organization_id, agent_id, owner_user_id, cadence, next_run_at, scheduler_mode, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        schedule_id, organization_id, agent_id, owner_user_id, cadence, goal, project_id,
+        timezone, next_run_at, scheduler_mode, status, timeout_seconds, max_attempts, mandate_json,
+        canonical_run_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        `sched8-${uuidv4()}`,
+        scheduleId,
         input.organizationId,
         input.agentId,
         input.schedule.ownerUserId || input.userId,
         input.schedule.cadence,
+        input.goal,
+        input.projectId || null,
+        input.schedule.timezone || 'UTC',
         input.schedule.nextRunAt || null,
-        'manual_process_due_endpoint',
+        'durable_cron_worker',
         'active',
+        Math.max(1, Math.min(Number(input.schedule.timeoutSeconds || 900), 86_400)),
+        Math.max(1, Math.min(Number(input.schedule.maxAttempts || 3), 10)),
+        safeJsonStringify({
+          version: 1,
+          approvedAt: nowIso(),
+          approvedBy: input.userId,
+          approvalPolicy: definition.approvalPolicy,
+          approvalDecision,
+          agentId: input.agentId,
+          goal: input.goal,
+          projectId: input.projectId || null,
+          ownerUserId: input.schedule.ownerUserId || input.userId,
+          cadence: input.schedule.cadence,
+          timezone: input.schedule.timezone || 'UTC',
+          timeoutSeconds: Math.max(
+            1,
+            Math.min(Number(input.schedule.timeoutSeconds || 900), 86_400)
+          ),
+          maxAttempts: Math.max(1, Math.min(Number(input.schedule.maxAttempts || 3), 10)),
+        }),
+        input.canonicalRunId || null,
       ]
     );
+    if (input.canonicalRunId) {
+      await projectCanonicalRunAfterExternalTransition({
+        canonicalRunId: input.canonicalRunId,
+        organizationId: input.organizationId,
+        aliasType: 'schedule',
+        externalId: scheduleId,
+        actorUserId: input.userId,
+        reason: 'Wave8 durable schedule registered.',
+      });
+    }
   }
   if (status === 'completed' || status === 'scheduled') {
     await recordWave8Notification({
@@ -852,99 +1099,300 @@ export async function executeWave8AgentTool(input: {
   runId?: string | null;
   aiRunId?: string | null;
   budgetApproved?: boolean;
+  resourceIdempotencyKey?: string | null;
+  estimatedCostUsd?: number | null;
 }): Promise<any> {
   await ensureWave8AgentRuntimeSchema();
   const definition = await getDefinition(input.agentId, input.organizationId);
   if (!definition) throw new Error(`Unknown Wave 8 agent: ${input.agentId}`);
   const toolDecision = validateToolScope(definition, [input.toolName]);
-  if (!toolDecision.allowed) {
-    return { allowed: false, error: toolDecision.reason, toolDecision };
-  }
+  let preliminaryDenial = toolDecision.allowed ? null : toolDecision.reason;
   if (definition.approvalPolicy === 'airun_required') {
     const approvalDecision = await validateApprovedAIRun({
       organizationId: input.organizationId,
       aiRunId: input.aiRunId,
     });
     if (!approvalDecision.allowed) {
-      return { allowed: false, error: approvalDecision.reason, toolDecision, approvalDecision };
+      preliminaryDenial = approvalDecision.reason;
     }
   }
   if (definition.approvalPolicy === 'budget_gate' && input.budgetApproved !== true) {
-    return {
-      allowed: false,
-      error: 'budget_gate_required',
-      toolDecision,
-      approvalDecision: { allowed: false, reason: 'budget_gate_required' },
-    };
+    preliminaryDenial = 'budget_gate_required';
   }
-  const result = await executeToolCall(input.toolName, input.toolInput, {
+  const governanceDecision = await authorizeAgentToolExecution({
     organizationId: input.organizationId,
     userId: input.userId,
-    projectId: input.projectId || undefined,
+    agentId: input.agentId,
+    toolName: input.toolName,
+    toolInput: input.toolInput,
+    projectId: input.projectId,
+    runId: input.runId || input.aiRunId,
+    preliminaryDenial,
   });
-  return { allowed: true, result, toolDecision };
+  if (!governanceDecision.allowed) {
+    return {
+      allowed: false,
+      error: governanceDecision.reason,
+      toolDecision,
+      governanceDecision,
+    };
+  }
+  const requestedResourceRunId = input.runId || input.aiRunId;
+  const wave8CanonicalBinding = requestedResourceRunId
+    ? await dbGet<{ canonical_run_id?: string | null }>(
+        `SELECT canonical_run_id FROM wave8_agent_runs
+         WHERE run_id = ? AND organization_id = ?`,
+        [requestedResourceRunId, input.organizationId]
+      )
+    : null;
+  const resourceRunId = wave8CanonicalBinding?.canonical_run_id || requestedResourceRunId;
+  let resourceExecution;
+  try {
+    resourceExecution = await executeWithAgentResourceReservation({
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      runId: resourceRunId,
+      userId: input.userId,
+      agentId: input.agentId,
+      toolName: input.toolName,
+      idempotencyKey: input.resourceIdempotencyKey,
+      estimatedCostUsd: input.estimatedCostUsd,
+      execute: () =>
+        executeToolCall(input.toolName, input.toolInput, {
+          organizationId: input.organizationId,
+          userId: input.userId,
+          projectId: input.projectId || undefined,
+        }),
+    });
+  } catch (error) {
+    return {
+      allowed: false,
+      error: error instanceof Error ? error.message : 'resource_governance_failed_closed',
+      toolDecision,
+      governanceDecision,
+    };
+  }
+  if (!resourceExecution.allowed || resourceExecution.replayed) {
+    return {
+      allowed: resourceExecution.allowed,
+      error: resourceExecution.allowed ? undefined : resourceExecution.reason,
+      replayed: resourceExecution.replayed,
+      toolDecision,
+      governanceDecision,
+      resourceDecision: resourceExecution.resourceDecision,
+    };
+  }
+  return {
+    allowed: true,
+    result: resourceExecution.result,
+    toolDecision,
+    governanceDecision,
+    resourceDecision: resourceExecution.resourceDecision,
+  };
 }
 
 export async function processDueWave8AgentSchedules(params: {
-  organizationId: string;
+  organizationId?: string;
   now?: string;
+  workerId?: string;
+  executeSchedule?: (input: LaunchWave8AgentInput, signal: AbortSignal) => Promise<any>;
 }): Promise<any[]> {
   await ensureWave8AgentRuntimeSchema();
   const now = params.now || nowIso();
+  const workerId = params.workerId || `manual-${uuidv4()}`;
+  const leaseExpiresAt = new Date(Date.parse(now) + 5 * 60 * 1000).toISOString();
+  const organizationClause = params.organizationId ? 'AND organization_id = ?' : '';
+  const queryParams = params.organizationId
+    ? [params.organizationId, now, now, now]
+    : [now, now, now];
   const rows = await dbAll(
     `SELECT * FROM wave8_agent_schedules
-     WHERE organization_id = ? AND status = 'active'
+     WHERE status = 'active'
+       ${organizationClause}
        AND (next_run_at IS NULL OR next_run_at <= ?)
+       AND (retry_at IS NULL OR retry_at <= ?)
+       AND (lease_expires_at IS NULL OR lease_expires_at <= ?)
      ORDER BY next_run_at ASC`,
-    [params.organizationId, now]
+    queryParams
   );
   const processed: any[] = [];
   for (const row of rows || []) {
-    const cadence = String(row.cadence || 'weekly') as 'once' | 'daily' | 'weekly';
-    const result = await launchWave8Agent({
-      organizationId: row.organization_id,
-      userId: row.owner_user_id,
-      agentId: row.agent_id,
-      goal: `Scheduled ${cadence} agent run`,
-      requestedTools: [],
-      schedule: null,
-      approval: { budgetApproved: true },
-      schedulerContext: {
-        scheduleId: row.schedule_id,
-        trigger: 'manual_process_due',
-      },
-    });
-    const nextRunAt =
-      cadence === 'daily'
-        ? new Date(Date.parse(now) + 24 * 60 * 60 * 1000).toISOString()
-        : cadence === 'weekly'
-          ? new Date(Date.parse(now) + 7 * 24 * 60 * 60 * 1000).toISOString()
-          : null;
-    await dbRun(
+    const claim = await dbRun(
       `UPDATE wave8_agent_schedules
-       SET next_run_at = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE schedule_id = ?`,
-      [nextRunAt, cadence === 'once' ? 'completed' : 'active', row.schedule_id]
-    ).catch(() => undefined);
-    await recordWave8Notification({
-      organizationId: row.organization_id,
-      runId: result.run.runId,
-      ownerUserId: row.owner_user_id,
-      notificationType: 'agent_schedule_processed',
-      payload: {
-        scheduleId: row.schedule_id,
-        cadence,
-        schedulerMode: row.scheduler_mode || 'manual_process_due_endpoint',
-        nextRunAt,
-        scheduleStatus: cadence === 'once' ? 'completed' : 'active',
-        delivery: {
-          channel: 'in_app_audit',
-          dispatchMode: 'audit_log_only',
-          deliveredExternally: false,
+       SET lease_owner = ?, lease_expires_at = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE schedule_id = ? AND status = 'active'
+         AND (lease_expires_at IS NULL OR lease_expires_at <= ?)`,
+      [workerId, leaseExpiresAt, row.schedule_id, now]
+    );
+    if (Number((claim as any)?.changes ?? (claim as any)?.rowCount ?? 0) !== 1) continue;
+    if (row.canonical_run_id) {
+      const contextDecision = await revalidateCanonicalRunContextForWorker({
+        canonicalRunId: row.canonical_run_id,
+        organizationId: row.organization_id,
+        actorUserId: row.owner_user_id,
+        workerKind: 'wave8_schedule',
+        externalId: row.schedule_id,
+      });
+      if (contextDecision.decision !== 'allowed') {
+        await dbRun(
+          `UPDATE wave8_agent_schedules
+             SET status = 'blocked_context', blocked_reason = ?, lease_owner = NULL,
+                 lease_expires_at = NULL, updated_at = CURRENT_TIMESTAMP
+           WHERE schedule_id = ? AND organization_id = ? AND lease_owner = ?`,
+          [
+            `${contextDecision.decision}:${contextDecision.reason}`,
+            row.schedule_id,
+            row.organization_id,
+            workerId,
+          ]
+        );
+        await recordWave8Notification({
+          organizationId: row.organization_id,
+          runId: row.schedule_id,
+          ownerUserId: row.owner_user_id,
+          notificationType: 'agent_schedule_context_blocked',
+          payload: {
+            scheduleId: row.schedule_id,
+            decision: contextDecision.decision,
+            reason: contextDecision.reason,
+            revalidationId: contextDecision.revalidationId,
+          },
+        });
+        continue;
+      }
+    }
+    const cadence = String(row.cadence || 'weekly') as 'once' | 'daily' | 'weekly';
+    try {
+      const scheduleInput: LaunchWave8AgentInput = {
+        organizationId: row.organization_id,
+        userId: row.owner_user_id,
+        canonicalRunId: row.canonical_run_id || null,
+        agentId: row.agent_id,
+        goal: row.goal || `Scheduled ${cadence} agent run`,
+        projectId: row.project_id || null,
+        requestedTools: [],
+        schedule: null,
+        approval: { budgetApproved: true },
+        schedulerContext: {
+          scheduleId: row.schedule_id,
+          trigger: params.workerId ? 'durable_cron_worker' : 'manual_process_due',
         },
-      },
-    });
-    processed.push(result.run);
+      };
+      const timeoutMs = Math.max(1, Number(row.timeout_seconds || 900)) * 1000;
+      const executeSchedule = params.executeSchedule || launchWave8Agent;
+      const abortController = new AbortController();
+      let timeoutHandle: NodeJS.Timeout | undefined;
+      const result = await Promise.race([
+        executeSchedule(scheduleInput, abortController.signal),
+        new Promise<never>((_, reject) => {
+          timeoutHandle = setTimeout(() => {
+            abortController.abort(`schedule_execution_timeout:${row.timeout_seconds || 900}`);
+            reject(new Error(`schedule_execution_timeout:${row.timeout_seconds || 900}`));
+          }, timeoutMs);
+        }),
+      ]).finally(() => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+      });
+      const nextRunAt = calculateNextScheduleRun(now, cadence, row.timezone || 'UTC');
+      await dbRun(
+        `UPDATE wave8_agent_schedules
+         SET next_run_at = ?, status = ?, lease_owner = NULL, lease_expires_at = NULL,
+             attempt_count = attempt_count + 1, last_run_at = ?, last_error = NULL,
+             retry_at = NULL, blocked_reason = NULL,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE schedule_id = ? AND lease_owner = ? AND status = 'active'`,
+        [nextRunAt, cadence === 'once' ? 'completed' : 'active', now, row.schedule_id, workerId]
+      );
+      if (row.canonical_run_id) {
+        await projectCanonicalRunAfterExternalTransition({
+          canonicalRunId: row.canonical_run_id,
+          organizationId: row.organization_id,
+          aliasType: 'schedule',
+          externalId: row.schedule_id,
+          actorUserId: row.owner_user_id,
+          reason: `Wave8 scheduled execution completed; schedule is ${
+            cadence === 'once' ? 'completed' : 'active'
+          }.`,
+        });
+      }
+      await recordWave8Notification({
+        organizationId: row.organization_id,
+        runId: result.run.runId,
+        ownerUserId: row.owner_user_id,
+        notificationType: 'agent_schedule_processed',
+        payload: {
+          scheduleId: row.schedule_id,
+          cadence,
+          schedulerMode: params.workerId ? 'durable_cron_worker' : 'manual_process_due_endpoint',
+          nextRunAt,
+          scheduleStatus: cadence === 'once' ? 'completed' : 'active',
+          delivery: {
+            channel: 'in_app_audit',
+            dispatchMode: 'audit_log_only',
+            deliveredExternally: false,
+          },
+        },
+      });
+      processed.push(result.run);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const nextAttempt = Number(row.attempt_count || 0) + 1;
+      const maxAttempts = Math.max(1, Number(row.max_attempts || 3));
+      const externalDependency = errorMessage.startsWith('external_dependency:');
+      const terminal = nextAttempt >= maxAttempts;
+      const status = externalDependency ? 'blocked_external' : terminal ? 'failed' : 'active';
+      const retryAt =
+        status === 'active'
+          ? new Date(
+              Date.parse(now) + Math.min(3600, 30 * 2 ** (nextAttempt - 1)) * 1000
+            ).toISOString()
+          : null;
+      await dbRun(
+        `UPDATE wave8_agent_schedules
+         SET lease_owner = NULL, lease_expires_at = NULL, attempt_count = attempt_count + 1,
+             last_error = ?, status = ?, retry_at = ?, blocked_reason = ?,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE schedule_id = ? AND lease_owner = ?`,
+        [
+          errorMessage,
+          status,
+          retryAt,
+          externalDependency ? errorMessage : null,
+          row.schedule_id,
+          workerId,
+        ]
+      );
+      if (row.canonical_run_id) {
+        await projectCanonicalRunAfterExternalTransition({
+          canonicalRunId: row.canonical_run_id,
+          organizationId: row.organization_id,
+          aliasType: 'schedule',
+          externalId: row.schedule_id,
+          actorUserId: row.owner_user_id,
+          reason: `Wave8 scheduled execution failed; schedule is ${status}.`,
+        });
+      }
+      await recordWave8Notification({
+        organizationId: row.organization_id,
+        runId: row.schedule_id,
+        ownerUserId: row.owner_user_id,
+        notificationType: externalDependency
+          ? 'agent_schedule_dependency_blocked'
+          : terminal
+            ? 'agent_schedule_failed'
+            : 'agent_schedule_retry_scheduled',
+        payload: {
+          scheduleId: row.schedule_id,
+          error: errorMessage,
+          attempt: nextAttempt,
+          maxAttempts,
+          status,
+          retryAt,
+          actionable: externalDependency || terminal,
+          actionUrl: `/my-work/agents?scheduleId=${row.schedule_id}`,
+        },
+      });
+    }
   }
   return processed;
 }
@@ -969,16 +1417,105 @@ export async function listWave8AgentSchedules(params: { organizationId: string }
   );
   return (rows || []).map((row: any) => ({
     scheduleId: row.schedule_id,
+    canonicalRunId: row.canonical_run_id || null,
     organizationId: row.organization_id,
     agentId: row.agent_id,
     ownerUserId: row.owner_user_id,
     cadence: row.cadence,
     nextRunAt: row.next_run_at || null,
-    schedulerMode: row.scheduler_mode || 'manual_process_due_endpoint',
+    schedulerMode: row.scheduler_mode || 'durable_cron_worker',
+    timezone: row.timezone || 'UTC',
+    attemptCount: Number(row.attempt_count || 0),
+    mandateVersion: Number(row.mandate_version || 1),
+    mandate: safeJsonParse(row.mandate_json, {}),
+    timeoutSeconds: Number(row.timeout_seconds || 900),
+    maxAttempts: Number(row.max_attempts || 3),
+    retryAt: row.retry_at || null,
+    blockedReason: row.blocked_reason || null,
+    lastRunAt: row.last_run_at || null,
+    lastError: row.last_error || null,
+    cancelledAt: row.cancelled_at || null,
+    cancelledBy: row.cancelled_by || null,
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at || null,
   }));
+}
+
+export async function transitionWave8AgentSchedule(input: {
+  organizationId: string;
+  scheduleId: string;
+  actorUserId: string;
+  action: 'pause' | 'resume' | 'cancel';
+}): Promise<any> {
+  await ensureWave8AgentRuntimeSchema();
+  const current = await dbGet(
+    `SELECT * FROM wave8_agent_schedules WHERE schedule_id = ? AND organization_id = ?`,
+    [input.scheduleId, input.organizationId]
+  );
+  if (!current) throw new Error('schedule_not_found');
+  const from = String(current.status);
+  const allowed =
+    (input.action === 'pause' && from === 'active') ||
+    (input.action === 'resume' &&
+      ['paused', 'blocked_external', 'blocked_context', 'failed'].includes(from)) ||
+    (input.action === 'cancel' &&
+      ['active', 'paused', 'blocked_external', 'blocked_context', 'failed'].includes(from));
+  if (!allowed) throw new Error(`invalid_schedule_transition:${from}:${input.action}`);
+  if (
+    current.lease_owner &&
+    current.lease_expires_at &&
+    Date.parse(current.lease_expires_at) > Date.now()
+  ) {
+    throw new Error('schedule_currently_executing');
+  }
+  const target =
+    input.action === 'pause' ? 'paused' : input.action === 'resume' ? 'active' : 'cancelled';
+  const result = await dbRun(
+    `UPDATE wave8_agent_schedules SET status = ?, mandate_version = mandate_version + 1,
+       lease_owner = NULL, lease_expires_at = NULL, retry_at = NULL, blocked_reason = NULL,
+       attempt_count = CASE WHEN ? = 'active' THEN 0 ELSE attempt_count END,
+       cancelled_at = ?, cancelled_by = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE schedule_id = ? AND organization_id = ? AND status = ?
+       AND (lease_expires_at IS NULL OR lease_expires_at <= ?)`,
+    [
+      target,
+      target,
+      target === 'cancelled' ? nowIso() : null,
+      target === 'cancelled' ? input.actorUserId : null,
+      input.scheduleId,
+      input.organizationId,
+      from,
+      nowIso(),
+    ]
+  );
+  if (Number(result.changes || 0) !== 1) throw new Error('schedule_transition_conflict');
+  if (current.canonical_run_id) {
+    await projectCanonicalRunAfterExternalTransition({
+      canonicalRunId: current.canonical_run_id,
+      organizationId: input.organizationId,
+      aliasType: 'schedule',
+      externalId: input.scheduleId,
+      actorUserId: input.actorUserId,
+      reason: `Wave8 schedule transitioned from ${from} to ${target}.`,
+    });
+  }
+  await recordWave8Notification({
+    organizationId: input.organizationId,
+    runId: input.scheduleId,
+    ownerUserId: current.owner_user_id,
+    notificationType: `agent_schedule_${target}`,
+    payload: {
+      scheduleId: input.scheduleId,
+      from,
+      to: target,
+      actorUserId: input.actorUserId,
+      mandateVersion: Number(current.mandate_version || 1) + 1,
+    },
+  });
+  return (await listWave8AgentSchedules({ organizationId: input.organizationId })).find(
+    (schedule) => schedule.scheduleId === input.scheduleId
+  );
 }
 
 export async function listWave8AgentNotifications(params: {

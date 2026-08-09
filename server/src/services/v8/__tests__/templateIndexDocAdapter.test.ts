@@ -71,6 +71,25 @@ const DOC_STUDIO_ROW = {
   updated_at: '2026-07-02T10:00:00.000Z',
 };
 
+const SHEET_TEMPLATE_ROW = {
+  id: '7d5126c4-4cd8-47da-8e97-b5d1584c11d1',
+  organization_id: null,
+  name: 'Dashboard KPI',
+  description: 'Executive KPI workbook',
+  category: 'kpi',
+  schema_snapshot: {
+    fields: [
+      { name: 'Wskaźnik', type: 'text' },
+      { name: 'Wynik', type: 'number' },
+    ],
+  },
+  status: 'approved',
+  version: '1.0.0',
+  visibility: 'system',
+  created_by: null,
+  created_at: '2026-08-01T10:00:00.000Z',
+};
+
 function templateListItem(overrides: Partial<ArtifactListItem> = {}): ArtifactListItem {
   return {
     artifactId: 'art-1',
@@ -156,8 +175,19 @@ describe('originSummary.template identity block', () => {
     expect(legacy.source).toBe('legacy');
     expect(legacy.legacy).toBe(true);
 
+    const workbookBuilder = buildTemplateOriginSummaryFields({
+      canonicalTemplateId: 'workbook-template-1',
+      originRuntime: 'sheet_template',
+      orphaned: false,
+      scope: 'organization',
+      status: 'draft',
+      source: 'canonical',
+    });
+    expect(workbookBuilder.source).toBe('canonical');
+    expect(workbookBuilder.legacy).toBe(false);
+
     // The forbidden 'application' spelling never appears in the contract.
-    expect(JSON.stringify([canonical, legacy])).not.toContain('application');
+    expect(JSON.stringify([canonical, legacy, workbookBuilder])).not.toContain('application');
   });
 });
 
@@ -225,7 +255,7 @@ describe('backfill adapter — document_studio_templates → document_template',
     expect(summary.status).toBe('approved');
   });
 
-  it('reads only approved templates visible to the org (own rows + __system__ catalogue)', async () => {
+  it('reads all lifecycle states visible to the org (own rows + __system__ catalogue)', async () => {
     mockDbAll.mockResolvedValue([]);
     await ensureBackfilledOutputsForOrg('org-visibility-probe');
 
@@ -234,26 +264,122 @@ describe('backfill adapter — document_studio_templates → document_template',
     );
     expect(docQuery).toBeDefined();
     const sql = String(docQuery![0]);
-    expect(sql).toContain("t.status = 'approved'");
+    // Drafts must be indexed too; otherwise Submit for review has no visible row.
+    expect(sql).not.toContain("t.status = 'approved'");
     expect(sql).toContain('is_system = TRUE');
     // Idempotency guard: only rows without an existing link are inserted.
     expect(sql).toContain('l.link_id IS NULL');
     expect(docQuery![1]).toContain('__system__');
   });
 
-  it('does NOT pull tp_base_templates into the index as a sheet template', async () => {
-    mockDbAll.mockResolvedValue([]);
-    await ensureBackfilledOutputsForOrg('org-no-sheets');
+  it('indexes tp_base_templates as canonical sheet templates', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM tp_base_templates') && sql.includes('LEFT JOIN')) {
+        return [SHEET_TEMPLATE_ROW];
+      }
+      return [];
+    });
 
-    expect(allSql().some((sql) => sql.includes('tp_base_templates'))).toBe(false);
-    const runtimesWritten = mockDbRun.mock.calls
-      .filter((call) => String(call[0]).includes('INSERT INTO v8_artifact_origin_links'))
-      .flatMap((call) => call[1] as unknown[]);
-    expect(runtimesWritten).not.toContain('sheet_template');
+    await ensureBackfilledOutputsForOrg('org-with-sheets');
+
+    const sheetQuery = mockDbAll.mock.calls.find(
+      (call) =>
+        String(call[0]).includes('FROM tp_base_templates') &&
+        String(call[0]).includes('LEFT JOIN v8_artifact_origin_links')
+    );
+    expect(sheetQuery).toBeDefined();
+    expect(String(sheetQuery![0])).toContain("t.visibility = 'private'");
+    expect(String(sheetQuery![0])).toContain('t.organization_id = ?');
+
+    const linkInsert = mockDbRun.mock.calls.find(
+      (call) =>
+        String(call[0]).includes('INSERT INTO v8_artifact_origin_links') &&
+        (call[1] as unknown[]).includes('sheet_template')
+    );
+    expect(linkInsert).toBeDefined();
+    expect(linkInsert![1]).toContain(SHEET_TEMPLATE_ROW.id);
+
+    const artifactInsert = mockDbRun.mock.calls.find((call) => {
+      if (!String(call[0]).includes('INSERT INTO v8_output_artifacts')) return false;
+      return (call[1] as unknown[]).some(
+        (param) => typeof param === 'string' && param.includes(SHEET_TEMPLATE_ROW.id)
+      );
+    });
+    expect(artifactInsert).toBeDefined();
+    const summaryJson = String(
+      (artifactInsert![1] as unknown[]).find(
+        (param) => typeof param === 'string' && param.includes('"structureBlueprint"')
+      )
+    );
+    const summary = JSON.parse(summaryJson).template;
+    expect(summary.canonicalTemplateId).toBe(SHEET_TEMPLATE_ROW.id);
+    expect(summary.originRuntime).toBe('sheet_template');
+    expect(summary.source).toBe('canonical');
+    expect(summary.legacy).toBe(false);
+    expect(summary.scope).toBe('system');
+    expect(summary.status).toBe('approved');
+    expect(summary.structureBlueprint.columns).toEqual([
+      { key: 'Wskaźnik', header: 'Wskaźnik', type: 'text' },
+      { key: 'Wynik', header: 'Wynik', type: 'number' },
+    ]);
   });
 });
 
 describe('orphan detection (measurement only)', () => {
+  it('projects presentation lifecycle instead of treating every active row as published', async () => {
+    mockDbAll.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM presentation_templates')) {
+        return [
+          {
+            canonical_id: 'deck-draft',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'draft',
+            active_value: true,
+          },
+          {
+            canonical_id: 'deck-approved',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'approved',
+            active_value: true,
+          },
+          {
+            canonical_id: 'deck-deprecated',
+            organization_id: 'org-alpha',
+            is_system: true,
+            status_value: 'deprecated',
+            active_value: false,
+          },
+        ];
+      }
+      return [];
+    });
+
+    const makeDeck = (artifactId: string, originRecordId: string) =>
+      templateListItem({
+        artifactId,
+        outputType: 'presentation',
+        originRuntime: 'presentation_template',
+        originRecordId,
+      });
+    const results = await enrichTemplateOriginSummaries('org-alpha', [
+      makeDeck('art-draft', 'deck-draft'),
+      makeDeck('art-approved', 'deck-approved'),
+      makeDeck('art-deprecated', 'deck-deprecated'),
+    ]);
+
+    expect(results.map((item) => (item.originSummary as any).template.status)).toEqual([
+      'draft',
+      'published',
+      'deprecated',
+    ]);
+    expect(allSql().find((sql) => sql.includes('FROM presentation_templates'))).toContain(
+      't.lifecycle_state'
+    );
+    expect(mockDbRun).not.toHaveBeenCalled();
+  });
+
   it('flags a template whose canonical record is gone and keeps a live one clean', async () => {
     mockDbAll.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM document_studio_templates')) {
@@ -327,10 +453,11 @@ describe('orphan detection (measurement only)', () => {
     expect(counts.byRuntime.document_template).toBe(2);
     expect(counts.byRuntime.report_template).toBe(0);
     expect(counts.byRuntime.presentation_template).toBe(0);
-    // sheet_template has no canonical registry → unverifiable, never guessed.
-    expect(counts.unverifiable).toEqual(['sheet_template']);
-    expect(counts.byRuntime.sheet_template).toBe(0);
-    expect(counts.total).toBe(2);
+    // tp_base_templates is the canonical workbook registry, so a missing row
+    // is measurable just like the other template runtimes.
+    expect(counts.unverifiable).toEqual([]);
+    expect(counts.byRuntime.sheet_template).toBe(1);
+    expect(counts.total).toBe(3);
 
     // ★ Measurement only — zero writes.
     expect(mockDbRun).not.toHaveBeenCalled();

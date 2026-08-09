@@ -56,6 +56,17 @@ export function isFormulaDisplayValue(value: unknown): value is string {
   return typeof value === 'string' && value.startsWith('=');
 }
 
+/** Semantic preview fallback for workbook CF. Native XLSX conditional formatting
+ * remains authoritative; this keeps critical negative variances visible in the
+ * HTML preview where ExcelJS CF rules are otherwise not evaluated. */
+export function isNegativeVarianceCell(sheetName: string, column: string, value: unknown): boolean {
+  if (!/variance|odchylenie/i.test(column) || !/tracking|budget|variance/i.test(sheetName)) return false;
+  if (typeof value === 'number') return value < 0;
+  if (typeof value !== 'string' || value.startsWith('=')) return false;
+  const parsed = Number(value.replace(/\s/g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(parsed) && parsed < 0;
+}
+
 export function buildWorkbookGridSheets(sheets: unknown): WorkbookGridSheet[] {
   if (!Array.isArray(sheets)) return [];
 

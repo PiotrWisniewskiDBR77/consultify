@@ -48,6 +48,8 @@ export interface DocumentSourceRef {
   sourceType: string;
   sourceId: string;
   sourceTitle?: string;
+  /** Inline evidence entered for a template-required source binding. */
+  sourceExcerpt?: string;
   sourceVersion?: string;
   sourceSnapshotId?: string;
 }

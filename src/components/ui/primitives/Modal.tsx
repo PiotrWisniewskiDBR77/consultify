@@ -115,11 +115,43 @@ export const Modal: React.FC<ModalProps> = ({
     preventEscapeCloseRef.current = preventEscapeClose;
   }, [preventEscapeClose]);
 
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'Escape' && !preventEscapeCloseRef.current) {
-      onCloseRef.current?.();
-    }
+  // Tab-trap the modal while open (CB-01 CODEX pass 2): confirm/delete
+  // dialogs like ConfirmModal must keep keyboard focus inside — Tab on the
+  // last focusable element cycles to the first, Shift+Tab on the first
+  // cycles to the last. Mirrors the established codebase convention
+  // (NotebookLibraryContent.tsx's inline focus trap).
+  const getFocusable = useCallback((): HTMLElement[] => {
+    const container = modalRef.current;
+    if (!container) return [];
+    return Array.from(
+      container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => el.offsetParent !== null);
   }, []);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !preventEscapeCloseRef.current) {
+        onCloseRef.current?.();
+        return;
+      }
+      if (event.key === 'Tab') {
+        const focusable = getFocusable();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    },
+    [getFocusable]
+  );
 
   useEffect(() => {
     if (open) {

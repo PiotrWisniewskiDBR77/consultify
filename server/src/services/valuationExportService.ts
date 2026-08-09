@@ -23,9 +23,13 @@ function safeJsonParse<T>(raw: any, fallback: T): T {
   }
 }
 
-function formatMoney(n: number | null | undefined, currency: string): string {
+export function formatValuationMoney(
+  n: number | null | undefined,
+  currency: string,
+  multiplier = 1
+): string {
   if (n == null || !Number.isFinite(Number(n))) return '—';
-  const v = Number(n);
+  const v = Number(n) * multiplier;
   const abs = Math.abs(v);
   if (abs >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(2)}B ${currency}`;
   if (abs >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M ${currency}`;
@@ -33,7 +37,7 @@ function formatMoney(n: number | null | undefined, currency: string): string {
   return `${v.toFixed(0)} ${currency}`;
 }
 
-function toTableFromSensitivity(s: any, currency: string): TableData | null {
+function toTableFromSensitivity(s: any, currency: string, multiplier: number): TableData | null {
   if (!s || !s.kind) return null;
   if (s.kind !== 'wacc_vs_g') return null;
   const headers = ['g \\\\ WACC', ...(s.waccGrid || []).map((w: number) => `${w.toFixed(1)}%`)];
@@ -42,13 +46,13 @@ function toTableFromSensitivity(s: any, currency: string): TableData | null {
     .map((r: any) => [
       `${Number(r.g).toFixed(1)}%`,
       ...((r.values || []).map((v: any) =>
-        Number.isFinite(Number(v)) ? formatMoney(Number(v), currency) : 'n/a'
+        Number.isFinite(Number(v)) ? formatValuationMoney(Number(v), currency, multiplier) : 'n/a'
       ) as string[]),
     ]);
   return { headers, rows };
 }
 
-function toCompsTable(comps: any, currency: string): TableData | null {
+function toCompsTable(comps: any, currency: string, multiplier: number): TableData | null {
   if (!comps) return null;
   const implied = comps?.impliedEnterpriseValue;
   if (!implied) return null;
@@ -65,15 +69,17 @@ function toCompsTable(comps: any, currency: string): TableData | null {
     String(comps.min ?? '—'),
     String(comps.median ?? '—'),
     String(comps.max ?? '—'),
-    `${formatMoney(implied.min, currency)} / ${formatMoney(implied.median, currency)} / ${formatMoney(implied.max, currency)}`,
+    `${formatValuationMoney(implied.min, currency, multiplier)} / ${formatValuationMoney(implied.median, currency, multiplier)} / ${formatValuationMoney(implied.max, currency, multiplier)}`,
   ];
   return { headers, rows: [row] };
 }
 
-function toTornadoChartData(tornado: any): ChartDataSet | null {
+function toTornadoChartData(tornado: any, multiplier: number): ChartDataSet | null {
   if (!Array.isArray(tornado) || tornado.length < 1) return null;
   const labels = tornado.slice(0, 8).map((d: any) => String(d?.driver || 'Driver').slice(0, 40));
-  const values = tornado.slice(0, 8).map((d: any) => Math.max(0, Number(d?.swing ?? 0)));
+  const values = tornado
+    .slice(0, 8)
+    .map((d: any) => Math.max(0, Number(d?.swing ?? 0) * multiplier));
   if (!values.some((v) => Number.isFinite(v) && v > 0)) return null;
   return {
     labels,
@@ -101,6 +107,7 @@ export async function exportValuationPptx(params: {
 
   const currency = row.currency || 'PLN';
   const results = safeJsonParse<any>(row.results, {});
+  const displayMultiplier = Math.max(1, Number(results?.monetaryUnit?.multiplier) || 1);
   const dcf = results?.dcf || {};
   const sensitivity = results?.sensitivity || null;
   const comps = results?.comps || null;
@@ -127,15 +134,15 @@ export async function exportValuationPptx(params: {
         type: 'executive_summary',
         headline:
           lang === 'pl'
-            ? `Wartość przedsiębiorstwa (EV): ${formatMoney(dcf.enterpriseValue, currency)}`
-            : `Enterprise value (EV): ${formatMoney(dcf.enterpriseValue, currency)}`,
+            ? `Wartość przedsiębiorstwa (EV): ${formatValuationMoney(dcf.enterpriseValue, currency, displayMultiplier)}`
+            : `Enterprise value (EV): ${formatValuationMoney(dcf.enterpriseValue, currency, displayMultiplier)}`,
         key_findings: [
-          `Equity value: ${formatMoney(dcf.equityValue, currency)}`,
+          `Equity value: ${formatValuationMoney(dcf.equityValue, currency, displayMultiplier)}`,
           `WACC: ${dcf.discountRatePercent ?? '—'}%`,
           dcf.terminalMethod === 'gordon'
             ? `Terminal growth (g): ${dcf.terminalGrowthPercent ?? '—'}%`
             : `Terminal: ${dcf.terminalMethod ?? '—'}`,
-          `PV split (explicit/terminal): ${formatMoney(dcf.pvExplicit, currency)} / ${formatMoney(dcf.pvTerminal, currency)}`,
+          `PV split (explicit/terminal): ${formatValuationMoney(dcf.pvExplicit, currency, displayMultiplier)} / ${formatValuationMoney(dcf.pvTerminal, currency, displayMultiplier)}`,
         ],
         recommendation:
           lang === 'pl'
@@ -151,7 +158,7 @@ export async function exportValuationPptx(params: {
         messages: [
           {
             title: lang === 'pl' ? 'Okres jawny vs terminal' : 'Explicit period vs terminal',
-            description: `${formatMoney(dcf.pvExplicit, currency)} / ${formatMoney(dcf.pvTerminal, currency)}`,
+            description: `${formatValuationMoney(dcf.pvExplicit, currency, displayMultiplier)} / ${formatValuationMoney(dcf.pvTerminal, currency, displayMultiplier)}`,
           },
           {
             title: lang === 'pl' ? 'Metoda terminalna' : 'Terminal method',
@@ -162,17 +169,18 @@ export async function exportValuationPptx(params: {
           },
           {
             title: lang === 'pl' ? 'Kapitał własny' : 'Equity value bridge',
-            description: `${lang === 'pl' ? 'EV' : 'EV'} ${formatMoney(dcf.enterpriseValue, currency)} − net debt ${formatMoney(
+            description: `${lang === 'pl' ? 'EV' : 'EV'} ${formatValuationMoney(dcf.enterpriseValue, currency, displayMultiplier)} − net debt ${formatValuationMoney(
               safeJsonParse<any>(row.assumptions, {})?.netDebt ?? null,
-              currency
-            )} = ${formatMoney(dcf.equityValue, currency)}`,
+              currency,
+              displayMultiplier
+            )} = ${formatValuationMoney(dcf.equityValue, currency, displayMultiplier)}`,
           },
         ],
       } as any,
     },
   ];
 
-  const compsTable = toCompsTable(comps, currency);
+  const compsTable = toCompsTable(comps, currency, displayMultiplier);
   if (compsTable) {
     slides.push({
       intent: 'appendix',
@@ -191,7 +199,7 @@ export async function exportValuationPptx(params: {
     });
   }
 
-  const tornadoChart = toTornadoChartData(tornado);
+  const tornadoChart = toTornadoChartData(tornado, displayMultiplier);
   if (tornadoChart) {
     slides.push({
       intent: 'single_insight',
@@ -209,7 +217,7 @@ export async function exportValuationPptx(params: {
     });
   }
 
-  const sensTable = toTableFromSensitivity(sensitivity, currency);
+  const sensTable = toTableFromSensitivity(sensitivity, currency, displayMultiplier);
   if (sensTable) {
     slides.push({
       intent: 'appendix',

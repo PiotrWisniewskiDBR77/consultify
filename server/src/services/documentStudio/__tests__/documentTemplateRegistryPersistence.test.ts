@@ -47,6 +47,7 @@ const {
   getTemplate,
   listTemplates,
   listTemplateAuditEntries,
+  reviseTemplateStructureDurably,
 } = await import('../documentTemplateService.js');
 
 describe('documentTemplateService — persistence write-through', () => {
@@ -119,6 +120,61 @@ describe('documentTemplateService — persistence write-through', () => {
       (c) => (c[0] as unknown as { action: string }).action
     );
     expect(auditCalls).toContain('template_approved');
+  });
+
+  it('durable structure save does not resolve before the DAO confirms the edited blueprint', async () => {
+    const { template } = draftTemplate({
+      organizationId: 'org-X',
+      userId: 'author',
+      input: { purpose: 'durable save', documentType: 'executive_memo' },
+    });
+    await Promise.resolve();
+    persistTemplateMock.mockClear();
+
+    let releasePersist!: (value: { ok: boolean }) => void;
+    const persistenceBarrier = new Promise<{ ok: boolean }>((resolve) => {
+      releasePersist = resolve;
+    });
+    // reviseTemplateStructure keeps its legacy best-effort write-through;
+    // the second call is the explicit durability barrier used by HTTP.
+    persistTemplateMock
+      .mockResolvedValueOnce({ ok: true })
+      .mockImplementationOnce(() => persistenceBarrier);
+
+    let resolved = false;
+    const save = reviseTemplateStructureDurably({
+      templateId: template.templateId,
+      organizationId: 'org-X',
+      userId: 'author',
+      sections: [
+        {
+          title: 'Decision required',
+          level: 1,
+          purpose: 'State the decision, deadline and accountable owner.',
+          required: true,
+          expectedLengthHint: 'short',
+          keyMessage: 'The Board must decide before the delivery gate.',
+          dataNeeded: ['Decision deadline', 'Named owner'],
+          suggestedEvidence: 'Signed decision record',
+        },
+      ],
+      requiredInputs: ['Board decision record'],
+    }).then((value) => {
+      resolved = true;
+      return value;
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(resolved).toBe(false);
+    releasePersist({ ok: true });
+    const saved = await save;
+
+    expect(saved.requiredInputs).toEqual(['Board decision record']);
+    expect(saved.sectionBlueprint[0]?.keyMessage).toBe(
+      'The Board must decide before the delivery gate.'
+    );
+    expect(persistTemplateMock).toHaveBeenCalledTimes(2);
   });
 
   it('deprecateTemplate writes the updated row and a template_deprecated audit entry', async () => {

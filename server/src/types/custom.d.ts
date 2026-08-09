@@ -14,8 +14,6 @@ declare module '../controllers/*.js' {
 
 declare module 'uuid';
 declare module 'bcryptjs';
-declare module 'jsonwebtoken';
-declare module 'ws';
 declare module 'cheerio';
 
 declare namespace Express {

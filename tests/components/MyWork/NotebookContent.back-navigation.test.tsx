@@ -23,6 +23,7 @@ const { apiMock, editorMock } = vi.hoisted(() => ({
     getNotebookPage: vi.fn(),
     notebookGetAIProposals: vi.fn(),
     updateNotebookPage: vi.fn(),
+    getOrphanedNotebookPageIds: vi.fn(async () => []),
   },
   editorMock: {
     commands: { setContent: vi.fn() },

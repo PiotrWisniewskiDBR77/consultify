@@ -1353,7 +1353,20 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
                 )}
               </button>
             ) : (
+              <>
               <button
+                type="button"
+                onClick={handleSend}
+                disabled
+                data-testid="chat-send-btn"
+                className="p-2 rounded-xl min-w-[44px] flex items-center justify-center bg-navy-900/35 text-white/70 dark:bg-[#F4F7FB]/35 dark:text-navy-950/50 cursor-not-allowed shadow-none"
+                title={t('aiChat.send', 'Send')}
+                aria-label={t('aiChat.send', 'Send') as string}
+              >
+                <ArrowUp size={18} />
+              </button>
+              <button
+                type="button"
                 onClick={() => onTeresaVoiceToggle?.()}
                 disabled={isDisabled || !teresaVoiceAvailable}
                 className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
@@ -1373,6 +1386,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               >
                 <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
               </button>
+              </>
             )}
           </div>
         </div>

@@ -1943,6 +1943,8 @@ router.get(
       projectName?: string | null;
       provider?: 'internal' | 'google' | 'microsoft';
       version?: string;
+      recurrenceRule?: string;
+      recurrenceSourceId?: string;
     }> = [];
 
     if (requestedSources.includes('task')) {
@@ -2075,7 +2077,7 @@ router.get(
             const seriesStart = `${startDate}T00:00:00.000Z`;
             const materialized = materializeInstances(
               seriesStart,
-              due ? undefined : endDate ? `${endDate}T00:00:00.000Z` : null,
+              due ? null : endDate ? `${endDate}T00:00:00.000Z` : null,
               {
                 seriesMasterRef: String(row.id),
                 rrule: recurrence.rrule,

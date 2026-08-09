@@ -885,7 +885,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           setLastSavedAt(Date.now());
         } catch (err: any) {
           if (err?.status === 409) {
-            toast(i18n.t('mindmap.persistence.conflictDetected'), { icon: '⚠️' });
+            // CB-05/RV-006: same stable id as IdeaMapWorkspace's shared-runtime
+            // conflict toast, so a stray duplicate never stacks.
+            toast(i18n.t('mindmap.persistence.conflictDetected'), {
+              icon: '⚠️',
+              id: `graph-conflict-${ideaId}`,
+            });
             await hydrate();
             return;
           }

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { CardBlock, CuratedColorSet } from '../../wizard/types';
+import { blockContentStyle } from '../manualEditing';
 
 interface Props {
   block: CardBlock;
@@ -17,7 +18,7 @@ export const TableBlock: React.FC<Props> = ({ block, theme }) => {
   return (
     <div
       className="overflow-x-auto rounded-lg border"
-      style={{ borderColor: theme.colors.primary + '20' }}
+      style={{ borderColor: theme.colors.primary + '20', ...blockContentStyle(block.content) }}
     >
       {/* §27-exempt: slide-content-renderer — renders presentation block data (headers/rows) as a visual table inside a deck slide; not a data listing */}
       <table className="w-full text-sm">

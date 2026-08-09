@@ -63,6 +63,20 @@ beforeEach(() => {
 
 const TEMPLATES: TemplateItem[] = [
   {
+    id: 'tpl-deprecated-1',
+    artifactIndexId: 'tpl-deprecated-1',
+    canonicalTemplateId: 'canon-deprecated-1',
+    title: 'Wycofany raport zarządczy',
+    description: 'Historyczny wzorzec, którego nie wolno używać.',
+    type: 'report',
+    category: 'custom',
+    scope: 'organization',
+    status: 'deprecated',
+    updatedAt: '2026-08-07T00:30:00.000Z',
+    createdBy: 'QA',
+    sectionCount: 4,
+  },
+  {
     id: 'tpl-report-1',
     artifactIndexId: 'tpl-report-1',
     canonicalTemplateId: 'canon-report-1',
@@ -203,5 +217,14 @@ describe('TemplatesTabContent — Galeria ↔ Tabela (ff_galeria_szablonow)', ()
     expect(screen.queryByTestId('template-gallery-tile-tpl-report-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('template-gallery-tile-tpl-sheet-1')).not.toBeInTheDocument();
     expect(screen.queryByTestId('template-gallery-tile-tpl-orphan-1')).not.toBeInTheDocument();
+  });
+
+  it('(f) a deprecated canonical template cannot be used from the gallery', () => {
+    mockFlag.mockReturnValue(true);
+    renderTab();
+
+    const tile = screen.getByTestId('template-gallery-tile-tpl-deprecated-1');
+    expect(within(tile).getByTestId('template-gallery-use-disabled-tpl-deprecated-1')).toBeDisabled();
+    expect(within(tile).getByText(/Wycofany wzorzec nie może być użyty/i)).toBeInTheDocument();
   });
 });

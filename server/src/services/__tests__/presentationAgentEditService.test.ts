@@ -21,6 +21,37 @@ describe('presentationAgentEditService', () => {
     expect(plan.noOpReason).toBeTruthy();
   });
 
+  it('fills explicit template gaps for a whole deck from Teresa values', () => {
+    const deck = {
+      deck_id: 'nova',
+      cards: [
+        {
+          title: 'Economics',
+          blocks: [
+            {
+              type: 'metric_strip',
+              content: {
+                metrics: [
+                  { label: 'NPV', value: 'Data required' },
+                  { label: 'Payback', value: 'Data required' },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+    const prompt = 'Fill values: NPV: EUR 3.2m; Payback: 11 months';
+    const plan = parsePresentationEditIntent(prompt);
+    const result = applyPresentationEditPlan({ deck, prompt, isPolish: false, plan });
+    expect(plan.actionable).toBe(true);
+    expect(JSON.stringify(result.deck)).not.toContain('Data required');
+    expect(result.deck.cards[0].blocks[0].content.metrics).toEqual([
+      expect.objectContaining({ value: 'EUR 3.2m' }),
+      expect.objectContaining({ value: '11 months' }),
+    ]);
+  });
+
   it('applies proposal changes only when intent is actionable', () => {
     const deck = {
       deck_id: 'deck-1',

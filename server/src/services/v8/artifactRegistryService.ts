@@ -28,7 +28,9 @@ import {
   RegisterArtifactOriginParamsSchema,
 } from '../../types/artifactRegistry.js';
 import type { RunState } from '../../types/executionSpine.js';
-import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { all as pooledAll, get as pooledGet, run as pooledRun } from '../../utils/DbPromise.js';
+import { createPinnedClientContext } from '../../utils/pinnedTransactionClient.js';
+import type { PgTransactionClient } from '../../utils/queryHelpers.js';
 import { AppError } from '../../utils/ErrorHandler.js';
 import logger from '../../utils/Logger.js';
 import type {
@@ -62,6 +64,50 @@ import {
   updateOperationContractLinks,
 } from './operationContractService.js';
 import * as publishReviewService from './publishReviewService.js';
+
+const artifactRegistryTransaction = createPinnedClientContext('artifact_registry');
+
+export function withArtifactRegistryClient<T>(
+  client: PgTransactionClient,
+  fn: () => Promise<T>
+): Promise<T> {
+  return artifactRegistryTransaction.withClient(client, fn);
+}
+
+type PooledQueryOptions = { timeout?: number; fallback?: boolean };
+
+async function dbAll<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T[]> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows || [];
+  return pooledAll<T>(sql, params, options);
+}
+
+async function dbGet<T = any>(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<T | undefined> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) return (await pinned.query<T>(sql, params)).rows[0];
+  return (await pooledGet<T>(sql, params, options)) ?? undefined;
+}
+
+async function dbRun(
+  sql: string,
+  params: unknown[] = [],
+  options?: PooledQueryOptions
+): Promise<{ success: boolean; changes?: number; lastID?: number; error?: string }> {
+  const pinned = artifactRegistryTransaction.current();
+  if (pinned) {
+    const result = await pinned.query(sql, params);
+    return { success: true, changes: result.rowCount ?? 0 };
+  }
+  return pooledRun(sql, params, options);
+}
 
 const LOG_PREFIX = '[V8:ArtifactRegistry]';
 const FALLBACK_ACTOR = 'system';
@@ -826,7 +872,7 @@ function buildStarterTableSeed(params: {
 }): StarterTableSeed {
   const explicitFields = Array.isArray(params.explicitColumns)
     ? params.explicitColumns
-        .map((column) => {
+        .map((column): StarterTableField | null => {
           if (typeof column === 'string') {
             const name = column.trim();
             return name ? { name, fieldType: 'singleLineText' } : null;
@@ -1038,22 +1084,22 @@ async function getArtifactRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactRow | null> {
-  return dbGet<ArtifactRow>(
+  return (await dbGet<ArtifactRow>(
     `SELECT * FROM v8_output_artifacts WHERE artifact_id = ? AND organization_id = ?`,
     [artifactId, organizationId],
     { fallback: true }
-  );
+  )) ?? null;
 }
 
 async function getArtifactRunRow(
   runId: string,
   organizationId: string
 ): Promise<ArtifactRunRow | null> {
-  return dbGet<ArtifactRunRow>(
+  return (await dbGet<ArtifactRunRow>(
     `SELECT * FROM v8_artifact_runs WHERE run_id = ? AND organization_id = ?`,
     [runId, organizationId],
     { fallback: true }
-  );
+  )) ?? null;
 }
 
 async function getArtifactRunChildRows(
@@ -1128,6 +1174,20 @@ async function cleanupGhostOutputsByOrigin(params: {
   ]);
 
   return { cleanedUp: true, notes: null };
+}
+
+/**
+ * Removes the canonical Outputs index entry for a deleted template record.
+ * The lookup and every delete remain tenant-scoped; the underlying template
+ * record is owned and deleted by the calling template service.
+ */
+export async function removeTemplateArtifactByOrigin(params: {
+  organizationId: string;
+  originRuntime: 'report_template' | 'presentation_template' | 'sheet_template' | 'document_template';
+  originRecordId: string;
+}): Promise<boolean> {
+  const result = await cleanupGhostOutputsByOrigin(params);
+  return result.cleanedUp;
 }
 
 async function mapArtifactRunRowWithEffectiveStatus(
@@ -2790,7 +2850,7 @@ async function getArtifactListItemRow(
   artifactId: string,
   organizationId: string
 ): Promise<ArtifactListRow | null> {
-  return dbGet<ArtifactListRow>(
+  return (await dbGet<ArtifactListRow>(
     `SELECT a.*,
             l.origin_runtime,
             l.origin_record_id,
@@ -2834,7 +2894,7 @@ async function getArtifactListItemRow(
        AND a.artifact_id = ?`,
     [organizationId, artifactId],
     { fallback: true }
-  );
+  )) ?? null;
 }
 
 /**
@@ -4186,15 +4246,13 @@ export async function materializeArtifactRun(
       const presentationGeneratorService = await import('../presentationGeneratorService.js');
       const outlined = await presentationGeneratorService.generateOutline(
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await presentationGeneratorService.generateDeck(
         outlined.deckId,
         outlined.outline,
         presentationParams.setup as any,
-        validated.organizationId,
-        validated.actorUserId
+        validated.organizationId
       );
       await registerArtifactOrigin({
         organizationId: validated.organizationId,

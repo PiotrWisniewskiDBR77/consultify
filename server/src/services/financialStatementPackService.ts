@@ -9,6 +9,7 @@ import {
   resolvePeriodLabel,
   serializeRowPeriodFields,
   serializeRowsPeriodFields,
+  toPeriodIsoDate,
 } from './financePeriodFormat.js';
 import {
   type PeriodStatements,
@@ -538,6 +539,8 @@ async function loadPriorPeriodStatements(
   entityName: string,
   periodEnd: string
 ): Promise<PeriodStatements | null> {
+  const canonicalPeriodEnd = toPeriodIsoDate(periodEnd);
+  if (!canonicalPeriodEnd) return null;
   try {
     const prior = await dbGet<{
       id: string;
@@ -554,7 +557,7 @@ async function loadPriorPeriodStatements(
          AND LOWER(COALESCE(pack_readiness_status, 'pending')) = 'ready'
        ORDER BY period_end DESC
        LIMIT 1`,
-      [organizationId, entityName || '', periodEnd]
+      [organizationId, entityName || '', canonicalPeriodEnd]
     );
     if (!prior?.id) return null;
     const priorStatements = await dbAll<{ id: string; statement_type: string }>(

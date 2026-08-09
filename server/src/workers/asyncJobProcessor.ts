@@ -3,6 +3,7 @@ import ActionExecutionAdapter from '../ai/actionExecutionAdapter.js';
 import AIPlaybookExecutor from '../ai/aiPlaybookExecutor.js';
 import AsyncJobService from '../ai/asyncJobService.js';
 import auditLogger from '../utils/auditLogger.js';
+import { assertLegacyNoncanonicalExecution } from '../ai/legacyNoncanonicalExecution.js';
 const { classifyError } = actionErrors;
 
 /**
@@ -22,6 +23,7 @@ const AsyncJobProcessor = {
   processDecisionExecution: async (job: any) => {
     const { jobId, payload } = job.data;
     const { decisionId, organizationId, correlationId } = payload;
+    await assertLegacyNoncanonicalExecution({ entrypoint: 'async_job_processor', organizationId, entityId: decisionId, payloads: [payload] });
 
     try {
       // Step 11.1 - Optimistic locking: Claim the job atomically
@@ -163,6 +165,7 @@ const AsyncJobProcessor = {
   processPlaybookAdvance: async (job: any) => {
     const { jobId, payload } = job.data;
     const { runId, stepId, organizationId, correlationId } = payload;
+    await assertLegacyNoncanonicalExecution({ entrypoint: 'async_job_processor', organizationId, entityId: runId, payloads: [payload] });
 
     try {
       // Step 11.1 - Optimistic locking

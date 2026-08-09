@@ -250,8 +250,8 @@ async function collectVEvents(
       continue;
     }
 
-    for (const component of Object.values(parsed)) {
-      if (!component || component.type !== 'VEVENT') continue;
+    for (const component of Object.values(parsed) as unknown[]) {
+      if (!component || (component as { type?: string }).type !== 'VEVENT') continue;
       const vevent = component as VEvent;
       const uid = vevent.uid;
       if (!uid) continue;
@@ -275,7 +275,8 @@ function buildProviderEvent(
   calendarId: string,
   recurrenceExceptions: Array<{ event: VEvent; calObj: DAVObject }> | undefined
 ): ProviderEvent {
-  const uid = vevent.uid;
+  const uid = String(vevent.uid ?? '').trim();
+  if (!uid) throw new Error('CALDAV_EVENT_UID_REQUIRED');
   const rruleStr = extractRRule(vevent);
   const isSeriesMaster = rruleStr != null;
 

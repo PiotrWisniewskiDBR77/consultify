@@ -1695,7 +1695,13 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "utilized": "Utilized"
-    }
+    },
+    "filterColumnActive": "Filter {{column}} (active: {{count}})",
+    "filterColumnInactive": "Filter {{column}}, no filter applied",
+    "filterByColumn": "Filter by {{column}}",
+    "list": "List",
+    "closeDocumentNamed": "Close {{name}}",
+    "moreOpenDocuments": "More open documents ({{count}})"
   },
   "superadmin": {
     "confirm": {
@@ -6338,7 +6344,30 @@
         "failed": "Failed"
       },
       "confidenceLevelLabel": "Confidence level",
-      "actionsHiddenInReadMode": "Actions are hidden in preview mode"
+      "actionsHiddenInReadMode": "Actions are hidden in preview mode",
+      "showTechnicalDetails": "Show technical details ({{count}})",
+      "hideTechnicalDetails": "Hide technical details",
+      "confidenceHint": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence",
+        "insufficient": "Insufficient data",
+        "contradicted": "Contradicted"
+      },
+      "followupType": {
+        "investigate": "Investigate",
+        "validate": "Validate",
+        "split": "Split",
+        "collect_evidence": "Collect evidence",
+        "publish": "Publish",
+        "reinterview": "Re-interview"
+      },
+      "sourceSectionType": {
+        "theme": "Theme",
+        "issue": "Issue",
+        "opportunity": "Opportunity",
+        "manual": "Manual"
+      }
     },
     "templateBuilder": {
       "freeTextAnswer": "Free text answer…",
@@ -6848,7 +6877,8 @@
       "selectedPeopleCount": "{{count}} selected people",
       "sessionUnitOne": "session",
       "sessionUnitOther": "sessions",
-      "usedNTimes": "used {{count}}×"
+      "usedNTimes": "used {{count}}×",
+      "close": "Close"
     },
     "singleQuestionRuntime": {
       "transcriptApproved": "Transcript approved.",
@@ -7819,6 +7849,111 @@
       "gapValue": "−{{value}}",
       "currentLevel": "Current level",
       "fofThreshold": "FoF threshold ({{benchmark}})"
+    },
+    "workbench": {
+      "title": "Assessment Workbench",
+      "loadingRuntime": "Loading runtime",
+      "reload": "Reload",
+      "applyPreset": "Apply DRD preset",
+      "start": "Start",
+      "complete": "Complete",
+      "loadingWorkbench": "Loading workbench…",
+      "currentState": "Current State",
+      "reviewReadiness": "Review Readiness",
+      "reviewReadinessHint": "Review remains explicit. AI can help prepare proposals, but approval gates still live here.",
+      "downstreamStatus": "Downstream Status",
+      "downstreamHint": "Reports and initiative packs should be created from this run so provenance stays intact.",
+      "definitionReadOnly": "Published definition `{{id}}` is read-only and versioned.",
+      "pendingPromotionRetry": "Pending promotion retry for `{{targetKind}}`: {{error}}",
+      "whatNext": "What Next",
+      "evidence": "Evidence",
+      "noEvidenceYet": "No evidence pointers yet.",
+      "evidenceKindLabel": "Evidence type",
+      "evidenceRef": "Evidence reference",
+      "evidenceLabel": "Optional label",
+      "addEvidence": "Add evidence",
+      "scoreProposal": "Score Proposal",
+      "scoringRationale": "Scoring rationale",
+      "scoreValues": "Score values",
+      "scoreConfidence": "Confidence 0-1",
+      "scoreAssumptions": "Assumptions, one per line",
+      "proposeScore": "Propose score",
+      "acceptScore": "Accept score",
+      "rejectScore": "Reject score",
+      "overrideScore": "Override score",
+      "overrideScoreValues": "Override score values",
+      "interpretationProposal": "Interpretation Proposal",
+      "interpretationSummary": "Interpretation summary",
+      "keyFindings": "Key findings, one per line",
+      "limits": "Limits",
+      "nextActions": "Next actions, one per line",
+      "proposeInterpretation": "Propose interpretation",
+      "acceptInterpretation": "Accept interpretation",
+      "rejectInterpretation": "Reject interpretation",
+      "overrideInterpretation": "Override interpretation",
+      "overrideSummary": "Override summary",
+      "promotion": "Promotion",
+      "promotionTargetKindLabel": "Promotion target",
+      "promotionTargetRef": "Target reference",
+      "promotionAutoCreateHint": "Leave blank to auto-create draft insight proposal",
+      "promote": "Promote",
+      "defaultGuidance": "Move the run forward by attaching evidence, reviewing proposals, and promoting only approved outputs.",
+      "interpretationStatus": "Interpretation: {{status}}",
+      "scoreStatus": "Score: {{status}}",
+      "reviewNotStarted": "Review not started",
+      "downstreamHandoffs": "{{count}} downstream handoff(s) recorded",
+      "promotionRetryPending": "Promotion retry pending",
+      "noDownstreamHandoff": "No downstream handoff yet",
+      "completedWithoutInterpretationReason": "Accepted for completion with missing interpretation.",
+      "requestFailed": "Workbench request failed",
+      "runState": {
+        "draft": "Draft",
+        "running": "Running",
+        "awaitingEvidence": "Awaiting evidence",
+        "scoreProposed": "Score proposed",
+        "scoreReviewed": "Score reviewed",
+        "interpretationProposed": "Interpretation proposed",
+        "interpretationReviewed": "Interpretation reviewed",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "reviewStatus": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "overridden": "Overridden"
+      },
+      "evidenceKind": {
+        "document": "Document",
+        "interviewNote": "Interview note",
+        "surveyResponse": "Survey response",
+        "artifact": "Artifact",
+        "externalUrl": "External link"
+      },
+      "promotionTarget": {
+        "outputsArtifact": "Output artifact",
+        "interviewInsight": "Interview insight"
+      },
+      "toast": {
+        "presetApplied": "Preset applied",
+        "workbenchStarted": "Workbench started",
+        "runCompleted": "Run completed",
+        "evidenceAdded": "Evidence added",
+        "scoreProposed": "Score proposed",
+        "scoreAccepted": "Score accepted",
+        "scoreRejected": "Score rejected",
+        "scoreOverridden": "Score overridden",
+        "interpretationProposed": "Interpretation proposed",
+        "interpretationAccepted": "Interpretation accepted",
+        "interpretationRejected": "Interpretation rejected",
+        "interpretationOverridden": "Interpretation overridden",
+        "promotionRecorded": "Promotion recorded"
+      },
+      "dimensionName": "Dimension",
+      "dimensionValue": "Value",
+      "addDimension": "Add dimension",
+      "removeDimension": "Remove dimension",
+      "evidenceReferenceOnFile": "Reference on file"
     }
   },
   "initiatives": {
@@ -8024,7 +8159,13 @@
       "sourceAxis": "Source axis",
       "timeline": "Timeline",
       "title": "Title",
-      "titleTooShort": "Title is too short"
+      "titleTooShort": "Title is too short",
+      "levelTypeLabel": "Initiative Type / Level",
+      "levelDescQuickWin": "Minimal governance. Can be self-approved.",
+      "levelDescStandard": "Standard approval flow. Requires owner + deadline + tasks.",
+      "levelDescStrategic": "Executive approval required. Full charter + RAID analysis.",
+      "levelDescTransformation": "Board-level governance. Full charter, steering committee, gate reviews.",
+      "levelUpgradeOnlyNote": "Level can be upgraded later but not downgraded."
     },
     "axis": {
       "operational": "Operational",
@@ -8119,7 +8260,9 @@
         "balanced": "Workload is balanced — no changes needed",
         "suggested": "suggested",
         "reasonHasCapacity": "{{name}} has capacity ({{load}})",
-        "reasonUnassigned": "{{name}} is currently unassigned"
+        "reasonUnassigned": "{{name}} is currently unassigned",
+        "filterRoleActive": "Filter by role (active: {{role}})",
+        "filterRoleInactive": "Filter by role, no filter applied"
       },
       "feasibility": {
         "title": "Feasibility",
@@ -8227,7 +8370,16 @@
         "delayImpactAction": "Delay Impact",
         "reasonAfterDep": "after dependency completes ({{d}})",
         "reasonOwnerFree": "owner available after {{d}}",
-        "reasonNoBlockers": "no blockers — can start immediately"
+        "reasonNoBlockers": "no blockers — can start immediately",
+        "editDatesFor": "Edit dates for {{name}}",
+        "statusDelayed": "Delayed",
+        "statusAtRisk": "At risk",
+        "statusNoDates": "No dates",
+        "statusOnSchedule": "On schedule",
+        "saveDatesFor": "Save dates for {{name}}",
+        "cancelEditingDatesFor": "Cancel editing dates for {{name}}",
+        "startDateFor": "Start date for {{name}}",
+        "endDateFor": "End date for {{name}}"
       },
       "completeness": {
         "title": "Completeness",
@@ -9418,7 +9570,19 @@
       "noMilestonesYet": "No milestones yet",
       "milestonesLoading": "Loading milestones…",
       "milestonesLoadError": "Could not load milestones",
-      "taskCreated": "Task created"
+      "taskCreated": "Task created",
+      "columnTask": "Task",
+      "columnStatus": "Status",
+      "columnPriority": "Priority",
+      "columnOwner": "Owner",
+      "columnDue": "Due",
+      "columnSource": "Source",
+      "filterStatusLabel": "Filter tasks by status",
+      "filterPriorityLabel": "Filter tasks by priority",
+      "filterOwnerLabel": "Filter tasks by owner",
+      "filterDueLabel": "Filter tasks by due date",
+      "filterSourceLabel": "Filter tasks by source",
+      "sourceAi": "AI"
     },
     "decisionsSection": {
       "missingInitiativeId": "Missing initiative ID",
@@ -10105,7 +10269,8 @@
       "targetSuccessSuccessPlaceholder": "Success criterion...",
       "targetSuccessDeliverablesTitle": "Deliverables",
       "targetSuccessDeliverablesDesc": "Specific outputs and results to be delivered",
-      "targetSuccessDeliverablesPlaceholder": "Deliverable..."
+      "targetSuccessDeliverablesPlaceholder": "Deliverable...",
+      "untitledSource": "Untitled source"
     },
     "suggestedChangesPanel": {
       "title": "Suggested changes",
@@ -10306,6 +10471,13 @@
       "property": "Property",
       "value": "Value",
       "actionsHiddenInReadMode": "Actions are hidden in preview mode"
+    },
+    "goals": {
+      "type": {
+        "scorecard": "Scorecard-typed goal",
+        "keyResult": "Key result",
+        "objective": "Objective"
+      }
     }
   },
   "execution": {
@@ -10627,7 +10799,8 @@
       "initiative": "Initiative",
       "selectAll": "Select all",
       "selectRow": "Select row",
-      "selectedCount": "{{count}} selected"
+      "selectedCount": "{{count}} selected",
+      "changeStatusFor": "Change status for {{name}}"
     },
     "badges": {
       "done": "Done",
@@ -10989,6 +11162,40 @@
       "readiness": "People readiness for change",
       "readinessEmpty": "No adoption signals (pulse/capability) to assess yet.",
       "readinessFailed": "Change readiness temporarily unavailable — the cockpit works normally."
+    },
+    "whatIf": {
+      "title": "What-if — intervention simulation",
+      "healthBadge": "Health {{delta}}",
+      "reset": "Reset",
+      "emptyHint": "Pick interventions above to see the projection. Nothing is saved until you take action.",
+      "intervention": {
+        "addResource": "+1 FTE",
+        "descope": "Reduce scope",
+        "extendDeadline": "+14 days",
+        "mitigateRisk": "Close risk",
+        "reprioritize": "Reprioritize"
+      },
+      "metric": {
+        "health": "Health",
+        "utilization": "Utilization %",
+        "fromBase": "(from {{base}})"
+      },
+      "explanation": {
+        "addResource": "Add resource (+{{magnitude}} FTE): team utilization drops by ~{{utilDrop}} pts, SPI trends slightly toward 1.0, health +{{healthDelta}}.",
+        "descope": "Reduce scope (-{{magnitude}}): SPI rises (+{{spiDelta}}), health +{{healthDelta}}, utilization drops by ~{{utilDrop}} pts.",
+        "extendDeadline": "Extend deadline (+{{magnitude}} days): the schedule delay decreases, SPI trends toward 1.0, health rises slightly.",
+        "mitigateRisk": "Mitigate risk (-{{magnitude}}): open high risks {{before}} → {{after}}, health +{{healthDelta}}.",
+        "reprioritize": "Reprioritize (×{{magnitude}}): cost (CPI) unchanged, SPI rises slightly toward 1.0, health +{{healthDelta}}.",
+        "unknown": "Unknown intervention \"{{unknownType}}\": skipped."
+      }
+    },
+    "intelligence": {
+      "unavailable": "Prediction temporarily unavailable — the cockpit still works normally.",
+      "title": "Risk prediction (EVM)",
+      "atRisk": "{{count}} at risk",
+      "loading": "Loading prediction…",
+      "empty": "No high-risk initiatives — everything on track.",
+      "suggestedActions": "Suggested actions"
     }
   },
   "benefits": {
@@ -14789,7 +14996,8 @@
       "submit": "Report",
       "sent": "Report sent for review.",
       "failed": "Report could not be sent. Please try again."
-    }
+    },
+    "conversationLandmark": "Conversation"
   },
   "aiChat": {
     "composer": {
@@ -20432,7 +20640,9 @@
       "empty": "No KPI reports yet. Create a report to review performance and corrective actions.",
       "create": {
         "title": "New KPI report",
-        "titlePlaceholder": "e.g. Monthly KPI Review"
+        "titlePlaceholder": "e.g. Monthly KPI Review",
+        "searchKpis": "Search KPIs",
+        "template": "Template"
       },
       "tasks": {
         "title": "Create tasks from action plan",
@@ -20510,7 +20720,10 @@
       },
       "ai": {
         "askAi": "Ask AI"
-      }
+      },
+      "closeFor": "Close {{name}} details",
+      "kpiFallback": "KPI",
+      "title": "KPI details"
     },
     "operational": {
       "totalTracked": "Total KPIs Tracked",
@@ -20611,7 +20824,10 @@
       "openModal": {
         "search": "Search",
         "empty": "No presentations yet."
-      }
+      },
+      "closeFor": "Close {{name}} ROI details",
+      "detailTitle": "ROI details",
+      "notes": "Notes"
     },
     "reportingSchedules": {
       "approvalAuto": "Auto",
@@ -20878,6 +21094,14 @@
         "nodes": "Nodes"
       },
       "noLinks": "No KPI–initiative links. Link KPIs to initiatives in the KPI tab."
+    },
+    "filters": {
+      "requiresReview": "Requires review",
+      "discrepancy": "Discrepancy",
+      "onTarget": "On target",
+      "belowTarget": "Below target",
+      "noData": "No data",
+      "needsEntry": "Needs entry"
     }
   },
   "traceability": {
@@ -23314,15 +23538,19 @@
         "submit": "Add to canvas"
       },
       "selection": {
-        "title": "AI on selection",
-        "selected": "Selection",
-        "empty": "Select a fragment of text to use AI actions.",
-        "expand": "Expand idea",
-        "shorten": "Shorten",
-        "rewrite": "Rewrite",
-        "suggest": "Suggest",
-        "promptPlaceholder": "Instruction for Teresa on the selected fragment...",
-        "preview": "Preview AI edit",
+        "turnSelectionIntoBlock": "Turn selection into a block",
+        "createTable": "Create table",
+        "createChart": "Create chart",
+        "createDiagram": "Create diagram",
+        "createResearch": "Create research",
+        "createDecision": "Create decision",
+        "editSelectedText": "Edit selected text",
+        "useSelection": "Use selection",
+        "actionList": "Action list",
+        "bulletSummary": "Bullet summary",
+        "editReplacementLabel": "Selection edit replacement",
+        "editReplacementPlaceholder": "Write the replacement Markdown here...",
+        "previewEdit": "Preview edit",
         "clear": "Clear"
       },
       "manualEdit": {
@@ -30542,7 +30770,10 @@
       ],
       "convertedFromSource": "Converted from {{typeLabel}}: {{title}}",
       "overdueDate": "Overdue: {{date}}",
-      "itemTitlePlaceholder": "{{typeLabel}} name..."
+      "itemTitlePlaceholder": "{{typeLabel}} name...",
+      "deleteItemNamed": "Delete {{title}}",
+      "deleteConfirmTitle": "Delete RAID item",
+      "deleteConfirmMessage": "Delete \"{{title}}\"? This action cannot be undone."
     },
     "nModeCardState": {
       "aiDraftTooltip": "AI draft — needs review",
@@ -34695,6 +34926,219 @@
     },
     "report": {
       "empty": "Report available after completion"
+    },
+    "launcher": {
+      "section": "Agents",
+      "loading": "Loading agents…",
+      "hint": "Choose a ready-made agent to launch as a background plan.",
+      "start": "Start agent",
+      "planTitlePrefix": "Agent",
+      "panelName": "Agent launcher",
+      "loadError": "We could not load the agent list. Please try again.",
+      "startError": "We could not start this agent. Please try again.",
+      "wave": {
+        "wave1": "Wave 1",
+        "wave2": "Wave 2",
+        "wave3": "Wave 3",
+        "reference": "Reference"
+      }
+    },
+    "catalog": {
+      "group": {
+        "moduly": {
+          "label": "Modules",
+          "hint": "Steps based on data from application modules."
+        },
+        "ai": {
+          "label": "AI / Teresa",
+          "hint": "Steps where the model does the work."
+        },
+        "dane": {
+          "label": "Data & Vault",
+          "hint": "Where the agent gets its context from."
+        },
+        "automaty": {
+          "label": "Automations",
+          "hint": "Steps that CREATE something. Each one asks for approval before running."
+        },
+        "kontrola": {
+          "label": "Flow control",
+          "hint": "Where the agent should stop and what should be documented."
+        },
+        "integracje": {
+          "label": "Integrations",
+          "hint": "Systems outside Consultify."
+        }
+      },
+      "mod-assessment": {
+        "label": "Assessment data",
+        "hint": "Reads results and gaps from the Assessment module."
+      },
+      "mod-initiatives": {
+        "label": "Initiative status",
+        "hint": "Initiative portfolio: progress, owners, risks."
+      },
+      "mod-decisions": {
+        "label": "Similar decisions",
+        "hint": "Searches for earlier decisions with a similar context."
+      },
+      "mod-stakeholders": {
+        "label": "Stakeholder analysis",
+        "hint": "Map of stakeholder influence and sentiment."
+      },
+      "mod-finance": {
+        "label": "Financial calculation",
+        "hint": "ROI, NPV, payback period on project data."
+      },
+      "mod-montecarlo": {
+        "label": "Monte Carlo simulation",
+        "hint": "Outcome distribution under uncertain assumptions."
+      },
+      "mod-benchmarks": {
+        "label": "Benchmark comparison",
+        "hint": "Compares results against the industry benchmark base."
+      },
+      "mod-interview": {
+        "label": "Interview",
+        "hint": "Retrieves answers from surveys and interviews.",
+        "soonReason": "The agent doesn't have access to the Interview module yet — this feature is in progress."
+      },
+      "mod-execution": {
+        "label": "Execution",
+        "hint": "Milestones, tasks, and delivery blockers.",
+        "soonReason": "Today the agent only reads initiative status — full access to the Execution module is in progress."
+      },
+      "mod-results": {
+        "label": "Results",
+        "hint": "Reads KPIs and realized benefits.",
+        "soonReason": "Today the agent only compares benchmarks — reading realized KPIs is in progress."
+      },
+      "mod-materials": {
+        "label": "Materials / Deck",
+        "hint": "Assembles a presentation from ready sections.",
+        "soonReason": "Today the agent only generates a section description, not the whole document — assembling a full presentation is in progress."
+      },
+      "ai-web": {
+        "label": "Search the web",
+        "hint": "Fresh market data from outside the organization."
+      },
+      "ai-report-section": {
+        "label": "Report section",
+        "hint": "Prepares a report section from the given sources."
+      },
+      "ai-summary": {
+        "label": "Stage summary",
+        "hint": "Summary of the previous plan steps' results.",
+        "soonReason": "The agent doesn't have a \"summarize what you've gathered\" step today — this feature is in progress."
+      },
+      "vault-context": {
+        "label": "Vault — selected safe",
+        "hint": "Limits the agent's knowledge to one safe (Mine / Project / Organization)."
+      },
+      "kb-search": {
+        "label": "Search knowledge",
+        "hint": "Searches the organization's documents without narrowing to a safe."
+      },
+      "structured-query": {
+        "label": "Data query",
+        "hint": "A natural-language question against tabular data."
+      },
+      "auto-task": {
+        "label": "Create task",
+        "hint": "Creates a task in My Work."
+      },
+      "auto-task-update": {
+        "label": "Update task",
+        "hint": "Changes the status or fields of an existing task."
+      },
+      "auto-decision": {
+        "label": "Create decision",
+        "hint": "Creates a decision card to be resolved."
+      },
+      "auto-initiative": {
+        "label": "Initiative draft",
+        "hint": "Proposes an initiative with a description and ROI estimate."
+      },
+      "auto-note": {
+        "label": "Notebook entry",
+        "hint": "Saves findings as a note."
+      },
+      "auto-meeting": {
+        "label": "Meeting proposal",
+        "hint": "Proposes a meeting time and attendees."
+      },
+      "ctrl-gate": {
+        "label": "Approval (gate)",
+        "hint": "The plan stops and waits for your approval."
+      },
+      "ctrl-wait": {
+        "label": "Wait (pause)",
+        "hint": "The process waits a set time before continuing."
+      },
+      "ctrl-note": {
+        "label": "Note (info)",
+        "hint": "A description on the diagram. Not executed — organizes the process."
+      },
+      "ctrl-branch": {
+        "label": "Condition (branch)",
+        "hint": "Different paths depending on the previous step's result.",
+        "soonReason": "The plan is linear today — steps run in order; branching is in progress."
+      },
+      "ctrl-loop": {
+        "label": "Loop over a list",
+        "hint": "Repeat a step for each item (e.g. each initiative).",
+        "soonReason": "Steps run once today, as a flat list — looping over a list is in progress."
+      },
+      "int-list": {
+        "label": "Connector list",
+        "hint": "Checks which integrations are connected and fresh."
+      },
+      "int-search": {
+        "label": "Search a connector",
+        "hint": "Queries a connected company system through the Wave 7 gateway."
+      },
+      "int-sharepoint": {
+        "label": "SharePoint",
+        "hint": "Retrieves documents from the SharePoint library.",
+        "soonReason": "This connector is already connected in the integrations catalog; today the agent reaches it only through the generic \"Search a connector\" step — a dedicated step is in progress."
+      },
+      "int-teams": {
+        "label": "Microsoft Teams",
+        "hint": "Team channels and messages.",
+        "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
+      },
+      "int-slack": {
+        "label": "Slack",
+        "hint": "Channels and messages.",
+        "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
+      },
+      "int-jira": {
+        "label": "Jira",
+        "hint": "Issues, sprints, and boards.",
+        "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
+      },
+      "int-gdrive": {
+        "label": "Google Drive",
+        "hint": "Files and folders from Drive.",
+        "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
+      },
+      "int-outlook": {
+        "label": "Outlook / Calendar",
+        "hint": "Mail and appointments.",
+        "soonReason": "This connector is in the integrations catalog, but a dedicated agent step for it is in progress."
+      }
+    },
+    "palette": {
+      "ariaLabel": "Agent block palette",
+      "title": "Block palette",
+      "searchPlaceholder": "Search blocks…",
+      "searchAriaLabel": "Search the palette for a block",
+      "hintFrozen": "The plan has already started — the diagram is frozen.",
+      "hintActive": "Click to add at the end. Drag to insert at a specific spot.",
+      "noResults": "No results",
+      "noMatch": "No block matches \"{{query}}\".",
+      "comingSoon": "Coming soon",
+      "approval": "approval"
     }
   },
   "views": {
@@ -34833,5 +35277,20 @@
       "byAt": "Last change: {{who}}{{when}}",
       "someoneElse": "another user"
     }
+  },
+  "initiativeStatus": {
+    "draft": "Draft",
+    "pending_review": "Pending review",
+    "review": "In review",
+    "promoted": "Promoted",
+    "planning": "Planning",
+    "approved": "Approved",
+    "scheduled": "Scheduled",
+    "executing": "Executing",
+    "blocked": "Blocked",
+    "done": "Done",
+    "tracking": "Tracking",
+    "cancelled": "Cancelled",
+    "archived": "Archived"
   }
 }

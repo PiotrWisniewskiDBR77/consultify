@@ -284,11 +284,7 @@ export interface SourceArtifact {
   artifactId?: string;
   confidence?: number;
   readiness?:
-    | 'ready'
-    | 'partial_ready'
-    | 'missing_sales_data'
-    | 'policy_blocked'
-    | 'insufficient_evidence';
+    'ready' | 'partial_ready' | 'missing_sales_data' | 'policy_blocked' | 'insufficient_evidence';
   lineage?: {
     runtime?: string;
     recordId?: string;
@@ -421,6 +417,16 @@ export interface CardBlock {
   is_refreshable: boolean;
   position: { area: 'full' | 'left' | 'right' | 'top' | 'bottom' | 'overlay'; order: number };
   style_overrides?: Record<string, unknown>;
+  /** Optional freeform geometry, expressed as percentages of the slide canvas. */
+  geometry?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+  };
+  /** Blocks sharing a group id move/resize as one selection. */
+  group_id?: string;
   ai_editable: boolean;
 }
 
@@ -449,9 +455,13 @@ export interface DeckCard {
    * the renderer honours it and skips the heuristic. 'auto'/'' → heuristic.
    */
   layout_id: string;
+  /** Manual slide-level vertical alignment/distribution override. */
+  content_alignment?: 'top' | 'center' | 'space-between';
   /** STEP 1b — optional B1 composition plan; absent → pure heuristic. */
   composition?: CardComposition | null;
   title: string;
+  /** Canonical slide thesis retained for round-trip title synchronization. */
+  key_message?: string;
   blocks: CardBlock[];
   source_refs: { artifact_id: string; artifact_type: string; artifact_name: string }[];
   speaker_notes?: string;

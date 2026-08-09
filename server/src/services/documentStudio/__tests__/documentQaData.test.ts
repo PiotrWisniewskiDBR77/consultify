@@ -175,6 +175,44 @@ describe('Document QA — Data QA category', () => {
     expect(data.findings.map((f) => f.code)).toContain('data_empty_kpi_strip');
   });
 
+  it('flags a scenario investment cell that conflicts with its assessment text', () => {
+    const schema = makeSchema({
+      sections: [
+        {
+          sectionId: 's-scenarios',
+          title: 'Scenarios and Assumptions',
+          level: 1,
+          blocks: [
+            {
+              blockId: 'b-scenarios',
+              type: 'table',
+              content: {
+                columns: ['Scenario', 'Investment', 'Assessment'],
+                rows: [
+                  [
+                    'C — Big bang',
+                    'EUR 0.9m',
+                    'Scenario C costs EUR 2.2m and has excessive delivery risk.',
+                  ],
+                ],
+              },
+            },
+          ],
+          sourceRefs: [],
+        },
+      ],
+    });
+    const data = findData(runDocumentQa(schema));
+    expect(data.findings.map((finding) => finding.code)).toContain(
+      'data_scenario_investment_assessment_mismatch'
+    );
+    expect(
+      data.findings.find(
+        (finding) => finding.code === 'data_scenario_investment_assessment_mismatch'
+      )?.severity
+    ).toBe('high');
+  });
+
   it('flags three or more mixed date formats in the same document', () => {
     const schema = makeSchema({
       sections: [

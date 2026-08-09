@@ -42,6 +42,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AIFieldEnhancer } from '@/components/shared/AIFieldEnhancer';
+import { ConfirmModal } from '@/components/ui/primitives/Modal';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -284,6 +285,9 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
   const [typeFilter, setTypeFilter] = useState<RaidTypeFilter>('all');
   const [showHeatmap, setShowHeatmap] = useState(false);
+  // RB-038 — persistent, named, confirm-before-delete (canonical ConfirmModal)
+  // instead of a hover-only unnamed immediate remove.
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<RaidItem | null>(null);
 
   // ── i18n helpers ─────────────────────────────────────────────────────────
 
@@ -824,11 +828,16 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
                         {/* Unowned indicator */}
                         {itemUnowned && <User size={12} className="text-amber-400 opacity-60" />}
                         <button
-                          onClick={() => onRemoveItem(item.id)}
+                          type="button"
+                          onClick={() => setPendingDeleteItem(item)}
                           disabled={locked}
-                          className="p-1 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                          aria-label={t('sharedComponents.raidCanvas.deleteItemNamed', {
+                            title: item.title || getTypeLabel(item.type),
+                            defaultValue: 'Delete {{title}}',
+                          })}
+                          className="p-1 text-c-text-secondary hover:text-danger-500 opacity-0 group-hover:opacity-100 focus:opacity-100 focus-visible:opacity-100 transition-all disabled:opacity-0"
                         >
-                          <X size={12} />
+                          <X size={12} aria-hidden="true" />
                         </button>
                       </div>
                     </div>
@@ -1208,6 +1217,25 @@ export const RaidCanvas: React.FC<RaidCanvasProps> = ({
 
       {/* ── Bottom spacer ──────────────────────────────────────────────── */}
       {items.length > 0 && <div className="h-2" />}
+
+      {/* RB-038 — explicit confirm + Cancel before permanently removing a
+          RAID item; never a hover-only immediate delete. */}
+      <ConfirmModal
+        open={pendingDeleteItem != null}
+        onClose={() => setPendingDeleteItem(null)}
+        onConfirm={() => {
+          if (pendingDeleteItem) onRemoveItem(pendingDeleteItem.id);
+          setPendingDeleteItem(null);
+        }}
+        title={t('sharedComponents.raidCanvas.deleteConfirmTitle', 'Delete RAID item')}
+        message={t('sharedComponents.raidCanvas.deleteConfirmMessage', {
+          title: pendingDeleteItem?.title || getTypeLabel(pendingDeleteItem?.type || 'risk'),
+          defaultValue: 'Delete "{{title}}"? This action cannot be undone.',
+        })}
+        confirmText={t('common.delete', 'Delete')}
+        cancelText={t('common.cancel', 'Cancel')}
+        confirmVariant="danger"
+      />
     </div>
   );
 };

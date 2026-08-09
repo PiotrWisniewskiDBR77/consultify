@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { Pool } from 'pg';
+import { adaptQuery } from '../database/PostgresDatabase.js';
+const databaseUrl=process.env.DATABASE_URL;if(!databaseUrl)throw new Error('DATABASE_URL is required');
+const pool=new Pool({connectionString:databaseUrl});
+const db={all:(s:string,p:unknown[],c:any)=>void pool.query(adaptQuery(s),p).then(r=>c(null,r.rows),c),get:(s:string,p:unknown[],c:any)=>void pool.query(adaptQuery(s),p).then(r=>c(null,r.rows[0]??null),c),run:(s:string,p:unknown[],c:any)=>void pool.query(adaptQuery(s),p).then(r=>c.call({changes:r.rowCount??0},null),(e)=>c.call({changes:0},e)),serialize:(c:()=>void)=>c()};
+(globalThis as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__=db;(process as any).__CONSULTIFY_GLOBAL_DB_INSTANCE__=db;
+async function main(){
+ await pool.query(`
+  CREATE TABLE IF NOT EXISTS v8_execution_runs (run_id TEXT PRIMARY KEY,organization_id TEXT NOT NULL,context_snapshot_id TEXT NOT NULL,initiator_user_id TEXT NOT NULL,state TEXT NOT NULL,plan_version INTEGER NOT NULL,goal TEXT NOT NULL,created_at TEXT,updated_at TEXT,resolved_at TEXT,expires_at TEXT,metadata JSONB);
+  CREATE TABLE IF NOT EXISTS v8_run_state_transitions (transition_id TEXT PRIMARY KEY,run_id TEXT NOT NULL,from_state TEXT NOT NULL,to_state TEXT NOT NULL,triggered_by TEXT NOT NULL,reason TEXT,transitioned_at TEXT);
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS parent_snapshot_id TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS snapshot_version INTEGER;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS captured_at TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS workspace_id TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS conversation_id TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS execution_run_id TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS artifact_refs JSONB;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS effective_scope_ref TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS resolved_role_ref TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS initiator_user_id TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS consumer_class TEXT;
+  ALTER TABLE v8_context_snapshots ADD COLUMN IF NOT EXISTS privacy_mode INTEGER;
+ `);
+ const svc=await import('../services/v8/transformationPlanningIntakeService.js');
+ const baseline=(await pool.query(`SELECT (SELECT COUNT(*)::int FROM transformation_cases) cases,(SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM v8_execution_runs) runs`)).rows[0];
+ const intake=await svc.startPlanningIntake({organizationId:'org-t01-i03',actorUserId:'user-t01-actor',idempotencyKey:'a03-clarification-proof-1',mandate:'Prepare a transformation plan',conversationId:'conversation-a03'});
+ assert.equal(intake.status,'needs_clarification');assert.deepEqual(intake.missingKeys,['measurable_outcomes','sponsor','scope','horizon']);
+ const afterStart=(await pool.query(`SELECT (SELECT COUNT(*)::int FROM transformation_cases) cases,(SELECT COUNT(*)::int FROM transformation_plans) plans,(SELECT COUNT(*)::int FROM v8_execution_runs) runs`)).rows[0];assert.deepEqual(afterStart,baseline);
+ const partial=await svc.answerPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor',sponsor:'COO'});assert.equal(partial.status,'needs_clarification');
+ await assert.rejects(()=>svc.convertPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor'}),/Missing:/);
+ const ready=await svc.answerPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor',measurableOutcomes:['Reduce approval lead time to 2 days'],scope:'Order approval workflow',horizon:'Q4 2026'});assert.equal(ready.status,'ready');assert.deepEqual(ready.missingKeys,[]);
+ const [left,right]=await Promise.all([svc.convertPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor'}),svc.convertPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor'})]);assert.equal(left.transformationCaseId,right.transformationCaseId);
+ const replay=await svc.convertPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-actor'});assert.equal(replay.transformationCaseId,left.transformationCaseId);assert.equal(replay.intake.idempotentReplay,true);
+ await assert.rejects(()=>svc.answerPlanningIntake({intakeId:intake.intakeId,organizationId:'org-other',actorUserId:'user-t01-actor',scope:'x'}),/not found/i);
+ await assert.rejects(()=>svc.answerPlanningIntake({intakeId:intake.intakeId,organizationId:'org-t01-i03',actorUserId:'user-t01-stakeholder',scope:'x'}),/another actor/i);
+ const proof=(await pool.query(`SELECT (SELECT COUNT(*)::int FROM transformation_cases WHERE idempotency_key=$1) cases,(SELECT COUNT(*)::int FROM transformation_plans p JOIN transformation_cases c ON c.transformation_case_id=p.transformation_case_id WHERE c.idempotency_key=$1) plans,(SELECT COUNT(*)::int FROM v8_execution_runs r JOIN transformation_cases c ON c.execution_run_id=r.run_id WHERE c.idempotency_key=$1) runs,(SELECT COUNT(*)::int FROM transformation_case_audit_events a JOIN transformation_cases c ON c.transformation_case_id=a.transformation_case_id WHERE c.idempotency_key=$1 AND a.event_type='transformation_planning_intake.converted') conversion_audits`,[`planning-intake:${intake.intakeId}`])).rows[0];assert.deepEqual(proof,{cases:1,plans:1,runs:1,conversion_audits:1});
+ console.log(JSON.stringify({proof:'A03_PLANNING_CLARIFICATION_REALDB_GREEN',exactMissingKeys:true,zeroPrematureCaseWrites:true,statuses:['needs_clarification','ready','converted'],concurrentConversion:2,cases:1,plans:1,canonicalRuns:1,conversionAudits:1,idempotentReplay:true,crossTenantFailClosed:true,actorFailClosed:true}));
+}
+main().finally(()=>pool.end());

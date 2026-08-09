@@ -27,6 +27,8 @@ export interface PreviewActionButtonProps {
   shortcut?: string;
   onClick: () => void;
   disabled?: boolean;
+  ariaDescribedBy?: string;
+  ariaBusy?: boolean;
 }
 
 const BASE =
@@ -50,11 +52,15 @@ export const PreviewActionButton: React.FC<PreviewActionButtonProps> = ({
   shortcut,
   onClick,
   disabled,
+  ariaDescribedBy,
+  ariaBusy,
 }) => (
   <button
     type="button"
     onClick={onClick}
     disabled={disabled}
+    aria-describedby={ariaDescribedBy}
+    aria-busy={ariaBusy || undefined}
     className={`${BASE} ${VARIANTS[variant]}`}
   >
     {Icon ? <Icon size={14} /> : null}

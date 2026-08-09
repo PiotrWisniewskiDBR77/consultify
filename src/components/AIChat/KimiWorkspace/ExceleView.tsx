@@ -300,7 +300,12 @@ export const ExceleView: React.FC = () => {
   const handlePreviewFile = useCallback(() => {
     const workbookId = (pipeline.preview as any)?.workbookId || reopenWorkbookId;
     if (workbookId) {
-      window.open(`/api/workbook/${workbookId}/download`, '_blank');
+      const link = document.createElement('a');
+      link.href = `/api/workbook/${encodeURIComponent(workbookId)}/download`;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       return;
     }
     if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
@@ -594,7 +599,7 @@ export const ExceleView: React.FC = () => {
         preview={effectivePreview}
         onReplay={pipeline.handleReplay}
         onRemix={pipeline.handleRemix}
-        onDownload={pipeline.handleDownload}
+        onDownload={handlePreviewFile}
         onPreviewFile={handlePreviewFile}
         onAllFiles={handleAllFiles}
         onStartGeneration={pipeline.startGeneration}
@@ -612,7 +617,7 @@ export const ExceleView: React.FC = () => {
               isGenerating={pipeline.isGenerating}
               isFailed={pipeline.isFailed}
               failureReason={pipeline.failureReason}
-              onDownload={pipeline.handleDownload}
+              onDownload={handlePreviewFile}
               onPreviewFile={handlePreviewFile}
               onAllFiles={handleAllFiles}
               onOpenVersionHistory={handleOpenVersionHistory}
@@ -630,7 +635,7 @@ export const ExceleView: React.FC = () => {
               isGenerating={pipeline.isGenerating}
               isFailed={pipeline.isFailed}
               failureReason={pipeline.failureReason}
-              onDownload={pipeline.handleDownload}
+              onDownload={handlePreviewFile}
               onPreviewFile={handlePreviewFile}
               onAllFiles={handleAllFiles}
               onOpenVersionHistory={handleOpenVersionHistory}

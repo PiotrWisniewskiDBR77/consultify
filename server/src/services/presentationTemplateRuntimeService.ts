@@ -25,6 +25,15 @@ export type CustomTemplateLayoutRole = 'cover' | 'content' | 'kpi' | 'table' | '
 
 export interface PresentationCustomTemplateDefinition {
   version: number;
+  variables?: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'boolean' | 'enum';
+    required: boolean;
+    defaultValue?: string | number | boolean;
+    description?: string;
+    options?: string[];
+  }>;
   theme: {
     titleFont: string;
     bodyFont: string;
@@ -65,6 +74,28 @@ export function validatePresentationCustomTemplate(
   }
   if (!Number.isInteger(input.version) || input.version < 1)
     errors.push('version must be a positive integer');
+  if (input.variables !== undefined) {
+    if (!Array.isArray(input.variables)) errors.push('variables must be an array');
+    else {
+      const keys = new Set<string>();
+      input.variables.forEach((variable: any, index: number) => {
+        const prefix = `variables.${index}`;
+        const key = typeof variable?.key === 'string' ? variable.key.trim() : '';
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(key)) errors.push(`${prefix}.key is invalid`);
+        if (keys.has(key)) errors.push(`${prefix}.key must be unique`);
+        keys.add(key);
+        if (typeof variable?.label !== 'string' || !variable.label.trim())
+          errors.push(`${prefix}.label is required`);
+        if (!['text', 'number', 'date', 'boolean', 'enum'].includes(variable?.type))
+          errors.push(`${prefix}.type is invalid`);
+        if (
+          variable?.type === 'enum' &&
+          (!Array.isArray(variable.options) || variable.options.length === 0)
+        )
+          errors.push(`${prefix}.options are required for enum`);
+      });
+    }
+  }
   if (!input.theme || typeof input.theme !== 'object') errors.push('theme is required');
   const theme = input.theme || {};
   for (const key of ['titleFont', 'bodyFont'] as const) {
@@ -122,6 +153,22 @@ export function validatePresentationCustomTemplate(
     }
   }
   return errors.length ? { ok: false, errors } : { ok: true, value: input };
+}
+
+export function materializeTemplateVariableBrief(
+  variables: NonNullable<PresentationCustomTemplateDefinition['variables']>,
+  values: Record<string, unknown>
+): { lines: string[]; missingRequired: string[] } {
+  const missingRequired: string[] = [];
+  const lines = variables.map((variable) => {
+    const value = values[variable.key] ?? variable.defaultValue;
+    if (value === undefined || value === '') {
+      if (variable.required) missingRequired.push(variable.key);
+      return `Data required: ${variable.label}`;
+    }
+    return `${variable.label}: ${String(value)}`;
+  });
+  return { lines, missingRequired };
 }
 
 export interface PresentationTemplateRuntime {
@@ -397,7 +444,7 @@ export function buildTemplateRuntimeFromRow(row: any | null): PresentationTempla
     customTemplate: (() => {
       if (layoutPolicy?.customTemplate == null) return undefined;
       const validation = validatePresentationCustomTemplate(layoutPolicy.customTemplate);
-      if (!validation.ok)
+      if (validation.ok === false)
         throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
       return validation.value;
     })(),
@@ -556,8 +603,392 @@ export interface DeckSlideFromOutline {
   content: {
     title: string;
     intent: string;
-    blocks: Array<{ type: 'heading' | 'text'; content: string }>;
+    blocks: Array<{ type: string; content: any }>;
   };
+}
+
+function cleanStringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+}
+
+function decodeTemplateText(value: unknown): string {
+  return String(value || '')
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function groundedValueForLabel(label: string, sourceLines: string[]): string {
+  const labelTerms = label
+    .toLowerCase()
+    .split(/\W+/)
+    .filter((term) => term.length > 2);
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const explicitlyLabelled = sourceLines.find((line) =>
+    new RegExp(`${escapedLabel}\\s*[:—–=-]\\s*\\S+`, 'i').test(line)
+  );
+  if (explicitlyLabelled) {
+    const explicitValue = explicitlyLabelled
+      .match(new RegExp(`${escapedLabel}\\s*[:—–=-]\\s*([^;]+)`, 'i'))?.[1]
+      ?.trim();
+    if (explicitValue)
+      return explicitValue.length > 48 ? `${explicitValue.slice(0, 45).trim()}…` : explicitValue;
+  }
+  const grounded = sourceLines.find((line) => {
+    const lower = line.toLowerCase();
+    return labelTerms.some((term) => lower.includes(term)) && /(?:\d|€|\$|£|%)/.test(line);
+  });
+  if (!grounded) return 'Data required';
+  const labelledValue = grounded.match(
+    new RegExp(`${escapedLabel}\\s*[:—–-]\\s*([^;]+)`, 'i')
+  )?.[1];
+  const concise = labelledValue?.trim() || grounded.trim();
+  return concise.length > 48 ? `${concise.slice(0, 45).trim()}…` : concise;
+}
+
+function labelledList(sourceLines: string[], label: RegExp): string[] {
+  const line = sourceLines.find((candidate) => label.test(candidate));
+  const value = line?.replace(/^[^:—–=-]+[:—–=-]\s*/i, '').trim();
+  return value
+    ? value
+        .split(/,|\band\b/gi)
+        .map((item) => item.trim().replace(/[.]$/, ''))
+        .filter(Boolean)
+    : [];
+}
+
+function compactSlideText(value: unknown, maxLength = 110): string {
+  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  if (text.length <= maxLength) return text;
+  const clipped = text.slice(0, maxLength - 1);
+  const boundary = clipped.lastIndexOf(' ');
+  return `${clipped.slice(0, boundary > maxLength * 0.65 ? boundary : clipped.length).trim()}…`;
+}
+
+/**
+ * Materialise an approved template into useful, audience-facing slide content.
+ * The template stores instructions rather than source facts, so these blocks
+ * deliberately express a decision framework and evidence slots without
+ * inventing numerical results.  Each intent gets a native block topology that
+ * the Deck Builder and PPTX exporter already understand.
+ */
+function blocksForTemplateIntent(
+  item: Record<string, unknown>,
+  title: string,
+  intent: string,
+  briefLines: string[] = []
+) {
+  const keyMessage = String(item.keyMessage ?? item.key_message ?? '').trim();
+  const hints = cleanStringList(item.contentHints ?? item.content_hints);
+  const dataNeeded = cleanStringList(item.dataNeeded ?? item.data_needed);
+  // A creation brief contains the user's facts for this particular deck.
+  // Template copy used to prefer the generic architect guidance, leaving a
+  // newly-created deck full of placeholders even when a detailed brief was
+  // supplied.  Prefer grounded brief content; the template still controls
+  // structure, layout and evidence labels.
+  const headline = compactSlideText(briefLines[0] || keyMessage || hints[0] || title, 120);
+  const evidenceLabels = dataNeeded.length > 0 ? dataNeeded.slice(0, 4) : hints.slice(0, 4);
+  const sourceLines = [keyMessage, ...hints, ...briefLines].filter(Boolean);
+  const heading = { type: 'heading', content: { text: title, level: 1 } };
+  const visualLead = {
+    type: 'callout',
+    content: { variant: 'info', text: compactSlideText(headline, 48) },
+  };
+
+  switch (intent) {
+    case 'cover':
+      return [
+        heading,
+        ...(headline !== title
+          ? [{ type: 'callout', content: { variant: 'recommendation', text: headline } }]
+          : []),
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: ['Opportunity', 'Proof', 'Ask'].map((label, index) => ({
+              title: label,
+              description: compactSlideText(
+                briefLines[index + 1] ||
+                  hints[index] ||
+                  ['Define the investable wedge', 'Show the evidence', 'State the decision'][index],
+                58
+              ),
+            })),
+          },
+        },
+      ];
+    case 'executive_summary':
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'recommendation', text: headline } },
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: (evidenceLabels.length
+              ? evidenceLabels
+              : ['Recommendation', 'Value', 'Conditions']
+            )
+              .slice(0, 3)
+              .map((label) => ({
+                title: label,
+                description: compactSlideText(groundedValueForLabel(label, sourceLines), 72),
+              })),
+          },
+        },
+      ];
+    case 'performance_overview':
+      return [
+        heading,
+        visualLead,
+        {
+          type: 'metric_strip',
+          content: {
+            metrics: (evidenceLabels.length
+              ? evidenceLabels
+              : ['Investment', 'Run-rate benefit', 'Payback']
+            ).slice(0, 3).map((label) => ({
+              label,
+              value: compactSlideText(groundedValueForLabel(label, sourceLines), 38),
+              trend: 'stable',
+            })),
+          },
+        },
+      ];
+    case 'comparison':
+      const comparisonFacts = briefLines.slice(0, 3).map((line) => compactSlideText(line, 58));
+      return [
+        heading,
+        visualLead,
+        {
+          type: 'smart_layout',
+          content: {
+            layoutType: '3col',
+            items: ['Evidence', 'Economics', 'Decision'].map((scenario, index) => ({
+              title: scenario,
+              description:
+                comparisonFacts[index] ||
+                'Define the evidence, accountable owner and decision threshold.',
+            })),
+          },
+        },
+      ];
+    case 'roadmap':
+      return [
+        heading,
+        visualLead,
+        {
+          type: 'timeline_block',
+          content: {
+            items: [
+              {
+                date: '0–3',
+                title: 'Mobilise',
+                description: compactSlideText(
+                  briefLines[0] || 'Confirm baseline, owners and controls.',
+                  72
+                ),
+              },
+              {
+                date: '4–9',
+                title: 'Prove',
+                description: compactSlideText(
+                  briefLines[1] || 'Deliver priority use cases and validate value.',
+                  72
+                ),
+              },
+              {
+                date: '10–18',
+                title: 'Scale',
+                description: compactSlideText(
+                  briefLines[2] || 'Expand proven automation and lock in benefits.',
+                  72
+                ),
+              },
+            ],
+          },
+        },
+      ];
+    case 'risk_management':
+      const risks = labelledList(briefLines, /^(?:(?:top|key)\s+)?risks?\s*[:—–=-]/i);
+      const mitigations = labelledList(briefLines, /^mitigations?\s*[:—–=-]/i);
+      return [
+        heading,
+        visualLead,
+        {
+          type: 'table',
+          content: {
+            headers: ['Risk', 'Exposure', 'Mitigation', 'Owner'],
+            rows:
+              risks.length > 0
+                ? risks.slice(0, 3).map((risk, index) => [
+                    compactSlideText(risk, 48),
+                    'Open',
+                    compactSlideText(
+                      mitigations[index] || mitigations[0] || 'Mitigation required',
+                      58
+                    ),
+                    'Owner required',
+                  ])
+                : [
+                    [
+                      'Adoption',
+                      'Assess',
+                      'Role-based enablement and adoption measures',
+                      'Business owner',
+                    ],
+                    [
+                      'Controls',
+                      'Assess',
+                      'Human review for exceptions and audit trail',
+                      'Risk owner',
+                    ],
+                    [
+                      'Value leakage',
+                      'Assess',
+                      'Monthly benefit validation against baseline',
+                      'Finance owner',
+                    ],
+                  ],
+          },
+        },
+      ];
+    case 'recommendation_single':
+    case 'recommendation_portfolio':
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'recommendation', text: headline } },
+        {
+          type: 'bullet_list',
+          content: {
+            items: (briefLines.length
+              ? briefLines
+              : hints.length
+              ? hints
+              : ['Decision rights', 'Value ownership', 'Control cadence']
+            )
+              .slice(0, 3)
+              .map((line) => compactSlideText(line, 76)),
+          },
+        },
+      ];
+    case 'next_steps':
+      const decisions = labelledList(briefLines, /^decisions?(?:\s+required)?\s*[:—–=-]/i);
+      return [
+        heading,
+        { type: 'callout', content: { variant: 'decision', text: headline } },
+        {
+          type: 'numbered_list',
+          content: {
+            items: (decisions.length
+              ? decisions
+              : hints.length
+              ? hints
+              : [
+                  'Confirm the decision and conditions',
+                  'Nominate accountable owners',
+                  'Launch the first control gate',
+                ]
+            )
+              .slice(0, 3)
+              .map((line) => compactSlideText(line, 76)),
+          },
+        },
+      ];
+    default:
+      return [
+        heading,
+        visualLead,
+        ...(briefLines.length > 1 || hints.length > 1
+          ? [
+              {
+                type: 'bullet_list',
+                content: {
+                  items: (briefLines.length > 1 ? briefLines : hints)
+                    .slice(1, 4)
+                    .map((line) => compactSlideText(line, 58)),
+                },
+              },
+            ]
+          : [
+              {
+                type: 'smart_layout',
+                content: {
+                  layoutType: '3col',
+                  items: ['Signal', 'Implication', 'Action'].map((label, index) => ({
+                    title: label,
+                    description: compactSlideText(
+                      briefLines[index + 1] || hints[index] || headline,
+                      42
+                    ),
+                  })),
+                },
+              },
+            ]),
+      ];
+  }
+}
+
+function briefLinesForOutlineItem(
+  title: string,
+  intent: string,
+  briefLines: string[],
+  index: number,
+  total: number
+): string[] {
+  if (briefLines.length === 0) return [];
+  const topic = `${title} ${intent}`.toLowerCase();
+  const topicGroups: Array<[RegExp, string[]]> = [
+    [/thesis|cover|venture/, ['thesis', 'company', 'product', 'version', 'audience']],
+    [/problem|customer/, ['problem', 'customer', 'beachhead', 'trigger', 'workaround']],
+    [/product|why now|workflow/, ['workflow', 'product', 'evidence', 'status', 'privacy']],
+    [
+      /market|opportunit/,
+      ['market', 'beachhead', 'customer', 'segment', 'adoption', 'expansion', 'price', 'pricing'],
+    ],
+    [/business model|gtm|go-to-market/, ['business model', 'pricing', 'subscription', 'revenue', 'gtm', 'channel']],
+    [/evidence|economic|risk/, ['evidence', 'measure', 'risk', 'owner', 'mitigation', 'cogs']],
+    [/competition|defensib/, ['defensibility', 'competition', 'proprietary', 'telemetry', 'distribution']],
+    [
+      /financial|outlook/,
+      ['financial', 'scenario', 'revenue', 'cogs', 'margin', 'ebitda', 'cash', 'runway', 'headcount', 'opex'],
+    ],
+    [/team|governance/, ['team', 'owner', 'governance', 'privacy', 'security', 'finance']],
+    [/funding|ask|milestone|next step/, ['ask', 'pilot', 'milestone', 'decision', 'funding', '90-day']],
+  ];
+  const keywords = topicGroups.find(([matcher]) => matcher.test(topic))?.[1] || [];
+  const matched = briefLines.filter((line) => {
+    const lower = line.toLowerCase();
+    return keywords.some((keyword) => lower.includes(keyword));
+  });
+  if (matched.length > 0) {
+    return matched
+      .map((line, position) => {
+        const lower = line.toLowerCase();
+        const keywordScore = keywords.reduce(
+          (score, keyword, keywordIndex) =>
+            score + (lower.includes(keyword) ? keywords.length - keywordIndex : 0),
+          0
+        );
+        const evidencePenalty = /do not invent|evidence needed|tbd|pending evidence/i.test(line)
+          ? 20
+          : 0;
+        return { line, score: keywordScore - evidencePenalty, position };
+      })
+      .sort((a, b) => b.score - a.score || a.position - b.position)
+      .slice(0, 7)
+      .map(({ line }) => line);
+  }
+
+  // Custom intents and titles are allowed.  When no semantic keyword is
+  // available, distribute the brief deterministically so every slide still
+  // receives grounded user content instead of repeating the first sentence.
+  const start = Math.floor((index * briefLines.length) / Math.max(total, 1));
+  return briefLines.slice(start, Math.min(start + 4, briefLines.length));
 }
 
 /**
@@ -575,20 +1006,24 @@ export interface DeckSlideFromOutline {
  * same function — the route must never re-derive this mapping inline.
  */
 export function mapOutlineBlueprintToDeckSlides(
-  outlineBlueprint: unknown[]
+  outlineBlueprint: unknown[],
+  brief?: string
 ): DeckSlideFromOutline[] {
   const items = Array.isArray(outlineBlueprint) ? outlineBlueprint : [];
+  const briefLines = String(brief || '')
+    .split(/[\n;]+|(?<=[.!?])\s+(?=[A-Z])/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   return items.map((raw, index) => {
     const item = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
     const intent = String(item.intent || 'content');
-    const title = String(item.title || item.workingTitle || `Slide ${index + 1}`);
-    const keyMessageRaw = item.keyMessage ?? item.key_message ?? null;
-    const blocks: Array<{ type: 'heading' | 'text'; content: string }> = [
-      { type: 'heading', content: title },
-    ];
-    if (typeof keyMessageRaw === 'string' && keyMessageRaw.trim()) {
-      blocks.push({ type: 'text', content: keyMessageRaw.trim() });
-    }
+    // Template Architect inputs may arrive HTML-escaped from a rich-text
+    // control. Persisting those entities literally creates visible "&amp;"
+    // titles and correctly trips the export encoding gate. Decode only the
+    // small safe entity set at the template-to-artifact boundary.
+    const title = decodeTemplateText(item.title || item.workingTitle || `Slide ${index + 1}`);
+    const slideBriefLines = briefLinesForOutlineItem(title, intent, briefLines, index, items.length);
+    const blocks = blocksForTemplateIntent(item, title, intent, slideBriefLines);
     return { type: intent, content: { title, intent, blocks } };
   });
 }

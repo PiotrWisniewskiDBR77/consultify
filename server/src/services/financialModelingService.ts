@@ -117,10 +117,12 @@ const BS_LINES = [
   'PPE_GROSS',
   'ACCUM_DEPRECIATION',
   'PPE_NET',
+  'OTHER_ASSETS',
   'TOTAL_ASSETS',
   'AP',
   'CURRENT_LIABILITIES',
   'LONG_TERM_DEBT',
+  'OTHER_LIABILITIES',
   'TOTAL_LIABILITIES',
   'EQUITY_CAPITAL',
   'RETAINED_EARNINGS',
@@ -216,6 +218,38 @@ function firstNonZero(map: Map<string, number>, codes: string[]): number {
   return 0;
 }
 
+function sumAbsoluteCodes(map: Map<string, number>, codes: string[]): number {
+  return codes.reduce((sum, code) => sum + Math.abs(numberOrZero(map.get(code))), 0);
+}
+
+function latestPeriodRows<T extends { period_label?: string | null }>(rows: T[]): T[] {
+  const ranked = rows
+    .map((row) => ({ row, year: Number(String(row.period_label || '').match(/(?:19|20)\d{2}/)?.[0] || 0) }))
+    .filter((entry) => entry.year > 0);
+  if (ranked.length === 0) return rows;
+  const latestYear = Math.max(...ranked.map((entry) => entry.year));
+  return ranked.filter((entry) => entry.year === latestYear).map((entry) => entry.row);
+}
+
+function parseJsonObject(value: unknown): Record<string, any> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value as Record<string, any>;
+  }
+  if (typeof value !== 'string' || !value.trim()) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function seedPeriodLabel(value: Record<string, any>): string | null {
+  const evidence = parseJsonObject(value.evidenceJson ?? value.evidence_json);
+  const label = value.periodLabel ?? value.period_label ?? evidence.periodLabel ?? evidence.period_label;
+  return label == null || String(label).trim() === '' ? null : String(label);
+}
+
 function mergeAssumptions(
   seeded: Record<string, any>,
   incoming?: Record<string, any>
@@ -235,8 +269,8 @@ function mergeAssumptions(
 
 async function loadSeedValueRows(
   statementIds: string[]
-): Promise<Array<{ line_code: string; value: number }>> {
-  const rowsFromSnapshots: Array<{ line_code: string; value: number }> = [];
+): Promise<Array<{ line_code: string; value: number; period_label?: string | null }>> {
+  const rowsFromSnapshots: Array<{ line_code: string; value: number; period_label?: string | null }> = [];
   let snapshotCoverage = 0;
 
   for (const statementId of statementIds) {
@@ -245,29 +279,48 @@ async function loadSeedValueRows(
       ? snapshotVersion?.snapshot?.values
       : [];
     if (snapshotValues.length === 0) continue;
-    snapshotCoverage += 1;
+    const statementRows: Array<{
+      line_code: string;
+      value: number;
+      period_label?: string | null;
+    }> = [];
     for (const value of snapshotValues) {
       const lineCode = normalizeCanonicalLineCode(String(value?.lineCode || ''));
       if (!lineCode) continue;
-      rowsFromSnapshots.push({
+      statementRows.push({
         line_code: lineCode,
         value: numberOrZero(value?.value),
+        period_label: seedPeriodLabel(value),
       });
+    }
+    // Older approved snapshots contain canonical totals but omit period lineage.
+    // They cannot safely seed a multi-period model because duplicate line codes
+    // would be summed. In that case use the value rows, where evidence_json keeps
+    // the source period, instead of silently manufacturing a combined period.
+    if (statementRows.length > 0 && statementRows.every((row) => row.period_label)) {
+      snapshotCoverage += 1;
+      rowsFromSnapshots.push(...statementRows);
     }
   }
 
   if (snapshotCoverage === statementIds.length && rowsFromSnapshots.length > 0) {
-    return rowsFromSnapshots;
+    return latestPeriodRows(rowsFromSnapshots);
   }
 
   const placeholders = statementIds.map(() => '?').join(',');
-  return (await dbAll<any>(
-    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value
+  const rows = (await dbAll<any>(
+    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value, fsv.period_label, fsv.evidence_json
      FROM financial_statement_values fsv
      LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
      WHERE fsv.statement_id IN (${placeholders})`,
     statementIds
-  )) as Array<{ line_code: string; value: number }>;
+  )) as Array<{
+    line_code: string;
+    value: number;
+    period_label?: string | null;
+    evidence_json?: unknown;
+  }>;
+  return latestPeriodRows(rows.map((row) => ({ ...row, period_label: seedPeriodLabel(row) })));
 }
 
 async function buildSeededAssumptionsFromStatement(
@@ -314,8 +367,9 @@ async function buildSeededAssumptionsFromStatement(
   const cash = firstNonZero(valuesByCode, ['CASH']);
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
-  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
-  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PPE_GROSS']);
+  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT']);
+  const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
+  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
   const inventory = firstNonZero(valuesByCode, ['INVENTORY']);
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
@@ -328,11 +382,31 @@ async function buildSeededAssumptionsFromStatement(
     throw new Error(`Statement missing critical lines: ${missingCritical.join(', ')}`);
   }
 
+  const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
+  const ebit = firstNonZero(valuesByCode, ['EBIT']);
+  const directOpex = firstNonZero(valuesByCode, ['OPEX']);
+  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
+    'RND',
+    'SGA',
+    'SELLING_EXPENSES',
+    'GENERAL_ADMIN_EXPENSES',
+    'OTHER_OPEX',
+  ]);
+  const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
+  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
+    'DEPRECIATION_PPE_CF',
+    'DEPRECIATION_ROU_CF',
+    'DEPRECIATION_INTANGIBLES_CF',
+    'DEPRECIATION_AMORTIZATION_CF',
+  ]);
+  const otherAssets = totalAssets - cash - ar - inventory - ppe;
+  const openingBalanceResidual = totalAssets - totalLiabilities - equity;
+  const otherLiabilities = totalAssets - equity - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
-    opex: Math.abs(firstNonZero(valuesByCode, ['OPEX'])),
-    depreciation: Math.abs(firstNonZero(valuesByCode, ['DEPRECIATION'])),
+    opex: Math.abs(baselineOpex),
+    depreciation: Math.abs(baselineDepreciation),
     interest: Math.abs(firstNonZero(valuesByCode, ['INTEREST_EXPENSE'])),
     tax: Math.abs(firstNonZero(valuesByCode, ['TAX', 'TAX_EXPENSE'])),
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
@@ -354,6 +428,11 @@ async function buildSeededAssumptionsFromStatement(
       initialAP: ap,
       initialDebt: debt,
       initialEquity: equity,
+      sourceEquity: equity,
+      sourceTotalLiabilities: totalLiabilities,
+      openingBalanceResidual,
+      initialOtherAssets: otherAssets,
+      initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
       seedSource: {
@@ -415,8 +494,9 @@ async function buildSeededAssumptionsFromPack(
   const cash = firstNonZero(valuesByCode, ['CASH']);
   const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
   const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
-  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
-  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PPE_GROSS']);
+  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT']);
+  const totalLiabilities = firstNonZero(valuesByCode, ['TOTAL_LIABILITIES']);
+  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PROPERTY_PLANT_EQUIPMENT', 'PPE_GROSS']);
   const ar = firstNonZero(valuesByCode, ['AR']);
   const inventory = firstNonZero(valuesByCode, ['INVENTORY']);
   const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
@@ -429,11 +509,31 @@ async function buildSeededAssumptionsFromPack(
     throw new Error(`Statement pack missing critical lines: ${missingCritical.join(', ')}`);
   }
 
+  const grossProfit = firstNonZero(valuesByCode, ['GROSS_PROFIT']);
+  const ebit = firstNonZero(valuesByCode, ['EBIT']);
+  const directOpex = firstNonZero(valuesByCode, ['OPEX']);
+  const baselineOpex = directOpex || Math.abs(grossProfit - ebit) || sumAbsoluteCodes(valuesByCode, [
+    'RND',
+    'SGA',
+    'SELLING_EXPENSES',
+    'GENERAL_ADMIN_EXPENSES',
+    'OTHER_OPEX',
+  ]);
+  const directDepreciation = firstNonZero(valuesByCode, ['DEPRECIATION']);
+  const baselineDepreciation = directDepreciation || sumAbsoluteCodes(valuesByCode, [
+    'DEPRECIATION_PPE_CF',
+    'DEPRECIATION_ROU_CF',
+    'DEPRECIATION_INTANGIBLES_CF',
+    'DEPRECIATION_AMORTIZATION_CF',
+  ]);
+  const otherAssets = totalAssets - cash - ar - inventory - ppe;
+  const openingBalanceResidual = totalAssets - totalLiabilities - equity;
+  const otherLiabilities = totalAssets - equity - ap - debt;
   const baseline = {
     revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
     cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
-    opex: Math.abs(firstNonZero(valuesByCode, ['OPEX'])),
-    depreciation: Math.abs(firstNonZero(valuesByCode, ['DEPRECIATION'])),
+    opex: Math.abs(baselineOpex),
+    depreciation: Math.abs(baselineDepreciation),
     interest: Math.abs(firstNonZero(valuesByCode, ['INTEREST_EXPENSE'])),
     tax: Math.abs(firstNonZero(valuesByCode, ['TAX', 'TAX_EXPENSE'])),
     capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
@@ -458,6 +558,11 @@ async function buildSeededAssumptionsFromPack(
       initialAP: ap,
       initialDebt: debt,
       initialEquity: equity,
+      sourceEquity: equity,
+      sourceTotalLiabilities: totalLiabilities,
+      openingBalanceResidual,
+      initialOtherAssets: otherAssets,
+      initialOtherLiabilities: otherLiabilities,
       initialPPE: ppe,
       baseline,
       seedSource: {
@@ -714,6 +819,8 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
   const initialAR = assumptions.initialAR ?? 0;
   const initialInventory = assumptions.initialInventory ?? 0;
   const initialAP = assumptions.initialAP ?? 0;
+  const initialOtherAssets = assumptions.initialOtherAssets ?? 0;
+  const initialOtherLiabilities = assumptions.initialOtherLiabilities ?? 0;
 
   // Track running BS balances
   let runningCash = initialCash;
@@ -740,6 +847,9 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     baselineRatios.capex = (baseline.capex ?? 0) / baselineRevenue;
   }
   const useZeroChangeBaseline = events.length === 0 && baselineRevenue > 0;
+  const forecastDrivers = assumptions.forecastDrivers || {};
+  const hasForecastDrivers =
+    useZeroChangeBaseline && Number.isFinite(Number(forecastDrivers.revenueGrowthPct));
   // Monthly compute resolution (always 12 periods/year internally)
   const baselinePerPeriod = baselineRevenue / 12;
 
@@ -769,13 +879,32 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
       totalDividend = 0;
 
     if (useZeroChangeBaseline) {
-      totalRevenue = baselinePerPeriod;
-      totalCOGS = baselinePerPeriod * (baselineRatios.cogs || 0);
-      totalOPEX = baselinePerPeriod * (baselineRatios.opex || 0);
-      totalDepr = baselinePerPeriod * (baselineRatios.depreciation || 0);
-      totalInterest = baselinePerPeriod * (baselineRatios.interest || 0);
-      totalTax = baselinePerPeriod * (baselineRatios.tax || 0);
-      totalCapex = baselinePerPeriod * (baselineRatios.capex || 0);
+      const forecastYear = Math.floor(pi / 12) + 1;
+      const annualRevenue = hasForecastDrivers
+        ? baselineRevenue * Math.pow(1 + Number(forecastDrivers.revenueGrowthPct) / 100, forecastYear)
+        : baselineRevenue;
+      totalRevenue = annualRevenue / 12;
+      const grossMarginPct = Number(forecastDrivers.grossMarginPct);
+      const opexPctRevenue = Number(forecastDrivers.opexPctRevenue);
+      const depreciationPctRevenue = Number(forecastDrivers.depreciationPctRevenue);
+      const capexPctRevenue = Number(forecastDrivers.capexPctRevenue);
+      totalCOGS = totalRevenue *
+        (Number.isFinite(grossMarginPct) ? 1 - grossMarginPct / 100 : baselineRatios.cogs || 0);
+      totalOPEX = totalRevenue *
+        (Number.isFinite(opexPctRevenue) ? opexPctRevenue / 100 : baselineRatios.opex || 0);
+      totalDepr = totalRevenue *
+        (Number.isFinite(depreciationPctRevenue)
+          ? depreciationPctRevenue / 100
+          : baselineRatios.depreciation || 0);
+      totalInterest = Number.isFinite(Number(forecastDrivers.debtCostPct))
+        ? (runningDebt * Number(forecastDrivers.debtCostPct)) / 100 / 12
+        : baselinePerPeriod * (baselineRatios.interest || 0);
+      const preTaxIncome = totalRevenue - totalCOGS - totalOPEX - totalDepr - totalInterest;
+      totalTax = hasForecastDrivers
+        ? Math.max(0, preTaxIncome * numberOrZero(assumptions.taxRatePct ?? 0.21))
+        : baselinePerPeriod * (baselineRatios.tax || 0);
+      totalCapex = totalRevenue *
+        (Number.isFinite(capexPctRevenue) ? capexPctRevenue / 100 : baselineRatios.capex || 0);
     }
 
     for (const event of events) {
@@ -848,8 +977,25 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     runningRetainedEarnings += out.pl.NET_INCOME - totalDividend;
     runningEquityCapital += totalEquityInjection;
 
-    // WC changes affect AR/Inventory/AP (simplified: distribute proportionally)
-    if (totalWCChange !== 0) {
+    if (hasForecastDrivers) {
+      const annualRevenue = totalRevenue * 12;
+      const annualCogs = totalCOGS * 12;
+      const targetAR = Number.isFinite(Number(forecastDrivers.dsoDays))
+        ? (annualRevenue * Number(forecastDrivers.dsoDays)) / 365
+        : runningAR;
+      const targetInventory = Number.isFinite(Number(forecastDrivers.dioDays))
+        ? (annualCogs * Number(forecastDrivers.dioDays)) / 365
+        : runningInventory;
+      const targetAP = Number.isFinite(Number(forecastDrivers.dpoDays))
+        ? (annualCogs * Number(forecastDrivers.dpoDays)) / 365
+        : runningAP;
+      totalWCChange +=
+        targetAR - runningAR + (targetInventory - runningInventory) - (targetAP - runningAP);
+      runningAR = targetAR;
+      runningInventory = targetInventory;
+      runningAP = targetAP;
+    } else if (totalWCChange !== 0) {
+      // Event-driven WC changes affect AR/Inventory/AP proportionally.
       runningAR += totalWCChange * 0.4;
       runningInventory += totalWCChange * 0.3;
       runningAP -= totalWCChange * 0.3;
@@ -881,11 +1027,14 @@ export async function computeModel(modelId: string): Promise<ComputeResult> {
     out.bs.PPE_GROSS = runningPPEGross;
     out.bs.ACCUM_DEPRECIATION = -runningAccumDepr;
     out.bs.PPE_NET = runningPPEGross - runningAccumDepr;
-    out.bs.TOTAL_ASSETS = out.bs.CURRENT_ASSETS + out.bs.PPE_NET;
+    out.bs.OTHER_ASSETS = initialOtherAssets;
+    out.bs.TOTAL_ASSETS = out.bs.CURRENT_ASSETS + out.bs.PPE_NET + out.bs.OTHER_ASSETS;
     out.bs.AP = runningAP;
     out.bs.CURRENT_LIABILITIES = runningAP;
     out.bs.LONG_TERM_DEBT = runningDebt;
-    out.bs.TOTAL_LIABILITIES = out.bs.CURRENT_LIABILITIES + runningDebt;
+    out.bs.OTHER_LIABILITIES = initialOtherLiabilities;
+    out.bs.TOTAL_LIABILITIES =
+      out.bs.CURRENT_LIABILITIES + runningDebt + out.bs.OTHER_LIABILITIES;
     out.bs.EQUITY_CAPITAL = runningEquityCapital;
     out.bs.RETAINED_EARNINGS = runningRetainedEarnings;
     out.bs.TOTAL_EQUITY = runningEquityCapital + runningRetainedEarnings;
@@ -1441,6 +1590,7 @@ export async function updateModel(
     'granularity',
     'scenario',
     'status',
+    'source_statement_pack_id',
   ];
   // Approval-state guard (mass-assignment defense): the `approved` lifecycle
   // state may ONLY be reached via approveModel(), which recomputes + validates,

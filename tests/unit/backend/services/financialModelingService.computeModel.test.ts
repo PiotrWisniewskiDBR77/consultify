@@ -6,6 +6,7 @@ const mockDb = vi.hoisted(() => ({
   all: vi.fn(),
   run: vi.fn(),
 }));
+const mockLoadLatestStatementVersionSnapshot = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../../server/src/utils/DbPromise.js', async () => {
   const actual = await vi.importActual<any>('../../../../server/src/utils/DbPromise.js');
@@ -16,6 +17,14 @@ vi.mock('../../../../server/src/utils/DbPromise.js', async () => {
     run: mockDb.run,
   };
 });
+
+vi.mock('../../../../server/src/services/financialStatementService.js', () => ({
+  loadLatestStatementVersionSnapshot: mockLoadLatestStatementVersionSnapshot,
+}));
+
+vi.mock('../../../../server/src/services/financeCanonicalResolver.js', () => ({
+  normalizeCanonicalLineCode: (code: string) => String(code || '').toUpperCase(),
+}));
 
 describe('financialModelingService.computeModel (T054)', () => {
   it('computes P&L/BS/CF outputs and produces passing hard validations for a simple scenario', async () => {
@@ -150,5 +159,127 @@ describe('financialModelingService.computeModel (T054)', () => {
     expect(feb?.cf.EQUITY_CF).toBe(500);
     expect(mar?.cf.EQUITY_CF).toBe(0);
   });
+
+  it('uses persisted forecast drivers to differentiate eventless scenarios', async () => {
+    const { computeModel } = await import(
+      '../../../../server/src/services/financialModelingService.js'
+    );
+    mockDb.get.mockResolvedValueOnce({
+      id: 'm3',
+      start_date: '2026-01-01',
+      horizon_months: 36,
+      granularity: 'annual',
+      assumptions_json: JSON.stringify({
+        initialCash: 100,
+        initialEquity: 100,
+        initialDebt: 0,
+        initialPPE: 0,
+        initialAR: 0,
+        initialInventory: 0,
+        initialAP: 0,
+        initialOtherAssets: 0,
+        initialOtherLiabilities: 0,
+        baseline: { revenue: 1200, cogs: 720, opex: 240 },
+        taxRatePct: 0.2,
+        forecastDrivers: {
+          revenueGrowthPct: 10,
+          grossMarginPct: 50,
+          opexPctRevenue: 20,
+          depreciationPctRevenue: 0,
+          capexPctRevenue: 0,
+          debtCostPct: 0,
+          dsoDays: 0,
+          dioDays: 0,
+          dpoDays: 0,
+        },
+      }),
+      scenario: 'optimistic',
+    });
+    mockDb.all.mockResolvedValueOnce([]);
+
+    const result = await computeModel('m3');
+    expect(result.periods[0]?.pl.REVENUE).toBeCloseTo(1320, 6);
+    expect(result.periods[1]?.pl.REVENUE).toBeCloseTo(1452, 6);
+    expect(result.periods[2]?.pl.REVENUE).toBeCloseTo(1597.2, 6);
+    expect(result.periods[0]?.pl.GROSS_PROFIT).toBe(660);
+    expect(result.periods[0]?.pl.OPEX).toBe(-264);
+    expect(result.validations.every((validation) => validation.status === 'pass')).toBe(true);
+  });
 });
 
+describe('financialModelingService model seed periods', () => {
+  it('seeds only the latest period when period labels live in JSON evidence', async () => {
+    const { createModel } = await import(
+      '../../../../server/src/services/financialModelingService.js'
+    );
+    mockLoadLatestStatementVersionSnapshot.mockResolvedValueOnce({
+      versionNo: 6,
+      snapshot: {
+        values: [
+          { lineCode: 'CASH', value: 999 },
+          { lineCode: 'TOTAL_ASSETS', value: 9999 },
+          { lineCode: 'TOTAL_EQUITY', value: 9999 },
+        ],
+      },
+    });
+    mockDb.get.mockResolvedValueOnce({
+      id: 'stmt-1',
+      period_label: 'FY2025',
+      period_start: '2025-01-01',
+      period_end: '2025-12-31',
+      currency: 'USD',
+      scaling: 'millions',
+      source_file_name: 'annual-report.pdf',
+      status: 'confirmed',
+      readiness_status: 'ready',
+    });
+    const latestRows = [
+      { line_code: 'CASH', value: 500 },
+      { line_code: 'TOTAL_ASSETS', value: 2000 },
+      { line_code: 'TOTAL_EQUITY', value: 1200 },
+      { line_code: 'TOTAL_LIABILITIES', value: 700 },
+      { line_code: 'LONG_TERM_DEBT', value: 200 },
+      { line_code: 'REVENUE', value: 3000 },
+      { line_code: 'COGS', value: 1800 },
+      { line_code: 'OPEX', value: 600 },
+    ];
+    mockDb.all.mockResolvedValueOnce([
+      ...latestRows.map((row) => ({
+        ...row,
+        value: row.value / 2,
+        period_label: null,
+        evidence_json: JSON.stringify({ periodLabel: '2024' }),
+      })),
+      ...latestRows.map((row) => ({
+        ...row,
+        period_label: null,
+        evidence_json: JSON.stringify({ periodLabel: '2025' }),
+      })),
+    ]);
+    mockDb.run.mockResolvedValue(undefined);
+
+    await createModel({
+      organizationId: 'org-1',
+      name: 'latest-period forecast',
+      startDate: '2026-01-01',
+      createdBy: 'user-1',
+      sourceStatementId: 'stmt-1',
+    });
+
+    const insertCall = mockDb.run.mock.calls.find((call) =>
+      String(call[0]).includes('INSERT INTO financial_models')
+    );
+    const assumptionsJson = (insertCall![1] as any[]).find(
+      (parameter) => typeof parameter === 'string' && parameter.includes('seedSource')
+    );
+    const assumptions = JSON.parse(assumptionsJson);
+    expect(assumptions.initialCash).toBe(500);
+    expect(assumptions.initialEquity).toBe(1200);
+    expect(assumptions.initialDebt).toBe(200);
+    expect(assumptions.sourceTotalLiabilities).toBe(700);
+    expect(assumptions.openingBalanceResidual).toBe(100);
+    expect(assumptions.initialOtherLiabilities).toBe(600);
+    expect(assumptions.baseline.revenue).toBe(3000);
+    expect(mockDb.all).toHaveBeenCalledTimes(1);
+  });
+});

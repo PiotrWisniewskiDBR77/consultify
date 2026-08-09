@@ -503,6 +503,68 @@ describe('Templates — cross-org IDOR', () => {
     const ids = (res.body.templates as Array<{ templateId: string }>).map((t) => t.templateId);
     expect(ids).not.toContain(victimId);
   });
+
+  describe('restore-as-draft', () => {
+    async function approveAsVictimAndGetAuditId(
+      app: Express,
+      templateId: string
+    ): Promise<string> {
+      asVictim();
+      const approveRes = await request(app)
+        .post(`/api/document-studio/templates/${templateId}/approve`)
+        .send({});
+      expect(approveRes.status).toBe(200);
+      const auditRes = await request(app).get(
+        `/api/document-studio/templates/${templateId}/audit`
+      );
+      expect(auditRes.status).toBe(200);
+      const approvedEntry = (
+        auditRes.body.auditEntries as Array<{ auditId: string; action: string }>
+      ).find((entry) => entry.action === 'template_approved');
+      expect(approvedEntry).toBeDefined();
+      return approvedEntry!.auditId;
+    }
+
+    it('is 404 for a foreign tenant (no existence leak)', async () => {
+      const app = createApp();
+      const id = await createTemplateAsVictim(app);
+      const auditId = await approveAsVictimAndGetAuditId(app, id);
+      asAttacker();
+      const res = await request(app).post(
+        `/api/document-studio/templates/${id}/audit/${auditId}/restore-as-draft`
+      );
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('template_not_found');
+    });
+
+    it('is 404 for a non-existent audit id', async () => {
+      const app = createApp();
+      const id = await createTemplateAsVictim(app);
+      asVictim();
+      const res = await request(app).post(
+        `/api/document-studio/templates/${id}/audit/not-a-real-audit-id/restore-as-draft`
+      );
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('template_audit_not_found');
+    });
+
+    it('restores an approved snapshot as an independent draft without mutating the source', async () => {
+      const app = createApp();
+      const id = await createTemplateAsVictim(app);
+      const auditId = await approveAsVictimAndGetAuditId(app, id);
+      asVictim();
+      const restoreRes = await request(app).post(
+        `/api/document-studio/templates/${id}/audit/${auditId}/restore-as-draft`
+      );
+      expect(restoreRes.status).toBe(201);
+      expect(restoreRes.body.template.templateId).not.toBe(id);
+      expect(restoreRes.body.template.status).toBe('draft');
+
+      const sourceRes = await request(app).get(`/api/document-studio/templates/${id}`);
+      expect(sourceRes.status).toBe(200);
+      expect(sourceRes.body.template.status).toBe('approved');
+    });
+  });
 });
 
 // =============================================================================

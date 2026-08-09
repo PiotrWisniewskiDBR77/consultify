@@ -51,6 +51,22 @@ interface CommentsListResponse {
   data?: { threads?: DeckCommentThread[]; counts?: DeckCommentCounts };
 }
 
+/**
+ * `Api` exposes an axios-compatible `response.data` through a Proxy. When the
+ * server payload itself also has a `data` envelope, the Proxy getter masks that
+ * own property. Read its descriptor so comment endpoints can consume the
+ * server's `{ success, data: ... }` contract without changing the shared
+ * transport semantics for the rest of the application.
+ */
+function responseEnvelopeData<T>(response: unknown): T | undefined {
+  if (!response || (typeof response !== 'object' && typeof response !== 'function')) {
+    return undefined;
+  }
+  const ownData = Object.getOwnPropertyDescriptor(response, 'data')?.value;
+  if (ownData && typeof ownData === 'object') return ownData as T;
+  return undefined;
+}
+
 function base(deckId: string): string {
   return `/presentations/decks/${encodeURIComponent(deckId)}/comments`;
 }
@@ -64,9 +80,10 @@ export async function listDeckComments(
   if (typeof opts.resolved === 'boolean') params.set('resolved', String(opts.resolved));
   const qs = params.toString();
   const res = (await Api.get(`${base(deckId)}${qs ? `?${qs}` : ''}`)) as CommentsListResponse;
+  const data = responseEnvelopeData<CommentsListResponse['data']>(res);
   return {
-    threads: res?.data?.threads ?? [],
-    counts: res?.data?.counts ?? null,
+    threads: data?.threads ?? [],
+    counts: data?.counts ?? null,
   };
 }
 
@@ -74,8 +91,8 @@ export async function addDeckComment(
   deckId: string,
   payload: { body: string; slideId?: string | null; parentCommentId?: string }
 ): Promise<DeckComment | null> {
-  const res = (await Api.post(base(deckId), payload)) as { data?: { comment?: DeckComment } };
-  return res?.data?.comment ?? null;
+  const res = await Api.post(base(deckId), payload);
+  return responseEnvelopeData<{ comment?: DeckComment }>(res)?.comment ?? null;
 }
 
 export async function setDeckCommentResolved(
@@ -83,18 +100,16 @@ export async function setDeckCommentResolved(
   commentId: string,
   resolved: boolean
 ): Promise<DeckComment | null> {
-  const res = (await Api.patch(`${base(deckId)}/${encodeURIComponent(commentId)}`, {
+  const res = await Api.patch(`${base(deckId)}/${encodeURIComponent(commentId)}`, {
     resolved,
-  })) as { data?: { comment?: DeckComment } };
-  return res?.data?.comment ?? null;
+  });
+  return responseEnvelopeData<{ comment?: DeckComment }>(res)?.comment ?? null;
 }
 
 export async function deleteDeckComment(
   deckId: string,
   commentId: string
 ): Promise<DeckComment | null> {
-  const res = (await Api.delete(`${base(deckId)}/${encodeURIComponent(commentId)}`)) as {
-    data?: { comment?: DeckComment };
-  };
-  return res?.data?.comment ?? null;
+  const res = await Api.delete(`${base(deckId)}/${encodeURIComponent(commentId)}`);
+  return responseEnvelopeData<{ comment?: DeckComment }>(res)?.comment ?? null;
 }

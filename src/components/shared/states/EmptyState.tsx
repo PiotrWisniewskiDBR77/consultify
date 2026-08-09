@@ -39,6 +39,14 @@ export interface EmptyStateActionSpec {
   onClick: () => void;
   /** Optional leading icon for the button. */
   icon?: LucideIcon;
+  /**
+   * Optional stable identifier rendered as `data-testid`. Lets a caller that
+   * opens a dialog from this action re-query a LIVE button reference at
+   * close-time for focus return, even if this component's own DOM node was
+   * replaced by an intervening re-render (e.g. a loading state flash) while
+   * the dialog was open.
+   */
+  testId?: string;
 }
 
 export interface EmptyStateProps {
@@ -90,7 +98,12 @@ const ActionButton: React.FC<{
         'bg-[var(--c-text)] text-[var(--c-surface)] hover:opacity-90'
       : 'border border-[var(--c-border)] bg-[var(--c-surface)] text-[var(--c-text)] hover:bg-[var(--c-surface-raised)]';
   return (
-    <button type="button" onClick={spec.onClick} className={`${base} ${emphasisCls}`}>
+    <button
+      type="button"
+      onClick={spec.onClick}
+      data-testid={spec.testId}
+      className={`${base} ${emphasisCls}`}
+    >
       {Icon && <Icon size={16} aria-hidden />}
       {spec.label}
     </button>

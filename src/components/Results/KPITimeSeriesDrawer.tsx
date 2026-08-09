@@ -14,10 +14,11 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { useDialogA11y } from '@/components/ui/primitives/useDialogA11y';
 import { useOrganizationContext } from '@/hooks/discovery/useOrganizationContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
@@ -31,10 +32,71 @@ import {
 } from '@/services/api/v8/results';
 import { InitiativeKPI, KPIMeasurement } from '@/types/core';
 
-import type { KpiDrawerSection } from './kpiDomain';
+import { type KpiDrawerSection } from './kpiDomain';
 import { RecoveryCardPanel } from './RecoveryCardPanel';
 import { isResultsFlagEnabled } from './resultsFeatureFlags';
 import { buildLinkedInitiatives, dedupeInitiativeOptions } from './resultsLineage';
+
+interface KpiReconciledReading {
+  value: number | null;
+  measuredAt: string | null;
+  /** True when the catalog's cached latestValue/latestMeasurementDate
+   * disagrees with the freshly-fetched measurement history's actual latest
+   * entry — a real staleness signal to surface, not a decoration. */
+  mismatchWithCatalog: boolean;
+}
+
+/**
+ * CB-04/RB-013 — ONE reconciled "current reading" for a KPI. Before this,
+ * this drawer read `kpi.latestValue` (the catalog's cached aggregate field,
+ * computed by a separate list-view fetch) for the header quick-stat, while
+ * independently deriving its own "latest" from the drawer's own
+ * freshly-fetched `measurements` array for the sparkline — two unreconciled
+ * read models for what a user experiences as a single fact ("what is this
+ * KPI's current value"). The measurement HISTORY is the unambiguous source
+ * (it is the actual row set, not a cached portfolio-list optimization) —
+ * this always renders from it, and flags (rather than silently swallows)
+ * any disagreement with the catalog cache so a real staleness bug surfaces
+ * instead of just picking whichever value happened to render first.
+ *
+ * Kept local to this drawer (rather than in kpiDomain.ts) so it has no
+ * dependency outside this file's recovery scope.
+ */
+function reconcileKpiLatestReading(
+  catalog: Pick<InitiativeKPI, 'latestValue' | 'latestMeasurementDate'>,
+  measurements: Array<{ value: number; measuredAt: string | null | undefined }>
+): KpiReconciledReading {
+  const sorted = [...measurements]
+    .filter((m) => m.measuredAt)
+    .sort(
+      (a, b) =>
+        new Date(b.measuredAt as string).getTime() - new Date(a.measuredAt as string).getTime()
+    );
+  const latestFromHistory = sorted[0] ?? null;
+
+  if (!latestFromHistory) {
+    return {
+      value: catalog.latestValue ?? null,
+      measuredAt: catalog.latestMeasurementDate ?? null,
+      mismatchWithCatalog: false,
+    };
+  }
+
+  const catalogValue = catalog.latestValue;
+  const catalogDate = catalog.latestMeasurementDate;
+  const mismatchWithCatalog =
+    catalogValue != null &&
+    catalogDate != null &&
+    (Number(catalogValue) !== Number(latestFromHistory.value) ||
+      new Date(catalogDate).getTime() !==
+        new Date(latestFromHistory.measuredAt as string).getTime());
+
+  return {
+    value: latestFromHistory.value,
+    measuredAt: latestFromHistory.measuredAt ?? null,
+    mismatchWithCatalog,
+  };
+}
 
 interface KPITimeSeriesDrawerProps {
   kpiId: string;
@@ -135,6 +197,8 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const { t } = useTranslation();
   const openChatWithContext = useOpenChatWithContext();
   const { formatForPrompt: formatOrgContext } = useOrganizationContext();
+  const drawerContainerRef = useRef<HTMLDivElement>(null);
+  useDialogA11y({ open: true, onClose, containerRef: drawerContainerRef });
   const [kpi, setKpi] = useState<InitiativeKPI | null>(null);
   const [measurements, setMeasurements] = useState<KPIMeasurement[]>([]);
   const [auditLog, setAuditLog] = useState<
@@ -168,6 +232,12 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [newValue, setNewValue] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [newNotes, setNewNotes] = useState('');
+  // CB-04/RB-014: was silently folded into `newNotes` ("Notes, source, or
+  // audit comment") — a single ambiguous freeform field. `source` is an
+  // EXISTING payload field (V8ResultsCreateKpiTimeSeriesPayload.source) the
+  // form never populated; splitting it out actually uses that contract
+  // instead of inventing a new one.
+  const [newSource, setNewSource] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const [editMode, setEditMode] = useState(false);
@@ -388,6 +458,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         const payload = {
           value: Number(newValue),
           periodStart: String(newDate).slice(0, 10),
+          source: newSource.trim() || undefined,
           notes: newNotes.trim() || undefined,
         };
         try {
@@ -399,6 +470,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           await Api.post(`/benefits/kpis/${kpiId}/time-series`, payload);
         }
         setNewValue('');
+        setNewSource('');
         setNewNotes('');
         fetchData();
         onValueRecorded?.();
@@ -411,7 +483,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         setSubmitting(false);
       }
     },
-    [kpiId, newValue, newDate, newNotes, fetchData, onValueRecorded]
+    [kpiId, newValue, newDate, newSource, newNotes, fetchData, onValueRecorded]
   );
 
   const handleSaveSettings = useCallback(async () => {
@@ -630,10 +702,24 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     [fetchData, onValueRecorded]
   );
 
+  // CB-04/RB-013: ONE reconciled current reading — see kpiDomain.ts's
+  // reconcileKpiLatestReading() doc comment. The measurement history (this
+  // drawer's own fresh fetch) is the source of truth; the catalog's cached
+  // `latestValue` is compared against it only to detect staleness, never to
+  // override it.
+  const reconciledReading = useMemo(() => {
+    if (!kpi) return null;
+    return reconcileKpiLatestReading(
+      { latestValue: kpi.latestValue, latestMeasurementDate: kpi.latestMeasurementDate },
+      measurements.map((m) => ({ value: m.value, measuredAt: m.measuredAt }))
+    );
+  }, [kpi, measurements]);
+
   const quickStats: QuickStat[] = useMemo(() => {
     if (!kpi) return [];
+    const currentValue = reconciledReading?.value ?? kpi.latestValue ?? null;
     const gap =
-      kpi.targetValue != null && kpi.latestValue != null ? kpi.targetValue - kpi.latestValue : null;
+      kpi.targetValue != null && currentValue != null ? kpi.targetValue - currentValue : null;
     return [
       {
         label: t('results.drawer.baseline', 'Baseline'),
@@ -649,8 +735,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
       },
       {
         label: t('results.columns.current', 'Current'),
-        value:
-          kpi.latestValue != null ? `${kpi.latestValue}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
+        value: currentValue != null ? `${currentValue}${kpi.unit ? ' ' + kpi.unit : ''}` : '—',
         color: kpi.isOnTarget ? 'text-emerald-400' : 'text-danger-400',
       },
       {
@@ -659,7 +744,7 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         color: gap != null ? (gap <= 0 ? 'text-emerald-400' : 'text-danger-400') : undefined,
       },
     ];
-  }, [kpi, t]);
+  }, [kpi, t, reconciledReading]);
 
   const expectationStats: QuickStat[] = useMemo(() => {
     if (!kpi) return [];
@@ -1200,7 +1285,14 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-40 bg-navy-950/40" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col overflow-hidden">
+      <div
+        ref={drawerContainerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={kpi?.name || t('results.drawer.title', 'KPI details')}
+        tabIndex={-1}
+        className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-navy-900 border-l border-slate-200 dark:border-navy-700 shadow-2xl flex flex-col overflow-hidden outline-none"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -1239,19 +1331,25 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <button
+              type="button"
               onClick={() =>
                 void openKpiAiChat(t('results.drawer.ai.defaultPrompt', 'Analyze this KPI'))
               }
               className="p-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-500 transition-colors"
               title={t('results.drawer.ai.askAi', 'Ask AI')}
+              aria-label={t('results.drawer.ai.askAi', 'Ask AI')}
             >
-              <Sparkles size={18} />
+              <Sparkles size={18} aria-hidden="true" />
             </button>
             <button
+              type="button"
               onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-700 text-slate-500 transition-colors"
+              aria-label={t('results.drawer.closeFor', 'Close {{name}} details', {
+                name: kpi?.name || t('results.drawer.kpiFallback', 'KPI'),
+              })}
             >
-              <X size={18} />
+              <X size={18} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -1299,6 +1397,24 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
 
               {normalizedSection === 'summary' && (
                 <>
+                  {/* CB-04/RB-013: the catalog's cached "latest" and the
+                      freshly-fetched measurement history disagreeing is a
+                      real staleness bug, not a decoration — surface it
+                      instead of silently picking one. */}
+                  {reconciledReading?.mismatchWithCatalog && (
+                    <div
+                      role="alert"
+                      className="flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300"
+                    >
+                      <AlertTriangle size={14} className="shrink-0" />
+                      <span>
+                        {t(
+                          'results.drawer.catalogMismatch',
+                          'The cached catalog value differs from the latest recorded measurement — showing the measurement.'
+                        )}
+                      </span>
+                    </div>
+                  )}
                   {/* Quick Stats */}
                   <div
                     id="kpi-drawer-summary"
@@ -1764,10 +1880,47 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                   <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-3">
                     {t('results.drawer.recordTitle', 'Record New Value')}
                   </h3>
+                  {/* CB-04/RB-014: governed measurement context — unit, cadence,
+                      owner — so whoever records a value sees what they're
+                      measuring against instead of a bare number+date form. All
+                      three already exist on the catalog entry; this form
+                      previously never surfaced them. */}
+                  {kpi && (
+                    <div
+                      className="mb-3 flex flex-wrap gap-x-4 gap-y-1 rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] px-3 py-2 text-[11px] text-slate-600 dark:text-slate-300"
+                      data-testid="kpi-record-descriptor"
+                    >
+                      <span>
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {t('results.drawer.descriptorUnit', 'Unit')}:
+                        </span>{' '}
+                        {kpi.unit || t('results.drawer.descriptorNone', '—')}
+                      </span>
+                      <span>
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {t('results.drawer.descriptorCadence', 'Cadence')}:
+                        </span>{' '}
+                        {kpi.measurementFrequency || t('results.drawer.descriptorNone', '—')}
+                      </span>
+                      <span>
+                        <span className="text-slate-400 dark:text-slate-500">
+                          {t('results.drawer.descriptorOwner', 'Owner')}:
+                        </span>{' '}
+                        {(kpi as any).ownerName || t('results.drawer.descriptorNone', '—')}
+                      </span>
+                    </div>
+                  )}
                   <form onSubmit={handleRecord} className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
+                        <label
+                          htmlFor="kpi-drawer-new-value"
+                          className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+                        >
+                          {t('results.drawer.historyValue', 'Value')}
+                        </label>
                         <input
+                          id="kpi-drawer-new-value"
                           className={inputCls}
                           type="number"
                           step="any"
@@ -1775,10 +1928,18 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                           onChange={(e) => setNewValue(e.target.value)}
                           placeholder={t('results.drawer.valuePlaceholder', 'Value')}
                           required
+                          aria-required="true"
                         />
                       </div>
                       <div>
+                        <label
+                          htmlFor="kpi-drawer-new-date"
+                          className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+                        >
+                          {t('results.drawer.historyDate', 'Date')}
+                        </label>
                         <input
+                          id="kpi-drawer-new-date"
                           className={inputCls}
                           type="date"
                           value={newDate}
@@ -1786,15 +1947,44 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                         />
                       </div>
                     </div>
-                    <input
-                      className={inputCls}
-                      value={newNotes}
-                      onChange={(e) => setNewNotes(e.target.value)}
-                      placeholder={t(
-                        'results.drawer.notesPlaceholder',
-                        'Notes, source, or audit comment (optional)'
-                      )}
-                    />
+                    {/* CB-04/RB-014: split out of the old single ambiguous
+                        "Notes, source, or audit comment" field — `source` maps
+                        to the payload's existing (previously-unused) `source`
+                        property, evidence provenance now travels distinctly
+                        from freeform notes. */}
+                    <div>
+                      <label
+                        htmlFor="kpi-drawer-new-source"
+                        className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+                      >
+                        {t('results.drawer.historySource', 'Source')}
+                      </label>
+                      <input
+                        id="kpi-drawer-new-source"
+                        className={inputCls}
+                        value={newSource}
+                        onChange={(e) => setNewSource(e.target.value)}
+                        placeholder={t(
+                          'results.drawer.sourcePlaceholder',
+                          'Source / evidence (e.g. system, report, link)'
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="kpi-drawer-new-notes"
+                        className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+                      >
+                        {t('results.drawer.historyNotes', 'Notes')}
+                      </label>
+                      <input
+                        id="kpi-drawer-new-notes"
+                        className={inputCls}
+                        value={newNotes}
+                        onChange={(e) => setNewNotes(e.target.value)}
+                        placeholder={t('results.drawer.notesPlaceholder', 'Notes (optional)')}
+                      />
+                    </div>
                     <button
                       type="submit"
                       disabled={!newValue || submitting}

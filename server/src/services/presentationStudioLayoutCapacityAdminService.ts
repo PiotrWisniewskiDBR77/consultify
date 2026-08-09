@@ -245,7 +245,7 @@ export function proposeLayoutCapacityOverrides(
 ): ProposeLayoutCapacityOverridesResult {
   const before = getCurrentRegistrySnapshot(input.organizationId);
   const apply = applyOverrides(input.overrides, input.organizationId);
-  if (!apply.ok) {
+  if (apply.ok === false) {
     return {
       ok: false,
       code: 'INVALID_OVERRIDES_PAYLOAD',
@@ -377,7 +377,7 @@ export async function executeLayoutCapacityOverrides(
     expectedFingerprint,
     now: input.now,
   });
-  if (!consume.ok) {
+  if (consume.ok === false) {
     return {
       ok: false,
       code: 'INVALID_APPROVAL_TICKET',
@@ -386,7 +386,7 @@ export async function executeLayoutCapacityOverrides(
   }
 
   const apply = applyOverrides(input.overrides, input.organizationId);
-  if (!apply.ok) {
+  if (apply.ok === false) {
     // Defense-in-depth: ticket was redeemed (single-use), so we cannot
     // un-redeem. We surface the validation error to the caller so they
     // know the ticket is gone AND no override landed.
@@ -560,7 +560,7 @@ export async function executeLayoutCapacityReset(
     expectedFingerprint,
     now: input.now,
   });
-  if (!consume.ok) {
+  if (consume.ok === false) {
     return {
       ok: false,
       code: 'INVALID_APPROVAL_TICKET',

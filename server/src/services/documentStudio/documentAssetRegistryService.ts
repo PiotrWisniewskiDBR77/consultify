@@ -131,7 +131,7 @@ export function registerLogo(input: RegisterLogoInput): DocumentAsset {
     throw new Error('asset_invalid_base64');
 
   const decoded = decodeBase64Safely(input.dataBase64);
-  if (!decoded.ok) throw new Error(decoded.reason);
+  if (decoded.ok === false) throw new Error(decoded.reason);
 
   // Auto-archive previous active logo for this org (one-active-at-a-time).
   // Emit `asset_replaced` instead of `asset_archived` so reviewers can

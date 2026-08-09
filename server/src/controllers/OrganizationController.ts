@@ -335,7 +335,7 @@ export class OrganizationController {
       const nextRole = normalizeOrganizationRole(role);
       const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
-      if (!target) {
+      if (!target?.user_id) {
         res.status(404).json({
           error: 'Member not found',
           code: 'MEMBER_NOT_FOUND',
@@ -403,7 +403,7 @@ export class OrganizationController {
 
       const result = await updateMemberRole({
         organizationId: orgId,
-        userId: targetUserId,
+        userId: target.user_id,
         role: nextRole,
       });
 
@@ -455,7 +455,7 @@ export class OrganizationController {
       const targetRole = normalizeOrganizationRole(target?.role);
       const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
-      if (!target) {
+      if (!target?.user_id) {
         res.status(404).json({
           error: 'Member not found',
           code: 'MEMBER_NOT_FOUND',
@@ -519,7 +519,7 @@ export class OrganizationController {
 
       await removeMember({
         organizationId: orgId,
-        userId: targetUserId,
+        userId: target.user_id,
       });
 
       // Audit proof (ADM-RAW-P1-004): member removals are high-risk admin writes.

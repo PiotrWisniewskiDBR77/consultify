@@ -117,7 +117,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                     id: 'queue:review',
                     column: 'queue',
                     value: 'requires-review',
-                    label: 'Requires review',
+                    label: t('results.filters.requiresReview', 'Requires review'),
                   },
                 ])
               }
@@ -163,7 +163,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                 id: 'queue:review',
                 column: 'queue',
                 value: 'requires-review',
-                label: 'Requires review',
+                label: t('results.filters.requiresReview', 'Requires review'),
               },
             ])
           }
@@ -184,7 +184,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                 id: 'queue:discrepancy',
                 column: 'queue',
                 value: 'discrepancy',
-                label: 'Discrepancy',
+                label: t('results.filters.discrepancy', 'Discrepancy'),
               },
             ])
           }
@@ -199,7 +199,12 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
           accentClassName="text-emerald-500"
           onClick={() =>
             onOpenCatalog([
-              { id: 'status:on-target', column: 'status', value: 'on-target', label: 'On target' },
+              {
+                id: 'status:on-target',
+                column: 'status',
+                value: 'on-target',
+                label: t('results.filters.onTarget', 'On target'),
+              },
             ])
           }
         />
@@ -288,7 +293,12 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                 type="button"
                 onClick={() =>
                   onOpenCatalog([
-                    { id: 'status:below', column: 'status', value: 'below', label: 'Below target' },
+                    {
+                      id: 'status:below',
+                      column: 'status',
+                      value: 'below',
+                      label: t('results.filters.belowTarget', 'Below target'),
+                    },
                   ])
                 }
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -300,7 +310,12 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                 type="button"
                 onClick={() =>
                   onOpenCatalog([
-                    { id: 'status:no-data', column: 'status', value: 'no-data', label: 'No data' },
+                    {
+                      id: 'status:no-data',
+                      column: 'status',
+                      value: 'no-data',
+                      label: t('results.filters.noData', 'No data'),
+                    },
                   ])
                 }
                 className="flex w-full items-center justify-between rounded-xl border border-slate-200/70 dark:border-white/[0.06] px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
@@ -318,7 +333,7 @@ export const KpiOverviewView: React.FC<KpiOverviewViewProps> = ({
                       id: 'queue:needs-entry',
                       column: 'queue',
                       value: 'needs-entry',
-                      label: 'Needs entry',
+                      label: t('results.filters.needsEntry', 'Needs entry'),
                     },
                   ])
                 }
