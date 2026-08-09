@@ -916,3 +916,34 @@ migracja na realistycznej kopii bazy demo/staging (1000+ istniejących
 migracji) — testowano tylko pustą bazę, ten sam zakres co RN-G1 §11 punkt
 (a); rollback/forward-repair rehearsal — nie testowany, brak jawnych plików
 rollback.
+
+## 16. KPI-E001/E002 — moja weryfikacja: 2 realne luki znalezione (2026-08-09)
+
+Przeczytałem `targetGeometryEvaluator.ts` i `20260810_rvn_kpi_core.sql` w
+całości. Jakość rekonstrukcji wysoka (boundary rule z decyzji #7 zastosowana
+konsekwentnie, decyzje #9/#10/#12 wdrożone dosłownie, uczciwe komentarze
+DEVIATION), ale porównanie z ORYGINALNYM `02_KPI_IMPLEMENTATION_PLAN.md`
+(nie z niedostępnym draftem, tylko z pierwotnym źródłem prawdy) ujawnia dwie
+realne luki funkcjonalne, których agent-rekonstruktor nie mógł znać (nie był
+proszony o ponowne zweryfikowanie enumów wprost z planu domenowego):
+
+1. **Brak geometrii `binary`** — `target_geometry` ma 5 wartości
+   (`threshold_min/threshold_max/range/exact/custom`), plan §3.1 ma 6
+   (`higher_better/lower_better/range/exact/binary/custom` — patrz ten
+   ledger §3.2). `binary` to realny, mandatowy przypadek użycia (zero-event
+   compliance: "zero wypadków", "certyfikat ważny", "raport złożony na
+   czas") — nie kosmetyka.
+2. **Brak stanu `pending_approval`** — `rvn_kpi_definitions.status` ma 4
+   wartości (`draft/active/suspended/archived`), plan wymaga 5-stanowego
+   `lifecycle_status` (`draft→pending_approval→active↔suspended→archived`,
+   patrz ten ledger §3.2, "Wymiar 1"). Bez tego stanu nie da się odróżnić
+   "KPI ma definicję czekającą na zatwierdzenie" od zwykłego draftu na
+   poziomie roota.
+
+Obie luki = odchylenie od PLANU ŹRÓDŁOWEGO, nie od mojej listy 12 decyzji
+(które nie dotykały dosłownych list enumów). Zlecona poprawka: dodanie
+`binary` do `target_geometry` + `evalBinary()` w evaluatorze (analogicznie
+do `evalThresholdMin` — `actualValue === successValue → on_target, inaczej
+critical`, zero strefy warning z definicji) oraz `pending_approval` do
+`rvn_kpi_definitions.status` (migracja ALTER, nie nowy plik — ta sama
+migracja jest jeszcze niewypchnięta poza tę gałąź).
