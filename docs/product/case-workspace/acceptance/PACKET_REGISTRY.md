@@ -226,7 +226,29 @@ Twelve open questions; coordinator resolutions, grouped:
 | CW-P07 | E7 | E1, E2, E4, E6 | `StandardModuleBar`/`StandardTable`/`StandardPreview`/`ArtifactRightPanel`/`StandardArtifactShell` all confirmed present (KEEP, all 5 primitives exist); `MyTasksListContent`/`DecisionsPanelContent` (ADAPT) | Case Workspace shell itself (CREATE — none exists); retire `MyWorkHub.tsx` (4727 lines) as the target, component-donor only | 235 (authority-ui-standards + canon UI rows) — **UI packets pause at W2-V0 (task #9)** |
 | CW-P08 | E8 | E1, E2, E4, E6, E7 | `useOpenChatWithContext`, `WorkspaceContext`, `chatNavigator.ts`, `CHAT_ACTION_DEFINITIONS`, `myWorkIntent`/`myWorkEvent` bus, `useConversationStore` pmoContext — all KEEP/EXTEND, unusually complete | ephemeral proposal → exact confirmation receipt binding to Case | subset of 155 |
 | CW-P09 | E9 | E4 | — | branch/join/timeout/compensation graph semantics (CREATE) | subset of 119 |
-| CW-P10 | E10 | E3, E4 | native artifact modules (Documents/Presentations/Excel per memory) | evidence/provenance/rights linking, facts digest, DOCX/PPTX/XLS readback | 76 (golden_case rows) |
+| CW-P09 | E10 | E1 | native artifact modules referenced by id only, never FK'd (dozens of heterogeneous tables) | `case_workspace_artifact_links`, `artifactLinkService.ts`, 8 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+FK-scope verified**, commit `21d8578ba5`. Renumbered from CW-P10. EvidenceRecord (CW-RT-024's second schema) and DOCX/PPTX/XLS readback explicitly out of scope, follow-up work. | 76 (golden_case rows) |
+
+## CW-P09 (E10 artifact links) — design decisions accepted 2026-08-09
+
+1. **EvidenceRecord schema not built** — accepted; CaseArtifactLink and
+   EvidenceRecord are two distinct schemas per CW-RT-024, this packet built
+   only the first. Real follow-up, not a scope-creep excuse.
+2. **`markLinkArtifactUnavailable` has no named route in CW-GR-033** —
+   accepted as still correct; it implements CW-03-017's stated need even
+   though the route catalog doesn't literally name it, a gap in the route
+   list rather than in this packet's design.
+3. **Deliverable register/accept commands not built** — accepted; DELIVERABLE
+   exists as a relation enum value (so a link CAN represent one), but the
+   accept-workflow commands are separate future work.
+4. **Tenant/membership checks not enforced here** — same cross-cutting gap
+   as all prior packets.
+5. **No severity/urgency scale on staleness** — accepted; free-text reason
+   only, ranking left to a future consumer if needed.
+6. **`computeArtifactLinkSetDigest` scope (ACTIVE rows only, own tuples
+   only)** — accepted as the only honest scope for a packet that cannot read
+   any module's own content; flagged for product to confirm whether
+   UNLINKED/UNAVAILABLE/stale rows should factor into a different digest
+   used elsewhere.
 | CW-P07 | E11 | E1 | — | `case_workspace_history_events` (FK-less, open event_type) + `case_workspace_value_measurements` (CW-02-032 field list, FK to case_core), `caseHistoryService.ts`, 5+ methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+case_core-untouched verified**, commit `1002af2a89`. Renumbered from the original CW-P11 slot per the execution-order note above; built directly on E1 (not E10, which this program hasn't reached yet), Monitoring-Case split explicitly deferred. | subset of 70 |
 
 ## CW-P07 (E11 history/value) — design decisions accepted 2026-08-09
