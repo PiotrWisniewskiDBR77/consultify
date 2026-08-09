@@ -44,9 +44,25 @@ owner visual acceptance (owner decision 2026-08-09).
   **NOT VERIFIED** for this exact candidate SHA until rerun. This is the correct honest state per doc 11
   §3.8 (stale/mismatched-SHA evidence is not acceptance evidence) — carried into Program A as an open item,
   not assumed to still hold.
-- [ ] Baseline four-scene readback (Mind Map / Whiteboard / Process Flow / Table) on the reconciled
-  candidate.
-- [ ] Runtime/backend/database/session identity and version badge captured.
-- [ ] `01_CANON_AND_DECISION_REGISTER.md` populated (`02_EXECUTION_LEDGER.csv` skeleton created).
+- [x] Baseline four-scene readback via dev-render harness (`?screen=melscanvas-workspace`, mock idea
+  `idea-dbr77-demo-1`, real `<IdeaMapWorkspace>` component, no login, per CLAUDE.md rule #7). Confirmed:
+  geometry (info panel left / tool rail right), mandatory 4-representation switcher present with correct
+  a11y names (Mapa myśli/Whiteboard/Process Flow/Tabela), canvas content survives representation switch.
+  Table already exposes the required saved views (Domyślny/Triażowanie/Scoring/Log decyzji/Timeline) —
+  ahead of the §5.4 requirement. Screenshots: `screenshots/e00-baseline__{mindmap,whiteboard,processflow,
+  table}__1280x800__light__pl.png`.
+- [x] **Pre-existing repo-wide defect found and fixed**: `dev-render/main.tsx` statically lazy-imports
+  `./screens/tools-sesja-wyjscie`, a file that does not exist on `origin/demo` — this broke the ENTIRE
+  dev-render harness (all ~128 screens, not just Ideas) with a Vite import-analysis error. Same pattern
+  previously logged in memory for M04/M06/M11/M13 ("harness dev-render znów martwy... 1 brakujący plik =
+  128 ekranów") — recurring, not new. Fixed by removing the dangling lazy import + registry entry for
+  `tools-sesja-wyjscie` (2-line removal, no content invented). This fix is local to this worktree/branch
+  only; it is not yet on `origin/demo` and will need to land there separately for other sessions.
+- [ ] Runtime/backend/database/session identity and version badge captured (dev-render harness is
+  frontend-only mock; live backend/DB identity capture deferred to a later Program A pass with the real
+  server running, not required to unblock Program B/C work).
+- [ ] `01_CANON_AND_DECISION_REGISTER.md` populated (`02_EXECUTION_LEDGER.csv` skeleton created, one
+  finding logged so far: untranslated i18n key `myWork.whiteboard.toolbarExtra.insert` visible in
+  Whiteboard Menu 3 — both as label text and as the button's accessible name).
 
 This file is updated as the program proceeds; do not treat it as final until Program H closes.

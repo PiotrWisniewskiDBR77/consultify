@@ -213,6 +213,19 @@
         "--strictPort"
       ],
       "port": 3500
+    },
+    {
+      "name": "ideas-transformation-baseline",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "--config",
+        "dev-render/vite.config.ts",
+        "--port",
+        "3521",
+        "--strictPort"
+      ],
+      "port": 3521
     }
   ]
 }
