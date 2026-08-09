@@ -199,6 +199,7 @@ const TARGET_LABELS: Partial<Record<HandoffTargetModule, string>> = {
   notebook: 'Notebook',
   interview: 'Interview Insights',
   excele: 'Excele Workbooks',
+  documents: 'Document Studio',
 };
 
 // ---------------------------------------------------------------------------
@@ -844,6 +845,13 @@ function inferTargetModuleFromChatRegex(
     return { targetModule: 'excele', handoffIntent: 'generate' };
   }
 
+  if (
+    /\b(document|document studio|docx|section|paragraph)\b/i.test(text) ||
+    /\b(dokument\w*|sekcj\w*|akapit\w*)\b/i.test(text)
+  ) {
+    return { targetModule: 'documents', handoffIntent: 'append' };
+  }
+
   for (const candidate of CHAT_ACTION_KEYWORDS) {
     if (candidate.patterns.some((pattern) => pattern.test(text))) {
       return {
@@ -875,6 +883,8 @@ function inferTargetModuleFromChatRegex(
     moduleHint.includes('workbook')
   )
     return { targetModule: 'excele', handoffIntent: 'generate' };
+  if (moduleHint.includes('document') || moduleHint.includes('doc-studio'))
+    return { targetModule: 'documents', handoffIntent: 'append' };
 
   return null;
 }
@@ -887,8 +897,9 @@ Given a user message, determine if it contains an actionable intent for one of t
 - notebook: notes, summaries, minutes, drafts, memos, documentation
 - interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
 - excele: spreadsheets, tables, Table Studio tables, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
+- documents: edits to an opened Document Studio document, its selected text, block, or section
 
-Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|null,"intent":"string describing the action"}
+Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|"documents"|null,"intent":"string describing the action"}
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
 
 async function inferTargetModuleWithLLM(
@@ -1175,6 +1186,29 @@ function buildTargetPayloadForChat(params: {
       ...(workbookMutation ? { workbook_mutation: workbookMutation } : {}),
       next_action_safe_fallback:
         'Apply an approved, version-checked workbook command; never fabricate a workbook reference',
+    };
+  }
+
+  if (targetModule === 'documents') {
+    const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
+    const entityData = (workspace.entityData || {}) as Record<string, unknown>;
+    const selection = (entityData.selection || {}) as Record<string, unknown>;
+    const artifactId = String(entityData.artifactId || workspace.entityId || '').trim();
+    const sectionId = String(selection.sectionId || entityData.activeSectionId || '').trim();
+    const blockId = String(selection.blockId || entityData.activeBlockId || '').trim();
+    const scope = blockId && sectionId ? 'local' : sectionId ? 'section' : 'global';
+    return {
+      artifact_id: artifactId,
+      instruction: trimPreview(userMessage, 500),
+      document_context: {
+        version_id: entityData.versionId ?? null,
+        classification: entityData.classification ?? null,
+        lifecycle: entityData.lifecycle ?? null,
+        scope,
+        ...(sectionId ? { section_id: sectionId } : {}),
+        ...(blockId ? { block_id: blockId } : {}),
+      },
+      proposal_only: true,
     };
   }
 
@@ -2048,6 +2082,14 @@ async function performHandoff(params: {
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
       return handleExceleHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+    case 'documents':
+      return handleDocumentsHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2383,6 +2425,131 @@ async function handleExceleHandoff(
     navigate_to: `/excele?artifactId=${encodeURIComponent(workbookId)}`,
     user_intent: context.user_intent,
     prompt_hint: payload.prompt || context.user_intent,
+  };
+}
+
+async function handleDocumentsHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const artifactId = typeof payload.artifact_id === 'string' ? payload.artifact_id.trim() : '';
+  const instruction = typeof payload.instruction === 'string' ? payload.instruction.trim() : '';
+  const documentContext =
+    payload.document_context && typeof payload.document_context === 'object'
+      ? (payload.document_context as Record<string, unknown>)
+      : {};
+  const scope = String(documentContext.scope || 'global');
+
+  if (!artifactId) {
+    throw new TeresaCopilotError(
+      'Document write is unavailable without an opened artifact context',
+      'P08_DOCUMENT_ARTIFACT_REQUIRED',
+      409
+    );
+  }
+  if (!instruction) {
+    throw new TeresaCopilotError(
+      'Document proposal requires an explicit instruction',
+      'P08_DOCUMENT_INSTRUCTION_REQUIRED',
+      409
+    );
+  }
+
+  const documentMod = await tryImport('../documentStudio/documentStudioService.js');
+  if (!documentMod) {
+    throw new TeresaCopilotError(
+      'Document Studio writer is unavailable',
+      'P08_DOCUMENT_WRITE_UNAVAILABLE',
+      503
+    );
+  }
+
+  let domainProposal: { proposalId?: string };
+  if (scope === 'local') {
+    const sectionId = String(documentContext.section_id || '').trim();
+    const blockId = String(documentContext.block_id || '').trim();
+    if (!sectionId || !blockId) {
+      throw new TeresaCopilotError(
+        'A local document edit requires stable section and block identifiers',
+        'P08_DOCUMENT_SELECTION_REQUIRED',
+        409
+      );
+    }
+    domainProposal = await documentMod.createLocalEditProposal({
+      artifactId,
+      organizationId,
+      userId,
+      input: { scope: 'local', sectionId, blockId, instruction },
+      useLlm: true,
+    });
+  } else if (scope === 'section') {
+    const sectionId = String(documentContext.section_id || '').trim();
+    if (!sectionId) {
+      throw new TeresaCopilotError(
+        'A section document edit requires a stable section identifier',
+        'P08_DOCUMENT_SELECTION_REQUIRED',
+        409
+      );
+    }
+    domainProposal = await documentMod.createSectionEditProposal({
+      artifactId,
+      organizationId,
+      userId,
+      sectionId,
+      instruction,
+      useLlm: true,
+    });
+  } else if (scope === 'global') {
+    domainProposal = await documentMod.createGlobalEditProposal({
+      artifactId,
+      organizationId,
+      userId,
+      instruction,
+      useLlm: true,
+    });
+  } else {
+    throw new TeresaCopilotError(
+      `Unsupported document selection scope: ${scope}`,
+      'P08_DOCUMENT_SCOPE_UNSUPPORTED',
+      409
+    );
+  }
+
+  if (!domainProposal?.proposalId) {
+    throw new TeresaCopilotError(
+      'Document Studio did not return a durable proposal',
+      'P08_DOCUMENT_PROPOSAL_FAILED',
+      502
+    );
+  }
+
+  const approval = await documentMod.approveEditProposal({
+    artifactId,
+    organizationId,
+    userId,
+    proposalId: domainProposal.proposalId,
+  });
+
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'documents', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, artifactId, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'documents',
+    artifact_ref: artifactId,
+    domain_proposal_ref: domainProposal.proposalId,
+    real_entity: true,
+    proposal_only: false,
+    mutation_applied: true,
+    scope,
+    version_after: approval?.proposal?.versionAfterId ?? null,
+    navigate_to: `/document-studio/${encodeURIComponent(artifactId)}`,
+    user_intent: context.user_intent,
   };
 }
 

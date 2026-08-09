@@ -205,6 +205,13 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['ideas_context', 'canvas_type'] as const,
   },
+  documents: {
+    module: 'Dokumenty' as const,
+    contract_ref: 'ARTIFACT_STUDIO_DOC',
+    description: 'Governed edits of an opened Document Studio artifact',
+    required_common_payload: true,
+    required_extra_fields: ['artifact_id', 'instruction', 'document_context'] as const,
+  },
 } as const;
 
 export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
@@ -215,6 +222,7 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'interview',
   'excele',
   'ideas',
+  'documents',
 ];
 
 export const P08_COMMON_PAYLOAD_FIELDS = [
@@ -589,6 +597,9 @@ export function validateTargetPayload(
   payload: Record<string, unknown>
 ): { valid: boolean; missing: string[] } {
   const targetDef = (P08_HANDOFF_TARGETS as any)[target];
+  if (!targetDef) {
+    return { valid: false, missing: [`unsupported_target:${target}`] };
+  }
   const missing: string[] = [];
   for (const field of targetDef.required_extra_fields) {
     if (payload[field] === undefined || payload[field] === null) {
