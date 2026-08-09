@@ -974,7 +974,34 @@ Closed Loop), KPI-E004 (Scorecards), KPI-E005-E007, potem UI (RN-G2), Teresa
 Ogromny zakres wciąż przed nami, ale fundament (Platform + pierwszy pełny
 segment jednej domeny) stoi i jest udowodniony.
 
-## 18. KPI-E001/E002 — warstwa API `/api/vnext/results/kpi/*` (2026-08-09)
+## 18. KPI-E003 Deviation Closed Loop — design zamrożony (2026-08-09)
+
+Draft agenta `a925f809507d44927` (bardzo dokładnie zweryfikowany w kodzie:
+odkrył że outbox nie ma żadnego konsumenta, że `manager_user_id` nigdy nie
+istniał na `rvn_kpi_definitions`, że plan ma wewnętrzną sprzeczność co do
+"Planu" jako osobnego agregatu). 8 otwartych pytań rozstrzygniętych. **Pełna
+treść (DDL+kod) tym razem wklejona bezpośrednio do**
+`docs/product/results-vnext/KPI_E003_DESIGN.md` — nie tylko decyzje —
+wnioskując z incydentu przy KPI-E001/E002 (§16), gdzie odesłanie do
+"konwersacji" zamiast wklejenia pełnej treści zmusiło implementatora do
+rekonstrukcji i wprowadziło 2 realne luki.
+
+Kluczowe decyzje: case key = `(organization_id, kpi_id)`, jeden aktywny case
+per KPI wymuszony partial unique index w bazie; "Plan" jako faza cyklu życia
+case'a, nie osobny agregat; `openOrEscalateDeviationCase` w TEJ SAMEJ
+transakcji co measurement insert (bo outbox nie ma dziś żadnego konsumenta —
+"async" oznaczałoby w praktyce że case nigdy by się nie tworzył); nowa
+platformowa tabela `rvn_platform_obligations` budowana TERAZ (nie jako osobny
+pakiet) bo OKR/ROI będą potrzebować identycznego mechanizmu, a to dokładnie
+zapobiega fragmentacji którą program ma naprawić. Implementacja czeka na
+zakończenie równoległego pakietu API routes (ryzyko konfliktu plików —
+`kpiMeasurementCommands.ts`/`atomicWrite.ts` są dotykane przez oba).
+
+## 19. KPI-E001/E002 — warstwa API `/api/vnext/results/kpi/*` (2026-08-09)
+
+_(Numer sekcji poprawiony po fakcie na 19 — równoległy pakiet KPI-E003
+zajął numer 18 tym samym commitem, w którym ta sekcja wylądowała
+niezamierzenie zbundlowana; treść bez zmian, tylko numeracja.)_
 
 Commity `14c854457b` (routes + Gateway mount) i `e885086628` (testy).
 Cienki router HTTP nad już gotowym command/repository layerem z §14-17 —
@@ -1067,25 +1094,3 @@ w tym repo. Weryfikacja na realnej bazie efemerycznej (przepis §11) NIE
 była tu potrzebna — ten pakiet nie dodał żadnego nowego SQL/DDL, tylko
 HTTP nad już zweryfikowanym layerem z §15/§17.
 
-## 18. KPI-E003 Deviation Closed Loop — design zamrożony (2026-08-09)
-
-Draft agenta `a925f809507d44927` (bardzo dokładnie zweryfikowany w kodzie:
-odkrył że outbox nie ma żadnego konsumenta, że `manager_user_id` nigdy nie
-istniał na `rvn_kpi_definitions`, że plan ma wewnętrzną sprzeczność co do
-"Planu" jako osobnego agregatu). 8 otwartych pytań rozstrzygniętych. **Pełna
-treść (DDL+kod) tym razem wklejona bezpośrednio do**
-`docs/product/results-vnext/KPI_E003_DESIGN.md` — nie tylko decyzje —
-wnioskując z incydentu przy KPI-E001/E002 (§16), gdzie odesłanie do
-"konwersacji" zamiast wklejenia pełnej treści zmusiło implementatora do
-rekonstrukcji i wprowadziło 2 realne luki.
-
-Kluczowe decyzje: case key = `(organization_id, kpi_id)`, jeden aktywny case
-per KPI wymuszony partial unique index w bazie; "Plan" jako faza cyklu życia
-case'a, nie osobny agregat; `openOrEscalateDeviationCase` w TEJ SAMEJ
-transakcji co measurement insert (bo outbox nie ma dziś żadnego konsumenta —
-"async" oznaczałoby w praktyce że case nigdy by się nie tworzył); nowa
-platformowa tabela `rvn_platform_obligations` budowana TERAZ (nie jako osobny
-pakiet) bo OKR/ROI będą potrzebować identycznego mechanizmu, a to dokładnie
-zapobiega fragmentacji którą program ma naprawić. Implementacja czeka na
-zakończenie równoległego pakietu API routes (ryzyko konfliktu plików —
-`kpiMeasurementCommands.ts`/`atomicWrite.ts` są dotykane przez oba).
