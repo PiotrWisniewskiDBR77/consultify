@@ -241,6 +241,7 @@ export const P08_ACTION_ENVELOPE_STATES = [
   'approved',
   'executing',
   'completed',
+  'undone',
   'rejected',
 ] as const;
 
@@ -251,7 +252,8 @@ export const P08_ACTION_ENVELOPE_TRANSITIONS: Record<ActionEnvelopeState, Action
   pending_approval: ['approved', 'rejected'],
   approved: ['executing'],
   executing: ['completed', 'rejected'],
-  completed: [],
+  completed: ['undone'],
+  undone: [],
   rejected: [],
 };
 

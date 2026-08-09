@@ -47,8 +47,9 @@ interface DeckQualityReport {
 interface DeckQualityGatesPanelProps {
   deckId: string;
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onJumpToCard?: (cardIndex: number) => void;
+  displayMode?: 'overlay' | 'embedded';
 }
 
 const categoryIcons: Record<string, typeof Shield> = {
@@ -127,6 +128,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
   isOpen,
   onClose,
   onJumpToCard,
+  displayMode = 'overlay',
 }) => {
   const { t } = useTranslation();
   const [report, setReport] = useState<DeckQualityReport | null>(null);
@@ -268,7 +270,14 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
     : 'text-c-text-secondary';
 
   return (
-    <div className="absolute top-0 right-0 w-80 h-full bg-c-surface border-l border-c-border-subtle z-30 flex flex-col shadow-xl">
+    <div
+      className={
+        displayMode === 'embedded'
+          ? 'flex h-full min-h-0 w-full flex-col bg-c-surface'
+          : 'absolute top-0 right-0 z-30 flex h-full w-80 flex-col border-l border-c-border-subtle bg-c-surface shadow-xl'
+      }
+      data-testid="presentation-quality-panel"
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">

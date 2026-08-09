@@ -73,6 +73,10 @@ export const ExceleView: React.FC = () => {
   const templateArtifactId = searchParams.get('templateArtifactId');
   const templatePrompt = searchParams.get('templatePrompt');
   const viewParam = searchParams.get('view');
+  const artifactStudioSpreadsheetEnabled = isArtifactStudioLaneEnabled('spreadsheet');
+  useEffect(() => {
+    emitArtifactStudioShellSelected('spreadsheet');
+  }, []);
   // Materiały wspólny launcher (2026-07-24) — `?entry=blank|ai` sygnalizuje
   // tryb wybrany w KROK 2 tablicy Materiałów, żeby wejście z Materiałów lądowało
   // od razu w tym trybie zamiast ponownie pytać o wybór na tym ekranie.
@@ -195,63 +199,65 @@ export const ExceleView: React.FC = () => {
     if (!artifactId || reopenLoaded.current) return;
     reopenLoaded.current = true;
 
-    Api.get(`/workbook/${artifactId}`)
-      .then((wbData: any) => {
-        const title = wbData?.title || wbData?.schema_json?.title || 'Spreadsheet';
-        const sheets = wbData?.schema_json?.sheets || [];
-        setReopenWorkbookId(artifactId);
-        setReopenError(null);
-        setReopenPreview({
-          type: 'xlsx',
-          title,
-          fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
-          summary: `Workbook "${title}" — ${sheets.length || 1} sheets.`,
-          kpiItems: [
-            { label: 'Sheets', value: String(sheets.length || 1) },
-            { label: 'Format', value: 'XLSX' },
-          ],
-          sheetNames: sheets.map((s: any) => s.name || 'Sheet'),
-          // B3 fix (2026-07-22, workstream Excel): GET /workbook/:id already
-          // returns the full schema_json (cells + formulas) — no separate
-          // fetch needed here, just map it into the grid shape the shell renders.
-          perSheetData: buildWorkbookGridSheets(sheets),
-          // "Najmniejszy arkusz" (2026-07-28, za ff_excele_edit): RAW sheets
-          // (column keys + odrębne value/formula) dla EditableSpreadsheetGrid —
-          // perSheetData wyżej spłaszcza formułę do napisu i gubi klucz kolumny,
-          // którego potrzebuje PATCH przy edycji.
-          rawSheets: sheets,
-          workbookId: artifactId,
-          downloadUrl: `/api/workbook/${artifactId}/download`,
-        });
-      })
-      .catch(() => {
-        // Naprawa 2026-07-23: `artifactId` tu nie zawsze jest generated_workbooks.id.
-        // Dla origin_runtime === 'sheet' bywa to tp_tables.id (governed table) —
-        // spróbuj otworzyć prawdziwą treść w Table Studio zamiast fabrykować pusty
-        // podgląd. Dopiero gdy NIC się nie rozwiąże (dane usunięte/wygasłe) —
-        // pokaż jawny błąd zamiast fałszywego "otworzyło się" z pustą siatką.
-        void (async () => {
-          const workspaceId = await resolveTablePlatformWorkspaceIdForTable(artifactId);
-          if (workspaceId) {
-            navigate(buildMyWorkSheetTableOpenPath(workspaceId, artifactId), { replace: true });
-            return;
-          }
-          setReopenWorkbookId(null);
-          setReopenPreview(null);
-          setReopenError(
-            t(
-              'kimi.excele.reopenNotFound',
-              'Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.'
-            )
-          );
-          toast.error(
-            t(
-              'kimi.excele.reopenNotFoundToast',
-              'Nie udało się otworzyć arkusza — treść nie została znaleziona.'
-            )
-          );
-        })();
+    void resolveSpreadsheetArtifactIdentity(artifactId).then((identity) => {
+      if (identity.kind === 'table') {
+        navigate(identity.canonicalOpenPath, { replace: true });
+        return;
+      }
+
+      if (identity.kind === 'missing') {
+        setReopenWorkbookId(null);
+        setReopenPreview(null);
+        setReopenError(
+          t(
+            'kimi.excele.reopenNotFound',
+            'Nie znaleziono treści tego arkusza — dane źródłowe zostały usunięte lub wygasły.'
+          )
+        );
+        toast.error(
+          t(
+            'kimi.excele.reopenNotFoundToast',
+            'Nie udało się otworzyć arkusza — treść nie została znaleziona.'
+          )
+        );
+        return;
+      }
+
+      const wbData = identity.workbook;
+      const title = wbData?.title || wbData?.schema_json?.title || 'Spreadsheet';
+      const sheets = wbData?.schema_json?.sheets || [];
+      setReopenWorkbookId(identity.workbookId);
+      setReopenError(null);
+      setReopenPreview({
+        type: 'xlsx',
+        title,
+        fileName: `${title.replace(/\s+/g, '_')}.xlsx`,
+        summary: `Workbook "${title}" — ${sheets.length || 1} sheets.`,
+        kpiItems: [
+          { label: 'Sheets', value: String(sheets.length || 1) },
+          { label: 'Format', value: 'XLSX' },
+        ],
+        sheetNames: sheets.map((s: any) => s.name || 'Sheet'),
+        // B3 fix (2026-07-22, workstream Excel): GET /workbook/:id already
+        // returns the full schema_json (cells + formulas) — no separate
+        // fetch needed here, just map it into the grid shape the shell renders.
+        perSheetData: buildWorkbookGridSheets(sheets),
+        // "Najmniejszy arkusz" (2026-07-28, za ff_excele_edit): RAW sheets
+        // (column keys + odrębne value/formula) dla EditableSpreadsheetGrid —
+        // perSheetData wyżej spłaszcza formułę do napisu i gubi klucz kolumny,
+        // którego potrzebuje PATCH przy edycji.
+        rawSheets: sheets,
+        workbookVersion: Number.isInteger(wbData?.version) ? wbData.version : 0,
+        workbookClassification: wbData?.classification ?? 'internal',
+        workbookLifecycle: wbData?.lifecycleStatus ?? 'draft',
+        workbookApprovalCurrent: wbData?.approvalCurrent === true,
+        sourcePack: wbData?.sourcePack,
+        evidenceRefs: Array.isArray(wbData?.evidenceRefs) ? wbData.evidenceRefs : [],
+        qualityReport: wbData?.qualityReport ?? null,
+        workbookId: identity.workbookId,
+        downloadUrl: `/api/workbook/${identity.workbookId}/download`,
       });
+    });
   }, [artifactId, navigate, t]);
 
   useEffect(() => {
@@ -581,6 +587,25 @@ export const ExceleView: React.FC = () => {
         onClean={handleCreateEmptyGrid}
         onAi={() => setEntryMode('ai')}
         onTemplate={() => navigate('/excele')}
+      />
+    );
+  }
+
+  if (
+    artifactStudioSpreadsheetEnabled &&
+    effectivePreview?.type === 'xlsx' &&
+    effectiveWorkbookId
+  ) {
+    return (
+      <SpreadsheetArtifactStudio
+        preview={effectivePreview}
+        workbookId={effectiveWorkbookId}
+        onDownload={pipeline.handleDownload}
+        onCopyLink={() => {
+          const href = buildArtifactPermalink('sheet', effectiveWorkbookId);
+          void navigator.clipboard.writeText(href);
+          toast.success(t('common.copied', 'Skopiowano'));
+        }}
       />
     );
   }

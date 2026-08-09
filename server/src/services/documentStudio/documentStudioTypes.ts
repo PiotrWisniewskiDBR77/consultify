@@ -2383,6 +2383,8 @@ export interface DocumentApprovalRequest {
   approvalId: string;
   organizationId: string;
   artifactId: string;
+  /** Immutable content version reviewed by the participants. */
+  versionId?: string;
   requestedBy: string;
   participants: DocumentApprovalParticipant[];
   quorumPolicy: DocumentApprovalQuorumPolicy;

@@ -303,6 +303,8 @@ export const ChartImageSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const SheetSchema = z.object({
+  /** Stable identity used by comments, sources and cross-version anchors. */
+  id: z.string().uuid().optional(),
   name: z.string(),
   purpose: z.string().optional(),
   columns: z.array(ColumnDefSchema),

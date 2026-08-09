@@ -13,12 +13,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
+import {
+  ArtifactContextCommandSurface,
+  ArtifactMenu3,
+  type ArtifactCommandContext,
+  type ArtifactLifecycle,
+} from '@/components/shared/ArtifactStudio';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ErrorState as SpecAErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
@@ -35,6 +42,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
+import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
+import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
@@ -57,6 +66,7 @@ import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
+import { PresentationReviewPanel } from './PresentationReviewPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
@@ -76,6 +86,7 @@ import {
   type VerticalAlignment,
 } from './geometryOps';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
+import { createPresentationArtifactCommandRegistry } from './presentationArtifactCommands';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
@@ -86,6 +97,7 @@ import { useDataRefresh } from './useDataRefresh';
 import { useDeckAutosave } from './useDeckAutosave';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
+import { presentationVersionApprovalId } from './presentationApproval';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // VF1-7 (SPEC-A wzorzec Deck): gate for the shared/states swap on the
@@ -380,6 +392,7 @@ export const DeckBuilder: React.FC = () => {
   // distinct from the collaborate-only `currentUser` above, which is id-only
   // and null when VITE_ENABLE_DECK_COLLABORATE is off).
   const approvalUser = useAppStore((s) => s.currentUser);
+  const approvalOrganization = useAppStore((s) => s.currentOrganization);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -395,10 +408,12 @@ export const DeckBuilder: React.FC = () => {
   const [qualityBannerExpanded, setQualityBannerExpanded] = useState(false);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
+  const [serverVersion, setServerVersion] = useState(1);
 
   const [teresaOpen, setTeresaOpen] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
+  const [presentStartIndex, setPresentStartIndex] = useState(0);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   // P3.1 — visible conflict state when autosave returns 409 (another session
   // saved the deck). Instead of silently overwriting the local (possibly
@@ -465,6 +480,7 @@ export const DeckBuilder: React.FC = () => {
   const getExpectedDeckVersion = useCallback(() => serverVersionRef.current, []);
   const syncDeckServerVersion = useCallback((version: number) => {
     serverVersionRef.current = version;
+    setServerVersion(version);
   }, []);
   const {
     versions,
@@ -780,6 +796,7 @@ export const DeckBuilder: React.FC = () => {
           payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
         if (typeof row?.version === 'number' && Number.isFinite(row.version)) {
           serverVersionRef.current = row.version;
+          setServerVersion(row.version);
         }
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
@@ -922,6 +939,7 @@ export const DeckBuilder: React.FC = () => {
     setConflict((current) => {
       if (current?.serverVersion != null) {
         serverVersionRef.current = current.serverVersion;
+        setServerVersion(current.serverVersion);
       }
       if (current?.pendingServer && Array.isArray(current.pendingServer.deckJson?.cards)) {
         setDeck((prev) => {
@@ -946,6 +964,7 @@ export const DeckBuilder: React.FC = () => {
         // Adopt the server's version number so our next autosave's
         // compare-and-swap matches and overwrites (last-write-wins).
         serverVersionRef.current = current.serverVersion;
+        setServerVersion(current.serverVersion);
       }
       return null;
     });
@@ -1276,6 +1295,32 @@ export const DeckBuilder: React.FC = () => {
     };
   }, [activeCard?.card_id, activeCard?.title, deck]);
 
+  const openChatWithContext = useOpenChatWithContext();
+  const artifactStudioPresentationEnabled = isArtifactStudioLaneEnabled('presentation');
+  useEffect(() => {
+    emitArtifactStudioShellSelected('presentation');
+  }, []);
+  const openGlobalTeresa = useCallback(() => {
+    if (!deck) return;
+    void openChatWithContext({
+      entityType: 'presentation',
+      entityId: deck.deck_id,
+      entityName: deck.title || t('presentations.presentationDeck'),
+      reuseActiveConversation: true,
+      contextData: {
+        artifactType: 'presentation',
+        versionId: (deck as any).version ?? (deck as any).updated_at ?? null,
+        classification:
+          (deck as any).confidentiality || (deck as any).meta?.confidentiality || 'internal',
+        lifecycle: (deck as any).status || 'draft',
+        activeSlideId: activeCard?.card_id || null,
+        activeSlideTitle: activeCard?.title || null,
+        selectedBlockId: selectedBlockId || null,
+        slideCount: deck.cards.length,
+      },
+    });
+  }, [activeCard?.card_id, activeCard?.title, deck, openChatWithContext, selectedBlockId, t]);
+
   const handleTeresaDeckIntent = useCallback(
     async (prompt: string) => {
       if (!deck) return false;
@@ -1424,6 +1469,83 @@ export const DeckBuilder: React.FC = () => {
     handleBackToPresentations,
   ]);
 
+  const presentationArtifactCommands = useMemo(
+    () =>
+      createPresentationArtifactCommandRegistry(
+        {
+          undo,
+          redo,
+          addSlide: () => handleAddBlankCard(activeCardIndex + 1),
+          duplicateSlide: () => duplicateCard(activeCardIndex),
+          toggleSlideLock: () => {
+            if (activeCard) handleToggleCardLock(activeCard.card_id);
+          },
+          deleteSlide: () => deleteCard(activeCardIndex),
+          insertText: () => handleInsertBlock('text'),
+          insertImage: () => setMediaLibraryOpen(true),
+          openTheme: () => setThemeSwitcherOpen(true),
+          duplicateBlock: () => {
+            if (activeCard && selectedBlockId) {
+              handleBlockDuplicate(activeCard.card_id, selectedBlockId);
+            }
+          },
+          deleteBlock: () => {
+            if (activeCard && selectedBlockId) {
+              handleBlockDelete(activeCard.card_id, selectedBlockId);
+            }
+          },
+        },
+        {
+          canUndo,
+          canRedo,
+          canDeleteSlide: (deck?.cards.length ?? 0) > 1,
+          hasActiveSlide: Boolean(activeCard),
+          hasSelectedBlock: Boolean(activeCard && selectedBlockId),
+        }
+      ),
+    [
+      activeCard,
+      activeCardIndex,
+      canRedo,
+      canUndo,
+      deck?.cards.length,
+      deleteCard,
+      duplicateCard,
+      handleAddBlankCard,
+      handleBlockDelete,
+      handleBlockDuplicate,
+      handleInsertBlock,
+      handleToggleCardLock,
+      redo,
+      selectedBlockId,
+      undo,
+    ]
+  );
+
+  const presentationArtifactCommandContext = useMemo<ArtifactCommandContext>(
+    () => ({
+      selection: {
+        artifactType: 'presentation' as const,
+        kind: artifactSelectionKind,
+        readOnly: false,
+        locked: Boolean(activeCard?.is_locked),
+      },
+      permissions: {
+        grants: new Set(['artifact.read', 'artifact.edit', 'artifact.comment']),
+      },
+      lifecycle: {
+        status: (() => {
+          const status = deck?.status as string | undefined;
+          return status === 'approved' || status === 'final' || status === 'in_review'
+            ? (status as ArtifactLifecycle)
+            : ('draft' as const);
+        })(),
+        conflict: Boolean(conflict),
+      },
+    }),
+    [activeCard?.is_locked, artifactSelectionKind, conflict, deck?.status]
+  );
+
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
       // VF1-7 (SPEC-A): shared/states ErrorState with a real exit (onBack),
@@ -1485,6 +1607,7 @@ export const DeckBuilder: React.FC = () => {
         title={deck.title}
         onExit={() => setPresentMode('off')}
         presenterView={presentMode === 'presenter'}
+        initialIndex={presentStartIndex}
       />
     );
   }
@@ -1504,6 +1627,7 @@ export const DeckBuilder: React.FC = () => {
         initialBrandKit={brandKit}
       >
         <DeckBuilderMelsView
+          artifactStudioMode={artifactStudioPresentationEnabled}
           title={deck.title}
           onTitleChange={handleTitleChange}
           onBack={handleBackToPresentations}
@@ -1520,11 +1644,21 @@ export const DeckBuilder: React.FC = () => {
               setActiveRailTool((prev) => (prev === 'comments' ? null : 'comments')),
             onShare: () => setShareModalOpen(true),
             onToggleAgent: () => setTeresaOpen((v) => !v),
-            onRun: () => setPresentMode('fullscreen'),
+            onRun: () => {
+              setPresentStartIndex(activeCardIndex);
+              setPresentMode('fullscreen');
+            },
+            onRunFromStart: () => {
+              setPresentStartIndex(0);
+              setPresentMode('fullscreen');
+            },
             // J12-S2 — presenter view (notes + next-slide + timer). The primary
             // "Present" chip runs the audience fullscreen ('show'); presenter is
             // a distinct mode, surfaced as an overflow (⋯) chip. ESC exits both.
-            onPresenter: () => setPresentMode('presenter'),
+            onPresenter: () => {
+              setPresentStartIndex(activeCardIndex);
+              setPresentMode('presenter');
+            },
           }}
           topBarState={
             {
@@ -1537,20 +1671,43 @@ export const DeckBuilder: React.FC = () => {
             } satisfies DeckBuilderTopBarChipsState
           }
           presenceSlot={
-            <div className="flex items-center gap-2">
-              {hasUnsavedChanges ? (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {t('presentations.builder.saving', 'Saving…')}
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                  <Check size={11} />
-                  {t('presentations.builder.saved', 'Saved')}
-                </span>
-              )}
-              <EntityStatusChip status={deck.status || 'draft'} />
-            </div>
+            artifactStudioPresentationEnabled ? undefined : (
+              <div className="flex items-center gap-2">
+                {hasUnsavedChanges ? (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {t('presentations.builder.saving', 'Saving…')}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <Check size={11} />
+                    {t('presentations.builder.saved', 'Saved')}
+                  </span>
+                )}
+                <EntityStatusChip status={deck.status || 'draft'} />
+              </div>
+            )
+          }
+          titleTrailingSlot={
+            artifactStudioPresentationEnabled ? (
+              <div
+                className="flex min-w-0 items-center gap-2"
+                data-testid="presentation-artifact-status"
+              >
+                {hasUnsavedChanges ? (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {t('presentations.builder.saving', 'Saving…')}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <Check size={11} />
+                    {t('presentations.builder.saved', 'Saved')}
+                  </span>
+                )}
+                <EntityStatusChip status={deck.status || 'draft'} />
+              </div>
+            ) : undefined
           }
           activeRightRailToolId={activeRailTool}
           onActiveRightRailToolChange={setActiveRailTool}
@@ -1633,6 +1790,33 @@ export const DeckBuilder: React.FC = () => {
               ) : undefined,
           }}
           leftRailTitle={t('presentations.builder.slides', 'Slides')}
+          menu3Slot={
+            <ArtifactMenu3
+              registry={presentationArtifactCommands}
+              context={presentationArtifactCommandContext}
+              resolveLabel={(label) => label}
+              maxVisible={7}
+              ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
+            />
+          }
+          reviewPanel={
+            artifactStudioPresentationEnabled ? (
+              <PresentationReviewPanel
+                deckId={deckId || deck?.deck_id || ''}
+                version={serverVersion}
+                organizationId={approvalOrganization?.id}
+                currentUserId={approvalUser?.id}
+                qualityPanel={
+                  <DeckQualityGatesPanel
+                    deckId={deckId || deck?.deck_id || ''}
+                    isOpen
+                    displayMode="embedded"
+                    onJumpToCard={setActiveCardIndex}
+                  />
+                }
+              />
+            ) : undefined
+          }
           leftRail={
             <SlideSorter
               cards={deck.cards}
@@ -1680,7 +1864,7 @@ export const DeckBuilder: React.FC = () => {
             />
           }
           aiEntrySlot={
-            teresaOpen ? (
+            !artifactStudioPresentationEnabled && teresaOpen ? (
               <div className="w-[360px] min-w-[320px] max-w-[420px] h-full">
                 <UnifiedChatPanel
                   mode="split"
@@ -1786,7 +1970,9 @@ export const DeckBuilder: React.FC = () => {
               currentIndex={activeCardIndex}
               totalCards={deck.cards.length}
               cardTitle={activeCard?.title || ''}
-              onQuickEdits={() => setTeresaOpen(true)}
+              onQuickEdits={
+                artifactStudioPresentationEnabled ? openGlobalTeresa : () => setTeresaOpen(true)
+              }
               onToggleNotes={() => setShowNotes((v) => !v)}
               notesOpen={showNotes}
             />
@@ -1816,12 +2002,14 @@ export const DeckBuilder: React.FC = () => {
                 }}
                 onSelect={handleInsertMediaImage}
               />
-              <DeckQualityGatesPanel
-                deckId={deckId || deck?.deck_id || ''}
-                isOpen={qualityGatesOpen}
-                onClose={() => setQualityGatesOpen(false)}
-                onJumpToCard={setActiveCardIndex}
-              />
+              {!artifactStudioPresentationEnabled ? (
+                <DeckQualityGatesPanel
+                  deckId={deckId || deck?.deck_id || ''}
+                  isOpen={qualityGatesOpen}
+                  onClose={() => setQualityGatesOpen(false)}
+                  onJumpToCard={setActiveCardIndex}
+                />
+              ) : null}
               <ShareAnalyticsPanel
                 deckId={deckId || deck?.deck_id || ''}
                 isOpen={analyticsOpen}
@@ -1834,7 +2022,7 @@ export const DeckBuilder: React.FC = () => {
                   onClose={() => setAuditLogOpen(false)}
                 />
               )}
-              {governanceModalOpen && (
+              {!artifactStudioPresentationEnabled && governanceModalOpen && (
                 <DeckGovernanceCardModal
                   deckId={deckId || deck?.deck_id || ''}
                   onClose={() => setGovernanceModalOpen(false)}
@@ -1907,8 +2095,11 @@ export const DeckBuilder: React.FC = () => {
               // bar renders 1:1 as before (no new DOM, no visual change).
               isArtifactApprovalUiEnabled() && (deckId || deck?.deck_id) ? (
                 <ArtifactApprovalStatusBar
-                  artifactType="deck"
-                  artifactId={(deckId || deck?.deck_id) as string}
+                  artifactType="presentation_version"
+                  artifactId={presentationVersionApprovalId({
+                    deck_id: deck.deck_id,
+                    version: serverVersion,
+                  })}
                   currentUserId={approvalUser?.id}
                   canReview
                 />

@@ -2350,6 +2350,17 @@ export const Api = {
     return handleResponse(res, 'Failed to execute Teresa proposal');
   },
 
+  undoTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/undo`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to undo Teresa proposal');
+  },
+
   chatWithAIStream: async (
     message: string,
     history: any[],

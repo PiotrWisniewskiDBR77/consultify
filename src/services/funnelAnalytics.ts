@@ -1,4 +1,5 @@
 export type FunnelEventName =
+  | 'artifact_studio_shell_selected'
   | 'auth_login_success'
   | 'reports_entry_redirected'
   | 'demo_session_started'

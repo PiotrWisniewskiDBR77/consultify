@@ -23,7 +23,9 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import ArtifactApprovalService from '../services/artifactApprovalService.js';
 import {
   createDeckComment,
   DeckCommentError,
@@ -204,6 +206,7 @@ import {
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
+import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
@@ -213,6 +216,113 @@ import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();
+
+function parseArtifactExportMode(req: Request, res: Response): 'draft' | 'final' | null | false {
+  const raw = typeof req.query.mode === 'string' ? req.query.mode.trim().toLowerCase() : null;
+  if (raw === null) return null;
+  if (raw === 'draft' || raw === 'final') return raw;
+  res.status(400).json({
+    success: false,
+    error: 'Unsupported export mode',
+    code: 'UNSUPPORTED_EXPORT_MODE',
+  });
+  return false;
+}
+
+function markPresentationExportResponse(
+  res: Response,
+  mode: 'draft' | 'final' | null,
+  deckId: string,
+  contentVersion: unknown
+): void {
+  res.setHeader('X-Artifact-Export-Mode', mode ?? 'legacy-final');
+  res.setHeader('X-Artifact-Version-Id', presentationVersionApprovalId(deckId, contentVersion));
+  if (mode === 'draft') res.setHeader('X-Artifact-Draft', 'true');
+}
+
+function presentationExportFilename(title: unknown, extension: 'pptx' | 'pdf', draft: boolean) {
+  const safeTitle = String(title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '');
+  return `${safeTitle}${draft ? '-DRAFT' : ''}.${extension}`;
+}
+
+function presentationExportOverride(req: Request) {
+  const requested = String(req.query.overrideQualityGate || '') === 'true';
+  const reason = typeof req.query.overrideReason === 'string' ? req.query.overrideReason : null;
+  return {
+    requested,
+    permitted: canOverrideQualityGate(req as any),
+    reason,
+  };
+}
+
+function presentationVersionApprovalId(deckId: string, contentVersion: unknown): string {
+  return `${deckId}@${String(contentVersion ?? 'unknown')}`;
+}
+
+async function logPresentationApprovalAudit(
+  req: Request,
+  deckId: string,
+  action: 'approval.submitted' | 'approval.approved' | 'approval.rejected',
+  versionId: string,
+  assignment: Record<string, unknown>
+): Promise<void> {
+  await auditEventsService.log({
+    actorId: getUserId(req),
+    actorType: 'USER',
+    organizationId: getOrgId(req),
+    action,
+    resourceType: 'presentation_deck',
+    resourceId: deckId,
+    metadata: {
+      versionId,
+      assignmentId: assignment.id ?? null,
+      approvalState: assignment.state ?? null,
+      assignedToUserId: assignment.assignedToUserId ?? null,
+    },
+    ip: req.ip,
+    userAgent: req.get('user-agent') || undefined,
+  });
+}
+
+async function enforceExplicitFinalPresentationPolicy(
+  req: Request,
+  res: Response,
+  deckId: string
+): Promise<boolean> {
+  const orgId = getOrgId(req);
+  const deck = (await dbGet(
+    `SELECT version, confidentiality FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [deckId, orgId]
+  )) as any;
+  if (!deck) {
+    res.status(404).json({ success: false, error: 'Deck not found' });
+    return false;
+  }
+  const versionApprovalId = presentationVersionApprovalId(deckId, deck.version);
+  const approval = await ArtifactApprovalService.getArtifactApprovalStatus(
+    orgId,
+    'presentation_version',
+    versionApprovalId
+  );
+  const decision = evaluateArtifactExportPolicy({
+    mode: 'final',
+    channel: 'download',
+    classification:
+      String(deck.confidentiality || '').toLowerCase() === 'public' ? 'public' : 'internal',
+    criticalQaFindings: 0,
+    approvalCurrentForVersion: approval.state === 'approved',
+    override: presentationExportOverride(req),
+  });
+  if (decision.allowed) return true;
+  res.status(409).json({
+    success: false,
+    error: 'Final presentation export is blocked by artifact governance.',
+    code: 'ARTIFACT_EXPORT_BLOCKED',
+    mode: 'final',
+    blocks: decision.blocks,
+  });
+  return false;
+}
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -2865,6 +2975,120 @@ router.get(
 );
 
 router.get(
+  '/decks/:id/approval-state',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const approval = await ArtifactApprovalService.getArtifactApprovalStatus(
+      orgId,
+      'presentation_version',
+      presentationVersionApprovalId(String(req.params.id), versionId)
+    );
+    res.json({
+      success: true,
+      data: { ...approval, versionId, currentForVersion: approval.state === 'approved' },
+    });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/submit',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const assignedToUserId = String(req.body?.assignedToUserId || '').trim();
+    if (!assignedToUserId) {
+      return res.status(400).json({ success: false, error: 'assignedToUserId is required' });
+    }
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.submitForReview({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      assignedToUserId,
+      submittedBy: userId,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.submitted',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res
+      .status(201)
+      .json({ success: true, data: { assignment, versionId, currentForVersion: false } });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/approve',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.approveArtifact({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      approvedByUserId: userId,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.approved',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res.json({ success: true, data: { assignment, versionId, currentForVersion: true } });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/reject',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.rejectArtifact({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      rejectedByUserId: userId,
+      reason: req.body?.reason ? String(req.body.reason) : undefined,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.rejected',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res.json({ success: true, data: { assignment, versionId, currentForVersion: false } });
+  })
+);
+
+router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
@@ -2875,6 +3099,9 @@ router.get(
     if (!authReq.user?.id && !authReq.userId)
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
+    const exportMode = parseArtifactExportMode(req, res);
+    if (exportMode === false) return;
+    const isDraftExport = exportMode === 'draft';
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
     const artifact = await artifactRegistryService.getArtifactByOrigin({
@@ -2890,6 +3117,13 @@ router.get(
 
     // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
     if (
+      exportMode === 'final' &&
+      !(await enforceExplicitFinalPresentationPolicy(req, res, String(req.params.id || '')))
+    ) {
+      return;
+    }
+    if (
+      exportMode === null &&
       !applyExportApprovalGate({
         res,
         organizationId: orgId,
@@ -2995,7 +3229,8 @@ router.get(
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
-    const filename = `${deck.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.pptx`;
+    const filename = presentationExportFilename(deck.title, 'pptx', isDraftExport);
+    markPresentationExportResponse(res, exportMode, String(freshDeck.id), freshDeck.version);
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
@@ -3057,6 +3292,9 @@ router.get(
     if (!authReq.user?.id && !authReq.userId)
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
+    const exportMode = parseArtifactExportMode(req, res);
+    if (exportMode === false) return;
+    const isDraftExport = exportMode === 'draft';
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
     const artifact = await artifactRegistryService.getArtifactByOrigin({
@@ -3072,6 +3310,13 @@ router.get(
 
     // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
     if (
+      exportMode === 'final' &&
+      !(await enforceExplicitFinalPresentationPolicy(req, res, String(deckId || '')))
+    ) {
+      return;
+    }
+    if (
+      exportMode === null &&
       !applyExportApprovalGate({
         res,
         organizationId: orgId,
@@ -3367,6 +3612,22 @@ router.post(
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
     if (!ensureConfidentialityPolicy(req, res, { action: 'share', deck: before })) return;
+    const publicLinkPolicy = evaluateArtifactExportPolicy({
+      mode: 'draft',
+      channel: 'public_link',
+      classification:
+        resolvePresentationDeckConfidentiality(before) === 'public' ? 'public' : 'internal',
+      criticalQaFindings: 0,
+      approvalCurrentForVersion: false,
+    });
+    if (!publicLinkPolicy.allowed) {
+      return res.status(409).json({
+        success: false,
+        error: 'Public presentation links require Public classification.',
+        code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+        blocks: publicLinkPolicy.blocks,
+      });
+    }
     const token = uuidv4().replace(/-/g, '');
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -4162,7 +4423,7 @@ router.put(
     // `changes` comes back 0, and it gets the same 409 VERSION_CONFLICT
     // shape as the pre-existing stale-read check above, so the FE doesn't
     // need to distinguish the two cases.
-    const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
+    const expectedVersion = clientVersion !== null ? clientVersion : normalizedVersion;
     const updateResult = (await dbRun(
       `UPDATE presentation_decks SET title = ?, deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
       [canonicalTitle, bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
@@ -6821,7 +7082,13 @@ router.get(
     const merged = [...(deckLevel.data || []), ...agentForDeck]
       .map((row: any) => ({
         id: row.id,
-        timestamp: row.timestamp,
+        // PostgreSQL drivers can hydrate timestamp columns as Date instances,
+        // while older audit providers return ISO strings. Normalize at the
+        // route boundary so ordering and the public response stay stable.
+        timestamp:
+          row.timestamp instanceof Date
+            ? row.timestamp.toISOString()
+            : String(row.timestamp ?? ''),
         actorId: row.actorId ?? null,
         actorType: row.actorType ?? 'SYSTEM',
         action: row.action,

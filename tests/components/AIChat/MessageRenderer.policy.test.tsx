@@ -324,6 +324,30 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     expect(clean).not.toContain('No sources: internal audit text');
   });
 
+  it('hides governed workbook mutation payloads while preserving the explanation', () => {
+    const clean = sanitizeUserVisibleAiText(
+      [
+        'Proponuję uzupełnić wartość w zaznaczonej komórce.',
+        '',
+        '```workbook-mutation',
+        '{"summary":"Update D4","operations":[{"type":"set_cell","sheetIndex":0,"rowIndex":3,"columnIndex":3,"value":42}]}',
+        '```',
+        '',
+        'Sprawdź propozycję przed wykonaniem.',
+      ].join('\n')
+    );
+
+    expect(clean).toBe(
+      'Proponuję uzupełnić wartość w zaznaczonej komórce.\n\nSprawdź propozycję przed wykonaniem.'
+    );
+    expect(clean).not.toContain('set_cell');
+  });
+
+  it('does not hide ordinary JSON examples', () => {
+    const content = 'Przykład:\n```json\n{"status":"draft"}\n```';
+    expect(sanitizeUserVisibleAiText(content)).toBe(content);
+  });
+
   it('sanitizes markdown and bullet variants of "No cited sources" debug lines', () => {
     const clean = sanitizeUserVisibleAiText(
       [
@@ -468,4 +492,3 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     expect(screen.getByText('Approval required before execution')).toBeInTheDocument();
   });
 });
-

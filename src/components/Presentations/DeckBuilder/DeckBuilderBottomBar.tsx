@@ -22,7 +22,7 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
   const { t } = useTranslation();
 
   return (
-    <div className="h-10 border-t border-c-border bg-c-surface flex items-center px-4 gap-4 flex-shrink-0">
+    <div className="h-full w-full bg-c-surface flex items-center gap-4 flex-shrink-0">
       <span className="text-xs text-c-text-muted">
         {t('presentations.builder.bottomBar.card', 'Card')} {currentIndex + 1}{' '}
         {t('presentations.builder.bottomBar.of', 'of')} {totalCards}
@@ -31,17 +31,19 @@ export const DeckBuilderBottomBar: React.FC<DeckBuilderBottomBarProps> = ({
       <span className="text-xs font-medium text-c-text-secondary truncate flex-1">{cardTitle}</span>
 
       <button
+        type="button"
         onClick={onQuickEdits}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
+        className="flex min-h-8 items-center gap-1.5 px-2.5 rounded-lg text-xs text-c-text-muted hover:bg-c-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
       >
         <Sparkles size={12} />
         {t('presentations.builder.bottomBar.quickEdits', 'Ask Teresa')}
       </button>
 
       <button
+        type="button"
         onClick={onToggleNotes}
         aria-pressed={notesOpen}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+        className={`flex min-h-8 items-center gap-1.5 px-2.5 rounded-lg text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
           // VF1-7: was crimson `bg-c-accent-soft` — active/toggle state is neutral
           // chrome (canonical c-focus tint, matches RightRail.tsx's active tool style).
           notesOpen

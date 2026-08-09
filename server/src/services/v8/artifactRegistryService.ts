@@ -311,6 +311,9 @@ interface ArtifactListRow extends ArtifactRow {
   report_status: string | null;
   report_type: string | null;
   report_source_refs_json: string | null;
+  report_pdf_path: string | null;
+  report_pptx_path: string | null;
+  latest_completed_export_format: string | null;
   presentation_title: string | null;
   presentation_status: string | null;
   presentation_mode: string | null;
@@ -2725,6 +2728,51 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
   };
 }
 
+const rowToListItem = mapArtifactRegistryListRow;
+
+export function resolvePersistedArtifactFormat(
+  row: Pick<
+    ArtifactListRow,
+    | 'origin_runtime'
+    | 'report_pdf_path'
+    | 'report_pptx_path'
+    | 'presentation_export_format'
+    | 'latest_completed_export_format'
+    | 'origin_summary_json'
+  >
+): 'docx' | 'pdf' | 'pptx' | 'xlsx' | null {
+  const completedExport = String(row.latest_completed_export_format || '').toLowerCase();
+  if (
+    completedExport === 'docx' ||
+    completedExport === 'pdf' ||
+    completedExport === 'pptx' ||
+    completedExport === 'xlsx'
+  ) {
+    return completedExport;
+  }
+  const originSummary = safeJsonParse<Record<string, unknown> | null>(
+    row.origin_summary_json,
+    null
+  );
+  const persistedOriginFormat = String(originSummary?.exportFormat || '').toLowerCase();
+  if (
+    persistedOriginFormat === 'docx' ||
+    persistedOriginFormat === 'pdf' ||
+    persistedOriginFormat === 'pptx' ||
+    persistedOriginFormat === 'xlsx'
+  ) {
+    return persistedOriginFormat;
+  }
+  if (row.origin_runtime === 'presentation') {
+    return String(row.presentation_export_format || '').toLowerCase() === 'pptx' ? 'pptx' : null;
+  }
+  if (row.origin_runtime === 'report') {
+    if (row.report_pdf_path) return 'pdf';
+    if (row.report_pptx_path) return 'pptx';
+  }
+  return null;
+}
+
 function matchesSearch(item: ArtifactListItem, search?: string): boolean {
   if (!search) return true;
   const q = search.trim().toLowerCase();
@@ -2858,6 +2906,15 @@ async function getArtifactListItemRow(
             r.status AS report_status,
             r.report_type AS report_type,
             r.source_refs_json AS report_source_refs_json,
+            r.pdf_path AS report_pdf_path,
+            r.pptx_path AS report_pptx_path,
+            (SELECT e.format FROM v8_output_exports e
+              WHERE e.artifact_id = a.artifact_id
+                AND e.organization_id = a.organization_id
+                AND e.status = 'completed'
+                AND LOWER(e.format) IN ('docx', 'pdf', 'pptx', 'xlsx')
+              ORDER BY COALESCE(e.completed_at, e.created_at) DESC, e.export_id DESC
+              LIMIT 1) AS latest_completed_export_format,
             d.title AS presentation_title,
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
@@ -2971,6 +3028,15 @@ export async function listArtifactsForUser(params: {
             r.status AS report_status,
             r.report_type AS report_type,
             r.source_refs_json AS report_source_refs_json,
+            r.pdf_path AS report_pdf_path,
+            r.pptx_path AS report_pptx_path,
+            (SELECT e.format FROM v8_output_exports e
+              WHERE e.artifact_id = a.artifact_id
+                AND e.organization_id = a.organization_id
+                AND e.status = 'completed'
+                AND LOWER(e.format) IN ('docx', 'pdf', 'pptx', 'xlsx')
+              ORDER BY COALESCE(e.completed_at, e.created_at) DESC, e.export_id DESC
+              LIMIT 1) AS latest_completed_export_format,
             d.title AS presentation_title,
             d.status AS presentation_status,
             d.presentation_mode AS presentation_mode,
@@ -3068,6 +3134,15 @@ export async function listArtifactsForUserByExecutionRunId(params: {
             COALESCE(r.title, a.title_snapshot) AS report_title,
             r.status AS report_status,
             COALESCE(r.source_refs_json, '[]') AS report_source_refs_json,
+            r.pdf_path AS report_pdf_path,
+            r.pptx_path AS report_pptx_path,
+            (SELECT e.format FROM v8_output_exports e
+              WHERE e.artifact_id = a.artifact_id
+                AND e.organization_id = a.organization_id
+                AND e.status = 'completed'
+                AND LOWER(e.format) IN ('docx', 'pdf', 'pptx', 'xlsx')
+              ORDER BY COALESCE(e.completed_at, e.created_at) DESC, e.export_id DESC
+              LIMIT 1) AS latest_completed_export_format,
             d.presentation_mode,
             COALESCE(d.title, a.title_snapshot) AS presentation_title,
             d.status AS presentation_status,

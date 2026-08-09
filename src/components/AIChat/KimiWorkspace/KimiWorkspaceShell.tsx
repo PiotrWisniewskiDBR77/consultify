@@ -91,6 +91,27 @@ export interface ArtifactPreview {
   // read-only table below keeps using `perSheetData` unchanged when the flag
   // is off or this is absent — zero regression.
   rawSheets?: import('@/utils/workbookFormulaEngine').FormulaSheet[];
+  /** Optimistic concurrency token for generated_workbooks mutations. */
+  workbookVersion?: number;
+  workbookClassification?: 'public' | 'internal' | 'confidential';
+  workbookLifecycle?: 'draft' | 'in_review' | 'approved' | 'final';
+  workbookApprovalCurrent?: boolean;
+  sourcePack?: unknown;
+  evidenceRefs?: unknown[];
+  qualityReport?: {
+    score?: number;
+    passed?: boolean;
+    issues?: Array<{
+      code?: string;
+      severity?: 'CRITICAL' | 'MAJOR' | 'MINOR' | string;
+      blocking?: boolean;
+      sheet?: string;
+      cell?: string | null;
+      col?: string | null;
+      message: string;
+      fix?: string;
+    }>;
+  } | null;
   deckId?: string;
   deckStatus?: 'draft' | 'reviewed' | 'exported' | string;
   deckSlides?: Array<{
