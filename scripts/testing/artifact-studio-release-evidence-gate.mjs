@@ -19,6 +19,16 @@ const fail = (message) => errors.push(message);
 const isSha = (value) => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
 const nonEmpty = (value) => typeof value === 'string' && value.trim().length > 0;
 const array = (value) => (Array.isArray(value) ? value : []);
+const formats = ['DOC', 'PPT', 'XLSX'];
+const hasAllFormats = (runs) => {
+  const present = new Set(runs.map((run) => run.format));
+  return formats.every((format) => present.has(format));
+};
+const validIsoInterval = (startedAt, endedAt) => {
+  const start = Date.parse(startedAt);
+  const end = Date.parse(endedAt);
+  return Number.isFinite(start) && Number.isFinite(end) && end > start;
+};
 
 if (!fs.existsSync(manifestPath)) {
   process.stderr.write(`Artifact Studio release evidence error: missing ${manifestPath}\n`);
@@ -62,8 +72,24 @@ if (transfer?.status === 'verified') {
   if (participants.length < 3) fail('crossFormatTransfer requires at least 3 participants');
   if (tasks.length < 27) fail('crossFormatTransfer requires task-level results across 3 formats');
   if (!tasks.every((task) => nonEmpty(task.participantId) && nonEmpty(task.format) &&
-      typeof task.unaided === 'boolean' && Number.isFinite(task.durationSeconds))) {
-    fail('crossFormatTransfer task results require participantId, format, unaided and durationSeconds');
+      formats.includes(task.format) && [1, 2, 3].includes(Number(task.formatOrder)) &&
+      typeof task.taskId === 'string' && task.taskId.length > 0 &&
+      typeof task.unaided === 'boolean' && Number.isFinite(task.durationSeconds) &&
+      task.durationSeconds >= 0 && Number.isFinite(task.wrongClicks) && task.wrongClicks >= 0)) {
+    fail('crossFormatTransfer task results require taskId, participantId, valid format/order, unaided, durationSeconds and wrongClicks');
+  }
+  const participantIds = new Set(participants.map((participant) => participant.id));
+  if (participantIds.size !== participants.length || participantIds.has(undefined)) {
+    fail('crossFormatTransfer participants require unique ids');
+  }
+  if (!tasks.every((task) => participantIds.has(task.participantId))) {
+    fail('crossFormatTransfer task results must reference declared participants');
+  }
+  for (const participantId of participantIds) {
+    const participantTasks = tasks.filter((task) => task.participantId === participantId);
+    if (!hasAllFormats(participantTasks)) {
+      fail(`crossFormatTransfer participant ${participantId} requires DOC, PPT and XLSX results`);
+    }
   }
   const later = tasks.filter((task) => Number(task.formatOrder) > 1);
   const unaidedRate = later.length ? later.filter((task) => task.unaided).length / later.length : 0;
@@ -80,8 +106,7 @@ if (transfer?.status === 'verified') {
 const screenReader = manifest.checks?.screenReader;
 if (screenReader?.status === 'verified') {
   const runs = array(screenReader.runs);
-  const formats = new Set(runs.map((run) => run.format));
-  if (!['DOC', 'PPT', 'XLSX'].every((format) => formats.has(format))) {
+  if (!hasAllFormats(runs)) {
     fail('screenReader requires manual runs for DOC, PPT and XLSX');
   }
   if (!runs.every((run) => nonEmpty(run.tester) && nonEmpty(run.reader) &&
@@ -97,8 +122,7 @@ if (screenReader?.status === 'verified') {
 const provider = manifest.checks?.teresaRealProvider;
 if (provider?.status === 'verified') {
   const runs = array(provider.runs);
-  const formats = new Set(runs.map((run) => run.format));
-  if (!['DOC', 'PPT', 'XLSX'].every((format) => formats.has(format))) {
+  if (!hasAllFormats(runs)) {
     fail('teresaRealProvider requires DOC, PPT and XLSX runs');
   }
   if (!runs.every((run) => nonEmpty(run.provider) && nonEmpty(run.model) &&
@@ -115,11 +139,16 @@ if (windows?.status === 'verified') {
   const entries = array(windows.windows);
   if (entries.length < 2) fail('stableWindows requires at least two windows');
   if (!entries.every((entry) => isSha(entry.sha) && nonEmpty(entry.environment) &&
-      nonEmpty(entry.startedAt) && nonEmpty(entry.endedAt) && entry.rollbackUsed === false &&
+      validIsoInterval(entry.startedAt, entry.endedAt) && entry.rollbackUsed === false &&
       Number.isFinite(entry.openSuccessRate) && Number.isFinite(entry.saveErrorRate) &&
       Number.isFinite(entry.exportSuccessRate) && Number.isFinite(entry.clientExceptionRate) &&
+      entry.openSuccessRate >= 0.99 && entry.saveErrorRate <= 0.01 &&
+      entry.exportSuccessRate >= 0.98 && entry.clientExceptionRate <= 0.005 &&
       entry.legacyRouteRequests === 0 && nonEmpty(entry.telemetryReport))) {
     fail('stableWindows entries require candidate SHA, interval, metrics, zero legacy use and no rollback');
+  }
+  if (new Set(entries.map((entry) => entry.sha)).size !== 1) {
+    fail('stableWindows must use one candidate SHA');
   }
   if (array(windows.rawEvidence).length === 0) fail('stableWindows rawEvidence is required');
 }
