@@ -24,11 +24,14 @@ import {
   buildArtifactPermalink,
   buildMyWorkSheetTableOpenPath,
 } from '@/utils/artifactLinks';
+import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
+import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isExceleRightRailEnabled } from '@/utils/exceleRightRailFlag';
 import {
   downloadSheetArtifactXlsx,
   resolveTablePlatformWorkspaceIdForTable,
 } from '@/utils/sheetArtifactOpen';
+import { resolveSpreadsheetArtifactIdentity } from '@/utils/spreadsheetArtifactIdentity';
 import { isTriModeEnabled } from '@/utils/triModeFlag';
 import { buildWorkbookGridSheets } from '@/utils/workbookGridPreview';
 
@@ -37,8 +40,8 @@ import { ExceleRightPanel } from './ExceleRightPanel';
 import { ExceleRightRail } from './ExceleRightRail';
 import type { ArtifactPreview } from './KimiWorkspaceShell';
 import { type KimiHeaderKebabItem, KimiWorkspaceShell } from './KimiWorkspaceShell';
+import { SpreadsheetArtifactStudio } from './SpreadsheetArtifactStudio';
 import { useKimiArtifactPipeline } from './useKimiArtifactPipeline';
-import { WorkbookVersionHistoryModal } from './WorkbookVersionHistoryModal';
 
 const EXCELE_SYSTEM_PROMPT = `You are a professional spreadsheet architect in Consultify.
 Your role is to help users create intelligent, multi-sheet Excel workbooks for ANY domain:
@@ -306,12 +309,7 @@ export const ExceleView: React.FC = () => {
   const handlePreviewFile = useCallback(() => {
     const workbookId = (pipeline.preview as any)?.workbookId || reopenWorkbookId;
     if (workbookId) {
-      const link = document.createElement('a');
-      link.href = `/api/workbook/${encodeURIComponent(workbookId)}/download`;
-      link.download = '';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      window.open(`/api/workbook/${workbookId}/download`, '_blank');
       return;
     }
     if (pipeline.currentRun?.materializationOrigin?.originRecordId) {
@@ -356,104 +354,6 @@ export const ExceleView: React.FC = () => {
       toast.success(t('sharedComponents.artifactPermalinkButton.copied', 'Link copied'));
     } catch {
       toast.error(t('sharedComponents.artifactPermalinkButton.copyFailed', 'Could not copy'));
-    }
-  }, [effectiveWorkbookId, t]);
-
-  // MAT-006 (2026-08-02) — workbook lifecycle: version history / checkpoint /
-  // share / revoke / CSV export. Functional wiring only (no redesign) — see
-  // WorkbookVersionHistoryModal.tsx + server/src/routes/workbook.routes.ts.
-  const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [isWorkbookShared, setIsWorkbookShared] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!effectiveWorkbookId) {
-      setIsWorkbookShared(false);
-      return;
-    }
-    void (async () => {
-      try {
-        const res = await Api.get(`/workbook/${encodeURIComponent(effectiveWorkbookId)}`);
-        const data = (res as { data?: { isShared?: boolean } } | null)?.data ?? res;
-        if (!cancelled) setIsWorkbookShared(Boolean((data as any)?.isShared));
-      } catch {
-        // non-fatal — share button just defaults to "not shared"
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [effectiveWorkbookId]);
-
-  const handleOpenVersionHistory = useCallback(() => {
-    if (!effectiveWorkbookId) return;
-    setShowVersionHistory(true);
-  }, [effectiveWorkbookId]);
-
-  const handleCheckpoint = useCallback(async () => {
-    if (!effectiveWorkbookId) return;
-    try {
-      await Api.checkpointWorkbook(effectiveWorkbookId);
-      toast.success(t('excele.checkpoint.success', 'Punkt kontrolny utworzony'));
-    } catch (err: any) {
-      if (Number(err?.status) === 409) {
-        toast.error(
-          t('excele.checkpoint.conflict', 'Konflikt wersji — odśwież stronę i spróbuj ponownie.')
-        );
-      } else {
-        toast.error(t('excele.checkpoint.failed', 'Nie udało się utworzyć punktu kontrolnego'));
-      }
-    }
-  }, [effectiveWorkbookId, t]);
-
-  const handleShare = useCallback(async () => {
-    if (!effectiveWorkbookId) return;
-    try {
-      const res = await Api.shareWorkbook(effectiveWorkbookId);
-      const fullUrl = `${window.location.origin}${res.shareUrl}`;
-      try {
-        await navigator.clipboard.writeText(fullUrl);
-        toast.success(t('excele.share.copied', 'Link publiczny skopiowany'));
-      } catch {
-        toast.success(fullUrl);
-      }
-      setIsWorkbookShared(true);
-    } catch {
-      toast.error(t('excele.share.failed', 'Nie udało się udostępnić skoroszytu'));
-    }
-  }, [effectiveWorkbookId, t]);
-
-  const handleRevokeShare = useCallback(async () => {
-    if (!effectiveWorkbookId) return;
-    try {
-      await Api.revokeWorkbookShare(effectiveWorkbookId);
-      toast.success(t('excele.share.revoked', 'Udostępnienie cofnięte'));
-      setIsWorkbookShared(false);
-    } catch {
-      toast.error(t('excele.share.revokeFailed', 'Nie udało się cofnąć udostępnienia'));
-    }
-  }, [effectiveWorkbookId, t]);
-
-  const handleExportCsv = useCallback(async () => {
-    if (!effectiveWorkbookId) return;
-    try {
-      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(
-        `/api/workbook/${encodeURIComponent(effectiveWorkbookId)}/export/csv?sheetIndex=0`,
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
-      );
-      if (!res.ok) throw new Error('CSV export failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `workbook-${effectiveWorkbookId}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error(t('excele.exportCsv.failed', 'Nie udało się wyeksportować CSV'));
     }
   }, [effectiveWorkbookId, t]);
 
@@ -611,75 +511,55 @@ export const ExceleView: React.FC = () => {
   }
 
   return (
-    <>
-      <KimiWorkspaceShell
-        lane="excele"
-        taskSteps={pipeline.taskSteps}
-        totalSteps={pipeline.totalSteps}
-        completedSteps={pipeline.completedSteps}
-        isGenerating={pipeline.isGenerating}
-        isCompleted={effectiveCompleted}
-        isFailed={pipeline.isFailed || !!reopenError}
-        failureReason={pipeline.failureReason || reopenError || undefined}
-        preview={effectivePreview}
-        onReplay={pipeline.handleReplay}
-        onRemix={pipeline.handleRemix}
-        onDownload={handlePreviewFile}
-        onPreviewFile={handlePreviewFile}
-        onAllFiles={handleAllFiles}
-        onStartGeneration={pipeline.startGeneration}
-        chatSystemPrompt={EXCELE_SYSTEM_PROMPT}
-        kebabItems={kebabItems}
-        rightPanel={
-          // Zgłoszenie Piotra 2026-07-28 ("ma wyglądać jak Word") — za flagą
-          // `ff_excele_right_rail` (domyślnie OFF, src/utils/exceleRightRailFlag.ts)
-          // prawy panel to szyna ikon (ta sama co Word/Deck), nie accordion.
-          isExceleRightRailEnabled() ? (
-            <ExceleRightRail
-              preview={effectivePreview}
-              workbookId={effectiveWorkbookId}
-              taskSteps={pipeline.taskSteps}
-              isGenerating={pipeline.isGenerating}
-              isFailed={pipeline.isFailed}
-              failureReason={pipeline.failureReason}
-              onDownload={handlePreviewFile}
-              onPreviewFile={handlePreviewFile}
-              onAllFiles={handleAllFiles}
-              onOpenVersionHistory={handleOpenVersionHistory}
-              onCheckpoint={() => void handleCheckpoint()}
-              onShare={() => void handleShare()}
-              onRevokeShare={() => void handleRevokeShare()}
-              isShared={isWorkbookShared}
-              onExportCsv={() => void handleExportCsv()}
-            />
-          ) : (
-            <ExceleRightPanel
-              preview={effectivePreview}
-              workbookId={effectiveWorkbookId}
-              taskSteps={pipeline.taskSteps}
-              isGenerating={pipeline.isGenerating}
-              isFailed={pipeline.isFailed}
-              failureReason={pipeline.failureReason}
-              onDownload={handlePreviewFile}
-              onPreviewFile={handlePreviewFile}
-              onAllFiles={handleAllFiles}
-              onOpenVersionHistory={handleOpenVersionHistory}
-              onCheckpoint={() => void handleCheckpoint()}
-              onShare={() => void handleShare()}
-              onRevokeShare={() => void handleRevokeShare()}
-              isShared={isWorkbookShared}
-              onExportCsv={() => void handleExportCsv()}
-            />
-          )
-        }
-      />
-      {showVersionHistory && effectiveWorkbookId && (
-        <WorkbookVersionHistoryModal
-          workbookId={effectiveWorkbookId}
-          onClose={() => setShowVersionHistory(false)}
-        />
-      )}
-    </>
+    <KimiWorkspaceShell
+      lane="excele"
+      taskSteps={pipeline.taskSteps}
+      totalSteps={pipeline.totalSteps}
+      completedSteps={pipeline.completedSteps}
+      isGenerating={pipeline.isGenerating}
+      isCompleted={effectiveCompleted}
+      isFailed={pipeline.isFailed || !!reopenError}
+      failureReason={pipeline.failureReason || reopenError || undefined}
+      preview={effectivePreview}
+      onReplay={pipeline.handleReplay}
+      onRemix={pipeline.handleRemix}
+      onDownload={pipeline.handleDownload}
+      onPreviewFile={handlePreviewFile}
+      onAllFiles={handleAllFiles}
+      onStartGeneration={pipeline.startGeneration}
+      chatSystemPrompt={EXCELE_SYSTEM_PROMPT}
+      kebabItems={kebabItems}
+      rightPanel={
+        // Zgłoszenie Piotra 2026-07-28 ("ma wyglądać jak Word") — za flagą
+        // `ff_excele_right_rail` (domyślnie OFF, src/utils/exceleRightRailFlag.ts)
+        // prawy panel to szyna ikon (ta sama co Word/Deck), nie accordion.
+        isExceleRightRailEnabled() ? (
+          <ExceleRightRail
+            preview={effectivePreview}
+            workbookId={effectiveWorkbookId}
+            taskSteps={pipeline.taskSteps}
+            isGenerating={pipeline.isGenerating}
+            isFailed={pipeline.isFailed}
+            failureReason={pipeline.failureReason}
+            onDownload={pipeline.handleDownload}
+            onPreviewFile={handlePreviewFile}
+            onAllFiles={handleAllFiles}
+          />
+        ) : (
+          <ExceleRightPanel
+            preview={effectivePreview}
+            workbookId={effectiveWorkbookId}
+            taskSteps={pipeline.taskSteps}
+            isGenerating={pipeline.isGenerating}
+            isFailed={pipeline.isFailed}
+            failureReason={pipeline.failureReason}
+            onDownload={pipeline.handleDownload}
+            onPreviewFile={handlePreviewFile}
+            onAllFiles={handleAllFiles}
+          />
+        )
+      }
+    />
   );
 };
 

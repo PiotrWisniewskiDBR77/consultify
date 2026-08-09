@@ -44,6 +44,8 @@ export interface OpenChatOptions {
     /** Ideas / Mind Map entity-context (M06 Fala 2 §2.1) */
     ideaId?: string;
   };
+  /** Keep the active Teresa conversation while replacing its screen context. */
+  reuseActiveConversation?: boolean;
 }
 
 /** window CustomEvent name for the mindmap AI-sidekick bridge — see aiSidekickContext.ts */
@@ -124,7 +126,7 @@ export function useOpenChatWithContext() {
         }
       }
 
-      if (alreadyHasContext && activeConversationId) {
+      if ((alreadyHasContext || options.reuseActiveConversation) && activeConversationId) {
         // Already in context — just update workspace context
         setWorkspaceContext({
           type: entityType as any,

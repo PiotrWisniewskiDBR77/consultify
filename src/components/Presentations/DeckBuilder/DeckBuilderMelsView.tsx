@@ -24,9 +24,8 @@
  *                         palette, share modal, bottom bar (supplied verbatim).
  */
 
-import './deckBuilderResponsive.css';
-
-import React, { useMemo } from 'react';
+import { ChevronDown, Play } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { ExecutiveModuleShell } from '@/components/shared/ExecutiveModuleShell';
 
@@ -399,14 +398,13 @@ export const DeckBuilderMelsView: React.FC<DeckBuilderMelsViewProps> = ({
       onOpenCommandPalette={onOpenCommandPalette}
       onOpenShortcutHelp={onOpenShortcutHelp}
       persistRailState={persistRailState}
-      className="deck-builder-responsive-shell"
       testId="deck-builder-mels-view"
     />
   );
 
   return (
     <div
-      className="h-full flex flex-col bg-c-surface overflow-hidden"
+      className="h-screen flex flex-col bg-c-surface overflow-hidden"
       data-testid="deck-builder-mels-root"
     >
       {bannerSlot}
