@@ -77,6 +77,8 @@ test('rejects transfer results that do not cover all formats per participant', (
       unaided: true,
       durationSeconds: 5,
       wrongClicks: 0,
+      stateSeparationTask: true,
+      stateSeparationCorrect: true,
     }))),
     medianDiscoveryImprovementPercent: 30,
     stateSeparationAccuracyPercent: 100,
@@ -85,6 +87,34 @@ test('rejects transfer results that do not cover all formats per participant', (
   const result = run(manifest);
   assert.equal(result.status, 2);
   assert.match(result.stderr, /requires DOC, PPT and XLSX results/);
+});
+
+test('rejects transfer metrics that are not derived from raw task results', () => {
+  const manifest = JSON.parse(fs.readFileSync(source, 'utf8'));
+  const participants = [{ id: 'P1' }, { id: 'P2' }, { id: 'P3' }];
+  manifest.checks.crossFormatTransfer = {
+    status: 'verified',
+    participants,
+    taskResults: participants.flatMap(({ id }) => ['DOC', 'PPT', 'XLSX'].flatMap(
+      (format, formatIndex) => Array.from({ length: 3 }, (_, taskIndex) => ({
+        taskId: `T${taskIndex + 1}`,
+        participantId: id,
+        format,
+        formatOrder: formatIndex + 1,
+        unaided: true,
+        durationSeconds: formatIndex === 0 ? 100 : 50,
+        wrongClicks: 0,
+        stateSeparationTask: true,
+        stateSeparationCorrect: true,
+      })),
+    )),
+    medianDiscoveryImprovementPercent: 99,
+    stateSeparationAccuracyPercent: 100,
+    rawEvidence: ['transfer.json'],
+  };
+  const result = run(manifest);
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /declared median improvement does not match/);
 });
 
 test('the gate can be invoked directly by node', () => {

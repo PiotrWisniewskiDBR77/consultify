@@ -29,6 +29,13 @@ const validIsoInterval = (startedAt, endedAt) => {
   const end = Date.parse(endedAt);
   return Number.isFinite(start) && Number.isFinite(end) && end > start;
 };
+const median = (values) => {
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+};
 
 if (!fs.existsSync(manifestPath)) {
   process.stderr.write(`Artifact Studio release evidence error: missing ${manifestPath}\n`);
@@ -75,8 +82,10 @@ if (transfer?.status === 'verified') {
       formats.includes(task.format) && [1, 2, 3].includes(Number(task.formatOrder)) &&
       typeof task.taskId === 'string' && task.taskId.length > 0 &&
       typeof task.unaided === 'boolean' && Number.isFinite(task.durationSeconds) &&
-      task.durationSeconds >= 0 && Number.isFinite(task.wrongClicks) && task.wrongClicks >= 0)) {
-    fail('crossFormatTransfer task results require taskId, participantId, valid format/order, unaided, durationSeconds and wrongClicks');
+      task.durationSeconds >= 0 && Number.isFinite(task.wrongClicks) && task.wrongClicks >= 0 &&
+      typeof task.stateSeparationTask === 'boolean' &&
+      (!task.stateSeparationTask || typeof task.stateSeparationCorrect === 'boolean'))) {
+    fail('crossFormatTransfer task results require taskId, participantId, valid format/order, unaided, durationSeconds, wrongClicks and state-separation fields');
   }
   const participantIds = new Set(participants.map((participant) => participant.id));
   if (participantIds.size !== participants.length || participantIds.has(undefined)) {
@@ -92,13 +101,27 @@ if (transfer?.status === 'verified') {
     }
   }
   const later = tasks.filter((task) => Number(task.formatOrder) > 1);
+  const first = tasks.filter((task) => Number(task.formatOrder) === 1);
   const unaidedRate = later.length ? later.filter((task) => task.unaided).length / later.length : 0;
   if (unaidedRate < 0.85) fail('crossFormatTransfer unaided completion is below 85 percent');
-  if (Number(transfer.medianDiscoveryImprovementPercent) < 25) {
+  const firstMedian = first.length ? median(first.map((task) => task.durationSeconds)) : NaN;
+  const laterMedian = later.length ? median(later.map((task) => task.durationSeconds)) : NaN;
+  const computedImprovement = firstMedian > 0 ? ((firstMedian - laterMedian) / firstMedian) * 100 : NaN;
+  if (!Number.isFinite(computedImprovement) || computedImprovement < 25) {
     fail('crossFormatTransfer median discovery improvement is below 25 percent');
   }
-  if (Number(transfer.stateSeparationAccuracyPercent) < 90) {
+  if (Math.abs(Number(transfer.medianDiscoveryImprovementPercent) - computedImprovement) > 0.01) {
+    fail('crossFormatTransfer declared median improvement does not match task results');
+  }
+  const separationTasks = tasks.filter((task) => task.stateSeparationTask);
+  const computedSeparationAccuracy = separationTasks.length
+    ? (separationTasks.filter((task) => task.stateSeparationCorrect).length / separationTasks.length) * 100
+    : NaN;
+  if (separationTasks.length < 9 || computedSeparationAccuracy < 90) {
     fail('crossFormatTransfer state separation accuracy is below 90 percent');
+  }
+  if (Math.abs(Number(transfer.stateSeparationAccuracyPercent) - computedSeparationAccuracy) > 0.01) {
+    fail('crossFormatTransfer declared state separation accuracy does not match task results');
   }
   if (array(transfer.rawEvidence).length === 0) fail('crossFormatTransfer rawEvidence is required');
 }
