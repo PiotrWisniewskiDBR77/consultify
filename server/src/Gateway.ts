@@ -273,6 +273,11 @@ import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
 // `/api/vnext/results/kpi` prefix, which would otherwise shadow this
 // router's `GET /` for the literal path segment "deviation-cases").
 import resultsVnextKpiDeviationRoutes from './routes/resultsVnext/kpiDeviation.routes.js';
+// KPI-E004 Scorecards — same MORE-SPECIFIC-prefix-registered-first rule as
+// resultsVnextKpiDeviationRoutes above (see kpiScorecard.routes.ts's own
+// "MOUNT-ORDER NOTE": resultsVnextKpiRoutes' `GET /:kpiId` would otherwise
+// shadow this router's `GET /` for the literal path segment "scorecards").
+import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1106,6 +1111,10 @@ export class ApiGateway {
       // specificity; the definition/measurement router's `GET /:kpiId`
       // would otherwise shadow this router's `GET /`).
       app.use('/api/vnext/results/kpi/deviation-cases', resultsVnextKpiDeviationRoutes);
+      // KPI-E004 scorecards router — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/kpi` mount below, registered before it
+      // for the same reason (see kpiScorecard.routes.ts's "MOUNT-ORDER NOTE").
+      app.use('/api/vnext/results/kpi/scorecards', resultsVnextKpiScorecardRoutes);
       app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);

@@ -1467,3 +1467,110 @@ widoczność poza tym co już istnieje w §23's
 konkretnych funkcjach, złapie ją najpierw 42883 na produkcji/demo, nie
 test.
 
+## 25. KPI-E005 Perspectives & Links — design zamrożony (2026-08-09)
+
+Draft agenta `a8d29666f58d13304` — jednoczęściowa, kompletna odpowiedź (lekcja
+z §16/§22 o ucinanych odpowiedziach zastosowana skutecznie). 5 decyzji
+podjętych, w tym: T3 non-leak wygrywa z kompletnością metryki "missing
+ownership" (świadome, udokumentowane ograniczenie, nie bug); 3 nowe verby
+uprawnień dla InitiativeKPIImpact zatwierdzone przeze mnie jako Integration
+Ownera (dodatkowa governance dla funkcji już przewidzianej w oryginalnym
+YAML planu, nie konkurencyjny model — nie wymaga eskalacji Founder-level);
+`measurement_frequency_days` jako addytywna kolumna na już wysłanej,
+zatwierdzonej tabeli — ratyfikowane jako standardowy wzorzec na przyszłość
+(ROI/OKR będą tego potrzebować analogicznie).
+
+Pełny, samowystarczalny projekt w `docs/product/results-vnext/KPI_E005_DESIGN.md`.
+`getManagementChain()` faktycznie nie istnieje (potwierdzone w kodzie) —
+projekt dopisuje jedną cienką funkcję odczytu do już istniejącego
+`managementChainMaintenance.ts`, nie buduje nowego serwisu. **Wymóg wynikający
+z §24**: każda nowa funkcja repository w tym pakiecie musi mieć bezpośredni
+test na realnym Postgresie, nie tylko zmockowaną trasę.
+
+## 25. KPI-E004 Scorecards — warstwa API `/scorecards/*` (2026-08-09)
+
+Zaimplementowano `server/src/routes/resultsVnext/kpiScorecard.routes.ts` —
+ostatni brakujący pakiet z `KPI_E004_DESIGN.md` §D ("Not in this package:
+... HTTP layer, next package"). Ten sam wzorzec stylu co `kpi.routes.ts`/
+`kpiDeviation.routes.ts` (inline handlery + wspólny `handle*Error` mapper +
+lokalny `requireAuth`, bez osobnej klasy Controller).
+
+**Endpointy** (wszystkie zamontowane pod `/api/vnext/results/kpi/scorecards`):
+`POST /` (createScorecard) · `GET /` (listScorecards) · `GET /:scorecardId`
+(getScorecard) · `GET /:scorecardId/items` (listScorecardItems) ·
+`POST /:scorecardId/items` (addScorecardItem) ·
+`DELETE /:scorecardId/items/:itemId` (removeScorecardItem) ·
+`PATCH /:scorecardId/items/reorder` (reorderScorecardItems, decyzja #4: zmiana
+`role` wtopiona tu, bez osobnego endpointu) · `GET /:scorecardId/status`
+(getScorecardStatusDistribution) · `POST /:scorecardId/activate|suspend|archive`
+· `POST /:scorecardId/review-snapshots` (createReviewSnapshot) ·
+`GET /:scorecardId/review-snapshots` (listReviewSnapshots) ·
+`GET /:scorecardId/review-snapshots/published` (getPublishedSnapshot — decyzja
+#6b, woła repository function wprost, nie duplikuje logiki redakcji) ·
+`POST /:scorecardId/review-snapshots/:snapshotId/publish` (publishReviewSnapshot).
+
+**getScorecard — repository nie eksportuje pojedynczego fetcha**: zweryfikowane
+czytaniem `kpiScorecardRepository.ts` (tylko `listScorecards`/
+`listScorecardItems`/`getScorecardStatusDistribution`/`getPublishedSnapshot`/
+`listReviewSnapshots`, `ListScorecardsParams` bez filtra `scorecardId`).
+Zamiast poszerzać kontrakt repozytorium dla wygody jednego pliku tras, dodano
+lokalny `loadVisibleScorecard` w `kpiScorecard.routes.ts` — ten sam kształt
+visibility-scoped-read co `listScorecards` (`wrapWithVisibilityScope`,
+`resourceType:'kpi_scorecard'`, cast `::text` po stronie UUID, ten sam bug
+TEXT/UUID co reszta pliku), zawężony do jednego `scorecard_id`. Wzorem
+`kpi.routes.ts`'s `loadDefinitionVersionRow`/`loadMeasurementRow`.
+
+**MOUNT-ORDER**: analogiczne ryzyko co `kpiDeviation.routes.ts`'s
+`/deviation-cases` — `kpi.routes.ts` na `/api/vnext/results/kpi` ma
+`GET /:kpiId` (jeden dynamiczny segment), który przechwyciłby
+`GET /api/vnext/results/kpi/scorecards` z `kpiId="scorecards"` gdyby ten
+router był zamontowany pod tym samym prefiksem. Naprawa: router zamontowany
+pod BARDZIEJ SPECYFICZNYM `/api/vnext/results/kpi/scorecards`, zarejestrowany
+w `Gateway.ts` PRZED `/api/vnext/results/kpi` (kolejność względem
+`/deviation-cases` nie ma znaczenia — segmenty "scorecards" i
+"deviation-cases" nigdy się nie zderzają, tylko oba z krótszym mountem).
+
+**Testy — bezpośredni test repository na realnym Postgresie, POTWIERDZONE**
+(zgodnie z krytyczną lekcją §24 — testy tras z `vi.mock` całego modułu
+repozytorium NIE dowodzą działania joina widoczności):
+- `server/src/routes/resultsVnext/__tests__/kpiScorecard.routes.test.ts` —
+  27 testów, HTTP-boundary (walidacja Zod, mapowanie błędów, mount-order),
+  repository/commands zmockowane w całości — tak jak `kpiDeviation.routes
+  .test.ts`, i tak samo NIE jest dowodem że join widoczności działa.
+- **NOWY** `tests/resultsVnext/kpi/kpiScorecardRepositoryRoutesRealdb.test.ts`
+  — 3 testy, WOŁA `kpiScorecardRepository.ts` (`listScorecards`,
+  `listScorecardItems`, `getScorecardStatusDistribution`,
+  `listReviewSnapshots`) BEZPOŚREDNIO na realnym Postgresie 16 (ten sam
+  przepis co §11/§15/§23/§24: `initdb --locale=C`, `LC_ALL=C`, TCP
+  `127.0.0.1:28481`), zamyka lukę którą `scorecardPublishNonLeak.realdb
+  .test.ts` (§23) zostawił otwartą dla tych czterech funkcji (miał pokrycie
+  tylko dla `getPublishedSnapshot`). Scenariusze: (1) PRIVATE scorecard
+  widoczny właścicielowi (USER_A), niewidoczny obcemu (USER_B) — `listScorecards`
+  I lokalny `loadVisibleScorecard`; scorecard wstawiony BEZPOŚREDNIO przez SQL
+  (`insertFixtureScorecard`/`insertScorecardVisibility`), nie przez
+  `createScorecard` — bo `createScorecard` zawsze używa JEDNEJ współdzielonej
+  aktywnej polityki domeny `'kpi'` per org (decyzja #1), więc w tym pliku
+  każdy scorecard stworzony przez command layer wychodzi OPEN_ORG; ten sam
+  trik co `scorecardPublishNonLeak.realdb.test.ts` dla PRIVATE KPI (mode leży
+  na wierszu zasobu, nie na polityce). (2) widoczność na poziomie itemu
+  (`resourceType='kpi'`) egzekwowana niezależnie od widoczności scorecardu
+  (AC #4) — `listScorecardItems`/`getScorecardStatusDistribution` z
+  ograniczonym KPI wewnątrz scorecardu OPEN_ORG. (3) PRIVATE scorecard
+  całkowicie chowa historię (`listReviewSnapshots`) przed obcym.
+  **Realny błąd złapany PRZEZ ten test podczas pisania** (nie tylko
+  potwierdzenie): scenariusz (3) pierwotnie podawał `expectedVersion`
+  SCORECARDU do `publishReviewSnapshot` zamiast `row_version` SNAPSHOTU —
+  `AtomicWriteConflictError: STALE_VERSION` na realnym Postgresie, naprawione
+  przez użycie `draft.result.rowVersion`.
+- Pełny zestaw `tests/resultsVnext/kpi` + `server/src/routes/resultsVnext` na
+  tym samym efemerycznym Postgresie: **163/163 PASS** (133 istniejące + 27
+  nowych testów tras + 3 nowe testy repository) — **zero regresji**.
+
+**Wynik końcowy**: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+w `server/` — 0 błędów. Zero dewiacji od `KPI_E004_DESIGN.md` poza jawnie
+udokumentowanym `getScorecard` (design nie precyzował tego endpointu — zbudowano
+minimalny odpowiednik jak poproszono). Poza zakresem: `listCorrectiveActions
+`/`listEffectivenessVerifications`-analogiczny endpoint dla wielu KPI naraz
+(scorecard Tool §3 "Attention and deviations", jawnie odłożone w
+`KPI_E004_DESIGN.md` §C.3) — nie budowany w tym pakiecie.
+
