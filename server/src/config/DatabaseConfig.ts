@@ -16,6 +16,7 @@ import logger from '../utils/Logger.js';
 import {
   assertNoLocalDatabaseOutsideTests,
   assertNoPrivateRailwayDbHostOutsideRailway,
+  assertNoProductionDatabaseOutsideVerifiedRuntime,
   resolveReachableDatabaseUrl,
 } from './databaseTargetResolver.js';
 
@@ -94,6 +95,7 @@ export function getDatabaseType(): 'postgres' {
   try {
     assertNoLocalDatabaseOutsideTests(process.env);
     assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+    assertNoProductionDatabaseOutsideVerifiedRuntime(process.env);
   } catch (error) {
     logger.error('\n\x1b[31m%s\x1b[0m', (error as Error).message);
     process.exit(1);
@@ -184,6 +186,7 @@ function getPostgresConfig(): PostgresConfig {
   try {
     assertNoLocalDatabaseOutsideTests(process.env);
     assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+    assertNoProductionDatabaseOutsideVerifiedRuntime(process.env);
   } catch (error) {
     logger.error('\n\x1b[31m%s\x1b[0m', (error as Error).message);
     process.exit(1);
