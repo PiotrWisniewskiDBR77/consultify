@@ -48,6 +48,7 @@ let reachable = false;
 type CaseCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCaseCommands.js');
 type BaselineCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiBaselineCommands.js');
 type RepositoryModule = typeof import('../../../server/src/services/resultsVnext/roi/roiRepository.js');
+type CalcRunCommandsModule = typeof import('../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js');
 type PgModule = typeof import('../../../server/src/database/PostgresDatabase.js');
 
 let createRoiCase: CaseCommandsModule['createRoiCase'];
@@ -58,6 +59,12 @@ let RoiCaseValidationError: CaseCommandsModule['RoiCaseValidationError'];
 let RoiCaseNotReadyForReviewError: CaseCommandsModule['RoiCaseNotReadyForReviewError'];
 let captureOrUpdateBaseline: BaselineCommandsModule['captureOrUpdateBaseline'];
 let getRoiCase: RepositoryModule['getRoiCase'];
+// ROI-E002 §5: markReadyForReview's guard now ALSO requires a successful,
+// fresh calculation run (isRoiCaseReadyForReviewEligibleWithEconomicModel
+// wraps this file's own E001 baseline guard, never replaces it) — this
+// already-shipped ROI-E001 test's own "ready once baseline is complete"
+// assertion needs one real calculation run to still reach 'ready_for_review'.
+let createRoiCalculationRun: CalcRunCommandsModule['createRoiCalculationRun'];
 let closePgPool: (() => Promise<void>) | undefined;
 
 async function insertVisibilityPolicy(domain: string, mode: string, createdBy: string): Promise<void> {
@@ -95,6 +102,11 @@ async function createFixtureCase(): Promise<{ caseId: string; rowVersion: number
     title: `Lifecycle fixture case ${randomUUID()}`,
     ownerUserId: USER_OWNER,
     currency: 'USD',
+    // ROI-E002: createRoiCalculationRun requires a non-null analysis window
+    // (Decision, roiCalculationRunCommands.ts's ANALYSIS_WINDOW_MISSING
+    // guard) — set here so the "ready for review" test below can create one.
+    analysisStart: '2026-01-01',
+    analysisEnd: '2026-12-31',
     createdBy: USER_OWNER,
     actorEffectiveRole: 'consultant',
     idempotencyKey: `create-${randomUUID()}`,
@@ -163,6 +175,11 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
     const repository: RepositoryModule = await import('../../../server/src/services/resultsVnext/roi/roiRepository.js');
     getRoiCase = repository.getRoiCase;
 
+    const calcRunCommands: CalcRunCommandsModule = await import(
+      '../../../server/src/services/resultsVnext/roi/roiCalculationRunCommands.js'
+    );
+    createRoiCalculationRun = calcRunCommands.createRoiCalculationRun;
+
     const pgModule: PgModule = await import('../../../server/src/database/PostgresDatabase.js');
     closePgPool = (pgModule as unknown as { closePool?: () => Promise<void> }).closePool;
 
@@ -188,6 +205,10 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
     );
     await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
+    // ROI-E002: createRoiCase now also inserts a rvn_roi_calculation_policy
+    // shell row (FK to rvn_roi_cases) — must be deleted before rvn_roi_cases.
+    await client.query(`DELETE FROM rvn_roi_calculation_runs WHERE organization_id = $1`, [ORG_ID]);
+    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
@@ -314,6 +335,19 @@ describe('ROI-E001 case lifecycle — startModeling/markReadyForReview guards + 
         actorEffectiveRole: 'consultant',
         idempotencyKey: `capture-full-${randomUUID()}`,
       });
+
+      // ROI-E002 §5: the guard now ALSO requires a successful, fresh
+      // calculation run — without one, this would still throw
+      // RoiCaseNotReadyForReviewError('no_successful_calculation_run').
+      const runOutcome = await createRoiCalculationRun({
+        organizationId: ORG_ID,
+        caseId,
+        scenarioId: null,
+        actorUserId: USER_OWNER,
+        actorEffectiveRole: 'consultant',
+        idempotencyKey: `calc-run-${randomUUID()}`,
+      });
+      expect(runOutcome.result.status).toBe('completed');
 
       const readyOutcome = await markReadyForReview({
         caseId,

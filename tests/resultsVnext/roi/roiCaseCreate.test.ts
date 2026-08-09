@@ -32,6 +32,12 @@ let insertShouldRace = false;
 let raceWinnerCaseId: string | null = null;
 const insertedCaseRows = new Map<string, Record<string, unknown>>();
 const insertedBaselineRows = new Map<string, Record<string, unknown>>();
+// ROI-E002 §4.1: createRoiCase now ALSO inserts a calculation-policy shell
+// row in the same transaction, immediately after the baseline shell — this
+// fake client needs to answer that INSERT (and loadCaseWithBaseline's
+// matching re-SELECT for the found-existing branches) the same way it
+// already does for rvn_roi_baselines.
+const insertedPolicyRows = new Map<string, Record<string, unknown>>();
 const releaseMock = vi.fn();
 
 const ORG_ID = 'org-1';
@@ -52,6 +58,28 @@ function baselineRowFor(caseId: string): Record<string, unknown> {
     bau_reference_value: null,
     intervention_comparison_notes: null,
     source: null,
+    confidence: null,
+    owner_user_id: null,
+    frozen_at: null,
+    frozen_by: null,
+    row_version: 1,
+    created_by: 'user-1',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
+  };
+}
+
+function policyRowFor(caseId: string): Record<string, unknown> {
+  return {
+    policy_row_id: `policy-${caseId}`,
+    case_id: caseId,
+    organization_id: ORG_ID,
+    discount_rate_pct: null,
+    tax_treatment: null,
+    inflation_rate_pct: null,
+    rounding_policy: 'half_up_2dp',
+    required_metrics: null,
+    notes: null,
     confidence: null,
     owner_user_id: null,
     frozen_at: null,
@@ -155,7 +183,16 @@ async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: u
     return { rows: [row], rowCount: 1 };
   }
 
-  // loadCaseWithBaseline's two SELECTs (winning-case re-read after either
+  // ROI-E002 §4.1: calculation-policy shell insert, same transaction,
+  // immediately after the baseline shell.
+  if (sql.startsWith('INSERT INTO rvn_roi_calculation_policy')) {
+    const caseId = params[0] as string;
+    const row = policyRowFor(caseId);
+    insertedPolicyRows.set(caseId, row);
+    return { rows: [row], rowCount: 1 };
+  }
+
+  // loadCaseWithBaseline's three SELECTs (winning-case re-read after either
   // the pre-check or the SAVEPOINT-rollback branch).
   if (sql.startsWith('SELECT * FROM rvn_roi_cases WHERE case_id')) {
     const caseId = params[0] as string;
@@ -165,6 +202,11 @@ async function fakeQuery(sql: string, params: unknown[] = []): Promise<{ rows: u
   if (sql.startsWith('SELECT * FROM rvn_roi_baselines WHERE case_id')) {
     const caseId = params[0] as string;
     const row = insertedBaselineRows.get(caseId) ?? baselineRowFor(caseId);
+    return { rows: [row], rowCount: 1 };
+  }
+  if (sql.startsWith('SELECT * FROM rvn_roi_calculation_policy WHERE case_id')) {
+    const caseId = params[0] as string;
+    const row = insertedPolicyRows.get(caseId) ?? policyRowFor(caseId);
     return { rows: [row], rowCount: 1 };
   }
 
@@ -245,6 +287,7 @@ beforeEach(() => {
   raceWinnerCaseId = null;
   insertedCaseRows.clear();
   insertedBaselineRows.clear();
+  insertedPolicyRows.clear();
   releaseMock.mockClear();
 });
 
@@ -294,5 +337,10 @@ describe('createRoiCase — AC-02 duplicate prevention', () => {
     expect(outcome.result.case.caseId).toBe('new-case-1');
     expect(outcome.result.baseline.caseId).toBe('new-case-1');
     expect(outcome.result.baseline.currentMeasuredValue).toBeNull();
+    // ROI-E002 §4.1: CreateRoiCaseResult gains a calculationPolicy field,
+    // always present (1:1 shell), rounding_policy on its DDL default.
+    expect(outcome.result.calculationPolicy.caseId).toBe('new-case-1');
+    expect(outcome.result.calculationPolicy.roundingPolicy).toBe('half_up_2dp');
+    expect(outcome.result.calculationPolicy.discountRatePct).toBeNull();
   });
 });

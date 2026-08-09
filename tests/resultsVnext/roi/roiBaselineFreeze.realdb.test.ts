@@ -154,6 +154,10 @@ describe('ROI-E001 baseline — freeze-protection trigger (real Postgres)', () =
     );
     await client.query(`DELETE FROM rvn_platform_events WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_baselines WHERE organization_id = $1`, [ORG_ID]);
+    // ROI-E002: createRoiCase now also inserts a rvn_roi_calculation_policy
+    // shell row (FK to rvn_roi_cases) — must be deleted before rvn_roi_cases
+    // itself, same ordering requirement rvn_roi_baselines already had.
+    await client.query(`DELETE FROM rvn_roi_calculation_policy WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_roi_cases WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_resource_visibility WHERE organization_id = $1`, [ORG_ID]);
     await client.query(`DELETE FROM rvn_platform_visibility_policies WHERE organization_id = $1`, [ORG_ID]);
