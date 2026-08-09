@@ -354,9 +354,9 @@ export const TopBar: React.FC<TopBarProps> = ({
   const primaryChips = orderedChips.filter((c) => resolveChipGroup(c) === 'primary');
   const overflowChips = orderedChips.filter((c) => resolveChipGroup(c) === 'overflow');
 
-  const commit = () => {
+  const commit = (nextTitle = draft) => {
     setEditing(false);
-    if (draft !== title) onTitleChange?.(draft);
+    if (nextTitle !== title) onTitleChange?.(nextTitle);
   };
 
   // ── Scalenie w jedną linię: klaster poleceń portalem do rzędu hosta ────────
@@ -441,9 +441,9 @@ export const TopBar: React.FC<TopBarProps> = ({
             autoFocus
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
+            onBlur={(event) => commit(event.currentTarget.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') commit();
+              if (e.key === 'Enter') commit(e.currentTarget.value);
               if (e.key === 'Escape') {
                 setDraft(title);
                 setEditing(false);

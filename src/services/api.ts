@@ -2350,6 +2350,17 @@ export const Api = {
     return handleResponse(res, 'Failed to execute Teresa proposal');
   },
 
+  undoTeresaProposal: async (proposalId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/v8/teresa/proposal/${encodeURIComponent(proposalId)}/undo`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to undo Teresa proposal');
+  },
+
   chatWithAIStream: async (
     message: string,
     history: any[],
@@ -7325,6 +7336,355 @@ export const Api = {
   ): Promise<{ data: { id: string; title: string | null; sheets: unknown[] } }> => {
     const res = await fetch(`${API_URL}/workbook/shared/${encodeURIComponent(token)}`);
     return handleResponse(res, 'Shared workbook not found');
+  },
+
+  applyWorkbookCommands: async (
+    workbookId: string,
+    payload: {
+      commandId: string;
+      baseVersion: number;
+      idempotencyKey: string;
+      operations: Array<
+        | {
+            type: 'setCell' | 'clearCell';
+            sheetIndex: number;
+            rowIndex: number;
+            columnKey: string;
+            value?: string | number | boolean | null;
+            formula?: string;
+          }
+        | { type: 'addSheet'; name?: string; afterIndex?: number; sheetId?: string }
+        | { type: 'renameSheet'; sheetId: string; name: string }
+        | { type: 'duplicateSheet'; sheetId: string; name?: string; newSheetId?: string }
+        | { type: 'deleteSheet'; sheetId: string }
+        | { type: 'reorderSheet'; sheetId: string; targetIndex: number }
+        | { type: 'setSheetHidden'; sheetId: string; hidden: boolean }
+        | { type: 'insertRows' | 'deleteRows'; sheetIndex: number; atIndex: number; count: number }
+        | {
+            type: 'insertColumns' | 'deleteColumns';
+            sheetIndex: number;
+            atIndex: number;
+            count: number;
+          }
+        | {
+            type: 'setCellStyle';
+            sheetIndex: number;
+            startRow: number;
+            endRow: number;
+            startColumn: number;
+            endColumn: number;
+            patch: {
+              bold?: boolean;
+              italic?: boolean;
+              fontColor?: string;
+              bgColor?: string;
+              numberFormat?: string;
+              alignment?: 'left' | 'center' | 'right';
+              wrapText?: boolean;
+              border?: 'thin' | 'medium' | 'thick' | 'none';
+            };
+          }
+      >;
+    }
+  ): Promise<{
+    ok: boolean;
+    duplicate: boolean;
+    commandId: string;
+    version: number;
+    operationCount: number;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/commands`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to apply workbook command');
+  },
+
+  undoWorkbookCommand: async (
+    workbookId: string,
+    commandVersion: number,
+    baseVersion: number
+  ): Promise<{ ok: boolean; commandVersion: number; version: number }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/revisions/${commandVersion}/undo`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ baseVersion }),
+      }
+    );
+    return handleResponse(res, 'Failed to undo workbook command');
+  },
+
+  listWorkbookRevisions: async (
+    workbookId: string
+  ): Promise<{
+    revisions: Array<{
+      id: string;
+      version: number;
+      command_id: string;
+      created_by: string;
+      created_at: string;
+    }>;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/revisions`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load workbook revisions');
+  },
+
+  restoreWorkbookRevision: async (
+    workbookId: string,
+    sourceVersion: number,
+    baseVersion: number
+  ): Promise<{ ok: boolean; sourceVersion: number; version: number }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/revisions/${sourceVersion}/restore`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ baseVersion }),
+      }
+    );
+    return handleResponse(res, 'Failed to restore workbook revision');
+  },
+
+  renameWorkbook: async (
+    workbookId: string,
+    title: string,
+    baseVersion: number
+  ): Promise<{ ok: boolean; title: string; version: number; unchanged: boolean }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/title`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ title, baseVersion }),
+    });
+    return handleResponse(res, 'Failed to rename workbook');
+  },
+
+  updateWorkbookGovernance: async (
+    workbookId: string,
+    input: {
+      field: 'classification' | 'lifecycleStatus';
+      value: 'public' | 'internal' | 'confidential' | 'draft' | 'in_review' | 'approved' | 'final';
+      baseVersion: number;
+      reason?: string;
+    }
+  ): Promise<{
+    ok: boolean;
+    classification: 'public' | 'internal' | 'confidential';
+    lifecycleStatus: 'draft' | 'in_review' | 'approved' | 'final';
+    approvalCurrent: boolean;
+    version: number;
+    unchanged: boolean;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/governance`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(input),
+    });
+    return handleResponse(res, 'Failed to update workbook governance');
+  },
+
+  getWorkbookApprovalState: async (
+    workbookId: string
+  ): Promise<{
+    state: 'draft' | 'review' | 'approved' | 'rejected';
+    assignment: {
+      id: string;
+      assigned_to_user_id: string;
+      status: string;
+    } | null;
+    workbookVersion: number;
+    currentForVersion: boolean;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/approval-state`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to load workbook approval state');
+  },
+
+  submitWorkbookForReview: async (
+    workbookId: string,
+    assignedToUserId: string
+  ): Promise<{
+    state: 'review';
+    assignment: { id: string; assigned_to_user_id: string; status: string };
+    currentForVersion: false;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/approval/submit`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ assignedToUserId }),
+      }
+    );
+    return handleResponse(res, 'Failed to submit workbook for review');
+  },
+
+  approveWorkbook: async (
+    workbookId: string
+  ): Promise<{
+    state: 'approved';
+    assignment: { id: string; assigned_to_user_id: string; status: string };
+    currentForVersion: true;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/approval/approve`,
+      { method: 'POST', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to approve workbook');
+  },
+
+  rejectWorkbook: async (
+    workbookId: string,
+    reason: string
+  ): Promise<{
+    state: 'rejected';
+    assignment: { id: string; assigned_to_user_id: string; status: string };
+    currentForVersion: false;
+  }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/approval/reject`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ reason }),
+      }
+    );
+    return handleResponse(res, 'Failed to reject workbook');
+  },
+
+  listWorkbookComments: async (
+    workbookId: string,
+    options: { status?: 'open' | 'resolved' | 'all'; sheetId?: string } = {}
+  ): Promise<{
+    comments: Array<{
+      id: string;
+      sheet_id: string | null;
+      range_ref: string | null;
+      anchored_version: number;
+      parent_comment_id: string | null;
+      body: string;
+      status: 'open' | 'resolved';
+      anchor_state: 'active' | 'orphaned';
+      created_by: string;
+      created_at: string;
+    }>;
+  }> => {
+    const query = new URLSearchParams({ status: options.status ?? 'open' });
+    if (options.sheetId) query.set('sheetId', options.sheetId);
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/comments?${query.toString()}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to load workbook comments');
+  },
+
+  createWorkbookComment: async (
+    workbookId: string,
+    payload: {
+      body: string;
+      idempotencyKey: string;
+      parentCommentId?: string;
+      anchor?: { sheetId?: string; range?: string };
+    }
+  ): Promise<{
+    id: string;
+    duplicate: boolean;
+    anchor?: { sheetId: string | null; range: string | null; version: number };
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/comments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create workbook comment');
+  },
+
+  setWorkbookCommentStatus: async (
+    workbookId: string,
+    commentId: string,
+    status: 'open' | 'resolved'
+  ): Promise<{ ok: boolean; id: string; status: 'open' | 'resolved' }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/comments/${encodeURIComponent(commentId)}/status`,
+      { method: 'PATCH', headers: getHeaders(), body: JSON.stringify({ status }) }
+    );
+    return handleResponse(res, 'Failed to update workbook comment');
+  },
+
+  listWorkbookSourceBindings: async (
+    workbookId: string
+  ): Promise<{
+    bindings: Array<{
+      id: string;
+      sheetId: string;
+      sheet: string | null;
+      range: string;
+      label: string;
+      sourceRef: string | null;
+      sourceType: string | null;
+      anchoredVersion: number;
+      anchorState: 'active' | 'orphaned';
+      createdBy: string;
+      createdAt: string;
+    }>;
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/sources`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load workbook source bindings');
+  },
+
+  bindWorkbookSource: async (
+    workbookId: string,
+    payload: {
+      sheetId: string;
+      range: string;
+      label: string;
+      sourceRef?: string;
+      sourceType?: string;
+      baseVersion: number;
+      idempotencyKey: string;
+    }
+  ): Promise<{
+    id: string;
+    duplicate: boolean;
+    version: number;
+    binding?: {
+      sheetId: string;
+      range: string;
+      label: string;
+      sourceRef: string | null;
+      sourceType: string | null;
+    };
+  }> => {
+    const res = await fetch(`${API_URL}/workbook/${encodeURIComponent(workbookId)}/sources`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to bind workbook source');
+  },
+
+  unbindWorkbookSource: async (
+    workbookId: string,
+    bindingId: string,
+    baseVersion: number
+  ): Promise<{ ok: boolean; id: string; version: number }> => {
+    const res = await fetch(
+      `${API_URL}/workbook/${encodeURIComponent(workbookId)}/sources/${encodeURIComponent(bindingId)}`,
+      {
+        method: 'DELETE',
+        headers: getHeaders(),
+        body: JSON.stringify({ baseVersion }),
+      }
+    );
+    return handleResponse(res, 'Failed to unbind workbook source');
   },
 
   // --- ASSESSMENT WORKFLOW ---

@@ -382,7 +382,10 @@ function createMockDatabase(): MockDatabase {
         })
       );
     });
-    if (idx < 0) return true;
+    // Match SQLite/Postgres semantics: a syntactically valid UPDATE that did not
+    // match a row reports zero changed rows. Returning a truthy value here made
+    // optimistic-locking routes report success even though no state was saved.
+    if (idx < 0) return false;
 
     let pIdx = 0;
     const resolvePlaceholder = (token: string) => {

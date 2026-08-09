@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Info,
   Shield,
-  X,
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -47,8 +46,9 @@ interface DeckQualityReport {
 interface DeckQualityGatesPanelProps {
   deckId: string;
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   onJumpToCard?: (cardIndex: number) => void;
+  displayMode?: 'overlay' | 'embedded';
 }
 
 const categoryIcons: Record<string, typeof Shield> = {
@@ -127,6 +127,7 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
   isOpen,
   onClose,
   onJumpToCard,
+  displayMode = 'overlay',
 }) => {
   const { t } = useTranslation();
   const [report, setReport] = useState<DeckQualityReport | null>(null);
@@ -268,7 +269,14 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
     : 'text-c-text-secondary';
 
   return (
-    <div className="absolute top-0 right-0 w-80 h-full bg-c-surface border-l border-c-border-subtle z-30 flex flex-col shadow-xl">
+    <div
+      className={
+        displayMode === 'embedded'
+          ? 'flex h-full min-h-0 w-full flex-col bg-c-surface'
+          : 'absolute top-0 right-0 z-30 flex h-full w-80 flex-col border-l border-c-border-subtle bg-c-surface shadow-xl'
+      }
+      data-testid="presentation-quality-panel"
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-c-border-subtle">
         <div className="flex items-center gap-2">
@@ -277,15 +285,15 @@ export const DeckQualityGatesPanel: React.FC<DeckQualityGatesPanelProps> = ({
             {t('presentations.qualityGates.title', 'Quality Gates')}
           </h3>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('common.close', 'Close')}
-          title={t('common.close', 'Close')}
-          className="inline-flex h-9 w-9 items-center justify-center rounded text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus"
-        >
-          <X size={16} aria-hidden />
-        </button>
+        {displayMode === 'overlay' && onClose ? (
+          <button
+            onClick={onClose}
+            className="text-c-text-secondary hover:text-c-text-secondary text-sm"
+            aria-label="Zamknij QA"
+          >
+            ✕
+          </button>
+        ) : null}
       </div>
 
       {/* Score */}

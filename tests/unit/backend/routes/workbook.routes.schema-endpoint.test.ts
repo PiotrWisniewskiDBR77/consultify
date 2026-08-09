@@ -45,9 +45,15 @@ vi.mock('../../../../server/src/services/workbook/WorkbookGeneratorService.js', 
   default: { generate: vi.fn() },
 }));
 
+vi.mock('../../../../server/src/services/v8/artifactRegistryService.js', () => ({
+  registerArtifactOrigin: vi.fn().mockResolvedValue({ artifactId: 'artifact-test' }),
+  adoptRunArtifactForWorkbook: vi.fn().mockResolvedValue(null),
+}));
+
 describe('GET /api/workbook/:id/schema', () => {
   beforeEach(() => {
     queryOneMock.mockReset();
+    mockUser.organizationId = 'org-1';
   });
 
   it('returns the full sheets (rows + cells + formulas) for an org-scoped workbook', async () => {
@@ -97,5 +103,117 @@ describe('GET /api/workbook/:id/schema', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.error).toMatch(/not found/i);
+  });
+
+  it('does not expose a cached workbook schema to another organization', async () => {
+    const { default: workbookRouter } = await import(
+      '../../../../server/src/routes/workbook.routes.js'
+    );
+    const app = express();
+    app.use(express.json());
+    app.use('/workbook', workbookRouter);
+
+    const created = await request(app)
+      .post('/workbook/blank')
+      .send({ title: 'Tenant A workbook' });
+    expect(created.status).toBe(201);
+
+    mockUser.organizationId = 'org-2';
+    queryOneMock.mockResolvedValueOnce(null);
+
+    const res = await request(app).get(`/workbook/${created.body.id}/schema`);
+    expect(res.status).toBe(404);
+    expect(queryOneMock).toHaveBeenCalledWith(expect.any(String), [created.body.id, 'org-2']);
+  });
+
+  it('does not expose cached XLSX bytes to another organization', async () => {
+    const { default: workbookRouter } = await import(
+      '../../../../server/src/routes/workbook.routes.js'
+    );
+    const app = express();
+    app.use(express.json());
+    app.use('/workbook', workbookRouter);
+
+    const created = await request(app)
+      .post('/workbook/blank')
+      .send({ title: 'Tenant A download' });
+    expect(created.status).toBe(201);
+
+    mockUser.organizationId = 'org-2';
+    queryOneMock.mockResolvedValueOnce(null);
+
+    const res = await request(app).get(`/workbook/${created.body.id}/download`);
+    expect(res.status).toBe(404);
+    expect(queryOneMock).toHaveBeenCalledWith(expect.any(String), [created.body.id, 'org-2']);
+  });
+
+  it('marks the backward-compatible workbook download as a draft export', async () => {
+    const { default: workbookRouter } = await import(
+      '../../../../server/src/routes/workbook.routes.js'
+    );
+    const app = express();
+    app.use(express.json());
+    app.use('/workbook', workbookRouter);
+
+    const created = await request(app)
+      .post('/workbook/blank')
+      .send({ title: 'Governed workbook' });
+    expect(created.status).toBe(201);
+
+    const res = await request(app).get(`/workbook/${created.body.id}/download`);
+    expect(res.status).toBe(200);
+    expect(res.headers['x-artifact-export-mode']).toBe('draft');
+    expect(res.headers['x-artifact-draft']).toBe('true');
+    expect(res.headers['content-disposition']).toContain('Governed_workbook-DRAFT.xlsx');
+  });
+
+  it('fails closed when a final export lacks current approval', async () => {
+    queryOneMock.mockResolvedValueOnce({
+      schema_json: JSON.stringify({
+        title: 'Governed workbook',
+        sheets: [{ name: 'Sheet1', columns: [], rows: [] }],
+      }),
+      file_name: 'governed.xlsx',
+      classification: 'internal',
+      approval_current: 0,
+      quality_report_json: JSON.stringify({ issues: [] }),
+    });
+
+    const { default: workbookRouter } = await import(
+      '../../../../server/src/routes/workbook.routes.js'
+    );
+    const app = express();
+    app.use('/workbook', workbookRouter);
+
+    const res = await request(app).get('/workbook/wb-final/download?mode=final');
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({
+      code: 'ARTIFACT_EXPORT_BLOCKED',
+      mode: 'final',
+      blocks: ['CURRENT_APPROVAL_REQUIRED'],
+    });
+  });
+
+  it('fails closed when a final export has a critical QA finding', async () => {
+    queryOneMock.mockResolvedValueOnce({
+      schema_json: JSON.stringify({
+        title: 'Governed workbook',
+        sheets: [{ name: 'Sheet1', columns: [], rows: [] }],
+      }),
+      file_name: 'governed.xlsx',
+      classification: 'internal',
+      approval_current: 1,
+      quality_report_json: JSON.stringify({ issues: [{ severity: 'critical' }] }),
+    });
+
+    const { default: workbookRouter } = await import(
+      '../../../../server/src/routes/workbook.routes.js'
+    );
+    const app = express();
+    app.use('/workbook', workbookRouter);
+
+    const res = await request(app).get('/workbook/wb-critical/download?mode=final');
+    expect(res.status).toBe(409);
+    expect(res.body.blocks).toEqual(['CRITICAL_QA_BLOCKED']);
   });
 });

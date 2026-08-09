@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../config/Config.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
+import { __resetApprovalServiceForTests } from '../services/documentStudio/documentApprovalService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -720,6 +721,109 @@ router.post(
 );
 
 router.post(
+  '/member',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!assertEnabled(req, res)) return deny(res);
+
+    const runId = String(req.body?.runId || '').trim();
+    const requestedRole = String(req.body?.role || 'USER')
+      .trim()
+      .toUpperCase();
+    const validRoles = ['ADMIN', 'USER', 'GUEST'] as const;
+    const userRole = (validRoles as readonly string[]).includes(requestedRole)
+      ? (requestedRole as (typeof validRoles)[number])
+      : 'USER';
+    if (!runId || runId.length > 128) {
+      return res.status(400).json({ error: 'runId is required' });
+    }
+
+    await ensureRunsTable();
+    const run = await DbPromise.get<{
+      organization_id: string;
+    }>(`SELECT organization_id FROM test_support_runs WHERE run_id = ?`, [runId], {
+      fallback: false,
+    });
+    if (!run?.organization_id) {
+      return res.status(404).json({ error: 'Test support run not found' });
+    }
+
+    const userId = uuidv4();
+    const memberId = uuidv4();
+    const memberSuffix = userId.slice(0, 8);
+    const email =
+      `e2e+${runId.replace(/[^a-zA-Z0-9_.-]/g, '-')}-${memberSuffix}`.slice(0, 64) + '@local.test';
+
+    await DbPromise.run(
+      `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId,
+        run.organization_id,
+        email,
+        'e2e-not-used',
+        userRole,
+        'active',
+        'E2E',
+        `Reviewer ${memberSuffix}`,
+      ],
+      { fallback: false }
+    );
+
+    try {
+      await DbPromise.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status, permission_scope)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [memberId, run.organization_id, userId, userRole, 'ACTIVE', JSON.stringify({ '*': true })],
+        { fallback: false }
+      );
+    } catch {
+      await DbPromise.run(
+        `INSERT INTO organization_members (id, organization_id, user_id, role, status)
+         VALUES (?, ?, ?, ?, ?)`,
+        [memberId, run.organization_id, userId, userRole, 'ACTIVE'],
+        { fallback: false }
+      );
+    }
+
+    const token = makeSignedToken({
+      id: userId,
+      email,
+      name: `E2E Reviewer ${memberSuffix}`,
+      role: userRole,
+      organizationId: run.organization_id,
+      isSuperAdmin: false,
+      runId,
+      jti: uuidv4(),
+    });
+
+    return res.status(201).json({
+      runId,
+      organizationId: run.organization_id,
+      userId,
+      token,
+    });
+  })
+);
+
+/**
+ * Test-only cold-read boundary for Document Studio approvals.
+ *
+ * This intentionally clears only the process-local approval registry. Durable
+ * rows remain untouched, so the next product API read must hydrate from the
+ * configured database. The endpoint is protected by the same non-production
+ * key gate as every other test-support operation.
+ */
+router.post(
+  '/document-approval-cache/reset',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!assertEnabled(req, res)) return deny(res);
+
+    __resetApprovalServiceForTests();
+    return res.status(204).end();
+  })
+);
+
+router.post(
   '/cleanup',
   asyncHandler(async (req: Request, res: Response) => {
     if (!assertEnabled(req, res)) return deny(res);
@@ -746,7 +850,9 @@ router.post(
     await purgeByOrganizationId(existing.organization_id);
 
     // Delete users/org at the end
-    await DbPromise.run(`DELETE FROM users WHERE id = ?`, [existing.user_id], { fallback: false });
+    await DbPromise.run(`DELETE FROM users WHERE organization_id = ?`, [existing.organization_id], {
+      fallback: false,
+    });
     await DbPromise.run(`DELETE FROM organizations WHERE id = ?`, [existing.organization_id], {
       fallback: false,
     });

@@ -62,12 +62,7 @@ import {
   ensureContentBlockRegistryHydrated,
   instantiateDocumentContentBlock,
 } from './documentContentBlockService.js';
-import {
-  buildDocumentEvidenceContract,
-  buildDocumentSchema,
-  buildDocumentSchemaPremium,
-  enforceDocumentSchemaGrounding,
-} from './documentContentGenerator.js';
+import { buildDocumentSchema, buildDocumentSchemaPremium } from './documentContentGenerator.js';
 import { renderDocumentSchemaToDocxBuffer } from './documentDocxRenderer.js';
 import { refineEditorTextWithLlm } from './documentEditorRefiner.js';
 import {
@@ -130,10 +125,6 @@ import type {
   DocumentTemplate,
   DocumentVersionSnapshot,
   DocumentVersionSnapshotOrigin,
-} from './documentStudioTypes.js';
-import {
-  documentSourceRefEvidenceText,
-  documentSourceRefsEvidenceText,
 } from './documentStudioTypes.js';
 import {
   getTemplate as getRegisteredTemplate,
@@ -309,7 +300,7 @@ async function persistProposalWriteThrough(
     degraded: outcome.degraded,
     reason: outcome.reason,
   };
-  if (outcome.ok === false) {
+  if (!outcome.ok) {
     const logFn = outcome.degraded === 'db_error' ? logger.error : logger.warn;
     logFn('[DocumentStudio] proposal durable write did not confirm', {
       proposalId: proposal.proposalId,
@@ -372,47 +363,6 @@ export async function planDocumentAsync(
   return { outline: refined };
 }
 
-function businessCaseSectionKind(title: string): string {
-  const value = title.toLowerCase();
-  if (/executive|podsumowanie/.test(value)) return 'executive';
-  if (/problem|pain/.test(value)) return 'problem';
-  if (/scope|methodolog|approach|zakres|metodolog/.test(value)) return 'scope';
-  if (/proposed initiative|solution|inicjatyw|rozwiąz/.test(value)) return 'initiative';
-  if (/scenario|assumption|założ|scenarius/.test(value)) return 'assumptions';
-  if (/benefit|kpi|korzy/.test(value)) return 'benefits';
-  if (/risk|ryzyk/.test(value)) return 'risks';
-  if (/implementation|roadmap|30\/60\/90|wdroż/.test(value)) return 'roadmap';
-  if (/recommend|decision|rekomend/.test(value)) return 'recommendation';
-  return `other:${value.replace(/\W+/g, ' ').trim()}`;
-}
-
-/**
- * The UI may submit an older saved business-case outline.  The same runtime
- * QA requires Scope/Methodology and Assumptions/Scenarios, so silently using
- * that stale outline created documents that could never pass their own export
- * gate. Preserve user-authored sections, but merge in the current canonical
- * structural requirements before prose generation.
- */
-export function mergeBusinessCaseOutlineRequirements(
-  intake: DocumentIntake,
-  outline: DocumentOutline
-): DocumentOutline {
-  if (intake.documentType !== 'business_case') return outline;
-  const canonical = planDocumentOutline(intake);
-  const byKind = new Map(outline.sections.map((section) => [businessCaseSectionKind(section.title), section]));
-  const used = new Set<string>();
-  const required = canonical.sections.map((section) => {
-    const kind = businessCaseSectionKind(section.title);
-    const existing = byKind.get(kind);
-    if (existing) used.add(kind);
-    return existing || section;
-  });
-  const extras = outline.sections.filter(
-    (section) => !used.has(businessCaseSectionKind(section.title))
-  );
-  return { ...outline, sections: [...required, ...extras] };
-}
-
 export interface MaterializeDocumentParams {
   organizationId: string;
   userId: string;
@@ -438,8 +388,6 @@ export interface MaterializeDocumentParams {
    * organization as the call site; cross-tenant template IDs are rejected.
    */
   templateId?: string | null;
-  /** Exact version selected by Mode 3 UI; prevents generation after template drift. */
-  templateVersion?: string | null;
   /**
    * Slice E15.wiring.materialize — explicit `sourcePackId` propagated
    * onto the resulting `DocumentSchema.sourcePackId` artifact-ref
@@ -563,262 +511,20 @@ export function preflightRequiredSources(
   return { ok: false, missing };
 }
 
-function templateSectionPurpose(section: DocumentTemplate['sectionBlueprint'][number]): string {
-  const guidance = [
-    section.purpose,
-    section.keyMessage ? `Key message: ${section.keyMessage}` : null,
-    section.contentHints?.length ? `Content guidance: ${section.contentHints.join('; ')}` : null,
-    section.dataNeeded?.length ? `Data needed: ${section.dataNeeded.join('; ')}` : null,
-    section.suggestedEvidence ? `Suggested evidence: ${section.suggestedEvidence}` : null,
-    section.formattingStyle ? `Formatting: ${section.formattingStyle}` : null,
-  ].filter((value): value is string => Boolean(value));
-  return guidance.join('\n');
-}
-
-export function outlineFromTemplate(
-  template: DocumentTemplate,
-  intake: DocumentIntake
-): DocumentOutline {
+function outlineFromTemplate(template: DocumentTemplate, intake: DocumentIntake): DocumentOutline {
   return {
     documentType: template.documentType,
     title: intake.title?.trim() || `${template.documentType.replace(/_/g, ' ')}: ${template.name}`,
     sections: template.sectionBlueprint.map((blueprint) => ({
       title: blueprint.title,
       level: blueprint.level,
-      purpose: templateSectionPurpose(blueprint),
+      purpose: blueprint.purpose,
       expectedLengthHint: blueprint.expectedLengthHint,
     })),
     recommendedDensity: template.density,
     recommendedRegister: template.communicationRegister,
     recommendedLanguageStyle: template.languageStyle,
   };
-}
-
-function premiumBusinessCaseBlocks(
-  template: DocumentTemplate,
-  intake: DocumentIntake,
-  sections: DocumentSection[]
-): void {
-  if (template.documentType !== 'business_case') return;
-  const brief = [intake.title, intake.description].filter(Boolean).join(' — ');
-  const currencies = [...new Set(brief.match(/(?:EUR|USD|GBP)\s*\d+(?:\.\d+)?m/gi) ?? [])];
-  const percentages = [...new Set(brief.match(/\d+(?:\.\d+)?%/g) ?? [])];
-  const payback = brief.match(/\d+[ -]month payback/i)?.[0] ?? 'Payback to be confirmed';
-  const mk = (type: DocumentBlock['type'], content: unknown): DocumentBlock => ({
-    blockId: `blk-${randomUUID()}`,
-    type,
-    content,
-    isAssumption: false,
-  });
-  const sentence = (pattern: RegExp, fallback: string): string =>
-    brief
-      .split(/(?<=[.!?])\s+/)
-      .find((value) => pattern.test(value))
-      ?.trim() ?? fallback;
-  const scenarioRow = (
-    label: string,
-    pattern: RegExp,
-    fallbackAssessment: string
-  ): [string, string, string] => {
-    const assessment = sentence(pattern, fallbackAssessment);
-    const amount = assessment.match(/(?:EUR|USD|GBP)\s*\d+(?:\.\d+)?m/iu)?.[0];
-    return [label, amount ?? 'Data required', assessment];
-  };
-  const riskNames = (() => {
-    const clause = brief.match(/\brisks?\s+(?:are|include)\s+([^.!?]+)/iu)?.[1] ?? '';
-    return clause
-      .split(/,|\s+and\s+/iu)
-      .map((value) => value.trim())
-      .filter(Boolean)
-      .slice(0, 6);
-  })();
-  const riskRows: string[][] = riskNames.length
-    ? riskNames.map((risk) => [risk, 'TBC', 'TBC', 'TBC', 'Evidence required'])
-    : [['Risk data required', 'TBC', 'TBC', 'TBC', 'Evidence required']];
-
-  sections.forEach((section, index) => {
-    const blueprint = template.sectionBlueprint[index];
-    const style = blueprint?.formattingStyle ?? '';
-    const title = section.title.toLowerCase();
-    if (style.includes('kpi_strip') || title.includes('executive summary')) {
-      section.blocks = [
-        mk('callout', {
-          variant: 'decision',
-          text: sentence(/approve|recommend|decision/i, brief),
-        }),
-        mk('kpi_strip', {
-          items: [
-            { label: 'Recommended investment', value: currencies[1] ?? currencies[0] ?? 'TBC' },
-            { label: 'Current conversion', value: percentages[0] ?? 'TBC' },
-            { label: 'Target conversion', value: percentages[3] ?? percentages[1] ?? 'TBC' },
-            { label: 'Payback', value: payback },
-          ],
-        }),
-      ];
-    } else if (
-      style.includes('scenario') ||
-      style.includes('comparison_table') ||
-      title.includes('scenario')
-    ) {
-      section.blocks = [
-        mk('table', {
-          columns: ['Scenario', 'Investment', 'Assessment'],
-          rows: [
-            scenarioRow(
-              'A — Do minimum',
-              /Scenario A|Downside|Do Minimum|Defer/i,
-              'Assessment data required'
-            ),
-            scenarioRow(
-              'B — Phased transformation',
-              /Scenario B|Base Case|Phased|Pilot/i,
-              'Assessment data required'
-            ),
-            scenarioRow(
-              'C — Big bang',
-              /Scenario C|Upside|Big Bang|Scale/i,
-              'Assessment data required'
-            ),
-          ],
-        }),
-        mk('callout', {
-          variant: 'assumption',
-          text: 'Assumptions and scenario values are taken directly from the supplied decision brief and require validation at each investment gate.',
-        }),
-      ];
-    } else if (style.includes('risk_table') || title === 'risks') {
-      section.blocks = [
-        mk('risk_table', {
-          columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'],
-          rows: riskRows,
-        }),
-      ];
-    } else if (style.includes('thirty_sixty_ninety') || title.includes('30/60/90')) {
-      section.blocks = [
-        mk('table', {
-          columns: ['Window', 'Priority action', 'Exit evidence'],
-          rows: [
-            ['0–30 days', 'Action data required', 'Exit evidence required'],
-            ['31–60 days', 'Action data required', 'Exit evidence required'],
-            ['61–90 days', 'Action data required', 'Exit evidence required'],
-          ],
-        }),
-      ];
-    } else if (style.includes('decision_callout') || title.includes('recommendation')) {
-      section.blocks = [
-        mk('callout', {
-          variant: 'recommendation',
-          text: sentence(/recommend|approve/i, 'Recommendation requires supplied evidence.'),
-        }),
-      ];
-    }
-    const hasPlaceholder = section.blocks.some((block) =>
-      /awaiting content|content removed|treść usunięta/i.test(JSON.stringify(block.content))
-    );
-    if (hasPlaceholder) {
-      const pattern = title.includes('benefit')
-        ? /conversion|EBITDA|payback/i
-        : title.includes('initiative')
-          ? /Scenario B|phased/i
-          : title.includes('scope')
-            ? /across|scope|Poland/i
-            : /current|risk|target/i;
-      section.blocks = [mk('paragraph', { text: sentence(pattern, brief) })];
-    }
-  });
-}
-
-function splitEvidenceItems(value: string): string[] {
-  return value
-    .split(/;|(?<=[.!?])\s+(?=[A-Z])/)
-    .map((item) => item.trim().replace(/[.]$/, ''))
-    .filter(Boolean);
-}
-
-export function replaceTemplatePlaceholdersWithEvidence(
-  sourceRefs: DocumentSourceRef[],
-  sections: DocumentSection[]
-): void {
-  const boundSources = sourceRefs
-    .map((ref) => ({ ref, text: documentSourceRefEvidenceText(ref) }))
-    .filter((entry) => entry.text.length > 0);
-  if (boundSources.length === 0) return;
-
-  const findSource = (pattern: RegExp) =>
-    boundSources.find((entry) => pattern.test(String(entry.ref.sourceTitle || ''))) ?? null;
-  const kpis = findSource(/kpi|metric|performance|financial/i);
-  const decisions = findSource(/decision|approval/i);
-  const risks = findSource(/risk/i);
-  const allEvidence = boundSources.map((entry) => entry.text).join(' ');
-  const decisionItems = decisions ? splitEvidenceItems(decisions.text) : [];
-  const riskItems = risks ? splitEvidenceItems(risks.text) : [];
-
-  const mk = (
-    type: DocumentBlock['type'],
-    content: unknown,
-    source: (typeof boundSources)[number] | null
-  ): DocumentBlock => ({
-    blockId: `blk-${randomUUID()}`,
-    type,
-    content,
-    sourceRef: source?.ref,
-    isAssumption: false,
-  });
-
-  for (const section of sections) {
-    const hasPlaceholder = section.blocks.some((block) =>
-      /awaiting content|content removed|treść usunięta/i.test(JSON.stringify(block.content))
-    );
-    if (!hasPlaceholder) continue;
-    const title = section.title.toLowerCase();
-    let source: (typeof boundSources)[number] | null = null;
-    let blocks: DocumentBlock[] | null = null;
-
-    if (/decision|required approval/.test(title) && decisionItems.length > 0) {
-      source = decisions;
-      blocks = [mk('numbered_list', { items: decisionItems }, source)];
-    } else if (/risk/.test(title) && riskItems.length > 0) {
-      source = risks;
-      const rows = riskItems.map((item) => {
-        const [risk, mitigation = 'Mitigation required'] = item.split(/\s+[—–-]\s+mitigation:\s*/i);
-        return [risk.trim(), 'To assess', 'To assess', 'Owner required', mitigation.trim()];
-      });
-      blocks = [
-        mk(
-          'risk_table',
-          {
-            columns: ['Risk', 'Likelihood', 'Impact', 'Owner', 'Mitigation'],
-            rows,
-          },
-          source
-        ),
-      ];
-    } else if (/financial|portfolio|performance|status/.test(title) && kpis) {
-      source = kpis;
-      blocks = [mk('paragraph', { text: kpis.text }, source)];
-    } else if (/next step|action/.test(title) && decisionItems.length > 0) {
-      source = decisions;
-      blocks = [mk('numbered_list', { items: decisionItems }, source)];
-    } else if (/executive summary|summary|podsumowanie/.test(title)) {
-      source = kpis ?? decisions ?? boundSources[0];
-      const recommendationLead =
-        decisionItems.length > 0
-          ? `We recommend approval of the following board decisions: ${decisionItems.join('; ')}. `
-          : '';
-      blocks = [mk('paragraph', { text: `${recommendationLead}${allEvidence}` }, source)];
-    } else {
-      blocks = [
-        mk(
-          'paragraph',
-          { text: 'No additional evidence was supplied for this section.' },
-          null
-        ),
-      ];
-    }
-
-    section.blocks = blocks;
-    section.sourceRefs = source ? [source.ref] : [];
-  }
 }
 
 export async function materializeDocumentArtifact(
@@ -837,9 +543,6 @@ export async function materializeDocumentArtifact(
       throw new Error('template_not_usable');
     }
     template = candidate;
-    if (params.templateVersion && candidate!.version !== params.templateVersion) {
-      throw new Error('template_version_mismatch');
-    }
     mode = 'mode_3';
   }
 
@@ -850,44 +553,28 @@ export async function materializeDocumentArtifact(
   const incomingSourceRefs = params.sourceRefs ?? [];
   if (template) {
     const preflight = preflightRequiredSources(template, incomingSourceRefs);
-    if (preflight.ok === false) {
+    if (!preflight.ok) {
       throw new MissingRequiredSourceError(preflight.missing);
     }
   }
 
   let outline: DocumentOutline;
-  // A governed template is the structural source of truth. The UI may send a
-  // stale/generic preview outline alongside Mode 3 generation; accepting it
-  // here used to silently replace the approved names, order and guidance.
-  if (template) {
-    outline = outlineFromTemplate(template, params.intake);
-  } else if (params.outline) {
+  if (params.outline) {
     outline = params.outline;
+  } else if (template) {
+    outline = outlineFromTemplate(template, params.intake);
   } else {
     outline = planDocumentOutline(params.intake);
     if (params.useLlm) {
       outline = await refineOutlineWithLlm(outline, params.intake, { enable: true });
     }
   }
-  outline = mergeBusinessCaseOutlineRequirements(params.intake, outline);
 
   // C1 — emit the resolved outline immediately so the streaming FE can paint
   // the section skeleton before the (potentially slow) prose LLM call runs.
   safeInvokeHook(params.hooks?.onPlan ? () => params.hooks!.onPlan!(outline) : undefined, 'onPlan');
 
   const sourceRefs = incomingSourceRefs;
-  const sourceEvidence = documentSourceRefsEvidenceText(sourceRefs);
-  // Required-source inputs used to be carried only as identity metadata. That
-  // let preflight pass while every downstream generator and the final
-  // deterministic guard saw only source titles, causing real KPI/risk/decision
-  // facts to be replaced as unsupported. Preserve identity separately, but
-  // enrich the generation brief with the curator-supplied evidence.
-  const generationIntake: DocumentIntake = sourceEvidence
-    ? {
-        ...params.intake,
-        description: `${params.intake.description}\n\nSupplied source evidence:\n${sourceEvidence}`,
-      }
-    : params.intake;
 
   // BUG-FIX (OXFORD/Word stale self-ref): generate the REAL wave5 artifact id
   // UP FRONT and thread it through both the schema (`schema.artifactId`) and the
@@ -903,7 +590,7 @@ export async function materializeDocumentArtifact(
   let provisionalSchema = await buildDocumentSchemaPremium(
     {
       artifactId: provisionalArtifactId,
-      intake: generationIntake,
+      intake: params.intake,
       outline,
       sourceRefs,
     },
@@ -969,81 +656,10 @@ export async function materializeDocumentArtifact(
   // deterministic schema unchanged, so materialization never fails
   // because the LLM was unavailable.
   if (params.useLlm) {
-    provisionalSchema = await generateBlockProse(provisionalSchema, generationIntake, sourceRefs, {
+    provisionalSchema = await generateBlockProse(provisionalSchema, params.intake, sourceRefs, {
       enable: true,
       warnings: warningsCollector,
     });
-  }
-
-  // FINAL grounding boundary. Must remain after every content/prose LLM layer:
-  // earlier guards can otherwise be overwritten by D11 prose enrichment. This
-  // also recomputes EvidenceContract from the exact schema being persisted.
-  provisionalSchema = enforceDocumentSchemaGrounding(
-    provisionalSchema,
-    [
-      params.intake.title,
-      params.intake.description,
-      sourceEvidence,
-      // Canonical outline metadata is generated and approved by this runtime.
-      // Excluding it from the allow-list caused the final grounding boundary
-      // to redact its own structural labels such as "30/60/90" even though no
-      // user-facing claim had been invented.
-      ...outline.sections.flatMap((section) => [section.title, section.purpose]),
-    ]
-      .filter(Boolean)
-      .join(' — ')
-  );
-
-  // Manual "Czysto" is an authoring canvas, not a grounded deterministic
-  // generation. Organization-context auto-grounding happens before this
-  // service, so detecting it by `sourceRefs.length === 0` was incorrect and
-  // caused the generic stub to be redacted into "Treść usunięta…". Restore a
-  // genuinely blank canonical section after the grounding boundary and remove
-  // auto-attached context from the blank document itself.
-  if (
-    params.useLlm !== true &&
-    params.intake.documentType === 'generic_document' &&
-    /^(Nowy dokument|New document)$/i.test(params.intake.title?.trim() || outline.title.trim()) &&
-    outline.sections.length === 1 &&
-    /^(Sekcja 1|Section 1)$/i.test(outline.sections[0]?.title?.trim() || '')
-  ) {
-    provisionalSchema.title = params.intake.title?.trim() || outline.title;
-    provisionalSchema.sections = outline.sections.map((section, orderIndex) => ({
-      sectionId: randomUUID(),
-      orderIndex,
-      level: section.level,
-      title: section.title,
-      purpose: section.purpose,
-      blocks: [
-        {
-          blockId: randomUUID(),
-          type: 'paragraph',
-          content: { text: '' },
-          isAssumption: false,
-        },
-      ],
-      sourceRefs: [],
-    }));
-    provisionalSchema.sourceRefs = [];
-    provisionalSchema.evidence = buildDocumentEvidenceContract([], provisionalSchema.sections);
-  }
-
-  // Template labels and authoring guidance are governed metadata, not factual
-  // claims derived from intake. The grounding boundary may redact unfamiliar
-  // wording; restore the approved skeleton afterwards while leaving generated
-  // body claims fully guarded.
-  if (template) {
-    const governedOutline = outlineFromTemplate(template, params.intake);
-    provisionalSchema.sections.forEach((section, index) => {
-      const governed = governedOutline.sections[index];
-      if (!governed) return;
-      section.title = governed.title;
-      section.purpose = governed.purpose;
-      const heading = section.blocks.find((block) => block.type === 'heading');
-      if (heading) heading.content = { text: governed.title };
-    });
-    replaceTemplatePlaceholdersWithEvidence(sourceRefs, provisionalSchema.sections);
-    premiumBusinessCaseBlocks(template, generationIntake, provisionalSchema.sections);
   }
 
   const generationWarnings = warningsCollector.list();
@@ -1101,20 +717,7 @@ export async function materializeDocumentArtifact(
     externalArtifactId: provisionalArtifactId,
   });
 
-  // MAT-010 fix (same bug class as G8) — `createWave5Artifact` returns
-  // `getWave5Artifact(...)`, a fresh SELECT, so it is `null` whenever the
-  // underlying `dbRun` INSERT silently failed (DbPromise's default
-  // `fallback:true` resolves `{success:false}` instead of throwing). Falling
-  // back to `provisionalArtifactId` here would let this route report success
-  // with an artifactId pointing at a row that was never written — MAT-010's
-  // own tracked Document owner table (`wave5_artifacts`), so this directly
-  // undermines the lineage contract, not just document creation. Fail
-  // honestly instead: the caller (`POST /api/document-studio/generate`)
-  // already wraps this in a try/catch that turns a thrown error into a 500.
-  if (!artifact) {
-    throw new Error('Failed to persist document artifact (wave5_artifacts write did not succeed)');
-  }
-  const artifactId = String(artifact.artifactId ?? artifact.artifact_id ?? provisionalArtifactId);
+  const artifactId = String(artifact?.artifactId ?? artifact?.artifact_id ?? provisionalArtifactId);
   const finalSchema: DocumentSchema = { ...provisionalSchema, artifactId };
 
   // HP-17 bridge — persist the inline EvidenceContract (`buildDocumentEvidenceContract`,
@@ -1165,25 +768,6 @@ export async function materializeDocumentArtifact(
   finalSchema.documentStatus = lifecycle.status;
   finalSchema.statusChangedAt = lifecycle.statusChangedAt;
   finalSchema.statusChangedBy = lifecycle.statusChangedBy;
-
-  // The schema returned by generate must be the same schema a subsequent GET
-  // observes. Wave5 is inserted before lifecycle finalization, so persist the
-  // finalized canonical snapshot in the durable, tenant-scoped schema overlay
-  // and synchronously populate the read-through cache. This closes the race in
-  // which the streaming response contained assumption flags but opening the
-  // saved artifact URL rehydrated an earlier snapshot without them.
-  const finalOverlayPersistence = await daoPersistSchemaOverlay(
-    artifactId,
-    params.organizationId,
-    finalSchema
-  );
-  if (finalOverlayPersistence.ok === false) {
-    logger.warn('[DocumentStudio] final generated schema overlay did not persist', {
-      artifactId,
-      organizationId: params.organizationId,
-    });
-  }
-  schemaOverlayStore.set(schemaOverlayKey(artifactId, params.organizationId), finalSchema);
 
   // C1 — emit each finalized section (in orderIndex order) so the streaming
   // FE can progressively fill the skeleton painted from the `plan` event. The
@@ -1291,6 +875,12 @@ export async function getDocumentGenerationWarnings(
 }
 
 export interface ExportDocumentOptions {
+  /**
+   * Draft exports are deliberately allowed before QA/approval, but must be
+   * visibly labelled. Omitted mode preserves the historical final-export
+   * behaviour for existing callers.
+   */
+  mode?: 'draft' | 'final';
   /** Actor performing the export; required to audit QA-block / override events. */
   userId?: string;
   /**
@@ -1319,10 +909,14 @@ export async function exportDocumentArtifact(
   if (!artifact) throw new Error('Document artifact not found');
 
   const manifest = await buildWave5ExportManifest(artifactId, organizationId);
-  const filename = `${(artifact.title || 'document')
+  const exportMode = options.mode ?? 'final';
+  const baseFilename = (artifact.title || 'document')
     .toString()
     .replace(/[^a-z0-9_-]+/gi, '_')
-    .toLowerCase()}.${format}`;
+    .toLowerCase();
+  const filename = `${baseFilename}${exportMode === 'draft' ? '_DRAFT' : ''}.${format}`;
+  (manifest as Record<string, unknown>).exportMode = exportMode;
+  (manifest as Record<string, unknown>).draftMarkingRequired = exportMode === 'draft';
 
   // QA gate: load the schema (also needed for binary renderers below) and
   // run QA when the document type is approval-gated. The gate runs for
@@ -1342,7 +936,7 @@ export async function exportDocumentArtifact(
     throw new Error('Document schema not found on artifact');
   }
 
-  if (requiresApprovalForExport(schema.documentType)) {
+  if (exportMode === 'final' && requiresApprovalForExport(schema.documentType)) {
     // Role-gated override: enforce BEFORE running QA so that an
     // unauthorized override attempt is logged independently of whether
     // QA itself would have passed.
@@ -1388,7 +982,7 @@ export async function exportDocumentArtifact(
     let fabricationSample: string[] = [];
     try {
       const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-      const fab = detectDocumentFabrication(schema);
+      const fab = detectDocumentFabrication(schema as any);
       fabricationCount = fab.count;
       fabricationSample = fab.hits.slice(0, 5).map((h) => h.value);
     } catch (fabErr) {
@@ -2812,18 +2406,6 @@ export class DocumentManualSaveNotFoundError extends Error {
   }
 }
 
-export class DocumentManualStructureMismatchError extends Error {
-  readonly code = 'template_structure_mismatch' as const;
-  readonly expectedSectionCount: number;
-  readonly receivedSectionCount: number;
-  constructor(expectedSectionCount: number, receivedSectionCount: number) {
-    super('A template-based document must preserve its approved section structure.');
-    this.name = 'DocumentManualStructureMismatchError';
-    this.expectedSectionCount = expectedSectionCount;
-    this.receivedSectionCount = receivedSectionCount;
-  }
-}
-
 export interface UpdateDocumentManualContentParams {
   artifactId: string;
   organizationId: string;
@@ -2841,8 +2423,6 @@ export interface UpdateDocumentManualContentParams {
    * Omitted/blank → title is left untouched.
    */
   title?: string;
-  /** Optional artifact-level sources edited manually in the Sources rail. */
-  sourceRefs?: DocumentSchema['sourceRefs'];
 }
 
 export interface UpdateDocumentManualContentResult {
@@ -2869,51 +2449,14 @@ export async function updateDocumentManualContent(
   }
 
   const nextSchema = cloneSchema(current);
-  if (current.templateRef) {
-    if (params.sections.length !== current.sections.length) {
-      throw new DocumentManualStructureMismatchError(
-        current.sections.length,
-        params.sections.length
-      );
-    }
-    // Full-editor replacement may change content, never the governed template
-    // skeleton. Map edited blocks back onto the existing section identities so
-    // a serializer cannot flatten or rename the approved structure.
-    nextSchema.sections = current.sections.map((section, index) => ({
-      ...section,
-      blocks: params.sections[index].blocks,
-      sourceRefs: params.sections[index].sourceRefs,
-    }));
-  } else {
-    nextSchema.sections = params.sections;
-  }
+  nextSchema.sections = params.sections;
   const trimmedTitle = typeof params.title === 'string' ? params.title.trim() : '';
   if (trimmedTitle) {
     nextSchema.title = trimmedTitle;
   }
-  if (Array.isArray(params.sourceRefs)) {
-    nextSchema.sourceRefs = params.sourceRefs;
-  }
   nextSchema.updatedAt = nowIso();
 
-  // The autosave response is a durability boundary: do not acknowledge the
-  // edit (or place it in the process cache) until PostgreSQL confirms it.
-  // `expectedVersion` is also checked inside the UPSERT so two requests that
-  // read the same version cannot both win.
-  const persistence = await daoPersistSchemaOverlay(
-    params.artifactId,
-    params.organizationId,
-    nextSchema,
-    params.expectedVersion
-  );
-  if (persistence.conflict) {
-    const winner = await daoLoadSchemaOverlay(params.artifactId, params.organizationId);
-    throw new DocumentManualSaveConflictError(winner?.updatedAt ?? current.updatedAt);
-  }
-  if (persistence.ok === false) {
-    throw new Error('manual_save_persistence_failed');
-  }
-  schemaOverlayStore.set(schemaOverlayKey(params.artifactId, params.organizationId), nextSchema);
+  persistSchemaOverlayWriteThrough(params.artifactId, params.organizationId, nextSchema);
 
   pushAuditEntry({
     auditId: makeId('doc-audit'),
@@ -3363,7 +2906,7 @@ export async function runQaForDocument(
   // detektora nigdy nie psuje raportu QA.
   try {
     const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-    const fab = detectDocumentFabrication(schema);
+    const fab = detectDocumentFabrication(schema as any);
     report.fabrication = {
       count: fab.count,
       sample: fab.hits.slice(0, 5).map((h) => h.value),

@@ -178,10 +178,12 @@ import {
   DocumentApprovalError,
   type DocumentApprovalErrorCode,
   ensureApprovalRegistryHydrated,
+  flushApprovalPersistence,
   getActiveApprovalForArtifact,
   getApproval,
   listDocumentApprovalAuditEntries,
   listDocumentApprovals,
+  markDocumentApprovalsStaleForVersionChange,
   recordApprovalDecision,
   requestDocumentApproval,
 } from '../services/documentStudio/documentApprovalService.js';
@@ -409,6 +411,7 @@ import { removeTemplateArtifactByOrigin } from '../services/v8/artifactRegistryS
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import logger from '../utils/Logger.js';
 import { retryWithBackoff } from '../utils/retryWithBackoff.js';
 
@@ -3214,6 +3217,19 @@ const VALID_APPROVAL_DECISION_KINDS: ReadonlyArray<DocumentApprovalDecisionKind>
   'request_changes',
 ];
 
+function withApprovalCurrentness(
+  approval: ReturnType<typeof getApproval> extends infer T ? Exclude<T, null> : never,
+  currentVersionId: string
+) {
+  const currentForVersion = approval.versionId === currentVersionId;
+  return {
+    ...approval,
+    currentForVersion,
+    effectiveStatus:
+      approval.status === 'approved' && !currentForVersion ? ('stale' as const) : approval.status,
+  };
+}
+
 function mapApprovalErrorToStatus(code: DocumentApprovalErrorCode): number {
   switch (code) {
     case 'invalid_input':
@@ -3225,6 +3241,7 @@ function mapApprovalErrorToStatus(code: DocumentApprovalErrorCode): number {
     case 'decision_already_recorded':
       return 409;
     case 'reviewer_not_participant':
+    case 'self_approval_forbidden':
     case 'forbidden':
       return 403;
     default:
@@ -3267,7 +3284,14 @@ router.get(
       statusRaw && VALID_APPROVAL_STATUSES.includes(statusRaw as DocumentApprovalStatus)
         ? (statusRaw as DocumentApprovalStatus)
         : undefined;
-    const approvals = listDocumentApprovals(organizationId, { artifactId, status });
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    const approvals = listDocumentApprovals(organizationId, { artifactId, status }).map((approval) =>
+      withApprovalCurrentness(approval, schema.updatedAt)
+    );
     res.json({ approvals });
   })
 );
@@ -3286,6 +3310,11 @@ router.post(
       return;
     }
     await ensureApprovalRegistryHydrated(organizationId, artifactId);
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
     const body = (req.body ?? {}) as Record<string, unknown>;
     const participants = parseApprovalParticipants(body.participants);
     const quorumPolicyRaw = typeof body.quorumPolicy === 'string' ? body.quorumPolicy : undefined;
@@ -3298,11 +3327,16 @@ router.post(
       const approval = requestDocumentApproval({
         organizationId,
         artifactId,
+        versionId: schema.updatedAt,
         userId,
         participants,
         quorumPolicy,
         reason: typeof body.reason === 'string' ? body.reason : undefined,
       });
+      if (!(await flushApprovalPersistence(organizationId, approval.approvalId))) {
+        res.status(503).json({ error: 'approval_persistence_failed' });
+        return;
+      }
       res.status(201).json({ approval });
     } catch (err) {
       if (err instanceof DocumentApprovalError) {
@@ -3363,7 +3397,12 @@ router.get(
       res.status(404).json({ error: 'approval_not_found' });
       return;
     }
-    res.json({ approval });
+    const schema = await getDocumentArtifact(artifactId, organizationId);
+    if (!schema) {
+      res.status(404).json({ error: 'document_not_found' });
+      return;
+    }
+    res.json({ approval: withApprovalCurrentness(approval, schema.updatedAt) });
   })
 );
 
@@ -3402,6 +3441,10 @@ router.post(
         kind: kindRaw as DocumentApprovalDecisionKind,
         comment: typeof body.comment === 'string' ? body.comment : undefined,
       });
+      if (!(await flushApprovalPersistence(organizationId, approval.approvalId))) {
+        res.status(503).json({ error: 'approval_persistence_failed' });
+        return;
+      }
       res.status(201).json({ approval });
     } catch (err) {
       if (err instanceof DocumentApprovalError) {
@@ -3442,6 +3485,10 @@ router.post(
         userId,
         reason,
       });
+      if (!(await flushApprovalPersistence(organizationId, approval.approvalId))) {
+        res.status(503).json({ error: 'approval_persistence_failed' });
+        return;
+      }
       res.json({ approval });
     } catch (err) {
       if (err instanceof DocumentApprovalError) {
@@ -4633,7 +4680,6 @@ router.put(
           ? (body.sourceRefs as DocumentSchema['sourceRefs'])
           : undefined,
       });
-
       // MAT-010 lineage hook (fail-safe). The Document type's real
       // version-producing route (durable content save with a compare-and-swap
       // on `expectedVersion`). Recorded only past that guard —
@@ -4658,6 +4704,20 @@ router.put(
       });
       if (respondIfLineageLost(res, versionOutcome)) return;
 
+      const staleApprovalIds = markDocumentApprovalsStaleForVersionChange({
+        organizationId,
+        artifactId,
+        previousVersionId: body.expectedVersion,
+        currentVersionId: result.schema.updatedAt,
+        actorId: userId,
+      });
+      const staleAuditPersisted = await Promise.all(
+        staleApprovalIds.map((approvalId) => flushApprovalPersistence(organizationId, approvalId))
+      );
+      if (staleAuditPersisted.some((persisted) => !persisted)) {
+        res.status(503).json({ error: 'approval_stale_audit_persistence_failed' });
+        return;
+      }
       res.json({ schema: result.schema });
     } catch (err) {
       if (err instanceof DocumentManualSaveNotFoundError) {
@@ -4710,15 +4770,53 @@ router.get(
       return;
     }
     const format = formatRaw as 'markdown' | 'docx' | 'pdf';
+    const modeRaw = typeof req.query.mode === 'string' ? req.query.mode.toLowerCase() : null;
+    if (modeRaw !== null && modeRaw !== 'draft' && modeRaw !== 'final') {
+      res.status(400).json({ error: 'unsupported_export_mode' });
+      return;
+    }
+    const exportMode = modeRaw as 'draft' | 'final' | null;
     const qaOverride = req.query.qaOverride === 'true' || req.query.qaOverride === '1';
     const { userRole } = getAuthContext(req as AuthRequest);
 
     try {
+      // Explicit v2 final exports require a current approval. Calls without a
+      // mode retain the historical endpoint contract during staged rollout.
+      if (exportMode === 'final') {
+        const schema = await getDocumentArtifact(artifactId, organizationId);
+        if (!schema) {
+          res.status(404).json({ error: 'document_not_found' });
+          return;
+        }
+        const approvalCurrentForVersion = listDocumentApprovals(organizationId, {
+          artifactId,
+          status: 'approved',
+        }).some((approval) => approval.versionId === schema.updatedAt);
+        const policy = evaluateArtifactExportPolicy({
+          mode: 'final',
+          channel: 'download',
+          classification: schema.confidentiality === 'public' ? 'public' : 'internal',
+          criticalQaFindings: 0,
+          approvalCurrentForVersion,
+        });
+        if (!policy.allowed) {
+          res.status(409).json({
+            error: 'artifact_export_blocked',
+            code: 'ARTIFACT_EXPORT_BLOCKED',
+            mode: 'final',
+            blocks: policy.blocks,
+          });
+          return;
+        }
+      }
       const result = await exportDocumentArtifact(artifactId, organizationId, format, {
         userId,
         userRole,
         qaOverride,
+        ...(exportMode ? { mode: exportMode } : {}),
       });
+      res.setHeader('X-Artifact-Export-Mode', exportMode ?? 'legacy-final');
+      if (exportMode === 'draft') res.setHeader('X-Artifact-Draft', 'true');
       if (format === 'docx' || format === 'pdf') {
         await reportsPresModelService
           .recordCompletedExport(artifactId, organizationId, format, userId)
@@ -5513,6 +5611,21 @@ router.post(
         const document = await getDocumentArtifact(artifactId, organizationId);
         if (!document) {
           res.status(404).json({ error: 'document_not_found' });
+          return;
+        }
+        const publicLinkPolicy = evaluateArtifactExportPolicy({
+          mode: 'draft',
+          channel: 'public_link',
+          classification: document.confidentiality === 'public' ? 'public' : 'internal',
+          criticalQaFindings: 0,
+          approvalCurrentForVersion: false,
+        });
+        if (!publicLinkPolicy.allowed) {
+          res.status(409).json({
+            error: 'public_link_classification_blocked',
+            code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+            blocks: publicLinkPolicy.blocks,
+          });
           return;
         }
         const link = await createShareLinkDurable({

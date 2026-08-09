@@ -899,7 +899,7 @@ export function rawCellToEditText(cell: FormulaCellRaw | undefined): string {
 }
 
 /** Tekst wyświetlany w komórce siatki (wynik obliczony, nie formuła). */
-export function formatComputedForDisplay(cell: ComputedCell | undefined): string {
+export function formatComputedForDisplay(cell: ComputedCell | undefined, numberFormat?: string): string {
   if (!cell) return '';
   if (cell.error) return cell.error;
   const v = cell.computed;
@@ -907,6 +907,25 @@ export function formatComputedForDisplay(cell: ComputedCell | undefined): string
   if (typeof v === 'boolean') return v ? 'PRAWDA' : 'FAŁSZ';
   if (typeof v === 'number') {
     if (!Number.isFinite(v)) return '#LICZBA!';
+    const format = numberFormat?.trim();
+    if (format && format.toLowerCase() !== 'general') {
+      const decimalPattern = format.split(';')[0] ?? format;
+      const decimalMatch = decimalPattern.match(/[.,](0+)/);
+      const fractionDigits = decimalMatch?.[1]?.length ?? 0;
+      const options: Intl.NumberFormatOptions = {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+        useGrouping: /[#0][ ,.]##0/.test(decimalPattern),
+      };
+      if (decimalPattern.includes('%')) {
+        return v.toLocaleString('pl-PL', { ...options, style: 'percent' });
+      }
+      const currency = decimalPattern.match(/(?:^|\s)(PLN|EUR|USD|GBP)(?:\s|$)/i)?.[1]?.toUpperCase();
+      if (currency) {
+        return v.toLocaleString('pl-PL', { ...options, style: 'currency', currency });
+      }
+      return v.toLocaleString('pl-PL', options);
+    }
     const rounded = Math.round(v * 100) / 100;
     return rounded.toLocaleString('pl-PL', { maximumFractionDigits: 2 });
   }
