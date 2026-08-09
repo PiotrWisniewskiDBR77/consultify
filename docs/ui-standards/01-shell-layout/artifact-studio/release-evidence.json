@@ -3,8 +3,8 @@
   "program": "Artifact Studio DOC/PPT/XLSX release evidence",
   "candidate": {
     "baseSha": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
-    "implementationSha": "6654cde039112dead7911e1fcab1b618ffed4ac1",
-    "evidenceSha": "5758d3b92f8e869ecde9481bdc9902cfdb1eabcf",
+    "implementationSha": "2fb925160bd357477c937ab142bb4ff97424cefe",
+    "evidenceSha": "2fb925160bd357477c937ab142bb4ff97424cefe",
     "branch": "codex/sync-demo-20260729"
   },
   "checks": {
