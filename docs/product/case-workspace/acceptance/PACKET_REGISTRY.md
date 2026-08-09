@@ -41,7 +41,7 @@ authorize packets to start.
 | Packet | Epic | Depends on | Reuse basis (KEEP/EXTEND) | New work (CREATE/ADAPT) | Requirement rows |
 | --- | --- | --- | --- | --- | --- |
 | CW-P00 | E0 | — | this registry + convergence map | dependency graph, evidence ledgers | (this document) |
-| CW-P01 | E1 | E0 | `projects` table + CRUD router (EXTEND); `currentProjectId` global store threading (KEEP) | Case profile/governance-tier fields; retire `projects.routes.ts` phantom stub | 155 (canon-modes-ux) |
+| CW-P01 | E1 | E0 | `projects` table + CRUD router (EXTEND, read-only reference); `currentProjectId` global store threading (KEEP) | `case_core` table (new, 1:1 keyed to `projects.id`) + `caseCoreService.ts`, 9 methods — **IMPLEMENTED, migration+esbuild verified**, commit `81e65dc2ab` | 155 (canon-modes-ux) |
 | CW-P02 | E2 | E1 | migration 672 plan/step shape as a reference (EXTEND, not reused as-is); `outputsTransactionalRegistry.ts` idempotent-registration pattern (ADAPT) | CasePlanVersion immutability, digest, diff/replan, branching | 119 (domain-graph-capabilities) |
 | CW-P03 | E3 | E0 | `toolGovernanceService.ts`/`toolGovernance.ts` (EXTEND, strongest foundation); `CommandBus.ts` (EXTEND); `toolChainExecutor.ts` DAG executor (KEEP) | Consolidate the 3 duplicate command-creation paths onto one Capability Registry; resolve the 4-way "capability" naming collision before scoping | subset of 119 |
 | CW-P04 | E4 | E2, E3 | `v8_execution_runs` (KEEP, already the Run entity); `v8_agent_work_graphs`/`v8_agent_branch_tasks` (KEEP, already NodeRun); `agentOperatorConsoleService.ts` (KEEP, recovery already exists) | CasePlanVersion binding (CREATE — does not exist); pre-E4 hand-port of `v8-full-done`'s 3 commits (session task #8) | 29 (authority-v8-runtime) |
@@ -69,6 +69,31 @@ authorize packets to start.
 
 Both are flagged here as scope questions for whoever reviews packet CW-P01/
 CW-P03 before they start — not resolved unilaterally in this registry.
+
+## CW-P01 (E1 Case Core) — design decisions accepted 2026-08-09
+
+The implementing agent flagged six open questions rather than silently
+deciding them (full text in commit `81e65dc2ab` and the workflow journal).
+Coordinator resolutions, per the autonomous-decision policy (ordinary
+reversible engineering judgment, not owner-escalation-worthy):
+
+1. **caseId vs projectId at the API boundary** — accepted as designed
+   (`case_id` is the real PK, decoupled from `project_id`). Deferred: how the
+   future API/frontend exposes this is an E7/API-layer decision, moot while
+   UI is paused at W2-V0.
+2. **`contracted_closure_type` NOT NULL at creation** — accepted; matches
+   canon section 7's confirmation-contract timing literally.
+3. **Loose TEXT pointer columns pending E6/CasePlanVersion** — accepted,
+   correctly deferred; tracked here so a later packet adds the FK instead of
+   silently leaving it loose forever.
+4. **`governance_tier_history` as JSON column vs. dedicated table** —
+   accepted for now (single-table constraint was explicit in the packet
+   brief); revisit if query volume ever needs it.
+5. **`recordClosure` cross-check as service-layer-only, no DB CHECK** —
+   accepted; defense-in-depth CHECK constraint can be added later without a
+   breaking migration.
+6. **Autonomy-ceiling enforcement blocked on E6** — accepted as a known,
+   tracked gap, not this packet's job.
 
 ## Status of this registry
 
