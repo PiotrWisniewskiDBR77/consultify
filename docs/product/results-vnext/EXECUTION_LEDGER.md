@@ -1806,3 +1806,162 @@ endpointów z brief'u zaimplementowane dosłownie zgodnie z sygnaturami
 repository/command warstwy z §27. Poza zakresem: żaden — to był ostatni
 brakujący pakiet KPI-E005 (§A–§D w pełni zamknięte: mechanika §27, API §28).
 
+## 29. KPI-E006 Teresa & Governance — implementacja 4 pakietów (2026-08-09)
+
+Zaimplementowano `KPI_E006_TERESA_DESIGN.md` w 4 osobnych commitach (Canon →
+Migracja → Handler → Testy), zgodnie z §E. Teresa dostaje trzeci governed
+handoff (po `initiatives`/`interview` w duchu, nowy w literze): doradca KPI
+z trzema trybami — `draft_quality_review` (KPI-F-027, tworzy/edytuje
+`draft` KPI przez `createKpiDraft`/`editDraft`), `check_in_manager_brief`
+(KPI-F-028, czysty odczyt z re-weryfikacją widoczności W MOMENCIE
+wykonania, nie ufa payloadowi sprzed minut), `reflection_rca` (KPI-F-030,
+`submitRootCause` z prawdziwym `userId` jako aktorem — nigdy sentinel
+`'teresa'`, bo `approvePlan`'s self-approval gate porównuje po tym polu).
+
+**Pakiet 1 (Canon)**: `teresaCopilotCanon.ts` — 6 nowych typów
+(`ResultsKpiAdvisorMode`/`ResultsKpiEvidenceBreakdown`/
+`KpiDraftQualityReviewPayload`/`KpiCheckInManagerBriefPayload`/
+`KpiReflectionRcaPayload`/`ResultsKpiHandoffContext`), wpis `kpi:` w
+`P08_HANDOFF_TARGETS`, `'kpi'` dopisane na KOŃCU `P08_HANDOFF_TARGET_MODULES`
+(9 istniejących nietknięte), `P08_KPI_FORBIDDEN_VERBS` (11 zabronionych
+czasowników udokumentowanych jako stała).
+
+**Pakiet 2 (Migracja)**: `20260814_rvn_teresa_kpi_handoff_results.sql` —
+**odkrycie sprzeczne z założeniem projektu**: `teresa_handoff_results`
+(razem z `teresa_proposals`/`teresa_audit_log`, które projekt świadomie
+zostawia nietknięte) JUŻ MA realną migrację —
+`20260719_baseline_gap.sql` (catch-up snapshot z 2026-07-19, `create table
+if not exists "public"."teresa_handoff_results"` z identycznym schematem co
+`ensureTeresaTables()`). Projekt tego nie wiedział. Migracja napisana mimo
+to (zgodnie z briefem zadania) jako samodzielny, idempotentny no-op —
+`CREATE TABLE IF NOT EXISTS` dopasowany kolumna-w-kolumnę do runtime'owego
+kształtu (`TEXT created_at`, nullable `result_ref` — NIE `TIMESTAMPTZ`/`NOT
+NULL` z draftu projektu), z osobnym `DO $$ ... $$` sprawdzającym istnienie
+`teresa_proposals` przed dodaniem FK (żeby migracja przeszła też samodzielnie
+na bazie bez `20260719_baseline_gap.sql`). Zweryfikowane na efemerycznym
+Postgresie 16 (`initdb --locale=C`, TCP `127.0.0.1:28471/28472`,
+`/private/tmp`): idempotencja ×2, ścieżka dołączenia FK po utworzeniu
+`teresa_proposals`, czysty apply na szczycie realnego łańcucha migracji tej
+gałęzi (`20260809_rvn_platform_*` ×4 + `20260810`–`20260813`, z wyjątkiem
+`20260813_rvn_kpi_initiative_impacts.sql` — nie dotyczy tego pakietu,
+wymaga osobnej fixture `initiatives`, dodanej osobno do pełnego przebiegu
+regresji niżej).
+
+**Pakiet 3 (Handler)**: `teresaCopilotService.ts` — dokładnie 4 importy z
+`resultsVnext/kpi/` (`createKpiDraft, editDraft as editKpiDraft`,
+`submitRootCause`, `getKpi, listKpis`, `getDeviationCase` — ostatni
+importowany zgodnie z zamrożoną 6-nazwową whitelistą §D, ale NIEUŻYWANY
+przez żaden z 3 handlerów, tak jak w kodzie źródłowym projektu), `case
+'kpi':` w `performHandoff`, `buildKpiDraftAdvisorContext` (eksportowany,
+uruchamiany PRZED `createProposal` — duplicate-risk lookup przez
+`listKpis()`), `handleResultsKpiHandoff` + 3 handlery trybów +
+`recordTeresaKpiHandoffResult`. **Decyzja #1 zastosowana**: pełny
+`EditDraftInput` przeczytany PRZED napisaniem edit-path — pole z draftu
+projektu (`editedBy`) NIE ISTNIEJE na prawdziwym interfejsie (prawdziwe pole
+to `actorUserId`) — poprawione, zero `as any` w handlerze. Dodatkowo
+jawny null-check na `KpiDefinition.currentDefinitionVersionId` (typ
+`string|null`) przed przekazaniem do `editDraft`'s nienullowalnego
+`definitionVersionId`, zamiast asercji `!`. **Decyzja #3 z jedną
+udokumentowaną dewiacją strukturalną**: projekt zakładał istniejący `switch
+(target_module)` w `undoProposal` do dopisania `case 'kpi':` — takiego
+switcha nie ma (jest pojedynczy `if (target_module !== 'excele')`
+blokujący WSZYSTKIE cele poza `excele` wspólnym kodem
+`P08_UNDO_UNSUPPORTED_TARGET`). Dodano osobny `if (target_module ===
+'kpi')` PRZED tym ogólnym sprawdzeniem, żeby zachować zamrożony przez
+projekt kod błędu `P08_UNDO_NOT_SUPPORTED` bez przebudowy przepływu dla
+pozostałych 9 celów. **Decyzja #5 zweryfikowana**: `actor_effective_role`/
+`actorEffectiveRole` zgrepowane w całym repo — wolny string wszędzie
+(`eventEnvelope.ts:37`, zero CHECK/enum/switch w `server/`/`tests/`) — użyto
+`'teresa_initiated'` bez dewiacji, zgodnie z oczekiwaniem projektu.
+
+**Pakiet 4 (Testy)** — 18 nowych testów, **215/215 PASS** razem ze 197
+istniejącymi testami KPI (`tests/resultsVnext` + `tests/v8/
+teresa-kpi-handoff.test.ts` + `server/src/routes/resultsVnext`, realny
+Postgres 16, `RUN_DB_TESTS=1` — patrz niżej dlaczego to konieczne):
+- `tests/resultsVnext/teresa-kpi-forbidden-verbs.test.ts` — **§D's własny
+  bash snippet jest fałszywy**: `grep ... # Expected: ZERO matches` nie
+  może być prawdą, skoro `P08_KPI_FORBIDDEN_VERBS` (string[] z tymi samymi
+  11 czasownikami) jest zadeklarowany w JEDNYM z dwóch grepowanych plików —
+  zweryfikowane wprost. Test implementuje realny niezmiennik zamiast: żaden
+  zabroniony czasownik nigdy nie jest IMPORTOWANY (jedyny mechanizm wywołania
+  w TS/JS) ani wywołany jako `verb(` w kodzie wykonywalnym (nie-komentarzu).
+- `tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts` (realDB) —
+  `executeProposal` dla `draft_quality_review` (create path) nigdy nie
+  zostawia `rvn_kpi_definitions.status != 'draft'`; `reflection_rca` →
+  `submitRootCause` z prawdziwym `userId` → `approvePlan` przez TEGO SAMEGO
+  usera nadal odrzucone przez `DeviationSelfApprovalDeniedError` (fixture
+  case z `created_by = ten sam user`, więc gate odpala przez `created_by`
+  nawet bez przechodzenia przez `submitPlan`).
+- `tests/v8/teresa-kpi-handoff.test.ts` (unit, mockowanie jak
+  `teresaHandoffTargets.failClosed.test.ts`) — happy path (3 tryby),
+  `STALE_VERSION` (edit path, `AtomicWriteConflictError` re-thrown, zero
+  receipt), brak widoczności w trybie 2 (`P08_KPI_VISIBILITY_STALE`),
+  duplicate-risk w trybie 1 (`buildKpiDraftAdvisorContext`), plus
+  `undoProposal`'s `P08_UNDO_NOT_SUPPORTED`.
+
+**Luka infrastrukturalna znaleziona i naprawiona (nie design, ale blokująca
+literalne wykonanie brief'u)**: `tests/v8/**` nie było w `vitest.config.ts`'s
+`include` — projekt PINuje `tests/v8/teresa-kpi-handoff.test.ts` jako
+ścieżkę, ale żaden wcześniejszy plik tam nie istniał (istniejące testy
+Teresy leżą w `server/src/services/v8/__tests__/`/`server/src/routes/v8/
+__tests__/`, oba już pokryte). Bez glob-a `npx vitest run tests/v8/...`
+dopasowuje zero testów NAWET z jawną ścieżką (pozycyjne ścieżki są
+przecinane z `include`, nie dodawane do niego — ten sam udokumentowany wzorzec
+co przy `tests/resultsVnext` w tym samym pliku). Dodano
+`'tests/v8/**/*.{test,spec}...'`.
+
+**Realna regresja znaleziona i naprawiona podczas weryfikacji (nie luka
+testowa cudza, tylko własna)**: `server/src/routes/v8/__tests__/
+p08-teresa-service.test.ts`'s §11 ma pętlę `for (const target of
+P08_HANDOFF_TARGET_MODULES)` generującą jeden test na cel z fixture'ów w
+lokalnej `payloadMap`. Dopisanie `'kpi'` do tej tablicy (Pakiet 1) karmi tę
+pętlę nowym przypadkiem bez fixture'a → `payloadMap['kpi']()` rzuca
+`TypeError`. Naprawione dopisaniem `buildKpiPayload()` +
+rejestracją w mapie. `'documents'`/`'presentations'` mają DOKŁADNIE tę samą
+lukę (potwierdzone identycznym zachowaniem z i bez tego pakietu, przez
+tymczasowy `git show <parent>:plik > plik` swap i re-run) — to PRZEDISTNIEJĄCY,
+niepowiązany dług, celowo nietknięty.
+
+**Metoda dowodu zero regresji (nie tylko liczby, realny diff)**: pełny
+zestaw testów Teresy (`teresaHandoffTargets.failClosed.test.ts` +
+`p08-teresa-canon.test.ts` + `p08-teresa-e2e-lifecycle.test.ts` +
+`p08-teresa-service.test.ts` + `p08-artifact-studio-teresa-bridge.test.ts` +
+`tests/acceptance/m01-p07b-teresa-handoff.realdb.test.ts`) uruchomiony
+DWUKROTNIE na tym samym efemerycznym Postgresie: raz z plikami
+`teresaCopilotService.ts`/`teresaCopilotCanon.ts` podmienionymi na wersję z
+commita SPRZED tego pakietu (`a42d737fba`, przez `git show <sha>:plik >
+plik`, potem przywrócone), raz z realną wersją tego pakietu. **62 testy
+failują identycznie w OBU wersjach** (stare, niezwiązane z KPI-E006:
+`p08-teresa-canon.test.ts`'s `P08_ACTION_ENVELOPE_STATES` ma teraz 7
+elementów zamiast oczekiwanych przez test 6 — `'undone'` dodany kiedyś bez
+aktualizacji testu; `teresaHandoffTargets.failClosed.test.ts`'s fixture'y
+nie zgadzają się z aktualnymi komunikatami błędów/polami — 57 failów) — to
+NIE jest domysł, to zweryfikowany diff dwóch realnych przebiegów.
+
+**Luka środowiskowa znaleziona podczas pisania testu realDB (zgodna z lekcją
+§24/pamięcią repo "cichy mock bazy")**: pierwsza próba `executeProposal`
+przez REALNY `teresa_proposals` (wstawiony ręcznym `pg.Client`) kończyła się
+`P08_PROPOSAL_NOT_FOUND` mimo że wiersz istniał — `server/src/database/
+Database.ts`'s `createDatabase()`/`getDatabaseInstance()` przełącza na
+**w-pamięci mock bazy** gdy `NODE_ENV==='test' && RUN_DB_TESTS!=='1' &&
+MOCK_DB!=='false'` — dokładnie ta sama pułapka co memory
+`audyt-bazy-danych-2026-08-06.md`. `utils/DbPromise.js`
+(`teresaCopilotService.ts`'s cała warstwa zapisu) idzie przez tę fabrykę;
+`resultsVnext`'s `acquirePgClient()` (KPI command/repository layer) idzie
+NIEZALEŻNIE, bezpośrednio przez `PostgresDatabase.ts`'s pool — dlatego
+istniejące testy `*.realdb.test.ts` w `tests/resultsVnext/kpi/` działały bez
+`RUN_DB_TESTS=1`, ale test na `executeProposal` (jedyny w tym pakiecie
+przechodzący przez `teresaCopilotService.ts`'s WŁASNE tabele na realnej
+bazie) go wymaga. Zdiagnozowane bezpośrednim skryptem `tsx` (raw insert +
+`dbGet` fallback:false → `null` bez rzuconego błędu = cichy mock, nie
+błąd połączenia).
+
+**Wynik końcowy**: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+w `server/` — 0 błędów. `tests/resultsVnext` + `tests/v8/
+teresa-kpi-handoff.test.ts` + `server/src/routes/resultsVnext` — **215/215
+PASS** (197 istniejące + 18 nowe), zero regresji na realnym Postgresie 16.
+Testy Teresy istniejące — 62 pre-existing faile potwierdzone identyczne z i
+bez tego pakietu (patrz wyżej), zero NOWYCH failów po naprawie §11's
+`payloadMap`. 4 commity osobne (Canon → Migracja → Handler → Testy), zgodnie
+z §E `KPI_E006_TERESA_DESIGN.md`.
+
