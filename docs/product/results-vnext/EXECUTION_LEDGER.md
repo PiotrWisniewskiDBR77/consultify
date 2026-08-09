@@ -698,3 +698,28 @@ bezpieczne do uruchomienia na pustej bazie — ten konkretny blok pracy
 Pełne RN-G1 PASS z §5 handbooka pozostaje otwarte na pozycje (a)/(b) powyżej
 oraz na pozostałe z §10 (management-chain maintenance service,
 `rvnVisibilityScopedQuery`).
+
+## 12. RN-G1 — management-chain maintenance service (2026-08-09)
+
+Commit `72d284805e`: `managementChainMaintenance.ts`
+(`updateManagerAndRecomposeClosure`, service-layer zgodnie z decyzją #1).
+**Zweryfikowane przeze mnie osobiście** — przeczytałem plik w całości.
+Algorytm cyklu poprawny (walk `newManagerId` w górę, `current===userId` w
+dowolnym kroku = odrzucone PRZED zapisem; self-assignment też poprawnie
+łapany jako trywialny cykl na pierwszej iteracji). Rekompozycja poddrzewa
+(delete tylko zewnętrznych starych ancestor-linków wskazujących w poddrzewo,
+cross-product nowych ancestors × członków poddrzewa) to standardowy, poprawny
+wzorzec reparentingu w tabeli closure. Dewiacja dobrze uzasadniona i
+zweryfikowana w źródle (nie zgadywana): `user_profile_extended` NIE ma
+kolumny `organization_id` — bound cyklu liczony z `users` zamiast. tsc: 0
+błędów (uruchomione dwukrotnie przez agenta, złapało i naprawiło jeden
+realny błąd typów po drodze — TS7022 na kształcie pętli).
+
+**RN-G1 core (schema+ABAC+atomic write+outbox drain+management chain) jest
+teraz kompletny i zweryfikowany w całości.** Jedyny brakujący kawałek z §10
+przed pełnym RN-G1 PASS: `rvnVisibilityScopedQuery` CTE wrapper (§B.4) — to
+jest mechanizm strukturalnie wymuszający "filter przed agregacją" (T3), którym
+przyszłe domenowe repozytoria KPI/ROI/OKR będą musiały owijać każde
+list/count/search/export zapytanie. Nic z platform kernel nie jest jeszcze
+wpięte do żadnego callera — to świadomie inert scaffolding, gotowe pod
+pierwszą domenę.
