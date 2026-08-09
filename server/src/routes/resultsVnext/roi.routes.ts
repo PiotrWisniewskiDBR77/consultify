@@ -39,6 +39,33 @@ import {
   RoiBaselineFrozenError,
 } from '../../services/resultsVnext/roi/roiBaselineCommands.js';
 import {
+  addAssumption,
+  removeAssumption,
+  updateAssumption,
+  RoiAssumptionFrozenError,
+} from '../../services/resultsVnext/roi/roiAssumptionCommands.js';
+import {
+  addBenefitEvidenceLink,
+  removeBenefitEvidenceLink,
+  RoiBenefitEvidenceLinkValidationError,
+} from '../../services/resultsVnext/roi/roiBenefitEvidenceLinkCommands.js';
+import {
+  addBenefitLine,
+  removeBenefitLine,
+  updateBenefitLine,
+  RoiBenefitLineFrozenError,
+  RoiBenefitLineValidationError,
+} from '../../services/resultsVnext/roi/roiBenefitLineCommands.js';
+import {
+  captureOrUpdateCalculationPolicy,
+  RoiCalculationPolicyFrozenError,
+  RoiEconomicModelNotEditableError,
+} from '../../services/resultsVnext/roi/roiCalculationPolicyCommands.js';
+import {
+  createRoiCalculationRun,
+  RoiCalculationRunValidationError,
+} from '../../services/resultsVnext/roi/roiCalculationRunCommands.js';
+import {
   archiveRoiCase,
   createRoiCase,
   markReadyForReview,
@@ -48,7 +75,36 @@ import {
   startModeling,
   updateRoiCaseDetails,
 } from '../../services/resultsVnext/roi/roiCaseCommands.js';
+import {
+  addCostLine,
+  removeCostLine,
+  updateCostLine,
+  RoiCostLineFrozenError,
+} from '../../services/resultsVnext/roi/roiCostLineCommands.js';
+import {
+  getAssumption,
+  getBenefitLine,
+  getCalculationPolicy,
+  getCalculationRun,
+  getCostLine,
+  getScenario,
+  listAssumptions,
+  listBenefitEvidenceLinks,
+  listBenefitLines,
+  listCalculationRuns,
+  listCostLines,
+  listScenarios,
+} from '../../services/resultsVnext/roi/roiEconomicModelRepository.js';
 import { getRoiBaseline, getRoiCase, listRoiCases } from '../../services/resultsVnext/roi/roiRepository.js';
+import {
+  addScenario,
+  removeScenario,
+  removeScenarioOverride,
+  setScenarioOverride,
+  updateScenario,
+  RoiScenarioFrozenError,
+  RoiScenarioValidationError,
+} from '../../services/resultsVnext/roi/roiScenarioCommands.js';
 import type { AuthenticatedRequest } from '../../types/index.js';
 import logger from '../../utils/Logger.js';
 import {
@@ -60,6 +116,37 @@ import {
   RoiCaseTransitionSchema,
   UpdateRoiCaseDetailsSchema,
 } from '../../validators/resultsVnextRoi.validators.js';
+import {
+  AddAssumptionSchema,
+  AddBenefitEvidenceLinkSchema,
+  AddBenefitLineSchema,
+  AddCostLineSchema,
+  AddScenarioSchema,
+  CaptureOrUpdateCalculationPolicySchema,
+  CreateRoiCalculationRunSchema,
+  IncludeDeletedQuerySchema,
+  ListBenefitEvidenceLinksQuerySchema,
+  ListCalculationRunsQuerySchema,
+  RemoveAssumptionSchema,
+  RemoveBenefitEvidenceLinkSchema,
+  RemoveBenefitLineSchema,
+  RemoveCostLineSchema,
+  RemoveScenarioOverrideSchema,
+  RemoveScenarioSchema,
+  RoiAssumptionParamsSchema,
+  RoiBenefitEvidenceLinkListParamsSchema,
+  RoiBenefitEvidenceLinkParamsSchema,
+  RoiBenefitLineParamsSchema,
+  RoiCalculationRunParamsSchema,
+  RoiCostLineParamsSchema,
+  RoiScenarioOverrideParamsSchema,
+  RoiScenarioParamsSchema,
+  SetScenarioOverrideSchema,
+  UpdateAssumptionSchema,
+  UpdateBenefitLineSchema,
+  UpdateCostLineSchema,
+  UpdateScenarioSchema,
+} from '../../validators/resultsVnextRoiEconomicModel.validators.js';
 
 const router = Router();
 
@@ -141,6 +228,23 @@ function handleRoiRouteError(res: Response, err: unknown, op: string): void {
     return;
   }
   if (err instanceof RoiCaseValidationError) {
+    res.status(409).json({ error: err.message, code: err.code, details: err.details });
+    return;
+  }
+  // ROI-E002 typed errors — same 409 "typed precondition failure" mapping
+  // every other guard error in this router already uses.
+  if (
+    err instanceof RoiEconomicModelNotEditableError ||
+    err instanceof RoiCalculationPolicyFrozenError ||
+    err instanceof RoiAssumptionFrozenError ||
+    err instanceof RoiCostLineFrozenError ||
+    err instanceof RoiBenefitLineFrozenError ||
+    err instanceof RoiBenefitLineValidationError ||
+    err instanceof RoiBenefitEvidenceLinkValidationError ||
+    err instanceof RoiScenarioFrozenError ||
+    err instanceof RoiScenarioValidationError ||
+    err instanceof RoiCalculationRunValidationError
+  ) {
     res.status(409).json({ error: err.message, code: err.code, details: err.details });
     return;
   }
@@ -483,6 +587,1008 @@ router.put(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'captureOrUpdateBaseline');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E002 — Economic Model routes (design §7)
+// ==========================================================================
+
+/** Shared existing-case 404 guard, identical shape to every write route
+ * above (`includeArchived: true` — a specific known id must not 404 merely
+ * because the case was archived, Decision D4). */
+async function requireExistingRoiCase(
+  auth: RouteAuth,
+  caseId: string,
+  res: Response
+): Promise<boolean> {
+  const existing = await getRoiCase({ userId: auth.userId, organizationId: auth.organizationId, caseId, includeArchived: true });
+  if (!existing) {
+    res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
+    return false;
+  }
+  return true;
+}
+
+// ---------- GET/PUT .../calculation-policy ----------
+
+router.get(
+  '/cases/:caseId/calculation-policy',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const policy = await getCalculationPolicy({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      if (!policy) {
+        res.status(404).json({ error: 'ROI calculation policy not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ calculationPolicy: policy });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getCalculationPolicy');
+    }
+  }
+);
+
+router.put(
+  '/cases/:caseId/calculation-policy',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(CaptureOrUpdateCalculationPolicySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof CaptureOrUpdateCalculationPolicySchema>;
+      const outcome = await captureOrUpdateCalculationPolicy({
+        organizationId: auth.organizationId,
+        caseId,
+        expectedVersion: body.expectedVersion,
+        discountRatePct: body.discountRatePct,
+        taxTreatment: body.taxTreatment,
+        inflationRatePct: body.inflationRatePct,
+        roundingPolicy: body.roundingPolicy,
+        requiredMetrics: body.requiredMetrics,
+        notes: body.notes,
+        confidence: body.confidence,
+        ownerUserId: body.ownerUserId,
+        actorId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        calculationPolicy: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'captureOrUpdateCalculationPolicy');
+    }
+  }
+);
+
+// ---------- GET/POST/PATCH/DELETE .../assumptions[/:assumptionId] ----------
+
+router.get(
+  '/cases/:caseId/assumptions',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(IncludeDeletedQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof IncludeDeletedQuerySchema>;
+      const assumptions = await listAssumptions({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeDeleted: query.includeDeleted,
+      });
+      res.status(200).json({ assumptions });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listAssumptions');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/assumptions/:assumptionId',
+  validateParams(RoiAssumptionParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
+      const assumption = await getAssumption({ userId: auth.userId, organizationId: auth.organizationId, caseId, assumptionId });
+      if (!assumption) {
+        res.status(404).json({ error: 'ROI assumption not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ assumption });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getAssumption');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/assumptions',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(AddAssumptionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof AddAssumptionSchema>;
+      const outcome = await addAssumption({
+        caseId,
+        organizationId: auth.organizationId,
+        category: body.category,
+        label: body.label,
+        unit: body.unit,
+        baseValue: body.baseValue,
+        downsideValue: body.downsideValue,
+        upsideValue: body.upsideValue,
+        confidence: body.confidence,
+        evidenceRef: body.evidenceRef,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        sensitivityRank: body.sensitivityRank,
+        notes: body.notes,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        assumption: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addAssumption');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/assumptions/:assumptionId',
+  validateParams(RoiAssumptionParamsSchema),
+  validateBody(UpdateAssumptionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
+      const body = req.body as import('zod').infer<typeof UpdateAssumptionSchema>;
+      const outcome = await updateAssumption({
+        assumptionId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        category: body.category,
+        label: body.label,
+        unit: body.unit,
+        baseValue: body.baseValue,
+        downsideValue: body.downsideValue,
+        upsideValue: body.upsideValue,
+        confidence: body.confidence,
+        evidenceRef: body.evidenceRef,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        sensitivityRank: body.sensitivityRank,
+        notes: body.notes,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        assumption: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateAssumption');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/assumptions/:assumptionId',
+  validateParams(RoiAssumptionParamsSchema),
+  validateBody(RemoveAssumptionSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, assumptionId } = req.params as { caseId: string; assumptionId: string };
+      const body = req.body as import('zod').infer<typeof RemoveAssumptionSchema>;
+      const outcome = await removeAssumption({
+        assumptionId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        assumption: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeAssumption');
+    }
+  }
+);
+
+// ---------- GET/POST/PATCH/DELETE .../cost-lines[/:costLineId] ----------
+
+router.get(
+  '/cases/:caseId/cost-lines',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(IncludeDeletedQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof IncludeDeletedQuerySchema>;
+      const costLines = await listCostLines({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeDeleted: query.includeDeleted,
+      });
+      res.status(200).json({ costLines });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listCostLines');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/cost-lines/:costLineId',
+  validateParams(RoiCostLineParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
+      const costLine = await getCostLine({ userId: auth.userId, organizationId: auth.organizationId, caseId, costLineId });
+      if (!costLine) {
+        res.status(404).json({ error: 'ROI cost line not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ costLine });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getCostLine');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/cost-lines',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(AddCostLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof AddCostLineSchema>;
+      const outcome = await addCostLine({
+        caseId,
+        organizationId: auth.organizationId,
+        category: body.category,
+        label: body.label,
+        description: body.description,
+        amount: body.amount,
+        currency: body.currency,
+        timingType: body.timingType,
+        oneTimePeriodDate: body.oneTimePeriodDate,
+        recurrenceStartDate: body.recurrenceStartDate,
+        recurrenceEndDate: body.recurrenceEndDate,
+        recurrenceCadence: body.recurrenceCadence,
+        confidence: body.confidence,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        costLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addCostLine');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/cost-lines/:costLineId',
+  validateParams(RoiCostLineParamsSchema),
+  validateBody(UpdateCostLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
+      const body = req.body as import('zod').infer<typeof UpdateCostLineSchema>;
+      const outcome = await updateCostLine({
+        costLineId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        category: body.category,
+        label: body.label,
+        description: body.description,
+        amount: body.amount,
+        currency: body.currency,
+        timingType: body.timingType,
+        oneTimePeriodDate: body.oneTimePeriodDate,
+        recurrenceStartDate: body.recurrenceStartDate,
+        recurrenceEndDate: body.recurrenceEndDate,
+        recurrenceCadence: body.recurrenceCadence,
+        confidence: body.confidence,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        costLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateCostLine');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/cost-lines/:costLineId',
+  validateParams(RoiCostLineParamsSchema),
+  validateBody(RemoveCostLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, costLineId } = req.params as { caseId: string; costLineId: string };
+      const body = req.body as import('zod').infer<typeof RemoveCostLineSchema>;
+      const outcome = await removeCostLine({
+        costLineId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        costLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeCostLine');
+    }
+  }
+);
+
+// ---------- GET/POST/PATCH/DELETE .../benefit-lines[/:benefitLineId] ----------
+
+router.get(
+  '/cases/:caseId/benefit-lines',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(IncludeDeletedQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof IncludeDeletedQuerySchema>;
+      const benefitLines = await listBenefitLines({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeDeleted: query.includeDeleted,
+      });
+      res.status(200).json({ benefitLines });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listBenefitLines');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/benefit-lines/:benefitLineId',
+  validateParams(RoiBenefitLineParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
+      const benefitLine = await getBenefitLine({ userId: auth.userId, organizationId: auth.organizationId, caseId, benefitLineId });
+      if (!benefitLine) {
+        res.status(404).json({ error: 'ROI benefit line not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ benefitLine });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getBenefitLine');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/benefit-lines',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(AddBenefitLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof AddBenefitLineSchema>;
+      const outcome = await addBenefitLine({
+        caseId,
+        organizationId: auth.organizationId,
+        category: body.category,
+        label: body.label,
+        description: body.description,
+        isFinancial: body.isFinancial,
+        amount: body.amount,
+        currency: body.currency,
+        timingType: body.timingType,
+        oneTimePeriodDate: body.oneTimePeriodDate,
+        recurrenceStartDate: body.recurrenceStartDate,
+        recurrenceEndDate: body.recurrenceEndDate,
+        recurrenceCadence: body.recurrenceCadence,
+        rampPeriods: body.rampPeriods,
+        doubleCountingGroup: body.doubleCountingGroup,
+        doubleCountingResolutionNote: body.doubleCountingResolutionNote,
+        confidence: body.confidence,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        benefitLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addBenefitLine');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/benefit-lines/:benefitLineId',
+  validateParams(RoiBenefitLineParamsSchema),
+  validateBody(UpdateBenefitLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
+      const body = req.body as import('zod').infer<typeof UpdateBenefitLineSchema>;
+      const outcome = await updateBenefitLine({
+        benefitLineId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        category: body.category,
+        label: body.label,
+        description: body.description,
+        isFinancial: body.isFinancial,
+        amount: body.amount,
+        currency: body.currency,
+        timingType: body.timingType,
+        oneTimePeriodDate: body.oneTimePeriodDate,
+        recurrenceStartDate: body.recurrenceStartDate,
+        recurrenceEndDate: body.recurrenceEndDate,
+        recurrenceCadence: body.recurrenceCadence,
+        rampPeriods: body.rampPeriods,
+        doubleCountingGroup: body.doubleCountingGroup,
+        doubleCountingResolutionNote: body.doubleCountingResolutionNote,
+        confidence: body.confidence,
+        source: body.source,
+        ownerUserId: body.ownerUserId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        benefitLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateBenefitLine');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/benefit-lines/:benefitLineId',
+  validateParams(RoiBenefitLineParamsSchema),
+  validateBody(RemoveBenefitLineSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
+      const body = req.body as import('zod').infer<typeof RemoveBenefitLineSchema>;
+      const outcome = await removeBenefitLine({
+        benefitLineId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        benefitLine: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeBenefitLine');
+    }
+  }
+);
+
+// ---------- GET/POST/DELETE .../benefit-lines/:benefitLineId/kpi-evidence-links[/:linkId] ----------
+// NOTE: `flagBenefitEvidenceLinkDisputed` (roiBenefitEvidenceLinkCommands.ts)
+// has no route here — design §7's table lists only GET/POST/DELETE for this
+// path. The command exists (design §4) for a future epic/UI surface to call;
+// intentionally not wired to HTTP in E002, not a silent omission.
+
+router.get(
+  '/cases/:caseId/benefit-lines/:benefitLineId/kpi-evidence-links',
+  validateParams(RoiBenefitEvidenceLinkListParamsSchema),
+  validateQuery(ListBenefitEvidenceLinksQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListBenefitEvidenceLinksQuerySchema>;
+      const links = await listBenefitEvidenceLinks({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        benefitLineId,
+        hydrateKpiDetails: query.hydrateKpiDetails,
+      });
+      res.status(200).json({ links });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listBenefitEvidenceLinks');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/benefit-lines/:benefitLineId/kpi-evidence-links',
+  validateParams(RoiBenefitEvidenceLinkListParamsSchema),
+  validateBody(AddBenefitEvidenceLinkSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, benefitLineId } = req.params as { caseId: string; benefitLineId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof AddBenefitEvidenceLinkSchema>;
+      const outcome = await addBenefitEvidenceLink({
+        benefitLineId,
+        caseId,
+        organizationId: auth.organizationId,
+        kpiId: body.kpiId,
+        pinnedKpiDefinitionVersionId: body.pinnedKpiDefinitionVersionId,
+        expectedUnit: body.expectedUnit,
+        purpose: body.purpose,
+        notes: body.notes,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        link: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addBenefitEvidenceLink');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/benefit-lines/:benefitLineId/kpi-evidence-links/:linkId',
+  validateParams(RoiBenefitEvidenceLinkParamsSchema),
+  validateBody(RemoveBenefitEvidenceLinkSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, linkId } = req.params as { caseId: string; benefitLineId: string; linkId: string };
+      const body = req.body as import('zod').infer<typeof RemoveBenefitEvidenceLinkSchema>;
+      const outcome = await removeBenefitEvidenceLink({
+        linkId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        linkId: outcome.result.linkId,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeBenefitEvidenceLink');
+    }
+  }
+);
+
+// ---------- GET/POST/PATCH/DELETE .../scenarios[/:scenarioId] ----------
+
+router.get(
+  '/cases/:caseId/scenarios',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(IncludeDeletedQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof IncludeDeletedQuerySchema>;
+      const scenarios = await listScenarios({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        includeDeleted: query.includeDeleted,
+      });
+      res.status(200).json({ scenarios });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listScenarios');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/scenarios/:scenarioId',
+  validateParams(RoiScenarioParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
+      const scenario = await getScenario({ userId: auth.userId, organizationId: auth.organizationId, caseId, scenarioId });
+      if (!scenario) {
+        res.status(404).json({ error: 'ROI scenario not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ scenario });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getScenario');
+    }
+  }
+);
+
+router.post(
+  '/cases/:caseId/scenarios',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(AddScenarioSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof AddScenarioSchema>;
+      const outcome = await addScenario({
+        caseId,
+        organizationId: auth.organizationId,
+        scenarioType: body.scenarioType,
+        label: body.label,
+        description: body.description,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        scenario: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'addScenario');
+    }
+  }
+);
+
+router.patch(
+  '/cases/:caseId/scenarios/:scenarioId',
+  validateParams(RoiScenarioParamsSchema),
+  validateBody(UpdateScenarioSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
+      const body = req.body as import('zod').infer<typeof UpdateScenarioSchema>;
+      const outcome = await updateScenario({
+        scenarioId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        label: body.label,
+        description: body.description,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        scenario: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'updateScenario');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/scenarios/:scenarioId',
+  validateParams(RoiScenarioParamsSchema),
+  validateBody(RemoveScenarioSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
+      const body = req.body as import('zod').infer<typeof RemoveScenarioSchema>;
+      const outcome = await removeScenario({
+        scenarioId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        scenario: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeScenario');
+    }
+  }
+);
+
+// ---------- POST .../scenarios/:scenarioId/overrides ; DELETE .../overrides/:overrideId ----------
+
+router.post(
+  '/cases/:caseId/scenarios/:scenarioId/overrides',
+  validateParams(RoiScenarioParamsSchema),
+  validateBody(SetScenarioOverrideSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId } = req.params as { caseId: string; scenarioId: string };
+      const body = req.body as import('zod').infer<typeof SetScenarioOverrideSchema>;
+      const outcome = await setScenarioOverride({
+        scenarioId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        targetType: body.targetType,
+        targetId: body.targetId,
+        overrideValue: body.overrideValue,
+        overrideAmount: body.overrideAmount,
+        note: body.note,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        override: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'setScenarioOverride');
+    }
+  }
+);
+
+router.delete(
+  '/cases/:caseId/scenarios/:scenarioId/overrides/:overrideId',
+  validateParams(RoiScenarioOverrideParamsSchema),
+  validateBody(RemoveScenarioOverrideSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, scenarioId, overrideId } = req.params as {
+        caseId: string;
+        scenarioId: string;
+        overrideId: string;
+      };
+      const body = req.body as import('zod').infer<typeof RemoveScenarioOverrideSchema>;
+      const outcome = await removeScenarioOverride({
+        overrideId,
+        scenarioId,
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        overrideId: outcome.result.overrideId,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'removeScenarioOverride');
+    }
+  }
+);
+
+// ---------- POST/GET .../calculation-runs[/:runId] ----------
+
+router.post(
+  '/cases/:caseId/calculation-runs',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(CreateRoiCalculationRunSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof CreateRoiCalculationRunSchema>;
+      const outcome = await createRoiCalculationRun({
+        organizationId: auth.organizationId,
+        caseId,
+        scenarioId: body.scenarioId,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+        reason: body.reason ?? null,
+      });
+      res.status(outcome.outcome === 'applied' ? 201 : 200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        run: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'createRoiCalculationRun');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/calculation-runs',
+  validateParams(RoiCaseIdParamsSchema),
+  validateQuery(ListCalculationRunsQuerySchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const query = req.query as unknown as import('zod').infer<typeof ListCalculationRunsQuerySchema>;
+      const runs = await listCalculationRuns({
+        userId: auth.userId,
+        organizationId: auth.organizationId,
+        caseId,
+        limit: query.limit,
+        offset: query.offset,
+      });
+      res.status(200).json({ runs });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'listCalculationRuns');
+    }
+  }
+);
+
+router.get(
+  '/cases/:caseId/calculation-runs/:runId',
+  validateParams(RoiCalculationRunParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId, runId } = req.params as { caseId: string; runId: string };
+      const run = await getCalculationRun({ userId: auth.userId, organizationId: auth.organizationId, caseId, runId });
+      if (!run) {
+        res.status(404).json({ error: 'ROI calculation run not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ run });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getCalculationRun');
     }
   }
 );
