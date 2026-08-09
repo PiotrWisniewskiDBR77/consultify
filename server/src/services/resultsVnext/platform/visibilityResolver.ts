@@ -189,6 +189,76 @@ export async function resolveVisibility(
   }
 }
 
+// ==========================================
+// getActiveVisibilityPolicy (KPI-E001/E002 design §11 / decyzja #11)
+// ==========================================
+
+export interface ActiveVisibilityPolicy {
+  policyId: string;
+  /**
+   * String form of `rvn_platform_visibility_policies.policy_version` (an
+   * `INT` column) — converted here, not left numeric, because the primary
+   * consumer of this value is `PlatformEventEnvelope.policyVersion`
+   * (eventEnvelope.ts), which is `TEXT NOT NULL` on `rvn_platform_events`
+   * (§A.1). Returning the string form lets a caller drop this straight into
+   * `buildEvent()`'s `policyVersion` field without a separate cast.
+   */
+  policyVersion: string;
+}
+
+/**
+ * Looks up the single active visibility policy for an
+ * `(organizationId, domain)` pair (docs/product/results-vnext/
+ * KPI_E001_E002_DESIGN.md §11, decyzja #11: "no active visibility policy for
+ * domain lookup helper exists in platform — build now as part of this
+ * package"). Reads `rvn_platform_visibility_policies` — the same table
+ * `resolveVisibility()`'s `record.policy_id` above already points into, but
+ * that table has never had a direct "give me the currently-active row for
+ * this domain" query until now (every existing caller reaches a
+ * `policy_id` indirectly, via a `rvn_platform_resource_visibility` row that
+ * already carries one).
+ *
+ * "Active" means: `is_active = true` AND `effective_to IS NULL OR
+ * effective_to > now()` — the same open-or-not-yet-expired condition the
+ * table's own `EXCLUDE USING gist` constraint
+ * (20260809_rvn_platform_visibility_core.sql) is built to keep to at most
+ * one overlapping row per `(organization_id, domain)` at a time. `ORDER BY
+ * policy_version DESC LIMIT 1` is defense in depth for the case where more
+ * than one technically-active row exists (e.g. a data-repair window) — it
+ * is not meant to paper over the constraint being violated.
+ *
+ * Returns `null` if no active policy exists for the domain — per decyzja
+ * #11, the CALLER (e.g. `createKpiDraft`) must fail closed on `null`
+ * (typed error), never assume a default visibility policy. This function
+ * itself does not throw for "no policy" — that is a legitimate, expected
+ * outcome (a domain that has not had its visibility policy provisioned
+ * yet), not an error condition at the platform layer.
+ */
+export async function getActiveVisibilityPolicy(
+  client: PoolClient,
+  input: { organizationId: string; domain: string }
+): Promise<ActiveVisibilityPolicy | null> {
+  const { organizationId, domain } = input;
+
+  const result = await client.query<{ policy_id: string; policy_version: number }>(
+    `SELECT policy_id, policy_version
+       FROM rvn_platform_visibility_policies
+      WHERE organization_id = $1
+        AND domain = $2
+        AND is_active = true
+        AND (effective_to IS NULL OR effective_to > now())
+      ORDER BY policy_version DESC
+      LIMIT 1`,
+    [organizationId, domain]
+  );
+
+  const row = result.rows[0];
+  if (!row) {
+    return null;
+  }
+  return { policyId: row.policy_id, policyVersion: String(row.policy_version) };
+}
+
 /**
  * -- DEVIATION FROM DESIGN: §B.3 names the existing membership tables for
  * SCOPE mode as "team_members/initiative_contributors". `team_members`

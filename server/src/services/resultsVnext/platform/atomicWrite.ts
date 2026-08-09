@@ -83,7 +83,30 @@ export class AtomicWriteAggregateNotFoundError extends Error {
  * is a placeholder consumer name, not an existing implemented projection.
  */
 export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string[]>> = {
-  'kpi.definition.approved': ['mywork_projection'],
+  // KPI-E001/E002 (docs/product/results-vnext/KPI_E001_E002_DESIGN.md §A.7,
+  // decyzja #1 zastosowana: underscore form `kpi.definition_approved`, NOT
+  // the dotted `kpi.definition.approved` placeholder this map used to carry
+  // — fixed here per decyzja #1). Full catalog per decyzja #8 ("every
+  // state-changing transaction appends an event" — plan §8 was missing
+  // kpi.definition_rejected/kpi.suspended/kpi.archived despite the commands
+  // existing in §7.1; filled here as a documentation-gap fix, not a new
+  // event surface). All KPI event_types fan out to 'mywork_projection' only
+  // — no KPI-specific projection group exists yet in this repo (mirrors the
+  // other two domains' entries below, which also default to
+  // 'mywork_projection' unless a domain-specific consumer is already known,
+  // as `roi_case.decided` shows for 'finance_projection').
+  'kpi.definition_created': ['mywork_projection'],
+  'kpi.definition_edited': ['mywork_projection'],
+  'kpi.definition_submitted': ['mywork_projection'],
+  'kpi.definition_approved': ['mywork_projection'],
+  'kpi.definition_rejected': ['mywork_projection'],
+  'kpi.activated': ['mywork_projection'],
+  'kpi.suspended': ['mywork_projection'],
+  'kpi.archived': ['mywork_projection'],
+  'kpi.measurement_recorded': ['mywork_projection'],
+  'kpi.measurement_corrected': ['mywork_projection'],
+  'kpi.measurement_verified': ['mywork_projection'],
+  'kpi.measurement_disputed': ['mywork_projection'],
   'roi_case.decided': ['mywork_projection', 'finance_projection'],
   'okr_set.published': ['mywork_projection'],
 };
@@ -372,6 +395,188 @@ export async function executeAtomicCommand<TAggregateRow, TResult>(
       // transaction, in which case this second ROLLBACK is a harmless no-op
       // that pg still may log/throw on depending on driver version.
       logger.warn('[resultsVnext/platform/atomicWrite] rollback after error failed', {
+        error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+      });
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ==========================================
+// executeAtomicCreate — sibling for NEW aggregates (KPI-E001/E002 design §A.6)
+// ==========================================
+
+/**
+ * Sibling of `executeAtomicCommand` for the "create a brand-new aggregate"
+ * case (docs/product/results-vnext/KPI_E001_E002_DESIGN.md §A.6, decyzja #2:
+ * "platform-owned, not KPI-owned; ROI/OKR will need the same primitive").
+ *
+ * `executeAtomicCommand` assumes the aggregate row already exists (it
+ * `SELECT ... FOR UPDATE`s it and checks a CAS `expectedVersion` against it)
+ * — that assumption is wrong for a `create` command, which has no row to
+ * lock yet. This helper drops `loadForUpdate`/`getCurrentVersion`/
+ * `expectedVersion` entirely (no CAS is possible or needed against a row
+ * that doesn't exist) and keeps everything else identical: `applyMutation`
+ * performs the domain INSERT(s) on the pinned client, the resulting event is
+ * written with the same `ON CONFLICT (organization_id, idempotency_key) DO
+ * NOTHING` idempotency guard, a duplicate submission rolls back the just-
+ * inserted aggregate row(s) and returns the previously-committed result
+ * instead of double-creating, and a successful create fans the event out to
+ * the outbox exactly like `executeAtomicCommand` does.
+ *
+ * Decyzja #12 (measurement commands route through THIS helper, not the
+ * parent KPI's CAS) is why `recordMeasurement`/`correctMeasurement`/
+ * `verifyMeasurement`/`disputeMeasurement` in `kpiMeasurementCommands.ts` all
+ * call `executeAtomicCreate` even though they are not, strictly, "creating
+ * the KPI" — each one creates a new, immutable `rvn_kpi_measurements` row
+ * (the table is append-only), which is exactly the "no existing row to CAS
+ * against" shape this helper is for.
+ */
+export interface ExecuteAtomicCreateParams<TResult> {
+  /** Tenant scope — the idempotency key and the outbox row are both written
+   * under this organization_id, same as `executeAtomicCommand`. */
+  organizationId: string;
+
+  /**
+   * Performs the domain INSERT(s) for the new aggregate on the pinned
+   * client and returns whatever shape the caller wants back as the command
+   * result. Unlike `executeAtomicCommand.applyMutation`, there is no
+   * `currentRow`/`nextVersion` to receive — a create has no prior state and
+   * the caller decides its own initial version (typically `1`), baked into
+   * whatever it inserts and into the event it builds in `buildEvent` below.
+   */
+  applyMutation: (client: PoolClient) => Promise<TResult>;
+
+  /**
+   * Builds the `rvn_platform_events` row to insert. Called AFTER
+   * `applyMutation`, same as `executeAtomicCommand`, so it can see the
+   * mutation result (e.g. the newly generated aggregate id) and put it in
+   * `afterState`/`aggregateId`. Must set `idempotencyKey`.
+   */
+  buildEvent: (ctx: { result: TResult }) => AtomicEventInput;
+
+  /**
+   * Reconstructs `TResult` from a pre-existing `rvn_platform_events` row
+   * when the idempotency key was already used (a command retry). Same
+   * fallback behavior as `executeAtomicCommand.loadExistingResult` — if
+   * omitted, this helper casts the existing event's `after_state` JSONB as
+   * `TResult`.
+   */
+  loadExistingResult?: (client: PoolClient, existingEvent: ExistingEventRow) => Promise<TResult>;
+}
+
+/**
+ * Design §A.6, executed literally (identical to §A.4's steps 5-7, minus the
+ * CAS-specific steps 2-4 that assume an existing row):
+ *   BEGIN
+ *   INSERT <new aggregate>                       (applyMutation)
+ *   INSERT INTO rvn_platform_events ... ON CONFLICT DO NOTHING RETURNING event_id
+ *     no row returned -> ROLLBACK (undoes the aggregate insert too), return
+ *     existing event's result
+ *   INSERT INTO rvn_platform_outbox (one row per applicable consumer_group)
+ *   COMMIT
+ */
+export async function executeAtomicCreate<TResult>(
+  params: ExecuteAtomicCreateParams<TResult>
+): Promise<AtomicCommandOutcome<TResult>> {
+  const { organizationId, applyMutation, buildEvent, loadExistingResult } = params;
+
+  const client: PoolClient = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+
+    // Domain insert(s), same pinned client.
+    const result = await applyMutation(client);
+
+    // Event log insert, idempotency-guarded — identical shape to
+    // executeAtomicCommand's step 5.
+    const eventInput = buildEvent({ result });
+    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(
+      EVENT_INSERT_SQL,
+      [
+        eventInput.schemaVersion,
+        eventInput.eventType,
+        eventInput.aggregateType,
+        eventInput.aggregateId,
+        eventInput.organizationId,
+        eventInput.actorUserId,
+        eventInput.actorEffectiveRole,
+        eventInput.commandId,
+        eventInput.correlationId,
+        eventInput.causationId,
+        eventInput.occurredAt,
+        eventInput.policyVersion,
+        eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+        eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+        eventInput.stateHash,
+        eventInput.reason,
+        JSON.stringify(eventInput.evidenceRefs ?? []),
+        eventInput.source,
+        eventInput.idempotencyKey,
+        eventInput.expectedVersion,
+        eventInput.resultingVersion,
+        JSON.stringify(eventInput.payload ?? {}),
+      ]
+    );
+
+    const insertedEvent = eventResult.rows[0];
+    if (!insertedEvent) {
+      // Duplicate idempotency_key — this exact create command already
+      // committed once. Roll back THIS call's aggregate insert (it must not
+      // double-create) and hand back the previously-committed result.
+      const existingResult = await client.query<ExistingEventRow>(
+        `SELECT event_id, sequence, event_type, aggregate_type, aggregate_id, organization_id,
+                occurred_at, recorded_at, before_state, after_state, resulting_version, idempotency_key
+           FROM rvn_platform_events
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [organizationId, eventInput.idempotencyKey]
+      );
+      const existingEvent = existingResult.rows[0];
+      await client.query('ROLLBACK');
+
+      if (!existingEvent) {
+        throw new Error(
+          `[executeAtomicCreate] idempotency conflict on (${organizationId}, ${eventInput.idempotencyKey}) but existing event row not found`
+        );
+      }
+
+      const duplicateResult = loadExistingResult
+        ? await loadExistingResult(client, existingEvent)
+        : ((existingEvent.after_state ?? {}) as unknown as TResult);
+
+      return {
+        outcome: 'duplicate',
+        eventId: existingEvent.event_id,
+        resultingVersion: existingEvent.resulting_version,
+        result: duplicateResult,
+      };
+    }
+
+    // Outbox fan-out, one row per applicable consumer_group.
+    const consumerGroups = resolveConsumerGroups(eventInput.eventType);
+    if (consumerGroups.length > 0) {
+      await client.query(
+        `INSERT INTO rvn_platform_outbox (event_id, consumer_group, status)
+           SELECT $1, cg, 'pending' FROM unnest($2::text[]) AS cg`,
+        [insertedEvent.event_id, consumerGroups]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return {
+      outcome: 'applied',
+      eventId: insertedEvent.event_id,
+      resultingVersion: insertedEvent.resulting_version,
+      result,
+    };
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      logger.warn('[resultsVnext/platform/atomicWrite] rollback after error failed (executeAtomicCreate)', {
         error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
       });
     }
