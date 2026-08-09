@@ -291,6 +291,16 @@ import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.r
 import resultsVnextKpiPerspectivesRoutes, {
   initiativesKpiImpactsRouter as resultsVnextInitiativesKpiImpactsRoutes,
 } from './routes/resultsVnext/kpiPerspectives.routes.js';
+// KPI-E007 Legacy Archive / Ops Exclusion — mounted at the MORE SPECIFIC
+// `/api/vnext/results/kpi/legacy` prefix, registered BEFORE the generic
+// `/api/vnext/results/kpi` mount below for consistency with every other
+// sub-router in this domain (same "more-specific-prefix-first" rule as
+// resultsVnextKpiDeviationRoutes/resultsVnextKpiScorecardRoutes above — see
+// KPI_E007_DESIGN.md §8). `/legacy` is a literal path segment, not a param,
+// so Express would match it correctly regardless of order in this specific
+// case, but mounting order-independent behaviour is not a reason to skip
+// the repo's established convention.
+import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyArchive.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1128,6 +1138,11 @@ export class ApiGateway {
       // generic `/api/vnext/results/kpi` mount below, registered before it
       // for the same reason (see kpiScorecard.routes.ts's "MOUNT-ORDER NOTE").
       app.use('/api/vnext/results/kpi/scorecards', resultsVnextKpiScorecardRoutes);
+      // KPI-E007 Legacy Archive — also a MORE SPECIFIC prefix than the
+      // generic `/api/vnext/results/kpi` mount below, registered before it
+      // for the same reason (see kpiLegacyArchive.routes.ts's own header
+      // comment and KPI_E007_DESIGN.md §8).
+      app.use('/api/vnext/results/kpi/legacy', resultsVnextKpiLegacyArchiveRoutes);
       // KPI-E005 Perspectives & Links — SAME prefix as resultsVnextKpiRoutes
       // below (not a more-specific sub-prefix like the two routers above),
       // so it MUST be registered BEFORE it — see the import comment above
