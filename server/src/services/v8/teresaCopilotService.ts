@@ -29,6 +29,14 @@ import {
   buildProposalOperationContract,
   updateOperationContractLinks,
 } from './operationContractService.js';
+// KPI-E006 — the only four KPI-domain functions imported anywhere in this
+// file (literal, grep-able proof for §D of KPI_E006_TERESA_DESIGN.md):
+//   grep -nE "from '\.\./resultsVnext/kpi/" server/src/services/v8/teresaCopilotService.ts
+import { createKpiDraft, editDraft as editKpiDraft } from '../resultsVnext/kpi/kpiDefinitionCommands.js';
+import { submitRootCause } from '../resultsVnext/kpi/kpiDeviationCommands.js';
+import { getKpi, listKpis } from '../resultsVnext/kpi/kpiRepository.js';
+import { getDeviationCase } from '../resultsVnext/kpi/kpiDeviationRepository.js';
+import { AtomicWriteConflictError } from '../resultsVnext/platform/atomicWrite.js';
 import {
   type ActionEnvelopeState,
   type HandoffTargetModule,
@@ -38,6 +46,7 @@ import {
   P08_DEGRADED_SCENARIOS,
   P08_HANDOFF_TARGET_MODULES,
   resolveVoiceAvailability,
+  type ResultsKpiHandoffContext,
   type TeresaHandoffContext,
   validateHandoffContext,
   validateTargetPayload,
@@ -1880,6 +1889,28 @@ export async function undoProposal(params: {
       'P08_INVALID_STATE_TRANSITION'
     );
   }
+  if (row.target_module === 'kpi') {
+    // Decision #3 (KPI_E006_TERESA_DESIGN.md): undo is explicitly blocked for
+    // KPI handoffs in V1. `createKpiDraft`/`editDraft`/`submitRootCause` have
+    // no natural "delete draft"/"revert RCA" domain operation — building one
+    // now would expand scope non-trivially (cascade considerations). An
+    // explicit "not supported" is safer than a fabricated undo that doesn't
+    // cleanly reverse domain state.
+    //
+    // DEVIATION FROM DESIGN: the design's instruction assumed an existing
+    // `switch (target_module)` here to extend with a `case 'kpi':` branch.
+    // No such switch exists — every other non-'excele' target already falls
+    // through the generic `if (row.target_module !== 'excele')` check below
+    // with the shared `P08_UNDO_UNSUPPORTED_TARGET` code. This branch is
+    // placed ABOVE that generic check so KPI handoffs get the design's
+    // pinned, more specific `P08_UNDO_NOT_SUPPORTED` code instead, without
+    // restructuring the existing control flow for every other target.
+    throw new TeresaCopilotError(
+      'Undo is not supported for KPI handoffs (no reversible domain operation).',
+      'P08_UNDO_NOT_SUPPORTED',
+      409
+    );
+  }
   if (row.target_module !== 'excele') {
     throw new TeresaCopilotError(
       'Undo is currently supported only for applied workbook mutations.',
@@ -2127,6 +2158,8 @@ async function performHandoff(params: {
         handoffContext,
         targetPayload
       );
+    case 'kpi':
+      return handleResultsKpiHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2658,6 +2691,288 @@ async function handlePresentationsHandoff(
     skipped_locked_slides: applied.skippedLockedSlides,
     navigate_to: `/presentations/decks/${encodeURIComponent(deckId)}`,
     user_intent: context.user_intent,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// KPI-E006 — Results/KPI advisor handoff (three governed modes)
+// ---------------------------------------------------------------------------
+
+/**
+ * Runs BEFORE `createProposal` (while Teresa assembles the chat suggestion),
+ * not from `performHandoff` — retrieval here is visibility-scoped (KPI-F-031),
+ * reusing `listKpis()` (already the only real `buildVisibilityScopedCte`
+ * caller in the KPI repo), never a raw query. Used to populate
+ * `draft_quality_review.quality_review.duplicate_risk` before the proposal
+ * is ever shown to the user for approval.
+ */
+export async function buildKpiDraftAdvisorContext(params: {
+  userId: string;
+  organizationId: string;
+  candidateName: string;
+  candidateCode: string;
+}): Promise<{ candidateKpiIds: string[]; note: string | null }> {
+  const { userId, organizationId, candidateName, candidateCode } = params;
+  const visible = await listKpis({ userId, organizationId, limit: 500 });
+  const needle = candidateName.trim().toLowerCase();
+  const codeNeedle = candidateCode.trim().toLowerCase();
+  const matched = visible.filter(
+    (k) =>
+      k.kpiCode.toLowerCase() === codeNeedle ||
+      (needle.length > 3 && k.kpiCode.toLowerCase().includes(needle))
+  );
+  return {
+    candidateKpiIds: matched.map((k) => k.kpiId),
+    note: matched.length
+      ? `${matched.length} visible KPI(s) with a similar code/name already exist`
+      : null,
+  };
+}
+
+/** Shared helper wrapping the `teresa_handoff_results` insert — same shape
+ * every other `handle*Handoff` function in this file already uses (see
+ * `handleRadarHandoff` etc. above), extracted here since all three KPI modes
+ * need it and none of the pre-existing handlers were factored this way. */
+async function recordTeresaKpiHandoffResult(
+  proposalId: string,
+  organizationId: string,
+  resultRef: string
+): Promise<void> {
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'kpi', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, resultRef, new Date().toISOString()],
+    { fallback: true }
+  );
+}
+
+async function handleResultsKpiHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const kpiContext = payload.kpi_handoff_context as ResultsKpiHandoffContext | undefined;
+  if (!kpiContext?.advisor_mode) {
+    throw new TeresaCopilotError('kpi_handoff_context.advisor_mode missing', 'P08_KPI_INVALID_PAYLOAD');
+  }
+  switch (kpiContext.advisor_mode) {
+    case 'draft_quality_review':
+      return handleKpiDraftQualityReview(proposalId, organizationId, userId, context, kpiContext);
+    case 'check_in_manager_brief':
+      return handleKpiCheckInManagerBrief(proposalId, organizationId, userId, context, kpiContext);
+    case 'reflection_rca':
+      return handleKpiReflectionRca(proposalId, organizationId, userId, context, kpiContext);
+    default: {
+      const _exhaustive: never = kpiContext.advisor_mode;
+      throw new TeresaCopilotError(`Unknown KPI advisor mode: ${String(_exhaustive)}`, 'P08_KPI_UNKNOWN_MODE');
+    }
+  }
+}
+
+/** Mode 1: `draft_quality_review` (KPI-F-027). */
+async function handleKpiDraftQualityReview(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  kpiContext: ResultsKpiHandoffContext
+): Promise<Record<string, unknown>> {
+  const draft = kpiContext.draft_quality_review;
+  if (!draft) throw new TeresaCopilotError('draft_quality_review payload missing', 'P08_KPI_INVALID_PAYLOAD');
+
+  const { resource_id: kpiId } = kpiContext.target_resource;
+  const { proposed } = draft;
+
+  if (kpiId === null) {
+    // CREATE path.
+    if (kpiContext.expected_version !== null) {
+      throw new TeresaCopilotError('expected_version must be null on create path', 'P08_KPI_INVALID_PAYLOAD');
+    }
+    // createKpiDraft() itself resolves the active visibility policy via
+    // getActiveVisibilityPolicy() and fails closed if none exists.
+    const outcome = await createKpiDraft({
+      organizationId,
+      kpiCode: proposed.kpiCode,
+      name: proposed.name,
+      description: proposed.description,
+      unit: proposed.unit,
+      targetGeometry: proposed.targetGeometry,
+      targetValue: proposed.targetValue,
+      targetMin: proposed.targetMin,
+      targetMax: proposed.targetMax,
+      warningLow: proposed.warningLow,
+      warningHigh: proposed.warningHigh,
+      criticalLow: proposed.criticalLow,
+      criticalHigh: proposed.criticalHigh,
+      binarySuccessValue: proposed.binarySuccessValue,
+      formulaText: proposed.formulaText,
+      ownerUserId: proposed.ownerUserId,
+      // createdBy = userId (the REAL human who approved+executed this
+      // proposal), NEVER a 'teresa' sentinel — keeps SelfApprovalDeniedError
+      // meaningful later when this person tries to self-approve in the KPI Tool.
+      createdBy: userId,
+      actorEffectiveRole: 'teresa_initiated',
+      idempotencyKey: proposalId,
+      correlationId: context.runtime_binding?.conversation_id ?? undefined,
+      reason: `Teresa draft_quality_review: ${draft.quality_review.purpose_question}`,
+    });
+    await recordTeresaKpiHandoffResult(proposalId, organizationId, outcome.result.kpi.kpiId);
+    return {
+      handoff: 'kpi',
+      advisor_mode: 'draft_quality_review',
+      kpi_id: outcome.result.kpi.kpiId,
+      definition_version_id: outcome.result.definitionVersion.definitionVersionId,
+      row_version: outcome.result.kpi.rowVersion,
+      real_entity: true,
+      status: outcome.result.kpi.status,
+      outcome: outcome.outcome,
+      quality_review: draft.quality_review,
+      duplicate_risk: draft.quality_review.duplicate_risk,
+    };
+  }
+
+  // EDIT path (decision #2): target_resource.resource_id is a kpi_id.
+  // Resolve current_definition_version_id via getKpi() FIRST (visibility-scoped read).
+  if (kpiContext.expected_version === null) {
+    throw new TeresaCopilotError('expected_version required when resource_id is set', 'P08_KPI_INVALID_PAYLOAD');
+  }
+  const currentKpi = await getKpi({ userId, organizationId, kpiId });
+  if (!currentKpi) {
+    throw new TeresaCopilotError('KPI not found or not visible to approving user', 'P08_KPI_VISIBILITY_STALE');
+  }
+  if (currentKpi.currentDefinitionVersionId === null) {
+    // Decision #1 follow-through: EditDraftInput.definitionVersionId is a
+    // non-nullable string; KpiDefinition.currentDefinitionVersionId is typed
+    // string|null (kpiTypes.ts). No known live path leaves a real KPI
+    // without a current version, but the type must be narrowed honestly
+    // rather than cast away.
+    throw new TeresaCopilotError(
+      'KPI has no current definition version to edit',
+      'P08_KPI_NO_DEFINITION_VERSION'
+    );
+  }
+  try {
+    const outcome = await editKpiDraft({
+      definitionVersionId: currentKpi.currentDefinitionVersionId,
+      organizationId,
+      expectedVersion: kpiContext.expected_version,
+      name: proposed.name,
+      description: proposed.description,
+      unit: proposed.unit,
+      targetGeometry: proposed.targetGeometry,
+      targetValue: proposed.targetValue,
+      targetMin: proposed.targetMin,
+      targetMax: proposed.targetMax,
+      warningLow: proposed.warningLow,
+      warningHigh: proposed.warningHigh,
+      criticalLow: proposed.criticalLow,
+      criticalHigh: proposed.criticalHigh,
+      binarySuccessValue: proposed.binarySuccessValue,
+      formulaText: proposed.formulaText,
+      // Decision #1: EditDraftInput has no `editedBy` field — the real actor
+      // field is `actorUserId` (verified by reading the full interface in
+      // kpiDefinitionCommands.ts before landing this, per the design's own
+      // instruction). No `as any` cast anywhere in this handler.
+      actorUserId: userId,
+      actorEffectiveRole: 'teresa_initiated',
+      idempotencyKey: proposalId,
+      correlationId: context.runtime_binding?.conversation_id ?? undefined,
+      reason: `Teresa draft_quality_review (re-review): ${draft.quality_review.purpose_question}`,
+    });
+    await recordTeresaKpiHandoffResult(proposalId, organizationId, kpiId);
+    return {
+      handoff: 'kpi',
+      advisor_mode: 'draft_quality_review',
+      kpi_id: kpiId,
+      row_version: outcome.resultingVersion,
+      real_entity: true,
+      outcome: outcome.outcome,
+      quality_review: draft.quality_review,
+    };
+  } catch (err) {
+    if (err instanceof AtomicWriteConflictError) throw err; // truth-preserving failure, re-throw as-is
+    throw err;
+  }
+}
+
+/** Mode 2: `check_in_manager_brief` (KPI-F-028). Read-only toward the KPI
+ * domain (never calls a command); the envelope exists to audit a sensitive
+ * aggregated read, matching T3. */
+async function handleKpiCheckInManagerBrief(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  kpiContext: ResultsKpiHandoffContext
+): Promise<Record<string, unknown>> {
+  const brief = kpiContext.check_in_manager_brief;
+  if (!brief) throw new TeresaCopilotError('check_in_manager_brief payload missing', 'P08_KPI_INVALID_PAYLOAD');
+
+  // Re-resolve visibility AT EXECUTION TIME, not trusting the payload built
+  // minutes earlier in chat — this is what makes it an AUDITED read.
+  const stillVisible = await listKpis({ userId, organizationId, limit: 500 });
+  const stillVisibleIds = new Set(stillVisible.map((k) => k.kpiId));
+  const leaked = brief.cited_kpi_ids.filter((id) => !stillVisibleIds.has(id));
+  if (leaked.length > 0) {
+    throw new TeresaCopilotError(`Cited KPI(s) no longer visible: ${leaked.join(', ')}`, 'P08_KPI_VISIBILITY_STALE');
+  }
+  await recordTeresaKpiHandoffResult(proposalId, organizationId, `brief:${proposalId}`);
+  return {
+    handoff: 'kpi',
+    advisor_mode: 'check_in_manager_brief',
+    real_entity: false,
+    scope: brief.scope,
+    cited_kpi_ids: brief.cited_kpi_ids,
+    cited_deviation_case_ids: brief.cited_deviation_case_ids,
+    narrative: brief.narrative,
+  };
+}
+
+/** Mode 3: `reflection_rca` (KPI-F-030) — self-approval enforcement. */
+async function handleKpiReflectionRca(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  kpiContext: ResultsKpiHandoffContext
+): Promise<Record<string, unknown>> {
+  const rca = kpiContext.reflection_rca;
+  if (!rca) throw new TeresaCopilotError('reflection_rca payload missing', 'P08_KPI_INVALID_PAYLOAD');
+  if (kpiContext.expected_version === null) {
+    throw new TeresaCopilotError('expected_version required (case already exists)', 'P08_KPI_INVALID_PAYLOAD');
+  }
+
+  // *** SELF-APPROVAL ENFORCEMENT — no special case for Teresa. ***
+  // submitRootCause() itself has no approver gate; the real gate is
+  // approvePlan() downstream (kpiDeviationCommands.ts), which denies when
+  // plan_submitted_by/created_by === approverId. That check only works if
+  // those columns hold a REAL human id — never a 'teresa' sentinel. So
+  // actorUserId below MUST be userId, exactly like createdBy above.
+  const outcome = await submitRootCause({
+    caseId: rca.case_id,
+    organizationId,
+    expectedVersion: kpiContext.expected_version,
+    actorUserId: userId,
+    actorEffectiveRole: 'teresa_initiated',
+    idempotencyKey: proposalId,
+    correlationId: context.runtime_binding?.conversation_id ?? undefined,
+    rootCauseSummary: rca.proposed_root_cause_summary,
+    rootCauseCategory: rca.proposed_root_cause_category,
+    recurrenceFlag: rca.recurrence_flag,
+    reason: 'Teresa reflection_rca draft, approved by user',
+  });
+  await recordTeresaKpiHandoffResult(proposalId, organizationId, outcome.result.caseId);
+  return {
+    handoff: 'kpi',
+    advisor_mode: 'reflection_rca',
+    case_id: outcome.result.caseId,
+    case_status: outcome.result.status,
+    row_version: outcome.resultingVersion,
+    real_entity: true,
+    outcome: outcome.outcome,
+    evidence_breakdown: rca.evidence_breakdown,
   };
 }
 
