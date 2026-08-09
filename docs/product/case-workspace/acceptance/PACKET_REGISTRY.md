@@ -42,7 +42,41 @@ authorize packets to start.
 | --- | --- | --- | --- | --- | --- |
 | CW-P00 | E0 | — | this registry + convergence map | dependency graph, evidence ledgers | (this document) |
 | CW-P01 | E1 | E0 | `projects` table + CRUD router (EXTEND, read-only reference); `currentProjectId` global store threading (KEEP) | `case_core` table (new, 1:1 keyed to `projects.id`) + `caseCoreService.ts`, 9 methods — **IMPLEMENTED, migration+esbuild verified**, commit `81e65dc2ab` | 155 (canon-modes-ux) |
-| CW-P02 | E2 | E1 | migration 672 plan/step shape as a reference (EXTEND, not reused as-is); `outputsTransactionalRegistry.ts` idempotent-registration pattern (ADAPT) | CasePlanVersion immutability, digest, diff/replan, branching | 119 (domain-graph-capabilities) |
+| CW-P02 | E2 | E1 | migration 672 plan/step shape as a reference (EXTEND, not reused as-is); `outputsTransactionalRegistry.ts` idempotent-registration pattern (ADAPT) | `case_plan_versions` + `case_plan_view_state` tables, `casePlanVersionService.ts`, 13 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild verified**, commit `1fe58aaef5` | 119 (domain-graph-capabilities) |
+
+## CW-P02 (E2 CasePlanVersion) — design decisions accepted 2026-08-09
+
+Eight open questions flagged by the implementing agent; coordinator
+resolutions:
+
+1. **`IN_REVIEW->DRAFT` / `PUBLISHED->WITHDRAWN` command/route names absent
+   from canon** — accepted the agent's by-analogy implementation
+   (`requestChangesOnPlanVersion`, `withdrawPlanVersion`); exact public
+   command/route names are an E2-HTTP-layer decision, not yet built, deferred.
+2. **`plan_number` vs `version` naming** — accepted as designed; correct
+   resolution of a real naming collision with CW-P01's OCC counter.
+3. **GR-036 `DEFERRED_EXTERNAL` scope** — accepted; correctly blocked on a
+   Capability Registry (E3) this packet does not own.
+4. **`case_core.current_plan_version_id` sync ownership** — decided: stays
+   unsynced (NULL) for now; callers query
+   `case_plan_versions WHERE case_id=? AND status='PUBLISHED'` directly.
+   Whichever packet builds the read model/orchestration layer for E4 owns
+   deciding whether to denormalize it later.
+5. **Any-cycle-rejected in `validatePlanVersion`** — accepted as a
+   deliberately conservative default; revisit only if/when CW-GR-008 grows an
+   explicit loop-policy field.
+6. **`diffPlanVersions` assumes ID-stable authoring** — accepted, flagged as
+   a known limitation until the (not-yet-built) E7/E9 authoring flow confirms
+   it preserves node/edge ids across a replan.
+7. **`SECRET_REF` stored verbatim, not the structured envelope CW-GR-013
+   describes (classification/checksum/redacted preview)** — accepted for now
+   but flagged here explicitly as a **security-relevant tracked gap**: no
+   secret value should reach `semantic_graph` in practice until a real
+   `SECRET_REF` envelope exists; this is a prerequisite for E2's HTTP layer
+   or any packet that lets a user paste a real credential into a plan.
+8. **`putViewState` last-write-wins, no OCC** — accepted; layout-only,
+   reasonable default, revisit only if concurrent multi-tab editing proves it
+   matters.
 | CW-P03 | E3 | E0 | `toolGovernanceService.ts`/`toolGovernance.ts` (EXTEND, strongest foundation); `CommandBus.ts` (EXTEND); `toolChainExecutor.ts` DAG executor (KEEP) | Consolidate the 3 duplicate command-creation paths onto one Capability Registry; resolve the 4-way "capability" naming collision before scoping | subset of 119 |
 | CW-P04 | E4 | E2, E3 | `v8_execution_runs` (KEEP, already the Run entity); `v8_agent_work_graphs`/`v8_agent_branch_tasks` (KEEP, already NodeRun); `agentOperatorConsoleService.ts` (KEEP, recovery already exists) | CasePlanVersion binding (CREATE — does not exist); pre-E4 hand-port of `v8-full-done`'s 3 commits (session task #8) | 29 (authority-v8-runtime) |
 | CW-P05 | E5 | E4 | `operationClaimService.ts` + `artifactLineageService.ts` (EXTEND, lineage/claim patterns) | durable wait claims, human task queue, callback auth/dedupe, outbox/inbox | subset of 70 (security-legacy) |
