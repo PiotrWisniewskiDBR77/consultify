@@ -266,6 +266,13 @@ import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.ro
 // /api/results* surface above (see kpi.routes.ts's own header comment:
 // "not aliases for new commands", plan §7).
 import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
+// KPI-E003 Deviation Closed Loop — mounted at the MORE SPECIFIC
+// `/api/vnext/results/kpi/deviation-cases` prefix and registered BEFORE
+// resultsVnextKpiRoutes below (see kpiDeviation.routes.ts's own "MOUNT-ORDER
+// NOTE": resultsVnextKpiRoutes owns `GET /:kpiId` on the shorter
+// `/api/vnext/results/kpi` prefix, which would otherwise shadow this
+// router's `GET /` for the literal path segment "deviation-cases").
+import resultsVnextKpiDeviationRoutes from './routes/resultsVnext/kpiDeviation.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1092,6 +1099,13 @@ export class ApiGateway {
       app.use('/api/results-extended', resultsExtendedRoutes);
       // Results vNext (KPI-E001/E002) — own auth (verifyToken +
       // requireOrgAccess) applied inside the router.
+      // KPI-E003 deviation-cases router MUST be registered BEFORE the
+      // shorter `/api/vnext/results/kpi` mount below — see
+      // kpiDeviation.routes.ts's "MOUNT-ORDER NOTE" (Express matches
+      // app-level middleware in registration order, not by prefix
+      // specificity; the definition/measurement router's `GET /:kpiId`
+      // would otherwise shadow this router's `GET /`).
+      app.use('/api/vnext/results/kpi/deviation-cases', resultsVnextKpiDeviationRoutes);
       app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
