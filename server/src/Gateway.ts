@@ -1200,14 +1200,17 @@ export class ApiGateway {
       // valuation-recommendation}/...
       app.use(
         '/api/finance/candidate-handoff/investment-case',
+        gatewayVerifyToken,
         financeCandidateHandoffInvestmentCaseRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/statement-pack',
+        gatewayVerifyToken,
         financeCandidateHandoffStatementPackRoutes
       );
       app.use(
         '/api/finance/candidate-handoff/valuation-recommendation',
+        gatewayVerifyToken,
         financeCandidateHandoffValuationRecommendationRoutes
       );
       app.use('/api/finance-v4', deprecationHeader('/api/v8/finance'), financeEnterpriseRoutes);
