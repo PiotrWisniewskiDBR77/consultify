@@ -121,7 +121,6 @@ import {
   upsertPortfolioInitiative,
 } from './initiativeCreateFlow';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
-import { InitiativeGoalsView } from './InitiativeGoalsView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
 import {
