@@ -30,6 +30,19 @@ export const CanonicalObjectTypeValues = [
   'ai_proposal',
   'notification',
   'signal',
+  // RN-G1 Platform Foundation extension (2026-08-09) — see
+  // docs/product/results-vnext/RN_G1_PLATFORM_DESIGN.md §C.1/§C.3 and
+  // server/migrations/20260809_rvn_platform_canonical_object_type_extend.sql.
+  // Appended, never reordered/removed relative to the values above. This is
+  // also the SSOT list RVN_RESOURCE_TYPES in
+  // server/src/services/resultsVnext/platform/resourceTypes.ts must stay in
+  // sync with (that file re-declares these 4 rather than importing from
+  // here, to avoid a runtime dependency from myWorkRoofPackage.ts back into
+  // resultsVnext/platform).
+  'kpi',
+  'roi_case',
+  'okr_set',
+  'deviation_case',
 ] as const;
 export type CanonicalObjectType = (typeof CanonicalObjectTypeValues)[number];
 
