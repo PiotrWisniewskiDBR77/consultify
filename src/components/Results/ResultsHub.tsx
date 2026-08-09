@@ -519,7 +519,6 @@ export const ResultsHub: React.FC = () => {
         id: 'results_kpi' as ModuleTab,
         label: t('results.tabs.kpi', 'KPI'),
         icon: <Target size={16} />,
-        count: kpis.length,
       },
       {
         id: 'results_reports' as ModuleTab,

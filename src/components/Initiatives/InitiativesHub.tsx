@@ -123,6 +123,7 @@ import {
 import { InitiativeDocumentView } from './InitiativeDocumentView';
 import { InitiativeObservabilityPanel } from './InitiativeObservabilityPanel';
 import { InitiativeObservabilityTable } from './InitiativeObservabilityTable';
+import { buildInitiativePreviewDetails } from './initiativePreviewDetails';
 import {
   InitiativePreviewV3Body,
   InitiativePreviewV3Footer,
@@ -1579,7 +1580,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   // ============================================
 
   const renderContent = () => {
-    // USPOJNIENIE E1/E2: Observability tab — lineage + funnel (read-only)
+    // T27 R11: Observability table plus preserved lineage dashboard.
     if (activeTab === 'observability') {
       return (
         <div className="flex h-full flex-col overflow-hidden">
@@ -1596,15 +1597,15 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         </div>
       );
     }
-    // F2: Candidates inbox — AI proposes initiatives from discovery (insights/assessments/audits).
+    // T28 R11: Candidates canonical table.
     if (activeTab === 'candidates') {
       return <CandidatesTable onAccept={handleAcceptCandidate} />;
     }
-    // RES-10: Initiatives-owned goals/OKR (goals table). Never Results' kpi_scorecards.
+    // T30 R13-CORRECTION: Goals canonical table.
     if (activeTab === 'goals') {
       return <InitiativesGoalsTable />;
     }
-    // F4: Portfolio health — MECE coverage / gaps / balance / duplicate clusters (read-only).
+    // T29 R11: Portfolio health table plus preserved dashboard.
     if (activeTab === 'portfolioHealth') {
       const openInitiative = (id: string, title: string) =>
         handleOpenDocument({ id, type: 'initiative', name: title || t('initiatives.document.untitled', 'Untitled initiative') });
@@ -2018,6 +2019,10 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     ];
 
     const selectedTableRow: PortfolioInitiative | null = selectedInit;
+    const tablePreviewDetailsText = buildInitiativePreviewDetails(
+      selectedTableRow,
+      i18n.language?.startsWith('pl') ? 'pl' : 'en'
+    );
 
     const tablePreviewActions: StandardPreviewActions | undefined = selectedTableRow
       ? {
@@ -2152,14 +2157,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                     ),
                   }}
                   details={{
-                    text:
-                      selectedTableRow.summary ||
-                      selectedTableRow.description ||
-                      t('initiatives.noDescription', 'No description.'),
+                    text: tablePreviewDetailsText,
                     onCopy: () => {
-                      void navigator.clipboard?.writeText(
-                        `${selectedTableRow.name} — ${selectedTableRow.status}`
-                      );
+                      void navigator.clipboard?.writeText(tablePreviewDetailsText);
                     },
                   }}
                   ai={{
