@@ -1288,3 +1288,88 @@ mapowanie Scorecard Tool) w `docs/product/results-vnext/KPI_E004_DESIGN.md`.
 Prerequisite: `RVN_RESOURCE_TYPES`/`CanonicalObjectTypeValues` nie mają
 jeszcze `'kpi_scorecard'` — pierwszy krok implementacji.
 
+## 23. KPI-E004 Scorecards — schema + command layer + repository + testy (2026-08-09)
+
+Zaimplementowano `KPI_E004_DESIGN.md` w 5 osobnych commitach (Package 0-4),
+każdy zweryfikowany osobno zanim przeszedł do następnego:
+
+- **Package 0** — prerequisite: `'kpi_scorecard'` dopisane na końcu
+  `RVN_RESOURCE_TYPES` (`platform/resourceTypes.ts`) i
+  `CanonicalObjectTypeValues` (`myWorkRoofPackage.ts`), bez reorderu.
+- **Package 1** — `server/migrations/20260812_rvn_kpi_scorecards.sql`, DDL
+  §A skopiowane dosłownie. Zweryfikowane na efemerycznym Postgresie 16
+  (Homebrew `postgresql@16`, `initdb --locale=C`, gniazdo w
+  `/private/tmp`) na TOP łańcucha `20260809_rvn_platform_*` →
+  `20260810_rvn_kpi_core` → `20260811_rvn_kpi_deviation_loop` →
+  `20260811_rvn_platform_obligations`: świeża baza (exit 0), drugi przebieg
+  idempotentny (same `NOTICE: already exists, skipping`),
+  `trg_rvn_kpi_scorecard_snapshots_protect_published` realnie blokuje
+  mutację `snapshot_payload` na opublikowanym wierszu (błąd 23001) ale
+  przepuszcza `status→superseded`, `ux_rvn_kpi_scorecard_snapshots_one_published`
+  realnie blokuje drugi jednocześnie opublikowany snapshot dla tego samego
+  `scorecard_id` (23505 na oczekiwanym unique index, nie na czymś innym).
+- **Package 2** — `kpiScorecardTypes.ts` (Row/DTO, konwencja
+  `kpiDeviationTypes.ts`) + `kpiScorecardCommands.ts`:
+  `createScorecard`/`addScorecardItem`/`removeScorecardItem`/
+  `reorderScorecardItems`/`activateScorecard`/`suspendScorecard`/
+  `archiveScorecard`/`createReviewSnapshot` wg decyzji #8 (wzorem
+  `createKpiDraft`/`runKpiLifecycleTransition`/`addCorrectiveAction`),
+  `publishReviewSnapshot` §B dosłownie **z dopisanym filtrem decyzji #6a**
+  (projekt jawnie ostrzegał że przykładowy SQL w §B kroku 1 nie miał go
+  jeszcze zaaplikowanego — dopisany przez `wrapWithVisibilityScope({userId:
+  publishedBy, resourceType:'kpi'})` spleciony w zapytanie materializujące
+  itemy, zamiast reimplementować gałęzie widoczności osobno).
+  `atomicWrite.ts`: `EVENT_TYPE_CONSUMER_GROUPS` — 3 nazwane w projekcie
+  (`scorecard.created`/`membership_changed`/`review_published`) + 4
+  dopisane dla kompletności katalogu (`activated`/`suspended`/`archived`/
+  `review_created`), ten sam wzorzec "documentation gap" co reszta pliku.
+- **Package 3** — `kpiScorecardRepository.ts` §C: `listScorecards`,
+  `listScorecardItems`, `getScorecardStatusDistribution`,
+  `getPublishedSnapshot` (**decyzja #6b dosłownie** — ponowne rozwiązanie
+  widocznych `kpi_id` dla ŻĄDAJĄCEGO czytelnika, przycięcie
+  `snapshot_payload.items`, przeliczenie `statusCounts` w ODPOWIEDZI, bez
+  dotykania zapisanego wiersza/`content_hash`), `listReviewSnapshots`.
+- **Package 4** — testy. Unit (`scorecardCommands.test.ts`, mockowany
+  `PoolClient`): CAS/STALE_VERSION, `NOT_A_DRAFT`, `SCORECARD_MISMATCH`,
+  happy path, + asercja strukturalna że `addScorecardItem`/
+  `removeScorecardItem`/`reorderScorecardItems` NIGDY nie emitują zapisu do
+  `rvn_kpi_definitions`/`rvn_kpi_definition_versions`/`rvn_kpi_measurements`
+  (przechwycone i przeskanowane KAŻDE zapytanie SQL wykonane w trakcie
+  komendy). RealDB (`scorecardPublishNonLeak.realdb.test.ts`, opt-in przez
+  `DATABASE_URL`/`DB_HOST`, ten sam skip policy co
+  `deviationCaseIdempotency.realdb.test.ts`): (a) atomiczność
+  publish-supersede pod realną współbieżnością (dwa `publishReviewSnapshot`
+  na różnych draftach tego samego scorecardu jednocześnie — nigdy oba
+  `published`, gwarantuje to `ux_rvn_kpi_scorecard_snapshots_one_published`,
+  nie logika aplikacji), (b) **KRYTYCZNY test non-leak dwuwarstwowy** —
+  użytkownik A (widzi ograniczony KPI jako jego właściciel, `PRIVATE`)
+  publikuje snapshot z 3 KPI; użytkownik B (nie widzi tego KPI) woła
+  `getPublishedSnapshot` i dostaje dokładnie 2 itemy + przeliczone
+  `statusCounts`, NIGDY 3; `content_hash` zapisanego wiersza zweryfikowany
+  PRZED i PO obu odczytach `getPublishedSnapshot` — nadal odpowiada pełnym
+  3 itemom (integralność archiwum nietknięta, redakcja dzieje się tylko w
+  odpowiedzi serwowanej niedouprawnionemu czytelnikowi).
+
+**Realny bug znaleziony i naprawiony przez test na żywym Postgresie** (nie
+złapany przez `tsc` ani testy jednostkowe z mockiem): `rvn_platform_resource_
+visibility.resource_id` jest `TEXT`, a `kpi_id`/`scorecard_id` są `UUID` —
+każdy `JOIN rvn_visible_resources vr ON vr.resource_id = <kolumna uuid>` w
+`kpiScorecardCommands.ts`/`kpiScorecardRepository.ts` padał błędem Postgres
+42883 (`operator does not exist: text = uuid`) dopóki nie dopisano `::text`
+po stronie UUID (6 miejsc w obu plikach). Ten sam wzorzec złączenia istnieje
+też w `kpiDeviationRepository.ts` (KPI-E003) — nigdy nie zweryfikowany na
+realnej bazie (`deviationCaseIdempotency.realdb.test.ts` nie woła repozytorium,
+tylko warstwę komend), więc może nosić tę samą, jeszcze nieodkrytą usterkę —
+poza zakresem tego pakietu, warte osobnego zgłoszenia.
+
+**Wynik końcowy**: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+w `server/` — 0 błędów. `npx vitest run tests/resultsVnext/kpi/` (7 plików,
+94 testy) — wszystkie PASS na tym samym efemerycznym Postgresie 16 użytym do
+weryfikacji schematu. Szerszy zestaw nazwany „kpi” (`tests/integration/*kpi*`,
+`tests/unit/**/kpi*`) — 17 plików PASS / 3 skip (opt-in przez inne zmienne
+env, np. `RES10_PG_URL`/`RES11_PG_URL` — nieustawione w tym przebiegu, zero
+regresji), 196 testów PASS / 18 skip na 214 — zero regresji względem stanu
+przed tym pakietem (10 nowych testów, wszystkie PASS, reszta niezmieniona).
+Nie zbudowano: warstwa HTTP `/api/vnext/results/kpi/scorecards/*` (jawnie
+poza zakresem tego pakietu per `KPI_E004_DESIGN.md` — następny, osobny pakiet).
+
