@@ -570,3 +570,20 @@ jest mechanizm, który ma czynić "zapomnienie filtra" strukturalnie niemożliwy
 jeszcze nie zbudowany), management-chain maintenance service (zapis przy
 zmianie `manager_id`, decyzja #1). Nic z tego jeszcze nie jest wpięte do
 żadnego callera/route — to świadomie inert scaffolding.
+
+## 9. RN-G1 — luka weryfikacyjna zamknięta (2026-08-09)
+
+`npm ci` w tym worktree (osobny lockfile niż main, 27 linii diff — świadomie
+NIE symlink z głównego repo) + `NODE_OPTIONS=--max-old-space-size=8192 npx tsc
+--noEmit` na całym `server/` (tsconfig `include: src/**/*`, obejmuje
+`resultsVnext/platform/*` i `myWorkRoofPackage.ts`): **0 błędów TS, proces
+zakończony czysto, brak śladów OOM crash** (mimo znanego ryzyka "tsc OOM-uje i
+udaje sukces" z wcześniejszych sesji — tu użyto flagi pamięci i sprawdzono
+faktyczną treść logu, nie tylko exit code, który sam w sobie był niewiarygodny
+przez pipe do `tee` bez `pipefail`). To potwierdza, że `hasEffectiveCapability`/
+`resolveEffectiveAccess` są wołane ze zgodnymi sygnaturami — konkretna
+niepewność, którą flagowałem w §8, jest zamknięta.
+
+**RN-G1 Platform slice 1 (schema + typy) = zweryfikowany, real, verified.**
+Node_modules w tym worktree jest teraz dostępny dla przyszłej pracy (testy,
+kolejne type-check) bez ponownego `npm ci`.
