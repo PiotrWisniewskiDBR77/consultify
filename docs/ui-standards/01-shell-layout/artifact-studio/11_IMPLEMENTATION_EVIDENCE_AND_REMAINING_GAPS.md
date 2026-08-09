@@ -2,8 +2,8 @@
 
 > Status programu: `IN_PROGRESS / NO_GO`
 > Zakres: otwarte DOC, PPT i XLSX; template'y są `OUT`
-> Snapshot kodu bazowego: branch `codex/sync-demo-20260729`, HEAD
-> `4610ddb7de335071921435d265bb499ac2ac51e2`
+> Snapshot zamkniętego kandydata: branch `codex/sync-demo-20260729`, HEAD
+> `2fb925160bd357477c937ab142bb4ff97424cefe`
 
 ## 1. Co zostało zaimplementowane
 
@@ -78,6 +78,7 @@ Wszystkie nowe ścieżki pozostają za flagami. Legacy nie zostało usunięte.
 | Teresa proposal card              | approval nie wykonuje zapisu; osobna jawna akcja Execute uruchamia zatwierdzony workbook proposal | 3/3 PASS |
 | Teresa → XLSX staging realDB       | utworzenie realnego workbooka, proposal z wersjonowanym selection context, approve, Execute, cold readback, audit, undo i ponowny readback | 1/1 PASS, 25,6 s: wersja `0→1→2`, `A2: null→37→null`, audyt `proposal_created/approved/execution_completed/execution_undone` (2026-08-09) |
 | XLSX UI — celowany pakiet         | shell, Menu 2/3, lewy panel, selection, komentarze, QA/źródła, historia, mutacje i przekazanie zaznaczenia Teresie      | 21/21 PASS; 24/24 z proposal card                 |
+| Końcowy bounded XLSX/runtime package | targeted Vitest oraz sekwencyjny Playwright DOC/PPT/XLSX na kandydacie `2fb925160bd357477c937ab142bb4ff97424cefe` | 25/25 Vitest PASS; 15/15 Playwright PASS; `git diff --check` i hooks PASS (2026-08-09) |
 
 Zwykłe `npm run build` przekroczyło domyślny limit pamięci procesu Node około
 4 GB. Ten sam build zakończył się powodzeniem z jawnym limitem 8 GB. Pozostają
