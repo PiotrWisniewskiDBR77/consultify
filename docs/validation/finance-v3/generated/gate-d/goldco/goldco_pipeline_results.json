@@ -1,31 +1,9 @@
 {
   "meta": {
-    "orgId": "org-goldco-8f92eb75-09d3-4006-9f4e-8147a3035ff0",
-    "generatedAt": "2026-08-09T19:05:11.275Z"
+    "orgId": "org-goldco-d3eb567e-2094-4c22-a17a-aa38baa14d19",
+    "generatedAt": "2026-08-09T19:21:31.818Z"
   },
-  "bugs": [
-    {
-      "id": "BUG-GOLDCO-01",
-      "severity": "P1",
-      "summary": "reopenVersion() cannot set version_kind=RESTATED / restatement_reason / restatement_class — the documented restatement mechanism is not actually reachable through the service layer.",
-      "evidence": "BUG-GOLDCO-01: artifactVersionService.reopenVersion() does not accept/set version_kind, restatement_reason, restatement_class on the new DRAFT row, despite WP-D01 ADR section 6 documenting reopen+versionKind metadata as the intended restatement mechanism and WP-B06 shipping the columns for exactly this purpose. Worked around in this slice with a direct UPDATE on the still-DRAFT row (legal — immutability trigger only blocks APPROVED rows); NOT patched in artifactVersionService.ts itself (prior-committed code, out of this WP's scope). Confirmed live: reopenVersion()'s own INSERT statement (artifactVersionService.ts, T12) has no version_kind column at all, so every reopened version, restatement or not, defaults to version_kind='ORIGINAL'.",
-      "status": "DOCUMENTED, NOT FIXED (prior-committed code outside this WP's file ownership) — worked around via direct SQL UPDATE on the still-DRAFT row for this slice only."
-    },
-    {
-      "id": "BUG-GOLDCO-03",
-      "severity": "P0",
-      "summary": "No reopened/restated Business Version can ever reach APPROVED — approveVersion() throws a Postgres unique-violation (uq_finance_bv_one_approved) because the child is marked APPROVED before the parent is demoted to SUPERSEDED, and that partial unique index cannot be deferred to transaction end.",
-      "evidence": "BUG-GOLDCO-03 (P0, blocking): approveVersion() cannot ever approve a version that HAS a parent_version_id — i.e. no reopened version (restatement or plain reopen) can ever reach APPROVED. Root cause: uq_finance_bv_one_approved (server/migrations/20260809_finance_v3_b01_core_artifacts.sql:143, `CREATE UNIQUE INDEX ... ON finance_business_versions (artifact_id) WHERE status = 'APPROVED'`) is a plain, non-deferrable partial unique INDEX (Postgres does not support DEFERRABLE on indexes with a WHERE predicate — only DEFERRABLE table CONSTRAINTs, which cannot carry a WHERE clause). approveVersion()'s own step ordering (artifactVersionService.ts, T8, steps (c) then T9) sets the CHILD row to APPROVED FIRST, then attempts to demote the PARENT row to SUPERSEDED SECOND, in the same transaction. Because the unique index is checked at statement end (not transaction end), step (c)'s UPDATE fails immediately with a 23505 unique-violation the instant the child becomes APPROVED while the parent (always APPROVED, by reopen's own precondition) still is too — T9 never even runs. Confirmed live: reproduced deterministically approving the GoldCo FY2024 RESTATED version. This blocks EVERY restatement/reopen approval in the entire schema, not just this slice's scenario — it is not a GoldCo-data problem, it is a structural ordering bug in already-committed WP-C02 code (or, alternatively, a still-open Gate B design question: WP-B02 section 5.2's own doc comment already flags T9-in-the-same-transaction as \"a documented tradeoff\", but does not appear to have been executed against a real Postgres unique index before now).",
-      "status": "DOCUMENTED, NOT FIXED — root cause is in prior-committed WP-B01 schema (the index) + WP-C02 approveVersion() step ordering, both outside this WP's file ownership; a correct fix (reorder T9 before the child UPDATE within the same transaction, or replace the partial unique index with a deferrable constraint trigger equivalent) needs its own ADR sign-off per this program's discipline, not a same-day patch inside a data-slice exercise. Blocks the restatement flow required by this WP's own brief from reaching a fully APPROVED restated version — see report for what WAS and was not demonstrated as a direct consequence."
-    },
-    {
-      "id": "BUG-GOLDCO-02",
-      "severity": "P0",
-      "summary": "finance_stmt_check_balance() (and, by the same code pattern, the cash/retained-earnings roll-forward triggers) never checks consolidation_scope=STANDALONE rows — only CONSOLIDATED. A standalone (non-group) Statement Pack can be arbitrarily unbalanced and reach APPROVED with the balance check silently never firing.",
-      "evidence": "BUG-GOLDCO-02: finance_stmt_check_balance() (server/migrations/20260809_finance_v3_d01_statements_02_integrity.sql section 8.1) only queries consolidation_scope='CONSOLIDATED' rows for BOTH TOTAL_ASSETS and TOTAL_LIABILITIES_EQUITY. A Statement Pack line mapped at consolidation_scope='STANDALONE' (the schema's own documented scope for a genuine single-entity, non-consolidated pack, WP-D01 ADR section 4.5) NEVER triggers the Assets=Liabilities+Equity check — confirmed live: an identical PLN 50,000,000 imbalance was silently accepted at STANDALONE scope and correctly rejected at COMMIT at CONSOLIDATED scope. This is the master plan's own \"Assets = Liabilities + Equity\" hard control (section 5 \"Kontrole\") silently not applying to the majority real-world case (a standalone company's own statement pack), the same failure class (\"SQL condition silently evaluates to skip instead of block\") WP-D01's own ADR section 7 already found and fixed once in the readiness gate's bool_and/COALESCE — this is a second, undiscovered instance of the same class in a different trigger.",
-      "status": "DOCUMENTED, NOT FIXED — the trigger function lives in server/migrations/20260809_finance_v3_d01_statements_02_integrity.sql, prior-committed WP-D01b migration code outside this WP's scope; a fix would need an additive migration adding a STANDALONE-scope variant of the same check (or removing the scope filter and checking per (entity,scope) pair), which is a schema change requiring its own ADR sign-off, not a same-day patch inside a data-slice exercise."
-    }
-  ],
+  "bugs": [],
   "parent": {
     "FY2023": {
       "revenue": 150000000,
@@ -457,37 +435,36 @@
     "businessVersionStatus": "APPROVED"
   },
   "restatement": {
-    "originalBusinessVersionId": "aa601959-76ca-470f-94df-09aee5363d91",
-    "restatedBusinessVersionId": "ae8f64ed-4d52-440e-a8c2-967c495ed925",
+    "originalBusinessVersionId": "cecaf1ee-3898-461f-8f2e-939e8a04be0d",
+    "restatedBusinessVersionId": "fe2c4b85-ed13-4c12-95c8-96a3406eaa1f",
     "originalStatusAfter": {
-      "status": "APPROVED",
-      "superseded_by_version_id": null
+      "status": "SUPERSEDED",
+      "superseded_by_version_id": "fe2c4b85-ed13-4c12-95c8-96a3406eaa1f"
     },
     "restatedStatusAfter": {
-      "status": "IN_REVIEW",
+      "status": "APPROVED",
       "version_kind": "RESTATED",
       "restatement_reason": "Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.",
       "restatement_class": "ERROR_CORRECTION",
-      "parent_version_id": "aa601959-76ca-470f-94df-09aee5363d91"
+      "parent_version_id": "cecaf1ee-3898-461f-8f2e-939e8a04be0d"
     }
   },
   "negativeProbe": {
     "standalone": {
       "scope": "STANDALONE",
-      "rejected": false,
-      "mappedCount": 2,
-      "storedCount": 2
+      "rejected": true,
+      "error": "finance_stmt_lines: balance check failed for version=6b8064a5-bae1-403e-85cf-b2f093eb556a entity=5485e43f-e6dc-4c51-8237-1124be78775d period=f9fd545e-8c48-43af-a694-0a09d6fb789d basis=FULL_YEAR scope=STANDALONE: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1"
     },
     "consolidated": {
       "scope": "CONSOLIDATED",
       "rejected": true,
-      "error": "finance_stmt_lines: balance check failed for version=ad7219ec-1590-4614-bf9f-ae91df48ffa5 entity=7c706876-31b1-49d3-ab5a-8a39de3cd406 period=6413f7a9-54ee-4349-9709-c59ac62f1e20 basis=FULL_YEAR: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1"
+      "error": "finance_stmt_lines: balance check failed for version=0237503f-7e79-42ea-b4ed-34b405e2c270 entity=e2f3461f-5fd3-465e-b4b9-8d4bbf371cf9 period=f9fd545e-8c48-43af-a694-0a09d6fb789d basis=FULL_YEAR scope=CONSOLIDATED: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1"
     }
   },
   "packStatuses": {
     "parentFY2023": true,
     "parentFY2024Original": true,
-    "parentFY2024Restated": false,
+    "parentFY2024Restated": true,
     "parentFY2025": true,
     "parentMonthly": true,
     "subFY2023": true,
@@ -496,7 +473,7 @@
     "group": true
   },
   "log": [
-    "[periods] FY2023=3ebd4901-d76a-4700-a5e8-a0e976759b83 FY2024=aff1d6c3-292f-4774-8f3c-356ab1fbb16b FY2025=6413f7a9-54ee-4349-9709-c59ac62f1e20 + 12 month periods for FY2025",
+    "[periods] FY2023=bc1fba38-ce80-4740-b5af-89910188e993 FY2024=d89885a6-b4ae-41c0-b551-7429873c52b2 FY2025=f9fd545e-8c48-43af-a694-0a09d6fb789d + 12 month periods for FY2025",
     "[taxonomy] custom org-scoped lines CTA_OCI, INTERCOMPANY_LOAN created",
     "\n=== PARENT standalone FY2023 ===",
     "  [PARENT FY2023] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
@@ -504,13 +481,15 @@
     "\n=== PARENT standalone FY2024 (ORIGINAL) ===",
     "  [PARENT FY2024 ORIGINAL] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
     "  [PARENT FY2024 ORIGINAL] approve ok=true",
-    "\n=== PARENT FY2024 RESTATEMENT (reopen -> version_kind=RESTATED -> remap -> approve) ===",
-    "  [PARENT FY2024 RESTATED] reopened vN+1=ae8f64ed-4d52-440e-a8c2-967c495ed925 (parent=aa601959-76ca-470f-94df-09aee5363d91), status=DRAFT",
-    "  [PARENT FY2024 RESTATED] version_kind after workaround UPDATE: {\"version_kind\":\"RESTATED\",\"restatement_reason\":\"Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.\",\"restatement_class\":\"ERROR_CORRECTION\"}",
+    "\n=== PARENT FY2024 RESTATEMENT (reopen with versionKind=RESTATED -> remap -> approve) — BUG-GOLDCO-01 + BUG-GOLDCO-03 FIX RE-TEST ===",
+    "  [PARENT FY2024 RESTATED] reopened vN+1=fe2c4b85-ed13-4c12-95c8-96a3406eaa1f (parent=cecaf1ee-3898-461f-8f2e-939e8a04be0d), status=DRAFT, version_kind=RESTATED",
+    "  [PARENT FY2024 RESTATED] BUG-GOLDCO-01 FIX CONFIRMED: reopenVersion() itself persisted version_kind=RESTATED + restatement_reason + restatement_class, no workaround UPDATE used.",
+    "  [PARENT FY2024 RESTATED] version_kind read back from DB: {\"version_kind\":\"RESTATED\",\"restatement_reason\":\"Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.\",\"restatement_class\":\"ERROR_CORRECTION\"}",
     "  [PARENT FY2024 RESTATED] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
-    "  [PARENT FY2024 RESTATED] approve THREW: duplicate key value violates unique constraint \"uq_finance_bv_one_approved\"",
-    "  *** BUG-GOLDCO-03 (P0, blocking): approveVersion() cannot ever approve a version that HAS a parent_version_id — i.e. no reopened version (restatement or plain reopen) can ever reach APPROVED. Root cause: uq_finance_bv_one_approved (server/migrations/20260809_finance_v3_b01_core_artifacts.sql:143, `CREATE UNIQUE INDEX ... ON finance_business_versions (artifact_id) WHERE status = 'APPROVED'`) is a plain, non-deferrable partial unique INDEX (Postgres does not support DEFERRABLE on indexes with a WHERE predicate — only DEFERRABLE table CONSTRAINTs, which cannot carry a WHERE clause). approveVersion()'s own step ordering (artifactVersionService.ts, T8, steps (c) then T9) sets the CHILD row to APPROVED FIRST, then attempts to demote the PARENT row to SUPERSEDED SECOND, in the same transaction. Because the unique index is checked at statement end (not transaction end), step (c)'s UPDATE fails immediately with a 23505 unique-violation the instant the child becomes APPROVED while the parent (always APPROVED, by reopen's own precondition) still is too — T9 never even runs. Confirmed live: reproduced deterministically approving the GoldCo FY2024 RESTATED version. This blocks EVERY restatement/reopen approval in the entire schema, not just this slice's scenario — it is not a GoldCo-data problem, it is a structural ordering bug in already-committed WP-C02 code (or, alternatively, a still-open Gate B design question: WP-B02 section 5.2's own doc comment already flags T9-in-the-same-transaction as \"a documented tradeoff\", but does not appear to have been executed against a real Postgres unique index before now).",
-    "  [PARENT FY2024 ORIGINAL] post-restatement status: {\"status\":\"APPROVED\",\"superseded_by_version_id\":null}",
+    "  [PARENT FY2024 RESTATED] approve ok=true",
+    "  [PARENT FY2024 RESTATED] BUG-GOLDCO-03 FIX CONFIRMED: approveVersion() succeeded, status=APPROVED",
+    "  [PARENT FY2024 ORIGINAL] post-restatement status: {\"status\":\"SUPERSEDED\",\"superseded_by_version_id\":\"fe2c4b85-ed13-4c12-95c8-96a3406eaa1f\"}",
+    "  [PARENT FY2024 ORIGINAL] BUG-GOLDCO-03 FIX CONFIRMED: original correctly SUPERSEDED, superseded_by_version_id points at the restated child.",
     "  [PARENT FY2024 ORIGINAL] finance_stmt_lines row count (must be unchanged, 28 expected): 28",
     "\n=== PARENT standalone FY2025 (built on RESTATED FY2024 closing) ===",
     "  [PARENT FY2025] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
@@ -527,10 +506,10 @@
     "\n=== SUB standalone FY2025 ===",
     "  [SUB FY2025] reconciliation status=CLEAN residual=0 ready=true transitionOk=true",
     "  [SUB FY2025] approve ok=true",
-    "\n=== NEGATIVE-TEST PROBE: unbalanced pack, STANDALONE vs CONSOLIDATED scope ===",
-    "  [PROBE STANDALONE, 50000000 PLN off-balance] result: {\"scope\":\"STANDALONE\",\"rejected\":false,\"mappedCount\":2,\"storedCount\":2}",
-    "  [PROBE CONSOLIDATED, 50000000 PLN off-balance] result: {\"scope\":\"CONSOLIDATED\",\"rejected\":true,\"error\":\"finance_stmt_lines: balance check failed for version=ad7219ec-1590-4614-bf9f-ae91df48ffa5 entity=7c706876-31b1-49d3-ab5a-8a39de3cd406 period=6413f7a9-54ee-4349-9709-c59ac62f1e20 basis=FULL_YEAR: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1\"}",
-    "  *** BUG-GOLDCO-02: finance_stmt_check_balance() (server/migrations/20260809_finance_v3_d01_statements_02_integrity.sql section 8.1) only queries consolidation_scope='CONSOLIDATED' rows for BOTH TOTAL_ASSETS and TOTAL_LIABILITIES_EQUITY. A Statement Pack line mapped at consolidation_scope='STANDALONE' (the schema's own documented scope for a genuine single-entity, non-consolidated pack, WP-D01 ADR section 4.5) NEVER triggers the Assets=Liabilities+Equity check — confirmed live: an identical PLN 50,000,000 imbalance was silently accepted at STANDALONE scope and correctly rejected at COMMIT at CONSOLIDATED scope. This is the master plan's own \"Assets = Liabilities + Equity\" hard control (section 5 \"Kontrole\") silently not applying to the majority real-world case (a standalone company's own statement pack), the same failure class (\"SQL condition silently evaluates to skip instead of block\") WP-D01's own ADR section 7 already found and fixed once in the readiness gate's bool_and/COALESCE — this is a second, undiscovered instance of the same class in a different trigger.",
+    "\n=== NEGATIVE-TEST PROBE: unbalanced pack, STANDALONE vs CONSOLIDATED scope — BUG-GOLDCO-02 FIX RE-TEST ===",
+    "  [PROBE STANDALONE, 50000000 PLN off-balance] result: {\"scope\":\"STANDALONE\",\"rejected\":true,\"error\":\"finance_stmt_lines: balance check failed for version=6b8064a5-bae1-403e-85cf-b2f093eb556a entity=5485e43f-e6dc-4c51-8237-1124be78775d period=f9fd545e-8c48-43af-a694-0a09d6fb789d basis=FULL_YEAR scope=STANDALONE: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1\"}",
+    "  [PROBE CONSOLIDATED, 50000000 PLN off-balance] result: {\"scope\":\"CONSOLIDATED\",\"rejected\":true,\"error\":\"finance_stmt_lines: balance check failed for version=0237503f-7e79-42ea-b4ed-34b405e2c270 entity=e2f3461f-5fd3-465e-b4b9-8d4bbf371cf9 period=f9fd545e-8c48-43af-a694-0a09d6fb789d basis=FULL_YEAR scope=CONSOLIDATED: assets=100000000 liab+equity=50000000 diff=50000000 tolerance=1\"}",
+    "  BUG-GOLDCO-02 FIX CONFIRMED: the PLN 50000000 imbalance is now rejected at BOTH STANDALONE and CONSOLIDATED scope (previously STANDALONE was silently accepted).",
     "\n=== Consolidated GoldCo Group FY2025 pack ===",
     "  [GROUP FY2025 CONSOLIDATED] reconciliation status=WITHIN_TOLERANCE residual=-6640000 ready=true transitionOk=true",
     "  [GROUP FY2025 CONSOLIDATED] approve ok=true"

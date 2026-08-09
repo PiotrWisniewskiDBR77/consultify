@@ -317,63 +317,45 @@ async function main() {
     packParentFY2024.businessVersion.version, rowsParentFY2024Orig.rawLines, rowsParentFY2024Orig.rules, 'PARENT FY2024 ORIGINAL'
   );
 
-  record(`\n=== PARENT FY2024 RESTATEMENT (reopen -> version_kind=RESTATED -> remap -> approve) ===`);
-  let restatementBug: string | null = null;
+  record(`\n=== PARENT FY2024 RESTATEMENT (reopen with versionKind=RESTATED -> remap -> approve) — BUG-GOLDCO-01 + BUG-GOLDCO-03 FIX RE-TEST ===`);
   let packParentFY2024Restated: any = null;
   if (resParentFY2024Orig.approved?.ok) {
     const origBvId = packParentFY2024.businessVersion.business_version_id;
     const origApprovedVersion = resParentFY2024Orig.approved.businessVersion.version;
     const RESTATEMENT_REASON =
       'Inventory valuation error discovered during FY2025 Q1 close: obsolete/slow-moving finished-goods stock at the Radom plant was carried at cost instead of net realizable value in the FY2024 audited pack.';
+    // BUG-GOLDCO-01 FIX (2026-08-09): reopenVersion() now accepts
+    // versionKind/restatementReason/restatementClass directly and persists
+    // them on the new DRAFT row itself — no more post-hoc workaround UPDATE.
     const reopened = await artifactVersionService.reopenVersion({
       organizationId: orgId, businessVersionId: origBvId, actorId: approverId, role: 'approver',
       expectedVersion: origApprovedVersion, reason: RESTATEMENT_REASON,
+      versionKind: 'RESTATED', restatementReason: RESTATEMENT_REASON, restatementClass: 'ERROR_CORRECTION',
     });
     if (!reopened.ok) {
       record(`  [PARENT FY2024 RESTATED] reopen FAILED: ${JSON.stringify(reopened)}`);
     } else {
       const newBvId = reopened.businessVersion.business_version_id;
-      record(`  [PARENT FY2024 RESTATED] reopened vN+1=${newBvId} (parent=${origBvId}), status=${reopened.businessVersion.status}`);
+      record(`  [PARENT FY2024 RESTATED] reopened vN+1=${newBvId} (parent=${origBvId}), status=${reopened.businessVersion.status}, version_kind=${reopened.businessVersion.version_kind}`);
 
-      // *** DOCUMENTED WORKAROUND, NOT A FIX TO COMMITTED CODE ***
-      // artifactVersionService.reopenVersion() (already-committed WP-C02/WP-D02
-      // code, server/src/services/finance/canonical/artifactVersionService.ts)
-      // does NOT accept or set version_kind/restatement_reason/restatement_class
-      // on the new INSERT, even though WP-D01's own ADR section 6 explicitly
-      // documents "restatement = reopen z dodatkowymi metadanymi (versionKind:
-      // 'RESTATED')" as the intended mechanism, and WP-B06 shipped the columns
-      // (finance_business_versions.version_kind/restatement_reason/restatement_class,
-      // migration 20260809_finance_v3_b06_reproducibility_retention_export.sql:74-86)
-      // with exactly that intent. This is a real, reproducible gap between the
-      // ADR's documented design and the shipped reopenVersion() signature —
-      // reported as BUG-GOLDCO-01 in the vertical-slice report, NOT silently
-      // patched here (reopenVersion.ts is prior-committed code from an earlier
-      // work package, not a file this WP owns). To exercise the REST of the
-      // restatement mechanism end-to-end for this slice, we set the two
-      // columns directly with a plain UPDATE — legal at the SQL level because
-      // the new business_version row is still DRAFT (finance_stmt_lines_enforce_parent_immutability
-      // and finance_business_versions' own immutability trigger only block
-      // mutation once a version is APPROVED), and the CHECK constraint
-      // (chk_finance_bv_restatement_reason) still enforces reason+class must
-      // both be present together.
-      await withPinnedPostgresTransaction((tx: Tx) =>
-        tx.queryRun(
-          `UPDATE finance_business_versions SET version_kind = 'RESTATED', restatement_reason = ?, restatement_class = ? WHERE business_version_id = ?`,
-          [RESTATEMENT_REASON, 'ERROR_CORRECTION', newBvId]
-        )
-      );
-      restatementBug =
-        'BUG-GOLDCO-01: artifactVersionService.reopenVersion() does not accept/set version_kind, restatement_reason, restatement_class on the new DRAFT row, despite WP-D01 ADR section 6 documenting reopen+versionKind metadata as the intended restatement mechanism and WP-B06 shipping the columns for exactly this purpose. Worked around in this slice with a direct UPDATE on the still-DRAFT row (legal — immutability trigger only blocks APPROVED rows); NOT patched in artifactVersionService.ts itself (prior-committed code, out of this WP\'s scope). Confirmed live: reopenVersion()\'s own INSERT statement (artifactVersionService.ts, T12) has no version_kind column at all, so every reopened version, restatement or not, defaults to version_kind=\'ORIGINAL\'.';
-      bugs.push({
-        id: 'BUG-GOLDCO-01', severity: 'P1',
-        summary: 'reopenVersion() cannot set version_kind=RESTATED / restatement_reason / restatement_class — the documented restatement mechanism is not actually reachable through the service layer.',
-        evidence: restatementBug, status: 'DOCUMENTED, NOT FIXED (prior-committed code outside this WP\'s file ownership) — worked around via direct SQL UPDATE on the still-DRAFT row for this slice only.',
-      });
+      if (
+        reopened.businessVersion.version_kind !== 'RESTATED' ||
+        reopened.businessVersion.restatement_reason !== RESTATEMENT_REASON ||
+        reopened.businessVersion.restatement_class !== 'ERROR_CORRECTION'
+      ) {
+        throw new Error(`BUG-GOLDCO-01 REGRESSION: reopenVersion() did not persist version_kind/restatement_reason/restatement_class as requested — got ${JSON.stringify({ version_kind: reopened.businessVersion.version_kind, restatement_reason: reopened.businessVersion.restatement_reason, restatement_class: reopened.businessVersion.restatement_class })}`);
+      }
+      record(`  [PARENT FY2024 RESTATED] BUG-GOLDCO-01 FIX CONFIRMED: reopenVersion() itself persisted version_kind=RESTATED + restatement_reason + restatement_class, no workaround UPDATE used.`);
 
+      // Read back directly from the DB (not just the service's own return value) — same
+      // discipline as the rest of this pipeline (never echo the caller's own input as proof).
       const confirmKind = await withPinnedPostgresTransaction((tx: Tx) =>
         tx.queryOne(`SELECT version_kind, restatement_reason, restatement_class FROM finance_business_versions WHERE business_version_id = ?`, [newBvId])
       );
-      record(`  [PARENT FY2024 RESTATED] version_kind after workaround UPDATE: ${JSON.stringify(confirmKind)}`);
+      record(`  [PARENT FY2024 RESTATED] version_kind read back from DB: ${JSON.stringify(confirmKind)}`);
+      if ((confirmKind as any)?.version_kind !== 'RESTATED') {
+        throw new Error(`BUG-GOLDCO-01 REGRESSION: DB row does not show version_kind='RESTATED': ${JSON.stringify(confirmKind)}`);
+      }
 
       const entRestated = await makeEntity(newBvId, 'PARENT', { functionalCurrency: 'PLN' });
       const rowsRestated = buildFullPackRows('PARENT', periodFY2024, 'PLN', oracle.parent.FY2024_restated, { includeCF: true });
@@ -383,17 +365,14 @@ async function main() {
       );
       packParentFY2024Restated = { businessVersionId: newBvId, res: resRestated };
 
-      if (resRestated.approved && !resRestated.approved.ok && resRestated.approved.code === 'DB_CONSTRAINT_VIOLATION' && /uq_finance_bv_one_approved/.test(resRestated.approved.message)) {
-        const msg =
-          'BUG-GOLDCO-03 (P0, blocking): approveVersion() cannot ever approve a version that HAS a parent_version_id — i.e. no reopened version (restatement or plain reopen) can ever reach APPROVED. Root cause: uq_finance_bv_one_approved (server/migrations/20260809_finance_v3_b01_core_artifacts.sql:143, `CREATE UNIQUE INDEX ... ON finance_business_versions (artifact_id) WHERE status = \'APPROVED\'`) is a plain, non-deferrable partial unique INDEX (Postgres does not support DEFERRABLE on indexes with a WHERE predicate — only DEFERRABLE table CONSTRAINTs, which cannot carry a WHERE clause). approveVersion()\'s own step ordering (artifactVersionService.ts, T8, steps (c) then T9) sets the CHILD row to APPROVED FIRST, then attempts to demote the PARENT row to SUPERSEDED SECOND, in the same transaction. Because the unique index is checked at statement end (not transaction end), step (c)\'s UPDATE fails immediately with a 23505 unique-violation the instant the child becomes APPROVED while the parent (always APPROVED, by reopen\'s own precondition) still is too — T9 never even runs. Confirmed live: reproduced deterministically approving the GoldCo FY2024 RESTATED version. This blocks EVERY restatement/reopen approval in the entire schema, not just this slice\'s scenario — it is not a GoldCo-data problem, it is a structural ordering bug in already-committed WP-C02 code (or, alternatively, a still-open Gate B design question: WP-B02 section 5.2\'s own doc comment already flags T9-in-the-same-transaction as "a documented tradeoff", but does not appear to have been executed against a real Postgres unique index before now).';
-        record(`  *** ${msg}`);
-        bugs.push({
-          id: 'BUG-GOLDCO-03', severity: 'P0',
-          summary: 'No reopened/restated Business Version can ever reach APPROVED — approveVersion() throws a Postgres unique-violation (uq_finance_bv_one_approved) because the child is marked APPROVED before the parent is demoted to SUPERSEDED, and that partial unique index cannot be deferred to transaction end.',
-          evidence: msg,
-          status: 'DOCUMENTED, NOT FIXED — root cause is in prior-committed WP-B01 schema (the index) + WP-C02 approveVersion() step ordering, both outside this WP\'s file ownership; a correct fix (reorder T9 before the child UPDATE within the same transaction, or replace the partial unique index with a deferrable constraint trigger equivalent) needs its own ADR sign-off per this program\'s discipline, not a same-day patch inside a data-slice exercise. Blocks the restatement flow required by this WP\'s own brief from reaching a fully APPROVED restated version — see report for what WAS and was not demonstrated as a direct consequence.',
-        });
+      // BUG-GOLDCO-03 FIX (2026-08-09): approveVersion() now supersedes the
+      // parent BEFORE flipping the child to APPROVED, in the same transaction
+      // — a reopened/restated version can now reach APPROVED without hitting
+      // uq_finance_bv_one_approved.
+      if (!resRestated.approved?.ok) {
+        throw new Error(`BUG-GOLDCO-03 REGRESSION: approveVersion() on the RESTATED version did not reach APPROVED: ${JSON.stringify(resRestated.approved)}`);
       }
+      record(`  [PARENT FY2024 RESTATED] BUG-GOLDCO-03 FIX CONFIRMED: approveVersion() succeeded, status=${resRestated.approved.businessVersion.status}`);
 
       // Confirm vN (original) is now SUPERSEDED (T9, fired inside approveVersion
       // when vN+1 was approved) and was NEVER mutated in place except for that
@@ -402,6 +381,10 @@ async function main() {
         tx.queryOne(`SELECT status, superseded_by_version_id FROM finance_business_versions WHERE business_version_id = ?`, [origBvId])
       );
       record(`  [PARENT FY2024 ORIGINAL] post-restatement status: ${JSON.stringify(origAfter)}`);
+      if ((origAfter as any)?.status !== 'SUPERSEDED' || (origAfter as any)?.superseded_by_version_id !== newBvId) {
+        throw new Error(`BUG-GOLDCO-03 REGRESSION: original vN did not become SUPERSEDED pointing at the restated child: ${JSON.stringify(origAfter)}`);
+      }
+      record(`  [PARENT FY2024 ORIGINAL] BUG-GOLDCO-03 FIX CONFIRMED: original correctly SUPERSEDED, superseded_by_version_id points at the restated child.`);
       const origLinesStillThere = await withPinnedPostgresTransaction((tx: Tx) =>
         tx.queryOne(`SELECT count(*)::int AS n FROM finance_stmt_lines WHERE business_version_id = ?`, [origBvId])
       );
@@ -480,7 +463,7 @@ async function main() {
   //    TOTAL_LIABILITIES_EQUITY lookups — this probe reproduces that live,
   //    not just by code reading.)
   // =======================================================================
-  record(`\n=== NEGATIVE-TEST PROBE: unbalanced pack, STANDALONE vs CONSOLIDATED scope ===`);
+  record(`\n=== NEGATIVE-TEST PROBE: unbalanced pack, STANDALONE vs CONSOLIDATED scope — BUG-GOLDCO-02 FIX RE-TEST ===`);
   const UNBALANCED_DELTA = 50_000_000;
   async function unbalancedProbe(scope: 'STANDALONE' | 'CONSOLIDATED') {
     const pack = await makeStatementPack();
@@ -510,18 +493,15 @@ async function main() {
   const probeConsolidated = await unbalancedProbe('CONSOLIDATED');
   record(`  [PROBE STANDALONE, ${UNBALANCED_DELTA} PLN off-balance] result: ${JSON.stringify(probeStandalone)}`);
   record(`  [PROBE CONSOLIDATED, ${UNBALANCED_DELTA} PLN off-balance] result: ${JSON.stringify(probeConsolidated)}`);
-  if (!probeStandalone.rejected && probeConsolidated.rejected) {
-    const msg =
-      'BUG-GOLDCO-02: finance_stmt_check_balance() (server/migrations/20260809_finance_v3_d01_statements_02_integrity.sql section 8.1) only queries consolidation_scope=\'CONSOLIDATED\' rows for BOTH TOTAL_ASSETS and TOTAL_LIABILITIES_EQUITY. A Statement Pack line mapped at consolidation_scope=\'STANDALONE\' (the schema\'s own documented scope for a genuine single-entity, non-consolidated pack, WP-D01 ADR section 4.5) NEVER triggers the Assets=Liabilities+Equity check — confirmed live: an identical PLN 50,000,000 imbalance was silently accepted at STANDALONE scope and correctly rejected at COMMIT at CONSOLIDATED scope. This is the master plan\'s own "Assets = Liabilities + Equity" hard control (section 5 "Kontrole") silently not applying to the majority real-world case (a standalone company\'s own statement pack), the same failure class ("SQL condition silently evaluates to skip instead of block") WP-D01\'s own ADR section 7 already found and fixed once in the readiness gate\'s bool_and/COALESCE — this is a second, undiscovered instance of the same class in a different trigger.';
-    record(`  *** ${msg}`);
-    bugs.push({
-      id: 'BUG-GOLDCO-02', severity: 'P0',
-      summary: 'finance_stmt_check_balance() (and, by the same code pattern, the cash/retained-earnings roll-forward triggers) never checks consolidation_scope=STANDALONE rows — only CONSOLIDATED. A standalone (non-group) Statement Pack can be arbitrarily unbalanced and reach APPROVED with the balance check silently never firing.',
-      evidence: msg,
-      status: 'DOCUMENTED, NOT FIXED — the trigger function lives in server/migrations/20260809_finance_v3_d01_statements_02_integrity.sql, prior-committed WP-D01b migration code outside this WP\'s scope; a fix would need an additive migration adding a STANDALONE-scope variant of the same check (or removing the scope filter and checking per (entity,scope) pair), which is a schema change requiring its own ADR sign-off, not a same-day patch inside a data-slice exercise.',
-    });
+  // BUG-GOLDCO-02 FIX (2026-08-09, additive migration
+  // 20260809_finance_v3_d01b_statements_02b_integrity_scope_fix.sql):
+  // finance_stmt_check_balance() (and the cash/RE roll-forward triggers)
+  // now check NEW.consolidation_scope instead of a hardcoded 'CONSOLIDATED'
+  // literal — an unbalanced pack must now be rejected at BOTH scopes.
+  if (probeStandalone.rejected && probeConsolidated.rejected) {
+    record(`  BUG-GOLDCO-02 FIX CONFIRMED: the PLN ${UNBALANCED_DELTA} imbalance is now rejected at BOTH STANDALONE and CONSOLIDATED scope (previously STANDALONE was silently accepted).`);
   } else {
-    record(`  [PROBE] unexpected outcome — re-examine before trusting BUG-GOLDCO-02 (rejected both / neither).`);
+    throw new Error(`BUG-GOLDCO-02 REGRESSION: expected both STANDALONE and CONSOLIDATED to reject the unbalanced probe — got standalone.rejected=${probeStandalone.rejected} consolidated.rejected=${probeConsolidated.rejected}`);
   }
 
   // =======================================================================
