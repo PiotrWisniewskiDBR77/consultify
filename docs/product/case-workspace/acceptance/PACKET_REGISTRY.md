@@ -315,7 +315,13 @@ Twelve open questions; coordinator resolutions, grouped:
 9. **`version_number`/`version` naming split, mirroring CW-P02's
    `plan_number`/`version`** — accepted, consistent with established
    precedent, same confirm-before-public-API flag carried forward.
-| CW-P13 | E13 | E4, E9 | `migrate.postgres.ts` convention (EXTEND); two flag mechanisms (EXTEND, pick deliberately) | legacy read adapter, quarantine, cohort rollout, kill switch | 30 (LEGACY_MIGRATION_PARITY) |
+| CW-P11 | E13 | E0 | `featureFlagService.ts` pattern (EXTEND by imitation, never written to) | `case_workspace_feature_flag_definitions` + `case_workspace_feature_flags` + `case_workspace_legacy_quarantine`, `migrationReadinessService.ts`, 15 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+featureFlagService-untouched verified**, commit `c11b43f40a`. Renumbered from CW-P13. Legacy read adapter (actually reading/adapting old AgentPlan data) explicitly out of scope — this packet is the flag/quarantine substrate only. | 30 (LEGACY_MIGRATION_PARITY) |
+
+Notable: the design deliberately improves on v8_feature_flags' own documented
+weakness — its non-production "zero rows means enabled" fallback (a known
+source of dev-vs-demo flag discrepancies per project memory) — by making
+absence of a row always read as disabled, in every environment, with no
+implicit-enable escape hatch.
 | CW-P14 | E14 | all above | — | correlation chain, Golden Cases A-F, candidate manifest | 110 (EPIC_DOD_COVERAGE) |
 
 ## Naming collisions to resolve before scoping (found during mapping, not yet owner-reviewed)
