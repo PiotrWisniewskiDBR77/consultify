@@ -471,7 +471,6 @@ export class ApiGateway {
       // router owns auth + V8 org/output gates below; applying the internal
       // tools guard here makes every collection request return a deliberate
       // production 404 when INTERNAL_TOOLS_ENABLED is off.
-      app.use('/api/artifact-runs', ...internalToolsGuard);
       app.use('/api/work-canvas', workCanvasRoutes);
       app.use('/api/agents', ...internalToolsGuard);
       app.use('/api/ai-operator', ...internalToolsGuard);
