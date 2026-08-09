@@ -125,6 +125,9 @@ Wypełnione przez agenta `a53002a3d9119f8a9` — 2026-08-09. Wszystkie wiersze
 - **KPI-F-032/033** (legacy boundary) referują wprost 4 równoległe tabele
   definicji + 3 implementacje Scorecard znalezione w §3.8 — legacy musi być
   fizycznie GET-only (brak route, nie tylko brak wpisu w routerze).
+  **Status: IMPLEMENTED 2026-08-09** (patrz adnotacja KPI-F-032..037 przy
+  opisie epika KPI-E007 niżej i `EXECUTION_LEDGER.md` §30) — Scorecard
+  wyjęty z zakresu (Decyzja D2, KPI-E007b backlog).
 - **KPI-F-003/029** (self-approval denial) i **KPI-F-016** (deviation closure
   wymaga effectiveness verification, nie tylko "wszystkie akcje completed") to
   bezpośrednie testy przeciw wzorcom ryzyka P0 z planu domenowego §3.2.
@@ -149,6 +152,25 @@ visibility) · KPI-E007 Registry/Legacy/Ops (6 AC: SSOT boundary rvn_* vs
 legacy GET-only, zero write route na legacy, honest empty/error states,
 atomowy outbox + idempotent replay, monitoring wyklucza legacy origin,
 prawdziwa trasa zamiast martwego `/kpi-okr` aliasu).
+
+**KPI-F-032..037 (KPI-E007 Legacy Archive / Ops Exclusion) — Status:
+IMPLEMENTED 2026-08-09** (backend only; UI Registry to RN-G2, poza
+zakresem). `denyMutations` middleware + 9 endpointów GET-only pod
+`/api/vnext/results/kpi/legacy` nad 4 tabelami legacy (`kpis`,
+`kpi_definitions`, `v8_kpi_definitions`, `tp_kpi_definitions`), test A.4
+(fizyczna odmowa zapisu, 37 assercji) + test B.2 (izolacja read-modeli na
+realnym Postgresie). Szczegóły budowy, 3 realne dewiacje od projektu
+znalezione na prawdziwym Postgresie i dowód regresji (`git stash`):
+`EXECUTION_LEDGER.md` §30. Scorecard legacy (3 równoległe implementacje)
+świadomie POZA zakresem tego epika (Decyzja D2 w
+`KPI_E007_DESIGN.md` §1) — zobacz **KPI-E007b** niżej.
+
+**KPI-E007b (backlog, nie zbudowane)**: legacy scorecard archive adapter
+(`kpi_scorecards`/`kpi_scorecard_items`, `balancedScorecardService.ts`,
+`transformationScorecardService.ts`). Nie blokuje domknięcia domeny KPI —
+scorecard ma już żywy zamiennik vNext (KPI-E004).
+
+**Domena KPI (KPI-E001…KPI-E007) — backend zamknięty 2026-08-09.**
 
 Pełne tabele (wszystkie pola: Command/API, Schema/migration, Events, UI route,
 Roles, testy planowane) — transkrypt agenta `a53002a3d9119f8a9`.

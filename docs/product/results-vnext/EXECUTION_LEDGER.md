@@ -1965,3 +1965,128 @@ bez tego pakietu (patrz wyżej), zero NOWYCH failów po naprawie §11's
 `payloadMap`. 4 commity osobne (Canon → Migracja → Handler → Testy), zgodnie
 z §E `KPI_E006_TERESA_DESIGN.md`.
 
+## 30. KPI-E007 Legacy Archive / Ops Exclusion — implementacja + odbiór (2026-08-09)
+
+**Ostatni epik domykający backend domeny KPI (E001–E007).** Zbudowano
+`KPI_E007_DESIGN.md` §2–§9 dosłownie: `denyMutations` (nowy plik
+`readOnlyGuard.middleware.ts`, celowo osobny od `demoGuard.middleware.ts` —
+patrz Decyzja D5), `ListLegacyQuerySchema`/`LegacyIdParamsSchema`
+(`resultsVnextKpiLegacy.validators.ts`), 8 funkcji odczytu +
+`getLegacyArchiveIndex` (`kpiLegacyArchiveRepository.ts`, zero importów z
+`*Commands.ts`), 9 endpointów GET-only pod
+`/api/vnext/results/kpi/legacy` (`kpiLegacyArchive.routes.ts`, zamontowany w
+`Gateway.ts` PRZED generycznym `/api/vnext/results/kpi`), jeden nowy licznik
+`resultsVnextLegacyArchiveHitsTotal` (`metricsService.ts` §9). 6 commitów
+osobnych (middleware+validatory → repository → metryka → routes+Gateway →
+test A.4 → test B.2/realdb).
+
+**Trzy realne dewiacje od pseudokodu projektu, znalezione WYŁĄCZNIE przez
+uruchomienie na prawdziwym Postgresie (nie przez czytanie kodu ani `tsc`)**:
+
+1. **`tp_kpi_definitions` NIE MA własnej kolumny `organization_id`** —
+   projekt sam kazał to zweryfikować przed napisaniem WHERE ("it may not be
+   literally `organization_id`... verify before writing the WHERE clause, do
+   not assume") i miał rację być podejrzliwy: realny łańcuch to
+   `tp_kpi_definitions.model_id → tp_governed_models.base_id →
+   tp_bases.organization_id` (`server/migrations/700_table_platform_foundation.sql`,
+   `713_governed_models.sql`). Repository robi JOIN przez ten łańcuch zamiast
+   prostego `WHERE organization_id = $1`.
+2. **`kpis` to NIE tabela, tylko VIEW tylko-do-odczytu** —
+   `server/migrations/20260719_baseline_gap.sql`:
+   `CREATE OR REPLACE VIEW public.kpis AS SELECT ik.id, i.organization_id,
+   ik.name, ... FROM initiative_kpis ik JOIN initiatives i ON
+   ik.initiative_id = i.id`. Bez kolumny `created_at` (tylko `updated_at`,
+   stąd `ORDER BY` poprawiony) i bez możliwości INSERT/UPDATE/DELETE wprost
+   (nieszkodliwe dla repository — same SELECT-y; test izolacji zatruwa
+   `initiative_kpis`+`initiatives`, widok sam odzwierciedla wiersz).
+   §0.1 draftu projektu opisywał `kpis` jako zwykłą tabelę — pierwszy realny
+   `INSERT INTO kpis`/`DELETE FROM kpis` w teście padł na
+   `error_view_not_updatable`, nie na braku tabeli.
+3. **`initiatives.status` DEFAULTuje na `'step3'`** (`server/migrations/
+   000_z_core_baseline.sql:264`), wartość którą WŁASNY
+   `initiatives_status_check` tej tabeli odrzuca — pre-existing defekt
+   migracji (default sprzed dodania CHECK, nigdy niezsynchronizowany),
+   NIEZWIĄZANY z tym epikiem. Potwierdzone `git stash`: 3 ISTNIEJĄCE testy
+   `tests/resultsVnext/kpi/{kpiIdentityAcrossSurfaces,
+   initiativeKpiImpactBaselineFreeze,
+   kpiInitiativeImpactPerspectivesRoutesRealdb}.realdb.test.ts` failują
+   IDENTYCZNIE (ten sam błąd) na świeżym efemerycznym Postgresie 17 zarówno
+   Z plikami KPI-E007 jak i bez nich (`git stash -u` → ten sam traceback) —
+   to NIE jest regresja tego epika, to pre-existing dziura w łańcuchu
+   migracji ujawniona przez fakt, że każdy `*.realdb.test.ts` w tym katalogu
+   wstawia do `initiatives` bez jawnego `status`. Nie naprawione (poza
+   zakresem KPI-E007) — zgłoszone jako osobny follow-up (patrz niżej).
+
+**Czwarta dewiacja, nie-DB**: `router.all('*', denyMutations)` z projektu
+nie działa na Express 5.2.1 tego repo (path-to-regexp v6+ odrzuca goły `'*'`
+— zweryfikowane; wzorzec repo to nazwany wildcard, np.
+`t01BrowserFixtureServer.ts`'s `/api/v8/transformation-cases/*path`).
+Użyto `router.use(denyMutations)` (bez ścieżki) — funkcjonalnie identyczne,
+nadal pierwsze w łańcuchu przed auth. Osobno: handlery walidują przez
+istniejące `validateQuery`/`validateParams` (jak `kpi.routes.ts`), NIE przez
+dosłowny inline `Schema.parse()+throw` z projektu — realny globalny error
+handler (`ErrorHandler.ts`) nie ma gałęzi na `ZodError`, więc rzucony
+`ZodError` wpadłby w gałąź 500, nie 400. `validateQuery`/`validateParams`
+to jest dokładnie to, co projekt słowami nakazał ("matching the pattern
+every other resultsVnext route file already uses").
+
+**D1 (`v8_kpi_definitions`) zweryfikowane empirycznie**: `SELECT
+table_schema, table_name FROM information_schema.tables WHERE table_name =
+'v8_kpi_definitions'` na efemerycznym Postgresie zwraca DWA wiersze
+(`public.v8_kpi_definitions` I `v8.v8_kpi_definitions`) — potwierdza
+założenie projektu "baseline dump ma oba". `SHOW search_path` = `"$user",
+public` (domyślny) → niekwalifikowane zapytanie repository rezolwuje do
+`public.v8_kpi_definitions`, identycznie jak `resultsROIService.ts`.
+Dowód na żywych danych (seed-smoke, posprzątany po sobie): wszystkie 4
+tabele legacy + endpoint `/legacy` zwróciły poprawnie ukształtowane
+koperty przez bezpośrednie wywołanie repository (nie tylko mock).
+
+**Testy**: 2 nowe pliki, 39 nowych testów (37 `kpiLegacyArchive.routes
+.test.ts` — 9 ścieżek × 4 czasowniki + 1 test statyczny; 2
+`legacyIsolation.realdb.test.ts` — 1 test fixture'owy na realnym Postgresie
++ 1 test statyczny), oba 100% PASS na efemerycznym Postgresie 17
+(`initdb --locale=C`, TCP `127.0.0.1:5433` — UWAGA: TCP, nie unix socket,
+bo `DatabaseConfig.ts`'s własny `parsePostgresUrl()` czyta tylko
+`new URL(...).hostname`/`.port`, IGNORUJE `?host=` query-param na unix
+socket, więc DATABASE_URL musi wskazywać prawdziwy TCP endpoint, nie tylko
+socket path — inny niż wcześniejszych epików wzorzec zauważony wprost, żeby
+następny agent nie zgadywał od nowa). `RUN_DB_TESTS=1` wymagane.
+
+**Pełny katalog `tests/resultsVnext/kpi/` (16 plików, `--no-file-parallelism`,
+efemeryczny Postgres 17)**: PRZED tym epikiem (`git stash -u`, 14 plików) —
+107 PASS + 5 skip = 112, 3 pliki failują w `beforeAll` (defekt #3 wyżej). PO
+tym epiku (16 plików) — 146 PASS + 5 skip = 151, TE SAME 3 pliki failują
+IDENTYCZNIE. Delta = dokładnie +39 zielonych testów (moje 2 nowe pliki),
+zero nowych failów, zero naprawionych/popsutych pre-existing testów.
+**Nie potwierdzam "215/215"
+z §29 na TYM efemerycznym środowisku** — to nie jest sprzeczność z §29
+(tamten wynik był zmierzony na innym, wcześniej zbudowanym klastrze Postgres
+16, prawdopodobnie przed jakąkolwiek migracją, która wprowadziła/ujawniła
+`initiatives_status_check` względem `'step3'`), tylko uczciwe stwierdzenie,
+że NIE dało się dziś odtworzyć 1:1 tej liczby na świeżo zbudowanej bazie —
+zgodnie z własną zasadą programu "audyty się starzeją w ~3 dni", zmierzono
+i zaraportowano to, co faktycznie wykonało się TERAZ, z dowodem
+(`git stash`) rozróżniającym winę tego epika od winy środowiska.
+`npx tsc --noEmit` na całym repo — 0 błędów, potwierdzone przed i po
+`git stash pop`.
+
+**Follow-up zgłoszony (nie naprawiony w tym epiku)**: `initiatives.status
+DEFAULT 'step3'` (`000_z_core_baseline.sql:264`) łamie własny
+`initiatives_status_check` tej samej tabeli — każdy `INSERT INTO
+initiatives` bez jawnego `status` na świeżo zmigrowanej bazie faluje. Poza
+zakresem KPI-E007 (dotyczy `initiatives`, nie KPI), zgłoszone jako osobne
+zadanie do wykonawcy.
+
+**KPI-E007b (backlog, Decyzja D2 — poza zakresem)**: legacy scorecard
+archive adapter (`kpi_scorecards`/`kpi_scorecard_items`,
+`balancedScorecardService.ts`, `transformationScorecardService.ts` — 3
+równoległe implementacje) NIE zbudowany. Strukturalnie różne od 4 tabel
+definicji w zakresie (item-per-KPI, nie płaska definicja) i nigdy nie były
+częścią inwentarza tego epika (`EXECUTION_LEDGER.md` §3.8,
+`EPIC_LEDGER_LIVE.md` KPI-F-032..037). Legacy scorecard ma już żywy
+zamiennik vNext (KPI-E004) z własną dwuwarstwową obroną widoczności —
+osobny, niżej priorytetowy cleanup, nie blokuje domknięcia domeny KPI.
+
+**Domena KPI (E001–E007) — backend zamknięty.** Program przechodzi do
+domeny ROI.
+
