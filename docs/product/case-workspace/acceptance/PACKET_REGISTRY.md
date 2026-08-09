@@ -227,7 +227,36 @@ Twelve open questions; coordinator resolutions, grouped:
 | CW-P08 | E8 | E1, E2, E4, E6, E7 | `useOpenChatWithContext`, `WorkspaceContext`, `chatNavigator.ts`, `CHAT_ACTION_DEFINITIONS`, `myWorkIntent`/`myWorkEvent` bus, `useConversationStore` pmoContext — all KEEP/EXTEND, unusually complete | ephemeral proposal → exact confirmation receipt binding to Case | subset of 155 |
 | CW-P09 | E9 | E4 | — | branch/join/timeout/compensation graph semantics (CREATE) | subset of 119 |
 | CW-P10 | E10 | E3, E4 | native artifact modules (Documents/Presentations/Excel per memory) | evidence/provenance/rights linking, facts digest, DOCX/PPTX/XLS readback | 76 (golden_case rows) |
-| CW-P11 | E11 | E10 | — | append-only history, honest closure types, Monitoring Case split | subset of 70 |
+| CW-P07 | E11 | E1 | — | `case_workspace_history_events` (FK-less, open event_type) + `case_workspace_value_measurements` (CW-02-032 field list, FK to case_core), `caseHistoryService.ts`, 5+ methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+case_core-untouched verified**, commit `1002af2a89`. Renumbered from the original CW-P11 slot per the execution-order note above; built directly on E1 (not E10, which this program hasn't reached yet), Monitoring-Case split explicitly deferred. | subset of 70 |
+
+## CW-P07 (E11 history/value) — design decisions accepted 2026-08-09
+
+1. **No retrofit of CW-P01-06 services to emit history events yet** —
+   accepted; only `recordValueMeasurement` calls `appendCaseHistoryEvent` in
+   this packet. Flagged as real follow-up work: `caseCoreService`,
+   `casePlanVersionService`, `runBindingService`, `proposalApprovalService`,
+   `waitSubscriptionService` should eventually call
+   `appendCaseHistoryEvent` from their own mutating methods so the timeline
+   is actually complete, not just measurement-triggered.
+2. **`event_type` open TEXT, not a CHECK enum** — accepted; correct
+   tradeoff so future emitters (item 1's follow-up) never need a migration
+   just to add a new event kind.
+3. **`confidence` as LOW/MEDIUM/HIGH, not numeric** — accepted as a
+   reasonable default; canon doesn't specify a scale, flagged for product to
+   confirm before any UI renders it.
+4. **No `monitoring_case_id` column yet** — accepted; the Monitoring-Case
+   split (CW-00-017/OD-06) needs a Case-to-Case relationship concept this
+   packet correctly doesn't invent ahead of need.
+5. **EVIDENCE_MISSING vs UNMEASURED reading** — accepted (attempted-but-
+   unavailable vs never-attempted).
+6. **`kpi_ref` opaque, no FK into Results** — accepted; Results is a
+   read-only-owned domain per the collision map, out of this packet's reach
+   entirely.
+7. **Tenant/membership checks not enforced here** — same cross-cutting gap
+   as all prior packets, already tracked.
+8. **`dedupe_key` idempotency designed without a route layer to confirm
+   caller discipline** — accepted; defensive design ahead of need is
+   reasonable here since it costs nothing structurally.
 | CW-P12 | E12 | E2 | — | Play draft/publish/instantiate via CasePlanVersion | subset of 109 |
 | CW-P13 | E13 | E4, E9 | `migrate.postgres.ts` convention (EXTEND); two flag mechanisms (EXTEND, pick deliberately) | legacy read adapter, quarantine, cohort rollout, kill switch | 30 (LEGACY_MIGRATION_PARITY) |
 | CW-P14 | E14 | all above | — | correlation chain, Golden Cases A-F, candidate manifest | 110 (EPIC_DOD_COVERAGE) |
