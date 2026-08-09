@@ -402,7 +402,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
         {card.blocks.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p
-              className="text-lg font-semibold"
+              className="text-lg font-semibold opacity-60"
               style={{ color: theme.colors.textPrimary }}
             >
               {sanitizeDeckDisplayText(card.title)}

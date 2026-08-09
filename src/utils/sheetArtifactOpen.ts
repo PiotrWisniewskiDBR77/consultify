@@ -12,59 +12,47 @@ import { getV8SheetArtifactXlsxExportPath } from './artifactLinks';
 
 export { buildMyWorkSheetTableOpenPath } from './artifactLinks';
 
-export interface TablePlatformArtifactIdentity {
-  tableId: string;
-  workspaceId: string;
-}
-
-const unwrapApiData = (value: any): any => value?.data ?? value;
-
-/**
- * Resolves both direct `tp_tables.id` values and artifact-registry ids without
- * losing the real table id. The older workspace-only helper could route an
- * artifact id as if it were a table id, producing a valid workspace URL whose
- * selected table did not exist.
- */
-export async function resolveTablePlatformArtifactIdentity(
-  candidateId: string
-): Promise<TablePlatformArtifactIdentity | null> {
-  try {
-    const normalized = String(candidateId || '').trim();
-    if (!normalized) return null;
-
-    let tableId = normalized;
-    let table: Record<string, unknown> | null = null;
-    try {
-      table = (await TablePlatformApi.getTable(tableId)) as Record<string, unknown>;
-    } catch {
-      const actionTargetRaw = await Api.get(
-        `/artifacts/${encodeURIComponent(normalized)}/action-target`
-      ).catch(() => null);
-      const actionTarget = unwrapApiData(actionTargetRaw);
-      const originRuntime = String(actionTarget?.originRuntime || '').trim().toLowerCase();
-      const originRecordId = String(actionTarget?.originRecordId || '').trim();
-      if (originRuntime !== 'sheet' || !originRecordId) return null;
-      tableId = originRecordId;
-      table = (await TablePlatformApi.getTable(tableId)) as Record<string, unknown>;
-    }
-
-    const baseId = String(table?.base_id ?? table?.baseId ?? '');
-    if (!baseId) return null;
-    const base = (await TablePlatformApi.getBase(baseId)) as Record<string, unknown>;
-    const workspaceId = String(base.workspace_id ?? base.workspaceId ?? '');
-    return workspaceId ? { tableId, workspaceId } : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Returns the idea workspace id (`tp_bases.workspace_id`) that owns the table, or null.
  */
 export async function resolveTablePlatformWorkspaceIdForTable(
   tableId: string
 ): Promise<string | null> {
-  return (await resolveTablePlatformArtifactIdentity(tableId))?.workspaceId ?? null;
+  try {
+    let resolvedTableId = tableId;
+    let table: Record<string, unknown> | null = null;
+    try {
+      table = (await TablePlatformApi.getTable(resolvedTableId)) as Record<string, unknown>;
+    } catch {
+      let fromArtifact: string | null = null;
+      try {
+        const actionTargetRaw = await Api.get(
+          `/artifacts/${encodeURIComponent(tableId)}/action-target`
+        );
+        const actionTarget = (actionTargetRaw as { data?: any })?.data ?? actionTargetRaw;
+        const originRuntime = String(actionTarget?.originRuntime || '')
+          .trim()
+          .toLowerCase();
+        const originRecordId = String(actionTarget?.originRecordId || '').trim();
+        if (originRuntime === 'sheet' && originRecordId) {
+          fromArtifact = originRecordId;
+        }
+      } catch {
+        fromArtifact = null;
+      }
+      if (!fromArtifact) return null;
+      resolvedTableId = fromArtifact;
+      table = (await TablePlatformApi.getTable(resolvedTableId)) as Record<string, unknown>;
+    }
+    if (!table) return null;
+    const baseId = String(table.base_id ?? table.baseId ?? '');
+    if (!baseId) return null;
+    const base = (await TablePlatformApi.getBase(baseId)) as Record<string, unknown>;
+    const ws = String(base.workspace_id ?? base.workspaceId ?? '');
+    return ws || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function downloadSheetArtifactXlsx(tableId: string): Promise<boolean> {

@@ -54,8 +54,6 @@ export interface RightRailToolDescriptor {
 }
 
 interface RightRailProps {
-  /** Physical side of the semantic panel rail. Defaults to the legacy right side. */
-  side?: 'left' | 'right';
   tools: RightRailToolDescriptor[];
   /** Currently active tool id (null = no panel open). */
   activeToolId: string | null;
@@ -112,7 +110,7 @@ const ToolIcon: React.FC<{
   const tooltip = disabled && disabledReason ? `${label} — ${disabledReason}` : label;
 
   const baseClasses =
-    'relative w-11 h-11 flex items-center justify-center rounded-lg transition-colors';
+    'relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors';
   const stateClasses = active
     ? 'bg-c-focus/10 text-c-focus-solid'
     : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200';
@@ -149,7 +147,6 @@ const ToolIcon: React.FC<{
 };
 
 export const RightRail: React.FC<RightRailProps> = ({
-  side = 'right',
   tools,
   activeToolId,
   onSelectTool,
@@ -184,30 +181,23 @@ export const RightRail: React.FC<RightRailProps> = ({
   // icon while collapsed both selects the tool AND re-opens the panel
   // (one gesture — the user should never have to hunt for a second,
   // separate handle to "expand" before the tool becomes clickable).
-  const isLeft = side === 'left';
-
   return (
     <aside
-      className={`flex-shrink-0 ${isLeft ? 'border-r flex-row-reverse' : 'border-l'} border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex h-full transition-[width] duration-150`}
+      className="hidden sm:flex flex-shrink-0 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 h-full transition-[width] duration-150"
       style={{ width: containerWidth }}
       data-testid={testId ?? 'mels-right-rail'}
       data-collapsed={collapsed ? 'true' : 'false'}
-      data-side={side}
     >
       {showPanel ? (
         <div
-          className={`relative ${isLeft ? 'border-l' : 'border-r'} border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col`}
+          className="relative border-r border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
           style={{ width: panelWidth }}
           id={panelDomId}
           data-testid="mels-right-rail-panel"
           data-mels-panel-of={activeTool?.id ?? ''}
         >
           {onResize ? (
-            <RailResizeHandle
-              side={isLeft ? 'left' : 'right'}
-              currentWidth={panelWidth}
-              onResize={onResize}
-            />
+            <RailResizeHandle side="right" currentWidth={panelWidth} onResize={onResize} />
           ) : null}
           {panelContent}
         </div>
@@ -222,7 +212,7 @@ export const RightRail: React.FC<RightRailProps> = ({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="flex h-11 w-11 items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
+            className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 mb-1"
             title={
               collapsed
                 ? (collapseLabel ?? 'Expand right rail')
@@ -237,17 +227,7 @@ export const RightRail: React.FC<RightRailProps> = ({
             aria-controls={showPanel ? panelDomId : undefined}
             data-testid="mels-right-rail-toggle"
           >
-            {isLeft ? (
-              collapsed ? (
-                <ChevronRight size={14} />
-              ) : (
-                <ChevronLeft size={14} />
-              )
-            ) : collapsed ? (
-              <ChevronLeft size={14} />
-            ) : (
-              <ChevronRight size={14} />
-            )}
+            {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
           </button>
         ) : null}
         {tools.map((tool) => (

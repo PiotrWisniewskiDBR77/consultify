@@ -20,12 +20,6 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
 import {
-  applyWorkbookCommand,
-  undoWorkbookCommand,
-  WorkbookCommandError,
-} from '../workbook/workbookCommandService.js';
-import type { WorkbookMutation } from '../workbook/workbookMutationEngine.js';
-import {
   buildProposalOperationContract,
   updateOperationContractLinks,
 } from './operationContractService.js';
@@ -84,7 +78,6 @@ export interface HandoffResult {
   target_module: HandoffTargetModule;
   state: ActionEnvelopeState;
   audit_entry_id: string;
-  handoff_result?: Record<string, unknown>;
   degraded?: string;
   error?: string;
 }
@@ -102,7 +95,7 @@ export interface TeresaChatProposalEnvelope {
   summary: string;
   state: ActionEnvelopeState;
   approvalState: 'awaiting_review' | 'approved' | 'completed' | 'rejected';
-  allowedActions: Array<'approve' | 'reject' | 'execute' | 'undo' | 'navigate'>;
+  allowedActions: Array<'approve' | 'reject' | 'execute' | 'navigate'>;
   targetModule: HandoffTargetModule;
   targetLabel: string;
   handoffIntent: string;
@@ -192,13 +185,24 @@ const CHAT_ACTION_KEYWORDS: Array<{
   },
 ];
 
-const TARGET_LABELS: Partial<Record<HandoffTargetModule, string>> = {
+const TARGET_LABELS: Record<HandoffTargetModule, string> = {
   radar: 'Radar',
   initiatives: 'Initiatives',
   calendar: 'Calendar',
   notebook: 'Notebook',
   interview: 'Interview Insights',
   excele: 'Excele Workbooks',
+  ideas: 'Ideas',
+  results: 'Results',
+  kpi: 'KPI',
+  roi: 'ROI',
+  execution: 'Execution',
+  finance: 'Finance',
+  meeting: 'Meetings',
+  outputs: 'Reports and Presentations',
+  documents: 'Documents',
+  tables: 'Tables',
+  presentations: 'Presentations',
 };
 
 // ---------------------------------------------------------------------------
@@ -270,6 +274,12 @@ async function ensureTeresaTables(): Promise<void> {
        ON teresa_audit_log(proposal_id)`,
       [],
       { fallback: true }
+    );
+    await dbRun(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_teresa_handoff_result_proposal
+       ON teresa_handoff_results(proposal_id)`,
+      [],
+      { fallback: false }
     );
     tablesEnsured = true;
     logger.info(`${LOG_PREFIX} Teresa DB tables ensured`);
@@ -351,8 +361,6 @@ function mapTeresaStateToAIActionStatus(state: ActionEnvelopeState): string {
       return 'EXECUTING';
     case 'completed':
       return 'EXECUTED';
-    case 'undone':
-      return 'REJECTED';
     case 'rejected':
       return 'REJECTED';
     case 'proposal':
@@ -371,8 +379,6 @@ function mapTeresaStateToAIRunStatus(
     case 'executing':
       return 'executing';
     case 'completed':
-      return 'audited';
-    case 'undone':
       return 'audited';
     case 'rejected':
       return 'rejected';
@@ -419,8 +425,6 @@ function eventTypeForTeresaState(state: ActionEnvelopeState): string {
       return 'execution_started';
     case 'completed':
       return 'execution_succeeded';
-    case 'undone':
-      return 'execution_undone';
     case 'rejected':
       return 'execution_failed';
     case 'proposal':
@@ -611,42 +615,29 @@ function trimPreview(value: unknown, max = 180): string {
 function deriveProposalTitle(message: string, targetModule: HandoffTargetModule): string {
   const cleaned = trimPreview(message, 72).replace(/[.!?]+$/g, '');
   if (cleaned) return cleaned;
-  return `Open ${TARGET_LABELS[targetModule] ?? targetModule}`;
+  return `Open ${TARGET_LABELS[targetModule]}`;
 }
 
 function deriveApprovalState(
   state: ActionEnvelopeState
 ): TeresaChatProposalEnvelope['approvalState'] {
   if (state === 'approved') return 'approved';
-  if (state === 'completed' || state === 'undone') return 'completed';
+  if (state === 'completed') return 'completed';
   if (state === 'rejected') return 'rejected';
   return 'awaiting_review';
 }
 
 function deriveAllowedActions(
-  proposal: ProposalRecord
+  state: ActionEnvelopeState
 ): TeresaChatProposalEnvelope['allowedActions'] {
-  switch (proposal.state) {
+  switch (state) {
     case 'proposal':
     case 'pending_approval':
       return ['approve', 'reject', 'navigate'];
     case 'approved':
       return ['execute', 'reject', 'navigate'];
-    case 'completed': {
-      const execution = [...proposal.audit_trail]
-        .reverse()
-        .find((entry) => entry.action === 'execution_completed');
-      const handoff = execution?.detail?.handoff_result;
-      const canUndoWorkbook =
-        proposal.target_module === 'excele' &&
-        !!handoff &&
-        typeof handoff === 'object' &&
-        (handoff as Record<string, unknown>).mutation_applied === true &&
-        Number.isInteger((handoff as Record<string, unknown>).version);
-      return canUndoWorkbook ? ['undo', 'navigate'] : ['navigate'];
-    }
     case 'executing':
-    case 'undone':
+    case 'completed':
     case 'rejected':
       return ['navigate'];
     default:
@@ -658,7 +649,14 @@ function extractResultRef(detail: Record<string, unknown> | null | undefined): s
   if (!detail || typeof detail !== 'object') return null;
   const handoff = detail.handoff_result;
   if (!handoff || typeof handoff !== 'object') return null;
-  const keys = ['signal_id', 'initiative_ref', 'calendar_ref', 'note_ref', 'insight_ref'];
+  const keys = [
+    'signal_id',
+    'initiative_ref',
+    'calendar_ref',
+    'note_ref',
+    'insight_ref',
+    'workbook_ref',
+  ];
   for (const key of keys) {
     const value = (handoff as Record<string, unknown>)[key];
     if (typeof value === 'string' && value.trim().length > 0) return value.trim();
@@ -731,8 +729,6 @@ function mapEnvelopeStateToOperationStage(state: ActionEnvelopeState): Operation
     case 'executing':
       return 'executing';
     case 'completed':
-      return 'completed';
-    case 'undone':
       return 'completed';
     case 'rejected':
       return 'rejected';
@@ -812,9 +808,9 @@ export function toChatProposalEnvelope(
     ),
     state: proposal.state,
     approvalState: deriveApprovalState(proposal.state),
-    allowedActions: deriveAllowedActions(proposal),
+    allowedActions: deriveAllowedActions(proposal.state),
     targetModule: proposal.target_module,
-    targetLabel: TARGET_LABELS[proposal.target_module] ?? proposal.target_module,
+    targetLabel: TARGET_LABELS[proposal.target_module],
     handoffIntent: String(proposal.handoff_context.proposed_next_action?.handoff_intent || 'open'),
     previewLines: buildPreviewLines(proposal, execution),
     auditCount: proposal.audit_trail.length,
@@ -964,134 +960,12 @@ function buildBoundedContextPack(
   return pack.slice(0, 5);
 }
 
-interface WorkbookChatContext {
-  workbook_id: string;
-  version_id: number | null;
-  active_sheet_index: number | null;
-  active_sheet_name: string | null;
-  classification: string | null;
-  selection: Record<string, unknown> | null;
-}
-
-interface WorkbookMutationProposal {
-  command_id: string;
-  operations: WorkbookMutation[];
-}
-
-/** Parse only an explicit fenced mutation diff; prose and loose JSON stay non-executable. */
-function extractWorkbookMutationProposal(
-  assistantMessage: string
-): WorkbookMutationProposal | null {
-  if (!assistantMessage || assistantMessage.length > 100_000) return null;
-  const fencedBlocks = assistantMessage.matchAll(/```(?:json|workbook-mutation)\s*([\s\S]*?)```/gi);
-  for (const match of fencedBlocks) {
-    try {
-      const parsed = JSON.parse(match[1]) as Record<string, unknown>;
-      const candidate =
-        parsed.workbook_mutation &&
-        typeof parsed.workbook_mutation === 'object' &&
-        !Array.isArray(parsed.workbook_mutation)
-          ? (parsed.workbook_mutation as Record<string, unknown>)
-          : parsed;
-      if (!Array.isArray(candidate.operations) || candidate.operations.length === 0) continue;
-      if (candidate.operations.length > 500) continue;
-      if (candidate.operations.some((operation) => !operation || typeof operation !== 'object')) {
-        continue;
-      }
-      return {
-        command_id:
-          typeof candidate.command_id === 'string' && candidate.command_id.trim()
-            ? candidate.command_id.trim()
-            : 'teresa.workbook.applyProposal',
-        operations: candidate.operations as WorkbookMutation[],
-      };
-    } catch {
-      // A malformed block cannot become a write. A later valid block may still be used.
-    }
-  }
-  return null;
-}
-
-function extractWorkbookChatContext(context: Record<string, unknown>): WorkbookChatContext | null {
-  const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
-  const screen = (context.screenContext || {}) as Record<string, unknown>;
-  const workspaceData = (workspace.entityData || {}) as Record<string, unknown>;
-  const screenData = (screen.page || {}) as Record<string, unknown>;
-  const data = Object.keys(workspaceData).length > 0 ? workspaceData : screenData;
-  const artifactType = String(data.artifactType || '').toLowerCase();
-  const workspaceType = String(workspace.type || screen.selectedObjectType || '').toLowerCase();
-  const workbookId = String(
-    data.workbookId || workspace.entityId || screen.selectedObjectId || ''
-  ).trim();
-
-  if (!workbookId || (artifactType !== 'spreadsheet' && workspaceType !== 'workbook')) {
-    return null;
-  }
-
-  const versionValue = Number(data.versionId);
-  const sheetIndexValue = Number(data.activeSheetIndex);
-  const rawSelection = data.selection;
-  const selection =
-    rawSelection && typeof rawSelection === 'object' && !Array.isArray(rawSelection)
-      ? (rawSelection as Record<string, unknown>)
-      : null;
-
-  return {
-    workbook_id: workbookId,
-    version_id: Number.isInteger(versionValue) && versionValue >= 0 ? versionValue : null,
-    active_sheet_index:
-      Number.isInteger(sheetIndexValue) && sheetIndexValue >= 0 ? sheetIndexValue : null,
-    active_sheet_name:
-      typeof data.activeSheetName === 'string' && data.activeSheetName.trim()
-        ? data.activeSheetName.trim()
-        : null,
-    classification:
-      typeof data.classification === 'string' && data.classification.trim()
-        ? data.classification.trim()
-        : null,
-    selection,
-  };
-}
-
-/**
- * Prompt contract for the global Teresa surface when an opened workbook is in scope.
- * The model may describe any analysis in normal prose, but a state-changing proposal
- * becomes executable only through the fenced, separately validated mutation block.
- */
-export function buildWorkbookMutationPromptHint(context: Record<string, unknown>): string {
-  const workbook = extractWorkbookChatContext(context);
-  if (!workbook) return '';
-
-  const selectionAddress =
-    workbook.selection && typeof workbook.selection.address === 'string'
-      ? workbook.selection.address.trim()
-      : '';
-  return [
-    '## OPEN WORKBOOK — GOVERNED MUTATION CONTRACT',
-    `Workbook: ${workbook.workbook_id}; immutable base version: ${workbook.version_id ?? 'UNKNOWN'}.`,
-    workbook.active_sheet_name
-      ? `Active sheet: ${workbook.active_sheet_name} (index ${workbook.active_sheet_index ?? 'UNKNOWN'}).`
-      : '',
-    selectionAddress ? `Explicit user selection: ${selectionAddress}.` : '',
-    'For analysis, explanation, or questions, answer normally and DO NOT emit a mutation block.',
-    'If and only if the user explicitly requests a workbook change and the supplied context contains every required coordinate or stable sheet id, provide a short human summary followed by exactly one fenced `workbook-mutation` JSON block.',
-    'The block shape is: {"command_id":"teresa.workbook.applyProposal","operations":[...]}.',
-    'Allowed operation types: setCell, clearCell, addSheet, renameSheet, duplicateSheet, deleteSheet, reorderSheet, setSheetHidden, insertRows, deleteRows, insertColumns, deleteColumns, setCellStyle.',
-    'Use zero-based sheetIndex, rowIndex, startRow/endRow and startColumn/endColumn; use the real columnKey or stable sheetId from context. Never invent workbook ids, sheet ids, coordinates, source values, formulas, or evidence.',
-    'If required coordinates, ids, permissions, or values are missing, explain what is missing and DO NOT emit the block.',
-    'Never claim the mutation was applied. It remains a proposal until the user approves and explicitly executes it; the server will revalidate version, permissions, operation schema, and atomicity.',
-  ]
-    .filter(Boolean)
-    .join('\n');
-}
-
 function buildTargetPayloadForChat(params: {
   targetModule: HandoffTargetModule;
   userMessage: string;
   assistantMessage: string;
-  context: Record<string, unknown>;
 }): Record<string, unknown> {
-  const { targetModule, userMessage, assistantMessage, context } = params;
+  const { targetModule, userMessage, assistantMessage } = params;
   const preview = trimPreview(assistantMessage || userMessage, 220);
   const title = deriveProposalTitle(userMessage, targetModule);
 
@@ -1154,27 +1028,12 @@ function buildTargetPayloadForChat(params: {
   }
 
   if (targetModule === 'excele') {
-    const workbookContext = extractWorkbookChatContext(context);
-    const workbookMutation = extractWorkbookMutationProposal(assistantMessage);
-    const selectionAddress =
-      workbookContext?.selection && typeof workbookContext.selection.address === 'string'
-        ? workbookContext.selection.address.trim()
-        : '';
     return {
       prompt: trimPreview(userMessage || assistantMessage || title, 220),
       why_now: trimPreview(userMessage, 160),
       time_window: 'next-available',
-      evidence_pointers: [
-        'chat:teresa',
-        ...(workbookContext ? [`workbook:${workbookContext.workbook_id}`] : []),
-        ...(selectionAddress ? [`selection:${selectionAddress}`] : []),
-      ],
-      proposal_only: true,
-      requires_structured_mutation: true,
-      ...(workbookContext ? { workbook_context: workbookContext } : {}),
-      ...(workbookMutation ? { workbook_mutation: workbookMutation } : {}),
-      next_action_safe_fallback:
-        'Apply an approved, version-checked workbook command; never fabricate a workbook reference',
+      evidence_pointers: ['chat:teresa'],
+      next_action_safe_fallback: 'Create a governed table/workbook draft after approval',
     };
   }
 
@@ -1263,7 +1122,6 @@ export async function createChatProposal(params: {
       targetModule: intent.targetModule,
       userMessage,
       assistantMessage,
-      context,
     }),
   });
 
@@ -1648,6 +1506,28 @@ export async function executeProposal(params: {
   }
 
   const currentState = row.state as ActionEnvelopeState;
+  // Execution is idempotent after completion. This is important both for an
+  // explicit user retry and for a client retry after a lost HTTP response.
+  if (currentState === 'completed') {
+    const auditRows = await loadAuditEntries(proposalId);
+    const completedAudit = [...auditRows]
+      .reverse()
+      .find((entry) => entry.action === 'execution_completed');
+    return {
+      success: true,
+      proposal_id: proposalId,
+      target_module: row.target_module as HandoffTargetModule,
+      state: 'completed',
+      audit_entry_id: completedAudit?.id ?? '',
+    };
+  }
+  if (currentState === 'executing') {
+    throw new TeresaCopilotError(
+      'Proposal execution already claimed',
+      'P08_EXECUTION_ALREADY_CLAIMED',
+      409
+    );
+  }
   if (currentState !== 'approved') {
     throw new TeresaCopilotError(
       `Cannot execute proposal in state: ${currentState}. Must be approved first.`,
@@ -1655,8 +1535,40 @@ export async function executeProposal(params: {
     );
   }
 
-  // Transition to executing
-  await transitionState(proposalId, 'executing');
+  // Atomically claim the proposal. A plain SELECT followed by UPDATE allowed
+  // two concurrent requests to execute the same owner-module write.
+  const claim = await dbRun(
+    `UPDATE teresa_proposals
+     SET state = 'executing', updated_at = ?
+     WHERE id = ? AND organization_id = ? AND state = 'approved'`,
+    [new Date().toISOString(), proposalId, organizationId],
+    { fallback: false }
+  );
+  if (claim.changes !== 1) {
+    const latest = await dbGet<ProposalRow>(
+      `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, organizationId],
+      { fallback: false }
+    );
+    if (latest?.state === 'completed') {
+      const auditRows = await loadAuditEntries(proposalId);
+      const completedAudit = [...auditRows]
+        .reverse()
+        .find((entry) => entry.action === 'execution_completed');
+      return {
+        success: true,
+        proposal_id: proposalId,
+        target_module: latest.target_module as HandoffTargetModule,
+        state: 'completed',
+        audit_entry_id: completedAudit?.id ?? '',
+      };
+    }
+    throw new TeresaCopilotError(
+      `Proposal execution already claimed (state: ${latest?.state ?? 'unknown'})`,
+      'P08_EXECUTION_ALREADY_CLAIMED',
+      409
+    );
+  }
   const executionStartAudit = await writeAuditEntry({
     proposalId,
     action: 'execution_started',
@@ -1695,8 +1607,11 @@ export async function executeProposal(params: {
       targetPayload,
     });
 
-    // Transition to completed
-    await transitionState(proposalId, 'completed');
+    // Transition to completed. fallback:false — DbPromise's default fallback
+    // swallows the error and resolves, so a failed UPDATE would report
+    // `completed` to the caller while the row stayed `executing`: a
+    // fabricated completion one layer below the receipt itself.
+    await transitionState(proposalId, 'completed', { fallback: false });
     const auditEntry = await writeAuditEntry({
       proposalId,
       action: 'execution_completed',
@@ -1734,7 +1649,6 @@ export async function executeProposal(params: {
       target_module: targetModule,
       state: 'completed',
       audit_entry_id: auditEntry.id,
-      handoff_result: handoffResult,
     };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
@@ -1789,132 +1703,6 @@ export async function executeProposal(params: {
       error: errorMsg,
       degraded: 'tool_unavailable',
     };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Core: undoProposal (completed XLSX mutation → undone)
-// ---------------------------------------------------------------------------
-
-export async function undoProposal(params: {
-  proposalId: string;
-  organizationId: string;
-  userId: string;
-}): Promise<HandoffResult> {
-  await ensureTeresaTables();
-  const { proposalId, organizationId, userId } = params;
-  const row = await dbGet<ProposalRow>(
-    `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
-    [proposalId, organizationId],
-    { fallback: true }
-  );
-  if (!row) {
-    throw new TeresaCopilotError('Proposal not found', 'P08_PROPOSAL_NOT_FOUND', 404);
-  }
-  if (row.state !== 'completed') {
-    throw new TeresaCopilotError(
-      `Cannot undo proposal in state: ${row.state}. Must be completed first.`,
-      'P08_INVALID_STATE_TRANSITION'
-    );
-  }
-  if (row.target_module !== 'excele') {
-    throw new TeresaCopilotError(
-      'Undo is currently supported only for applied workbook mutations.',
-      'P08_UNDO_UNSUPPORTED_TARGET'
-    );
-  }
-
-  const executionAudit = await dbGet<AuditRow>(
-    `SELECT * FROM teresa_audit_log
-     WHERE proposal_id = ? AND action = 'execution_completed'
-     ORDER BY timestamp DESC LIMIT 1`,
-    [proposalId],
-    { fallback: true }
-  );
-  const detail = executionAudit?.detail_json
-    ? (JSON.parse(executionAudit.detail_json) as Record<string, unknown>)
-    : null;
-  const handoffResult = detail?.handoff_result as Record<string, unknown> | undefined;
-  const workbookId = handoffResult?.workbook_ref;
-  const commandVersion = handoffResult?.version;
-  if (
-    handoffResult?.mutation_applied !== true ||
-    typeof workbookId !== 'string' ||
-    !workbookId ||
-    !Number.isInteger(commandVersion) ||
-    Number(commandVersion) < 1
-  ) {
-    throw new TeresaCopilotError(
-      'The proposal has no reversible workbook mutation.',
-      'P08_UNDO_NOT_AVAILABLE',
-      409
-    );
-  }
-
-  try {
-    const undoResult = await undoWorkbookCommand({
-      workbookId,
-      organizationId,
-      userId,
-      commandVersion: Number(commandVersion),
-      baseVersion: Number(commandVersion),
-      idempotencyKey: `teresa:undo:${proposalId}`,
-    });
-    await transitionState(proposalId, 'undone');
-    const auditEntry = await writeAuditEntry({
-      proposalId,
-      action: 'execution_undone',
-      actor: `user:${userId}`,
-      fromState: 'completed',
-      toState: 'undone',
-      detail: {
-        execution_audit_entry_id: executionAudit?.id ?? null,
-        original_workbook_version: commandVersion,
-        undo_result: undoResult,
-      },
-    });
-    const targetPayload = JSON.parse(row.target_payload_json || '{}');
-    const handoffContext = JSON.parse(row.handoff_context_json || '{}');
-    await mirrorTeresaProposalToAIRun({
-      proposalId,
-      organizationId,
-      userId: row.user_id,
-      sessionId: row.session_id,
-      state: 'undone',
-      targetModule: 'excele',
-      targetPayload,
-      handoffContext,
-      eventType: 'execution_undone',
-      actorUserId: userId,
-      details: { auditEntryId: auditEntry.id, undoResult },
-      outputRefs: [{ type: 'excele', id: workbookId }],
-      audit: {
-        undoneBy: userId,
-        undoneAt: new Date().toISOString(),
-        rollbackStatus: 'rolled_back',
-        result: undoResult,
-      },
-    });
-    return {
-      success: true,
-      proposal_id: proposalId,
-      target_module: 'excele',
-      state: 'undone',
-      audit_entry_id: auditEntry.id,
-      handoff_result: {
-        handoff: 'excele',
-        workbook_ref: workbookId,
-        mutation_undone: true,
-        command_version: commandVersion,
-        version: undoResult.version,
-        duplicate: undoResult.duplicate,
-      },
-    };
-  } catch (error) {
-    if (error instanceof WorkbookCommandError) {
-      throw new TeresaCopilotError(error.message, error.code, error.statusCode);
-    }
-    throw error;
   }
 }
 
@@ -2043,11 +1831,17 @@ async function performHandoff(params: {
         userId
       );
     case 'notebook':
-      return handleNotebookHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleNotebookHandoff(
+        proposalId,
+        organizationId,
+        handoffContext,
+        targetPayload,
+        userId
+      );
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
-      return handleExceleHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
+      return handleExceleHandoff(proposalId, organizationId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2069,38 +1863,93 @@ async function handleRadarHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 (fabricated owner receipt): this used to mint
+  // `fallbackRef = randomUUID()` and write it as the receipt whenever the
+  // radar service was absent, threw, or returned no id — the proposal still
+  // reached `completed` with a durable receipt and deep link pointing at a
+  // signal that was never created. Fail closed instead: no confirmed owner
+  // object means no receipt and no completion. executeProposal's existing
+  // catch turns this throw into a `rejected` proposal with an
+  // `execution_failed` audit entry, so the caller is told the truth.
   let realSignalId: string | null = null;
+  let failureReason = 'radar service is unavailable';
 
   const radarMod = await tryImport('./radarTriageService.js');
   if (radarMod) {
     try {
       const fn = radarMod.createSignal ?? radarMod.default?.createSignal;
-      const result = await fn?.({
-        organizationId,
-        why_now: payload.why_now,
-        evidence_pointers: payload.evidence_pointers,
-        user_intent: context.user_intent,
-        source: 'teresa',
-        proposalId,
-      });
-      realSignalId = result?.id || result?.signalId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Radar service call failed, using fallback ref`);
+      if (typeof fn !== 'function') {
+        failureReason = 'radar service exposes no create';
+      } else {
+        const result = await fn({
+          organizationId,
+          why_now: payload.why_now,
+          evidence_pointers: payload.evidence_pointers,
+          user_intent: context.user_intent,
+          source: 'teresa',
+          proposalId,
+        });
+        realSignalId = result?.id || result?.signalId || null;
+        if (!realSignalId) {
+          failureReason = 'radar service returned no signal id';
+        }
+      }
+    } catch (err) {
+      failureReason = `radar service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realSignalId || fallbackRef;
+  if (!realSignalId) {
+    logger.warn(`${LOG_PREFIX} Radar handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Radar handoff did not create a signal: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // An id handed back by the writer is a claim, not evidence. Confirm the row
+  // through the owner module's own tenant-scoped read before anything durable
+  // is written: an id for a row that is absent, or that belongs to another
+  // tenant, must never produce a receipt.
+  let ownerConfirmed = false;
+  try {
+    const readBack = radarMod?.getTriageSignal ?? radarMod?.default?.getTriageSignal;
+    if (typeof readBack !== 'function') {
+      failureReason = 'radar service exposes no read-back';
+    } else {
+      const signal = await readBack(realSignalId, organizationId);
+      ownerConfirmed = Boolean(signal);
+      if (!ownerConfirmed) {
+        failureReason = `radar signal ${realSignalId} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `radar read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Radar owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Radar handoff could not confirm the created signal: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // fallback:false — DbPromise's fallback swallows a failed INSERT and
+  // resolves, which would leave the proposal completed with no receipt row
+  // behind it — the same lie one layer down.
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'radar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realSignalId, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'radar',
-    signal_id: ref,
-    real_entity: Boolean(realSignalId),
+    signal_id: realSignalId,
+    real_entity: true,
     why_now: payload.why_now,
     user_intent: context.user_intent,
   };
@@ -2112,40 +1961,85 @@ async function handleInitiativesHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realInitRef: string | null = null;
+  let failureReason = 'initiatives service is unavailable';
 
   const initMod = await tryImport('../initiativeGenerationService.js');
   if (initMod) {
     try {
       const create =
         initMod.createInitiative ?? initMod.default?.createInitiative ?? initMod.default?.create;
-      const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
-      const result = await create?.({
-        organizationId,
-        title: seed.problem_statement || context.user_intent,
-        description: seed.proposed_outcome || '',
-        source: 'teresa',
-        proposalId,
-      });
-      realInitRef = result?.id || result?.initiativeId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Initiatives service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'initiatives service exposes no create';
+      } else {
+        const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
+        const result = await create({
+          organizationId,
+          title: seed.problem_statement || context.user_intent,
+          description: seed.proposed_outcome || '',
+          source: 'teresa',
+          proposalId,
+        });
+        realInitRef = result?.id || result?.initiativeId || null;
+        if (!realInitRef) {
+          failureReason = 'initiatives service returned no initiative id';
+        }
+      }
+    } catch (err) {
+      failureReason = `initiatives service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realInitRef || fallbackRef;
+  if (!realInitRef) {
+    logger.warn(`${LOG_PREFIX} Initiatives handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Initiatives handoff did not create an initiative: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the initiatives module's own tenant-scoped read
+  // (planningPortfolioReadService is the canonical v8 read lane for
+  // `initiatives`; initiativeGenerationService is write-only).
+  let ownerConfirmed = false;
+  try {
+    const readMod = await tryImport('./planningPortfolioReadService.js');
+    const readBack = readMod?.getInitiativeDetailRead ?? readMod?.default?.getInitiativeDetailRead;
+    if (typeof readBack !== 'function') {
+      failureReason = 'initiatives module exposes no read-back';
+    } else {
+      const initiative = await readBack(realInitRef, organizationId);
+      ownerConfirmed = Boolean(initiative);
+      if (!ownerConfirmed) {
+        failureReason = `initiative ${realInitRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `initiatives read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Initiatives owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Initiatives handoff could not confirm the created initiative: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'initiatives', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realInitRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'initiatives',
-    initiative_ref: ref,
-    real_entity: Boolean(realInitRef),
-    proposal_only: !realInitRef,
+    initiative_ref: realInitRef,
+    real_entity: true,
+    proposal_only: false,
     user_intent: context.user_intent,
   };
 }
@@ -2157,8 +2051,9 @@ async function handleCalendarHandoff(
   payload: Record<string, unknown>,
   userId?: string
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realCalRef: string | null = null;
+  let failureReason = 'calendar/meeting service is unavailable';
 
   // Teresa last-mile (backlog #4): wire directly to the real meetings write path
   // (`meetingService.createMeeting`) instead of a non-existent `calendarInteropService.createEvent`.
@@ -2166,37 +2061,78 @@ async function handleCalendarHandoff(
   if (calMod) {
     try {
       const create = calMod.createMeeting ?? calMod.default?.createMeeting;
-      const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
-      const whenRaw = intent.when ? String(intent.when) : '';
-      const parsed = new Date(whenRaw);
-      const startAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-      const result = await create?.({
-        organizationId,
-        createdBy: userId || 'teresa',
-        title: String(intent.what || context.user_intent || 'Teresa meeting').slice(0, 300),
-        startAt,
-        endAt: startAt,
-        attendees: [],
-        agenda: [],
-        decisions: [],
-      });
-      realCalRef = result?.id || result?.eventId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Calendar/meeting service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'calendar/meeting service exposes no create';
+      } else {
+        const intent = (payload.calendar_intent || {}) as Record<string, unknown>;
+        const whenRaw = intent.when ? String(intent.when) : '';
+        const parsed = new Date(whenRaw);
+        const startAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+        const result = await create({
+          organizationId,
+          createdBy: userId || 'teresa',
+          title: String(intent.what || context.user_intent || 'Teresa meeting').slice(0, 300),
+          startAt,
+          endAt: startAt,
+          attendees: [],
+          agenda: [],
+          decisions: [],
+        });
+        realCalRef = result?.id || result?.eventId || null;
+        if (!realCalRef) {
+          failureReason = 'calendar/meeting service returned no meeting id';
+        }
+      }
+    } catch (err) {
+      failureReason = `calendar/meeting service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realCalRef || fallbackRef;
+  if (!realCalRef) {
+    logger.warn(`${LOG_PREFIX} Calendar handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Calendar handoff did not create a meeting: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the meetings module's own tenant-scoped read.
+  let ownerConfirmed = false;
+  try {
+    const readBack = calMod?.getMeeting ?? calMod?.default?.getMeeting;
+    if (typeof readBack !== 'function') {
+      failureReason = 'calendar/meeting service exposes no read-back';
+    } else {
+      const meeting = await readBack({ organizationId, meetingId: realCalRef });
+      ownerConfirmed = Boolean(meeting);
+      if (!ownerConfirmed) {
+        failureReason = `meeting ${realCalRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `calendar read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Calendar owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Calendar handoff could not confirm the created meeting: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'calendar', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realCalRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'calendar',
-    calendar_ref: ref,
-    real_entity: Boolean(realCalRef),
+    calendar_ref: realCalRef,
+    real_entity: true,
     calendar_intent: payload.calendar_intent,
     user_intent: context.user_intent,
   };
@@ -2206,43 +2142,107 @@ async function handleNotebookHandoff(
   proposalId: string,
   organizationId: string,
   context: TeresaHandoffContext,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  userId?: string
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realNoteId: string | null = null;
+  let failureReason = 'notebook service is unavailable';
 
   const noteMod = await tryImport('../notebookService.js');
   if (noteMod) {
     try {
       const create = noteMod.createNote ?? noteMod.default?.createNote ?? noteMod.default?.create;
-      const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
-      const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
-      const result = await create?.({
-        organizationId,
-        title: nbCtx.title || 'Teresa handoff note',
-        body: nbCtx.body_preview || '',
-        source: 'teresa',
-        proposalId,
-        // #21: termin przypomnienia ląduje w capture_metadata.reminder (bez migracji).
-        ...(reminder && (reminder.dueAt || reminder.term) ? { reminder } : {}),
-      });
-      realNoteId = result?.id || result?.noteId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Notebook service call failed, using fallback ref`);
+      if (typeof create !== 'function') {
+        failureReason = 'notebook service exposes no create';
+      } else {
+        const nbCtx = (payload.notebook_handoff_context || {}) as Record<string, unknown>;
+        const reminder = (nbCtx.reminder || null) as { dueAt?: string; term?: string } | null;
+        const result = await create({
+          organizationId,
+          title: nbCtx.title || 'Teresa handoff note',
+          body: nbCtx.body_preview || '',
+          source: 'teresa',
+          proposalId,
+          // FIX (Notebook owner_user_id='system', flagged in M01-P07A review
+          // and this packet's §6): `createNote` defaults `userId` to
+          // `'system'` when the caller omits it, and `notebookService.ingest`
+          // always writes `visibility: 'private'` scoped by `owner_user_id`.
+          // A note owned by `'system'` is permanently invisible to the actor
+          // who approved the handoff (every read path filters
+          // `owner_user_id = <requesting user>`). `performHandoff` already
+          // carries the real acting `userId` end-to-end — this handler just
+          // never forwarded it. This is the ENTIRE fix: no notebookService.ts
+          // change, no schema change, no cross-module contract change.
+          userId: userId || undefined,
+          // #21: termin przypomnienia ląduje w capture_metadata.reminder (bez migracji).
+          ...(reminder && (reminder.dueAt || reminder.term) ? { reminder } : {}),
+        });
+        realNoteId = result?.id || result?.noteId || null;
+        if (!realNoteId) {
+          failureReason = 'notebook service returned no note id';
+        }
+      }
+    } catch (err) {
+      failureReason = `notebook service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realNoteId || fallbackRef;
+  if (!realNoteId) {
+    logger.warn(`${LOG_PREFIX} Notebook handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Notebook handoff did not create a note: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the notebook module's own tenant-scoped read
+  // (`resolveEmbedChip` selects `notebook_pages` WHERE id = ? AND
+  // organization_id = ? and reports `permissionOk:false` for anything it
+  // cannot see — an existing, already-shipped read-back, not new surface).
+  let ownerConfirmed = false;
+  try {
+    const svc = noteMod?.default ?? noteMod?.notebookService;
+    const readBack = svc?.resolveEmbedChip;
+    if (typeof readBack !== 'function') {
+      failureReason = 'notebook service exposes no read-back';
+    } else {
+      const chip = await readBack.call(
+        svc,
+        organizationId,
+        userId || 'teresa',
+        'notebook_page',
+        realNoteId
+      );
+      ownerConfirmed = Boolean(chip?.permissionOk);
+      if (!ownerConfirmed) {
+        failureReason = `note ${realNoteId} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `notebook read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Notebook owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Notebook handoff could not confirm the created note: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'notebook', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realNoteId, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'notebook',
-    note_ref: ref,
-    real_entity: Boolean(realNoteId),
+    note_ref: realNoteId,
+    real_entity: true,
     notebook_context: payload.notebook_handoff_context,
     user_intent: context.user_intent,
   };
@@ -2254,8 +2254,9 @@ async function handleInterviewHandoff(
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
+  // FIX M01-005 — see handleRadarHandoff for the full rationale.
   let realInsightRef: string | null = null;
+  let failureReason = 'interview service is unavailable';
 
   const interviewMod = await tryImport('./interviewInsightService.js');
   if (interviewMod) {
@@ -2265,136 +2266,121 @@ async function handleInterviewHandoff(
         interviewMod.default?.generateInsight ??
         interviewMod.createInsight ??
         interviewMod.default?.createInsight;
-      const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
-      const result = await fn?.({
-        organizationId,
-        action: interviewCtx.action || 'generate_insight',
-        session_ids: interviewCtx.session_ids,
-        title: interviewCtx.title || context.user_intent,
-        source: 'teresa',
-        proposalId,
-      });
-      realInsightRef = result?.id || result?.insightId || null;
-    } catch {
-      logger.warn(`${LOG_PREFIX} Interview service call failed, using fallback ref`);
+      if (typeof fn !== 'function') {
+        failureReason = 'interview service exposes no create';
+      } else {
+        const interviewCtx = (payload.interview_handoff_context || {}) as Record<string, unknown>;
+        const result = await fn({
+          organizationId,
+          action: interviewCtx.action || 'generate_insight',
+          session_ids: interviewCtx.session_ids,
+          title: interviewCtx.title || context.user_intent,
+          source: 'teresa',
+          proposalId,
+        });
+        realInsightRef = result?.id || result?.insightId || null;
+        if (!realInsightRef) {
+          failureReason = 'interview service returned no insight id';
+        }
+      }
+    } catch (err) {
+      failureReason = `interview service call failed: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
-  const ref = realInsightRef || fallbackRef;
+  if (!realInsightRef) {
+    logger.warn(`${LOG_PREFIX} Interview handoff created no owner object — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Interview handoff did not create an insight: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
+  // Confirm through the interview module's own read. `getById` is keyed by id
+  // only, so the tenant check is asserted here against the row it returns — a
+  // foreign-tenant insight must never produce a receipt in this organization.
+  let ownerConfirmed = false;
+  try {
+    const readBack = interviewMod?.getById ?? interviewMod?.default?.getById;
+    if (typeof readBack !== 'function') {
+      failureReason = 'interview service exposes no read-back';
+    } else {
+      const insight = await readBack(realInsightRef);
+      const insightOrg = insight?.organizationId ?? insight?.organization_id ?? null;
+      ownerConfirmed = Boolean(insight) && String(insightOrg || '') === String(organizationId);
+      if (!ownerConfirmed) {
+        failureReason = `interview insight ${realInsightRef} is not readable in this organization`;
+      }
+    }
+  } catch (err) {
+    failureReason = `interview read-back failed: ${err instanceof Error ? err.message : String(err)}`;
+  }
+
+  if (!ownerConfirmed) {
+    logger.warn(`${LOG_PREFIX} Interview owner read-back failed — ${failureReason}`);
+    throw new TeresaCopilotError(
+      `Interview handoff could not confirm the created insight: ${failureReason}`,
+      'P08_HANDOFF_NO_OWNER_OBJECT',
+      502
+    );
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'interview', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
-    { fallback: true }
+    [randomUUID(), proposalId, organizationId, realInsightRef, new Date().toISOString()],
+    { fallback: false }
   );
   return {
     handoff: 'interview',
-    insight_ref: ref,
-    real_entity: Boolean(realInsightRef),
+    insight_ref: realInsightRef,
+    real_entity: true,
     interview_context: payload.interview_handoff_context,
     user_intent: context.user_intent,
   };
 }
 
+/**
+ * Excele has NO owner write path.
+ *
+ * FIX M01-005: this handler never called any service — it minted
+ * `const ref = randomUUID()` unconditionally, wrote it as
+ * `teresa_handoff_results.result_ref` and returned `completed`, so EVERY
+ * excele handoff fabricated a durable receipt and a `/excele` deep link for
+ * a workbook that was never created. It fails closed instead: no result_ref,
+ * no receipt, no `completed`. `executeProposal`'s existing catch turns this
+ * throw into a `rejected` proposal with an `execution_failed` audit entry —
+ * capability-honest (`P0.8`), matching the `P08_HANDOFF_NOT_IMPLEMENTED`
+ * pattern already established for this exact gap.
+ */
 async function handleExceleHandoff(
-  proposalId: string,
-  organizationId: string,
-  userId: string,
-  context: TeresaHandoffContext,
-  payload: Record<string, unknown>
+  _proposalId: string,
+  _organizationId: string,
+  _context: TeresaHandoffContext,
+  _payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const workbookContext = payload.workbook_context as Record<string, unknown> | undefined;
-  const workbookId =
-    workbookContext && typeof workbookContext.workbook_id === 'string'
-      ? workbookContext.workbook_id.trim()
-      : '';
-
-  if (!workbookId) {
-    throw new TeresaCopilotError(
-      'Workbook write is unavailable without a real, versioned workbook context',
-      'P08_EXCELE_WRITE_UNAVAILABLE',
-      409
-    );
-  }
-
-  const version = Number(workbookContext?.version_id);
-  if (!Number.isInteger(version) || version < 0) {
-    throw new TeresaCopilotError(
-      'Workbook write requires an immutable base version',
-      'P08_EXCELE_VERSION_REQUIRED',
-      409
-    );
-  }
-
-  const mutation = payload.workbook_mutation;
-  if (!mutation || typeof mutation !== 'object' || Array.isArray(mutation)) {
-    throw new TeresaCopilotError(
-      'Workbook proposal must contain a structured mutation diff before execution',
-      'P08_EXCELE_STRUCTURED_MUTATION_REQUIRED',
-      409
-    );
-  }
-  const mutationPayload = mutation as Record<string, unknown>;
-  if (!Array.isArray(mutationPayload.operations) || mutationPayload.operations.length === 0) {
-    throw new TeresaCopilotError(
-      'Workbook proposal contains no executable operations',
-      'P08_EXCELE_STRUCTURED_MUTATION_REQUIRED',
-      409
-    );
-  }
-
-  let commandResult;
-  try {
-    commandResult = await applyWorkbookCommand({
-      workbookId,
-      organizationId,
-      userId,
-      commandId:
-        typeof mutationPayload.command_id === 'string' && mutationPayload.command_id.trim()
-          ? mutationPayload.command_id.trim()
-          : 'teresa.workbook.applyProposal',
-      baseVersion: version,
-      idempotencyKey: `teresa:${proposalId}`,
-      operations: mutationPayload.operations as WorkbookMutation[],
-    });
-  } catch (error) {
-    if (error instanceof WorkbookCommandError) {
-      throw new TeresaCopilotError(error.message, `P08_EXCELE_${error.code}`, error.statusCode);
-    }
-    throw error;
-  }
-
-  await dbRun(
-    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
-     VALUES (?, ?, ?, 'excele', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, workbookId, new Date().toISOString()],
-    { fallback: true }
+  logger.warn(`${LOG_PREFIX} Excele handoff has no owner write path — failing closed`);
+  throw new TeresaCopilotError(
+    'Excele handoff is not implemented: no owner module write path exists, so no workbook can be created',
+    'P08_HANDOFF_NOT_IMPLEMENTED',
+    501
   );
-  return {
-    handoff: 'excele',
-    workbook_ref: workbookId,
-    real_entity: true,
-    proposal_only: false,
-    mutation_applied: true,
-    version: commandResult.version,
-    operation_count: commandResult.operationCount,
-    duplicate: commandResult.duplicate,
-    workbook_context: workbookContext,
-    navigate_to: `/excele?artifactId=${encodeURIComponent(workbookId)}`,
-    user_intent: context.user_intent,
-    prompt_hint: payload.prompt || context.user_intent,
-  };
 }
 
 // ---------------------------------------------------------------------------
 // Internal: state transitions + audit
 // ---------------------------------------------------------------------------
 
-async function transitionState(proposalId: string, newState: ActionEnvelopeState): Promise<void> {
+async function transitionState(
+  proposalId: string,
+  newState: ActionEnvelopeState,
+  options?: { fallback?: boolean }
+): Promise<void> {
   await dbRun(
     `UPDATE teresa_proposals SET state = ?, updated_at = ? WHERE id = ?`,
     [newState, new Date().toISOString(), proposalId],
-    { fallback: true }
+    { fallback: options?.fallback ?? true }
   );
 }
 

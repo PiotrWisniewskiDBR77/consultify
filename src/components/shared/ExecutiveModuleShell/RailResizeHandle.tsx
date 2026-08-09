@@ -41,10 +41,6 @@ interface RailResizeHandleProps {
   ariaLabel?: string;
   /** Step size for Arrow Left/Right keyboard fallback. */
   step?: number;
-  /** Minimum width announced to assistive technology. */
-  minWidth?: number;
-  /** Maximum width announced to assistive technology. */
-  maxWidth?: number;
   /** Optional `data-testid`. */
   testId?: string;
 }
@@ -55,8 +51,6 @@ export const RailResizeHandle: React.FC<RailResizeHandleProps> = ({
   onResize,
   ariaLabel,
   step = 16,
-  minWidth = 0,
-  maxWidth = 2000,
   testId,
 }) => {
   const draggingRef = useRef(false);
@@ -126,9 +120,6 @@ export const RailResizeHandle: React.FC<RailResizeHandleProps> = ({
       role="separator"
       aria-orientation="vertical"
       aria-label={ariaLabel ?? (side === 'left' ? 'Resize left rail' : 'Resize right rail')}
-      aria-valuemin={Math.round(minWidth)}
-      aria-valuemax={Math.round(maxWidth)}
-      aria-valuenow={Math.round(currentWidth)}
       tabIndex={0}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}

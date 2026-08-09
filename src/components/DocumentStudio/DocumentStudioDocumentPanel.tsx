@@ -17,7 +17,6 @@ import {
   FileText,
   FileWarning,
   History,
-  ListTree,
   Loader2,
   MessageSquare,
   MoreHorizontal,
@@ -27,7 +26,6 @@ import {
   Sparkles,
   Table2,
   Users,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
@@ -35,25 +33,17 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  ArtifactBottomBar,
-  ArtifactContextCommandSurface,
-  ArtifactMenu3,
-} from '@/components/shared/ArtifactStudio';
-import {
   ExecutiveModuleShell,
   type RightRailToolDescriptor,
   type TopBarChipDescriptor,
 } from '@/components/shared/ExecutiveModuleShell';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import Button from '@/components/ui/primitives/Button';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   fetchExecutionModuleManifest,
   validateExecutionModuleManifest,
 } from '@/services/executionModuleStandard/api';
 import type { ExecutionModuleValidationResult } from '@/services/executionModuleStandard/types';
-import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
-import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import {
   buildMyWorkSheetTableOpenPath,
@@ -90,7 +80,6 @@ import {
   saveDocumentStudioManualContent,
 } from './api';
 import { CreateTemplateFromArtifactModal } from './CreateTemplateFromArtifactModal';
-import { createDocumentArtifactCommandRegistry } from './documentArtifactCommands';
 import { DocumentCommentsPanel } from './DocumentCommentsPanel';
 import { DocumentExportSuccessNote } from './DocumentExportSuccessNote';
 import { DocumentSchemaDiffView } from './DocumentSchemaDiffView';
@@ -1646,57 +1635,6 @@ function ApprovalsPanel({ artifactId }: { artifactId: string }): React.ReactElem
   );
 }
 
-function DocumentReviewPanel({ artifactId }: { artifactId: string }): React.ReactElement {
-  const { t } = useTranslation();
-  const [tab, setTab] = useState<'qa' | 'approval'>('qa');
-
-  return (
-    <div className="flex h-full min-h-0 flex-col" data-testid="document-review-panel">
-      <div
-        className="flex shrink-0 gap-1 border-b border-c-border-subtle p-2"
-        role="tablist"
-        aria-label={t('documentStudio.panel.reviewTabs', 'QA i zatwierdzanie')}
-      >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'qa'}
-          onClick={() => setTab('qa')}
-          className={`min-h-9 rounded-md px-3 text-xs font-medium ${
-            tab === 'qa'
-              ? 'bg-c-focus/10 text-c-focus-solid'
-              : 'text-c-text-secondary hover:bg-c-surface-hover'
-          }`}
-        >
-          QA
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'approval'}
-          onClick={() => setTab('approval')}
-          className={`min-h-9 rounded-md px-3 text-xs font-medium ${
-            tab === 'approval'
-              ? 'bg-c-focus/10 text-c-focus-solid'
-              : 'text-c-text-secondary hover:bg-c-surface-hover'
-          }`}
-        >
-          {t('documentStudio.panel.approvalTab', 'Zatwierdzenie')}
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-auto">
-        {tab === 'qa' ? (
-          <div className="p-3">
-            <DocumentStudioQaPanel artifactId={artifactId} />
-          </div>
-        ) : (
-          <ApprovalsPanel artifactId={artifactId} />
-        )}
-      </div>
-    </div>
-  );
-}
-
 function ContentLibraryPanel({
   artifactId,
   schema,
@@ -1909,7 +1847,7 @@ function TeresaDrawerPanel({
   const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col overflow-y-auto p-3">
-      <div className="mb-3 rounded-lg border border-c-focus bg-c-focus/10 p-3">
+      <div className="mb-3 rounded-lg border border-c-accent bg-c-accent-soft0 p-3">
         <h3 className="text-sm font-semibold text-c-text">Teresa</h3>
         <p className="mt-1 text-xs text-c-text-secondary">
           {t(
@@ -1935,11 +1873,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
 }) => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const openChatWithContext = useOpenChatWithContext();
-  const artifactStudioMode = isArtifactStudioLaneEnabled('document');
-  useEffect(() => {
-    emitArtifactStudioShellSelected('document');
-  }, []);
   // N20 (menu pliku) — live autosave status observed from the TipTap editor's
   // debounced `PUT /:artifactId/content` (see `DocumentTipTapEditor.tsx`
   // `persistManualEdit`). This was already computed and thrown away before —
@@ -1973,88 +1906,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // `DocumentTipTapEditor`'s `onEditorInstance`. Drives the standalone
   // `DocumentUndoRedoControls` below the "Document preview" action row.
   const [tiptapEditor, setTiptapEditor] = useState<Editor | null>(null);
-  const [editorSelectionKind, setEditorSelectionKind] = useState<'none' | 'text'>('none');
-  const [editorCommandRevision, setEditorCommandRevision] = useState(0);
 
   useEffect(() => {
-    if (!tiptapEditor) {
-      setEditorSelectionKind('none');
-      return;
-    }
-    const syncEditorState = (): void => {
-      setEditorSelectionKind(tiptapEditor.state.selection.empty ? 'none' : 'text');
-      setEditorCommandRevision((revision) => revision + 1);
-    };
-    syncEditorState();
-    tiptapEditor.on('selectionUpdate', syncEditorState);
-    tiptapEditor.on('transaction', syncEditorState);
-    return () => {
-      tiptapEditor.off('selectionUpdate', syncEditorState);
-      tiptapEditor.off('transaction', syncEditorState);
-    };
-  }, [tiptapEditor]);
-
-  const documentArtifactCommands = useMemo(() => {
-    // Transactions update TipTap's undo/redo availability without changing
-    // the editor instance. Reading this revision deliberately refreshes the
-    // registry predicates after each editor transaction.
-    void editorCommandRevision;
-    return createDocumentArtifactCommandRegistry(
-      {
-        undo: () => tiptapEditor?.chain().focus().undo().run(),
-        redo: () => tiptapEditor?.chain().focus().redo().run(),
-        setParagraph: () => tiptapEditor?.chain().focus().setParagraph().run(),
-        setHeading: (level) => tiptapEditor?.chain().focus().toggleHeading({ level }).run(),
-        toggleBulletList: () => tiptapEditor?.chain().focus().toggleBulletList().run(),
-        toggleOrderedList: () => tiptapEditor?.chain().focus().toggleOrderedList().run(),
-        toggleBold: () => tiptapEditor?.chain().focus().toggleBold().run(),
-        toggleItalic: () => tiptapEditor?.chain().focus().toggleItalic().run(),
-        toggleUnderline: () => tiptapEditor?.chain().focus().toggleUnderline().run(),
-      },
-      {
-        canUndo: tiptapEditor?.can().undo() ?? false,
-        canRedo: tiptapEditor?.can().redo() ?? false,
-        editorReady: Boolean(tiptapEditor),
-      }
-    );
-  }, [tiptapEditor, editorCommandRevision]);
-
-  const documentArtifactCommandContext = useMemo(
-    () => ({
-      selection: {
-        artifactType: 'document' as const,
-        kind: editorSelectionKind,
-      },
-      permissions: { grants: new Set(['artifact.edit']) },
-      lifecycle: {
-        status: 'draft' as const,
-        conflict: autosaveStatus === 'conflict',
-      },
-    }),
-    [autosaveStatus, editorSelectionKind]
-  );
-
-  const openGlobalTeresa = useCallback(() => {
-    void openChatWithContext({
-      entityType: 'document',
-      entityId: artifactId,
-      entityName: schema.title,
-      reuseActiveConversation: true,
-      contextData: {
-        artifactType: 'document',
-        versionId: schema.updatedAt,
-        classification: schema.confidentiality,
-        selectionKind: editorSelectionKind,
-      },
-    });
-  }, [artifactId, editorSelectionKind, openChatWithContext, schema]);
-
-  useEffect(() => {
-    // The override policy is only relevant after an export has actually been
-    // blocked by QA. Loading it for every editor mount caused an unrelated
-    // asynchronous state update in ordinary editing flows and made the open
-    // document pay for governance UI it never displayed.
-    if (!qaBlock) return;
     let cancelled = false;
     getDocumentStudioPolicy()
       .then((next) => {
@@ -2067,7 +1920,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     return () => {
       cancelled = true;
     };
-  }, [qaBlock]);
+  }, []);
 
   const sourceCount = schema.sourceRefs.length;
   const assumptionCount = useMemo(
@@ -2493,8 +2346,8 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
     t,
   ]);
 
-  const topBarChips = useMemo<TopBarChipDescriptor[]>(() => {
-    const chips: TopBarChipDescriptor[] = [
+  const topBarChips = useMemo<TopBarChipDescriptor[]>(
+    () => [
       {
         // U5 (odbiór "menu pliku", 2026-07-28) — moved to `overflow`.
         // Measured live at 1280px: 6 always-expanded chips + the new "Plik"
@@ -2522,7 +2375,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         id: 'qa',
         label: qaBlock
           ? t('documentStudio.panel.chipQaBlocked', 'QA blocked')
-          : t('documentStudio.panel.chipQaReview', 'QA i przegląd'),
+          : t('documentStudio.panel.chipQa', 'QA'),
         icon: ShieldCheck,
         dotTone: qaBlock ? 'danger' : 'success',
         onClick: handleOpenQa,
@@ -2575,33 +2428,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         disabled: exporting !== null,
         onClick: () => void handleExport('docx'),
       },
-    ];
-    // Artifact Studio keeps Menu 2 on a single line. Teresa is global and
-    // formatting lives in Menu 3; only artifact-level workflows remain.
-    return artifactStudioMode
-      ? chips
-          .filter((chip) => ['history', 'qa', 'share', 'run'].includes(chip.id))
-          .map((chip) =>
-            chip.id === 'qa'
-              ? { ...chip, group: 'overflow' as const, overflowSection: 'Przegląd' }
-              : chip.id === 'history'
-                ? { ...chip, overflowSection: 'Historia' }
-                : chip
-          )
-      : chips;
-  }, [
-    artifactStudioMode,
-    exporting,
-    handleExport,
-    handleOpenAgent,
-    handleOpenGovernance,
-    handleOpenHistory,
-    handleOpenQa,
-    handleOpenShare,
-    policy?.canOverrideQa,
-    qaBlock,
-    t,
-  ]);
+    ],
+    [
+      exporting,
+      handleExport,
+      handleOpenAgent,
+      handleOpenGovernance,
+      handleOpenHistory,
+      handleOpenQa,
+      handleOpenShare,
+      policy?.canOverrideQa,
+      qaBlock,
+      t,
+    ]
+  );
 
   // Right-rail tool inventory (13 total). Kanon powłoki: ≤5 "primary"
   // icons visible by default in the icon strip; the rest fold behind a
@@ -2754,7 +2594,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
   // menu row). Each is wrapped with a "back to menu" affordance so the
   // user can return to the overflow list without leaving the rail.
   const renderOverflowToolPanel = (overflowToolId: string): React.ReactNode => {
-    const backButton = !artifactStudioMode ? (
+    const backButton = (
       <button
         type="button"
         onClick={() => setOverflowSelection(null)}
@@ -2764,7 +2604,7 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         <ChevronDown size={12} className="rotate-90" aria-hidden="true" />
         {t('documentStudio.panel.toolMoreBack', 'More tools')}
       </button>
-    ) : null;
+    );
 
     let content: React.ReactNode = null;
     if (overflowToolId === 'activity') {
@@ -2856,13 +2696,17 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       );
     }
     if (activeToolId === 'qa') {
-      return <DocumentReviewPanel artifactId={artifactId} />;
+      return (
+        <div className="h-full overflow-y-auto p-3">
+          <DocumentStudioQaPanel artifactId={artifactId} />
+        </div>
+      );
     }
     return null;
   };
 
-  const canvasContent = (
-    <div className="relative flex min-h-full flex-col">
+  const canvas = (
+    <div className="flex min-h-full flex-col">
       {showSaveAsTemplateModal ? (
         <CreateTemplateFromArtifactModal
           artifactId={artifactId}
@@ -3034,26 +2878,19 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         </div>
       )}
 
-      <div
-        className={
-          artifactStudioMode
-            ? 'flex flex-col overflow-y-auto px-6 py-4'
-            : 'flex flex-col gap-3 overflow-y-auto p-6'
-        }
-      >
-        {!artifactStudioMode ? (
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
-            <div>
-              <h2 className="text-sm font-semibold text-c-text">
-                {t('documentStudio.panel.documentPreview', 'Document preview')}
-              </h2>
-              <p className="text-xs text-c-text-secondary">
-                {schema.documentType} · {schema.language.toUpperCase()} · {schema.density} ·{' '}
-                {schema.confidentiality}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {/*
+      <div className="flex flex-col gap-3 overflow-y-auto p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200/60 dark:border-white/[0.03] bg-c-surface p-3">
+          <div>
+            <h2 className="text-sm font-semibold text-c-text">
+              {t('documentStudio.panel.documentPreview', 'Document preview')}
+            </h2>
+            <p className="text-xs text-c-text-secondary">
+              {schema.documentType} · {schema.language.toUpperCase()} · {schema.density} ·{' '}
+              {schema.confidentiality}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {/*
               P-11 (2026-07-28) — "muszę zrobić możliwości edycji, możliwości
               cofnięć. Nie mogę tutaj cofnąć zmiany." The TipTap engine
               already tracks history (StarterKit's `undoRedo` option
@@ -3063,77 +2900,76 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
               it is a one-line move once the owner's redesigned right panel
               lands — see its own doc-comment.
             */}
-              <DocumentUndoRedoControls editor={tiptapEditor} />
-              <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-navy-700" />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleOpenBuilder}
-                disabled={!tableSourceRef || openingBuilder}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {openingBuilder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  {t('documentStudio.panel.openInSheetsBuilder', 'Open in Sheets Builder')}
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport('markdown')}
-                disabled={exporting !== null}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {exporting === 'markdown' ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Download className="h-3.5 w-3.5" />
-                  )}
-                  Markdown
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport('docx')}
-                disabled={exporting !== null}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {exporting === 'docx' ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Download className="h-3.5 w-3.5" />
-                  )}
-                  DOCX
-                </span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport('pdf')}
-                disabled={exporting !== null}
-              >
-                <span className="inline-flex items-center gap-1">
-                  {exporting === 'pdf' ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Download className="h-3.5 w-3.5" />
-                  )}
-                  PDF
-                </span>
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={onStartOver}>
-                <span className="inline-flex items-center gap-1">
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  {t('documentStudio.panel.startOver', 'Start over')}
-                </span>
-              </Button>
-            </div>
+            <DocumentUndoRedoControls editor={tiptapEditor} />
+            <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-slate-200 dark:bg-navy-700" />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleOpenBuilder}
+              disabled={!tableSourceRef || openingBuilder}
+            >
+              <span className="inline-flex items-center gap-1">
+                {openingBuilder ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                {t('documentStudio.panel.openInSheetsBuilder', 'Open in Sheets Builder')}
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('markdown')}
+              disabled={exporting !== null}
+            >
+              <span className="inline-flex items-center gap-1">
+                {exporting === 'markdown' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                Markdown
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('docx')}
+              disabled={exporting !== null}
+            >
+              <span className="inline-flex items-center gap-1">
+                {exporting === 'docx' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                DOCX
+              </span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('pdf')}
+              disabled={exporting !== null}
+            >
+              <span className="inline-flex items-center gap-1">
+                {exporting === 'pdf' ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                PDF
+              </span>
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onStartOver}>
+              <span className="inline-flex items-center gap-1">
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t('documentStudio.panel.startOver', 'Start over')}
+              </span>
+            </Button>
           </div>
-        ) : null}
+        </div>
         <DocumentTipTapEditor
           schema={schema}
           onSchemaUpdated={onSchemaUpdated}
@@ -3144,20 +2980,6 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
         />
       </div>
     </div>
-  );
-
-  const canvas = artifactStudioMode ? (
-    <ArtifactContextCommandSurface
-      registry={documentArtifactCommands}
-      context={documentArtifactCommandContext}
-      resolveLabel={(label) => label}
-      ariaLabel={t('documentStudio.panel.contextMenu', 'Menu kontekstowe dokumentu')}
-      className="min-h-full"
-    >
-      {canvasContent}
-    </ArtifactContextCommandSurface>
-  ) : (
-    canvasContent
   );
 
   return (
@@ -3190,44 +3012,20 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
       // already chip-heavy 1280px bar) or `topBarPrimaryActionSlot` (renders
       // LAST, after Udostępnij).
       topBarLeadingActionSlot={
-        !artifactStudioMode ? (
-          <DocumentStudioFileMenu
-            onNew={onStartOver}
-            onOpen={handleFileOpen}
-            saveStatus={autosaveStatus}
-            onSaveAs={() => void handleSaveAs()}
-            saveAsBusy={savingAs}
-            onSaveAsTemplate={() => setShowSaveAsTemplateModal(true)}
-          />
-        ) : undefined
+        <DocumentStudioFileMenu
+          onNew={onStartOver}
+          onOpen={handleFileOpen}
+          saveStatus={autosaveStatus}
+          onSaveAs={() => void handleSaveAs()}
+          saveAsBusy={savingAs}
+          onSaveAsTemplate={() => setShowSaveAsTemplateModal(true)}
+        />
       }
       topBarChips={topBarChips}
-      topBarTitleTrailingSlot={
-        artifactStudioMode ? (
-          <div
-            className="flex min-w-0 items-center gap-2 text-xs text-c-text-secondary"
-            data-testid="document-artifact-status"
-          >
-            <span className="whitespace-nowrap">
-              {autosaveStatus === 'saving'
-                ? t('common.saving', 'Zapisywanie…')
-                : autosaveStatus === 'error'
-                  ? t('common.saveError', 'Błąd zapisu')
-                  : autosaveStatus === 'conflict'
-                    ? t('common.conflict', 'Konflikt')
-                    : t('common.saved', 'Zapisano')}
-            </span>
-            <span className="rounded-md border border-c-border px-2 py-1 whitespace-nowrap">
-              {schema.confidentiality}
-            </span>
-          </div>
-        ) : undefined
-      }
       presenceSlot={
         <div className="text-right text-[11px] text-c-text-secondary">
           <div>
-            {schema.language.toUpperCase()}
-            {!artifactStudioMode ? ` · ${schema.confidentiality}` : ''}
+            {schema.language.toUpperCase()} · {schema.confidentiality}
           </div>
           <div>
             {t('documentStudio.panel.presenceSources', {
@@ -3243,129 +3041,19 @@ export const DocumentStudioDocumentPanel: React.FC<DocumentStudioDocumentPanelPr
           </div>
         </div>
       }
-      leftRailTitle={
-        artifactStudioMode
-          ? t('documentStudio.panel.structureTitle', 'Struktura dokumentu')
-          : t('documentStudio.panel.outlineTitle', 'Outline')
-      }
+      leftRailTitle={t('documentStudio.panel.outlineTitle', 'Outline')}
       leftRailContent={
-        artifactStudioMode ? (
-          <div className="flex h-full min-h-0 flex-col">
-            <div
-              className="grid grid-cols-5 gap-1 border-b border-c-border p-2"
-              role="tablist"
-              aria-label={t('documentStudio.panel.documentPanelViews', 'Widoki panelu dokumentu')}
-            >
-              {[
-                {
-                  id: null,
-                  label: t('documentStudio.panel.outlineTitle', 'Struktura'),
-                  icon: ListTree,
-                },
-                {
-                  id: 'sources',
-                  label: t('documentStudio.panel.toolSources', 'Źródła'),
-                  icon: FileText,
-                },
-                {
-                  id: 'comments',
-                  label: t('documentStudio.panel.toolComments', 'Komentarze'),
-                  icon: MessageSquare,
-                },
-                {
-                  id: 'qa',
-                  label: t('documentStudio.panel.toolQaReview', 'QA i przegląd'),
-                  icon: ShieldCheck,
-                },
-                {
-                  id: 'more',
-                  label: t('documentStudio.panel.toolHistory', 'Historia'),
-                  icon: History,
-                },
-              ].map((item) => {
-                const selected = activeRailToolId === item.id;
-                return (
-                  <button
-                    key={item.id ?? 'structure'}
-                    type="button"
-                    role="tab"
-                    title={item.label}
-                    aria-label={item.label}
-                    aria-selected={selected}
-                    onClick={() => {
-                      if (item.id === 'more') setOverflowSelection('activity');
-                      setActiveRailToolId(item.id);
-                    }}
-                    className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
-                      selected
-                        ? 'bg-c-focus/10 text-c-focus-solid'
-                        : 'text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text'
-                    }`}
-                  >
-                    <item.icon size={17} aria-hidden="true" />
-                  </button>
-                );
-              })}
-            </div>
-            <div className="min-h-0 flex-1">
-              {activeRailToolId ? (
-                renderRightRailPanel(activeRailToolId)
-              ) : (
-                <OutlinePanel
-                  sections={schema.sections}
-                  sourceCount={sourceCount}
-                  assumptionCount={assumptionCount}
-                />
-              )}
-            </div>
-          </div>
-        ) : (
-          <OutlinePanel
-            sections={schema.sections}
-            sourceCount={sourceCount}
-            assumptionCount={assumptionCount}
-          />
-        )
+        <OutlinePanel
+          sections={schema.sections}
+          sourceCount={sourceCount}
+          assumptionCount={assumptionCount}
+        />
       }
-      secondBar={
-        artifactStudioMode ? (
-          <ArtifactMenu3
-            registry={documentArtifactCommands}
-            context={documentArtifactCommandContext}
-            resolveLabel={(label) => label}
-            maxVisible={8}
-            ariaLabel={t('documentStudio.panel.contextTools', 'Narzędzia dokumentu')}
-          />
-        ) : undefined
-      }
-      rightRailTools={artifactStudioMode ? [] : rightRailTools}
+      rightRailTools={rightRailTools}
       renderRightRailPanel={renderRightRailPanel}
       activeRightRailToolId={activeRailToolId}
       onActiveRightRailToolChange={setActiveRailToolId}
       canvas={canvas}
-      artifactStudioMode={artifactStudioMode}
-      artifactMinCanvasWidth={680}
-      bottomBar={
-        artifactStudioMode ? (
-          <ArtifactBottomBar
-            leading={t('documentStudio.panel.sectionCount', {
-              defaultValue: '{{count}} sekcji',
-              count: schema.sections.length,
-            })}
-            center={autosaveStatus === 'conflict' ? t('common.conflict', 'Konflikt') : undefined}
-            trailing={
-              <button
-                type="button"
-                onClick={openGlobalTeresa}
-                className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-c-text-secondary hover:bg-c-surface-raised hover:text-c-text"
-              >
-                <Sparkles size={14} aria-hidden="true" />
-                <span>Teresa</span>
-              </button>
-            }
-          />
-        ) : undefined
-      }
       defaultLeftWidth={260}
       defaultRightWidth={340}
       persistRailState

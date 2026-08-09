@@ -13,19 +13,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { UnifiedChatPanel } from '@/components/AIChat/UnifiedChatPanel';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
-import {
-  ArtifactContextCommandSurface,
-  ArtifactMenu3,
-  type ArtifactCommandContext,
-  type ArtifactLifecycle,
-} from '@/components/shared/ArtifactStudio';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { ErrorState as SpecAErrorState, SkeletonState } from '@/components/shared/states';
 import { ArtifactApprovalStatusBar } from '@/components/standard/ArtifactApprovalStatusBar';
 import { EvidencePanelSection } from '@/components/standard/EvidencePanelSection';
 import { ErrorState, LoadingState } from '@/components/ui/primitives';
 import { EntityStatusChip } from '@/components/ui/primitives/chips/EntityStatusChip';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { PresentationStudioApi } from '@/services/api/presentationStudio.api';
 import { exportPresentationDeck, PresentationExportError } from '@/services/presentationExport';
@@ -42,8 +35,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { AppView } from '@/types';
 import type { WorkspaceContext } from '@/types/workspace';
 import { isArtifactApprovalUiEnabled } from '@/utils/artifactApprovalUiFlag';
-import { isArtifactStudioLaneEnabled } from '@/utils/artifactStudioFlags';
-import { emitArtifactStudioShellSelected } from '@/utils/artifactStudioTelemetry';
 import { isEvidencePanelEnabled } from '@/utils/evidencePanelFlag';
 import { isMelsDeckBuilderEnabled } from '@/utils/melsDeckBuilderFlag';
 
@@ -66,12 +57,25 @@ import { normalizeSlideComposition } from './deckData';
 import { DeckGovernanceCardModal } from './DeckGovernanceCardModal';
 import { DeckPresenceStack } from './DeckPresenceStack';
 import { DeckQualityGatesPanel } from './DeckQualityGatesPanel';
-import { PresentationReviewPanel } from './PresentationReviewPanel';
 import { DeckRelationsPanel } from './DeckRelationsPanel';
 import type { BrandKit } from './DeckThemeContext';
 import { DeckThemeProvider } from './DeckThemeContext';
+import {
+  mergeStarterBlockContent,
+  resolveBlankCardInsertionIndex,
+  shouldSyncKeyMessageWithTitle,
+  titleFromPrimaryHeadingUpdate,
+} from './manualEditing';
+import {
+  alignBlocks,
+  distributeBlocks,
+  expandSelectionToGroups,
+  groupBlocks,
+  ungroupBlocks,
+  type HorizontalAlignment,
+  type VerticalAlignment,
+} from './geometryOps';
 import { MediaLibraryBrowser } from './MediaLibraryBrowser';
-import { createPresentationArtifactCommandRegistry } from './presentationArtifactCommands';
 import { PresentMode } from './PresentMode';
 import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
@@ -79,9 +83,9 @@ import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
 import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
+import { useDeckAutosave } from './useDeckAutosave';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
-import { presentationVersionApprovalId } from './presentationApproval';
 import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 // VF1-7 (SPEC-A wzorzec Deck): gate for the shared/states swap on the
@@ -276,6 +280,7 @@ function deckFromUnifiedJson(params: {
       layout_id: layoutId,
       composition: composition ?? null,
       title: String(headingText || 'Slide'),
+      key_message: slide?.key_message ? String(slide.key_message) : undefined,
       blocks,
       source_refs: [],
       has_refreshable_data: hasRefreshable,
@@ -375,7 +380,6 @@ export const DeckBuilder: React.FC = () => {
   // distinct from the collaborate-only `currentUser` above, which is id-only
   // and null when VITE_ENABLE_DECK_COLLABORATE is off).
   const approvalUser = useAppStore((s) => s.currentUser);
-  const approvalOrganization = useAppStore((s) => s.currentOrganization);
 
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -389,15 +393,12 @@ export const DeckBuilder: React.FC = () => {
     critic?: { overallScore: number; regenerateSlides: number[]; passed: boolean };
   } | null>(null);
   const [qualityBannerExpanded, setQualityBannerExpanded] = useState(false);
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialRef = useRef(false);
   const serverVersionRef = useRef<number>(1);
-  const [serverVersion, setServerVersion] = useState(1);
 
   const [teresaOpen, setTeresaOpen] = useState(true);
   const [showNotes, setShowNotes] = useState(false);
   const [presentMode, setPresentMode] = useState<'off' | 'fullscreen' | 'presenter'>('off');
-  const [presentStartIndex, setPresentStartIndex] = useState(0);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   // P3.1 — visible conflict state when autosave returns 409 (another session
   // saved the deck). Instead of silently overwriting the local (possibly
@@ -415,6 +416,7 @@ export const DeckBuilder: React.FC = () => {
   // R4 — animations toggle UI removed; deck animations stay on by default.
   const [animationsEnabled] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  const [backgroundImageCardId, setBackgroundImageCardId] = useState<string | null>(null);
   // P2.2 — "AI Generate" button in BlockToolbar's Images panel is in flight.
   const [generatingAiImage, setGeneratingAiImage] = useState(false);
   const [qualityGatesOpen, setQualityGatesOpen] = useState(false);
@@ -463,7 +465,6 @@ export const DeckBuilder: React.FC = () => {
   const getExpectedDeckVersion = useCallback(() => serverVersionRef.current, []);
   const syncDeckServerVersion = useCallback((version: number) => {
     serverVersionRef.current = version;
-    setServerVersion(version);
   }, []);
   const {
     versions,
@@ -473,6 +474,10 @@ export const DeckBuilder: React.FC = () => {
     lastSavedAt,
     restoreVersion,
     saveManualCheckpoint,
+    markSaved,
+    noteSaveStarted,
+    notePersistedSave,
+    noteSaveFailed,
   } = useVersionHistory(deck, deckId, getExpectedDeckVersion, syncDeckServerVersion);
 
   const { isCardOutdated, refreshCard, refreshAllCards, refreshBlock } = useDataRefresh(
@@ -484,24 +489,38 @@ export const DeckBuilder: React.FC = () => {
   // TipTap edit (EditableBlock). Block ids are unique across the whole deck
   // (`block-<card_id>-<n>` or `block-<timestamp>-<rand>`), so a single id is
   // enough to identify the selection deck-wide.
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [artifactSelectionKind, setArtifactSelectionKind] = useState<'none' | 'slide' | 'block'>(
-    'none'
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const selectedBlockId = selectedBlockIds.at(-1) ?? null;
+  const selectedBlock = useMemo(
+    () =>
+      deck?.cards
+        .flatMap((card) => card.blocks)
+        .find((block) => block.block_id === selectedBlockId) ?? null,
+    [deck, selectedBlockId]
   );
 
   const handleSelectCard = useCallback(
     (index: number) => {
       setActiveCardIndex(index);
-      setSelectedBlockId(null);
-      setArtifactSelectionKind('slide');
+      setSelectedBlockIds([]);
     },
     [setActiveCardIndex]
   );
 
   const handleSelectBlock = useCallback(
-    (cardId: string, blockId: string) => {
-      setSelectedBlockId(blockId);
-      setArtifactSelectionKind('block');
+    (cardId: string, blockId: string, additive = false) => {
+      const card = deck?.cards.find((candidate) => candidate.card_id === cardId);
+      setSelectedBlockIds((current) => {
+        const sameCardIds = card
+          ? current.filter((id) => card.blocks.some((block) => block.block_id === id))
+          : [];
+        const toggled = additive
+          ? sameCardIds.includes(blockId)
+            ? sameCardIds.filter((id) => id !== blockId)
+            : [...sameCardIds, blockId]
+          : [blockId];
+        return card ? expandSelectionToGroups(card.blocks, toggled) : toggled;
+      });
       const idx = deck?.cards.findIndex((c) => c.card_id === cardId) ?? -1;
       if (idx >= 0 && idx !== activeCardIndex) setActiveCardIndex(idx);
     },
@@ -524,17 +543,32 @@ export const DeckBuilder: React.FC = () => {
 
   const handleBlockUpdate = useCallback(
     (cardId: string, blockId: string, updates: Partial<CardBlock>) => {
-      applyBlockChange(cardId, (blocks) =>
-        blocks.map((b) => (b.block_id === blockId ? { ...b, ...updates } : b))
+      const card = deck?.cards.find((candidate) => candidate.card_id === cardId);
+      if (!card) return;
+      const currentBlock = card.blocks.find((block) => block.block_id === blockId);
+      if (!currentBlock) return;
+
+      const updatedBlock = { ...currentBlock, ...updates };
+      const nextBlocks = card.blocks.map((block) =>
+        block.block_id === blockId ? updatedBlock : block
       );
+      const title = titleFromPrimaryHeadingUpdate(card.blocks, blockId, updatedBlock);
+      const syncKeyMessage =
+        Boolean(title) && shouldSyncKeyMessageWithTitle(card.title, card.key_message);
+      updateCard(cardId, {
+        blocks: nextBlocks,
+        is_locked: true,
+        ...(title ? { title } : {}),
+        ...(syncKeyMessage ? { key_message: title } : {}),
+      });
     },
-    [applyBlockChange]
+    [deck, updateCard]
   );
 
   const handleBlockDelete = useCallback(
     (cardId: string, blockId: string) => {
       applyBlockChange(cardId, (blocks) => deleteBlockFromList(blocks, blockId));
-      setSelectedBlockId((current) => (current === blockId ? null : current));
+      setSelectedBlockIds((current) => current.filter((id) => id !== blockId));
     },
     [applyBlockChange]
   );
@@ -551,6 +585,39 @@ export const DeckBuilder: React.FC = () => {
       applyBlockChange(cardId, (blocks) => moveBlockInList(blocks, blockId, direction));
     },
     [applyBlockChange]
+  );
+
+  const handleGroupBlocks = useCallback(() => {
+    if (!activeCard || selectedBlockIds.length < 2) return;
+    const groupId = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    applyBlockChange(activeCard.card_id, (blocks) =>
+      groupBlocks(blocks, selectedBlockIds, groupId)
+    );
+  }, [activeCard, applyBlockChange, selectedBlockIds]);
+
+  const handleUngroupBlocks = useCallback(() => {
+    if (!activeCard || selectedBlockIds.length === 0) return;
+    applyBlockChange(activeCard.card_id, (blocks) => ungroupBlocks(blocks, selectedBlockIds));
+  }, [activeCard, applyBlockChange, selectedBlockIds]);
+
+  const handleAlignBlocks = useCallback(
+    (alignment: HorizontalAlignment | VerticalAlignment) => {
+      if (!activeCard || selectedBlockIds.length < 2) return;
+      applyBlockChange(activeCard.card_id, (blocks) =>
+        alignBlocks(blocks, selectedBlockIds, alignment)
+      );
+    },
+    [activeCard, applyBlockChange, selectedBlockIds]
+  );
+
+  const handleDistributeBlocks = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      if (!activeCard || selectedBlockIds.length < 3) return;
+      applyBlockChange(activeCard.card_id, (blocks) =>
+        distributeBlocks(blocks, selectedBlockIds, axis)
+      );
+    },
+    [activeCard, applyBlockChange, selectedBlockIds]
   );
 
   const handleBlockRefresh = useCallback(
@@ -573,6 +640,14 @@ export const DeckBuilder: React.FC = () => {
       updateCard(cardId, { is_locked: !card.is_locked });
     },
     [deck, updateCard]
+  );
+
+  const handleSpeakerNotesChange = useCallback(
+    (value: string) => {
+      if (!activeCard) return;
+      updateCard(activeCard.card_id, { speaker_notes: value, is_locked: true });
+    },
+    [activeCard, updateCard]
   );
 
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null);
@@ -633,6 +708,60 @@ export const DeckBuilder: React.FC = () => {
 
   useCommandPaletteShortcut(() => setCommandPaletteOpen(true));
 
+  const handleAutosaveConflict = useCallback(
+    (next: {
+      serverVersion: number | null;
+      pendingServer: { deckJson: any; title: string } | null;
+    }) => {
+      setConflict(next);
+      toast.error(t('presentations.versionConflictDetected'));
+    },
+    [t]
+  );
+
+  const fetchLatestDeck = useCallback(
+    (id: string) => Api.get(`/presentations/decks/${id}`) as Promise<any>,
+    []
+  );
+
+  // ★ ONE AUTOSAVE OWNER (MAT-006B / P1). `useDeckAutosave` is the ONLY writer
+  // and the only user of `serverVersionRef` — the single compare-and-swap token,
+  // seeded here from the canonical load. `useVersionHistory` used to run a
+  // second, independent 30 s PUT to the same endpoint with its OWN baseline and
+  // its OWN token (hardcoded to 1, never seeded), which 409-ed by construction
+  // on every deck with `version > 1`; that loop is deleted. What it legitimately
+  // provided — the "Saving…/Saved" state, `lastSavedAt`, and re-reading the
+  // durable version timeline after a write — is preserved by reporting the
+  // writer's start/success/failure back into it.
+  //
+  // Declared BEFORE the loader effect so `markPersisted` is in scope there and
+  // so the autosave effect runs first on mount, while `hasLoadedInitialRef` is
+  // still false.
+  const { markPersisted: markAutosaveBaseline } = useDeckAutosave({
+    deckId,
+    deck,
+    hasLoadedInitialRef,
+    serverVersionRef,
+    paused: Boolean(conflict),
+    onConflict: handleAutosaveConflict,
+    fetchLatestDeck,
+    onSaveStart: noteSaveStarted,
+    onSaveSuccess: notePersistedSave,
+    onSaveError: noteSaveFailed,
+  });
+
+  // Every place that puts SERVER truth into state (loader, restore read-back,
+  // agent-edit accept, "Reload latest") must call THIS, not either hook's own
+  // marker: the writer must not write that state back, and the version-history
+  // UI must not report it as a save that happened.
+  const markPersisted = useCallback(
+    (persisted: Deck | null) => {
+      markAutosaveBaseline(persisted);
+      markSaved(persisted);
+    },
+    [markAutosaveBaseline, markSaved]
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -651,7 +780,6 @@ export const DeckBuilder: React.FC = () => {
           payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
         if (typeof row?.version === 'number' && Number.isFinite(row.version)) {
           serverVersionRef.current = row.version;
-          setServerVersion(row.version);
         }
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
@@ -694,6 +822,7 @@ export const DeckBuilder: React.FC = () => {
             updated_at: row?.updated_at || deckJson.updated_at || new Date().toISOString(),
           };
           if (!cancelled) {
+            markPersisted(loaded);
             setDeck(loaded);
             setLoadingDeck(false);
             setLoadError(null);
@@ -717,6 +846,7 @@ export const DeckBuilder: React.FC = () => {
         });
         if (converted) {
           if (!cancelled) {
+            markPersisted(converted);
             setDeck(converted);
             setLoadingDeck(false);
             setLoadError(null);
@@ -756,6 +886,7 @@ export const DeckBuilder: React.FC = () => {
           updated_at: String(row?.updated_at || nowIso),
         };
         if (!cancelled) {
+          markPersisted(emptyDeck);
           setDeck(emptyDeck);
           setLoadingDeck(false);
           setLoadError(null);
@@ -781,84 +912,7 @@ export const DeckBuilder: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [deckId, setDeck, deckReloadKey]);
-
-  const deckForAutosave = useMemo(() => {
-    if (!deckId || !deck) return null;
-    return { deckId, deck };
-  }, [deckId, deck]);
-
-  useEffect(() => {
-    if (!deckForAutosave) return;
-    if (!hasLoadedInitialRef.current) return;
-    // P3.1 — pause autosave while an unresolved version conflict is on screen.
-    // Autosaving again would just re-trigger the same 409 loop; the user must
-    // pick "Reload latest" or "Keep my version" first.
-    if (conflict) return;
-
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/presentations/decks/${deckForAutosave.deckId}/autosave`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'X-Deck-Version': String(serverVersionRef.current),
-          },
-          body: JSON.stringify(deckForAutosave.deck),
-        });
-        if (res.status === 409) {
-          // P3.1 — another session advanced the deck's version. DO NOT silently
-          // clobber the local (unsaved) edits with the server copy. Fetch the
-          // latest so we can offer an instant reload, then raise a visible
-          // conflict banner and stop autosaving until the user resolves it.
-          const conflictPayload = await res.json().catch(() => ({}));
-          let serverVersion: number | null =
-            typeof conflictPayload?.serverVersion === 'number'
-              ? conflictPayload.serverVersion
-              : null;
-          let pendingServer: { deckJson: any; title: string } | null = null;
-          try {
-            const latest = (await Api.get(`/presentations/decks/${deckForAutosave.deckId}`)) as any;
-            const latestPayload =
-              latest?.data && typeof latest.data === 'object' && 'data' in latest.data
-                ? latest.data.data
-                : latest?.data;
-            if (typeof latestPayload?.version === 'number') {
-              serverVersion = latestPayload.version;
-            }
-            const latestDeckJson = safeJsonParse<any>(latestPayload?.deck_json, null);
-            if (latestDeckJson && Array.isArray(latestDeckJson.cards)) {
-              pendingServer = {
-                deckJson: latestDeckJson,
-                title: String(latestPayload?.title || latestDeckJson.title || 'Untitled'),
-              };
-            }
-          } catch {
-            /* keep whatever the 409 body told us */
-          }
-          setConflict({ serverVersion, pendingServer });
-          toast.error(t('presentations.versionConflictDetected'));
-          return;
-        }
-        const payload = await res.json().catch(() => ({}));
-        if (typeof payload?.version === 'number') {
-          serverVersionRef.current = payload.version;
-          setServerVersion(payload.version);
-        }
-      } catch {
-        // Non-blocking; builder remains usable offline-ish.
-      }
-    }, 800);
-
-    return () => {
-      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-    };
-  }, [deckForAutosave, conflict]);
+  }, [deckId, setDeck, deckReloadKey, markPersisted]);
 
   // P3.1 — conflict resolution handlers. "Reload latest" adopts the server's
   // deck (discarding local edits); "Keep my version" bumps our version pointer
@@ -868,20 +922,23 @@ export const DeckBuilder: React.FC = () => {
     setConflict((current) => {
       if (current?.serverVersion != null) {
         serverVersionRef.current = current.serverVersion;
-        setServerVersion(current.serverVersion);
       }
       if (current?.pendingServer && Array.isArray(current.pendingServer.deckJson?.cards)) {
-        setDeck((prev) => ({
-          ...(prev || {}),
-          ...current.pendingServer!.deckJson,
-          deck_id: deckId,
-          title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
-        }));
+        setDeck((prev) => {
+          const adopted = {
+            ...(prev || {}),
+            ...current.pendingServer!.deckJson,
+            deck_id: deckId,
+            title: String(current.pendingServer!.title || prev?.title || 'Untitled'),
+          } as Deck;
+          markPersisted(adopted);
+          return adopted;
+        });
       }
       return null;
     });
     toast.success(t('presentations.versionConflictReloaded'));
-  }, [deckId, setDeck, t]);
+  }, [deckId, setDeck, t, markPersisted]);
 
   const resolveConflictKeepMine = useCallback(() => {
     setConflict((current) => {
@@ -889,7 +946,6 @@ export const DeckBuilder: React.FC = () => {
         // Adopt the server's version number so our next autosave's
         // compare-and-swap matches and overwrites (last-write-wins).
         serverVersionRef.current = current.serverVersion;
-        setServerVersion(current.serverVersion);
       }
       return null;
     });
@@ -963,7 +1019,15 @@ export const DeckBuilder: React.FC = () => {
 
   const handleAddBlankCard = useCallback(
     (atIndex?: number) => {
-      const idx = atIndex ?? (deck?.cards.length || 0);
+      // `SlideSorter` uses this callback as a React click handler, while
+      // `CardCanvas` calls it with an explicit insertion index.  A click
+      // handler receives a SyntheticEvent as its first argument; treating
+      // that value as an array index coerced it to 0 in `splice()` and also
+      // stored the event object as `activeCardIndex`.  The visible symptom
+      // was "Card [object Object]1 of N" and every subsequent block insert
+      // silently targeted no active card.  Only a finite numeric argument is
+      // an insertion request; UI events mean "append".
+      const idx = resolveBlankCardInsertionIndex(atIndex, deck?.cards.length || 0);
       const newCard: DeckCard = {
         card_id: `card-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         deck_id: deck?.deck_id || '',
@@ -971,13 +1035,33 @@ export const DeckBuilder: React.FC = () => {
         intent: 'key_messages',
         layout_id: 'content_full',
         title: 'New Slide',
-        blocks: [],
+        blocks: [
+          {
+            block_id: `block-${Date.now()}-heading`,
+            card_id: '',
+            type: 'heading',
+            content: { text: 'Add a clear slide title', level: 2 },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: true,
+          },
+          {
+            block_id: `block-${Date.now()}-body`,
+            card_id: '',
+            type: 'paragraph',
+            content: { text: 'Add the key message or supporting evidence.' },
+            is_refreshable: false,
+            position: { area: 'full', order: 1 },
+            ai_editable: true,
+          },
+        ],
         source_refs: [],
         has_refreshable_data: false,
         background: { type: 'theme' },
         animations: { entrance: 'fade', block_stagger: false },
         is_locked: false,
       };
+      newCard.blocks = newCard.blocks.map((block) => ({ ...block, card_id: newCard.card_id }));
       addCard(idx, newCard);
     },
     [deck, addCard]
@@ -990,7 +1074,12 @@ export const DeckBuilder: React.FC = () => {
         block_id: `block-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         card_id: activeCard.card_id,
         type: blockType as CardBlock['type'],
-        content: content || getDefaultContent(blockType),
+        // Toolbar panels often pass only a variant (for example
+        // `{ chartType: 'bar' }` or `{ diagram_kind: 'funnel' }`). Merge that
+        // partial choice over a complete editable starter model; using the
+        // partial object verbatim produced invisible charts/diagrams and KPI
+        // blocks with no selectable content.
+        content: mergeStarterBlockContent(getDefaultContent(blockType), content),
         is_refreshable: false,
         position: { area: 'full', order: activeCard.blocks.length },
         ai_editable: true,
@@ -1004,14 +1093,36 @@ export const DeckBuilder: React.FC = () => {
 
   const handleInsertMediaImage = useCallback(
     (item: { storage_url: string; original_name: string }) => {
-      handleInsertBlock('image', {
-        url: item.storage_url,
-        alt: item.original_name,
-        fit: 'cover',
-      });
+      if (backgroundImageCardId) {
+        updateCard(backgroundImageCardId, {
+          background: { type: 'image', value: item.storage_url },
+        });
+      } else if (activeCard && selectedBlock?.type === 'image') {
+        handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, {
+          content: {
+            ...selectedBlock.content,
+            url: item.storage_url,
+            alt: item.original_name,
+          },
+        });
+      } else {
+        handleInsertBlock('image', {
+          url: item.storage_url,
+          alt: item.original_name,
+          fit: 'cover',
+        });
+      }
+      setBackgroundImageCardId(null);
       setMediaLibraryOpen(false);
     },
-    [handleInsertBlock]
+    [
+      activeCard,
+      backgroundImageCardId,
+      handleBlockUpdate,
+      handleInsertBlock,
+      selectedBlock,
+      updateCard,
+    ]
   );
 
   const handleExport = useCallback(
@@ -1047,7 +1158,17 @@ export const DeckBuilder: React.FC = () => {
       try {
         const restored = await restoreVersion(versionId);
         if (restored) {
-          setDeck(restored);
+          // MAT-006B — a SERVER restore has already been persisted, and the deck
+          // below is its canonical read-back (the CAS token was synchronized to
+          // it inside the hook). Baseline it, or the debounced autosave writes
+          // the server's own content straight back 800 ms later: another version
+          // bump that desynchronizes the token the restore just fixed, another
+          // `presentation_deck_versions` snapshot recording no change, and an
+          // `updated_at` reorder of the Materials list.
+          // An in-session checkpoint (`source: 'session'`) is NOT on the server,
+          // so it deliberately keeps the write.
+          if (restored.source === 'server') markPersisted(restored.deck);
+          setDeck(restored.deck);
           toast.success(t('presentations.versionRestored'));
         } else {
           toast.error(t('presentations.couldNotRestoreThatVersion'));
@@ -1056,7 +1177,7 @@ export const DeckBuilder: React.FC = () => {
         toast.error(t('presentations.couldNotRestoreThatVersion'));
       }
     },
-    [restoreVersion, setDeck]
+    [restoreVersion, setDeck, markPersisted, t]
   );
 
   const handleAcceptAgentEdit = useCallback(async () => {
@@ -1070,14 +1191,35 @@ export const DeckBuilder: React.FC = () => {
           res?.data && typeof res.data === 'object' && 'data' in res.data
             ? res.data.data
             : res?.data;
-        setDeck(payload?.deck || pendingAgentEdit.deck);
+        // MAT-006B — `POST /agent-edit/:id/accept` UPDATEs `deck_json`, bumps
+        // `version` and writes the history snapshot server-side, then answers
+        // with the persisted deck and its new version. Two consequences:
+        //   1. the CAS token must follow the server, otherwise the next autosave
+        //      still carries the pre-accept version and 409s into the conflict
+        //      banner for a user who did nothing wrong;
+        //   2. the returned deck is server truth, so baselining it stops the
+        //      debounced autosave from re-writing what accept just wrote.
+        if (typeof payload?.version === 'number' && Number.isFinite(payload.version)) {
+          serverVersionRef.current = payload.version;
+        }
+        if (payload?.deck) {
+          markPersisted(payload.deck);
+          setDeck(payload.deck);
+        } else {
+          // Unexpected response shape — the server persisted something we did
+          // not get back. Keep the local proposal AND the write that reconciles
+          // it; that is the safe direction (content preserved, not dropped).
+          setDeck(pendingAgentEdit.deck);
+        }
       } else {
+        // No operationId: nothing was persisted server-side, so this really is
+        // an unsaved change — autosave must write it.
         setDeck(pendingAgentEdit.deck);
       }
       toast.success(t('presentations.changesAppliedAndSaved'));
     }
     setPendingAgentEdit(null);
-  }, [pendingAgentEdit, setDeck, deck?.deck_id]);
+  }, [pendingAgentEdit, setDeck, deck?.deck_id, markPersisted, t]);
 
   const handleRejectAgentEdit = useCallback(async () => {
     if (pendingAgentEdit?.operationId && deck?.deck_id) {
@@ -1133,32 +1275,6 @@ export const DeckBuilder: React.FC = () => {
       timestamp: new Date(),
     };
   }, [activeCard?.card_id, activeCard?.title, deck]);
-
-  const openChatWithContext = useOpenChatWithContext();
-  const artifactStudioPresentationEnabled = isArtifactStudioLaneEnabled('presentation');
-  useEffect(() => {
-    emitArtifactStudioShellSelected('presentation');
-  }, []);
-  const openGlobalTeresa = useCallback(() => {
-    if (!deck) return;
-    void openChatWithContext({
-      entityType: 'presentation',
-      entityId: deck.deck_id,
-      entityName: deck.title || t('presentations.presentationDeck'),
-      reuseActiveConversation: true,
-      contextData: {
-        artifactType: 'presentation',
-        versionId: (deck as any).version ?? (deck as any).updated_at ?? null,
-        classification:
-          (deck as any).confidentiality || (deck as any).meta?.confidentiality || 'internal',
-        lifecycle: (deck as any).status || 'draft',
-        activeSlideId: activeCard?.card_id || null,
-        activeSlideTitle: activeCard?.title || null,
-        selectedBlockId: selectedBlockId || null,
-        slideCount: deck.cards.length,
-      },
-    });
-  }, [activeCard?.card_id, activeCard?.title, deck, openChatWithContext, selectedBlockId, t]);
 
   const handleTeresaDeckIntent = useCallback(
     async (prompt: string) => {
@@ -1254,8 +1370,7 @@ export const DeckBuilder: React.FC = () => {
       // Fala 1 (manual mode) — Escape deselects the active block first (most
       // local interaction), before falling through to modals/back-navigation.
       if (selectedBlockId) {
-        setSelectedBlockId(null);
-        setArtifactSelectionKind('slide');
+        setSelectedBlockIds([]);
         return;
       }
       if (presentMode !== 'off' || commandPaletteOpen || governanceModalOpen || auditLogOpen) {
@@ -1308,83 +1423,6 @@ export const DeckBuilder: React.FC = () => {
     selectedBlockId,
     handleBackToPresentations,
   ]);
-
-  const presentationArtifactCommands = useMemo(
-    () =>
-      createPresentationArtifactCommandRegistry(
-        {
-          undo,
-          redo,
-          addSlide: () => handleAddBlankCard(activeCardIndex + 1),
-          duplicateSlide: () => duplicateCard(activeCardIndex),
-          toggleSlideLock: () => {
-            if (activeCard) handleToggleCardLock(activeCard.card_id);
-          },
-          deleteSlide: () => deleteCard(activeCardIndex),
-          insertText: () => handleInsertBlock('text'),
-          insertImage: () => setMediaLibraryOpen(true),
-          openTheme: () => setThemeSwitcherOpen(true),
-          duplicateBlock: () => {
-            if (activeCard && selectedBlockId) {
-              handleBlockDuplicate(activeCard.card_id, selectedBlockId);
-            }
-          },
-          deleteBlock: () => {
-            if (activeCard && selectedBlockId) {
-              handleBlockDelete(activeCard.card_id, selectedBlockId);
-            }
-          },
-        },
-        {
-          canUndo,
-          canRedo,
-          canDeleteSlide: (deck?.cards.length ?? 0) > 1,
-          hasActiveSlide: Boolean(activeCard),
-          hasSelectedBlock: Boolean(activeCard && selectedBlockId),
-        }
-      ),
-    [
-      activeCard,
-      activeCardIndex,
-      canRedo,
-      canUndo,
-      deck?.cards.length,
-      deleteCard,
-      duplicateCard,
-      handleAddBlankCard,
-      handleBlockDelete,
-      handleBlockDuplicate,
-      handleInsertBlock,
-      handleToggleCardLock,
-      redo,
-      selectedBlockId,
-      undo,
-    ]
-  );
-
-  const presentationArtifactCommandContext = useMemo<ArtifactCommandContext>(
-    () => ({
-      selection: {
-        artifactType: 'presentation' as const,
-        kind: artifactSelectionKind,
-        readOnly: false,
-        locked: Boolean(activeCard?.is_locked),
-      },
-      permissions: {
-        grants: new Set(['artifact.read', 'artifact.edit', 'artifact.comment']),
-      },
-      lifecycle: {
-        status: (() => {
-          const status = deck?.status as string | undefined;
-          return status === 'approved' || status === 'final' || status === 'in_review'
-            ? (status as ArtifactLifecycle)
-            : ('draft' as const);
-        })(),
-        conflict: Boolean(conflict),
-      },
-    }),
-    [activeCard?.is_locked, artifactSelectionKind, conflict, deck?.status]
-  );
 
   if (loadingDeck || !deck) {
     if (!loadingDeck && loadError) {
@@ -1447,7 +1485,6 @@ export const DeckBuilder: React.FC = () => {
         title={deck.title}
         onExit={() => setPresentMode('off')}
         presenterView={presentMode === 'presenter'}
-        initialIndex={presentStartIndex}
       />
     );
   }
@@ -1467,7 +1504,6 @@ export const DeckBuilder: React.FC = () => {
         initialBrandKit={brandKit}
       >
         <DeckBuilderMelsView
-          artifactStudioMode={artifactStudioPresentationEnabled}
           title={deck.title}
           onTitleChange={handleTitleChange}
           onBack={handleBackToPresentations}
@@ -1484,21 +1520,11 @@ export const DeckBuilder: React.FC = () => {
               setActiveRailTool((prev) => (prev === 'comments' ? null : 'comments')),
             onShare: () => setShareModalOpen(true),
             onToggleAgent: () => setTeresaOpen((v) => !v),
-            onRun: () => {
-              setPresentStartIndex(activeCardIndex);
-              setPresentMode('fullscreen');
-            },
-            onRunFromStart: () => {
-              setPresentStartIndex(0);
-              setPresentMode('fullscreen');
-            },
+            onRun: () => setPresentMode('fullscreen'),
             // J12-S2 — presenter view (notes + next-slide + timer). The primary
             // "Present" chip runs the audience fullscreen ('show'); presenter is
             // a distinct mode, surfaced as an overflow (⋯) chip. ESC exits both.
-            onPresenter: () => {
-              setPresentStartIndex(activeCardIndex);
-              setPresentMode('presenter');
-            },
+            onPresenter: () => setPresentMode('presenter'),
           }}
           topBarState={
             {
@@ -1511,43 +1537,20 @@ export const DeckBuilder: React.FC = () => {
             } satisfies DeckBuilderTopBarChipsState
           }
           presenceSlot={
-            artifactStudioPresentationEnabled ? undefined : (
-              <div className="flex items-center gap-2">
-                {hasUnsavedChanges ? (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    {t('presentations.builder.saving', 'Saving…')}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                    <Check size={11} />
-                    {t('presentations.builder.saved', 'Saved')}
-                  </span>
-                )}
-                <EntityStatusChip status={deck.status || 'draft'} />
-              </div>
-            )
-          }
-          titleTrailingSlot={
-            artifactStudioPresentationEnabled ? (
-              <div
-                className="flex min-w-0 items-center gap-2"
-                data-testid="presentation-artifact-status"
-              >
-                {hasUnsavedChanges ? (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    {t('presentations.builder.saving', 'Saving…')}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-                    <Check size={11} />
-                    {t('presentations.builder.saved', 'Saved')}
-                  </span>
-                )}
-                <EntityStatusChip status={deck.status || 'draft'} />
-              </div>
-            ) : undefined
+            <div className="flex items-center gap-2">
+              {hasUnsavedChanges ? (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  {t('presentations.builder.saving', 'Saving…')}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                  <Check size={11} />
+                  {t('presentations.builder.saved', 'Saved')}
+                </span>
+              )}
+              <EntityStatusChip status={deck.status || 'draft'} />
+            </div>
           }
           activeRightRailToolId={activeRailTool}
           onActiveRightRailToolChange={setActiveRailTool}
@@ -1568,6 +1571,24 @@ export const DeckBuilder: React.FC = () => {
                 onGenerateAiImage={handleGenerateAiImage}
                 isGeneratingAiImage={generatingAiImage}
                 onUpload={() => setMediaLibraryOpen(true)}
+                cards={deck.cards}
+                selectedBlock={selectedBlock}
+                selectedBlocks={activeCard?.blocks.filter((block) =>
+                  selectedBlockIds.includes(block.block_id)
+                )}
+                onSelectedBlockUpdate={(updates) => {
+                  if (activeCard && selectedBlock)
+                    handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
+                }}
+                onSelectCard={handleSelectCard}
+                onGroup={handleGroupBlocks}
+                onUngroup={handleUngroupBlocks}
+                onAlign={handleAlignBlocks}
+                onDistribute={handleDistributeBlocks}
+                onUndo={undo}
+                onRedo={redo}
+                canUndo={canUndo}
+                canRedo={canRedo}
               />
             ),
             comments: (
@@ -1612,33 +1633,6 @@ export const DeckBuilder: React.FC = () => {
               ) : undefined,
           }}
           leftRailTitle={t('presentations.builder.slides', 'Slides')}
-          menu3Slot={
-            <ArtifactMenu3
-              registry={presentationArtifactCommands}
-              context={presentationArtifactCommandContext}
-              resolveLabel={(label) => label}
-              maxVisible={7}
-              ariaLabel={t('presentations.builder.contextTools', 'Narzędzia prezentacji')}
-            />
-          }
-          reviewPanel={
-            artifactStudioPresentationEnabled ? (
-              <PresentationReviewPanel
-                deckId={deckId || deck?.deck_id || ''}
-                version={serverVersion}
-                organizationId={approvalOrganization?.id}
-                currentUserId={approvalUser?.id}
-                qualityPanel={
-                  <DeckQualityGatesPanel
-                    deckId={deckId || deck?.deck_id || ''}
-                    isOpen
-                    displayMode="embedded"
-                    onJumpToCard={setActiveCardIndex}
-                  />
-                }
-              />
-            ) : undefined
-          }
           leftRail={
             <SlideSorter
               cards={deck.cards}
@@ -1654,39 +1648,39 @@ export const DeckBuilder: React.FC = () => {
             />
           }
           canvas={
-            <ArtifactContextCommandSurface
-              registry={presentationArtifactCommands}
-              context={presentationArtifactCommandContext}
-              resolveLabel={(label) => label}
-              ariaLabel={t('presentations.builder.contextMenu', 'Menu kontekstowe prezentacji')}
-              surfaceAriaLabel={t(
-                'presentations.builder.contextSurface',
-                'Powierzchnia robocza prezentacji'
-              )}
-              className="min-h-full"
-            >
-              <CardCanvas
-                cards={deck.cards}
-                activeCardIndex={activeCardIndex}
-                colorSetId={deck.color_set_id}
-                onSelectCard={handleSelectCard}
-                onBlockClick={handleSelectBlock}
-                onAddCard={handleAddBlankCard}
-                onRewriteCard={handleRewriteCard}
-                speakerNotes={activeCard?.speaker_notes}
-                showNotes={showNotes}
-                animationsEnabled={animationsEnabled}
-                selectedBlockId={selectedBlockId}
-                onBlockUpdate={handleBlockUpdate}
-                onBlockDelete={handleBlockDelete}
-                onBlockDuplicate={handleBlockDuplicate}
-                onBlockMove={handleBlockMove}
-                onBlockRefresh={handleBlockRefresh}
-              />
-            </ArtifactContextCommandSurface>
+            <CardCanvas
+              cards={deck.cards}
+              activeCardIndex={activeCardIndex}
+              colorSetId={deck.color_set_id}
+              onSelectCard={handleSelectCard}
+              onBlockClick={handleSelectBlock}
+              onAddCard={handleAddBlankCard}
+              onRewriteCard={handleRewriteCard}
+              speakerNotes={activeCard?.speaker_notes}
+              onSpeakerNotesChange={handleSpeakerNotesChange}
+              showNotes={showNotes}
+              animationsEnabled={animationsEnabled}
+              selectedBlockId={selectedBlockId}
+              selectedBlockIds={selectedBlockIds}
+              onBlockUpdate={handleBlockUpdate}
+              onBlockDelete={handleBlockDelete}
+              onBlockDuplicate={handleBlockDuplicate}
+              onBlockMove={handleBlockMove}
+              onBlockRefresh={handleBlockRefresh}
+              onBlockReplaceImage={(_cardId, blockId) => {
+                setSelectedBlockIds([blockId]);
+                setBackgroundImageCardId(null);
+                setMediaLibraryOpen(true);
+              }}
+              onUpdateCard={updateCard}
+              onChooseBackgroundImage={(cardId) => {
+                setBackgroundImageCardId(cardId);
+                setMediaLibraryOpen(true);
+              }}
+            />
           }
           aiEntrySlot={
-            !artifactStudioPresentationEnabled && teresaOpen ? (
+            teresaOpen ? (
               <div className="w-[360px] min-w-[320px] max-w-[420px] h-full">
                 <UnifiedChatPanel
                   mode="split"
@@ -1792,9 +1786,7 @@ export const DeckBuilder: React.FC = () => {
               currentIndex={activeCardIndex}
               totalCards={deck.cards.length}
               cardTitle={activeCard?.title || ''}
-              onQuickEdits={
-                artifactStudioPresentationEnabled ? openGlobalTeresa : () => setTeresaOpen(true)
-              }
+              onQuickEdits={() => setTeresaOpen(true)}
               onToggleNotes={() => setShowNotes((v) => !v)}
               notesOpen={showNotes}
             />
@@ -1818,17 +1810,18 @@ export const DeckBuilder: React.FC = () => {
               />
               <MediaLibraryBrowser
                 isOpen={mediaLibraryOpen}
-                onClose={() => setMediaLibraryOpen(false)}
+                onClose={() => {
+                  setMediaLibraryOpen(false);
+                  setBackgroundImageCardId(null);
+                }}
                 onSelect={handleInsertMediaImage}
               />
-              {!artifactStudioPresentationEnabled ? (
-                <DeckQualityGatesPanel
-                  deckId={deckId || deck?.deck_id || ''}
-                  isOpen={qualityGatesOpen}
-                  onClose={() => setQualityGatesOpen(false)}
-                  onJumpToCard={setActiveCardIndex}
-                />
-              ) : null}
+              <DeckQualityGatesPanel
+                deckId={deckId || deck?.deck_id || ''}
+                isOpen={qualityGatesOpen}
+                onClose={() => setQualityGatesOpen(false)}
+                onJumpToCard={setActiveCardIndex}
+              />
               <ShareAnalyticsPanel
                 deckId={deckId || deck?.deck_id || ''}
                 isOpen={analyticsOpen}
@@ -1841,7 +1834,7 @@ export const DeckBuilder: React.FC = () => {
                   onClose={() => setAuditLogOpen(false)}
                 />
               )}
-              {!artifactStudioPresentationEnabled && governanceModalOpen && (
+              {governanceModalOpen && (
                 <DeckGovernanceCardModal
                   deckId={deckId || deck?.deck_id || ''}
                   onClose={() => setGovernanceModalOpen(false)}
@@ -1914,11 +1907,8 @@ export const DeckBuilder: React.FC = () => {
               // bar renders 1:1 as before (no new DOM, no visual change).
               isArtifactApprovalUiEnabled() && (deckId || deck?.deck_id) ? (
                 <ArtifactApprovalStatusBar
-                  artifactType="presentation_version"
-                  artifactId={presentationVersionApprovalId({
-                    deck_id: deck.deck_id,
-                    version: serverVersion,
-                  })}
+                  artifactType="deck"
+                  artifactId={(deckId || deck?.deck_id) as string}
                   currentUserId={approvalUser?.id}
                   canReview
                 />
@@ -2069,14 +2059,26 @@ export const DeckBuilder: React.FC = () => {
             onAddCard={handleAddBlankCard}
             onRewriteCard={handleRewriteCard}
             speakerNotes={activeCard?.speaker_notes}
+            onSpeakerNotesChange={handleSpeakerNotesChange}
             showNotes={showNotes}
             animationsEnabled={animationsEnabled}
             selectedBlockId={selectedBlockId}
+            selectedBlockIds={selectedBlockIds}
             onBlockUpdate={handleBlockUpdate}
             onBlockDelete={handleBlockDelete}
             onBlockDuplicate={handleBlockDuplicate}
             onBlockMove={handleBlockMove}
             onBlockRefresh={handleBlockRefresh}
+            onBlockReplaceImage={(_cardId, blockId) => {
+              setSelectedBlockIds([blockId]);
+              setBackgroundImageCardId(null);
+              setMediaLibraryOpen(true);
+            }}
+            onUpdateCard={updateCard}
+            onChooseBackgroundImage={(cardId) => {
+              setBackgroundImageCardId(cardId);
+              setMediaLibraryOpen(true);
+            }}
           />
 
           {/* Right: Block Toolbar */}
@@ -2086,6 +2088,24 @@ export const DeckBuilder: React.FC = () => {
             onGenerateAiImage={handleGenerateAiImage}
             isGeneratingAiImage={generatingAiImage}
             onUpload={() => setMediaLibraryOpen(true)}
+            cards={deck.cards}
+            selectedBlock={selectedBlock}
+            selectedBlocks={activeCard?.blocks.filter((block) =>
+              selectedBlockIds.includes(block.block_id)
+            )}
+            onSelectedBlockUpdate={(updates) => {
+              if (activeCard && selectedBlock)
+                handleBlockUpdate(activeCard.card_id, selectedBlock.block_id, updates);
+            }}
+            onSelectCard={handleSelectCard}
+            onGroup={handleGroupBlocks}
+            onUngroup={handleUngroupBlocks}
+            onAlign={handleAlignBlocks}
+            onDistribute={handleDistributeBlocks}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
           />
 
           {/* Passive AI Activity Panel — runtime telemetry feed */}
@@ -2113,7 +2133,10 @@ export const DeckBuilder: React.FC = () => {
           {/* Media Library Browser */}
           <MediaLibraryBrowser
             isOpen={mediaLibraryOpen}
-            onClose={() => setMediaLibraryOpen(false)}
+            onClose={() => {
+              setMediaLibraryOpen(false);
+              setBackgroundImageCardId(null);
+            }}
             onSelect={handleInsertMediaImage}
           />
 

@@ -46,7 +46,6 @@ import {
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import { hasPresentationCapability } from '../services/presentationAccessPolicyService.js';
-import { buildWorkbookMutationPromptHint } from '../services/v8/teresaCopilotService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../utils/ErrorHandler.js';
 import { withRequestTimeout } from '../utils/withRequestTimeout.js';
@@ -1886,16 +1885,11 @@ router.post(
           ].join('\n')
         : '';
 
-    const workbookMutationInstruction = buildWorkbookMutationPromptHint(
-      (context || {}) as Record<string, unknown>
-    );
-
     let enhancedSystemInstruction =
       [
         teresaWorkspaceInstruction,
         canvasContextInstruction,
         ideaContextInstruction,
-        workbookMutationInstruction,
         systemInstruction || '',
       ]
         .filter((part) => String(part || '').trim().length > 0)

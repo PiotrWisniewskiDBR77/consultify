@@ -178,12 +178,7 @@ describe('POST /api/workbook/:id/clone', () => {
     expect(mockBuildWorkbookBuffer).toHaveBeenCalledTimes(1);
     const builtSchema = mockBuildWorkbookBuffer.mock.calls[0][0];
     expect(builtSchema.title).toBe('Model finansowy Q3 (Copy)');
-    expect(builtSchema.sheets).toEqual([
-      expect.objectContaining({
-        ...SOURCE_SCHEMA.sheets[0],
-        id: expect.any(String),
-      }),
-    ]);
+    expect(builtSchema.sheets).toEqual(SOURCE_SCHEMA.sheets);
 
     // Persisted a NEW row (new id) under the caller's org.
     const insertCall = mockQueryRun.mock.calls.find(

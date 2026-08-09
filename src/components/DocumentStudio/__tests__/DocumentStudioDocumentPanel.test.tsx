@@ -2,9 +2,9 @@
  * @vitest-environment jsdom
  */
 
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentStudioDocumentPanel, SchemaDiffPanel } from '../DocumentStudioDocumentPanel';
 import type { DocumentSchema } from '../types';
@@ -169,10 +169,6 @@ vi.mock('@/services/executionModuleStandard/api', () => ({
   })),
 }));
 
-afterEach(() => {
-  cleanup();
-});
-
 const schema: DocumentSchema = {
   documentId: 'doc-1',
   artifactId: 'artifact-1',
@@ -240,12 +236,7 @@ const schema: DocumentSchema = {
 
 describe('DocumentStudioDocumentPanel', () => {
   beforeEach(() => {
-    window.history.replaceState({}, '', '/');
     window.localStorage.clear();
-    // Legacy characterization cases are intentionally isolated from rollout
-    // flags supplied by a developer's local Vite environment.
-    window.localStorage.setItem('ff.artifact_studio', 'false');
-    window.localStorage.setItem('ff.document_studio_v2', 'false');
     vi.clearAllMocks();
     // N20 (menu pliku) — "Zapisz jako" default happy path: a fresh artifact
     // is created, then overwritten with the current schema's sections.
@@ -297,64 +288,6 @@ describe('DocumentStudioDocumentPanel', () => {
     });
   });
 
-  it('uses the Artifact Studio shell without a local Teresa or legacy right rail', async () => {
-    window.localStorage.setItem('ff.artifact_studio', 'true');
-    window.localStorage.setItem('ff.document_studio_v2', 'true');
-
-    render(
-      <DocumentStudioDocumentPanel
-        artifactId="artifact-1"
-        schema={schema}
-        onStartOver={vi.fn()}
-        onSchemaUpdated={vi.fn()}
-      />
-    );
-
-    expect(screen.getByTestId('document-studio-mels-shell')).toHaveAttribute(
-      'data-artifact-studio',
-      'true'
-    );
-    expect(screen.getByTestId('artifact-menu3')).toBeInTheDocument();
-    expect(screen.getByTestId('artifact-bottom-bar-content')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Teresa' })).toBeInTheDocument();
-    expect(screen.getByTestId('document-artifact-status')).toHaveTextContent('Zapisano');
-    expect(screen.getByTestId('document-artifact-status')).toHaveTextContent(
-      schema.confidentiality
-    );
-    expect(
-      screen.getByTestId('mels-topbar-chips').querySelector('[data-mels-chip="qa"]')
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('mels-topbar-overflow'));
-    expect(screen.getByTestId('mels-topbar-overflow-menu')).toHaveTextContent('QA');
-    expect(screen.getByTestId('mels-topbar-overflow-menu')).toHaveTextContent('History');
-
-    expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('document-file-menu-trigger')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'AI Editor' })).not.toBeInTheDocument();
-    expect(screen.queryByText('Manifest gate')).not.toBeInTheDocument();
-    expect(screen.queryByText('Document preview')).not.toBeInTheDocument();
-
-    const sourcesButton = screen.getByRole('button', { name: 'Źródła' });
-    fireEvent.click(sourcesButton);
-    expect(sourcesButton).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Benefits table');
-    expect(screen.queryByRole('dialog', { name: 'Narzędzia dokumentu' })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Struktura' }));
-    expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Executive summary');
-
-    fireEvent.click(screen.getByRole('button', { name: 'QA i przegląd' }));
-    expect(screen.getByTestId('document-review-panel')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'QA' })).toHaveAttribute('aria-selected', 'true');
-    fireEvent.click(screen.getByRole('tab', { name: 'Zatwierdzenie' }));
-    expect(screen.getByRole('tab', { name: 'Zatwierdzenie' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    );
-    expect(await screen.findByText('Approvals')).toBeInTheDocument();
-  });
-
   it('renders the document in the shared MELS shell with outline and canonical chips', async () => {
     render(
       <DocumentStudioDocumentPanel
@@ -370,7 +303,7 @@ describe('DocumentStudioDocumentPanel', () => {
     expect(screen.getByTestId('mels-left-rail')).toHaveTextContent('Risks');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('Document preview');
     expect(screen.getByTestId('mels-canvas')).toHaveTextContent('This is the executive summary.');
-    await waitFor(() => expect(screen.getByText('QA i przegląd')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('QA')).toBeInTheDocument());
 
     // U5 (odbiór "menu pliku", 2026-07-28) — "history" and "governance" moved
     // to the `⋯` overflow tier (measured live at 1280px: 6 always-expanded
@@ -423,7 +356,7 @@ describe('DocumentStudioDocumentPanel', () => {
       expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Benefits table')
     );
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Benefits table');
-    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('v2');
+    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('version v2');
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Used');
     expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('connector ready');
 
@@ -461,8 +394,7 @@ describe('DocumentStudioDocumentPanel', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('mels-right-rail-tool-more'));
-    fireEvent.click(screen.getByTestId('document-studio-rail-overflow-item-library'));
+    fireEvent.click(screen.getByTestId('mels-right-rail-tool-library'));
     await waitFor(() =>
       expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('Reusable intro')
     );
@@ -499,8 +431,7 @@ describe('DocumentStudioDocumentPanel', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('mels-right-rail-tool-more'));
-    fireEvent.click(screen.getByTestId('document-studio-rail-overflow-item-diff'));
+    fireEvent.click(screen.getByTestId('mels-right-rail-tool-diff'));
 
     await waitFor(() =>
       expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('1 block added.')
@@ -550,16 +481,14 @@ describe('DocumentStudioDocumentPanel', () => {
       />
     );
 
-    fireEvent.click(screen.getByTestId('mels-right-rail-tool-more'));
-    fireEvent.click(screen.getByTestId('document-studio-rail-overflow-item-manifest'));
+    fireEvent.click(screen.getByTestId('mels-right-rail-tool-manifest'));
 
     await waitFor(() =>
       expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent(
         'DOC_BUILDER_MANIFEST passes'
       )
     );
-    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('MUST');
-    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('SHOULD');
+    expect(screen.getByTestId('mels-right-rail-panel')).toHaveTextContent('0 MUST · 0 SHOULD');
   });
 
   // N20 (menu pliku, live odbiór 2026-07-28) — "Nie ma Zapisz, Zapisz jako,

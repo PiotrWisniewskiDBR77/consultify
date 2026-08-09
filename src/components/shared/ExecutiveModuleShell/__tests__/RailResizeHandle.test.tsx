@@ -42,25 +42,7 @@ describe('RailResizeHandle', () => {
     const handle = screen.getByRole('separator');
     expect(handle).toBeInTheDocument();
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
-    expect(handle.getAttribute('aria-valuemin')).toBe('0');
-    expect(handle.getAttribute('aria-valuemax')).toBe('2000');
-    expect(handle.getAttribute('aria-valuenow')).toBe('280');
     expect(handle.getAttribute('data-mels-resize')).toBe('left');
-  });
-
-  it('announces caller-provided width limits', () => {
-    render(
-      <RailResizeHandle
-        side="right"
-        currentWidth={400}
-        minWidth={320}
-        maxWidth={480}
-        onResize={vi.fn()}
-      />
-    );
-    const handle = screen.getByRole('separator');
-    expect(handle.getAttribute('aria-valuemin')).toBe('320');
-    expect(handle.getAttribute('aria-valuemax')).toBe('480');
   });
 
   it('LEFT drag: moving pointer right grows width', () => {

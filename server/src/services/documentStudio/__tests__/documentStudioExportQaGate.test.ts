@@ -149,25 +149,6 @@ describe('Export QA gate — approval-gated types', () => {
     setSchema({});
   });
 
-  it('allows an explicitly requested draft export and marks its filename and manifest', async () => {
-    setSchema({ documentType: 'board_report' });
-    const result = await exportDocumentArtifact(
-      'artifact-export-qa-1',
-      'org-A',
-      'markdown',
-      { userId: 'user-draft-1', mode: 'draft' }
-    );
-
-    expect(result.filename).toContain('_DRAFT.markdown');
-    expect(result.manifest).toMatchObject({
-      exportMode: 'draft',
-      draftMarkingRequired: true,
-    });
-    expect(listDocumentAuditEntries('artifact-export-qa-1', 'org-A')).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ action: 'qa_blocked_export' })])
-    );
-  });
-
   it('throws QaBlockingError for board_report with blocking findings (markdown)', async () => {
     setSchema({ documentType: 'board_report' });
     await expect(

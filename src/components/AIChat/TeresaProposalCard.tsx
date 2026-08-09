@@ -1,4 +1,4 @@
-import { Check, Loader2, Play, Undo2, X } from 'lucide-react';
+import { Check, Loader2, Play, X } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,7 +6,7 @@ import { Api } from '@/services/api';
 import { usePortfolioStore } from '@/store/portfolioSlice';
 import type { TeresaChatProposal } from '@/types';
 
-type ProposalAction = 'approve' | 'reject' | 'execute' | 'undo';
+type ProposalAction = 'approve' | 'reject' | 'execute';
 
 interface TeresaProposalCardProps {
   proposal: TeresaChatProposal;
@@ -40,11 +40,6 @@ const STATUS_STYLES: Record<TeresaChatProposal['state'], { badge: string; label:
     badge:
       'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300',
     label: 'Completed',
-  },
-  undone: {
-    badge:
-      'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
-    label: 'Undone',
   },
   rejected: {
     badge:
@@ -110,16 +105,6 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
         applyProposalUpdate(
           unwrapProposalResponse(response),
           t('aiChat.teresaProposal.rejected', 'Teresa proposal rejected.')
-        );
-        usePortfolioStore.getState().triggerRefresh();
-        return;
-      }
-
-      if (action === 'undo') {
-        const response = await Api.undoTeresaProposal(currentProposal.proposalId);
-        applyProposalUpdate(
-          unwrapProposalResponse(response),
-          t('aiChat.teresaProposal.undone', 'Teresa workbook change undone.')
         );
         usePortfolioStore.getState().triggerRefresh();
         return;
@@ -225,21 +210,6 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
               <Play size={13} />
             )}
             {t('aiChat.teresaProposal.execute', 'Execute')}
-          </button>
-        )}
-
-        {currentProposal.allowedActions.includes('undo') && (
-          <button
-            onClick={() => handleAction('undo')}
-            disabled={busyAction !== null}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-60 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/35"
-          >
-            {busyAction === 'undo' ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Undo2 size={13} />
-            )}
-            {t('aiChat.teresaProposal.undo', 'Undo change')}
           </button>
         )}
 

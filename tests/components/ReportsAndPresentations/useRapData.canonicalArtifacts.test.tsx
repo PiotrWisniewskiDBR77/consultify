@@ -189,7 +189,6 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
               lastTransitionAt: '2026-03-20T10:00:00Z',
               openPath: '/reports/builder/reg-r1',
               exportPath: '/api/report-builder/reg-r1/export/pdf',
-              exportFormat: 'pdf',
               authority: 'report_builder',
             },
             {
@@ -230,7 +229,6 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
     expect(doc?.artifactId).toBe('art-1');
     expect(doc?.governance?.openPath).toBe('/reports/builder/reg-r1');
     expect(doc?.governance?.exportPath).toBe('/api/report-builder/reg-r1/export/pdf');
-    expect(doc?.fileFormat).toBe('PDF');
   });
 
   // P0.2 (2026-07-26): a Document Studio document (originRuntime=native_artifact)
@@ -254,7 +252,6 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
               lastTransitionAt: '2026-07-24T10:00:00Z',
               openPath: '/document-studio/doc-studio-42',
               exportPath: '/api/document-studio/doc-studio-42/export/pdf',
-              exportFormat: 'docx',
               authority: 'document_studio',
             },
           ],
@@ -274,7 +271,6 @@ describe('useRapData — canonical /api/artifacts consumption', () => {
         originRecordId: 'doc-studio-42',
         artifactId: 'art-doc-1',
         title: 'Notatka z warsztatu',
-        fileFormat: 'DOCX',
       }),
     );
     expect(result.current.rows[0]?.governance?.openPath).toBe('/document-studio/doc-studio-42');

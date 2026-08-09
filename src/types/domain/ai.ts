@@ -327,7 +327,6 @@ export type TeresaProposalState =
   | 'approved'
   | 'executing'
   | 'completed'
-  | 'undone'
   | 'rejected';
 
 export interface TeresaChatProposal {
@@ -337,7 +336,7 @@ export interface TeresaChatProposal {
   summary: string;
   state: TeresaProposalState;
   approvalState: 'awaiting_review' | 'approved' | 'completed' | 'rejected';
-  allowedActions: Array<'approve' | 'reject' | 'execute' | 'undo' | 'navigate'>;
+  allowedActions: Array<'approve' | 'reject' | 'execute' | 'navigate'>;
   targetModule: string;
   targetLabel: string;
   handoffIntent: string;

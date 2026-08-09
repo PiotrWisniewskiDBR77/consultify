@@ -20,8 +20,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { resolveArtifactPanelArbitration } from '@/components/shared/ArtifactStudio/layout';
-
 import { type TopBarChipDescriptor } from './ChipDescriptor';
 import { LeftRail } from './LeftRail';
 import { RightRail, type RightRailToolDescriptor } from './RightRail';
@@ -71,20 +69,6 @@ export interface ExecutiveModuleShellProps {
    */
   secondBar?: React.ReactNode;
 
-  /**
-   * Enables the canonical open-artifact anatomy. This is additive and leaves
-   * every existing module unchanged when omitted. In Artifact Studio mode the
-   * legacy per-module right tool rail is suppressed: the only legal right-hand
-   * surface is the caller-supplied global Teresa surface.
-   */
-  artifactStudioMode?: boolean;
-  /** Global application Teresa surface. Never a module-local AI editor. */
-  globalTeresaSlot?: React.ReactNode;
-  /** Canonical 32-36px view/status bar below the working area. */
-  bottomBar?: React.ReactNode;
-  /** Minimum usable canvas width used by Artifact Studio panel arbitration. */
-  artifactMinCanvasWidth?: number;
-
   /** Left rail configuration. */
   leftRailTitle?: string;
   leftRailToolsSlot?: React.ReactNode;
@@ -110,8 +94,6 @@ export interface ExecutiveModuleShellProps {
    * ZAWSZE widoczny. ADDITIVE — pomijające go powłoki nie zmieniają się.
    */
   rightRailCollapsible?: boolean;
-  /** Semantic information rail side. Ideas uses left; legacy consumers keep right. */
-  inspectorRailSide?: 'left' | 'right';
 
   /** Center canvas. */
   canvas: React.ReactNode;
@@ -131,8 +113,6 @@ export interface ExecutiveModuleShellProps {
    * undo / zoom) rendered ABSOLUTELY over the canvas, not in a column.
    */
   floatingLeftRail?: React.ReactNode;
-  /** Physical side of the floating canvas tool rail. */
-  floatingToolRailSide?: 'left' | 'right';
   /**
    * `centerMode==='canvas'` only: floating zoom / minimap overlay pinned
    * to the bottom-right corner of the canvas.
@@ -194,10 +174,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   topBarMergeSlotId,
   topBarLeadingActionSlot,
   secondBar,
-  artifactStudioMode = false,
-  globalTeresaSlot,
-  bottomBar,
-  artifactMinCanvasWidth = moduleKey === 'prezentacje' ? 760 : 680,
   leftRailTitle,
   leftRailToolsSlot,
   leftRailBottomSlot,
@@ -207,11 +183,9 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   activeRightRailToolId,
   onActiveRightRailToolChange,
   rightRailCollapsible = true,
-  inspectorRailSide = 'right',
   canvas,
   centerMode = 'chrome',
   floatingLeftRail,
-  floatingToolRailSide = 'left',
   canvasOverlaySlot,
   aiEntrySlot,
   onRunPrimary,
@@ -238,7 +212,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
   });
 
   const [internalActiveToolId, setInternalActiveToolId] = useState<string | null>(null);
-  const isCanvasMode = centerMode === 'canvas';
   // Controlled when `activeRightRailToolId` is supplied (undefined = uncontrolled).
   const isRailControlled = activeRightRailToolId !== undefined;
   const activeToolId = isRailControlled ? activeRightRailToolId! : internalActiveToolId;
@@ -250,38 +223,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
     [isRailControlled, onActiveRightRailToolChange]
   );
   const [helpOpen, setHelpOpen] = useState(false);
-  const [viewportWidth, setViewportWidth] = useState(() =>
-    typeof window === 'undefined' ? 1600 : window.innerWidth
-  );
-
-  useEffect(() => {
-    if (!artifactStudioMode || typeof window === 'undefined') return;
-    const updateViewport = (): void => setViewportWidth(window.innerWidth);
-    updateViewport();
-    window.addEventListener('resize', updateViewport);
-    return () => window.removeEventListener('resize', updateViewport);
-  }, [artifactStudioMode]);
-
-  const artifactPanels = useMemo(
-    () =>
-      resolveArtifactPanelArbitration({
-        viewportWidth,
-        leftRequested: !rail.leftCollapsed && !isCanvasMode,
-        teresaRequested: Boolean(globalTeresaSlot),
-        leftWidth: rail.leftWidth,
-        teresaWidth: rail.rightWidth,
-        minCanvasWidth: artifactMinCanvasWidth,
-      }),
-    [
-      artifactMinCanvasWidth,
-      globalTeresaSlot,
-      isCanvasMode,
-      rail.leftCollapsed,
-      rail.leftWidth,
-      rail.rightWidth,
-      viewportWidth,
-    ]
-  );
 
   const builtInModalEnabled = helpModalTitle !== null;
 
@@ -337,14 +278,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
       const rr = rail.getBoundingClientRect();
       if (rr.width === 0) return;
       const pr = plotno.getBoundingClientRect();
-      const gutter =
-        floatingToolRailSide === 'right' ? pr.right - rr.left + 8 : rr.right - pr.left + 8;
-      // Canvas tool rails are overlay controls. They must never shorten the
-      // working surface: the canvas keeps its full width and the rail floats
-      // above it (the same spatial contract as zoom controls and context menus).
-      // Keep the measurement code temporarily for compatibility with legacy
-      // callers, but do not reserve a structural gutter in canvas mode.
-      setRailGutter(centerMode === 'canvas' ? 0 : Math.max(0, Math.ceil(gutter)));
+      setRailGutter(Math.max(0, Math.ceil(rr.right - pr.left + 8)));
     };
     zmierz();
     const obs = new ResizeObserver(zmierz);
@@ -359,32 +293,15 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
       cancelAnimationFrame(id);
       obs.disconnect();
     };
-  }, [floatingLeftRail, floatingToolRailSide, centerMode]);
+  }, [floatingLeftRail, centerMode]);
 
-  const handleKeyboardContextMenu = useCallback((event: React.KeyboardEvent<HTMLElement>) => {
-    if (!(event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10'))) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const canvas = event.currentTarget;
-    const active = document.activeElement instanceof HTMLElement ? document.activeElement : canvas;
-    const target = canvas.contains(active) ? active : canvas;
-    const rect = target.getBoundingClientRect();
-    target.dispatchEvent(
-      new MouseEvent('contextmenu', {
-        bubbles: true,
-        cancelable: true,
-        clientX: Math.round(rect.left + Math.min(rect.width / 2, 32)),
-        clientY: Math.round(rect.top + Math.min(rect.height / 2, 32)),
-      })
-    );
-  }, []);
+  const isCanvasMode = centerMode === 'canvas';
 
   return (
     <div
       className={`flex flex-col h-full bg-white dark:bg-navy-950 ${className ?? ''}`}
       data-testid={testId ?? 'mels-shell'}
       data-mels-module={moduleKey}
-      data-artifact-studio={artifactStudioMode ? 'true' : undefined}
     >
       <TopBar
         moduleLabel={moduleLabel}
@@ -403,13 +320,13 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
 
       {secondBar}
 
-      <div className="relative flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0">
         {/*
          * 'chrome' mode: columnar left rail beside the canvas (today's
          * behaviour). 'canvas' mode: the column is suppressed and the
          * floating rail is layered over the canvas instead.
          */}
-        {!isCanvasMode && (!artifactStudioMode || artifactPanels.left === 'docked') ? (
+        {!isCanvasMode ? (
           <LeftRail
             width={rail.leftWidth}
             collapsed={rail.leftCollapsed}
@@ -423,22 +340,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           </LeftRail>
         ) : null}
 
-        {!artifactStudioMode && inspectorRailSide === 'left' ? (
-          <RightRail
-            side="left"
-            tools={rightRailTools}
-            activeToolId={activeToolId}
-            onSelectTool={setActiveToolId}
-            panelContent={panelContent}
-            panelWidth={rail.rightWidth}
-            collapsed={rail.rightCollapsed}
-            onToggleCollapse={rail.toggleRight}
-            onResize={rail.setRightWidth}
-            collapsible={rightRailCollapsible}
-            testId="mels-left-inspector-rail"
-          />
-        ) : null}
-
         {isCanvasMode ? (
           <main
             ref={canvasRef}
@@ -446,8 +347,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             data-testid="mels-canvas"
             data-center-mode="canvas"
             aria-label={`${moduleLabel} canvas`}
-            tabIndex={0}
-            onKeyDownCapture={handleKeyboardContextMenu}
           >
             {/*
               Rail plywa NAD plotnem, wiec bez rezerwacji miejsca zaslania wlasne
@@ -460,13 +359,7 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             */}
             <div
               className="h-full w-full"
-              style={
-                floatingLeftRail
-                  ? floatingToolRailSide === 'right'
-                    ? { paddingRight: railGutter }
-                    : { paddingLeft: railGutter }
-                  : undefined
-              }
+              style={floatingLeftRail ? { paddingLeft: railGutter } : undefined}
               data-testid="mels-canvas-content"
             >
               {canvas}
@@ -474,15 +367,8 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             {floatingLeftRail ? (
               <div
                 ref={leftRailRef}
-                className={`pointer-events-none absolute inset-y-0 z-sticky flex items-center ${
-                  floatingToolRailSide === 'right' ? 'right-0' : 'left-0'
-                }`}
-                data-testid={
-                  floatingToolRailSide === 'right'
-                    ? 'mels-floating-right-tool-rail'
-                    : 'mels-floating-left-rail'
-                }
-                data-side={floatingToolRailSide}
+                className="pointer-events-none absolute inset-y-0 left-0 z-sticky flex items-center"
+                data-testid="mels-floating-left-rail"
               >
                 <div className="pointer-events-auto">{floatingLeftRail}</div>
               </div>
@@ -501,62 +387,24 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
             className="flex-1 min-w-0 overflow-auto bg-slate-50 dark:bg-navy-950"
             data-testid="mels-canvas"
             aria-label={`${moduleLabel} canvas`}
-            tabIndex={0}
-            onKeyDownCapture={handleKeyboardContextMenu}
           >
             {canvas}
           </main>
         )}
 
-        {!artifactStudioMode && inspectorRailSide === 'right' ? (
-          <RightRail
-            side="right"
-            tools={rightRailTools}
-            activeToolId={activeToolId}
-            onSelectTool={setActiveToolId}
-            panelContent={panelContent}
-            panelWidth={rail.rightWidth}
-            collapsed={rail.rightCollapsed}
-            onToggleCollapse={rail.toggleRight}
-            onResize={rail.setRightWidth}
-            collapsible={rightRailCollapsible}
-          />
-        ) : null}
+        <RightRail
+          tools={rightRailTools}
+          activeToolId={activeToolId}
+          onSelectTool={setActiveToolId}
+          panelContent={panelContent}
+          panelWidth={rail.rightWidth}
+          collapsed={rail.rightCollapsed}
+          onToggleCollapse={rail.toggleRight}
+          onResize={rail.setRightWidth}
+          collapsible={rightRailCollapsible}
+        />
 
-        {artifactStudioMode && artifactPanels.left === 'overlay' ? (
-          <div
-            className="absolute inset-y-0 left-0 z-overlay shadow-xl"
-            data-testid="artifact-studio-left-overlay"
-          >
-            <LeftRail
-              width={rail.leftWidth}
-              collapsed={false}
-              onToggleCollapse={rail.toggleLeft}
-              title={leftRailTitle}
-              toolsSlot={leftRailToolsSlot}
-              bottomSlot={leftRailBottomSlot}
-              onResize={rail.setLeftWidth}
-            >
-              {leftRailContent}
-            </LeftRail>
-          </div>
-        ) : null}
-
-        {artifactStudioMode && globalTeresaSlot ? (
-          <aside
-            className={`${
-              artifactPanels.teresa === 'overlay'
-                ? 'absolute inset-y-0 right-0 z-overlay shadow-xl'
-                : 'flex-shrink-0'
-            } border-l border-c-border-subtle bg-c-surface`}
-            style={{ width: rail.rightWidth }}
-            data-testid="artifact-studio-global-teresa"
-            data-panel-mode={artifactPanels.teresa}
-            aria-label="Teresa"
-          >
-            {globalTeresaSlot}
-          </aside>
-        ) : !artifactStudioMode && aiEntrySlot ? (
+        {aiEntrySlot ? (
           <aside
             className="hidden sm:flex flex-shrink-0 border-l border-c-border-subtle bg-c-surface"
             data-testid="mels-ai-entry"
@@ -566,15 +414,6 @@ export const ExecutiveModuleShell: React.FC<ExecutiveModuleShellProps> = ({
           </aside>
         ) : null}
       </div>
-
-      {bottomBar ? (
-        <footer
-          className="flex h-9 flex-shrink-0 items-center border-t border-c-border-subtle bg-c-surface px-3"
-          data-testid="artifact-studio-bottom-bar"
-        >
-          {bottomBar}
-        </footer>
-      ) : null}
 
       {builtInModalEnabled ? (
         <ShortcutHelpModal

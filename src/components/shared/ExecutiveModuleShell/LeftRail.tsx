@@ -71,7 +71,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
       aria-expanded={!collapsed}
       aria-label={title ?? 'Outline'}
     >
-      <div className="flex min-h-12 items-center justify-between px-2 py-0.5 border-b border-slate-200 dark:border-navy-700 flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 dark:border-navy-700 flex-shrink-0 h-10">
         {!collapsed && title ? (
           <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400 truncate">
             {title}
@@ -82,7 +82,7 @@ export const LeftRail: React.FC<LeftRailProps> = ({
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex h-11 w-11 items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="p-1 rounded text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           title={toggleLabel ?? (collapsed ? 'Expand left rail' : 'Collapse left rail')}
           aria-label={toggleLabel ?? (collapsed ? 'Expand left rail' : 'Collapse left rail')}
           aria-pressed={collapsed}

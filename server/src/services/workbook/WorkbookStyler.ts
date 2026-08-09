@@ -233,7 +233,7 @@ export function addSubtleColorScale(
             { argb: PALETTE.scaleMid },
             { argb: PALETTE.scaleHigh },
           ],
-        } as any,
+        } as ExcelJS.ColorScaleRuleType,
       ],
     });
   } catch {

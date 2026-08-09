@@ -986,7 +986,6 @@ export async function buildWorkbookBuffer(
         tabColor: sheetDef.tabColor ? { argb: hexToArgb(sheetDef.tabColor) } : undefined,
       },
     });
-    if (sheetDef.hidden) ws.state = 'hidden';
 
     // W7.7 — track max content width per column key for auto-width pass
     const colWidths = new Map<string, number>();

@@ -35,7 +35,6 @@ import { useAppStore } from '../store/useAppStore';
 import { useConversationStore } from '../store/useConversationStore';
 import { AppView } from '../types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '../types/workspace';
-import { isArtifactStudioLaneEnabled } from '../utils/artifactStudioFlags';
 
 /**
  * A breadcrumb segment. A plain string preserves the historical behaviour
@@ -86,7 +85,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { setDisplayMode, setWorkspaceContext, expandToFullScreen } = useConversationStore();
-  const activeWorkspaceContext = useConversationStore((s) => s.workspaceContext);
 
   // Views where chat panel should NOT be shown (full-screen chat only, and settings)
   // AI chat is now available on Admin, SuperAdmin, Context Builder, and Partner screens
@@ -124,25 +122,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     (currentView ? !VIEWS_WITHOUT_CHAT_PANEL.includes(currentView) : true) &&
     !hasEmbeddedModuleChat;
 
-  // Artifact Studio V2 deliberately has no embedded/local AI panel. Mount the
-  // existing global Teresa surface for those routes, while keeping the Menu 1
-  // toggle visibility unchanged (the studio opens Teresa from its bottom bar
-  // or an explicit selection handoff).
-  const artifactStudioUsesGlobalChat = React.useMemo(() => {
-    const path = location.pathname.toLowerCase();
-    if (path.startsWith('/document-studio')) {
-      return isArtifactStudioLaneEnabled('document');
-    }
-    if (path.startsWith('/presentations/builder/')) {
-      return isArtifactStudioLaneEnabled('presentation');
-    }
-    if (path.startsWith('/excele')) {
-      return isArtifactStudioLaneEnabled('spreadsheet');
-    }
-    return false;
-  }, [location.pathname, location.search]);
-  const shouldMountChatPanel = shouldShowChatPanel || artifactStudioUsesGlobalChat;
-
   // Compute workspace context for AI awareness
   const workspaceContext = useMemo(() => {
     if (!currentView) return null;
@@ -166,20 +145,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     const hasHelpOrigin = storeCtx?.entityData?.helpDocumentId && chatKickoffMessage;
     if (hasHelpOrigin) return;
 
-    // The studio adapters provide a richer artifact/version/selection context.
-    // Do not replace it with the generic route context on every layout render.
-    if (!artifactStudioUsesGlobalChat) {
-      setWorkspaceContext(workspaceContext);
-    }
+    setWorkspaceContext(workspaceContext);
 
     // Only push the UI into split mode when the split panel is actually visible.
-    if (shouldMountChatPanel && !isChatCollapsed) {
+    if (shouldShowChatPanel && !isChatCollapsed) {
       setDisplayMode('split');
     }
   }, [
     workspaceContext,
-    shouldMountChatPanel,
-    artifactStudioUsesGlobalChat,
+    shouldShowChatPanel,
     isChatCollapsed,
     currentView,
     chatKickoffMessage,
@@ -368,7 +342,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                             <button
                               type="button"
                               onClick={() => navigate(to)}
-                              className="text-slate-900 dark:text-slate-200 hover:text-navy-950 dark:hover:text-white hover:underline cursor-pointer transition-colors truncate"
+                              className="hover:text-navy-900 dark:hover:text-white hover:underline cursor-pointer transition-colors truncate"
                             >
                               {label}
                             </button>
@@ -447,7 +421,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               {/* Chat Panel — Right Side (D17: the one Teresa panel is always
                   docked on the right). Renders AFTER the main content so it sits
                   on the right edge; resizer precedes it and drags leftward. */}
-              {shouldMountChatPanel && !isChatCollapsed && (
+              {shouldShowChatPanel && !isChatCollapsed && (
                 <>
                   {/* Resizer */}
                   <div
@@ -469,17 +443,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     </button>
                     <UnifiedChatPanel
                       mode="split"
-                      workspaceContext={
-                        artifactStudioUsesGlobalChat
-                          ? activeWorkspaceContext || workspaceContext
-                          : workspaceContext
-                      }
+                      workspaceContext={workspaceContext}
                       showModeToggle={true}
                       onModeToggle={() => {
-                        const effectiveContext = artifactStudioUsesGlobalChat
-                          ? activeWorkspaceContext || workspaceContext
-                          : workspaceContext;
-                        if (effectiveContext?.type === 'document') {
+                        if (workspaceContext?.type === 'document') {
                           navigate('/wordy');
                         } else {
                           expandToFullScreen();

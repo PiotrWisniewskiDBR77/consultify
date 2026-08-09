@@ -42,10 +42,11 @@ import type {
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
 import { isExceleEditEnabled } from '@/utils/exceleEditFlag';
-import { isFormulaDisplayValue } from '@/utils/workbookGridPreview';
+import { isFormulaDisplayValue, isNegativeVarianceCell } from '@/utils/workbookGridPreview';
 
 import { EditableSpreadsheetGrid } from './EditableSpreadsheetGrid';
 import TabelePreviewLayout from './tabelePreview/TabelePreviewLayout';
+import { WorkbookBoardSummary } from './WorkbookBoardSummary';
 
 export type KimiLane = 'excele' | 'prezentacje' | 'tabele';
 
@@ -90,27 +91,6 @@ export interface ArtifactPreview {
   // read-only table below keeps using `perSheetData` unchanged when the flag
   // is off or this is absent — zero regression.
   rawSheets?: import('@/utils/workbookFormulaEngine').FormulaSheet[];
-  /** Optimistic concurrency token for generated_workbooks mutations. */
-  workbookVersion?: number;
-  workbookClassification?: 'public' | 'internal' | 'confidential';
-  workbookLifecycle?: 'draft' | 'in_review' | 'approved' | 'final';
-  workbookApprovalCurrent?: boolean;
-  sourcePack?: unknown;
-  evidenceRefs?: unknown[];
-  qualityReport?: {
-    score?: number;
-    passed?: boolean;
-    issues?: Array<{
-      code?: string;
-      severity?: 'CRITICAL' | 'MAJOR' | 'MINOR' | string;
-      blocking?: boolean;
-      sheet?: string;
-      cell?: string | null;
-      col?: string | null;
-      message: string;
-      fix?: string;
-    }>;
-  } | null;
   deckId?: string;
   deckStatus?: 'draft' | 'reviewed' | 'exported' | string;
   deckSlides?: Array<{
@@ -646,7 +626,7 @@ function ArtifactPreviewPane({
         {preview.type === 'pdf' && !preview.url && (
           <div className="flex items-center justify-center h-full min-h-[400px]">
             <div className="text-center space-y-3">
-              <FileText size={48} className="mx-auto text-c-text-secondary" />
+              <FileText size={24} className="mx-auto text-c-text-secondary" aria-hidden />
               <p className="text-sm font-medium text-c-text">{preview.title}</p>
               <p className="text-xs text-c-text-secondary">
                 {t('kimi.docReady', 'Document ready — use Preview File or Download')}
@@ -707,6 +687,16 @@ function ArtifactPreviewPane({
                 return sheetData && sheetData.columns.length > 0;
               })() ? (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
+                {preview.perSheetData && preview.sheetNames ? (
+                  <WorkbookBoardSummary
+                    sheets={preview.perSheetData.map((sheet, index) => ({
+                      ...sheet,
+                      name: preview.sheetNames?.[index] || `Sheet ${index + 1}`,
+                    }))}
+                    rawSheets={preview.rawSheets}
+                    activeSheetName={preview.sheetNames[activeSheet]}
+                  />
+                ) : null}
                 <div className="overflow-x-auto max-h-[520px] overflow-y-auto">
                   {(() => {
                     const sheetData = (preview.perSheetData?.[activeSheet] ?? preview.tableData)!;
@@ -738,12 +728,21 @@ function ArtifactPreviewPane({
                               {sheetData.columns.map((col, ci) => {
                                 const raw = row[col];
                                 const isFormula = isFormulaDisplayValue(raw);
+                                const isNegativeVariance = isNegativeVarianceCell(
+                                  preview.sheetNames?.[activeSheet] || '',
+                                  col,
+                                  raw
+                                );
                                 return (
                                   <td
                                     key={`${col}-${ci}`}
                                     title={isFormula ? raw : undefined}
                                     className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
-                                      isFormula ? 'font-mono text-c-text-secondary' : 'text-c-text'
+                                      isNegativeVariance
+                                        ? 'bg-c-danger/10 font-semibold text-c-danger'
+                                        : isFormula
+                                          ? 'font-mono text-c-text-secondary'
+                                          : 'text-c-text'
                                     }`}
                                   >
                                     {String(raw ?? '')}
@@ -798,7 +797,7 @@ function ArtifactPreviewPane({
             ) : (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
                 <div className="p-8 text-center text-c-text-secondary">
-                  <FileSpreadsheet size={48} className="mx-auto mb-3 opacity-50" />
+                  <FileSpreadsheet size={24} className="mx-auto mb-3 opacity-50" aria-hidden />
                   <p className="text-sm font-medium">
                     {t('kimi.xlsxPreview', 'Spreadsheet preview')}
                   </p>
@@ -887,7 +886,7 @@ function ArtifactPreviewPane({
             ) : (
               <div className="bg-c-surface rounded-hig-md border border-c-border-subtle overflow-hidden">
                 <div className="p-8 text-center text-c-text-secondary">
-                  <Presentation size={48} className="mx-auto mb-3 opacity-50" />
+                  <Presentation size={24} className="mx-auto mb-3 opacity-50" aria-hidden />
                   <p className="text-sm font-medium">
                     {t('kimi.deckPreview', 'Presentation preview')}
                   </p>
@@ -926,7 +925,10 @@ function ArtifactPreviewPane({
       </div>
 
       {/* Sheet tabs (for xlsx) */}
-      {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
+      {preview.type === 'xlsx' &&
+        preview.sheetNames &&
+        preview.sheetNames.length > 0 &&
+        !(isExceleEditEnabled() && preview.rawSheets && preview.rawSheets.length > 0) && (
         <div
           role="tablist"
           className="flex items-center gap-0.5 px-2 py-1.5 border-t border-c-border-subtle bg-c-surface-raised overflow-x-auto shrink-0"

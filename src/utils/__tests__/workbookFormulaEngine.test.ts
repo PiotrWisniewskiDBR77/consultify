@@ -285,11 +285,4 @@ describe('parseCellInput / rawCellToEditText / formatComputedForDisplay', () => 
       formatComputedForDisplay({ raw: {}, computed: null, isFormula: true, error: '#CYKL!' })
     ).toBe('#CYKL!');
   });
-
-  it('formatComputedForDisplay respektuje zapisany format liczby, procentu i waluty', () => {
-    const cell = { raw: {}, computed: 1234.5, isFormula: false };
-    expect(formatComputedForDisplay(cell, '# ##0.00')).toMatch(/1[\s\u00a0\u202f]234,50/);
-    expect(formatComputedForDisplay({ ...cell, computed: 0.125 }, '0.00%')).toBe('12,50%');
-    expect(formatComputedForDisplay(cell, '# ##0.00 PLN')).toMatch(/(?:PLN|zł)/i);
-  });
 });

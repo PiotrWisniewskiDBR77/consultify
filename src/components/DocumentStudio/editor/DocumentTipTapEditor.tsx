@@ -31,6 +31,7 @@
 import type { Editor } from '@tiptap/react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { toast } from 'react-hot-toast';
 
 import {
   DocumentManualSaveConflictError,
@@ -39,9 +40,17 @@ import {
 } from '../api';
 import { DocumentInlineAIMenu } from '../inline-ai';
 import type { DocumentSchema } from '../types';
+import { setCollapsedSectionsMeta } from './collapsedSectionsExtension';
 import { getDocumentEditorExtensions } from './documentEditorExtensions';
+import {
+  CHART_NODE_NAME,
+  DOC_IMAGE_NODE_NAME,
+  KPI_STRIP_NODE_NAME,
+  QUOTE_NODE_NAME,
+} from './nodeNames';
 import { schemaToProseMirror } from './schemaToTipTap';
 import { type PMDoc, proseMirrorToSchema } from './tipTapToSchema';
+import { useManualPrompt } from './useManualPrompt';
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -66,6 +75,8 @@ export interface DocumentTipTapEditorProps {
    * ADDITIVE: omit to keep this editor's behaviour byte-identical.
    */
   onEditorInstance?: (editor: Editor | null) => void;
+  /** Section ids whose body blocks are visually collapsed in the manual canvas. */
+  collapsedSectionIds?: ReadonlySet<string>;
 }
 
 export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
@@ -77,6 +88,7 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   artifactId,
   onAutosaveStatusChange,
   onEditorInstance,
+  collapsedSectionIds,
 }) => {
   const extensions = useMemo(() => getDocumentEditorExtensions(placeholder), [placeholder]);
 
@@ -91,6 +103,12 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExternalUpdateRef = useRef(false);
+  // TipTap may emit `onUpdate` while normalizing its initial ProseMirror
+  // document. That is hydration, not a user edit, and must never trigger the
+  // manual-content PUT (especially immediately after an SSE `done`, where it
+  // could overwrite the server-finalized schema with a transient buffer).
+  // Arm autosave only from an actual editing DOM gesture.
+  const userEditArmedRef = useRef(false);
 
   // Optimistic-lock version — the `schema.updatedAt` this editor instance
   // last confirmed against the server (either from the initial load, a
@@ -180,12 +198,29 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       editable,
       content: initialDoc as unknown as Record<string, unknown>,
       editorProps: {
-        attributes: {
-          'aria-label': 'Document content',
+        handleDOMEvents: {
+          beforeinput: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          paste: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          drop: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
+          cut: () => {
+            userEditArmedRef.current = true;
+            return false;
+          },
         },
       },
       onUpdate: ({ editor: ed }) => {
         if (isExternalUpdateRef.current) return;
+        if (!userEditArmedRef.current) return;
+        userEditArmedRef.current = false;
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
         saveTimerRef.current = setTimeout(() => {
           const json = ed.getJSON() as unknown as PMDoc;
@@ -202,6 +237,8 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
     // content edit. This is the remount-on-edit guard.
     [schema.artifactId]
   );
+
+  const { requestText, promptDialog } = useManualPrompt();
 
   // Keep editable in sync without remounting.
   useEffect(() => {
@@ -264,17 +301,537 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
   }, [schema, editor]);
 
   useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.view.dispatch(
+      setCollapsedSectionsMeta(editor.state.tr, collapsedSectionIds ?? new Set<string>())
+    );
+  }, [collapsedSectionIds, editor]);
+
+  useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, []);
 
+  const insertStructuredBlock = useCallback(
+    async (
+      blockType:
+        | 'table'
+        | 'risk_table'
+        | 'kpi_strip'
+        | 'image'
+        | 'roadmap'
+        | 'callout'
+        | 'quote'
+        | 'chart'
+    ) => {
+      if (!editor) return;
+      const identity = {
+        blockId: `blk-${crypto.randomUUID()}`,
+        blockType: blockType === 'roadmap' ? 'table' : blockType,
+        sourceRef: '',
+        isAssumption: false,
+      };
+      if (blockType === 'callout') {
+        const text = await requestText('Treść wyróżnienia', 'Kluczowa decyzja lub rekomendacja');
+        if (!text?.trim()) return;
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'callout',
+            attrs: { ...identity, variant: 'info' },
+            content: [{ type: 'paragraph', content: [{ type: 'text', text: text.trim() }] }],
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'quote') {
+        const text = await requestText('Treść cytatu', 'Wpisz cytat lub ważną wypowiedź');
+        if (!text?.trim()) return;
+        const cite = (await requestText('Autor lub źródło (opcjonalnie)', ''))?.trim() ?? '';
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: QUOTE_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({ text: text.trim(), ...(cite ? { cite } : {}) }),
+            },
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'chart') {
+        const title = await requestText('Tytuł wykresu', 'Wyniki programu');
+        if (!title?.trim()) return;
+        const raw = await requestText(
+          'Dane wykresu: kategoria|wartość; kategoria|wartość',
+          'Plan|100;Wykonanie|72'
+        );
+        if (!raw?.trim()) return;
+        const points = raw
+          .split(';')
+          .map((row) => row.split('|').map((cell) => cell.trim()))
+          .filter(([category, value]) => Boolean(category) && Number.isFinite(Number(value)));
+        if (points.length === 0) return;
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: CHART_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({
+                kind: 'bar',
+                title: title.trim(),
+                categories: points.map(([category]) => category),
+                series: [
+                  { label: 'Wartość', values: points.map(([, value]) => Number(value)) },
+                ],
+              }),
+            },
+          })
+          .run();
+        return;
+      }
+      if (blockType === 'image') {
+        const url = await requestText('Adres obrazu (https://)', 'https://');
+        if (!url?.trim() || !/^https:\/\//i.test(url.trim())) return;
+        const alt = (await requestText('Opis alternatywny obrazu', ''))?.trim() ?? '';
+        const caption = (await requestText('Podpis obrazu (opcjonalnie)', ''))?.trim() ?? '';
+        userEditArmedRef.current = true;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: DOC_IMAGE_NODE_NAME,
+            attrs: {
+              ...identity,
+              payloadJson: JSON.stringify({ url: url.trim(), alt, caption }),
+            },
+          })
+          .run();
+        return;
+      }
+
+      let payload: Record<string, unknown>;
+      if (blockType === 'kpi_strip') {
+        const raw = await requestText('KPI w formacie Nazwa=Wartość; Nazwa=Wartość', 'Postęp=72%');
+        if (!raw?.trim()) return;
+        const items = raw
+          .split(';')
+          .map((entry) => entry.split('=').map((part) => part.trim()))
+          .filter(([label, value]) => Boolean(label && value))
+          .map(([label, value]) => ({ label, value }));
+        if (items.length === 0) return;
+        payload = { items };
+      } else if (blockType === 'risk_table') {
+        const raw = await requestText(
+          'Ryzyka: nazwa|prawdopodobieństwo|wpływ|właściciel; …',
+          'Adopcja|Średnie|Wysoki|COO'
+        );
+        if (!raw?.trim()) return;
+        payload = {
+          columns: ['Ryzyko', 'Prawdopodobieństwo', 'Wpływ', 'Właściciel'],
+          rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
+        };
+      } else if (blockType === 'roadmap') {
+        const raw = await requestText(
+          'Roadmapa: okres|rezultat|właściciel; …',
+          '30 dni|Pilotaż|COO;60 dni|Rollout|CIO;90 dni|Stabilizacja|PMO'
+        );
+        if (!raw?.trim()) return;
+        payload = {
+          columns: ['Okres', 'Rezultat', 'Właściciel'],
+          rows: raw.split(';').map((row) => row.split('|').map((cell) => cell.trim())),
+        };
+      } else {
+        const raw = await requestText(
+          'Tabela: nagłówki w pierwszym wierszu; pola oddziel |, wiersze oddziel ;',
+          'Metryka|Wartość;Postęp|72%'
+        );
+        if (!raw?.trim()) return;
+        const rows = raw.split(';').map((row) => row.split('|').map((cell) => cell.trim()));
+        payload = { columns: rows.shift() ?? [], rows };
+      }
+      userEditArmedRef.current = true;
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: KPI_STRIP_NODE_NAME,
+          attrs: { ...identity, payloadJson: JSON.stringify(payload) },
+        })
+        .run();
+    },
+    [editor, requestText]
+  );
+
+  const uploadImageFile = useCallback(
+    async (file: File): Promise<void> => {
+      if (!editor) return;
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        toast.error('Obsługiwane są obrazy PNG i JPEG.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Obraz może mieć maksymalnie 5 MB.');
+        return;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('image_read_failed'));
+        reader.readAsDataURL(file);
+      });
+      const alt = (await requestText('Opis alternatywny obrazu', file.name))?.trim();
+      if (!alt) {
+        toast.error('Opis alternatywny jest wymagany.');
+        return;
+      }
+      const caption = (await requestText('Podpis obrazu (opcjonalnie)', ''))?.trim() ?? '';
+      const payloadJson = JSON.stringify({
+        url: dataUrl,
+        dataBase64: dataUrl.slice(dataUrl.indexOf(',') + 1),
+        mimeType: file.type,
+        alt,
+        caption,
+      });
+      userEditArmedRef.current = true;
+      if (editor.isActive(DOC_IMAGE_NODE_NAME)) {
+        editor.chain().focus().updateAttributes(DOC_IMAGE_NODE_NAME, { payloadJson }).run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: DOC_IMAGE_NODE_NAME,
+            attrs: {
+              blockId: `blk-${crypto.randomUUID()}`,
+              blockType: 'image',
+              sourceRef: '',
+              isAssumption: false,
+              payloadJson,
+            },
+          })
+          .run();
+      }
+    },
+    [editor, requestText]
+  );
+
+  const findInDocument = useCallback(async () => {
+    if (!editor) return;
+    const query = (await requestText('Znajdź w dokumencie', ''))?.trim();
+    if (!query) return;
+    const needle = query.toLocaleLowerCase();
+    const after = editor.state.selection.from;
+    const matches: Array<{ from: number; to: number }> = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return;
+      const haystack = node.text.toLocaleLowerCase();
+      let index = haystack.indexOf(needle);
+      while (index >= 0) {
+        matches.push({ from: pos + index, to: pos + index + query.length });
+        index = haystack.indexOf(needle, index + Math.max(1, needle.length));
+      }
+    });
+    const match = matches.find((candidate) => candidate.from > after) ?? matches[0];
+    if (!match) {
+      toast.error(`Nie znaleziono: ${query}`);
+      return;
+    }
+    editor.chain().focus().setTextSelection(match).scrollIntoView().run();
+  }, [editor, requestText]);
+
+  const replaceInDocument = useCallback(async () => {
+    if (!editor) return;
+    const query = (await requestText('Znajdź tekst do zamiany', ''))?.trim();
+    if (!query) return;
+    const replacement = await requestText('Zamień na', '');
+    if (replacement === null) return;
+    const needle = query.toLocaleLowerCase();
+    const matches: Array<{ from: number; to: number }> = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return;
+      const haystack = node.text.toLocaleLowerCase();
+      let index = haystack.indexOf(needle);
+      while (index >= 0) {
+        matches.push({ from: pos + index, to: pos + index + query.length });
+        index = haystack.indexOf(needle, index + Math.max(1, needle.length));
+      }
+    });
+    if (matches.length === 0) {
+      toast.error(`Nie znaleziono: ${query}`);
+      return;
+    }
+    userEditArmedRef.current = true;
+    for (const match of matches.reverse()) {
+      editor.chain().focus().setTextSelection(match).insertContent(replacement).run();
+    }
+  }, [editor, requestText]);
+
+  const runBodyBlockCommand = useCallback(
+    (command: () => boolean): boolean => {
+      if (!editor) return false;
+      const { from, to } = editor.state.selection;
+      let includesSectionMarker = false;
+      editor.state.doc.nodesBetween(from, to, (node) => {
+        if (node.type.name === 'docSection') includesSectionMarker = true;
+      });
+      if (includesSectionMarker) {
+        toast.error('Zaznacz treść wewnątrz jednej sekcji — nagłówki sekcji są chronione.');
+        return false;
+      }
+      userEditArmedRef.current = true;
+      return command();
+    },
+    [editor]
+  );
+
   return (
     <div className={className} data-testid="document-tiptap-editor">
+      {editable && editor ? (
+        <div
+          className="mb-3 flex flex-wrap items-center gap-1 rounded-xl border border-c-border bg-c-surface p-1.5"
+          role="toolbar"
+          aria-label="Formatowanie dokumentu"
+          data-testid="document-formatting-toolbar"
+        >
+          {[
+            {
+              label: 'Tekst',
+              title: 'Zwykły tekst',
+              active: editor.isActive('paragraph'),
+              run: () => runBodyBlockCommand(() => editor.chain().focus().setParagraph().run()),
+            },
+            ...([1, 2, 3] as const).map((level) => ({
+              label: `H${level}`,
+              title: `Nagłówek ${level}`,
+              active: editor.isActive('heading', { level }),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().toggleHeading({ level }).run()),
+            })),
+            {
+              label: '• Lista',
+              title: 'Lista punktowana',
+              active: editor.isActive('bulletList'),
+              run: () => runBodyBlockCommand(() => editor.chain().focus().toggleBulletList().run()),
+            },
+            {
+              label: '1. Lista',
+              title: 'Lista numerowana',
+              active: editor.isActive('orderedList'),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().toggleOrderedList().run()),
+            },
+            {
+              label: 'B',
+              title: 'Pogrubienie (Ctrl/Cmd+B)',
+              active: editor.isActive('bold'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleBold().run();
+              },
+            },
+            {
+              label: 'I',
+              title: 'Kursywa (Ctrl/Cmd+I)',
+              active: editor.isActive('italic'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleItalic().run();
+              },
+            },
+            {
+              label: 'U',
+              title: 'Podkreślenie (Ctrl/Cmd+U)',
+              active: editor.isActive('underline'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleUnderline().run();
+              },
+            },
+            {
+              label: 'S',
+              title: 'Przekreślenie',
+              active: editor.isActive('strike'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleStrike().run();
+              },
+            },
+            {
+              label: 'Zakreśl',
+              title: 'Kolor wyróżnienia',
+              active: editor.isActive('highlight'),
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().toggleHighlight({ color: '#fde68a' }).run();
+              },
+            },
+            ...(['left', 'center', 'right'] as const).map((alignment) => ({
+              label: alignment === 'left' ? '⇤' : alignment === 'center' ? '↔' : '⇥',
+              title: `Wyrównaj: ${
+                alignment === 'left'
+                  ? 'do lewej'
+                  : alignment === 'center'
+                    ? 'wyśrodkuj'
+                    : 'do prawej'
+              }`,
+              active: editor.isActive({ textAlign: alignment }),
+              run: () =>
+                runBodyBlockCommand(() => editor.chain().focus().setTextAlign(alignment).run()),
+            })),
+            {
+              label: 'Link',
+              title: 'Dodaj lub edytuj link (Ctrl/Cmd+K)',
+              active: editor.isActive('link'),
+              run: () => {
+                void (async () => {
+                  const current = String(editor.getAttributes('link').href ?? '');
+                  const entered = await requestText('Adres linku', current || 'https://');
+                  if (entered === null) return;
+                  const value = entered.trim();
+                  userEditArmedRef.current = true;
+                  if (!value) {
+                    editor.chain().focus().unsetLink().run();
+                    return;
+                  }
+                  const href = /^(https?:|mailto:)/i.test(value) ? value : `https://${value}`;
+                  editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+                })();
+                return true;
+              },
+            },
+            {
+              label: 'Usuń link',
+              title: 'Usuń link',
+              active: false,
+              run: () => {
+                userEditArmedRef.current = true;
+                return editor.chain().focus().unsetLink().run();
+              },
+            },
+            ...(
+              [
+                ['Wyróżnienie', 'callout'],
+                ['Cytat', 'quote'],
+                ['Wykres', 'chart'],
+                ['Tabela', 'table'],
+                ['KPI', 'kpi_strip'],
+                ['Ryzyka', 'risk_table'],
+                ['Roadmapa', 'roadmap'],
+                ['Obraz', 'image'],
+              ] as const
+            ).map(([label, blockType]) => ({
+              label,
+              title: `Wstaw: ${label}`,
+              active: false,
+              run: () => {
+                void insertStructuredBlock(blockType);
+                return true;
+              },
+            })),
+            {
+              label: 'Znajdź',
+              title: 'Znajdź w dokumencie',
+              active: false,
+              run: () => {
+                void findInDocument();
+                return true;
+              },
+            },
+            {
+              label: 'Zamień',
+              title: 'Znajdź i zamień',
+              active: false,
+              run: () => {
+                void replaceInDocument();
+                return true;
+              },
+            },
+          ].map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              aria-label={action.title}
+              aria-pressed={action.active}
+              title={action.title}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                action.run();
+              }}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                action.active
+                  ? 'bg-c-text text-c-surface'
+                  : 'text-c-text-secondary hover:bg-c-surface-hover hover:text-c-text'
+              }`}
+            >
+              {action.label}
+            </button>
+          ))}
+          <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+            <span className="sr-only">Rozmiar czcionki</span>
+            <select
+              aria-label="Rozmiar czcionki"
+              value={String(editor.getAttributes('textStyle').fontSize ?? '')}
+              onChange={(event) => {
+                userEditArmedRef.current = true;
+                const size = event.target.value;
+                if (size) editor.chain().focus().setFontSize(size).run();
+                else editor.chain().focus().unsetFontSize().run();
+              }}
+              className="rounded-lg border border-c-border bg-c-surface px-2 py-1.5 text-xs text-c-text"
+            >
+              <option value="">Auto</option>
+              <option value="12px">12</option>
+              <option value="14px">14</option>
+              <option value="16px">16</option>
+              <option value="18px">18</option>
+              <option value="24px">24</option>
+              <option value="32px">32</option>
+            </select>
+          </label>
+          <label className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-c-text-secondary transition-colors hover:bg-c-surface-hover hover:text-c-text">
+            Wgraj / zmień obraz
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="sr-only"
+              aria-label="Wgraj lub zmień obraz"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = '';
+                if (file) void uploadImageFile(file);
+              }}
+            />
+          </label>
+          <label className="flex items-center gap-1 text-xs text-c-text-secondary">
+            <span>Kolor</span>
+            <input
+              type="color"
+              aria-label="Kolor tekstu"
+              value={String(editor.getAttributes('textStyle').color ?? '#111827')}
+              onChange={(event) => {
+                userEditArmedRef.current = true;
+                editor.chain().focus().setColor(event.target.value).run();
+              }}
+              className="h-7 w-8 cursor-pointer rounded border border-c-border bg-transparent p-0.5"
+            />
+          </label>
+        </div>
+      ) : null}
       <EditorContent
         editor={editor}
         className="document-studio-editor prose prose-slate max-w-none dark:prose-invert"
       />
+      {promptDialog}
       {artifactId && (
         <DocumentInlineAIMenu
           editor={editor ?? null}

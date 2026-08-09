@@ -45,10 +45,10 @@
  * Design contract mirrors `documentBrandVoiceService.ts`:
  *
  *   - In-process `Map<key, ApprovalRequest>` is the synchronous source
- *     of truth. Persistence is ordered write-through to the DAO and lazy
- *     hydration on the first read per (org, artifact).
- *   - Mutations enqueue approval + audit writes per approval. HTTP route
- *     handlers flush that queue before acknowledging the mutation.
+ *     of truth. Persistence is best-effort write-through to the DAO and
+ *     lazy hydration on the first read per (org, artifact).
+ *   - Mutations record audit + write through via
+ *     `void persistX().catch(...)` so the caller never awaits.
  *   - `ensureApprovalRegistryHydrated(organizationId, artifactId)` is
  *     awaited by the route layer before reads.
  *
@@ -88,7 +88,6 @@ export type DocumentApprovalErrorCode =
   | 'approval_already_resolved'
   | 'reviewer_not_participant'
   | 'decision_already_recorded'
-  | 'self_approval_forbidden'
   | 'forbidden';
 
 export class DocumentApprovalError extends Error {
@@ -108,7 +107,6 @@ const registryStore = new Map<string, DocumentApprovalRequest>();
 const auditStore = new Map<string, DocumentApprovalAuditEntry[]>();
 const hydratedKeys = new Set<string>();
 const hydrationInflight = new Map<string, Promise<void>>();
-const persistenceQueues = new Map<string, Promise<boolean>>();
 
 function approvalKey(organizationId: string, approvalId: string): string {
   return `${organizationId}::${approvalId}`;
@@ -125,42 +123,6 @@ function makeId(prefix: string): string {
 
 function nowIso(): string {
   return new Date().toISOString();
-}
-
-/**
- * Serialize approval and audit writes per approval. The previous fire-and-forget
- * writes could complete out of order (for example a pending request overwriting
- * an already-approved row) and allowed the HTTP response to win the race with
- * durable persistence. Keeping a per-approval queue preserves mutation order;
- * route handlers call `flushApprovalPersistence` before acknowledging success.
- */
-function enqueuePersistence(
-  organizationId: string,
-  approvalId: string,
-  write: () => Promise<{ ok: boolean }>
-): void {
-  const key = approvalKey(organizationId, approvalId);
-  const previous = persistenceQueues.get(key) ?? Promise.resolve(true);
-  const next = previous.then(async (previousOk) => {
-    const result = await write().catch(() => ({ ok: false }));
-    return previousOk && result.ok;
-  });
-  persistenceQueues.set(key, next);
-}
-
-/** Wait until every write scheduled for this approval is durable. */
-export async function flushApprovalPersistence(
-  organizationId: string,
-  approvalId: string
-): Promise<boolean> {
-  const key = approvalKey(organizationId, approvalId);
-  const pending = persistenceQueues.get(key);
-  if (!pending) return true;
-  const ok = await pending;
-  if (persistenceQueues.get(key) === pending) {
-    persistenceQueues.delete(key);
-  }
-  return ok;
 }
 
 function clone(approval: DocumentApprovalRequest): DocumentApprovalRequest {
@@ -187,9 +149,7 @@ function pushAudit(entry: DocumentApprovalAuditEntry): void {
   const current = auditStore.get(key) ?? [];
   current.push(entry);
   auditStore.set(key, current);
-  enqueuePersistence(entry.organizationId, entry.approvalId, () =>
-    persistApprovalAuditEntry(entry)
-  );
+  void persistApprovalAuditEntry(entry).catch(() => undefined);
 }
 
 function recordMutation(
@@ -365,8 +325,6 @@ export function evaluateApprovalResolution(
 export interface RequestDocumentApprovalParams {
   organizationId: string;
   artifactId: string;
-  /** Required by the HTTP route; optional only for legacy service callers. */
-  versionId?: string;
   userId: string;
   participants: DocumentApprovalParticipant[];
   quorumPolicy?: DocumentApprovalQuorumPolicy;
@@ -398,12 +356,6 @@ export function requestDocumentApproval(
   if (!participants.some((p) => p.required)) {
     throw new DocumentApprovalError('invalid_input', 'at least one required participant is needed');
   }
-  if (!participants.some((p) => p.required && p.userId !== params.userId)) {
-    throw new DocumentApprovalError(
-      'self_approval_forbidden',
-      'at least one independent required reviewer is needed'
-    );
-  }
 
   const quorumPolicy: DocumentApprovalQuorumPolicy =
     params.quorumPolicy && VALID_QUORUM_POLICIES.has(params.quorumPolicy)
@@ -423,7 +375,6 @@ export function requestDocumentApproval(
     approvalId: makeId('approval'),
     organizationId: params.organizationId,
     artifactId: params.artifactId,
-    ...(params.versionId?.trim() ? { versionId: params.versionId.trim() } : {}),
     requestedBy: params.userId,
     participants,
     quorumPolicy,
@@ -435,12 +386,9 @@ export function requestDocumentApproval(
   };
 
   registryStore.set(approvalKey(approval.organizationId, approval.approvalId), approval);
-  enqueuePersistence(approval.organizationId, approval.approvalId, () =>
-    persistApproval(approval)
-  );
+  void persistApproval(approval).catch(() => undefined);
 
   recordMutation(approval, 'approval_requested', params.userId, {
-    ...(approval.versionId ? { versionId: approval.versionId } : {}),
     quorumPolicy,
     requiredCount: participants.filter((p) => p.required).length,
     optionalCount: participants.filter((p) => !p.required).length,
@@ -512,12 +460,6 @@ export function recordApprovalDecision(
       `reviewer is not a participant on this approval: ${params.reviewerId}`
     );
   }
-  if (params.reviewerId === existing.requestedBy && params.kind === 'approve') {
-    throw new DocumentApprovalError(
-      'self_approval_forbidden',
-      'the requester cannot approve their own document version'
-    );
-  }
   if (existing.decisions.some((d) => d.reviewerId === params.reviewerId)) {
     throw new DocumentApprovalError(
       'decision_already_recorded',
@@ -552,7 +494,7 @@ export function recordApprovalDecision(
   };
 
   registryStore.set(approvalKey(next.organizationId, next.approvalId), next);
-  enqueuePersistence(next.organizationId, next.approvalId, () => persistApproval(next));
+  void persistApproval(next).catch(() => undefined);
 
   recordMutation(next, 'approval_decision_recorded', params.reviewerId, {
     decisionId: decision.decisionId,
@@ -623,7 +565,7 @@ export function cancelApproval(params: CancelApprovalParams): DocumentApprovalRe
     updatedAt: now,
   };
   registryStore.set(approvalKey(next.organizationId, next.approvalId), next);
-  enqueuePersistence(next.organizationId, next.approvalId, () => persistApproval(next));
+  void persistApproval(next).catch(() => undefined);
 
   recordMutation(next, 'approval_cancelled', params.userId, {
     reason: params.reason?.trim() || undefined,
@@ -695,55 +637,6 @@ export function listDocumentApprovalAuditEntries(
     : [];
 }
 
-/**
- * Records that approvals for the previously current document version no longer
- * authorize the new material revision. The approved request remains immutable
- * historical evidence; currentness is derived from its versionId.
- */
-export function markDocumentApprovalsStaleForVersionChange(params: {
-  organizationId: string;
-  artifactId: string;
-  previousVersionId: string;
-  currentVersionId: string;
-  actorId: string;
-}): string[] {
-  if (
-    !params.organizationId ||
-    !params.artifactId ||
-    !params.previousVersionId ||
-    !params.currentVersionId ||
-    !params.actorId ||
-    params.previousVersionId === params.currentVersionId
-  ) {
-    return [];
-  }
-
-  const staleApprovalIds: string[] = [];
-  for (const approval of listDocumentApprovals(params.organizationId, {
-    artifactId: params.artifactId,
-    status: 'approved',
-  })) {
-    if (approval.versionId !== params.previousVersionId) continue;
-    const alreadyRecorded = listDocumentApprovalAuditEntries(
-      approval.approvalId,
-      params.organizationId
-    ).some(
-      (entry) =>
-        entry.action === 'approval_became_stale' &&
-        entry.details?.currentVersionId === params.currentVersionId
-    );
-    if (alreadyRecorded) continue;
-    recordMutation(approval, 'approval_became_stale', params.actorId, {
-      approvedVersionId: approval.versionId,
-      previousVersionId: params.previousVersionId,
-      currentVersionId: params.currentVersionId,
-      reason: 'material_content_changed',
-    });
-    staleApprovalIds.push(approval.approvalId);
-  }
-  return staleApprovalIds;
-}
-
 // =============================================================================
 // Test-only helpers
 // =============================================================================
@@ -754,7 +647,6 @@ export function __resetApprovalServiceForTests(): void {
   auditStore.clear();
   hydratedKeys.clear();
   hydrationInflight.clear();
-  persistenceQueues.clear();
 }
 
 /** @internal */

@@ -26,13 +26,11 @@ import {
   DocumentApprovalError,
   ensureApprovalRegistryHydrated,
   evaluateApprovalResolution,
-  flushApprovalPersistence,
   getActiveApprovalForArtifact,
   getApproval,
   isTerminalApprovalStatus,
   listDocumentApprovalAuditEntries,
   listDocumentApprovals,
-  markDocumentApprovalsStaleForVersionChange,
   recordApprovalDecision,
   requestDocumentApproval,
 } from '../documentApprovalService.js';
@@ -176,7 +174,6 @@ describe('requestDocumentApproval', () => {
     const approval = requestDocumentApproval({
       organizationId: ORG_A,
       artifactId: ART_1,
-      versionId: 'version-7',
       userId: AUTHOR,
       participants: [
         { userId: ' rev1 ', required: true, role: ' Director ' },
@@ -188,7 +185,6 @@ describe('requestDocumentApproval', () => {
 
     expect(approval.approvalId).toMatch(/^approval-/);
     expect(approval.status).toBe('pending');
-    expect(approval.versionId).toBe('version-7');
     expect(approval.quorumPolicy).toBe('unanimous');
     expect(approval.participants.map((p) => p.userId)).toEqual(['rev1', 'rev2']);
     expect(approval.participants[0]!.role).toBe('Director');
@@ -214,17 +210,6 @@ describe('requestDocumentApproval', () => {
         participants: [{ userId: 'rev1', required: false }],
       })
     ).toThrow(/required/);
-  });
-
-  it('requires at least one independent required reviewer', () => {
-    expect(() =>
-      requestDocumentApproval({
-        organizationId: ORG_A,
-        artifactId: ART_1,
-        userId: AUTHOR,
-        participants: [{ userId: AUTHOR, required: true }],
-      })
-    ).toThrow(/independent required reviewer/i);
   });
 
   it('rejects a second open approval for the same artifact with approval_already_open', () => {
@@ -290,7 +275,6 @@ describe('requestDocumentApproval', () => {
       userId: AUTHOR,
       participants: [{ userId: REVIEWER_1, required: true }],
     });
-    expect(await flushApprovalPersistence(ORG_A, approval.approvalId)).toBe(true);
     const persisted = await __loadApprovalByIdForTests(approval.approvalId, ORG_A);
     expect(persisted).not.toBeNull();
     expect(persisted!.artifactId).toBe(ART_1);
@@ -389,40 +373,6 @@ describe('recordApprovalDecision', () => {
         kind: 'approve',
       })
     ).toThrow(/not_participant|not a participant/i);
-  });
-
-  it('forbids the requester from approving their own version', () => {
-    const approval = requestDocumentApproval({
-      organizationId: ORG_A,
-      artifactId: ART_1,
-      userId: AUTHOR,
-      participants: [
-        { userId: AUTHOR, required: false },
-        { userId: REVIEWER_1, required: true },
-      ],
-    });
-    expect(() =>
-      recordApprovalDecision({
-        organizationId: ORG_A,
-        approvalId: approval.approvalId,
-        reviewerId: AUTHOR,
-        kind: 'approve',
-      })
-    ).toThrow(/cannot approve their own/i);
-  });
-
-  it('flushes ordered writes so the durable row cannot regress to pending', async () => {
-    const approval = open('single_approval');
-    recordApprovalDecision({
-      organizationId: ORG_A,
-      approvalId: approval.approvalId,
-      reviewerId: REVIEWER_1,
-      kind: 'approve',
-    });
-    expect(await flushApprovalPersistence(ORG_A, approval.approvalId)).toBe(true);
-    const persisted = await __loadApprovalByIdForTests(approval.approvalId, ORG_A);
-    expect(persisted?.status).toBe('approved');
-    expect(persisted?.decisions).toHaveLength(1);
   });
 
   it('rejects a duplicate decision from the same reviewer with decision_already_recorded', () => {
@@ -615,53 +565,6 @@ describe('hydration', () => {
 });
 
 describe('audit trail', () => {
-  it('keeps an approved request immutable and records when a material edit makes it stale', () => {
-    const approval = requestDocumentApproval({
-      organizationId: ORG_A,
-      artifactId: ART_1,
-      versionId: 'version-1',
-      userId: AUTHOR,
-      participants: [{ userId: REVIEWER_1, required: true }],
-      quorumPolicy: 'single_approval',
-    });
-    recordApprovalDecision({
-      organizationId: ORG_A,
-      approvalId: approval.approvalId,
-      reviewerId: REVIEWER_1,
-      kind: 'approve',
-    });
-
-    expect(
-      markDocumentApprovalsStaleForVersionChange({
-        organizationId: ORG_A,
-        artifactId: ART_1,
-        previousVersionId: 'version-1',
-        currentVersionId: 'version-2',
-        actorId: AUTHOR,
-      })
-    ).toEqual([approval.approvalId]);
-    expect(getApproval(approval.approvalId, ORG_A)?.status).toBe('approved');
-    expect(listDocumentApprovalAuditEntries(approval.approvalId, ORG_A).at(-1)).toMatchObject({
-      action: 'approval_became_stale',
-      actorId: AUTHOR,
-      details: {
-        approvedVersionId: 'version-1',
-        currentVersionId: 'version-2',
-        reason: 'material_content_changed',
-      },
-    });
-
-    expect(
-      markDocumentApprovalsStaleForVersionChange({
-        organizationId: ORG_A,
-        artifactId: ART_1,
-        previousVersionId: 'version-1',
-        currentVersionId: 'version-2',
-        actorId: AUTHOR,
-      })
-    ).toEqual([]);
-  });
-
   it('records request, decision, resolved, and cancelled actions in order', () => {
     const a1 = requestDocumentApproval({
       organizationId: ORG_A,

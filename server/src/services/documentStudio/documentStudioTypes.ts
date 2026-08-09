@@ -228,8 +228,31 @@ export interface DocumentSourceRef {
   sourceType: string;
   sourceId: string;
   sourceTitle?: string;
+  /** Human-readable source content used for generation and grounding. */
+  sourceExcerpt?: string;
   sourceVersion?: string;
   sourceSnapshotId?: string;
+}
+
+/** Extract bounded inline evidence, including the legacy text-in-sourceId shape. */
+export function documentSourceRefEvidenceText(ref: DocumentSourceRef): string {
+  const explicit = typeof ref.sourceExcerpt === 'string' ? ref.sourceExcerpt.trim() : '';
+  if (explicit) return explicit.slice(0, 12_000);
+  if (String(ref.sourceType || '').toLowerCase() !== 'text') return '';
+  const title = String(ref.sourceTitle || '').trim();
+  const prefix = title ? `text:${title}:` : '';
+  if (!prefix || !String(ref.sourceId || '').startsWith(prefix)) return '';
+  return String(ref.sourceId).slice(prefix.length).trim().slice(0, 12_000);
+}
+
+export function documentSourceRefsEvidenceText(sourceRefs: DocumentSourceRef[]): string {
+  return sourceRefs
+    .map((ref) => {
+      const evidence = documentSourceRefEvidenceText(ref);
+      return evidence ? `${ref.sourceTitle || ref.sourceType}: ${evidence}` : '';
+    })
+    .filter(Boolean)
+    .join('\n');
 }
 
 /**
@@ -317,6 +340,8 @@ export interface FormattingSchema {
     enabled: boolean;
     pageNumbering: boolean;
     confidentialityLabel: boolean;
+    /** Optional author-defined footer text rendered before governance labels. */
+    content?: string;
     /**
      * Slice E15.5.formatting — page-numbering format string (e.g.
      * "Page X of Y", "X / Y", "Strona X z Y"). Optional /
@@ -938,12 +963,7 @@ export interface DocumentExportResult {
  *                  SSOT 6-scope edit doctrine.
  */
 export type DocumentEditorScope =
-  | 'local'
-  | 'section'
-  | 'global'
-  | 'methodology'
-  | 'source'
-  | 'transformative';
+  'local' | 'section' | 'global' | 'methodology' | 'source' | 'transformative';
 export type DocumentProposalStatus = 'proposed' | 'approved' | 'rejected' | 'executed';
 
 /**
@@ -1356,10 +1376,7 @@ export interface DocumentCommentSectionCounts {
  *                       snapshots are never pruned by that cap.
  */
 export type DocumentVersionSnapshotOrigin =
-  | 'manual'
-  | 'auto_status_change'
-  | 'rollback_revert'
-  | 'autosave';
+  'manual' | 'auto_status_change' | 'rollback_revert' | 'autosave';
 
 /**
  * Frozen, addressable copy of a `DocumentSchema` at a point in time.
@@ -2246,10 +2263,7 @@ export interface AudienceProfileUpdateInput {
 }
 
 export type AudienceProfileAuditAction =
-  | 'profile_drafted'
-  | 'profile_updated'
-  | 'profile_activated'
-  | 'profile_archived';
+  'profile_drafted' | 'profile_updated' | 'profile_activated' | 'profile_archived';
 
 export interface AudienceProfileAuditEntry {
   auditId: string;
@@ -2309,11 +2323,7 @@ export interface DocumentVariant {
  * Terminal states: approved, rejected, changes_requested, cancelled.
  */
 export type DocumentApprovalStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'changes_requested'
-  | 'cancelled';
+  'pending' | 'approved' | 'rejected' | 'changes_requested' | 'cancelled';
 
 /** A single reviewer's verdict on an open approval request. */
 export type DocumentApprovalDecisionKind = 'approve' | 'reject' | 'request_changes';
@@ -2373,8 +2383,6 @@ export interface DocumentApprovalRequest {
   approvalId: string;
   organizationId: string;
   artifactId: string;
-  /** Immutable content version reviewed by the participants. */
-  versionId?: string;
   requestedBy: string;
   participants: DocumentApprovalParticipant[];
   quorumPolicy: DocumentApprovalQuorumPolicy;
@@ -2391,11 +2399,7 @@ export interface DocumentApprovalRequest {
 }
 
 export type DocumentApprovalAuditAction =
-  | 'approval_requested'
-  | 'approval_decision_recorded'
-  | 'approval_resolved'
-  | 'approval_became_stale'
-  | 'approval_cancelled';
+  'approval_requested' | 'approval_decision_recorded' | 'approval_resolved' | 'approval_cancelled';
 
 export interface DocumentApprovalAuditEntry {
   auditId: string;
