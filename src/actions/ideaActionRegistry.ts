@@ -35,6 +35,7 @@ import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
 } from '@/components/MyWork/ideaSelectionTypes';
+import type { UserRole } from '@/types/core';
 import { Api } from '@/services/api';
 
 // ───────────────────────────── TYPY KONTRAKTU ─────────────────────────────
@@ -112,6 +113,43 @@ export interface ActionResult {
 }
 
 /**
+ * Wymagana rola konta (hierarchia jak `ProtectedRoute.tsx:hasRequiredRole` —
+ * OWNER/ADMIN spełniają wymóg roli niższej). Opcjonalne: brak pola = akcja
+ * dostępna dla każdej zalogowanej roli (dzisiejsze domyślne zachowanie
+ * wszystkich 16 wpisów, więc pole jest addytywne).
+ */
+export interface ActionPermission {
+  requiredRole: UserRole;
+}
+
+/**
+ * Typowany wynik terminalny — rozszerzenie ponad `ActionResult` (Krok
+ * kolejnej fali, patrz DoD E02). `ActionResult` zostaje jako dzisiejszy,
+ * synchroniczny kontrakt `handler`/`runIdeaAction`; `ActionOutcome` to
+ * NOWA, bogatsza ścieżka zwrotna do wykorzystania przez powierzchnie, które
+ * chcą rozróżnić `proposal`/`applied`/`error`/`cancelled` zamiast czytać to
+ * z `ActionResult.ok` + `data.needsConfirmation`. Nieużywana jeszcze przez
+ * `runIdeaAction` (patrz `outcomeFromResult` niżej) — dodana jako typ, żeby
+ * kolejna fala mogła podłączać powierzchnie bez migracji sygnatury.
+ */
+export type ActionOutcome =
+  | { status: 'applied'; result: ActionResult }
+  | { status: 'proposal'; proposal: unknown }
+  | { status: 'error'; error: string }
+  | { status: 'cancelled' };
+
+/** Adapter zgodności: dzisiejszy `ActionResult` → `ActionOutcome` (bez zmiany `runIdeaAction`). */
+export function outcomeFromResult(result: ActionResult): ActionOutcome {
+  if (!result.ok) {
+    return { status: 'error', error: result.message || 'Nieznany błąd.' };
+  }
+  if ((result.data as { needsConfirmation?: boolean } | undefined)?.needsConfirmation) {
+    return { status: 'cancelled' };
+  }
+  return { status: 'applied', result };
+}
+
+/**
  * Jak cofnąć skutek akcji. Wymagany, gdy `mutates: true` (kryterium odbioru
  * rozdz. 02: „żadna akcja mutates nie wykonuje się bez możliwości cofnięcia").
  */
@@ -164,6 +202,35 @@ export interface ActionDef {
   runtime?: ToolActionMap;
   /** Skąd wzięta definicja — plik:linia. Dowód, nie deklaracja. */
   source: string;
+
+  /**
+   * Wymagana rola konta. Brak pola = bez dodatkowego wymogu ponad zwykłe
+   * uwierzytelnienie (dzisiejsze zachowanie wszystkich 16 wpisów — pole jest
+   * opcjonalne, żeby nic nie trzeba było dopisywać wstecznie).
+   */
+  permission?: ActionPermission;
+  /**
+   * Nieodwracalna/niszcząca w sensie danych (np. trwałe usunięcie), OSOBNO od
+   * `mutates` (które tylko mówi „coś się zmienia" — np. `idea.workspace.duplicate`
+   * mutuje, ale nic nie niszczy). Domyślnie `false`, gdy nieustawione.
+   */
+  destructive?: boolean;
+  /** Woła zewnętrzny system/efekt poza granicą Idea Workspace (np. eksport na dysk, integrację). Domyślnie `false`. */
+  external?: boolean;
+  /**
+   * Kanoniczna JEDNA powierzchnia-właściciel akcji — odróżniona od `surfaces`
+   * (gdzie akcja może się DODATKOWO pokazać, np. wyszarzona przez
+   * `showsDisabled`). Brak pola = właściciel nieustalony jeszcze (dzisiejszy
+   * stan wszystkich 16 wpisów); kolejna fala ma to uzupełnić per akcja.
+   */
+  ownerSurface?: Surface;
+  /**
+   * Nazwa zdarzenia telemetrii (WYŁĄCZNIE nazwa — żadnego payloadu treści
+   * płótna/Idei tutaj, zgodnie z CLAUDE.md: telemetria nie może wyciekać
+   * zawartości canvasu). Payload dobiera i sanityzuje warstwa wysyłająca
+   * zdarzenie, nie rejestr.
+   */
+  analyticsEvent?: string;
 }
 
 // ─────────────────────── SZYNA: realne wywołania runtime ───────────────────────
