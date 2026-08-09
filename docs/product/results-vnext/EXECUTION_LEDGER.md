@@ -2090,3 +2090,126 @@ osobny, niżej priorytetowy cleanup, nie blokuje domknięcia domeny KPI.
 **Domena KPI (E001–E007) — backend zamknięty.** Program przechodzi do
 domeny ROI.
 
+## 31. ROI-E001 Case & Baseline — implementacja + odbiór (2026-08-10)
+
+**Pierwszy epik domeny ROI.** Zbudowano `ROI_E001_DESIGN.md` §3–§8 dosłownie
+(design był FROZEN, self-contained, full DDL — brak potrzeby zgadywania):
+migracja `20260815_rvn_roi_core.sql` (`rvn_roi_cases`/`rvn_roi_baselines`,
+14-wartościowy `status` forward-declared jak `rvn_kpi_definitions`, partial
+unique index AC-02, trigger `rvn_roi_baselines_protect_frozen`), warstwa
+komend `roiCaseCommands.ts` (`createRoiCase` z SAVEPOINT-dedupe race
+skopiowanym dosłownie z `kpiDeviationCommands.openOrEscalateDeviationCase`,
+`updateRoiCaseDetails`, `archiveRoiCase` jako flaga ortogonalna do `status`
+per Decyzja D4, `startModeling`/`markReadyForReview` przez generyczne
+`runRoiCaseLifecycleTransition`, eksportowany `isRoiCaseReadyForReviewEligible`
+jako punkt rozszerzenia dla ROI-E002 per Decyzja D2) i
+`roiBaselineCommands.ts` (`captureOrUpdateBaseline` z guardem frozen,
+`freezeRoiBaseline` jako cross-epic kontrakt dla przyszłego
+`approveRoiCase` z ROI-E003 per Decyzja D5), `roiRepository.ts`
+(`listRoiCases`/`getRoiCase`/`getRoiBaseline` przez
+`buildVisibilityScopedCte`/`wrapWithVisibilityScope`, `::text` cast na
+każdym joinie `case_id` — TEN SAM bug klasy §24 tym razem NIE wystąpił w
+finalnym kodzie, bo `roiVisibilityJoin.realdb.test.ts` napisany i uruchomiony
+PRZED oznaczeniem epika za skończony, dokładnie jak design nakazał), 9
+endpointów `/api/vnext/results/roi/cases/*` (`roi.routes.ts`, zamontowany w
+`Gateway.ts`), walidatory Zod (`resultsVnextRoi.validators.ts`, lokalne
+helpery pól jak KPI), 8 nowych event type'ów w
+`EVENT_TYPE_CONSUMER_GROUPS` (`roi_case.decided` NIETKNIĘTY per Decyzja D7).
+6 commitów osobnych (migracja → command/repository layer → event types →
+HTTP layer → testy mockowane → fix błędu real-Postgres → testy realdb).
+
+**Jeden realny bug Postgresa, znaleziony WYŁĄCZNIE przez uruchomienie na
+prawdziwym Postgresie (nie przez czytanie kodu ani `tsc`)**: `createRoiCase`'s
+ACL-grant INSERT (Decyzja D3) zawierał kolumnę `organization_id` — pasującą
+do KAŻDEJ innej tabeli ten plik zapisuje, więc wyglądała naturalnie — ale
+`rvn_platform_resource_acl` (`20260809_rvn_platform_visibility_core.sql`) NIE
+MA takiej kolumny (PRIMARY KEY to `resource_type, resource_id, grantee_type,
+grantee_id`). Postgres 42703 natychmiast, przy pierwszym realnym wywołaniu
+`createRoiCase` na żywej bazie (`roiVisibilityJoin.realdb.test.ts`'s pierwszy
+test). Projekt własny fragment kodu w §4.1 już pomijał tę kolumnę — naprawa
+to dopasowanie do literalnej listy kolumn z designu i do realnej tabeli, NIE
+ALTER tabeli platformowej. Znaleziony i naprawiony PRZED zamknięciem epika,
+nie zostawiony jako dług.
+
+**Drugi realny fakt Postgresa (nie bug, ale test-isolation lekcja)**:
+`ux_rvn_roi_cases_one_active_per_initiative` (AC-02) naprawdę egzekwuje "co
+najwyżej jeden aktywny Case per initiative" — pierwsza wersja
+`roiCaseLifecycle.realdb.test.ts` dzieliła jeden `INITIATIVE_ID` między
+blokami `it`, więc drugi blok's `createRoiCase` cicho zwracał case z
+PIERWSZEGO bloku (`created: false`, już w statusie `modeling`) zamiast
+tworzyć nowy — to jest DOKŁADNIE poprawne zachowanie AC-02, ale zepsuło
+izolację testu i dało mylący błąd `INVALID_ROI_CASE_STATUS_TRANSITION`.
+Naprawiono nadając każdemu fixture case'owi własną initiative — ubocznie to
+jest żywy dowód, że AC-02's dedup faktycznie działa na prawdziwej bazie, nie
+tylko w mockowanym SAVEPOINT-teście.
+
+**Testy**: 4 nowe pliki w `tests/resultsVnext/roi/` (`roiCaseCreate.test.ts`
+— 4 testy mockowane: no-active-policy fail-closed, AC-02 pre-check path,
+AC-02 SAVEPOINT-race path via wymuszony 23505, happy-path create;
+`roiVisibilityJoin.realdb.test.ts` — 3 testy realDB: RESTRICTED_ACL
+grantee-widzi/outsider-nie-widzi dla `listRoiCases`/`getRoiCase`,
+`getRoiBaseline` dziedziczy widoczność przez `case_id`, archived-default-
+exclusion; `roiBaselineFreeze.realdb.test.ts` — 1 test realDB:
+`captureOrUpdateBaseline` przed/po freeze, `freezeRoiBaseline` jako
+samodzielny kontrakt, DB TRIGGER (nie tylko aplikacja) blokuje raw UPDATE na
+zamrożonej kolumnie treści, ale przepuszcza `row_version`/`updated_at`;
+`roiCaseLifecycle.realdb.test.ts` — 3 testy realDB: `startModeling`'s
+fromStatuses guard, `markReadyForReview`'s
+`isRoiCaseReadyForReviewEligible` guard w sekwencji brak-wartości → brak-
+okresu → eligible, `archiveRoiCase` niezależny od statusu +
+idempotentny re-archive) + 1 nowy plik `server/src/routes/resultsVnext/
+__tests__/roi.routes.test.ts` (20 testów HTTP-boundary: create/get/list/
+patch/archive/transitions/baseline, error→HTTP mapping, includeArchived:true
+lookup behavior). **Razem 31 nowych testów, wszystkie PASS** (4+3+1+3
+bezpośrednio w `tests/resultsVnext/roi/`, +20 w route test) na efemerycznym
+Postgresie 17 (`initdb --locale=C`, TCP `127.0.0.1:5433` — ta sama uwaga co
+§30: `DatabaseConfig.ts`'s `parsePostgresUrl()` ignoruje unix-socket
+`?host=`, DATABASE_URL musi wskazywać prawdziwy TCP endpoint). Migracje
+zaaplikowane: 4× `20260809_rvn_platform_*`, `20260810_rvn_kpi_core`,
+`20260811_rvn_kpi_deviation_loop`, `20260811_rvn_platform_obligations`,
+`20260812_rvn_kpi_scorecards`, `20260813_rvn_kpi_initiative_impacts`,
+`20260813_rvn_kpi_measurement_cadence`, `20260814_rvn_teresa_kpi_handoff_results`,
+`20260815_rvn_roi_core` (nowa) + minimalne fixture stand-in `initiatives`/
+`team_members` (ten sam wzorzec co
+`initiativeKpiImpactBaselineFreeze.realdb.test.ts`/
+`kpiVisibilityJoinRegression.realdb.test.ts` już ustanowiły — realna tabela
+`initiatives` żyje w core-baseline poza łańcuchem migracji tego programu).
+
+**Pełny katalog `tests/resultsVnext/kpi/` (16 plików) — PRZED/PO porównanie
+przez `git worktree` na commicie `53c4eca093` (ostatni PRZED tym epikiem),
+NIE `git stash`** (cała praca ROI-E001 była już commitowana małymi
+pakietami — worktree na starym SHA jest uczciwym odpowiednikiem stash na
+tym samym efemerycznym Postgresie): **PRZED = 149 PASS + 2 skip, 1 plik
+(`legacyIsolation.realdb.test.ts`) failuje w `beforeAll`** (brakuje pełnej
+core-baseline schemy — legacy `kpi_definitions`/`initiative_kpis` spoza
+łańcucha migracji rvn_*, niezwiązane z tym epikiem). **PO (z całym kodem
+ROI-E001) = IDENTYCZNIE 149 PASS + 2 skip, ten sam 1 plik failuje tym samym
+błędem.** Zero regresji, zero przypadkowych napraw. Dodatkowo sprawdzono
+`tests/resultsVnext/teresa-kpi-e2e-no-silent-approval.test.ts` (KPI-E006,
+całkowicie niezwiązany plik) — failuje IDENTYCZNIE PRZED i PO (2 testy,
+`P08_PROPOSAL_NOT_FOUND`) — potwierdzone jako pre-existing luka środowiska
+(minimalna efemeryczna baza tego sesyjnego setupu brakuje pełnej schemy
+Teresa/core), NIE regresja tego epika. `npx tsc --noEmit` na całym repo
+(`NODE_OPTIONS=--max-old-space-size=8192`, bo domyślny heap OOM-uje na tym
+repo — ta sama uwaga co poprzednie epiki) — **0 błędów**, sprawdzone po
+KAŻDYM z 6 commitów, nie tylko na końcu.
+
+**Nie potwierdzam "215/215" ani żadnej innej liczby z wcześniejszych epików
+na TYM efemerycznym środowisku** — zgodnie z własną zasadą programu
+("audyty się starzeją w ~3 dni"), zmierzono i zaraportowano dokładnie to, co
+wykonało się TERAZ (149+31=180 PASS w połączonym KPI+ROI przebiegu
+`tests/resultsVnext` + `server/src/routes/resultsVnext/__tests__`, patrz
+liczby wyżej), z dowodem (worktree na starym SHA) rozróżniającym winę tego
+epika od winy środowiska.
+
+**Poza zakresem tego epika (przyszłe ROI-E002…E008), potwierdzone jako
+NIEZBUDOWANE, nie zapomniane**: economic model (Assumption/Cost/Benefit/
+Scenario/CalculationRun — ROI-E002), Submit/Approve/Reject/Changes-Requested
+(ROI-E003 — `freezeRoiBaseline` już tu gotowy jako kontrakt dla
+`approveRoiCase`), Tracking/Benefits Realization (ROI-E005), PIR (ROI-E006),
+Finance seam (ROI-E007), Teresa/legacy (ROI-E008), `/cases/:caseId/history`
+endpoint.
+
+**Domena ROI: 1/8 epików zbudowanych (E001).** ROI-E002 jest następny w
+kolejce per `EPIC_LEDGER_LIVE.md`'s epic split.
+

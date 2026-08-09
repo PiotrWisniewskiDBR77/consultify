@@ -229,4 +229,33 @@ accept, legacy GET-only fail-closed na mutacje, legacy `/roi` jawnie
 oznaczone i nigdy nie zasila vNext, append-only event log z idempotent
 replay).
 
+**ROI-E001 Case & Baseline — Status: IMPLEMENTED 2026-08-10** (backend only;
+UI Registry to RN-G2, poza zakresem). `docs/product/results-vnext/
+ROI_E001_DESIGN.md` (FROZEN) → `server/migrations/20260815_rvn_roi_core.sql`
+(`rvn_roi_cases`/`rvn_roi_baselines`, freeze-protection trigger, AC-02
+partial unique index) → `server/src/services/resultsVnext/roi/*`
+(`roiCaseCommands.ts`/`roiBaselineCommands.ts`/`roiRepository.ts`/
+`roiTypes.ts`) → `server/src/routes/resultsVnext/roi.routes.ts` (9
+endpointów pod `/api/vnext/results/roi`, zamontowany w `Gateway.ts`). 31
+nowych testów, wszystkie PASS na efemerycznym Postgresie 17 (11 w
+`tests/resultsVnext/roi/` — 4 mockowane + 7 realDB, + 20 w
+`server/src/routes/resultsVnext/__tests__/roi.routes.test.ts`). Jeden realny
+bug Postgresa znaleziony i naprawiony (`rvn_platform_resource_acl` nie ma
+kolumny `organization_id`) — szczegóły, dowód PRZED/PO przez `git worktree`
+na starym SHA (149 PASS + 2 skip identycznie w obu, zero regresji domeny
+KPI): `EXECUTION_LEDGER.md` §31. Sześć AC z prozy §0 designu wszystkie
+zaadresowane: AC-01 create z Initiative (`createRoiCase`), AC-02 duplicate
+prevention (partial unique index + SAVEPOINT dedupe, kopiowany z
+`kpiDeviationCommands.openOrEscalateDeviationCase`), AC-03 honest missing
+(baseline shell nullable, nigdy fabrykowane 0), AC-04 server-side lifecycle
+guard (`runRoiCaseLifecycleTransition`), AC-05 period-aware baseline bez
+nadpisania po freeze (trigger + `RoiBaselineFrozenError` + `freezeRoiBaseline`
+cross-epic kontrakt dla ROI-E003), AC-06 `RESTRICTED_ACL` default (Decyzja
+D3 ACL grants). Poza zakresem, świadomie NIEZBUDOWANE: economic model
+(ROI-E002), Submit/Approve/Reject (ROI-E003 — `freezeRoiBaseline` już
+gotowy jako jego kontrakt), Tracking/Benefits Realization/PIR/Finance
+seam/Teresa (ROI-E005…E008), `/cases/:caseId/history`.
+
+**Domena ROI: 1/8 epików zbudowanych (E001). ROI-E002 następny w kolejce.**
+
 Pełne tabele (wszystkie pola per AC): transkrypt agenta `a2714d65fd9b0df12`.
