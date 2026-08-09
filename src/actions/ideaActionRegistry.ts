@@ -150,7 +150,12 @@ export type IconName =
   // grupy Convert/„Convert branch to…", dodane 1:1 z ikonami już
   // importowanymi w `NodeContextMenu.tsx` z lucide-react.
   | 'Star'
-  | 'Rocket';
+  | 'Rocket'
+  // Process Flow edge menu (2026-08-09) — `ProcessFlowContextMenu.tsx`'s
+  // `getEdgeContextActions`, dodane 1:1 z ikonami już importowanymi tam z
+  // lucide-react (zero nowych zależności ikon).
+  | 'Split'
+  | 'Check';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -376,6 +381,12 @@ const RUNTIME_EDGE_LABEL: ToolActionMap = {
 const RUNTIME_EDGE_REVERSE: ToolActionMap = {
   whiteboard: 'wb_edge_reverse',
   mindmap: 'mm_edge_reverse',
+  // process_flow (2026-08-09): `handleEdgeReverse(edgeId)` in
+  // IdeaProcessFlowTool.tsx already takes an explicit edgeId (unlike
+  // insertBetween()/deleteSelected() below it, which only act on the
+  // canvas selection) — a genuine REUSE, not a new mechanism. New receiver
+  // `pf_edge_reverse` added to useProcessFlowQuickActions.ts for this.
+  process_flow: 'pf_edge_reverse',
 };
 const RUNTIME_EDGE_CYCLE_ARROW: ToolActionMap = {
   whiteboard: 'wb_edge_cycle_arrow',
@@ -403,6 +414,36 @@ const RUNTIME_EDGE_EDIT_RELATION: ToolActionMap = {
   mindmap: 'mm_edge_edit_relation',
 };
 
+/**
+ * Process Flow edge menu (2026-08-09, `ProcessFlowContextMenu.tsx`'s
+ * `getEdgeContextActions`) — cztery mapy PONIŻEJ są Przepływu TYLKO, dodane
+ * ŚWIADOMIE jako NOWE akcje zamiast rozszerzenia `idea.edge.insert_node`/
+ * `.delete` (Mapa myśli): `insertBetween()`/`deleteSelected()` w
+ * `IdeaProcessFlowTool.tsx` operują na ZAZNACZENIU na płótnie (nie przyjmują
+ * `edgeId`), a Mapy myśli `mm_edge_insert_node`/`mm_edge_delete` adresują po
+ * jawnym id — inny mechanizm, nie wariant tej samej akcji (patrz `teresa.description`
+ * przy każdym wpisie niżej). `edge-reverse` to jedyna z dziewięciu, która
+ * NAPRAWDĘ jest tą samą operacją (adresowana po edgeId) — patrz
+ * `RUNTIME_EDGE_REVERSE.process_flow` wyżej, rozszerzone w miejscu, nie
+ * duplikowane tutaj.
+ */
+const RUNTIME_PF_EDGE_EDIT_PROPS: ToolActionMap = {
+  process_flow: 'pf_edge_edit_props',
+};
+/** REUŻYCIE — `pf_insert_between` ma już odbiornik w useProcessFlowQuickActions.ts
+ * (dawniej wołany tylko z floating toolbar „Insert between"); zero nowego kodu w hooku. */
+const RUNTIME_PF_EDGE_INSERT_NODE: ToolActionMap = {
+  process_flow: 'pf_insert_between',
+};
+const RUNTIME_PF_EDGE_CONDITION: ToolActionMap = {
+  process_flow: 'pf_edge_set_condition',
+};
+/** REUŻYCIE — `pf_delete` ma już odbiornik (`handlers.deleteSelected()`), dawniej
+ * wołany tylko z Menu 3/rail; zero nowego kodu w hooku. */
+const RUNTIME_PF_EDGE_DELETE: ToolActionMap = {
+  process_flow: 'pf_delete',
+};
+
 /** Wskaźnik akcja → jej mapa runtime (indirekcja NIE jest czytana przez R6 —
  * to zwykły obiekt JS, guard widzi tylko siedem `ToolActionMap` powyżej). */
 const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
@@ -413,6 +454,14 @@ const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
   'idea.edge.delete': RUNTIME_EDGE_DELETE,
   'idea.edge.insert_node': RUNTIME_EDGE_INSERT_NODE,
   'idea.edge.edit_relation': RUNTIME_EDGE_EDIT_RELATION,
+  'idea.edge.pf_edit_props': RUNTIME_PF_EDGE_EDIT_PROPS,
+  'idea.edge.pf_insert_node': RUNTIME_PF_EDGE_INSERT_NODE,
+  'idea.edge.pf_condition_none': RUNTIME_PF_EDGE_CONDITION,
+  'idea.edge.pf_condition_yes': RUNTIME_PF_EDGE_CONDITION,
+  'idea.edge.pf_condition_no': RUNTIME_PF_EDGE_CONDITION,
+  'idea.edge.pf_condition_default': RUNTIME_PF_EDGE_CONDITION,
+  'idea.edge.pf_condition_exception': RUNTIME_PF_EDGE_CONDITION,
+  'idea.edge.pf_delete': RUNTIME_PF_EDGE_DELETE,
 };
 
 /**
@@ -445,7 +494,18 @@ const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
  * tego zadania, luka nie zostanie naprawiona. Żywa ścieżka dla Teresy dziś to
  * `ctx.params.edgeId`.
  */
-async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+async function runEdgeParamCallback(
+  actionId: string,
+  ctx: ActionContext,
+  // Process Flow extension (2026-08-09): dla akcji, gdzie 5 rejestrowych id
+  // dzielą JEDEN runtime string (`pf_edge_set_condition`, 5x warunek), wartość
+  // jest zaszyta w `extra` per-id (np. `{ condition: 'yes' }`) i wygrywa nad
+  // `ctx.params` — inaczej Teresa musiałaby zgadywać, że `idea.edge.pf_condition_yes`
+  // wymaga też podania `condition: 'yes'` w parametrach, co byłoby zbędne
+  // (wartość wynika z WYBRANEGO id, tak jak w `getEdgeContextActions`, gdzie
+  // każdy z 5 wierszy woła `onSetCondition` z inną, zaszytą w domknięciu wartością).
+  extra?: Record<string, unknown>
+): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
     (run as () => void)();
@@ -459,7 +519,8 @@ async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promi
         ? ctx.selection.primaryId
         : undefined;
   if (!edgeId) {
-    const toolLabel = ctx.tool === 'mindmap' ? 'Mapy myśli' : 'Tablicy';
+    const toolLabel =
+      ctx.tool === 'mindmap' ? 'Mapy myśli' : ctx.tool === 'process_flow' ? 'Przepływu' : 'Tablicy';
     return {
       ok: false,
       actionId,
@@ -474,7 +535,7 @@ async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promi
       message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
     };
   }
-  dispatchQuickAction(runtime, ctx, { edgeId, ...(ctx.params || {}) });
+  dispatchQuickAction(runtime, ctx, { edgeId, ...(ctx.params || {}), ...(extra || {}) });
   return { ok: true, actionId, data: { runtime, edgeId } };
 }
 
@@ -1724,7 +1785,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     label: { pl: 'Odwróć kierunek', en: 'Reverse direction' },
     icon: 'ArrowLeftRight',
     scope: 'edge',
-    tools: ['whiteboard', 'mindmap'],
+    tools: ['whiteboard', 'mindmap', 'process_flow'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.reverse', ctx),
     mutates: true,
@@ -1732,11 +1793,11 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'Tablica: IdeaWhiteboardTool.tsx handleEdgeReverse:3223 → pushUndoSnapshot() przed zamianą source/target. Mapa myśli: useMindMapQuickActions.ts mm_edge_reverse → handlers.pushUndo() przed zamianą source/target (ta sama logika, przeniesiona z IdeaRecommendationMap.tsx handleEdgeContextAction, które też już wołało pushUndo()).',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeReverse:3223 → pushUndoSnapshot() przed zamianą source/target. Mapa myśli: useMindMapQuickActions.ts mm_edge_reverse → handlers.pushUndo() przed zamianą source/target (ta sama logika, przeniesiona z IdeaRecommendationMap.tsx handleEdgeContextAction, które też już wołało pushUndo()). Przepływ (2026-08-09, `ProcessFlowContextMenu.tsx` edge-reverse): IdeaProcessFlowTool.tsx handleEdgeReverse:1012 → pushUndo():1015 przed zamianą source/target+handles — już obecne, nic nie dopisywano.',
     },
     teresa: {
       description:
-        'Zamienia miejscami początek i koniec wskazanego połączenia (Tablica lub Mapa myśli). Na Mapie myśli działa TYLKO na krawędziach relacji — na strukturalnych krawędziach hierarchii po cichu nic się nie stanie (tak jak dziś w menu prawego kliku). Podaj `edgeId` połączenia.',
+        'Zamienia miejscami początek i koniec wskazanego połączenia (Tablica, Mapa myśli lub Przepływ). Na Mapie myśli działa TYLKO na krawędziach relacji — na strukturalnych krawędziach hierarchii po cichu nic się nie stanie (tak jak dziś w menu prawego kliku). Na Przepływie działa na KAŻDYM połączeniu (Przepływ ma jeden typ krawędzi, bez rozróżnienia strukturalna/relacja). Podaj `edgeId` połączenia.',
       parameters: {
         type: 'object',
         properties: {
@@ -1746,7 +1807,7 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
     },
     source:
-      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_reverse (Mapa myśli)',
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_reverse (Mapa myśli) · src/components/MyWork/IdeaProcessFlowTool.tsx handleEdgeReverse:1012 + processflow/useProcessFlowQuickActions.ts pf_edge_reverse (Przepływ, 2026-08-09)',
   },
   {
     id: 'idea.edge.cycle_arrow',
@@ -1871,6 +1932,264 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source:
       'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_delete (Mapa myśli)',
+  },
+  // ── Process Flow edge menu (2026-08-09) — `ProcessFlowContextMenu.tsx`'s
+  // `getEdgeContextActions` (8 z 9 wpisów; `edge-reverse`, 9., rozszerzył
+  // `idea.edge.reverse` WYŻEJ, w miejscu jego deklaracji — prawdziwe REUŻYCIE,
+  // Przepływ ma dokładnie tę samą operację adresowaną po `edgeId`). Kolejność
+  // deklaracji niżej = kolejność w `getEdgeContextActions`.
+  //
+  // `edge-insert`/`edge-delete` NIE rozszerzają `idea.edge.insert_node`/
+  // `.delete` (Mapa myśli) mimo pozornie tej samej nazwy: `insertBetween()`/
+  // `deleteSelected()` w `IdeaProcessFlowTool.tsx` operują na ZAZNACZENIU na
+  // płótnie, nie przyjmują `edgeId` — inny mechanizm niż Mapy myśli
+  // `mm_edge_insert_node`/`mm_edge_delete`, które adresują po jawnym id.
+  // Świadomie NIE scalone — patrz `teresa.description` przy każdym z dwóch
+  // wpisów niżej.
+  //
+  // 5 pozycji `edge-cond-*` (typ warunku BPMN-style: brak/Tak/Nie/Domyślny/
+  // Wyjątek na `data.conditionType`) to pojęcie WYŁĄCZNIE Przepływu, bez
+  // odpowiednika na Tablicy/Mapie myśli — 5 NOWYCH wpisów. Zachowanie opisane
+  // niżej jest AKTUALNE (2026-08-09): manualny audyt
+  // `docs/qa/ideas-manual-audit-2026-08-09/02_PROCESS_FLOW_AUDIT.md`, finding
+  // `PF-P1-02` (repaired), potwierdza że etykietowanie Tak/Nie i pętli korekty
+  // jest już naprawione i przeżywa przeładowanie — opisy odzwierciedlają ten
+  // naprawiony stan, nie przedmigracyjny defekt.
+  {
+    id: 'idea.edge.pf_edit_props',
+    label: { pl: 'Etykieta i styl', en: 'Label & style' },
+    icon: 'Pencil',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_edit_props', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel etykiety/koloru/stylu linii/strzałki wskazanego połączenia Przepływu (ten sam EdgeStylePopover co lewy klik na krawędzi). Sama w sobie NIC nie zmienia dane — użytkownik dokańcza zmianę W otwartym panelu (te dalsze mutacje nie mają dziś własnych wpisów w rejestrze, poza zakresem tego zadania). Wywołanie spoza UI (Teresa) otwiera panel w stałym domyślnym miejscu ekranu, bo nie ma współrzędnych kliknięcia. Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaProcessFlowTool.tsx onEditProps → setEdgeStylePopover (~linia 3805) + processflow/EdgeStylePopover.tsx + processflow/useProcessFlowQuickActions.ts pf_edge_edit_props (nowy odbiornik, 2026-08-09)',
+  },
+  {
+    id: 'idea.edge.pf_insert_node',
+    label: { pl: 'Wstaw węzeł na połączeniu', en: 'Insert node on connection' },
+    icon: 'Split',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_insert_node', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx insertBetween:1775 → pushUndo():1811 przed mutacją (add_node+remove_edge+2×add_edge), stos Ctrl+Z.',
+    },
+    teresa: {
+      description:
+        'Dzieli wskazane połączenie Przepływu na dwa, wstawiając między nimi nowy krok. UWAGA (mechanizm inny niż na Mapie myśli): `insertBetween()` w Przepływie działa na AKTUALNIE ZAZNACZONEJ krawędzi na płótnie, nie na dowolnym `edgeId` — realnie trafi w to połączenie tylko, gdy jest ono zaznaczone w przeglądarce użytkownika w chwili wywołania (tak jak dziś prawy klik, który zaznacza krawędź PRZED otwarciem menu). Dlatego świadomie NIE rozszerzono nim `idea.edge.insert_node` (Mapa myśli, adresowane po edgeId) — to inny mechanizm, nie wariant tej samej akcji. `edgeId` w kontrakcie jest informacyjny (spójność z resztą rejestru) — realnie liczy się zaznaczenie.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: {
+            type: 'string',
+            description: 'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
+          },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaProcessFlowTool.tsx insertBetween:1775 (też floating toolbar „Insert between" i szyna pf_insert_between, processflow/useProcessFlowQuickActions.ts:100 — REUŻYTY odbiornik, nie duplikowany)',
+  },
+  {
+    id: 'idea.edge.pf_condition_none',
+    label: { pl: 'Warunek: Bez warunku', en: 'Condition: No condition' },
+    icon: 'Check',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_condition_none', ctx, { condition: '' }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx handleEdgeConditionChange:942 → pushUndo():945 przed setEdges (już obecne, nic nie dopisywano).',
+    },
+    teresa: {
+      description:
+        'Czyści typ warunku wskazanego połączenia Przepływu — krawędź wraca do zwykłej, sekwencyjnej (bez etykiety Tak/Nie/Domyślny/Wyjątek). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx EDGE_CONDITIONS[0] + IdeaProcessFlowTool.tsx handleEdgeConditionChange:942',
+  },
+  {
+    id: 'idea.edge.pf_condition_yes',
+    label: { pl: 'Warunek: Tak', en: 'Condition: Yes' },
+    icon: 'Check',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_condition_yes', ctx, { condition: 'yes' }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx handleEdgeConditionChange:942 → pushUndo():945 przed setEdges (już obecne, nic nie dopisywano).',
+    },
+    teresa: {
+      description:
+        'Ustawia typ warunku wskazanego połączenia Przepływu na „Tak" (gałąź decyzji spełnionej). Etykieta i logika zapisują się trwale i przeżywają przeładowanie (potwierdzone manualnym audytem, finding PF-P1-02). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx EDGE_CONDITIONS[1] + IdeaProcessFlowTool.tsx handleEdgeConditionChange:942',
+  },
+  {
+    id: 'idea.edge.pf_condition_no',
+    label: { pl: 'Warunek: Nie', en: 'Condition: No' },
+    icon: 'Check',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_condition_no', ctx, { condition: 'no' }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx handleEdgeConditionChange:942 → pushUndo():945 przed setEdges (już obecne, nic nie dopisywano).',
+    },
+    teresa: {
+      description:
+        'Ustawia typ warunku wskazanego połączenia Przepływu na „Nie" (gałąź decyzji niespełnionej). Etykieta i logika zapisują się trwale i przeżywają przeładowanie (potwierdzone manualnym audytem, finding PF-P1-02). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx EDGE_CONDITIONS[2] + IdeaProcessFlowTool.tsx handleEdgeConditionChange:942',
+  },
+  {
+    id: 'idea.edge.pf_condition_default',
+    label: { pl: 'Warunek: Domyślny', en: 'Condition: Default' },
+    icon: 'Check',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runEdgeParamCallback('idea.edge.pf_condition_default', ctx, { condition: 'default' }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx handleEdgeConditionChange:942 → pushUndo():945 przed setEdges (już obecne, nic nie dopisywano).',
+    },
+    teresa: {
+      description:
+        'Ustawia typ warunku wskazanego połączenia Przepływu na „Domyślny" (wyjście bramki, gdy żaden inny warunek nie pasuje). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx EDGE_CONDITIONS[3] + IdeaProcessFlowTool.tsx handleEdgeConditionChange:942',
+  },
+  {
+    id: 'idea.edge.pf_condition_exception',
+    label: { pl: 'Warunek: Wyjątek', en: 'Condition: Exception' },
+    icon: 'Check',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runEdgeParamCallback('idea.edge.pf_condition_exception', ctx, { condition: 'exception' }),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaProcessFlowTool.tsx handleEdgeConditionChange:942 → pushUndo():945 przed setEdges (już obecne, nic nie dopisywano).',
+    },
+    teresa: {
+      description:
+        'Ustawia typ warunku wskazanego połączenia Przepływu na „Wyjątek" (gałąź błędu/wyjątku, np. pętla korekty — patrz finding PF-P1-02). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) Przepływu.' },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx EDGE_CONDITIONS[4] + IdeaProcessFlowTool.tsx handleEdgeConditionChange:942',
+  },
+  {
+    id: 'idea.edge.pf_delete',
+    label: { pl: 'Usuń połączenie', en: 'Delete connection' },
+    icon: 'Trash2',
+    scope: 'edge',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.pf_delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useProcessFlowNodes.ts deleteSelected:70 → pushUndo():83 przed usunięciem (stos Ctrl+Z).',
+    },
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa wskazane połączenie Przepływu na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji). UWAGA (jak przy `idea.edge.pf_insert_node`): `deleteSelected()` w Przepływie działa na AKTUALNIE ZAZNACZONYM elemencie (węźle LUB krawędzi), nie na dowolnym `edgeId` — realnie usunie to połączenie tylko, gdy jest ono zaznaczone na płótnie (tak jak dziś prawy klik, który zaznacza krawędź przed otwarciem menu). Świadomie NIE rozszerzono `idea.edge.delete` (Tablica/Mapa myśli, adresowane po edgeId) — inny mechanizm. `edgeId` w kontrakcie jest informacyjny — realnie liczy się zaznaczenie.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: {
+            type: 'string',
+            description: 'Id połączenia (informacyjnie — realnie liczy się zaznaczenie na płótnie).',
+          },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaProcessFlowTool.tsx onDelete → deleteSelected() (~linia 3816) + processflow/useProcessFlowNodes.ts:70 (też szyna pf_delete, processflow/useProcessFlowQuickActions.ts:185 — REUŻYTY odbiornik, nie duplikowany)',
   },
   // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
   // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,

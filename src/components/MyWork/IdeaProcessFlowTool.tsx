@@ -2253,6 +2253,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       // zasłaniającej pstryczek toru.
       toggleGrid: () => setShowGrid((prev) => !prev),
       toggleSnap: () => setSnapToGridEnabled((prev) => !prev),
+      // Action Registry — Process Flow edge menu (2026-08-09): bus path for
+      // Teresa/non-UI callers of `idea.edge.pf_edit_props`/`idea.edge.reverse`/
+      // `idea.edge.pf_condition_*` (see ideaActionRegistry.ts). The UI
+      // right-click path (getEdgeContextActions call site below) is
+      // untouched — it keeps calling these exact same functions directly.
+      openEdgeStylePopover: (edgeId: string) => setEdgeStylePopover({ edgeId, x: 240, y: 240 }),
+      reverseEdge: (edgeId: string) => handleEdgeReverse(edgeId),
+      setEdgeCondition: (edgeId: string, condition: string) =>
+        handleEdgeConditionChange(edgeId, condition),
     },
     setters: {
       setFlowMode,

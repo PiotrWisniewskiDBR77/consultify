@@ -57,6 +57,33 @@ export interface ProcessFlowQuickActionHandlers {
   toggleGrid?: () => void;
   /** D2: przyciąganie kroków do siatki (ReactFlow `snapToGrid`), jak wyżej. */
   toggleSnap?: () => void;
+  /**
+   * Action Registry — Process Flow edge menu (2026-08-09,
+   * `ProcessFlowContextMenu.tsx`'s `getEdgeContextActions`). UI right-click
+   * already opens `EdgeStylePopover` directly via a local `setEdgeStylePopover`
+   * closure in `IdeaProcessFlowTool.tsx` (unchanged) — this is the bus path
+   * for Teresa/non-UI callers (`idea.edge.pf_edit_props` in
+   * `ideaActionRegistry.ts`). No click position exists off the UI thread, so
+   * the popover opens at a fixed default anchor.
+   */
+  openEdgeStylePopover?: (edgeId: string) => void;
+  /**
+   * Action Registry — edge-reverse (`idea.edge.reverse`, extended to
+   * `process_flow` 2026-08-09). `handleEdgeReverse(edgeId)` in
+   * `IdeaProcessFlowTool.tsx` already takes an explicit id, so this is a
+   * real, id-addressable bus path (unlike insert/delete below, which stay
+   * selection-based).
+   */
+  reverseEdge?: (edgeId: string) => void;
+  /**
+   * Action Registry — the 5 `idea.edge.pf_condition_*` actions
+   * (`edge-cond-none/yes/no/default/exception` in
+   * `getEdgeContextActions`/`EDGE_CONDITIONS`) all dispatch here with the
+   * condition value baked in per registry id. Forwards to
+   * `handleEdgeConditionChange(edgeId, condition)` in `IdeaProcessFlowTool.tsx`,
+   * which already calls `pushUndo()`.
+   */
+  setEdgeCondition?: (edgeId: string, condition: string) => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -184,6 +211,26 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
     if (action === 'pf_redo') handlers.redo();
     if (action === 'pf_delete') handlers.deleteSelected();
     if (action === 'pf_duplicate') handlers.duplicateSelected();
+
+    // Action Registry — Process Flow edge menu (2026-08-09). edge-insert
+    // (`idea.edge.pf_insert_node`) and edge-delete (`idea.edge.pf_delete`)
+    // reuse `pf_insert_between`/`pf_delete` ABOVE — same underlying
+    // insertBetween()/deleteSelected(), selection-based, no new case needed
+    // here. The three below are the actions that had NO runtime string at
+    // all before this pass.
+    if (action === 'pf_edge_edit_props') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (edgeId) handlers.openEdgeStylePopover?.(edgeId);
+    }
+    if (action === 'pf_edge_reverse') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (edgeId) handlers.reverseEdge?.(edgeId);
+    }
+    if (action === 'pf_edge_set_condition') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      const condition = typeof detail?.condition === 'string' ? detail.condition : undefined;
+      if (edgeId && condition !== undefined) handlers.setEdgeCondition?.(edgeId, condition);
+    }
   };
 
   useEffect(() => {
