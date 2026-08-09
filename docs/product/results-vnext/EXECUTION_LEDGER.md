@@ -1373,3 +1373,97 @@ przed tym pakietem (10 nowych testów, wszystkie PASS, reszta niezmieniona).
 Nie zbudowano: warstwa HTTP `/api/vnext/results/kpi/scorecards/*` (jawnie
 poza zakresem tego pakietu per `KPI_E004_DESIGN.md` — następny, osobny pakiet).
 
+## 24. KOREKTA §19/§21 — ten sam TEXT/UUID join bug (§23) NAPRAWIONY w
+`kpiRepository.ts`/`kpiDeviationRepository.ts`; luka testowa POTWIERDZONA
+(2026-08-09)
+
+§23 przewidziało wprost ("warte osobnego zgłoszenia") że ten sam wzorzec
+złączenia mógł nosić identyczną usterkę w `kpiDeviationRepository.ts`. To
+się potwierdziło — i dotyczyło też `kpiRepository.ts` (KPI-E001/E002), co
+§23 nie wymieniło. Ten wpis to KOREKTA, nie tylko dopisek: §19 i §21 podały
+liczby testów ("16/16", "121/121 zielono ... zero regresji") jako dowód że
+warstwa API `/api/vnext/results/kpi/*` i `/deviation-cases/*` działa —
+liczby były PRAWDZIWE dla uruchomionych testów, ale te testy NIGDY nie
+wykonały złączenia, które właśnie tu naprawiono. Zgodnie ze złotą regułą
+repo ("testy przeszły" ≠ "działa") to trzeba nazwać wprost, nie
+zminimalizować.
+
+**Naprawa (7 miejsc, ten sam wzorzec `::text` co `kpiScorecardRepository.ts`
+z §23)**:
+- `kpiRepository.ts` — `vr.resource_id = kd.kpi_id` → `= kd.kpi_id::text`
+  (linie ~114 `listKpis`, ~144 `getKpi`) i `vr.resource_id = m.kpi_id` →
+  `= m.kpi_id::text` (~229 `listMeasurements`).
+- `kpiDeviationRepository.ts` — `vr.resource_id = dc.kpi_id` →
+  `= dc.kpi_id::text` w CZTERECH miejscach: `getDeviationCase` (~87),
+  `listDeviationCases` (~147), `listCorrectiveActions` (~198),
+  `listEffectivenessVerifications` (~236).
+Pełny przegląd obu plików (nie tylko wskazane linie) — brak innych
+porównań kolumny TEXT z platformy (`rvn_platform_resource_visibility`/
+`rvn_platform_resource_acl`) z kolumną UUID bez castu; wszystkie pozostałe
+złączenia w tych plikach są UUID-do-UUID (np. `dc.case_id = ca.deviation_
+case_id`) i nie potrzebują castu.
+
+**Ustalenie z dochodzenia "dlaczego testy tego nie złapały" (fakty, nie
+domysł)**: `kpi.routes.test.ts` i `kpiDeviation.routes.test.ts` mockują
+CAŁY moduł repozytorium na poziomie `vi.mock('.../kpiRepository.js', ...)`
+/ `vi.mock('.../kpiDeviationRepository.js', ...)` — `getKpi`/`listKpis`/
+`listMeasurements`/`getDeviationCase`/`listDeviationCases` są zastąpione
+`vi.fn()`. Zweryfikowane wprost: żaden inny plik w repo (poza samymi
+plikami routes i ich testami) nie importuje `kpiRepository.ts` ani
+`kpiDeviationRepository.ts` (`grep -rln "kpi/kpiRepository\|kpi/
+kpiDeviationRepository" tests/ server/src/` — zero trafień poza tymi
+czterema plikami). §21's "121/121 zielono" NA REALNYM POSTGRESIE (pełny
+łańcuch migracji, prawdziwa rola/baza) było prawdziwe — Postgres BYŁ
+użyty przez inne testy w tym samym przebiegu (np.
+`deviationCaseIdempotency.realdb.test.ts`, przez command layer) — ale
+`kpiDeviation.routes.test.ts`'s GET-owe scenariusze nigdy nie wywołały
+`listDeviationCases`/`getDeviationCase` NA TYM Postgresie, bo funkcje były
+podmienione na mocki przed importem routera. To nie jest niejednoznaczne:
+zerowe pokrycie tego joina przez którykolwiek istniejący test jest
+potwierdzone przez brak importu, nie przez domysł.
+
+**Weryfikacja na realnym Postgresie 16** (ten sam przepis co §11/§15/§23:
+`initdb --locale=C`, `LC_ALL=C`, TCP na `127.0.0.1:28461` — gniazdo Unix w
+`/private/tmp` też działa, TCP wybrany bo `databaseTargetResolver.ts`
+wymaga poprawnego `new URL(...).hostname`, którego pusty host przy
+`?host=/socket/path` nie daje). Migracje `20260809_rvn_platform_*` (4) +
+`20260810_rvn_kpi_core` + `20260811_rvn_kpi_deviation_loop` +
+`20260811_rvn_platform_obligations` + `20260812_rvn_kpi_scorecards` — exit
+0.
+- **PRZED naprawą** (kod z §19/§21 przywrócony przez `git stash`):
+  `npx vitest run tests/resultsVnext/kpi server/src/routes/resultsVnext` →
+  **131/133 PASS, 2 FAIL** — oba faile to NOWY test poniżej, z realnym
+  błędem Postgres `42883: operator does not exist: text = uuid` rzuconym
+  wprost z `listKpis`/`listDeviationCases`. WSZYSTKIE 131 innych testów
+  (w tym `kpi.routes.test.ts`/`kpiDeviation.routes.test.ts` w całości)
+  przeszły — dowód namacalny, nie tylko wywnioskowany, że istniejący
+  zestaw był ślepy na ten bug.
+- **PO naprawie** (`git stash pop`): **133/133 PASS**, zero regresji.
+  `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` w `server/` —
+  0 błędów.
+
+**Nowy test**: `tests/resultsVnext/kpi/kpiVisibilityJoinRegression.realdb
+.test.ts` (realDB, ten sam skip-policy co `deviationCaseIdempotency
+.realdb.test.ts`/`scorecardPublishNonLeak.realdb.test.ts` — cichy no-op
+bez skonfigurowanej bazy, rzuca jeśli baza skonfigurowana ale
+nieosiągalna). Dwa scenariusze, oba tworzą PRIVATE KPI (właściciel
+USER_A) i wołają repozytorium jako USER_A (właściciel) i USER_B (obcy, bez
+RBAC override) — zmuszając join do realnego wykonania z realnymi
+wierszami `rvn_platform_resource_visibility`, nie mockiem:
+1. `listKpis`/`getKpi` — USER_A widzi KPI (na liście i przez get), USER_B
+   nie (brak na liście, `getKpi` zwraca `null`).
+2. `listDeviationCases`/`getDeviationCase` — case na tym samym PRIVATE KPI
+   dziedziczy widoczność przez `kpi_id`; USER_A widzi, USER_B nie.
+Sprzątanie po sobie w `afterAll` (DELETE po `organization_id`), zero
+trwałych artefaktów w bazie efemerycznej ani w `/private/tmp`.
+
+**Poza zakresem tego wpisu**: `listCorrectiveActions`/
+`listEffectivenessVerifications` (KPI-E003) i `getPublishedSnapshot`/
+`listScorecardItems`/itd. (KPI-E004, już naprawione w §23) mają teraz
+poprawny `::text` cast (zweryfikowane grepem — pełny przegląd obu plików
+w tym pakiecie), ale nie mają własnego dedykowanego realDB testu na
+widoczność poza tym co już istnieje w §23's
+`scorecardPublishNonLeak.realdb.test.ts` — jeśli regresja wróci w tych
+konkretnych funkcjach, złapie ją najpierw 42883 na produkcji/demo, nie
+test.
+
