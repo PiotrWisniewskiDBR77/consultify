@@ -1194,3 +1194,74 @@ tej wartości dla `explain_warning_critical_deviation` — udokumentowane w
 `platform/obligations.ts`). Wpięcie `rvn_platform_obligations` w realny UI
 MyWork (Home/Inbox/Calendar) — jawnie poza zakresem per §C samego projektu.
 
+## 21. KPI-E003 Deviation Closed Loop — warstwa API `/deviation-cases/*` (2026-08-09)
+
+Implementacja routera HTTP nad command/repository layer z §20 (design:
+`KPI_E003_DESIGN.md` §B, decyzja #2 — "plan" to faza case'a, żaden osobny
+`:planId`). Nowy plik `server/src/routes/resultsVnext/kpiDeviation.routes.ts`
+(13 endpointów: list/get, acknowledge, PUT root-cause, POST/PATCH
+corrective-actions, plan/submit, plan/approve, recovery-observation,
+effectiveness-verifications, close, escalate/deescalate, reopen) — 1:1 wzorzec
+stylu `kpi.routes.ts` (inline handlery + wspólny `handle*Error` + lokalny
+`requireAuth`), nowy `server/src/validators/resultsVnextKpiDeviation.validators.ts`
+(Zod, jeden schemat na endpoint, enumy re-eksportowane z `kpiDeviationTypes.ts`).
+
+**Realny bug routingu złapany PRZED wdrożeniem, nie na demo**: montowanie
+nowego routera na tym samym prefiksie co `kpi.routes.ts`
+(`/api/vnext/results/kpi`) zderza się z jego `GET /:kpiId` — dla
+`GET .../kpi/deviation-cases` Express trafiłby najpierw w `kpi.routes.ts`
+(ten sam prefiks, zarejestrowany pierwszy), `kpiId="deviation-cases"` nie
+przechodzi `KpiIdParamsSchema` (UUID) i `validateParams` odpowiada 400
+bezpośrednio (nie wywołuje `next()`) — nowy router nigdy by nie dostał
+żądania. Naprawione montowaniem na WĘŻSZYM prefiksie
+`/api/vnext/results/kpi/deviation-cases` i rejestracją w `Gateway.ts`
+PRZED mountem `/api/vnext/results/kpi` (Express dopasowuje middleware
+w kolejności rejestracji, nie po specyficzności prefiksu) — pełny opis w
+nagłówku `kpiDeviation.routes.ts` ("MOUNT-ORDER NOTE") i komentarzu przy
+obu mountach w `Gateway.ts`. Zweryfikowane wprost testem (`GET
+/deviation-cases` idzie do właściwego routera, `listDeviationCases`
+wywołane, `getKpi` z `kpi.routes.ts` NIE wywołane).
+
+**DEVIATION FROM TASK BRIEF**: brief zlecający ten plik nazwał błąd
+self-approval `SelfApprovalDeniedError` (wzorem importu tej klasy z
+`kpiDefinitionCommands.ts` w `kpi.routes.ts`). Ta domena ma WŁASNĄ,
+osobną klasę — `DeviationSelfApprovalDeniedError` z `kpiDeviationCommands.ts`
+(ten plik, we własnym komentarzu: "this module's own class since the two
+domains have separate aggregates") — zmapowana na 403 dokładnie tak jak
+brief chciał dla "SelfApprovalDeniedError", tylko pod prawdziwą nazwą.
+
+**Testy**: `kpiDeviation.routes.test.ts` (supertest, wzorem
+`kpi.routes.test.ts` — command/repository layer mockowany, klasy błędów
+prawdziwe przez `importOriginal`), 21 przypadków: record-measurement (przez
+prawdziwy `kpi.routes.ts`, zamontowany w tym samym teście w kolejności
+Gateway.ts) → get roundtrip; list z filtrami; pełna ścieżka acknowledge →
+root-cause → corrective-action → plan submit/approve; cross-check
+action/case w PATCH (404 gdy action należy do innego case); recovery-
+observation + effectiveness-verification (201, zwraca `case`+`verification`);
+close bez zweryfikowanej skuteczności → 409 `EFFECTIVENESS_NOT_VERIFIED`;
+self-approval denial na approve planu → 403 `SELF_APPROVAL_DENIED`;
+STALE_VERSION 409 / aggregate-not-found 404; escalate/deescalate/reopen
+(reopen jako `executeAtomicCreate` — brak `expectedVersion` w body); kilka
+Zod 400. Zero mocków bazy dla samej logiki stanu — ta już ma dowód na
+realnym Postgresie w §20.
+
+**Wynik**: `tsc --noEmit` w `server/` — 0 błędów. Pełny zestaw `tests/resultsVnext/kpi
+server/src/routes/resultsVnext` uruchomiony DWA razy: (a) bez bazy (realdb
+plik z §20 poprawnie pomija się/raportuje błąd konfiguracji — patrz jego
+własna SKIP POLICY) i (b) na świeżo postawionym efemerycznym Postgresie 16
+(pełny łańcuch migracji `20260809_rvn_platform_*` + `20260810_rvn_kpi_core` +
+`20260811_rvn_kpi_deviation_loop` + `20260811_rvn_platform_obligations`,
+rola+baza `iris`/`iris_test`, `LC_ALL=C`, TCP na osobnym porcie zamiast
+domyślnego 5432 — na tej maszynie 5432 to już inny, lokalny serwer deweloperski
+bez roli `iris`) — **121/121 zielono** (100 istniejących + 21 nowych), zero
+regresji. Efemeryczna baza posprzątana (`pg_ctl -m fast stop` + `rm -rf`
+katalogu danych/gniazda), zero trwałych artefaktów.
+
+**Poza zakresem tego pakietu** (świadomie, zgodnie z briefem): `GET
+.../corrective-actions` i `GET .../effectiveness-verifications` jako osobne
+listy — `kpiDeviationRepository.ts` już eksportuje `listCorrectiveActions`/
+`listEffectivenessVerifications`, ale żaden z nich nie jest na liście
+endpointów z briefu ani w tabeli plików `KPI_E003_DESIGN.md` §D; zostawione
+na przyszły pakiet razem z resztą jawnie odłożonych elementów §D (wpięcie
+MyWork UI, CRUD na response-policy).
+
