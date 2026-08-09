@@ -283,37 +283,80 @@ async function runByTool(
 }
 
 /**
- * Cienki przekaźnik dla akcji `scope: 'edge'` Tablicy (pilot 2026-08-09,
- * `WhiteboardEdgeContextMenu.tsx`). Krawędź Tablicy NIE ma adresowalnego id
- * na szynie `idea-workspace-quick-action` — mutacja (etykieta/styl/strzałka/
- * odwrócenie/usunięcie) żyje w lokalnym zamknięciu `handleEdge*` w
- * `IdeaWhiteboardTool.tsx`, zamkniętym nad `edgeContextMenu.edgeId` z lokalnego
- * stanu Reacta. `useWhiteboardQuickActions.ts` NIE MA odbiornika dla akcji
- * krawędzi (patrz jego handlery `wb_*` — żaden nie dotyczy krawędzi), więc
- * `dispatchQuickAction`/`runByTool` tutaj by nie zadziałały bez dopisania
- * takiego odbiornika (poza zakresem tego pilota — celowo NIE ruszamy
- * `useWhiteboardQuickActions.ts` ani `IdeaWhiteboardTool.tsx`).
+ * Runtime strings na szynie `idea-workspace-quick-action` dla akcji krawędzi
+ * Tablicy — odbiornik: `useWhiteboardQuickActions.ts` (`editEdgeLabel` /
+ * `reverseEdge` / `cycleEdgeArrow` / `cycleEdgeStyle` / `deleteEdge`,
+ * dopisane 2026-08-09 razem z tą mapą). Konwencja nazw 1:1 z resztą rejestru
+ * (`RUNTIME_*`), analogicznie do `mm_edge_arrow` w Mapie myśli.
+ */
+const RUNTIME_EDGE_ACTION: Record<string, string> = {
+  'idea.edge.edit_label': 'wb_edge_edit_label',
+  'idea.edge.reverse': 'wb_edge_reverse',
+  'idea.edge.cycle_arrow': 'wb_edge_cycle_arrow',
+  'idea.edge.cycle_style': 'wb_edge_cycle_style',
+  'idea.edge.delete': 'wb_edge_delete',
+};
+
+/**
+ * Przekaźnik dla akcji `scope: 'edge'` Tablicy (pilot 2026-08-09,
+ * `WhiteboardEdgeContextMenu.tsx`; odbiornik szyny dopisany tego samego dnia
+ * jako follow-up, patrz `useWhiteboardQuickActions.ts` + `IdeaWhiteboardTool.tsx`
+ * `handleEdge*`).
  *
- * Zamiast tego powierzchnia (komponent menu) przekazuje SWÓJ oryginalny
- * prop-callback jako `ctx.params.run` — ten handler go po prostu wykonuje.
- * ŚWIADOME OGRANICZENIE (Z4): Teresa NIE MA dziś sposobu wywołania tych akcji
- * — nie istnieje pojęcie „krawędź pod kursorem" adresowalne z czatu, więc
- * wywołanie z `ctx.source === 'teresa'` zawsze grzecznie odmawia. Naprawa
- * wymaga adresowalnego `edgeId` + odbiornika w `useWhiteboardQuickActions.ts`
- * — kolejna fala, nie ten pilot.
+ * DWIE ścieżki, jedna funkcja:
+ *  • `ctx.source === 'ui'` + `ctx.params.run` (funkcja) — komponent menu
+ *    przekazuje SWÓJ oryginalny prop-callback (zamknięty nad lokalnym stanem
+ *    `edgeContextMenu` w `IdeaWhiteboardTool.tsx`); wykonujemy go wprost,
+ *    DOKŁADNIE jak przed tym follow-upem — zachowanie kliku człowieka jest
+ *    nietknięte.
+ *  • każdy inny wywołujący (Teresa, przyszła powierzchnia bez dostępu do
+ *    tego konkretnego zamknięcia komponentu) — nie ma `ctx.params.run`, więc
+ *    zamiast grzecznej odmowy dispatchujemy na szynę `idea-workspace-quick-action`
+ *    z realnym `edgeId`, którą teraz słucha `useWhiteboardQuickActions.ts`
+ *    (ten sam wzorzec co `mm_edge_arrow` w Mapie myśli — `edgeId` zamiast
+ *    zamknięcia nad komponentem).
+ *
+ * Skąd `edgeId` bez zamknięcia komponentu? `ctx.params.edgeId` (LLM podaje
+ * wprost — `teresa.parameters` każdej z 5 akcji niżej go wymaga, wzorem
+ * `idea.ai.expand_map`'s `nodeId`), z fallbackiem na `ctx.selection` (gdy
+ * `type === 'edge'`, konwencja `IdeaWorkspaceSelection` z `ideaSelectionTypes.ts`)
+ * dla przyszłych wywołań opartych na zaznaczeniu UI. UWAGA (odbiór): dziś
+ * `UnifiedChatPanel.tsx` woła `executeTeresaTool` z `selection: EMPTY_SELECTION`
+ * na sztywno (linie ~1988/2039) — fallback na `ctx.selection` jest więc
+ * martwy dla Teresy, dopóki ta osobna, poza zakresem tego zadania, luka nie
+ * zostanie naprawiona. Żywa ścieżka dla Teresy dziś to `ctx.params.edgeId`.
  */
 async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
-  if (ctx.source !== 'ui' || typeof run !== 'function') {
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+
+  const edgeId =
+    typeof ctx.params?.edgeId === 'string' && ctx.params.edgeId
+      ? ctx.params.edgeId
+      : ctx.selection?.type === 'edge' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!edgeId) {
     return {
       ok: false,
       actionId,
       message:
-        'Ta akcja działa tylko z menu prawego kliku na konkretnym połączeniu Tablicy — nie mam dziś sposobu adresowania go z czatu.',
+        'Nie wiem, na którym połączeniu Tablicy wykonać tę akcję — podaj `edgeId` (np. z listy połączeń) albo zaznacz je najpierw.',
     };
   }
-  (run as () => void)();
-  return { ok: true, actionId };
+  const runtime = RUNTIME_EDGE_ACTION[actionId];
+  if (!runtime) {
+    return {
+      ok: false,
+      actionId,
+      message: `Ta akcja nie istnieje w tej reprezentacji (${ctx.tool}).`,
+    };
+  }
+  dispatchQuickAction(runtime, ctx, { edgeId, ...(ctx.params || {}) });
+  return { ok: true, actionId, data: { runtime, edgeId } };
 }
 
 // ───────────────────── MAPY RUNTIME (parsowane przez strażnika) ─────────────────────
@@ -870,12 +913,15 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source: 'src/services/api.ts:4619 (duplicateMyIdea) + IdeaMapWorkspace.tsx kebab „Duplikuj"',
   },
-  // ── PILOT scope='edge' (2026-08-09) — WhiteboardEdgeContextMenu.tsx ──────
+  // ── scope='edge' (pilot 2026-08-09, dispatch-bus follow-up ten sam dzień) ─
   // Pierwsze 5 wpisów zakresu 'edge' w rejestrze. Handler = runEdgeParamCallback
   // (patrz komentarz przy jej definicji) — świadomie inny wzorzec niż
-  // dispatchQuickAction/runByTool używany przez pozostałe 16 wpisów, bo
-  // Tablica nie ma dziś odbiornika krawędzi na szynie. Kolejność deklaracji
-  // = kolejność w menu (1:1 ze stanem sprzed migracji).
+  // dispatchQuickAction/runByTool używany przez pozostałe 16 wpisów: UI nadal
+  // idzie przez `ctx.params.run` (prop-callback menu), ale każdy INNY
+  // wywołujący (Teresa) idzie przez `RUNTIME_EDGE_ACTION` → szynę
+  // `idea-workspace-quick-action` → realny odbiornik w
+  // `useWhiteboardQuickActions.ts`. Kolejność deklaracji = kolejność w menu
+  // (1:1 ze stanem sprzed migracji).
   {
     id: 'idea.edge.edit_label',
     label: { pl: 'Dodaj / edytuj etykietę', en: 'Add / edit label' },
@@ -893,7 +939,15 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Ustawia etykietę zaznaczonego połączenia na Tablicy (okno tekstowe z bieżącą wartością). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — Teresa nie ma jeszcze sposobu wskazania „które połączenie", więc wywołanie z czatu zawsze odmówi.',
+        'Ustawia etykietę wskazanego połączenia na Tablicy. Podaj `edgeId` połączenia (z menu prawego kliku klik działa bez tego parametru — tam etykietę pyta okno tekstowe).',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          label: { type: 'string', description: 'Nowa etykieta połączenia.' },
+        },
+        required: ['edgeId', 'label'],
+      },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158',
   },
@@ -914,7 +968,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Zamienia miejscami początek i koniec zaznaczonego połączenia na Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+        'Zamienia miejscami początek i koniec wskazanego połączenia na Tablicy. Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+        },
+        required: ['edgeId'],
+      },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223',
   },
@@ -935,7 +996,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Przełącza strzałkę kierunku zaznaczonego połączenia na Tablicy (cykl: brak → koniec → oba → początek). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+        'Przełącza strzałkę kierunku wskazanego połączenia na Tablicy (cykl: brak → koniec → oba → początek). Podaj `edgeId` połączenia — jeden klik cyklu, więc żeby dojść do konkretnego kierunku, może być potrzebne kilka wywołań.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+        },
+        required: ['edgeId'],
+      },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200',
   },
@@ -956,7 +1024,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     teresa: {
       description:
-        'Przełącza styl linii zaznaczonego połączenia na Tablicy (cykl: ciągła → kreskowana → kropkowana → falista). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+        'Przełącza styl linii wskazanego połączenia na Tablicy (cykl: ciągła → kreskowana → kropkowana → falista). Podaj `edgeId` połączenia — jeden klik cyklu, może być potrzebne kilka wywołań.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+        },
+        required: ['edgeId'],
+      },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178',
   },
@@ -982,7 +1057,14 @@ const IDEA_ACTIONS: ActionDef[] = [
     destructive: true,
     teresa: {
       description:
-        'Usuwa zaznaczone połączenie z Tablicy na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+        'Usuwa wskazane połączenie z Tablicy na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji, w tej samej sesji przeglądarki). Podaj `edgeId` połączenia.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+        },
+        required: ['edgeId'],
+      },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245',
   },

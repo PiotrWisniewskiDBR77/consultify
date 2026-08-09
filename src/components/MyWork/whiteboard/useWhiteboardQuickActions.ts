@@ -54,6 +54,21 @@ export interface WhiteboardQuickActionHandlers {
   redo?: () => void;
   /** Runs an AI generator (preview→apply via IdeaProposalReview; never applies silently). */
   runAIAction?: (generatorType: WhiteboardAIGeneratorType) => void;
+
+  /**
+   * Edge actions (2026-08-09, E02 follow-up — real receiver for the pilot's
+   * `idea.edge.*` registry entries). Mirrors mindmap's `mm_edge_arrow`
+   * pattern: given ONLY an edge id (no closure over a specific menu
+   * instance), locate that edge and perform the same mutation the human
+   * right-click menu performs. This is what lets a non-UI caller (Teresa,
+   * or any future surface) address a specific edge instead of requiring a
+   * human to have clicked that edge's own context menu.
+   */
+  editEdgeLabel?: (edgeId: string, label?: string) => void;
+  reverseEdge?: (edgeId: string) => void;
+  cycleEdgeArrow?: (edgeId: string) => void;
+  cycleEdgeStyle?: (edgeId: string) => void;
+  deleteEdge?: (edgeId: string) => void;
 }
 
 export interface UseWhiteboardQuickActionsOpts {
@@ -150,6 +165,24 @@ export function useWhiteboardQuickActions(opts: UseWhiteboardQuickActionsOpts): 
     // so handleQuickAction's CONVERT_PREFIX_MAP can route them
     if (action === 'wb_convert_decision' || action === 'wb_convert_action') {
       return;
+    }
+
+    // ── Edge actions (2026-08-09, E02 follow-up) ──────────────────────────
+    // Real receivers for `idea.edge.*` registry entries — dispatched by
+    // `runEdgeParamCallback`'s non-UI path in `ideaActionRegistry.ts` (the
+    // UI path still runs the menu's own prop-callback directly and never
+    // reaches here). `detail.edgeId` is required: unlike the UI menu, there
+    // is no local component closure to fall back to.
+    const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+    if (edgeId) {
+      if (action === 'wb_edge_edit_label') {
+        const label = typeof detail?.label === 'string' ? detail.label : undefined;
+        handlers.editEdgeLabel?.(edgeId, label);
+      }
+      if (action === 'wb_edge_reverse') handlers.reverseEdge?.(edgeId);
+      if (action === 'wb_edge_cycle_arrow') handlers.cycleEdgeArrow?.(edgeId);
+      if (action === 'wb_edge_cycle_style') handlers.cycleEdgeStyle?.(edgeId);
+      if (action === 'wb_edge_delete') handlers.deleteEdge?.(edgeId);
     }
   };
 

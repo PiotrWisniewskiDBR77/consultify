@@ -2462,6 +2462,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   // AI runner is defined below (needs handleGenerateProposal); bridged via ref
   // like the hook's own internal latest-handler pattern.
   const runAIActionRef = useRef<(generatorType: WhiteboardAIGeneratorType) => void>(() => {});
+  // Edge actions (2026-08-09, E02 follow-up): `handleEdge*` live further down
+  // (need `edges`/`edgeContextMenu` state declared later in this component),
+  // so they're bridged via the same latest-ref pattern as `runAIActionRef`
+  // above — the hook call below needs a stable function identity NOW, the
+  // real implementation is assigned after the `handleEdge*` useCallbacks.
+  // This is what gives Whiteboard edges a real, addressable dispatch-bus
+  // receiver (`wb_edge_*` on `idea-workspace-quick-action`), matching how
+  // Mind Map edges already dispatch `mm_edge_arrow` to
+  // `useMindMapQuickActions.ts` — see `runEdgeParamCallback` in
+  // `ideaActionRegistry.ts` for the caller side.
+  const editEdgeLabelRef = useRef<(edgeId: string, label?: string) => void>(() => {});
+  const reverseEdgeRef = useRef<(edgeId: string) => void>(() => {});
+  const cycleEdgeArrowRef = useRef<(edgeId: string) => void>(() => {});
+  const cycleEdgeStyleRef = useRef<(edgeId: string) => void>(() => {});
+  const deleteEdgeRef = useRef<(edgeId: string) => void>(() => {});
   useWhiteboardQuickActions({
     open,
     handlers: {
@@ -2486,6 +2501,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       undo: undoWhiteboard,
       redo: redoWhiteboard,
       runAIAction: (generatorType) => runAIActionRef.current(generatorType),
+      editEdgeLabel: (edgeId, label) => editEdgeLabelRef.current(edgeId, label),
+      reverseEdge: (edgeId) => reverseEdgeRef.current(edgeId),
+      cycleEdgeArrow: (edgeId) => cycleEdgeArrowRef.current(edgeId),
+      cycleEdgeStyle: (edgeId) => cycleEdgeStyleRef.current(edgeId),
+      deleteEdge: (edgeId) => deleteEdgeRef.current(edgeId),
     },
   });
 
@@ -3155,97 +3175,137 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   // edge.set_label — realny handler: aktualizuje data.label, autosave przez
   // onGraphChange, realtime przez collab update_edge.
-  const handleEdgeEditLabel = useCallback(() => {
-    if (!edgeContextMenu) return;
-    const edge = edges.find((ed) => ed.id === edgeContextMenu.edgeId);
-    if (!edge) return;
-    const current = String(edge.data?.label || '');
-    const next = window.prompt(isPl ? 'Etykieta połączenia:' : 'Connection label:', current);
-    if (next === null || next === current) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        updated = { ...ed, data: { ...(ed.data || {}), label: next } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, edges, isPl, pushUndoSnapshot, setEdges]);
+  //
+  // `edgeIdArg`/`labelArg` (2026-08-09, E02 follow-up): opcjonalne — gdy
+  // podane (wywołanie z `wb_edge_edit_label` na szynie, patrz
+  // `useWhiteboardQuickActions.ts`), używamy ich zamiast lokalnego stanu
+  // `edgeContextMenu` i pomijamy `window.prompt` (headless caller, np.
+  // Teresa, nie odpowie na natywny prompt). Menu prawego kliku nadal woła
+  // `handleEdgeEditLabel()` bez argumentów — zachowanie 1:1 ze stanem sprzed
+  // tej zmiany.
+  const handleEdgeEditLabel = useCallback(
+    (edgeIdArg?: string, labelArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      const edge = edges.find((ed) => ed.id === edgeId);
+      if (!edge) return;
+      const current = String(edge.data?.label || '');
+      const next =
+        edgeIdArg !== undefined
+          ? (labelArg ?? current)
+          : window.prompt(isPl ? 'Etykieta połączenia:' : 'Connection label:', current);
+      if (next === null || next === current) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          updated = { ...ed, data: { ...(ed.data || {}), label: next } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, edges, isPl, pushUndoSnapshot, setEdges]
+  );
 
   // edge.set_style — cykl styli obsługiwanych przez LabeledEdge.
-  const handleEdgeCycleStyle = useCallback(() => {
-    if (!edgeContextMenu) return;
-    const order = ['solid', 'dashed', 'dotted', 'wavy'] as const;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        const cur = String(ed.data?.edgeStyle || 'solid');
-        const nextStyle = order[(order.indexOf(cur as any) + 1) % order.length];
-        updated = { ...ed, data: { ...(ed.data || {}), edgeStyle: nextStyle } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+  const handleEdgeCycleStyle = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      const order = ['solid', 'dashed', 'dotted', 'wavy'] as const;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          const cur = String(ed.data?.edgeStyle || 'solid');
+          const nextStyle = order[(order.indexOf(cur as any) + 1) % order.length];
+          updated = { ...ed, data: { ...(ed.data || {}), edgeStyle: nextStyle } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges]
+  );
 
   // edge.set_arrow — strzałka kierunku przepływu (2026-07-28, zgłoszenie
   // właściciela). Cykl none → end → both → start na `data.arrowDirection`,
   // czyli DOKŁADNIE tym polu, którego używa Przepływ procesu i Mapa myśli
   // (SSOT geometrii: `canvas/edgeArrowMarkers.tsx`). Ta sama ścieżka zapisu co
   // `handleEdgeCycleStyle` → undo + collab + autosave bez nowej mechaniki.
-  const handleEdgeCycleArrow = useCallback(() => {
-    if (!edgeContextMenu) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    let applied: EdgeArrowDirection = 'none';
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
-        updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-    toast.success(
-      t(`mindmap.edgeArrow.${applied}`, {
-        defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
-      }),
-      { duration: 900 }
-    );
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]);
+  const handleEdgeCycleArrow = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      let applied: EdgeArrowDirection = 'none';
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          applied = nextArrowDirection(resolveArrowDirection(ed.data?.arrowDirection, 'none'));
+          updated = { ...ed, data: { ...(ed.data || {}), arrowDirection: applied } };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+      toast.success(
+        t(`mindmap.edgeArrow.${applied}`, {
+          defaultValue: applied === 'none' ? 'Arrow: none' : `Arrow: ${applied}`,
+        }),
+        { duration: 900 }
+      );
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges, t]
+  );
 
   // edge.reverse — zamiana source/target (i uchwytów), kierunek strzałki podąża.
-  const handleEdgeReverse = useCallback(() => {
-    if (!edgeContextMenu) return;
-    pushUndoSnapshot();
-    let updated: Edge | undefined;
-    setEdges((prev) =>
-      prev.map((ed) => {
-        if (ed.id !== edgeContextMenu.edgeId) return ed;
-        updated = {
-          ...ed,
-          source: ed.target,
-          target: ed.source,
-          sourceHandle: ed.targetHandle ?? null,
-          targetHandle: ed.sourceHandle ?? null,
-        };
-        return updated;
-      })
-    );
-    if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
-  }, [collab, edgeContextMenu, pushUndoSnapshot, setEdges]);
+  const handleEdgeReverse = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      pushUndoSnapshot();
+      let updated: Edge | undefined;
+      setEdges((prev) =>
+        prev.map((ed) => {
+          if (ed.id !== edgeId) return ed;
+          updated = {
+            ...ed,
+            source: ed.target,
+            target: ed.source,
+            sourceHandle: ed.targetHandle ?? null,
+            targetHandle: ed.sourceHandle ?? null,
+          };
+          return updated;
+        })
+      );
+      if (updated) collab.broadcastGraphPatch([{ op: 'update_edge', data: updated as any }]);
+    },
+    [collab, edgeContextMenu, pushUndoSnapshot, setEdges]
+  );
 
   // edge.delete — routujemy przez onEdgesChange, żeby dostać undo + collab
   // broadcast (remove_edge) + persist tą samą ścieżką co reszta zmian krawędzi.
-  const handleEdgeDelete = useCallback(() => {
-    if (!edgeContextMenu) return;
-    onEdgesChange([{ id: edgeContextMenu.edgeId, type: 'remove' }]);
-  }, [edgeContextMenu, onEdgesChange]);
+  const handleEdgeDelete = useCallback(
+    (edgeIdArg?: string) => {
+      const edgeId = edgeIdArg ?? edgeContextMenu?.edgeId;
+      if (!edgeId) return;
+      onEdgesChange([{ id: edgeId, type: 'remove' }]);
+    },
+    [edgeContextMenu, onEdgesChange]
+  );
+
+  // Bridge for the refs declared near the `useWhiteboardQuickActions` call
+  // above (needed there for a real `wb_edge_*` bus receiver before these
+  // callbacks exist in render order) — same pattern as `runAIActionRef`.
+  editEdgeLabelRef.current = handleEdgeEditLabel;
+  reverseEdgeRef.current = handleEdgeReverse;
+  cycleEdgeArrowRef.current = handleEdgeCycleArrow;
+  cycleEdgeStyleRef.current = handleEdgeCycleStyle;
+  deleteEdgeRef.current = handleEdgeDelete;
 
   const handleSlashCommand = useCallback(
     (action: string) => {
