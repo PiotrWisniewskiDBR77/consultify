@@ -65,7 +65,6 @@ import {
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
 import { useAppStore } from '@/store/useAppStore';
-import { InitiativeStatus } from '@/types/core';
 import { formatListDate } from '@/utils/listDateFormat';
 
 import { Menu3DropdownChip } from '../shared/Menu3DropdownChip';
@@ -96,7 +95,6 @@ import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { StandardModuleBar } from '../standard/StandardModuleBar';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
 import { getFinanceErrorMessage } from './financeErrorMap';
-import { isFinanceFlagEnabled } from './financeFeatureFlags';
 import { FinanceLanePanel } from './FinanceLanePanel';
 import { FinanceLaneStrip } from './FinanceLaneStrip';
 import { buildFinanceTeresaPrompt } from './financeModelLabels';
@@ -104,7 +102,6 @@ import { useFinancePreview } from './FinancePreviewPanel';
 import {
   type FinanceAnalysisRow,
   type FinanceKind,
-  type FinanceModelPreviewDetail,
   type FinanceModelRow,
   type FinanceRow,
   type FinanceStatementRow,
@@ -118,8 +115,6 @@ import { useFinanceData } from './hooks/useFinanceData';
 import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';
 import { useFinanceSelection } from './hooks/useFinanceSelection';
-import type { DriverNode } from './panels/DriverPlannerPanel';
-import type { ValueOfficeInitiative } from './panels/ValueOfficePanel';
 
 // ---------------------------------------------------------------------------
 // H5.1 perf (code-splitting): heavy, on-demand surfaces are lazy-loaded so the
@@ -171,68 +166,6 @@ const CreateValuationModal = lazy(() =>
 );
 const LinkInitiativeModal = lazy(() =>
   import('./modals/LinkInitiativeModal').then((m) => ({ default: m.LinkInitiativeModal }))
-);
-const BankingValuePanel = lazy(() =>
-  import('./panels/BankingValuePanel').then((m) => ({ default: m.BankingValuePanel }))
-);
-const CashForecastPanel = lazy(() =>
-  import('./panels/CashForecastPanel').then((m) => ({ default: m.CashForecastPanel }))
-);
-const DriverPlannerPanel = lazy(() =>
-  import('./panels/DriverPlannerPanel').then((m) => ({ default: m.DriverPlannerPanel }))
-);
-const DriverTreePanel = lazy(() =>
-  import('./panels/DriverTreePanel').then((m) => ({ default: m.DriverTreePanel }))
-);
-const EfficientFrontierPanel = lazy(() =>
-  import('./panels/EfficientFrontierPanel').then((m) => ({ default: m.EfficientFrontierPanel }))
-);
-const ExtendedRatiosPanel = lazy(() =>
-  import('./panels/ExtendedRatiosPanel').then((m) => ({ default: m.ExtendedRatiosPanel }))
-);
-const HeadcountPlannerPanel = lazy(() =>
-  import('./panels/HeadcountPlannerPanel').then((m) => ({ default: m.HeadcountPlannerPanel }))
-);
-const InvestmentAppraisalPanel = lazy(() =>
-  import('./panels/InvestmentAppraisalPanel').then((m) => ({ default: m.InvestmentAppraisalPanel }))
-);
-const MonteCarloNpvPanel = lazy(() =>
-  import('./panels/MonteCarloNpvPanel').then((m) => ({ default: m.MonteCarloNpvPanel }))
-);
-const RealOptionsPanel = lazy(() =>
-  import('./panels/RealOptionsPanel').then((m) => ({ default: m.RealOptionsPanel }))
-);
-const RollingForecastPanel = lazy(() =>
-  import('./panels/RollingForecastPanel').then((m) => ({ default: m.RollingForecastPanel }))
-);
-const ScenarioComputePanel = lazy(() =>
-  import('./panels/ScenarioComputePanel').then((m) => ({ default: m.ScenarioComputePanel }))
-);
-const ValuationVisualsPanel = lazy(() =>
-  import('./panels/ValuationVisualsPanel').then((m) => ({ default: m.ValuationVisualsPanel }))
-);
-const ValueAttributionPanel = lazy(() =>
-  import('./panels/ValueAttributionPanel').then((m) => ({ default: m.ValueAttributionPanel }))
-);
-const ValueCapturePipelinePanel = lazy(() =>
-  import('./panels/ValueCapturePipelinePanel').then((m) => ({
-    default: m.ValueCapturePipelinePanel,
-  }))
-);
-const ValueLedgerPanel = lazy(() =>
-  import('./panels/ValueLedgerPanel').then((m) => ({ default: m.ValueLedgerPanel }))
-);
-const ValueOfficePanel = lazy(() =>
-  import('./panels/ValueOfficePanel').then((m) => ({ default: m.ValueOfficePanel }))
-);
-const VarianceBridgePanel = lazy(() =>
-  import('./panels/VarianceBridgePanel').then((m) => ({ default: m.VarianceBridgePanel }))
-);
-const VarianceNarrationPanel = lazy(() =>
-  import('./panels/VarianceNarrationPanel').then((m) => ({ default: m.VarianceNarrationPanel }))
-);
-const WhatIfSensitivityPanel = lazy(() =>
-  import('./panels/WhatIfSensitivityPanel').then((m) => ({ default: m.WhatIfSensitivityPanel }))
 );
 
 /**
@@ -296,210 +229,6 @@ const EMPTY_STATE_ICON_BY_TAB: Partial<Record<ModuleTab, typeof Calculator>> = {
   prediction: TrendingUp,
   valuation: Target,
 };
-
-function isInvestmentAnalysisType(value: unknown): boolean {
-  const normalized = String(value || '')
-    .trim()
-    .toLowerCase();
-  return (
-    normalized === 'financial' ||
-    normalized === 'investment_case' ||
-    normalized === 'investment' ||
-    normalized === 'capex' ||
-    normalized.includes('investment') ||
-    normalized.includes('capex')
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Value Office (M16) — real-initiative mapping helpers.
-//
-// GET /api/initiatives returns free-text/legacy-shaped financial columns
-// (business_value/expected_roi were widened to TEXT by migration 903 to stop
-// AI-authored payloads like "20-30%" from failing inserts — see that
-// migration's note). These helpers are a best-effort, non-fabricating parse:
-// unparsable input degrades to a neutral default (0 / 0.5), never a made-up
-// specific number. Cancelled/archived initiatives are excluded outright
-// rather than mapped to a fake stage.
-// ---------------------------------------------------------------------------
-
-/** Best-effort numeric parse of a possibly free-text finance column. */
-function parseFinanceNumber(raw: unknown): number {
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
-  if (raw == null) return 0;
-  const str = String(raw).trim();
-  if (!str) return 0;
-  const direct = Number(str.replace(/\s/g, '').replace(',', '.'));
-  if (Number.isFinite(direct)) return direct;
-  const match = str.match(/-?\d+(?:[.,]\d+)?/);
-  if (!match) return 0;
-  const base = Number(match[0].replace(',', '.'));
-  if (!Number.isFinite(base)) return 0;
-  const lower = str.toLowerCase();
-  if (/mln|milion|million/.test(lower)) return base * 1_000_000;
-  if (/\btys\.?\b/.test(lower)) return base * 1_000;
-  if (/\bk\b/.test(lower)) return base * 1_000;
-  if (/\bm\b/.test(lower) && !/mln/.test(lower)) return base * 1_000_000;
-  return base;
-}
-
-type ValueStage = 'identified' | 'committed' | 'in_flight' | 'realized' | 'banked';
-
-/** Maps the enforced InitiativeStatus lifecycle (src/types/core.ts) onto the
- * M16 value-bridge maturity ladder. Cancelled/archived initiatives return
- * `null` — they are excluded from the value cockpit rather than counted as
- * "identified" value that no longer exists. */
-function mapInitiativeStatusToStage(status: unknown): ValueStage | null {
-  const normalized = String(status || '').toUpperCase();
-  switch (normalized) {
-    case InitiativeStatus.DRAFT:
-    case InitiativeStatus.PENDING_REVIEW:
-    case InitiativeStatus.REVIEW:
-    case InitiativeStatus.PROMOTED:
-      return 'identified';
-    case InitiativeStatus.PLANNING:
-    case InitiativeStatus.APPROVED:
-    case InitiativeStatus.SCHEDULED:
-      return 'committed';
-    case InitiativeStatus.EXECUTING:
-    case InitiativeStatus.BLOCKED:
-      return 'in_flight';
-    case InitiativeStatus.DONE:
-      return 'realized';
-    case InitiativeStatus.TRACKING:
-      return 'banked';
-    default:
-      return null;
-  }
-}
-
-/** risk_level is a free TEXT column (low/medium/high, occasionally numeric).
- * Unknown/missing values get a neutral 0.5 — never a fabricated specific
- * risk score. */
-function mapRiskLevelToScore(riskLevel: unknown): number {
-  const normalized = String(riskLevel || '')
-    .trim()
-    .toLowerCase();
-  if (normalized === 'low') return 0.2;
-  if (normalized === 'medium' || normalized === 'moderate') return 0.5;
-  if (normalized === 'high') return 0.8;
-  const numeric = Number(normalized);
-  if (Number.isFinite(numeric) && normalized !== '') {
-    return Math.min(Math.max(numeric > 1 ? numeric / 100 : numeric, 0), 1);
-  }
-  return 0.5;
-}
-
-/** effort is a free TEXT column — usually a small integer string (see
- * transformationReadDeckPackService.ts's `Number(initiative.effort || 3)`),
- * sometimes a low/medium/high label. Falls back to 3 (the same default used
- * elsewhere in the codebase) when neither parses. */
-function mapEffortToScore(effort: unknown): number {
-  const numeric = Number(effort);
-  if (Number.isFinite(numeric) && numeric > 0) return numeric;
-  const normalized = String(effort || '')
-    .trim()
-    .toLowerCase();
-  if (normalized === 'low') return 3;
-  if (normalized === 'medium') return 6;
-  if (normalized === 'high') return 9;
-  return 3;
-}
-
-interface RawInitiativeForValueOffice {
-  id: string | number;
-  name?: string;
-  status?: string;
-  businessValue?: unknown;
-  costCapex?: unknown;
-  costOpex?: unknown;
-  riskLevel?: unknown;
-  effort?: unknown;
-}
-
-/** Maps GET /api/initiatives rows onto ValueOfficeInitiative[]. Excludes
- * cancelled/archived initiatives (no live/realized value to represent). NPV
- * is approximated as businessValue net of capex+opex — the initiatives table
- * has no dedicated NPV column, so this is a transparent proxy, not the
- * discounted-cashflow NPV a formal investment appraisal would produce. */
-function mapInitiativesToValueOffice(
-  rows: RawInitiativeForValueOffice[] | null | undefined
-): ValueOfficeInitiative[] {
-  const mapped: ValueOfficeInitiative[] = [];
-  for (const row of rows || []) {
-    const stage = mapInitiativeStatusToStage(row.status);
-    if (!stage) continue;
-    const value = parseFinanceNumber(row.businessValue);
-    const capex = parseFinanceNumber(row.costCapex);
-    const opex = parseFinanceNumber(row.costOpex);
-    mapped.push({
-      id: String(row.id),
-      name: row.name || undefined,
-      value,
-      stage,
-      npv: value - capex - opex,
-      risk: mapRiskLevelToScore(row.riskLevel),
-      effort: mapEffortToScore(row.effort),
-    });
-  }
-  return mapped;
-}
-
-// ---------------------------------------------------------------------------
-// Driver Planner (M16) — real driver-tree from the selected model's forecast.
-//
-// There is no persisted "Revenue = Customers × ARPU"-style driver assumption
-// tree per financial model (that decomposition only exists transiently in
-// nlToModelService's NL-parse-to-model wizard flow). What IS real and
-// already computed for the selected model is its base-scenario P&L forecast
-// (modelPreviewDetail.scenarioTables.base['P&L']), so this builds a genuine
-// EBIT = (Revenue − COGS − Opex) − Depreciation tree from those real figures
-// instead of inventing customer/ARPU semantics the model doesn't have.
-// ---------------------------------------------------------------------------
-function buildDriverTreeFromModelPreview(
-  detail: FinanceModelPreviewDetail | null
-): DriverNode | undefined {
-  if (!detail) return undefined;
-  const year = detail.forecastYears?.[0];
-  if (!year) return undefined;
-  const plLines = detail.scenarioTables?.base?.['P&L'];
-  if (!Array.isArray(plLines) || plLines.length === 0) return undefined;
-  const findLine = (code: string) => plLines.find((l) => l.lineCode === code);
-  const revenue = Number(findLine('REVENUE')?.values?.[year]);
-  if (!Number.isFinite(revenue) || revenue <= 0) return undefined;
-  const cogs = Number(findLine('COGS')?.values?.[year] ?? 0) || 0;
-  const opex = Number(findLine('OPEX')?.values?.[year] ?? 0) || 0;
-  const depreciation = Number(findLine('DEPRECIATION')?.values?.[year] ?? 0) || 0;
-  const unit = detail.currency || undefined;
-  const leaf = (id: string, label: string, val: number): DriverNode => ({
-    id,
-    label,
-    value: val,
-    unit,
-    min: 0,
-    max: Math.max(val * 1.5, val + 1, 1),
-  });
-  return {
-    id: 'ebit',
-    label: `EBIT (${year})`,
-    op: 'subtract',
-    unit,
-    children: [
-      {
-        id: 'ebitda',
-        label: 'EBITDA',
-        op: 'subtract',
-        unit,
-        children: [
-          leaf('revenue', 'Revenue', revenue),
-          leaf('cogs', 'COGS', cogs),
-          leaf('opex', 'Opex', opex),
-        ],
-      },
-      leaf('depreciation', 'Depreciation', depreciation),
-    ],
-  };
-}
 
 export const FinanceHub: React.FC = () => {
   const { t } = useTranslation();
@@ -643,16 +372,6 @@ export const FinanceHub: React.FC = () => {
     deselectRow,
   } = useFinanceSelection(activeTab);
 
-  // Driver Planner (M16, flag-gated) — real EBIT decomposition of the
-  // currently previewed model's base-scenario forecast. `undefined` when no
-  // model is selected/previewed yet (or it has no P&L forecast lines), in
-  // which case DriverPlannerPanel renders an empty state prompting model
-  // selection (real-data-only — no synthetic SaaS sample; fixed 2026-07-16).
-  const valueOfficeDriverTree = useMemo(
-    () => buildDriverTreeFromModelPreview(modelPreviewDetail),
-    [modelPreviewDetail]
-  );
-
   const handleOpenEntityChat = useCallback(
     (row: FinanceRow) => {
       const entityTypeMap: Record<string, string> = {
@@ -703,37 +422,6 @@ export const FinanceHub: React.FC = () => {
     setV8Dashboard(null);
     setLanePanelOpen(false);
   }, [currentOrganization?.id]);
-
-  // Value Office (M16, flag-gated) — real org initiatives for ValueOfficePanel.
-  // Only fetched on the 'models' tab (the only place the panel renders) so the
-  // rest of Finance never pays for this call. Fail-soft: on error the panel
-  // falls back to its own built-in sample (never a thrown error).
-  const [valueOfficeInitiatives, setValueOfficeInitiatives] = useState<ValueOfficeInitiative[]>([]);
-  useEffect(() => {
-    if (
-      activeTab !== 'models' ||
-      !isFinanceFlagEnabled('valueOffice') ||
-      !currentOrganization?.id
-    ) {
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const rows = (await Api.get('/api/initiatives?limit=200')) as
-          | RawInitiativeForValueOffice[]
-          | null;
-        if (!cancelled) {
-          setValueOfficeInitiatives(mapInitiativesToValueOffice(Array.isArray(rows) ? rows : []));
-        }
-      } catch {
-        if (!cancelled) setValueOfficeInitiatives([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [activeTab, currentOrganization?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3262,13 +2950,6 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-          {isFinanceFlagEnabled('investmentAppraisal') && (
-            <div className="px-6 pb-6">
-              <Suspense fallback={<LoadingState template="panel" />}>
-                <InvestmentAppraisalPanel />
-              </Suspense>
-            </div>
-          )}
         </>
       );
     if (!activeDocumentId && activeTab === 'models' && filteredRows.length === 0)
@@ -3329,117 +3010,18 @@ export const FinanceHub: React.FC = () => {
               </div>
             </div>
           </div>
-          {isFinanceFlagEnabled('valueOffice') && (
-            <div className="px-6 pb-4">
-              <Suspense fallback={<LoadingState template="panel" />}>
-                <ValueOfficePanel initiatives={valueOfficeInitiatives} />
-              </Suspense>
-            </div>
-          )}
-          {isFinanceFlagEnabled('driverPlanner') && (
-            <div className="px-6 pb-6">
-              {/* No model exists yet on this empty-state branch, so there is no
-                  real forecast to decompose — the panel renders its empty state
-                  prompting model selection (no synthetic sample). */}
-              <Suspense fallback={<LoadingState template="panel" />}>
-                <DriverPlannerPanel />
-              </Suspense>
-            </div>
-          )}
         </>
       );
     if (activeDocumentId && activeDocument) return fullView;
-    const _baseView =
-      viewMode === 'grid'
-        ? gridView
-        : activeTab === 'statements'
-          ? statementsTableWithPreview
-          : tableWithPreview;
-    const _showInvest = isFinanceFlagEnabled('investmentAppraisal') && activeTab === 'investment';
-    const _showValue = isFinanceFlagEnabled('valueOffice') && activeTab === 'models';
-    const _showDriver = isFinanceFlagEnabled('driverPlanner') && activeTab === 'models';
-    const _showVariance = isFinanceFlagEnabled('varianceBridge') && activeTab === 'prediction';
-    const _showValVis = isFinanceFlagEnabled('valuationVisuals') && activeTab === 'valuation';
-    const _showM16Suite = isFinanceFlagEnabled('m16ValuationSuite') && activeTab === 'valuation';
-    const _showCashForecast =
-      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
-    const _showVarianceNarration =
-      isFinanceFlagEnabled('m16PlanningSuite') && activeTab === 'prediction';
-    // M16 advanced suite (wire-c) — independent of m16ValuationSuite/m16PlanningSuite (fala 1).
-    const _showFrontier = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'valuation';
-    const _showScenarioCompute =
-      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
-    const _showRollingForecast =
-      isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'prediction';
-    const _showDriverTree = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
-    const _showHeadcount = isFinanceFlagEnabled('m16AdvancedSuite') && activeTab === 'models';
-    // M16 value suite (wire-d) — independent of m16ValuationSuite /
-    // m16PlanningSuite / m16AdvancedSuite (does not touch those flags).
-    // Ledger/attribution/capture/banking follow the 'models' tab convention
-    // established by ValueOfficePanel (_showValue above); extended ratios
-    // follows the 'analysis' tab (ratio-analysis semantics).
-    const _showValueLedger = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
-    const _showAttribution = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
-    const _showCapturePipeline = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
-    const _showBanking = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'models';
-    const _showExtendedRatios = isFinanceFlagEnabled('m16ValueSuite') && activeTab === 'analysis';
-    if (
-      _showInvest ||
-      _showValue ||
-      _showDriver ||
-      _showVariance ||
-      _showValVis ||
-      _showM16Suite ||
-      _showCashForecast ||
-      _showVarianceNarration ||
-      _showFrontier ||
-      _showScenarioCompute ||
-      _showRollingForecast ||
-      _showDriverTree ||
-      _showHeadcount ||
-      _showValueLedger ||
-      _showAttribution ||
-      _showCapturePipeline ||
-      _showBanking ||
-      _showExtendedRatios
-    ) {
-      return (
-        <div className="flex flex-col">
-          {_baseView}
-          <Suspense
-            fallback={
-              <div className="px-4 pb-6">
-                <LoadingState template="panel" />
-              </div>
-            }
-          >
-            <div className="flex flex-col gap-4 px-4 pb-6">
-              {_showInvest && <InvestmentAppraisalPanel />}
-              {_showValue && <ValueOfficePanel initiatives={valueOfficeInitiatives} />}
-              {_showDriver && <DriverPlannerPanel driverTree={valueOfficeDriverTree} />}
-              {_showVariance && <VarianceBridgePanel />}
-              {_showValVis && <ValuationVisualsPanel valuation={selectedItem as any} />}
-              {_showM16Suite && <MonteCarloNpvPanel />}
-              {_showM16Suite && <RealOptionsPanel />}
-              {_showM16Suite && <WhatIfSensitivityPanel />}
-              {_showCashForecast && <CashForecastPanel />}
-              {_showVarianceNarration && <VarianceNarrationPanel />}
-              {_showFrontier && <EfficientFrontierPanel />}
-              {_showScenarioCompute && <ScenarioComputePanel />}
-              {_showRollingForecast && <RollingForecastPanel />}
-              {_showDriverTree && <DriverTreePanel />}
-              {_showHeadcount && <HeadcountPlannerPanel />}
-              {_showValueLedger && <ValueLedgerPanel />}
-              {_showAttribution && <ValueAttributionPanel />}
-              {_showCapturePipeline && <ValueCapturePipelinePanel />}
-              {_showBanking && <BankingValuePanel />}
-              {_showExtendedRatios && <ExtendedRatiosPanel />}
-            </div>
-          </Suspense>
-        </div>
-      );
-    }
-    return _baseView;
+    // Finance tabs are list surfaces. Analysis tools, planners and charts belong
+    // to the record workspace opened from a row, never below the list itself.
+    // Keeping this return unconditional is the canonical guard against the
+    // legacy flag-driven panel stack reappearing under a populated table.
+    return viewMode === 'grid'
+      ? gridView
+      : activeTab === 'statements'
+        ? statementsTableWithPreview
+        : tableWithPreview;
   }, [
     loadingTab,
     loadError,
@@ -3450,7 +3032,6 @@ export const FinanceHub: React.FC = () => {
     openChatWithContext,
     activeDocumentId,
     activeDocument,
-    selectedItem,
     fullView,
     viewMode,
     gridView,
@@ -3458,8 +3039,6 @@ export const FinanceHub: React.FC = () => {
     statementsTableWithPreview,
     showImportWizard,
     handleImportWizardComplete,
-    valueOfficeInitiatives,
-    valueOfficeDriverTree,
   ]);
 
   // ---- Render ----
