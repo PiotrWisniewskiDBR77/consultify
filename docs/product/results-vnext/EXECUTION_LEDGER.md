@@ -947,3 +947,29 @@ do `evalThresholdMin` — `actualValue === successValue → on_target, inaczej
 critical`, zero strefy warning z definicji) oraz `pending_approval` do
 `rvn_kpi_definitions.status` (migracja ALTER, nie nowy plik — ta sama
 migracja jest jeszcze niewypchnięta poza tę gałąź).
+
+## 17. KPI-E001/E002 — luki naprawione i zweryfikowane (2026-08-09)
+
+Commit `b937a0e3d8`. **Zweryfikowane przeze mnie** (CHECK constraints w
+migracji sprawdzone bezpośrednio): `status` ma teraz 5 wartości włącznie z
+`pending_approval`, `target_geometry` ma 6 wartości włącznie z `binary`.
+Nowa kolumna `binary_success_value NUMERIC CHECK IN (0,1)` — per-wersja, nie
+globalna konwencja (bo polaryzacja sukcesu różni się per KPI: "zero
+wypadków" sukces=0, "certyfikat ważny" sukces=1), chroniona przez trigger
+`protect_approved` tak jak inne pola. `submitDefinition`/`rejectDefinitionVersion`
+poprawnie przełączają `rvn_kpi_definitions.status` między `draft`↔
+`pending_approval`, z guardem `WHERE status=...` żeby późniejsza poprawka
+aktywnego KPI nie cofnęła go do pending_approval. tsc: 0 błędów. Testy:
+69/69 (61 + 8 nowych binary cases). RealDB: zweryfikowane bezpośrednio że
+oba nowe CHECK działają (poprawne wartości przechodzą, niepoprawne odrzucone)
+i że trigger chroni nową kolumnę na zatwierdzonych wierszach.
+
+**KPI-E001 (Central KPI Contract) i KPI-E002 (Measurement Truth) są teraz
+zgodne z planem źródłowym w pełnym zakresie enumów.** To pierwszy kompletny,
+zweryfikowany pionowy przyrost domenowy w programie Results Next — schema +
+command layer + pure evaluator + testy, zbudowany na fundamencie RN-G1.
+Pozostaje: warstwa API (`/api/vnext/results/kpi/*`), KPI-E003 (Deviation
+Closed Loop), KPI-E004 (Scorecards), KPI-E005-E007, potem UI (RN-G2), Teresa
+(RN-G3), i to samo dla ROI i OKR — a potem integracje krzyżowe i hardening.
+Ogromny zakres wciąż przed nami, ale fundament (Platform + pierwszy pełny
+segment jednej domeny) stoi i jest udowodniony.
