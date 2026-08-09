@@ -363,8 +363,54 @@ reversible engineering judgment, not owner-escalation-worthy):
 6. **Autonomy-ceiling enforcement blocked on E6** — accepted as a known,
    tracked gap, not this packet's job.
 
+## CW-P12 (shared tenant/membership authorization primitive) — 2026-08-10
+
+Not a domain-epic packet — the cross-cutting module every one of CW-P01-11
+independently flagged as missing. `caseWorkspaceAuthContext.ts`:
+`resolveActorMembership`/`requireOrgMember`/`requireOrgRole`/`requireCaseAccess`,
+fail-closed on missing-or-non-ACTIVE membership, role floor corroborated
+against two independent existing implementations
+(`finalBatchService.ts`/`chatPermissionService.ts`), enumeration-oracle-safe
+(`requireCaseAccess` throws byte-for-byte identical errors for
+nonexistent/cross-tenant/unauthorized-own-org cases — verified in the test
+by direct string-comparison between the three, not against a hardcoded
+literal). Commits `cbbc97f95c` + fix `f147877c0f` (a real bug: node-postgres
+returns `TIMESTAMPTZ` as a `Date`, not a string — `organization_members`
+uses `TIMESTAMPTZ` unlike this directory's own `TEXT` convention).
+
+**Deliberate deviation from the coordinator's own task brief, accepted as
+correct**: the brief asked for a distinct `case_not_found` vs
+authorization-failure error; the design instead unified them, citing SEC-009
+(`FROZEN_TARGET_CONTRACT`, "cross-tenant references fail closed without
+disclosing existence") as higher-authority. Coordinator independently
+verified SEC-009's exact text/authority level and the two role-rank
+citations before accepting — not taken on the implementing agent's word.
+
+**Not yet done**: nothing in CW-P01-11's 11 existing services actually
+*calls* this module yet (that requires touching those files, out of this
+packet's own no-existing-file-modified scope) — it exists as an unused,
+tested primitive until a route layer (or a dedicated retrofit packet) wires
+it in. This is the literal next prerequisite before any of the 12 packets'
+work can safely reach an HTTP boundary.
+
 ## Status of this registry
 
-First pass only. Each packet's file allowlist, acceptance criteria and exact
-requirement-row assignment (currently only cluster-level, not per-row) is
-completed when that packet is actually opened, per document 13 §4.3.
+12 packets landed (2026-08-09 – 2026-08-10): E1, E2, E3, E4, E5, E6, E9,
+E10, E11, E12, E13, plus the shared auth primitive. 78 real-Postgres tests,
+all independently re-verified by the coordinator (not just trusted from
+agent reports), one real bug caught and fixed along the way in this
+verification step (`f147877c0f`) plus one caught during design review
+(`44769e6bc9`, CW-P08 cross-tenant instantiation).
+
+Each packet's file allowlist, acceptance criteria and exact requirement-row
+assignment (currently only cluster-level, not per-row, for the W1 baseline)
+is completed when that packet is actually opened, per document 13 §4.3 —
+now true for all 12 packets above.
+
+Remaining unaddressed: E7/E8 (gated at W2-V0, needs Piotr's preliminary
+visual-direction approval before any production UI commit), the HTTP/API
+route layer for all 12 services (needs `caseWorkspaceAuthContext` actually
+wired into each service's call sites first — not yet done), E14 (final
+acceptance rollup: Golden Cases A-F, accessibility, performance budgets,
+candidate manifest — depends on substantially everything else being real
+and route-reachable first).
