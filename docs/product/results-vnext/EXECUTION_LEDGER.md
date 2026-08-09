@@ -973,3 +973,119 @@ Closed Loop), KPI-E004 (Scorecards), KPI-E005-E007, potem UI (RN-G2), Teresa
 (RN-G3), i to samo dla ROI i OKR — a potem integracje krzyżowe i hardening.
 Ogromny zakres wciąż przed nami, ale fundament (Platform + pierwszy pełny
 segment jednej domeny) stoi i jest udowodniony.
+
+## 18. KPI-E001/E002 — warstwa API `/api/vnext/results/kpi/*` (2026-08-09)
+
+Commity `14c854457b` (routes + Gateway mount) i `e885086628` (testy).
+Cienki router HTTP nad już gotowym command/repository layerem z §14-17 —
+zero nowej logiki domenowej, tylko auth/param plumbing, walidacja Zod
+(`server/src/validators/resultsVnextKpi.validators.ts`) i mapowanie
+błędów na kody HTTP. Wzorzec referencyjny:
+`server/src/routes/pmo/initiativeClosure.routes.ts` (inline handlery +
+jeden `handle*Error` mapper + lokalny `requireAuth`, nie osobny
+Controller — ta domena nie miała istniejącego kontrolera do rozszerzenia).
+
+**15 endpointów zamontowanych** (`server/src/routes/resultsVnext/kpi.routes.ts`,
+zamontowany w `Gateway.ts` pod `/api/vnext/results/kpi`): `POST /`,
+`GET /`, `GET /:kpiId`, `PUT /:kpiId/draft`, `POST /:kpiId/submit`,
+`POST /:kpiId/definition-versions/:versionId/{approve,reject}`,
+`POST /:kpiId/{activate,suspend,archive}`, `POST /:kpiId/measurements`,
+`GET /:kpiId/measurements`, `POST /:kpiId/measurements/:measurementId/
+{corrections,verify,dispute}`. To PODZBIÓR planu §7.1/§7.2 — tylko
+endpointy z realną implementacją command/repository dzisiaj; deviation
+cases (§7.3) i scorecards (§7.4) nie mają jeszcze kodu domenowego, więc
+nie są tu wpięte (przyszłe pakiety).
+
+**Decyzje projektowe tej warstwy (nie były pinowane przez żaden istniejący
+dokument, więc udokumentowane tutaj):**
+1. `PUT .../draft` i `POST .../submit` przyjmują `kpiId` w URL (zgodnie z
+   planem), ale komendy `editDraft`/`submitDefinition` operują na
+   `definitionVersionId` — router rozwiązuje to przez `kpiRepository.getKpi`
+   (odczyt visibility-scoped) i używa `kpi.currentDefinitionVersionId`.
+2. `approve`/`reject` mają `versionId` wprost w URL, ale komenda nie
+   sprawdza że wersja należy do `kpiId` z URL — router robi dodatkowy
+   odczyt (`rvn_kpi_definition_versions` po `definition_version_id` +
+   `organization_id`) i zwraca 404 przy niezgodności, zamiast pozwolić na
+   mylącą "sukces" operację pod złym zagnieżdżonym URL-em.
+3. **`performanceStatus` jest liczone SERWEROWO**, nie przyjmowane od
+   klienta — `recordMeasurement`'s own doc comment mówi że komenda tego
+   nie robi ("the caller ... can evaluate before calling"); router jest
+   tym callerem: ładuje bounds z `rvn_kpi_definition_versions`, konwertuje
+   przez (już eksportowane) `toKpiDefinitionVersion`, i woła
+   `evaluatePerformanceStatus` (dotąd 100% martwy kod — pierwszy realny
+   caller). To samo dla `correctMeasurement` (przeliczenie względem
+   ORYGINALNEJ wersji definicji zmierzonej wartości). Bez tego klient
+   mógłby sfałszować status wydajności KPI przez samo zgłoszenie.
+4. **idempotencyKey**: brak jednego wzorca w repo (część endpointów
+   header `X-Idempotency-Key`, część pole `idempotencyKey` w body —
+   zgrepowane `initiativeClosure.routes.ts`/`InitiativeController.ts`:
+   pole w body jest częstsze). Przyjęto: opcjonalne pole `idempotencyKey`
+   w body; jeśli brak, generowane server-side (`crypto.randomUUID()`) —
+   `platform/atomicWrite.ts` wymaga go zawsze (unique index), więc
+   generacja server-side jest bezpiecznym domyślnym zachowaniem.
+5. **Błędy → HTTP**: `SelfApprovalDeniedError`→403,
+   `AtomicWriteConflictError`(STALE_VERSION)→409,
+   `AtomicWriteAggregateNotFoundError`/`KpiMeasurementNotFoundError`→404,
+   `KpiNoActiveVisibilityPolicyError`→409 (org bez aktywnej polityki —
+   precondition failure, nie 400/404), `KpiDefinitionValidationError`→409
+   (dowolna nieprawidłowa tranzycja stanu — patrz DEVIATION niżej),
+   nieznany błąd→500 zalogowany, bez stack trace w response.
+
+**DEVIATION od briefu zadania**: brief nazwał klasę błędu
+`DefinitionVersionNotSubmittedError` dla przypadku "wersja nie była
+zgłoszona". Taka klasa NIE ISTNIEJE nigdzie w repo (zgrepowane przed
+napisaniem kodu) — realny błąd dla KAŻDEJ nieprawidłowej tranzycji stanu
+(submit nie-draftu, approve/reject nie-submitted, activate bez approved
+version) to pojedyncza klasa `KpiDefinitionValidationError`
+(`kpiDefinitionCommands.ts`), rozróżniana przez `.code`
+(`NOT_A_DRAFT`/`NOT_SUBMITTED`/`INVALID_KPI_STATUS_TRANSITION`/
+`NO_APPROVED_VERSION`). Zmapowana na 409, tak jak brief sugerował jako
+alternatywę.
+
+**Testy**: `server/src/routes/resultsVnext/__tests__/kpi.routes.test.ts` —
+16 testów kontraktowych HTTP (supertest + Express, wzorzec
+`workbook-commands.routes.test.ts`: middleware auth/rbac/demo/rate-limit
+zastąpione przejściami, warstwa SERWISU mockowana, nie cała baza —
+command/repository layer ma już własną ewidencję na realnym Postgresie
+z §15/§17 i pokrycie jednostkowe w `tests/resultsVnext/kpi/`). Klasy
+błędów w mockach są PRAWDZIWE (`importOriginal` + nadpisanie tylko
+funkcji), więc `instanceof` w `handleKpiRouteError` jest testowane na
+faktycznych prototypach. Pokrywa: create→get roundtrip, self-approval
+denial 403, STALE_VERSION 409, aggregate-not-found 404, invalid-transition
+409, measurement record→list roundtrip z serwerowym przeliczeniem
+`performanceStatus`, 404 przy niezgodności kpiId/measurementId na
+correct/verify/dispute, walidacja Zod 400. **tsc: 0 błędów** (`server/`,
+`--max-old-space-size=8192`). **Testy: 16/16 nowych, 85/85 łącznie z
+istniejącym `tests/resultsVnext/kpi/` (69) — bez regresji.**
+
+**Poza zakresem tego pakietu** (świadomie): endpointy `GET .../history`,
+`GET .../contexts`, `GET /portfolio/summary`, `GET /my-kpis`,
+`GET /attention` z planu §7.2 — `kpiRepository.ts` nie ma dla nich
+implementacji (tylko `listKpis`/`getKpi`/`listMeasurements` istnieją);
+całe §7.3 (Deviation) i §7.4 (Scorecards) — brak command/repository layera
+w tym repo. Weryfikacja na realnej bazie efemerycznej (przepis §11) NIE
+była tu potrzebna — ten pakiet nie dodał żadnego nowego SQL/DDL, tylko
+HTTP nad już zweryfikowanym layerem z §15/§17.
+
+## 18. KPI-E003 Deviation Closed Loop — design zamrożony (2026-08-09)
+
+Draft agenta `a925f809507d44927` (bardzo dokładnie zweryfikowany w kodzie:
+odkrył że outbox nie ma żadnego konsumenta, że `manager_user_id` nigdy nie
+istniał na `rvn_kpi_definitions`, że plan ma wewnętrzną sprzeczność co do
+"Planu" jako osobnego agregatu). 8 otwartych pytań rozstrzygniętych. **Pełna
+treść (DDL+kod) tym razem wklejona bezpośrednio do**
+`docs/product/results-vnext/KPI_E003_DESIGN.md` — nie tylko decyzje —
+wnioskując z incydentu przy KPI-E001/E002 (§16), gdzie odesłanie do
+"konwersacji" zamiast wklejenia pełnej treści zmusiło implementatora do
+rekonstrukcji i wprowadziło 2 realne luki.
+
+Kluczowe decyzje: case key = `(organization_id, kpi_id)`, jeden aktywny case
+per KPI wymuszony partial unique index w bazie; "Plan" jako faza cyklu życia
+case'a, nie osobny agregat; `openOrEscalateDeviationCase` w TEJ SAMEJ
+transakcji co measurement insert (bo outbox nie ma dziś żadnego konsumenta —
+"async" oznaczałoby w praktyce że case nigdy by się nie tworzył); nowa
+platformowa tabela `rvn_platform_obligations` budowana TERAZ (nie jako osobny
+pakiet) bo OKR/ROI będą potrzebować identycznego mechanizmu, a to dokładnie
+zapobiega fragmentacji którą program ma naprawić. Implementacja czeka na
+zakończenie równoległego pakietu API routes (ryzyko konfliktu plików —
+`kpiMeasurementCommands.ts`/`atomicWrite.ts` są dotykane przez oba).
