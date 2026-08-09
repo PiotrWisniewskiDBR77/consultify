@@ -1574,3 +1574,114 @@ minimalny odpowiednik jak poproszono). Poza zakresem: `listCorrectiveActions
 (scorecard Tool §3 "Attention and deviations", jawnie odłożone w
 `KPI_E004_DESIGN.md` §C.3) — nie budowany w tym pakiecie.
 
+## 27. KPI-E005 Perspectives & Links — implementacja (mechanika, bez warstwy
+API) (2026-08-09)
+
+Zaimplementowano `KPI_E005_DESIGN.md` (§26) w 5 osobnych commitach
+(Package 0-4), każdy zweryfikowany osobno na efemerycznym Postgresie 16
+(`initdb --locale=C`, `LC_ALL=C`, TCP `127.0.0.1`) zanim przeszedł do
+następnego — **każda nowa funkcja repository ma bezpośredni realDB test**,
+zgodnie z wymogiem §24, nie tylko zmockowany test.
+
+- **Package 0** — prerequisite: `listManagementChainDescendants` dopisane
+  do `platform/managementChainMaintenance.ts` (§B.1) — pierwsza funkcja
+  ODCZYTU w tym module (dotąd był tylko zapis/`updateManagerAndRecomposeClosure`).
+- **Package 1** — dwie migracje, §A.3+§C skopiowane dosłownie:
+  `20260813_rvn_kpi_measurement_cadence.sql` (addytywna kolumna
+  `measurement_frequency_days` na `rvn_kpi_definition_versions` + rozszerzony
+  `rvn_kpi_definition_versions_protect_approved()`) i
+  `20260813_rvn_kpi_initiative_impacts.sql` (`rvn_kpi_initiative_impacts`,
+  FK do `initiatives(id)` — pierwsza tabela RVN z realną zależnością od
+  legacy baseline, `ux_..._one_active` partial unique index,
+  `rvn_kpi_initiative_impacts_protect_baseline` trigger). Zweryfikowane na
+  efemerycznym Postgresie NA SZCZYCIE istniejącego łańcucha migracji tej
+  gałęzi + minimalnej fixture `initiatives(id TEXT PRIMARY KEY)` (pełny
+  baseline `migrations-v2/001_baseline_20260413.sql` wymaga rozszerzenia
+  `vector`, niedostępnego w tym środowisku — ten sam wzorzec samodzielnej
+  fixture co istniejące testy realDB używają dla `team_members`): świeży
+  apply exit 0, drugi przebieg idempotentny, rozszerzony trigger realnie
+  blokuje mutację `measurement_frequency_days` na zatwierdzonej wersji
+  (23001) a przepuszcza `effective_to`, `protect_baseline` realnie blokuje
+  mutację `baseline_value_at_commitment`/`committed_by` po `committed`, i
+  `ux_rvn_kpi_initiative_impacts_one_active` realnie blokuje drugi
+  jednoczesny aktywny impact dla tego samego `(kpi_id, initiative_id)`.
+- **Package 2** — `kpiPerspectivesRepository.ts`: `listMyKpis` (§A, SQL
+  dosłownie — jedno zapytanie, UNION ALL sześciu gałęzi, grace period
+  decyzji #5) i `listOrganizationKpiAttention` (§B, orkiestrator siedmiu
+  NIEZALEŻNYCH zapytań — `missingOwnership` świadomie omija
+  `chain_members`/`scoped_kpis` per decyzja #2). **Realny bug znaleziony
+  przez uruchomienie dosłownego SQL na prawdziwym Postgresie, nie
+  domysłem**: predykat design doc `< $4 - interval '1 day'` bez rzutowania
+  na `$4` — Postgres'owe wnioskowanie typu parametru rozwiązuje operator `-`
+  jako `interval - interval` zamiast `timestamptz - interval`, więc `$4`
+  typuje się jako `interval` i zewnętrzne `<` pada 42883. Naprawione
+  jawnym `$4::timestamptz`. Obie funkcje smoke-zweryfikowane end-to-end na
+  realnym Postgresie z realnymi fixture'ami (poprawny grace period,
+  poprawna agregacja chain-scoped).
+- **Package 3** — `kpiInitiativeImpactTypes.ts` (Row/DTO) +
+  `kpiInitiativeImpactCommands.ts` (§C.3: `proposeInitiativeKpiImpact`
+  `executeAtomicCreate` z pre-checkiem ACTIVE_IMPACT_EXISTS,
+  `commitInitiativeKpiImpact` `executeAtomicCommand` — zamraża baseline z
+  NAJNOWSZEGO pomiaru W TEJ SAMEJ transakcji, `recordReviewedAttribution`
+  `executeAtomicCommand` z self-approval denial (`reviewedBy` !=
+  `committedBy`), `supersedeInitiativeKpiImpact` `executeAtomicCommand` —
+  stara wersja → `superseded`, nowy `proposed` wiersz w TEJ SAMEJ
+  transakcji) + `kpiInitiativeImpactRepository.ts`
+  (`listInitiativeImpactsForKpi`/`listKpiImpactsForInitiative` przez
+  `buildVisibilityScopedCte({resourceType:'kpi'})`, brak własnego wiersza
+  widoczności — dziedziczy z KPI per design §C). Cztery nowe event types
+  (`kpi.initiative_impact_*`) dopisane do `atomicWrite.ts`'s
+  `EVENT_TYPE_CONSUMER_GROUPS`. **`aggregateType` musi być wartością z
+  `RVN_RESOURCE_TYPES`** (typ `PlatformEventEnvelope.aggregateType` w
+  `eventEnvelope.ts`) — `'kpi_initiative_impact'` tam nie istnieje (design
+  świadomie nie rejestruje nowego resource type, tabela dziedziczy
+  widoczność z KPI), więc eventy impactu używają `aggregateType:'kpi'` +
+  `aggregateId:<kpiId właściciela>`, ten sam wzorzec co
+  `kpiCorrectiveActionCommands.ts`'s `aggregateType:'deviation_case'` +
+  `aggregateId:<deviationCaseId>`.
+
+  **DEVIATION FROM DESIGN**: design §C.3 każe `commitInitiativeKpiImpact`
+  pisać `link_graph_edges` "przez TĘ SAMĄ ścieżkę kodu co istniejący
+  `POST /api/my-work/link-graph/edges`". Ta ścieżka
+  (`my-work.routes.ts`'s `linkGraphAddEdge`, zweryfikowane czytaniem pliku,
+  nie zgadywaniem) jest (1) modułowo-prywatną, nieeksportowaną `const` i (2)
+  pisze przez `queryHelpers.queryRun`, który — wg WŁASNEGO komentarza tego
+  pliku przy `withPgTransaction` — idzie przez współdzieloną PULĘ połączeń
+  `PostgresDatabase`, chwytając RÓŻNE fizyczne połączenie przy każdym
+  wywołaniu, więc nie może uczestniczyć w przypiętej transakcji
+  `executeAtomicCommand`, w której design sam wymaga atomowości zamrożenia
+  baseline + zapisu edge'a. Najbliższy bezpieczny odpowiednik: replikacja
+  DOKŁADNIE tego samego kształtu wiersza `link_graph_edges` na przypiętym
+  kliencie, z tą samą idempotentną obsługą duplikatu (23505 na
+  `ux_link_graph_edges_ref` → no-op) — kopiowanie kształtu, nie
+  ręczne pisanie innego.
+
+- **Package 4** — testy. Unit (mock, `initiativeKpiImpactCommands.test.ts`,
+  7 testów): self-approval denial, zamrażanie baseline (z pomiarem i bez),
+  guard ACTIVE_IMPACT_EXISTS. RealDB (zgodnie z wymogiem §24 — KAŻDA nowa
+  funkcja repository ma bezpośredni test, nie tylko zmockowany):
+  `organizationKpiAttention.realdb.test.ts` (manager widzi tylko
+  podwładnych przez tabelę zamknięcia łańcucha zarządzania; PRIVATE KPI
+  podwładnego pozostaje niewidoczny mimo bycia w chain — T3 wygrywa,
+  zweryfikowane przez `ownerLoad.activeKpiCount` zostające na 1, nie 2),
+  `initiativeKpiImpactBaselineFreeze.realdb.test.ts` (TRIGGER, nie kod
+  aplikacji, realnie blokuje bezpośredni UPDATE `baseline_value_at_commitment`/
+  `committed_by` po commitment — 23001, `reviewed_attribution_value`
+  pozostaje zapisywalne), `kpiIdentityAcrossSurfaces.realdb.test.ts` (§D.3
+  dosłownie: jedna KPI + jeden deviation case + jedna scorecard + jeden
+  InitiativeKPIImpact, odczytane przez wszystkich 5 powierzchni
+  — `listKpis`/`getKpi`/`listMyKpis`/`listOrganizationKpiAttention`/
+  `listScorecardItems` — string-equal `kpiId` wszędzie).
+
+**Wynik końcowy**: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+w `server/` — 0 błędów. Pełny zestaw `tests/resultsVnext/kpi` +
+`server/src/routes/resultsVnext` na tym samym efemerycznym Postgresie:
+**173/173 PASS** (163 istniejące + 10 nowych: 7 unit + 3 realDB) — **zero
+regresji**. Dwie realne dewiacje znalezione i naprawione przez uruchomienie
+na prawdziwym Postgresie (nie domysłem): predykat grace-period w §A.4
+wymagający jawnego rzutowania `$4::timestamptz`, i architektura
+`link_graph_edges`-write w §C.3 (opisana wyżej). Nie zbudowano: warstwa API
+`/api/vnext/results/kpi/my`, `/attention`, `/initiative-impacts/*` — jawnie
+poza zakresem tego pakietu per `KPI_E005_DESIGN.md`, następny, osobny
+pakiet.
+
