@@ -58,7 +58,17 @@ import * as exceptionLedgerService from './exceptionLedgerService.js';
 // Row shapes (only the columns this module actually reads/writes).
 // ---------------------------------------------------------------------------
 
-interface BaselineModelRow {
+// NOTE (WP-D08): the row shapes, CANONICAL_CODES/STATEMENT_TYPE_OF/DRIVING_SCHEDULE_TYPE tables,
+// loadContext()/requireAssumption()/daysInPeriod() below carry an `export` keyword they did not
+// have in WP-D06 — a purely ADDITIVE, zero-behavior-change visibility change (no signature, no
+// logic touched) so `predictionComputeService.ts`/`predictionPreflightService.ts` can load the
+// SAME Baseline Model context (schedules/assumptions/history/opening BS) that this module already
+// knows how to load, instead of duplicating that ~90-line loader. See WP-D08 report section
+// "baselineScheduleEngine.ts / baselineComputeService.ts reuse" for the full rationale — this is
+// the "minimal necessary change, backward compatible" the WP-D08 brief asked for if reuse required
+// touching this file's API; `runBaselineCompute()` itself is completely unchanged, so every WP-D06
+// test still exercises the exact same code path.
+export interface BaselineModelRow {
   business_version_id: string;
   organization_id: string;
   horizon_months: number;
@@ -68,14 +78,14 @@ interface BaselineModelRow {
   mandatory_contractual_cash_sweep_modeled: boolean;
 }
 
-interface BaselineScheduleRow {
+export interface BaselineScheduleRow {
   schedule_type: string;
   entity_id: string;
   schedule_item_code: string;
   payload: Record<string, unknown>;
 }
 
-interface BaselineAssumptionRow {
+export interface BaselineAssumptionRow {
   schedule_type: string;
   driver_code: string;
   entity_id: string;
@@ -83,7 +93,7 @@ interface BaselineAssumptionRow {
   value_status: string;
 }
 
-interface PeriodMetaRow {
+export interface PeriodMetaRow {
   period_id: string;
   fiscal_year: number;
   fiscal_month: number | null;
@@ -91,13 +101,13 @@ interface PeriodMetaRow {
   period_end: string | Date;
 }
 
-interface StmtLineCellRow {
+export interface StmtLineCellRow {
   canonical_line_id: string;
   value_decimal: string | null;
   value_status: string;
 }
 
-const CANONICAL_CODES = [
+export const CANONICAL_CODES = [
   'REVENUE', 'COGS', 'GROSS_MARGIN', 'OPEX', 'EBITDA', 'DEPRECIATION', 'EBIT',
   'INTEREST_EXPENSE', 'TAX_EXPENSE', 'NET_INCOME',
   'CASH', 'AR', 'INVENTORY', 'CURRENT_ASSETS', 'FIXED_ASSETS', 'TOTAL_ASSETS',
@@ -105,9 +115,9 @@ const CANONICAL_CODES = [
   'EQUITY', 'TOTAL_LIABILITIES_EQUITY', 'RETAINED_EARNINGS', 'DIVIDENDS_DECLARED', 'WORKING_CAPITAL',
   'CFO', 'CFI', 'CFF', 'NET_CHANGE_CASH', 'CAPEX', 'FCF',
 ] as const;
-type CanonicalCode = (typeof CANONICAL_CODES)[number];
+export type CanonicalCode = (typeof CANONICAL_CODES)[number];
 
-const STATEMENT_TYPE_OF: Record<CanonicalCode, 'P&L' | 'BS' | 'CF'> = {
+export const STATEMENT_TYPE_OF: Record<CanonicalCode, 'P&L' | 'BS' | 'CF'> = {
   REVENUE: 'P&L', COGS: 'P&L', GROSS_MARGIN: 'P&L', OPEX: 'P&L', EBITDA: 'P&L', DEPRECIATION: 'P&L',
   EBIT: 'P&L', INTEREST_EXPENSE: 'P&L', TAX_EXPENSE: 'P&L', NET_INCOME: 'P&L',
   CASH: 'BS', AR: 'BS', INVENTORY: 'BS', CURRENT_ASSETS: 'BS', FIXED_ASSETS: 'BS', TOTAL_ASSETS: 'BS',
@@ -117,7 +127,7 @@ const STATEMENT_TYPE_OF: Record<CanonicalCode, 'P&L' | 'BS' | 'CF'> = {
 };
 
 /** `driving_schedule_type` per canonical line — NULL for roll-up/solver lines not directly produced by one `schedule_type` (ADR section 4.4). */
-const DRIVING_SCHEDULE_TYPE: Partial<Record<CanonicalCode, string>> = {
+export const DRIVING_SCHEDULE_TYPE: Partial<Record<CanonicalCode, string>> = {
   REVENUE: 'revenue_pvm',
   COGS: 'cogs_opex', OPEX: 'cogs_opex',
   AR: 'wc_dso_dio_dpo', INVENTORY: 'wc_dso_dio_dpo', AP: 'wc_dso_dio_dpo',
@@ -147,13 +157,13 @@ function toIsoDate(value: string | Date): string {
   return value;
 }
 
-function daysInPeriod(p: PeriodMetaRow): number {
+export function daysInPeriod(p: PeriodMetaRow): number {
   const start = Date.parse(`${toIsoDate(p.period_start)}T00:00:00Z`);
   const end = Date.parse(`${toIsoDate(p.period_end)}T00:00:00Z`);
   return Math.round((end - start) / 86_400_000) + 1;
 }
 
-interface LoadedContext {
+export interface LoadedContext {
   model: BaselineModelRow;
   artifactId: string;
   sourceWorkingRevisionId: string | null;
@@ -166,7 +176,15 @@ interface LoadedContext {
   assumptions: Map<string, number>; // `${scheduleType}::${driverCode}` -> value_decimal
 }
 
-async function loadContext(params: RunBaselineComputeParams): Promise<
+/**
+ * WP-D08 reuse note: `params.businessVersionId` must be the BASELINE MODEL's own
+ * `business_version_id` (the one with a `finance_baseline_models` row and an inbound
+ * `STATEMENT_TO_MODEL` edge) — NOT a Prediction Scenario's `business_version_id`. A caller in
+ * `predictionComputeService.ts`/`predictionPreflightService.ts` resolves that baseline model
+ * version first (via the scenario's own `MODEL_TO_SCENARIO` lineage edge, ADR WP-D07 section 2)
+ * and passes it here — this function itself is completely unaware Prediction exists.
+ */
+export async function loadContext(params: RunBaselineComputeParams): Promise<
   | { ok: true; ctx: LoadedContext }
   | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'NO_BASELINE_MODEL_ROW'; message: string }
 > {
@@ -296,7 +314,7 @@ async function loadContext(params: RunBaselineComputeParams): Promise<
   };
 }
 
-function requireAssumption(ctx: LoadedContext, scheduleType: string, driverCode: string): number {
+export function requireAssumption(ctx: LoadedContext, scheduleType: string, driverCode: string): number {
   const v = ctx.assumptions.get(`${scheduleType}::${driverCode}`);
   if (v === undefined) throw new Error(`baselineComputeService: missing assumption ${scheduleType}::${driverCode}`);
   return v;
