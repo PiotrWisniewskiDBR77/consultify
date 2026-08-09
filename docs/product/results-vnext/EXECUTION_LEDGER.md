@@ -31,7 +31,7 @@ przez SendMessage na poprawną ścieżkę.
 
 | Gate | Status | Data | Uwagi |
 |---|---|---|---|
-| RN-G0 | IN_PROGRESS | 2026-08-09 | inwentaryzacja w toku (fala 1 przekierowana po błędzie ścieżki) |
+| RN-G0 | PREPARED — pending independent review (Codex) | 2026-08-09 | Kontrakt+baseline+inventory+threat model+ownership/DAG+epic ledger (108 AC rows) kompletne. Brak nierozstrzygniętego P0 semantycznego blokującego G1. Nie mogę sam ogłosić PASS — to decyzja Codex/Foundera |
 | RN-G1 | NOT_STARTED | | |
 | RN-G2 | NOT_STARTED | | |
 | RN-G3 | NOT_STARTED | | |
@@ -52,9 +52,9 @@ nie blokuje), właściciel, rekomendacja, status.
 | EN-02 | macierz ról i materiality thresholds per domena | tak (maker-checker/G1) | Security | RBAC(3-poziom)+PBAC(capability-key, shadow-only) istnieją. ABAC/visibility modes (OPEN_ORG/SCOPE/MANAGEMENT_CHAIN/PRIVATE/RESTRICTED_ACL) = ZERO wyników w grepie, budować od zera | PARTIAL — RBAC/PBAC fundament gotowy, ABAC OPEN |
 | EN-03 | źródłowy kontrakt MyWork/Decisions/outbox rozszerzalny bezpiecznie | tak (G1/G3) | Platform | Decisions CAS wzorzec GOTOWY do kopiowania (decisionCollaborationService.ts:809-940, zweryfikować migrację 932 na demo!). Prawdziwy transactional outbox z event envelope NIE ISTNIEJE (notification_outbox=best-effort, non-atomic) — budować od zera | PARTIAL — Decisions wzorzec gotowy, outbox OPEN |
 | EN-04 | stabilny route/history owner dla full tools | nie (G2) | Registry UX | TBD | OPEN |
-| EN-05 | lista legacy write consumers (telemetry/logs) | tak (G1 legacy freeze) | Data | TBD | OPEN |
+| EN-05 | lista legacy write consumers (telemetry/logs) | tak (G1 legacy freeze) | Data | Kod-poziom kompletny (nie runtime telemetry): 5 systemów ROI (§3.7), 4+ tabele KPI + 3 Scorecard (§3.8), dokładne plik:linia dla wszystkich write endpointów. Wystarczające do zaprojektowania T5 (fizyczna izolacja GET-only) w G1 | PARTIAL — code-level RESOLVED, runtime telemetry nie sprawdzana (nie blokuje) |
 | EN-06 | polityka reflection waiver i min. liczby KR | nie (OKR G4) | OKR | TBD | OPEN |
-| EN-07 | finance calculation artifacts/version identifiers (D06 seam) | nie (G6) | ROI/Finance | TBD | OPEN |
+| EN-07 | finance calculation artifacts/version identifiers (D06 seam) | nie (G6) | ROI/Finance | Pełna koperta zdefiniowana w planie §9.6 (`finance_artifact_type/id/version_id`+mapping version+source/as-of+unit/currency+purpose) — patrz §3.5. Realne Finance artifact IDs z żywego M16 do spięcia dopiero w G6 | RESOLVED (kontrakt), realne ID = G6 |
 | EN-08 | znane zestawy known-answer ROI + polityki currency/discount/rounding | tak (ROI G4) | ROI | Known-answer fixture set TERAZ w pełni zdefiniowany w planie §16.1 (10 nazwanych scenariuszy, wymóg niezależnej weryfikacji). Rounding/currency/discount default nadal NIE zdecydowane liczbowo — plan mówi "decimal-safe + declared rounding policy" ale nie podaje wartości domyślnych, to robota WP0/WP1 (ROIPolicyVersion) | PARTIAL — fixture-set CLOSED, numeric policy defaults nadal OPEN |
 | EN-09 | pilot population i pierwsze okresy/cykle | nie (G4) | Program | TBD | OPEN |
 | EN-10 | nazwane terminalne acceptance environment (Railway demo / inne) | nie (poza zakresem wykonawcy, Codex/Founder) | Codex/Founder | N/A — decyzja poza mną | OPEN (nie blokuje implementacji) |
@@ -485,8 +485,31 @@ równoległe tabele KPI). Platform jest SSOT dla tych trzech mechanizmów.
 | T8 | Money/decimal unsafety | ROI operuje na pieniądzach — plan wymaga decimal-safe, zero floating point (§3.5) | Typ kolumny NUMERIC/DECIMAL, nigdy FLOAT/REAL, w nowych tabelach `rvn_*` | Known-answer fixture z dokładnością co do grosza |
 | T9 | Stale-compute-at-approval | Approval zatwierdza wynik silnika, który mógł się zdezaktualizować między compute a submit | Plan już to adresuje (§3.5: "approval requires successful current run matching submitted snapshot") — pilnować przy implementacji WP5 | Test: zmiana inputu po compute, przed approve → approval odrzucony/wymusza recompute |
 
-## 5. Epic ledger seed
+## 5. Epic ledger
 
-Referencja: `docs/product/results-vnext/07_EPIC_AND_TRACEABILITY_LEDGER.md` — wiersze
-feature/AC dopisywane tu dopiero po ustaleniu realnych plików/komend, nie kopiowane
-na sucho.
+Pełny, wypełniony ledger (23 epików, 108 wierszy feature/AC, wszystkie
+`NOT_IMPLEMENTED`) w osobnym pliku: `docs/product/results-vnext/EPIC_LEDGER_LIVE.md`
+(oddzielony od tego pliku, żeby zachować nawigowalność). Rozszerza szablon z
+`07_EPIC_AND_TRACEABILITY_LEDGER.md` §8.
+
+## 6. RN-G0 — stan zamknięcia (2026-08-09)
+
+Zgodnie z kryteriami `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md` §5 RN-G0:
+
+| Wymóg | Stan |
+|---|---|
+| Decyzje D01-D15 zamknięte | ✓ (zamknięte w samym pakiecie) |
+| ADR/supersession | ✓ częściowo — EN-11 (V8 docs vs results-vnext) rozstrzygnięte tekstem; EN-12 (delegation rule vs CLAUDE.md) rozstrzygnięte dla tej sesji; brak formalnego osobnego pliku ADR |
+| Threat model | ✓ §4.3 (T1-T9) |
+| Inventory kodu/routes/schema/consumers/flags | ✓ §3 (8 fal, KPI/ROI/OKR domena+kod, MyWork/Decisions/Teresa/events/RBAC/org) |
+| Baseline branch/SHA/worktree/status | ✓ §0 |
+| Ownership/allowlist/DAG | ✓ §4.1-4.2 |
+| Ledger epików i kryteriów | ✓ `EPIC_LEDGER_LIVE.md`, 108 wierszy |
+| Open Decision & Evidence Register | 6/12 RESOLVED, 3/12 PARTIAL (fakty znane, implementacja=G1 praca, nie brakująca decyzja), 3/12 OPEN nie-blokujące (EN-06 OKR policy=G4, EN-09 pilot population=Founder przed G4, EN-10 acceptance env=poza zakresem wykonawcy) |
+| Brak nierozstrzygniętego P0 semantycznego | ✓ żaden otwarty punkt nie blokuje startu G1 |
+
+**Wniosek**: G0 jest kompletne z mojej strony. Nie mogę sam ogłosić PASS
+(zastrzeżone dla Codex/niezależnego review, zgodnie z `08_CLAUDE_COMPLETE_EXECUTION_PROMPT.md`
+§13). Kontynuuję do E1/RN-G1 (platform foundation) — to jest dozwolone: dokument
+mówi "po RN-G0, E1 Platform Foundation executes toward RN-G1", nie wymaga
+zewnętrznego sign-off między G0 a startem G1.
