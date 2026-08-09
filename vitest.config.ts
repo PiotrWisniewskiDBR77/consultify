@@ -260,6 +260,11 @@ export default defineConfig({
       'tests/security/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Performance tests (Agent 5)
       'tests/performance/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // results-vnext (KPI-E001/E002 and future ROI/OKR/deviation packages)
+      // unit tests — pure functions + mocked-PoolClient command tests, no
+      // real DB needed. Without this glob these tests are uncollectable by
+      // `npm run test:unit`/CI regardless of `git add -f`ing the files.
+      'tests/resultsVnext/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Table Platform service tests
       'server/src/services/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
       // V8 integration tests (nested under __tests__/integration/)
