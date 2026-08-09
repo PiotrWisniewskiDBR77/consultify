@@ -5106,7 +5106,7 @@ router.post(
     const userId = getUserId(req);
 
     const validation = validatePresetCreateInput(req.body);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       return res.status(400).json({
         success: false,
         error: validation.error,
