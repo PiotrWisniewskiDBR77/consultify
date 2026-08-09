@@ -1685,3 +1685,124 @@ wymagający jawnego rzutowania `$4::timestamptz`, i architektura
 poza zakresem tego pakietu per `KPI_E005_DESIGN.md`, następny, osobny
 pakiet.
 
+## 28. KPI-E005 Perspectives & Links — warstwa API (2026-08-09)
+
+Zaimplementowano `server/src/routes/resultsVnext/kpiPerspectives.routes.ts` —
+ostatni brakujący pakiet z `KPI_E005_DESIGN.md` §E ("Not in this package:
+`/api/vnext/results/kpi/my`, `/attention`, `/initiative-impacts/*` HTTP
+routes"). Ten sam wzorzec stylu co `kpi.routes.ts`/`kpiDeviation.routes.ts`/
+`kpiScorecard.routes.ts` (inline handlery + wspólny `handle*Error` mapper +
+lokalny `requireAuth`, bez osobnej klasy Controller).
+
+**Endpointy**: `GET /api/vnext/results/kpi/my` (listMyKpis, userId z tokena)
+· `GET /api/vnext/results/kpi/attention` (listOrganizationKpiAttention,
+managerId z tokena) · `POST /api/vnext/results/kpi/initiative-impacts`
+(proposeInitiativeKpiImpact) · `POST .../initiative-impacts/:impactId/commit`
+(commitInitiativeKpiImpact) · `POST .../initiative-impacts/:impactId/review`
+(recordReviewedAttribution, self-approval denial -> 403) ·
+`POST .../initiative-impacts/:impactId/supersede`
+(supersedeInitiativeKpiImpact) · `GET .../kpi/:kpiId/initiative-impacts`
+(listInitiativeImpactsForKpi) · `GET /api/vnext/results/initiatives/
+:initiativeId/kpi-impacts` (listKpiImpactsForInitiative). Walidacja Zod w
+nowym `server/src/validators/resultsVnextKpiPerspectives.validators.ts`
+(ten sam wzorzec pól — `idempotencyKeyField`/`nullableReasonField`/
+`expectedVersionField`/`isoDateTimeString` — redeklarowany lokalnie, nie
+importowany między plikami walidatorów, zgodnie z konwencją każdego
+sąsiedniego pliku w tym katalogu).
+
+**MOUNT-ORDER — nowy, inny kształt problemu niż §23/§25**: w
+`/deviation-cases`/`/scorecards` chodziło o bardziej-specyficzny-prefiks-
+najpierw. Tutaj `/my`/`/attention`/`/initiative-impacts/*`/
+`/:kpiId/initiative-impacts` z brief'u zadania są BEZPOŚREDNIMI dziećmi
+TEGO SAMEGO ogólnego prefiksu `/api/vnext/results/kpi`, który już posiada
+`kpi.routes.ts` (`GET /:kpiId`) — nie da się dla nich wydzielić osobnego,
+bardziej specyficznego pod-prefiksu tak jak zrobiły to poprzednie dwa
+pakiety. Naprawa: `kpiPerspectives.routes.ts`'s domyślny router
+zamontowany na DOKŁADNIE TYM SAMYM prefiksie `/api/vnext/results/kpi` i
+zarejestrowany w `Gateway.ts` PRZED `resultsVnextKpiRoutes` — bez tego,
+`GET /api/vnext/results/kpi/my` trafiłby najpierw w `kpi.routes.ts`'s
+`GET /:kpiId` (`kpiId="my"`) i dostał 400 z walidacji UUID zamiast
+przejść dalej. Sprawdzone EXPLICITE jednym testem, który faktycznie woła
+oba te endpointy i sprawdza że `mockGetKpi` NIE został wywołany
+(`kpiPerspectives.routes.test.ts`'s "mount-order regression guard" —
+zarówno dla `/my`/`/attention`, jak i odwrotnie: osobny test potwierdza że
+`GET /api/vnext/results/kpi/:realUuid` nadal poprawnie trafia w
+`kpi.routes.ts`, więc naprawa nie połknęła całego prefiksu). Endpoint
+`GET /:kpiId/initiative-impacts` nie kolidował z niczym z założenia — drugi
+segment ścieżki jest literałem "initiative-impacts", nie dynamicznym
+`/:kpiId` z jednym segmentem jak w `kpi.routes.ts`. Ósmy endpoint
+(`GET /api/vnext/results/initiatives/:initiativeId/kpi-impacts`) leży pod
+zupełnie nowym prefiksem `/api/vnext/results/initiatives` (zweryfikowane
+grepem — nigdzie wcześniej niezamontowany), więc `kpiPerspectives.routes.ts`
+eksportuje DWA routery (`export default` dla `/api/vnext/results/kpi`,
+named export `initiativesKpiImpactsRouter` dla `/api/vnext/results/
+initiatives`) zamiast jednego.
+
+**Błąd, którego NIE ma w tym pliku**: ani `listMyKpis`/
+`listOrganizationKpiAttention` (czyste odczyty przez
+`buildVisibilityScopedCte`, nigdy nie rzucają `KpiNoActiveVisibilityPolicyError`
+— zweryfikowane czytaniem `kpiPerspectivesRepository.ts`), ani komendy
+InitiativeKPIImpact (ta tabela świadomie nie ma własnego wiersza
+`rvn_platform_resource_visibility` — dziedziczy z KPI, design §C) nie mogą
+rzucić tego błędu, więc `handlePerspectivesRouteError` — inaczej niż
+`kpi.routes.ts`/`kpiScorecard.routes.ts` — NIE ma tej gałęzi.
+
+**Testy — zgodnie z wymogiem §24, bezpośredni test repository/command na
+realnym Postgresie dla KAŻDEJ funkcji użytej w tym pakiecie, nie tylko
+zmockowana trasa**:
+- `server/src/routes/resultsVnext/__tests__/kpiPerspectives.routes.test.ts`
+  — 21 testów HTTP-boundary (walidacja Zod, mapowanie błędów, mount-order —
+  montuje razem `kpiPerspectives.routes.ts` I `kpi.routes.ts` w tej samej
+  kolejności co `Gateway.ts`, tak jak `kpiDeviation.routes.test.ts` robi to
+  dla swojego prefiksu). Repository/command zmockowane w całości — jak
+  zawsze, to NIE jest dowód działania joina widoczności.
+- **NOWY** `tests/resultsVnext/kpi/kpiInitiativeImpactPerspectivesRoutesRealdb
+  .test.ts` — 3 testy na realnym Postgresie 16, zamyka DWIE realne luki:
+  (1) `listInitiativeImpactsForKpi`/`listKpiImpactsForInitiative`
+  (`kpiInitiativeImpactRepository.ts`) miały ZERO pokrycia testowego
+  gdziekolwiek przed tym pakietem (zgrepowane `tests/`/`server/src` — brak
+  trafień poza samym plikiem repozytorium) — pierwszy realny przebieg ich
+  `INNER JOIN rvn_visible_resources`/`kpi_id::text` (PRIVATE KPI właściciela
+  OWNER widoczne, OUTSIDER bez RBAC override widzi pustą listę na obu
+  ścieżkach odczytu, plus filtr `status` zawężający poprawnie); (2)
+  `recordReviewedAttribution` miał tylko test jednostkowy na fałszywym
+  `PoolClient` (`initiativeKpiImpactCommands.test.ts`) —
+  ten plik dodaje realny self-approval denial (reviewedBy===committedBy,
+  wiersz w DB niezmieniony po odrzuceniu) i realną ścieżkę sukcesu
+  (committed -> realized_reviewed); `supersedeInitiativeKpiImpact` NIE MIAŁ
+  ŻADNEGO testu wcześniej (zgrepowane `tests/` — zero trafień poza
+  komentarzem) — ten plik jest jego pierwszym przebiegiem gdziekolwiek,
+  włącznie z tańcem częściowego unikalnego indeksu
+  (`ux_rvn_kpi_initiative_impacts_one_active`: stary wiersz flippowany na
+  `superseded` PRZED insertem nowego `proposed` wiersza w tej samej
+  transakcji — zweryfikowane bezpośrednim SELECT-em na obu wierszach po
+  fakcie, nie tylko wynikiem funkcji).
+- Pełny zestaw `tests/resultsVnext/kpi` + `server/src/routes/resultsVnext`
+  na tym samym efemerycznym Postgresie (Homebrew `postgresql@16`,
+  `initdb --locale=C`, gniazdo w `/private/tmp`, migracje
+  `20260303_link_graph_v3.sql` + `20260809_rvn_platform_*.sql` +
+  `20260810_rvn_kpi_core.sql` + `20260811_rvn_kpi_deviation_loop.sql` +
+  `20260811_rvn_platform_obligations.sql` + `20260812_rvn_kpi_scorecards.sql`
+  + `20260813_rvn_kpi_measurement_cadence.sql` +
+  `20260813_rvn_kpi_initiative_impacts.sql`, plus samodzielna fixture
+  `initiatives`/`team_members` jak każdy sąsiedni test w tym katalogu —
+  pełny `migrations-v2/001_baseline_20260413.sql` wymaga rozszerzenia
+  `vector`, niedostępnego w tym środowisku): **197/197 PASS** (173
+  istniejące + 24 nowych: 21 HTTP-boundary + 3 realDB) — **zero regresji**.
+  Dwie pułapki złapane i naprawione PODCZAS pisania testu realDB, nie tylko
+  potwierdzone: (a) `buildVisibilityScopedCte`'s gałąź SCOPE zawsze
+  referencuje `team_members` niezależnie od trybu widoczności faktycznie
+  użytego przez fixture — brakująca tabela dawała `42P01` nawet dla
+  scenariusza czysto PRIVATE; (b) `rvn_platform_visibility_policies` ma
+  unikalny indeks `(organization_id, domain, policy_version)` — wołanie
+  `insertVisibilityPolicy` osobno w KAŻDYM z trzech scenariuszy testowych
+  (ten sam ORG_ID) dawało `23505` na drugim; naprawione jedną wspólną
+  polityką utworzoną raz w `beforeAll`, reużywaną przez wszystkie trzy
+  scenariusze (każdy ze swoim świeżym `kpi_id`).
+
+**Wynik końcowy**: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
+w `server/` — 0 błędów. Zero dewiacji od `KPI_E005_DESIGN.md` — wszystkie 8
+endpointów z brief'u zaimplementowane dosłownie zgodnie z sygnaturami
+repository/command warstwy z §27. Poza zakresem: żaden — to był ostatni
+brakujący pakiet KPI-E005 (§A–§D w pełni zamknięte: mechanika §27, API §28).
+

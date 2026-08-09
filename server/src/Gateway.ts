@@ -278,6 +278,19 @@ import resultsVnextKpiDeviationRoutes from './routes/resultsVnext/kpiDeviation.r
 // "MOUNT-ORDER NOTE": resultsVnextKpiRoutes' `GET /:kpiId` would otherwise
 // shadow this router's `GET /` for the literal path segment "scorecards").
 import resultsVnextKpiScorecardRoutes from './routes/resultsVnext/kpiScorecard.routes.js';
+// KPI-E005 Perspectives & Links — `router` (default export) owns
+// `/my`/`/attention`/`/initiative-impacts/*`/`/:kpiId/initiative-impacts` as
+// DIRECT children of the SAME generic `/api/vnext/results/kpi` prefix
+// resultsVnextKpiRoutes owns (unlike the two routers above, which each
+// carved out their own more-specific sub-prefix) — it MUST be registered
+// BEFORE resultsVnextKpiRoutes below, or `GET /api/vnext/results/kpi/my`
+// would hit that router's `GET /:kpiId` first (`kpiId="my"`) and 400 on the
+// UUID check instead of falling through (see kpiPerspectives.routes.ts's own
+// "MOUNT-ORDER NOTE"). `initiativesKpiImpactsRouter` (named export) is a
+// brand-new prefix (`/api/vnext/results/initiatives`) with no ordering risk.
+import resultsVnextKpiPerspectivesRoutes, {
+  initiativesKpiImpactsRouter as resultsVnextInitiativesKpiImpactsRoutes,
+} from './routes/resultsVnext/kpiPerspectives.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1115,7 +1128,13 @@ export class ApiGateway {
       // generic `/api/vnext/results/kpi` mount below, registered before it
       // for the same reason (see kpiScorecard.routes.ts's "MOUNT-ORDER NOTE").
       app.use('/api/vnext/results/kpi/scorecards', resultsVnextKpiScorecardRoutes);
+      // KPI-E005 Perspectives & Links — SAME prefix as resultsVnextKpiRoutes
+      // below (not a more-specific sub-prefix like the two routers above),
+      // so it MUST be registered BEFORE it — see the import comment above
+      // and kpiPerspectives.routes.ts's own "MOUNT-ORDER NOTE".
+      app.use('/api/vnext/results/kpi', resultsVnextKpiPerspectivesRoutes);
       app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
+      app.use('/api/vnext/results/initiatives', resultsVnextInitiativesKpiImpactsRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
