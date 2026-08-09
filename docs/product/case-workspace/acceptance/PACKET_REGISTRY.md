@@ -104,7 +104,27 @@ resolutions:
    ("human UI and Teresa call the same owning command") belongs to whichever
    packet wires routes/dispatcher through this registry, not to registry
    persistence itself.
-| CW-P04 | E4 | E2, E3 | `v8_execution_runs` (KEEP, already the Run entity); `v8_agent_work_graphs`/`v8_agent_branch_tasks` (KEEP, already NodeRun); `agentOperatorConsoleService.ts` (KEEP, recovery already exists) | CasePlanVersion binding (CREATE — does not exist); pre-E4 hand-port of `v8-full-done`'s 3 commits (session task #8) | 29 (authority-v8-runtime) |
+| CW-P04 | E4 | E2, E3 | `v8_execution_runs` (KEEP, already the Run entity, read-only referenced); `v8_agent_work_graphs`/`v8_agent_branch_tasks` (KEEP, already NodeRun); `v8_agent_run_identities.canonical_run_id` (pattern reused: run_id as PK) | `case_workspace_run_bindings` (run_id itself is the PK — structurally at-most-one-binding-ever), `runBindingService.ts`, 4 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+v8-files-untouched verified**, commit `2ede09b5b6` | 29 (authority-v8-runtime) |
+
+## CW-P04 (E4 Run binding) — design decisions accepted 2026-08-09
+
+1. **Call-site timing (when in the Run lifecycle bindRunToPlanVersion fires)**
+   — deferred; belongs to whichever future packet actually drives
+   `v8_execution_runs.state` transitions, out of this packet's scope.
+2. **PUBLISHED-required at bind time, inferred not literally stated** —
+   accepted as the correct reading of CW-01-011 ("immutable approved
+   definition"); flagged for product to confirm no dry-run/preview Run needs
+   to bind against a non-PUBLISHED version.
+3. **Organization cross-check beyond literal packet scope** — accepted and
+   kept; a defensive tenant-isolation guard is worth keeping even if an
+   upstream invariant already guarantees it elsewhere.
+4. **No `updated_at`, by design (row never mutated)** — accepted; revisit
+   only if a future recovery/compensation packet needs to record a
+   Run-was-superseded fact, which would likely be a NEW row/table, not a
+   mutation of this one.
+5. **`correlationId` belongs on `v8_execution_runs`, not this table** —
+   accepted; out of scope (no ALTER TABLE permitted on `v8_execution_runs`
+   by this program's collision-avoidance mandate).
 | CW-P05 | E5 | E4 | `operationClaimService.ts` + `artifactLineageService.ts` (EXTEND, lineage/claim patterns) | durable wait claims, human task queue, callback auth/dedupe, outbox/inbox | subset of 70 (security-legacy) |
 | CW-P06 | E6 | E1, E2 | autonomy policy concepts already documented in canon (00/08) | server-enforced A0-A4 ceilings, explicit A2/A3/A4 controls, revalidation | 109 (governance-history-decisions) |
 | CW-P07 | E7 | E1, E2, E4, E6 | `StandardModuleBar`/`StandardTable`/`StandardPreview`/`ArtifactRightPanel`/`StandardArtifactShell` all confirmed present (KEEP, all 5 primitives exist); `MyTasksListContent`/`DecisionsPanelContent` (ADAPT) | Case Workspace shell itself (CREATE — none exists); retire `MyWorkHub.tsx` (4727 lines) as the target, component-donor only | 235 (authority-ui-standards + canon UI rows) — **UI packets pause at W2-V0 (task #9)** |
