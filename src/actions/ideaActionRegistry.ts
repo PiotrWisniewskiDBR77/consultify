@@ -155,7 +155,13 @@ export type IconName =
   // `getEdgeContextActions`, dodane 1:1 z ikonami już importowanymi tam z
   // lucide-react (zero nowych zależności ikon).
   | 'Split'
-  | 'Check';
+  | 'Check'
+  // Process Flow node menu + floating toolbar (2026-08-09) —
+  // `ProcessFlowContextMenu.tsx`'s `getNodeContextActions` ('Settings' —
+  // otwórz właściwości) i `ProcessFlowFloatingToolbar.tsx` ('MessageCircle' —
+  // komentarze węzła, odróżnione od 'MessageSquare' użytego dla „Zapytaj AI").
+  | 'Settings'
+  | 'MessageCircle';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -444,6 +450,16 @@ const RUNTIME_PF_EDGE_DELETE: ToolActionMap = {
   process_flow: 'pf_delete',
 };
 
+/**
+ * Process Flow NODE menu (2026-08-09, `ProcessFlowContextMenu.tsx`'s
+ * `getNodeContextActions`) — `idea.node.pf_ai_rewrite_step`'s bus path.
+ * NOWY odbiornik `pf_ai_rewrite_step` dopisany do
+ * `useProcessFlowQuickActions.ts` w tej samej zmianie.
+ */
+const RUNTIME_PF_NODE_AI_REWRITE_STEP: ToolActionMap = {
+  process_flow: 'pf_ai_rewrite_step',
+};
+
 /** Wskaźnik akcja → jej mapa runtime (indirekcja NIE jest czytana przez R6 —
  * to zwykły obiekt JS, guard widzi tylko siedem `ToolActionMap` powyżej). */
 const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
@@ -728,6 +744,137 @@ async function runMindmapNodeBusAction(
     return { ok: true, actionId };
   }
   return runByTool(actionId, map, ctx, ctx.params);
+}
+
+/**
+ * UI-only akcje menu WĘZŁA Przepływu (N6 kontynuacja, 2026-08-09,
+ * `ProcessFlowContextMenu.tsx`'s `getNodeContextActions` + dual-surface
+ * `ProcessFlowFloatingToolbar.tsx`) — ten sam kształt co
+ * `runMindmapNodeUiOnlyCallback`, osobna funkcja WYŁĄCZNIE dla uczciwego
+ * komunikatu („menu węzła Przepływu"). Użyta dla pozycji bez sensownego,
+ * nie-spekulatywnego punktu wejścia na szynę (sprawdzone PRZED użyciem dla
+ * każdej — patrz komentarz przy każdym wpisie niżej, co dokładnie sprawdzono).
+ */
+async function runProcessFlowNodeUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu węzła (prawy klik) lub pływającego paska Przepływu — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * `idea.node.pf_ai_rewrite_step` (N6 kontynuacja, 2026-08-09) — jedyna nowa
+ * szyna węzła Przepływu w tej fali. UI: `ctx.params.run` = dokładnie
+ * dotychczasowy klik (`openStepRewrite(nodeId)` w `IdeaProcessFlowTool.tsx`,
+ * NIETKNIĘTY — otwiera pusty panel, człowiek sam wpisuje polecenie). Teresa:
+ * nie ma przeglądarki do wpisania polecenia, więc podaje `instruction` wprost
+ * w parametrach — dispatchuje na szynę z ZARÓWNO `nodeId` JAK I `instruction`,
+ * a nowy odbiornik `pf_ai_rewrite_step` (`useProcessFlowQuickActions.ts`)
+ * woła `createStepRewriteProposal` NATYCHMIAST (bez czekania na wpisanie
+ * tekstu) — ale WCIĄŻ tylko tworzy propozycję (`AIProposalPanel`), człowiek
+ * musi kliknąć Akceptuj/Odrzuć (rozdz. 09 §3, model propozycji zachowany dla
+ * obu ścieżek).
+ */
+async function runProcessFlowAIRewriteStepCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.node.pf_ai_rewrite_step';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  const instruction =
+    typeof ctx.params?.instruction === 'string' && ctx.params.instruction.trim()
+      ? ctx.params.instruction
+      : undefined;
+  if (!nodeId || !instruction) {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Nie wiem, który krok Przepływu przeredagować i jak — podaj `nodeId` kroku oraz `instruction` (polecenie przeredagowania).',
+    };
+  }
+  const runtime = RUNTIME_PF_NODE_AI_REWRITE_STEP.process_flow;
+  if (!runtime) {
+    return { ok: false, actionId, message: 'Ta akcja nie istnieje w tej reprezentacji.' };
+  }
+  dispatchQuickAction(runtime, ctx, { nodeId, instruction });
+  return { ok: true, actionId, data: { runtime, nodeId } };
+}
+
+/**
+ * `idea.node.pf_convert_initiative` (N6 kontynuacja, 2026-08-09) — WZOROWANE
+ * na `idea.workspace.convert` wyżej (bezpośrednie `Api.convertMyIdea`
+ * w handlerze), NIE na szynie `idea-workspace-quick-action`. Powód
+ * (sprawdzone, nie spekulacja): UI klik (`handleConvert('pf_convert_initiative')`
+ * w `IdeaProcessFlowTool.tsx`) woła `onQuickAction('pf_convert_initiative',
+ * { selectedIds, activeTool })` — ale `IdeaMapWorkspace.tsx`'s
+ * `handleQuickAction` (odbiornik `pf_convert_*` na tej samej szynie) czyta
+ * WYŁĄCZNIE `eventDetail?.nodeIds` (`CONVERT_PREFIX_MAP` branch) — `selectedIds`
+ * jest polem MARTWYM, nigdy odczytanym. Efekt: `explicitNodeIds` jest ZAWSZE
+ * `undefined` dla tej akcji, konwersja pada z powrotem na `selection.ids`
+ * (stan całego workspace'u, zsynchronizowany z zaznaczeniem płótna) —
+ * NIE na węzeł, na którym otwarto menu (prawy klik na węzeł go nie zaznacza,
+ * patrz `idea.node.pf_edit`/`idea.node.duplicate`). PRZEDISTNIEJĄCY defekt
+ * (nazwa pola), NIEnaprawiony tu — UI ścieżka (`ctx.params.run`) zostaje
+ * dokładnie taka, jaka była. Zamiast próbować naprawić to przez tę samą,
+ * wadliwą szynę, ścieżka Teresy pomija ją całkowicie i woła `Api.convertMyIdea`
+ * wprost z poprawnym polem `nodeIds` — Teresa dostaje DZIAŁającą, poprawną
+ * ścieżkę, której UI dziś nie ma (asymetria udokumentowana, nie ukryta).
+ * Tak jak `idea.workspace.convert`, NIE replikuje dodatkowych efektów UI
+ * ścieżki (`Api.createLinkGraphEdge`, `outputLinks` patch, event
+ * `idea-mindmap-mark-converted`) — ta sama, już zaakceptowana uproszczona
+ * ścieżka rejestru co istniejący `idea.workspace.convert` (patrz ten wpis),
+ * nie nowe ograniczenie wprowadzone tutaj.
+ */
+async function runProcessFlowConvertInitiativeCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.node.pf_convert_initiative';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Nie wiem, który krok Przepływu skonwertować — podaj `nodeId`.',
+    };
+  }
+  if (!ctx.confirmed) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Konwersja tworzy nowy, trwały obiekt (Inicjatywę) — potrzebuję potwierdzenia.',
+    };
+  }
+  const data = await Api.convertMyIdea(ctx.ideaId, {
+    target: 'initiative',
+    options: { language: ctx.language || 'pl', nodeIds: [nodeId] },
+  });
+  return { ok: true, actionId, data };
 }
 
 /**
@@ -1035,12 +1182,25 @@ const RUNTIME_TOGGLE_FOLLOW: ToolActionMap = {
  * `deleteSelected` — te same funkcje, które `IdeaWhiteboardTool.tsx` przekazuje
  * jako propy `onDuplicate`/`onDeleteNode` do tego menu. Reuse za darmo, bez
  * nowej szyny.
+ *
+ * N6 kontynuacja Przepływu (2026-08-09, `ProcessFlowContextMenu.tsx`'s
+ * `getNodeContextActions` + dual-surface `ProcessFlowFloatingToolbar.tsx`):
+ * `pf_duplicate`/`pf_delete` REUŻYTE tu (rozszerzenie `tools`, NIE nowe id) —
+ * SPRAWDZONE, nie zgadywane: `duplicateSelected()`/`deleteSelected()` w
+ * `useProcessFlowNodes.ts` operują na PŁASKIM zaznaczeniu płótna (tak jak
+ * Tablica), NIE na drzewie z rodzicem (w przeciwieństwie do Mapy myśli, która
+ * dlatego świadomie NIE reużyła tych id — `idea.node.mm_duplicate`/`mm_delete`
+ * niżej, `single_item` zakotwiczony pod rodzicem). Oba mają już odbiornik w
+ * `useProcessFlowQuickActions.ts` (`pf_duplicate`/`pf_delete`, istniały PRZED
+ * tą zmianą — wołane dotąd tylko z Menu 3/rail), zero nowego kodu w hooku.
  */
 const RUNTIME_NODE_DUPLICATE: ToolActionMap = {
   whiteboard: 'wb_duplicate',
+  process_flow: 'pf_duplicate',
 };
 const RUNTIME_NODE_DELETE: ToolActionMap = {
   whiteboard: 'wb_delete',
+  process_flow: 'pf_delete',
 };
 
 /**
@@ -1294,7 +1454,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_AUTO_LAYOUT,
     source:
-      'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:149 (pf_auto_layout) + IdeaMapWorkspace.tsx onAutoLayout (commit f5d0271992)',
+      'src/components/MyWork/processflow/useProcessFlowQuickActions.ts:149 (pf_auto_layout) + IdeaMapWorkspace.tsx onAutoLayout (commit f5d0271992) · REUSED (2026-08-09, N6 kontynuacja) by ProcessFlowContextMenu.tsx getNodeContextActions "auto-layout" item (onAutoLayout → handleAutoLayout(), IdeaProcessFlowTool.tsx ~linia 3797) — genuine same action despite living in the NODE menu: handleAutoLayout() rearranges the WHOLE current view, not just the clicked node, identical to the canvas/pane menu\'s own "Auto-layout" item that already owns this id. `surfaces` already includes \'context\' (added for Mind Map\'s pane menu, E02-N5-PANE) — no field changes needed for this second, honest reuse.',
   },
   {
     id: 'idea.canvas.cursor_select',
@@ -2191,6 +2351,281 @@ const IDEA_ACTIONS: ActionDef[] = [
     source:
       'src/components/MyWork/IdeaProcessFlowTool.tsx onDelete → deleteSelected() (~linia 3816) + processflow/useProcessFlowNodes.ts:70 (też szyna pf_delete, processflow/useProcessFlowQuickActions.ts:185 — REUŻYTY odbiornik, nie duplikowany)',
   },
+  // ── N6 kontynuacja (2026-08-09) — Process Flow NODE menu
+  // (`ProcessFlowContextMenu.tsx`'s `getNodeContextActions`, 8 pozycji) +
+  // dual-surface `ProcessFlowFloatingToolbar.tsx` (7 przycisków). Ani
+  // `ProcessFlowContextMenu.tsx`, ani wywołania obu komponentów w
+  // `IdeaProcessFlowTool.tsx` NIE są dotykane (ten sam wybór co edge-menu
+  // 9182ae70cd) — klik człowieka na OBU powierzchniach zostaje 1:1 taki, jaki
+  // był. Poniższe wpisy dają Teresie/nie-UI wywołującym drugą ścieżkę tylko
+  // tam, gdzie jest ona realna i nie-spekulatywna.
+  //
+  // Zakres reużycia cross-tool (Z1), sprawdzone PRZED dopisaniem:
+  //  • duplicate/delete → ROZSZERZONE `idea.node.duplicate`/`idea.node.delete`
+  //    (Tablica) wyżej — `duplicateSelected()`/`deleteSelected()` w
+  //    `useProcessFlowNodes.ts` operują na PŁASKIM zaznaczeniu płótna,
+  //    dokładnie jak Tablicy wersja (NIE jak Mapy myśli `mm_duplicate`/
+  //    `mm_delete`, zakotwiczone pod rodzicem — stąd Mapa myśli świadomie NIE
+  //    reużyła tych samych id). Dual-surface za darmo: floating toolbar
+  //    „Duplikuj"/„Usuń" wołają TE SAME funkcje.
+  //  • auto-layout → REUŻYTE `idea.view.auto_layout` (istniejące, `tools`
+  //    już zawiera `process_flow`) — `handleAutoLayout()` przestawia CAŁY
+  //    widok, nie tylko kliknięty węzeł, więc pozycja menu węzła jest
+  //    dosłownie tą samą akcją co pozycja menu tła/Menu 3, nie wariantem.
+  //  • copy DEKLINOWANE od `idea.node.copy` (Tablica): sprawdzone w
+  //    `useProcessFlowNodes.ts` (`schowekRef`/`kopiujWezly`/`pasteClipboard`)
+  //    — to REALNA kopia obiektu (węzeł+wewnętrzne krawędzie) do schowka
+  //    NARZĘDZIA, konsumowana przez „Wklej" na płótnie, W PRZECIWIEŃSTWIE do
+  //    Tablicy `idea.node.copy` (WB-CLIPBOARD-01: kopia SAMEGO TEKSTU do
+  //    schowka systemowego, bez wklejenia obiektu). Materialnie inny
+  //    mechanizm — nowe id, nie reuse.
+  //  • edit DEKLINOWANE od `idea.node.edit` (Tablica) i NIE tożsame z Mapy
+  //    myśli `mm_edit` (osobne id per tool tam też) — sprawdzone: „Edit
+  //    label" w Przepływie WYŁĄCZNIE bumpuje `editSignal` na węźle (przełącza
+  //    tryb edycji inline), nie przyjmuje ani nie zapisuje `label` samo w
+  //    sobie (w przeciwieństwie do Tablicy `idea.node.edit`, które od razu
+  //    dispatchuje nową treść). Ten sam rodzaj różnicy co Mapa myśli już
+  //    udokumentowała dla `mm_edit` — przełącznik trybu UI, nie mutacja.
+  //  • properties DEKLINOWANE od Mapy myśli `idea.node.mm_open_detail`
+  //    (inny komponent panelu, `ProcessFlowPropertiesPanel` vs
+  //    `setDrawerNodeId`, zero współdzielonego kodu) — nowe id.
+  //  • comments DEKLINOWANE od Tablicy `idea.node.comments` — SPRAWDZONE:
+  //    `ProcessFlowNodeCommentThread.tsx`'s własny nagłówek mówi wprost, że
+  //    dzieli warstwę trwałości z Tablicą (obie "blob-only via
+  //    `node.data.comments[]`, no server API" — W PRZECIWIEŃSTWIE do Mapy
+  //    myśli, która ma realne API serwerowe), ALE komponent/stan
+  //    (`setCommentsPanelNodeId`) jest CAŁKOWICIE osobną implementacją, żadnego
+  //    współdzielonego kodu z Tablicą — ten sam próg co reszta tego pliku
+  //    (osobna implementacja = osobne id, mimo tej samej klasy trwałości).
+  //  • artifact-links/chat: bez odpowiednika w rejestrze na żadnym innym
+  //    narzędziu (Mapa myśli ma `mm_open_linked_artifacts`, ale inny
+  //    mechanizm — 0/1/>1 rozgałęzienie zamiast prostego toggle popovera) —
+  //    nowe id.
+  //
+  // Convert-to-initiative (E11 uczciwość, ta sama rodzina obaw co
+  // E02-N5-CONVERT/Mapa myśli — patrz `docs/qa/ideas-complete-transformation-
+  // 2026-08-09/02_EXECUTION_LEDGER.csv` wiersz E02-N5-CONVERT dla pełnego
+  // kontekstu): Przepływ NIE cierpi na to samo (kaskada do potomków mimo
+  // etykiety „Convert" bez „branch") — konwersja Przepływu bierze WĘZŁY, nie
+  // poddrzewo (Przepływ nie ma pojęcia rodzic/dziecko). Ma INNY, nowo
+  // odkryty defekt: `handleConvert()` wysyła `{selectedIds, activeTool}`, ale
+  // `IdeaMapWorkspace.tsx`'s `CONVERT_PREFIX_MAP` odbiornik czyta WYŁĄCZNIE
+  // `eventDetail.nodeIds` — `selectedIds` jest polem MARTWYM. Efekt: konwersja
+  // pada na `selection.ids` (stan całego workspace'u), NIE na węzeł, na
+  // którym otwarto menu (prawy klik nie zaznacza — patrz wyżej). Tak jak
+  // Mapa myśli: brak podglądu przed konwersją (`requiresPreview: false`
+  // zgodne z rzeczywistością, nie z docelowym standardem rozdz. 10 §2.2),
+  // backend zapisuje `outputLinks[]` + bezwarunkowe nadpisanie
+  // `promoted_to`/`stage`, NIE append-only `conversions[]`/lineage z audytu
+  // 09 §9 — udokumentowane jako luka, nie naprawione (poza zakresem).
+  {
+    id: 'idea.node.pf_properties',
+    label: { pl: 'Otwórz właściwości', en: 'Open properties' },
+    icon: 'Settings',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    // Dual-surface (2026-08-09): NAPRAWDĘ ta sama akcja co
+    // `ProcessFlowFloatingToolbar.tsx`'s „Rename" (F2) — SPRAWDZONE w kodzie
+    // (nie zgadywane): oba `onOpenProperties` (menu węzła) i `onRename`
+    // (pływający pasek) wołają DOSŁOWNIE `() => setShowPropertiesPanel(true)`,
+    // bez ŻADNEGO parametru różnicującego "otwórz właściwości" od "zmień
+    // nazwę" — ten sam panel (`ProcessFlowPropertiesPanel`) otwiera się
+    // identycznie z obu wejść, mimo dwóch różnych etykiet ("Open properties"
+    // vs "Rename (F2)"), co może mylić użytkownika oczekującego skupienia na
+    // polu nazwy przy „Rename" — panel nie robi nic specjalnego dla tego
+    // wejścia. Udokumentowane uczciwie, nie ukryte.
+    surfaces: ['context', 'floating'],
+    shortcut: 'F2',
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_properties', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel właściwości wskazanego kroku Przepływu (etykieta, typ bramki, tor, metryki). Samo otwarcie nie mutuje danych — edycje dzieją się WEWNĄTRZ panelu, poza tą akcją. Ta sama akcja jest też przyciskiem „Rename (F2)" pływającego paska — obie wejścia otwierają identyczny panel, mimo różnych etykiet. DZIŚ NIEDOSTĘPNE dla Teresy — lokalny stan UI (`setShowPropertiesPanel`), bez odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getNodeContextActions id=properties:96 (onOpenProperties) + IdeaProcessFlowTool.tsx (~linia 3794) · dual-surface: ProcessFlowFloatingToolbar.tsx onRename prop (~linia 3485), IdeaProcessFlowTool.tsx onRename → setShowPropertiesPanel(true) — DOKŁADNIE ta sama funkcja',
+  },
+  {
+    id: 'idea.node.pf_edit',
+    label: { pl: 'Edytuj etykietę', en: 'Edit label' },
+    icon: 'Pencil',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    // NIE reużyto `idea.node.edit` (Tablica, dispatchuje nową `label` wprost)
+    // ani nie wprowadzono jako wariant Mapy myśli `mm_edit` — SPRAWDZONE:
+    // przełącza WYŁĄCZNIE tryb edycji inline (bumpuje `editSignal` na
+    // `node.data`, `FlowNodeComponent` zaczyna edycję), treść zmienia się
+    // dopiero gdy użytkownik wpisze tekst i odejdzie z pola — osobny
+    // mechanizm (`onLabelChange`), bez własnej pozycji menu. Ten sam rodzaj
+    // różnicy (przełącznik trybu UI vs mutacja danych) co Mapa myśli już
+    // udokumentowała dla `mm_edit`.
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_edit', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Włącza tryb edycji etykiety wskazanego kroku Przepływu (kursor w polu tekstowym). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na węzeł — sama zmiana treści i tak wymaga wpisania tekstu przez człowieka, więc nie ma dziś sensownego odpowiednika dla czatu.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getNodeContextActions id=edit:103 (onEditLabel) + IdeaProcessFlowTool.tsx editSignal bump (~linia 3759)',
+  },
+  {
+    id: 'idea.node.pf_copy',
+    label: { pl: 'Kopiuj', en: 'Copy' },
+    icon: 'Copy',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    // NIE reużyto `idea.node.copy` (Tablica, WB-CLIPBOARD-01: kopia SAMEGO
+    // TEKSTU do schowka systemowego, bez wklejenia obiektu) — SPRAWDZONE w
+    // `useProcessFlowNodes.ts`: `kopiujWezly`/`copyNodeById` kopiują węzeł
+    // (i jego wewnętrzne krawędzie) do `schowekRef` — schowka NARZĘDZIA
+    // (React ref, nie schowka przeglądarki) — a „Wklej" na płótnie
+    // (`pasteClipboard`) REALNIE wkleja te obiekty jako nowe elementy. To
+    // realna kopia obiektu, materialnie inny mechanizm niż Tablicy wersja —
+    // nowe id, nie reuse. Menu prawego kliku nie zaznacza klikniętego węzła
+    // (patrz `idea.node.pf_edit`), więc `onCopy` w `IdeaProcessFlowTool.tsx`
+    // woła `copyNodeById(nodeId)` (po id z zamknięcia menu), NIE
+    // `copySelected()` — jedyna z ośmiu pozycji tego menu, która świadomie
+    // obsługuje ten przypadek zamiast cicho nic nie robić.
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_copy', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje wskazany krok Przepływu (i jego wewnętrzne połączenia) do schowka narzędzia — realna kopia obiektu, konsumowana przez „Wklej" na płótnie (nie schowek systemowy — to nie jest wariant Tablicy `idea.node.copy`, który kopiuje tylko tekst). Dziś dostępne WYŁĄCZNIE z menu prawego kliku — schowek to zmienna w przeglądarce, bez odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getNodeContextActions id=copy:119 (onCopy) + IdeaProcessFlowTool.tsx copyNodeById (~linia 3778) + useProcessFlowNodes.ts kopiujWezly/copyNodeById:186-215',
+  },
+  {
+    id: 'idea.node.pf_ai_rewrite_step',
+    label: { pl: 'AI: przeredaguj krok', en: 'AI: rewrite step' },
+    icon: 'Sparkles',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runProcessFlowAIRewriteStepCallback(ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'createStepRewriteProposal (generatorType: edit_step) → presentBatch → AIProposalPanel (accept/reject); odrzucenie = zero zmian. Rozdz. 09 §3 nazywa to WZORCEM DO SKOPIOWANIA — najlepiej zbudowaną ścieżkę AI dziś w całym Idea Workspace (before/after walidacja + readback w podglądzie).',
+    },
+    teresa: {
+      description:
+        'Przeredagowuje wskazany krok Przepływu wg polecenia (realne AI — `edit_step` generator, `Api`/`generateAIProposal`, ZAWSZE do akceptacji w podglądzie z porównaniem przed/po i walidacją). Podaj `nodeId` kroku i `instruction` (co zmienić). W przeciwieństwie do Mapy myśli `idea.node.mm_ai_rewrite_node` (UI-only, bo zbiera polecenie przez blokujący `window.prompt()`) — ta akcja ma prawdziwą ścieżkę dla Teresy, bo UI Przepływu zbiera polecenie przez zwykły panel React, nie dialog przeglądarki.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id kroku Przepływu do przeredagowania.' },
+          instruction: { type: 'string', description: 'Polecenie — co zmienić w treści kroku.' },
+        },
+        required: ['nodeId', 'instruction'],
+      },
+    },
+    runtime: RUNTIME_PF_NODE_AI_REWRITE_STEP,
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getNodeContextActions id=ai-rewrite-step:144 (onAIRewriteStep) + IdeaProcessFlowTool.tsx openStepRewrite:817 + createStepRewriteProposal (useProcessFlowAIProposal.ts:356) + processflow/useProcessFlowQuickActions.ts pf_ai_rewrite_step (nowy odbiornik, 2026-08-09)',
+  },
+  {
+    id: 'idea.node.pf_convert_initiative',
+    label: { pl: 'Konwertuj na inicjatywę', en: 'Convert to initiative' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['context'],
+    handler: (ctx) => runProcessFlowConvertInitiativeCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Api.convertMyIdea → nowy rekord Initiative; brak automatycznego cofnięcia (ten sam wzorzec co idea.workspace.convert/idea.node.mm_convert_initiative).',
+    },
+    destructive: false,
+    teresa: {
+      description:
+        'Konwertuje wskazany krok Przepływu na Inicjatywę — tworzy nowy, trwały rekord w PMO. UWAGA (defekt odkryty przy tym wpisie, NIE naprawiony w UI): kliknięcie człowieka w menu wysyła pole `selectedIds`, którego odbiornik w powłoce nigdy nie czyta (czyta tylko `nodeIds`) — w praktyce UI konwertuje bieżące zaznaczenie płótna, NIE koniecznie krok, na którym otwarto menu (prawy klik go nie zaznacza). Ta ścieżka (Teresa) go NIE dziedziczy — woła `Api.convertMyIdea` wprost z poprawnym `nodeId`, więc jest bardziej wiarygodna niż dzisiejszy klik człowieka. Brak podglądu przed konwersją (przedistniejące, rozdz. 10 §2.2 tego wymaga docelowo). Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id kroku Przepływu do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowContextMenu.tsx getNodeContextActions id=convert-initiative:155 (onConvertInitiative) + IdeaProcessFlowTool.tsx handleConvert:2361 + IdeaMapWorkspace.tsx CONVERT_PREFIX_MAP/handleQuickAction:1017-1045 (selectedIds/nodeIds mismatch discovered here) + Api.convertMyIdea (Teresa path, direct call, 2026-08-09)',
+  },
+  {
+    id: 'idea.node.pf_artifact_links',
+    label: { pl: 'Powiązane artefakty', en: 'Artifact links' },
+    icon: 'Link2',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['floating'],
+    // Wyłącznie na pływającym pasku — menu prawego kliku na węzeł NIE ma tej
+    // pozycji (sprawdzone w `getNodeContextActions`, 8 pozycji bez tej). Bez
+    // odpowiednika cross-tool: Mapa myśli ma `idea.node.mm_open_linked_artifacts`,
+    // ale INNY mechanizm (0/1/>1 rozgałęzienie: 0→toast, 1→otwiera wprost,
+    // >1→panel szczegółów), podczas gdy tu to prosty toggle popovera z listą
+    // + usuwaniem pojedynczych linków — materialnie inny UX, nowe id.
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_artifact_links', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Pokazuje/ukrywa popover z artefaktami powiązanymi ze wskazanym krokiem Przepływu (lista + usuwanie pojedynczych linków). Samo przełączenie nie mutuje danych — usunięcie linku wewnątrz popovera tak, ale to osobny, niewystawiony tu mechanizm. DZIŚ NIEDOSTĘPNE dla Teresy — lokalny stan UI (`showLinks`), bez odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowFloatingToolbar.tsx onClick → setShowLinks (~linia 111)',
+  },
+  {
+    id: 'idea.node.pf_comments',
+    label: { pl: 'Komentarze', en: 'Comments' },
+    icon: 'MessageCircle',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['floating'],
+    // NIE reużyto `idea.node.comments` (Tablica) mimo tej samej warstwy
+    // trwałości ("blob-only via node.data.comments[], no server API" — tak
+    // twierdzi nagłówek `ProcessFlowNodeCommentThread.tsx` wprost) —
+    // implementacja (komponent, stan `setCommentsPanelNodeId`) jest
+    // CAŁKOWICIE osobna, zero współdzielonego kodu z Tablicą. Ten sam próg co
+    // reszta tego rejestru: osobna implementacja = osobne id, nawet gdy klasa
+    // trwałości się zgadza.
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_comments', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera wątek komentarzy wskazanego kroku Przepływu (trwałość: blob w `node.data.comments[]`, bez osobnego API serwerowego — jak Tablica, w przeciwieństwie do Mapy myśli, która ma realne API). Samo otwarcie nie mutuje danych. DZIŚ NIEDOSTĘPNE dla Teresy — lokalny stan UI (`setCommentsPanelNodeId`), bez odbiornika na szynie.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowFloatingToolbar.tsx onClick → onOpenComments (~linia 128) + IdeaProcessFlowTool.tsx setCommentsPanelNodeId (~linia 3500)',
+  },
+  {
+    id: 'idea.node.pf_open_chat',
+    label: { pl: 'Zapytaj AI', en: 'Ask AI' },
+    icon: 'MessageSquare',
+    scope: 'single_item',
+    tools: ['process_flow'],
+    surfaces: ['floating'],
+    handler: (ctx) => runProcessFlowNodeUiOnlyCallback('idea.node.pf_open_chat', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera czat Teresy z wstępnie wypełnionym kontekstem (tryb Przepływu, liczba kroków/torów, zaznaczone elementy, ostrzeżenia walidacji). Etykieta uczciwa wobec rzeczywistości (rozdz. 09 §2): to delegacja do rozmowy, NIE strukturalna zmiana danych — nie generuje propozycji, tylko wypełnia pole czatu tekstem, który człowiek może wysłać lub zmienić. DZIŚ NIEDOSTĘPNE jako osobna akcja dla Teresy (sama Teresa JEST czatem, do którego to prowadzi) — lokalny callback UI bez sensownego odpowiednika.',
+    },
+    source:
+      'src/components/MyWork/processflow/ProcessFlowFloatingToolbar.tsx onClick → onOpenChat (~linia 145) + IdeaProcessFlowTool.tsx handleOpenChatWithContext:2371',
+  },
   // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
   // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,
   // Cofnij/Ponów, overflow „…" ×9, Zapisz, Wyczyść rysunki). Kolejność
@@ -2666,22 +3101,32 @@ const IDEA_ACTIONS: ActionDef[] = [
     label: { pl: 'Duplikuj', en: 'Duplicate' },
     icon: 'Copy',
     scope: 'selected_items',
-    tools: ['whiteboard'],
-    surfaces: ['context'],
+    // Rozszerzone o `process_flow` (2026-08-09, N6 kontynuacja — patrz
+    // komentarz przy `RUNTIME_NODE_DUPLICATE` wyżej dla pełnego uzasadnienia):
+    // `duplicateSelected()` w `useProcessFlowNodes.ts` operuje na PŁASKIM
+    // zaznaczeniu płótna, identycznie jak Tablicy wersja — genuine reuse, nie
+    // nowe id. `surfaces` dostaje `floating`, bo `ProcessFlowFloatingToolbar.tsx`
+    // ma przycisk „Duplikuj" wołający TĘ SAMĄ funkcję (`onDuplicate=
+    // {duplicateSelected}`) — Tablica dziś nie ma zarejestrowanej powierzchni
+    // `floating` dla tej akcji (ma `WhiteboardSelectionBar` używającą tej samej
+    // funkcji, ale niepodłączoną do rejestru — poza zakresem tego wpisu).
+    tools: ['whiteboard', 'process_flow'],
+    surfaces: ['context', 'floating'],
     handler: (ctx) => runToolbarBusAction('idea.node.duplicate', RUNTIME_NODE_DUPLICATE, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'useWhiteboardNodes.ts duplicateSelected:131-161 → pushSnapshot() (stos Ctrl+Z)',
+      evidence:
+        'Tablica: useWhiteboardNodes.ts duplicateSelected:131-161 → pushSnapshot() (stos Ctrl+Z). Przepływ (2026-08-09): useProcessFlowNodes.ts duplicateSelected:227 → pushUndo():231 (stos Ctrl+Z, już obecne, nic nie dopisywano).',
     },
     teresa: {
       description:
-        'Duplikuje zaznaczone elementy na Tablicy. UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika (ta sama funkcja co przycisk "Duplikuj") — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego duplikować.',
+        'Duplikuje zaznaczone elementy (Tablica lub Przepływ). UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika (ta sama funkcja co przycisk "Duplikuj") — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego duplikować. Na Przepływie menu prawego kliku na węzeł NIE zaznacza go (celowe zachowanie, patrz `idea.node.pf_edit`) — jeśli klikniesz prawym na węzeł, który nie był wcześniej zaznaczony lewym kliknięciem, ta pozycja menu po cichu nic nie zrobi (przedistniejąca luka, niedotknięta tym wpisem).',
     },
     runtime: RUNTIME_NODE_DUPLICATE,
     source:
-      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=duplicate + useWhiteboardNodes.ts:131',
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=duplicate + useWhiteboardNodes.ts:131 (Tablica) · src/components/MyWork/IdeaProcessFlowTool.tsx onDuplicate → duplicateSelected() (~linia 3786, menu węzła) + ProcessFlowFloatingToolbar.tsx onDuplicate prop (~linia 3486) + useProcessFlowNodes.ts:227 (Przepływ, 2026-08-09)',
   },
   {
     id: 'idea.node.bring_to_front',
@@ -2755,23 +3200,31 @@ const IDEA_ACTIONS: ActionDef[] = [
     label: { pl: 'Usuń', en: 'Delete' },
     icon: 'Trash2',
     scope: 'selected_items',
-    tools: ['whiteboard'],
-    surfaces: ['context'],
+    // Rozszerzone o `process_flow` (2026-08-09, N6 kontynuacja) — patrz
+    // uzasadnienie przy `idea.node.duplicate` wyżej i przy
+    // `RUNTIME_NODE_DELETE`: `deleteSelected()` w `useProcessFlowNodes.ts`
+    // usuwa CZYMKOLWIEK jest dziś zaznaczone (węzły LUB krawędzie), tak samo
+    // ogólnie jak Tablicy wersja ("zaznaczone elementy", nie "węzły") —
+    // genuine reuse. `floating`: `ProcessFlowFloatingToolbar.tsx` ma przycisk
+    // „Usuń" wołający TĘ SAMĄ funkcję (`onDelete={deleteSelected}`).
+    tools: ['whiteboard', 'process_flow'],
+    surfaces: ['context', 'floating'],
     handler: (ctx) => runToolbarBusAction('idea.node.delete', RUNTIME_NODE_DELETE, ctx),
     mutates: true,
     requiresPreview: false,
     undo: {
       kind: 'local_stack',
-      evidence: 'useWhiteboardNodes.ts deleteSelected:107-129 → pushSnapshot() (stos Ctrl+Z)',
+      evidence:
+        'Tablica: useWhiteboardNodes.ts deleteSelected:107-129 → pushSnapshot() (stos Ctrl+Z). Przepływ: useProcessFlowNodes.ts deleteSelected:70 → pushUndo():83 (stos Ctrl+Z, już obecne — ta sama funkcja już reużyta przez `idea.edge.pf_delete`, edge-menu wpis 2026-08-09).',
     },
     destructive: true,
     teresa: {
       description:
-        'Usuwa zaznaczone elementy z Tablicy (cofnięcie przez Ctrl+Z w tej samej sesji). UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego usunąć.',
+        'Usuwa zaznaczone elementy (Tablica lub Przepływ; cofnięcie przez Ctrl+Z w tej samej sesji). UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego usunąć. Na Przepływie menu prawego kliku na węzeł NIE zaznacza go — jeśli klikniesz prawym na niezaznaczony węzeł, ta pozycja menu po cichu nic nie zrobi (przedistniejąca luka, ta sama co przy `idea.node.duplicate`, niedotknięta tym wpisem; krawędzie NIE mają tego problemu, bo prawy klik na krawędzi ZAZNACZA ją jawnie przed otwarciem menu — patrz `idea.edge.pf_delete`).',
     },
     runtime: RUNTIME_NODE_DELETE,
     source:
-      'src/components/MyWork/IdeaCanvasContextMenu.tsx DESTRUCTIVE_NODE_ACTIONS kind=delete + useWhiteboardNodes.ts:107',
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx DESTRUCTIVE_NODE_ACTIONS kind=delete + useWhiteboardNodes.ts:107 (Tablica) · src/components/MyWork/IdeaProcessFlowTool.tsx onDelete → deleteSelected() (~linia 3793, menu węzła) + ProcessFlowFloatingToolbar.tsx onDelete prop (~linia 3487) + useProcessFlowNodes.ts:70 (Przepływ, 2026-08-09)',
   },
   {
     id: 'idea.node.expand',

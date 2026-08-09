@@ -84,6 +84,19 @@ export interface ProcessFlowQuickActionHandlers {
    * which already calls `pushUndo()`.
    */
   setEdgeCondition?: (edgeId: string, condition: string) => void;
+  /**
+   * Action Registry — Process Flow NODE menu (2026-08-09,
+   * `ProcessFlowContextMenu.tsx`'s `getNodeContextActions`,
+   * `idea.node.pf_ai_rewrite_step`). UI click (`onAIRewriteStep` in
+   * `IdeaProcessFlowTool.tsx`) still calls `openStepRewrite(nodeId)` ALONE —
+   * that only opens the AI panel and waits for a human to type + submit
+   * their own instruction (`handleAIPanelGenerate` → `createStepRewriteProposal`).
+   * Teresa supplies the instruction up front (no browser to type into), so
+   * this receiver does both steps in one call: opens the panel (still
+   * required for the doc09 §3 accept/reject step — Teresa does not skip
+   * proposal review) AND immediately generates with her instruction.
+   */
+  startAIRewriteStep?: (nodeId: string, instruction: string) => void;
 }
 
 export interface ProcessFlowQuickActionSetters {
@@ -230,6 +243,19 @@ export function useProcessFlowQuickActions(opts: UseProcessFlowQuickActionsOpts)
       const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
       const condition = typeof detail?.condition === 'string' ? detail.condition : undefined;
       if (edgeId && condition !== undefined) handlers.setEdgeCondition?.(edgeId, condition);
+    }
+
+    // Action Registry — Process Flow NODE menu (2026-08-09). `pf_duplicate`/
+    // `pf_delete` above (already existed) cover `idea.node.duplicate`/
+    // `idea.node.delete` (extended cross-tool from Whiteboard) and
+    // `pf_auto_layout` above covers the node menu's "Auto-layout" item
+    // (same whole-view action as the canvas menu's own entry) — no new
+    // cases needed for those. `pf_ai_rewrite_step` is the one genuinely new
+    // receiver this pass adds.
+    if (action === 'pf_ai_rewrite_step') {
+      const nodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
+      const instruction = typeof detail?.instruction === 'string' ? detail.instruction : undefined;
+      if (nodeId && instruction) handlers.startAIRewriteStep?.(nodeId, instruction);
     }
   };
 

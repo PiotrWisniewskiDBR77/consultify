@@ -2262,6 +2262,18 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       reverseEdge: (edgeId: string) => handleEdgeReverse(edgeId),
       setEdgeCondition: (edgeId: string, condition: string) =>
         handleEdgeConditionChange(edgeId, condition),
+      // Action Registry — Process Flow node menu (2026-08-09): bus path for
+      // Teresa's `idea.node.pf_ai_rewrite_step`. UI click (`onAIRewriteStep`
+      // in the getNodeContextActions call site below) still calls
+      // `openStepRewrite(rewriteNodeId)` alone — untouched. Teresa supplies
+      // the instruction up front, so this does both steps: open panel +
+      // generate immediately.
+      startAIRewriteStep: (nodeId: string, instruction: string) => {
+        if (locked || !nodeId || !instruction.trim()) return;
+        setRewriteStepId(nodeId);
+        setShowAIPanel(true);
+        createStepRewriteProposal({ nodeId, instruction });
+      },
     },
     setters: {
       setFlowMode,
