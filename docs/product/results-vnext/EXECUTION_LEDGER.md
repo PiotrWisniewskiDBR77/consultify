@@ -1265,3 +1265,26 @@ endpointów z briefu ani w tabeli plików `KPI_E003_DESIGN.md` §D; zostawione
 na przyszły pakiet razem z resztą jawnie odłożonych elementów §D (wpięcie
 MyWork UI, CRUD na response-policy).
 
+## 22. KPI-E004 Scorecards — design zamrożony (2026-08-09)
+
+Dwie NIEZALEŻNE rekonstrukcje tego samego briefu (agent `a919e772f8a34efad`
+zwrócił obciętą odpowiedź — tylko końcówka dotarła; agent `a4f07bd2c39d8702e`
+odtworzył brakujące sekcje A/B/C.1/C.2 od zera). Musiałem je pogodzić, nie
+tylko skleić — **znalazłem realną rozbieżność bezpieczeństwa między nimi**:
+druga rekonstrukcja materializuje `publishReviewSnapshot` filtrując po
+widoczności PUBLIKUJĄCEGO (dobra decyzja), ale odczyt (`getPublishedSnapshot`)
+zwracał cały zamrożony payload BEZ ponownego filtrowania dla czytelnika —
+dokładnie P0 ryzyko z planu ("Restricted KPI leaks in Scorecard totals").
+Rozstrzygnięcie: **dwuwarstwowa obrona** — filtr przy publikacji (widoczność
+publikującego) ORAZ filtr przy KAŻDYM odczycie opublikowanego snapshotu
+(ponowne przeliczenie widocznych `kpi_id` dla żądającego czytelnika,
+przycięcie `items`+przeliczenie `statusCounts` w odpowiedzi, BEZ modyfikacji
+zapisanego wiersza/`content_hash` — integralność archiwum zachowana, redakcja
+dzieje się tylko przy serwowaniu). To jest jedyny sposób żeby AC #4 (non-leak)
+było prawdziwe dla opublikowanych snapshotów, nie tylko dla żywego widoku.
+
+Pełny, spójny, samowystarczalny projekt (schema+command+repository+7-sekcyjne
+mapowanie Scorecard Tool) w `docs/product/results-vnext/KPI_E004_DESIGN.md`.
+Prerequisite: `RVN_RESOURCE_TYPES`/`CanonicalObjectTypeValues` nie mają
+jeszcze `'kpi_scorecard'` — pierwszy krok implementacji.
+
