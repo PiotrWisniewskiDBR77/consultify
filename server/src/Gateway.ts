@@ -301,6 +301,11 @@ import resultsVnextKpiPerspectivesRoutes, {
 // case, but mounting order-independent behaviour is not a reason to skip
 // the repo's established convention.
 import resultsVnextKpiLegacyArchiveRoutes from './routes/resultsVnext/kpiLegacyArchive.routes.js';
+// ROI-E001 Case & Baseline — first ROI vNext router, own prefix
+// `/api/vnext/results/roi` (no ordering interaction with the KPI mounts
+// above — separate path namespace entirely). See roi.routes.ts's own
+// "MOUNT-ORDER NOTE" for the rule the NEXT ROI router must follow.
+import resultsVnextRoiRoutes from './routes/resultsVnext/roi.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1150,6 +1155,10 @@ export class ApiGateway {
       app.use('/api/vnext/results/kpi', resultsVnextKpiPerspectivesRoutes);
       app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
       app.use('/api/vnext/results/initiatives', resultsVnextInitiativesKpiImpactsRoutes);
+      // ROI-E001 (Case & Baseline) — own auth (verifyToken +
+      // requireOrgAccess) applied inside the router, same convention as
+      // resultsVnextKpiRoutes above.
+      app.use('/api/vnext/results/roi', resultsVnextRoiRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
