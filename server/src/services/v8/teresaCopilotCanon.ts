@@ -139,6 +139,82 @@ export interface InterviewHandoffPayload {
   evidence_pointers: string[];
 }
 
+// ────────────────────────────────────────────────────────────────
+// KPI-E006 — Results/KPI advisor handoff (three governed modes)
+// ────────────────────────────────────────────────────────────────
+
+export type ResultsKpiAdvisorMode =
+  | 'draft_quality_review'   // KPI-F-027
+  | 'check_in_manager_brief' // KPI-F-028
+  | 'reflection_rca';        // KPI-F-030
+
+export interface ResultsKpiEvidenceBreakdown {
+  facts: string[];
+  inference: string[];
+  missing_evidence: string[];
+  recommendation: string;
+}
+
+export interface KpiDraftQualityReviewPayload {
+  proposed: {
+    kpiCode: string;
+    name: string;
+    description: string | null;
+    unit: string | null;
+    targetGeometry: 'threshold_min' | 'threshold_max' | 'range' | 'exact' | 'binary' | 'custom';
+    targetValue: number | null;
+    targetMin: number | null;
+    targetMax: number | null;
+    warningLow: number | null;
+    warningHigh: number | null;
+    criticalLow: number | null;
+    criticalHigh: number | null;
+    binarySuccessValue: number | null;
+    formulaText: string | null;
+    ownerUserId: string | null;
+  };
+  quality_review: {
+    purpose_question: string;
+    actionability_question: string;
+    owner_load_note: string | null;
+    target_evidence_note: string | null;
+    duplicate_risk: { candidate_kpi_ids: string[]; note: string | null };
+  };
+  evidence_breakdown: ResultsKpiEvidenceBreakdown;
+}
+
+export interface KpiCheckInManagerBriefPayload {
+  scope: 'my_kpis' | 'team' | 'organization';
+  cited_kpi_ids: string[];
+  cited_deviation_case_ids: string[];
+  narrative: string;
+  evidence_breakdown: ResultsKpiEvidenceBreakdown;
+}
+
+export interface KpiReflectionRcaPayload {
+  case_id: string;
+  proposed_root_cause_summary: string;
+  proposed_root_cause_category: string;
+  recurrence_flag: boolean;
+  evidence_breakdown: ResultsKpiEvidenceBreakdown;
+}
+
+export interface ResultsKpiHandoffContext {
+  advisor_mode: ResultsKpiAdvisorMode;
+  target_resource: {
+    resource_type: 'kpi' | 'deviation_case';
+    /** Decision #2: ALWAYS kpi_id (never definition_version_id) for the
+     * 'kpi' resource_type — the handler resolves current_definition_version_id
+     * internally via getKpi() when editing. null ONLY for draft_quality_review
+     * on a brand-new KPI (create path). */
+    resource_id: string | null;
+  };
+  expected_version: number | null; // null legal ONLY on the create path
+  draft_quality_review?: KpiDraftQualityReviewPayload;
+  check_in_manager_brief?: KpiCheckInManagerBriefPayload;
+  reflection_rca?: KpiReflectionRcaPayload;
+}
+
 export const P08_HANDOFF_TARGETS = {
   radar: {
     module: 'Radar' as const,
@@ -191,6 +267,17 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['interview_handoff_context', 'evidence_pointers'] as const,
   },
+  kpi: {
+    module: 'KPI' as const,
+    contract_ref: 'KPI-E006',
+    description:
+      'Governed KPI advisor: drafting + quality-review for a new KPI, ' +
+      'check-in/manager-brief assistance (visibility-scoped), deviation ' +
+      'reflection/RCA drafting. Teresa never creates/activates/approves/' +
+      'verifies/closes — see P08_KPI_FORBIDDEN_VERBS.',
+    required_common_payload: true,
+    required_extra_fields: ['kpi_handoff_context', 'evidence_pointers'] as const,
+  },
   excele: {
     module: 'Excele' as const,
     contract_ref: 'P12',
@@ -231,7 +318,21 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'ideas',
   'documents',
   'presentations',
+  'kpi', // KPI-E006, appended — existing 9 entries untouched
 ];
+
+// ────────────────────────────────────────────────────────────────
+// KPI-E006 — forbidden verbs (documentation of an existing architectural
+// fact: Teresa never imports/calls any of these; see §D grep-able proof
+// in tests/resultsVnext/teresa-kpi-forbidden-verbs.test.ts)
+// ────────────────────────────────────────────────────────────────
+
+export const P08_KPI_FORBIDDEN_VERBS = [
+  'approveDefinitionVersion', 'rejectDefinitionVersion', 'activateKpi',
+  'suspendKpi', 'archiveKpi', 'verifyMeasurement', 'disputeMeasurement',
+  'approvePlan', 'submitEffectivenessVerification', 'closeDeviationCase',
+  'reopenDeviationCase',
+] as const;
 
 export const P08_COMMON_PAYLOAD_FIELDS = [
   'origin',
