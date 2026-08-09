@@ -257,7 +257,42 @@ Twelve open questions; coordinator resolutions, grouped:
 8. **`dedupe_key` idempotency designed without a route layer to confirm
    caller discipline** — accepted; defensive design ahead of need is
    reasonable here since it costs nothing structurally.
-| CW-P12 | E12 | E2 | — | Play draft/publish/instantiate via CasePlanVersion | subset of 109 |
+| CW-P08 | E12 | E2 | `casePlanVersionService.createPlanDraft` reused by call, not duplicated | `process_definitions` + `process_versions`, `playService.ts`, 13 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+casePlanVersionService-untouched verified**, commit `b8a644a4f8` + cross-tenant fix `44769e6bc9`. Renumbered from CW-P12 per the execution-order note. | subset of 109 |
+
+## CW-P08 (E12 Plays) — design decisions accepted 2026-08-09
+
+1. **Authorization vocabulary limited to org role OWNER/ADMIN, no dedicated
+   process-owner/reviewer role** — accepted as a reasonable minimum viable
+   gate; flagged for product to confirm the intended fuller vocabulary
+   before any route ships.
+2. **Only monotonic visibility widening (PRIVATE→TEAM/ORGANIZATION), no
+   narrowing** — accepted; canon doesn't ask for narrowing and it's easy to
+   add later without a breaking change.
+3. **No self-review prohibition** — accepted for now; `shareProcessDefinition`'s
+   role gate is the actual protection for shared visibility, review is an
+   additional, not the only, checkpoint. Worth revisiting alongside E6's own
+   self-approval precedent (CW-P05) if a stronger separation-of-duties
+   requirement surfaces later.
+4. **Multiple PUBLISHED process_versions may coexist (no auto-deprecate,
+   no SUPERSEDED state)** — accepted; matches CW-RT-028's literal state
+   machine, which has no SUPERSEDED value, unlike CasePlanVersion's.
+5. **Cross-tenant instantiation gap — FIXED, not just tracked.** The
+   implementing agent correctly identified the gap but hesitated on whether
+   reading `case_core` was "reserved" to CW-P02. It wasn't — every sibling
+   packet already does this. Coordinator added the read-only organization_id
+   cross-check directly (commit `44769e6bc9`) rather than leaving a known
+   tenant-isolation hole open.
+6. **`capability_versions`/`policy_ref`/`required_bindings` free-form JSON**
+   — accepted, same open posture as CW-P03's `metadata` column.
+7. **≥1 PUBLISHED version required before widening visibility** — accepted
+   as the literal, defensible reading; flagged for product to confirm
+   pre-publish collaboration sharing isn't also wanted.
+8. **`team_id` has no real team entity to resolve against** — accepted;
+   column exists per canon's enum, real meaning deferred until a team
+   concept lands elsewhere in the product.
+9. **`version_number`/`version` naming split, mirroring CW-P02's
+   `plan_number`/`version`** — accepted, consistent with established
+   precedent, same confirm-before-public-API flag carried forward.
 | CW-P13 | E13 | E4, E9 | `migrate.postgres.ts` convention (EXTEND); two flag mechanisms (EXTEND, pick deliberately) | legacy read adapter, quarantine, cohort rollout, kill switch | 30 (LEGACY_MIGRATION_PARITY) |
 | CW-P14 | E14 | all above | — | correlation chain, Golden Cases A-F, candidate manifest | 110 (EPIC_DOD_COVERAGE) |
 
