@@ -40,6 +40,12 @@ import {
 // Row shapes
 // ---------------------------------------------------------------------------
 
+/** WP-B06 §4.1 — `finance_business_versions.version_kind` CHECK constraint values. */
+export type VersionKind = 'ORIGINAL' | 'RESTATED' | 'MANAGEMENT_ADJUSTED';
+
+/** WP-B06 §4.1 — `finance_business_versions.restatement_class` CHECK constraint values. */
+export type RestatementClass = 'ERROR_CORRECTION' | 'ACCOUNTING_POLICY_CHANGE' | 'RECLASSIFICATION' | 'OTHER';
+
 export interface BusinessVersionRow {
   business_version_id: string;
   artifact_id: string;
@@ -75,6 +81,10 @@ export interface BusinessVersionRow {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  /** WP-B06 §4.1 (`20260809_finance_v3_b06_reproducibility_retention_export.sql`). */
+  version_kind: VersionKind;
+  restatement_reason: string | null;
+  restatement_class: RestatementClass | null;
 }
 
 export interface WorkingRevisionRow {
@@ -358,14 +368,23 @@ export interface ApproveVersionParams {
 }
 
 /**
- * WP-B02 §5 — one transaction, four ordered steps: (a) completeness/freshness/
+ * WP-B02 §5 — one transaction, five ordered steps: (a) completeness/freshness/
  * blocking-exception/SoD validation, (b) freeze compute snapshot (INSERT,
- * never UPDATE), (c) status transition with compute_snapshot_id in the SAME
- * statement, (d) append-only audit log insert. T9 (supersede parent) is
- * attempted as a best-effort statement in the same transaction per §5.2's
- * documented tradeoff (kept in-transaction here rather than a separate
- * follow-up transaction, since this work package has no background
- * reconciliation job yet to repair a post-commit T9 failure).
+ * never UPDATE), (T9) supersede the parent version FIRST if this is a
+ * reopened/restated version being approved, (c) status transition with
+ * compute_snapshot_id in the SAME statement, (d) append-only audit log
+ * insert. T9 is kept in-transaction (rather than a separate follow-up
+ * transaction) per §5.2's documented tradeoff, since this work package has
+ * no background reconciliation job yet to repair a post-commit T9 failure —
+ * but it MUST run BEFORE (c), not after: `uq_finance_bv_one_approved` is a
+ * partial UNIQUE INDEX (not DEFERRABLE — Postgres does not allow DEFERRABLE
+ * on an index with a WHERE predicate), so its uniqueness check fires at the
+ * end of each UPDATE statement, not at COMMIT. Superseding the child's still-
+ * APPROVED parent before flipping the child to APPROVED avoids ever having
+ * two APPROVED rows for the same artifact_id at any point in the transaction
+ * (BUG-GOLDCO-03 fix, 2026-08-09 — see
+ * docs/validation/finance-v3/generated/gate-d/GOLDCO_STATEMENTS_VERTICAL_SLICE_REPORT.md
+ * and the corrected WP-B02_lifecycle_concurrency_ADR.md §5/§6.4).
  */
 export async function approveVersion(params: ApproveVersionParams): Promise<ApproveResult> {
   return withPinnedPostgresTransaction(async (tx) => {
@@ -486,6 +505,32 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
     );
     if (!snapshot) throw new Error('finance_compute_snapshots insert returned no row');
 
+    // T9 — supersede the parent (if any) BEFORE the child's own status flip to
+    // APPROVED (BUG-GOLDCO-03 fix, 2026-08-09). `uq_finance_bv_one_approved`
+    // (server/migrations/20260809_finance_v3_b01_core_artifacts.sql:143) is a
+    // partial UNIQUE INDEX, not a table CONSTRAINT — Postgres does not allow
+    // DEFERRABLE on an index with a WHERE predicate, so its uniqueness check
+    // fires at the end of EACH UPDATE statement, not at COMMIT. Since
+    // `reopenVersion()` only ever reopens an APPROVED row, `current.parent_version_id`
+    // (when set) is *always* still APPROVED at this point — flipping the CHILD
+    // to APPROVED first (the previous order here, and the order the WP-B02 ADR's
+    // own §5 sequence diagram showed as a *post-commit* best-effort step) collides
+    // with the still-APPROVED parent on that same partial index the instant the
+    // child's UPDATE runs, before this step ever gets a chance to execute — see
+    // BUG-GOLDCO-03 in docs/validation/finance-v3/generated/gate-d/GOLDCO_STATEMENTS_VERTICAL_SLICE_REPORT.md
+    // and the corrected ordering in WP-B02_lifecycle_concurrency_ADR.md §5/§6.4.
+    // Demoting the parent FIRST removes it from the partial index before the
+    // child ever tries to claim the "one APPROVED per artifact_id" slot, so a
+    // plain non-deferred unique index is sufficient — no schema change needed.
+    if (current.parent_version_id) {
+      await tx.queryRun(
+        `UPDATE finance_business_versions
+            SET status = 'SUPERSEDED', superseded_at = now(), superseded_by_version_id = ?
+          WHERE business_version_id = ? AND organization_id = ? AND status = 'APPROVED'`,
+        [params.businessVersionId, current.parent_version_id, params.organizationId]
+      );
+    }
+
     // (c) status transition — compute_snapshot_id in the SAME statement as the status flip.
     const approved = await tx.queryOne<BusinessVersionRow>(
       `UPDATE finance_business_versions
@@ -522,16 +567,6 @@ export async function approveVersion(params: ApproveVersionParams): Promise<Appr
       ]
     );
 
-    // T9 (best-effort, same transaction here — see doc comment above).
-    if (current.parent_version_id) {
-      await tx.queryRun(
-        `UPDATE finance_business_versions
-            SET status = 'SUPERSEDED', superseded_at = now(), superseded_by_version_id = ?
-          WHERE business_version_id = ? AND organization_id = ? AND status = 'APPROVED'`,
-        [params.businessVersionId, current.parent_version_id, params.organizationId]
-      );
-    }
-
     return { ok: true, businessVersion: approved, computeSnapshotId, idempotentReplay: false };
   });
 }
@@ -546,7 +581,8 @@ export type ReopenErrorCode =
   | 'STATE_PRECONDITION_FAILED'
   | 'FORBIDDEN'
   | 'REASON_REQUIRED'
-  | 'DRAFT_ALREADY_EXISTS';
+  | 'DRAFT_ALREADY_EXISTS'
+  | 'RESTATEMENT_METADATA_REQUIRED';
 
 export type ReopenResult =
   | {
@@ -568,6 +604,22 @@ export interface ReopenVersionParams {
   expectedVersion: number;
   reason: string;
   idempotencyKey?: string;
+  /**
+   * BUG-GOLDCO-01 fix (2026-08-09). WP-B06 §4.2's documented restatement
+   * mechanism ("restatement to nie osobna operacja state machine, to reopen
+   * (B02 T12) z dodatkowymi metadanymi... `versionKind: 'RESTATED'`") — the
+   * caller marks THIS reopen as a restatement by passing `versionKind:
+   * 'RESTATED'` plus `restatementReason`/`restatementClass`. Omitted (or
+   * explicitly `'ORIGINAL'`) means a plain reopen — `vN+1.version_kind`
+   * defaults to `'ORIGINAL'`, matching WP-B06 §4.2's own default rule
+   * ("version_kind nie jest dziedziczone automatycznie... domyślnie nowy
+   * vN+1 też jest ORIGINAL"). `'MANAGEMENT_ADJUSTED'` is intentionally not
+   * reachable through reopen — WP-B06 §4.4 models it as a separate
+   * `artifact_id`, not a version_kind reachable via this function.
+   */
+  versionKind?: Extract<VersionKind, 'ORIGINAL' | 'RESTATED'>;
+  restatementReason?: string;
+  restatementClass?: RestatementClass;
 }
 
 /**
@@ -587,6 +639,18 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
   }
   if (!REOPEN_ALLOWED_ROLES.includes(params.role)) {
     return { ok: false, code: 'FORBIDDEN', message: `Role ${params.role} may not reopen` };
+  }
+  // BUG-GOLDCO-01 fix: mirror `chk_finance_bv_restatement_reason`
+  // (`version_kind != 'RESTATED' OR (restatement_reason IS NOT NULL AND
+  // restatement_class IS NOT NULL)`, WP-B06 §4.1) at the application layer so
+  // a caller gets a clean 400-shaped error instead of a raw Postgres
+  // check-violation surfacing from inside the transaction below.
+  if (params.versionKind === 'RESTATED' && (!params.restatementReason?.trim() || !params.restatementClass)) {
+    return {
+      ok: false,
+      code: 'RESTATEMENT_METADATA_REQUIRED',
+      message: "versionKind='RESTATED' requires both restatementReason and restatementClass",
+    };
   }
 
   try {
@@ -666,13 +730,21 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
       );
       const nextVersionNo = (maxVersionRow?.max_version_no ?? vN.version_no) + 1;
 
+      // BUG-GOLDCO-01 fix: persist version_kind/restatement_reason/restatement_class
+      // on vN+1 itself, instead of leaving every reopened version defaulting to
+      // version_kind='ORIGINAL' regardless of caller intent (WP-B06 §4.2).
+      const versionKind: VersionKind = params.versionKind ?? 'ORIGINAL';
+      const restatementReason = versionKind === 'RESTATED' ? (params.restatementReason ?? null) : null;
+      const restatementClass = versionKind === 'RESTATED' ? (params.restatementClass ?? null) : null;
+
       const newBusinessVersionId = uuidv4();
       const newVersion = await tx.queryOne<BusinessVersionRow>(
         `INSERT INTO finance_business_versions (
            business_version_id, artifact_id, organization_id, version_no, status,
            parent_version_id, reopen_reason, reopened_by, reopened_at,
-           engine_manifest_id, risk_tier, created_by
-         ) VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, ?, now(), ?, ?, ?)
+           engine_manifest_id, risk_tier, created_by,
+           version_kind, restatement_reason, restatement_class
+         ) VALUES (?, ?, ?, ?, 'DRAFT', ?, ?, ?, now(), ?, ?, ?, ?, ?, ?)
          RETURNING *`,
         [
           newBusinessVersionId,
@@ -685,6 +757,9 @@ export async function reopenVersion(params: ReopenVersionParams): Promise<Reopen
           vN.engine_manifest_id,
           vN.risk_tier,
           params.actorId,
+          versionKind,
+          restatementReason,
+          restatementClass,
         ]
       );
       if (!newVersion) throw new Error('finance_business_versions insert (reopen) returned no row');

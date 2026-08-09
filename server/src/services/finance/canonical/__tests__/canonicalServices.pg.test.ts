@@ -413,6 +413,140 @@ describe.skipIf(!REAL_PG)('Finance v3 canonical services — real PostgreSQL', (
       expect(replay.idempotentReplay).toBe(true);
       expect(replay.businessVersion.business_version_id).toBe(first.businessVersion.business_version_id);
     });
+
+    // BUG-GOLDCO-03 regression (docs/validation/finance-v3/generated/gate-d/
+    // GOLDCO_STATEMENTS_VERTICAL_SLICE_REPORT.md §6): approveVersion() used to
+    // set the CHILD row to APPROVED before demoting the still-APPROVED PARENT
+    // to SUPERSEDED, in the same transaction. `uq_finance_bv_one_approved` is
+    // a partial UNIQUE INDEX (not DEFERRABLE), so that ordering threw a raw
+    // 23505 unique-violation on EVERY reopen->approve, unconditionally. Fixed
+    // by superseding the parent BEFORE flipping the child — this test failed
+    // (threw) against the pre-fix code and must pass here.
+    it('approving a reopened vN+1 reaches APPROVED and supersedes vN (BUG-GOLDCO-03)', async () => {
+      const vN = await createApprovedVersion();
+
+      const reopened = await artifactVersionService.reopenVersion({
+        organizationId: orgId,
+        businessVersionId: vN.business_version_id,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: vN.version,
+        reason: 'BUG-GOLDCO-03 regression test — plain reopen then approve',
+      });
+      if (!reopened.ok) throw new Error('unreachable');
+      const childBvId = reopened.businessVersion.business_version_id;
+      let childVersion = reopened.businessVersion.version;
+
+      const submitted = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: childBvId,
+        action: 'submit_for_review',
+        actorId: preparerId,
+        role: 'preparer',
+        expectedVersion: childVersion,
+      });
+      if (!submitted.ok) throw new Error('unreachable');
+      childVersion = submitted.businessVersion.version;
+
+      const started = await artifactVersionService.transition({
+        organizationId: orgId,
+        businessVersionId: childBvId,
+        action: 'start_review',
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: childVersion,
+      });
+      if (!started.ok) throw new Error('unreachable');
+      childVersion = started.businessVersion.version;
+
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE finance_business_versions SET freshness = 'CURRENT' WHERE business_version_id = ?`, [childBvId])
+      );
+
+      // Before the fix, this threw a raw 23505 unique-violation instead of
+      // returning a structured ApproveResult — asserting `.ok` alone already
+      // proves the fix; the `await` not throwing is itself load-bearing.
+      const approved = await artifactVersionService.approveVersion({
+        organizationId: orgId,
+        businessVersionId: childBvId,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: childVersion,
+      });
+      expect(approved.ok).toBe(true);
+      if (!approved.ok) throw new Error('unreachable');
+      expect(approved.businessVersion.status).toBe('APPROVED');
+
+      const parentAfter = await artifactVersionService.getBusinessVersion(orgId, vN.business_version_id);
+      expect(parentAfter?.status).toBe('SUPERSEDED');
+      expect(parentAfter?.superseded_by_version_id).toBe(childBvId);
+      expect(parentAfter?.superseded_at).toBeTruthy();
+    });
+
+    // BUG-GOLDCO-01 regression: reopenVersion() used to silently drop
+    // versionKind/restatementReason/restatementClass — every reopened
+    // version, restatement or not, defaulted to version_kind='ORIGINAL'
+    // regardless of caller intent (WP-B06 §4.2's documented mechanism).
+    it('reopen with versionKind=RESTATED persists version_kind/restatement_reason/restatement_class (BUG-GOLDCO-01)', async () => {
+      const vN = await createApprovedVersion();
+
+      const restated = await artifactVersionService.reopenVersion({
+        organizationId: orgId,
+        businessVersionId: vN.business_version_id,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: vN.version,
+        reason: 'Inventory valuation error found in Q1 close',
+        versionKind: 'RESTATED',
+        restatementReason: 'Inventory valuation error found in Q1 close',
+        restatementClass: 'ERROR_CORRECTION',
+      });
+      expect(restated.ok).toBe(true);
+      if (!restated.ok) throw new Error('unreachable');
+      expect(restated.businessVersion.version_kind).toBe('RESTATED');
+      expect(restated.businessVersion.restatement_reason).toBe('Inventory valuation error found in Q1 close');
+      expect(restated.businessVersion.restatement_class).toBe('ERROR_CORRECTION');
+
+      // Read back from the DB directly, not just the service's own return value.
+      const dbRow = await artifactVersionService.getBusinessVersion(orgId, restated.businessVersion.business_version_id);
+      expect(dbRow?.version_kind).toBe('RESTATED');
+      expect(dbRow?.restatement_reason).toBe('Inventory valuation error found in Q1 close');
+      expect(dbRow?.restatement_class).toBe('ERROR_CORRECTION');
+
+      // A plain reopen (no versionKind) still defaults to 'ORIGINAL' — WP-B06
+      // §4.2: "version_kind nie jest dziedziczone automatycznie... domyślnie
+      // nowy vN+1 też jest ORIGINAL".
+      const vN2 = await createApprovedVersion();
+      const plainReopen = await artifactVersionService.reopenVersion({
+        organizationId: orgId,
+        businessVersionId: vN2.business_version_id,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: vN2.version,
+        reason: 'plain reopen, not a restatement',
+      });
+      expect(plainReopen.ok).toBe(true);
+      if (!plainReopen.ok) throw new Error('unreachable');
+      expect(plainReopen.businessVersion.version_kind).toBe('ORIGINAL');
+      expect(plainReopen.businessVersion.restatement_reason).toBeNull();
+      expect(plainReopen.businessVersion.restatement_class).toBeNull();
+
+      // versionKind='RESTATED' without reason/class is rejected at the
+      // application layer (mirrors chk_finance_bv_restatement_reason).
+      const vN3 = await createApprovedVersion();
+      const missingMetadata = await artifactVersionService.reopenVersion({
+        organizationId: orgId,
+        businessVersionId: vN3.business_version_id,
+        actorId: approverId,
+        role: 'approver',
+        expectedVersion: vN3.version,
+        reason: 'restatement without required metadata',
+        versionKind: 'RESTATED',
+      });
+      expect(missingMetadata.ok).toBe(false);
+      if (missingMetadata.ok) throw new Error('unreachable');
+      expect(missingMetadata.code).toBe('RESTATEMENT_METADATA_REQUIRED');
+    });
   });
 
   describe('lineageService — real DB insert + cycle rejection via the DB trigger', () => {
