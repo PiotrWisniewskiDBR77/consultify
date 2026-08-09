@@ -609,3 +609,92 @@ budować własne agregaty. Pozostałe z G1 przed pełnym RN-G1 PASS: management-
 maintenance service (zapis przy zmianie manager_id), `rvnVisibilityScopedQuery`
 CTE wrapper (B.4), realDB migration test (pusta+realistyczna kopia bazy, wymóg
 handbooka §5 RN-G1) — to wymaga efemerycznej Postgresa, nie tylko tsc.
+
+## 11. RN-G1 — migracje na realnym Postgresie (2026-08-09) — PASS (częściowy zakres)
+
+Zamknięcie luki z §10: `tsc --noEmit` weryfikuje TYLKO typy, nie schema SQL na
+żywym silniku. Zgodnie ze złotą regułą repo ("Weryfikuj REALNY runtime, nie
+docy/flagi") uruchomiono 4 migracje RN-G1 na efemerycznym Postgresie 16
+(Homebrew `postgresql@16`, niepodpięty do `PATH` domyślnie — binaria w
+`/opt/homebrew/opt/postgresql@16/bin`). Gotowego skryptu-przepisu w
+`scripts/` NIE znaleziono (`grep -rl ephemeral scripts/` — zero trafień);
+użyto ręcznie odtworzonego przepisu z pamięci sesji
+`audyt-bazy-danych-2026-08-06` (`initdb --locale=C`, `LC_ALL=C` przy starcie,
+krótki katalog gniazda `/private/tmp/cfy-rn-g1-sock` — limit 103 bajty na
+ścieżkę Unix socketu, którego długa ścieżka worktree/iCloud by przekroczyła).
+`docker`/`colima` są zainstalowane, ale daemon nie chodził (`colima list` →
+oba profile `Stopped`) — Postgres z Homebrew był szybszą ścieżką, więc Docker
+nie był potrzebny.
+
+**Komendy (streszczenie, pełny log w tej sesji agenta):**
+```
+export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
+initdb --locale=C -D /private/tmp/cfy-rn-g1-pgdata -U postgres
+LC_ALL=C pg_ctl -D /private/tmp/cfy-rn-g1-pgdata \
+  -o "-k /private/tmp/cfy-rn-g1-sock -p 5544" -l .../pg.log start
+createdb -h /private/tmp/cfy-rn-g1-sock -p 5544 -U postgres cfy_rn_g1_test
+psql -h ... -f 20260809_rvn_platform_events_outbox.sql
+psql -h ... -f 20260809_rvn_platform_visibility_core.sql
+psql -h ... -f 20260809_rvn_platform_management_chain.sql
+psql -h ... -f 20260809_rvn_platform_canonical_object_type_extend.sql
+```
+
+**Wynik — 5 sprawdzeń z zadania, wszystkie PASS:**
+
+1. **Aplikacja na pustej bazie** — wszystkie 4 migracje, w kolejności,
+   `ON_ERROR_STOP=1`: `exit 0` każda, zero błędów. Migracja #4 poprawnie
+   weszła w gałąź `EXCEPTION WHEN undefined_table` (brak
+   `v8_canonical_object_states` na czystej bazie) i wykonała się jako no-op.
+2. **Idempotencja** — te same 4 pliki uruchomione DRUGI raz na tej samej
+   bazie: same `NOTICE: relation "..." already exists, skipping` +
+   `CREATE TABLE`/`CREATE INDEX`/`CREATE EXTENSION`, `exit 0` każda. Brak
+   błędów przy powtórnym uruchomieniu.
+3. **Struktura tabel** — `\dt rvn_platform_*` zwraca dokładnie 7
+   oczekiwanych tabel (`rvn_platform_events`, `rvn_platform_outbox`,
+   `rvn_platform_projection_checkpoints`, `rvn_platform_visibility_policies`,
+   `rvn_platform_resource_visibility`, `rvn_platform_resource_acl`,
+   `rvn_platform_management_chain_closure`); `\d rvn_platform_events`
+   potwierdza pełny zestaw kolumn + indeksy + FK z `rvn_platform_outbox`.
+4. **Migracja #4 na pustej bazie — explicite osobny test**: zweryfikowano NIE
+   TYLKO że nie rzuca błędu (punkt 1), ale DODATKOWO uruchomiono ją na
+   DRUGIEJ, osobnej bazie ZE zbudowaną ręcznie `v8_canonical_object_states`
+   (stary CHECK z 8 wartości) — INSERT `'kpi'` odrzucony PRZED migracją
+   (`violates check constraint`), migracja aplikuje się dwukrotnie bez błędu,
+   PO migracji INSERT `'kpi'`/`'roi_case'`/`'okr_set'`/`'deviation_case'`
+   przechodzi, stara wartość `'task'` nadal działa, a `'bogus_type'` nadal
+   jest odrzucany. Confirmed: rozszerzenie CHECK jest poprawne i idempotentne
+   w OBU gałęziach (tabela brak / tabela obecna).
+5. **INSERT + REVOKE na `rvn_platform_events`** — INSERT jako `postgres`
+   (owner) powiódł się. `UPDATE` jako **owner/superuser** (`postgres`)
+   **POWIÓDŁ SIĘ** (`UPDATE 1`) — to jest DOKŁADNIE ograniczenie, które sama
+   migracja dokumentuje w komentarzu (`REVOKE ... FROM PUBLIC` nie chroni
+   przed połączeniem jako owner/superuser, a "app currently connects as
+   table owner in every environment this was checked against"). Aby
+   potwierdzić że REVOKE faktycznie coś robi, dodatkowo utworzono rolę
+   NIE-ownera (`rvn_nonowner`, tylko `GRANT SELECT, INSERT`) i jako ta rola
+   `UPDATE`/`DELETE` na `rvn_platform_events` skończyły się
+   `ERROR: permission denied for table rvn_platform_events` (exit 1) — czyli
+   REVOKE realnie blokuje UPDATE/DELETE dla każdej roli, która nie jest
+   ownerem/superuserem, zgodnie z udokumentowanym zamierzeniem migracji.
+
+**Sprzątanie**: `pg_ctl stop -m fast` + `rm -rf` katalogu danych i gniazda —
+żadnych trwałych artefaktów poza tym wpisem w ledgerze.
+
+**Co NIE zostało zweryfikowane w tym kroku (świadomie poza zakresem
+zlecenia)**: (a) "realistyczna kopia bazy" z §5 handbooka rozumiana jako pełna
+migrowana kopia demo/staging (1000+ istniejących migracji) — testowano tylko
+pustą bazę + jeden ręcznie zbudowany scenariusz "tabela z danymi" dla migracji
+#4, nie pełny łańcuch `db:migrate` od zera; (b) "rollback lub forward-repair
+rehearsal" (drugi wymóg §5 RN-G1) — nie testowany, migracje nie mają jawnych
+plików rollback; (c) zachowanie REVOKE pod realną rolą aplikacyjną tego repo
+(nie zweryfikowano jaką rolą faktycznie łączy się produkcyjny pool — migracja
+sama to flaguje jako "sprawdzone we wszystkich środowiskach = connects as
+owner", to ustalenie nie zostało tu ponownie zweryfikowane, tylko odtworzone
+zachowanie superusera).
+
+**Wniosek**: 4 migracje RN-G1 są mechanicznie poprawne, idempotentne i
+bezpieczne do uruchomienia na pustej bazie — ten konkretny blok pracy
+("zweryfikuj na realnym Postgresie, nie tylko tsc") jest zamknięty jako PASS.
+Pełne RN-G1 PASS z §5 handbooka pozostaje otwarte na pozycje (a)/(b) powyżej
+oraz na pozostałe z §10 (management-chain maintenance service,
+`rvnVisibilityScopedQuery`).
