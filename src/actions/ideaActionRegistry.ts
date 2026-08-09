@@ -76,7 +76,12 @@ export type IconName =
   | 'MousePointer2'
   | 'Workflow'
   | 'Download'
-  | 'Copy';
+  | 'Copy'
+  | 'Type'
+  | 'ArrowLeftRight'
+  | 'ArrowRight'
+  | 'Paintbrush'
+  | 'Trash2';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -275,6 +280,40 @@ async function runByTool(
   }
   dispatchQuickAction(runtime, ctx, extra);
   return { ok: true, actionId, data: { runtime } };
+}
+
+/**
+ * Cienki przekaźnik dla akcji `scope: 'edge'` Tablicy (pilot 2026-08-09,
+ * `WhiteboardEdgeContextMenu.tsx`). Krawędź Tablicy NIE ma adresowalnego id
+ * na szynie `idea-workspace-quick-action` — mutacja (etykieta/styl/strzałka/
+ * odwrócenie/usunięcie) żyje w lokalnym zamknięciu `handleEdge*` w
+ * `IdeaWhiteboardTool.tsx`, zamkniętym nad `edgeContextMenu.edgeId` z lokalnego
+ * stanu Reacta. `useWhiteboardQuickActions.ts` NIE MA odbiornika dla akcji
+ * krawędzi (patrz jego handlery `wb_*` — żaden nie dotyczy krawędzi), więc
+ * `dispatchQuickAction`/`runByTool` tutaj by nie zadziałały bez dopisania
+ * takiego odbiornika (poza zakresem tego pilota — celowo NIE ruszamy
+ * `useWhiteboardQuickActions.ts` ani `IdeaWhiteboardTool.tsx`).
+ *
+ * Zamiast tego powierzchnia (komponent menu) przekazuje SWÓJ oryginalny
+ * prop-callback jako `ctx.params.run` — ten handler go po prostu wykonuje.
+ * ŚWIADOME OGRANICZENIE (Z4): Teresa NIE MA dziś sposobu wywołania tych akcji
+ * — nie istnieje pojęcie „krawędź pod kursorem" adresowalne z czatu, więc
+ * wywołanie z `ctx.source === 'teresa'` zawsze grzecznie odmawia. Naprawa
+ * wymaga adresowalnego `edgeId` + odbiornika w `useWhiteboardQuickActions.ts`
+ * — kolejna fala, nie ten pilot.
+ */
+async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa tylko z menu prawego kliku na konkretnym połączeniu Tablicy — nie mam dziś sposobu adresowania go z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
 }
 
 // ───────────────────── MAPY RUNTIME (parsowane przez strażnika) ─────────────────────
@@ -830,6 +869,122 @@ const IDEA_ACTIONS: ActionDef[] = [
       confirmBeforeRun: true,
     },
     source: 'src/services/api.ts:4619 (duplicateMyIdea) + IdeaMapWorkspace.tsx kebab „Duplikuj"',
+  },
+  // ── PILOT scope='edge' (2026-08-09) — WhiteboardEdgeContextMenu.tsx ──────
+  // Pierwsze 5 wpisów zakresu 'edge' w rejestrze. Handler = runEdgeParamCallback
+  // (patrz komentarz przy jej definicji) — świadomie inny wzorzec niż
+  // dispatchQuickAction/runByTool używany przez pozostałe 16 wpisów, bo
+  // Tablica nie ma dziś odbiornika krawędzi na szynie. Kolejność deklaracji
+  // = kolejność w menu (1:1 ze stanem sprzed migracji).
+  {
+    id: 'idea.edge.edit_label',
+    label: { pl: 'Dodaj / edytuj etykietę', en: 'Add / edit label' },
+    icon: 'Type',
+    scope: 'edge',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.edit_label', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158 → pushUndoSnapshot() przed setEdges (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Ustawia etykietę zaznaczonego połączenia na Tablicy (okno tekstowe z bieżącą wartością). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — Teresa nie ma jeszcze sposobu wskazania „które połączenie", więc wywołanie z czatu zawsze odmówi.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158',
+  },
+  {
+    id: 'idea.edge.reverse',
+    label: { pl: 'Odwróć kierunek', en: 'Reverse direction' },
+    icon: 'ArrowLeftRight',
+    scope: 'edge',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.reverse', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx handleEdgeReverse:3223 → pushUndoSnapshot() przed zamianą source/target (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Zamienia miejscami początek i koniec zaznaczonego połączenia na Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223',
+  },
+  {
+    id: 'idea.edge.cycle_arrow',
+    label: { pl: 'Kierunek strzałki', en: 'Arrow direction' },
+    icon: 'ArrowRight',
+    scope: 'edge',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.cycle_arrow', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200 → pushUndoSnapshot() przed zmianą data.arrowDirection (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Przełącza strzałkę kierunku zaznaczonego połączenia na Tablicy (cykl: brak → koniec → oba → początek). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200',
+  },
+  {
+    id: 'idea.edge.cycle_style',
+    label: { pl: 'Zmień styl linii', en: 'Change line style' },
+    icon: 'Paintbrush',
+    scope: 'edge',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.cycle_style', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 → pushUndoSnapshot() przed zmianą data.edgeStyle (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Przełącza styl linii zaznaczonego połączenia na Tablicy (cykl: ciągła → kreskowana → kropkowana → falista). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178',
+  },
+  {
+    id: 'idea.edge.delete',
+    label: { pl: 'Usuń połączenie', en: 'Delete connection' },
+    icon: 'Trash2',
+    scope: 'edge',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx handleEdgeDelete:3245 → onEdgesChange:1144 → pushUndoSnapshot() przed applyEdgeChanges (stos Ctrl+Z)',
+    },
+    // Trwałe usunięcie krawędzi z grafu — pierwsze użycie `destructive` w
+    // rejestrze (pole zadeklarowane, dotąd nieużywane przez żaden z 16
+    // wcześniejszych wpisów). Undo jest lokalny (Ctrl+Z), stąd `mutates`+`undo`
+    // osobno od `destructive`, zgodnie z opisem pola w interfejsie ActionDef.
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa zaznaczone połączenie z Tablicy na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na konkretnym połączeniu — jak wyżej, Teresa dziś tego nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245',
   },
 ];
 
