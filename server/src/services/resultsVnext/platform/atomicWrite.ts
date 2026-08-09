@@ -137,6 +137,22 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.deviation_effectiveness_verified': ['mywork_projection'],
   'kpi.deviation_closed': ['mywork_projection'],
   'kpi.deviation_reopened': ['mywork_projection'],
+
+  // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md §B/§D) —
+  // Scorecards. The design doc's own task spec names 3 explicitly
+  // (scorecard.created/scorecard.membership_changed/scorecard.review_published);
+  // scorecard.review_created/activated/suspended/archived are filled in here
+  // for the same "documentation gap, not an intentional opt-out" reason
+  // KPI-E003's own trailing entries above were — every state-changing
+  // command in kpiScorecardCommands.ts appends an event. All fan out to
+  // 'mywork_projection' only, same default every other domain entry above.
+  'scorecard.created': ['mywork_projection'],
+  'scorecard.membership_changed': ['mywork_projection'],
+  'scorecard.activated': ['mywork_projection'],
+  'scorecard.suspended': ['mywork_projection'],
+  'scorecard.archived': ['mywork_projection'],
+  'scorecard.review_created': ['mywork_projection'],
+  'scorecard.review_published': ['mywork_projection'],
 };
 
 /**
