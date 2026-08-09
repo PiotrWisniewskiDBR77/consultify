@@ -18,7 +18,7 @@ yet complete.
 |---|---|
 | Worktree | `/private/tmp/consultify-pre-rebuild-v8-ui-integration-20260809` |
 | Branch | `codex/pre-rebuild-v8-ui-integration-20260809` |
-| Candidate SHA before this report | `ab013cbaf565dc94b5c38b1b4a2af1dd5a0f0bfb` |
+| Candidate product SHA before final reconciliation metadata | `1d9c73e7832ab6b69c61cdacc4a814c2fe558dd6` |
 | Current GitHub demo | `bf29e98a3d8a0c40bf822d8c79f817a679c30695` |
 | Accepted Railway runtime parent | `37f835ccfd5e49462986ed95f8285ef1b04dc59d` |
 | Git status | clean before report creation |
@@ -129,3 +129,65 @@ integration rules.
 **NO-GO:** call the whole application human-test ready, enable all Artifact
 Studio flags, fast-forward `demo`, deploy, or delete quarantined histories
 without the separate runtime/release gates.
+
+## Reconciliation refresh — 2026-08-09 16:50 CEST
+
+The final bounded Artifact Studio owner handoff produced nine commits after the
+first candidate was published. They have now been replayed without conflicts
+onto this candidate. The added scope includes the fail-closed release evidence
+gate, external evidence templates, stable workbook sheet identities, global
+Teresa bridges for DOC and PPT, and the final XLSX runtime regression package.
+
+Current additional evidence:
+
+- bounded Artifact Studio regression after replay: **69/69 PASS**;
+- release evidence gate self-tests: **6/6 PASS**;
+- release manifest result: `crossFormatTransfer=evidence_missing`,
+  `screenReader=evidence_missing`, `teresaRealProvider=evidence_missing`,
+  `stableWindows=evidence_missing`, `legacyRemoval=blocked`;
+- current demo health: PostgreSQL and Redis connected, readiness green;
+- deployed demo runtime SHA: `37f835ccfd5e49462986ed95f8285ef1b04dc59d`;
+- current GitHub `origin/demo`: `bf29e98a3d8a0c40bf822d8c79f817a679c30695`;
+- local root Documents/UI workspace: 310 dirty paths, of which 53 are already
+  byte-identical to this candidate and 257 remain different or root-only.
+
+Therefore blanket feature-flag removal is explicitly **NO-GO**. The correct
+demo policy is to keep incomplete Artifact Studio lanes fail-closed while the
+legacy, already accepted surfaces remain visible. A flag can be retired only
+after its replacement lane reaches its terminal evidence gate; a flag is not a
+substitute for acceptance.
+
+## Demo database and deployment reconciliation — 2026-08-09 16:58 CEST
+
+The Railway context was independently verified before any possible mutation:
+project `consultify`, environment `demo`, service `consultify`. The latest
+deployment is `SUCCESS`; `/api/health` reports PostgreSQL and Redis connected
+and runtime SHA `37f835ccfd5e49462986ed95f8285ef1b04dc59d`.
+
+The canonical runtime migration preflight (shared discovery and checksum code
+with the runtime runner) found exactly two pending additive migrations:
+`20260806_mfa_user_mfa_table.sql` and
+`20260806_superadmin_mfa_methods_table.sql`. Both create missing MFA storage
+with `CREATE TABLE/INDEX IF NOT EXISTS`; neither deletes or rewrites business
+data. A previously accepted fresh-schema repair had changed
+`20260331_p28_workbench_p29_partner_program_ledger.sql`, but its exact new
+checksum was not yet recorded in the two-sided immutable compatibility ledger.
+That ledger is now corrected. A second read-only demo preflight proves:
+
+- checksum mismatches: **0**;
+- pending runtime migrations: **2, both named above**;
+- history rows are not rewritten by the compatibility path;
+- targeted migration identity/preflight suite: **7/7 executed PASS**, four
+  realDB-only cases skipped because this invocation did not target its
+  disposable test database.
+
+The legacy manual runner still reports hundreds of `schema_migrations`
+pending because it uses a different discovery/history contract. It is not the
+runtime owner and is retained as controlled migration tooling debt; it must not
+be used as an alternative deployment gate.
+
+After the final Documents replay, root and server typechecks plus frontend and
+backend production builds all pass again. Promotion remains intentionally
+blocked until the clean candidate is committed/pushed and the controlled demo
+deployment applies the two pending runtime migrations, after which the same
+preflight must return pending=0 and runtime SHA must equal `origin/demo`.

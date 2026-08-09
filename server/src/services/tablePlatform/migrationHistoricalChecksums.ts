@@ -120,7 +120,7 @@ export const APPROVED_HISTORICAL_CHECKSUM_VARIANTS: Readonly<
   },
   '20260331_p28_workbench_p29_partner_program_ledger.sql': {
     stored: '8662c1ce32d8679a',
-    current: 'a4f62b55e7bccfed',
+    current: 'a3a9e54337cb453e',
   },
   '20260331_p35b_canonical_model_completion.sql': {
     stored: '50bcc34793b78f58',

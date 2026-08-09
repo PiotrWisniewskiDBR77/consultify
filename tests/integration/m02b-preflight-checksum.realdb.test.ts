@@ -172,18 +172,22 @@ describe('M02-019 — preflight checksum drift + runner parity', () => {
     // cannot hide inside a regex change or an unreviewed allowlist addition.
     expect(new Set(allowlist)).toEqual(
       new Set([
+        '654_canonical_inbox_items_producer_fresh_db_gap.sql',
+        '669_tool_facilitation_producer_fresh_db_gap.sql',
+        '672_enterprise_agent_planner.sql',
         '20260802c_mat010_operation_claims_table.sql',
         '942_ideas_collaboration_tool_sessions.sql',
         '800_chat_007_proposal_idempotency_key.sql',
         '942_chat_m01p04a_attachment_status.sql',
         '940_mw010_vault_document_versions.sql',
+        '941_ai_agent_plan_execution_lease.sql',
         '942_ai_agent_plan_run_idempotency.sql',
         '943_work_canvas_timestamp_parity_postgres.sql',
         '944_canvas_idea_materialization_receipts.sql',
         '945_chat_m01p04c_knowledge_doc_scope.sql',
       ])
     );
-    expect(allowlist.length).toBe(9);
+    expect(allowlist.length).toBe(13);
 
     // Pattern-matched files are unaffected.
     expect(isRuntimeMigrationFile('20260804_decision_workflow_canonical.sql')).toBe(true);
