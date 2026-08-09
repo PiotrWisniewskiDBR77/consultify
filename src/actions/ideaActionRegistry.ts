@@ -59,8 +59,26 @@ export type ActionScope =
 /** Cztery reprezentacje jednej Idei (ten sam graf, inny widok). */
 export type Tool = CanvasToolType;
 
-/** Powierzchnie, na których akcja może się pokazać. */
-export type Surface = 'menu1' | 'menu3' | 'rail' | 'panel' | 'context' | 'floating';
+/**
+ * Powierzchnie, na których akcja może się pokazać.
+ *
+ * `toolbar` (2026-08-09, N7 kontynuacja) — dopisane dla `WhiteboardToolbar.tsx`.
+ * ŻADNA z sześciu poprzednich wartości nie pasuje uczciwie: to nie Menu 3
+ * (osobny, już zarejestrowany komponent — `buildIdeaMenu3Actions` w
+ * `IdeaMapWorkspace.tsx` — kolizja identyfikatorów powierzchni podwoiłaby te
+ * pozycje w innym rzędzie), nie `rail` (fizyczny prawy/lewy rail kreacji —
+ * właściciel: `CanvasLeftToolbar.tsx`, patrz komentarz w `WhiteboardToolbar.tsx`
+ * o „Sticky/Text/Shape/Frame/Draw owned exclusively by the left rail"), nie
+ * `panel` (prawy panel informacji) i nie `floating` (pasek zaznaczenia —
+ * znaczenie zdefiniowane w `_KONTRAKT_REDAKCYJNY.md`). `WhiteboardToolbar.tsx`
+ * to osobny, drugorzędny górny pasek („Editor Shell Canon §2 GÓRNA") spoza
+ * sześciopunktowej anatomii z rozdz. 01 — dodanie nowej wartości zamiast
+ * naciągnięcia istniejącej jest bezpieczne (żaden inny caller `getActionsForSurface`
+ * nie używa dziś `rail`/`panel`/`floating`, więc zero ryzyka kolizji), ale
+ * właściciel powinien ocenić, czy ten pasek docelowo scala się z Menu 3 zamiast
+ * mieć własną powierzchnię — nierozstrzygnięte tutaj (wyłącznie wiring, nie redesign).
+ */
+export type Surface = 'menu1' | 'menu3' | 'rail' | 'panel' | 'context' | 'floating' | 'toolbar';
 
 /** Nazwy ikon lucide-react używane dziś przez powierzchnie Idea Workspace. */
 export type IconName =
@@ -81,7 +99,21 @@ export type IconName =
   | 'ArrowLeftRight'
   | 'ArrowRight'
   | 'Paintbrush'
-  | 'Trash2';
+  | 'Trash2'
+  | 'Circle'
+  | 'Diamond'
+  | 'Hexagon'
+  | 'Image'
+  | 'Link2'
+  | 'Undo2'
+  | 'Redo2'
+  | 'ThumbsUp'
+  | 'TrendingUp'
+  | 'ExternalLink'
+  | 'Keyboard'
+  | 'Grid3X3'
+  | 'Shapes'
+  | 'Save';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -359,6 +391,67 @@ async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promi
   return { ok: true, actionId, data: { runtime, edgeId } };
 }
 
+/**
+ * Cienki przekaźnik dla akcji `WhiteboardToolbar.tsx` (2026-08-09, N7
+ * kontynuacja pilota krawędzi) BEZ dziś istniejącego stringa runtime na
+ * żadnej szynie ani odbiornika w `useWhiteboardQuickActions.ts` — dokładnie
+ * ta sama sytuacja co edge PRZED follow-upem 43fb54eb4c, świadomie
+ * NIENAPRAWIANA w tym samym wpisie (patrz `WhiteboardToolbar.tsx`, komentarz
+ * przy każdej z tych akcji, DLACZEGO akurat tych sześć zostało bez odbiornika,
+ * a reszta baru dostała realne dispatchowanie).
+ *
+ * ŚWIADOME OGRANICZENIE (Z4): `src/components/AIChat/whiteboardIntentDetector.ts`
+ * (jedyny istniejący, choć legacy, regexowy detektor intencji Tablicy) nie ma
+ * ANI JEDNEGO wzorca pasującego do skrótów klawiszowych/tła/Zapisz/Wyczyść
+ * rysunki — więc w przeciwieństwie do edge (gdzie było jasne "Teresa powinna
+ * to wołać po edgeId"), tu nie ma dziś ŻADNEGO sygnału, że ktokolwiek próbował
+ * wywołać te operacje z czatu. Stąd świadoma decyzja: UI-only na tę turę,
+ * bez budowania nowej infrastruktury szyny na spekulację.
+ */
+async function runToolbarUiOnlyCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z górnego paska narzędzi Tablicy — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * DWIE ścieżki dla `WhiteboardToolbar.tsx` akcji z JUŻ ISTNIEJĄCYM
+ * odbiornikiem na szynie (insert-shape ×5, undo/redo, voting/rola/podążaj) —
+ * dokładnie ten sam kształt co `runEdgeParamCallback`, uogólniony na
+ * `runByTool`:
+ *  • `ctx.source === 'ui'` + `ctx.params.run` (funkcja) — wykonuje ORYGINALNY
+ *    prop-callback komponentu wprost. KRYTYCZNE dla zachowania kontraktu
+ *    propsów: `WhiteboardToolbar` jest komponentem kontrolowanym — jego
+ *    `onXxx` propy MUSZĄ zostać wywołane przy kliku, inaczej test (i każdy
+ *    przyszły konsument z własnym propem) się psuje. Pierwsza wersja tego
+ *    wpisu (2026-08-09) błędnie szła prosto do `runByTool` z pominięciem
+ *    `ctx.params.run` — złapane przez `WhiteboardToolbar.commandrow.test.tsx`
+ *    (props.onExport/onToggleVoting nie wołane), naprawione tym helperem.
+ *  • każdy inny wywołujący (Teresa) — `runByTool` (dispatch na szynę
+ *    `idea-workspace-quick-action`, odbiornik już istnieje w
+ *    `useWhiteboardQuickActions.ts`, patrz komentarz przy mapach RUNTIME_* niżej).
+ */
+async function runToolbarBusAction(
+  actionId: string,
+  map: ToolActionMap,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  return runByTool(actionId, map, ctx);
+}
+
 // ───────────────────── MAPY RUNTIME (parsowane przez strażnika) ─────────────────────
 
 /**
@@ -425,6 +518,74 @@ const RUNTIME_AI_TABLE_CATEGORIZE: ToolActionMap = {
 /** AI: generator frameworka (Tabela) — otwiera FrameworkGenerator. */
 const RUNTIME_AI_TABLE_FRAMEWORK: ToolActionMap = {
   table: 'tbl_framework',
+};
+
+/**
+ * `WhiteboardToolbar.tsx` (2026-08-09, N7 kontynuacja) — pięć wariantów
+ * dropdownu „Wstaw" (dawniej hardkodowana tablica `items` w komponencie).
+ * Runtime stringi `wb_add_shape_*`/`wb_add_image`/`wb_add_link` JUŻ MAJĄ
+ * odbiornik w `useWhiteboardQuickActions.ts` (linie 100-123) — komponent po
+ * prostu nigdy z niego nie korzystał, wołał `addElement(kind)` bezpośrednio z
+ * closure. Migracja na `dispatchQuickAction` daje Teresie te 5 akcji ZA DARMO
+ * (żadnej nowej szyny) — inaczej niż akcje niżej bez istniejącego odbiornika.
+ */
+// UWAGA FORMATU: jedna para `tool: 'action',` PER LINIA (nie w jednej linii z
+// `const`) — `scripts/check-actions.sh` R6 parsuje mapy runtime awk-em wg
+// dosłownego wzorca z nagłówka pliku; skrócony zapis `{ whiteboard: '...' }`
+// w jednej linii jest NIEWIDOCZNY dla strażnika (cichy brak weryfikacji R6),
+// dokładnie tej klasy błędu ma zapobiegać.
+const RUNTIME_INSERT_SHAPE_CIRCLE: ToolActionMap = {
+  whiteboard: 'wb_add_shape_circle',
+};
+const RUNTIME_INSERT_SHAPE_DIAMOND: ToolActionMap = {
+  whiteboard: 'wb_add_shape_diamond',
+};
+const RUNTIME_INSERT_SHAPE_HEXAGON: ToolActionMap = {
+  whiteboard: 'wb_add_shape_hexagon',
+};
+const RUNTIME_INSERT_IMAGE: ToolActionMap = {
+  whiteboard: 'wb_add_image',
+};
+const RUNTIME_INSERT_LINK: ToolActionMap = {
+  whiteboard: 'wb_add_link',
+};
+
+/**
+ * Cofnij/Ponów — WSPÓLNE dla wszystkich czterech reprezentacji (Z1), pierwsze
+ * takie użycie w rejestrze poza `idea.element.add`. Runtime stringi już mają
+ * odbiorniki: `mm_undo`/`mm_redo` (useMindMapQuickActions.ts:254-255),
+ * `wb_undo`/`wb_redo` (useWhiteboardQuickActions.ts:141-142), `pf_undo`/`pf_redo`
+ * (useProcessFlowQuickActions.ts:183-184), `tbl_undo`/`tbl_redo`
+ * (useTableQuickActions.ts:102-109) — weryfikowane grepem przed dopisaniem,
+ * nie zgadywane.
+ */
+const RUNTIME_UNDO: ToolActionMap = {
+  mindmap: 'mm_undo',
+  whiteboard: 'wb_undo',
+  process_flow: 'pf_undo',
+  table: 'tbl_undo',
+};
+const RUNTIME_REDO: ToolActionMap = {
+  mindmap: 'mm_redo',
+  whiteboard: 'wb_redo',
+  process_flow: 'pf_redo',
+  table: 'tbl_redo',
+};
+
+/**
+ * Sesja współpracy Tablicy (`WhiteboardToolbar.tsx` overflow „…") — runtime
+ * stringi już obsłużone w `useWhiteboardQuickActions.ts` (linie 149-152), tak
+ * jak insert-shape wyżej: komponent dziś woła prop bezpośrednio, odbiornik
+ * szyny czeka nieużywany.
+ */
+const RUNTIME_TOGGLE_VOTING: ToolActionMap = {
+  whiteboard: 'wb_session_toggle_voting',
+};
+const RUNTIME_CYCLE_ROLE: ToolActionMap = {
+  whiteboard: 'wb_session_cycle_role',
+};
+const RUNTIME_TOGGLE_FOLLOW: ToolActionMap = {
+  whiteboard: 'wb_session_toggle_follow',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -1067,6 +1228,406 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245',
+  },
+  // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
+  // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,
+  // Cofnij/Ponów, overflow „…" ×9, Zapisz, Wyczyść rysunki). Kolejność
+  // deklaracji = kolejność w barze. Pięć grup handlera:
+  //  1. runToolbarBusAction + RUNTIME_INSERT_* — UI: prop wprost; Teresa: szyna
+  //     (odbiornik już istnieje, reuse, Teresa za darmo)
+  //  2. runToolbarBusAction + RUNTIME_UNDO/REDO — wspólne z 3 innymi narzędziami (Z1)
+  //  3. runToolbarBusAction + RUNTIME_TOGGLE_VOTING/CYCLE_ROLE/TOGGLE_FOLLOW — odbiornik już istnieje
+  //  4. dedykowany handler dla „Eksport" (ten sam kształt UI/Teresa co wyżej,
+  //     ale poza szyną `idea-workspace-quick-action`) — dispatchuje TEN SAM
+  //     CustomEvent co dziś (`idea-workspace-open-export-menu`, odbiornik:
+  //     IdeaMapWorkspace.tsx:2931-2939), NIE ten sam co `idea.export.open`
+  //     (patrz komentarz przy tej akcji niżej)
+  //  5. runToolbarUiOnlyCallback — bez istniejącego odbiornika (skróty, tło ×4, Zapisz, Wyczyść)
+  {
+    id: 'idea.canvas.insert_shape_circle',
+    label: { pl: 'Wstaw: koło', en: 'Insert: circle' },
+    icon: 'Circle',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_circle', RUNTIME_INSERT_SHAPE_CIRCLE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'stos undo Tablicy (wb_undo w useWhiteboardQuickActions.ts) po dodaniu elementu',
+    },
+    teresa: {
+      description: 'Wstawia kształt koła na otwartą Tablicę.',
+    },
+    runtime: RUNTIME_INSERT_SHAPE_CIRCLE,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:227-231 (dropdown „Wstaw") + useWhiteboardQuickActions.ts:100 (wb_add_shape_circle, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.insert_shape_diamond',
+    label: { pl: 'Wstaw: romb', en: 'Insert: diamond' },
+    icon: 'Diamond',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_diamond', RUNTIME_INSERT_SHAPE_DIAMOND, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'stos undo Tablicy (wb_undo w useWhiteboardQuickActions.ts) po dodaniu elementu',
+    },
+    teresa: {
+      description: 'Wstawia kształt rombu na otwartą Tablicę.',
+    },
+    runtime: RUNTIME_INSERT_SHAPE_DIAMOND,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:232-237 (dropdown „Wstaw") + useWhiteboardQuickActions.ts:101 (wb_add_shape_diamond, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.insert_shape_hexagon',
+    label: { pl: 'Wstaw: sześciokąt', en: 'Insert: hexagon' },
+    icon: 'Hexagon',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_shape_hexagon', RUNTIME_INSERT_SHAPE_HEXAGON, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'stos undo Tablicy (wb_undo w useWhiteboardQuickActions.ts) po dodaniu elementu',
+    },
+    teresa: {
+      description: 'Wstawia kształt sześciokąta na otwartą Tablicę.',
+    },
+    runtime: RUNTIME_INSERT_SHAPE_HEXAGON,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:238-243 (dropdown „Wstaw") + useWhiteboardQuickActions.ts:102 (wb_add_shape_hexagon, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.insert_image',
+    label: { pl: 'Wstaw obraz', en: 'Insert image' },
+    icon: 'Image',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_image', RUNTIME_INSERT_IMAGE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'stos undo Tablicy (wb_undo w useWhiteboardQuickActions.ts) po dodaniu elementu',
+    },
+    teresa: {
+      description: 'Wstawia placeholder obrazu na otwartą Tablicę.',
+    },
+    runtime: RUNTIME_INSERT_IMAGE,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:244-249,257 (dropdown „Wstaw" + domyślny klik) + useWhiteboardQuickActions.ts:122 (wb_add_image, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.insert_link',
+    label: { pl: 'Wstaw link', en: 'Insert link' },
+    icon: 'Link2',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.insert_link', RUNTIME_INSERT_LINK, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'stos undo Tablicy (wb_undo w useWhiteboardQuickActions.ts) po dodaniu elementu',
+    },
+    teresa: {
+      description: 'Wstawia placeholder linku na otwartą Tablicę.',
+    },
+    runtime: RUNTIME_INSERT_LINK,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:250-255 (dropdown „Wstaw") + useWhiteboardQuickActions.ts:123 (wb_add_link, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.undo',
+    label: { pl: 'Cofnij', en: 'Undo' },
+    icon: 'Undo2',
+    // Sam mechanizm cofania NIE ma własnego wpisu na stosie undo (byłby
+    // nieskończony regres) — `mutates: false`, tak jak `idea.canvas.cursor_select`
+    // (tryb, nie treść). Cofa realne mutacje, ale samo wywołanie nie jest
+    // jedną z nich.
+    scope: 'current_view',
+    tools: 'all',
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.undo', RUNTIME_UNDO, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Cofa ostatnią zmianę w otwartej reprezentacji (Ctrl/Cmd+Z).',
+    },
+    runtime: RUNTIME_UNDO,
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:273-279 (undo) — wspólne dla 4 narzędzi',
+  },
+  {
+    id: 'idea.canvas.redo',
+    label: { pl: 'Ponów', en: 'Redo' },
+    icon: 'Redo2',
+    scope: 'current_view',
+    tools: 'all',
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.redo', RUNTIME_REDO, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Ponawia cofniętą zmianę w otwartej reprezentacji (Ctrl/Cmd+Shift+Z).',
+    },
+    runtime: RUNTIME_REDO,
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:280-286 (redo) — wspólne dla 4 narzędzi',
+  },
+  {
+    id: 'idea.canvas.toggle_voting',
+    label: { pl: 'Głosowanie', en: 'Voting' },
+    icon: 'ThumbsUp',
+    // Stan SESJI współpracy (widoczny wszystkim uczestnikom), nie treść Idei —
+    // tak jak `idea.canvas.cursor_select`, `mutates: false`: nie ma pozycji na
+    // stosie Ctrl+Z, przełącza się z powrotem tym samym przyciskiem.
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.toggle_voting', RUNTIME_TOGGLE_VOTING, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Włącza/wyłącza tryb głosowania sesji współpracy na Tablicy.',
+    },
+    runtime: RUNTIME_TOGGLE_VOTING,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:300-307 (overflow „…") + useWhiteboardQuickActions.ts:151 (wb_session_toggle_voting, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.cycle_role',
+    label: { pl: 'Rola w sesji', en: 'Session role' },
+    icon: 'Workflow',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.cycle_role', RUNTIME_CYCLE_ROLE, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Przełącza własną rolę w bieżącej sesji współpracy na Tablicy (cykl ról).',
+    },
+    runtime: RUNTIME_CYCLE_ROLE,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:308-314 (overflow „…") + useWhiteboardQuickActions.ts:149 (wb_session_cycle_role, dotąd nieużywany odbiornik)',
+  },
+  {
+    id: 'idea.canvas.toggle_follow',
+    label: { pl: 'Podążaj', en: 'Follow' },
+    icon: 'TrendingUp',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.toggle_follow', RUNTIME_TOGGLE_FOLLOW, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Włącza/wyłącza podążanie widokiem za prowadzącym sesję na Tablicy.',
+    },
+    runtime: RUNTIME_TOGGLE_FOLLOW,
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:315-322 (overflow „…") + useWhiteboardQuickActions.ts:152 (wb_session_toggle_follow, dotąd nieużywany odbiornik)',
+  },
+  {
+    // UWAGA (odbiór): `idea.export.open` (scope='workspace', surfaces=['menu1'],
+    // icon='Download') już istnieje i kończy się DOKŁADNIE tym samym efektem —
+    // `IdeaMapWorkspace.tsx` nasłuchuje RÓWNOLEGLE `open_export_menu` (linia
+    // ~1001) i `idea-workspace-open-export-menu` (linia 2931-2939), oba wołają
+    // `setExportMenuOpen(true)`. Świadomie NIE reużyto tamtej akcji tutaj:
+    // zrobiłoby to reużycie ikony `Download` zamiast dzisiejszej `ExternalLink`
+    // tego przycisku — złamałoby wymóg "zero zmian wizualnych" tego zadania.
+    // Zamiast tego osobny wpis z WŁASNĄ ikoną, ale dispatchujący TEN SAM,
+    // już-nasłuchiwany event — zero nowej infrastruktury. Ujednolicenie tych
+    // dwóch (jedna ikona wszędzie, zgodnie z Z1) to osobna decyzja właściciela,
+    // nie ta migracja.
+    id: 'idea.canvas.export_view',
+    label: { pl: 'Eksport', en: 'Export' },
+    icon: 'ExternalLink',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: async (ctx) => {
+      // UI: wykonaj ORYGINALNY prop-callback komponentu (`onExport`) wprost —
+      // ten sam kontrakt co `runToolbarBusAction` (patrz komentarz tam);
+      // konieczne, bo ten event NIE idzie przez `dispatchQuickAction`/
+      // `idea-workspace-quick-action`, więc `runByTool` by tu nie pasował.
+      const run = ctx.params?.run;
+      if (ctx.source === 'ui' && typeof run === 'function') {
+        (run as () => void)();
+        return { ok: true, actionId: 'idea.canvas.export_view' };
+      }
+      // Teresa/inny wywołujący: ten sam event co `onExport` dziś nadaje —
+      // odbiornik już istnieje (IdeaMapWorkspace.tsx:2931-2939), zero nowej szyny.
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-open-export-menu', { detail: { ideaId: ctx.ideaId } })
+      );
+      return {
+        ok: true,
+        actionId: 'idea.canvas.export_view',
+        data: { runtime: 'idea-workspace-open-export-menu' },
+      };
+    },
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Otwiera okno eksportu otwartej Tablicy do pliku.',
+    },
+    source:
+      'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:323-328 (overflow „…") + IdeaWhiteboardTool.tsx:4017-4021 (idea-workspace-open-export-menu) + IdeaMapWorkspace.tsx:2931-2939 (odbiornik)',
+  },
+  {
+    // Bez istniejącego runtime stringa/odbiornika ANI dziś, ani gdziekolwiek w
+    // `whiteboardIntentDetector.ts` (regexowy detektor intencji Tablicy — 0
+    // trafień dla skrótów/tła/Zapisz/Wyczyść) — UI-only na tę turę,
+    // `runToolbarUiOnlyCallback` (patrz komentarz przy jej definicji).
+    id: 'idea.canvas.toggle_shortcuts',
+    label: { pl: 'Skróty klawiszowe', en: 'Keyboard shortcuts' },
+    icon: 'Keyboard',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.toggle_shortcuts', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Pokazuje/chowa okno skrótów klawiszowych Tablicy. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa nie ma jeszcze sposobu wywołania tego z czatu.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:329-334 (overflow „…")',
+  },
+  {
+    id: 'idea.canvas.set_bg_dots',
+    label: {
+      pl: 'Tło: Kropki',
+      en: 'Background: Dots',
+    },
+    icon: 'Circle',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.set_bg_dots', ctx),
+    // Preferencja WIDOKU (zapisywana z Ideą, ale bez wpisu na stosie Ctrl+Z —
+    // tak jak `idea.canvas.cursor_select`), nie mutacja treści grafu.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Ustawia tło Tablicy na wzór kropek. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:335-341 (overflow „…", bg-dots)',
+  },
+  {
+    id: 'idea.canvas.set_bg_grid',
+    label: {
+      pl: 'Tło: Siatka',
+      en: 'Background: Grid',
+    },
+    icon: 'Grid3X3',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.set_bg_grid', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Ustawia tło Tablicy na wzór siatki. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:342-348 (overflow „…", bg-grid)',
+  },
+  {
+    id: 'idea.canvas.set_bg_lines',
+    label: {
+      pl: 'Tło: Linie',
+      en: 'Background: Lines',
+    },
+    icon: 'LayoutGrid',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.set_bg_lines', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Ustawia tło Tablicy na wzór linii. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:349-355 (overflow „…", bg-lines)',
+  },
+  {
+    id: 'idea.canvas.set_bg_blank',
+    label: {
+      pl: 'Tło: Puste',
+      en: 'Background: Blank',
+    },
+    icon: 'Shapes',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.set_bg_blank', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Ustawia puste (bez wzoru) tło Tablicy. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:356-362 (overflow „…", bg-blank)',
+  },
+  {
+    id: 'idea.canvas.save',
+    label: { pl: 'Zapisz', en: 'Save' },
+    icon: 'Save',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.save', ctx),
+    // Zapisuje już-zmutowany stan (persystencja), nie tworzy nowej mutacji —
+    // `mutates: false`, analogicznie do akcji „otwiera X" w tym rejestrze
+    // (np. `idea.ai.table_assistant`), gdzie realna zmiana (jeśli w ogóle)
+    // żyje gdzie indziej.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zapisuje bieżący stan Tablicy natychmiast (poza automatycznym zapisem w tle). Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:375-393 (przycisk Zapisz)',
+  },
+  {
+    // Destrukcyjne (trwałe usunięcie WSZYSTKICH rysunków odręcznych), z
+    // dialogiem potwierdzenia PRZED wykonaniem (IdeaWhiteboardTool.tsx
+    // showConfirm) — dokładnie jak `idea.edge.delete`, `destructive: true`
+    // OSOBNO od `mutates`/`undo`.
+    id: 'idea.canvas.clear_drawings',
+    label: { pl: 'Wyczyść rysunki', en: 'Clear drawings' },
+    icon: 'Trash2',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarUiOnlyCallback('idea.canvas.clear_drawings', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaWhiteboardTool.tsx onClearDrawings prop (WhiteboardToolbar.tsx:3995-4013) → pushUndoSnapshot() przed setDrawingPaths([]) (stos Ctrl+Z), za dialogiem potwierdzenia',
+    },
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa WSZYSTKIE rysunki odręczne (pen paths) z Tablicy na trwałe, po potwierdzeniu w dialogu. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx:3995-4013 (onClearDrawings)',
   },
 ];
 
