@@ -18,6 +18,7 @@ import { z } from 'zod';
 export const CellStyleSchema = z.object({
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
   fontSize: z.number().optional(),
   fontColor: z.string().optional(),
   bgColor: z.string().optional(),
@@ -87,6 +88,7 @@ export const ColumnDefSchema = z.object({
   type: z.enum(['text', 'number', 'currency', 'percent', 'date', 'boolean', 'rating']).optional(),
   numberFormat: z.string().optional(),
   style: CellStyleSchema.optional(),
+  hidden: z.boolean().optional(),
   /** Column-wide data validation applied to every data cell in the column
    *  (cell-level `validation` still wins for a specific cell). */
   validation: DataValidationSchema.optional(),
@@ -102,6 +104,7 @@ export const RowSchema = z.object({
   height: z.number().optional(),
   isHeader: z.boolean().optional(),
   isSummary: z.boolean().optional(),
+  hidden: z.boolean().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -279,6 +282,12 @@ export const SensitivityTableSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const ChartImageSchema = z.object({
+  /** Stable id for manual update/delete operations. */
+  id: z.string().optional(),
+  /** Editable metadata retained with the exported PNG. */
+  title: z.string().optional(),
+  chartType: z.enum(['bar', 'line']).optional(),
+  sourceRange: z.string().optional(),
   /** PNG image, base64-encoded (no data-URI prefix) OR a raw base64 string. */
   pngBase64: z.string(),
   /** Top-left anchor cell (A1) for the image. */
@@ -297,6 +306,8 @@ export const SheetSchema = z.object({
   /** Stable identity used by comments, sources and cross-version anchors. */
   id: z.string().uuid().optional(),
   name: z.string(),
+  /** Hidden sheets remain addressable by formulas and stable anchors. */
+  hidden: z.boolean().optional(),
   purpose: z.string().optional(),
   columns: z.array(ColumnDefSchema),
   rows: z.array(RowSchema),
@@ -306,8 +317,8 @@ export const SheetSchema = z.object({
   headerStyle: CellStyleSchema.optional(),
   alternateRowColor: z.string().optional(),
   showGridLines: z.boolean().optional(),
-  /** Hidden sheets remain addressable by formulas and stable anchors. */
-  hidden: z.boolean().optional(),
+  /** Show native Excel filter dropdowns on the header row. */
+  autoFilter: z.boolean().optional(),
   tabColor: z.string().optional(),
   /** X2 — Conditional formatting blocks (per range). */
   conditionalFormatting: z.array(ConditionalFormattingBlockSchema).optional(),
