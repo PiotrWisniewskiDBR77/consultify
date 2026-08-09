@@ -248,6 +248,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       handlers.setFoldLevel?.(Infinity);
       toast.success(i18n.t('mindmap.quickActions.allExpanded'), { duration: 1200 });
     }
+    // NOWY odbiornik (2026-08-09, rejestr akcji N5 — `idea.view.select_all`,
+    // `PaneContextMenu.tsx` „Zaznacz wszystko"). Selekcja jest stanem UI, nie
+    // treścią mapy — nie wymaga pushUndo (ten sam wzorzec co `mm_focus_selected`
+    // niżej, które też tylko przesuwa uwagę, niczego nie zmienia w grafie).
+    if (action === 'mm_select_all') {
+      setters.setNodes((prev) => prev.map((n) => ({ ...n, selected: true })));
+    }
     if (action === 'mm_focus_selected') handlers.focusSelectedNode();
     if (action === 'mm_reparent_promote') handlers.reparentSelectedPromote();
     if (action === 'mm_reparent_demote') handlers.reparentSelectedDemote();

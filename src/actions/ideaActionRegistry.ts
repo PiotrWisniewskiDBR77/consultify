@@ -132,7 +132,14 @@ export type IconName =
   | 'ListChecks'
   | 'Brain'
   | 'Network'
-  | 'Table2';
+  | 'Table2'
+  // N5 kontynuacja (2026-08-09) — Mind Map pane (tło) PPM
+  // (`PaneContextMenu.tsx`), dodane 1:1 z ikonami już importowanymi tam
+  // z lucide-react (zero nowych zależności ikon).
+  | 'ClipboardCopy'
+  | 'Scissors'
+  | 'Maximize'
+  | 'ChevronDown';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -548,6 +555,34 @@ async function runContextMenuUiOnlyCallback(
 }
 
 /**
+ * UI-only akcje menu tła (pane) Mapy myśli (N5 kontynuacja, 2026-08-09,
+ * `PaneContextMenu.tsx`) — ten sam kształt co `runContextMenuUiOnlyCallback`
+ * (Tablica), z UCZCIWYM komunikatem dla Mapy myśli. Sprawdzone PRZED użyciem:
+ * `pane_copy`/`pane_cut`/`pane_paste` opierają się na `copySelected`/
+ * `cutSelected`/`pasteNodes` z `useMindMapNodes.tsx` — closure nad lokalnym
+ * schowkiem (`hasMindMapClipboard`) NIEPRZEKAZANYM do `useMindMapQuickActions`
+ * (`MindMapQuickActionHandlers` go nie deklaruje) i bez sensownego odpowiednika
+ * po stronie Teresy (schowek przeglądarki to nie coś, co LLM mógłby wypełnić).
+ * Świadomie UI-only zamiast budować nową infrastrukturę na spekulację.
+ */
+async function runMindmapPaneUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik na tło) Mapy myśli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
  * `idea.node.edit` (N7 kontynuacja, 2026-08-09) — jedyna pozycja menu węzła,
  * której realna mutacja NIE żyje na szynie `idea-workspace-quick-action`, tylko
  * na osobnym, już istniejącym evencie `idea-workspace-node-update`
@@ -760,6 +795,65 @@ const RUNTIME_WB_TO_MINDMAP: ToolActionMap = {
 };
 const RUNTIME_WB_TO_TABLE: ToolActionMap = {
   whiteboard: 'wb_ai_to_table',
+};
+
+/**
+ * `PaneContextMenu.tsx` (N5 kontynuacja, 2026-08-09) — tło (pane) Mapy myśli,
+ * 13 pozycji. Każda mapa niżej wskazuje na odbiornik, który JUŻ ISTNIEJE i
+ * JEST ŻYWY w `useMindMapQuickActions.ts` (zweryfikowane grepem przed
+ * dopisaniem — żaden nowy odbiornik poza `mm_select_all`, patrz komentarz przy
+ * tej mapie). `PaneContextMenu.tsx` przekazuje `ctx.params.run` (swój
+ * dotychczasowy `onAction(item.id)` z `IdeaRecommendationMap.tsx` —
+ * NIETKNIĘTY) dla WSZYSTKICH 13 pozycji, więc klik człowieka idzie DOKŁADNIE
+ * tą samą ścieżką co przed migracją (zero zmiany zachowania); mapy niżej
+ * dają Teresie (`ctx.source === 'teresa'`, brak `run`) drugą, realną ścieżkę
+ * przez `runToolbarBusAction` → szynę `idea-workspace-quick-action`.
+ */
+const RUNTIME_PANE_ADD_ROOT: ToolActionMap = {
+  // Odbiornik od 2026-07-28 (`handlers.addRootTopic()`), dotąd używany tylko
+  // przez `MindmapCommandPalette.tsx` (Cmd+K) — bez wpisu w rejestrze.
+  // RÓŻNICA od kliku człowieka (świadoma, nie naprawiana tutaj): pozycja
+  // nowego węzła to stały offset od korzenia, nie punkt prawego kliku —
+  // Teresa nie ma pojęcia "gdzie kliknięto", więc offset jest uczciwym
+  // zachowaniem zastępczym, nie regresją klik-ścieżki (ta idzie przez `run`).
+  mindmap: 'mm_add_root',
+};
+const RUNTIME_PANE_SELECT_ALL: ToolActionMap = {
+  // NOWY odbiornik — `useMindMapQuickActions.ts`, dopisany przy tej migracji
+  // (poprzednio `pane_select_all` żył WYŁĄCZNIE lokalnie w
+  // `IdeaRecommendationMap.handlePaneContextAction`, bez odbiornika na szynie).
+  mindmap: 'mm_select_all',
+};
+const RUNTIME_PANE_FIT_VIEW: ToolActionMap = {
+  // Odbiornik już istnieje (`useMindMapQuickActions.ts` `mm_fit_view` →
+  // `handlers.fitView`) — używany dotąd np. przez `CanvasLeftToolbar`/paletę
+  // poleceń, nigdy przez ten rejestr.
+  mindmap: 'mm_fit_view',
+};
+const RUNTIME_PANE_AUTO_CLUSTER: ToolActionMap = {
+  // Odbiornik już istnieje i mutuje realnie (grupuje węzły-sieroty w klastry,
+  // `handlers.pushUndo()` wewnątrz) — `useMindMapQuickActions.ts` `mm_auto_cluster`.
+  mindmap: 'mm_auto_cluster',
+};
+const RUNTIME_PANE_COLLAPSE_ALL: ToolActionMap = {
+  // `mm_fold_0` — ta sama gałąź obsługi co `mm_fold_1`/`mm_fold_2`/`mm_fold_3`
+  // (`useMindMapQuickActions.ts`, `handlers.setFoldLevel?.(level)`).
+  mindmap: 'mm_fold_0',
+};
+const RUNTIME_PANE_FOLD_1: ToolActionMap = {
+  mindmap: 'mm_fold_1',
+};
+const RUNTIME_PANE_FOLD_2: ToolActionMap = {
+  mindmap: 'mm_fold_2',
+};
+const RUNTIME_PANE_EXPAND_ALL: ToolActionMap = {
+  mindmap: 'mm_expand_all',
+};
+const RUNTIME_PANE_AI_SUGGEST: ToolActionMap = {
+  // Odbiornik już istnieje — otwiera czat z promptem "zasugeruj gałęzie"
+  // (`handlers.onOpenChat`), z fallbackiem na `handlers.handleAIExpand()`
+  // (ta sama wywoła AI co `idea.ai.expand_map`) gdy czat niedostępny.
+  mindmap: 'mm_ai_suggest',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -2328,6 +2422,238 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_WB_TO_TABLE,
     source:
       'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=wb_to_table:277-285 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+
+  // ── Mapa myśli: menu tła (pane), N5 kontynuacja (2026-08-09) ─────────────
+  // `PaneContextMenu.tsx`, 13 pozycji. Cztery bez odpowiednika: `idea.view.copy_selection`
+  // /`cut_selection`/`paste_at_point` (schowek lokalny, patrz
+  // `runMindmapPaneUiOnlyCallback`) są UI-only; `idea.view.add_root_topic` jest
+  // hybrydowe (klik = pozycja pod kursorem, Teresa = offset od korzenia).
+  // `idea.view.auto_layout` (wyżej, Krok „AI: rozwiń mapę" fala) JEST już
+  // zarejestrowane z `tools: ['mindmap', 'process_flow']` i `surfaces` włącznie
+  // z `'context'` — Menu tła NIE dostaje drugiego wpisu dla Auto-układu, tylko
+  // odwołuje się do tego samego id (Z1, zero duplikacji).
+  {
+    id: 'idea.view.add_root_topic',
+    label: { pl: 'Dodaj temat (do korzenia)', en: 'Add topic (to root)' },
+    icon: 'Plus',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'N',
+    handler: (ctx) => runToolbarBusAction('idea.view.add_root_topic', RUNTIME_PANE_ADD_ROOT, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'klik: pushUndo() w IdeaRecommendationMap.handlePaneContextAction (pane_add_node); Teresa: pushUndo() w useMindMapNodes.tsx addRootTopic (mm_add_root)',
+    },
+    teresa: {
+      description:
+        'Dodaje nowy, pusty temat połączony z korzeniem Mapy myśli. Z czatu ląduje w stałym miejscu obok korzenia (nie w miejscu kliknięcia — Teresa nie zna pozycji kursora).',
+    },
+    runtime: RUNTIME_PANE_ADD_ROOT,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:51 (pane_add_node)',
+  },
+  {
+    id: 'idea.view.copy_selection',
+    label: { pl: 'Kopiuj węzły', en: 'Copy nodes' },
+    icon: 'ClipboardCopy',
+    scope: 'selected_items',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘C',
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.copy_selection', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje zaznaczone węzły do schowka Mapy myśli. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tło — schowek jest stanem przeglądarki, Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:58 (pane_copy)',
+  },
+  {
+    id: 'idea.view.cut_selection',
+    label: { pl: 'Wytnij węzły', en: 'Cut nodes' },
+    icon: 'Scissors',
+    scope: 'selected_items',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘X',
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.cut_selection', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'cutSelected() → pushUndo() w useMindMapNodes.tsx:1154',
+    },
+    teresa: {
+      description:
+        'Wycina zaznaczone węzły do schowka Mapy myśli (usuwa z płótna). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tło — schowek jest stanem przeglądarki, Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:65 (pane_cut)',
+  },
+  {
+    id: 'idea.view.paste_at_point',
+    label: { pl: 'Wklej węzły', en: 'Paste nodes' },
+    icon: 'Clipboard',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘V',
+    handler: (ctx) => runMindmapPaneUiOnlyCallback('idea.view.paste_at_point', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'pasteNodes() → pushUndo() w useMindMapNodes.tsx:1219',
+    },
+    teresa: {
+      description:
+        'Wkleja zawartość schowka Mapy myśli w miejscu kliknięcia. Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tło — schowek jest stanem przeglądarki, Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:72 (pane_paste)',
+  },
+  {
+    id: 'idea.view.select_all',
+    label: { pl: 'Zaznacz wszystko', en: 'Select all' },
+    icon: 'Grid3X3',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘A',
+    handler: (ctx) => runToolbarBusAction('idea.view.select_all', RUNTIME_PANE_SELECT_ALL, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Zaznacza wszystkie węzły na otwartej Mapie myśli.',
+    },
+    runtime: RUNTIME_PANE_SELECT_ALL,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:80 (pane_select_all)',
+  },
+  {
+    id: 'idea.view.fit_view',
+    label: { pl: 'Dopasuj widok', en: 'Fit view' },
+    icon: 'Maximize',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘0',
+    handler: (ctx) => runToolbarBusAction('idea.view.fit_view', RUNTIME_PANE_FIT_VIEW, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Dopasowuje widok kamery tak, by cała Mapa myśli zmieściła się na ekranie.',
+    },
+    runtime: RUNTIME_PANE_FIT_VIEW,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:86 (pane_fit_view)',
+  },
+  {
+    id: 'idea.view.auto_cluster',
+    label: { pl: 'Auto-grupowanie', en: 'Auto-cluster' },
+    icon: 'Layers',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.view.auto_cluster', RUNTIME_PANE_AUTO_CLUSTER, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'handlers.pushUndo() w useMindMapQuickActions.ts (blok mm_auto_cluster)',
+    },
+    teresa: {
+      description:
+        'Grupuje niepogrupowane węzły (bezpośrednio pod korzeniem) w tematyczne gałęzie na podstawie etykiet/tagów/typu semantycznego. Wymaga co najmniej dwóch niepogrupowanych węzłów.',
+    },
+    runtime: RUNTIME_PANE_AUTO_CLUSTER,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:98 (pane_auto_cluster)',
+  },
+  {
+    id: 'idea.view.collapse_all',
+    label: { pl: 'Zwiń wszystko', en: 'Collapse all' },
+    icon: 'ChevronDown',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Alt+0',
+    handler: (ctx) => runToolbarBusAction('idea.view.collapse_all', RUNTIME_PANE_COLLAPSE_ALL, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Zwija wszystkie gałęzie Mapy myśli do samego korzenia (poziom 0).',
+    },
+    runtime: RUNTIME_PANE_COLLAPSE_ALL,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:106 (pane_collapse_all)',
+  },
+  {
+    id: 'idea.view.fold_level_1',
+    label: { pl: 'Pokaż poziom 1', en: 'Show level 1' },
+    icon: 'ChevronDown',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Alt+1',
+    handler: (ctx) => runToolbarBusAction('idea.view.fold_level_1', RUNTIME_PANE_FOLD_1, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Zwija Mapę myśli tak, by widoczny był tylko pierwszy poziom gałęzi.',
+    },
+    runtime: RUNTIME_PANE_FOLD_1,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:112 (pane_fold_1)',
+  },
+  {
+    id: 'idea.view.fold_level_2',
+    label: { pl: 'Pokaż poziom 2', en: 'Show level 2' },
+    icon: 'ChevronDown',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Alt+2',
+    handler: (ctx) => runToolbarBusAction('idea.view.fold_level_2', RUNTIME_PANE_FOLD_2, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Zwija Mapę myśli tak, by widoczne były dwa pierwsze poziomy gałęzi.',
+    },
+    runtime: RUNTIME_PANE_FOLD_2,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:118 (pane_fold_2)',
+  },
+  {
+    id: 'idea.view.expand_all',
+    label: { pl: 'Rozwiń wszystko', en: 'Expand all' },
+    icon: 'ChevronDown',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Alt+9',
+    handler: (ctx) => runToolbarBusAction('idea.view.expand_all', RUNTIME_PANE_EXPAND_ALL, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description: 'Rozwija wszystkie zwinięte gałęzie Mapy myśli.',
+    },
+    runtime: RUNTIME_PANE_EXPAND_ALL,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:124 (pane_expand_all)',
+  },
+  {
+    id: 'idea.ai.suggest_nodes',
+    label: { pl: 'AI: Zasugeruj węzły', en: 'AI: Suggest nodes' },
+    icon: 'Sparkles',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.ai.suggest_nodes', RUNTIME_PANE_AI_SUGGEST, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera czat z gotowym promptem proszącym AI o propozycje nowych gałęzi dla otwartej Mapy myśli. Nie zmienia mapy samo z siebie — to prośba o sugestię, nie wykonanie.',
+    },
+    runtime: RUNTIME_PANE_AI_SUGGEST,
+    source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:131 (pane_ai_suggest)',
   },
 ];
 
