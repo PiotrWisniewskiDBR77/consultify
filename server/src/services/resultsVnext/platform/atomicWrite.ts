@@ -153,6 +153,18 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'scorecard.archived': ['mywork_projection'],
   'scorecard.review_created': ['mywork_projection'],
   'scorecard.review_published': ['mywork_projection'],
+
+  // KPI-E005 (docs/product/results-vnext/KPI_E005_DESIGN.md §C.3) —
+  // InitiativeKPIImpact. Not pinned by the design doc (§A/§B are read-model
+  // queries with no command layer of their own; §C.3 gives command
+  // signatures but no event-type catalog) — this package's own consistent
+  // naming choice, same convention as kpiDeviationCommands.ts's
+  // `kpi.deviation_manager_escalated`. All fan out to 'mywork_projection'
+  // only, same default every other domain entry above.
+  'kpi.initiative_impact_proposed': ['mywork_projection'],
+  'kpi.initiative_impact_committed': ['mywork_projection'],
+  'kpi.initiative_impact_reviewed': ['mywork_projection'],
+  'kpi.initiative_impact_superseded': ['mywork_projection'],
 };
 
 /**
