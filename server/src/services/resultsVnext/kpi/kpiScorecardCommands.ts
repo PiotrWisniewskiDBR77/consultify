@@ -960,13 +960,25 @@ export async function publishReviewSnapshot(
       // via wrapWithVisibilityScope rather than hand-rolled, so this reuses
       // the SAME branching resolveVisibility()/buildVisibilityScopedCte
       // already implement instead of a third divergent visibility check.
+      //
+      // -- DEVIATION FROM DESIGN (found on a real Postgres 16, not guessed):
+      // rvn_platform_resource_visibility.resource_id is TEXT (§B.1 of the
+      // RN-G1 platform design — resource_type/resource_id is a generic axis
+      // shared across every domain), but si.kpi_id is UUID
+      // (20260810_rvn_kpi_core.sql). `vr.resource_id = si.kpi_id` fails with
+      // Postgres error 42883 "operator does not exist: text = uuid" — no
+      // implicit cast exists between the two types. The §B sample text
+      // (copied from a domain that never ran this join against a real
+      // engine) is missing the cast; `si.kpi_id::text` is the nearest safe
+      // fix, scoped to this query only (not touching the shared
+      // visibilityScopedQuery.ts contract other domains already depend on).
       const baseQuerySql = `
         SELECT si.kpi_id, si.role, kd.current_definition_version_id AS definition_version_id,
                m.measurement_id, m.actual_value, dv.unit, m.performance_status,
                m.data_quality_status, m.period_start, m.period_end
           FROM rvn_kpi_scorecard_items si
           INNER JOIN rvn_visible_resources vr
-                  ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id
+                  ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
           JOIN rvn_kpi_definitions kd
             ON kd.kpi_id = si.kpi_id AND kd.organization_id = si.organization_id
           LEFT JOIN rvn_kpi_definition_versions dv

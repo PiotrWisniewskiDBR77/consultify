@@ -31,6 +31,17 @@
  * instead — AC #4 ("non-leak aggregation"): scorecard-level visibility must
  * never broaden a more restrictive per-KPI policy, so item-level reads
  * always re-check the KPI's own visibility, never the scorecard's.
+ *
+ * -- DEVIATION FROM DESIGN (found on a real Postgres 16, not guessed):
+ * `rvn_platform_resource_visibility.resource_id` is TEXT, but
+ * `rvn_kpi_scorecards.scorecard_id`/`rvn_kpi_scorecard_items.kpi_id` are
+ * UUID -- `vr.resource_id = sc.scorecard_id` (or `= si.kpi_id`) fails with
+ * Postgres 42883 "operator does not exist: text = uuid", no implicit cast.
+ * Every `INNER JOIN rvn_visible_resources vr ON ...` below casts the UUID
+ * side with `::text` -- scoped to this file's own queries, not touching the
+ * shared `visibilityScopedQuery.ts` contract other domains already depend
+ * on (see kpiScorecardCommands.ts's own copy of this same fix/comment for
+ * `publishReviewSnapshot`'s equivalent join).
  */
 import type { PoolClient, QueryResultRow } from 'pg';
 
@@ -110,7 +121,7 @@ export async function listScorecards(params: ListScorecardsParams): Promise<KpiS
 
   const baseQuerySql = `
     SELECT sc.* FROM rvn_kpi_scorecards sc
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE sc.organization_id = $1 ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
      ORDER BY sc.updated_at DESC LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`;
   const rows = await withReadClient((c) => queryRows<KpiScorecardRow>(c, `${cte.sql}\n${baseQuerySql}`, values));
@@ -133,7 +144,7 @@ export async function listScorecardItems(params: ListScorecardItemsParams): Prom
   const { userId, organizationId, scorecardId } = params;
   const baseQuerySql = `
     SELECT si.* FROM rvn_kpi_scorecard_items si
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
      WHERE si.organization_id = $1 AND si.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
      ORDER BY si.sort_order ASC`;
   const wrapped = await wrapWithVisibilityScope(baseQuerySql, { userId, organizationId, resourceType: 'kpi' });
@@ -172,7 +183,7 @@ export async function getScorecardStatusDistribution(
         COUNT(*) FILTER (WHERE latest.performance_status IS NULL OR latest.performance_status = 'neutral') AS missing_count,
         COUNT(*) AS total_count
       FROM rvn_kpi_scorecard_items si
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi' AND vr.resource_id = si.kpi_id::text
       LEFT JOIN LATERAL (
         SELECT m.performance_status FROM rvn_kpi_measurements m
          WHERE m.kpi_id = si.kpi_id AND m.period_end <= $${VISIBILITY_CTE_PARAM_COUNT + 2}
@@ -220,7 +231,7 @@ export async function getPublishedSnapshot(
   const baseQuerySql = `
     SELECT rs.* FROM rvn_kpi_scorecard_review_snapshots rs
       INNER JOIN rvn_kpi_scorecards sc ON sc.scorecard_id = rs.scorecard_id
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE rs.organization_id = $1 AND rs.scorecard_id = $${VISIBILITY_CTE_PARAM_COUNT + 1} AND rs.status = 'published'`;
   const wrapped = await wrapWithVisibilityScope(baseQuerySql, {
     userId,
@@ -304,7 +315,7 @@ export async function listReviewSnapshots(
   const baseQuerySql = `
     SELECT rs.* FROM rvn_kpi_scorecard_review_snapshots rs
       INNER JOIN rvn_kpi_scorecards sc ON sc.scorecard_id = rs.scorecard_id
-      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id
+      INNER JOIN rvn_visible_resources vr ON vr.resource_type = 'kpi_scorecard' AND vr.resource_id = sc.scorecard_id::text
      WHERE rs.organization_id = $1 AND ${baseFilters.join(' AND ')}
      ORDER BY rs.review_period_end DESC, rs.created_at DESC
      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`;
