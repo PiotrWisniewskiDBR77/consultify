@@ -1094,3 +1094,103 @@ w tym repo. Weryfikacja na realnej bazie efemerycznej (przepis §11) NIE
 była tu potrzebna — ten pakiet nie dodał żadnego nowego SQL/DDL, tylko
 HTTP nad już zweryfikowanym layerem z §15/§17.
 
+## 20. KPI-E003 Deviation Closed Loop — schema + command layer + testy (2026-08-09)
+
+Implementacja pełnego zakresu `docs/product/results-vnext/KPI_E003_DESIGN.md`
+§A/§B/§C (design zamrożony w §18) — trzy osobne, ograniczone commity.
+
+**Pakiet 1 — migracje** (`server/migrations/20260811_rvn_kpi_deviation_loop.sql`,
+`server/migrations/20260811_rvn_platform_obligations.sql`). Zweryfikowane na
+efemerycznym Postgresie 16 (ten sam przepis co §11/§15: `initdb --locale=C`,
+gniazdo w `/private/tmp`) NA WIERZCHU pełnego łańcucha tej gałęzi
+(`20260809_rvn_platform_*.sql` + `20260810_rvn_kpi_core.sql`): apply na pustej
+bazie exit 0, drugi run (idempotencja) exit 0, partial unique index
+`ux_rvn_kpi_deviation_cases_one_active_per_kpi` blokuje drugi aktywny case
+dla tego samego `kpi_id` (`23505`) i pozwala po zamknięciu pierwszego —
+zweryfikowane wprost SQL-em (INSERT/UPDATE/INSERT). **Realny bug złapany
+przy weryfikacji**: `rvn_kpi_definitions.response_policy_id` był `TEXT` w
+`20260810_rvn_kpi_core.sql`, a nowy FK-cel `rvn_kpi_response_policies
+.response_policy_id` to `UUID` — `ALTER TABLE ... ADD CONSTRAINT` padał na
+"incompatible types". Naprawione konwersją kolumny (`ALTER COLUMN ...
+TYPE UUID USING ...::uuid`) w NOWEJ migracji zamiast edycji już wylądowanej
+`20260810` (nie ma jeszcze produkcyjnych danych w tej kolumnie, konwersja
+bezpieczna) — pełny opis w komentarzu `DEVIATION FROM DESIGN` w pliku.
+
+**Pakiet 2 — command layer**: `kpiDeviationTypes.ts` (Row/DTO wzorem
+`kpiTypes.ts`), `kpiDeviationCommands.ts` (pełna maszyna stanów:
+`openOrEscalateDeviationCase`, `closeDeviationCase` dosłownie z §B,
+`acknowledgeDeviationCase`/`submitRootCause`/`submitPlan`/`approvePlan`
+(maker-checker)/`recordRecoveryObservation`/`submitEffectivenessVerification`
+(auto-return `executing` przy `ineffective`)/`escalate`+`deescalateDeviationCase`
+(overlay)/`reopenDeviationCase` (nowy wiersz)), `kpiCorrectiveActionCommands.ts`
+(`addCorrectiveAction`, `updateCorrectiveAction` z auto-tranzycją
+`approved→executing` na PIERWSZEJ akcji `active`, decyzja #8),
+`kpiDeviationRepository.ts` (odczyty wyłącznie przez
+`buildVisibilityScopedCte`/`wrapWithVisibilityScope`, JOIN po `kpi_id` —
+case/action/verification nie mają własnego wiersza w
+`rvn_platform_resource_visibility`, dziedziczą widoczność po KPI, ten sam
+wzorzec co `kpiRepository.listMeasurements`), `platform/obligations.ts`
+(`createObligation`/`completeObligation`/`attachSourceEventId`, wzorzec
+dwustopniowy z §C). Wpięcie w `kpiMeasurementCommands.ts`:
+`recordMeasurement`/`correctMeasurement` wołają `openOrEscalateDeviationCase`
+na TYM SAMYM pinned clencie, wewnątrz `applyMutation` (decyzja #3) —
+`verifyMeasurement`/`disputeMeasurement` NIE (nie zmieniają
+`performance_status`). `atomicWrite.ts`: 13 typów zdarzeń deviation w
+`EVENT_TYPE_CONSUMER_GROUPS` (9 nazwanych wprost w brifie zadania + 4 dla
+pozostałych komend, ten sam powód co luka z §16 — brak wpisu ≠ celowe
+pominięcie); `resolveConsumerGroups`/`EVENT_INSERT_SQL` wyeksportowane, żeby
+ręczne insercje zdarzeń w `openOrEscalateDeviationCase` (nie może zagnieździć
+drugiego `executeAtomicCreate` wewnątrz cudzego `applyMutation`) używały
+DOKŁADNIE tego samego mechanizmu fan-out do outboxa co reszta domeny.
+
+**Pakiet 3 — testy**. Jednostkowe (`tests/resultsVnext/kpi/`, wzorzec
+`fakeClient` z `approveDefinitionVersion.test.ts`): `approvePlan.test.ts`
+(self-approval denial na `plan_submitted_by` I `created_by`,
+STALE_VERSION), `deviationStateMachine.test.ts` (twarda maszyna stanów —
+`acknowledgeDeviationCase`/`submitPlan` (zły status + zero akcji
+korygujących)/`recordRecoveryObservation` odrzucają PRZED jakimkolwiek
+zapisem; `closeDeviationCase` odrzuca bez zaakceptowanej
+EffectivenessVerification — brak wiersza i wynik `ineffective`).
+Integracyjne na realnym Postgresie 16 (`deviationCaseIdempotency.realdb.test.ts`,
+efemeryczna baza tym samym przepisem): sekwencyjnie — measurement `warning`
+otwiera dokładnie jeden case, kolejny `critical` eskaluje severity NA TYM
+SAMYM case (nie drugi), dwa osobne zdarzenia `kpi.deviation_opened`/
+`.escalated`, dokładnie jedno zobowiązanie MyWork (§C); równolegle —
+`Promise.all` dwóch `recordMeasurement` na tym samym KPI (różne okresy) bez
+rzutu wyjątku, dokładnie jeden case na końcu.
+
+**Realny bug współbieżności znaleziony i naprawiony przy weryfikacji**:
+dosłowny kod z §B (`openOrEscalateDeviationCase`) łapie `23505` na
+przegranym INSERT i OD RAZU odpytuje ponownie na tym samym połączeniu —
+ale Postgres po błędzie ABORTUJE CAŁĄ transakcję, więc ten drugi SELECT
+sam pada z `25P02 current transaction is aborted`, nieobsłużonym przez
+`catch (23505)`, więc przegrywający rzuca wyjątek zamiast łagodnie zwrócić
+case zwycięzcy. **Zweryfikowane ręcznie dwiema surowymi sesjami `psql`**
+(fifo + `BEGIN`/`INSERT`/`sleep`/`COMMIT` na przemian) PRZED i PO naprawie —
+bez `SAVEPOINT` retry-SELECT faktycznie pada na `25P02`, z `SAVEPOINT` +
+`ROLLBACK TO SAVEPOINT` przed retry działa. Naprawione owinięciem
+kandydackiego INSERT-u w `SAVEPOINT` (pełny opis w komentarzu `DEVIATION
+FROM DESIGN` w `kpiDeviationCommands.ts`) — dodatkowo w teście integracyjnym
+osobny, DETERMINISTYCZNY dowód (dwa niezależne `pg.Client`, ręcznie
+wymuszone zablokowanie INSERT-u na niezatwierdzonym wierszu drugiej
+transakcji) zamiast polegać wyłącznie na przypadkowym trafieniu wyścigu
+przez `Promise.all` (które w tym środowisku — lokalny Postgres na loopback,
+zapytania sub-milisekundowe — w praktyce prawie zawsze kończy się zanim
+druga transakcja w ogóle zdąży odpytać, więc SAM `Promise.all` NIE jest
+niezawodnym dowodem tej konkretnej kolizji, tylko deterministyczny test
+dwóch ręcznie sterowanych połączeń jest).
+
+**Wynik**: `tsc --noEmit` w `server/` — 0 błędów. Pełny zestaw
+`tests/resultsVnext/kpi server/src/routes/resultsVnext` na tej samej
+efemerycznej bazie — **100/100 zielono** (85 istniejących + 15 nowych: 4 +
+8 + 3), bez regresji. Nowe pliki w `tests/` dodane przez `git add -f`
+(konwencja repo). Efemeryczna baza posprzątana (`pg_ctl -m fast stop` +
+`rm -rf` katalogu danych/gniazda), zero trwałych artefaktów.
+
+**Poza zakresem tego pakietu** (świadomie, zgodnie z briefem): warstwa API
+`/api/vnext/results/kpi/deviation-cases/*` — osobny, kolejny pakiet.
+`policy_version_id` na obligation zostaje `null` (§C nie definiuje źródła
+tej wartości dla `explain_warning_critical_deviation` — udokumentowane w
+`platform/obligations.ts`). Wpięcie `rvn_platform_obligations` w realny UI
+MyWork (Home/Inbox/Calendar) — jawnie poza zakresem per §C samego projektu.
+
