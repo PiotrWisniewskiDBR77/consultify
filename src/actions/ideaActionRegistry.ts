@@ -145,7 +145,12 @@ export type IconName =
   // już importowanymi tam z lucide-react (zero nowych zależności ikon).
   | 'FoldVertical'
   | 'ScanSearch'
-  | 'ChevronRight';
+  | 'ChevronRight'
+  // N5 kontynuacja (2026-08-09, trzecia fala) — Mind Map node (węzeł) PPM
+  // grupy Convert/„Convert branch to…", dodane 1:1 z ikonami już
+  // importowanymi w `NodeContextMenu.tsx` z lucide-react.
+  | 'Star'
+  | 'Rocket';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -664,6 +669,103 @@ async function runMindmapNodeBusAction(
   return runByTool(actionId, map, ctx, ctx.params);
 }
 
+/**
+ * Konwersja węzła/gałęzi Mapy myśli do artefaktu (N5 trzecia fala, 2026-08-09
+ * — `NodeContextMenu.tsx` grupy Convert/„Convert branch to…" + dual-surface
+ * `FloatingNodeToolbar.tsx` „Convert branch"). Klik człowieka (`ctx.params.run`)
+ * idzie DOKŁADNIE dotychczasową ścieżką (`onAction(item.id)` →
+ * `handleContextAction`/lokalny `SUBTREE_MAP` w `IdeaRecommendationMap.tsx` —
+ * OBA wołają TĘ SAMĄ funkcję `convertBranch(target, nodeId)`,
+ * `IdeaRecommendationMap.tsx:4822`), NIETKNIĘTĄ.
+ *
+ * UCZCIWOŚĆ (rozdz. 10 „Konwersja, Eksport, Import, Szablony" §2.2/§7,
+ * sprawdzone PRZED tym wpisem, nie zgadywane):
+ *  - `convertBranch()` ZAWSZE zbiera potomków (`collectDescendants`),
+ *    NIEZALEŻNIE od tego, czy wywołano ją z grupy „Convert" (etykieta
+ *    sugeruje POJEDYNCZY węzeł, BEZ potomków) czy „Convert branch to…" — to
+ *    jest DOKUMENTOWANA, PRZEDISTNIEJĄCA rozbieżność (rozdz. 10 §7: „«Convert»
+ *    (bez sufiksu, węzeł Mind Map) | Zawsze konwertuje CAŁĄ gałąź, mimo
+ *    etykiety sugerującej element"), NIE coś wprowadzone lub naprawione tym
+ *    wpisem. `scope: 'single_item'` opisuje kotwicę (JEDEN węzeł, na którym
+ *    otwarto menu) — kaskada do potomków jest opisana uczciwie w
+ *    `teresa.description` każdego wpisu niżej, ten sam wybór co
+ *    `idea.node.mm_duplicate_branch` wyżej (Structure group, druga fala).
+ *  - Rozdz. 10 §2.2 WYMAGA podglądu treści docelowego artefaktu PRZED
+ *    wykonaniem konwersji. DZIŚ go nie ma (tylko toast PO fakcie —
+ *    `IdeaMapWorkspace.tsx handleConvert`) — `requiresPreview: false` jest
+ *    uczciwe wobec STANU DZISIEJSZEGO, nie wobec docelowego standardu (ten sam
+ *    wybór co istniejący `idea.workspace.convert` wyżej).
+ *  - Backend zapisuje link zwrotny jako `outputLinks[]` w `extensions` grafu
+ *    (addytywne) + krawędź LinkGraph, ale TEŻ nadpisuje `promoted_to`/
+ *    `promoted_entity_id`/`stage='promoted'` na CAŁEJ Idei bezwarunkowo
+ *    (`POST .../my-ideas/:id/convert`, opisane w rozdz. 10 §2.3 jako defekt
+ *    DO naprawy: druga konwersja innej gałęzi kasuje ślad pierwszej). To NIE
+ *    jest append-only `conversions[]` z audytu 09 §9
+ *    (`{conversionId,targetType,targetId,scope,sourceElementIds,createdAt,
+ *    createdBy,mappingVersion,sourceLink}`) — brak takiej struktury dziś w
+ *    ogóle. `undo.kind: 'manual_delete'` (jak `idea.workspace.convert`) jest
+ *    jedyną uczciwą odpowiedzią: nie ma czego automatycznie cofnąć, i nie ma
+ *    historii wielu konwersji do przywrócenia z. Rozdz. 10 §2.3/audyt 09 §9 to
+ *    osobny, większy epik (E11 — lineage/konwersja) — NIE naprawiane tym
+ *    wpisem, tylko uczciwie nie deklarowane jako coś więcej niż jest.
+ *
+ * ZASTRZEŻENIE target `process_flow` — SPRAWDZONE, NIE spekulacja (pierwsza
+ * lektura tego wpisu podejrzewała pętlę re-dispatchu; obalone przez
+ * `tests/unit/mywork/h2.3-mindmap-processflow-branch-conversion.test.ts`,
+ * commit `35e55d879d`, zanim wylądowało tutaj — patrz ten test dla dowodu).
+ * `process_flow` NIE jest w `IDEA_CONVERT_TARGETS`/`CONVERT_PREFIX_MAP`
+ * (`ideaConvertTargets.ts`) i faktycznie NIE idzie przez `Api.convertMyIdea`
+ * jak pozostałe cztery targety (initiative/decision/task_set) — `convertBranch`
+ * dispatchuje `convert_process_flow` z jawnym `nodeIds`, co
+ * `IdeaMapWorkspace.tsx`'s `handleQuickAction` łapie NA SAMEJ GÓRZE funkcji
+ * (`XFORM_MAP[action] || (action === 'convert_process_flow' && explicitNodeIds)`,
+ * `IdeaMapWorkspace.tsx:888`) i kieruje przez `transformSelection` — TĘ SAMĄ
+ * ścieżkę co „Przełącz na Proces" (`xform_to_flow`), nie przez konwersję do
+ * artefaktu w innym module. Efekt: węzły gałęzi trafiają jako nowe kroki DO
+ * WŁASNEGO Procesu Idei (`idea-workspace-insert`, `setActiveTool('process_flow')`),
+ * BEZ nowego rekordu w innym module, BEZ `outputLinks`, BEZ `Api.convertMyIdea`.
+ * Uczciwie: to jest bliżej „Generowanie reprezentacji" z rozdz. 10 §1 niż
+ * „Konwersja do artefaktu" (mimo etykiety menu „Convert branch → Process
+ * Flow") — istniejąca, PRZEDISTNIEJĄCA niezgodność nazwy z definicją rozdz.
+ * 10, nie coś wprowadzone lub naprawione tym wpisem. Undo tej JEDNEJ pozycji
+ * (`idea.node.mm_convert_branch_process_flow` niżej) jest oznaczone uczciwie
+ * inaczej niż pozostałych siedmiu — patrz jej `undo.evidence`.
+ */
+async function runMindmapNodeConvertAction(
+  actionId: string,
+  target: string,
+  map: ToolActionMap,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `nodeId` węzła (kotwicy poddrzewa) do konwersji.',
+    };
+  }
+  if (!ctx.confirmed) {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Konwersja tworzy nowy, trwały obiekt w innym module (i obejmuje CAŁE poddrzewo tego węzła) — potrzebuję potwierdzenia.',
+    };
+  }
+  return runByTool(actionId, map, ctx, { nodeId, target });
+}
+
 async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -948,6 +1050,20 @@ const RUNTIME_MM_NODE_DETACH_BRANCH: ToolActionMap = {
 };
 const RUNTIME_MM_NODE_DUPLICATE_BRANCH: ToolActionMap = {
   mindmap: 'mm_duplicate_branch',
+};
+/**
+ * N5 trzecia fala (2026-08-09) — WSPÓLNY runtime string dla WSZYSTKICH ośmiu
+ * `idea.node.mm_convert_*`/`idea.node.mm_convert_branch_*` wpisów niżej
+ * (Convert + Convert-branch grupy): jeden odbiornik w
+ * `useMindMapQuickActions.ts` (`mm_convert_branch`) czyta `target` z payloadu
+ * (`{ nodeId, target }`, dopisane przez `runMindmapNodeConvertAction`) zamiast
+ * ośmiu osobnych runtime stringów — target JEST już wybrany przez to, KTÓRĄ
+ * akcję Teresa/klik zawołały (`idea.node.mm_convert_initiative` zawsze niesie
+ * `target:'initiative'`), więc osiem runtime stringów byłoby czystą
+ * duplikacją bez dodatkowej informacji.
+ */
+const RUNTIME_MM_NODE_CONVERT_BRANCH: ToolActionMap = {
+  mindmap: 'mm_convert_branch',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -3157,6 +3273,319 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_DUPLICATE_BRANCH,
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:183 (ctx_duplicate_branch)',
+  },
+  // ── Convert (single-item label, cascades to descendants today — see the
+  // honesty block above `runMindmapNodeConvertAction`) ─────────────────────
+  {
+    id: 'idea.node.mm_convert_initiative',
+    label: { pl: 'Konwertuj → Inicjatywa', en: 'Convert → Initiative' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_initiative',
+        'initiative',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea → nowy rekord Initiative; brak automatycznego cofnięcia (ten sam wzorzec co idea.workspace.convert wyżej)',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli na Inicjatywę. UWAGA (etykieta menu myli — sprawdzone w kodzie): mimo że pozycja nazywa się „Convert" (bez „branch"), zabiera CAŁE poddrzewo tego węzła, nie tylko sam węzeł — identycznie jak „Konwertuj gałąź". Podaj `nodeId`. Tworzy nowy, trwały rekord w PMO.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:314 (ctx_convert_initiative) + IdeaRecommendationMap.tsx:4979 convertBranch(\'initiative\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_decision',
+    label: { pl: 'Konwertuj → Decyzja', en: 'Convert → Decision' },
+    icon: 'Star',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_decision',
+        'decision',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea → nowy rekord Decision; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli na artefakt Decyzji. Tak samo jak „→ Inicjatywa" wyżej — mimo etykiety bez „branch" zabiera CAŁE poddrzewo tego węzła. Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:320 (ctx_convert_decision) + IdeaRecommendationMap.tsx:4980 convertBranch(\'decision\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_tasks',
+    label: { pl: 'Konwertuj → Taski', en: 'Convert → Tasks' },
+    icon: 'ListChecks',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_tasks',
+        'task_set',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea(target: task_set) → nowe zadania; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli na zestaw zadań (target `task_set` — nie istnieje osobny target „tasks", to ta sama konwersja co „→ Task set (branch)" niżej pod inną etykietą menu). Zabiera CAŁE poddrzewo tego węzła, mimo etykiety bez „branch". Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy (wraz z poddrzewem) do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:326 (ctx_convert_tasks) + IdeaRecommendationMap.tsx:4978 convertBranch(\'task_set\', ...)',
+  },
+  // ── Convert branch to… (dual-surface, Z1: NodeContextMenu.tsx `context` +
+  // FloatingNodeToolbar.tsx `floating` — literally identical local ids
+  // `ctx_subtree_convert_*` in both components, same `convertBranch()` call
+  // underneath, ONE registry entry each) ────────────────────────────────────
+  {
+    id: 'idea.node.mm_convert_branch_decision',
+    label: { pl: 'Konwertuj gałąź → Decyzja', en: 'Convert branch → Decision' },
+    icon: 'Star',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_branch_decision',
+        'decision',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea → nowy rekord Decision; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli WRAZ Z CAŁYM PODDRZEWEM na artefakt Decyzji. Podaj `nodeId` węzła-kotwicy gałęzi.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy gałęzi do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:340 (ctx_subtree_convert_decision) + FloatingNodeToolbar.tsx:563 + IdeaRecommendationMap.tsx:4982/5688 convertBranch(\'decision\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_branch_tasks',
+    label: { pl: 'Konwertuj gałąź → Taski', en: 'Convert branch → Tasks' },
+    icon: 'ListChecks',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_branch_tasks',
+        'task_set',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea(target: task_set) → nowe zadania; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli WRAZ Z CAŁYM PODDRZEWEM na zestaw zadań. UWAGA (sprawdzone w kodzie): dziś IDENTYCZNA konwersja (target `task_set`) co „→ Task set (branch)" niżej — dwie różne pozycje menu, ten sam efekt, nie naprawiane tym wpisem. Podaj `nodeId` węzła-kotwicy gałęzi.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy gałęzi do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:346 (ctx_subtree_convert_tasks) + FloatingNodeToolbar.tsx:568 + IdeaRecommendationMap.tsx:4983/5689 convertBranch(\'task_set\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_branch_task_set',
+    label: { pl: 'Konwertuj gałąź → Zestaw zadań', en: 'Convert branch → Task set' },
+    icon: 'ListChecks',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_branch_task_set',
+        'task_set',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea(target: task_set) → nowe zadania; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli WRAZ Z CAŁYM PODDRZEWEM na zestaw zadań. Ten sam target (`task_set`) co „→ Tasks (branch)" wyżej — osobny wpis, bo to wizualnie odrębna pozycja menu (Z1 nie zabrania dwóm pozycjom menu współdzielić dziś implementacji). Podaj `nodeId` węzła-kotwicy gałęzi.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy gałęzi do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:352 (ctx_subtree_convert_task_set) + FloatingNodeToolbar.tsx:573 + IdeaRecommendationMap.tsx:4984/5690 convertBranch(\'task_set\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_branch_initiative',
+    label: { pl: 'Konwertuj gałąź → Inicjatywa', en: 'Convert branch → Initiative' },
+    icon: 'Rocket',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_branch_initiative',
+        'initiative',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'IdeaMapWorkspace.tsx handleConvert → Api.convertMyIdea → nowy rekord Initiative; brak automatycznego cofnięcia',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli WRAZ Z CAŁYM PODDRZEWEM na Inicjatywę. Podaj `nodeId` węzła-kotwicy gałęzi.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy gałęzi do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:358 (ctx_subtree_convert_initiative) + FloatingNodeToolbar.tsx:578 + IdeaRecommendationMap.tsx:4985/5691 convertBranch(\'initiative\', ...)',
+  },
+  {
+    id: 'idea.node.mm_convert_branch_process_flow',
+    label: { pl: 'Konwertuj gałąź → Proces', en: 'Convert branch → Process Flow' },
+    icon: 'Workflow',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    // UWAGA — SPRAWDZONE (`h2.3-mindmap-processflow-branch-conversion.test.ts`),
+    // NIE spekulacja: `process_flow` idzie INNĄ ścieżką niż pozostałe 4
+    // targety tej grupy — nie przez `Api.convertMyIdea` (dziś nawet nie jest
+    // w `IDEA_CONVERT_TARGETS`), tylko przez `IdeaMapWorkspace.tsx`'s
+    // `XFORM_MAP`/`transformSelection` (`convert_process_flow` + jawne
+    // `nodeIds` łapane NA GÓRZE `handleQuickAction`, `IdeaMapWorkspace.tsx:888`)
+    // — wstawia kroki do WŁASNEGO Procesu Idei, BEZ nowego rekordu w innym
+    // module, BEZ `outputLinks`. Bliżej „Generowanie reprezentacji" (rozdz. 10
+    // §1) niż „Konwersja do artefaktu", mimo etykiety menu — PRZEDISTNIEJĄCA
+    // niezgodność, nie naprawiana tym wpisem (patrz komentarz nad
+    // `runMindmapNodeConvertAction` dla pełnego dowodu).
+    handler: (ctx) =>
+      runMindmapNodeConvertAction(
+        'idea.node.mm_convert_branch_process_flow',
+        'process_flow',
+        RUNTIME_MM_NODE_CONVERT_BRANCH,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Mechanizm inny niż reszta grupy (patrz komentarz wyżej): IdeaMapWorkspace.tsx transformSelection → idea-workspace-insert wstawia kroki do Procesu TEJ SAMEJ Idei (nie nowy rekord w innym module) — czy odbiornik `idea-workspace-insert` po stronie Procesu woła pushUndo() NIE zweryfikowane w tym wpisie (poza zakresem — trzeci plik/inne narzędzie); manual_delete jest bezpiecznym dolnym ograniczeniem, nie potwierdzonym faktem',
+    },
+    teresa: {
+      description:
+        'Konwertuje wskazany węzeł Mapy myśli WRAZ Z CAŁYM PODDRZEWEM na kroki Procesu (Process Flow) TEJ SAMEJ Idei. UWAGA: w przeciwieństwie do „→ Inicjatywa/Decyzja/Taski (branch)" wyżej, to NIE tworzy nowego rekordu w innym module — to reprezentacja tej samej Idei, sprawdzone w kodzie (`IdeaMapWorkspace.tsx` `transformSelection`, nie `Api.convertMyIdea`). Podaj `nodeId` węzła-kotwicy gałęzi.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy gałęzi do konwersji.' },
+        },
+        required: ['nodeId'],
+      },
+      confirmBeforeRun: true,
+    },
+    runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:364 (ctx_subtree_convert_process_flow) + FloatingNodeToolbar.tsx:583 + IdeaRecommendationMap.tsx:4986-4991/5694 convertBranch(\'process_flow\', ...)',
   },
   {
     id: 'idea.node.mm_delete',

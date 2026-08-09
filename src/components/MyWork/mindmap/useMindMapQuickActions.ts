@@ -117,6 +117,15 @@ export interface MindMapQuickActionHandlers {
    */
   detachBranch?: (nodeId?: string) => void;
   duplicateBranch?: (nodeId?: string) => void;
+  /**
+   * N5 kontynuacja, trzecia fala (2026-08-09, `NodeContextMenu.tsx` grupy
+   * Convert/„Convert branch to…" + dual-surface `FloatingNodeToolbar.tsx`
+   * „Convert branch") — `convertBranch` istniał już w `IdeaRecommendationMap.tsx`
+   * (dispatch na `idea-workspace-quick-action` z `nodeIds` = węzeł + potomkowie),
+   * NIE przekazywany dotąd do tego hooka. Ten sam sygnał (target+nodeId) co
+   * klik człowieka — patrz `idea.node.mm_convert_branch_*` w rejestrze akcji.
+   */
+  convertBranch?: (target: string, nodeId?: string) => void;
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
@@ -257,6 +266,18 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     // hooka. `targetNodeId` = detail.nodeId, sparsowane wyżej.
     if (action === 'mm_detach_branch') handlers.detachBranch?.(targetNodeId);
     if (action === 'mm_duplicate_branch') handlers.duplicateBranch?.(targetNodeId);
+    // NOWY odbiornik (2026-08-09, N5 trzecia fala — rejestr akcji
+    // `idea.node.mm_convert_initiative`/`.mm_convert_decision`/`.mm_convert_tasks`/
+    // `.mm_convert_branch_*`, `NodeContextMenu.tsx` grupy Convert/„Convert
+    // branch to…" + dual-surface `FloatingNodeToolbar.tsx` „Convert branch").
+    // `convertBranch(target, nodeId)` już istniał w `IdeaRecommendationMap.tsx`
+    // (V5-IDEA-17/MM-15) — tylko nigdy nie był przekazany do `handlers` tego
+    // hooka. `detail.target` przychodzi z rejestru (jeden string per akcja —
+    // Teresa nie wybiera targetu dowolnie, wybiera KTÓRĄ akcję woła).
+    if (action === 'mm_convert_branch') {
+      const target = typeof detail?.target === 'string' ? detail.target : undefined;
+      if (target && targetNodeId) handlers.convertBranch?.(target, targetNodeId);
+    }
     // NOWY odbiornik (2026-08-09, N5 druga fala — rejestr akcji
     // `idea.node.mm_connect_to_selected`, `NodeContextMenu.tsx` „Connect to
     // selected"). Kliknięcie człowieka (ctx.params.run, patrz

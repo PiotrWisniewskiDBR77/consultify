@@ -1,12 +1,23 @@
 /**
- * REJESTR AKCJI (2026-08-09, N5 druga fala — wzór: `PaneContextMenu.tsx`,
- * e6ac31f10b): 15 z 44-45 pozycji tego menu (grupy Edit + Structure + Delete)
- * mają teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY`
+ * REJESTR AKCJI (2026-08-09, N5 druga + trzecia fala — wzór:
+ * `PaneContextMenu.tsx`, e6ac31f10b): 23 z 44-45 pozycji tego menu (grupy
+ * Edit + Structure + Delete — druga fala; Convert + Convert branch — trzecia
+ * fala) mają teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY`
  * (`idea.node.mm_*`, `getAction(id)`) i wykonują się przez
- * `runIdeaAction(id, ctx)`. Grupy AI/Convert/Convert branch/Style & data
- * ŚWIADOMIE NIETKNIĘTE (osobne przyszłe fale) — dla nich `onSelect` zostaje
- * dokładnie `() => onAction(item.id)`, bez żadnego udziału rejestru.
+ * `runIdeaAction(id, ctx)`. Grupy AI/Style & data ŚWIADOMIE NIETKNIĘTE
+ * (osobne przyszłe fale) — dla nich `onSelect` zostaje dokładnie
+ * `() => onAction(item.id)`, bez żadnego udziału rejestru.
  *
+ * TRZECIA FALA (Convert + Convert branch, 8 pozycji): dual-surface z
+ * `FloatingNodeToolbar.tsx`'s „Convert branch" dropdown — TE SAME lokalne id
+ * (`ctx_subtree_convert_*`) renderują się w obu komponentach, oba wołają dziś
+ * DOKŁADNIE tę samą funkcję `convertBranch()` w `IdeaRecommendationMap.tsx` —
+ * jeden rejestr wpis każdy, `surfaces: ['context','floating']` (Z1). Zobacz
+ * honesty block przy `runMindmapNodeConvertAction` w rejestrze: „Convert"
+ * (bez „branch" w nazwie) i „Convert branch" robią dziś TO SAMO (obie
+ * kaskadują do potomków) — udokumentowane, nie naprawione tym wpisem.
+ *
+
  * TAK SAMO jak menu tła: komponent przekazuje `ctx.params.run` — dokładnie
  * ten sam mechanizm co `PaneContextMenu.tsx`/`WhiteboardToolbar.tsx`
  * (`runMindmapNodeBusAction`/`runMindmapNodeUiOnlyCallback` w rejestrze).
@@ -76,8 +87,9 @@ import { type MenuItemBase } from './contextMenuTypes';
 
 /** Lokalny id menu (i18n `myWorkMindmap.ctxMenu.<id>`, tożsamość klik-ścieżki
  * przez `onAction`) → id w rejestrze akcji (tożsamość Teresy/dispatchu).
- * WYŁĄCZNIE grupy Edit/Structure/Delete (15 pozycji) — AI/Convert/Convert
- * branch/Style & data celowo brak w tej mapie (osobne przyszłe fale). */
+ * Grupy Edit/Structure/Delete (15 pozycji, druga fala) + Convert/Convert
+ * branch (8 pozycji, trzecia fala, 2026-08-09) — AI/Style & data nadal
+ * celowo brak w tej mapie (osobne przyszłe fale). */
 const REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
   ctx_edit: 'idea.node.mm_edit',
   ctx_open_detail: 'idea.node.mm_open_detail',
@@ -93,6 +105,20 @@ const REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
   ctx_connect_to_selected: 'idea.node.mm_connect_to_selected',
   ctx_detach_branch: 'idea.node.mm_detach_branch',
   ctx_duplicate_branch: 'idea.node.mm_duplicate_branch',
+  // N5 trzecia fala (2026-08-09) — Convert group (single-item label; cascades
+  // to descendants today regardless — see honesty note in the registry).
+  ctx_convert_initiative: 'idea.node.mm_convert_initiative',
+  ctx_convert_decision: 'idea.node.mm_convert_decision',
+  ctx_convert_tasks: 'idea.node.mm_convert_tasks',
+  // N5 trzecia fala (2026-08-09) — Convert branch group. Same local ids are
+  // ALSO used verbatim in `FloatingNodeToolbar.tsx`'s "Convert branch"
+  // dropdown (dual-surface, Z1: one registry entry, surfaces:
+  // ['context','floating'] — see that file's own small copy of this mapping).
+  ctx_subtree_convert_decision: 'idea.node.mm_convert_branch_decision',
+  ctx_subtree_convert_tasks: 'idea.node.mm_convert_branch_tasks',
+  ctx_subtree_convert_task_set: 'idea.node.mm_convert_branch_task_set',
+  ctx_subtree_convert_initiative: 'idea.node.mm_convert_branch_initiative',
+  ctx_subtree_convert_process_flow: 'idea.node.mm_convert_branch_process_flow',
   ctx_delete: 'idea.node.mm_delete',
 };
 

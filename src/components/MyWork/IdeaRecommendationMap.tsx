@@ -4448,6 +4448,12 @@ function MindMapInner({
   // function values.
   const detachBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
   const duplicateBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
+  // N5 trzecia fala (2026-08-09) — same TDZ reason as the two refs above:
+  // `convertBranch` (Convert/Convert-branch groups) is declared later in this
+  // component too.
+  const convertBranchRef = useRef<((target: string, nodeId?: string) => void) | undefined>(
+    undefined
+  );
 
   // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
   useMindMapQuickActions({
@@ -4478,6 +4484,8 @@ function MindMapInner({
       // any click could invoke it.
       detachBranch: (nodeId?: string) => detachBranchRef.current?.(nodeId),
       duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
+      // N5 trzecia fala (2026-08-09) — `idea.node.mm_convert_branch_*`.
+      convertBranch: (target: string, nodeId?: string) => convertBranchRef.current?.(target, nodeId),
       getSelectedNode,
       toggleCollapse,
       setFoldLevel,
@@ -4845,6 +4853,9 @@ function MindMapInner({
     },
     [collectDescendants, getContextTargetNode, ideaId, isPolish]
   );
+  // N5 trzecia fala (2026-08-09) — see `detachBranchRef.current = detachBranch;`
+  // above for why this is a ref assignment, not a direct handler value.
+  convertBranchRef.current = convertBranch;
 
   const handleContextAction = useCallback(
     (action: string) => {
