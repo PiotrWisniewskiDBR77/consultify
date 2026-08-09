@@ -311,6 +311,11 @@ function createMockDatabase(): MockDatabase {
     // Normalize commonly used timestamp fields if present.
     if (row.created_at == null && cols.includes('created_at')) row.created_at = nowIso();
     if (row.updated_at == null && cols.includes('updated_at')) row.updated_at = nowIso();
+    // SQLite applies these defaults in the real schema. Preserve them in the
+    // lightweight store so route-level tests observe the same response shape.
+    if (table === 'generated_workbook_source_bindings' && row.anchor_state == null) {
+      row.anchor_state = 'active';
+    }
 
     // Upsert behavior: prefer the ON CONFLICT column when specified,
     // otherwise fall back to `id`. This lets tables with non-id PKs
@@ -476,6 +481,10 @@ function createMockDatabase(): MockDatabase {
         'token_hash',
         // Document Studio cross-table lookups keyed by artifact or pack id.
         'artifact_id',
+        'workbook_id',
+        'proposal_id',
+        'action',
+        'idempotency_key',
         'share_link_id',
         'pack_id',
         'version_id',
@@ -515,6 +524,18 @@ function createMockDatabase(): MockDatabase {
         });
       });
 
+      const literalEqualityMatches = Array.from(
+        wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*'([^']*)'/gi)
+      )
+        .map((match) => ({
+          column: String(match[1] || '').toLowerCase(),
+          expected: String(match[2] || ''),
+        }))
+        .filter((pred) => allowed.has(pred.column));
+      literalEqualityMatches.forEach((pred) => {
+        rows = rows.filter((row) => String(row[pred.column] ?? '') === pred.expected);
+      });
+
       if (
         !equalityMatches.length &&
         (s.includes('organization_id = ?') || s.includes('organization_id = $1'))
@@ -546,13 +567,19 @@ function createMockDatabase(): MockDatabase {
     const selectMatch = normalizeSql(sql).match(/^\s*select\s+(.+?)\s+from\b/i);
     const selectPart = selectMatch?.[1] || '';
     const aliasSpecs = Array.from(
-      selectPart.matchAll(/\b([a-zA-Z0-9_.]+)\s+as\s+"?([a-zA-Z0-9_]+)"?/gi)
+      selectPart.matchAll(
+        /(?:\b([a-zA-Z0-9_.]+)|coalesce\s*\(\s*([a-zA-Z0-9_.]+)\s*,\s*([^)]*)\))\s+as\s+"?([a-zA-Z0-9_]+)"?/gi
+      )
     ).map((match) => ({
       source:
-        String(match[1] || '')
+        String(match[1] || match[2] || '')
           .split('.')
           .pop() || '',
-      alias: String(match[2] || ''),
+      fallback:
+        match[2] && match[3] != null
+          ? String(match[3]).trim().replace(/^['"]|['"]$/g, '')
+          : undefined,
+      alias: String(match[4] || ''),
     }));
 
     if (!aliasSpecs.length) return rows;
@@ -561,8 +588,12 @@ function createMockDatabase(): MockDatabase {
       const next = { ...row };
       for (const spec of aliasSpecs) {
         if (!spec.alias || !spec.source) continue;
-        if (Object.prototype.hasOwnProperty.call(row, spec.source)) {
-          next[spec.alias] = row[spec.source];
+        const value = row[spec.source];
+        if (value != null) next[spec.alias] = value;
+        else if (spec.fallback !== undefined) {
+          next[spec.alias] = /^-?\d+(?:\.\d+)?$/.test(spec.fallback)
+            ? Number(spec.fallback)
+            : spec.fallback;
         }
       }
       return next;
@@ -687,7 +718,29 @@ function createMockDatabase(): MockDatabase {
       return Promise.resolve();
     },
     async query(_text, _params) {
-      return { rows: [], rowCount: 0 };
+      const sql = normalizeSql(_text as any);
+      const params = Array.isArray(_params) ? _params : [];
+
+      if (/^\s*create\s+table/i.test(sql)) {
+        applyCreateTable(mock, sql);
+        return { rows: [], rowCount: 0 };
+      }
+      if (/^\s*create\s+index/i.test(sql) || /^\s*alter\s+table/i.test(sql)) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      if (/^\s*select\b/i.test(sql)) {
+        const rows = selectFromTable(mock, sql, params) || [];
+        return { rows, rowCount: rows.length };
+      }
+
+      const didInsert = applyInsert(mock, sql, params);
+      const didUpdate = didInsert ? false : applyUpdate(mock, sql, params);
+      const didDelete = didInsert || didUpdate ? false : applyDelete(mock, sql, params);
+      return {
+        rows: [],
+        rowCount: didInsert || didUpdate || didDelete ? 1 : 0,
+      };
     },
   };
 

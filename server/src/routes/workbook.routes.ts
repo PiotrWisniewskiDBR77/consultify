@@ -1805,7 +1805,7 @@ router.get(
     await ensureWorkbookSchema();
     const rows = await queryHelpers.queryAll<{
       id: string;
-      version: number;
+      version: number | null;
       command_id: string;
       created_by: string;
       created_at: string;
@@ -2509,12 +2509,13 @@ router.patch(
       res.status(404).json({ error: 'Workbook not found' });
       return;
     }
-    if (head.version !== baseVersion) {
+    const headVersion = Number(head.version ?? 0);
+    if (headVersion !== baseVersion) {
       res.status(409).json({
         error: 'Workbook version conflict',
         code: 'WORKBOOK_VERSION_CONFLICT',
         expectedVersion: baseVersion,
-        currentVersion: head.version,
+        currentVersion: headVersion,
       });
       return;
     }
@@ -2526,12 +2527,12 @@ router.patch(
       return;
     }
     if (schema.title === title) {
-      res.json({ ok: true, title, version: head.version, unchanged: true });
+      res.json({ ok: true, title, version: headVersion, unchanged: true });
       return;
     }
     const nextSchema = { ...schema, title };
     const nextSchemaJson = JSON.stringify(nextSchema);
-    const nextVersion = head.version + 1;
+    const nextVersion = headVersion + 1;
     const mutationKey = `title:${uuidv4()}`;
     const persisted = await queryHelpers.transaction(async () => {
       const result = await queryHelpers.queryRun(
@@ -2545,7 +2546,7 @@ router.patch(
           mutationKey,
           req.params.id,
           user.organizationId,
-          head.version,
+          headVersion,
         ]
       );
       if (!result.changes) return false;
@@ -2627,12 +2628,13 @@ router.patch(
       res.status(404).json({ error: 'Workbook not found' });
       return;
     }
-    if (head.version !== baseVersion) {
+    const governanceHeadVersion = Number(head.version ?? 0);
+    if (governanceHeadVersion !== baseVersion) {
       res.status(409).json({
         error: 'Workbook version conflict',
         code: 'WORKBOOK_VERSION_CONFLICT',
         expectedVersion: baseVersion,
-        currentVersion: head.version,
+        currentVersion: governanceHeadVersion,
       });
       return;
     }
@@ -2649,7 +2651,7 @@ router.patch(
         classification: asClassification(head.classification),
         lifecycleStatus: head.lifecycle_status || 'draft',
         approvalCurrent: head.approval_current === true || head.approval_current === 1,
-        version: head.version,
+        version: governanceHeadVersion,
         unchanged: true,
       });
       return;
@@ -2693,7 +2695,7 @@ router.patch(
       await queryHelpers.queryRun(
         `UPDATE generated_workbooks SET ${column} = ?${field === 'classification' ? ', approval_current = 0' : ''}
          WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
-        [value, req.params.id, user.organizationId, head.version]
+        [value, req.params.id, user.organizationId, governanceHeadVersion]
       );
       await queryHelpers.queryRun(
         `INSERT INTO generated_workbook_governance_events
@@ -2708,7 +2710,7 @@ router.patch(
           previousValue,
           value,
           reason || null,
-          head.version,
+          governanceHeadVersion,
           user.id,
         ]
       );
@@ -2721,7 +2723,7 @@ router.patch(
         field === 'classification'
           ? false
           : head.approval_current === true || head.approval_current === 1,
-      version: head.version,
+      version: governanceHeadVersion,
       unchanged: false,
     });
   })
@@ -3199,7 +3201,7 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
-      version: row.version,
+      version: Number(row.version ?? 0),
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
       evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],
