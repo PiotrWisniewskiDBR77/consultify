@@ -1,13 +1,35 @@
 /**
- * REJESTR AKCJI (2026-08-09, N5 druga + trzecia fala — wzór:
- * `PaneContextMenu.tsx`, e6ac31f10b): 23 z 44-45 pozycji tego menu (grupy
- * Edit + Structure + Delete — druga fala; Convert + Convert branch — trzecia
- * fala) mają teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY`
- * (`idea.node.mm_*`, `getAction(id)`) i wykonują się przez
- * `runIdeaAction(id, ctx)`. Grupy AI/Style & data ŚWIADOMIE NIETKNIĘTE
- * (osobne przyszłe fale) — dla nich `onSelect` zostaje dokładnie
- * `() => onAction(item.id)`, bez żadnego udziału rejestru.
+ * REJESTR AKCJI (2026-08-09, N5 czwarta — OSTATNIA — fala: wzór
+ * `PaneContextMenu.tsx`, e6ac31f10b): WSZYSTKIE 44-45 pozycji tego menu mają
+ * teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY` (`idea.node.mm_*`,
+ * `getAction(id)`) i wykonują się przez `runIdeaAction(id, ctx)`. Druga fala =
+ * Edit + Structure + Delete (15). Trzecia fala = Convert + Convert branch (8).
+ * Czwarta fala (TA zmiana) = AI (9 pozycji, 8 wpisów — ctx_ai_expand/
+ * ctx_ai_deepen dzielą jeden wpis, sprawdzone: identyczny handleAIExpand())
+ * + Style & data (13 pozycji, 11 wpisów — ctx_quick_notes/ctx_quick_tags
+ * reużywają `idea.node.mm_open_detail`, sprawdzone: identyczny
+ * setDrawerNodeId()). Tym samym `NodeContextMenu.tsx` jest w CAŁOŚCI
+ * podpięty pod rejestr — brak lokalnych pozycji menu bez odpowiadającego
+ * wpisu (patrz `if (registryId && !getAction(registryId))` niżej, które teraz
+ * pilnuje KAŻDEJ pozycji, nie tylko trzech pierwszych grup).
  *
+ * Honesty highlights czwartej fali (pełne uzasadnienia w rejestrze):
+ *  - `ai_suggest_links` — klik z TEGO menu jest DZIŚ MARTWY
+ *    (`handleContextAction` nie ma gałęzi obsługi); ta sama etykieta na
+ *    pływającym pasku AI DZIAŁA. Zgłoszone, NIE naprawione tym wpisem (zmiana
+ *    widocznego zachowania kliku wykracza poza wiring).
+ *  - `ctx_dependencies`/`ctx_priority`/`ctx_competitive` — realne AI
+ *    (`Api.getMyIdeaAISuggestions`), ale mimo pozycji w menu WĘZŁA operują na
+ *    CAŁEJ mapie (węzeł spod kursora bez wpływu na wynik) — `scope: 'workspace'`
+ *    w rejestrze, nie `single_item`.
+ *  - `ctx_competitive` — `onAddToMap` nie wołał `pushUndo()` (jedyny z 7
+ *    wywołujących `idea-workspace-insert` w tym pliku bez niego) — DOPISANE tą
+ *    zmianą w `IdeaRecommendationMap.tsx`.
+ *  - `ctx_change_shape`/`ctx_paste_style`/`ctx_vote_up` — bezpośrednio mutują
+ *    dane węzła, żadna nie woła `pushUndo()` (systemowa, przedistniejąca luka
+ *    w undo tej grupy — zgłoszona, nie naprawiona hurtem tym wiringiem).
+ *
+
  * TRZECIA FALA (Convert + Convert branch, 8 pozycji): dual-surface z
  * `FloatingNodeToolbar.tsx`'s „Convert branch" dropdown — TE SAME lokalne id
  * (`ctx_subtree_convert_*`) renderują się w obu komponentach, oba wołają dziś
@@ -119,6 +141,34 @@ const REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
   ctx_subtree_convert_task_set: 'idea.node.mm_convert_branch_task_set',
   ctx_subtree_convert_initiative: 'idea.node.mm_convert_branch_initiative',
   ctx_subtree_convert_process_flow: 'idea.node.mm_convert_branch_process_flow',
+  // N5 czwarta fala (2026-08-09) — AI group (9 pozycji, 8 wpisów rejestru:
+  // ctx_ai_expand/ctx_ai_deepen dzielą JEDEN wpis, `idea.node.mm_ai_expand_node`
+  // — sprawdzone w handleContextAction, oba wołają identyczny handleAIExpand()).
+  ctx_ai_rewrite_node: 'idea.node.mm_ai_rewrite_node',
+  ctx_ai_expand: 'idea.node.mm_ai_expand_node',
+  ctx_ai_deepen: 'idea.node.mm_ai_expand_node',
+  ctx_what_if: 'idea.node.mm_ai_what_if',
+  ctx_summarize_branch: 'idea.node.mm_summarize_branch',
+  ctx_dependencies: 'idea.node.mm_ai_detect_dependencies',
+  ctx_priority: 'idea.node.mm_ai_prioritize',
+  ctx_competitive: 'idea.node.mm_ai_competitors',
+  ai_suggest_links: 'idea.node.mm_ai_suggest_links',
+  // N5 czwarta fala (2026-08-09) — Style & data group (13 pozycji: 11 nowe
+  // wpisy + ctx_quick_notes/ctx_quick_tags reużywają idea.node.mm_open_detail,
+  // sprawdzone: obie wołają dosłownie ten sam setDrawerNodeId co Open details).
+  ctx_change_shape: 'idea.node.mm_change_shape',
+  ctx_add_image: 'idea.node.mm_add_image',
+  ctx_copy_style: 'idea.node.mm_copy_style',
+  ctx_paste_style: 'idea.node.mm_paste_style',
+  ctx_vote_up: 'idea.node.mm_vote_up',
+  ctx_assign: 'idea.node.mm_assign',
+  ctx_comments: 'idea.node.mm_comments',
+  ctx_quick_notes: 'idea.node.mm_open_detail',
+  ctx_quick_tags: 'idea.node.mm_open_detail',
+  ctx_attach_knowledge: 'idea.node.mm_attach_knowledge',
+  ctx_attach_artifact: 'idea.node.mm_attach_artifact',
+  ctx_open_linked_artifacts: 'idea.node.mm_open_linked_artifacts',
+  ctx_share_branch: 'idea.node.mm_copy_link',
   ctx_delete: 'idea.node.mm_delete',
 };
 

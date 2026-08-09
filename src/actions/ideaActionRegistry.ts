@@ -766,6 +766,47 @@ async function runMindmapNodeConvertAction(
   return runByTool(actionId, map, ctx, { nodeId, target });
 }
 
+/**
+ * `idea.node.mm_attach_knowledge` (N5 czwarta fala, 2026-08-09) — jedyna
+ * pozycja grupy Style & data z realnym, ADRESOWALNYM po `nodeId` punktem
+ * wejścia (`idea-workspace-attach-knowledge`, `IdeaMapWorkspace.tsx:2716-2726`
+ * — czyta `detail.nodeId`+`detail.ideaId` i otwiera popover artefaktów na
+ * WSKAZANYM węźle). W PRZECIWIEŃSTWIE do `idea.node.attach_knowledge`
+ * (Tablica, wyżej) — tamten odbiornik SPRAWDZONO, że IGNORUJE
+ * `detail.nodeId` i działa wyłącznie na bieżące zaznaczenie przeglądarki, więc
+ * jest UI-only. Tu odbiornik jest inny plik/inny mechanizm i faktycznie
+ * honoruje `nodeId` — stąd OSOBNY wpis (nie rozszerzenie `tools` istniejącego),
+ * bus-wired.
+ */
+function dispatchMindmapAttachKnowledge(nodeId: string, ideaId: string) {
+  window.dispatchEvent(
+    new CustomEvent('idea-workspace-attach-knowledge', { detail: { nodeId, ideaId } })
+  );
+}
+
+async function runMindmapAttachKnowledgeCallback(ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId: 'idea.node.mm_attach_knowledge' };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId: 'idea.node.mm_attach_knowledge',
+      message: 'Podaj `nodeId` węzła, do którego dołączyć wiedzę.',
+    };
+  }
+  dispatchMindmapAttachKnowledge(nodeId, ctx.ideaId || '');
+  return { ok: true, actionId: 'idea.node.mm_attach_knowledge', data: { nodeId } };
+}
+
 async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -1064,6 +1105,56 @@ const RUNTIME_MM_NODE_DUPLICATE_BRANCH: ToolActionMap = {
  */
 const RUNTIME_MM_NODE_CONVERT_BRANCH: ToolActionMap = {
   mindmap: 'mm_convert_branch',
+};
+/**
+ * N5 czwarta fala (2026-08-09) — grupa AI węzła Mapy myśli. Reużywa
+ * ISTNIEJĄCY runtime string `mm_ai_expand` (RUNTIME_AI_EXPAND wyżej, dziś
+ * używany przez `idea.ai.expand_map` w zasięgu `workspace`, rail/panel) —
+ * TEN SAM odbiornik (`handlers.handleAIExpand(targetNodeId)`,
+ * `useMindMapQuickActions.ts:872`) już honoruje `detail.nodeId`, więc nowy
+ * wpis w zasięgu `single_item` (menu węzła) może bezpiecznie dzielić string
+ * zamiast duplikować go pod nową nazwą.
+ */
+const RUNTIME_MM_NODE_AI_WHAT_IF: ToolActionMap = {
+  // Odbiornik (`useMindMapQuickActions.ts:1121`) IGNORUJE `detail.nodeId` —
+  // zawsze tylko `setShowWhatIf(true)`, tak samo jak klik z menu węzła
+  // (`IdeaRecommendationMap.tsx:4900`, `setShowWhatIf(true)` bez żadnego
+  // targetowania). Modal wewnątrz i tak bierze `nodes.find(n => n.selected)`
+  // — SPRAWDZONE PRZED wpisem, nie spekulacja (patrz honesty w teresa.description
+  // niżej): ani klik z menu węzła, ani Teresa nie mogą dziś wskazać
+  // KONKRETNEGO węzła dla tej akcji, mimo że jest wystawiona w menu węzła.
+  mindmap: 'mm_ai_what_if',
+};
+const RUNTIME_MM_NODE_AI_SUMMARIZE_BRANCH: ToolActionMap = {
+  // UWAGA — DWIE RÓŻNE ścieżki dla "podsumuj gałąź" (sprawdzone PRZED wpisem):
+  // klik z menu węzła (`ctx_summarize_branch`) woła `summarizeBranch()`
+  // (`IdeaRecommendationMap.tsx:4808-4828`), który TYLKO wypełnia prompt czatu
+  // (`idea-workspace-chat-prompt`) — zero realnej generacji. Ten runtime
+  // string (`mm_ai_summarize_branch`, odbiornik `useMindMapQuickActions.ts:1081`)
+  // to INNY, MOCNIEJSZY mechanizm: otwiera `BranchSummaryPanel.tsx`, który
+  // faktycznie woła `Api.*` po prawdziwe podsumowanie LLM. Świadomie wybrany
+  // dla Teresy zamiast repliki "wypełnij czat" (dałby Teresie gorszy wynik niż
+  // ma dziś dostępny w kodzie) — udokumentowana rozbieżność UI-vs-Teresa, jak
+  // `idea.node.ai_find_themes` wyżej. Odbiornik używa WYŁĄCZNIE
+  // `handlers.getSelectedNode()`, IGNORUJE `detail.nodeId` — ta sama uczciwa
+  // granica co powyżej (`RUNTIME_MM_NODE_AI_WHAT_IF`).
+  mindmap: 'mm_ai_summarize_branch',
+};
+const RUNTIME_MM_NODE_AI_SUGGEST_LINKS: ToolActionMap = {
+  // UWAGA — KLIK Z MENU WĘZŁA JEST DZIŚ MARTWY (sprawdzone grepem, nie
+  // spekulacja): `handleContextAction` w `IdeaRecommendationMap.tsx` NIE MA
+  // gałęzi `if (action === 'ai_suggest_links')` — lista `if`-ów kończy się na
+  // `ctx_delete` bez obsługi tego id. Ten SAM string działa dziś WYŁĄCZNIE z
+  // pływającego paska (`FloatingAIPopover.tsx:52` → `useMindMapQuickActions.ts:1123`
+  // → dispatch `mm_ai_suggest_links_execute` → `IdeaMapWorkspace.tsx:1047`
+  // realny `generateAIProposal` + `setProposalBatch`, proposal-first). Zgodnie
+  // z zasadą „zachowaj dokładny klik" NIE naprawiamy tu martwej gałęzi w
+  // `handleContextAction` (zmieniłoby to widoczne zachowanie kliku, poza
+  // zakresem tego wiringu) — `ctx.params.run` zostaje bajt-identyczny
+  // no-opem dla człowieka, a Teresa dostaje TEN SAM realny odbiornik, którego
+  // pływający pasek już używa. Zgłoszone jako oddzielna, tania naprawa do
+  // zrobienia (jedna brakująca gałąź `if`).
+  mindmap: 'ai_suggest_links',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -2924,14 +3015,24 @@ const IDEA_ACTIONS: ActionDef[] = [
     scope: 'single_item',
     tools: ['mindmap'],
     surfaces: ['context'],
+    // REUŻYWANY (N5 czwarta fala, 2026-08-09) także przez `ctx_quick_notes`
+    // ("Notes") i `ctx_quick_tags` ("Tags") — SPRAWDZONE w
+    // handleContextAction:4916-4918, nie spekulacja: obie pozycje wołają
+    // DOSŁOWNIE `setDrawerNodeId(ctxNode.id)`, identycznie jak `ctx_open_detail`
+    // — zero dedykowanego widoku notatek/tagów, zero parametru wskazującego
+    // zakładkę. Trzy różne etykiety menu ("Open details"/"Notes"/"Tags"), JEDNA
+    // faktyczna akcja — mylące wobec użytkownika (spodziewa się widoku notatek
+    // lub tagów, dostaje ten sam generyczny panel szczegółów), udokumentowane
+    // tu zamiast utrzymywane w trzech pozorowanych osobnych wpisach.
     handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_open_detail', ctx),
     mutates: false,
     requiresPreview: false,
     teresa: {
       description:
-        'Otwiera panel szczegółów wskazanego węzła Mapy myśli. Stan lokalny UI (`setDrawerNodeId` w `IdeaRecommendationMap.tsx`), nieprzekazany do szyny — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+        'Otwiera panel szczegółów wskazanego węzła Mapy myśli. Stan lokalny UI (`setDrawerNodeId` w `IdeaRecommendationMap.tsx`), nieprzekazany do szyny — dziś dostępne WYŁĄCZNIE z menu prawego kliku. UWAGA: menu prawego kliku ma też pozycje "Notes" i "Tags" — obie wołają DOKŁADNIE tę samą akcję (ten sam kod, brak dedykowanego widoku notatek/tagów), więc odpowiadają na TO SAMO polecenie co "Open details".',
     },
-    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:98 (ctx_open_detail)',
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:98 (ctx_open_detail) + :446 (ctx_quick_notes) + :452 (ctx_quick_tags) — wszystkie trzy handleContextAction:4874-4918',
   },
   {
     id: 'idea.node.mm_add_child',
@@ -3586,6 +3687,514 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_MM_NODE_CONVERT_BRANCH,
     source:
       'src/components/MyWork/mindmap/NodeContextMenu.tsx:364 (ctx_subtree_convert_process_flow) + FloatingNodeToolbar.tsx:583 + IdeaRecommendationMap.tsx:4986-4991/5694 convertBranch(\'process_flow\', ...)',
+  },
+  // ─────────── N5 czwarta fala (2026-08-09) — grupa AI (9 pozycji, 8 wpisów) ───────────
+  {
+    id: 'idea.node.mm_ai_rewrite_node',
+    label: { pl: 'AI: Przeredaguj ten węzeł', en: 'AI: Rewrite this node' },
+    icon: 'Sparkles',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // SPRAWDZONE PRZED wpisem (nie spekulacja): odbiornik
+    // `IdeaMapWorkspace.tsx:2741` (`idea-mindmap-rewrite-node`) zbiera
+    // instrukcję przez SYNCHRONICZNY `window.prompt()` (przeglądarkowy, blokujący
+    // dialog), DOPIERO POTEM woła realny LLM (`Api.chatWithAIStream`) i buduje
+    // proposal (`generatorType:'node_rewrite'`, `setProposalBatch`) —
+    // proposal-first, zgodne z rozdz. 09 §3. Ale `window.prompt()` wymaga
+    // CZŁOWIEKA przy klawiaturze przeglądarki — Teresa (wywołanie z czatu, bez
+    // okna przeglądarki użytkownika) nie ma jak dostarczyć `instruction` do tego
+    // dialogu. Świadomie UI-only: dispatch na szynę tylko przeniósłby ten sam
+    // blokujący prompt, nie dając Teresie żadnej realnej ścieżki — to właśnie
+    // ograniczenie, które rozdz. 09 §6 nazywa „prymitywny UX do poprawy",
+    // udokumentowane tu, nie naprawione (poza zakresem tego wiringu).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_rewrite_node', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaMapWorkspace.tsx:2764-2790 — Api.chatWithAIStream → setProposalBatch (generatorType: node_rewrite) → IdeaProposalReview; odrzucenie = zero zmian.',
+    },
+    teresa: {
+      description:
+        'Przeredagowuje etykietę wskazanego węzła Mapy myśli wg polecenia (realne AI, zawsze do akceptacji w podglądzie). DZIŚ NIEDOSTĘPNE dla Teresy: mechanizm zbiera polecenie przez natywny `window.prompt()` przeglądarki użytkownika (blokujący dialog) — nie ma parametru, którym Teresa mogłaby dostarczyć instrukcję z czatu. Dostępne WYŁĄCZNIE z menu prawego kliku na węzeł.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:280 (ctx_ai_rewrite_node)',
+  },
+  {
+    id: 'idea.node.mm_ai_expand_node',
+    label: { pl: 'AI: Rozbuduj temat', en: 'Expand topic' },
+    icon: 'Sparkles',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // UCZCIWOŚĆ (rozdz. 09 §2, sprawdzone w handleContextAction:4885-4887, nie
+    // spekulacja): „Expand topic" (`ctx_ai_expand`) i „Deepen" (`ctx_ai_deepen`)
+    // są DWIEMA RÓŻNYMI etykietami menu, ale wołają DOKŁADNIE tę samą funkcję
+    // — `handleAIExpand(ctxNode?.id)` — bez ŻADNEGO parametru różnicującego
+    // "rozbuduj" od "pogłęb". Zero różnicy w backendowym wywołaniu
+    // (`Api.expandMyIdeaMap`, ten sam `count:5`, ten sam `context`). To jest
+    // ODWROTNOŚĆ zakazanego wzorca z rozdz. 09 §2 (tam: JEDNA etykieta ukrywa
+    // różne efekty; tu: DWIE etykiety obiecują różny efekt, dostarczają
+    // identyczny) — świadomie WSPÓLNY wpis rejestru dla obu lokalnych id
+    // (patrz `REGISTRY_ID_BY_LOCAL_ID` w `NodeContextMenu.tsx`), zamiast dwóch
+    // wpisów udających, że to różne akcje.
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_ai_expand_node', RUNTIME_AI_EXPAND, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaRecommendationMap.tsx:4360-4442 handleAIExpand — Api.expandMyIdeaMap(proposeOnly:true) → setAiProposal + setShowAIModal(true); odrzucenie = zero zmian.',
+    },
+    teresa: {
+      description:
+        'Proponuje nowe węzły-potomki rozbudowujące wskazany węzeł Mapy myśli (realne AI, zawsze do akceptacji w podglądzie). UWAGA: w menu prawego kliku ta sama akcja jest wystawiona pod DWIEMA etykietami — „Expand topic" i „Deepen" — obie wołają identyczny kod, żadna nie "pogłębia" mocniej niż druga (sprawdzone w kodzie, nie w opisie). Podaj `nodeId` węzła-kotwicy.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła, który AI ma rozbudować.' },
+        },
+        required: ['nodeId'],
+      },
+    },
+    runtime: RUNTIME_AI_EXPAND,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:286 (ctx_ai_expand) + :292 (ctx_ai_deepen) — oba handleContextAction:4885-4887',
+  },
+  {
+    id: 'idea.node.mm_ai_what_if',
+    label: { pl: 'AI: Co jeśli...?', en: 'What if...?' },
+    icon: 'GitBranch',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // UCZCIWOŚĆ (sprawdzone w AIWhatIfScenarios call site,
+    // IdeaRecommendationMap.tsx:6143-6165, nie spekulacja): mimo że pozycja
+    // wisi w menu KONKRETNEGO węzła, ANI klik człowieka, ANI ta akcja rejestru
+    // nie przekazują `ctxNode` do modalu — modal sam bierze
+    // `nodes.find(n => n.selected)`, z fallbackiem na `ideaTitle`/`'root'`.
+    // Prawoklik na węzeł A, gdy zaznaczony jest węzeł B, wygeneruje scenariusze
+    // dla B, nie A. Zasięg deklarowany jako `single_item` opisuje POZYCJĘ w
+    // menu (kotwica intencji), nie faktyczny mechanizm — realnie działa jak
+    // `selected_items`/`current_view`.
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_ai_what_if', RUNTIME_MM_NODE_AI_WHAT_IF, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'AIWhatIfScenarios.tsx (Api.getMyIdeaAISuggestions) → onApplyScenario w IdeaRecommendationMap.tsx:6157-6165 → pushUndo() + idea-workspace-insert (per-scenariusz Apply, nieklikniete = brak zmian).',
+    },
+    teresa: {
+      description:
+        'Generuje scenariusze "co jeśli" (realne AI) dla aktualnie zaznaczonego węzła Mapy myśli — do przeglądu i ręcznego zastosowania per scenariusz. UWAGA: nie da się wskazać KONKRETNEGO węzła (ani z menu, ani z czatu) — działa zawsze na to, co jest DZIŚ zaznaczone w przeglądarce, z fallbackiem na tytuł Idei/korzeń mapy, gdy nic nie jest zaznaczone.',
+    },
+    runtime: RUNTIME_MM_NODE_AI_WHAT_IF,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:298 (ctx_what_if)',
+  },
+  {
+    id: 'idea.node.mm_summarize_branch',
+    label: { pl: 'Podsumuj gałąź', en: 'Summarize branch' },
+    icon: 'FileText',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Etykieta BEZ słowa "AI" — poprawnie: klik człowieka (`summarizeBranch()`,
+    // IdeaRecommendationMap.tsx:4808-4828) TYLKO wypełnia prompt czatu Teresy
+    // (`idea-workspace-chat-prompt`), zero bezpośredniej generacji, zero
+    // mutacji grafu — zgodne z rozdz. 09 §2/§5 (delegacja do czatu, jawnie
+    // nazwana, bez udawania structured AI). Dla Teresy wybrano INNY, mocniejszy
+    // mechanizm (`RUNTIME_MM_NODE_AI_SUMMARIZE_BRANCH` — patrz jego komentarz)
+    // zamiast repliki "wyślij sobie prompt do czatu", co byłoby bez sensu dla
+    // wywołującego, który JEST czatem.
+    handler: (ctx) =>
+      runMindmapNodeBusAction(
+        'idea.node.mm_summarize_branch',
+        RUNTIME_MM_NODE_AI_SUMMARIZE_BRANCH,
+        ctx
+      ),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Podsumowuje gałąź (węzeł + potomkowie) aktualnie zaznaczoną na Mapie myśli — realne AI, tylko odczyt (nie zmienia mapy). UWAGA: to INNY mechanizm niż klik człowieka z menu węzła (ten tylko wypełnia prompt w oknie czatu) — Teresa dostaje bezpośrednio wygenerowane podsumowanie. Ani jedna, ani druga ścieżka nie przyjmuje `nodeId` — obie działają na to, co jest dziś zaznaczone w przeglądarce.',
+    },
+    runtime: RUNTIME_MM_NODE_AI_SUMMARIZE_BRANCH,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:304 (ctx_summarize_branch)',
+  },
+  {
+    id: 'idea.node.mm_ai_detect_dependencies',
+    label: { pl: 'Wykryj zależności', en: 'Detect dependencies' },
+    icon: 'Network',
+    scope: 'workspace',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Etykieta BEZ słowa "AI" mimo realnego LLM (`AIDependencyDetector.tsx` →
+    // `Api.getMyIdeaAISuggestions`) — zgodne z rozdz. 09 §5 (nazwa nie musi
+    // zawierać "AI", żeby akcja BYŁA realnym AI; zakaz działa w drugą stronę).
+    // `scope: 'workspace'` (NIE `single_item`) jest UCZCIWY wobec kodu, nie
+    // wobec pozycji w menu: `setShowDependencyDetector(true)`
+    // (handleContextAction:4946) nie przekazuje ŻADNEGO nodeId, a
+    // `AIDependencyDetector` bierze CAŁE `nodes`/`edges` mapy — prawoklik na
+    // konkretny węzeł nie ma żadnego wpływu na wynik. Za flagą
+    // `mindmapHeuristicAiOverlays` (domyślnie OFF) — nazwa flagi myląco sugeruje
+    // heurystykę; SAMO WYKRYWANIE jest realnym wywołaniem LLM, sprawdzone w
+    // kodzie (nie w nazwie flagi). BRAK bus/Teresa: `setShowDependencyDetector`
+    // to czysty lokalny stan komponentu, bez żadnego odbiornika na szynie —
+    // sprawdzone PRZED wpisem (grep `showDependencyDetector` poza tym plikiem:
+    // brak wyników), UI-only.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_detect_dependencies', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaRecommendationMap.tsx:6469-6529 onAddDependency/onAddAll → pushUndo() + setEdges (Add pojedynczo/Add All, nieklikniete = brak zmian).',
+    },
+    teresa: {
+      description:
+        'Wykrywa semantyczne zależności między węzłami CAŁEJ Mapy myśli (realne AI) i proponuje nowe krawędzie do akceptacji pojedynczo lub hurtem. DZIŚ NIEDOSTĘPNE dla Teresy — otwarcie panelu to czysty lokalny stan UI bez odbiornika na szynie. UWAGA: mimo pozycji w menu prawego kliku na węzeł, węzeł spod kursora NIE wpływa na wynik — analiza zawsze obejmuje całą mapę. Za flagą wyłączoną domyślnie.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:310 (ctx_dependencies)',
+  },
+  {
+    id: 'idea.node.mm_ai_prioritize',
+    label: { pl: 'Ustal priorytety', en: 'Prioritize' },
+    icon: 'Target',
+    scope: 'workspace',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Ten sam wzorzec co `idea.node.mm_ai_detect_dependencies` wyżej: etykieta
+    // bez "AI" (poprawnie — LLM realny, `AIPriorityRecommender.tsx` →
+    // `Api.getMyIdeaAISuggestions`), `scope: 'workspace'` bo
+    // `setShowPriorityRecommender(true)` (handleContextAction:4947) nie
+    // przekazuje nodeId, a komponent bierze CAŁE `nodes`. UI-only — brak
+    // odbiornika na szynie (sprawdzone grepem).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_prioritize', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaRecommendationMap.tsx:6537-6560 onApplyPriorities → pushUndo() + setNodes (recenzja rekomendacji, Apply commit).',
+    },
+    teresa: {
+      description:
+        'Proponuje priorytety (0-100) dla węzłów CAŁEJ Mapy myśli na podstawie analizy impact/effort (realne AI, do przeglądu przed zastosowaniem). DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. Węzeł spod kursora nie wpływa na wynik (cała mapa), mimo pozycji w menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:316 (ctx_priority)',
+  },
+  {
+    id: 'idea.node.mm_ai_competitors',
+    label: { pl: 'Konkurencja', en: 'Competitors' },
+    icon: 'Globe',
+    scope: 'workspace',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Ten sam wzorzec co dwa wpisy wyżej. DODATKOWA NAPRAWA (ta sama klasa co
+    // `mm_connect_to_selected`/`mm_detach_branch` w drugiej fali — prawdziwy,
+    // zweryfikowany brak, nie spekulacja): `onAddToMap`
+    // (IdeaRecommendationMap.tsx, wywołanie AICompetitiveLandscape) NIE wołało
+    // `pushUndo()` przed `idea-workspace-insert`, w przeciwieństwie do
+    // WSZYSTKICH pozostałych 6 wywołujących tego samego eventu w tym pliku
+    // (onAddBlindSpot/onAddNodes×2/onImport itd., wszystkie mają `pushUndo()`
+    // jako pierwszą linię) — dopisane TĄ zmianą (patrz IdeaRecommendationMap.tsx).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_ai_competitors', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaRecommendationMap.tsx onAddToMap (AICompetitiveLandscape) → pushUndo() (DOPISANE tym wpisem — było brakiem, patrz komentarz wyżej) + idea-workspace-insert.',
+    },
+    teresa: {
+      description:
+        'Generuje listę konkurentów/analogii dla CAŁEJ Idei (realne AI) i wstawia wybrane pozycje jako nowe węzły. DZIŚ NIEDOSTĘPNE dla Teresy — czysty lokalny stan UI. Węzeł spod kursora nie wpływa na wynik.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:322 (ctx_competitive)',
+  },
+  {
+    id: 'idea.node.mm_ai_suggest_links',
+    label: { pl: 'AI: Sugeruj połączenia', en: 'AI: Suggest links' },
+    icon: 'Sparkles',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context', 'floating'],
+    handler: (ctx) =>
+      runMindmapNodeBusAction(
+        'idea.node.mm_ai_suggest_links',
+        RUNTIME_MM_NODE_AI_SUGGEST_LINKS,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'IdeaMapWorkspace.tsx:1047-1080 mm_ai_suggest_links_execute → generateAIProposal(generatorType: ai_propose_attachments) → setProposalBatch; odrzucenie = zero zmian.',
+    },
+    teresa: {
+      description:
+        'Proponuje powiązania (linki/krawędzie do innych elementów) dla wskazanego węzła Mapy myśli (realne AI, do akceptacji w podglądzie). UWAGA: klik z menu prawego kliku na węzeł jest DZIŚ MARTWY (brak gałęzi obsługi w komponencie — zgłoszone, nie naprawione tym wpisem, żeby nie zmieniać widocznego zachowania kliku poza zakresem wiringu); TA SAMA etykieta na pływającym pasku AI DZIAŁA już dziś i to jej odbiornik wykonuje wywołanie Teresy. Odbiornik ignoruje `nodeId` z parametrów — operuje na tym, co jest dziś zaznaczone w przeglądarce.',
+    },
+    runtime: RUNTIME_MM_NODE_AI_SUGGEST_LINKS,
+    source:
+      'src/components/MyWork/mindmap/NodeContextMenu.tsx:328 (ai_suggest_links, martwy klik) + FloatingAIPopover.tsx:52 (żywy klik, ta sama etykieta)',
+  },
+  // ─── N5 czwarta fala (2026-08-09) — grupa Style & data (13 pozycji, 11 nowych wpisów + 2 reużycia idea.node.mm_open_detail) ───
+  {
+    id: 'idea.node.mm_change_shape',
+    label: { pl: 'Zmień kształt', en: 'Change shape' },
+    icon: 'Diamond',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // JEDYNA (razem z paste_style/vote_up niżej) pozycja tej grupy, która
+    // mutuje dane węzła BEZPOŚREDNIO, bez modalu pośredniczącego — i, tak jak
+    // te dwie, BEZ `pushUndo()` przed `updateNodeData`
+    // (handleContextAction:4949-4960, sprawdzone: brak wywołania w tym bloku).
+    // To PRZEDISTNIEJĄCA, SYSTEMOWA luka obejmująca WSZYSTKIE bezpośrednie
+    // mutacje danych węzła w tej grupie (change_shape/paste_style/vote_up) —
+    // nie punktowy brak jak `mm_connect_to_selected` w drugiej fali, tylko cała
+    // klasa zachowań. Zgłoszone uczciwie tu, NIE naprawione hurtem tym wpisem
+    // (3 niezależne miejsca, poza wąskim zakresem tego wiringu; patrz raport).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_change_shape', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: handleContextAction ctx_change_shape (IdeaRecommendationMap.tsx:4949-4960) NIE woła pushUndo() przed updateNodeData — zmiana kształtu nie trafia dziś na stos Ctrl+Z. `local_stack` deklarowany jako bezpieczne dolne ograniczenie zamierzonego mechanizmu (autosave i tak zapisuje stan), nie potwierdzony fakt działania Ctrl+Z dla TEJ konkretnej zmiany.',
+    },
+    teresa: {
+      description:
+        'Zmienia kształt wskazanego węzła Mapy myśli (cykl: domyślny/koło/romb/sześciokąt). Lokalna mutacja danych węzła, bez wywołania AI. DZIŚ NIEDOSTĘPNE dla Teresy — brak odbiornika na szynie.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:404 (ctx_change_shape)',
+  },
+  {
+    id: 'idea.node.mm_add_image',
+    label: { pl: 'Dodaj obraz', en: 'Add image' },
+    icon: 'Image',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Wzorzec `idea.node.mm_edit`: pozycja menu WYŁĄCZNIE otwiera modal
+    // (`setImageUrlNodeId`, handleContextAction:5004-5008) — sama treść (URL
+    // obrazu) i faktyczna mutacja (`updateNodeDataById`, bez `pushUndo()` —
+    // ta sama systemowa luka co wyżej) następują DOPIERO po wypełnieniu
+    // modalu przez człowieka, osobny mechanizm bez własnej pozycji menu.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_add_image', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera okno dodania obrazu (URL) do wskazanego węzła Mapy myśli. Sama treść (adres obrazu) wymaga wpisania przez człowieka w modalu — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:410 (ctx_add_image)',
+  },
+  {
+    id: 'idea.node.mm_copy_style',
+    label: { pl: 'Kopiuj styl', en: 'Copy style' },
+    icon: 'Paintbrush',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Nie mutuje GRAFU — zapisuje styl w lokalnym stanie schowka komponentu
+    // (`styleClipboard`, przeglądarkowe, jak `idea.node.mm_copy`/`mm_cut`
+    // wyżej) — ten sam wzorzec, ta sama uczciwa granica dla Teresy.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_copy_style', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje styl wskazanego węzła Mapy myśli do schowka narzędzia (do późniejszego "Wklej styl"). Schowek jest stanem przeglądarki użytkownika — DZIŚ NIEDOSTĘPNE dla Teresy z tego samego powodu co kopiuj/wytnij węzły.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:416 (ctx_copy_style)',
+  },
+  {
+    id: 'idea.node.mm_paste_style',
+    label: { pl: 'Wklej styl', en: 'Paste style' },
+    icon: 'Paintbrush',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Bezpośrednia mutacja (`setNodes`, handleContextAction:5013-5017), BEZ
+    // `pushUndo()` — ta sama systemowa luka jak `mm_change_shape`/`mm_vote_up`
+    // (patrz komentarz tam). Poza tym: czyta lokalny `styleClipboard` — bez
+    // sensownego odpowiednika dla Teresy (schowek to stan przeglądarki), tak
+    // samo jak `idea.node.mm_copy` — UI-only z DWÓCH niezależnych powodów.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_paste_style', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: handleContextAction ctx_paste_style (IdeaRecommendationMap.tsx:5013-5017) NIE woła pushUndo() przed setNodes — ta sama systemowa luka co ctx_change_shape/ctx_vote_up (patrz idea.node.mm_change_shape). `local_stack` = dolne ograniczenie, nie potwierdzone działanie.',
+    },
+    teresa: {
+      description:
+        'Wkleja wcześniej skopiowany styl na wskazany węzeł. DZIŚ NIEDOSTĘPNE dla Teresy — wymaga schowka stylu w przeglądarce użytkownika (musiał wcześniej kliknąć "Kopiuj styl" na innym węźle), bez odpowiednika parametrowego.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:422 (ctx_paste_style)',
+  },
+  {
+    id: 'idea.node.mm_vote_up',
+    label: { pl: 'Głosuj', en: 'Vote up' },
+    icon: 'Star',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_vote_up', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'BRAK: handleContextAction ctx_vote_up (IdeaRecommendationMap.tsx:4901-4907) NIE woła pushUndo() przed updateNodeData (cykl 0-5) — ta sama systemowa luka co ctx_change_shape/ctx_paste_style.',
+    },
+    teresa: {
+      description:
+        'Zwiększa licznik głosów wskazanego węzła Mapy myśli (cykl 0→5→0). Lokalna mutacja danych węzła. DZIŚ NIEDOSTĘPNE dla Teresy — brak odbiornika na szynie.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:428 (ctx_vote_up)',
+  },
+  {
+    id: 'idea.node.mm_assign',
+    label: { pl: 'Przypisz osobę', en: 'Assign person' },
+    icon: 'UserPlus',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Wzorzec `idea.node.mm_edit`/`mm_add_image`: pozycja menu WYŁĄCZNIE
+    // otwiera `AssignPersonModal` (`setAssignModalNodeId`,
+    // handleContextAction:4908-4912). Rzeczywista mutacja (`onAssign` →
+    // `updateNodeDataById`, IdeaRecommendationMap.tsx:6909-6917) jest lokalnym
+    // polem `assignee` na węźle, bez wywołania API i BEZ `pushUndo()` — ta sama
+    // systemowa luka jak wyżej, tym razem w kroku PO modalu, więc poza samą
+    // klasyfikacją tego wpisu (który opisuje TYLKO otwarcie modalu).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_assign', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera okno przypisania osoby do wskazanego węzła Mapy myśli. Nazwisko/imię wymaga wpisania przez człowieka w modalu — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:434 (ctx_assign)',
+  },
+  {
+    id: 'idea.node.mm_comments',
+    label: { pl: 'Komentarze', en: 'Comments' },
+    icon: 'MessageSquare',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // NIE reużyto `idea.node.comments` (Tablica, tools:['whiteboard'] wyżej) —
+    // SPRAWDZONE PRZED wpisem, nie spekulacja: to DWA różne komponenty z
+    // różnym trwałym magazynem. `WhiteboardNodeCommentThread.tsx` (nagłówek
+    // pliku, dosłownie): "Persistence contract... blob-only via
+    // node.data.comments[], no server API". Mapa myśli używa
+    // `NodeCommentThread.tsx` — REALNE API (`Api.getNodeComments`/
+    // `addNodeComment`/`deleteNodeComment`, serwerowo trwałe komentarze z
+    // @mention). To NIE kosmetyczna różnica nazwy komponentu — Mapa myśli ma
+    // dojrzalszą, serwerową wersję tej samej funkcji niż Tablica; osobny wpis
+    // dokumentuje tę rozbieżność zamiast ją zamazywać wspólnym `tools`.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_comments', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera wątek komentarzy (serwerowo trwały, z @wzmiankami) wskazanego węzła Mapy myśli. Samo otwarcie panelu nie mutuje danych — dodawanie/usuwanie komentarzy dzieje się wewnątrz panelu, poza tą akcją. DZIŚ NIEDOSTĘPNE dla Teresy — lokalny stan UI (`setCommentNodeId`) bez odbiornika na szynie.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:440 (ctx_comments)',
+  },
+  {
+    id: 'idea.node.mm_attach_knowledge',
+    label: { pl: 'Dołącz wiedzę', en: 'Attach knowledge' },
+    icon: 'BookOpen',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runMindmapAttachKnowledgeCallback(ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel dołączania wiedzy (Vault/artefakty) dla wskazanego węzła Mapy myśli, wskazanego po `nodeId`. Samo otwarcie nie mutuje danych. W przeciwieństwie do wersji Tablicy (`idea.node.attach_knowledge`, UI-only bo tamten odbiornik ignoruje nodeId) — Mapa myśli ma realny, adresowalny mechanizm.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła, dla którego otworzyć panel wiedzy.' },
+        },
+        required: ['nodeId'],
+      },
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:458 (ctx_attach_knowledge)',
+  },
+  {
+    id: 'idea.node.mm_attach_artifact',
+    label: { pl: 'Dołącz artefakt', en: 'Attach artifact' },
+    icon: 'BookOpen',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Wzorzec `idea.node.mm_edit`: pozycja menu WYŁĄCZNIE otwiera
+    // `AttachArtifactModal` (`setAttachArtifactNodeId`,
+    // handleContextAction:4928-4930). Realna mutacja (`onAttach` →
+    // `Api.attachArtifactToObject`, IdeaRecommendationMap.tsx:6925-6947) jest
+    // REALNYM wywołaniem serwera (w przeciwieństwie do assign/change_shape —
+    // to nie tylko lokalne dane węzła), ale dzieje się PO wypełnieniu modalu,
+    // osobny krok od samego otwarcia menu.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_attach_artifact', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera okno dołączania artefaktu (innego rekordu Consultify) do wskazanego węzła Mapy myśli. Wybór artefaktu i faktyczne dołączenie (realny zapis na serwerze) następują w modalu — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:464 (ctx_attach_artifact)',
+  },
+  {
+    id: 'idea.node.mm_open_linked_artifacts',
+    label: { pl: 'Powiązane artefakty', en: 'Linked artifacts' },
+    icon: 'ExternalLink',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Wyłącznie odczyt: 0 linków → toast informacyjny; 1 link → otwiera go
+    // wprost (`mywork-open-item`); >1 → otwiera panel szczegółów węzła
+    // (handleContextAction:4931-4945). Żadna gałąź nie zmienia danych.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_open_linked_artifacts', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Pokazuje artefakty powiązane ze wskazanym węzłem Mapy myśli (otwiera bezpośrednio, gdy jest dokładnie jeden; w przeciwnym razie panel szczegółów). Wyłącznie odczyt. DZIŚ NIEDOSTĘPNE dla Teresy — logika czyta `ctxNode.data.artifactLinks` z domknięcia komponentu, bez odbiornika na szynie.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:470 (ctx_open_linked_artifacts)',
+  },
+  {
+    id: 'idea.node.mm_copy_link',
+    label: { pl: 'Kopiuj link', en: 'Copy link' },
+    icon: 'Share2',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // Czysty odczyt + zapis do schowka SYSTEMOWEGO (nie schowka narzędzia) —
+    // buduje URL z `focusNode=<id>` i kopiuje (handleContextAction:5018-5030).
+    // Nie zmienia żadnych danych Idei.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_copy_link', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje do schowka systemowego link URL do wskazanego węzła Mapy myśli (parametr `focusNode`). Nie zmienia danych Idei. DZIŚ NIEDOSTĘPNE dla Teresy — `navigator.clipboard` to API przeglądarki użytkownika, bez sensownego odpowiednika po stronie czatu.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:476 (ctx_share_branch)',
   },
   {
     id: 'idea.node.mm_delete',

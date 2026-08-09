@@ -6724,6 +6724,13 @@ function MindMapInner({
           nodes={nodes.map((n) => ({ id: n.id, data: n.data }))}
           locked={locked}
           onAddToMap={(items) => {
+            // HONEST FIX (2026-08-09, N5 czwarta fala — rejestr akcji
+            // `idea.node.mm_ai_competitors`): znalezione przy wiringu, ta
+            // mutacja nigdy nie wołała pushUndo(), w przeciwieństwie do
+            // WSZYSTKICH innych wywołujących `idea-workspace-insert` w tym
+            // pliku (onAddBlindSpot/onAddNodes×2/onImport itd.) — naprawione
+            // tutaj, ten sam wzorzec co `mm_connect_to_selected` w drugiej fali.
+            pushUndo();
             for (const item of items) {
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
