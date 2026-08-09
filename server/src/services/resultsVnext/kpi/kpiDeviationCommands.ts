@@ -256,6 +256,28 @@ export async function openOrEscalateDeviationCase(
     ? (params.responseHoursOverride?.critical ?? 48)
     : (params.responseHoursOverride?.warning ?? 120);
 
+  // -- DEVIATION FROM DESIGN: §B's literal code wraps ONLY the INSERT in a
+  // plain try/catch and, on a caught 23505, immediately issues a second
+  // `client.query` (the retry SELECT) on the SAME transaction. Verified
+  // empirically against a real Postgres 16 (two genuinely concurrent
+  // sessions racing the same INSERT) that this does NOT work: Postgres
+  // aborts the WHOLE transaction on the unique-violation error, so that
+  // retry SELECT itself fails with `25P02 current transaction is aborted,
+  // commands ignored until end of transaction block` — the losing side of a
+  // real race would throw an unhandled 25P02 instead of gracefully
+  // returning the winner's case_id, defeating the entire point of "catch
+  // 23505 and look it up instead" (and the case-key idempotency the design
+  // itself asks for, decision text: "consecutive bad measurements escalate
+  // severity on the existing case, they never spawn a second case"). Nearest
+  // safe equivalent: wrap just the candidate INSERT in a SAVEPOINT so a
+  // caught 23505 can `ROLLBACK TO SAVEPOINT` (clearing the aborted state)
+  // before the retry SELECT — re-verified empirically that this exact
+  // sequence (SAVEPOINT / failing INSERT / ROLLBACK TO SAVEPOINT / SELECT /
+  // COMMIT) works. Everything else (the manual event insert, the §C
+  // obligation) still runs on the SAME outer transaction, just after the
+  // savepoint is released rather than inside the original try block.
+  await client.query('SAVEPOINT deviation_case_create');
+  let newCaseId: string;
   try {
     const insertResult = await client.query<{ case_id: string }>(
       `INSERT INTO rvn_kpi_deviation_cases
@@ -265,8 +287,22 @@ export async function openOrEscalateDeviationCase(
        RETURNING case_id`,
       [organizationId, kpiId, measurementId, performanceStatus, ownerUserId, managerUserId, responseHours, params.actorUserId]
     );
-    const newCaseId = insertResult.rows[0]!.case_id;
+    newCaseId = insertResult.rows[0]!.case_id;
+    await client.query('RELEASE SAVEPOINT deviation_case_create');
+  } catch (err: unknown) {
+    if ((err as { code?: string }).code === '23505') {
+      await client.query('ROLLBACK TO SAVEPOINT deviation_case_create');
+      const retry = await client.query<{ case_id: string }>(
+        `SELECT case_id FROM rvn_kpi_deviation_cases
+          WHERE organization_id = $1 AND kpi_id = $2 AND status <> 'closed'`,
+        [organizationId, kpiId]
+      );
+      return { caseId: retry.rows[0]!.case_id, created: false, severityChanged: false };
+    }
+    throw err;
+  }
 
+  {
     // Decision #4: kpi.deviation_opened as its own rvn_platform_events row,
     // manual insert, same transaction, in addition to whatever buildEvent()
     // produces for kpi.measurement_recorded in the OUTER command.
@@ -324,16 +360,6 @@ export async function openOrEscalateDeviationCase(
     }
 
     return { caseId: newCaseId, created: true, severityChanged: false };
-  } catch (err: unknown) {
-    if ((err as { code?: string }).code === '23505') {
-      const retry = await client.query<{ case_id: string }>(
-        `SELECT case_id FROM rvn_kpi_deviation_cases
-          WHERE organization_id = $1 AND kpi_id = $2 AND status <> 'closed'`,
-        [organizationId, kpiId]
-      );
-      return { caseId: retry.rows[0]!.case_id, created: false, severityChanged: false };
-    }
-    throw err;
   }
 }
 
