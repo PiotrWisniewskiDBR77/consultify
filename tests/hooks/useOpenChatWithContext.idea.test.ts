@@ -192,4 +192,49 @@ describe('useOpenChatWithContext — mindmap sidekick bridge', () => {
 
     expect(createConversation).toHaveBeenCalledTimes(1);
   });
+
+  it('reuses the active Teresa conversation across Artifact Studio contexts when requested', async () => {
+    mockActiveConversationId = 'conv-artifact-studio';
+    mockConversations = [
+      { id: 'conv-artifact-studio', pmoContext: { reportId: 'document-previous' } },
+    ];
+
+    const { result } = renderHook(() => useOpenChatWithContext());
+
+    await act(async () => {
+      await result.current({
+        entityType: 'presentation',
+        entityId: 'deck-next',
+        entityName: 'Board deck',
+        reuseActiveConversation: true,
+        contextData: { activeSlideId: 'slide-2' },
+      });
+    });
+
+    expect(createConversation).not.toHaveBeenCalled();
+    expect(setWorkspaceContext).toHaveBeenLastCalledWith({
+      type: 'presentation',
+      entityId: 'deck-next',
+      entityName: 'Board deck',
+      entityData: { activeSlideId: 'slide-2' },
+    });
+  });
+
+  it('keeps the default new-conversation behavior for a different entity', async () => {
+    mockActiveConversationId = 'conv-existing';
+    mockConversations = [{ id: 'conv-existing', pmoContext: { reportId: 'document-1' } }];
+    createConversation.mockResolvedValue({ id: 'conv-new' });
+
+    const { result } = renderHook(() => useOpenChatWithContext());
+
+    await act(async () => {
+      await result.current({
+        entityType: 'presentation',
+        entityId: 'deck-2',
+        entityName: 'Another deck',
+      });
+    });
+
+    expect(createConversation).toHaveBeenCalledTimes(1);
+  });
 });

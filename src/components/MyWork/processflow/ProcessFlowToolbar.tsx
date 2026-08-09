@@ -318,7 +318,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${
                 warnings.length > 0
                   ? 'bg-warning-500/10 text-warning-600 dark:text-warning-300'
-                  : 'bg-success-500/10 text-success-600 dark:text-success-300'
+                  : 'bg-success-500/10 text-emerald-800 dark:text-success-300'
               }`}
             >
               {warnings.length > 0

@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Archive,
   Bot,
   CheckCircle2,
   ChevronRight,
@@ -48,6 +47,7 @@ import {
 } from '@/components/shared/selectionTokens';
 import { EmptyState, ErrorState, SkeletonState } from '@/components/shared/states';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { normalizeRowActionSections } from '@/components/standard/StandardTable';
 import { MetaChip, ToolChip } from '@/components/ui/primitives/chips';
 import { CHIP_TONE_VAR, ChipBase, ChipDot } from '@/components/ui/primitives/chips/chipBase';
 import type {
@@ -571,7 +571,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     const detailsText = idea.body || '';
 
     const contextParts: string[] = [];
-    if (idea.sourceType) contextParts.push(`${isPolish ? 'Źródło' : 'Source'}: ${idea.sourceType}`);
     if (typeof idea.mapItems === 'number')
       contextParts.push(`${isPolish ? 'Elementy' : 'Items'}: ${idea.mapItems}`);
     if (typeof idea.mapNodes === 'number') contextParts.push(`Nodes: ${idea.mapNodes}`);
@@ -634,12 +633,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
       {
         columns: 2,
         buttons: [
-          {
-            label: isPolish ? 'Konwertuj' : 'Convert',
-            icon: Sparkles,
-            onClick: () => onStartConvert(idea),
-            colorScheme: 'primary',
-          },
           {
             label: isPolish ? 'Otwórz Flow' : 'Open Flow',
             icon: Workflow,
@@ -1131,20 +1124,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                             ? onConvertIdeaToTarget(idea, 'report')
                             : onStartConvert(idea),
                       },
-                      {
-                        // Z3 audit (2026-07-24): 'table' NIE istnieje jako convert
-                        // target NIGDZIE w systemie — brak w `IdeaConvertTarget` (SSOT
-                        // ideaConvertTargets.ts), brak w `LIVE_CONVERT_TARGETS`
-                        // (server/src/routes/my-work.routes.ts) — serwer zwróciłby 400
-                        // „Invalid target". To jedyny z trzech, który zostaje
-                        // wyłączony — bo naprawdę nie ma odbiornika, nie „na wiarę".
-                        id: 'output_table',
-                        label: isPolish ? 'Tabela' : 'Table',
-                        icon: Table2,
-                        disabled: true,
-                        rightLabel: isPolish ? 'wkrótce' : 'soon',
-                        onClick: () => undefined,
-                      },
                     ],
                   },
                   ...(folders && onMoveToFolder
@@ -1192,14 +1171,6 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         label: isPolish ? 'Edytuj' : 'Edit',
                         icon: Edit2,
                         onClick: () => onOpenIdea(idea),
-                      },
-                      {
-                        id: 'archive',
-                        label: isPolish ? 'Archiwizuj' : 'Archive',
-                        icon: Archive,
-                        disabled: true,
-                        description: isPolish ? 'Wkrótce (backend)' : 'Coming soon (backend)',
-                        onClick: () => {},
                       },
                     ],
                   },
@@ -1339,7 +1310,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onClick={(event) => event.stopPropagation()}
                     >
                       <RowActionsMenu
-                        sections={rowActionSections}
+                        sections={normalizeRowActionSections(rowActionSections)}
                         iconVariant="vertical"
                         className="opacity-40 transition-opacity group-hover:opacity-100"
                       />

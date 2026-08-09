@@ -50,10 +50,24 @@ export function IdeaViewSwitcher({
   rightInset = 12,
 }: IdeaViewSwitcherProps) {
   const anchorRef = useRef<HTMLDivElement | null>(null);
-  const [box, setBox] = useState<{ right: number; bottom: number } | null>(null);
+  const [box, setBox] = useState<{
+    left?: number;
+    right?: number;
+    top?: number;
+    bottom?: number;
+  } | null>(null);
   /** Cel portalu ścieżki OFF: `body` normalnie, element pełnoekranowy w F11. */
   const portalTarget = useFullscreenPortalTarget();
   const zjednoczonyPasek = isIdeaBottomBarUnifiedEnabled();
+  const [compactViewport, setCompactViewport] = useState(
+    () => typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 500)
+  );
+  useEffect(() => {
+    const updateCompactViewport = () =>
+      setCompactViewport(window.innerWidth < 768 || window.innerHeight < 500);
+    window.addEventListener('resize', updateCompactViewport);
+    return () => window.removeEventListener('resize', updateCompactViewport);
+  }, []);
   /**
    * Tabela nie ma płótna React Flow, więc nie ma `CanvasZoomControls`, a co za
    * tym idzie — gniazda. Nie zgadujemy tego z DOM (to by dało migotanie albo,
@@ -62,7 +76,7 @@ export function IdeaViewSwitcher({
    * ścieżce — własna pigułka w rogu. To NAZWANY wyjątek, nie przeoczenie.
    */
   const bezPlotna = activeTool === 'table';
-  const doGniazda = zjednoczonyPasek && !bezPlotna;
+  const doGniazda = zjednoczonyPasek && !bezPlotna && !compactViewport;
   // Gniazdo w pigułce zoomu. Montuje się razem z `CanvasZoomControls`, czyli
   // PÓŹNIEJ niż my i na nowo przy każdej zmianie narzędzia — stąd krótkie
   // dopytywanie, a nie jednorazowe `getElementById` na starcie.
@@ -186,10 +200,22 @@ export function IdeaViewSwitcher({
           bottomOffset = window.innerHeight - gornaKrawedzKlastra + 8;
         }
       }
-      setBox({
-        right: Math.max(0, rightOffset),
-        bottom: Math.max(0, bottomOffset),
-      });
+      const compactCanvas = r.width < 720 || r.height < 260;
+      setBox(
+        compactCanvas
+          ? {
+              // At 200% zoom the bottom controls and the canvas empty state
+              // occupy the same narrow band. Keep the representation switcher
+              // actionable in the top-left safe area instead of stacking it
+              // over tool CTAs.
+              left: Math.max(0, r.left + 12),
+              top: Math.max(0, r.top + 8),
+            }
+          : {
+              right: Math.max(0, rightOffset),
+              bottom: Math.max(0, bottomOffset),
+            }
+      );
     };
     measure();
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
@@ -224,7 +250,7 @@ export function IdeaViewSwitcher({
               title={label}
               aria-label={label}
               aria-pressed={isActive}
-              className={`flex h-8 w-8 items-center justify-center rounded-hig-xl transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
+              className={`flex h-11 w-11 items-center justify-center rounded-hig-xl transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-c-focus ${
                 isActive
                   ? 'bg-c-surface dark:bg-c-surface-raised text-c-text dark:text-c-text'
                   : 'text-c-text-secondary dark:text-c-text-muted hover:bg-c-surface dark:hover:bg-c-surface-raised'
@@ -245,7 +271,13 @@ export function IdeaViewSwitcher({
   if (doGniazda) {
     if (!gniazdo) return null;
     return createPortal(
-      <div ref={anchorRef} data-testid="idea-view-switcher" className="flex items-center gap-0.5">
+      <div
+        ref={anchorRef}
+        data-testid="idea-view-switcher"
+        data-compact-viewport={String(compactViewport)}
+        className="flex items-center gap-0.5"
+      >
+
         {przyciski}
         {/* Separator po naszej stronie, nie po stronie gniazda — puste gniazdo
             nie zostawia wtedy sierocej kreski przy samym „−". */}
@@ -262,8 +294,9 @@ export function IdeaViewSwitcher({
     <div
       ref={anchorRef}
       className="fixed z-dropdown pointer-events-auto flex items-center gap-0.5 rounded-hig-2xl bg-c-surface-raised dark:bg-c-surface backdrop-blur-sm border border-c-border-subtle dark:border-c-border-subtle shadow-hig-xl px-1 py-1"
-      style={{ right: box.right, bottom: box.bottom }}
+      style={{ left: box.left, right: box.right, top: box.top, bottom: box.bottom }}
       data-testid="idea-view-switcher"
+      data-compact-viewport={String(compactViewport)}
     >
       {przyciski}
     </div>

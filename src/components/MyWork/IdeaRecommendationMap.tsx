@@ -2522,8 +2522,17 @@ function MindMapInner({
       if (n.type === 'branch') {
         const count = structuralChildCount.get(n.id) || 0;
         if (count !== n.data?.count || simplifiedMode || Object.keys(extra).length > 0) {
-          return { ...n, data: { ...n.data, count, ...extra } };
+          return {
+            ...n,
+            focusable: false,
+            data: { ...n.data, count, ...extra },
+          };
         }
+        // React Flow 11 hard-codes role="button" for every focusable node.
+        // Branch cards contain native buttons, so keep the wrapper mouse-
+        // selectable but remove its duplicate keyboard stop; the real branch
+        // commands remain natively focusable inside the card.
+        return n.focusable === false ? n : { ...n, focusable: false };
       }
       if (Object.keys(extra).length > 0) {
         return { ...n, data: { ...n.data, ...extra } };

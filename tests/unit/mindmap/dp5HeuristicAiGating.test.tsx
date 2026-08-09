@@ -99,20 +99,12 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
     onAction: vi.fn(),
   };
 
-  /** The AI group renders as a hover flyout — open it first. */
-  const openAiSubmenu = () => {
-    const aiHeader = screen.getByText('AI').closest('div');
-    expect(aiHeader).toBeTruthy();
-    if (aiHeader) fireEvent.mouseEnter(aiHeader);
-  };
-
   it('renders ctx_dependencies disabled with "Coming soon" badge when listed', () => {
     const onAction = vi.fn();
     render(
       <NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={['ctx_dependencies']} />
     );
-    openAiSubmenu();
-    const btn = screen.getByText('Detect dependencies').closest('button');
+    const btn = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).toBeDisabled();
     expect(screen.getByText('ideas.mindmap.comingSoon')).toBeTruthy();
@@ -123,8 +115,7 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
   it('leaves ctx_dependencies clickable when comingSoonIds is empty', () => {
     const onAction = vi.fn();
     render(<NodeContextMenu {...baseProps} onAction={onAction} comingSoonIds={[]} />);
-    openAiSubmenu();
-    const btn = screen.getByText('Detect dependencies').closest('button');
+    const btn = document.querySelector<HTMLButtonElement>('[data-command-id="ctx_dependencies"]');
     expect(btn).toBeTruthy();
     expect(btn).not.toBeDisabled();
     expect(screen.queryByText('ideas.mindmap.comingSoon')).toBeNull();
@@ -134,11 +125,10 @@ describe('DP-5: NodeContextMenu comingSoonIds gating', () => {
 
   it('does not gate real-LLM context actions (What if, Competitors)', () => {
     render(<NodeContextMenu {...baseProps} comingSoonIds={['ctx_dependencies']} />);
-    openAiSubmenu();
-    for (const label of ['What if...?', 'Competitors']) {
-      const btn = screen.getByText(label).closest('button');
-      expect(btn, label).toBeTruthy();
-      expect(btn, label).not.toBeDisabled();
+    for (const commandId of ['ctx_what_if', 'ctx_competitive']) {
+      const btn = document.querySelector<HTMLButtonElement>(`[data-command-id="${commandId}"]`);
+      expect(btn, commandId).toBeTruthy();
+      expect(btn, commandId).not.toBeDisabled();
     }
   });
 });

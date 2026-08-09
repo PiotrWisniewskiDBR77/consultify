@@ -1,0 +1,1 @@
+requirement_id,epic_id,priority,source_doc,source_section,business_outcome,surface,action_id,baseline_state,implementation_state,files_changed,route_or_api,automated_tests,runtime_test,persistence_readback,visual_evidence,accessibility_locale,candidate_sha,final_state,blocker_or_risk

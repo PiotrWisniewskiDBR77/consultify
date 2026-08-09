@@ -463,8 +463,8 @@ const IDEA_ACTIONS: ActionDef[] = [
   },
   {
     // „Eksport" — otwiera `IdeaExportMenu` z pełnym grafem + rozszerzeniami.
-    // To samo wejście, co pozycja „Eksport" w kebabie Menu 1 (dwa wejścia, jeden
-    // mechanizm). Prawy slot Menu 3, wyłączony gdy reprezentacja pusta (gate w UI).
+    // Document-level action: one canonical entry in Menu 1 overflow. Keeping it
+    // out of Menu 3 prevents the same outcome from competing with view actions.
     id: 'idea.export.open',
     label: {
       pl: 'Eksport',
@@ -473,7 +473,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     icon: 'Download',
     scope: 'workspace',
     tools: 'all',
-    surfaces: ['menu3'],
+    surfaces: ['menu1'],
     handler: async (ctx) => {
       // `open_export_menu` ma gotowy odbiornik w IdeaMapWorkspace.handleQuickAction
       // (setExportMenuOpen) i w routerze zdarzeń szyny (lista dozwolonych akcji).

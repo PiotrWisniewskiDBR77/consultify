@@ -1,0 +1,42 @@
+[
+  {
+    "tool": "mindmap",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "tool": "whiteboard",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "tool": "process_flow",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "tool": "table",
+    "theme": "light",
+    "violations": []
+  },
+  {
+    "tool": "mindmap",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "tool": "whiteboard",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "tool": "process_flow",
+    "theme": "dark",
+    "violations": []
+  },
+  {
+    "tool": "table",
+    "theme": "dark",
+    "violations": []
+  }
+]

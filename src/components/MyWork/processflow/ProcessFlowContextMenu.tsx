@@ -13,8 +13,9 @@ import {
   Split,
   Trash2,
 } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
+import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import i18n from '@/i18n';
 
 /**
@@ -51,56 +52,23 @@ export const ProcessFlowContextMenu: React.FC<ProcessFlowContextMenuProps> = ({
   actions,
   onClose,
 }) => {
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) {
-        onClose();
-      }
-    };
-    // Faza przechwytywania — obowiązkowa: d3-zoom pod ReactFlow woła
-    // `stopImmediatePropagation()` na `mousedown` w `.react-flow__pane`, więc
-    // zwykły listener nigdy się nie odpali (patrz NodeContextMenu).
-    window.addEventListener('mousedown', handler, true);
-    return () => window.removeEventListener('mousedown', handler, true);
-  }, [onClose]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
-
   return (
-    <div
-      ref={menuRef}
-      className="fixed z-overlay min-w-[180px] rounded-xl border border-slate-200/60 dark:border-white/[0.03] bg-c-surface shadow-xl py-1"
-      style={{ top: y, left: x }}
-    >
-      {actions.map((action) => (
-        <React.Fragment key={action.id}>
-          {action.separatorBefore && <div className="my-1 border-t border-c-border-subtle" />}
-          <button
-            onClick={() => {
-              action.onClick();
-              onClose();
-            }}
-            disabled={action.disabled}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors disabled:opacity-40 ${
-              action.danger
-                ? 'text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20'
-                : 'text-c-text-secondary hover:bg-c-surface-raised'
-            }`}
-          >
-            {action.icon}
-            {action.label}
-          </button>
-        </React.Fragment>
-      ))}
-    </div>
+    <CanvasContextMenu
+      x={x}
+      y={y}
+      onClose={onClose}
+      ariaLabel="Process Flow actions"
+      testId="process-flow-context-menu"
+      items={actions.map((action) => ({
+        id: action.id,
+        label: action.label,
+        icon: action.icon,
+        disabled: action.disabled,
+        danger: action.danger,
+        separatorBefore: action.separatorBefore,
+        onSelect: action.onClick,
+      }))}
+    />
   );
 };
 
