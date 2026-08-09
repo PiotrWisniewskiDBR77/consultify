@@ -16,6 +16,14 @@
  * (existing values there are never reordered/removed — see that file).
  */
 
-export const RVN_RESOURCE_TYPES = ['kpi', 'roi_case', 'okr_set', 'deviation_case'] as const;
+export const RVN_RESOURCE_TYPES = [
+  'kpi',
+  'roi_case',
+  'okr_set',
+  'deviation_case',
+  // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md prerequisite) —
+  // appended, never reordered/removed relative to the values above.
+  'kpi_scorecard',
+] as const;
 
 export type RvnResourceType = (typeof RVN_RESOURCE_TYPES)[number];

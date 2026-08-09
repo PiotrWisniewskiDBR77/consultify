@@ -43,6 +43,12 @@ export const CanonicalObjectTypeValues = [
   'roi_case',
   'okr_set',
   'deviation_case',
+  // KPI-E004 (docs/product/results-vnext/KPI_E004_DESIGN.md prerequisite) —
+  // appended, never reordered/removed relative to the values above. Stays in
+  // sync with RVN_RESOURCE_TYPES in
+  // server/src/services/resultsVnext/platform/resourceTypes.ts (same
+  // duplication rationale as the RN-G1 block above).
+  'kpi_scorecard',
 ] as const;
 export type CanonicalObjectType = (typeof CanonicalObjectTypeValues)[number];
 
