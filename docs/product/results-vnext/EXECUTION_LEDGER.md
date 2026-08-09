@@ -1467,7 +1467,7 @@ widoczność poza tym co już istnieje w §23's
 konkretnych funkcjach, złapie ją najpierw 42883 na produkcji/demo, nie
 test.
 
-## 25. KPI-E005 Perspectives & Links — design zamrożony (2026-08-09)
+## 26. KPI-E005 Perspectives & Links — design zamrożony (2026-08-09)
 
 Draft agenta `a8d29666f58d13304` — jednoczęściowa, kompletna odpowiedź (lekcja
 z §16/§22 o ucinanych odpowiedziach zastosowana skutecznie). 5 decyzji
