@@ -97,6 +97,8 @@ const INTERNAL_RAG_ID_RE = /\b(?:rag|chunk)_\d+\b/gi;
 const INTERNAL_DEBUG_LINE_RE =
   /^[^\S\r\n]*(?:[-*•]|\d+[.)])?[^\S\r\n]*(?:\*\*)?(?:No sources|No cited sources|Uncertainty\s*\/\s*verification|Source ledger|Blocked scopes|cross_tenant|other_user_private|organization_data|forbidden_by_policy|disabled_by_user|Source\s+\d+)(?:\*\*)?\b.*(?:\r?\n)?/gim;
 const RAW_ARTIFACT_ENVELOPE_RE = /(?:^|\n)artifact:[a-z0-9_-]+:\s*\{[\s\S]*$/i;
+const WORKBOOK_MUTATION_BLOCK_RE =
+  /(?:^|\n)[ \t]*```workbook-mutation[ \t]*\r?\n[\s\S]*?\r?\n[ \t]*```[ \t]*(?=\r?\n|$)/gi;
 
 function stripVerboseCitationPrefixes(text: string): string {
   if (!text) return text;
@@ -106,6 +108,10 @@ function stripVerboseCitationPrefixes(text: string): string {
 export function sanitizeUserVisibleAiText(text: string): string {
   if (!text) return text;
   return text
+    // Governed workbook mutation JSON is rendered by TeresaProposalCard.
+    // Keep the conversational explanation, but do not expose or duplicate the
+    // machine envelope in the user-facing message body.
+    .replace(WORKBOOK_MUTATION_BLOCK_RE, '\n')
     .replace(RAW_ARTIFACT_ENVELOPE_RE, '')
     .replace(INTERNAL_DEBUG_LINE_RE, '')
     .replace(INTERNAL_SOURCE_MARKER_RE, '')

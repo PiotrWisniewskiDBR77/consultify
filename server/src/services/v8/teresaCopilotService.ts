@@ -20,6 +20,12 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 import logger from '../../utils/Logger.js';
 import { ensureRunForAction, recordAIRunEvent } from '../aiRunLedgerService.js';
 import {
+  applyWorkbookCommand,
+  undoWorkbookCommand,
+  WorkbookCommandError,
+} from '../workbook/workbookCommandService.js';
+import type { WorkbookMutation } from '../workbook/workbookMutationEngine.js';
+import {
   buildProposalOperationContract,
   updateOperationContractLinks,
 } from './operationContractService.js';
@@ -78,6 +84,7 @@ export interface HandoffResult {
   target_module: HandoffTargetModule;
   state: ActionEnvelopeState;
   audit_entry_id: string;
+  handoff_result?: Record<string, unknown>;
   degraded?: string;
   error?: string;
 }
@@ -95,7 +102,7 @@ export interface TeresaChatProposalEnvelope {
   summary: string;
   state: ActionEnvelopeState;
   approvalState: 'awaiting_review' | 'approved' | 'completed' | 'rejected';
-  allowedActions: Array<'approve' | 'reject' | 'execute' | 'navigate'>;
+  allowedActions: Array<'approve' | 'reject' | 'execute' | 'undo' | 'navigate'>;
   targetModule: HandoffTargetModule;
   targetLabel: string;
   handoffIntent: string;
@@ -185,7 +192,7 @@ const CHAT_ACTION_KEYWORDS: Array<{
   },
 ];
 
-const TARGET_LABELS: Record<HandoffTargetModule, string> = {
+const TARGET_LABELS: Partial<Record<HandoffTargetModule, string>> = {
   radar: 'Radar',
   initiatives: 'Initiatives',
   calendar: 'Calendar',
@@ -344,6 +351,8 @@ function mapTeresaStateToAIActionStatus(state: ActionEnvelopeState): string {
       return 'EXECUTING';
     case 'completed':
       return 'EXECUTED';
+    case 'undone':
+      return 'REJECTED';
     case 'rejected':
       return 'REJECTED';
     case 'proposal':
@@ -362,6 +371,8 @@ function mapTeresaStateToAIRunStatus(
     case 'executing':
       return 'executing';
     case 'completed':
+      return 'audited';
+    case 'undone':
       return 'audited';
     case 'rejected':
       return 'rejected';
@@ -408,6 +419,8 @@ function eventTypeForTeresaState(state: ActionEnvelopeState): string {
       return 'execution_started';
     case 'completed':
       return 'execution_succeeded';
+    case 'undone':
+      return 'execution_undone';
     case 'rejected':
       return 'execution_failed';
     case 'proposal':
@@ -598,29 +611,42 @@ function trimPreview(value: unknown, max = 180): string {
 function deriveProposalTitle(message: string, targetModule: HandoffTargetModule): string {
   const cleaned = trimPreview(message, 72).replace(/[.!?]+$/g, '');
   if (cleaned) return cleaned;
-  return `Open ${TARGET_LABELS[targetModule]}`;
+  return `Open ${TARGET_LABELS[targetModule] ?? targetModule}`;
 }
 
 function deriveApprovalState(
   state: ActionEnvelopeState
 ): TeresaChatProposalEnvelope['approvalState'] {
   if (state === 'approved') return 'approved';
-  if (state === 'completed') return 'completed';
+  if (state === 'completed' || state === 'undone') return 'completed';
   if (state === 'rejected') return 'rejected';
   return 'awaiting_review';
 }
 
 function deriveAllowedActions(
-  state: ActionEnvelopeState
+  proposal: ProposalRecord
 ): TeresaChatProposalEnvelope['allowedActions'] {
-  switch (state) {
+  switch (proposal.state) {
     case 'proposal':
     case 'pending_approval':
       return ['approve', 'reject', 'navigate'];
     case 'approved':
       return ['execute', 'reject', 'navigate'];
+    case 'completed': {
+      const execution = [...proposal.audit_trail]
+        .reverse()
+        .find((entry) => entry.action === 'execution_completed');
+      const handoff = execution?.detail?.handoff_result;
+      const canUndoWorkbook =
+        proposal.target_module === 'excele' &&
+        !!handoff &&
+        typeof handoff === 'object' &&
+        (handoff as Record<string, unknown>).mutation_applied === true &&
+        Number.isInteger((handoff as Record<string, unknown>).version);
+      return canUndoWorkbook ? ['undo', 'navigate'] : ['navigate'];
+    }
     case 'executing':
-    case 'completed':
+    case 'undone':
     case 'rejected':
       return ['navigate'];
     default:
@@ -706,6 +732,8 @@ function mapEnvelopeStateToOperationStage(state: ActionEnvelopeState): Operation
       return 'executing';
     case 'completed':
       return 'completed';
+    case 'undone':
+      return 'completed';
     case 'rejected':
       return 'rejected';
     default:
@@ -784,9 +812,9 @@ export function toChatProposalEnvelope(
     ),
     state: proposal.state,
     approvalState: deriveApprovalState(proposal.state),
-    allowedActions: deriveAllowedActions(proposal.state),
+    allowedActions: deriveAllowedActions(proposal),
     targetModule: proposal.target_module,
-    targetLabel: TARGET_LABELS[proposal.target_module],
+    targetLabel: TARGET_LABELS[proposal.target_module] ?? proposal.target_module,
     handoffIntent: String(proposal.handoff_context.proposed_next_action?.handoff_intent || 'open'),
     previewLines: buildPreviewLines(proposal, execution),
     auditCount: proposal.audit_trail.length,
@@ -936,12 +964,134 @@ function buildBoundedContextPack(
   return pack.slice(0, 5);
 }
 
+interface WorkbookChatContext {
+  workbook_id: string;
+  version_id: number | null;
+  active_sheet_index: number | null;
+  active_sheet_name: string | null;
+  classification: string | null;
+  selection: Record<string, unknown> | null;
+}
+
+interface WorkbookMutationProposal {
+  command_id: string;
+  operations: WorkbookMutation[];
+}
+
+/** Parse only an explicit fenced mutation diff; prose and loose JSON stay non-executable. */
+function extractWorkbookMutationProposal(
+  assistantMessage: string
+): WorkbookMutationProposal | null {
+  if (!assistantMessage || assistantMessage.length > 100_000) return null;
+  const fencedBlocks = assistantMessage.matchAll(/```(?:json|workbook-mutation)\s*([\s\S]*?)```/gi);
+  for (const match of fencedBlocks) {
+    try {
+      const parsed = JSON.parse(match[1]) as Record<string, unknown>;
+      const candidate =
+        parsed.workbook_mutation &&
+        typeof parsed.workbook_mutation === 'object' &&
+        !Array.isArray(parsed.workbook_mutation)
+          ? (parsed.workbook_mutation as Record<string, unknown>)
+          : parsed;
+      if (!Array.isArray(candidate.operations) || candidate.operations.length === 0) continue;
+      if (candidate.operations.length > 500) continue;
+      if (candidate.operations.some((operation) => !operation || typeof operation !== 'object')) {
+        continue;
+      }
+      return {
+        command_id:
+          typeof candidate.command_id === 'string' && candidate.command_id.trim()
+            ? candidate.command_id.trim()
+            : 'teresa.workbook.applyProposal',
+        operations: candidate.operations as WorkbookMutation[],
+      };
+    } catch {
+      // A malformed block cannot become a write. A later valid block may still be used.
+    }
+  }
+  return null;
+}
+
+function extractWorkbookChatContext(context: Record<string, unknown>): WorkbookChatContext | null {
+  const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
+  const screen = (context.screenContext || {}) as Record<string, unknown>;
+  const workspaceData = (workspace.entityData || {}) as Record<string, unknown>;
+  const screenData = (screen.page || {}) as Record<string, unknown>;
+  const data = Object.keys(workspaceData).length > 0 ? workspaceData : screenData;
+  const artifactType = String(data.artifactType || '').toLowerCase();
+  const workspaceType = String(workspace.type || screen.selectedObjectType || '').toLowerCase();
+  const workbookId = String(
+    data.workbookId || workspace.entityId || screen.selectedObjectId || ''
+  ).trim();
+
+  if (!workbookId || (artifactType !== 'spreadsheet' && workspaceType !== 'workbook')) {
+    return null;
+  }
+
+  const versionValue = Number(data.versionId);
+  const sheetIndexValue = Number(data.activeSheetIndex);
+  const rawSelection = data.selection;
+  const selection =
+    rawSelection && typeof rawSelection === 'object' && !Array.isArray(rawSelection)
+      ? (rawSelection as Record<string, unknown>)
+      : null;
+
+  return {
+    workbook_id: workbookId,
+    version_id: Number.isInteger(versionValue) && versionValue >= 0 ? versionValue : null,
+    active_sheet_index:
+      Number.isInteger(sheetIndexValue) && sheetIndexValue >= 0 ? sheetIndexValue : null,
+    active_sheet_name:
+      typeof data.activeSheetName === 'string' && data.activeSheetName.trim()
+        ? data.activeSheetName.trim()
+        : null,
+    classification:
+      typeof data.classification === 'string' && data.classification.trim()
+        ? data.classification.trim()
+        : null,
+    selection,
+  };
+}
+
+/**
+ * Prompt contract for the global Teresa surface when an opened workbook is in scope.
+ * The model may describe any analysis in normal prose, but a state-changing proposal
+ * becomes executable only through the fenced, separately validated mutation block.
+ */
+export function buildWorkbookMutationPromptHint(context: Record<string, unknown>): string {
+  const workbook = extractWorkbookChatContext(context);
+  if (!workbook) return '';
+
+  const selectionAddress =
+    workbook.selection && typeof workbook.selection.address === 'string'
+      ? workbook.selection.address.trim()
+      : '';
+  return [
+    '## OPEN WORKBOOK — GOVERNED MUTATION CONTRACT',
+    `Workbook: ${workbook.workbook_id}; immutable base version: ${workbook.version_id ?? 'UNKNOWN'}.`,
+    workbook.active_sheet_name
+      ? `Active sheet: ${workbook.active_sheet_name} (index ${workbook.active_sheet_index ?? 'UNKNOWN'}).`
+      : '',
+    selectionAddress ? `Explicit user selection: ${selectionAddress}.` : '',
+    'For analysis, explanation, or questions, answer normally and DO NOT emit a mutation block.',
+    'If and only if the user explicitly requests a workbook change and the supplied context contains every required coordinate or stable sheet id, provide a short human summary followed by exactly one fenced `workbook-mutation` JSON block.',
+    'The block shape is: {"command_id":"teresa.workbook.applyProposal","operations":[...]}.',
+    'Allowed operation types: setCell, clearCell, addSheet, renameSheet, duplicateSheet, deleteSheet, reorderSheet, setSheetHidden, insertRows, deleteRows, insertColumns, deleteColumns, setCellStyle.',
+    'Use zero-based sheetIndex, rowIndex, startRow/endRow and startColumn/endColumn; use the real columnKey or stable sheetId from context. Never invent workbook ids, sheet ids, coordinates, source values, formulas, or evidence.',
+    'If required coordinates, ids, permissions, or values are missing, explain what is missing and DO NOT emit the block.',
+    'Never claim the mutation was applied. It remains a proposal until the user approves and explicitly executes it; the server will revalidate version, permissions, operation schema, and atomicity.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 function buildTargetPayloadForChat(params: {
   targetModule: HandoffTargetModule;
   userMessage: string;
   assistantMessage: string;
+  context: Record<string, unknown>;
 }): Record<string, unknown> {
-  const { targetModule, userMessage, assistantMessage } = params;
+  const { targetModule, userMessage, assistantMessage, context } = params;
   const preview = trimPreview(assistantMessage || userMessage, 220);
   const title = deriveProposalTitle(userMessage, targetModule);
 
@@ -1004,12 +1154,27 @@ function buildTargetPayloadForChat(params: {
   }
 
   if (targetModule === 'excele') {
+    const workbookContext = extractWorkbookChatContext(context);
+    const workbookMutation = extractWorkbookMutationProposal(assistantMessage);
+    const selectionAddress =
+      workbookContext?.selection && typeof workbookContext.selection.address === 'string'
+        ? workbookContext.selection.address.trim()
+        : '';
     return {
       prompt: trimPreview(userMessage || assistantMessage || title, 220),
       why_now: trimPreview(userMessage, 160),
       time_window: 'next-available',
-      evidence_pointers: ['chat:teresa'],
-      next_action_safe_fallback: 'Create a governed table/workbook draft after approval',
+      evidence_pointers: [
+        'chat:teresa',
+        ...(workbookContext ? [`workbook:${workbookContext.workbook_id}`] : []),
+        ...(selectionAddress ? [`selection:${selectionAddress}`] : []),
+      ],
+      proposal_only: true,
+      requires_structured_mutation: true,
+      ...(workbookContext ? { workbook_context: workbookContext } : {}),
+      ...(workbookMutation ? { workbook_mutation: workbookMutation } : {}),
+      next_action_safe_fallback:
+        'Apply an approved, version-checked workbook command; never fabricate a workbook reference',
     };
   }
 
@@ -1098,6 +1263,7 @@ export async function createChatProposal(params: {
       targetModule: intent.targetModule,
       userMessage,
       assistantMessage,
+      context,
     }),
   });
 
@@ -1568,6 +1734,7 @@ export async function executeProposal(params: {
       target_module: targetModule,
       state: 'completed',
       audit_entry_id: auditEntry.id,
+      handoff_result: handoffResult,
     };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
@@ -1622,6 +1789,132 @@ export async function executeProposal(params: {
       error: errorMsg,
       degraded: 'tool_unavailable',
     };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Core: undoProposal (completed XLSX mutation → undone)
+// ---------------------------------------------------------------------------
+
+export async function undoProposal(params: {
+  proposalId: string;
+  organizationId: string;
+  userId: string;
+}): Promise<HandoffResult> {
+  await ensureTeresaTables();
+  const { proposalId, organizationId, userId } = params;
+  const row = await dbGet<ProposalRow>(
+    `SELECT * FROM teresa_proposals WHERE id = ? AND organization_id = ?`,
+    [proposalId, organizationId],
+    { fallback: true }
+  );
+  if (!row) {
+    throw new TeresaCopilotError('Proposal not found', 'P08_PROPOSAL_NOT_FOUND', 404);
+  }
+  if (row.state !== 'completed') {
+    throw new TeresaCopilotError(
+      `Cannot undo proposal in state: ${row.state}. Must be completed first.`,
+      'P08_INVALID_STATE_TRANSITION'
+    );
+  }
+  if (row.target_module !== 'excele') {
+    throw new TeresaCopilotError(
+      'Undo is currently supported only for applied workbook mutations.',
+      'P08_UNDO_UNSUPPORTED_TARGET'
+    );
+  }
+
+  const executionAudit = await dbGet<AuditRow>(
+    `SELECT * FROM teresa_audit_log
+     WHERE proposal_id = ? AND action = 'execution_completed'
+     ORDER BY timestamp DESC LIMIT 1`,
+    [proposalId],
+    { fallback: true }
+  );
+  const detail = executionAudit?.detail_json
+    ? (JSON.parse(executionAudit.detail_json) as Record<string, unknown>)
+    : null;
+  const handoffResult = detail?.handoff_result as Record<string, unknown> | undefined;
+  const workbookId = handoffResult?.workbook_ref;
+  const commandVersion = handoffResult?.version;
+  if (
+    handoffResult?.mutation_applied !== true ||
+    typeof workbookId !== 'string' ||
+    !workbookId ||
+    !Number.isInteger(commandVersion) ||
+    Number(commandVersion) < 1
+  ) {
+    throw new TeresaCopilotError(
+      'The proposal has no reversible workbook mutation.',
+      'P08_UNDO_NOT_AVAILABLE',
+      409
+    );
+  }
+
+  try {
+    const undoResult = await undoWorkbookCommand({
+      workbookId,
+      organizationId,
+      userId,
+      commandVersion: Number(commandVersion),
+      baseVersion: Number(commandVersion),
+      idempotencyKey: `teresa:undo:${proposalId}`,
+    });
+    await transitionState(proposalId, 'undone');
+    const auditEntry = await writeAuditEntry({
+      proposalId,
+      action: 'execution_undone',
+      actor: `user:${userId}`,
+      fromState: 'completed',
+      toState: 'undone',
+      detail: {
+        execution_audit_entry_id: executionAudit?.id ?? null,
+        original_workbook_version: commandVersion,
+        undo_result: undoResult,
+      },
+    });
+    const targetPayload = JSON.parse(row.target_payload_json || '{}');
+    const handoffContext = JSON.parse(row.handoff_context_json || '{}');
+    await mirrorTeresaProposalToAIRun({
+      proposalId,
+      organizationId,
+      userId: row.user_id,
+      sessionId: row.session_id,
+      state: 'undone',
+      targetModule: 'excele',
+      targetPayload,
+      handoffContext,
+      eventType: 'execution_undone',
+      actorUserId: userId,
+      details: { auditEntryId: auditEntry.id, undoResult },
+      outputRefs: [{ type: 'excele', id: workbookId }],
+      audit: {
+        undoneBy: userId,
+        undoneAt: new Date().toISOString(),
+        rollbackStatus: 'rolled_back',
+        result: undoResult,
+      },
+    });
+    return {
+      success: true,
+      proposal_id: proposalId,
+      target_module: 'excele',
+      state: 'undone',
+      audit_entry_id: auditEntry.id,
+      handoff_result: {
+        handoff: 'excele',
+        workbook_ref: workbookId,
+        mutation_undone: true,
+        command_version: commandVersion,
+        version: undoResult.version,
+        duplicate: undoResult.duplicate,
+      },
+    };
+  } catch (error) {
+    if (error instanceof WorkbookCommandError) {
+      throw new TeresaCopilotError(error.message, error.code, error.statusCode);
+    }
+    throw error;
   }
 }
 
@@ -1754,7 +2047,7 @@ async function performHandoff(params: {
     case 'interview':
       return handleInterviewHandoff(proposalId, organizationId, handoffContext, targetPayload);
     case 'excele':
-      return handleExceleHandoff(proposalId, organizationId, handoffContext, targetPayload);
+      return handleExceleHandoff(proposalId, organizationId, userId, handoffContext, targetPayload);
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2006,21 +2299,88 @@ async function handleInterviewHandoff(
 async function handleExceleHandoff(
   proposalId: string,
   organizationId: string,
+  userId: string,
   context: TeresaHandoffContext,
   payload: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
-  const fallbackRef = randomUUID();
-  const ref = fallbackRef;
+  const workbookContext = payload.workbook_context as Record<string, unknown> | undefined;
+  const workbookId =
+    workbookContext && typeof workbookContext.workbook_id === 'string'
+      ? workbookContext.workbook_id.trim()
+      : '';
+
+  if (!workbookId) {
+    throw new TeresaCopilotError(
+      'Workbook write is unavailable without a real, versioned workbook context',
+      'P08_EXCELE_WRITE_UNAVAILABLE',
+      409
+    );
+  }
+
+  const version = Number(workbookContext?.version_id);
+  if (!Number.isInteger(version) || version < 0) {
+    throw new TeresaCopilotError(
+      'Workbook write requires an immutable base version',
+      'P08_EXCELE_VERSION_REQUIRED',
+      409
+    );
+  }
+
+  const mutation = payload.workbook_mutation;
+  if (!mutation || typeof mutation !== 'object' || Array.isArray(mutation)) {
+    throw new TeresaCopilotError(
+      'Workbook proposal must contain a structured mutation diff before execution',
+      'P08_EXCELE_STRUCTURED_MUTATION_REQUIRED',
+      409
+    );
+  }
+  const mutationPayload = mutation as Record<string, unknown>;
+  if (!Array.isArray(mutationPayload.operations) || mutationPayload.operations.length === 0) {
+    throw new TeresaCopilotError(
+      'Workbook proposal contains no executable operations',
+      'P08_EXCELE_STRUCTURED_MUTATION_REQUIRED',
+      409
+    );
+  }
+
+  let commandResult;
+  try {
+    commandResult = await applyWorkbookCommand({
+      workbookId,
+      organizationId,
+      userId,
+      commandId:
+        typeof mutationPayload.command_id === 'string' && mutationPayload.command_id.trim()
+          ? mutationPayload.command_id.trim()
+          : 'teresa.workbook.applyProposal',
+      baseVersion: version,
+      idempotencyKey: `teresa:${proposalId}`,
+      operations: mutationPayload.operations as WorkbookMutation[],
+    });
+  } catch (error) {
+    if (error instanceof WorkbookCommandError) {
+      throw new TeresaCopilotError(error.message, `P08_EXCELE_${error.code}`, error.statusCode);
+    }
+    throw error;
+  }
+
   await dbRun(
     `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
      VALUES (?, ?, ?, 'excele', ?, ?)`,
-    [randomUUID(), proposalId, organizationId, ref, new Date().toISOString()],
+    [randomUUID(), proposalId, organizationId, workbookId, new Date().toISOString()],
     { fallback: true }
   );
   return {
     handoff: 'excele',
-    workbook_ref: ref,
-    navigate_to: '/excele',
+    workbook_ref: workbookId,
+    real_entity: true,
+    proposal_only: false,
+    mutation_applied: true,
+    version: commandResult.version,
+    operation_count: commandResult.operationCount,
+    duplicate: commandResult.duplicate,
+    workbook_context: workbookContext,
+    navigate_to: `/excele?artifactId=${encodeURIComponent(workbookId)}`,
     user_intent: context.user_intent,
     prompt_hint: payload.prompt || context.user_intent,
   };

@@ -294,6 +294,8 @@ export const ChartImageSchema = z.object({
 // ---------------------------------------------------------------------------
 
 export const SheetSchema = z.object({
+  /** Stable identity used by comments, sources and cross-version anchors. */
+  id: z.string().uuid().optional(),
   name: z.string(),
   purpose: z.string().optional(),
   columns: z.array(ColumnDefSchema),
@@ -304,6 +306,8 @@ export const SheetSchema = z.object({
   headerStyle: CellStyleSchema.optional(),
   alternateRowColor: z.string().optional(),
   showGridLines: z.boolean().optional(),
+  /** Hidden sheets remain addressable by formulas and stable anchors. */
+  hidden: z.boolean().optional(),
   tabColor: z.string().optional(),
   /** X2 — Conditional formatting blocks (per range). */
   conditionalFormatting: z.array(ConditionalFormattingBlockSchema).optional(),

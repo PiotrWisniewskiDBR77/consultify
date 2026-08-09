@@ -14,7 +14,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Search, ShieldCheck, Sparkles } from 'lucide-react';
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ExecutiveModuleShell } from '../index';
 
@@ -92,6 +92,110 @@ describe('ExecutiveModuleShell', () => {
     renderShell();
     const canvas = screen.getByTestId('mels-canvas');
     expect(within(canvas).getByTestId('canvas-stub')).toBeInTheDocument();
+  });
+
+  it('commits the latest title input value when blur immediately follows typing', () => {
+    const onTitleChange = vi.fn();
+    renderShell({ onTitleChange });
+
+    fireEvent.click(screen.getByTestId('mels-topbar-title'));
+    const input = screen.getByTestId('mels-topbar-title-input');
+    fireEvent.change(input, { target: { value: 'Renamed presentation' } });
+    fireEvent.blur(input);
+
+    expect(onTitleChange).toHaveBeenCalledWith('Renamed presentation');
+  });
+
+  it('supports a left information rail and a right canvas tool rail', () => {
+    renderShell({
+      centerMode: 'canvas',
+      inspectorRailSide: 'left',
+      floatingToolRailSide: 'right',
+      floatingLeftRail: <div data-testid="canvas-tool-rail-stub">Canvas tools</div>,
+    });
+
+    expect(screen.getByTestId('mels-left-inspector-rail')).toHaveAttribute('data-side', 'left');
+    expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mels-floating-right-tool-rail')).toHaveAttribute(
+      'data-side',
+      'right'
+    );
+    expect(screen.getByTestId('mels-canvas-content').style.paddingLeft).toBe('');
+  });
+
+  it('opens the focused canvas target context menu with Shift+F10', () => {
+    const onContextMenu = vi.fn((event: React.MouseEvent) => event.preventDefault());
+    renderShell({
+      centerMode: 'canvas',
+      canvas: (
+        <button type="button" onContextMenu={onContextMenu}>
+          Canvas node
+        </button>
+      ),
+    });
+
+    const node = screen.getByRole('button', { name: 'Canvas node' });
+    node.focus();
+    fireEvent.keyDown(node, { key: 'F10', shiftKey: true });
+    expect(onContextMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it('Artifact Studio mode renders only the global Teresa right surface and bottom bar', () => {
+    renderShell({
+      artifactStudioMode: true,
+      globalTeresaSlot: <div data-testid="global-teresa-stub">Global conversation</div>,
+      aiEntrySlot: <div data-testid="legacy-ai-stub">Legacy AI</div>,
+      bottomBar: <div data-testid="bottom-bar-stub">View controls</div>,
+    });
+    expect(screen.getByTestId('mels-shell')).toHaveAttribute('data-artifact-studio', 'true');
+    expect(screen.queryByTestId('mels-right-rail')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('legacy-ai-stub')).not.toBeInTheDocument();
+    expect(screen.getByTestId('global-teresa-stub')).toBeInTheDocument();
+    expect(screen.getByTestId('bottom-bar-stub')).toBeInTheDocument();
+  });
+
+  it('keeps Teresa as an overlay and removes the docked left panel on a compact viewport', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    renderShell({
+      artifactStudioMode: true,
+      globalTeresaSlot: <div>Global conversation</div>,
+    });
+
+    expect(screen.queryByTestId('mels-left-rail')).not.toBeInTheDocument();
+    expect(screen.getByTestId('artifact-studio-global-teresa')).toHaveAttribute(
+      'data-panel-mode',
+      'overlay'
+    );
+  });
+
+  it('docks both panels when the viewport preserves the minimum canvas', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1920 });
+    renderShell({
+      artifactStudioMode: true,
+      globalTeresaSlot: <div>Global conversation</div>,
+    });
+
+    expect(screen.getByTestId('mels-left-rail')).toBeInTheDocument();
+    expect(screen.getByTestId('artifact-studio-global-teresa')).toHaveAttribute(
+      'data-panel-mode',
+      'docked'
+    );
+  });
+
+  it('keeps one side panel at 1280px and preserves the presentation canvas minimum', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+    renderShell({
+      artifactStudioMode: true,
+      moduleKey: 'prezentacje',
+      artifactMinCanvasWidth: 760,
+      globalTeresaSlot: <div>Global conversation</div>,
+    });
+
+    expect(screen.queryByTestId('mels-left-rail')).not.toBeInTheDocument();
+    expect(screen.getByTestId('artifact-studio-global-teresa')).toHaveAttribute(
+      'data-panel-mode',
+      'docked'
+    );
   });
 
   it('marks data-mels-module with the supplied moduleKey', () => {

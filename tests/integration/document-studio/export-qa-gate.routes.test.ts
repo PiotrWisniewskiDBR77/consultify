@@ -76,6 +76,7 @@ vi.mock('../../../server/src/utils/Logger.js', () => ({
 // `getDocumentArtifact` reads `metadata_json.documentStudioSchema`.
 // ---------------------------------------------------------------------------
 const APPROVAL_GATED_TYPE = 'sales_proposal';
+let schemaVersion = new Date(0).toISOString();
 
 function makeSchema(artifactId: string): DocumentSchema {
   return {
@@ -94,7 +95,7 @@ function makeSchema(artifactId: string): DocumentSchema {
     sections: [],
     sourceRefs: [],
     createdAt: new Date(0).toISOString(),
-    updatedAt: new Date(0).toISOString(),
+    updatedAt: schemaVersion,
   };
 }
 
@@ -157,6 +158,10 @@ vi.mock('../../../server/src/services/documentStudio/documentQaService.js', asyn
 });
 
 import { listDocumentAuditEntries } from '../../../server/src/services/documentStudio/documentStudioService.js';
+import {
+  __resetApprovalServiceForTests,
+  recordApprovalDecision,
+} from '../../../server/src/services/documentStudio/documentApprovalService.js';
 
 import documentStudioRoutes from '../../../server/src/routes/document-studio.routes.js';
 
@@ -176,7 +181,9 @@ function nextArtifact(): string {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  __resetApprovalServiceForTests();
   qaBlocking = true;
+  schemaVersion = new Date(0).toISOString();
   mockUser = { id: 'user-qa-1', organizationId: ORG, role: 'CONSULTANT' };
 });
 
@@ -240,5 +247,33 @@ describe('M18 · GET /:artifactId/export/:format — QA gate at the route (L-03)
 
     expect(res.status).toBe(200);
     expect(res.body.format).toBe('markdown');
+  });
+
+  it('blocks final export when approval belongs to an older document version', async () => {
+    const artifactId = nextArtifact();
+    qaBlocking = false;
+    schemaVersion = '2026-08-09T01:00:00.000Z';
+
+    const requested = await request(createApp())
+      .post(`/api/document-studio/${artifactId}/approvals`)
+      .send({ participants: [{ userId: 'reviewer-1', required: true }] });
+    expect(requested.status).toBe(201);
+    expect(requested.body.approval.versionId).toBe(schemaVersion);
+
+    recordApprovalDecision({
+      organizationId: ORG,
+      approvalId: requested.body.approval.approvalId,
+      reviewerId: 'reviewer-1',
+      kind: 'approve',
+    });
+
+    schemaVersion = '2026-08-09T02:00:00.000Z';
+    const staleExport = await request(createApp())
+      .get(`/api/document-studio/${artifactId}/export/markdown`)
+      .query({ mode: 'final' });
+
+    expect(staleExport.status).toBe(409);
+    expect(staleExport.body.code).toBe('ARTIFACT_EXPORT_BLOCKED');
+    expect(staleExport.body.blocks).toContain('CURRENT_APPROVAL_REQUIRED');
   });
 });

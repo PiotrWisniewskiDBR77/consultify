@@ -10,6 +10,8 @@ import type {
   TemplateStatus as MaterialTemplateStatus,
 } from '@/types/materials';
 
+import type { MaterialFileFormat } from './materialFileFormat';
+
 export type RapTab =
   | 'outputs_all'
   | 'outputs_mine'
@@ -62,6 +64,8 @@ export interface UnifiedOutputRow {
   sourceInitiativeId?: string;
   slideCount?: number;
   exportFormats: string[];
+  /** Persisted material format; never inferred from the generic `kind`. */
+  fileFormat: MaterialFileFormat;
   governance?: ArtifactGovernanceSummary;
   /** Only set when `kind === 'sheet'` — see `SheetOrigin` above. */
   sheetOrigin?: SheetOrigin;
@@ -94,12 +98,7 @@ export type ReportStatus = 'draft' | 'ready' | 'exported' | 'archived';
 
 export type PresentationSourceType = 'tool' | 'assessment' | 'finance' | 'upload';
 export type PresentationStatus =
-  | 'draft'
-  | 'generated'
-  | 'editing'
-  | 'ready'
-  | 'shared'
-  | 'archived';
+  'draft' | 'generated' | 'editing' | 'ready' | 'shared' | 'archived';
 
 export interface ArtifactSourceRef {
   artifact_id: string;
@@ -260,6 +259,8 @@ export interface ReportItem {
   createdAt: string;
   updatedAt: string;
   exportFormats: string[];
+  /** Persisted document format; `Unknown` means the registry did not provide one. */
+  fileFormat?: MaterialFileFormat;
   sourceRefs?: Array<string | ArtifactSourceRef>;
   governance?: ArtifactGovernanceSummary;
   [key: string]: unknown;

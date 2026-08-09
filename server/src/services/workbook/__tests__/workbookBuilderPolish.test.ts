@@ -82,6 +82,22 @@ async function firstSheetXml(buf: Buffer): Promise<string> {
 // ---------------------------------------------------------------------------
 // TASK 1 — fullCalcOnLoad + cached formula results
 // ---------------------------------------------------------------------------
+describe('sheet visibility', () => {
+  it('preserves hidden sheet state in the exported XLSX', async () => {
+    const buffer = await buildWorkbookBuffer({
+      title: 'Visibility',
+      sheets: [
+        { name: 'Visible', columns: [], rows: [] },
+        { name: 'Hidden data', hidden: true, columns: [], rows: [] },
+      ],
+    });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+    expect(workbook.getWorksheet('Visible')?.state).toBe('visible');
+    expect(workbook.getWorksheet('Hidden data')?.state).toBe('hidden');
+  });
+});
+
 describe('polish/1 — fullCalcOnLoad + cached trivial formula results', () => {
   it('writes <calcPr fullCalcOnLoad="1"/> into workbook.xml', async () => {
     const buf = await buildWorkbookBuffer(FIN_SEED);

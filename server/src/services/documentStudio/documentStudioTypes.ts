@@ -2373,6 +2373,8 @@ export interface DocumentApprovalRequest {
   approvalId: string;
   organizationId: string;
   artifactId: string;
+  /** Immutable content version reviewed by the participants. */
+  versionId?: string;
   requestedBy: string;
   participants: DocumentApprovalParticipant[];
   quorumPolicy: DocumentApprovalQuorumPolicy;
@@ -2392,6 +2394,7 @@ export type DocumentApprovalAuditAction =
   | 'approval_requested'
   | 'approval_decision_recorded'
   | 'approval_resolved'
+  | 'approval_became_stale'
   | 'approval_cancelled';
 
 export interface DocumentApprovalAuditEntry {

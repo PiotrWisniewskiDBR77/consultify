@@ -52,10 +52,11 @@ import {
 } from '../standard';
 import { resolveArtifactOpenPath } from './artifactNavigation';
 import { duplicateArtifactToCanvasDraft } from './duplicateArtifactToDraft';
+import { MATERIAL_FILE_FORMATS } from './materialFileFormat';
 import { SaveAsTemplateModal, type SaveAsTemplateSource } from './SaveAsTemplateModal';
 import { TrustStatePreviewSection } from './TrustStatePreviewSection';
-import { SHEET_ORIGIN_META } from './types';
 import type { ArtifactGovernanceSummary, SheetOrigin, UnifiedOutputRow } from './types';
+import { SHEET_ORIGIN_META } from './types';
 import type { useRapActions } from './useRapData';
 import { useTrustState } from './useTrustState';
 
@@ -137,6 +138,7 @@ function collectSearchTokens(
     formatSourceSummary(row, t),
     formatReviewSummary(row, t),
     row.exportFormats.join(' '),
+    row.fileFormat,
   ]
     .filter(Boolean)
     .map((value) => String(value).toLowerCase());
@@ -333,6 +335,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
     }
     for (const f of activeFilters) {
       if (f.column === 'outputKind') data = data.filter((item) => item.kind === f.value);
+      if (f.column === 'fileFormat') data = data.filter((item) => item.fileFormat === f.value);
       if (f.column === 'status') data = data.filter((item) => item.statusKey === f.value);
       if (f.column === 'visibilityScope') {
         data = data.filter((item) => (item.governance?.visibilityScope || '') === f.value);
@@ -422,6 +425,21 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             </span>
           );
         },
+      },
+      {
+        id: 'fileFormat',
+        label: t('rap.outputs.columns.format', 'Format'),
+        width: '110px',
+        sortable: true,
+        sortAccessor: (rawRow: Record<string, unknown>) =>
+          MATERIAL_FILE_FORMATS.indexOf((rawRow as unknown as AggregateRow).fileFormat),
+        filterable: true,
+        filterOptions: MATERIAL_FILE_FORMATS.map((format) => ({ value: format, label: format })),
+        render: (rawRow: Record<string, unknown>) => (
+          <span className="text-xs font-medium text-c-text-secondary">
+            {(rawRow as unknown as AggregateRow).fileFormat}
+          </span>
+        ),
       },
       {
         id: 'status',

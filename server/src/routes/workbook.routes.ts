@@ -16,9 +16,24 @@ import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { buildOrgContextSourcePack } from '../services/documentStudio/documentOrgContextSourcePack.js';
+import ArtifactApprovalService from '../services/artifactApprovalService.js';
+import {
+  evaluateArtifactExportPolicy,
+  type ArtifactClassification,
+  type ArtifactExportMode,
+} from '../services/artifactExportPolicy.js';
 import { createP23Error } from '../services/v8/exceleCanon.js';
 import type { WorkbookQualityReport } from '../services/workbook/workbookQualityGate.js';
-import type { WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
+import {
+  applyWorkbookCommand,
+  undoWorkbookCommand,
+  WorkbookCommandError,
+} from '../services/workbook/workbookCommandService.js';
+import {
+  pruneWorkbookRuntimeCache,
+  workbookRuntimeCache as workbookCache,
+} from '../services/workbook/workbookRuntimeCache.js';
+import type { CellStyle, WorkbookSchema } from '../services/workbook/WorkbookSchema.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
@@ -78,13 +93,17 @@ function buildWorkbookGrounding(input: {
 
   if (Array.isArray(evidenceRefs) && evidenceRefs.length) {
     const refs = evidenceRefs
-      .map((e) => (typeof e === 'string' ? e : (() => {
-        try {
-          return JSON.stringify(e);
-        } catch {
-          return '';
-        }
-      })()))
+      .map((e) =>
+        typeof e === 'string'
+          ? e
+          : (() => {
+              try {
+                return JSON.stringify(e);
+              } catch {
+                return '';
+              }
+            })()
+      )
       .filter(Boolean);
     if (refs.length) parts.push(`Dowody: ${refs.join('; ')}`);
   }
@@ -171,8 +190,7 @@ async function hydrateGroundingFromRun(params: {
     const goal = typeof executionRun?.goal === 'string' ? executionRun.goal.trim() : '';
     if (!goal) return undefined;
 
-    const titleHint =
-      typeof run.plan?.titleHint === 'string' ? run.plan.titleHint.trim() : '';
+    const titleHint = typeof run.plan?.titleHint === 'string' ? run.plan.titleHint.trim() : '';
     const heading = titleHint
       ? `Brief z sesji (${titleHint}) — podstawa liczb, nie zaprzeczaj mu:`
       : 'Brief z sesji — podstawa liczb, nie zaprzeczaj mu:';
@@ -191,22 +209,7 @@ router.use(verifyToken);
 router.use(requireOrgAccess());
 router.use(demoContextMiddleware);
 
-// In-memory cache for recent workbooks (bounded to 50 entries)
-const workbookCache = new Map<
-  string,
-  { buffer: Buffer; fileName: string; schema: any; createdAt: string }
->();
-const MAX_CACHE = 50;
-
-function pruneCache() {
-  if (workbookCache.size <= MAX_CACHE) return;
-  const entries = [...workbookCache.entries()].sort((a, b) =>
-    a[1].createdAt.localeCompare(b[1].createdAt)
-  );
-  while (workbookCache.size > MAX_CACHE) {
-    workbookCache.delete(entries.shift()![0]);
-  }
-}
+const pruneCache = pruneWorkbookRuntimeCache;
 
 // Ensure storage table exists
 async function ensureWorkbookSchema() {
@@ -229,21 +232,567 @@ async function ensureWorkbookSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS action_contract_json TEXT DEFAULT '{}'`
-    );
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS source_pack_json TEXT DEFAULT '{}'`
-    );
-    await queryHelpers.queryRun(
-      `ALTER TABLE generated_workbooks ADD COLUMN IF NOT EXISTS evidence_refs_json TEXT DEFAULT '[]'`
-    );
+    // Keep the additive migration portable. SQLite does not support
+    // `ADD COLUMN IF NOT EXISTS`; wrapping the entire migration in one `try`
+    // meant its first syntax error silently skipped every following column.
+    // Adding each column independently is safe on SQLite and Postgres: an
+    // already-existing column is the only expected failure and must not stop
+    // later migrations.
+    const additiveColumns = [
+      `action_contract_json TEXT DEFAULT '{}'`,
+      `source_pack_json TEXT DEFAULT '{}'`,
+      `evidence_refs_json TEXT DEFAULT '[]'`,
+      `classification TEXT DEFAULT 'internal'`,
+      `lifecycle_status TEXT DEFAULT 'draft'`,
+      `approval_current INTEGER DEFAULT 0`,
+      `quality_report_json TEXT DEFAULT '{}'`,
+      `version INTEGER DEFAULT 0`,
+      `last_mutation_key TEXT`,
+    ];
+    for (const columnDefinition of additiveColumns) {
+      try {
+        await queryHelpers.queryRun(
+          `ALTER TABLE generated_workbooks ADD COLUMN ${columnDefinition}`
+        );
+      } catch {
+        // Column already exists. Other migration statements still have to run.
+      }
+    }
     await queryHelpers.queryRun(
       `CREATE INDEX IF NOT EXISTS idx_workbooks_org ON generated_workbooks(organization_id)`
+    );
+    await queryHelpers.queryRun(`
+      CREATE TABLE IF NOT EXISTS generated_workbook_revisions (
+        id TEXT PRIMARY KEY,
+        workbook_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        command_id TEXT NOT NULL,
+        idempotency_key TEXT,
+        base_schema_json TEXT NOT NULL,
+        schema_json TEXT NOT NULL,
+        operations_json TEXT DEFAULT '[]',
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(workbook_id, organization_id, version)
+      )
+    `);
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_workbook_revisions_head
+       ON generated_workbook_revisions(workbook_id, organization_id, version DESC)`
+    );
+    await queryHelpers.queryRun(`
+      CREATE TABLE IF NOT EXISTS generated_workbook_comments (
+        id TEXT PRIMARY KEY,
+        workbook_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        sheet_id TEXT,
+        range_ref TEXT,
+        anchored_version INTEGER NOT NULL DEFAULT 0,
+        parent_comment_id TEXT,
+        body TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open',
+        anchor_state TEXT NOT NULL DEFAULT 'active',
+        idempotency_key TEXT,
+        created_by TEXT NOT NULL,
+        resolved_by TEXT,
+        resolved_at TIMESTAMP,
+        deleted_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(workbook_id, organization_id, idempotency_key)
+      )
+    `);
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_workbook_comments_scope
+       ON generated_workbook_comments(workbook_id, organization_id, status, created_at)`
+    );
+    await queryHelpers.queryRun(`
+      CREATE TABLE IF NOT EXISTS generated_workbook_source_bindings (
+        id TEXT PRIMARY KEY,
+        workbook_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        sheet_id TEXT NOT NULL,
+        range_ref TEXT NOT NULL,
+        label TEXT NOT NULL,
+        source_ref TEXT,
+        source_type TEXT,
+        anchored_version INTEGER NOT NULL DEFAULT 0,
+        anchor_state TEXT NOT NULL DEFAULT 'active',
+        idempotency_key TEXT,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(workbook_id, organization_id, idempotency_key)
+      )
+    `);
+    try {
+      await queryHelpers.queryRun(
+        `ALTER TABLE generated_workbook_source_bindings ADD COLUMN anchor_state TEXT NOT NULL DEFAULT 'active'`
+      );
+    } catch {
+      // Existing installations may already contain the additive anchor column.
+    }
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_workbook_source_bindings_scope
+       ON generated_workbook_source_bindings(workbook_id, organization_id, sheet_id, range_ref)`
+    );
+    await queryHelpers.queryRun(`
+      CREATE TABLE IF NOT EXISTS generated_workbook_governance_events (
+        id TEXT PRIMARY KEY,
+        workbook_id TEXT NOT NULL,
+        organization_id TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        previous_value TEXT,
+        next_value TEXT NOT NULL,
+        reason TEXT,
+        workbook_version INTEGER NOT NULL DEFAULT 0,
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await queryHelpers.queryRun(
+      `CREATE INDEX IF NOT EXISTS idx_workbook_governance_events_scope
+       ON generated_workbook_governance_events(workbook_id, organization_id, created_at DESC)`
     );
   } catch {
     /* table may already exist */
   }
+}
+
+function ensureStableSheetIds(schema: WorkbookSchema): boolean {
+  let changed = false;
+  for (const sheet of schema.sheets || []) {
+    if (!sheet.id) {
+      sheet.id = uuidv4();
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+function isValidRangeRef(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    /^(?:[A-Z]{1,3}[1-9]\d*)(?::(?:[A-Z]{1,3}[1-9]\d*))?$/.test(value.trim().toUpperCase())
+  );
+}
+
+type WorkbookCellMutation = {
+  type: 'setCell' | 'clearCell';
+  sheetIndex: number;
+  rowIndex: number;
+  columnKey: string;
+  value?: string | number | boolean | null;
+  formula?: string;
+};
+
+type WorkbookSheetMutation =
+  | { type: 'addSheet'; name?: string; afterIndex?: number; sheetId?: string }
+  | { type: 'renameSheet'; sheetId: string; name: string }
+  | { type: 'duplicateSheet'; sheetId: string; name?: string; newSheetId?: string }
+  | { type: 'deleteSheet'; sheetId: string }
+  | { type: 'reorderSheet'; sheetId: string; targetIndex: number }
+  | { type: 'setSheetHidden'; sheetId: string; hidden: boolean };
+
+type WorkbookAxisMutation =
+  | { type: 'insertRows' | 'deleteRows'; sheetIndex: number; atIndex: number; count: number }
+  | { type: 'insertColumns' | 'deleteColumns'; sheetIndex: number; atIndex: number; count: number };
+
+type WorkbookCellStyleMutation = {
+  type: 'setCellStyle';
+  sheetIndex: number;
+  startRow: number;
+  endRow: number;
+  startColumn: number;
+  endColumn: number;
+  patch: Partial<CellStyle>;
+};
+
+type WorkbookMutation =
+  | WorkbookCellMutation
+  | WorkbookSheetMutation
+  | WorkbookAxisMutation
+  | WorkbookCellStyleMutation;
+
+type WorkbookAnchorTransform = WorkbookAxisMutation & { sheetId: string };
+
+const WORKBOOK_SHEET_NAME_FORBIDDEN = /[\[\]:*?/\\]/;
+
+function normalizedSheetName(value: unknown): string {
+  if (typeof value !== 'string') throw new Error('Invalid sheet name');
+  const name = value.trim();
+  if (!name || name.length > 31 || WORKBOOK_SHEET_NAME_FORBIDDEN.test(name)) {
+    throw new Error('Invalid sheet name');
+  }
+  return name;
+}
+
+function uniqueSheetName(schema: WorkbookSchema, requested: string, excludeId?: string): string {
+  const base = normalizedSheetName(requested);
+  const occupied = new Set(
+    schema.sheets
+      .filter((sheet) => sheet.id !== excludeId)
+      .map((sheet) => sheet.name.toLocaleLowerCase())
+  );
+  if (!occupied.has(base.toLocaleLowerCase())) return base;
+  for (let suffix = 2; suffix < 10_000; suffix += 1) {
+    const suffixText = ` (${suffix})`;
+    const candidate = `${base.slice(0, 31 - suffixText.length)}${suffixText}`;
+    if (!occupied.has(candidate.toLocaleLowerCase())) return candidate;
+  }
+  throw new Error('Unable to create unique sheet name');
+}
+
+function mutationSheetId(value?: string): string {
+  if (value === undefined) return uuidv4();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new Error('Invalid sheet id');
+  }
+  return value;
+}
+
+function createBlankSheet(name: string, sheetId?: string): WorkbookSchema['sheets'][number] {
+  const columns = Array.from({ length: 12 }, (_, index) => {
+    let current = index + 1;
+    let key = '';
+    while (current > 0) {
+      key = String.fromCharCode(65 + ((current - 1) % 26)) + key;
+      current = Math.floor((current - 1) / 26);
+    }
+    return { key, header: key };
+  });
+  return {
+    id: mutationSheetId(sheetId),
+    name,
+    columns,
+    rows: Array.from({ length: 30 }, () => ({ cells: {} })),
+  };
+}
+
+function applyWorkbookSheetMutation(
+  schema: WorkbookSchema,
+  operation: WorkbookSheetMutation
+): { orphanedSheetId?: string } {
+  const findIndex = (sheetId: string) => schema.sheets.findIndex((sheet) => sheet.id === sheetId);
+
+  if (operation.type === 'addSheet') {
+    const name = uniqueSheetName(schema, operation.name || 'Arkusz');
+    const requestedIndex =
+      operation.afterIndex === undefined ? schema.sheets.length : operation.afterIndex + 1;
+    if (
+      !Number.isInteger(requestedIndex) ||
+      requestedIndex < 0 ||
+      requestedIndex > schema.sheets.length
+    ) {
+      throw new Error('Invalid sheet insertion index');
+    }
+    const id = mutationSheetId(operation.sheetId);
+    if (schema.sheets.some((sheet) => sheet.id === id)) throw new Error('Duplicate sheet id');
+    schema.sheets.splice(requestedIndex, 0, createBlankSheet(name, id));
+    return {};
+  }
+
+  const sheetIndex = findIndex(operation.sheetId);
+  if (sheetIndex < 0) throw new Error('Unknown sheetId');
+  const sheet = schema.sheets[sheetIndex];
+
+  if (operation.type === 'renameSheet') {
+    sheet.name = uniqueSheetName(schema, operation.name, sheet.id);
+  } else if (operation.type === 'duplicateSheet') {
+    const clone = JSON.parse(JSON.stringify(sheet)) as typeof sheet;
+    clone.id = mutationSheetId(operation.newSheetId);
+    if (schema.sheets.some((existing) => existing.id === clone.id)) {
+      throw new Error('Duplicate sheet id');
+    }
+    clone.name = uniqueSheetName(schema, operation.name || `${sheet.name} kopia`);
+    clone.hidden = false;
+    schema.sheets.splice(sheetIndex + 1, 0, clone);
+  } else if (operation.type === 'deleteSheet') {
+    if (schema.sheets.length === 1) throw new Error('Cannot delete the last sheet');
+    schema.sheets.splice(sheetIndex, 1);
+    return { orphanedSheetId: operation.sheetId };
+  } else if (operation.type === 'reorderSheet') {
+    if (
+      !Number.isInteger(operation.targetIndex) ||
+      operation.targetIndex < 0 ||
+      operation.targetIndex >= schema.sheets.length
+    ) {
+      throw new Error('Invalid targetIndex');
+    }
+    schema.sheets.splice(sheetIndex, 1);
+    schema.sheets.splice(operation.targetIndex, 0, sheet);
+  } else if (operation.type === 'setSheetHidden') {
+    if (operation.hidden && !sheet.hidden) {
+      const visibleCount = schema.sheets.filter((candidate) => !candidate.hidden).length;
+      if (visibleCount <= 1) throw new Error('Cannot hide the last visible sheet');
+    }
+    sheet.hidden = operation.hidden;
+  }
+  return {};
+}
+
+function applyWorkbookCellMutation(schema: WorkbookSchema, operation: WorkbookCellMutation): void {
+  const { sheetIndex, rowIndex, columnKey } = operation;
+  if (!Number.isInteger(sheetIndex) || sheetIndex < 0) throw new Error('Invalid sheetIndex');
+  if (!Number.isInteger(rowIndex) || rowIndex < 0) throw new Error('Invalid rowIndex');
+  if (typeof columnKey !== 'string' || !columnKey.trim()) throw new Error('Invalid columnKey');
+  if (operation.formula !== undefined && typeof operation.formula !== 'string') {
+    throw new Error('Invalid formula');
+  }
+  if (
+    operation.value !== undefined &&
+    operation.value !== null &&
+    !['string', 'number', 'boolean'].includes(typeof operation.value)
+  ) {
+    throw new Error('Invalid value');
+  }
+
+  const sheet = schema.sheets?.[sheetIndex];
+  if (!sheet?.rows || !sheet.columns) throw new Error(`Unknown sheetIndex ${sheetIndex}`);
+  if (rowIndex >= sheet.rows.length) throw new Error(`Unknown rowIndex ${rowIndex}`);
+  if (!sheet.columns.some((column) => column.key === columnKey)) {
+    throw new Error(`Unknown columnKey ${columnKey}`);
+  }
+
+  const targetRow = sheet.rows[rowIndex];
+  if (!targetRow.cells) targetRow.cells = {};
+  const oldCell = targetRow.cells[columnKey] ?? {};
+  const nextCell: Record<string, unknown> = {
+    style: oldCell.style,
+    comment: oldCell.comment,
+    validation: oldCell.validation,
+  };
+  if (operation.type === 'setCell') {
+    const formula = operation.formula?.trim().replace(/^=+/, '');
+    if (formula) nextCell.formula = formula;
+    else if (operation.value !== undefined) nextCell.value = operation.value;
+  }
+  targetRow.cells[columnKey] = nextCell as (typeof targetRow.cells)[string];
+}
+
+const WORKBOOK_STYLE_KEYS = new Set([
+  'bold',
+  'italic',
+  'fontColor',
+  'bgColor',
+  'numberFormat',
+  'alignment',
+  'wrapText',
+  'border',
+]);
+
+function applyWorkbookCellStyleMutation(
+  schema: WorkbookSchema,
+  operation: WorkbookCellStyleMutation
+): void {
+  const { sheetIndex, startRow, endRow, startColumn, endColumn, patch } = operation;
+  if (![sheetIndex, startRow, endRow, startColumn, endColumn].every(Number.isInteger)) {
+    throw new Error('Invalid cell style range');
+  }
+  if (
+    sheetIndex < 0 ||
+    startRow < 0 ||
+    startColumn < 0 ||
+    endRow < startRow ||
+    endColumn < startColumn
+  ) {
+    throw new Error('Invalid cell style range');
+  }
+  if (
+    !patch ||
+    typeof patch !== 'object' ||
+    Array.isArray(patch) ||
+    Object.keys(patch).length === 0
+  ) {
+    throw new Error('Cell style patch must not be empty');
+  }
+  if (Object.keys(patch).some((key) => !WORKBOOK_STYLE_KEYS.has(key))) {
+    throw new Error('Unsupported cell style property');
+  }
+  const sheet = schema.sheets?.[sheetIndex];
+  if (!sheet || endRow >= sheet.rows.length || endColumn >= sheet.columns.length) {
+    throw new Error('Unknown cell style range');
+  }
+  const cellCount = (endRow - startRow + 1) * (endColumn - startColumn + 1);
+  if (cellCount > 10_000) throw new Error('Cell style range is too large');
+
+  for (let rowIndex = startRow; rowIndex <= endRow; rowIndex += 1) {
+    const row = sheet.rows[rowIndex];
+    if (!row.cells) row.cells = {};
+    for (let columnIndex = startColumn; columnIndex <= endColumn; columnIndex += 1) {
+      const columnKey = sheet.columns[columnIndex].key;
+      const cell = row.cells[columnKey] ?? {};
+      cell.style = { ...(cell.style ?? {}), ...patch };
+      row.cells[columnKey] = cell;
+    }
+  }
+}
+
+function columnLettersToIndex(value: string): number {
+  return (
+    value
+      .replace(/\$/g, '')
+      .split('')
+      .reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1
+  );
+}
+
+function columnIndexToLetters(index: number): string {
+  let current = index + 1;
+  let result = '';
+  while (current > 0) {
+    result = String.fromCharCode(65 + ((current - 1) % 26)) + result;
+    current = Math.floor((current - 1) / 26);
+  }
+  return result;
+}
+
+function shiftAxisIndex(
+  value: number,
+  operation: WorkbookAxisMutation,
+  axis: 'row' | 'column'
+): number | null {
+  const relevant =
+    axis === 'row'
+      ? operation.type === 'insertRows' || operation.type === 'deleteRows'
+      : operation.type === 'insertColumns' || operation.type === 'deleteColumns';
+  if (!relevant) return value;
+  const inserting = operation.type === 'insertRows' || operation.type === 'insertColumns';
+  if (inserting) return value >= operation.atIndex ? value + operation.count : value;
+  if (value < operation.atIndex) return value;
+  if (value >= operation.atIndex + operation.count) return value - operation.count;
+  return null;
+}
+
+function transformCellReference(reference: string, operation: WorkbookAxisMutation): string {
+  const match = /^(\$?)([A-Z]{1,3})(\$?)([1-9]\d*)$/.exec(reference.toUpperCase());
+  if (!match) return reference;
+  const column = shiftAxisIndex(columnLettersToIndex(match[2]), operation, 'column');
+  // Workbook row index 0 is Excel row 2 because row 1 contains schema column headers.
+  const row = shiftAxisIndex(Number(match[4]) - 2, operation, 'row');
+  if (column === null || row === null || row < -1) return '#REF!';
+  return `${match[1]}${columnIndexToLetters(column)}${match[3]}${row + 2}`;
+}
+
+function transformFormulaReferences(
+  formula: string,
+  formulaSheetName: string,
+  targetSheetName: string,
+  operation: WorkbookAxisMutation
+): string {
+  const referencePattern =
+    /(?:(?:'((?:[^']|'')+)'|([A-Za-z_][A-Za-z0-9_. ]*))!)?(\$?[A-Z]{1,3}\$?[1-9]\d*)/g;
+  return formula.replace(referencePattern, (whole, quotedSheet, plainSheet, reference) => {
+    const explicitSheet = quotedSheet ? String(quotedSheet).replace(/''/g, "'") : plainSheet;
+    const pointsToTarget = explicitSheet
+      ? explicitSheet.toLocaleLowerCase() === targetSheetName.toLocaleLowerCase()
+      : formulaSheetName.toLocaleLowerCase() === targetSheetName.toLocaleLowerCase();
+    if (!pointsToTarget) return whole;
+    const prefix = whole.slice(0, whole.length - reference.length);
+    return `${prefix}${transformCellReference(reference, operation)}`;
+  });
+}
+
+function transformRangeRef(rangeRef: string, operation: WorkbookAxisMutation): string | null {
+  const parts = rangeRef.trim().toUpperCase().split(':');
+  const transformed = parts.map((part) => transformCellReference(part, operation));
+  if (transformed.every((part) => part === '#REF!')) return null;
+  if (transformed.some((part) => part === '#REF!')) return null;
+  return transformed.join(':');
+}
+
+function applyWorkbookAxisMutation(
+  schema: WorkbookSchema,
+  operation: WorkbookAxisMutation
+): WorkbookAnchorTransform {
+  if (!Number.isInteger(operation.sheetIndex) || operation.sheetIndex < 0)
+    throw new Error('Invalid sheetIndex');
+  if (!Number.isInteger(operation.atIndex) || operation.atIndex < 0)
+    throw new Error('Invalid axis index');
+  if (!Number.isInteger(operation.count) || operation.count < 1 || operation.count > 100) {
+    throw new Error('Axis mutation count must be between 1 and 100');
+  }
+  const sheet = schema.sheets[operation.sheetIndex];
+  if (!sheet?.id) throw new Error('Unknown sheetIndex');
+
+  if (operation.type === 'insertRows') {
+    if (operation.atIndex > sheet.rows.length) throw new Error('Invalid row insertion index');
+    sheet.rows.splice(
+      operation.atIndex,
+      0,
+      ...Array.from({ length: operation.count }, () => ({ cells: {} }))
+    );
+  } else if (operation.type === 'deleteRows') {
+    if (operation.atIndex + operation.count > sheet.rows.length)
+      throw new Error('Invalid row deletion range');
+    if (operation.count >= sheet.rows.length) throw new Error('Cannot delete all rows');
+    sheet.rows.splice(operation.atIndex, operation.count);
+  } else if (operation.type === 'insertColumns') {
+    if (operation.atIndex > sheet.columns.length) throw new Error('Invalid column insertion index');
+    const inserted = Array.from({ length: operation.count }, (_, offset) => ({
+      key: `col_${uuidv4().replace(/-/g, '').slice(0, 12)}`,
+      header: columnIndexToLetters(operation.atIndex + offset),
+    }));
+    sheet.columns.splice(operation.atIndex, 0, ...inserted);
+  } else {
+    if (operation.atIndex + operation.count > sheet.columns.length)
+      throw new Error('Invalid column deletion range');
+    if (operation.count >= sheet.columns.length) throw new Error('Cannot delete all columns');
+    const removedKeys = new Set(
+      sheet.columns
+        .slice(operation.atIndex, operation.atIndex + operation.count)
+        .map((column) => column.key)
+    );
+    sheet.columns.splice(operation.atIndex, operation.count);
+    for (const row of sheet.rows) {
+      for (const key of removedKeys) delete row.cells[key];
+    }
+  }
+
+  for (const formulaSheet of schema.sheets) {
+    for (const row of formulaSheet.rows || []) {
+      for (const cell of Object.values(row.cells || {})) {
+        if (typeof cell.formula === 'string') {
+          cell.formula = transformFormulaReferences(
+            cell.formula,
+            formulaSheet.name,
+            sheet.name,
+            operation
+          );
+        }
+      }
+    }
+  }
+  return { ...operation, sheetId: sheet.id };
+}
+
+function asExportMode(value: unknown): ArtifactExportMode {
+  return value === 'final' ? 'final' : 'draft';
+}
+
+function asClassification(value: unknown): ArtifactClassification {
+  return value === 'public' || value === 'confidential' ? value : 'internal';
+}
+
+function countCriticalQaFindings(value: string | null | undefined): number {
+  if (!value) return 0;
+  try {
+    const report = JSON.parse(value) as { issues?: Array<{ severity?: string }> };
+    return Array.isArray(report.issues)
+      ? report.issues.filter((issue) => issue?.severity === 'critical').length
+      : 0;
+  } catch {
+    // A malformed governance snapshot cannot be treated as a clean report.
+    return 1;
+  }
+}
+
+function draftFileName(fileName: string): string {
+  const normalized = fileName || 'workbook.xlsx';
+  return /\.xlsx$/i.test(normalized)
+    ? normalized.replace(/\.xlsx$/i, '-DRAFT.xlsx')
+    : `${normalized}-DRAFT.xlsx`;
 }
 
 /**
@@ -284,20 +833,25 @@ async function finalizeGeneratedWorkbook(params: {
 }): Promise<Record<string, unknown>> {
   const { result, user } = params;
 
+  // Every newly materialized workbook gets durable sheet identities before it
+  // can be cached or persisted. Older workbooks are migrated lazily on read.
+  ensureStableSheetIds(result.schema as WorkbookSchema);
+
   // Cache the buffer for download
   workbookCache.set(result.id, {
     buffer: result.buffer,
     fileName: result.fileName,
     schema: result.schema,
     createdAt: result.generatedAt,
+    organizationId: user.organizationId,
   });
   pruneCache();
 
   // Persist metadata
   try {
     await queryHelpers.queryRun(
-      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         result.id,
         user.organizationId,
@@ -320,6 +874,7 @@ async function finalizeGeneratedWorkbook(params: {
           params.sourcePack && typeof params.sourcePack === 'object' ? params.sourcePack : {}
         ),
         JSON.stringify(Array.isArray(params.evidenceRefs) ? params.evidenceRefs : []),
+        JSON.stringify(result.qualityReport ?? {}),
         user.id,
         result.generatedAt,
       ]
@@ -405,18 +960,19 @@ async function finalizeGeneratedWorkbook(params: {
       );
       artifactId = registered?.artifactId ?? null;
       if (artifactId) {
-        logger.info(
-          `[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`
-        );
+        logger.info(`[WorkbookRoutes] Registered artifact ${artifactId} for workbook ${result.id}`);
       }
     }
   } catch (err) {
-    logger.error('[WorkbookRoutes] Failed to register workbook in artifact registry after retries', {
-      workbookId: result.id,
-      organizationId: user.organizationId,
-      artifactId,
-      message: err instanceof Error ? err.message : String(err),
-    });
+    logger.error(
+      '[WorkbookRoutes] Failed to register workbook in artifact registry after retries',
+      {
+        workbookId: result.id,
+        organizationId: user.organizationId,
+        artifactId,
+        message: err instanceof Error ? err.message : String(err),
+      }
+    );
   }
 
   return {
@@ -613,12 +1169,7 @@ router.post(
     }
 
     const { id } = req.params;
-    const {
-      params: rawParams,
-      projectId,
-      sourceInitiativeId,
-      conversationId,
-    } = req.body || {};
+    const { params: rawParams, projectId, sourceInitiativeId, conversationId } = req.body || {};
 
     const { getWorkbookTemplate, buildTemplateParamsSchema } =
       await import('../services/workbook/templates/index.js');
@@ -634,9 +1185,7 @@ router.post(
     // Validate the flat param map against the template's descriptor-derived zod
     // schema (unknown keys stripped, out-of-range/typed values rejected at the edge).
     const schemaZod = buildTemplateParamsSchema(entry);
-    const parsed = schemaZod.safeParse(
-      rawParams && typeof rawParams === 'object' ? rawParams : {}
-    );
+    const parsed = schemaZod.safeParse(rawParams && typeof rawParams === 'object' ? rawParams : {});
     if (!parsed.success) {
       res.status(400).json({
         error: 'Invalid template parameters',
@@ -671,7 +1220,10 @@ router.post(
       logger.error('[WorkbookRoutes] Template build failed:', err);
       res.status(500).json({
         error: 'Failed to build workbook from template',
-        classified: createP23Error('export_failed', err instanceof Error ? err.message : String(err)),
+        classified: createP23Error(
+          'export_failed',
+          err instanceof Error ? err.message : String(err)
+        ),
       });
       return;
     }
@@ -761,14 +1313,20 @@ router.post(
     const fileName = `${title.replace(/\s+/g, '_')}.xlsx`;
     const generatedAt = new Date().toISOString();
 
-    workbookCache.set(id, { buffer, fileName, schema, createdAt: generatedAt });
+    workbookCache.set(id, {
+      buffer,
+      fileName,
+      schema,
+      createdAt: generatedAt,
+      organizationId: user.organizationId,
+    });
     pruneCache();
 
     // Persist metadata (best-effort — pobranie i tak działa z cache/rebuild).
     try {
       await queryHelpers.queryRun(
-        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO generated_workbooks (id, organization_id, title, description, prompt, schema_json, sheet_count, file_name, file_size, validation_errors, quality_score, pipeline_log, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           user.organizationId,
@@ -785,6 +1343,7 @@ router.post(
           JSON.stringify({}),
           JSON.stringify({}),
           JSON.stringify([]),
+          JSON.stringify({}),
           user.id,
           generatedAt,
         ]
@@ -796,9 +1355,7 @@ router.post(
     // Register in V8 artifact registry (Outputs Library), jak w `/generate`.
     let artifactId: string | null = null;
     try {
-      const { registerArtifactOrigin } = await import(
-        '../services/v8/artifactRegistryService.js'
-      );
+      const { registerArtifactOrigin } = await import('../services/v8/artifactRegistryService.js');
       const registered = await registerArtifactOrigin({
         organizationId: user.organizationId,
         outputType: 'sheet',
@@ -859,21 +1416,35 @@ router.get(
     }
 
     const { id } = req.params;
+    const mode = asExportMode(req.query.mode);
     const cached = workbookCache.get(id);
 
-    if (cached) {
+    if (mode === 'draft' && cached?.organizationId === user.organizationId) {
       res.setHeader(
         'Content-Type',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       );
-      res.setHeader('Content-Disposition', `attachment; filename="${cached.fileName}"`);
+      res.setHeader('X-Artifact-Export-Mode', 'draft');
+      res.setHeader('X-Artifact-Draft', 'true');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${draftFileName(cached.fileName)}"`
+      );
       res.send(cached.buffer);
       return;
     }
 
     // Try to regenerate from stored schema
-    const row = await queryHelpers.queryOne<{ schema_json: string; file_name: string }>(
-      `SELECT schema_json, file_name FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+    await ensureWorkbookSchema();
+    const row = await queryHelpers.queryOne<{
+      schema_json: string;
+      file_name: string;
+      classification: string | null;
+      approval_current: number | boolean | null;
+      quality_report_json: string | null;
+    }>(
+      `SELECT schema_json, file_name, classification, approval_current, quality_report_json
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
 
@@ -884,6 +1455,23 @@ router.get(
           'access_denied',
           `Workbook ${id} not found for this organization`
         ),
+      });
+      return;
+    }
+
+    const policy = evaluateArtifactExportPolicy({
+      mode,
+      channel: 'download',
+      classification: asClassification(row.classification),
+      criticalQaFindings: countCriticalQaFindings(row.quality_report_json),
+      approvalCurrentForVersion: row.approval_current === true || row.approval_current === 1,
+    });
+    if (!policy.allowed) {
+      res.status(409).json({
+        error: 'Artifact export is blocked by governance policy',
+        code: 'ARTIFACT_EXPORT_BLOCKED',
+        mode,
+        blocks: policy.blocks,
       });
       return;
     }
@@ -909,9 +1497,15 @@ router.get(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
+    res.setHeader('X-Artifact-Export-Mode', mode);
+    res.setHeader('X-Artifact-Draft', policy.draftMarkingRequired ? 'true' : 'false');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${row.file_name || 'workbook.xlsx'}"`
+      `attachment; filename="${
+        policy.draftMarkingRequired
+          ? draftFileName(row.file_name || 'workbook.xlsx')
+          : row.file_name || 'workbook.xlsx'
+      }"`
     );
     res.send(buffer);
   })
@@ -977,7 +1571,14 @@ router.get(
     const { id } = req.params;
 
     const cached = workbookCache.get(id);
-    if (cached?.schema) {
+    if (cached?.organizationId === user.organizationId && cached.schema) {
+      if (ensureStableSheetIds(cached.schema as WorkbookSchema)) {
+        await ensureWorkbookSchema();
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+          [JSON.stringify(cached.schema), id, user.organizationId]
+        );
+      }
       res.json({
         id,
         title: cached.schema.title,
@@ -1005,13 +1606,21 @@ router.get(
       return;
     }
 
-    let schema: { title?: string; description?: string; sheets?: unknown[] } | null = null;
+    let schema: WorkbookSchema | null = null;
     try {
       schema = JSON.parse(row.schema_json);
     } catch (err) {
       logger.error(`[WorkbookRoutes] Stored schema for ${id} is not valid JSON:`, err);
       res.status(500).json({ error: 'Stored workbook schema is corrupted' });
       return;
+    }
+
+    if (schema && ensureStableSheetIds(schema)) {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+        [JSON.stringify(schema), id, user.organizationId]
+      );
+      workbookCache.delete(id);
     }
 
     res.json({
@@ -1081,8 +1690,7 @@ router.post(
     }
 
     const rawTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
-    const title =
-      rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
+    const title = rawTitle || `${sourceSchema.title || source.title || 'Untitled workbook'} (Copy)`;
     const schema: WorkbookSchema = { ...sourceSchema, title };
 
     const { buildWorkbookBuffer } = await import('../services/workbook/WorkbookBuilder.js');
@@ -1123,6 +1731,1232 @@ router.post(
     });
 
     res.status(201).json({ ...payload, clonedFrom: id });
+  })
+);
+
+/**
+ * POST /api/workbook/:id/commands
+ *
+ * Atomowy pakiet mutacji komórek dla Spreadsheet Studio. Cały pakiet jest
+ * walidowany i nakładany na kopię schema_json przed pojedynczym warunkowym
+ * UPDATE. `baseVersion` chroni przed cichym nadpisaniem, a `idempotencyKey`
+ * przed powtórzeniem zaakceptowanego pakietu po retry transportowym.
+ */
+router.post(
+  '/:id/commands',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { id } = req.params;
+    const { commandId, baseVersion, idempotencyKey, operations } = req.body || {};
+    if (typeof commandId !== 'string' || !commandId.trim()) {
+      res.status(400).json({ error: 'commandId must be a non-empty string' });
+      return;
+    }
+    if (!Number.isInteger(baseVersion) || baseVersion < 0) {
+      res.status(400).json({ error: 'baseVersion must be a non-negative integer' });
+      return;
+    }
+    if (typeof idempotencyKey !== 'string' || !idempotencyKey.trim()) {
+      res.status(400).json({ error: 'idempotencyKey must be a non-empty string' });
+      return;
+    }
+    if (!Array.isArray(operations) || operations.length === 0 || operations.length > 1000) {
+      res.status(400).json({ error: 'operations must contain between 1 and 1000 items' });
+      return;
+    }
+
+    try {
+      await ensureWorkbookSchema();
+      const result = await applyWorkbookCommand({
+        workbookId: id,
+        organizationId: user.organizationId,
+        userId: user.id,
+        commandId,
+        baseVersion,
+        idempotencyKey,
+        operations,
+      });
+      res.json({ ok: true, ...result });
+    } catch (error) {
+      if (error instanceof WorkbookCommandError) {
+        res
+          .status(error.statusCode)
+          .json({ error: error.message, code: error.code, ...error.details });
+      } else {
+        throw error;
+      }
+    }
+  })
+);
+
+router.get(
+  '/:id/revisions',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const rows = await queryHelpers.queryAll<{
+      id: string;
+      version: number;
+      command_id: string;
+      created_by: string;
+      created_at: string;
+    }>(
+      `SELECT id, version, command_id, created_by, created_at
+       FROM generated_workbook_revisions
+       WHERE workbook_id = ? AND organization_id = ?
+       ORDER BY version DESC`,
+      [req.params.id, user.organizationId]
+    );
+    res.json({ revisions: rows });
+  })
+);
+
+router.post(
+  '/:id/revisions/:version/undo',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const commandVersion = Number(req.params.version);
+    const baseVersion = Number(req.body?.baseVersion);
+    if (!Number.isInteger(commandVersion) || !Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'command and base versions must be integers' });
+      return;
+    }
+    try {
+      const result = await undoWorkbookCommand({
+        workbookId: req.params.id,
+        organizationId: user.organizationId,
+        userId: user.id,
+        commandVersion,
+        baseVersion,
+        idempotencyKey:
+          typeof req.body?.idempotencyKey === 'string'
+            ? req.body.idempotencyKey
+            : `undo:${commandVersion}:${uuidv4()}`,
+      });
+      res.json({ ok: true, ...result });
+    } catch (error) {
+      if (error instanceof WorkbookCommandError) {
+        res.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+          ...(error.details || {}),
+        });
+        return;
+      }
+      throw error;
+    }
+  })
+);
+
+router.post(
+  '/:id/revisions/:version/restore',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const sourceVersion = Number(req.params.version);
+    const baseVersion = Number(req.body?.baseVersion);
+    if (!Number.isInteger(sourceVersion) || !Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'source and base versions must be integers' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, COALESCE(version, 0) AS version
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    if (head.version !== baseVersion) {
+      res.status(409).json({
+        error: 'Workbook version conflict',
+        code: 'WORKBOOK_VERSION_CONFLICT',
+        expectedVersion: baseVersion,
+        currentVersion: head.version,
+      });
+      return;
+    }
+    const source = await queryHelpers.queryOne<{ schema_json: string }>(
+      `SELECT schema_json FROM generated_workbook_revisions
+       WHERE workbook_id = ? AND organization_id = ? AND version = ?`,
+      [req.params.id, user.organizationId, sourceVersion]
+    );
+    if (!source) {
+      res.status(404).json({ error: 'Workbook revision not found' });
+      return;
+    }
+    let headSchema: WorkbookSchema;
+    let targetSchema: WorkbookSchema;
+    try {
+      headSchema = JSON.parse(head.schema_json) as WorkbookSchema;
+      targetSchema = JSON.parse(source.schema_json) as WorkbookSchema;
+    } catch {
+      res.status(422).json({ error: 'Workbook revision contains invalid schema JSON' });
+      return;
+    }
+    const headSheetIds = new Set(
+      (headSchema.sheets || []).map((sheet) => sheet.id).filter(Boolean)
+    );
+    const targetSheetIds = new Set(
+      (targetSchema.sheets || []).map((sheet) => sheet.id).filter(Boolean)
+    );
+    const restoredSheetIds = [...targetSheetIds].filter((sheetId) => !headSheetIds.has(sheetId));
+    const removedSheetIds = [...headSheetIds].filter((sheetId) => !targetSheetIds.has(sheetId));
+    const nextVersion = head.version + 1;
+    const mutationKey = `restore:${sourceVersion}:${uuidv4()}`;
+    const persisted = await queryHelpers.transaction(async () => {
+      const result = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks
+         SET schema_json = ?, version = ?, last_mutation_key = ?, approval_current = 0
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [
+          source.schema_json,
+          nextVersion,
+          mutationKey,
+          req.params.id,
+          user.organizationId,
+          head.version,
+        ]
+      );
+      if (!result.changes) return false;
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_revisions
+         (id, workbook_id, organization_id, version, command_id, idempotency_key,
+          base_schema_json, schema_json, operations_json, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          nextVersion,
+          'xlsx.versions.restore',
+          mutationKey,
+          head.schema_json,
+          source.schema_json,
+          JSON.stringify([{ sourceVersion }]),
+          user.id,
+        ]
+      );
+      for (const sheetId of restoredSheetIds) {
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbook_comments
+           SET anchor_state = 'active', updated_at = CURRENT_TIMESTAMP
+           WHERE workbook_id = ? AND organization_id = ? AND sheet_id = ?
+             AND deleted_at IS NULL`,
+          [req.params.id, user.organizationId, sheetId]
+        );
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbook_source_bindings
+           SET anchor_state = 'active', updated_at = CURRENT_TIMESTAMP
+           WHERE workbook_id = ? AND organization_id = ? AND sheet_id = ?`,
+          [req.params.id, user.organizationId, sheetId]
+        );
+      }
+      for (const sheetId of removedSheetIds) {
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbook_comments
+           SET anchor_state = 'orphaned', updated_at = CURRENT_TIMESTAMP
+           WHERE workbook_id = ? AND organization_id = ? AND sheet_id = ?
+             AND deleted_at IS NULL`,
+          [req.params.id, user.organizationId, sheetId]
+        );
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbook_source_bindings
+           SET anchor_state = 'orphaned', updated_at = CURRENT_TIMESTAMP
+           WHERE workbook_id = ? AND organization_id = ? AND sheet_id = ?`,
+          [req.params.id, user.organizationId, sheetId]
+        );
+      }
+      return true;
+    });
+    if (!persisted) {
+      res
+        .status(409)
+        .json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      return;
+    }
+    workbookCache.delete(req.params.id);
+    res.json({
+      ok: true,
+      sourceVersion,
+      version: nextVersion,
+      restoredCommentSheetIds: restoredSheetIds,
+      orphanedCommentSheetIds: removedSheetIds,
+      restoredSourceSheetIds: restoredSheetIds,
+      orphanedSourceSheetIds: removedSheetIds,
+    });
+  })
+);
+
+router.get(
+  '/:id/sources',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const workbook = await queryHelpers.queryOne<{ schema_json: string }>(
+      `SELECT schema_json FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!workbook?.schema_json) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(workbook.schema_json) as WorkbookSchema;
+    } catch {
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+    const sheetNames = new Map(
+      (schema.sheets || []).filter((sheet) => sheet.id).map((sheet) => [sheet.id!, sheet.name])
+    );
+    const bindings = await queryHelpers.queryAll<{
+      id: string;
+      sheet_id: string;
+      range_ref: string;
+      label: string;
+      source_ref: string | null;
+      source_type: string | null;
+      anchored_version: number;
+      anchor_state: 'active' | 'orphaned';
+      created_by: string;
+      created_at: string;
+    }>(
+      `SELECT id, sheet_id, range_ref, label, source_ref, source_type,
+              anchored_version, anchor_state, created_by, created_at
+       FROM generated_workbook_source_bindings
+       WHERE workbook_id = ? AND organization_id = ?
+       ORDER BY created_at ASC`,
+      [req.params.id, user.organizationId]
+    );
+    res.json({
+      bindings: (bindings || []).map((binding) => ({
+        id: binding.id,
+        sheetId: binding.sheet_id,
+        sheet: sheetNames.get(binding.sheet_id) || null,
+        range: binding.range_ref,
+        label: binding.label,
+        sourceRef: binding.source_ref,
+        sourceType: binding.source_type,
+        anchoredVersion: binding.anchored_version,
+        anchorState: binding.anchor_state,
+        createdBy: binding.created_by,
+        createdAt: binding.created_at,
+      })),
+    });
+  })
+);
+
+router.post(
+  '/:id/sources',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const label = typeof req.body?.label === 'string' ? req.body.label.trim() : '';
+    const sourceRef = typeof req.body?.sourceRef === 'string' ? req.body.sourceRef.trim() : null;
+    const sourceType =
+      typeof req.body?.sourceType === 'string' ? req.body.sourceType.trim() : null;
+    const sheetId = typeof req.body?.sheetId === 'string' ? req.body.sheetId : '';
+    const rangeRef =
+      typeof req.body?.range === 'string' ? req.body.range.trim().toUpperCase() : '';
+    const idempotencyKey =
+      typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey.trim() : '';
+    const baseVersion = Number(req.body?.baseVersion);
+    if (!label || label.length > 500) {
+      res.status(400).json({ error: 'label must contain between 1 and 500 characters' });
+      return;
+    }
+    if (!sheetId || !isValidRangeRef(rangeRef)) {
+      res.status(400).json({ error: 'A valid sheetId and range are required' });
+      return;
+    }
+    if (!idempotencyKey || !Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'idempotencyKey and integer baseVersion are required' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, COALESCE(version, 0) AS version
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head?.schema_json) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const existing = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM generated_workbook_source_bindings
+       WHERE workbook_id = ? AND organization_id = ? AND idempotency_key = ?`,
+      [req.params.id, user.organizationId, idempotencyKey]
+    );
+    if (existing) {
+      res.status(200).json({ id: existing.id, duplicate: true, version: head.version });
+      return;
+    }
+    if (head.version !== baseVersion) {
+      res.status(409).json({
+        error: 'Workbook version conflict',
+        code: 'WORKBOOK_VERSION_CONFLICT',
+        expectedVersion: baseVersion,
+        currentVersion: head.version,
+      });
+      return;
+    }
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(head.schema_json) as WorkbookSchema;
+    } catch {
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+    if (!(schema.sheets || []).some((sheet) => sheet.id === sheetId)) {
+      res.status(400).json({ error: 'Unknown sheetId' });
+      return;
+    }
+    const bindingId = uuidv4();
+    const nextVersion = head.version + 1;
+    const persisted = await queryHelpers.transaction(async () => {
+      const updated = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks
+         SET version = ?, last_mutation_key = ?, approval_current = 0
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [nextVersion, idempotencyKey, req.params.id, user.organizationId, head.version]
+      );
+      if (!updated.changes) return false;
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_source_bindings
+         (id, workbook_id, organization_id, sheet_id, range_ref, label, source_ref,
+          source_type, anchored_version, idempotency_key, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          bindingId,
+          req.params.id,
+          user.organizationId,
+          sheetId,
+          rangeRef,
+          label,
+          sourceRef,
+          sourceType,
+          nextVersion,
+          idempotencyKey,
+          user.id,
+        ]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_revisions
+         (id, workbook_id, organization_id, version, command_id, idempotency_key,
+          base_schema_json, schema_json, operations_json, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          nextVersion,
+          'xlsx.sources.bind',
+          idempotencyKey,
+          head.schema_json,
+          head.schema_json,
+          JSON.stringify([{ bindingId, sheetId, range: rangeRef, label, sourceRef, sourceType }]),
+          user.id,
+        ]
+      );
+      return true;
+    });
+    if (!persisted) {
+      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      return;
+    }
+    workbookCache.delete(req.params.id);
+    res.status(201).json({
+      id: bindingId,
+      duplicate: false,
+      version: nextVersion,
+      binding: { sheetId, range: rangeRef, label, sourceRef, sourceType },
+    });
+  })
+);
+
+router.delete(
+  '/:id/sources/:bindingId',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const baseVersion = Number(req.body?.baseVersion);
+    if (!Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'baseVersion must be an integer' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, COALESCE(version, 0) AS version
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    if (head.version !== baseVersion) {
+      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      return;
+    }
+    const binding = await queryHelpers.queryOne<{
+      id: string;
+      sheet_id: string;
+      range_ref: string;
+      label: string;
+      source_ref: string | null;
+      source_type: string | null;
+    }>(
+      `SELECT id, sheet_id, range_ref, label, source_ref, source_type
+       FROM generated_workbook_source_bindings
+       WHERE id = ? AND workbook_id = ? AND organization_id = ?`,
+      [req.params.bindingId, req.params.id, user.organizationId]
+    );
+    if (!binding) {
+      res.status(404).json({ error: 'Source binding not found' });
+      return;
+    }
+    const nextVersion = head.version + 1;
+    const mutationKey = `source-unbind:${req.params.bindingId}:${uuidv4()}`;
+    const persisted = await queryHelpers.transaction(async () => {
+      const updated = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks
+         SET version = ?, last_mutation_key = ?, approval_current = 0
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [nextVersion, mutationKey, req.params.id, user.organizationId, head.version]
+      );
+      if (!updated.changes) return false;
+      await queryHelpers.queryRun(
+        `DELETE FROM generated_workbook_source_bindings
+         WHERE id = ? AND workbook_id = ? AND organization_id = ?`,
+        [binding.id, req.params.id, user.organizationId]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_revisions
+         (id, workbook_id, organization_id, version, command_id, idempotency_key,
+          base_schema_json, schema_json, operations_json, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          nextVersion,
+          'xlsx.sources.unbind',
+          mutationKey,
+          head.schema_json,
+          head.schema_json,
+          JSON.stringify([{ bindingId: binding.id, ...binding }]),
+          user.id,
+        ]
+      );
+      return true;
+    });
+    if (!persisted) {
+      res.status(409).json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      return;
+    }
+    workbookCache.delete(req.params.id);
+    res.json({ ok: true, id: binding.id, version: nextVersion });
+  })
+);
+
+router.get(
+  '/:id/comments',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const workbook = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!workbook) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const requestedStatus = String(req.query.status || 'open');
+    if (!['open', 'resolved', 'all'].includes(requestedStatus)) {
+      res.status(400).json({ error: 'status must be open, resolved or all' });
+      return;
+    }
+    const params: unknown[] = [req.params.id, user.organizationId];
+    let filters = `workbook_id = ? AND organization_id = ? AND deleted_at IS NULL`;
+    if (requestedStatus !== 'all') {
+      filters += ` AND status = ?`;
+      params.push(requestedStatus);
+    }
+    if (typeof req.query.sheetId === 'string' && req.query.sheetId) {
+      filters += ` AND sheet_id = ?`;
+      params.push(req.query.sheetId);
+    }
+    const comments = await queryHelpers.queryAll(
+      `SELECT id, workbook_id, sheet_id, range_ref, anchored_version,
+              parent_comment_id, body, status, anchor_state, created_by,
+              resolved_by, resolved_at, created_at, updated_at
+       FROM generated_workbook_comments
+       WHERE ${filters}
+       ORDER BY created_at ASC`,
+      params
+    );
+    res.json({ comments: comments || [] });
+  })
+);
+
+router.post(
+  '/:id/comments',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+    const idempotencyKey =
+      typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey.trim() : '';
+    const parentCommentId =
+      typeof req.body?.parentCommentId === 'string' ? req.body.parentCommentId : null;
+    if (!body || body.length > 10_000) {
+      res.status(400).json({ error: 'body must contain between 1 and 10000 characters' });
+      return;
+    }
+    if (!idempotencyKey) {
+      res.status(400).json({ error: 'idempotencyKey must be a non-empty string' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const workbook = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, COALESCE(version, 0) AS version
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!workbook?.schema_json) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(workbook.schema_json);
+    } catch {
+      res.status(500).json({ error: 'Stored workbook schema is corrupted' });
+      return;
+    }
+    const idsAdded = ensureStableSheetIds(schema);
+    const anchor: { sheetId?: unknown; range?: unknown } =
+      req.body?.anchor && typeof req.body.anchor === 'object' ? req.body.anchor : {};
+    let sheetId = typeof anchor.sheetId === 'string' ? anchor.sheetId : null;
+    let rangeRef = typeof anchor.range === 'string' ? anchor.range.trim().toUpperCase() : null;
+    if (sheetId && !schema.sheets.some((sheet) => sheet.id === sheetId)) {
+      res.status(400).json({ error: 'Unknown sheetId' });
+      return;
+    }
+    if (rangeRef && (!sheetId || !isValidRangeRef(rangeRef))) {
+      res.status(400).json({ error: 'A valid range requires a sheetId' });
+      return;
+    }
+    if (parentCommentId) {
+      const parent = await queryHelpers.queryOne<{
+        sheet_id: string | null;
+        range_ref: string | null;
+      }>(
+        `SELECT sheet_id, range_ref FROM generated_workbook_comments
+         WHERE id = ? AND workbook_id = ? AND organization_id = ? AND deleted_at IS NULL`,
+        [parentCommentId, req.params.id, user.organizationId]
+      );
+      if (!parent) {
+        res.status(404).json({ error: 'Parent comment not found' });
+        return;
+      }
+      sheetId = parent.sheet_id;
+      rangeRef = parent.range_ref;
+    }
+    const existing = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM generated_workbook_comments
+       WHERE workbook_id = ? AND organization_id = ? AND idempotency_key = ?`,
+      [req.params.id, user.organizationId, idempotencyKey]
+    );
+    if (existing) {
+      res.status(200).json({ id: existing.id, duplicate: true });
+      return;
+    }
+    const commentId = uuidv4();
+    await queryHelpers.transaction(async () => {
+      if (idsAdded) {
+        await queryHelpers.queryRun(
+          `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+          [JSON.stringify(schema), req.params.id, user.organizationId]
+        );
+      }
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_comments
+         (id, workbook_id, organization_id, sheet_id, range_ref, anchored_version,
+          parent_comment_id, body, idempotency_key, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          commentId,
+          req.params.id,
+          user.organizationId,
+          sheetId,
+          rangeRef,
+          workbook.version,
+          parentCommentId,
+          body,
+          idempotencyKey,
+          user.id,
+        ]
+      );
+    });
+    res.status(201).json({
+      id: commentId,
+      duplicate: false,
+      anchor: { sheetId, range: rangeRef, version: workbook.version },
+    });
+  })
+);
+
+router.patch(
+  '/:id/comments/:commentId/status',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const status = req.body?.status;
+    if (!['open', 'resolved'].includes(status)) {
+      res.status(400).json({ error: 'status must be open or resolved' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const result = await queryHelpers.queryRun(
+      `UPDATE generated_workbook_comments
+       SET status = ?, resolved_by = ?, resolved_at = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND workbook_id = ? AND organization_id = ? AND deleted_at IS NULL`,
+      [
+        status,
+        status === 'resolved' ? user.id : null,
+        status === 'resolved' ? new Date().toISOString() : null,
+        req.params.commentId,
+        req.params.id,
+        user.organizationId,
+      ]
+    );
+    if (!result.changes) {
+      res.status(404).json({ error: 'Comment not found' });
+      return;
+    }
+    res.json({ ok: true, id: req.params.commentId, status });
+  })
+);
+
+router.patch(
+  '/:id/title',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const title = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
+    const baseVersion = Number(req.body?.baseVersion);
+    if (!title || title.length > 240) {
+      res.status(400).json({ error: 'Workbook title must contain 1-240 characters' });
+      return;
+    }
+    if (!Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'baseVersion must be an integer' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ schema_json: string; version: number }>(
+      `SELECT schema_json, COALESCE(version, 0) AS version
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    if (head.version !== baseVersion) {
+      res.status(409).json({
+        error: 'Workbook version conflict',
+        code: 'WORKBOOK_VERSION_CONFLICT',
+        expectedVersion: baseVersion,
+        currentVersion: head.version,
+      });
+      return;
+    }
+    let schema: WorkbookSchema;
+    try {
+      schema = JSON.parse(head.schema_json) as WorkbookSchema;
+    } catch {
+      res.status(422).json({ error: 'Workbook contains invalid schema JSON' });
+      return;
+    }
+    if (schema.title === title) {
+      res.json({ ok: true, title, version: head.version, unchanged: true });
+      return;
+    }
+    const nextSchema = { ...schema, title };
+    const nextSchemaJson = JSON.stringify(nextSchema);
+    const nextVersion = head.version + 1;
+    const mutationKey = `title:${uuidv4()}`;
+    const persisted = await queryHelpers.transaction(async () => {
+      const result = await queryHelpers.queryRun(
+        `UPDATE generated_workbooks
+         SET title = ?, schema_json = ?, version = ?, last_mutation_key = ?, approval_current = 0
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [
+          title,
+          nextSchemaJson,
+          nextVersion,
+          mutationKey,
+          req.params.id,
+          user.organizationId,
+          head.version,
+        ]
+      );
+      if (!result.changes) return false;
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_revisions
+         (id, workbook_id, organization_id, version, command_id, idempotency_key,
+          base_schema_json, schema_json, operations_json, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          nextVersion,
+          'xlsx.workbook.rename',
+          mutationKey,
+          head.schema_json,
+          nextSchemaJson,
+          JSON.stringify([{ title }]),
+          user.id,
+        ]
+      );
+      return true;
+    });
+    if (!persisted) {
+      res
+        .status(409)
+        .json({ error: 'Workbook version conflict', code: 'WORKBOOK_VERSION_CONFLICT' });
+      return;
+    }
+    workbookCache.delete(req.params.id);
+    res.json({ ok: true, title, version: nextVersion, unchanged: false });
+  })
+);
+
+router.patch(
+  '/:id/governance',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const field = req.body?.field;
+    const value = req.body?.value;
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    const baseVersion = Number(req.body?.baseVersion);
+    const classifications = ['public', 'internal', 'confidential'] as const;
+    const lifecycleStatuses = ['draft', 'in_review', 'approved', 'final'] as const;
+    if (field !== 'classification' && field !== 'lifecycleStatus') {
+      res.status(400).json({ error: 'field must be classification or lifecycleStatus' });
+      return;
+    }
+    if (!Number.isInteger(baseVersion)) {
+      res.status(400).json({ error: 'baseVersion must be an integer' });
+      return;
+    }
+    if (
+      (field === 'classification' && !classifications.includes(value)) ||
+      (field === 'lifecycleStatus' && !lifecycleStatuses.includes(value))
+    ) {
+      res.status(400).json({ error: 'Unsupported governance value' });
+      return;
+    }
+
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{
+      version: number;
+      classification: string | null;
+      lifecycle_status: string | null;
+      approval_current: number | boolean | null;
+      quality_report_json: string | null;
+    }>(
+      `SELECT COALESCE(version, 0) AS version, classification, lifecycle_status,
+              approval_current, quality_report_json
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    if (head.version !== baseVersion) {
+      res.status(409).json({
+        error: 'Workbook version conflict',
+        code: 'WORKBOOK_VERSION_CONFLICT',
+        expectedVersion: baseVersion,
+        currentVersion: head.version,
+      });
+      return;
+    }
+
+    const previousValue =
+      field === 'classification'
+        ? asClassification(head.classification)
+        : lifecycleStatuses.includes(head.lifecycle_status as (typeof lifecycleStatuses)[number])
+          ? head.lifecycle_status!
+          : 'draft';
+    if (previousValue === value) {
+      res.json({
+        ok: true,
+        classification: asClassification(head.classification),
+        lifecycleStatus: head.lifecycle_status || 'draft',
+        approvalCurrent: head.approval_current === true || head.approval_current === 1,
+        version: head.version,
+        unchanged: true,
+      });
+      return;
+    }
+
+    if (field === 'classification') {
+      const rank = { public: 0, internal: 1, confidential: 2 } as const;
+      if (rank[value as keyof typeof rank] < rank[previousValue as keyof typeof rank] && !reason) {
+        res.status(422).json({
+          error: 'A reason is required to lower workbook classification',
+          code: 'CLASSIFICATION_DOWNGRADE_REASON_REQUIRED',
+        });
+        return;
+      }
+    } else if (value === 'in_review') {
+      res.status(409).json({
+        error: 'A reviewer assignment is required to submit a workbook for review',
+        code: 'WORKBOOK_REVIEW_ASSIGNMENT_REQUIRED',
+      });
+      return;
+    } else if (value === 'approved' || value === 'final') {
+      const approvalCurrent = head.approval_current === true || head.approval_current === 1;
+      if (!approvalCurrent) {
+        res.status(409).json({
+          error: 'Current approval is required for this lifecycle transition',
+          code: 'WORKBOOK_APPROVAL_REQUIRED',
+        });
+        return;
+      }
+      if (value === 'final' && countCriticalQaFindings(head.quality_report_json) > 0) {
+        res.status(409).json({
+          error: 'Critical QA findings block final lifecycle status',
+          code: 'WORKBOOK_QA_BLOCKED',
+        });
+        return;
+      }
+    }
+
+    const column = field === 'classification' ? 'classification' : 'lifecycle_status';
+    await queryHelpers.transaction(async () => {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET ${column} = ?${field === 'classification' ? ', approval_current = 0' : ''}
+         WHERE id = ? AND organization_id = ? AND COALESCE(version, 0) = ?`,
+        [value, req.params.id, user.organizationId, head.version]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_governance_events
+         (id, workbook_id, organization_id, event_type, previous_value, next_value,
+          reason, workbook_version, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          field === 'classification' ? 'classification.changed' : 'lifecycle.changed',
+          previousValue,
+          value,
+          reason || null,
+          head.version,
+          user.id,
+        ]
+      );
+    });
+    res.json({
+      ok: true,
+      classification: field === 'classification' ? value : asClassification(head.classification),
+      lifecycleStatus: field === 'lifecycleStatus' ? value : head.lifecycle_status || 'draft',
+      approvalCurrent:
+        field === 'classification'
+          ? false
+          : head.approval_current === true || head.approval_current === 1,
+      version: head.version,
+      unchanged: false,
+    });
+  })
+);
+
+router.get(
+  '/:id/governance-events',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const workbook = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!workbook) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const events = await queryHelpers.queryAll<{
+      id: string;
+      event_type: string;
+      previous_value: string | null;
+      next_value: string | null;
+      reason: string | null;
+      workbook_version: number;
+      created_by: string;
+      created_at: string;
+    }>(
+      `SELECT id, event_type, previous_value, next_value, reason,
+              workbook_version, created_by, created_at
+       FROM generated_workbook_governance_events
+       WHERE workbook_id = ? AND organization_id = ?
+       ORDER BY created_at DESC LIMIT 200`,
+      [req.params.id, user.organizationId]
+    );
+    res.json({
+      events: events.map((event) => ({
+        id: event.id,
+        eventType: event.event_type,
+        previousValue: event.previous_value,
+        nextValue: event.next_value,
+        reason: event.reason,
+        workbookVersion: event.workbook_version,
+        createdBy: event.created_by,
+        createdAt: event.created_at,
+      })),
+    });
+  })
+);
+
+router.get(
+  '/:id/approval-state',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{
+      version: number;
+      approval_current: number | boolean | null;
+    }>(
+      `SELECT COALESCE(version, 0) AS version, approval_current
+       FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const approval = await ArtifactApprovalService.getArtifactApprovalStatus(
+      user.organizationId,
+      'workbook',
+      req.params.id
+    );
+    res.json({
+      ...approval,
+      workbookVersion: head.version,
+      currentForVersion: head.approval_current === true || head.approval_current === 1,
+    });
+  })
+);
+
+router.post(
+  '/:id/approval/submit',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const assignedToUserId = String(req.body?.assignedToUserId || '').trim();
+    if (!assignedToUserId) {
+      res.status(400).json({ error: 'assignedToUserId is required' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ version: number }>(
+      `SELECT COALESCE(version, 0) AS version FROM generated_workbooks
+       WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const assignment = await ArtifactApprovalService.submitForReview({
+      orgId: user.organizationId,
+      artifactType: 'workbook',
+      artifactId: req.params.id,
+      assignedToUserId,
+      submittedBy: user.id,
+    });
+    await queryHelpers.transaction(async () => {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET lifecycle_status = 'in_review', approval_current = 0
+         WHERE id = ? AND organization_id = ?`,
+        [req.params.id, user.organizationId]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_governance_events
+         (id, workbook_id, organization_id, event_type, previous_value, next_value,
+          reason, workbook_version, created_by)
+         VALUES (?, ?, ?, 'approval.submitted', 'draft', 'in_review', ?, ?, ?)`,
+        [
+          uuidv4(),
+          req.params.id,
+          user.organizationId,
+          `Assigned reviewer: ${assignedToUserId}`,
+          head.version,
+          user.id,
+        ]
+      );
+    });
+    res.status(201).json({
+      assignment,
+      state: 'review',
+      currentForVersion: false,
+      workbookVersion: head.version,
+    });
+  })
+);
+
+router.post(
+  '/:id/approval/approve',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ version: number }>(
+      `SELECT COALESCE(version, 0) AS version FROM generated_workbooks
+       WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const assignment = await ArtifactApprovalService.approveArtifact({
+      orgId: user.organizationId,
+      artifactType: 'workbook',
+      artifactId: req.params.id,
+      approvedByUserId: user.id,
+    });
+    await queryHelpers.transaction(async () => {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET lifecycle_status = 'approved', approval_current = 1
+         WHERE id = ? AND organization_id = ?`,
+        [req.params.id, user.organizationId]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_governance_events
+         (id, workbook_id, organization_id, event_type, previous_value, next_value,
+          reason, workbook_version, created_by)
+         VALUES (?, ?, ?, 'approval.approved', 'in_review', 'approved', NULL, ?, ?)`,
+        [uuidv4(), req.params.id, user.organizationId, head.version, user.id]
+      );
+    });
+    res.json({ assignment, state: 'approved', currentForVersion: true });
+  })
+);
+
+router.post(
+  '/:id/approval/reject',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const user = req.user;
+    if (!user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (!reason) {
+      res.status(422).json({ error: 'A rejection reason is required' });
+      return;
+    }
+    await ensureWorkbookSchema();
+    const head = await queryHelpers.queryOne<{ version: number }>(
+      `SELECT COALESCE(version, 0) AS version FROM generated_workbooks
+       WHERE id = ? AND organization_id = ?`,
+      [req.params.id, user.organizationId]
+    );
+    if (!head) {
+      res.status(404).json({ error: 'Workbook not found' });
+      return;
+    }
+    const assignment = await ArtifactApprovalService.rejectArtifact({
+      orgId: user.organizationId,
+      artifactType: 'workbook',
+      artifactId: req.params.id,
+      rejectedByUserId: user.id,
+      reason,
+    });
+    await queryHelpers.transaction(async () => {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET lifecycle_status = 'draft', approval_current = 0
+         WHERE id = ? AND organization_id = ?`,
+        [req.params.id, user.organizationId]
+      );
+      await queryHelpers.queryRun(
+        `INSERT INTO generated_workbook_governance_events
+         (id, workbook_id, organization_id, event_type, previous_value, next_value,
+          reason, workbook_version, created_by)
+         VALUES (?, ?, ?, 'approval.rejected', 'in_review', 'draft', ?, ?, ?)`,
+        [uuidv4(), req.params.id, user.organizationId, reason, head.version, user.id]
+      );
+    });
+    res.json({ assignment, state: 'rejected', currentForVersion: false });
   })
 );
 
@@ -1218,7 +3052,10 @@ router.patch(
     if (!row?.schema_json) {
       res.status(404).json({
         error: 'Workbook not found or expired',
-        classified: createP23Error('access_denied', `Workbook ${id} not found for this organization`),
+        classified: createP23Error(
+          'access_denied',
+          `Workbook ${id} not found for this organization`
+        ),
       });
       return;
     }
@@ -1277,7 +3114,7 @@ router.patch(
     targetRow.cells[columnKey] = nextCell as (typeof sheet.rows)[number]['cells'][string];
 
     await queryHelpers.queryRun(
-      `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+      `UPDATE generated_workbooks SET schema_json = ?, approval_current = 0 WHERE id = ? AND organization_id = ?`,
       [JSON.stringify(schema), id, user.organizationId]
     );
 
@@ -1324,13 +3161,18 @@ router.get(
       file_name: string;
       file_size: number;
       quality_score: number | null;
+      version: number;
       action_contract_json?: string | null;
       source_pack_json?: string | null;
       evidence_refs_json?: string | null;
+      quality_report_json?: string | null;
+      classification: string | null;
+      lifecycle_status: string | null;
+      approval_current: number | boolean | null;
       created_by: string;
       created_at: string;
     }>(
-      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, action_contract_json, source_pack_json, evidence_refs_json, created_by, created_at
+      `SELECT id, title, description, schema_json, sheet_count, file_name, file_size, quality_score, COALESCE(version, 0) AS version, action_contract_json, source_pack_json, evidence_refs_json, quality_report_json, classification, lifecycle_status, approval_current, created_by, created_at
      FROM generated_workbooks WHERE id = ? AND organization_id = ?`,
       [id, user.organizationId]
     );
@@ -1340,7 +3182,14 @@ router.get(
       return;
     }
 
-    const schemaJson = row.schema_json ? JSON.parse(row.schema_json) : null;
+    const schemaJson: WorkbookSchema | null = row.schema_json ? JSON.parse(row.schema_json) : null;
+    if (schemaJson && ensureStableSheetIds(schemaJson)) {
+      await queryHelpers.queryRun(
+        `UPDATE generated_workbooks SET schema_json = ? WHERE id = ? AND organization_id = ?`,
+        [JSON.stringify(schemaJson), id, user.organizationId]
+      );
+      workbookCache.delete(id);
+    }
     res.json({
       id: row.id,
       title: row.title || schemaJson?.title,
@@ -1350,9 +3199,14 @@ router.get(
       file_name: row.file_name,
       file_size: row.file_size,
       quality_score: row.quality_score,
+      version: row.version,
       actionContract: row.action_contract_json ? JSON.parse(row.action_contract_json) : {},
       sourcePack: row.source_pack_json ? JSON.parse(row.source_pack_json) : {},
       evidenceRefs: row.evidence_refs_json ? JSON.parse(row.evidence_refs_json) : [],
+      qualityReport: row.quality_report_json ? JSON.parse(row.quality_report_json) : null,
+      classification: asClassification(row.classification),
+      lifecycleStatus: row.lifecycle_status || 'draft',
+      approvalCurrent: row.approval_current === true || row.approval_current === 1,
       created_by: row.created_by,
       created_at: row.created_at,
       downloadUrl: `/api/workbook/${row.id}/download`,

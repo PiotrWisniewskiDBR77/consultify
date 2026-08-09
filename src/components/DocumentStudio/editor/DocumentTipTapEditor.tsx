@@ -179,6 +179,11 @@ export const DocumentTipTapEditor: React.FC<DocumentTipTapEditorProps> = ({
       extensions,
       editable,
       content: initialDoc as unknown as Record<string, unknown>,
+      editorProps: {
+        attributes: {
+          'aria-label': 'Document content',
+        },
+      },
       onUpdate: ({ editor: ed }) => {
         if (isExternalUpdateRef.current) return;
         if (saveTimerRef.current) clearTimeout(saveTimerRef.current);

@@ -16,6 +16,7 @@ interface PresentModeProps {
   title: string;
   onExit: () => void;
   presenterView?: boolean;
+  initialIndex?: number;
 }
 
 export const PresentMode: React.FC<PresentModeProps> = ({
@@ -24,8 +25,11 @@ export const PresentMode: React.FC<PresentModeProps> = ({
   title,
   onExit,
   presenterView = false,
+  initialIndex = 0,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    Math.min(Math.max(0, initialIndex), Math.max(0, cards.length - 1))
+  );
   const [isAnimating, setIsAnimating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +79,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
 
   if (presenterView) {
     return (
-      <div className="fixed inset-0 z-modal bg-c-bg flex">
+      <div className="fixed inset-0 z-modal bg-c-bg flex" data-testid="presenter-view">
         {/* Main slide */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-4xl">
@@ -146,6 +150,7 @@ export const PresentMode: React.FC<PresentModeProps> = ({
       ref={containerRef}
       className="fixed inset-0 z-modal bg-black flex flex-col items-center justify-center"
       onClick={goNext}
+      data-testid="audience-present-view"
     >
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-c-surface">

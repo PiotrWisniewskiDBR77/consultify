@@ -875,6 +875,12 @@ export async function getDocumentGenerationWarnings(
 }
 
 export interface ExportDocumentOptions {
+  /**
+   * Draft exports are deliberately allowed before QA/approval, but must be
+   * visibly labelled. Omitted mode preserves the historical final-export
+   * behaviour for existing callers.
+   */
+  mode?: 'draft' | 'final';
   /** Actor performing the export; required to audit QA-block / override events. */
   userId?: string;
   /**
@@ -903,10 +909,14 @@ export async function exportDocumentArtifact(
   if (!artifact) throw new Error('Document artifact not found');
 
   const manifest = await buildWave5ExportManifest(artifactId, organizationId);
-  const filename = `${(artifact.title || 'document')
+  const exportMode = options.mode ?? 'final';
+  const baseFilename = (artifact.title || 'document')
     .toString()
     .replace(/[^a-z0-9_-]+/gi, '_')
-    .toLowerCase()}.${format}`;
+    .toLowerCase();
+  const filename = `${baseFilename}${exportMode === 'draft' ? '_DRAFT' : ''}.${format}`;
+  (manifest as Record<string, unknown>).exportMode = exportMode;
+  (manifest as Record<string, unknown>).draftMarkingRequired = exportMode === 'draft';
 
   // QA gate: load the schema (also needed for binary renderers below) and
   // run QA when the document type is approval-gated. The gate runs for
@@ -926,7 +936,7 @@ export async function exportDocumentArtifact(
     throw new Error('Document schema not found on artifact');
   }
 
-  if (requiresApprovalForExport(schema.documentType)) {
+  if (exportMode === 'final' && requiresApprovalForExport(schema.documentType)) {
     // Role-gated override: enforce BEFORE running QA so that an
     // unauthorized override attempt is logged independently of whether
     // QA itself would have passed.
@@ -972,9 +982,7 @@ export async function exportDocumentArtifact(
     let fabricationSample: string[] = [];
     try {
       const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-      const fab = detectDocumentFabrication(
-        schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
-      );
+      const fab = detectDocumentFabrication(schema as any);
       fabricationCount = fab.count;
       fabricationSample = fab.hits.slice(0, 5).map((h) => h.value);
     } catch (fabErr) {
@@ -2898,9 +2906,7 @@ export async function runQaForDocument(
   // detektora nigdy nie psuje raportu QA.
   try {
     const { detectDocumentFabrication } = await import('./documentFabricationCheck.js');
-    const fab = detectDocumentFabrication(
-      schema as unknown as { sections?: unknown[]; sourceRefs?: unknown[] }
-    );
+    const fab = detectDocumentFabrication(schema as any);
     report.fabrication = {
       count: fab.count,
       sample: fab.hits.slice(0, 5).map((h) => h.value),

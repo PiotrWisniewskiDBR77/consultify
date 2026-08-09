@@ -8,6 +8,7 @@
  *   POST /proposal/:id/approve  — Approve a proposal
  *   POST /proposal/:id/reject   — Reject a proposal
  *   POST /proposal/:id/execute  — Execute an approved proposal
+ *   POST /proposal/:id/undo     — Undo an applied XLSX proposal
  *   GET  /proposal/:id      — Get a proposal with audit trail
  *   GET  /proposals         — Get proposal history for current user
  *   GET  /audit/:proposalId — Get full audit trail for a proposal
@@ -274,6 +275,33 @@ router.post(
           proposal: proposal ? teresaService.toChatProposalEnvelope(proposal, result) : null,
         },
         meta: teresaMeta({ action: 'executed' }),
+      });
+    } catch (err) {
+      if (err instanceof teresaService.TeresaCopilotError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
+      throw err;
+    }
+  })
+);
+
+router.post(
+  '/proposal/:id/undo',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    try {
+      const result = await teresaService.undoProposal({
+        proposalId: req.params.id,
+        organizationId,
+        userId,
+      });
+      const proposal = await teresaService.getProposal(req.params.id, organizationId);
+      return res.json({
+        data: {
+          execution: result,
+          proposal: proposal ? teresaService.toChatProposalEnvelope(proposal, result) : null,
+        },
+        meta: teresaMeta({ action: 'undone' }),
       });
     } catch (err) {
       if (err instanceof teresaService.TeresaCopilotError) {

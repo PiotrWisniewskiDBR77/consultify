@@ -25,6 +25,7 @@ import {
 } from '@/types/materials';
 
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
+import { resolveMaterialFileFormat } from './materialFileFormat';
 import type {
   ArtifactGovernanceSummary,
   PresentationItem,
@@ -222,6 +223,7 @@ function mapReport(raw: any): ReportItem {
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
     exportFormats: Array.isArray(exportFormats) ? exportFormats : [],
+    fileFormat: resolveMaterialFileFormat(raw),
     sourceRefs: raw.source_refs_json
       ? typeof raw.source_refs_json === 'string'
         ? JSON.parse(raw.source_refs_json)
@@ -258,6 +260,7 @@ function mapArtifactReport(raw: any): ReportItem {
     createdAt: raw.createdAt || new Date().toISOString(),
     updatedAt: raw.lastTransitionAt || raw.updatedAt || new Date().toISOString(),
     exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
+    fileFormat: resolveMaterialFileFormat(raw),
     sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
     governance: mapArtifactGovernance(raw),
     sourceType: raw.originRuntime,
@@ -472,7 +475,8 @@ function mapArtifactPresentation(raw: any): PresentationItem {
  */
 export function resolveSheetOrigin(raw: any): SheetOrigin {
   const originSummary = raw?.originSummary;
-  const sourceTable = originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
+  const sourceTable =
+    originSummary && typeof originSummary === 'object' ? originSummary.sourceTable : undefined;
   return sourceTable === 'tp_tables' ? 'table_export' : 'workbook';
 }
 
@@ -506,6 +510,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       reportType: r.reportType,
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: r.exportFormats,
+      fileFormat: r.fileFormat || 'Unknown',
       governance: r.governance || baseGov,
     };
   }
@@ -524,6 +529,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       slideCount: p.slideCount,
       exportFormats: p.exportFormats,
+      fileFormat: resolveMaterialFileFormat(raw),
       governance: p.governance || baseGov,
     };
   }
@@ -543,6 +549,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
         'custom',
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: [],
+      fileFormat: resolveMaterialFileFormat(raw),
       governance: baseGov,
     };
   }
@@ -568,6 +575,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       slideCount: outline.length,
       exportFormats: [],
+      fileFormat: resolveMaterialFileFormat(raw),
       governance: baseGov,
     };
   }
@@ -584,6 +592,7 @@ export function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
       updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
       sourceInitiativeId: raw.sourceInitiativeId || raw.source_initiative_id || undefined,
       exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
+      fileFormat: resolveMaterialFileFormat(raw),
       governance: baseGov,
       sheetOrigin: resolveSheetOrigin(raw),
     };

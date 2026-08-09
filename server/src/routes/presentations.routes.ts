@@ -17,7 +17,9 @@ import { verifyToken } from '../middleware/auth.middleware.js';
 import { sanitizeOrgIdForUploadPath } from '../middleware/fileUpload.middleware.js';
 import { requireOrgAccess } from '../middleware/rbac.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
+import { exportsDir } from '../utils/storagePaths.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import ArtifactApprovalService from '../services/artifactApprovalService.js';
 import {
   createDeckComment,
   DeckCommentError,
@@ -176,6 +178,7 @@ import {
 } from '../services/report/pdf/PdfLayoutTruncationMarker.js';
 import { PptxPipelineService } from '../services/report/pptx/PptxPipelineService.js';
 import { getStorage } from '../services/storage/index.js';
+import { evaluateArtifactExportPolicy } from '../services/artifactExportPolicy.js';
 import * as artifactRegistryService from '../services/v8/artifactRegistryService.js';
 import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
@@ -184,6 +187,113 @@ import logger from '../utils/Logger.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();
+
+function parseArtifactExportMode(req: Request, res: Response): 'draft' | 'final' | null | false {
+  const raw = typeof req.query.mode === 'string' ? req.query.mode.trim().toLowerCase() : null;
+  if (raw === null) return null;
+  if (raw === 'draft' || raw === 'final') return raw;
+  res.status(400).json({
+    success: false,
+    error: 'Unsupported export mode',
+    code: 'UNSUPPORTED_EXPORT_MODE',
+  });
+  return false;
+}
+
+function markPresentationExportResponse(
+  res: Response,
+  mode: 'draft' | 'final' | null,
+  deckId: string,
+  contentVersion: unknown
+): void {
+  res.setHeader('X-Artifact-Export-Mode', mode ?? 'legacy-final');
+  res.setHeader('X-Artifact-Version-Id', presentationVersionApprovalId(deckId, contentVersion));
+  if (mode === 'draft') res.setHeader('X-Artifact-Draft', 'true');
+}
+
+function presentationExportFilename(title: unknown, extension: 'pptx' | 'pdf', draft: boolean) {
+  const safeTitle = String(title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '');
+  return `${safeTitle}${draft ? '-DRAFT' : ''}.${extension}`;
+}
+
+function presentationExportOverride(req: Request) {
+  const requested = String(req.query.overrideQualityGate || '') === 'true';
+  const reason = typeof req.query.overrideReason === 'string' ? req.query.overrideReason : null;
+  return {
+    requested,
+    permitted: canOverrideQualityGate(req as any),
+    reason,
+  };
+}
+
+function presentationVersionApprovalId(deckId: string, contentVersion: unknown): string {
+  return `${deckId}@${String(contentVersion ?? 'unknown')}`;
+}
+
+async function logPresentationApprovalAudit(
+  req: Request,
+  deckId: string,
+  action: 'approval.submitted' | 'approval.approved' | 'approval.rejected',
+  versionId: string,
+  assignment: Record<string, unknown>
+): Promise<void> {
+  await auditEventsService.log({
+    actorId: getUserId(req),
+    actorType: 'USER',
+    organizationId: getOrgId(req),
+    action,
+    resourceType: 'presentation_deck',
+    resourceId: deckId,
+    metadata: {
+      versionId,
+      assignmentId: assignment.id ?? null,
+      approvalState: assignment.state ?? null,
+      assignedToUserId: assignment.assignedToUserId ?? null,
+    },
+    ip: req.ip,
+    userAgent: req.get('user-agent') || undefined,
+  });
+}
+
+async function enforceExplicitFinalPresentationPolicy(
+  req: Request,
+  res: Response,
+  deckId: string
+): Promise<boolean> {
+  const orgId = getOrgId(req);
+  const deck = (await dbGet(
+    `SELECT version, confidentiality FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+    [deckId, orgId]
+  )) as any;
+  if (!deck) {
+    res.status(404).json({ success: false, error: 'Deck not found' });
+    return false;
+  }
+  const versionApprovalId = presentationVersionApprovalId(deckId, deck.version);
+  const approval = await ArtifactApprovalService.getArtifactApprovalStatus(
+    orgId,
+    'presentation_version',
+    versionApprovalId
+  );
+  const decision = evaluateArtifactExportPolicy({
+    mode: 'final',
+    channel: 'download',
+    classification:
+      String(deck.confidentiality || '').toLowerCase() === 'public' ? 'public' : 'internal',
+    criticalQaFindings: 0,
+    approvalCurrentForVersion: approval.state === 'approved',
+    override: presentationExportOverride(req),
+  });
+  if (decision.allowed) return true;
+  res.status(409).json({
+    success: false,
+    error: 'Final presentation export is blocked by artifact governance.',
+    code: 'ARTIFACT_EXPORT_BLOCKED',
+    mode: 'final',
+    blocks: decision.blocks,
+  });
+  return false;
+}
 
 const asyncHandler =
   (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) =>
@@ -429,23 +539,33 @@ function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: st
 // this same export_path) see the same up-to-date artifact.
 async function regeneratePptxIfStale(deck: any): Promise<any> {
   try {
-    if (!deck?.export_path) return deck;
-    const exportPath = String(deck.export_path);
+    if (!deck?.id || !deck?.organization_id) return deck;
+    const exportPath = deck.export_path
+      ? String(deck.export_path)
+      : path.join(exportsDir('presentations'), `${deck.id}.pptx`);
+    const exportMissing = !fs.existsSync(exportPath);
     const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
-    if (!deckUpdatedAt || Number.isNaN(deckUpdatedAt)) return deck;
 
     let fileMtimeMs = 0;
-    try {
-      fileMtimeMs = fs.statSync(exportPath).mtimeMs;
-    } catch {
-      // Missing file is handled by the existing fs.existsSync() check downstream.
-      return deck;
+    if (!exportMissing) {
+      try {
+        fileMtimeMs = fs.statSync(exportPath).mtimeMs;
+      } catch {
+        fileMtimeMs = 0;
+      }
     }
 
     // Small tolerance to avoid re-render churn from clock/rounding skew between the
     // DB timestamp and the filesystem mtime for a file we just wrote ourselves.
     const STALE_TOLERANCE_MS = 2000;
-    if (deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS) return deck;
+    if (
+      !exportMissing &&
+      (!deckUpdatedAt ||
+        Number.isNaN(deckUpdatedAt) ||
+        deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS)
+    ) {
+      return deck;
+    }
 
     const deckDocument = normalizeDeckDocument(deck);
     if (!deckDocument || !Array.isArray(deckDocument.cards) || deckDocument.cards.length === 0) {
@@ -494,15 +614,21 @@ async function regeneratePptxIfStale(deck: any): Promise<any> {
     fs.writeFileSync(exportPath, result.buffer);
     const exportedAtIso = new Date().toISOString();
     await dbRun(
-      `UPDATE presentation_decks SET slide_count = ?, exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
-      [result.slideCount, exportedAtIso, deck.id, deck.organization_id]
+      `UPDATE presentation_decks SET slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      [result.slideCount, exportPath, exportedAtIso, deck.id, deck.organization_id]
     );
     logger.info('[Presentations] Re-rendered stale PPTX export before download', {
       deckId: deck.id,
       slideCount: result.slideCount,
     });
 
-    return { ...deck, exported_at: exportedAtIso, slide_count: result.slideCount };
+    return {
+      ...deck,
+      export_path: exportPath,
+      export_format: 'pptx',
+      exported_at: exportedAtIso,
+      slide_count: result.slideCount,
+    };
   } catch (error) {
     // Regeneration failure must never block the download of the last-known-good file.
     logger.warn('[Presentations] PPTX re-render before download failed; serving existing file', {
@@ -1691,12 +1817,80 @@ router.post(
 
     const deckId = uuidv4().replace(/-/g, '');
     const slideCount = Array.isArray(slides) ? slides.length : 0;
+    const nowIso = new Date().toISOString();
+    const builderCards = Array.isArray(slides)
+      ? slides.map((slide: any, index: number) => {
+          const content = slide?.content || slide || {};
+          const cardId = uuidv4().replace(/-/g, '');
+          const blocks: any[] = [];
+          const pushBlock = (type: string, blockContent: Record<string, unknown>) => {
+            blocks.push({
+              block_id: uuidv4().replace(/-/g, ''),
+              card_id: cardId,
+              type,
+              content: blockContent,
+              is_refreshable: false,
+              position: { area: 'full', order: blocks.length },
+              ai_editable: true,
+            });
+          };
+          const slideTitle = String(content?.title || `Slide ${index + 1}`);
+          pushBlock('heading', { text: slideTitle, level: 2 });
+          if (Array.isArray(content?.bullets) && content.bullets.length > 0) {
+            pushBlock('bullet_list', { items: content.bullets.map(String) });
+          } else if (content?.text) {
+            pushBlock('paragraph', { text: String(content.text) });
+          }
+          return {
+            card_id: cardId,
+            deck_id: deckId,
+            order_index: index,
+            intent: slide?.type || 'content',
+            layout_id: 'auto',
+            title: slideTitle,
+            blocks: Array.isArray(content?.blocks) && content.blocks.length > 0 ? content.blocks : blocks,
+            source_refs: [],
+            has_refreshable_data: false,
+            background: { type: 'theme' },
+            animations: { entrance: 'none', block_stagger: false },
+            is_locked: false,
+          };
+        })
+      : [];
+    const initialDeckJson = JSON.stringify({
+      deck_id: deckId,
+      organization_id: orgId,
+      title: String(title),
+      theme_id: theme || 'modern',
+      presentation_mode: 'show',
+      communication_register: 'professional',
+      image_style_preset: 'minimal_no_images',
+      color_set_id: 'midnight_navy',
+      status: 'draft',
+      card_size: '16:9',
+      cards: builderCards,
+      source_refs: [],
+      generation_settings: {
+        text_mode: 'preserve',
+        content_depth: 'concise',
+        audience: 'internal',
+        tone: 'professional',
+        language: 'en',
+        image_source: 'none',
+      },
+      animations_enabled: true,
+      share_settings: { is_shared: false, permissions: 'view' },
+      speaker_notes_generated: false,
+      created_by: userId,
+      created_at: nowIso,
+      updated_at: nowIso,
+    });
 
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -1710,17 +1904,19 @@ router.post(
             sourcePack: sourcePack || {},
             evidenceRefs: Array.isArray(evidenceRefs) ? evidenceRefs : [],
           }),
+          initialDeckJson,
         ]
       );
 
       if (Array.isArray(slides)) {
         for (let i = 0; i < slides.length; i++) {
           const slide = slides[i];
-          const cardId = uuidv4().replace(/-/g, '');
+          const cardId = builderCards[i].card_id;
+          const content = slide.content || slide;
           await dbRun(
             `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
+            [cardId, deckId, i, slide.type || 'content', JSON.stringify(content)]
           );
         }
       }
@@ -1837,8 +2033,8 @@ router.post(
     try {
       await ensureDeckLineageSchema();
       await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -1942,6 +2138,120 @@ router.get(
 );
 
 router.get(
+  '/decks/:id/approval-state',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const approval = await ArtifactApprovalService.getArtifactApprovalStatus(
+      orgId,
+      'presentation_version',
+      presentationVersionApprovalId(String(req.params.id), versionId)
+    );
+    res.json({
+      success: true,
+      data: { ...approval, versionId, currentForVersion: approval.state === 'approved' },
+    });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/submit',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const assignedToUserId = String(req.body?.assignedToUserId || '').trim();
+    if (!assignedToUserId) {
+      return res.status(400).json({ success: false, error: 'assignedToUserId is required' });
+    }
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.submitForReview({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      assignedToUserId,
+      submittedBy: userId,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.submitted',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res
+      .status(201)
+      .json({ success: true, data: { assignment, versionId, currentForVersion: false } });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/approve',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.approveArtifact({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      approvedByUserId: userId,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.approved',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res.json({ success: true, data: { assignment, versionId, currentForVersion: true } });
+  })
+);
+
+router.post(
+  '/decks/:id/approval/reject',
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const deck = (await dbGet(
+      `SELECT version FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [req.params.id, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+    const versionId = String(deck.version ?? 'unknown');
+    const assignment = await ArtifactApprovalService.rejectArtifact({
+      orgId,
+      artifactType: 'presentation_version',
+      artifactId: presentationVersionApprovalId(String(req.params.id), versionId),
+      rejectedByUserId: userId,
+      reason: req.body?.reason ? String(req.body.reason) : undefined,
+    });
+    await logPresentationApprovalAudit(
+      req,
+      String(req.params.id),
+      'approval.rejected',
+      versionId,
+      assignment as unknown as Record<string, unknown>
+    );
+    res.json({ success: true, data: { assignment, versionId, currentForVersion: false } });
+  })
+);
+
+router.get(
   '/decks/:id/download',
   asyncHandler(async (req, res) => {
     if (!ensurePresentationCapability(req, res, 'presentation_export')) return;
@@ -1952,6 +2262,9 @@ router.get(
     if (!authReq.user?.id && !authReq.userId)
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation export'))) return;
+    const exportMode = parseArtifactExportMode(req, res);
+    if (exportMode === false) return;
+    const isDraftExport = exportMode === 'draft';
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
     const artifact = await artifactRegistryService.getArtifactByOrigin({
@@ -1967,6 +2280,13 @@ router.get(
 
     // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
     if (
+      exportMode === 'final' &&
+      !(await enforceExplicitFinalPresentationPolicy(req, res, String(req.params.id || '')))
+    ) {
+      return;
+    }
+    if (
+      exportMode === null &&
       !applyExportApprovalGate({
         res,
         organizationId: orgId,
@@ -1984,16 +2304,32 @@ router.get(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
-    if (!deck || !deck.export_path)
+    if (!deck)
       return res.status(404).json({ success: false, error: 'Export not available' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
-    const quality = await enforceQualityGateForExport({
-      organizationId: orgId,
-      deckId: String(req.params.id || ''),
-      format: 'pptx',
-      allowOverride: canOverrideQualityGate(req),
-    });
+    if (
+      exportMode === 'final' &&
+      presentationExportOverride(req).requested &&
+      !presentationExportOverride(req).reason?.trim()
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: 'An override reason is required for final presentation export.',
+        code: 'ARTIFACT_EXPORT_BLOCKED',
+        mode: 'final',
+        blocks: ['OVERRIDE_REASON_REQUIRED'],
+      });
+    }
+
+    const quality = isDraftExport
+      ? { ok: true as const, report: null }
+      : await enforceQualityGateForExport({
+          organizationId: orgId,
+          deckId: String(req.params.id || ''),
+          format: 'pptx',
+          allowOverride: canOverrideQualityGate(req),
+        });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
@@ -2019,13 +2355,13 @@ router.get(
       return res.status(quality.status ?? 422).json(quality.payload);
     }
 
-    if (!fs.existsSync(deck.export_path))
-      return res.status(404).json({ success: false, error: 'File not found' });
-
-    // P0 fix: deck_json can have been edited (autosave / agent-edit) after the on-disk
-    // PPTX was last rendered. Re-render from the current deck_json when stale so the
-    // download reflects the latest edits instead of the file from creation time.
+    // Ensure a direct-created deck gets its first PPTX lazily, and an edited deck gets
+    // a fresh one. Both paths use the same controlled exports directory and persist
+    // export_path, so later downloads and bundle exports share the canonical file.
     const freshDeck = await regeneratePptxIfStale(deck);
+    if (!freshDeck.export_path || !fs.existsSync(freshDeck.export_path)) {
+      return res.status(404).json({ success: false, error: 'Export not available' });
+    }
 
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
@@ -2046,14 +2382,15 @@ router.get(
         format: 'pptx',
         status: 'completed',
         qualityReport: quality.report,
-        filePath: deck.export_path,
+        filePath: freshDeck.export_path,
       });
       return res
         .status(422)
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
-    const filename = `${deck.title.replace(/[^a-zA-Z0-9-_ ]/g, '')}.pptx`;
+    const filename = presentationExportFilename(deck.title, 'pptx', isDraftExport);
+    markPresentationExportResponse(res, exportMode, String(freshDeck.id), freshDeck.version);
     res.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.presentationml.presentation'
@@ -2078,7 +2415,7 @@ router.get(
         entityId: String(req.params.id || ''),
         actionUrl: `/presentations/builder/${req.params.id}`,
       }).catch(() => null);
-      res.sendFile(path.resolve(deck.export_path));
+      res.sendFile(path.resolve(freshDeck.export_path));
     } catch (exportErr: any) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
@@ -2115,6 +2452,9 @@ router.get(
     if (!authReq.user?.id && !authReq.userId)
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
+    const exportMode = parseArtifactExportMode(req, res);
+    if (exportMode === false) return;
+    const isDraftExport = exportMode === 'draft';
 
     // P18-B: export audit respects visibility — deny exports when artifact is not visible to the caller.
     const artifact = await artifactRegistryService.getArtifactByOrigin({
@@ -2130,6 +2470,13 @@ router.get(
 
     // M17: export-approval gate — see server/src/services/v8/exportApprovalGate.ts.
     if (
+      exportMode === 'final' &&
+      !(await enforceExplicitFinalPresentationPolicy(req, res, String(deckId || '')))
+    ) {
+      return;
+    }
+    if (
+      exportMode === null &&
       !applyExportApprovalGate({
         res,
         organizationId: orgId,
@@ -2150,12 +2497,28 @@ router.get(
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
-    const quality = await enforceQualityGateForExport({
-      organizationId: orgId,
-      deckId: String(deckId || ''),
-      format: 'pdf',
-      allowOverride: canOverrideQualityGate(req),
-    });
+    if (
+      exportMode === 'final' &&
+      presentationExportOverride(req).requested &&
+      !presentationExportOverride(req).reason?.trim()
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: 'An override reason is required for final presentation export.',
+        code: 'ARTIFACT_EXPORT_BLOCKED',
+        mode: 'final',
+        blocks: ['OVERRIDE_REASON_REQUIRED'],
+      });
+    }
+
+    const quality = isDraftExport
+      ? { ok: true as const, report: null }
+      : await enforceQualityGateForExport({
+          organizationId: orgId,
+          deckId: String(deckId || ''),
+          format: 'pdf',
+          allowOverride: canOverrideQualityGate(req),
+        });
     if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
@@ -2198,7 +2561,8 @@ router.get(
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
-    const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+    const filename = presentationExportFilename(deck.title, 'pdf', isDraftExport);
+    markPresentationExportResponse(res, exportMode, String(deck.id), deck.version);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
@@ -2384,6 +2748,22 @@ router.post(
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
     if (!ensureConfidentialityPolicy(req, res, { action: 'share', deck: before })) return;
+    const publicLinkPolicy = evaluateArtifactExportPolicy({
+      mode: 'draft',
+      channel: 'public_link',
+      classification:
+        resolvePresentationDeckConfidentiality(before) === 'public' ? 'public' : 'internal',
+      criticalQaFindings: 0,
+      approvalCurrentForVersion: false,
+    });
+    if (!publicLinkPolicy.allowed) {
+      return res.status(409).json({
+        success: false,
+        error: 'Public presentation links require Public classification.',
+        code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+        blocks: publicLinkPolicy.blocks,
+      });
+    }
     const token = uuidv4().replace(/-/g, '');
     const expiresAt = expiresInDays
       ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
@@ -2481,7 +2861,7 @@ router.get(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const collaborators = await listCollaborators(req.params.id, orgId);
+    const collaborators = await listCollaborators(String(req.params.id), orgId);
     res.json({ success: true, data: { collaborators } });
   })
 );
@@ -2523,7 +2903,7 @@ router.post(
       : permissionToRole(body.permission);
 
     const result = await upsertCollaborator({
-      deckId: req.params.id,
+      deckId: String(req.params.id),
       organizationId: orgId,
       userId: targetUserId || null,
       invitedEmail: email || null,
@@ -2568,7 +2948,11 @@ router.delete(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const result = await revokeCollaborator(req.params.id, orgId, req.params.collaboratorId);
+    const result = await revokeCollaborator(
+      String(req.params.id),
+      orgId,
+      String(req.params.collaboratorId)
+    );
     await (req as any).emitAuditEvent?.({
       actorType: 'USER',
       action: 'collaborator_revoke',
@@ -3071,7 +3455,7 @@ router.put(
       : null;
 
     const deck = (await dbGet(
-      'SELECT id, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
+      'SELECT id, title, version, deck_json FROM presentation_decks WHERE id = ? AND organization_id = ?',
       [deckId, orgId]
     )) as any;
     if (!deck) {
@@ -3093,7 +3477,16 @@ router.put(
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
 
-    const newVersion = (deck.version || 1) + 1;
+    // SQLite drivers normally expose INTEGER columns as numbers, while the
+    // lightweight mock database can preserve SQL literals as strings. Normalize
+    // before incrementing so version 1 always advances to 2 (never "11").
+    const persistedVersion = Number(deck.version);
+    const normalizedVersion = Number.isFinite(persistedVersion) ? persistedVersion : 1;
+    const newVersion = normalizedVersion + 1;
+    const nextTitle =
+      typeof req.body?.title === 'string' && req.body.title.trim()
+        ? req.body.title.trim()
+        : String(deck.title || 'Untitled');
 
     if (deck.deck_json) {
       try {
@@ -3123,10 +3516,10 @@ router.put(
     // `changes` comes back 0, and it gets the same 409 VERSION_CONFLICT
     // shape as the pre-existing stale-read check above, so the FE doesn't
     // need to distinguish the two cases.
-    const expectedVersion = clientVersion !== null ? clientVersion : deck.version;
+    const expectedVersion = clientVersion !== null ? clientVersion : normalizedVersion;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [bodyStr, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [nextTitle, bodyStr, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {
@@ -5762,7 +6155,13 @@ router.get(
     const merged = [...(deckLevel.data || []), ...agentForDeck]
       .map((row: any) => ({
         id: row.id,
-        timestamp: row.timestamp,
+        // PostgreSQL drivers can hydrate timestamp columns as Date instances,
+        // while older audit providers return ISO strings. Normalize at the
+        // route boundary so ordering and the public response stay stable.
+        timestamp:
+          row.timestamp instanceof Date
+            ? row.timestamp.toISOString()
+            : String(row.timestamp ?? ''),
         actorId: row.actorId ?? null,
         actorType: row.actorType ?? 'SYSTEM',
         action: row.action,

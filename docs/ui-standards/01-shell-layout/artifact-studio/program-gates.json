@@ -1,0 +1,259 @@
+{
+  "program": "Artifact Studio rollout",
+  "version": 2,
+  "terminalGate": "LEGACY-01",
+  "requiredEvidenceKinds": [
+    "unit",
+    "component",
+    "integration",
+    "e2e",
+    "accessibility",
+    "responsive",
+    "realdb",
+    "runtime",
+    "export-artifact",
+    "audit",
+    "rollback"
+  ],
+  "gates": [
+    {
+      "id": "BASE-01",
+      "dependsOn": [],
+      "status": "verified",
+      "checks": ["unit", "runtime"],
+      "verified": ["unit", "runtime", "realdb"],
+      "missing": []
+    },
+    {
+      "id": "CMD-01",
+      "dependsOn": ["BASE-01"],
+      "status": "verified",
+      "checks": ["unit", "integration"],
+      "verified": ["unit", "integration"],
+      "missing": []
+    },
+    {
+      "id": "SHELL-01",
+      "dependsOn": ["CMD-01"],
+      "status": "partial",
+      "checks": ["component", "accessibility", "responsive"],
+      "verified": [
+        "component",
+        "responsive",
+        "focus-visibility",
+        "document-mounted-shell-e2e",
+        "presentation-mounted-shell-e2e",
+        "spreadsheet-mounted-shell-e2e",
+        "document-one-menu2-line",
+        "presentation-one-menu2-line",
+        "spreadsheet-one-menu2-line",
+        "document-one-menu3",
+        "presentation-one-menu3",
+        "spreadsheet-one-menu3",
+        "document-one-left-no-local-right",
+        "presentation-one-left-no-local-right",
+        "spreadsheet-one-left-no-local-right",
+        "spreadsheet-keyboard-context-menu-e2e",
+        "document-presentation-keyboard-context-menu-e2e",
+        "cross-format-axe-runtime"
+      ],
+      "missing": ["screen-reader"]
+    },
+    {
+      "id": "TER-01",
+      "dependsOn": ["CMD-01", "SHELL-01"],
+      "status": "partial",
+      "checks": ["integration", "e2e", "audit"],
+      "verified": [
+        "component",
+        "single-surface-component",
+        "xlsx-explicit-selection-context",
+        "xlsx-structured-proposal-versioned-command-contract",
+        "xlsx-scoped-mutation-prompt-contract",
+        "xlsx-explicit-proposal-card-execution",
+        "xlsx-staging-realdb-proposal-execute-audit-undo",
+        "xlsx-mounted-proposal-runtime",
+        "global-teresa-cross-format-conversation-e2e",
+        "draft-transport-recovery-component"
+      ],
+      "missing": ["real-llm-provider-prompt"]
+    },
+    {
+      "id": "GOV-01",
+      "dependsOn": ["BASE-01"],
+      "status": "verified",
+      "checks": ["unit", "integration", "realdb", "audit"],
+      "verified": [
+        "unit",
+        "integration",
+        "runtime-confidential-export-block",
+        "runtime-non-public-share-block",
+        "runtime-public-share-link",
+        "runtime-document-qa-export-gate",
+        "xlsx-staging-realdb-classification-persistence",
+        "xlsx-staging-realdb-governance-audit",
+        "document-realdb-independent-approval-cold-read-audit",
+        "document-realdb-material-edit-stales-approval",
+        "document-realdb-final-export-current-approval-gate",
+        "presentation-realdb-independent-approval-audit"
+      ],
+      "missing": []
+    },
+    {
+      "id": "PPT-01",
+      "dependsOn": ["SHELL-01", "TER-01", "GOV-01"],
+      "status": "partial",
+      "checks": [
+        "component",
+        "integration",
+        "e2e",
+        "responsive",
+        "runtime",
+        "export-artifact",
+        "rollback"
+      ],
+      "verified": [
+        "component",
+        "integration-create-contract",
+        "version-pinned-approval-integration",
+        "export-artifact-ooxml-inspection",
+        "e2e-autosave-reload",
+        "present-presenter-component",
+        "present-presenter-e2e",
+        "mounted-realdb-autosave-reload-present",
+        "mounted-realdb-draft-export-ooxml-inspection",
+        "immutable-export-version-id-binding",
+        "mounted-shell-runtime",
+        "flag-rollback-e2e"
+      ],
+      "missing": []
+    },
+    {
+      "id": "DOC-01",
+      "dependsOn": ["SHELL-01", "TER-01", "GOV-01"],
+      "status": "partial",
+      "checks": [
+        "component",
+        "integration",
+        "e2e",
+        "responsive",
+        "runtime",
+        "export-artifact",
+        "rollback"
+      ],
+      "verified": [
+        "component",
+        "integration",
+        "e2e-autosave",
+        "e2e-comments",
+        "e2e-export-qa",
+        "mounted-staging-realdb-reopen",
+        "mounted-staging-realdb-draft-docx-pdf-inspection",
+        "mounted-shell-runtime",
+        "flag-rollback-e2e"
+      ],
+      "missing": []
+    },
+    {
+      "id": "XLSX-01",
+      "dependsOn": ["CMD-01", "GOV-01"],
+      "status": "verified",
+      "checks": ["unit", "integration", "realdb", "audit", "rollback"],
+      "verified": [
+        "unit",
+        "integration",
+        "undo-redo",
+        "comment-anchors",
+        "stable-sheet-ids",
+        "atomic-restore",
+        "mounted-staging-realdb-mutation-reopen-export",
+        "staging-realdb-teresa-audit-undo",
+        "mounted-realdb-broader-command-audit-runtime",
+        "mounted-realdb-multisheet-command-audit",
+        "focused-xlsx-regression-163-pass",
+        "flag-rollback-e2e"
+      ],
+      "missing": []
+    },
+    {
+      "id": "XLSX-02",
+      "dependsOn": ["SHELL-01", "TER-01", "XLSX-01"],
+      "status": "partial",
+      "checks": [
+        "component",
+        "integration",
+        "e2e",
+        "responsive",
+        "realdb",
+        "runtime",
+        "export-artifact",
+        "rollback"
+      ],
+      "verified": [
+        "component",
+        "integration",
+        "responsive-component",
+        "range-clipboard",
+        "axis-structure",
+        "sheet-structure",
+        "formatting",
+        "freeze",
+        "find-replace",
+        "office-context-menu",
+        "explicit-teresa-selection",
+        "teresa-structured-proposal-versioned-atomic-apply",
+        "teresa-fenced-mutation-diff-contract",
+        "teresa-proposal-card-explicit-execute",
+        "itemized-qa-and-source-anchor-jump",
+        "sqlite-roundtrip",
+        "export-artifact-inspection",
+        "mounted-staging-realdb-mutation-reopen-export",
+        "staging-realdb-teresa-proposal-lifecycle",
+        "tp-tables-origin-realdb",
+        "styles-multisheet-realdb",
+        "source-to-range-realdb",
+        "mounted-realdb-multisheet-export-ooxml-inspection",
+        "full-spreadsheet-shell-e2e-8-pass",
+        "mounted-shell-runtime",
+        "flag-rollback-e2e"
+      ],
+      "missing": []
+    },
+    {
+      "id": "XFER-01",
+      "dependsOn": ["PPT-01", "DOC-01", "XLSX-02"],
+      "status": "partial",
+      "checks": ["e2e", "accessibility", "responsive", "runtime"],
+      "verified": [
+        "automated-cross-format-shell-transfer-e2e",
+        "cross-format-axe-runtime",
+        "runtime-responsive-1920-1440-1280-1024",
+        "global-teresa-cross-format-runtime"
+      ],
+      "missing": [
+        "task-based-user-transfer-8-of-9",
+        "screen-reader-manual"
+      ]
+    },
+    {
+      "id": "LEGACY-01",
+      "dependsOn": ["XFER-01"],
+      "status": "pending",
+      "checks": [
+        "unit",
+        "component",
+        "integration",
+        "e2e",
+        "accessibility",
+        "responsive",
+        "realdb",
+        "runtime",
+        "export-artifact",
+        "audit",
+        "rollback"
+      ],
+      "verified": [],
+      "missing": ["two-stable-release-windows", "telemetry", "rollback-rehearsal", "legacy-removal"]
+    }
+  ]
+}

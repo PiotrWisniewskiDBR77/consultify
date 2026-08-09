@@ -84,12 +84,16 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
         </span>
         <div className="flex gap-1">
           <button
+            type="button"
+            aria-label={t('presentations.builder.cardsView', 'Show slide thumbnails')}
             onClick={() => setViewMode('cards')}
             className={`p-1 rounded ${viewMode === 'cards' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
             <LayoutGrid size={12} />
           </button>
           <button
+            type="button"
+            aria-label={t('presentations.builder.listView', 'Show slide list')}
             onClick={() => setViewMode('list')}
             className={`p-1 rounded ${viewMode === 'list' ? 'bg-c-surface-raised text-c-text' : 'text-c-text-secondary'}`}
           >
@@ -154,6 +158,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                       informacja o STANIE ochrony, nie akcja kontekstowa. */}
                   {card.is_locked && (
                     <button
+                      type="button"
+                      aria-label={t('presentations.builder.unlockSlideAction', 'Unlock slide')}
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleLock?.(card.card_id);
@@ -170,6 +176,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
 
                   {/* Context menu trigger */}
                   <button
+                    type="button"
+                    aria-label={t('presentations.builder.slideActions', 'Slide actions')}
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMoveSubmenu(false);
@@ -196,6 +204,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   <span className="text-c-text truncate flex-1">{card.title}</span>
                   {card.is_locked && (
                     <button
+                      type="button"
+                      aria-label={t('presentations.builder.unlockSlideAction', 'Unlock slide')}
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleLock?.(card.card_id);
@@ -211,6 +221,8 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   )}
                   {outdated && <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />}
                   <button
+                    type="button"
+                    aria-label={t('presentations.builder.slideActions', 'Slide actions')}
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowMoveSubmenu(false);

@@ -67,6 +67,7 @@ export interface DeckBuilderTopBarChipsLabels {
   share?: string;
   agent?: string;
   run?: string;
+  runFromStart?: string;
   presenter?: string;
 }
 
@@ -84,6 +85,8 @@ export interface DeckBuilderTopBarChipsHandlers {
   onToggleAgent?: () => void;
   /** Primary chip — "Present" (audience fullscreen) for the deck lane. */
   onRun?: () => void;
+  /** Audience fullscreen from slide one. */
+  onRunFromStart?: () => void;
   /**
    * J12-S2 — presenter view (speaker notes + next slide + timer). Distinct
    * from the primary "Present" chip; folds into the overflow (⋯) menu.
@@ -127,6 +130,7 @@ const DEFAULT_LABELS: Required<Omit<DeckBuilderTopBarChipsLabels, 'internalLabel
   share: 'Share',
   agent: 'Teresa',
   run: 'Present',
+  runFromStart: 'Present from beginning',
   presenter: 'Presenter view',
 };
 
@@ -219,6 +223,14 @@ export function buildDeckBuilderTopBarChips(args: {
       icon: FileSearch,
       onClick: handlers.onAudit,
       disabled: !handlers.onAudit,
+      group: 'overflow',
+    },
+    {
+      id: 'run-from-start',
+      label: L.runFromStart,
+      icon: Play,
+      onClick: handlers.onRunFromStart,
+      disabled: !handlers.onRunFromStart || state.runEnabled === false,
       group: 'overflow',
     },
     {

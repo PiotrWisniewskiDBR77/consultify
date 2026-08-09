@@ -26,6 +26,7 @@ describe('buildDeckBuilderTopBarChips', () => {
         onShare: vi.fn(),
         onToggleAgent: vi.fn(),
         onRun: vi.fn(),
+        onRunFromStart: vi.fn(),
         onPresenter: vi.fn(),
       },
     });
@@ -41,12 +42,23 @@ describe('buildDeckBuilderTopBarChips', () => {
       'governance',
       'analytics',
       'audit',
+      'run-from-start',
       'presenter',
       'share',
       'comments',
       'agent',
       'run',
     ]);
+  });
+
+  it('offers presentation from the beginning as an overflow action', () => {
+    const onRunFromStart = vi.fn();
+    const chips = buildDeckBuilderTopBarChips({ handlers: { onRunFromStart } });
+    const fromStart = chips.find((chip) => chip.id === 'run-from-start');
+    expect(fromStart?.group).toBe('overflow');
+    expect(fromStart?.disabled).toBe(false);
+    fromStart?.onClick?.();
+    expect(onRunFromStart).toHaveBeenCalledTimes(1);
   });
 
   it('J12-S2: presenter chip is an overflow chip wired to onPresenter', () => {

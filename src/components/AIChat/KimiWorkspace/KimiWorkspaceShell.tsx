@@ -28,14 +28,7 @@ import {
   Table,
   X,
 } from 'lucide-react';
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -97,6 +90,27 @@ export interface ArtifactPreview {
   // read-only table below keeps using `perSheetData` unchanged when the flag
   // is off or this is absent — zero regression.
   rawSheets?: import('@/utils/workbookFormulaEngine').FormulaSheet[];
+  /** Optimistic concurrency token for generated_workbooks mutations. */
+  workbookVersion?: number;
+  workbookClassification?: 'public' | 'internal' | 'confidential';
+  workbookLifecycle?: 'draft' | 'in_review' | 'approved' | 'final';
+  workbookApprovalCurrent?: boolean;
+  sourcePack?: unknown;
+  evidenceRefs?: unknown[];
+  qualityReport?: {
+    score?: number;
+    passed?: boolean;
+    issues?: Array<{
+      code?: string;
+      severity?: 'CRITICAL' | 'MAJOR' | 'MINOR' | string;
+      blocking?: boolean;
+      sheet?: string;
+      cell?: string | null;
+      col?: string | null;
+      message: string;
+      fix?: string;
+    }>;
+  } | null;
   deckId?: string;
   deckStatus?: 'draft' | 'reviewed' | 'exported' | string;
   deckSlides?: Array<{
@@ -185,7 +199,8 @@ const KebabMenu: React.FC<{ items: KimiHeaderKebabItem[]; ariaLabel: string }> =
     }
     const update = () => {
       const r = btnRef.current?.getBoundingClientRect();
-      if (r) setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
+      if (r)
+        setPos({ top: r.bottom + 6, right: Math.max(8, Math.round(window.innerWidth - r.right)) });
     };
     update();
     window.addEventListener('resize', update);
@@ -659,7 +674,10 @@ function ArtifactPreviewPane({
                 ))}
               </div>
             )}
-            {isExceleEditEnabled() && preview.workbookId && preview.rawSheets && preview.rawSheets.length > 0 ? (
+            {isExceleEditEnabled() &&
+            preview.workbookId &&
+            preview.rawSheets &&
+            preview.rawSheets.length > 0 ? (
               // "Najmniejszy arkusz, który jest naprawdę arkuszem" (2026-07-28,
               // za flagą ff_excele_edit, domyślnie OFF) — klik→edycja→przeliczenie
               // formuł zależnych→zapis, patrz EditableSpreadsheetGrid.tsx.
@@ -725,9 +743,7 @@ function ArtifactPreviewPane({
                                     key={`${col}-${ci}`}
                                     title={isFormula ? raw : undefined}
                                     className={`px-3 py-1.5 whitespace-nowrap max-w-[200px] truncate ${
-                                      isFormula
-                                        ? 'font-mono text-c-text-secondary'
-                                        : 'text-c-text'
+                                      isFormula ? 'font-mono text-c-text-secondary' : 'text-c-text'
                                     }`}
                                   >
                                     {String(raw ?? '')}
