@@ -126,7 +126,66 @@ resolutions:
    accepted; out of scope (no ALTER TABLE permitted on `v8_execution_runs`
    by this program's collision-avoidance mandate).
 | CW-P05 | E5 | E4 | `operationClaimService.ts` + `artifactLineageService.ts` (EXTEND, lineage/claim patterns) | durable wait claims, human task queue, callback auth/dedupe, outbox/inbox | subset of 70 (security-legacy) |
-| CW-P06 | E6 | E1, E2 | autonomy policy concepts already documented in canon (00/08) | server-enforced A0-A4 ceilings, explicit A2/A3/A4 controls, revalidation | 109 (governance-history-decisions) |
+| CW-P05 | E6 | E1, E2 | autonomy policy concepts already documented in canon (00/08) | `case_workspace_action_proposals` + `case_workspace_action_proposal_decisions`, `proposalApprovalService.ts`, 13 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+tsc-strict verified**, commit `b3e5f4c524`. Renumbered from the original CW-P06 slot: packet IDs are assigned in actual execution order (E1→E2→E3→E4→E6), not strict epic-number order — E5 was deliberately skipped for now, see §"Execution order note" below. | 109 (governance-history-decisions) |
+
+### Execution order note
+
+Packets are numbered CW-P01, CW-P02, ... in the order they actually start,
+not by epic number. E5 (durable waits/events) was skipped ahead of E6
+(proposals/approvals) because E6 builds directly on E1's already-landed
+`autonomy_policy` column and is a governance-critical prerequisite; E5 will
+be picked up as a later packet (its own CW-P0N slot, assigned when it
+starts). This note exists so the packet-ID sequence isn't mistaken for the
+epic-number sequence when this registry is read later.
+
+## CW-P05 (E6 ActionProposal/Approval) — design decisions accepted 2026-08-09
+
+Twelve open questions; coordinator resolutions, grouped:
+
+- **Version-naming collision (`proposal_version`/`target_expected_version`/
+  OCC `version`)** — accepted, same precedent as CW-P02/CW-P03.
+- **`node_run_id` NOT NULL with no canonical NodeRun table/FK** — accepted as
+  an opaque unenforced TEXT column; this is a real gap (no referential
+  integrity), tracked for whichever future packet defines a real NodeRun
+  table.
+- **`proposal_version` numbering scheme inferred** — accepted, consistent
+  with the `plan_number` precedent.
+- **`target_expected_version` cross-module staleness not verified** —
+  accepted as correctly out of scope; would require every target module to
+  expose its own OCC state to this service, too broad for this packet.
+- **Expiry blocks APPROVE only, not REJECT/REQUEST_CHANGES/DEFER** —
+  accepted; this is the safer reading (you can always kill or downgrade a
+  stale proposal, you just can't approve one).
+- **DEFER modeled as a non-status-changing audited fact** — accepted as the
+  correct reading of CW-RT-041 never listing it as a state-machine trigger.
+- **Self-approval prohibition scoped to APPROVE only** — accepted and
+  confirmed correct: a proposer rejecting/deferring their own proposal is
+  withdrawal, not a governance bypass. Restricting the hard ceiling to
+  APPROVE is the right scope, not a loophole.
+- **No idempotency-key ledger for execution-transition methods (OCC only)**
+  — accepted; the real dispatcher (CW-RT-043, future work) will know actual
+  outcomes and can add one then.
+- **`revokeApprovedProposal` doesn't enforce "before execution where policy
+  permits"** — accepted; the state machine itself already blocks revoking
+  past APPROVED (mechanical guard), the deferred part is a policy nuance
+  needing an engine that doesn't exist yet.
+- **`authenticationAssurance`/`approvalChannelPolicy` free-text, no canon
+  vocabulary** — accepted as placeholder, same pattern as CW-P03's
+  `data_classification` gap.
+- **LIGHT-Case single-click "Zatwierdź i rozpocznij" is not an
+  ActionProposal** — accepted; that's an orchestration-layer composition of
+  `createCase`+`publishPlanVersion`+start, not this packet's concern.
+- **Tenant/membership authorization not enforced at this service layer** —
+  accepted as a deliberate layering choice (service = business logic +
+  invariants, authorization = route/middleware), **but flagged here
+  prominently as a cross-cutting item**: this is now true of all five
+  CW-P01-05 services, not unique to this packet. **Hard prerequisite before
+  any HTTP route wires these services**: the future route layer must
+  implement real tenant/membership/ACL checks before exposing any of
+  `caseCoreService`, `casePlanVersionService`, `capabilityRegistryService`,
+  `runBindingService`, or `proposalApprovalService` to a network boundary.
+  Not a blocker for further backend-only packets, but must not be forgotten
+  once E7/E8 (UI/Chat, both gated at W2-V0 anyway) or any HTTP layer starts.
 | CW-P07 | E7 | E1, E2, E4, E6 | `StandardModuleBar`/`StandardTable`/`StandardPreview`/`ArtifactRightPanel`/`StandardArtifactShell` all confirmed present (KEEP, all 5 primitives exist); `MyTasksListContent`/`DecisionsPanelContent` (ADAPT) | Case Workspace shell itself (CREATE — none exists); retire `MyWorkHub.tsx` (4727 lines) as the target, component-donor only | 235 (authority-ui-standards + canon UI rows) — **UI packets pause at W2-V0 (task #9)** |
 | CW-P08 | E8 | E1, E2, E4, E6, E7 | `useOpenChatWithContext`, `WorkspaceContext`, `chatNavigator.ts`, `CHAT_ACTION_DEFINITIONS`, `myWorkIntent`/`myWorkEvent` bus, `useConversationStore` pmoContext — all KEEP/EXTEND, unusually complete | ephemeral proposal → exact confirmation receipt binding to Case | subset of 155 |
 | CW-P09 | E9 | E4 | — | branch/join/timeout/compensation graph semantics (CREATE) | subset of 119 |
