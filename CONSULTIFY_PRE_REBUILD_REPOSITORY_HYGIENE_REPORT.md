@@ -4,7 +4,7 @@ Date: 2026-08-09 (Europe/Warsaw)
 
 ## Executive status
 
-Status: **RECONCILIATION CANDIDATE BUILT; NOT YET PROMOTED**
+Status: **DB-INTEGRATED RECONCILIATION CANDIDATE BUILT; NOT YET PROMOTED**
 
 The deployed demo is healthy, but GitHub `origin/demo` does not currently describe the deployed runtime. A clean two-parent reconciliation candidate now combines the latest GitHub demo tip with the exact Railway runtime SHA. The active Documents / Artifact Studio work remains isolated and has not been modified by this cleanup.
 
@@ -14,7 +14,8 @@ The deployed demo is healthy, but GitHub `origin/demo` does not currently descri
 |---|---|---:|---|
 | GitHub demo | `origin/demo` | `bf29e98a3d8a0c40bf822d8c79f817a679c30695` | one commit beyond the historical common base |
 | Railway demo runtime | `https://demo.consultify.ai` | `37f835ccfd5e49462986ed95f8285ef1b04dc59d` | healthy; DB and Redis connected; readiness green |
-| Reconciliation candidate | `codex/pre-rebuild-cleanup-20260809` | `957a820d6db5aa1db435b941402a664b4d268af4` | clean two-parent merge; local only |
+| Reconciliation candidate | `codex/pre-rebuild-cleanup-20260809` | `bbc8731f5ac60c5e55536076c4e02a9fb10e9bf6` | clean two-parent merge plus audit report; local only |
+| DB-integrated candidate | `codex/pre-rebuild-db-integration-20260809` | `2ab1438674...` plus this report commit | DB/MFA package applied and verified; local only |
 | Active Documents WIP | `codex/sync-demo-20260729` | `9c23e3d80ece...` plus dirty worktree | protected; do not reset, stash, clean, or merge blindly |
 
 The reconciliation merge has parents `bf29e98a3d` and `37f835ccfd`. Its only textual conflict was `src/components/Economics/FinanceHub.tsx`; it was resolved in favor of the newer GitHub demo decision that FinanceHub tabs remain list-only and tools open inside the selected record workspace.
@@ -75,6 +76,28 @@ Only worktrees that are clean, have no live task, and whose commits are reachabl
   - Artifact origin runtime parity is missing `assessment_report` on the client. The active Documents worktree already contains an uncommitted correction to the same exact contract, so this candidate must not duplicate it. The fix must arrive through the reviewed Documents handoff.
 
 These are integration blockers for promotion, not evidence that the clean merge itself is corrupted.
+
+## Independent sceptical audit and DB integration
+
+Two independent read-only audits classified the original reconciliation candidate as a correct demo/runtime scaffold but **NO-GO as a complete canonical base**. They found uncontained DB/MFA, Documents, V8, UI45, Results and UX packages, several competing variants, and dirty historical worktrees that must not be bulk-committed or deleted.
+
+The accepted DB/MFA functional series and SuperAdmin PostgreSQL repair were therefore applied on a separate branch in their prescribed order. Verification on a disposable local PostgreSQL 17 database produced:
+
+- strict fresh schema: **PASS — 577 migrations**;
+- immediate replay: **PASS — 0 migrations pending**;
+- realDB/negative controls: **PASS — 24/24** covering LLM tenant isolation, source-pack cold reopen and refused writes, `user_mfa`, and SuperAdmin MFA permissions/persistence;
+- root typecheck: **PASS**;
+- backend build: **PASS**;
+- frontend build: **PASS**.
+
+Both disposable databases and all build/test artifacts created for this verification were removed afterwards. Demo and production data were not touched.
+
+Remaining release blockers identified by the audits:
+
+1. `/api/artifact-runs` is mounted behind an internal-tools pre-guard and can return 404 to valid ordinary tenant members. It requires a bounded access-guard repair and owner/member/outsider tests.
+2. The active Documents/Artifact Studio package must provide one bounded handoff; it also contains the missing client `assessment_report` parity fix.
+3. Artifact Studio master and lane flags are fail-closed and absent from demo; rollout requires an explicit controlled flag matrix after runtime/visual acceptance.
+4. V8, UI45, Results and UI standard packages require one canonical choice per scope; alternatives stay quarantined until patch-equivalence review.
 
 ## Current decision
 
