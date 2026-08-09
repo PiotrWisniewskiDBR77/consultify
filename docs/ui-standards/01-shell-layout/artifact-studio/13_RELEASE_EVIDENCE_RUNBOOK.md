@@ -71,6 +71,11 @@ open success, save error/conflict, export success, Teresa attach/apply, client
 exceptions, liczbę wywołań legacy route oraz użycie rollbacku. Surowy dashboard
 lub eksport metryk musi być trwałym załącznikiem.
 
+Minimalne progi dla każdego okna: open success co najmniej 99%, export success
+co najmniej 98%, save error najwyżej 1%, client exception najwyżej 0,5%, zero
+wywołań legacy i zero użyć rollbacku. Przedziały czasu muszą być poprawnymi,
+niepustymi interwałami ISO-8601, a oba okna muszą wskazywać ten sam SHA.
+
 Okno nie jest stabilne, jeżeli użyto rollbacku, brak któregokolwiek wskaźnika
 albo pojawił się ruch do legacy. Dwa okna muszą należeć do tej samej linii
 kandydata; zmiana materialna resetuje obserwację.
