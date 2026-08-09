@@ -94,7 +94,7 @@ Both disposable databases and all build/test artifacts created for this verifica
 
 Remaining release blockers identified by the audits:
 
-1. `/api/artifact-runs` is mounted behind an internal-tools pre-guard and can return 404 to valid ordinary tenant members. It requires a bounded access-guard repair and owner/member/outsider tests.
+1. `/api/artifact-runs` was mounted behind an internal-tools pre-guard and could return 404 to valid ordinary tenant members. The pre-guard has now been removed in commit `7c15f91cc5`; the route retains its own authentication, organization-context and V8 outputs gates. Gateway plus route regression: **9/9 PASS**.
 2. The active Documents/Artifact Studio package must provide one bounded handoff; it also contains the missing client `assessment_report` parity fix.
 3. Artifact Studio master and lane flags are fail-closed and absent from demo; rollout requires an explicit controlled flag matrix after runtime/visual acceptance.
 4. V8, UI45, Results and UI standard packages require one canonical choice per scope; alternatives stay quarantined until patch-equivalence review.
