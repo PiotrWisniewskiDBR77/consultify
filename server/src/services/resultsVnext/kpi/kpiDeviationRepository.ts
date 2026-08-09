@@ -84,7 +84,7 @@ export async function getDeviationCase(params: GetDeviationCaseParams): Promise<
     SELECT dc.*
       FROM rvn_kpi_deviation_cases dc
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id::text
      WHERE dc.organization_id = $1
        AND dc.case_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
@@ -144,7 +144,7 @@ export async function listDeviationCases(params: ListDeviationCasesParams): Prom
     SELECT dc.*
       FROM rvn_kpi_deviation_cases dc
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id::text
      WHERE dc.organization_id = $1
        ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
      ORDER BY dc.detected_at DESC
@@ -195,7 +195,7 @@ export async function listCorrectiveActions(params: ListCorrectiveActionsParams)
       FROM rvn_kpi_corrective_actions ca
       INNER JOIN rvn_kpi_deviation_cases dc ON dc.case_id = ca.deviation_case_id
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id::text
      WHERE ca.organization_id = $1
        AND ${filters.join(' AND ')}
      ORDER BY ca.created_at ASC
@@ -233,7 +233,7 @@ export async function listEffectivenessVerifications(
       FROM rvn_kpi_effectiveness_verifications ev
       INNER JOIN rvn_kpi_deviation_cases dc ON dc.case_id = ev.deviation_case_id
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = dc.kpi_id::text
      WHERE ev.organization_id = $1
        AND ev.deviation_case_id = $${cte.values.length + 1}
      ORDER BY ev.created_at DESC

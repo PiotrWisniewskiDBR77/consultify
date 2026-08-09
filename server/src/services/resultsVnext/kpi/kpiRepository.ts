@@ -111,7 +111,7 @@ export async function listKpis(params: ListKpisParams): Promise<KpiDefinition[]>
     SELECT kd.*
       FROM rvn_kpi_definitions kd
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
      WHERE kd.organization_id = $1
        ${filters.length ? `AND ${filters.join(' AND ')}` : ''}
      ORDER BY kd.updated_at DESC
@@ -141,7 +141,7 @@ export async function getKpi(params: GetKpiParams): Promise<KpiDefinition | null
     SELECT kd.*
       FROM rvn_kpi_definitions kd
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = kd.kpi_id::text
      WHERE kd.organization_id = $1
        AND kd.kpi_id = $${VISIBILITY_CTE_PARAM_COUNT + 1}
   `;
@@ -226,7 +226,7 @@ export async function listMeasurements(params: ListMeasurementsParams): Promise<
     SELECT m.*
       FROM rvn_kpi_measurements m
       INNER JOIN rvn_visible_resources vr
-              ON vr.resource_type = 'kpi' AND vr.resource_id = m.kpi_id
+              ON vr.resource_type = 'kpi' AND vr.resource_id = m.kpi_id::text
      WHERE ${filters.join(' AND ')}
        ${currentOnlyClause}
      ORDER BY m.period_start DESC, m.recorded_at DESC
