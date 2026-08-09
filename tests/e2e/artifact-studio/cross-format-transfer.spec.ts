@@ -227,7 +227,8 @@ test.describe('Artifact Studio cross-format transfer contract', () => {
         v2: `/excele?artifactId=${workbookId}&ff_excele=1&ff_artifactStudio=1&ff_spreadsheetStudioV2=1`,
         legacy: `/excele?artifactId=${workbookId}&ff_excele=1&ff_artifactStudio=1&ff_spreadsheetStudioV2=0`,
         v2Shell: 'spreadsheet-artifact-studio',
-        legacyReady: (activePage: Page) => activePage.getByRole('button', { name: /Task Progress/ }),
+        legacyReady: (activePage: Page) =>
+          activePage.getByRole('button', { name: /Task (?:Progress|completed)/ }),
         title: workbookTitle,
         identity: workbookId,
       },

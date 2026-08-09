@@ -144,6 +144,7 @@ tests/e2e/documents/screens/export-qa-02-markdown-exported.png
 tests/e2e/documents/screens/export-qa-03-qa-panel-report.png
 tests/e2e/presentations/artifact-studio-approval-realdb.spec.ts
 tests/e2e/presentations/artifact-studio-shell-v2.spec.ts
+tests/e2e/spreadsheets/artifact-studio-shell-v2.spec.ts
 tests/integration/document-studio/export-qa-gate.routes.test.ts
 tests/unit/artifact-studio/ArtifactMenu3.test.tsx
 tests/unit/artifact-studio/commandRegistry.test.ts
