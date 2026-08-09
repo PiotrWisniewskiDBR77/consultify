@@ -349,6 +349,58 @@ describe('evaluatePerformanceStatus — exact without ANY tolerance band: exact 
   ]);
 });
 
+describe('evaluatePerformanceStatus — binary (zero-event compliance, no warning zone, decyzja §16 fix)', () => {
+  const bounds = { geometry: 'binary' as const, binarySuccessValue: 1 };
+  run([
+    {
+      description: 'actualValue matches binarySuccessValue -> on_target',
+      input: { ...bounds, actualValue: 1 },
+      expected: 'on_target',
+    },
+    {
+      description: 'actualValue mismatches binarySuccessValue -> critical directly, no warning zone',
+      input: { ...bounds, actualValue: 0 },
+      expected: 'critical',
+    },
+    {
+      description: 'actualValue missing -> neutral, never fabricated',
+      input: { ...bounds, actualValue: null },
+      expected: 'neutral',
+    },
+    {
+      description: 'actualValue undefined -> neutral',
+      input: { ...bounds, actualValue: undefined },
+      expected: 'neutral',
+    },
+    {
+      description: 'actualValue NaN -> neutral, not treated as a number',
+      input: { ...bounds, actualValue: NaN },
+      expected: 'neutral',
+    },
+    {
+      description: 'binarySuccessValue not configured on the definition version -> neutral even with actual present',
+      input: { geometry: 'binary', actualValue: 1 },
+      expected: 'neutral',
+    },
+  ]);
+});
+
+describe('evaluatePerformanceStatus — binary with successValue=0 ("zero incidents" shape: absence is success)', () => {
+  const bounds = { geometry: 'binary' as const, binarySuccessValue: 0 };
+  run([
+    {
+      description: 'actual=0 matches success value 0 -> on_target',
+      input: { ...bounds, actualValue: 0 },
+      expected: 'on_target',
+    },
+    {
+      description: 'actual=1 mismatches success value 0 -> critical',
+      input: { ...bounds, actualValue: 1 },
+      expected: 'critical',
+    },
+  ]);
+});
+
 describe('evaluatePerformanceStatus — exact with only ONE side of critical bounds configured', () => {
   it('criticalLow only: below-tolerance side gets a warning zone, above-tolerance side stays binary', () => {
     const bounds = {

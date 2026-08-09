@@ -23,6 +23,17 @@
 -- judgment, following the conventions of the sibling RN-G1 migrations in
 -- this same directory. Flag for review against the original draft text if
 -- it resurfaces.
+--
+-- -- FIX (EXECUTION_LEDGER.md §16, 2026-08-09/10): the reconstruction above
+-- omitted two enum members that ARE explicit in the source domain plan
+-- (`docs/product/results-vnext/02_KPI_IMPLEMENTATION_PLAN.md` §3.1 "KPI
+-- Definition Version" / §4.1 "KPI lifecycle"), not merely the 12
+-- design-doc decisions this file's header above cross-checks against —
+-- `target_geometry`'s `'binary'` case and `rvn_kpi_definitions.status`'s
+-- `'pending_approval'` state. Both are added below (still edited in place,
+-- not stacked as a second migration — this file had not left the branch
+-- when the gap was found). See `binary_success_value` below and this
+-- table's `status` CHECK for the concrete fix.
 
 -- ==========================================
 -- rvn_kpi_definitions — root aggregate.
@@ -40,8 +51,16 @@ CREATE TABLE IF NOT EXISTS rvn_kpi_definitions (
   kpi_id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id             TEXT NOT NULL,
   kpi_code                  TEXT NOT NULL,
+  -- 'pending_approval' sits between 'draft' and 'active' (plan §4.1:
+  -- "draft -> pending_approval -> active <-> suspended -> archived") —
+  -- entered by submitDefinition() when the KPI's first/current definition
+  -- version is submitted for review, left by approveDefinitionVersion()
+  -- only implicitly (status stays 'pending_approval' until activateKpi()
+  -- explicitly moves it to 'active' — approval and activation are distinct
+  -- actions, see kpiDefinitionCommands.ts) or by rejectDefinitionVersion()
+  -- (moves back to 'draft' so the KPI can be edited and resubmitted).
   status                    TEXT NOT NULL DEFAULT 'draft'
-                              CHECK (status IN ('draft','active','suspended','archived')),
+                              CHECK (status IN ('draft','pending_approval','active','suspended','archived')),
   current_definition_version_id UUID NULL,
   -- No FK, no process registry check (decyzja #5) — deferred, flagged for
   -- verification before the Slice K1 process-picker UI is built.
@@ -76,6 +95,18 @@ CREATE INDEX IF NOT EXISTS idx_rvn_kpi_definitions_org_status
 -- §C) — see that file for the exact per-geometry semantics of each bound.
 -- 'custom' geometry never reads formula_text at evaluation time (decyzja
 -- #9: "no arbitrary code execution in custom formulas" — always neutral).
+--
+-- 'binary' (plan §3.1's `direction: ... | binary | ...`) is the sixth
+-- geometry — zero-event compliance ("zero incidents", "certificate valid",
+-- "report filed on time"). It does NOT fit the six numeric bound columns
+-- above (there is no zone to be near/far from — a period either satisfies
+-- the compliance condition or it does not, decyzja #7-style boundary logic
+-- does not apply). Rather than repurpose `target_value`/NUMERIC(0/1) with
+-- no column documenting what "1" is supposed to mean for a given KPI, this
+-- migration adds one dedicated column below (`binary_success_value`) that
+-- pins, per definition version, which `rvn_kpi_measurements.actual_value`
+-- (0 or 1) counts as success — see that column's own comment and
+-- targetGeometryEvaluator.ts's evalBinary() for the read side.
 CREATE TABLE IF NOT EXISTS rvn_kpi_definition_versions (
   definition_version_id  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   kpi_id                 UUID NOT NULL REFERENCES rvn_kpi_definitions(kpi_id),
@@ -86,7 +117,7 @@ CREATE TABLE IF NOT EXISTS rvn_kpi_definition_versions (
   unit                   TEXT NULL,
   target_geometry           TEXT NOT NULL
                             CHECK (target_geometry IN
-                              ('threshold_min','threshold_max','range','exact','custom')),
+                              ('threshold_min','threshold_max','range','exact','binary','custom')),
   target_value             NUMERIC NULL,
   target_min               NUMERIC NULL,
   target_max               NUMERIC NULL,
@@ -94,6 +125,22 @@ CREATE TABLE IF NOT EXISTS rvn_kpi_definition_versions (
   warning_high              NUMERIC NULL,
   critical_low              NUMERIC NULL,
   critical_high             NUMERIC NULL,
+  -- Only meaningful when target_geometry = 'binary'. The `actual_value`
+  -- (0 or 1, see rvn_kpi_measurements below) that counts as "on target" for
+  -- THIS definition version — e.g. 0 for "zero incidents" (success is the
+  -- absence of the event), 1 for "certificate valid"/"report filed on
+  -- time" (success is the presence/occurrence of the event). Kept as its
+  -- own NUMERIC(0|1) column, comparable directly against
+  -- rvn_kpi_measurements.actual_value without a type cast, rather than
+  -- repurposing target_value (which every OTHER geometry already uses for
+  -- a genuine numeric target and would make a binary KPI's target_value
+  -- ambiguous between "the target number" and "the success flag"). NULL
+  -- for every non-'binary' geometry, and NULL is also a legal (if
+  -- incomplete) state for a 'binary' draft — evaluatePerformanceStatus()
+  -- treats a 'binary' measurement with no configured success value as
+  -- 'neutral', the same "missing config never fabricates a status" rule
+  -- every other geometry follows for its own missing bounds.
+  binary_success_value        NUMERIC NULL CHECK (binary_success_value IN (0,1)),
   -- Free-text formula description for human readers / future restricted
   -- expression engine (decyzja #9 explicitly defers that engine as a
   -- separate future package) — never evaluated as code by this package.
@@ -177,6 +224,7 @@ BEGIN
        OR NEW.warning_high IS DISTINCT FROM OLD.warning_high
        OR NEW.critical_low IS DISTINCT FROM OLD.critical_low
        OR NEW.critical_high IS DISTINCT FROM OLD.critical_high
+       OR NEW.binary_success_value IS DISTINCT FROM OLD.binary_success_value
        OR NEW.formula_text IS DISTINCT FROM OLD.formula_text
        OR NEW.approval_status IS DISTINCT FROM OLD.approval_status
        OR NEW.effective_from IS DISTINCT FROM OLD.effective_from

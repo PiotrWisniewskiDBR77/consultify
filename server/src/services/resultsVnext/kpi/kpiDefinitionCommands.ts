@@ -200,6 +200,10 @@ export interface CreateKpiDraftInput {
   warningHigh?: number | null;
   criticalLow?: number | null;
   criticalHigh?: number | null;
+  /** Only meaningful when `targetGeometry === 'binary'` — see
+   * targetGeometryEvaluator.ts's evalBinary() and the migration's column
+   * comment. */
+  binarySuccessValue?: number | null;
   formulaText?: string | null;
   /** No FK, deferred (decyzja #5). */
   primaryProcessId?: string | null;
@@ -246,6 +250,7 @@ export async function createKpiDraft(
     warningHigh = null,
     criticalLow = null,
     criticalHigh = null,
+    binarySuccessValue = null,
     formulaText = null,
     primaryProcessId = null,
     responsePolicyId = null,
@@ -314,8 +319,8 @@ export async function createKpiDraft(
         `INSERT INTO rvn_kpi_definition_versions
            (kpi_id, organization_id, version_number, name, description, unit, target_geometry,
             target_value, target_min, target_max, warning_low, warning_high, critical_low, critical_high,
-            formula_text, approval_status, created_by)
-         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'draft', $15)
+            binary_success_value, formula_text, approval_status, created_by)
+         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'draft', $16)
          RETURNING *`,
         [
           kpiRow.kpi_id,
@@ -331,6 +336,7 @@ export async function createKpiDraft(
           warningHigh,
           criticalLow,
           criticalHigh,
+          binarySuccessValue,
           formulaText,
           createdBy,
         ]
@@ -417,6 +423,7 @@ export interface EditDraftInput {
   warningHigh?: number | null;
   criticalLow?: number | null;
   criticalHigh?: number | null;
+  binarySuccessValue?: number | null;
   formulaText?: string | null;
   actorUserId: string;
   actorEffectiveRole: string;
@@ -473,6 +480,10 @@ export async function editDraft(
         warning_high: edits.warningHigh !== undefined ? edits.warningHigh : currentRow.warning_high,
         critical_low: edits.criticalLow !== undefined ? edits.criticalLow : currentRow.critical_low,
         critical_high: edits.criticalHigh !== undefined ? edits.criticalHigh : currentRow.critical_high,
+        binary_success_value:
+          edits.binarySuccessValue !== undefined
+            ? edits.binarySuccessValue
+            : currentRow.binary_success_value,
         formula_text: edits.formulaText !== undefined ? edits.formulaText : currentRow.formula_text,
       };
 
@@ -481,8 +492,8 @@ export async function editDraft(
             SET name = $1, description = $2, unit = $3, target_geometry = $4,
                 target_value = $5, target_min = $6, target_max = $7,
                 warning_low = $8, warning_high = $9, critical_low = $10, critical_high = $11,
-                formula_text = $12, row_version = $13, updated_at = now()
-          WHERE definition_version_id = $14
+                binary_success_value = $12, formula_text = $13, row_version = $14, updated_at = now()
+          WHERE definition_version_id = $15
           RETURNING *`,
         [
           merged.name,
@@ -496,6 +507,7 @@ export async function editDraft(
           merged.warning_high,
           merged.critical_low,
           merged.critical_high,
+          merged.binary_success_value,
           merged.formula_text,
           nextVersion,
           definitionVersionId,
@@ -598,6 +610,26 @@ export async function submitDefinition(
       if (!updatedRow) {
         throw new Error(`[submitDefinition] update returned no row for ${definitionVersionId}`);
       }
+
+      // Root aggregate lifecycle side-effect (EXECUTION_LEDGER.md §16 fix):
+      // submitting a definition version for review is exactly what "freezes
+      // the contract for reviewer decision" (plan §4.1) means for the KPI
+      // itself — the two status dimensions are independent columns, but
+      // this transition is not. Only fires from 'draft' (a later
+      // amendment's draft version being submitted while the KPI is already
+      // 'active'/'suspended' does NOT pull the root status back to
+      // 'pending_approval' — that would freeze governed measurements
+      // against an in-flight amendment, which is out of scope for this
+      // fix). Same "derived write, no CAS of its own" pattern
+      // approveDefinitionVersion already uses below for
+      // current_definition_version_id.
+      await client.query(
+        `UPDATE rvn_kpi_definitions
+            SET status = 'pending_approval', updated_at = now()
+          WHERE kpi_id = $1 AND status = 'draft'`,
+        [updatedRow.kpi_id]
+      );
+
       return toKpiDefinitionVersion(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -816,6 +848,21 @@ export async function rejectDefinitionVersion(
       if (!updatedRow) {
         throw new Error(`[rejectDefinitionVersion] update returned no row for ${definitionVersionId}`);
       }
+
+      // Mirror of submitDefinition's forward transition: a rejection lifts
+      // the "frozen for reviewer decision" state (plan §4.1) this KPI
+      // entered when the now-rejected version was submitted, so the KPI
+      // can be edited and resubmitted. Only fires from 'pending_approval' —
+      // an amendment draft being rejected while the KPI is already
+      // 'active'/'suspended' on a DIFFERENT, already-approved version must
+      // not touch that root status.
+      await client.query(
+        `UPDATE rvn_kpi_definitions
+            SET status = 'draft', updated_at = now()
+          WHERE kpi_id = $1 AND status = 'pending_approval'`,
+        [updatedRow.kpi_id]
+      );
+
       return toKpiDefinitionVersion(updatedRow);
     },
     buildEvent: ({ result, nextVersion }) => {
@@ -988,7 +1035,16 @@ export function activateKpi(input: KpiLifecycleInput): Promise<AtomicCommandOutc
   return runKpiLifecycleTransition(
     {
       eventType: 'kpi.activated',
-      fromStatuses: ['draft', 'suspended'],
+      // 'pending_approval' added (EXECUTION_LEDGER.md §16 fix): the normal
+      // path into 'active' now runs draft -> (submitDefinition) ->
+      // pending_approval -> (approveDefinitionVersion, root status left
+      // untouched) -> pending_approval -> (activateKpi) -> active. 'draft'
+      // is kept too — a KPI whose current version was approved without
+      // ever moving the root status (e.g. data predating this fix, or a
+      // future direct-approve path) must still be activatable; the
+      // `requiresApprovedVersion` check below is what actually gates this,
+      // not the fromStatuses list.
+      fromStatuses: ['draft', 'pending_approval', 'suspended'],
       toStatus: 'active',
       requiresApprovedVersion: true,
     },

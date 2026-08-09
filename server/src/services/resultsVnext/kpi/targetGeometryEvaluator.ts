@@ -33,6 +33,17 @@
  * warning band are this implementer's reconstruction (see the migration's
  * own DEVIATION note) built to satisfy the two decisions above consistently
  * across every geometry, not a recovered original.
+ *
+ * -- FIX (EXECUTION_LEDGER.md §16): the reconstruction above initially
+ * omitted `binary` (source plan §3.1 `direction: ... | binary | ...`) — a
+ * sixth, genuinely different geometry, not a variant of the five above. It
+ * has no near/far zone at all (no boundary rule applies): a measurement
+ * either matches its definition version's configured `binarySuccessValue`
+ * or it does not, so `evalBinary()` below is intentionally two-valued
+ * (`on_target`/`critical`) with no `warning` branch — this is not decyzja
+ * #10's "no critical bound configured" fallback, it is the geometry's own
+ * permanent shape (zero-event compliance: "zero incidents", "certificate
+ * valid" — there is no partial compliance to warn about).
  */
 import type { KpiPerformanceStatus, KpiTargetGeometry } from './kpiTypes.js';
 
@@ -48,6 +59,11 @@ export interface TargetGeometryEvaluationInput {
   warningHigh?: number | null;
   criticalLow?: number | null;
   criticalHigh?: number | null;
+  /** `binary` geometry only — the `actualValue` (0 or 1) that counts as
+   * success for this definition version (`rvn_kpi_definition_versions
+   * .binary_success_value`). Missing/non-finite -> `'neutral'`, same rule
+   * as every other geometry's missing target. */
+  binarySuccessValue?: number | null;
 }
 
 function isNum(value: number | null | undefined): value is number {
@@ -168,6 +184,22 @@ function evalExact(input: TargetGeometryEvaluationInput): KpiPerformanceStatus {
 }
 
 /**
+ * `binary` — zero-event compliance geometry (source plan §3.1). No zone,
+ * no boundary rule: `actualValue === binarySuccessValue` is `'on_target'`,
+ * any other numeric value is `'critical'` directly — there is no `warning`
+ * state for this geometry (design intent, not a missing-config fallback).
+ * Missing `actualValue` OR missing `binarySuccessValue` (definition version
+ * not yet configured with a success value) both degrade to `'neutral'`,
+ * consistent with every other geometry's "missing config never fabricates
+ * a status" rule.
+ */
+function evalBinary(input: TargetGeometryEvaluationInput): KpiPerformanceStatus {
+  const { actualValue, binarySuccessValue } = input;
+  if (!isNum(actualValue) || !isNum(binarySuccessValue)) return 'neutral';
+  return actualValue === binarySuccessValue ? 'on_target' : 'critical';
+}
+
+/**
  * `custom` — decyzja #9, literal: always `'neutral'`. `formula_text` (or
  * any other field) is never read. A restricted expression engine is
  * explicitly out of scope for this package (tracked as a distinct future
@@ -196,6 +228,8 @@ export function evaluatePerformanceStatus(
       return evalRange(input);
     case 'exact':
       return evalExact(input);
+    case 'binary':
+      return evalBinary(input);
     case 'custom':
       return evalCustom();
     default: {

@@ -16,17 +16,31 @@
 // ENUMS (mirror the CHECK constraints in the migration)
 // ==========================================
 
-export const KPI_STATUSES = ['draft', 'active', 'suspended', 'archived'] as const;
+// 'pending_approval' sits between 'draft' and 'active' (source plan §4.1 —
+// see EXECUTION_LEDGER.md §16 and the migration's own comment on this
+// column for the full rationale of when each command sets it).
+export const KPI_STATUSES = [
+  'draft',
+  'pending_approval',
+  'active',
+  'suspended',
+  'archived',
+] as const;
 export type KpiStatus = (typeof KPI_STATUSES)[number];
 
 export const KPI_APPROVAL_STATUSES = ['draft', 'submitted', 'approved', 'rejected'] as const;
 export type KpiApprovalStatus = (typeof KPI_APPROVAL_STATUSES)[number];
 
+// 'binary' (source plan §3.1's `direction: ... | binary | ...`, see
+// EXECUTION_LEDGER.md §16) is the sixth geometry — zero-event compliance,
+// evaluated via `binarySuccessValue` rather than the numeric bound columns
+// the other five geometries use (targetGeometryEvaluator.ts's evalBinary()).
 export const KPI_TARGET_GEOMETRIES = [
   'threshold_min',
   'threshold_max',
   'range',
   'exact',
+  'binary',
   'custom',
 ] as const;
 export type KpiTargetGeometry = (typeof KPI_TARGET_GEOMETRIES)[number];
@@ -113,6 +127,10 @@ export interface KpiDefinitionVersionRow {
   warning_high: string | null;
   critical_low: string | null;
   critical_high: string | null;
+  /** Only set when `target_geometry = 'binary'` — see the migration's
+   * column comment. NUMERIC(0|1) in the DB, comes back as a numeric string
+   * like every other bound column here. */
+  binary_success_value: string | null;
   formula_text: string | null;
   approval_status: KpiApprovalStatus;
   effective_from: string | null;
@@ -146,6 +164,7 @@ export interface KpiDefinitionVersion {
   warningHigh: number | null;
   criticalLow: number | null;
   criticalHigh: number | null;
+  binarySuccessValue: number | null;
   formulaText: string | null;
   approvalStatus: KpiApprovalStatus;
   effectiveFrom: string | null;
@@ -188,6 +207,7 @@ export function toKpiDefinitionVersion(row: KpiDefinitionVersionRow): KpiDefinit
     warningHigh: toNullableNumber(row.warning_high),
     criticalLow: toNullableNumber(row.critical_low),
     criticalHigh: toNullableNumber(row.critical_high),
+    binarySuccessValue: toNullableNumber(row.binary_success_value),
     formulaText: row.formula_text,
     approvalStatus: row.approval_status,
     effectiveFrom: row.effective_from,
