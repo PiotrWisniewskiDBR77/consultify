@@ -3,12 +3,6 @@
  * Deck generation, templates, brand kits, export.
  */
 
-// MAT-010: top-level import, NOT an inline `require('crypto')`. This file's
-// existing `hashIp()` uses the require() form, which throws
-// "ReferenceError: require is not defined" under the real ESM dev server
-// (found the hard way in MAT-006). That latent bug is out of MAT-010's
-// boundary and is left untouched — but not repeated here.
-import { createHash } from 'crypto';
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs';
@@ -33,22 +27,9 @@ import {
   ensureDeckCommentsHydrated,
   getDeckCommentCounts,
   listDeckCommentThreads,
-  persistDeckCommentNow,
-  refreshDeckCommentsFromPersistence,
   replyToDeckComment,
   setDeckCommentResolved,
 } from '../services/deckCommentsService.js';
-// MAT-010 — canonical artifact lineage. `created` (below) and `public_open`
-// hooks stay on the fail-open `...Safe` variant — see their own comments for
-// why. Every OTHER event type uses `...Tracked` (Codex review, second round)
-// — see `respondIfLineageLost` below for why those sites CAN'T stay fire-open.
-import {
-  cancelPendingLineageIntent,
-  deriveCreatedEventIdempotencyKey,
-  preflightStreamingExportIntent,
-  recordLineageEventSafe,
-  recordLineageEventTracked,
-} from '../services/lineage/artifactLineageService.js';
 import {
   isTemplateResolveError,
   resolvePresentationTemplateForCreation,
@@ -101,13 +82,9 @@ import {
 } from '../services/presentationDeckCollaboratorService.js';
 import { buildDeckDiffSummary } from '../services/presentationDeckDiffSummaryService.js';
 import {
-  buildDeckDocumentFromStructuredSlides,
   deckDocumentToRenderableUnifiedJson,
   normalizeDeckDocument,
-  resolveDeckContentCoherence,
-  type StructuredSlideInput,
 } from '../services/presentationDeckDocumentService.js';
-import { canonicalizePresentationAutosaveDeck } from '../services/presentationDeckAutosaveCanonicalizer.js';
 import {
   evaluateRevertEligibility,
   type RevertEligibilityReason,
@@ -152,7 +129,6 @@ import {
   type OperationsHealthAnomaly,
   type OperationsHealthReport,
 } from '../services/presentationOperationsHealthService.js';
-import { drawPresentationPdfFooter } from '../services/presentationPdfLayoutService.js';
 import {
   buildPresentationRuntimeRollup,
   type PresentationRuntimeEventRow,
@@ -182,11 +158,7 @@ import {
   recordGovernanceEvent,
   type TemplateLifecycleState,
 } from '../services/presentationTemplateGovernanceService.js';
-import {
-  materializeTemplateVariableBrief,
-  mapOutlineBlueprintToDeckSlides,
-  validatePresentationCustomTemplate,
-} from '../services/presentationTemplateRuntimeService.js';
+import { mapOutlineBlueprintToDeckSlides } from '../services/presentationTemplateRuntimeService.js';
 import {
   comparePresetsByName,
   normalizePresetFilters,
@@ -212,7 +184,6 @@ import { applyExportApprovalGate } from '../services/v8/exportApprovalGate.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
-import { exportsDir } from '../utils/storagePaths.js';
 import { canOverrideQualityGate, enforceQualityGateForExport } from './presentationExportGate.js';
 
 const router = Router();
@@ -425,41 +396,6 @@ function ensureConfidentialityPolicy(
   return true;
 }
 
-/**
- * MAT-010 (Codex review, second round) — the closing half of the durability
- * fix. `recordLineageEventTracked` tells the truth about whether an event's
- * intent survived ANYWHERE (direct write or the durable pending/outbox
- * fallback). When it did not — a genuine double failure — the calling route
- * must not report unconditional success (the business mutation already
- * committed and is NOT rolled back; only the HTTP response is honest about
- * the audit trail). Returns `true` when the caller should send this 500 and
- * stop; `false` when the caller should proceed with its normal response.
- *
- * Mirrors `workbook.routes.ts`'s function of the same name exactly (same
- * signature, same body, same status code/shape) — kept as a local copy
- * rather than a shared import because both route files are independently
- * frozen modules and this durability fix must not introduce a new
- * cross-route dependency.
- *
- * Client-retry safety after this 500 is verified per event type at each call
- * site's own comment, not assumed uniformly — see
- * `recordLineageEventTracked`'s doc comment in artifactLineageService.ts for
- * the full reasoning (CAS guard on version/restore; single-column overwrite,
- * not accumulation, on share_minted; already-idempotent share_revoked; no
- * persisted side effect on export — except the two streamed export sites
- * where the response is already committed by the time the hook runs, see
- * their own comments).
- */
-function respondIfLineageLost(res: Response, outcome: { durable: boolean }): boolean {
-  if (outcome.durable) return false;
-  res.status(500).json({
-    success: false,
-    error: 'Lineage could not be durably recorded for this operation',
-    code: 'LINEAGE_RECOVERY_REQUIRED',
-  });
-  return true;
-}
-
 const EXPORT_MAX_SLIDE_COUNT = 60;
 const EXPORT_MAX_PAYLOAD_BYTES = 50_000_000;
 const pendingDeckAiOperations = new Map<
@@ -533,16 +469,7 @@ async function recordPresentationExportRecord(params: {
   filePath?: string | null;
   fileUrl?: string | null;
   errorCategory?: string | null;
-  // Codex review, third round (Blocker A) — when the caller already ran
-  // `preflightStreamingExportIntent` before streaming began (PDF/PNG), these
-  // thread the SAME idempotency key / occurredAt through so this
-  // post-stream call converges on the pre-flight's durable pending row
-  // instead of deriving an unrelated one. Omitted by every other caller —
-  // `recordLineageEventTracked` derives its own when these are undefined,
-  // unchanged from before this round.
-  lineageIdempotencyKey?: string;
-  lineageOccurredAt?: string;
-}): Promise<{ durable: boolean } | null> {
+}) {
   try {
     await dbRun(
       `INSERT INTO presentation_export_records (id, deck_id, organization_id, user_id, format, status, quality_result, quality_report_json, fidelity_score, file_path, file_url, storage_provider, error_category, completed_at)
@@ -566,41 +493,6 @@ async function recordPresentationExportRecord(params: {
     if (!isSchemaMissingError(error))
       logger.warn('[Presentations] Could not record export QA', error);
   }
-
-  // MAT-010 lineage hook. Only a genuinely completed export becomes an
-  // `export` lineage entry; failed/blocked attempts stay in
-  // `presentation_export_records` where the QA detail belongs. `...Tracked`
-  // (Codex review, second round): retry-safety verified — re-running an
-  // export has no persisted side effect to duplicate, the file is simply
-  // regenerated. IMPORTANT: this helper has no `res` of its own — it is
-  // called from several route handlers below. Most call the lineage hook
-  // BEFORE their response is sent and can gate on the returned outcome via
-  // `respondIfLineageLost`; the pdf and png success paths call it AFTER
-  // `doc.pipe(res)`/`archive.pipe(res)` have already streamed the response,
-  // so they cannot act on `durable: false` — see their own comments for that
-  // residual gap. Returns `null` (nothing to track/gate) for non-`completed`
-  // statuses, unchanged from the prior behavior.
-  if (params.status === 'completed') {
-    return recordLineageEventTracked({
-      organizationId: params.organizationId,
-      artifactKind: 'presentation',
-      sourceRecordId: params.deckId,
-      eventType: 'export',
-      actorUserId: params.userId || null,
-      detail: { format: params.format },
-      idempotencyKey: params.lineageIdempotencyKey,
-      occurredAt: params.lineageOccurredAt,
-    });
-  }
-  return null;
-}
-
-/**
- * MAT-010 — share-token digest for the lineage trail. The raw token is never
- * written to the lineage (mirrors `workbook.routes.ts`'s `hashShareToken`).
- */
-function hashLineageShareToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex').slice(0, 16);
 }
 
 async function recordPresentationRuntimeEvent(params: {
@@ -645,97 +537,41 @@ function enforceExportLimits(deck: any, cards: any[]): { ok: boolean; error?: st
 // updated more recently than the exported file was written, then persist the refreshed
 // file + `exported_at` so subsequent downloads (and the bundle/ZIP export, which reuses
 // this same export_path) see the same up-to-date artifact.
-export class CurrentPptxExportError extends Error {
-  readonly code = 'PPTX_CURRENT_RENDER_FAILED';
-
-  constructor(
-    message: string,
-    readonly cause?: unknown
-  ) {
-    super(message);
-    this.name = 'CurrentPptxExportError';
-  }
-}
-
-interface CurrentPptxExportDependencies {
-  generate: (
-    unifiedJson: any,
-    options: any
-  ) => Promise<{
-    buffer: Buffer;
-    slideCount: number;
-    warnings: string[];
-  }>;
-  persist: (params: {
-    deckId: string;
-    organizationId: string;
-    exportPath: string;
-    slideCount: number;
-    exportedAt: string;
-    exportedVersion: number;
-  }) => Promise<void>;
-}
-
-// A successful deployment may contain exporter fixes while the persisted deck
-// version is unchanged. Files on the Railway volume pre-date the new process;
-// treat them as stale once per process lifetime so downloads pick up the current
-// renderer instead of serving bytes produced by an older release indefinitely.
-const pptxExporterStartedAtMs = Date.now();
-
-/** Ensure the downloadable bytes represent the current persisted deck version. */
-export async function ensureCurrentPptxExport(
-  deck: any,
-  dependencies?: Partial<CurrentPptxExportDependencies>
-): Promise<any> {
-  const exportPath = deck?.export_path
-    ? String(deck.export_path)
-    : path.join(exportsDir('presentations'), `${String(deck?.id || 'presentation')}.pptx`);
-  const generate =
-    dependencies?.generate ??
-    (async (unifiedJson: any, options: any) => {
-      const pipeline = new PptxPipelineService();
-      return pipeline.generateFromUnifiedJson(unifiedJson, options);
-    });
-  const persist =
-    dependencies?.persist ??
-    (async (params) => {
-      await dbRun(
-        `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', slide_count = ?, exported_at = ?, exported_version = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
-        [
-          params.exportPath,
-          params.slideCount,
-          params.exportedAt,
-          params.exportedVersion,
-          params.deckId,
-          params.organizationId,
-        ]
-      );
-    });
-
+async function regeneratePptxIfStale(deck: any): Promise<any> {
   try {
-    let fileExists = false;
-    let fileModifiedAtMs = 0;
-    try {
-      const fileStat = fs.statSync(exportPath);
-      fileExists = fileStat.isFile();
-      fileModifiedAtMs = fileStat.mtimeMs;
-    } catch {
-      fileExists = false;
+    if (!deck?.id || !deck?.organization_id) return deck;
+    const exportPath = deck.export_path
+      ? String(deck.export_path)
+      : path.join(exportsDir('presentations'), `${deck.id}.pptx`);
+    const exportMissing = !fs.existsSync(exportPath);
+    const deckUpdatedAt = deck.updated_at ? new Date(deck.updated_at).getTime() : 0;
+
+    let fileMtimeMs = 0;
+    if (!exportMissing) {
+      try {
+        fileMtimeMs = fs.statSync(exportPath).mtimeMs;
+      } catch {
+        fileMtimeMs = 0;
+      }
     }
-    const deckVersion = Number.isInteger(Number(deck?.version)) ? Number(deck.version) : 1;
-    const exportedVersion = Number.isInteger(Number(deck?.exported_version))
-      ? Number(deck.exported_version)
-      : null;
-    const isCurrent =
-      fileExists &&
-      exportedVersion !== null &&
-      exportedVersion === deckVersion &&
-      fileModifiedAtMs >= pptxExporterStartedAtMs;
-    if (isCurrent) return { ...deck, export_path: exportPath };
+
+    // Small tolerance to avoid re-render churn from clock/rounding skew between the
+    // DB timestamp and the filesystem mtime for a file we just wrote ourselves.
+    const STALE_TOLERANCE_MS = 2000;
+    if (
+      !exportMissing &&
+      (!deckUpdatedAt ||
+        Number.isNaN(deckUpdatedAt) ||
+        deckUpdatedAt <= fileMtimeMs + STALE_TOLERANCE_MS)
+    ) {
+      return deck;
+    }
 
     const deckDocument = normalizeDeckDocument(deck);
     if (!deckDocument || !Array.isArray(deckDocument.cards) || deckDocument.cards.length === 0) {
-      throw new CurrentPptxExportError('The current deck has no renderable slides.');
+      // Nothing renderable — leave the stale-but-existing file in place rather than
+      // failing the download outright.
+      return deck;
     }
 
     // Fix 2026-07-14 (dowód _DOWOD_DECK_PPTX_2026-07-14.md): re-rendering from the
@@ -752,42 +588,35 @@ export async function ensureCurrentPptxExport(
       baseUnified = null; // legacy/corrupt unified_json → coerced-flatten fallback
     }
     const unifiedJson = deckDocumentToRenderableUnifiedJson(deckDocument, baseUnified);
-    // Validation is intentionally ON: integrity failures must block download;
-    // serving last-known-good bytes here would misrepresent the saved deck.
-    const result = await generate(unifiedJson, {
+    const pipeline = new PptxPipelineService();
+    // Validation is intentionally ON (skipValidation removed): the only
+    // error-severity rules (missing intent/key_message/content, nameless
+    // initiatives, empty deck) are integrity failures that would render broken
+    // anyway. A validation throw lands in the catch below → the download keeps
+    // serving the last-known-good file instead of a broken re-render.
+    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
       template: (deckDocument.meta?.theme as any) || undefined,
       language: (deckDocument.meta?.language as any) || undefined,
       confidentiality: (deckDocument.meta?.confidentiality as any) || undefined,
-      addClosingSlide: false,
-      customTemplate: deckDocument.meta?.customTemplate,
     });
 
     // Render-integrity gate: never overwrite a good export with a deck that
-    // contains fallback "Render Error" slides, and never serve it as current.
+    // contains fallback "Render Error" slides — serve the previous file instead.
     const renderFailures = result.warnings.filter((warning) => warning.includes('render failed'));
     if (renderFailures.length > 0) {
-      throw new CurrentPptxExportError(
-        `The current deck could not be rendered cleanly: ${renderFailures.join('; ')}`
-      );
+      logger.error('[Presentations] Stale-regen produced error slides; keeping previous export', {
+        deckId: deck.id,
+        renderFailures,
+      });
+      return deck;
     }
 
-    fs.mkdirSync(path.dirname(exportPath), { recursive: true });
-    const temporaryPath = `${exportPath}.tmp-${uuidv4()}`;
-    try {
-      fs.writeFileSync(temporaryPath, result.buffer);
-      fs.renameSync(temporaryPath, exportPath);
-    } finally {
-      if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
-    }
+    fs.writeFileSync(exportPath, result.buffer);
     const exportedAtIso = new Date().toISOString();
-    await persist({
-      deckId: String(deck.id),
-      organizationId: String(deck.organization_id),
-      exportPath,
-      slideCount: result.slideCount,
-      exportedAt: exportedAtIso,
-      exportedVersion: deckVersion,
-    });
+    await dbRun(
+      `UPDATE presentation_decks SET slide_count = ?, export_path = ?, export_format = 'pptx', exported_at = ?, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
+      [result.slideCount, exportPath, exportedAtIso, deck.id, deck.organization_id]
+    );
     logger.info('[Presentations] Re-rendered stale PPTX export before download', {
       deckId: deck.id,
       slideCount: result.slideCount,
@@ -798,19 +627,15 @@ export async function ensureCurrentPptxExport(
       export_path: exportPath,
       export_format: 'pptx',
       exported_at: exportedAtIso,
-      exported_version: deckVersion,
       slide_count: result.slideCount,
     };
   } catch (error) {
-    logger.warn('[Presentations] Current PPTX render failed; download blocked', {
+    // Regeneration failure must never block the download of the last-known-good file.
+    logger.warn('[Presentations] PPTX re-render before download failed; serving existing file', {
       deckId: deck?.id,
       error: (error as any)?.message || error,
     });
-    if (error instanceof CurrentPptxExportError) throw error;
-    throw new CurrentPptxExportError(
-      `The current presentation could not be rendered: ${(error as any)?.message || 'unknown error'}`,
-      error
-    );
+    return deck;
   }
 }
 
@@ -824,27 +649,11 @@ function isSchemaMissingError(error: unknown): boolean {
   );
 }
 
-// MAT-006B — fail-closed count/content coherence on the canonical read path.
-//
-// AS-IS that produced the staging blocker: `slide_count` was echoed verbatim
-// from the column while `normalizeDeckDocument()` silently returned `null` for
-// a row with no `deck_json.cards` and no `unified_json.slides`. The response
-// therefore claimed "11 slides" and delivered none, and the builder rendered
-// "Card 1 of 0" with no explanation of why.
-//
-// The canonical GET now reports the DERIVED count (what it can actually serve)
-// and states the content state explicitly. `content_state === 'missing'` always
-// travels with `slide_count === 0`, so no consumer of this route can advertise
-// slides that do not exist.
 function normalizeDeckRow(row: any) {
-  const coherence = resolveDeckContentCoherence(row);
-  const canonicalDeck = coherence.document;
+  const canonicalDeck = normalizeDeckDocument(row);
   return {
     ...row,
     deck_json: canonicalDeck ? JSON.stringify(canonicalDeck) : row.deck_json,
-    slide_count: coherence.cardCount,
-    declared_slide_count: coherence.declaredSlideCount,
-    content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
     source_artifacts: JSON.parse(row.source_artifacts || '[]'),
     source_refs: JSON.parse(row.source_refs_json || '[]'),
     outline_json: JSON.parse(row.outline_json || '[]'),
@@ -860,40 +669,11 @@ const PUBLIC_DECK_DENY_FIELDS = new Set([
   'share_created_by',
   'created_by',
   'updated_by',
-  // MAT-006B — `declared_slide_count` is the raw column kept for internal
-  // diagnostics (it is the number that can lie). A public share viewer has no
-  // use for it and it exposes internal bookkeeping drift, so it is stripped.
-  // `slide_count` (derived) and `content_state` DO stay: they are what let the
-  // viewer say "this deck has no content" instead of rendering "Card 1 of 0".
-  'declared_slide_count',
 ]);
 
 function toPublicDeckRow(row: any) {
   const full = normalizeDeckRow(row);
-  const publicRow = Object.fromEntries(
-    Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k))
-  ) as Record<string, any>;
-
-  // Give the public viewer the same canonical document used by the builder,
-  // rather than making it reconstruct a deck from a mixture of legacy row
-  // columns. Keep `deck_json` for backwards-compatible clients, but derive it
-  // from the exact same sanitized object so the two representations cannot
-  // drift. In particular, canonical deck documents carry tenant/author fields
-  // of their own; stripping only the database row leaked those values inside
-  // the JSON string.
-  const canonicalDeck = resolveDeckContentCoherence(row).document;
-  if (canonicalDeck) {
-    const {
-      organization_id: _organizationId,
-      created_by: _createdBy,
-      updated_by: _updatedBy,
-      ...publicDeck
-    } = canonicalDeck as any;
-    publicRow.deck = publicDeck;
-    publicRow.deck_json = JSON.stringify(publicDeck);
-  }
-
-  return publicRow;
+  return Object.fromEntries(Object.entries(full).filter(([k]) => !PUBLIC_DECK_DENY_FIELDS.has(k)));
 }
 
 function parseDeckPayload(row: any): any {
@@ -918,51 +698,6 @@ async function ensureDeckLineageSchema(): Promise<void> {
     if (!isSchemaMissingError(error)) {
       logger.warn('[Presentations] Could not ensure source_refs_json column', error);
     }
-  }
-}
-
-// MAT-007/009 root-cause fix (part 2): POST /decks and POST /decks/from-template
-// build canonical deck_json (see buildDeckDocumentFromStructuredSlides above) but,
-// unlike the AI generateDeck() pipeline (presentationGeneratorService.ts:2076-2127),
-// never rendered a physical PPTX or set export_path — so GET /decks/:id/download
-// (`if (!deck || !deck.export_path) return res.status(404)`) 404s for every deck
-// created through these two routes, even after the content-shape fix above. This
-// reuses the EXACT same render call the generator pipeline already makes
-// (PptxPipelineService.generateFromUnifiedJson via deckDocumentToRenderableUnifiedJson)
-// so the golden-flow export step works against a real, existing contract instead of
-// a new one. Best-effort / non-fatal: a render failure must not fail deck creation —
-// the deck is still fully usable in the builder; export can be retried by editing +
-// re-triggering a stale re-render, or a future manual export attempt will just 404
-// exactly as it did before this change, not worse.
-async function renderInitialPptxForDeck(params: {
-  deckId: string;
-  organizationId: string;
-  deckDocument: ReturnType<typeof buildDeckDocumentFromStructuredSlides>;
-}): Promise<void> {
-  try {
-    if (!Array.isArray(params.deckDocument.cards) || params.deckDocument.cards.length === 0) {
-      return;
-    }
-    const unifiedJson = deckDocumentToRenderableUnifiedJson(params.deckDocument, null);
-    const pipeline = new PptxPipelineService();
-    const result = await pipeline.generateFromUnifiedJson(unifiedJson, {
-      template: (params.deckDocument.meta?.theme as any) || undefined,
-      language: (params.deckDocument.meta?.language as any) || undefined,
-      confidentiality: (params.deckDocument.meta?.confidentiality as any) || undefined,
-    });
-    const exportDir = exportsDir('presentations');
-    const exportPath = path.join(exportDir, `${params.deckId}.pptx`);
-    fs.mkdirSync(exportDir, { recursive: true });
-    fs.writeFileSync(exportPath, result.buffer);
-    await dbRun(
-      `UPDATE presentation_decks SET export_path = ?, export_format = 'pptx', exported_at = CURRENT_TIMESTAMP, exported_version = version, updated_at = updated_at WHERE id = ? AND organization_id = ?`,
-      [exportPath, params.deckId, params.organizationId]
-    );
-  } catch (renderErr) {
-    logger.warn('[presentations] initial PPTX render failed (non-fatal, deck still usable)', {
-      deckId: params.deckId,
-      error: (renderErr as any)?.message || renderErr,
-    });
   }
 }
 
@@ -999,34 +734,6 @@ async function syncArtifactRegistryForDeck(params: {
       sourceTable: 'presentation_decks',
       nativeStatus: params.status || 'draft',
     },
-  });
-
-  // MAT-010 lineage hook (fail-open) — head of the lineage chain for decks.
-  // Placed inside this shared helper so BOTH deck-creation call sites are
-  // covered by one insertion, and after `registerArtifactOrigin` above so the
-  // canonical artifact id resolves immediately.
-  //
-  // Fail-open matters especially here: both call sites wrap this helper in a
-  // try/catch that DELETES the freshly created deck on throw. A lineage
-  // failure must never trigger that rollback — hence `...Safe`, which never
-  // throws.
-  await recordLineageEventSafe({
-    organizationId: params.organizationId,
-    artifactKind: 'presentation',
-    sourceRecordId: params.deckId,
-    eventType: 'created',
-    actorUserId: params.userId,
-    titleSnapshot: params.title,
-    idempotencyKey: deriveCreatedEventIdempotencyKey({
-      artifactKind: 'presentation',
-      sourceRecordId: params.deckId,
-    }),
-    sourceContext: {
-      source: params.source ?? null,
-      presentationMode: params.presentationMode ?? null,
-      slideCount: params.slideCount ?? null,
-    },
-    detail: { status: params.status || 'draft' },
   });
 }
 
@@ -1138,58 +845,6 @@ async function getTemplateForOrgOrSystem(templateId: string, organizationId: str
   )) as any;
 }
 
-/**
- * M09-H02 — strict, tenant-scoped read-back for `presentation_templates` writes.
- *
- * Deliberately NOT `getTemplateForOrgOrSystem`: that helper also matches system
- * rows (`organization_id IS NULL`), so it can confirm a row this org does not
- * own. A write may only be reported as successful when the row is durably
- * present AND owned by the writing organization.
- */
-async function readBackOrgTemplate(templateId: string, organizationId: string) {
-  return (await dbGet(`SELECT * FROM presentation_templates WHERE id = ? AND organization_id = ?`, [
-    templateId,
-    organizationId,
-  ])) as any;
-}
-
-/**
- * M09-H02 — settle a `presentation_templates` write against durable state.
- *
- * `dbRun` defaults to `fallback: true` (see `DbPromise.run`), so a failed
- * statement RESOLVES `{ success: false }` instead of rejecting. Callers that
- * ignore the result answer 200 for a row that was never written.
- *
- * The driver acknowledgement is therefore treated as a hint, never as the
- * authority — the read-back is the authority:
- *
- *  - ack ok + row present   → success
- *  - ack failed + row present → success, logged. This is the retry/idempotency
- *    case scoped to this operation: a statement can commit and still report a
- *    failure (timeout fired after COMMIT). Failing closed there would orphan a
- *    row that genuinely exists, so the durable state wins.
- *  - row absent (any ack)   → fail closed. Never fabricate an envelope from the
- *    in-memory draft.
- */
-async function settleTemplateWrite(
-  operation: string,
-  templateId: string,
-  organizationId: string,
-  ack: { success: boolean; error?: string } | null | undefined
-): Promise<{ ok: true; row: any } | { ok: false; reason: string }> {
-  const row = await readBackOrgTemplate(templateId, organizationId);
-  if (!row) {
-    return { ok: false, reason: ack?.error || 'row_not_persisted' };
-  }
-  if (!ack?.success) {
-    logger.warn(
-      `[Presentations] ${operation}: driver reported a failed write but the row is durably present — treating as committed`,
-      { templateId, organizationId, driverError: ack?.error }
-    );
-  }
-  return { ok: true, row };
-}
-
 async function enforceNoLegalHold(res: Response, organizationId: string, operation: string) {
   try {
     await requireNoLegalHold(organizationId, operation);
@@ -1232,19 +887,6 @@ router.get(
     if (!row) {
       return res.status(404).json({ success: false, error: 'Shared presentation not found' });
     }
-
-    // MAT-010 lineage hook (fail-open). UNAUTHENTICATED request: the tenant
-    // comes from the matched row (server-side), never from the requester, and
-    // there is no actor. Placed after the row matched, so a revoked/expired/
-    // unknown token — 404'd above — never produces a lineage entry.
-    await recordLineageEventSafe({
-      organizationId: String(row.organization_id),
-      artifactKind: 'presentation',
-      sourceRecordId: String(row.id),
-      eventType: 'public_open',
-      actorUserId: null,
-      detail: { via: 'public_share_link' },
-    });
 
     res.json({ success: true, data: toPublicDeckRow(row) });
   })
@@ -1498,9 +1140,6 @@ router.post(
           source: resolved.source,
           legacy: resolved.legacy,
           slideCount: resolved.outlineBlueprint.length,
-          variables: Array.isArray((resolved.customTemplate as any)?.variables)
-            ? (resolved.customTemplate as any).variables
-            : [],
         },
       });
     } catch (err) {
@@ -1540,14 +1179,6 @@ router.post(
       return;
     }
     const useLlm = req.body?.useLlm === true;
-    if (input.customTemplate !== undefined) {
-      const validation = validatePresentationCustomTemplate(input.customTemplate);
-      if (validation.ok === false) {
-        return res
-          .status(400)
-          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
-      }
-    }
 
     let draft;
     try {
@@ -1564,12 +1195,13 @@ router.post(
 
     const { template, llmRefined } = draft;
     const id = uuidv4().replace(/-/g, '');
-    // `layout_policy_json` carries the versioned custom theme/master contract.
-    // Legacy preset-only templates store `{ customTemplate: null }` and retain
-    // the corporate/minimal/modern behavior unchanged.
-    const insertAck = await dbRun(
-      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, layout_policy_json, is_system, is_active, cloned_from, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
+    // Base insert uses ONLY the migration-568 columns so template creation
+    // keeps working on installs where migration 767 (lifecycle + lineage)
+    // has not run yet. `lifecycle_state` defaults to `draft` either way
+    // (567 has no such column; 767 adds it with `DEFAULT 'draft'`).
+    await dbRun(
+      `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, is_active, cloned_from, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, TRUE, NULL, ?)`,
       [
         id,
         orgId,
@@ -1586,31 +1218,9 @@ router.post(
         template.minSlides,
         JSON.stringify(template.mustHaveIntents),
         JSON.stringify(template.recommendedVisuals),
-        JSON.stringify({ customTemplate: input.customTemplate || null }),
         userId,
       ]
     );
-
-    // M09-H02 — settle against durable state BEFORE any best-effort side write.
-    // Previously the route ran the lineage/governance writes and then answered
-    // `success: true` with an envelope rebuilt from the in-memory draft whenever
-    // the read-back came back empty, so a rejected INSERT still looked like a
-    // saved template.
-    const planSettled = await settleTemplateWrite('template plan', id, orgId, insertAck);
-    if (planSettled.ok === false) {
-      logger.error('[Presentations] Template plan insert did not persist', {
-        templateId: id,
-        organizationId: orgId,
-        reason: planSettled.reason,
-        correlationId: (req as any).correlationId,
-      });
-      res.status(500).json({
-        success: false,
-        error: 'template_persist_failed',
-        message: 'Template was not saved. Nothing was created.',
-      });
-      return;
-    }
 
     // Epic C2 parity with /clone: a freshly drafted template is the root
     // of its own lineage chain. Best-effort — never breaks creation when
@@ -1648,16 +1258,9 @@ router.post(
       );
     }
 
-    // M09-H02 — re-read after the lineage write so the client gets the final
-    // persisted row. `planSettled.row` is the fail-closed guarantee; this only
-    // refreshes it. No in-memory fallback: if the row vanished between the two
-    // reads, the earlier guard already proved persistence, so we serve the row
-    // we verified rather than inventing one.
-    const row = (await readBackOrgTemplate(id, orgId)) || planSettled.row;
-    res.json({
-      success: true,
-      data: { template: normalizeTemplatePayload(row), llmRefined },
-    });
+    const row = await getTemplateForOrgOrSystem(id, orgId);
+    const normalized = row ? normalizeTemplatePayload(row) : { id, ...template };
+    res.json({ success: true, data: { template: normalized, llmRefined } });
   })
 );
 
@@ -1672,59 +1275,6 @@ router.get(
   })
 );
 
-router.delete(
-  '/templates/:id',
-  asyncHandler(async (req, res) => {
-    if (!ensurePresentationCapability(req, res, 'template_approve')) return;
-    const orgId = getOrgId(req);
-    const templateId = String(req.params.id || '');
-    const existing = await readBackOrgTemplate(templateId, orgId);
-    if (!existing) {
-      return res.status(404).json({ success: false, error: 'Template not found' });
-    }
-    const lifecycleState = String(existing.lifecycle_state || 'draft');
-    if (lifecycleState !== 'draft') {
-      return res.status(409).json({
-        success: false,
-        error: 'Only draft templates can be deleted.',
-        code: 'TEMPLATE_DELETE_REQUIRES_DRAFT',
-        lifecycleState,
-      });
-    }
-    if (existing.is_system === true || existing.is_system === 1) {
-      return res.status(403).json({
-        success: false,
-        error: 'System templates cannot be deleted.',
-        code: 'SYSTEM_TEMPLATE_DELETE_FORBIDDEN',
-      });
-    }
-    const result = await dbRun(
-      `DELETE FROM presentation_templates
-        WHERE id = ? AND organization_id = ?
-          AND COALESCE(lifecycle_state, 'draft') = 'draft'
-          AND COALESCE(is_system, FALSE) = FALSE`,
-      [templateId, orgId]
-    );
-    if (!result?.changes) {
-      return res.status(409).json({
-        success: false,
-        error: 'Draft changed before deletion. Refresh and try again.',
-        code: 'TEMPLATE_DELETE_CONFLICT',
-      });
-    }
-    try {
-      await dbRun(
-        `DELETE FROM presentation_template_governance_events
-          WHERE template_id = ? AND organization_id = ?`,
-        [templateId, orgId]
-      );
-    } catch (cleanupError) {
-      logger.warn('[Presentations] Could not clean deleted draft governance events', cleanupError);
-    }
-    res.json({ success: true, data: { deletedTemplateId: templateId } });
-  })
-);
-
 router.post(
   '/templates/:id/clone',
   asyncHandler(async (req, res) => {
@@ -1736,7 +1286,7 @@ router.post(
 
     const id = uuidv4().replace(/-/g, '');
     const { name } = req.body;
-    const cloneAck = await dbRun(
+    await dbRun(
       `INSERT INTO presentation_templates (id, organization_id, name, description, deck_type, audience, goal, language_default, confidentiality_default, theme, outline_json, max_slides, min_slides, must_have_intents, recommended_visuals, is_system, cloned_from, created_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FALSE, ?, ?)`,
       [
@@ -1759,24 +1309,6 @@ router.post(
         (req as any).user?.id,
       ]
     );
-
-    // M09-H02 — the clone answered `{ success: true, data: { id } }` for an id
-    // that may never have been written. Settle against durable, org-owned state
-    // before the best-effort lineage writes and before answering.
-    const cloneSettled = await settleTemplateWrite('template clone', id, orgId, cloneAck);
-    if (cloneSettled.ok === false) {
-      logger.error('[Presentations] Template clone insert did not persist', {
-        templateId: id,
-        sourceTemplateId: String(req.params.id),
-        organizationId: orgId,
-        reason: cloneSettled.reason,
-      });
-      return res.status(500).json({
-        success: false,
-        error: 'template_clone_failed',
-        message: 'Template was not cloned. Nothing was created.',
-      });
-    }
 
     // Epic C2: extend the clone with a lineage chain + governance
     // event so the registry surface can render the version history.
@@ -1848,25 +1380,8 @@ router.put(
       }
     }
 
-    const {
-      name,
-      description,
-      audience,
-      goal,
-      theme,
-      outlineJson,
-      maxSlides,
-      colorTemplateId,
-      customTemplate,
-    } = req.body;
-    if (customTemplate !== undefined && customTemplate !== null) {
-      const validation = validatePresentationCustomTemplate(customTemplate);
-      if (validation.ok === false) {
-        return res
-          .status(400)
-          .json({ success: false, error: 'custom_template_invalid', details: validation.errors });
-      }
-    }
+    const { name, description, audience, goal, theme, outlineJson, maxSlides, colorTemplateId } =
+      req.body;
 
     // Fala 1 (2026-07-28) — "wzorzec kolorów" (N31). Reuses the existing,
     // previously-unused `layout_policy_json` free-form column (no new
@@ -1875,7 +1390,7 @@ router.put(
     // `colorTemplateId === undefined` means "field not sent, leave
     // untouched"; `null` or `''` means "explicitly cleared".
     let layoutPolicyJson: string | null = null;
-    if (colorTemplateId !== undefined || customTemplate !== undefined) {
+    if (colorTemplateId !== undefined) {
       let currentLayoutPolicy: Record<string, unknown> = {};
       if (existing?.layout_policy_json) {
         try {
@@ -1886,12 +1401,11 @@ router.put(
       }
       layoutPolicyJson = JSON.stringify({
         ...currentLayoutPolicy,
-        ...(colorTemplateId !== undefined ? { colorTemplateId: colorTemplateId || null } : {}),
-        ...(customTemplate !== undefined ? { customTemplate: customTemplate || null } : {}),
+        colorTemplateId: colorTemplateId || null,
       });
     }
 
-    const updateAck = await dbRun(
+    await dbRun(
       `UPDATE presentation_templates SET name = COALESCE(?, name), description = COALESCE(?, description), audience = COALESCE(?, audience), goal = COALESCE(?, goal), theme = COALESCE(?, theme), outline_json = COALESCE(?, outline_json), max_slides = COALESCE(?, max_slides), layout_policy_json = COALESCE(?, layout_policy_json), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND is_system = FALSE`,
       [
         name,
@@ -1906,40 +1420,6 @@ router.put(
         orgId,
       ]
     );
-
-    // M09-H02 — the UPDATE is already tenant-scoped in its WHERE clause, but the
-    // route answered `{ success: true }` unconditionally. A foreign-org id, an
-    // unknown id or a system row therefore matched zero rows and still reported
-    // a saved edit. Zero rows changed is NOT a successful save.
-    if (updateAck?.success && updateAck.changes === 0) {
-      res.status(404).json({
-        success: false,
-        error: 'template_not_found_for_org',
-        message: 'No editable template with this id belongs to your organization.',
-      });
-      return;
-    }
-
-    const updateSettled = await settleTemplateWrite(
-      'template update',
-      String(req.params.id),
-      orgId,
-      updateAck
-    );
-    if (updateSettled.ok === false) {
-      logger.error('[Presentations] Template update did not persist', {
-        templateId: String(req.params.id),
-        organizationId: orgId,
-        reason: updateSettled.reason,
-      });
-      res.status(500).json({
-        success: false,
-        error: 'template_update_failed',
-        message: 'Template was not updated. No changes were saved.',
-      });
-      return;
-    }
-
     res.json({ success: true });
   })
 );
@@ -1961,78 +1441,6 @@ const VALID_LIFECYCLE_STATES: ReadonlySet<TemplateLifecycleState> = new Set([
 
 function isValidLifecycleState(value: unknown): value is TemplateLifecycleState {
   return typeof value === 'string' && VALID_LIFECYCLE_STATES.has(value as TemplateLifecycleState);
-}
-
-async function syncPresentationTemplateArtifactGovernance(params: {
-  organizationId: string;
-  templateId: string;
-  lifecycleState: TemplateLifecycleState;
-  actorId: string;
-}): Promise<void> {
-  const template = (await getTemplateForOrgOrSystem(
-    params.templateId,
-    params.organizationId
-  )) as any;
-  if (!template) return;
-
-  let outline: unknown = [];
-  try {
-    outline = JSON.parse(template.outline_json || '[]');
-  } catch {
-    outline = [];
-  }
-  const isDraft = params.lifecycleState === 'draft';
-  const artifact = await artifactRegistryService.registerArtifactOrigin({
-    organizationId: params.organizationId,
-    outputType: 'presentation',
-    artifactFamily: 'template',
-    originRuntime: 'presentation_template',
-    originRecordId: params.templateId,
-    titleSnapshot: template.name || 'Untitled presentation template',
-    ownerUserId: params.actorId,
-    createdBy: template.created_by || params.actorId,
-    deliveryState: isDraft ? 'draft' : 'ready',
-    visibilityScope: isDraft ? 'private' : 'organization',
-    originSummary: {
-      template: {
-        canonicalTemplateId: params.templateId,
-        originRuntime: 'presentation_template',
-        orphaned: false,
-        scope: template.is_system ? 'application' : 'organization',
-        status: params.lifecycleState === 'approved' ? 'published' : params.lifecycleState,
-        description: template.description || '',
-        deckType: template.deck_type || 'custom',
-        structureBlueprint: {
-          outline: Array.isArray(outline)
-            ? outline
-            : Array.isArray((outline as any)?.outline)
-              ? (outline as any).outline
-              : [],
-        },
-        metadata: {
-          createdBy: template.created_by || params.actorId,
-          createdAt: template.created_at,
-          updatedAt: template.updated_at,
-          legacyTemplateId: params.templateId,
-        },
-      },
-    },
-  });
-
-  if (artifact) {
-    await dbRun(
-      `UPDATE v8_output_artifacts
-       SET delivery_state = ?, visibility_scope = ?, is_draft = ?, last_transition_at = CURRENT_TIMESTAMP
-       WHERE artifact_id = ? AND organization_id = ?`,
-      [
-        isDraft ? 'draft' : 'ready',
-        isDraft ? 'private' : 'organization',
-        isDraft ? 1 : 0,
-        artifact.artifactId,
-        params.organizationId,
-      ]
-    );
-  }
 }
 
 router.get(
@@ -2094,26 +1502,6 @@ router.post(
         code: 'INVALID_TARGET_STATE',
       });
     }
-    if (targetState === 'approved') {
-      const candidate = await getTemplateForOrgOrSystem(templateId, orgId);
-      if (candidate?.layout_policy_json) {
-        let customTemplate: unknown;
-        try {
-          customTemplate = JSON.parse(candidate.layout_policy_json)?.customTemplate;
-        } catch {
-          customTemplate = '__invalid_json__';
-        }
-        if (customTemplate != null) {
-          const validation = validatePresentationCustomTemplate(customTemplate);
-          if (validation.ok === false)
-            return res.status(422).json({
-              success: false,
-              error: 'custom_template_invalid',
-              details: validation.errors,
-            });
-        }
-      }
-    }
 
     const result = await applyLifecycleTransition({
       templateId,
@@ -2143,18 +1531,6 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
-      });
-    }
-
-    // Keep the unified Template Library in lockstep with the Architect
-    // governance state. This applies to approved, draft and deprecated; a
-    // template moved back to draft must disappear from the default library.
-    if (result.record) {
-      await syncPresentationTemplateArtifactGovernance({
-        organizationId: orgId,
-        templateId,
-        lifecycleState: targetState,
-        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 
@@ -2209,15 +1585,6 @@ router.post(
         error: 'Template governance storage is unavailable.',
         code: 'TEMPLATE_GOVERNANCE_UNAVAILABLE',
         reason: result.reason || 'storage_error',
-      });
-    }
-
-    if (result.record) {
-      await syncPresentationTemplateArtifactGovernance({
-        organizationId: orgId,
-        templateId,
-        lifecycleState: 'deprecated',
-        actorId: (req as any).user?.id || getUserId(req) || 'system',
       });
     }
 
@@ -2450,51 +1817,80 @@ router.post(
 
     const deckId = uuidv4().replace(/-/g, '');
     const slideCount = Array.isArray(slides) ? slides.length : 0;
-    // MAT-007/009 root-cause fix: build the canonical deck_json (schemaVersion
-    // 1, real DeckDocumentCard[]) up front so the row this INSERT creates is
-    // self-consistent from the start — GET /decks/:id and the DeckBuilder both
-    // read deck_json first (see normalizeDeckDocument), and previously this
-    // route only ever wrote to the never-read `presentation_cards` table,
-    // leaving deck_json NULL while slide_count correctly reported the count.
-    // That produced "Ready, N slides" in the list but "Card 1 of 0" in the
-    // builder. See docs/program/WEEKEND_COMPLETION_2026-08-01/PACKETS/MAT-006B_PRESENTATION_LIFECYCLE_E2E.md.
-    const canonicalDeckDocument = buildDeckDocumentFromStructuredSlides({
-      deckId,
-      organizationId: orgId,
-      title,
-      theme: theme || 'modern',
-      slides: Array.isArray(slides) ? (slides as StructuredSlideInput[]) : [],
+    const nowIso = new Date().toISOString();
+    const builderCards = Array.isArray(slides)
+      ? slides.map((slide: any, index: number) => {
+          const content = slide?.content || slide || {};
+          const cardId = uuidv4().replace(/-/g, '');
+          const blocks: any[] = [];
+          const pushBlock = (type: string, blockContent: Record<string, unknown>) => {
+            blocks.push({
+              block_id: uuidv4().replace(/-/g, ''),
+              card_id: cardId,
+              type,
+              content: blockContent,
+              is_refreshable: false,
+              position: { area: 'full', order: blocks.length },
+              ai_editable: true,
+            });
+          };
+          const slideTitle = String(content?.title || `Slide ${index + 1}`);
+          pushBlock('heading', { text: slideTitle, level: 2 });
+          if (Array.isArray(content?.bullets) && content.bullets.length > 0) {
+            pushBlock('bullet_list', { items: content.bullets.map(String) });
+          } else if (content?.text) {
+            pushBlock('paragraph', { text: String(content.text) });
+          }
+          return {
+            card_id: cardId,
+            deck_id: deckId,
+            order_index: index,
+            intent: slide?.type || 'content',
+            layout_id: 'auto',
+            title: slideTitle,
+            blocks: Array.isArray(content?.blocks) && content.blocks.length > 0 ? content.blocks : blocks,
+            source_refs: [],
+            has_refreshable_data: false,
+            background: { type: 'theme' },
+            animations: { entrance: 'none', block_stagger: false },
+            is_locked: false,
+          };
+        })
+      : [];
+    const initialDeckJson = JSON.stringify({
+      deck_id: deckId,
+      organization_id: orgId,
+      title: String(title),
+      theme_id: theme || 'modern',
+      presentation_mode: 'show',
+      communication_register: 'professional',
+      image_style_preset: 'minimal_no_images',
+      color_set_id: 'midnight_navy',
       status: 'draft',
-      createdBy: userId,
+      card_size: '16:9',
+      cards: builderCards,
+      source_refs: [],
+      generation_settings: {
+        text_mode: 'preserve',
+        content_depth: 'concise',
+        audience: 'internal',
+        tone: 'professional',
+        language: 'en',
+        image_source: 'none',
+      },
+      animations_enabled: true,
+      share_settings: { is_shared: false, permissions: 'view' },
+      speaker_notes_generated: false,
+      created_by: userId,
+      created_at: nowIso,
+      updated_at: nowIso,
     });
-    if (source === 'teresa_deterministic_fallback') {
-      for (const card of canonicalDeckDocument.cards) {
-        card.source_refs = [
-          {
-            artifact_id: `teresa-request-${deckId}`,
-            artifact_type: 'chat_prompt',
-            artifact_name: 'Teresa user request',
-            confidence: 1,
-            readiness: 'user_supplied',
-          },
-        ];
-      }
-    }
-    const deckJsonStr = JSON.stringify(canonicalDeckDocument);
 
     try {
       await ensureDeckLineageSchema();
-      // MAT-010 G8 fix — `dbRun` defaults `fallback: true` (see DbPromise.ts),
-      // which resolves `{ success: false }` on a DB error instead of
-      // rejecting (e.g. an `organization_id` FK violation). Without this
-      // check the route fell through to card inserts, audit, registry sync
-      // and PPTX render for a deck row that was NEVER written, then answered
-      // 201 with an id pointing at nothing. Checking `.success` restores the
-      // existing catch/500 path for a failed create — no new behavior, just
-      // no longer silently trusting an unchecked write.
-      const deckInsertResult = await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      await dbRun(
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
@@ -2508,35 +1904,20 @@ router.post(
             sourcePack: sourcePack || {},
             evidenceRefs: Array.isArray(evidenceRefs) ? evidenceRefs : [],
           }),
-          deckJsonStr,
+          initialDeckJson,
         ]
       );
-      if (!deckInsertResult?.success) {
-        throw new Error(
-          `presentation_decks insert failed: ${deckInsertResult?.error || 'unknown error'}`
-        );
-      }
 
       if (Array.isArray(slides)) {
         for (let i = 0; i < slides.length; i++) {
           const slide = slides[i];
-          const cardId = uuidv4().replace(/-/g, '');
-          // Best-effort legacy mirror; deck_json above is now the source of
-          // truth read by GET /decks/:id and the builder. presentation_cards
-          // may not exist in every environment, so a failure here must not
-          // fail deck creation (the canonical row above already succeeded).
-          try {
-            await dbRun(
-              `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-              [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
-            );
-          } catch (cardsErr) {
-            logger.warn('[presentations] presentation_cards mirror insert failed (non-fatal)', {
-              deckId,
-              error: (cardsErr as any)?.message || cardsErr,
-            });
-          }
+          const cardId = builderCards[i].card_id;
+          const content = slide.content || slide;
+          await dbRun(
+            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [cardId, deckId, i, slide.type || 'content', JSON.stringify(content)]
+          );
         }
       }
 
@@ -2568,12 +1949,6 @@ router.post(
         ]);
         throw artifactErr;
       }
-
-      await renderInitialPptxForDeck({
-        deckId,
-        organizationId: orgId,
-        deckDocument: canonicalDeckDocument,
-      });
 
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
@@ -2607,7 +1982,7 @@ router.post(
  * HERE via `resolvePresentationTemplateForCreation` — never trusted from a
  * prior `/templates/resolve` response.
  *
- * Body: { templateArtifactId: string, title?: string, brief?: string }
+ * Body: { templateArtifactId: string, title?: string }
  * Returns 201: { success: true, data: { id, title, slideCount } } — same
  * shape as `POST /decks` so the client can reuse its existing deck-created
  * handling.
@@ -2629,11 +2004,6 @@ router.post(
       return;
     }
     const requestedTitle = typeof req.body?.title === 'string' ? req.body.title.trim() : '';
-    const brief = typeof req.body?.brief === 'string' ? req.body.brief.trim() : '';
-    const variableValues =
-      req.body?.variableValues && typeof req.body.variableValues === 'object'
-        ? req.body.variableValues
-        : {};
 
     let resolved;
     try {
@@ -2656,159 +2026,36 @@ router.post(
     // Deterministic outline→slide copy (no AI) — see mapOutlineBlueprintToDeckSlides
     // doc comment for why this is a named, independently-tested export rather
     // than inline mapping.
-    const templateVariables = Array.isArray((resolved.customTemplate as any)?.variables)
-      ? (resolved.customTemplate as any).variables
-      : [];
-    const variableMaterialization = materializeTemplateVariableBrief(
-      templateVariables,
-      variableValues
-    );
-    if (variableMaterialization.missingRequired.length > 0) {
-      res.status(422).json({
-        success: false,
-        error: 'TEMPLATE_VARIABLES_REQUIRED',
-        details: variableMaterialization.missingRequired,
-      });
-      return;
-    }
-    const materializedBrief = [brief, ...variableMaterialization.lines].filter(Boolean).join('\n');
-    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint, materializedBrief);
+    const slides = mapOutlineBlueprintToDeckSlides(resolved.outlineBlueprint);
     const slideCount = slides.length;
 
     const deckId = uuidv4().replace(/-/g, '');
-    // MAT-007/009 root-cause fix — see matching comment in `POST /decks`
-    // above: persist canonical deck_json at creation so this row never lands
-    // in the "Ready + slide_count>0, empty builder" state.
-    const templateSourceRef = {
-      artifact_id: templateArtifactId,
-      artifact_type: 'presentation_template',
-      artifact_name: resolved.name || 'Presentation template',
-      confidence: 1,
-      readiness: 'approved_template',
-      freshness_days: 0,
-      captured_at: new Date().toISOString(),
-      lineage: { canonicalTemplateId: resolved.canonicalTemplateId, origin: 'template_library' },
-    };
-    const baseDeckDocument = buildDeckDocumentFromStructuredSlides({
-      deckId,
-      organizationId: orgId,
-      title,
-      theme: resolved.theme,
-      slides: slides as StructuredSlideInput[],
-      status: 'draft',
-      createdBy: userId,
-    });
-    // A deterministic template copy is grounded in the approved template
-    // itself. Preserve that lineage on every card (and block), and carry the
-    // Template Architect's custom visual contract into the canonical deck so
-    // quality gates and exporters see the same brand/header-footer metadata.
-    const customTemplate = resolved.customTemplate as any;
-    if (customTemplate != null) {
-      const validation = validatePresentationCustomTemplate(customTemplate);
-      if (validation.ok === false) {
-        throw new Error(`custom_template_invalid:${validation.errors.join('; ')}`);
-      }
-    }
-    const customTheme = customTemplate?.theme;
-    const canonicalDeckDocument = {
-      ...baseDeckDocument,
-      theme_id: resolved.theme,
-      color_set_id: customTheme ? 'custom_template' : baseDeckDocument.color_set_id,
-      source_refs: [templateSourceRef],
-      meta: {
-        ...baseDeckDocument.meta,
-        theme: resolved.theme,
-        templateId: resolved.canonicalTemplateId,
-        customTemplate: customTemplate || undefined,
-        templateVersion: customTemplate?.version || null,
-      },
-      cards: baseDeckDocument.cards.map((card, index) => ({
-        ...card,
-        source_refs: [templateSourceRef],
-        blocks: card.blocks.map((block) => ({ ...block, source_ref: templateSourceRef })),
-        header_footer:
-          index === 0
-            ? undefined
-            : {
-                confidentiality: baseDeckDocument.meta.confidentiality || 'internal',
-                pageNumber: index + 1,
-                totalPages: baseDeckDocument.cards.length,
-                footerText: resolved.name || 'Consultify presentation',
-                showPageNumbers: true,
-              },
-      })),
-      delivery: {
-        ...baseDeckDocument.delivery,
-        brandLayoutSystem: {
-          templateFamily: resolved.name || resolved.theme,
-          source: customTheme ? 'custom_template' : 'template_theme',
-          brand: customTheme || { themeId: resolved.theme },
-          customTemplate: customTemplate || null,
-          headerFooter: {
-            enabled: true,
-            hideOnCover: true,
-            showPageNumbers: true,
-            showConfidentiality: true,
-          },
-        },
-      },
-      traceability: {
-        sourceRefs: [templateSourceRef],
-        sourceArtifacts: [
-          {
-            artifactId: templateArtifactId,
-            artifactType: 'presentation_template',
-            name: resolved.name,
-            canonicalTemplateId: resolved.canonicalTemplateId,
-          },
-        ],
-      },
-    };
-    const deckJsonStr = JSON.stringify(canonicalDeckDocument);
     try {
       await ensureDeckLineageSchema();
-      // MAT-010 G8 fix — see matching comment in `POST /decks` above: `dbRun`
-      // resolves `{ success: false }` rather than throwing, so an unchecked
-      // insert can answer 201 for a deck row that was never written.
-      const deckInsertResult = await dbRun(
-        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, deck_json, created_at, updated_at)
-         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+      await dbRun(
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, version, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', 'modern', ?, 'draft', ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [
           deckId,
           orgId,
           title,
-          resolved.theme,
           slideCount,
           JSON.stringify({
             source: 'template_library',
             templateArtifactId,
             canonicalTemplateId: resolved.canonicalTemplateId,
-            briefProvided: Boolean(brief),
           }),
-          deckJsonStr,
         ]
       );
-      if (!deckInsertResult?.success) {
-        throw new Error(
-          `presentation_decks insert failed: ${deckInsertResult?.error || 'unknown error'}`
-        );
-      }
 
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         const cardId = uuidv4().replace(/-/g, '');
-        try {
-          await dbRun(
-            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-            [cardId, deckId, i, slide.type, JSON.stringify(slide.content)]
-          );
-        } catch (cardsErr) {
-          logger.warn('[presentations] presentation_cards mirror insert failed (non-fatal)', {
-            deckId,
-            error: (cardsErr as any)?.message || cardsErr,
-          });
-        }
+        await dbRun(
+          `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [cardId, deckId, i, slide.type, JSON.stringify(slide.content)]
+        );
       }
 
       await (req as any).emitAuditEvent?.({
@@ -2840,12 +2087,6 @@ router.post(
         throw artifactErr;
       }
 
-      await renderInitialPptxForDeck({
-        deckId,
-        organizationId: orgId,
-        deckDocument: canonicalDeckDocument,
-      });
-
       res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
     } catch (error: any) {
       logger.error('[presentations] Failed to create deck from template:', error);
@@ -2864,93 +2105,15 @@ router.get(
     const orgId = getOrgId(req);
     try {
       await ensureDeckLineageSchema();
-      // MAT-006B — the list must not advertise slides the deck cannot serve.
-      //
-      // The first attempt at this gate used a pure-SQL predicate
-      // (`COALESCE(deck_json,'') <> '' OR COALESCE(unified_json,'') <> ''`) and
-      // echoed the stored `slide_count` whenever it was true. That is not
-      // fail-closed: a non-empty JSON string is not proof of renderable cards.
-      // It still passed a positive count through for `'{}'`, for invalid JSON
-      // (which `safeJsonParse` discards), for `{"schemaVersion":1,"cards":[]}`,
-      // and for the generator's cards+1 drift — i.e. every shape that actually
-      // occurs on `demo`. Only parsing the payload can answer the question, so
-      // the list now parses it, in JS, through the same
-      // `resolveDeckContentCoherence()` the canonical GET uses. List and
-      // canonical GET are therefore the same number by construction; there is
-      // no 'unverified' middle state left to hide behind.
-      //
-      // COST — this is a deliberate trade. The listing now reads `deck_json`
-      // (tens of rows x ~40 KB on a demo tenant) and JSON.parses each one. Two
-      // things keep the shape sane, neither of them measured:
-      //   1. `unified_json` is NOT selected up front. Every writer that stores
-      //      content stores `deck_json` (presentationGeneratorService.ts:2127
-      //      writes both in one UPDATE), so the second column is dead weight for
-      //      effectively every row. It is fetched only for the rows whose
-      //      `deck_json` yielded zero cards AND that hold a `unified_json` —
-      //      the legacy shape. Omitting it can only ever UNDERSTATE a count
-      //      (`normalizeDeckDocument` falls back to `unified_json` only when
-      //      `deck_json` produced no cards), never overstate it, so the second
-      //      pass is a correctness top-up, not a guess.
-      //   2. Neither content column is returned to the client. The response
-      //      carries the same fields it always did, plus the derived count.
-      // If this listing ever becomes hot, the fix is a persisted derived count
-      // (a generated column or a write-path invariant), not a return to a
-      // predicate that cannot see inside the payload.
-      const rows = (await dbAll(
+      const rows = await dbAll(
         `SELECT pd.id, pd.title, pd.description, pd.deck_type, pd.audience, pd.goal, pd.language, pd.theme, pd.presentation_mode, pd.slide_count, pd.status, pd.export_format, pd.exported_at, pd.created_at, pd.updated_at, pd.source_id, pd.thumbnail_url, pd.source_refs_json, pd.created_by,
-                (u.first_name || ' ' || u.last_name) AS created_by_name,
-                pd.deck_json,
-                (CASE WHEN COALESCE(pd.unified_json, '') <> '' THEN 1 ELSE 0 END) AS has_unified_json
+                (u.first_name || ' ' || u.last_name) AS created_by_name
          FROM presentation_decks pd
          LEFT JOIN users u ON u.id = pd.created_by
          WHERE pd.organization_id = ? ORDER BY pd.updated_at DESC`,
         [orgId]
-      )) as any[];
-
-      const deckRows: any[] = rows || [];
-      const coherences = deckRows.map((row: any) => resolveDeckContentCoherence(row));
-      const needsUnifiedJson = deckRows
-        .filter(
-          (row: any, index: number) =>
-            coherences[index].cardCount === 0 && Number(row?.has_unified_json) === 1
-        )
-        .map((row: any) => String(row?.id));
-      if (needsUnifiedJson.length > 0) {
-        const placeholders = needsUnifiedJson.map(() => '?').join(', ');
-        const unifiedRows = (await dbAll(
-          `SELECT id, unified_json FROM presentation_decks
-           WHERE organization_id = ? AND id IN (${placeholders})`,
-          [orgId, ...needsUnifiedJson]
-        )) as any[];
-        const unifiedById = new Map(
-          (unifiedRows || []).map((u: any) => [String(u?.id), u?.unified_json])
-        );
-        deckRows.forEach((row: any, index: number) => {
-          if (!unifiedById.has(String(row?.id))) return;
-          coherences[index] = resolveDeckContentCoherence({
-            ...row,
-            unified_json: unifiedById.get(String(row?.id)),
-          });
-        });
-      }
-
-      const data = deckRows.map((row: any, index: number) => {
-        // Content columns are read to derive the count; they are not shipped.
-        const { deck_json: _deckJson, has_unified_json: _hasUnifiedJson, ...listRow } = row;
-        const coherence = coherences[index];
-        return {
-          ...listRow,
-          has_canonical_content: coherence.hasCanonicalContent,
-          // The raw column, kept for diagnostics only — this is the number that
-          // lied on `demo` ("Ready · 11" over zero renderable cards).
-          declared_slide_count: coherence.declaredSlideCount,
-          // Derived from the persisted content. `content_state === 'missing'`
-          // always travels with `slide_count === 0`.
-          slide_count: coherence.cardCount,
-          content_state: coherence.hasCanonicalContent ? 'canonical' : 'missing',
-        };
-      });
-      res.json({ success: true, data });
+      );
+      res.json({ success: true, data: rows || [] });
     } catch (error) {
       if (isSchemaMissingError(error)) {
         logger.warn('[Presentations] Deck listing unavailable: schema not ready');
@@ -3141,16 +2304,33 @@ router.get(
       `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
       [req.params.id, orgId]
     )) as any;
-    if (!deck) return res.status(404).json({ success: false, error: 'Export not available' });
+    if (!deck)
+      return res.status(404).json({ success: false, error: 'Export not available' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
-    const quality = await enforceQualityGateForExport({
-      organizationId: orgId,
-      deckId: String(req.params.id || ''),
-      format: 'pptx',
-      allowOverride: canOverrideQualityGate(req),
-    });
-    if (quality.ok === false) {
+    if (
+      exportMode === 'final' &&
+      presentationExportOverride(req).requested &&
+      !presentationExportOverride(req).reason?.trim()
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: 'An override reason is required for final presentation export.',
+        code: 'ARTIFACT_EXPORT_BLOCKED',
+        mode: 'final',
+        blocks: ['OVERRIDE_REASON_REQUIRED'],
+      });
+    }
+
+    const quality = isDraftExport
+      ? { ok: true as const, report: null }
+      : await enforceQualityGateForExport({
+          organizationId: orgId,
+          deckId: String(req.params.id || ''),
+          format: 'pptx',
+          allowOverride: canOverrideQualityGate(req),
+        });
+    if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(req.params.id || ''),
@@ -3175,33 +2355,17 @@ router.get(
       return res.status(quality.status ?? 422).json(quality.payload);
     }
 
-    let freshDeck: any;
-    try {
-      freshDeck = await ensureCurrentPptxExport(deck);
-    } catch (error) {
-      const message =
-        error instanceof CurrentPptxExportError
-          ? error.message
-          : 'The current presentation could not be rendered.';
-      await recordPresentationExportRecord({
-        organizationId: orgId,
-        userId,
-        deckId: String(req.params.id || ''),
-        format: 'pptx',
-        status: 'failed',
-        qualityReport: quality.report,
-        errorCategory: 'current_render_failed',
-      });
-      return res.status(422).json({
-        success: false,
-        error: message,
-        code: 'PPTX_CURRENT_RENDER_FAILED',
-      });
+    // Ensure a direct-created deck gets its first PPTX lazily, and an edited deck gets
+    // a fresh one. Both paths use the same controlled exports directory and persist
+    // export_path, so later downloads and bundle exports share the canonical file.
+    const freshDeck = await regeneratePptxIfStale(deck);
+    if (!freshDeck.export_path || !fs.existsSync(freshDeck.export_path)) {
+      return res.status(404).json({ success: false, error: 'Export not available' });
     }
 
     const cards = getDeckCards(freshDeck);
     const limitCheck = enforceExportLimits(freshDeck, cards);
-    if (limitCheck.ok === false) {
+    if (!limitCheck.ok) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -3211,19 +2375,15 @@ router.get(
         status: 'failed',
         errorCategory: 'limit_exceeded',
       }).catch(() => null);
-      const limitExportOutcome = await recordPresentationExportRecord({
+      await recordPresentationExportRecord({
         organizationId: orgId,
         userId,
         deckId: String(req.params.id || ''),
         format: 'pptx',
-        status: 'failed',
+        status: 'completed',
         qualityReport: quality.report,
         filePath: freshDeck.export_path,
       });
-      // Response not yet sent — safe to fail-closed on a genuine double
-      // failure. Retry-safety: re-running this export has no persisted side
-      // effect to duplicate (see `recordPresentationExportRecord`'s comment).
-      if (limitExportOutcome && respondIfLineageLost(res, limitExportOutcome)) return;
       return res
         .status(422)
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
@@ -3337,13 +2497,29 @@ router.get(
     if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
     if (!ensureConfidentialityPolicy(req, res, { action: 'export', deck })) return;
 
-    const quality = await enforceQualityGateForExport({
-      organizationId: orgId,
-      deckId: String(deckId || ''),
-      format: 'pdf',
-      allowOverride: canOverrideQualityGate(req),
-    });
-    if (quality.ok === false) {
+    if (
+      exportMode === 'final' &&
+      presentationExportOverride(req).requested &&
+      !presentationExportOverride(req).reason?.trim()
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: 'An override reason is required for final presentation export.',
+        code: 'ARTIFACT_EXPORT_BLOCKED',
+        mode: 'final',
+        blocks: ['OVERRIDE_REASON_REQUIRED'],
+      });
+    }
+
+    const quality = isDraftExport
+      ? { ok: true as const, report: null }
+      : await enforceQualityGateForExport({
+          organizationId: orgId,
+          deckId: String(deckId || ''),
+          format: 'pdf',
+          allowOverride: canOverrideQualityGate(req),
+        });
+    if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -3370,7 +2546,7 @@ router.get(
 
     const cards = getDeckCards(deck);
     const limitCheck = enforceExportLimits(deck, cards);
-    if (limitCheck.ok === false) {
+    if (!limitCheck.ok) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -3385,30 +2561,8 @@ router.get(
         .json({ success: false, error: limitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
 
-    // Codex review, third round (Blocker A) — durable pending intent BEFORE
-    // the first byte is sent. `doc.pipe(res)` below streams the response
-    // immediately as pages render; once that starts, headers/body are
-    // committed and a later lineage failure can never become a 5xx (see
-    // the comment at `doc.end()` below). If we cannot even persist the
-    // INTENT to record this export, refuse to start streaming at all —
-    // a plain error response, zero bytes sent — rather than risk total,
-    // silent lineage loss on an export the client will believe succeeded.
-    const pdfExportIntent = await preflightStreamingExportIntent({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      sourceRecordId: String(deckId || ''),
-      actorUserId: userId,
-      detail: { format: 'pdf' },
-    });
-    if (!pdfExportIntent) {
-      return res.status(500).json({
-        success: false,
-        error: 'Lineage could not be durably recorded before export',
-        code: 'LINEAGE_RECOVERY_REQUIRED',
-      });
-    }
-
-    const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+    const filename = presentationExportFilename(deck.title, 'pdf', isDraftExport);
+    markPresentationExportResponse(res, exportMode, String(deck.id), deck.version);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
@@ -3465,11 +2619,15 @@ router.get(
         });
         const footer = card.header_footer;
         if (footer) {
-          drawPresentationPdfFooter(
-            doc,
-            `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
-            pdfMargin
-          );
+          doc
+            .fillColor('#666')
+            .fontSize(8)
+            .text(
+              `${String(footer.confidentiality || deck.confidentiality || 'internal').toUpperCase()} · ${String(footer.footerText || 'Consultify')} · ${index + 1}/${cards.length}`,
+              48,
+              doc.page.height - 42,
+              { align: 'center' }
+            );
         }
       });
 
@@ -3483,18 +2641,6 @@ router.get(
         format: 'pdf',
         status: 'completed',
       }).catch(() => null);
-      // NOTE (Codex review, third round — Blocker A CLOSED): `doc.pipe(res)`
-      // above has ALREADY streamed headers and body to the client by the
-      // time `doc.end()` returns — there is nothing left to un-send, so
-      // this call itself still cannot fail-closed on an export the client
-      // has already received. What changed: `pdfExportIntent` above already
-      // persisted a durable pending row BEFORE any byte was sent (aborting
-      // the whole request if even THAT failed) — so if this direct write
-      // also fails, nothing is lost: the pre-flight row is what the next
-      // scheduled reconciliation tick replays, converging on the SAME
-      // idempotency key. Threading `pdfExportIntent`'s key/occurredAt
-      // through is what makes this finalize idempotent rather than a
-      // second, unrelated attempt.
       await recordPresentationExportRecord({
         organizationId: orgId,
         userId,
@@ -3503,8 +2649,6 @@ router.get(
         status: 'completed',
         qualityReport: quality.report,
         filePath: null,
-        lineageIdempotencyKey: pdfExportIntent.idempotencyKey,
-        lineageOccurredAt: pdfExportIntent.occurredAt,
       });
       sendNotification({
         userId,
@@ -3517,14 +2661,6 @@ router.get(
         actionUrl: `/presentations/builder/${deckId}`,
       }).catch(() => null);
     } catch (exportErr: any) {
-      // Blocker A: the export genuinely failed after the pre-flight intent
-      // was persisted (possibly after partial bytes already streamed) —
-      // cancel it so reconciliation never fabricates a false `completed`
-      // event for a failed export.
-      await cancelPendingLineageIntent({
-        organizationId: orgId,
-        idempotencyKey: pdfExportIntent.idempotencyKey,
-      });
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -3663,26 +2799,6 @@ router.post(
       entityId: String(req.params.id || ''),
       actionUrl: `/presentations/builder/${req.params.id}`,
     }).catch(() => null);
-
-    // MAT-010 lineage hook. Only a token HASH reaches the lineage. `...Tracked`
-    // + `respondIfLineageLost` (Codex review, second round): the business
-    // write above is `UPDATE ... SET share_token = ?`, a single-column
-    // overwrite, not an append — a retry mints a NEW token that REPLACES this
-    // one; there is still exactly one valid token afterward, never an
-    // accumulation. The residual cost of declining success here is the
-    // previous (already-minted) token becoming invalid sooner than expected,
-    // not data corruption or an accumulation of live credentials.
-    const shareOutcome = await recordLineageEventTracked({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      sourceRecordId: String(req.params.id),
-      eventType: 'share_minted',
-      actorUserId: shareUserId,
-      titleSnapshot: before.title,
-      detail: { shareTokenHash: hashLineageShareToken(token), expiresAt },
-    });
-    if (respondIfLineageLost(res, shareOutcome)) return;
-
     res.json({ success: true, data: { shareToken: token, expiresAt } });
   })
 );
@@ -3717,22 +2833,6 @@ router.delete(
       after: { shareToken: null, shareExpiresAt: null },
       metadata: { organizationId: orgId, title: before.title },
     });
-
-    // MAT-010 lineage hook. `...Tracked` + `respondIfLineageLost` (Codex
-    // review, second round): retry-safe — this route is already documented
-    // idempotent above (nulling an already-null token is a no-op), so a
-    // retried revoke cannot double-apply anything.
-    const revokeOutcome = await recordLineageEventTracked({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      sourceRecordId: String(req.params.id),
-      eventType: 'share_revoked',
-      actorUserId: getUserId(req),
-      titleSnapshot: before.title,
-      detail: { hadShareToken: Boolean(before.share_token) },
-    });
-    if (respondIfLineageLost(res, revokeOutcome)) return;
-
     res.json({ success: true, data: { revoked: true } });
   })
 );
@@ -3848,7 +2948,11 @@ router.delete(
     if (!deck) {
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
-    const result = await revokeCollaborator(String(req.params.id), orgId, String(req.params.collaboratorId));
+    const result = await revokeCollaborator(
+      String(req.params.id),
+      orgId,
+      String(req.params.collaboratorId)
+    );
     await (req as any).emitAuditEvent?.({
       actorType: 'USER',
       action: 'collaborator_revoke',
@@ -3911,9 +3015,6 @@ router.get(
       return res.status(404).json({ success: false, error: 'Deck not found' });
     }
     await ensureDeckCommentsHydrated(orgId);
-    // Comments are shared review state. Refresh the local cache on every read
-    // so a GET served by a different Railway instance sees recent mutations.
-    await refreshDeckCommentsFromPersistence(orgId);
     const slideId =
       typeof req.query.slideId === 'string' && req.query.slideId.trim()
         ? String(req.query.slideId).trim()
@@ -3970,7 +3071,6 @@ router.post(
             body: text,
             slideId: typeof body.slideId === 'string' ? body.slideId : null,
           });
-      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: parentCommentId ? 'deck_comment_reply' : 'deck_comment_add',
@@ -4010,7 +3110,6 @@ router.patch(
         commentId,
         resolved,
       });
-      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: resolved ? 'deck_comment_resolve' : 'deck_comment_reopen',
@@ -4048,7 +3147,6 @@ router.delete(
         userId,
         commentId,
       });
-      await persistDeckCommentNow(comment);
       await (req as any).emitAuditEvent?.({
         actorType: 'USER',
         action: 'deck_comment_delete',
@@ -4141,7 +3239,7 @@ router.post(
       format: 'html',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (quality.ok === false) {
+    if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -4190,11 +3288,7 @@ router.post(
       'Content-Disposition',
       `attachment; filename="${deck.title || 'presentation'}.html"`
     );
-    // Response headers are set but the body is not yet sent — safe to
-    // fail-closed on a genuine double failure. Retry-safety: re-running this
-    // export has no persisted side effect to duplicate (see
-    // `recordPresentationExportRecord`'s comment).
-    const htmlExportOutcome = await recordPresentationExportRecord({
+    await recordPresentationExportRecord({
       organizationId: orgId,
       userId,
       deckId: String(deckId || ''),
@@ -4203,7 +3297,6 @@ router.post(
       qualityReport: quality.report,
       filePath: null,
     });
-    if (htmlExportOutcome && respondIfLineageLost(res, htmlExportOutcome)) return;
     res.send(htmlBuffer);
   })
 );
@@ -4379,21 +3472,21 @@ router.put(
       });
     }
 
-    const canonicalBody = canonicalizePresentationAutosaveDeck(req.body);
-    const bodyStr = JSON.stringify(canonicalBody);
+    const bodyStr = JSON.stringify(req.body);
     if (bodyStr.length > 10_000_000) {
       return res.status(413).json({ success: false, error: 'Payload too large' });
     }
 
-    const newVersion = (deck.version || 1) + 1;
-    const canonicalSlideCount = Array.isArray(canonicalBody.cards) ? canonicalBody.cards.length : 0;
-    // The builder edits the deck title inside the same Deck document as slide
-    // content. Persist it to the indexed row as part of the same CAS write;
-    // otherwise GET /decks/:id prefers the stale row title on cold reopen and
-    // makes a successful-looking rename disappear.
-    const requestedTitle =
-      typeof canonicalBody.title === 'string' ? canonicalBody.title.trim() : '';
-    const canonicalTitle = requestedTitle || deck.title || 'Untitled presentation';
+    // SQLite drivers normally expose INTEGER columns as numbers, while the
+    // lightweight mock database can preserve SQL literals as strings. Normalize
+    // before incrementing so version 1 always advances to 2 (never "11").
+    const persistedVersion = Number(deck.version);
+    const normalizedVersion = Number.isFinite(persistedVersion) ? persistedVersion : 1;
+    const newVersion = normalizedVersion + 1;
+    const nextTitle =
+      typeof req.body?.title === 'string' && req.body.title.trim()
+        ? req.body.title.trim()
+        : String(deck.title || 'Untitled');
 
     if (deck.deck_json) {
       try {
@@ -4425,8 +3518,8 @@ router.put(
     // need to distinguish the two cases.
     const expectedVersion = clientVersion !== null ? clientVersion : normalizedVersion;
     const updateResult = (await dbRun(
-      `UPDATE presentation_decks SET title = ?, deck_json = ?, slide_count = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
-      [canonicalTitle, bodyStr, canonicalSlideCount, newVersion, deckId, orgId, expectedVersion]
+      `UPDATE presentation_decks SET title = ?, deck_json = ?, version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ? AND version = ?`,
+      [nextTitle, bodyStr, newVersion, deckId, orgId, expectedVersion]
     )) as { success?: boolean; changes?: number } | undefined;
 
     if ((updateResult?.changes ?? 0) === 0) {
@@ -4442,26 +3535,6 @@ router.put(
         clientVersion,
       });
     }
-
-    // MAT-010 lineage hook. Recorded only PAST the compare-and-swap guard
-    // above, so a 409-losing writer never appears in the lineage. This is the
-    // deck's real version-producing route: it snapshots the prior state into
-    // `presentation_deck_versions` and advances `presentation_decks.version`.
-    // `...Tracked` + `respondIfLineageLost` (Codex review, second round):
-    // retry-safe because the CAS guard above rejects a retried PUT once the
-    // mutation has actually applied (stale/behind version -> 409, never a
-    // double-apply).
-    const versionOutcome = await recordLineageEventTracked({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      // `String(...)` because Express types `req.params` values as
-      // `string | string[]` — same idiom as the share routes above.
-      sourceRecordId: String(deckId),
-      eventType: 'version',
-      actorUserId: userId,
-      detail: { version: newVersion, previousVersion: expectedVersion, via: 'autosave' },
-    });
-    if (respondIfLineageLost(res, versionOutcome)) return;
 
     res.json({ success: true, version: newVersion });
   })
@@ -6033,7 +5106,7 @@ router.post(
     const userId = getUserId(req);
 
     const validation = validatePresetCreateInput(req.body);
-    if (validation.ok === false) {
+    if (!validation.ok) {
       return res.status(400).json({
         success: false,
         error: validation.error,
@@ -8174,7 +7247,7 @@ router.post(
       format: 'png',
       allowOverride: canOverrideQualityGate(req),
     });
-    if (quality.ok === false) {
+    if (!quality.ok) {
       await recordPresentationRuntimeEvent({
         organizationId: orgId,
         deckId: String(deckId || ''),
@@ -8202,7 +7275,7 @@ router.post(
     const deckData: any = normalizeDeckDocument(deck) || {};
     const cards = deckData.cards || deckData.slides || [];
     const pngLimitCheck = enforceExportLimits(deck, cards);
-    if (pngLimitCheck.ok === false) {
+    if (!pngLimitCheck.ok) {
       await recordCanonicalDeckExportTrace({
         organizationId: orgId,
         userId,
@@ -8216,33 +7289,6 @@ router.post(
         .status(422)
         .json({ success: false, error: pngLimitCheck.error, code: 'EXPORT_LIMIT_EXCEEDED' });
     }
-
-    // Codex review, third round (Blocker A) — same durable pre-flight intent
-    // as the PDF route above, for the same reason: `archive.pipe(res)`
-    // below streams immediately, so once it starts a later lineage failure
-    // can never become a 5xx. If we cannot even persist the intent, refuse
-    // to start streaming — zero bytes sent. NOTE: unlike the PDF route,
-    // this route has no try/catch around generation today (a pre-existing
-    // gap, not introduced here — `recordPresentationExportRecord({status:
-    // 'failed'})` is never called for PNG either) — a mid-generation throw
-    // (e.g. `sharp`) leaves this pending row uncancelled, same class of gap
-    // as the route's pre-existing lack of failure bookkeeping, not a new
-    // regression from this change.
-    const pngExportIntent = await preflightStreamingExportIntent({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      sourceRecordId: String(deckId || ''),
-      actorUserId: userId,
-      detail: { format: 'png' },
-    });
-    if (!pngExportIntent) {
-      return res.status(500).json({
-        success: false,
-        error: 'Lineage could not be durably recorded before export',
-        code: 'LINEAGE_RECOVERY_REQUIRED',
-      });
-    }
-
     const title = deck.title || 'presentation';
 
     const Archiver = (await import('archiver')).default;
@@ -8271,13 +7317,6 @@ router.post(
     }
 
     await archive.finalize();
-    // NOTE (Codex review, third round — Blocker A CLOSED): `archive.pipe(res)`
-    // above has ALREADY streamed the zip to the client by the time
-    // `archive.finalize()` resolves, so this call itself still cannot
-    // fail-closed. What changed: `pngExportIntent` above already persisted
-    // a durable pending row BEFORE any byte was sent — threading its
-    // key/occurredAt through makes this finalize converge with that
-    // pre-flight row instead of being a second, unrelated attempt.
     await recordPresentationExportRecord({
       organizationId: orgId,
       userId,
@@ -8286,8 +7325,6 @@ router.post(
       status: 'completed',
       qualityReport: quality.report,
       filePath: null,
-      lineageIdempotencyKey: pngExportIntent.idempotencyKey,
-      lineageOccurredAt: pngExportIntent.occurredAt,
     });
   })
 );
@@ -8559,29 +7596,6 @@ router.post(
       }
     }
 
-    // MAT-010 lineage hook. Past the CAS guard above, so a 409-losing restore
-    // never appears in the lineage. Restore is a NEW forward version, never a
-    // rewrite of history, and the deck id is unchanged — hence the same
-    // `sourceRecordId` as every other event. `...Tracked` +
-    // `respondIfLineageLost` (Codex review, second round): retry-safe, same
-    // CAS guard (`expectedVersion` check + the UPDATE's own `AND version = ?`)
-    // as above.
-    const restoreOutcome = await recordLineageEventTracked({
-      organizationId: orgId,
-      artifactKind: 'presentation',
-      // `String(...)` — see the autosave hook: Express types `req.params`
-      // values as `string | string[]`.
-      sourceRecordId: String(deckId),
-      eventType: 'restore',
-      actorUserId: userId,
-      detail: {
-        version: newVersion,
-        restoredFromVersion: versionRow.version,
-        versionId: String(versionId),
-      },
-    });
-    if (respondIfLineageLost(res, restoreOutcome)) return;
-
     res.json({ success: true, version: newVersion, restoredFromVersion: versionRow.version });
   })
 );
@@ -8642,13 +7656,5 @@ router.get(
     });
   })
 );
-
-/**
- * M09-H02 — narrow test surface. `settleTemplateWrite` encodes the
- * "durable read-back is the authority, not the driver ack" rule; the
- * post-commit-timeout branch cannot be reached through HTTP without racing a
- * real timeout, so it is asserted directly. Not imported by production code.
- */
-export const __testables = { settleTemplateWrite, readBackOrgTemplate };
 
 export default router;

@@ -2664,7 +2664,7 @@ function presentationCoherenceForRow(row: ArtifactListRow) {
     unified_json: row.presentation_unified_json,
   });
 }
-function rowToListItem(row: ArtifactListRow): ArtifactListItem {
+export function mapArtifactRegistryListRow(row: ArtifactListRow): ArtifactListItem {
   const base = mapArtifactRow(row);
   const sourceRefs =
     row.origin_runtime === 'report'
@@ -2717,7 +2717,7 @@ function rowToListItem(row: ArtifactListRow): ArtifactListItem {
     slideCount: coherence ? coherence.cardCount : null,
     declaredSlideCount: coherence ? coherence.declaredSlideCount : null,
     contentState: coherence ? (coherence.hasCanonicalContent ? 'canonical' : 'missing') : null,
-    exportFormat: row.origin_runtime === 'sheet' ? 'xlsx' : row.presentation_export_format,
+    exportFormat: resolvePersistedArtifactFormat(row),
     sourceRefs,
     publishState: row.publish_state,
     publishReviewers: safeJsonParse(row.publish_reviewers, [] as string[]),

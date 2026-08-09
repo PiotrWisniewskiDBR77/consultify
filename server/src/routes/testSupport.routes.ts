@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../config/Config.js';
 import adminAuditService from '../services/adminAuditService.js';
 import { setV8OrgFlag } from '../services/v8/featureFlagService.js';
+import { __resetApprovalServiceForTests } from '../services/documentStudio/documentApprovalService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';

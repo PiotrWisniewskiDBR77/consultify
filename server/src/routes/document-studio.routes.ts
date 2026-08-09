@@ -4680,7 +4680,6 @@ router.put(
           ? (body.sourceRefs as DocumentSchema['sourceRefs'])
           : undefined,
       });
-
       // MAT-010 lineage hook (fail-safe). The Document type's real
       // version-producing route (durable content save with a compare-and-swap
       // on `expectedVersion`). Recorded only past that guard —
@@ -4705,6 +4704,20 @@ router.put(
       });
       if (respondIfLineageLost(res, versionOutcome)) return;
 
+      const staleApprovalIds = markDocumentApprovalsStaleForVersionChange({
+        organizationId,
+        artifactId,
+        previousVersionId: body.expectedVersion,
+        currentVersionId: result.schema.updatedAt,
+        actorId: userId,
+      });
+      const staleAuditPersisted = await Promise.all(
+        staleApprovalIds.map((approvalId) => flushApprovalPersistence(organizationId, approvalId))
+      );
+      if (staleAuditPersisted.some((persisted) => !persisted)) {
+        res.status(503).json({ error: 'approval_stale_audit_persistence_failed' });
+        return;
+      }
       res.json({ schema: result.schema });
     } catch (err) {
       if (err instanceof DocumentManualSaveNotFoundError) {
@@ -5598,6 +5611,21 @@ router.post(
         const document = await getDocumentArtifact(artifactId, organizationId);
         if (!document) {
           res.status(404).json({ error: 'document_not_found' });
+          return;
+        }
+        const publicLinkPolicy = evaluateArtifactExportPolicy({
+          mode: 'draft',
+          channel: 'public_link',
+          classification: document.confidentiality === 'public' ? 'public' : 'internal',
+          criticalQaFindings: 0,
+          approvalCurrentForVersion: false,
+        });
+        if (!publicLinkPolicy.allowed) {
+          res.status(409).json({
+            error: 'public_link_classification_blocked',
+            code: 'PUBLIC_LINK_CLASSIFICATION_BLOCKED',
+            blocks: publicLinkPolicy.blocks,
+          });
           return;
         }
         const link = await createShareLinkDurable({
