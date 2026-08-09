@@ -48,14 +48,14 @@ nie blokuje), właściciel, rekomendacja, status.
 
 | ID | Opis | Blocking | Właściciel | Rekomendacja | Status |
 |---|---|---|---|---|---|
-| EN-01 | organization/team/manager hierarchy contract + kompletność realDB | tak (visibility/G1) | Platform | TBD po inwentaryzacji | OPEN |
-| EN-02 | macierz ról i materiality thresholds per domena | tak (maker-checker/G1) | Security | TBD | OPEN |
-| EN-03 | źródłowy kontrakt MyWork/Decisions/outbox rozszerzalny bezpiecznie | tak (G1/G3) | Platform | TBD | OPEN |
+| EN-01 | organization/team/manager hierarchy contract + kompletność realDB | tak (visibility/G1) | Platform | `teams` PŁASKIE (brak parent_team_id), `manager_id` istnieje ale NIGDY traversowany, zero `getManagementChain()`. Budować od zera w G1, nie rozszerzać | PARTIAL — fakty znane, implementacja OPEN |
+| EN-02 | macierz ról i materiality thresholds per domena | tak (maker-checker/G1) | Security | RBAC(3-poziom)+PBAC(capability-key, shadow-only) istnieją. ABAC/visibility modes (OPEN_ORG/SCOPE/MANAGEMENT_CHAIN/PRIVATE/RESTRICTED_ACL) = ZERO wyników w grepie, budować od zera | PARTIAL — RBAC/PBAC fundament gotowy, ABAC OPEN |
+| EN-03 | źródłowy kontrakt MyWork/Decisions/outbox rozszerzalny bezpiecznie | tak (G1/G3) | Platform | Decisions CAS wzorzec GOTOWY do kopiowania (decisionCollaborationService.ts:809-940, zweryfikować migrację 932 na demo!). Prawdziwy transactional outbox z event envelope NIE ISTNIEJE (notification_outbox=best-effort, non-atomic) — budować od zera | PARTIAL — Decisions wzorzec gotowy, outbox OPEN |
 | EN-04 | stabilny route/history owner dla full tools | nie (G2) | Registry UX | TBD | OPEN |
 | EN-05 | lista legacy write consumers (telemetry/logs) | tak (G1 legacy freeze) | Data | TBD | OPEN |
 | EN-06 | polityka reflection waiver i min. liczby KR | nie (OKR G4) | OKR | TBD | OPEN |
 | EN-07 | finance calculation artifacts/version identifiers (D06 seam) | nie (G6) | ROI/Finance | TBD | OPEN |
-| EN-08 | znane zestawy known-answer ROI + polityki currency/discount/rounding | tak (ROI G4) | ROI | TBD | OPEN |
+| EN-08 | znane zestawy known-answer ROI + polityki currency/discount/rounding | tak (ROI G4) | ROI | Known-answer fixture set TERAZ w pełni zdefiniowany w planie §16.1 (10 nazwanych scenariuszy, wymóg niezależnej weryfikacji). Rounding/currency/discount default nadal NIE zdecydowane liczbowo — plan mówi "decimal-safe + declared rounding policy" ale nie podaje wartości domyślnych, to robota WP0/WP1 (ROIPolicyVersion) | PARTIAL — fixture-set CLOSED, numeric policy defaults nadal OPEN |
 | EN-09 | pilot population i pierwsze okresy/cykle | nie (G4) | Program | TBD | OPEN |
 | EN-10 | nazwane terminalne acceptance environment (Railway demo / inne) | nie (poza zakresem wykonawcy, Codex/Founder) | Codex/Founder | N/A — decyzja poza mną | OPEN (nie blokuje implementacji) |
 | EN-11 | `DOCUMENTATION_REGISTRY.md` przypisuje "Authority: Highest" trzem starym dok. V8 (`RESULTS_V8_SSOT.md`, `KPI_FULL_SYSTEM_CANON_V8.md`, `RESULTS_KPI_AND_FINANCE_ANALYSIS_LINKAGE_RUNTIME_V8.md`, kwiecień 2026) dla dokładnie tej domeny, a `results-vnext/` nigdzie w rejestrze nie figuruje | nie (results-vnext §3 sam siebie stawia nad V8 jako "materiał do odzyskania" — rozstrzygnięte tekstem pakietu, nie wymaga mojej/Piotra decyzji) | Data/Docs hygiene | Traktuję results-vnext jako obowiązujący, V8 jako legacy-recovery source zgodnie z jego własną §3. Rejestr wymaga wpisu `superseded_by` — housekeeping, nie blocker | RESOLVED (informacyjnie zgłoszone Piotrowi) |
@@ -225,14 +225,76 @@ assumption/cost/benefit rows, NIGDY wpisywane ręcznie jako gotowy wynik;
 `double_counting_group` wymaga group-aware netting bez podanego algorytmu; KPI
 jako opcjonalna ewidencja (nie parent) wymaga dyscypliny na poziomie schema+query.
 
-**Do zrobienia**: dosłać porównanie plan-vs-oryginał (workpackages WP0..., dokładne
-nazwy epików ROI-E001-E008, dokładny schemat encji z planu) — plik
-`03_ROI_IMPLEMENTATION_PLAN.md` był w momencie działania agenta jeszcze nie
-skopiowany do tej gałęzi (naprawione commitem `8e1edbd066`, PO zakończeniu tego
-agenta). Wysłano follow-up do agenta `a4d7b6ec42463bcbb`.
+**UZUPEŁNIONE po dosłaniu pliku** (agent `a4d7b6ec42463bcbb`, druga runda):
 
-Pełny raport (formuły, pełne pola encji z oryginału, 10 ryzyk): transkrypt agenta
-`a4d7b6ec42463bcbb`.
+Nowe encje względem oryginału: `ROICalculationRun` (immutable run: input
+snapshot/hash, engine version, policy version, scenario, status, metrics —
+oryginał tylko wspominał "store snapshot/hash" jako luźną zasadę),
+`ROIBenefitEvidenceLink` (typed, zastępuje luźne `evidence_reference_id` —
+pinned KPI definition version, expected unit, purpose, freshness, dispute
+status), `ROIWorkingRevision` (**genuinie nowy trzy-poziomowy model wersji,
+którego oryginał w ogóle nie miał**: working revision [autosave/undo wewnątrz
+Draftu] vs business version [submit/approve/forecast/reapproval/closure] vs
+calculation run [immutable silnik] — częste edycje NIGDY nie tworzą business
+version, tylko working revision), `ROIPolicyVersion` (wersjonowany, pinned przez
+kalkulacje i approval — currency/discount rate/horizon/materiality thresholds/
+maker-checker rules/PIR requirements). `ROICase` dostaje osobne
+`original_approved_snapshot_id` vs `latest_approved_snapshot_id` (oryginał miał
+jeden wskaźnik) + pełny model visibility/sensitivity (`visibility_mode:
+restricted_acl|private|scope|management_chain|open_org`, `sensitivity`,
+`approved_summary_visibility_policy_id`) + `row_version` (optimistic concurrency)
+— ZERO tego w oryginale.
+
+Storage: 21 tabel z prefiksem `rvn_` (§10, pełna lista w transkrypcie) — no
+floating-point money (semantic decimal), JSON tylko dla immutable
+snapshots/bounded extension, tenant isolation w query+cache+job+storage.
+
+**Workpackages WP0→WP9** (dokładne nazwy z planu §15): WP0 Contract freeze →
+WP1 Domain+deterministic engine (known-answer suite) → WP2 Persistence/jobs/
+lifecycle → WP3 Registry/preview/Quick Create → WP4 Build Case workspace → WP5
+Decision+approval → WP6 Forecast/Actual/Benefits Realization (**pokrywa 2
+epiki: ROI-E004 I ROI-E005, nie 1:1**) → WP7 PIR+learning+portfolio → WP8
+Finance seam → WP9 Legacy archive+hardening. Epic↔WP mapping z
+`07_EPIC_AND_TRACEABILITY_LEDGER.md` już potwierdzony w tabeli §5 tego ledgeru.
+
+**Silnik**: pipeline `typed inputs→validation/normalize→period cash-flow
+expansion→scenario overrides→metrics→validation findings→immutable
+CalculationRun`, MUSI być pure domain package (bez UI/DB/network). Safety
+rules: divide-by-zero/undefined IRR → typed `N/A` nigdy fabrykowany wynik;
+mixed currency → hard validation fail; "declared rounding policy" ale BEZ
+default wartości (patrz EN-08 wyżej — częściowo zamknięte). Approval wymaga
+świeżego, current run matching submitted snapshot (nowa reguła, oryginał tego
+nie miał — zamyka lukę stale-compute-at-approval).
+
+**Finance seam D06 — teraz w pełni zdefiniowany** (był całkowicie pusty w
+oryginale): to jest nazwana decyzja Foundera ("D06, founder response 6C"), nie
+domyślne zachowanie inżynierskie. Dokładna koperta (§9.6, dosłownie):
+`finance_artifact_type, finance_artifact_id, finance_version_id, mapping
+version, source/as-of, semantic unit/currency, link purpose`. Reguła
+nienaruszalna: "Results never overwrites Finance values; Finance never
+overwrites Approved/Forecast/Actual ROI truth; divergence produces a
+reconciliation case, not silent last-write-wins sync." 10-punktowy gate (§20)
+zanim D06 w ogóle może być ponownie rozważone do konsolidacji.
+
+**Ważne odkrycie**: analiza to NIE jest zwykłe porównanie 2 dokumentów —
+plan ma osobną tabelę (§1.3) rozstrzygającą sprzeczności z **"earlier Results
+doctrine"** (wcześniejsza wewnętrzna doktryna Consultify, np. "standalone ROI
+było dozwolone" → superseded), czyli realnie jest to rekoncyliacja
+TRZECH źródeł (oryginał / stara wewnętrzna doktryna / nowy plan), nie dwóch.
+
+UX: plan świadomie redukuje 12 równoległych zakładek oryginału (§18 źródła) do
+4 faz (Build Case/Decision/Realize Value/Learn) — jawna decyzja redesignu, nie
+tylko doprecyzowanie.
+
+Zaktualizowana lista ryzyk = tabela §19 planu (13 ryzyk z mitygacjami) zastępuje
+wcześniejszą listę 10 z pierwszej rundy — większość already addressed przez
+nazwane mechanizmy planu. Jedno nowe ryzyko dostrzeżone przez agenta: jeśli
+WP1 (silnik) wystartuje PRZED WP0 ustaleniem konkretnych default rounding
+values w `ROIPolicyVersion`, testy jednostkowe silnika ryzykują pisanie
+przeciw niezdefiniowanej polityce — do pilnowania przy planowaniu kolejności.
+
+Pełny raport (pełne definicje encji, 21 tabel, API surface, event catalog 17
+zdarzeń, kompletna tabela §19): transkrypt agenta `a4d7b6ec42463bcbb`.
 
 ### 3.6 UI canon — komponenty do re-użycia (zweryfikowane, istnieją w repo)
 
@@ -303,9 +365,74 @@ pinned seam (D06), zero prób rozszerzenia/przejęcia.
 Pełny raport (dokładne plik:linia dla ~35 migracji, wszystkie route'y, wszystkie
 komponenty UI): transkrypt agenta `a6fc7bee60ecfc818`.
 
-### 3.8 KPI code inventory (resumed), MyWork/Decisions/Teresa inventory, ROI plan (uzupełniony)
+### 3.8 KPI — AS-IS kod: fragmentacja PORÓWNYWALNA do ROI (4+ tabele definicji, 3 modele Scorecard)
 
-_(w toku — ostatnie 3 fale z 8)_
+**Cztery lokalizacje migracji** — `server/migrations/` (784 plików, README mówi "DEPRECATED" ale to WCIĄŻ jest realny katalog czytany przez `DatabaseInitializer.ts` na boot dla wzorca `/^(7\d{2}|\d{8})_/`), `migrations-v2/` (39, ma baseline dump ale NIE ma świeżych RES-0xx), `migrations-archive/` (637, historyczne), `never-ran/` (61, martwe). Dokumentacja katalogu jest myląca względem realnego zachowania runnera.
+
+**Rdzeń aktywny**: `initiative_kpis` (FK od `tasks.kpi_id`, `kpi_scorecard_items`) + świeża fala RES-01..RES-11 (sierpień 2026: definition versions, time-series identity, recovery card, visibility policy, scorecards). **Ale obok niego co najmniej 4 INNE, częściowo nakładające się tabele definicji KPI** z różnymi typami kluczy i różnymi maszynami stanów: `kpis` (uuid id), `kpi_definitions` (osobny katalog z formula/dimensions), `v8_kpi_definitions` (własny state machine design→baseline→active→measurement→review→deviation→improvement→benefits_realization), `tp_kpi_definitions` (Table Platform "Governed Models" — CAŁKOWICIE INNY koncept KPI, współdzieli tylko nazwę). Plus ≥25 tabel satelickich (measurements, time-series, deviation×2 równoległe, wallboards, evidence, attribution, finance-reconciliation×2, next-actions, signals, milestones, audit-log, connectors, templates).
+
+**Scorecard = TRZY niezależne implementacje już dziś**: `kpi_scorecards`/`kpi_scorecard_items` (RES-10, deklaruje się "kanoniczny", jedyny writer = `kpiScorecardService.ts`), `balancedScorecardService.ts`, `transformationScorecardService.ts` (osobne serwisy, osobne UI za flagą `transformationScorecard`). Żaden nie jest tym, co opisuje plan KPI-E004 (materializowany + immutable review snapshot) — RES-10 to najbliższy punkt startowy, ale bez snapshotów.
+
+API rozproszone na **4 osobne routery**: `/api/results` (395 linii), `/api/v8/results` (4298 linii — największy pojedynczy plik), `/api/results-v4`, `/api/table-platform` (inny koncept KPI). Widoczność jako polityka (nie flaga): `kpiVisibilityService.ts` (RES-11) — `org_visible|initiative_restricted|private_to_owner`, jedyne miejsce tej logiki. Trasa `/results/kpi` **nie istnieje dziś** — `/results` jest zakładkowy nie ścieżkowy; jedyny literal `/kpi-okr` to martwy alias→redirect na `/results`.
+
+Pełny raport (dokładne plik:linia dla wszystkich ~40 tabel/routes/serwisów/komponentów): transkrypt agenta `a7574f64cee39b870`.
+
+### 3.9 MyWork/Decisions/Teresa/Events/Audit/RBAC — fundament platformy (RN-E002..E005)
+
+**Decisions ma JUŻ prawdziwy CAS wzorzec — kopiować 1:1 dla KPI/ROI**: `expectedVersion` +
+`SELECT...FOR UPDATE` + atomowa transakcja + `409 STALE_VERSION` na konflikt —
+`decisionCollaborationService.ts:809-940`. **`resultsROIContinuity.ts:533` już
+ZAPOWIADA dokładnie ten wzorzec** ("RES-02: CAS pointer — round-trip as
+expectedVersion") — intencja architektoniczna już w typach, tylko niedopięta.
+Caveat: migracja z kolumną `version`/`decided_by` to plik `932_...` (numeracja
+9xx = NIE auto-uruchamiana na boot) — **zweryfikować na żywej bazie demo czy
+faktycznie tam jest**, zanim zbuduje się na tym założeniu.
+
+**Teresa (P08) ma już zarezerwowany, niepodłączony slot**: `HandoffTargetModule`
+w typach zawiera `'results'|'kpi'|'roi'` (`teresaCopilotCanon.ts:26-43`), ale
+**rejestr `P08_HANDOFF_TARGETS` i lista aktywnych modułów jeszcze go NIE
+zawierają** — czysty, bezpieczny "dopisz nowy target" (wzorzec `handleRadarHandoff`
+gotowy do skopiowania, z evidence_pointers/state machine/audit za darmo). Pełny
+proposal lifecycle już istnieje: `proposal→pending_approval→approved→executing→
+completed→undone→rejected`, `no_silent_writes`/`no_parallel_approvals` jako
+twarde reguły (`teresaCopilotCanon.ts:254-286`). Audit: `teresa_proposals`/
+`teresa_audit_log` — ale **self-provisioned inline (`ensureTeresaTables()`), NIE
+przez system migracji** — do naprawienia przy budowie nowego.
+
+**MyWork nie ma jednego kanonicznego bytu "obligation"** — dziś to agregacja z
+`tasks`+`decisions`+`ai_inbox`(brak dedupe!)+`user_activity`. Bliższy odpowiednik:
+`v8_canonical_object_states` (upsert-by-natural-key `(object_id,organization_id)`,
+**nie CAS/version-based**, ale idempotentny) z rozszerzalnym enum
+`CanonicalObjectType` — gotowy slot do dodania `'kpi'`/`'deviation_case'`.
+
+**KRYTYCZNE — brak prawdziwego transactional outbox**: `notification_outbox`
+istnieje, ale to best-effort, wołany PO commicie domenowej transakcji (jawny
+komentarz w kodzie: "must not claim delivery succeeded"), zero event envelope
+(brak aggregateType/actor/correlationId/causationId/policyVersion jako typu
+domenowego — tylko HTTP request-tracing). **Trzeba zbudować od zera** — wzorzec
+do naśladowania to atomowa transakcja Decisions, rozszerzona o INSERT do outbox
+w TEJ SAMEJ transakcji (dokładne odwrotność dzisiejszego `notification_outbox`).
+
+**KRYTYCZNE — zero infrastruktury ABAC/visibility**: RBAC (3 poziomy
+superadmin>admin>user) i PBAC (capability-key, `effectiveAccessService.ts`,
+shadow-only rollout) istnieją i działają produkcyjnie, ale **grep po
+`OPEN_ORG`/`SCOPE`/`MANAGEMENT_CHAIN`/`PRIVATE`/`RESTRICTED_ACL` zwraca ZERO
+wyników w całym `server/src`**. Dzisiejsza "widoczność" to wyłącznie ręczny
+`WHERE organization_id=?` per-serwis. `manager_id` istnieje na profilu
+(`user_profile_extended`), ale **nigdy nie jest traversowany** do budowy
+management chain — zero usługi typu `getManagementChain(userId)`. `teams` jest
+PŁASKIE (brak `parent_team_id`) — wielopoziomowa hierarchia nie istnieje.
+**To jest fundament wymagany przez D10 (domenowa widoczność) i musi powstać w
+G1 od podstaw** — nie ma czego rozszerzać.
+
+Audit: `AuditEventsService`/`audit_events` = de facto SSOT, gotowy do wywołania
+z nowego serwisu (jedna linia kodu), append-only jako konwencja aplikacyjna (BEZ
+twardego DB constraint — brak triggera/REVOKE). Osobny równoległy
+`tp_audit_events` dla Table Platform — nie mylić.
+
+Pełny raport (wszystkie pliki/linie, agentProposalGovernanceService jako
+cięższy alternatywny governance layer, pełna analiza organization/team): transkrypt
+agenta `a16c12524cb5c7c80`.
 
 ## 4. File ownership / allowlists
 
