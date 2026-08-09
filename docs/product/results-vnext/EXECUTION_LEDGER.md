@@ -536,3 +536,37 @@ jako zarezerwowane. Czysto TS, zero migracji.
 → visibility core → management chain closure → canonical_object_type extend),
 serwisy w `server/src/services/resultsVnext/platform/*`. Pełny schemat/algorytm/
 uzasadnienia: transkrypt agenta `a46aed05740e0f273`.
+
+## 8. RN-G1 Platform Foundation — pierwszy realny kod wylądował (2026-08-09)
+
+Commity `57015efbf6` (4 migracje SQL) i `c912f505dc` (TS scaffolding:
+`eventEnvelope.ts`, `resourceTypes.ts`, `visibilityResolver.ts`, rozszerzenie
+`CanonicalObjectTypeValues`). **Zweryfikowane osobiście, nie tylko na słowo
+agenta** — przeczytałem migracje i `visibilityResolver.ts` w całości.
+
+Ocena: zgodne z zamrożonym projektem, dwie dobrze udokumentowane dewiacje
+(`REVOKE ... FROM PUBLIC` zamiast nazwanej roli — w repo nie ma żadnego wzorca
+per-tabela REVOKE do naśladowania; SCOPE mode wpięty tylko dla `team_members`,
+bo `initiative_contributors` z projektu nie istnieje w repo — inne scope_type
+failują closed, nie silently allowed). Migracja #4 ma dodatkowy `DO $$ ...
+EXCEPTION WHEN undefined_table` guard (własna, rozsądna inicjatywa agenta,
+zgodna z `--safe` filozofią migracji w tym repo).
+
+**Luka do zamknięcia przed dalszą budową**: weryfikacja była tylko przez
+`esbuild --bundle` per plik (składnia+importy), NIE przez prawdziwy
+`tsc --noEmit` — worktree nie miał `node_modules` (znany problem iCloud z
+poprzednich sesji). To realna luka: esbuild nie łapie błędów typów (np. czy
+`hasEffectiveCapability(access, '*')` faktycznie istnieje w sygnaturze
+`effectiveAccessService.ts`, czy `resolveEffectiveAccess({userId,
+organizationId})` bez `projectId` faktycznie działa dla zasobów
+organizacyjnych, nie projektowych). Uruchomiłem `npm ci` (nie symlink z
+głównego repo — package.json/lockfile się różnią, 27 linii diff) w tym
+worktree, w toku.
+
+**Pozostałe do G1** (jawnie NIEDOKOŃCZONE, zgodnie z zakresem bounded package):
+atomowy write helper (§A.4 projektu — CAS+event+outbox w jednej transakcji),
+outbox drain cron (§A.5), `rvnVisibilityScopedQuery` CTE wrapper (§B.4 — to
+jest mechanizm, który ma czynić "zapomnienie filtra" strukturalnie niemożliwym,
+jeszcze nie zbudowany), management-chain maintenance service (zapis przy
+zmianie `manager_id`, decyzja #1). Nic z tego jeszcze nie jest wpięte do
+żadnego callera/route — to świadomie inert scaffolding.
