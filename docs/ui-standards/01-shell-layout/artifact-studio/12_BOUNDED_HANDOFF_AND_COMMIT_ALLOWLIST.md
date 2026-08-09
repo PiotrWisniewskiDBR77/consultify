@@ -3,12 +3,14 @@
 > Status: `BOUNDED_IMPLEMENTATION_CANDIDATE / PROGRAM_NO_GO`
 > Branch: `codex/sync-demo-20260729`
 > Base przed commitem: `9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611`
+> Commit implementacyjny: `6654cde039112dead7911e1fcab1b618ffed4ac1`
+> Ostatni commit dowodowy przed aktualizacją handoffu: `8d6c5fb4c4019be48b83e8fa546ff9d0152401da`
 > Merge-base z `origin/demo`: `fca72583ea83acf728a7807c5e119318dc206416`
 > Zakres: otwarte DOC, PPT i XLSX; szablony są `OUT`
 
 ## Granica pakietu
 
-Dokładna, maszynowa allowlista znajduje się w `commit-allowlist.txt`. Commit może zawierać wyłącznie te ścieżki. Pakiet obejmuje specyfikację, wspólny shell i rejestr komend, adaptery DOC/PPT/XLSX, governance, globalny kontekst Teresy, migracje addytywne, testy i dowody E2E.
+Dokładna, maszynowa allowlista znajduje się w `commit-allowlist.txt` i obejmuje 154 ścieżki z pełnego bounded zakresu `base..HEAD`: kod wdrożeniowy oraz późniejsze, fail-closed bramki dowodowe. Commit może zawierać wyłącznie te ścieżki. Pakiet obejmuje specyfikację, wspólny shell i rejestr komend, adaptery DOC/PPT/XLSX, governance, globalny kontekst Teresy, migracje addytywne, testy i dowody E2E.
 
 W pakiecie celowo znajduje się poprawka parity dla `assessment_report`:
 - `src/services/api/artifactRuns.ts`
@@ -39,4 +41,6 @@ Wymagane przed commitem:
 
 ## Pozostałe bramki programu
 
-Po commicie nadal wymagane są current-SHA runtime/realDB, pełna macierz permissions/audit/recovery, viewporty 1920/1440/1280/1024, cross-format transfer, dostępność i obserwacja rolloutowa. Legacy nie może zostać usunięte przed spełnieniem bramek zapisanych w `program-gates.json` i `11_IMPLEMENTATION_EVIDENCE_AND_REMAINING_GAPS.md`.
+Po commicie nadal wymagane są: moderowany cross-format transfer, manualny screen-reader/VoiceOver, pełny real-provider Teresa flow dla selection → proposal/diff → accept/reject → audit → undo oraz dwa stabilne okna rolloutowe. Legacy nie może zostać usunięte przed spełnieniem bramek zapisanych w `program-gates.json`, `release-evidence.json` i `11_IMPLEMENTATION_EVIDENCE_AND_REMAINING_GAPS.md`.
+
+Aktualny root worktree po commitach nadal zawiera obce/historyczne zmiany. Jedyna wykryta bieżąca modyfikacja nakładająca się ścieżką na allowlistę to formatowanie `src/services/api.ts` w `getInitiativeById`; nie należy ono do tego pakietu i pozostaje unstaged. Poprawka parity `assessment_report` znajduje się osobno w commitowanym `src/services/api/artifactRuns.ts`.
