@@ -587,3 +587,25 @@ niepewność, którą flagowałem w §8, jest zamknięta.
 **RN-G1 Platform slice 1 (schema + typy) = zweryfikowany, real, verified.**
 Node_modules w tym worktree jest teraz dostępny dla przyszłej pracy (testy,
 kolejne type-check) bez ponownego `npm ci`.
+
+## 10. RN-G1 Platform kernel — kompletny (2026-08-09)
+
+Commit `21ddd501ed`: `atomicWrite.ts` (generyczny `executeAtomicCommand<TAggregateRow,
+TResult>` — CAS+event+outbox w jednej transakcji, §A.4) i `outboxDrain.ts`
+(`claimOutboxBatch`/`reclaimExpiredClaims`/`markDispatched`/`markFailed` z
+exponential backoff i dead_letter, §A.5). **Zweryfikowane przeze mnie osobiście
+dwukrotnie**: przeczytałem oba pliki w całości (poprawna logika — duplicate
+idempotency key poprawnie rollbackuje mutację i zwraca poprzedni wynik zamiast
+podwójnego zastosowania; backoff liczony w jednym UPDATE bez race condition;
+dead_letter loguje TODO zamiast cichego końca) + niezależnie uruchomiłem
+`tsc --noEmit` (bez pipe/tee tym razem, czysty exit code) — **0 błędów**.
+
+**RN-G1 Platform kernel jest teraz kompletny i zweryfikowany**: schema (4
+migracje) + typy (CanonicalObjectType rozszerzony, RVN_RESOURCE_TYPES SSOT) +
+ABAC resolver (pełny algorytm B.3) + atomowy write helper (A.4) + outbox drain
+primitives (A.5). Wszystko wciąż CELOWO niewpięte do żadnego callera/route —
+to jest fundament, na którym KPI/ROI/OKR (D14 — równoległe workstreamy) będą
+budować własne agregaty. Pozostałe z G1 przed pełnym RN-G1 PASS: management-chain
+maintenance service (zapis przy zmianie manager_id), `rvnVisibilityScopedQuery`
+CTE wrapper (B.4), realDB migration test (pusta+realistyczna kopia bazy, wymóg
+handbooka §5 RN-G1) — to wymaga efemerycznej Postgresa, nie tylko tsc.
