@@ -125,7 +125,44 @@ resolutions:
 5. **`correlationId` belongs on `v8_execution_runs`, not this table** —
    accepted; out of scope (no ALTER TABLE permitted on `v8_execution_runs`
    by this program's collision-avoidance mandate).
-| CW-P05 | E5 | E4 | `operationClaimService.ts` + `artifactLineageService.ts` (EXTEND, lineage/claim patterns) | durable wait claims, human task queue, callback auth/dedupe, outbox/inbox | subset of 70 (security-legacy) |
+| CW-P06 | E5 | E4 | `operationClaimService.ts` (EXTEND, lease/claim pattern reused by idiom, table never shared) + `artifactLineageService.ts` (reference) | `case_workspace_waits`, `waitSubscriptionService.ts`, 11 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+operationClaimService-untouched verified**, commit `cbc65d7b42`. HUMAN/TIMER fully built; DOMAIN_EVENT/EXTERNAL_CALLBACK enum values + resolve() path only, real inbox/dedupe deferred (CW-CANON-12). | subset of 70 (security-legacy) |
+
+## CW-P06 (E5 WaitSubscription) — design decisions accepted 2026-08-09
+
+1. **`node_run_id` nullable despite CW-RT-020 listing it as required** —
+   accepted; a NodeRun cannot exist before its owning Run, and `run_id` is
+   already nullable per this packet's own scope, so `node_run_id` must
+   follow.
+2. **`action_proposal_id` FK added beyond CW-RT-020's literal schema** —
+   accepted; this was an explicit instruction in the packet brief (a wait
+   gating a specific ActionProposal), not an unrequested addition.
+3. **Lease/claim columns added beyond CW-RT-020's literal schema** —
+   accepted; necessary to satisfy CW-RT-021's "leases and atomic claiming"
+   requirement, correctly mirrors the existing NodeRun lease-field pattern.
+4. **No bounded-wait polling in `claimTimerWait` (unlike
+   `operationClaimService`'s 8s default)** — accepted; this packet's caller
+   is a scheduler sweep, not a concurrent request path, so blocking-wait
+   semantics don't apply the same way.
+5. **`correlation_key` double duty (domain correlation + idempotent-create
+   key)** — accepted; WaitSubscription has no separate idempotencyKey field
+   in canon, and reusing correlation_key is the natural, minimal choice.
+6. **`wait_target_required` (at least one of run_id/action_proposal_id) as
+   service-level check, not a DB CHECK** — accepted; not literally stated in
+   canon, so enforcing it as guidance rather than a hard constraint is the
+   right conservatism.
+7. **Trigger points for `ExpireWait`/timer-claim sweep not built** —
+   accepted; only the durable primitives are this packet's job, the actual
+   cron/worker loop is orchestration, future work.
+8. **DOMAIN_EVENT/EXTERNAL_CALLBACK satisfaction path not built** — accepted;
+   correctly deferred per CW-CANON-12, needs an event bus/inbox this packet
+   doesn't build.
+9. **`provideHumanInput`'s actor not persisted (no decided_by-shaped
+   column)** — accepted for now since CW-RT-020's literal schema has no such
+   field; flagged as worth reconsidering once a real HUMAN-wait UI needs to
+   display who provided input, which would need a small additive migration.
+10. **Tenant/membership checks not enforced at this layer** — same
+    cross-cutting gap as CW-P01-05, already tracked prominently in the
+    CW-P05 section above; not repeated in full here.
 | CW-P05 | E6 | E1, E2 | autonomy policy concepts already documented in canon (00/08) | `case_workspace_action_proposals` + `case_workspace_action_proposal_decisions`, `proposalApprovalService.ts`, 13 methods — **IMPLEMENTED, migration+idempotent-rerun+esbuild+tsc-strict verified**, commit `b3e5f4c524`. Renumbered from the original CW-P06 slot: packet IDs are assigned in actual execution order (E1→E2→E3→E4→E6), not strict epic-number order — E5 was deliberately skipped for now, see §"Execution order note" below. | 109 (governance-history-decisions) |
 
 ### Execution order note
