@@ -402,4 +402,77 @@ describe.skipIf(!REAL_PG)('WP-D02 Statement Pack mapping/reconciliation — real
       expect(reconRow?.reason_code).toBe('NON_RECURRING');
     });
   });
+
+  // BUG-GOLDCO-02 regression (docs/validation/finance-v3/generated/gate-d/
+  // GOLDCO_STATEMENTS_VERTICAL_SLICE_REPORT.md §6): finance_stmt_check_balance()
+  // (and the cash/retained-earnings roll-forward triggers, same code pattern)
+  // used to hardcode `consolidation_scope = 'CONSOLIDATED'` in their lookups,
+  // so a Statement Pack mapped at consolidation_scope='STANDALONE' (the
+  // schema's own documented scope for a genuine single-entity, non-group
+  // pack — WP-D01 ADR §4.5) never triggered the Assets=Liabilities+Equity
+  // check at all. Fixed by the additive migration
+  // 20260809_finance_v3_d01b_statements_02b_integrity_scope_fix.sql, which
+  // CREATE OR REPLACEs the three trigger functions to check NEW.consolidation_scope
+  // instead. This suite requires that migration to have been applied to the
+  // target cluster (same as every other check in this file — real DDL, not a
+  // mocked schema).
+  describe('BUG-GOLDCO-02 fix — balance check now fires for STANDALONE scope, not just CONSOLIDATED', () => {
+    const UNBALANCED_DELTA = 50_000_000;
+
+    async function unbalancedProbe(scope: 'STANDALONE' | 'CONSOLIDATED') {
+      const pack = await makeStatementPack();
+      const bvId = pack.businessVersion.business_version_id;
+      await makeEntity(bvId, `PROBE-${scope}`);
+      const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
+        { lineItem: 'Total assets', periodId, entityCode: `PROBE-${scope}`, currency: 'PLN', value: 100_000_000, sourceRef: {} },
+        { lineItem: 'Total liabilities and equity', periodId, entityCode: `PROBE-${scope}`, currency: 'PLN', value: 100_000_000 - UNBALANCED_DELTA, sourceRef: {} },
+      ];
+      const rules: import('../statementMappingService.js').MappingRule[] = [
+        { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS', consolidationScope: scope },
+        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY', consolidationScope: scope },
+      ];
+      return statementMappingService.mapStatementLines({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        unit: 'UNITS',
+        presentationCurrency: 'PLN',
+        createdBy: preparerId,
+        rawLines,
+        rules,
+      });
+    }
+
+    it('a PLN 50,000,000 imbalance at consolidationScope=STANDALONE is now rejected (was silently accepted pre-fix)', async () => {
+      await expect(unbalancedProbe('STANDALONE')).rejects.toThrow(/balance check failed/);
+    });
+
+    it('a PLN 50,000,000 imbalance at consolidationScope=CONSOLIDATED is still rejected (no regression on the already-checked scope)', async () => {
+      await expect(unbalancedProbe('CONSOLIDATED')).rejects.toThrow(/balance check failed/);
+    });
+
+    it('a balanced pack at consolidationScope=STANDALONE still commits cleanly (fix does not over-reject)', async () => {
+      const pack = await makeStatementPack();
+      const bvId = pack.businessVersion.business_version_id;
+      await makeEntity(bvId, 'PROBE-BALANCED');
+      const rawLines: import('../statementMappingService.js').RawStatementLine[] = [
+        { lineItem: 'Total assets', periodId, entityCode: 'PROBE-BALANCED', currency: 'PLN', value: 500_000, sourceRef: {} },
+        { lineItem: 'Total liabilities and equity', periodId, entityCode: 'PROBE-BALANCED', currency: 'PLN', value: 500_000, sourceRef: {} },
+      ];
+      const rules: import('../statementMappingService.js').MappingRule[] = [
+        { sourceLabel: 'Total assets', statementType: 'BS', lineCode: 'TOTAL_ASSETS', consolidationScope: 'STANDALONE' },
+        { sourceLabel: 'Total liabilities and equity', statementType: 'BS', lineCode: 'TOTAL_LIABILITIES_EQUITY', consolidationScope: 'STANDALONE' },
+      ];
+      const mapped = await statementMappingService.mapStatementLines({
+        organizationId: orgId,
+        businessVersionId: bvId,
+        unit: 'UNITS',
+        presentationCurrency: 'PLN',
+        createdBy: preparerId,
+        rawLines,
+        rules,
+      });
+      expect(mapped).toHaveLength(2);
+      expect(mapped.every((r) => r.bucket === 'MAPPED')).toBe(true);
+    });
+  });
 });
