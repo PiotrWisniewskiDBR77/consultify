@@ -50,6 +50,7 @@ Wszystkie nowe ścieżki pozostają za flagami. Legacy nie zostało usunięte.
 | Transfer DOC → PPT → XLSX         | Playwright w jednej sesji i na trzech artefaktach z lokalnego API: to samo położenie Menu2/Menu3/lewego panelu/bottom Teresy, bez lokalnego prawego raila | 1/1 PASS, 44,6 s                                  |
 | Cross-format pełny kontrakt       | 5 scenariuszy sekwencyjnie: macierz viewportów, canonical shell, DOC/PPT context menu przez pointer i `Shift+F10`, axe oraz jedna globalna Teresa | 5/5 PASS, 2,0 min (2026-08-09); równoległe fixture'y wymagają dalszej izolacji |
 | Cross-format rollback + semantyka screen-reader | Izolowany frontend/backend na portach 3410/3411: DOC/PPT/XLSX V2 → legacy → V2 z zachowaniem identity; następnie landmarki `main`/`toolbar`, nazwane kontrolki i brak widocznych kontrolek bez accessible name | 2/2 PASS, 31,5 s (2026-08-09). To dowodzi rollback rehearsal i automatycznej semantyki; ręczny VoiceOver pozostaje `EVIDENCE_MISSING` |
+| Fail-closed release evidence gate | `node scripts/testing/artifact-studio-release-evidence-gate.mjs`; terminalnie także `--require-complete` | Struktura PASS; terminal oczekiwanie kod `1`: transfer, VoiceOver, real-provider i dwa okna nadal `EVIDENCE_MISSING`, legacy `blocked` (2026-08-09) |
 | Globalna Teresa DOC → PPT → XLSX  | Playwright na świeżym frontendzie: jedna aktywna rozmowa jest zachowana, a kontekst ekranu zmienia się kolejno dla dokumentu, prezentacji i skoroszytu; bez tworzenia dodatkowych rozmów | 1/1 PASS w pełnym pliku, 20,6 s                   |
 | Axe runtime DOC → PPT → XLSX      | Playwright + axe na zamontowanych studiach; brak naruszeń critical i serious                                                  | 1/1 PASS w pełnym pliku, 25,7 s                   |
 | PPT/XLSX/shared                   | adaptery PPT/XLSX, grid, Menu 3 i flagi                                                                                | 14/14 PASS                                        |
@@ -277,6 +278,11 @@ komendy. Obecność ikony lub generatora backendowego nie jest akceptacją.
 3. Wykonać ręczny screen-reader i zadaniowy transfer 8/9.
 4. Włączyć flagi kohortowo; obserwować minimum dwa stabilne okna wydaniowe.
 5. Dopiero po `LEGACY-01 = verified` usunąć stare shelle i flagi.
+
+Wykonawczy formularz, wymagane pola i komendy odbiorowe dla punktów 2–5 są w
+`13_RELEASE_EVIDENCE_RUNBOOK.md` oraz `release-evidence.json`. Walidator
+`scripts/testing/artifact-studio-release-evidence-gate.mjs` odrzuca brakujące
+metryki, próby bez SHA i przedwczesne oznaczenie legacy removal jako zakończone.
 
 ## 6. Warunek końca programu
 

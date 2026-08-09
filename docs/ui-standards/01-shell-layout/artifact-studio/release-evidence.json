@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "program": "Artifact Studio DOC/PPT/XLSX release evidence",
+  "candidate": {
+    "baseSha": "9c23e3d80ecec9b8e77f8cfdeb65e6838e61d611",
+    "implementationSha": "6654cde039112dead7911e1fcab1b618ffed4ac1",
+    "evidenceSha": "5758d3b92f8e869ecde9481bdc9902cfdb1eabcf",
+    "branch": "codex/sync-demo-20260729"
+  },
+  "checks": {
+    "crossFormatTransfer": {
+      "status": "evidence_missing",
+      "participants": [],
+      "taskResults": [],
+      "rawEvidence": [],
+      "missing": [
+        "moderated task-level results for DOC, PPT and XLSX",
+        "at least 85 percent unaided completion in second and third formats",
+        "median discovery time improvement of at least 25 percent",
+        "at least 90 percent correct separation of save, QA, review, approval and export"
+      ]
+    },
+    "screenReader": {
+      "status": "evidence_missing",
+      "runs": [],
+      "rawEvidence": [],
+      "missing": [
+        "manual VoiceOver smoke for DOC, PPT and XLSX",
+        "announcements for save, error, QA and async job",
+        "keyboard path and focus return evidence"
+      ]
+    },
+    "teresaRealProvider": {
+      "status": "evidence_missing",
+      "runs": [],
+      "rawEvidence": [],
+      "missing": [
+        "real provider request for an artifact selection",
+        "proposal diff, explicit accept or reject, audit and undo evidence"
+      ]
+    },
+    "stableWindows": {
+      "status": "evidence_missing",
+      "windows": [],
+      "rawEvidence": [],
+      "missing": [
+        "two completed stable release windows on the same candidate lineage",
+        "telemetry summary including legacy route usage and rollback activity"
+      ]
+    },
+    "legacyRemoval": {
+      "status": "blocked",
+      "removalSha": null,
+      "changedFilesManifest": null,
+      "routeImportScan": null,
+      "rollbackPlan": null,
+      "rawEvidence": [],
+      "missing": [
+        "verified cross-format transfer and accessibility",
+        "two verified stable windows",
+        "separate legacy-removal package and regression evidence"
+      ]
+    }
+  },
+  "terminalStatus": "evidence_missing"
+}
