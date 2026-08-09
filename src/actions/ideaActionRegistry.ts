@@ -100,6 +100,7 @@ export type IconName =
   | 'ArrowRight'
   | 'Paintbrush'
   | 'Trash2'
+  | 'Edit3'
   | 'Circle'
   | 'Diamond'
   | 'Hexagon'
@@ -333,48 +334,98 @@ async function runByTool(
 }
 
 /**
- * Runtime strings na szynie `idea-workspace-quick-action` dla akcji krawędzi
- * Tablicy — odbiornik: `useWhiteboardQuickActions.ts` (`editEdgeLabel` /
- * `reverseEdge` / `cycleEdgeArrow` / `cycleEdgeStyle` / `deleteEdge`,
- * dopisane 2026-08-09 razem z tą mapą). Konwencja nazw 1:1 z resztą rejestru
- * (`RUNTIME_*`), analogicznie do `mm_edge_arrow` w Mapie myśli.
+ * Runtime strings na szynie `idea-workspace-quick-action` dla akcji krawędzi —
+ * PO JEDNEJ mapie na akcję (nie jedna zbiorcza `Record<string,string>` jak
+ * przed 2026-08-09 rozszerzeniem na Mapę myśli), bo `scripts/check-actions.sh`
+ * (R6) parsuje WYŁĄCZNIE linie `  tool: 'string',` związane z constem typu
+ * `ToolActionMap` — zagnieżdżony jednolinijkowy zapis
+ * (`'idea.edge.x': { whiteboard: '...', mindmap: '...' }`) był niewidoczny
+ * dla strażnika (dotyczyło to również ORYGINALNEJ, jednotoolowej mapy z pilota
+ * 2026-08-09 — R6 nigdy jej nie sprawdzał). Ten kształt NAPRAWIA to przy okazji:
+ * każda z siedmiu map niżej jest realnie pilnowana przez R6.
+ *
+ * Odbiorniki: `useWhiteboardQuickActions.ts` (`editEdgeLabel`/`reverseEdge`/
+ * `cycleEdgeArrow`/`cycleEdgeStyle`/`deleteEdge`, 2026-08-09) i
+ * `useMindMapQuickActions.ts` (`mm_edge_*`, rozszerzenie 2026-08-09 —
+ * `mm_edge_arrow` istniał już wcześniej, od 2026-07-28, i jest tu PONOWNIE
+ * UŻYTY, nie duplikowany, bo to DOKŁADNIE to samo pole `data.arrowDirection`,
+ * SSOT współdzielone z Tablicą/Przepływem — patrz `canvas/edgeArrowMarkers.tsx`).
  */
-const RUNTIME_EDGE_ACTION: Record<string, string> = {
-  'idea.edge.edit_label': 'wb_edge_edit_label',
-  'idea.edge.reverse': 'wb_edge_reverse',
-  'idea.edge.cycle_arrow': 'wb_edge_cycle_arrow',
-  'idea.edge.cycle_style': 'wb_edge_cycle_style',
-  'idea.edge.delete': 'wb_edge_delete',
+const RUNTIME_EDGE_LABEL: ToolActionMap = {
+  whiteboard: 'wb_edge_edit_label',
+  mindmap: 'mm_edge_edit_label',
+};
+const RUNTIME_EDGE_REVERSE: ToolActionMap = {
+  whiteboard: 'wb_edge_reverse',
+  mindmap: 'mm_edge_reverse',
+};
+const RUNTIME_EDGE_CYCLE_ARROW: ToolActionMap = {
+  whiteboard: 'wb_edge_cycle_arrow',
+  // PONOWNE UŻYCIE stringa 'mm_edge_arrow' — odbiornik istnieje od 2026-07-28
+  // (useMindMapQuickActions.ts), NIE dopisujemy drugiego runtime dla tej samej
+  // mutacji `data.arrowDirection`.
+  mindmap: 'mm_edge_arrow',
+};
+const RUNTIME_EDGE_CYCLE_STYLE: ToolActionMap = {
+  whiteboard: 'wb_edge_cycle_style',
+  mindmap: 'mm_edge_cycle_style',
+};
+const RUNTIME_EDGE_DELETE: ToolActionMap = {
+  whiteboard: 'wb_edge_delete',
+  mindmap: 'mm_edge_delete',
+};
+/** Mapa myśli TYLKO — Tablica świadomie NIE wspiera rozcięcia krawędzi węzłem
+ * (brak logiki po jej stronie, patrz `WhiteboardEdgeContextMenu.tsx`). */
+const RUNTIME_EDGE_INSERT_NODE: ToolActionMap = {
+  mindmap: 'mm_edge_insert_node',
+};
+/** Mapa myśli TYLKO — typy relacji (`related`/`depends_on`/…) to pojęcie bez
+ * odpowiednika na Tablicy. */
+const RUNTIME_EDGE_EDIT_RELATION: ToolActionMap = {
+  mindmap: 'mm_edge_edit_relation',
+};
+
+/** Wskaźnik akcja → jej mapa runtime (indirekcja NIE jest czytana przez R6 —
+ * to zwykły obiekt JS, guard widzi tylko siedem `ToolActionMap` powyżej). */
+const RUNTIME_EDGE_ACTION_MAPS: Partial<Record<string, ToolActionMap>> = {
+  'idea.edge.edit_label': RUNTIME_EDGE_LABEL,
+  'idea.edge.reverse': RUNTIME_EDGE_REVERSE,
+  'idea.edge.cycle_arrow': RUNTIME_EDGE_CYCLE_ARROW,
+  'idea.edge.cycle_style': RUNTIME_EDGE_CYCLE_STYLE,
+  'idea.edge.delete': RUNTIME_EDGE_DELETE,
+  'idea.edge.insert_node': RUNTIME_EDGE_INSERT_NODE,
+  'idea.edge.edit_relation': RUNTIME_EDGE_EDIT_RELATION,
 };
 
 /**
- * Przekaźnik dla akcji `scope: 'edge'` Tablicy (pilot 2026-08-09,
- * `WhiteboardEdgeContextMenu.tsx`; odbiornik szyny dopisany tego samego dnia
- * jako follow-up, patrz `useWhiteboardQuickActions.ts` + `IdeaWhiteboardTool.tsx`
- * `handleEdge*`).
+ * Przekaźnik dla akcji `scope: 'edge'` (pilot Tablicy 2026-08-09,
+ * `WhiteboardEdgeContextMenu.tsx`; rozszerzony tego samego dnia o Mapę myśli,
+ * `EdgeContextMenu.tsx` — `src/components/MyWork/mindmap/`).
  *
  * DWIE ścieżki, jedna funkcja:
- *  • `ctx.source === 'ui'` + `ctx.params.run` (funkcja) — komponent menu
- *    przekazuje SWÓJ oryginalny prop-callback (zamknięty nad lokalnym stanem
- *    `edgeContextMenu` w `IdeaWhiteboardTool.tsx`); wykonujemy go wprost,
- *    DOKŁADNIE jak przed tym follow-upem — zachowanie kliku człowieka jest
- *    nietknięte.
- *  • każdy inny wywołujący (Teresa, przyszła powierzchnia bez dostępu do
- *    tego konkretnego zamknięcia komponentu) — nie ma `ctx.params.run`, więc
- *    zamiast grzecznej odmowy dispatchujemy na szynę `idea-workspace-quick-action`
- *    z realnym `edgeId`, którą teraz słucha `useWhiteboardQuickActions.ts`
- *    (ten sam wzorzec co `mm_edge_arrow` w Mapie myśli — `edgeId` zamiast
- *    zamknięcia nad komponentem).
+ *  • `ctx.source === 'ui'` + `ctx.params.run` (funkcja) — UŻYWANE WYŁĄCZNIE
+ *    przez Tablicę: `WhiteboardEdgeContextMenu.tsx` przekazuje SWÓJ oryginalny
+ *    prop-callback (zamknięty nad lokalnym stanem `edgeContextMenu` w
+ *    `IdeaWhiteboardTool.tsx`); wykonujemy go wprost — zachowanie kliku
+ *    człowieka jest nietknięte. Mapa myśli tej ścieżki NIE UŻYWA (jej hook już
+ *    miał bezpośredni dostęp do surowego stanu `edges`/`setEdges`, więc
+ *    zarówno klik człowieka, JAK i Teresa idą tą samą, drugą ścieżką niżej —
+ *    dokładnie tak, jak `mm_edge_arrow` już działał od 2026-07-28).
+ *  • każdy inny wywołujący (Mapa myśli zawsze, Tablica dla Teresy) — nie ma
+ *    `ctx.params.run`, więc dispatchujemy na szynę `idea-workspace-quick-action`
+ *    z realnym `edgeId`.
  *
  * Skąd `edgeId` bez zamknięcia komponentu? `ctx.params.edgeId` (LLM podaje
- * wprost — `teresa.parameters` każdej z 5 akcji niżej go wymaga, wzorem
- * `idea.ai.expand_map`'s `nodeId`), z fallbackiem na `ctx.selection` (gdy
- * `type === 'edge'`, konwencja `IdeaWorkspaceSelection` z `ideaSelectionTypes.ts`)
- * dla przyszłych wywołań opartych na zaznaczeniu UI. UWAGA (odbiór): dziś
- * `UnifiedChatPanel.tsx` woła `executeTeresaTool` z `selection: EMPTY_SELECTION`
- * na sztywno (linie ~1988/2039) — fallback na `ctx.selection` jest więc
- * martwy dla Teresy, dopóki ta osobna, poza zakresem tego zadania, luka nie
- * zostanie naprawiona. Żywa ścieżka dla Teresy dziś to `ctx.params.edgeId`.
+ * wprost — `teresa.parameters` każdej akcji niżej go wymaga, wzorem
+ * `idea.ai.expand_map`'s `nodeId`; `EdgeContextMenu.tsx` na Mapie myśli też
+ * ZAWSZE go podaje jawnie, bo menu zna edgeId z własnego propa), z fallbackiem
+ * na `ctx.selection` (gdy `type === 'edge'`, konwencja `IdeaWorkspaceSelection`
+ * z `ideaSelectionTypes.ts`) dla przyszłych wywołań opartych na zaznaczeniu UI.
+ * UWAGA (odbiór): dziś `UnifiedChatPanel.tsx` woła `executeTeresaTool` z
+ * `selection: EMPTY_SELECTION` na sztywno (linie ~1988/2039) — fallback na
+ * `ctx.selection` jest więc martwy dla Teresy, dopóki ta osobna, poza zakresem
+ * tego zadania, luka nie zostanie naprawiona. Żywa ścieżka dla Teresy dziś to
+ * `ctx.params.edgeId`.
  */
 async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
@@ -390,14 +441,14 @@ async function runEdgeParamCallback(actionId: string, ctx: ActionContext): Promi
         ? ctx.selection.primaryId
         : undefined;
   if (!edgeId) {
+    const toolLabel = ctx.tool === 'mindmap' ? 'Mapy myśli' : 'Tablicy';
     return {
       ok: false,
       actionId,
-      message:
-        'Nie wiem, na którym połączeniu Tablicy wykonać tę akcję — podaj `edgeId` (np. z listy połączeń) albo zaznacz je najpierw.',
+      message: `Nie wiem, na którym połączeniu ${toolLabel} wykonać tę akcję — podaj \`edgeId\` (np. z listy połączeń) albo zaznacz je najpierw.`,
     };
   }
-  const runtime = RUNTIME_EDGE_ACTION[actionId];
+  const runtime = RUNTIME_EDGE_ACTION_MAPS[actionId]?.[ctx.tool];
   if (!runtime) {
     return {
       ok: false,
@@ -1197,21 +1248,27 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     source: 'src/services/api.ts:4619 (duplicateMyIdea) + IdeaMapWorkspace.tsx kebab „Duplikuj"',
   },
-  // ── scope='edge' (pilot 2026-08-09, dispatch-bus follow-up ten sam dzień) ─
-  // Pierwsze 5 wpisów zakresu 'edge' w rejestrze. Handler = runEdgeParamCallback
-  // (patrz komentarz przy jej definicji) — świadomie inny wzorzec niż
-  // dispatchQuickAction/runByTool używany przez pozostałe 16 wpisów: UI nadal
-  // idzie przez `ctx.params.run` (prop-callback menu), ale każdy INNY
-  // wywołujący (Teresa) idzie przez `RUNTIME_EDGE_ACTION` → szynę
-  // `idea-workspace-quick-action` → realny odbiornik w
-  // `useWhiteboardQuickActions.ts`. Kolejność deklaracji = kolejność w menu
-  // (1:1 ze stanem sprzed migracji).
+  // ── scope='edge' (pilot Tablicy 2026-08-09, rozszerzenie na Mapę myśli
+  // tego samego dnia) ─────────────────────────────────────────────────────
+  // Handler = runEdgeParamCallback (patrz komentarz przy jej definicji) —
+  // świadomie inny wzorzec niż dispatchQuickAction/runByTool używany przez
+  // pozostałe wpisy: Tablica idzie przez `ctx.params.run` (prop-callback
+  // menu) dla UI, Mapa myśli ZAWSZE przez szynę `idea-workspace-quick-action`
+  // (UI i Teresa jedną ścieżką — jej hook miał już bezpośredni dostęp do
+  // `edges`/`setEdges`, więc nie potrzebuje zamknięcia komponentu). Pięć
+  // wpisów niżej są WSPÓLNE obu narzędziom (Z1: ta sama realna akcja = to
+  // samo id) — `idea.edge.edit_label`/`.reverse`/`.cycle_arrow`/
+  // `.cycle_style`/`.delete`. Dwa pozostałe („Wstaw węzeł na połączeniu",
+  // „Edytuj relację") są WYŁĄCZNIE Mapy myśli — Tablica nie ma pojęcia relacji
+  // ani rozcinania krawędzi węzłem, więc to NIE są warianty tej samej akcji.
+  // Kolejność deklaracji = kolejność w obu menu (1:1 ze stanem sprzed migracji;
+  // Tablica po prostu pomija pozycje spoza jej `tools`).
   {
     id: 'idea.edge.edit_label',
     label: { pl: 'Dodaj / edytuj etykietę', en: 'Add / edit label' },
     icon: 'Type',
     scope: 'edge',
-    tools: ['whiteboard'],
+    tools: ['whiteboard', 'mindmap'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.edit_label', ctx),
     mutates: true,
@@ -1219,28 +1276,60 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158 → pushUndoSnapshot() przed setEdges (stos Ctrl+Z)',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158 → pushUndoSnapshot() przed setEdges. Mapa myśli: useMindMapQuickActions.ts mm_edge_edit_label → handlers.pushUndo() przed setEdges — DOPISANE 2026-08-09 razem z tym wpisem (poprzednio, w IdeaRecommendationMap.tsx handleEdgeContextAction/edge_add_label, etykiety krawędzi nie dało się cofnąć Ctrl+Z; ta luka jest teraz zamknięta na obu narzędziach).',
     },
     teresa: {
       description:
-        'Ustawia etykietę wskazanego połączenia na Tablicy. Podaj `edgeId` połączenia (z menu prawego kliku klik działa bez tego parametru — tam etykietę pyta okno tekstowe).',
+        'Ustawia etykietę wskazanego połączenia (Tablica lub Mapa myśli). Podaj `edgeId` połączenia (z menu prawego kliku działa bez tego parametru — tam etykietę pyta okno tekstowe).',
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi).' },
           label: { type: 'string', description: 'Nowa etykieta połączenia.' },
         },
         required: ['edgeId', 'label'],
       },
     },
-    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158',
+    source:
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeEditLabel:3158 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_edit_label (Mapa myśli)',
+  },
+  {
+    id: 'idea.edge.insert_node',
+    label: { pl: 'Wstaw węzeł na połączeniu', en: 'Insert node on edge' },
+    icon: 'Plus',
+    scope: 'edge',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.insert_node', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useMindMapQuickActions.ts mm_edge_insert_node → handlers.pushUndo() przed setEdges/setNodes (stos Ctrl+Z) — logika przeniesiona 1:1 z IdeaRecommendationMap.tsx handleEdgeContextAction (dawne edge_insert_node), które też wołało pushUndo() przed mutacją.',
+    },
+    teresa: {
+      description:
+        'Dzieli wskazane połączenie relacji na Mapie myśli na dwa, wstawiając pusty węzeł pomiędzy jego końce. Działa TYLKO na krawędziach relacji (nie na strukturalnych krawędziach hierarchii) — na innych, tak jak dziś w menu prawego kliku, po cichu nic się nie stanie. Tablica NIE wspiera tej operacji (brak logiki rozcięcia krawędzi po jej stronie) — akcja tam nie istnieje.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: {
+            type: 'string',
+            description: 'Id połączenia (krawędzi relacji) na Mapie myśli.',
+          },
+        },
+        required: ['edgeId'],
+      },
+    },
+    source: 'src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_insert_node',
   },
   {
     id: 'idea.edge.reverse',
     label: { pl: 'Odwróć kierunek', en: 'Reverse direction' },
     icon: 'ArrowLeftRight',
     scope: 'edge',
-    tools: ['whiteboard'],
+    tools: ['whiteboard', 'mindmap'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.reverse', ctx),
     mutates: true,
@@ -1248,27 +1337,28 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'IdeaWhiteboardTool.tsx handleEdgeReverse:3223 → pushUndoSnapshot() przed zamianą source/target (stos Ctrl+Z)',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeReverse:3223 → pushUndoSnapshot() przed zamianą source/target. Mapa myśli: useMindMapQuickActions.ts mm_edge_reverse → handlers.pushUndo() przed zamianą source/target (ta sama logika, przeniesiona z IdeaRecommendationMap.tsx handleEdgeContextAction, które też już wołało pushUndo()).',
     },
     teresa: {
       description:
-        'Zamienia miejscami początek i koniec wskazanego połączenia na Tablicy. Podaj `edgeId` połączenia.',
+        'Zamienia miejscami początek i koniec wskazanego połączenia (Tablica lub Mapa myśli). Na Mapie myśli działa TYLKO na krawędziach relacji — na strukturalnych krawędziach hierarchii po cichu nic się nie stanie (tak jak dziś w menu prawego kliku). Podaj `edgeId` połączenia.',
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi).' },
         },
         required: ['edgeId'],
       },
     },
-    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223',
+    source:
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeReverse:3223 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_reverse (Mapa myśli)',
   },
   {
     id: 'idea.edge.cycle_arrow',
     label: { pl: 'Kierunek strzałki', en: 'Arrow direction' },
     icon: 'ArrowRight',
     scope: 'edge',
-    tools: ['whiteboard'],
+    tools: ['whiteboard', 'mindmap'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.cycle_arrow', ctx),
     mutates: true,
@@ -1276,27 +1366,28 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200 → pushUndoSnapshot() przed zmianą data.arrowDirection (stos Ctrl+Z)',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200 → pushUndoSnapshot() przed zmianą data.arrowDirection (Ctrl+Z). Mapa myśli: useMindMapQuickActions.ts mm_edge_arrow (już istniejący odbiornik z 2026-07-28, PONOWNIE UŻYTY tu, nie duplikowany) NIE woła pushUndo — Ctrl+Z NIE cofa zmiany kierunku strzałki na tym narzędziu. Uczciwa luka pre-existing, świadomie NIENAPRAWIANA w tym wpisie: mm_edge_arrow obsługuje też masowe ustawienie strzałki na całej gałęzi z FloatingNodeToolbar.tsx (poza zakresem tego zadania), więc dopisanie pushUndo tam wymaga osobnej weryfikacji tamtej ścieżki.',
     },
     teresa: {
       description:
-        'Przełącza strzałkę kierunku wskazanego połączenia na Tablicy (cykl: brak → koniec → oba → początek). Podaj `edgeId` połączenia — jeden klik cyklu, więc żeby dojść do konkretnego kierunku, może być potrzebne kilka wywołań.',
+        'Przełącza strzałkę kierunku wskazanego połączenia (Tablica lub Mapa myśli), cykl: brak → koniec → oba → początek. Podaj `edgeId` połączenia — jeden klik cyklu, więc żeby dojść do konkretnego kierunku, może być potrzebne kilka wywołań. Na Mapie myśli ta akcja NIE wspiera Ctrl+Z (patrz `undo.evidence`).',
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi).' },
         },
         required: ['edgeId'],
       },
     },
-    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200',
+    source:
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleArrow:3200 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_arrow (Mapa myśli, od 2026-07-28)',
   },
   {
     id: 'idea.edge.cycle_style',
     label: { pl: 'Zmień styl linii', en: 'Change line style' },
     icon: 'Paintbrush',
     scope: 'edge',
-    tools: ['whiteboard'],
+    tools: ['whiteboard', 'mindmap'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.cycle_style', ctx),
     mutates: true,
@@ -1304,27 +1395,60 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 → pushUndoSnapshot() przed zmianą data.edgeStyle (stos Ctrl+Z)',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 → pushUndoSnapshot() przed zmianą data.edgeStyle. Mapa myśli: useMindMapQuickActions.ts mm_edge_cycle_style → handlers.pushUndo() przed zmianą style.strokeDasharray — DOPISANE 2026-08-09 (poprzednio brak Ctrl+Z, tak jak edit_label wyżej). UWAGA modelu danych (odbiór, poza zakresem naprawy tutaj): Mapa myśli cyklu 3 stanów (solid/dashed/dotted) przez `edge.style.strokeDasharray`; Tablica cyklu 4 stanów (+wavy) przez `data.edgeStyle`, semantyczne pole czytane przez jej renderer krawędzi. Mapa myśli MA WŁASNY renderer (`LabeledEdge.tsx`), który liczy `strokeDasharray` WYŁĄCZNIE z `data.edgeStyle` (linie 139-147) — `style.strokeDasharray` ustawiane przez tę akcję nigdy nie trafia na ekran, bo `<path>` nadpisuje je jawnie. Innymi słowy: dziś (przed I PO tej migracji, zachowanie 1:1 przeniesione bez zmian) klik „Zmień styl linii" na Mapie myśli pokazuje toast, ale linia wizualnie się NIE zmienia — pre-existing defekt renderowania, niezwiązany z wiring rejestru, NIE naprawiany w tym zadaniu.',
     },
     teresa: {
       description:
-        'Przełącza styl linii wskazanego połączenia na Tablicy (cykl: ciągła → kreskowana → kropkowana → falista). Podaj `edgeId` połączenia — jeden klik cyklu, może być potrzebne kilka wywołań.',
+        'Przełącza styl linii wskazanego połączenia (Tablica lub Mapa myśli), cykl: Tablica ciągła→kreskowana→kropkowana→falista, Mapa myśli ciągła→kreskowana→kropkowana. Podaj `edgeId` połączenia — jeden klik cyklu, może być potrzebne kilka wywołań.',
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi).' },
         },
         required: ['edgeId'],
       },
     },
-    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178',
+    source:
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeCycleStyle:3178 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_cycle_style (Mapa myśli)',
+  },
+  {
+    id: 'idea.edge.edit_relation',
+    label: { pl: 'Edytuj relację', en: 'Edit relation' },
+    icon: 'Edit3',
+    scope: 'edge',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runEdgeParamCallback('idea.edge.edit_relation', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'useMindMapQuickActions.ts mm_edge_edit_relation → handlers.pushUndo() przed setEdges — DOPISANE 2026-08-09 (poprzednio, IdeaRecommendationMap.tsx handleEdgeContextAction/edge_edit_relation, brak Ctrl+Z, tak jak edit_label).',
+    },
+    teresa: {
+      description:
+        'Ustawia typ semantycznej relacji wskazanego połączenia na Mapie myśli: related/depends_on/blocks/supports/contradicts (wartość zapisuje się też jako etykieta linii). Działa TYLKO na krawędziach relacji — na strukturalnych po cichu nic się nie stanie, jak dziś. Tablica nie ma pojęcia relacji — akcja tam nie istnieje.',
+      parameters: {
+        type: 'object',
+        properties: {
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi relacji) na Mapie myśli.' },
+          relation: {
+            type: 'string',
+            description: 'Typ relacji: related, depends_on, blocks, supports lub contradicts.',
+          },
+        },
+        required: ['edgeId', 'relation'],
+      },
+    },
+    source: 'src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_edit_relation',
   },
   {
     id: 'idea.edge.delete',
     label: { pl: 'Usuń połączenie', en: 'Delete connection' },
     icon: 'Trash2',
     scope: 'edge',
-    tools: ['whiteboard'],
+    tools: ['whiteboard', 'mindmap'],
     surfaces: ['context'],
     handler: (ctx) => runEdgeParamCallback('idea.edge.delete', ctx),
     mutates: true,
@@ -1332,7 +1456,7 @@ const IDEA_ACTIONS: ActionDef[] = [
     undo: {
       kind: 'local_stack',
       evidence:
-        'IdeaWhiteboardTool.tsx handleEdgeDelete:3245 → onEdgesChange:1144 → pushUndoSnapshot() przed applyEdgeChanges (stos Ctrl+Z)',
+        'Tablica: IdeaWhiteboardTool.tsx handleEdgeDelete:3245 → onEdgesChange:1144 → pushUndoSnapshot() przed applyEdgeChanges. Mapa myśli: useMindMapQuickActions.ts mm_edge_delete → handlers.pushUndo() przed setEdges filter (ta sama logika, przeniesiona z IdeaRecommendationMap.tsx handleEdgeContextAction, które też już wołało pushUndo()).',
     },
     // Trwałe usunięcie krawędzi z grafu — pierwsze użycie `destructive` w
     // rejestrze (pole zadeklarowane, dotąd nieużywane przez żaden z 16
@@ -1341,16 +1465,17 @@ const IDEA_ACTIONS: ActionDef[] = [
     destructive: true,
     teresa: {
       description:
-        'Usuwa wskazane połączenie z Tablicy na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji, w tej samej sesji przeglądarki). Podaj `edgeId` połączenia.',
+        'Usuwa wskazane połączenie na trwałe (cofnięcie tylko przez Ctrl+Z w tej samej sesji przeglądarki). Na Mapie myśli działa TYLKO na krawędziach relacji utworzonych ręcznie — na strukturalnych i automatycznych po cichu nic się nie stanie (tak jak dziś w menu prawego kliku, gdzie ta pozycja jest wtedy wyszarzona). Podaj `edgeId` połączenia.',
       parameters: {
         type: 'object',
         properties: {
-          edgeId: { type: 'string', description: 'Id połączenia (krawędzi) na Tablicy.' },
+          edgeId: { type: 'string', description: 'Id połączenia (krawędzi).' },
         },
         required: ['edgeId'],
       },
     },
-    source: 'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245',
+    source:
+      'src/components/MyWork/IdeaWhiteboardTool.tsx handleEdgeDelete:3245 (Tablica) · src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_delete (Mapa myśli)',
   },
   // ── N7 kontynuacja (2026-08-09) — WhiteboardToolbar.tsx, surface='toolbar' ──
   // 18 pozycji = 1:1 z tym, co bar dziś renderuje (dropdown „Wstaw" ×5,

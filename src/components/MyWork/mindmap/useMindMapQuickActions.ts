@@ -19,6 +19,7 @@ import {
 } from '../canvas/edgeArrowMarkers';
 import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { findIdeaTemplate } from '../IdeaTemplateGallery';
+import { isRelationEdge } from './useMindMapNodes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
 import { applyStructureLayout } from './StructureLayouts';
@@ -1315,6 +1316,177 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         }),
         { duration: 900 }
       );
+    }
+
+    // ── Menu krawędzi, pozostałe 6 pozycji (2026-08-09, rejestr akcji Z1/Z4 —
+    // `EdgeContextMenu.tsx`) ─────────────────────────────────────────────────
+    // Przed tym dopiskiem TYLKO `mm_edge_arrow` (wyżej) miało odbiornik na tej
+    // szynie; pozostałe 6 pozycji menu prawego kliku szły przez `onAction` prop
+    // → `handleEdgeContextAction` w `IdeaRecommendationMap.tsx` (zamknięcie nad
+    // lokalnym stanem `edgeContextMenu`/`edges`). Logika PRZENIESIONA stąd 1:1
+    // (mutacje bez zmian, patrz komentarze przy każdym bloku) — komponent nie ma
+    // już własnej implementacji tych 6 akcji, tylko dispatchuje przez rejestr
+    // (`getActionsForSurface`/`runIdeaAction`), DOKŁADNIE jak `mm_edge_arrow` już
+    // robił od 2026-07-28 — ten sam wzorzec, rozszerzony, nie duplikowany.
+    //
+    // Etykieta/relacja: `detail.label`/`detail.relation` obecne → Teresa podała
+    // treść wprost, pomijamy `window.prompt` (headless caller nie odpowie na
+    // natywny prompt) — 1:1 z konwencją `addLabel` przy `mm_add_child` wyżej.
+    // Nieobecne → klik człowieka, pytamy jak dawniej.
+    //
+    // `isRelationEdge` gate: `edge_reverse`/`edge_insert_node`/`edge_edit_relation`/
+    // `edge_delete` działały w oryginale TYLKO na krawędziach relacji (nie
+    // strukturalnych) — na innych po cichu nic się nie działo (menu samo NIE
+    // wyszarzało tych pozycji dla krawędzi strukturalnych, więc ten cichy no-op
+    // jest ŚWIADOMIE zachowany 1:1, nie "naprawiany" tutaj).
+    //
+    // `handlers.pushUndo()`: DOPISANE dla edit_label/cycle_style/edit_relation —
+    // oryginał (`handleEdgeContextAction`) NIE wołał tam pushUndo (w
+    // przeciwieństwie do reverse/insert_node/delete, które już wołały), więc te
+    // 3 akcje nie wspierały Ctrl+Z. Rejestr wymaga uczciwego `undo` dla każdej
+    // `mutates: true` akcji (R4) — zamiast fałszywie to zadeklarować, dodajemy tu
+    // realny pushUndo() (funkcja już istnieje i jest już używana przez sąsiednie
+    // akcje w tej samej funkcji — niskie ryzyko, brak nowej mechaniki).
+    if (action === 'mm_edge_edit_label') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const current = String(edge.data?.label || '');
+      const providedLabel = typeof detail?.label === 'string' ? detail.label : undefined;
+      const next =
+        providedLabel !== undefined
+          ? providedLabel
+          : window.prompt(i18n.t('mindmap.connectionLabel'), current);
+      if (next === null || next === undefined) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, label: next } } : e))
+      );
+    }
+
+    if (action === 'mm_edge_insert_node') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      const newId = `node-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      const targetNode = nodes.find((n) => n.id === edge.target);
+      const posX = sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : 0;
+      const posY = sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : 0;
+      const newNode: Node = {
+        id: newId,
+        type: 'idea',
+        position: { x: posX, y: posY },
+        data: {
+          label: '',
+          branchKey: 'uncategorized',
+          sourceType: 'manual',
+          priority: 50,
+          _startEditing: Date.now(),
+        },
+      } as any;
+      setters.setEdges((prev) => {
+        const without = prev.filter((e) => e.id !== edgeId);
+        return [
+          ...without,
+          { ...edge, id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`, target: newId } as Edge,
+          {
+            ...edge,
+            id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            source: newId,
+            target: edge.target,
+          } as Edge,
+        ];
+      });
+      setters.setNodes((prev) => [
+        ...prev.map((n) => ({ ...n, selected: false })),
+        { ...newNode, selected: true },
+      ]);
+    }
+
+    if (action === 'mm_edge_reverse') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId
+            ? {
+                ...e,
+                source: e.target,
+                target: e.source,
+                sourceHandle: e.targetHandle,
+                targetHandle: e.sourceHandle,
+              }
+            : e
+        )
+      );
+      toast.success(i18n.t('mindmap.directionReversed'), { duration: 800 });
+    }
+
+    if (action === 'mm_edge_cycle_style') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge) return;
+      const styles = ['solid', 'dashed', 'dotted'];
+      const current = edge.style?.strokeDasharray
+        ? edge.style.strokeDasharray === '2 2'
+          ? 'dotted'
+          : 'dashed'
+        : 'solid';
+      const nextIdx = (styles.indexOf(current) + 1) % styles.length;
+      const nextStyle = styles[nextIdx];
+      const dasharray = nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
+        )
+      );
+      toast.success(
+        i18n.t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),
+        { duration: 800 }
+      );
+    }
+
+    if (action === 'mm_edge_edit_relation') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      const current = String(edge.data?.relation || '');
+      const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
+      const providedRelation = typeof detail?.relation === 'string' ? detail.relation : undefined;
+      const next =
+        providedRelation !== undefined
+          ? providedRelation
+          : window.prompt(
+              i18n.t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
+              current
+            );
+      if (next === null || next === undefined) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) =>
+        prev.map((e) =>
+          e.id === edgeId ? { ...e, data: { ...e.data, relation: next, label: next } } : e
+        )
+      );
+    }
+
+    if (action === 'mm_edge_delete') {
+      const edgeId = typeof detail?.edgeId === 'string' ? detail.edgeId : undefined;
+      if (!edgeId || locked) return;
+      const edge = edges.find((e) => e.id === edgeId);
+      if (!edge || !isRelationEdge(edge)) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+      toast.success(i18n.t('mindmap.connectionRemoved'), { duration: 800 });
     }
   };
 

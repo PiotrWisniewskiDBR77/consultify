@@ -4074,135 +4074,15 @@ function MindMapInner({
     return () => window.removeEventListener('mindmap-edge-contextmenu', handler);
   }, []);
 
-  const handleEdgeContextAction = useCallback(
-    (action: string) => {
-      if (!edgeContextMenu) return;
-      const targetEdge = (edges as Edge[]).find((e) => e.id === edgeContextMenu.edgeId);
-      if (!targetEdge) return;
-      const relationEdge = isRelationEdge(targetEdge);
-
-      if (action === 'edge_add_label') {
-        const current = targetEdge.data?.label || '';
-        const label = window.prompt(t('mindmap.connectionLabel'), current);
-        if (label !== null) {
-          setEdges((prev: Edge[]) =>
-            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e))
-          );
-        }
-      }
-
-      if (action === 'edge_insert_node' && relationEdge) {
-        pushUndo();
-        const newId = `node-${uid()}`;
-        const midX = 0;
-        const midY = 0;
-        const sourceNode = (nodes as Node[]).find((n) => n.id === targetEdge.source);
-        const targetNode = (nodes as Node[]).find((n) => n.id === targetEdge.target);
-        const posX =
-          sourceNode && targetNode ? (sourceNode.position.x + targetNode.position.x) / 2 : midX;
-        const posY =
-          sourceNode && targetNode ? (sourceNode.position.y + targetNode.position.y) / 2 : midY;
-
-        const newNode: Node = {
-          id: newId,
-          type: 'idea',
-          position: { x: posX, y: posY },
-          data: {
-            label: '',
-            branchKey: 'uncategorized',
-            sourceType: 'manual',
-            priority: 50,
-            _startEditing: Date.now(),
-          },
-        } as any;
-
-        setEdges((prev: Edge[]) => {
-          const without = prev.filter((e) => e.id !== targetEdge.id);
-          return [
-            ...without,
-            { ...targetEdge, id: `edge-${uid()}`, target: newId } as Edge,
-            {
-              ...targetEdge,
-              id: `edge-${uid()}`,
-              source: newId,
-              target: targetEdge.target,
-            } as Edge,
-          ];
-        });
-        setNodes((prev: Node[]) => [
-          ...prev.map((n) => ({ ...n, selected: false })),
-          { ...newNode, selected: true },
-        ]);
-      }
-
-      if (action === 'edge_reverse' && relationEdge) {
-        pushUndo();
-        setEdges((prev: Edge[]) =>
-          prev.map((e) =>
-            e.id === targetEdge.id
-              ? {
-                  ...e,
-                  source: e.target,
-                  target: e.source,
-                  sourceHandle: e.targetHandle,
-                  targetHandle: e.sourceHandle,
-                }
-              : e
-          )
-        );
-        toast.success(t('mindmap.directionReversed'), { duration: 800 });
-      }
-
-      if (action === 'edge_change_style') {
-        const styles = ['solid', 'dashed', 'dotted'];
-        const current = targetEdge.style?.strokeDasharray
-          ? targetEdge.style.strokeDasharray === '2 2'
-            ? 'dotted'
-            : 'dashed'
-          : 'solid';
-        const nextIdx = (styles.indexOf(current) + 1) % styles.length;
-        const nextStyle = styles[nextIdx];
-        const dasharray =
-          nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
-        setEdges((prev: Edge[]) =>
-          prev.map((e) =>
-            e.id === targetEdge.id ? { ...e, style: { ...e.style, strokeDasharray: dasharray } } : e
-          )
-        );
-        toast.success(
-          t('myWork.ideaMap.toast.styleChanged', 'Style: {{style}}', { style: nextStyle }),
-          {
-            duration: 800,
-          }
-        );
-      }
-
-      if (action === 'edge_edit_relation' && relationEdge) {
-        const current = targetEdge.data?.relation || '';
-        const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
-        const label = window.prompt(
-          t('mindmap.relationTypePrompt', { relations: relations.join(', ') }),
-          current
-        );
-        if (label !== null) {
-          setEdges((prev: Edge[]) =>
-            prev.map((e) =>
-              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e
-            )
-          );
-        }
-      }
-
-      if (action === 'edge_delete' && relationEdge) {
-        pushUndo();
-        setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
-        toast.success(t('mindmap.connectionRemoved'), { duration: 800 });
-      }
-
-      setEdgeContextMenu(null);
-    },
-    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes]
-  );
+  // handleEdgeContextAction USUNIĘTE (2026-08-09, rejestr akcji Z1/E02
+  // rozszerzenie z Tablicy). Wszystkie 7 pozycji menu krawędzi (dawniej 6 tu +
+  // „Kierunek strzałki" już wcześniej poza tą funkcją) idzie teraz przez
+  // rejestr: `EdgeContextMenu.tsx` dispatchuje `runIdeaAction(...)`, realna
+  // mutacja żyje w `useMindMapQuickActions.ts` (`mm_edge_*`), adresowana
+  // `edgeId` — DOKŁADNIE jak „Kierunek strzałki" (`mm_edge_arrow`) już
+  // działało od 2026-07-28. Menu samo zamyka się przez `CanvasContextMenu`
+  // (`closeOnSelect` domyślnie true) — nie trzeba już `setEdgeContextMenu(null)`
+  // z tego miejsca.
 
   const selectedBranchKey = useMemo(() => {
     const selected = nodes.find((n: any) => n?.selected);
@@ -5835,7 +5715,6 @@ function MindMapInner({
           isLocked={locked}
           isUserCreated={edgeContextMenu.isUserCreated}
           onClose={() => setEdgeContextMenu(null)}
-          onAction={handleEdgeContextAction}
         />
       )}
 
