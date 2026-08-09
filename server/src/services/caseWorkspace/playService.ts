@@ -133,15 +133,16 @@
  *      indefinitely (this file's assumption, addressed individually by
  *      version_number per CW-GR-029's GET .../versions/:version route), needs
  *      product confirmation.
- *   5. instantiateProcessVersion does not verify that the target case_id's
- *      organization_id matches the ProcessVersion's owning process_definition's
- *      organization_id (cross-tenant isolation). Implementing that check
- *      would require this service to also SELECT case_core, and
- *      casePlanVersionService.ts's own migration header reserves case_core
- *      reads to itself under CW-P02's collision-avoidance mandate — unclear
- *      whether that reservation was scoped only to CW-P02 or extends to
- *      sibling case_workspace services. Flagged rather than implemented;
- *      confirm before any route wires instantiateProcessVersion.
+ *   5. RESOLVED (coordinator, post-review): instantiateProcessVersion DOES
+ *      verify that the target case_id's organization_id matches the
+ *      ProcessVersion's owning process_definition's organization_id, via a
+ *      read-only SELECT on case_core (throws process_version_case_
+ *      organization_mismatch on mismatch). CW-P02's "reservation" only ever
+ *      meant casePlanVersionService.ts does not WRITE case_core — every
+ *      sibling service (runBindingService, proposalApprovalService,
+ *      caseHistoryService's value measurements) already reads case_core
+ *      read-only for its own tenant cross-checks; this follows the same
+ *      established, safe pattern.
  *   6. capability_versions / policy_ref / required_bindings on
  *      process_versions have no confirmed JSON shape anywhere in
  *      docs/product/case-workspace/*.md beyond CW-RT-014's one-line mention
@@ -1108,6 +1109,20 @@ export async function instantiateProcessVersion(
   const version = await getProcessVersion(id);
   if (!version) throw new Error('process_version_not_found');
   if (version.status !== 'PUBLISHED') throw new Error('process_version_not_publishable');
+
+  const definition = await queryOne<{ organization_id: string }>(
+    `SELECT organization_id FROM process_definitions WHERE process_definition_id = ?`,
+    [version.processDefinitionId]
+  );
+  if (!definition) throw new Error('process_definition_not_found');
+  const caseRow = await queryOne<{ organization_id: string }>(
+    `SELECT organization_id FROM case_core WHERE case_id = ?`,
+    [targetCaseId]
+  );
+  if (!caseRow) throw new Error('case_not_found');
+  if (caseRow.organization_id !== definition.organization_id) {
+    throw new Error('process_version_case_organization_mismatch');
+  }
 
   return createPlanDraft({
     caseId: targetCaseId,
