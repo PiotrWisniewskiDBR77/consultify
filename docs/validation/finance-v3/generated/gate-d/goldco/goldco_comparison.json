@@ -1,0 +1,3162 @@
+{
+  "summary": {
+    "totalRows": 349,
+    "comparableRows": 347,
+    "passed": 347,
+    "failed": 0,
+    "naRows": 2,
+    "failedDetail": []
+  },
+  "rows": [
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.revenue",
+      "oracle": 150000000,
+      "pipeline": 150000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.cogs",
+      "oracle": 95000000,
+      "pipeline": 95000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.grossMargin",
+      "oracle": 55000000,
+      "pipeline": 55000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.opex",
+      "oracle": 30000000,
+      "pipeline": 30000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.ebitda",
+      "oracle": 25000000,
+      "pipeline": 25000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.depreciation",
+      "oracle": 6000000,
+      "pipeline": 6000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.ebit",
+      "oracle": 19000000,
+      "pipeline": 19000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.interest",
+      "oracle": 2000000,
+      "pipeline": 2000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.taxExpense",
+      "oracle": 3230000,
+      "pipeline": 3230000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "pl.netIncome",
+      "oracle": 13770000,
+      "pipeline": 13770000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.cash",
+      "oracle": 8000000,
+      "pipeline": 8000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.ar",
+      "oracle": 22000000,
+      "pipeline": 22000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.inventory",
+      "oracle": 18000000,
+      "pipeline": 18000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.currentAssets",
+      "oracle": 48000000,
+      "pipeline": 48000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.fixedAssets",
+      "oracle": 92000000,
+      "pipeline": 92000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.totalAssets",
+      "oracle": 140000000,
+      "pipeline": 140000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.ap",
+      "oracle": 15000000,
+      "pipeline": 15000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.currentLiabilities",
+      "oracle": 15000000,
+      "pipeline": 15000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.longTermDebt",
+      "oracle": 40000000,
+      "pipeline": 40000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.totalLiabilities",
+      "oracle": 55000000,
+      "pipeline": 55000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.totalEquity",
+      "oracle": 85000000,
+      "pipeline": 85000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 140000000,
+      "pipeline": 140000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "retainedEarnings (closing)",
+      "oracle": 68770000,
+      "pipeline": 68770000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "dividendsDeclared",
+      "oracle": 5000000,
+      "pipeline": 5000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "cf.cfo",
+      "oracle": 20000000,
+      "pipeline": 20000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "cf.cfi",
+      "oracle": -14000000,
+      "pipeline": -14000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "cf.cff",
+      "oracle": -6000000,
+      "pipeline": -6000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2023",
+      "field": "cf.netChangeCash",
+      "oracle": 0,
+      "pipeline": 0,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.revenue",
+      "oracle": 165000000,
+      "pipeline": 165000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.cogs",
+      "oracle": 106000000,
+      "pipeline": 106000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.grossMargin",
+      "oracle": 59000000,
+      "pipeline": 59000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.opex",
+      "oracle": 32000000,
+      "pipeline": 32000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.ebitda",
+      "oracle": 27000000,
+      "pipeline": 27000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.depreciation",
+      "oracle": 6500000,
+      "pipeline": 6500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.ebit",
+      "oracle": 20500000,
+      "pipeline": 20500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.interest",
+      "oracle": 2200000,
+      "pipeline": 2200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.taxExpense",
+      "oracle": 3477000,
+      "pipeline": 3477000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "pl.netIncome",
+      "oracle": 14823000,
+      "pipeline": 14823000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.cash",
+      "oracle": 9500000,
+      "pipeline": 9500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.ar",
+      "oracle": 24000000,
+      "pipeline": 24000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.inventory",
+      "oracle": 21000000,
+      "pipeline": 21000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.currentAssets",
+      "oracle": 54500000,
+      "pipeline": 54500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.fixedAssets",
+      "oracle": 96500000,
+      "pipeline": 96500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.totalAssets",
+      "oracle": 151000000,
+      "pipeline": 151000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.ap",
+      "oracle": 16500000,
+      "pipeline": 16500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.currentLiabilities",
+      "oracle": 16500000,
+      "pipeline": 16500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.longTermDebt",
+      "oracle": 42000000,
+      "pipeline": 42000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.totalLiabilities",
+      "oracle": 58500000,
+      "pipeline": 58500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.totalEquity",
+      "oracle": 92500000,
+      "pipeline": 92500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 151000000,
+      "pipeline": 151000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "retainedEarnings (closing)",
+      "oracle": 77593000,
+      "pipeline": 77593000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "dividendsDeclared",
+      "oracle": 6000000,
+      "pipeline": 6000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "cf.cfo",
+      "oracle": 12000000,
+      "pipeline": 12000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "cf.cfi",
+      "oracle": -8000000,
+      "pipeline": -8000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "cf.cff",
+      "oracle": -2500000,
+      "pipeline": -2500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 ORIGINAL",
+      "field": "cf.netChangeCash",
+      "oracle": 1500000,
+      "pipeline": 1500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.revenue",
+      "oracle": 165000000,
+      "pipeline": 165000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.cogs",
+      "oracle": 109000000,
+      "pipeline": 109000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.grossMargin",
+      "oracle": 56000000,
+      "pipeline": 56000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.opex",
+      "oracle": 32000000,
+      "pipeline": 32000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.ebitda",
+      "oracle": 24000000,
+      "pipeline": 24000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.depreciation",
+      "oracle": 6500000,
+      "pipeline": 6500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.ebit",
+      "oracle": 17500000,
+      "pipeline": 17500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.interest",
+      "oracle": 2200000,
+      "pipeline": 2200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.taxExpense",
+      "oracle": 3477000,
+      "pipeline": 3477000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "pl.netIncome",
+      "oracle": 11823000,
+      "pipeline": 11823000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.cash",
+      "oracle": 9500000,
+      "pipeline": 9500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.ar",
+      "oracle": 24000000,
+      "pipeline": 24000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.inventory",
+      "oracle": 18000000,
+      "pipeline": 18000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.currentAssets",
+      "oracle": 51500000,
+      "pipeline": 51500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.fixedAssets",
+      "oracle": 96500000,
+      "pipeline": 96500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.totalAssets",
+      "oracle": 148000000,
+      "pipeline": 148000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.ap",
+      "oracle": 16500000,
+      "pipeline": 16500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.currentLiabilities",
+      "oracle": 16500000,
+      "pipeline": 16500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.longTermDebt",
+      "oracle": 42000000,
+      "pipeline": 42000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.totalLiabilities",
+      "oracle": 58500000,
+      "pipeline": 58500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.totalEquity",
+      "oracle": 89500000,
+      "pipeline": 89500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 148000000,
+      "pipeline": 148000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "retainedEarnings (closing)",
+      "oracle": 74593000,
+      "pipeline": 74593000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "dividendsDeclared",
+      "oracle": 6000000,
+      "pipeline": 6000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "cf.cfo",
+      "oracle": 12000000,
+      "pipeline": 12000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "cf.cfi",
+      "oracle": -8000000,
+      "pipeline": -8000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "cf.cff",
+      "oracle": -2500000,
+      "pipeline": -2500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 RESTATED",
+      "field": "cf.netChangeCash",
+      "oracle": 1500000,
+      "pipeline": 1500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.revenue",
+      "oracle": 182000000,
+      "pipeline": 182000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.cogs",
+      "oracle": 118000000,
+      "pipeline": 118000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.grossMargin",
+      "oracle": 64000000,
+      "pipeline": 64000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.opex",
+      "oracle": 34000000,
+      "pipeline": 34000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.ebitda",
+      "oracle": 30000000,
+      "pipeline": 30000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.depreciation",
+      "oracle": 7000000,
+      "pipeline": 7000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.ebit",
+      "oracle": 23000000,
+      "pipeline": 23000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.interest",
+      "oracle": 2000000,
+      "pipeline": 2000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.taxExpense",
+      "oracle": 3990000,
+      "pipeline": 3990000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "pl.netIncome",
+      "oracle": 17010000,
+      "pipeline": 17010000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.cash",
+      "oracle": 11000000,
+      "pipeline": 11000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.ar",
+      "oracle": 26000000,
+      "pipeline": 26000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.inventory",
+      "oracle": 19500000,
+      "pipeline": 19500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.currentAssets",
+      "oracle": 56500000,
+      "pipeline": 56500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.fixedAssets",
+      "oracle": 101500000,
+      "pipeline": 101500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.totalAssets",
+      "oracle": 158000000,
+      "pipeline": 158000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.ap",
+      "oracle": 17500000,
+      "pipeline": 17500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.currentLiabilities",
+      "oracle": 17500000,
+      "pipeline": 17500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.longTermDebt",
+      "oracle": 40500000,
+      "pipeline": 40500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.totalLiabilities",
+      "oracle": 58000000,
+      "pipeline": 58000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.totalEquity",
+      "oracle": 100000000,
+      "pipeline": 100000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 158000000,
+      "pipeline": 158000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "retainedEarnings (closing)",
+      "oracle": 84603000,
+      "pipeline": 84603000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "dividendsDeclared",
+      "oracle": 7000000,
+      "pipeline": 7000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "cf.cfo",
+      "oracle": 15000000,
+      "pipeline": 15000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "cf.cfi",
+      "oracle": -9000000,
+      "pipeline": -9000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "cf.cff",
+      "oracle": -4500000,
+      "pipeline": -4500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025",
+      "field": "cf.netChangeCash",
+      "oracle": 1500000,
+      "pipeline": 1500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2024 restatement delta",
+      "field": "netIncome delta (restated-original)",
+      "oracle": -3000000,
+      "pipeline": -3000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "revenue",
+      "oracle": 11375000,
+      "pipeline": 11375000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "cogs",
+      "oracle": 7375000,
+      "pipeline": 7375000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "grossMargin",
+      "oracle": 4000000,
+      "pipeline": 4000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "opex",
+      "oracle": 2125000,
+      "pipeline": 2125000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "ebitda",
+      "oracle": 1875000,
+      "pipeline": 1875000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "depreciation",
+      "oracle": 437500,
+      "pipeline": 437500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "ebit",
+      "oracle": 1437500,
+      "pipeline": 1437500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "interest",
+      "oracle": 125000,
+      "pipeline": 125000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "taxExpense",
+      "oracle": 249375,
+      "pipeline": 249375,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "netIncome",
+      "oracle": 1063125,
+      "pipeline": 1063125,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "cash (cumulative)",
+      "oracle": 9593750,
+      "pipeline": 9593750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M01",
+      "field": "netChangeCash",
+      "oracle": 93750,
+      "pipeline": 93750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "revenue",
+      "oracle": 11830000,
+      "pipeline": 11830000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "cogs",
+      "oracle": 7670000,
+      "pipeline": 7670000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "grossMargin",
+      "oracle": 4160000,
+      "pipeline": 4160000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "opex",
+      "oracle": 2210000,
+      "pipeline": 2210000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "ebitda",
+      "oracle": 1950000,
+      "pipeline": 1950000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "depreciation",
+      "oracle": 455000,
+      "pipeline": 455000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "ebit",
+      "oracle": 1495000,
+      "pipeline": 1495000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "interest",
+      "oracle": 130000,
+      "pipeline": 130000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "taxExpense",
+      "oracle": 259350,
+      "pipeline": 259350,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "netIncome",
+      "oracle": 1105650,
+      "pipeline": 1105650,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "cash (cumulative)",
+      "oracle": 9691250,
+      "pipeline": 9691250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M02",
+      "field": "netChangeCash",
+      "oracle": 97500,
+      "pipeline": 97500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "revenue",
+      "oracle": 12891667,
+      "pipeline": 12891667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "cogs",
+      "oracle": 8358333,
+      "pipeline": 8358333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "grossMargin",
+      "oracle": 4533334,
+      "pipeline": 4533334,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "opex",
+      "oracle": 2408333,
+      "pipeline": 2408333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "ebitda",
+      "oracle": 2125001,
+      "pipeline": 2125001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "depreciation",
+      "oracle": 495833,
+      "pipeline": 495833,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "ebit",
+      "oracle": 1629168,
+      "pipeline": 1629168,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "interest",
+      "oracle": 141667,
+      "pipeline": 141667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "taxExpense",
+      "oracle": 282625,
+      "pipeline": 282625,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "netIncome",
+      "oracle": 1204876,
+      "pipeline": 1204876,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "cash (cumulative)",
+      "oracle": 9797500,
+      "pipeline": 9797500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M03",
+      "field": "netChangeCash",
+      "oracle": 106250,
+      "pipeline": 106250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "revenue",
+      "oracle": 13346667,
+      "pipeline": 13346667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "cogs",
+      "oracle": 8653333,
+      "pipeline": 8653333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "grossMargin",
+      "oracle": 4693334,
+      "pipeline": 4693334,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "opex",
+      "oracle": 2493333,
+      "pipeline": 2493333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "ebitda",
+      "oracle": 2200001,
+      "pipeline": 2200001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "depreciation",
+      "oracle": 513333,
+      "pipeline": 513333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "ebit",
+      "oracle": 1686668,
+      "pipeline": 1686668,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "interest",
+      "oracle": 146667,
+      "pipeline": 146667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "taxExpense",
+      "oracle": 292600,
+      "pipeline": 292600,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "netIncome",
+      "oracle": 1247401,
+      "pipeline": 1247401,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "cash (cumulative)",
+      "oracle": 9907500,
+      "pipeline": 9907500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M04",
+      "field": "netChangeCash",
+      "oracle": 110000,
+      "pipeline": 110000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "revenue",
+      "oracle": 14408333,
+      "pipeline": 14408333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "cogs",
+      "oracle": 9341667,
+      "pipeline": 9341667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "grossMargin",
+      "oracle": 5066666,
+      "pipeline": 5066666,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "opex",
+      "oracle": 2691667,
+      "pipeline": 2691667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "ebitda",
+      "oracle": 2374999,
+      "pipeline": 2374999,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "depreciation",
+      "oracle": 554167,
+      "pipeline": 554167,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "ebit",
+      "oracle": 1820832,
+      "pipeline": 1820832,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "interest",
+      "oracle": 158333,
+      "pipeline": 158333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "taxExpense",
+      "oracle": 315875,
+      "pipeline": 315875,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "netIncome",
+      "oracle": 1346624,
+      "pipeline": 1346624,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "cash (cumulative)",
+      "oracle": 10026250,
+      "pipeline": 10026250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M05",
+      "field": "netChangeCash",
+      "oracle": 118750,
+      "pipeline": 118750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "revenue",
+      "oracle": 15166667,
+      "pipeline": 15166667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "cogs",
+      "oracle": 9833333,
+      "pipeline": 9833333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "grossMargin",
+      "oracle": 5333334,
+      "pipeline": 5333334,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "opex",
+      "oracle": 2833333,
+      "pipeline": 2833333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "ebitda",
+      "oracle": 2500001,
+      "pipeline": 2500001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "depreciation",
+      "oracle": 583333,
+      "pipeline": 583333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "ebit",
+      "oracle": 1916668,
+      "pipeline": 1916668,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "interest",
+      "oracle": 166667,
+      "pipeline": 166667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "taxExpense",
+      "oracle": 332500,
+      "pipeline": 332500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "netIncome",
+      "oracle": 1417501,
+      "pipeline": 1417501,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "cash (cumulative)",
+      "oracle": 10151250,
+      "pipeline": 10151250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M06",
+      "field": "netChangeCash",
+      "oracle": 125000,
+      "pipeline": 125000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "revenue",
+      "oracle": 13953333,
+      "pipeline": 13953333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "cogs",
+      "oracle": 9046667,
+      "pipeline": 9046667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "grossMargin",
+      "oracle": 4906666,
+      "pipeline": 4906666,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "opex",
+      "oracle": 2606667,
+      "pipeline": 2606667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "ebitda",
+      "oracle": 2299999,
+      "pipeline": 2299999,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "depreciation",
+      "oracle": 536667,
+      "pipeline": 536667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "ebit",
+      "oracle": 1763332,
+      "pipeline": 1763332,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "interest",
+      "oracle": 153333,
+      "pipeline": 153333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "taxExpense",
+      "oracle": 305900,
+      "pipeline": 305900,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "netIncome",
+      "oracle": 1304099,
+      "pipeline": 1304099,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "cash (cumulative)",
+      "oracle": 10266250,
+      "pipeline": 10266250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M07",
+      "field": "netChangeCash",
+      "oracle": 115000,
+      "pipeline": 115000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "revenue",
+      "oracle": 10616667,
+      "pipeline": 10616667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "cogs",
+      "oracle": 6883333,
+      "pipeline": 6883333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "grossMargin",
+      "oracle": 3733334,
+      "pipeline": 3733334,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "opex",
+      "oracle": 1983333,
+      "pipeline": 1983333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "ebitda",
+      "oracle": 1750001,
+      "pipeline": 1750001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "depreciation",
+      "oracle": 408333,
+      "pipeline": 408333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "ebit",
+      "oracle": 1341668,
+      "pipeline": 1341668,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "interest",
+      "oracle": 116667,
+      "pipeline": 116667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "taxExpense",
+      "oracle": 232750,
+      "pipeline": 232750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "netIncome",
+      "oracle": 992251,
+      "pipeline": 992251,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "cash (cumulative)",
+      "oracle": 10353750,
+      "pipeline": 10353750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M08",
+      "field": "netChangeCash",
+      "oracle": 87500,
+      "pipeline": 87500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "revenue",
+      "oracle": 15470000,
+      "pipeline": 15470000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "cogs",
+      "oracle": 10030000,
+      "pipeline": 10030000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "grossMargin",
+      "oracle": 5440000,
+      "pipeline": 5440000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "opex",
+      "oracle": 2890000,
+      "pipeline": 2890000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "ebitda",
+      "oracle": 2550000,
+      "pipeline": 2550000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "depreciation",
+      "oracle": 595000,
+      "pipeline": 595000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "ebit",
+      "oracle": 1955000,
+      "pipeline": 1955000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "interest",
+      "oracle": 170000,
+      "pipeline": 170000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "taxExpense",
+      "oracle": 339150,
+      "pipeline": 339150,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "netIncome",
+      "oracle": 1445850,
+      "pipeline": 1445850,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "cash (cumulative)",
+      "oracle": 10481250,
+      "pipeline": 10481250,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M09",
+      "field": "netChangeCash",
+      "oracle": 127500,
+      "pipeline": 127500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "revenue",
+      "oracle": 17441667,
+      "pipeline": 17441667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "cogs",
+      "oracle": 11308333,
+      "pipeline": 11308333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "grossMargin",
+      "oracle": 6133334,
+      "pipeline": 6133334,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "opex",
+      "oracle": 3258333,
+      "pipeline": 3258333,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "ebitda",
+      "oracle": 2875001,
+      "pipeline": 2875001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "depreciation",
+      "oracle": 670833,
+      "pipeline": 670833,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "ebit",
+      "oracle": 2204168,
+      "pipeline": 2204168,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "interest",
+      "oracle": 191667,
+      "pipeline": 191667,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "taxExpense",
+      "oracle": 382375,
+      "pipeline": 382375,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "netIncome",
+      "oracle": 1630126,
+      "pipeline": 1630126,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "cash (cumulative)",
+      "oracle": 10625000,
+      "pipeline": 10625000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M10",
+      "field": "netChangeCash",
+      "oracle": 143750,
+      "pipeline": 143750,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "revenue",
+      "oracle": 18200000,
+      "pipeline": 18200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "cogs",
+      "oracle": 11800000,
+      "pipeline": 11800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "grossMargin",
+      "oracle": 6400000,
+      "pipeline": 6400000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "opex",
+      "oracle": 3400000,
+      "pipeline": 3400000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "ebitda",
+      "oracle": 3000000,
+      "pipeline": 3000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "depreciation",
+      "oracle": 700000,
+      "pipeline": 700000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "ebit",
+      "oracle": 2300000,
+      "pipeline": 2300000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "interest",
+      "oracle": 200000,
+      "pipeline": 200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "taxExpense",
+      "oracle": 399000,
+      "pipeline": 399000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "netIncome",
+      "oracle": 1701000,
+      "pipeline": 1701000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "cash (cumulative)",
+      "oracle": 10775000,
+      "pipeline": 10775000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M11",
+      "field": "netChangeCash",
+      "oracle": 150000,
+      "pipeline": 150000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "revenue",
+      "oracle": 27299999,
+      "pipeline": 27299999,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "cogs",
+      "oracle": 17700001,
+      "pipeline": 17700001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "grossMargin",
+      "oracle": 9599998,
+      "pipeline": 9599998,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "opex",
+      "oracle": 5100001,
+      "pipeline": 5100001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "ebitda",
+      "oracle": 4499997,
+      "pipeline": 4499997,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "depreciation",
+      "oracle": 1050001,
+      "pipeline": 1050001,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "ebit",
+      "oracle": 3449996,
+      "pipeline": 3449996,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "interest",
+      "oracle": 299999,
+      "pipeline": 299999,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "taxExpense",
+      "oracle": 598500,
+      "pipeline": 598500,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "netIncome",
+      "oracle": 2551497,
+      "pipeline": 2551497,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "cash (cumulative)",
+      "oracle": 11000000,
+      "pipeline": 11000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 M12",
+      "field": "netChangeCash",
+      "oracle": 225000,
+      "pipeline": 225000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out",
+      "field": "revenue",
+      "oracle": 182000000,
+      "pipeline": 182000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "sum of 12 monthly pipeline values vs FY2025 annual pipeline value directly (both read from DB, not oracle)"
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out (pipeline-internal)",
+      "field": "revenue",
+      "oracle": 182000000,
+      "pipeline": 182000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "annual pipeline value vs sum of 12 monthly pipeline values (both from DB)"
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out",
+      "field": "cogs",
+      "oracle": 118000000,
+      "pipeline": 118000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "sum of 12 monthly pipeline values vs FY2025 annual pipeline value directly (both read from DB, not oracle)"
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out (pipeline-internal)",
+      "field": "cogs",
+      "oracle": 118000000,
+      "pipeline": 118000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "annual pipeline value vs sum of 12 monthly pipeline values (both from DB)"
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out",
+      "field": "netIncome",
+      "oracle": 17010000,
+      "pipeline": 17010000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "sum of 12 monthly pipeline values vs FY2025 annual pipeline value directly (both read from DB, not oracle)"
+    },
+    {
+      "section": "PARENT FY2025 monthly SUM-TO-ANNUAL tie-out (pipeline-internal)",
+      "field": "netIncome",
+      "oracle": 17010000,
+      "pipeline": 17010000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "annual pipeline value vs sum of 12 monthly pipeline values (both from DB)"
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.revenue",
+      "oracle": 9000000,
+      "pipeline": 9000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.cogs",
+      "oracle": 5800000,
+      "pipeline": 5800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.grossMargin",
+      "oracle": 3200000,
+      "pipeline": 3200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.opex",
+      "oracle": 1900000,
+      "pipeline": 1900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.ebitda",
+      "oracle": 1300000,
+      "pipeline": 1300000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.depreciation",
+      "oracle": 400000,
+      "pipeline": 400000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.ebit",
+      "oracle": 900000,
+      "pipeline": 900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.interest",
+      "oracle": 100000,
+      "pipeline": 100000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.taxExpense",
+      "oracle": 200000,
+      "pipeline": 200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "pl.netIncome",
+      "oracle": 600000,
+      "pipeline": 600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.cash",
+      "oracle": 600000,
+      "pipeline": 600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.ar",
+      "oracle": 1400000,
+      "pipeline": 1400000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.inventory",
+      "oracle": 1000000,
+      "pipeline": 1000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.currentAssets",
+      "oracle": 3000000,
+      "pipeline": 3000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.fixedAssets",
+      "oracle": 5500000,
+      "pipeline": 5500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.totalAssets",
+      "oracle": 8500000,
+      "pipeline": 8500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.ap",
+      "oracle": 900000,
+      "pipeline": 900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.currentLiabilities",
+      "oracle": 900000,
+      "pipeline": 900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.longTermDebt",
+      "oracle": 2600000,
+      "pipeline": 2600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.totalLiabilities",
+      "oracle": 3500000,
+      "pipeline": 3500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.totalEquity",
+      "oracle": 5000000,
+      "pipeline": 5000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 8500000,
+      "pipeline": 8500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2023",
+      "field": "retainedEarnings (closing)",
+      "oracle": 3600000,
+      "pipeline": 3600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.revenue",
+      "oracle": 9800000,
+      "pipeline": 9800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.cogs",
+      "oracle": 6300000,
+      "pipeline": 6300000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.grossMargin",
+      "oracle": 3500000,
+      "pipeline": 3500000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.opex",
+      "oracle": 2050000,
+      "pipeline": 2050000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.ebitda",
+      "oracle": 1450000,
+      "pipeline": 1450000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.depreciation",
+      "oracle": 420000,
+      "pipeline": 420000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.ebit",
+      "oracle": 1030000,
+      "pipeline": 1030000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.interest",
+      "oracle": 110000,
+      "pipeline": 110000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.taxExpense",
+      "oracle": 230000,
+      "pipeline": 230000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "pl.netIncome",
+      "oracle": 690000,
+      "pipeline": 690000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.cash",
+      "oracle": 750000,
+      "pipeline": 750000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.ar",
+      "oracle": 1550000,
+      "pipeline": 1550000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.inventory",
+      "oracle": 1100000,
+      "pipeline": 1100000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.currentAssets",
+      "oracle": 3400000,
+      "pipeline": 3400000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.fixedAssets",
+      "oracle": 5800000,
+      "pipeline": 5800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.totalAssets",
+      "oracle": 9200000,
+      "pipeline": 9200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.ap",
+      "oracle": 950000,
+      "pipeline": 950000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.currentLiabilities",
+      "oracle": 950000,
+      "pipeline": 950000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.longTermDebt",
+      "oracle": 2650000,
+      "pipeline": 2650000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.totalLiabilities",
+      "oracle": 3600000,
+      "pipeline": 3600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.totalEquity",
+      "oracle": 5600000,
+      "pipeline": 5600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 9200000,
+      "pipeline": 9200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2024",
+      "field": "retainedEarnings (closing)",
+      "oracle": 4290000,
+      "pipeline": 4290000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.revenue",
+      "oracle": 10700000,
+      "pipeline": 10700000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.cogs",
+      "oracle": 6900000,
+      "pipeline": 6900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.grossMargin",
+      "oracle": 3800000,
+      "pipeline": 3800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.opex",
+      "oracle": 2200000,
+      "pipeline": 2200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.ebitda",
+      "oracle": 1600000,
+      "pipeline": 1600000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.depreciation",
+      "oracle": 440000,
+      "pipeline": 440000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.ebit",
+      "oracle": 1160000,
+      "pipeline": 1160000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.interest",
+      "oracle": 100000,
+      "pipeline": 100000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.taxExpense",
+      "oracle": 265000,
+      "pipeline": 265000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "pl.netIncome",
+      "oracle": 795000,
+      "pipeline": 795000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.cash",
+      "oracle": 900000,
+      "pipeline": 900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.ar",
+      "oracle": 1700000,
+      "pipeline": 1700000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.inventory",
+      "oracle": 1200000,
+      "pipeline": 1200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.currentAssets",
+      "oracle": 3800000,
+      "pipeline": 3800000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.fixedAssets",
+      "oracle": 6100000,
+      "pipeline": 6100000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.totalAssets",
+      "oracle": 9900000,
+      "pipeline": 9900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.ap",
+      "oracle": 1000000,
+      "pipeline": 1000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.currentLiabilities",
+      "oracle": 1000000,
+      "pipeline": 1000000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.longTermDebt",
+      "oracle": 2700000,
+      "pipeline": 2700000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.totalLiabilities",
+      "oracle": 3700000,
+      "pipeline": 3700000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.totalEquity",
+      "oracle": 6200000,
+      "pipeline": 6200000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 9900000,
+      "pipeline": 9900000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "SUB FY2025",
+      "field": "retainedEarnings (closing)",
+      "oracle": 5085000,
+      "pipeline": 5085000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "pl.revenue",
+      "oracle": 226940000,
+      "pipeline": 226940000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "pl.cogs",
+      "oracle": 146980000,
+      "pipeline": 146980000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "pl.netIncomeConsolidated (pre-NCI-split)",
+      "oracle": 20349000,
+      "pipeline": 20349000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "bs.totalAssets",
+      "oracle": 195765000,
+      "pipeline": 195765000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "bs.totalLiabilities",
+      "oracle": 70035000,
+      "pipeline": 70035000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "bs.totalEquity (incl. NCI)",
+      "oracle": 125730000,
+      "pipeline": 125730000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "bs.totalLiabilitiesEquity",
+      "oracle": 195765000,
+      "pipeline": 195765000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated pl.revenue",
+      "oracle": 44940000,
+      "pipeline": 44940000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated pl.netIncome",
+      "oracle": 3339000,
+      "pipeline": 3339000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated bs.totalAssets",
+      "oracle": 41085000,
+      "pipeline": 41085000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated bs.equity (post-CTA)",
+      "oracle": 25730000,
+      "pipeline": 25730000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated bs.totalLiabilitiesEquity",
+      "oracle": 41085000,
+      "pipeline": 41085000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "SUB-translated CTA_OCI",
+      "oracle": -2170000,
+      "pipeline": -2170000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "elimination pair net (NATURAL/CONTRA, DB-stored)",
+      "oracle": 0,
+      "pipeline": 0,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true,
+      "note": "2 row(s): [{\"entity_code\":\"PARENT\",\"value_decimal\":\"-3320000\",\"sign_convention\":\"NATURAL\"},{\"entity_code\":\"SUB\",\"value_decimal\":\"-3320000\",\"sign_convention\":\"CONTRA\"}]"
+    },
+    {
+      "section": "GROUP FY2025 consolidated",
+      "field": "intercompany loan PLN (PARENT leg, face value)",
+      "oracle": 3320000,
+      "pipeline": 3320000,
+      "tolerance": 1,
+      "diff": 0,
+      "pass": true
+    },
+    {
+      "section": "GROUP FY2025 consolidated (oracle-only, no DB row exists)",
+      "field": "NCI equity (20% of SUB translated equity)",
+      "oracle": 5146000,
+      "pipeline": null,
+      "tolerance": 1,
+      "diff": null,
+      "pass": "N/A",
+      "note": "no NCI_EQUITY canonical taxonomy line exists; not written to finance_stmt_lines by this slice (documented scope decision) — oracle value shown for completeness only"
+    },
+    {
+      "section": "GROUP FY2025 consolidated (oracle-only, no DB row exists)",
+      "field": "NCI net income (20% of SUB translated NI)",
+      "oracle": 667800,
+      "pipeline": null,
+      "tolerance": 1,
+      "diff": null,
+      "pass": "N/A",
+      "note": "no NCI_NET_INCOME canonical taxonomy line exists; not written to finance_stmt_lines by this slice (documented scope decision) — oracle value shown for completeness only"
+    }
+  ]
+}
