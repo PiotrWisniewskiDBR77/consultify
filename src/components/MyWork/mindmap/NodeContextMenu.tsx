@@ -1,3 +1,37 @@
+/**
+ * REJESTR AKCJI (2026-08-09, N5 druga fala — wzór: `PaneContextMenu.tsx`,
+ * e6ac31f10b): 15 z 44-45 pozycji tego menu (grupy Edit + Structure + Delete)
+ * mają teraz odpowiadający wpis w `IDEA_ACTION_REGISTRY`
+ * (`idea.node.mm_*`, `getAction(id)`) i wykonują się przez
+ * `runIdeaAction(id, ctx)`. Grupy AI/Convert/Convert branch/Style & data
+ * ŚWIADOMIE NIETKNIĘTE (osobne przyszłe fale) — dla nich `onSelect` zostaje
+ * dokładnie `() => onAction(item.id)`, bez żadnego udziału rejestru.
+ *
+ * TAK SAMO jak menu tła: komponent przekazuje `ctx.params.run` — dokładnie
+ * ten sam mechanizm co `PaneContextMenu.tsx`/`WhiteboardToolbar.tsx`
+ * (`runMindmapNodeBusAction`/`runMindmapNodeUiOnlyCallback` w rejestrze).
+ * Powód: `IdeaRecommendationMap.handleContextAction` ma bezpośredni dostęp do
+ * lokalnego stanu tego komponentu (schowek Mapy myśli, `preContextMenuSelectionRef`,
+ * `getContextTargetNode`) — closure, którego `useMindMapQuickActions.ts` NIE
+ * dzieli w całości. Klik człowieka więc idzie DOKŁADNIE tą samą ścieżką co
+ * przed tą migracją (`onAction` prop, `IdeaRecommendationMap.tsx`'s
+ * `handleContextAction` NIETKNIĘTE poza dwoma uczciwymi dopiskami `pushUndo()`
+ * — patrz tamten plik). Rejestr dokłada DRUGĄ ścieżkę dla Teresy
+ * (`ctx.source === 'teresa'`, brak `run`): 7 z 15 pozycji mają dziś realny,
+ * żywy odbiornik w `useMindMapQuickActions.ts` (dodaj dziecko/rodzeństwo,
+ * duplikuj, usuń, zwiń/rozwiń, połącz, odłącz gałąź, duplikuj gałąź — 3 z tych
+ * to NOWE odbiorniki dopisane tą samą zmianą, patrz ten plik i
+ * `IdeaRecommendationMap.tsx`); pozostałe 8 (edytuj, otwórz szczegóły,
+ * kopiuj/wytnij/wklej, skup na poddrzewie, wejdź głębiej) zostają uczciwie
+ * UI-only — stan lokalny UI/schowek bez sensownego odpowiednika dla LLM,
+ * `runMindmapNodeUiOnlyCallback` zwraca to wprost.
+ *
+ * Zachowanie wizualne (kolejność, separatory, stan disabled, skróty
+ * klawiszowe, ikony) jest 1:1 ze stanem sprzed migracji — źródłem
+ * etykiet/ikon/skrótów zostaje TEN plik (i18n `myWorkMindmap.ctxMenu.*`),
+ * NIE `def.label`/`def.icon` z rejestru (te opisują akcję dla WSZYSTKICH
+ * powierzchni, np. Menu 3 w przyszłości).
+ */
 import {
   BookOpen,
   ChevronRight,
@@ -34,9 +68,33 @@ import {
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, getAction, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 
 import { type MenuItemBase } from './contextMenuTypes';
+
+/** Lokalny id menu (i18n `myWorkMindmap.ctxMenu.<id>`, tożsamość klik-ścieżki
+ * przez `onAction`) → id w rejestrze akcji (tożsamość Teresy/dispatchu).
+ * WYŁĄCZNIE grupy Edit/Structure/Delete (15 pozycji) — AI/Convert/Convert
+ * branch/Style & data celowo brak w tej mapie (osobne przyszłe fale). */
+const REGISTRY_ID_BY_LOCAL_ID: Record<string, string> = {
+  ctx_edit: 'idea.node.mm_edit',
+  ctx_open_detail: 'idea.node.mm_open_detail',
+  ctx_add_child: 'idea.node.mm_add_child',
+  ctx_add_sibling: 'idea.node.mm_add_sibling',
+  ctx_duplicate: 'idea.node.mm_duplicate',
+  ctx_copy_nodes: 'idea.node.mm_copy',
+  ctx_cut_nodes: 'idea.node.mm_cut',
+  ctx_paste_nodes: 'idea.node.mm_paste',
+  ctx_toggle_collapse: 'idea.node.mm_toggle_collapse',
+  ctx_focus_subtree: 'idea.node.mm_focus_subtree',
+  ctx_drill_down: 'idea.node.mm_drill_down',
+  ctx_connect_to_selected: 'idea.node.mm_connect_to_selected',
+  ctx_detach_branch: 'idea.node.mm_detach_branch',
+  ctx_duplicate_branch: 'idea.node.mm_duplicate_branch',
+  ctx_delete: 'idea.node.mm_delete',
+};
 
 export interface NodeContextMenuProps {
   x: number;
@@ -69,7 +127,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   nodeId,
   nodeType,
   isLocked,
-  isPl: _isPl,
+  isPl,
   canPasteStyle = false,
   canPasteNodes = false,
   hasChildren = false,
@@ -432,6 +490,18 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
           const Icon = item.icon;
           const comingSoon = comingSoonIds?.includes(item.id) ?? false;
           const disabled = item.disabled || comingSoon;
+          const registryId = REGISTRY_ID_BY_LOCAL_ID[item.id];
+          // Odbiór (Z3): każda pozycja Edit/Structure/Delete MUSI mieć wpis w
+          // rejestrze — brak wpisu to błąd migracji, nie stan przejściowy do
+          // cichego pominięcia. Pozycje spoza tych trzech grup (AI/Convert/
+          // Convert branch/Style & data) NIE są w `REGISTRY_ID_BY_LOCAL_ID` —
+          // dla nich `registryId` jest `undefined` i menu zachowuje się
+          // dokładnie jak przed tą migracją (patrz `onSelect` niżej).
+          if (registryId && !getAction(registryId)) {
+            throw new Error(
+              `NodeContextMenu: brak wpisu rejestru dla pozycji menu '${item.id}' (oczekiwano '${registryId}')`
+            );
+          }
           return {
             id: item.id,
             label: t(`myWorkMindmap.ctxMenu.${item.id}`, item.labelEn),
@@ -446,7 +516,26 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 : undefined,
             danger: item.danger,
             separatorBefore: itemIndex === 0 && group === groups[groups.length - 1],
-            onSelect: () => onAction(item.id),
+            onSelect: registryId
+              ? () => {
+                  const ctx: ActionContext = {
+                    ideaId: '',
+                    tool: 'mindmap',
+                    selection: EMPTY_SELECTION,
+                    surface: 'context',
+                    source: 'ui',
+                    language: isPl ? 'pl' : 'en',
+                    // `run` = dokładnie dotychczasowa klik-ścieżka (`onAction`
+                    // prop, `IdeaRecommendationMap.handleContextAction`
+                    // nietknięte poza dwoma dopiskami `pushUndo()`). Rejestr
+                    // konsultuje `run` PRZED jakąkolwiek szyną (Z1/
+                    // `runMindmapNodeBusAction`), więc kliknięcie człowieka
+                    // zachowuje się 1:1 jak przed migracją.
+                    params: { run: () => onAction(item.id) },
+                  };
+                  void runIdeaAction(registryId, ctx);
+                }
+              : () => onAction(item.id),
           };
         })
       )}

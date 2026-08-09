@@ -139,7 +139,13 @@ export type IconName =
   | 'ClipboardCopy'
   | 'Scissors'
   | 'Maximize'
-  | 'ChevronDown';
+  | 'ChevronDown'
+  // N5 kontynuacja (2026-08-09, druga fala) — Mind Map node (węzeł) PPM
+  // (`NodeContextMenu.tsx`, grupy Edit/Structure/Delete), dodane 1:1 z ikonami
+  // już importowanymi tam z lucide-react (zero nowych zależności ikon).
+  | 'FoldVertical'
+  | 'ScanSearch'
+  | 'ChevronRight';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -609,6 +615,55 @@ function dispatchNodeUpdate(nodeId: string, data: Record<string, unknown>) {
   );
 }
 
+/**
+ * UI-only akcje menu WĘZŁA (nie tła) Mapy myśli (N5 kontynuacja, druga fala,
+ * 2026-08-09, `NodeContextMenu.tsx` grupy Edit/Structure) — ten sam kształt co
+ * `runMindmapPaneUiOnlyCallback`, osobna funkcja WYŁĄCZNIE dla uczciwego
+ * komunikatu („menu węzła", nie „menu tła"), żeby odmowa nie myliła Teresy co
+ * do tego, KTÓRE menu ma na myśli. Użyta dla pozycji bez sensownego,
+ * nie-spekulatywnego punktu wejścia na szynę (sprawdzone PRZED użyciem dla
+ * każdej — patrz komentarz przy każdym wpisie niżej, co dokładnie sprawdzono).
+ */
+async function runMindmapNodeUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik na węzeł) Mapy myśli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * Szyna dla akcji WĘZŁA Mapy myśli, które MAJĄ żywy odbiornik w
+ * `useMindMapQuickActions.ts` — jak `runToolbarBusAction`, ale DODATKOWO
+ * przekazuje `ctx.params` jako `extra` do `dispatchQuickAction` (ten sam
+ * zabieg co `idea.element.add`), bo te odbiorniki czytają konkretne pola z
+ * `detail` (`nodeId`/`label`/`targetNodeId`) — bez przekazania `ctx.params`
+ * Teresa nie mogłaby wskazać WĘZŁA, tylko trafiałaby w domyślne zachowanie
+ * (zaznaczenie/ostatni aktywny), co dla menu PRAWEGO KLIKU NA KONKRETNY WĘZEŁ
+ * byłoby nieuczciwe (menu istnieje właśnie po to, żeby wskazać węzeł).
+ */
+async function runMindmapNodeBusAction(
+  actionId: string,
+  map: ToolActionMap,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  return runByTool(actionId, map, ctx, ctx.params);
+}
+
 async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
   const run = ctx.params?.run;
   if (ctx.source === 'ui' && typeof run === 'function') {
@@ -854,6 +909,45 @@ const RUNTIME_PANE_AI_SUGGEST: ToolActionMap = {
   // (`handlers.onOpenChat`), z fallbackiem na `handlers.handleAIExpand()`
   // (ta sama wywoła AI co `idea.ai.expand_map`) gdy czat niedostępny.
   mindmap: 'mm_ai_suggest',
+};
+
+/**
+ * `NodeContextMenu.tsx` (N5 kontynuacja, druga fala, 2026-08-09) — grupy
+ * Edit/Structure/Delete (Convert/Convert-branch/Style&data i AI ŚWIADOMIE
+ * NIETKNIĘTE, osobne przyszłe fale). Każda mapa niżej ma JUŻ ŻYWY odbiornik w
+ * `useMindMapQuickActions.ts` — zweryfikowane grepem przed dopisaniem — poza
+ * trzema NOWYMI: `mm_connect_nodes`, `mm_detach_branch`, `mm_duplicate_branch`
+ * (dopisane tą samą zmianą; `detachBranch`/`duplicateBranch` istniały już w
+ * `IdeaRecommendationMap.tsx` od V5-IDEA-17, ale nigdy nie były przekazane do
+ * `useMindMapQuickActions`' `handlers` — dopięte tutaj, nie duplikowane).
+ */
+const RUNTIME_MM_NODE_ADD_CHILD: ToolActionMap = {
+  mindmap: 'mm_add_child',
+};
+const RUNTIME_MM_NODE_ADD_SIBLING: ToolActionMap = {
+  mindmap: 'mm_add_sibling',
+};
+const RUNTIME_MM_NODE_DUPLICATE: ToolActionMap = {
+  mindmap: 'mm_duplicate',
+};
+const RUNTIME_MM_NODE_DELETE: ToolActionMap = {
+  mindmap: 'mm_delete',
+};
+const RUNTIME_MM_NODE_TOGGLE_COLLAPSE: ToolActionMap = {
+  mindmap: 'mm_toggle_collapse',
+};
+const RUNTIME_MM_NODE_CONNECT: ToolActionMap = {
+  // NOWY odbiornik (patrz useMindMapQuickActions.ts) — czyta detail.nodeId
+  // (węzeł źródłowy, ten sam parsing co wszystkie inne akcje węzłowe) oraz
+  // detail.targetNodeId (drugi węzeł, NOWE pole — bez odpowiednika gdzie
+  // indziej w tym pliku, bo żadna inna akcja węzłowa nie wymaga DRUGIEGO id).
+  mindmap: 'mm_connect_nodes',
+};
+const RUNTIME_MM_NODE_DETACH_BRANCH: ToolActionMap = {
+  mindmap: 'mm_detach_branch',
+};
+const RUNTIME_MM_NODE_DUPLICATE_BRANCH: ToolActionMap = {
+  mindmap: 'mm_duplicate_branch',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -2654,6 +2748,448 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_PANE_AI_SUGGEST,
     source: 'src/components/MyWork/mindmap/PaneContextMenu.tsx:131 (pane_ai_suggest)',
+  },
+
+  // ─────────── N5 kontynuacja, druga fala (2026-08-09) — NodeContextMenu.tsx ───────────
+  // Grupy Edit (8) + Structure (6) + Delete (1) = 15 pozycji. AI/Convert/
+  // Convert-branch/Style&data ŚWIADOMIE NIETKNIĘTE (osobne przyszłe fale —
+  // dotykanie ich teraz utrudniłoby review tego diffa).
+  //
+  // Cross-tool reuse (Z1), sprawdzone PRZED dopisaniem: Tablica ma już
+  // `idea.node.edit`/`idea.node.copy`/`idea.node.duplicate`/`idea.node.delete`
+  // (`tools: ['whiteboard']`). Dla KAŻDEJ z nich zdecydowano NIE reużywać id —
+  // patrz komentarz przy odpowiednim wpisie niżej za powód (mechanizm i/lub
+  // zakres różnią się materialnie, nie kosmetycznie).
+  {
+    id: 'idea.node.mm_edit',
+    label: { pl: 'Edytuj', en: 'Edit' },
+    icon: 'Edit3',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    // Dual-surface (2026-08-09): `FloatingNodeToolbar.tsx:302` ma `onClick`
+    // wołający `onAction('ctx_edit')` — DOKŁADNIE ten sam lokalny id co
+    // `NodeContextMenu.tsx`. ZASTRZEŻENIE odkryte przy tym wpisie, NIE
+    // naprawione tutaj (poza zakresem — dotknięcie renderowania/dispatchu
+    // 742-liniowego `FloatingNodeToolbar.tsx` to osobna fala): ten `onClick`
+    // NIE woła `handleContextAction` — ma WŁASNY `onAction` prop
+    // (`IdeaRecommendationMap.tsx:5649-5668`), który dla nierozpoznanych
+    // lokalnych id-ków (w tym `ctx_edit`) po prostu odpala surowy
+    // `window.dispatchEvent(...'idea-workspace-quick-action'..., {action:
+    // 'ctx_edit', nodeId})` — string `'ctx_edit'` NIE MA odbiornika w
+    // `useMindMapQuickActions.ts` (zweryfikowane grepem), więc przycisk
+    // „Edytuj" na pływającym pasku jest DZIŚ MARTWY. Deklarujemy `'floating'`
+    // w `surfaces` tylko jako uczciwe zadeklarowanie WŁAŚCICIELSTWA tej samej
+    // akcji na tej powierzchni (dla przyszłego podłączenia) — samo dodanie
+    // tego pola NIE naprawia klika (toolbar nie czyta jeszcze z rejestru).
+    surfaces: ['context', 'floating'],
+    shortcut: 'F2',
+    // NIE reużyto `idea.node.edit` (Tablica): tam „Edytuj" = prompt() +
+    // bezpośredni dispatch nowej `label` (`runNodeEditLabelCallback`,
+    // realna mutacja treści). Tu „Edytuj" WYŁĄCZNIE przełącza tryb edycji
+    // inline węzła (`_startEditing` na `data`, `startEditingSelected` w
+    // `useMindMapNodes.tsx:964`) — sama treść zmienia się DOPIERO gdy
+    // użytkownik wpisze tekst i odejdzie z pola (osobny mechanizm,
+    // `onLabelChange`, bez własnej pozycji menu). To różnica w RODZAJU
+    // (przełącznik trybu UI vs mutacja danych), nie kosmetyczna — stąd osobne
+    // id zamiast rozszerzania `tools` istniejącego wpisu.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_edit', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Włącza tryb edycji etykiety wskazanego węzła Mapy myśli (kursor w polu tekstowym). Dziś dostępne WYŁĄCZNIE z menu prawego kliku/pływającego paska — sama zmiana treści i tak wymaga wpisania tekstu przez człowieka, więc nie ma dziś sensownego odpowiednika dla czatu.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:91 (ctx_edit)',
+  },
+  {
+    id: 'idea.node.mm_open_detail',
+    label: { pl: 'Otwórz szczegóły', en: 'Open details' },
+    icon: 'ExternalLink',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_open_detail', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel szczegółów wskazanego węzła Mapy myśli. Stan lokalny UI (`setDrawerNodeId` w `IdeaRecommendationMap.tsx`), nieprzekazany do szyny — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:98 (ctx_open_detail)',
+  },
+  {
+    id: 'idea.node.mm_add_child',
+    label: { pl: 'Dodaj dziecko', en: 'Add child' },
+    icon: 'Plus',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Tab',
+    // Rozważono reużycie `idea.element.add` (ten sam runtime string
+    // `mm_add_child`, `surfaces` już zawiera `'context'`) — ODRZUCONE: jego
+    // `handler` (`runByTool`) ZAWSZE dyspatchuje na szynę, nawet dla kliku
+    // człowieka (ignoruje `ctx.params.run`), co złamałoby wymóg tej fali
+    // („byte-identical human-click behavior" przez `ctx.params.run`). Nowy id
+    // reużywa TEN SAM runtime string (`mm_add_child`) — zero nowej logiki po
+    // stronie hooka, tylko druga, ostrożniejsza ścieżka wejścia.
+    handler: (ctx) => runMindmapNodeBusAction('idea.node.mm_add_child', RUNTIME_MM_NODE_ADD_CHILD, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapNodes.tsx addChildNode:349 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Dodaje węzeł-dziecko do wskazanego węzła Mapy myśli. Podaj `nodeId` węzła-rodzica; bez niego trafi pod aktualnie zaznaczony/ostatnio aktywny węzeł. `label` opcjonalna treść nowego węzła.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-rodzica.' },
+          label: { type: 'string', description: 'Treść nowego węzła (opcjonalna).' },
+        },
+      },
+    },
+    runtime: RUNTIME_MM_NODE_ADD_CHILD,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:104 (ctx_add_child)',
+  },
+  {
+    id: 'idea.node.mm_add_sibling',
+    label: { pl: 'Dodaj rodzeństwo', en: 'Add sibling' },
+    icon: 'GitBranch',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Enter',
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_add_sibling', RUNTIME_MM_NODE_ADD_SIBLING, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapNodes.tsx addSiblingNode:487 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Dodaje węzeł-rodzeństwo obok wskazanego węzła Mapy myśli (ten sam rodzic). Węzeł bez rodzica (korzeń) dostaje zamiast tego dziecko — uczciwy fallback, nie cichy błąd. Podaj `nodeId` węzła kotwicy.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła, obok którego dodać rodzeństwo.' },
+        },
+      },
+    },
+    runtime: RUNTIME_MM_NODE_ADD_SIBLING,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:111 (ctx_add_sibling)',
+  },
+  {
+    id: 'idea.node.mm_duplicate',
+    label: { pl: 'Duplikuj', en: 'Duplicate' },
+    icon: 'Copy',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘D',
+    // NIE reużyto `idea.node.duplicate` (Tablica, scope `selected_items`,
+    // runtime `wb_duplicate`): Mapa myśli duplikuje DOKŁADNIE jeden węzeł
+    // zakotwiczony pod jego rodzicem (`duplicateSelected` w
+    // `useMindMapNodes.tsx:724` — cicho no-opuje bez rodzica, tzn. dla
+    // korzenia/gałęzi startowej), podczas gdy Tablica duplikuje płaski zbiór
+    // zaznaczonych kształtów bez pojęcia rodzica. Różny zakres (`single_item`
+    // vs `selected_items`) I różny odbiornik (`mm_duplicate` vs
+    // `wb_duplicate`) — nie kosmetyka, osobne id.
+    handler: (ctx) => runMindmapNodeBusAction('idea.node.mm_duplicate', RUNTIME_MM_NODE_DUPLICATE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapNodes.tsx duplicateSelected:724 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Duplikuje węzeł. UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika (ta sama funkcja co przycisk „Duplikuj") — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego duplikować (ta sama uczciwa granica co `idea.node.duplicate` na Tablicy).',
+    },
+    runtime: RUNTIME_MM_NODE_DUPLICATE,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:118 (ctx_duplicate)',
+  },
+  {
+    id: 'idea.node.mm_copy',
+    label: { pl: 'Kopiuj', en: 'Copy' },
+    icon: 'ClipboardCopy',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘C',
+    // NIE reużyto `idea.node.copy` (Tablica): implementacje schowka są
+    // CAŁKOWICIE niezależne (Mapa: `_clipboard` — closure w
+    // `useMindMapNodes.tsx` serializująca podgraf węzeł+krawędzie; Tablica:
+    // WB-CLIPBOARD-01, kopia SAMEGO TEKSTU etykiety do schowka systemowego).
+    // Zero wspólnego runtime, oba już UI-only — konflacja id-ków nic by nie
+    // dała, tylko zmyliła który mechanizm faktycznie działa.
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_copy', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje węzeł (i jego wewnętrzne krawędzie) do schowka Mapy myśli. Schowek to zmienna w przeglądarce (`useMindMapNodes.tsx`), nieprzekazana do szyny — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:125 (ctx_copy_nodes)',
+  },
+  {
+    id: 'idea.node.mm_cut',
+    label: { pl: 'Wytnij', en: 'Cut' },
+    icon: 'Scissors',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘X',
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_cut', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Wycina węzeł (kopiuje do schowka Mapy myśli i usuwa z płótna). Ten sam schowek co „Kopiuj" — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:132 (ctx_cut_nodes)',
+  },
+  {
+    id: 'idea.node.mm_paste',
+    label: { pl: 'Wklej', en: 'Paste' },
+    icon: 'Clipboard',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: '⌘V',
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_paste', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapNodes.tsx pasteNodes:1219 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Wkleja zawartość schowka Mapy myśli w miejscu wskazanego węzła. Ten sam schowek co „Kopiuj"/„Wytnij" — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:139 (ctx_paste_nodes)',
+  },
+  {
+    id: 'idea.node.mm_toggle_collapse',
+    label: { pl: 'Zwiń / rozwiń', en: 'Fold / unfold' },
+    icon: 'FoldVertical',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    // Dual-surface (2026-08-09): `FloatingNodeToolbar.tsx:314` ma `onClick`
+    // wołający `onAction('mm_toggle_collapse')` — TEN SAM string co runtime
+    // tej akcji (nie lokalny `ctx_*` id, ale identyczny efekt). W
+    // przeciwieństwie do `ctx_edit` (patrz `idea.node.mm_edit` wyżej), ten
+    // klik DZIAŁA dziś (odbiornik istnieje) — po tym wpisie działa PRECYZYJNIEJ:
+    // `useMindMapQuickActions.ts`'s `mm_toggle_collapse` odbiornik ignorował
+    // `detail.nodeId` na rzecz `getSelectedNode()` (poprawione tą samą zmianą,
+    // patrz komentarz w hooku) — pływający pasek zyskuje to poprawnie
+    // wycelowane zachowanie za darmo, bez zmiany w `FloatingNodeToolbar.tsx`.
+    surfaces: ['context', 'floating'],
+    shortcut: 'Space',
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_toggle_collapse', RUNTIME_MM_NODE_TOGGLE_COLLAPSE, ctx),
+    // Stan widoku (zwinięcie gałęzi), nie treść Idei — ta sama konwencja co
+    // `idea.view.collapse_all`/`fold_level_1`/`fold_level_2`/`expand_all`
+    // (wszystkie `mutates: false` mimo wołania setNodes/setCollapsedNodeIds).
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Zwija albo rozwija (przełącznik) dzieci wskazanego węzła Mapy myśli. Podaj `nodeId` — bez niego działa na aktualnie zaznaczonym węźle.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła do zwinięcia/rozwinięcia.' },
+        },
+      },
+    },
+    runtime: RUNTIME_MM_NODE_TOGGLE_COLLAPSE,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:152 (ctx_toggle_collapse)',
+  },
+  {
+    id: 'idea.node.mm_focus_subtree',
+    label: { pl: 'Skup na poddrzewie', en: 'Focus subtree' },
+    icon: 'ScanSearch',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    // ZASTRZEŻENIE odkryte przy tym wpisie, NIE wprowadzone/naprawiane tutaj:
+    // `ctx_focus_subtree` i `ctx_drill_down` (niżej) wołają DZIŚ DOKŁADNIE tę
+    // samą funkcję (`handleDrillDown(ctxNode.id)`,
+    // `IdeaRecommendationMap.tsx:4837-4840`) — mimo to zostają DWOMA osobnymi
+    // wpisami rejestru, bo to dwie WIZUALNIE odrębne pozycje menu (różne
+    // etykiety/ikony/miejsce w grupie) — Z1 rządzi reużyciem TEJ SAMEJ akcji
+    // pod wieloma id-kami, nie zabrania dwóm różnym pozycjom menu współdzielić
+    // dziś implementację (prawdziwe przed tym wpisem, nie ukryte).
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_focus_subtree', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Ustawia widok na poddrzewo wskazanego węzła (breadcrumb + dopasowanie kadru). Stan lokalny UI (`setDrillPath` w `IdeaRecommendationMap.tsx`), nieprzekazany do szyny — dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:159 (ctx_focus_subtree)',
+  },
+  {
+    id: 'idea.node.mm_drill_down',
+    label: { pl: 'Wejdź głębiej', en: 'Drill down' },
+    icon: 'ChevronRight',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) => runMindmapNodeUiOnlyCallback('idea.node.mm_drill_down', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Wchodzi w poddrzewo wskazanego węzła jako nowy „katalog roboczy" (breadcrumb). Dziś identyczne wykonawczo z „Skup na poddrzewie" (patrz `idea.node.mm_focus_subtree`) — stan lokalny UI, dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:165 (ctx_drill_down)',
+  },
+  {
+    id: 'idea.node.mm_connect_to_selected',
+    label: { pl: 'Połącz z zaznaczonym', en: 'Connect to selected' },
+    icon: 'Link2',
+    // `single_item`, NIE `selected_items`: akcja jest zakotwiczona na JEDNYM
+    // węźle (tym, na którym otwarto menu) — drugi węzeł to PARAMETR
+    // (`targetNodeId`), nie zestaw wielu zaznaczonych elementów w sensie, w
+    // jakim `selected_items` jest używane gdzie indziej w tym rejestrze
+    // (Tablica: „zrób coś z tym, co jest dziś zaznaczone").
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_connect_to_selected', RUNTIME_MM_NODE_CONNECT, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      // HONEST FIX (patrz komentarz w IdeaRecommendationMap.tsx przy
+      // ctx_connect_to_selected i w useMindMapQuickActions.ts przy
+      // mm_connect_nodes) — ta mutacja NIGDY nie wołała pushUndo() ani na
+      // ścieżce kliku, ani teraz na nowej ścieżce Teresy; DOPISANE tym
+      // wpisem w obu miejscach.
+      evidence:
+        'IdeaRecommendationMap.tsx ctx_connect_to_selected + useMindMapQuickActions.ts mm_connect_nodes → oba wołają teraz pushUndo() (dopisane tą zmianą)',
+    },
+    teresa: {
+      description:
+        'Łączy relacją ("related") wskazany węzeł z drugim węzłem Mapy myśli. Podaj `nodeId` węzła źródłowego i `targetNodeId` węzła docelowego — w przeciwieństwie do kliku człowieka (gdzie drugi węzeł to to, co było zaznaczone PRZED prawym kliknięciem), Teresa nie ma pojęcia "co było zaznaczone wcześniej", więc musi podać oba id-ki wprost.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła źródłowego.' },
+          targetNodeId: { type: 'string', description: 'Id węzła docelowego.' },
+        },
+        required: ['nodeId', 'targetNodeId'],
+      },
+    },
+    runtime: RUNTIME_MM_NODE_CONNECT,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:171 (ctx_connect_to_selected)',
+  },
+  {
+    id: 'idea.node.mm_detach_branch',
+    label: { pl: 'Odłącz gałąź', en: 'Detach branch' },
+    icon: 'Scissors',
+    // Zakotwiczone na JEDNYM węźle (rozłącza TYLKO jego własną krawędź do
+    // rodzica) — `single_item`, nie zestaw zaznaczeń.
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_detach_branch', RUNTIME_MM_NODE_DETACH_BRANCH, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaRecommendationMap.tsx detachBranch:4718 → pushUndo() (DOPISANE tym wpisem — funkcja istniała od V5-IDEA-17 bez wywołania pushUndo)',
+    },
+    teresa: {
+      description:
+        'Odłącza wskazany węzeł od jego rodzica (staje się węzłem najwyższego poziomu). Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła do odłączenia.' },
+        },
+        required: ['nodeId'],
+      },
+    },
+    runtime: RUNTIME_MM_NODE_DETACH_BRANCH,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:177 (ctx_detach_branch)',
+  },
+  {
+    id: 'idea.node.mm_duplicate_branch',
+    label: { pl: 'Duplikuj gałąź', en: 'Duplicate branch' },
+    icon: 'Copy',
+    // `single_item`, NIE `selected_items`: JEDNA kotwica + jej struktura
+    // potomna — to nie jest wielokrotne zaznaczenie w sensie tego rejestru,
+    // tylko efekt kaskadowy jednego celu (dokładnie rozważanie zasugerowane
+    // w briefie tej fali: zamiast wymyślać nowe pojęcie `scope`, uczciwość
+    // "duplikuje TEŻ poddrzewo" idzie do opisu Teresy, nie do `scope`).
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runMindmapNodeBusAction('idea.node.mm_duplicate_branch', RUNTIME_MM_NODE_DUPLICATE_BRANCH, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaRecommendationMap.tsx duplicateBranch:4736 → pushUndo() (DOPISANE tym wpisem — funkcja istniała od V5-IDEA-17 bez wywołania pushUndo)',
+    },
+    teresa: {
+      description:
+        'Duplikuje wskazany węzeł WRAZ Z CAŁYM PODDRZEWEM (wszystkimi węzłami potomnymi) Mapy myśli — nowa kopia zawiera każdy węzeł-potomek, nie tylko sam wskazany węzeł. Podaj `nodeId`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id węzła-kotwicy poddrzewa do duplikacji.' },
+        },
+        required: ['nodeId'],
+      },
+    },
+    runtime: RUNTIME_MM_NODE_DUPLICATE_BRANCH,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:183 (ctx_duplicate_branch)',
+  },
+  {
+    id: 'idea.node.mm_delete',
+    label: { pl: 'Usuń', en: 'Delete' },
+    icon: 'Trash2',
+    // Ta INSTANCJA (wywołana z menu prawego kliku na JEDNYM węźle) działa
+    // jako single_item — ale bazowa funkcja (`deleteSelected`) potrafi
+    // usunąć WIELE zaznaczonych węzłów naraz, gdy wywołana skądinąd (np.
+    // klawisz Delete przy zaznaczeniu wielokrotnym). Deklarujemy `single_item`
+    // bo to jest zakres TEJ powierzchni (menu węzła), nie ukrywając szerszej
+    // zdolności funkcji w opisie Teresy poniżej.
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['context'],
+    shortcut: 'Del',
+    // NIE reużyto `idea.node.delete` (Tablica, `wb_delete`) — inny odbiornik,
+    // inna reprezentacja, ta sama „operuje na dzisiejszym zaznaczeniu, nie
+    // przyjmuje nodeId" uczciwa granica (patrz teresa.description niżej,
+    // słowo w słowo ten sam wzorzec co Tablica).
+    handler: (ctx) => runMindmapNodeBusAction('idea.node.mm_delete', RUNTIME_MM_NODE_DELETE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useMindMapNodes.tsx deleteSelected:657 → pushUndo() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Usuwa węzeł (i jego poddrzewo — z potwierdzeniem, gdy ma dzieci). UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego usunąć (ta sama uczciwa granica co `idea.node.delete` na Tablicy).',
+    },
+    runtime: RUNTIME_MM_NODE_DELETE,
+    source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:404 (ctx_delete)',
   },
 ];
 

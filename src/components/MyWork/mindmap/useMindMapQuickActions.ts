@@ -107,6 +107,16 @@ export interface MindMapQuickActionHandlers {
   focusSelectedNode: () => void;
   reparentSelectedPromote: () => void;
   reparentSelectedDemote: () => void;
+  /**
+   * N5 kontynuacja, druga fala (2026-08-09, `NodeContextMenu.tsx` grupa
+   * Structure) — istniały już w `IdeaRecommendationMap.tsx` (V5-IDEA-17), NIE
+   * przekazywane dotąd do tego hooka (więc niedostępne na szynie/dla Teresy).
+   * Opcjonalne: harnessy testowe (`useMindMapQuickActions.*.test.tsx`) nie
+   * dostarczają ich wszystkich, `?.()` poniżej jest bezpieczny bez zmiany
+   * istniejących testów.
+   */
+  detachBranch?: (nodeId?: string) => void;
+  duplicateBranch?: (nodeId?: string) => void;
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
@@ -229,8 +239,57 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_duplicate') handlers.duplicateSelected();
     if (action === 'mm_toggle_collapse') {
-      const sel = handlers.getSelectedNode();
-      if (sel) handlers.toggleCollapse(sel.id);
+      // HONEST FIX (2026-08-09, N5 druga fala): `targetNodeId` (detail.nodeId)
+      // was already parsed above but silently ignored in favor of
+      // getSelectedNode() — harmless for the human click path (right-click
+      // already selects the target node, see IdeaRecommendationMap.onNodeContextMenu)
+      // but meant Teresa/FloatingNodeToolbar's explicit nodeId was dropped on
+      // the floor. `toggleCollapse`'s own signature already takes a nodeId —
+      // preferring it here is a minimal, safe correction, not new mechanics.
+      const collapseTargetId = targetNodeId || handlers.getSelectedNode()?.id;
+      if (collapseTargetId) handlers.toggleCollapse(collapseTargetId);
+    }
+    // NOWE odbiorniki (2026-08-09, N5 druga fala — rejestr akcji
+    // `idea.node.mm_detach_branch`/`idea.node.mm_duplicate_branch`,
+    // `NodeContextMenu.tsx` grupa Structure). `detachBranch`/`duplicateBranch`
+    // już istniały (IdeaRecommendationMap.tsx V5-IDEA-17, oba przyjmują
+    // opcjonalny `nodeId`) — tylko nigdy nie były przekazane do `handlers` tego
+    // hooka. `targetNodeId` = detail.nodeId, sparsowane wyżej.
+    if (action === 'mm_detach_branch') handlers.detachBranch?.(targetNodeId);
+    if (action === 'mm_duplicate_branch') handlers.duplicateBranch?.(targetNodeId);
+    // NOWY odbiornik (2026-08-09, N5 druga fala — rejestr akcji
+    // `idea.node.mm_connect_to_selected`, `NodeContextMenu.tsx` „Connect to
+    // selected"). Kliknięcie człowieka (ctx.params.run, patrz
+    // NodeContextMenu.tsx) idzie NADAL przez `handleContextAction`'s
+    // `ctx_connect_to_selected` lokalny branch (peer = poprzednie zaznaczenie
+    // sprzed prawego kliku, `preContextMenuSelectionRef` — stan lokalny
+    // komponentu, którego ten hook nie dzieli). DLA TERESY implementacja jest
+    // TUTAJ, samodzielna (nie woła handleContextAction) — bo `targetNodeId`
+    // (węzeł źródłowy) jest, ale drugi węzeł MUSI przyjść jako jawny parametr
+    // (`detail.targetNodeId`), nie "co było zaznaczone wcześniej" (Teresa nie
+    // ma takiego pojęcia). Mutacja lustrzana wobec `ctx_connect_to_selected`
+    // (`IdeaRecommendationMap.tsx`: type 'labeled', edgeRole 'relation',
+    // relation 'related').
+    if (action === 'mm_connect_nodes') {
+      if (locked) return;
+      const peerNodeId = typeof detail?.targetNodeId === 'string' ? detail.targetNodeId : undefined;
+      if (!targetNodeId || !peerNodeId || targetNodeId === peerNodeId) {
+        toast(i18n.t('mindmap.selectAnotherNodeToCreateA'), { icon: 'ℹ️' });
+        return;
+      }
+      const peerExists = nodes.some((n) => n.id === peerNodeId);
+      if (!peerExists) return;
+      handlers.pushUndo();
+      setters.setEdges((prev) => [
+        ...prev,
+        {
+          id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+          source: targetNodeId,
+          target: peerNodeId,
+          type: 'labeled',
+          data: { userCreated: true, edgeRole: 'relation', relation: 'related' },
+        } as Edge,
+      ]);
     }
     if (
       action === 'mm_fold_0' ||

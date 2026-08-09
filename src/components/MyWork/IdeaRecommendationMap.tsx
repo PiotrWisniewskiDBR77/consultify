@@ -4443,6 +4443,12 @@ function MindMapInner({
     [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]
   );
 
+  // N5 druga fala (2026-08-09) — see the `handlers.detachBranch`/
+  // `duplicateBranch` comment below for why these are refs, not direct
+  // function values.
+  const detachBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
+  const duplicateBranchRef = useRef<((nodeId?: string) => void) | undefined>(undefined);
+
   // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
   useMindMapQuickActions({
     ideaId,
@@ -4460,6 +4466,18 @@ function MindMapInner({
       addRootTopic,
       duplicateSelected,
       deleteSelected,
+      // N5 druga fala (2026-08-09) — NodeContextMenu.tsx Structure group
+      // (`idea.node.mm_detach_branch`/`idea.node.mm_duplicate_branch`).
+      // Functions already existed (V5-IDEA-17) but are declared LATER in this
+      // component (after `getContextTargetNode`/`collectDescendants`, which
+      // this `useMindMapQuickActions(...)` call precedes) — a direct
+      // reference here would be a TDZ error. Forwarded through a ref instead
+      // of reordering ~100 lines of this already-large component; the ref is
+      // populated synchronously right after the real functions are defined
+      // (see `detachBranchRef.current = detachBranch;` below), well before
+      // any click could invoke it.
+      detachBranch: (nodeId?: string) => detachBranchRef.current?.(nodeId),
+      duplicateBranch: (nodeId?: string) => duplicateBranchRef.current?.(nodeId),
       getSelectedNode,
       toggleCollapse,
       setFoldLevel,
@@ -4701,17 +4719,29 @@ function MindMapInner({
     (nodeId?: string) => {
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
+      // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+      // `idea.node.mm_detach_branch`): znalezione przy wiringu, nie
+      // wprowadzone tym wpisem — ta mutacja NIGDY nie wołała pushUndo(), więc
+      // Ctrl+Z jej nie cofał (w przeciwieństwie do sąsiednich operacji na
+      // węzłach, które pushUndo już miały). Naprawione tutaj, tak samo jak
+      // przy 3 pozycjach menu krawędzi w poprzedniej fali.
+      pushUndo();
       setEdges((prev: Edge[]) => prev.filter((e) => e.target !== targetId));
       toast.success(t('mindmap.branchDetached'), { duration: 800 });
     },
-    [getContextTargetNode, isPolish, setEdges]
+    [getContextTargetNode, isPolish, pushUndo, setEdges]
   );
+  detachBranchRef.current = detachBranch;
 
   // V5-IDEA-17: Duplicate branch — clone node + all descendants
   const duplicateBranch = useCallback(
     (nodeId?: string) => {
       const targetId = nodeId || getContextTargetNode()?.id;
       if (!targetId) return;
+      // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+      // `idea.node.mm_duplicate_branch`): tak samo jak `detachBranch` powyżej,
+      // ta mutacja nigdy nie wołała pushUndo(). Naprawione tutaj.
+      pushUndo();
       const descendants = collectDescendants(targetId);
       const allIds = [targetId, ...descendants];
       const idMap = new Map<string, string>();
@@ -4762,8 +4792,9 @@ function MindMapInner({
         duration: 1000,
       });
     },
-    [collectDescendants, edges, getContextTargetNode, isPolish, nodes, setEdges, setNodes]
+    [collectDescendants, edges, getContextTargetNode, isPolish, nodes, pushUndo, setEdges, setNodes]
   );
+  duplicateBranchRef.current = duplicateBranch;
 
   // V5-IDEA-17: Summarize branch — send to AI chat
   const summarizeBranch = useCallback(
@@ -4923,6 +4954,11 @@ function MindMapInner({
         if (!peer) {
           toast(t('mindmap.selectAnotherNodeToCreateA'));
         } else {
+          // HONEST FIX (2026-08-09, N5 druga fala — rejestr akcji
+          // `idea.node.mm_connect_to_selected`): znalezione przy wiringu, ta
+          // mutacja nigdy nie wołała pushUndo() — naprawione tutaj, tak samo
+          // jak `detachBranch`/`duplicateBranch` powyżej.
+          pushUndo();
           setEdges((prev: Edge[]) => [
             ...prev,
             {
@@ -5005,6 +5041,7 @@ function MindMapInner({
       ideaId,
       nodes,
       pasteNodes,
+      pushUndo,
       setEdges,
       setNodes,
       styleClipboard,
