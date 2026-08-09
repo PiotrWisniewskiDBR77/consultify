@@ -113,7 +113,25 @@ export type IconName =
   | 'Keyboard'
   | 'Grid3X3'
   | 'Shapes'
-  | 'Save';
+  | 'Save'
+  // N7 kontynuacja (2026-08-09) — Whiteboard node/pane PPM
+  // (`IdeaCanvasContextMenu.tsx`), dodane 1:1 z ikonami już importowanymi tam
+  // z lucide-react (zero nowych zależności ikon).
+  | 'Pencil'
+  | 'Clipboard'
+  | 'BringToFront'
+  | 'SendToBack'
+  | 'Lock'
+  | 'Unlock'
+  | 'GitBranch'
+  | 'BookOpen'
+  | 'MessageSquare'
+  | 'Layers'
+  | 'Tags'
+  | 'ListChecks'
+  | 'Brain'
+  | 'Network'
+  | 'Table2';
 
 /** Minimalny JSON Schema — kształt zgodny z `parameters` w toolDefinitions.ts. */
 export interface JSONSchema {
@@ -452,6 +470,83 @@ async function runToolbarBusAction(
   return runByTool(actionId, map, ctx);
 }
 
+/**
+ * UI-only akcje menu węzła/tła Tablicy (N7 kontynuacja, 2026-08-09,
+ * `IdeaCanvasContextMenu.tsx`) — ten sam kształt co `runToolbarUiOnlyCallback`,
+ * ale z UCZCIWYM komunikatem (to menu prawego kliku, nie górny pasek).
+ * Sprawdzone PRZED użyciem dla każdej z tych pozycji, czy istnieje jakikolwiek
+ * żywy punkt wejścia dla Teresy (szyna `idea-workspace-quick-action`,
+ * `whiteboardIntentDetector.ts`) — dla żadnej z nich nie istnieje, więc
+ * świadomie zostają UI-only zamiast budować nową infrastrukturę na spekulację.
+ */
+async function runContextMenuUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z menu kontekstowego (prawy klik) Tablicy — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
+ * `idea.node.edit` (N7 kontynuacja, 2026-08-09) — jedyna pozycja menu węzła,
+ * której realna mutacja NIE żyje na szynie `idea-workspace-quick-action`, tylko
+ * na osobnym, już istniejącym evencie `idea-workspace-node-update`
+ * (nadawany dziś przez `VSMNodeComponent.tsx:171` i przez `handleBaseAction`
+ * 'edit' w `IdeaCanvasContextMenu.tsx`; odbiorniki: `IdeaWhiteboardTool.tsx:2571`
+ * ORAZ `IdeaProcessFlowTool.tsx:2535` — generyczny patch `node.data` po
+ * `nodeId`, nie nowa infrastruktura). Dwie ścieżki jak wszędzie: UI = oryginalny
+ * `ctx.params.run` (prompt() + dispatch, nietknięte); Teresa = bezpośredni
+ * dispatch po `ctx.params.nodeId`+`label` (LLM podaje wprost, ten sam wzorzec
+ * co `idea.edge.edit_label`'s `edgeId`).
+ *
+ * ZASTRZEŻENIE ODKRYTE PRZY TYM WPISIE (nie wprowadzone tu, nie naprawiane
+ * tu — poza zakresem wiringu): odbiornik `idea-workspace-node-update` w
+ * `IdeaWhiteboardTool.tsx:2551-2569` NIE woła `pushUndoSnapshot()` przed
+ * `setNodes`, w przeciwieństwie do `duplicateSelected`/`deleteSelected`/
+ * `lockSelected` itd. — edycja etykiety węzła (ludzka I przez Teresę) NIE
+ * trafia dziś na stos Ctrl+Z. Prawdziwe zarówno przed, jak i po tym wpisie
+ * (sama funkcja `handleBaseAction` 'edit' też nigdy nie wołała
+ * `pushUndoSnapshot`) — zgłoszone niżej w `undo.evidence`, nie ukryte.
+ */
+function dispatchNodeUpdate(nodeId: string, data: Record<string, unknown>) {
+  window.dispatchEvent(
+    new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
+  );
+}
+
+async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId: 'idea.node.edit' };
+  }
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  const label = typeof ctx.params?.label === 'string' ? ctx.params.label : undefined;
+  if (!nodeId || !label) {
+    return {
+      ok: false,
+      actionId: 'idea.node.edit',
+      message: 'Podaj `nodeId` elementu i nową `label` — bez nich nie wiem, co zmienić.',
+    };
+  }
+  dispatchNodeUpdate(nodeId, { label });
+  return { ok: true, actionId: 'idea.node.edit', data: { nodeId } };
+}
+
 // ───────────────────── MAPY RUNTIME (parsowane przez strażnika) ─────────────────────
 
 /**
@@ -586,6 +681,34 @@ const RUNTIME_CYCLE_ROLE: ToolActionMap = {
 };
 const RUNTIME_TOGGLE_FOLLOW: ToolActionMap = {
   whiteboard: 'wb_session_toggle_follow',
+};
+
+/**
+ * N7 kontynuacja (2026-08-09) — Whiteboard node/pane PPM (`IdeaCanvasContextMenu.tsx`).
+ * `wb_duplicate`/`wb_delete` MAJĄ JUŻ odbiornik w `useWhiteboardQuickActions.ts`
+ * (linie ok. 133-135) wołający DOKŁADNIE `handlers.duplicateSelected`/
+ * `deleteSelected` — te same funkcje, które `IdeaWhiteboardTool.tsx` przekazuje
+ * jako propy `onDuplicate`/`onDeleteNode` do tego menu. Reuse za darmo, bez
+ * nowej szyny.
+ */
+const RUNTIME_NODE_DUPLICATE: ToolActionMap = {
+  whiteboard: 'wb_duplicate',
+};
+const RUNTIME_NODE_DELETE: ToolActionMap = {
+  whiteboard: 'wb_delete',
+};
+
+/**
+ * `wb_ai_to_map`/`wb_ai_to_table` MAJĄ JUŻ odbiornik (AI_ACTION_MAP w
+ * `useWhiteboardQuickActions.ts` → `handlers.runAIAction('wb_to_map_branches'
+ * | 'wb_to_table')`) — dotąd nieużywany przez żaden wpis rejestru (podobnie
+ * jak insert-shape ×5 przed toolbar-wpisem). Reuse za darmo.
+ */
+const RUNTIME_WB_TO_MINDMAP: ToolActionMap = {
+  whiteboard: 'wb_ai_to_map',
+};
+const RUNTIME_WB_TO_TABLE: ToolActionMap = {
+  whiteboard: 'wb_ai_to_table',
 };
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -1628,6 +1751,458 @@ const IDEA_ACTIONS: ActionDef[] = [
         'Usuwa WSZYSTKIE rysunki odręczne (pen paths) z Tablicy na trwałe, po potwierdzeniu w dialogu. Dziś dostępne WYŁĄCZNIE z górnego paska narzędzi — Teresa tego jeszcze nie wywoła.',
     },
     source: 'src/components/MyWork/IdeaWhiteboardTool.tsx:3995-4013 (onClearDrawings)',
+  },
+  // ── N7 kontynuacja (2026-08-09) — IdeaCanvasContextMenu.tsx, Whiteboard
+  // node/pane PPM. Ten sam komponent jest importowany też przez
+  // IdeaProcessFlowTool.tsx, ale — zweryfikowane grepem po `<IdeaCanvasContextMenu`
+  // — Przepływ go dziś NIE RENDERUJE (ma własny `ProcessFlowContextMenu`,
+  // decyzja "M07 F5b B2" udokumentowana komentarzem w IdeaProcessFlowTool.tsx:3730);
+  // jedyny żywy renderer to IdeaWhiteboardTool.tsx z `activeTool={'whiteboard'}`
+  // na sztywno. Te 20 wpisów mają więc `tools: ['whiteboard']`, zero ryzyka dla
+  // Przepływu — nie ma go tu czego regresować.
+  //
+  // Pierwsze użycie zakresu `selected_items` w rejestrze: 5 z tych wpisów
+  // (duplicate/bring_to_front/send_to_back/lock/delete) operują na CAŁYM
+  // bieżącym zaznaczeniu płótna (funkcje `*Selected` już wspólne z
+  // WhiteboardSelectionBar), nie tylko na węźle, na którym otwarto menu —
+  // stąd `selected_items`, odróżnione od `single_item` (edit/copy/AI-node/
+  // attach/comments, które działają na `target.nodeId` konkretnie klikniętym).
+  // Namespace `idea.node.*` obejmuje oba zakresy (jak `idea.edge.*` obejmuje
+  // jeden `scope`), bo z punktu widzenia menu to jedna rodzina "operacje na
+  // węźle/węzłach"; `idea.canvas.*` dla 4 pozycji tła (scope `current_view`,
+  // bez kolizji z istniejącymi `idea.canvas.*` wpisami toolbara — inne id-ki).
+  {
+    id: 'idea.node.edit',
+    label: { pl: 'Edytuj', en: 'Edit' },
+    icon: 'Pencil',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runNodeEditLabelCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'ZASTRZEŻENIE (odkryte przy tym wpisie, nie naprawiane tu): odbiornik idea-workspace-node-update w IdeaWhiteboardTool.tsx:2551-2569 NIE woła pushUndoSnapshot() przed setNodes — w przeciwieństwie do duplicate/delete/lock/layer poniżej, edycja etykiety węzła nie trafia dziś na stos Ctrl+Z (prawdziwe też przed tym wpisem — handleBaseAction "edit" też nigdy tego nie wołał).',
+    },
+    teresa: {
+      description:
+        'Zmienia etykietę (treść) wskazanego elementu na Tablicy. Podaj `nodeId` elementu i nową `label`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id elementu na Tablicy.' },
+          label: { type: 'string', description: 'Nowa treść etykiety.' },
+        },
+        required: ['nodeId', 'label'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=edit + handleBaseAction:403-416',
+  },
+  {
+    id: 'idea.node.copy',
+    label: { pl: 'Kopiuj', en: 'Copy' },
+    icon: 'Clipboard',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.copy', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        // WB-CLIPBOARD-01 (docs/qa/ideas-complete-transformation-2026-08-09/02_EXECUTION_LEDGER.csv):
+        // to WYŁĄCZNIE kopia TEKSTU etykiety do schowka systemowego — NIE jest
+        // to kopia obiektu (brak wklejenia węzła/krawędzi). Świadomie
+        // nienaprawione tym wpisem (osobno logowany defekt P1).
+        'Kopiuje treść etykiety wskazanego elementu do schowka jako TEKST — to nie jest kopia obiektu (brak wklejenia całego elementu). Dostępne tylko z menu przeglądarki, nie z czatu.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=copy + handleBaseAction:417-419 (WB-CLIPBOARD-01)',
+  },
+  {
+    id: 'idea.node.duplicate',
+    label: { pl: 'Duplikuj', en: 'Duplicate' },
+    icon: 'Copy',
+    scope: 'selected_items',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.node.duplicate', RUNTIME_NODE_DUPLICATE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useWhiteboardNodes.ts duplicateSelected:131-161 → pushSnapshot() (stos Ctrl+Z)',
+    },
+    teresa: {
+      description:
+        'Duplikuje zaznaczone elementy na Tablicy. UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika (ta sama funkcja co przycisk "Duplikuj") — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego duplikować.',
+    },
+    runtime: RUNTIME_NODE_DUPLICATE,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=duplicate + useWhiteboardNodes.ts:131',
+  },
+  {
+    id: 'idea.node.bring_to_front',
+    label: { pl: 'Warstwa: na wierzch', en: 'Layer: bring to front' },
+    icon: 'BringToFront',
+    scope: 'selected_items',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.bring_to_front', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'IdeaWhiteboardTool.tsx bringSelectedToFront:3043-3052 → pushUndoSnapshot()',
+    },
+    teresa: {
+      description:
+        'Przenosi zaznaczone elementy na wierzch (kolejność rysowania) na Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku — brak odbiornika na szynie, Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=bring_to_front + IdeaWhiteboardTool.tsx:3043',
+  },
+  {
+    id: 'idea.node.send_to_back',
+    label: { pl: 'Warstwa: pod spód', en: 'Layer: send to back' },
+    icon: 'SendToBack',
+    scope: 'selected_items',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.send_to_back', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'IdeaWhiteboardTool.tsx sendSelectedToBack:3054-3063 → pushUndoSnapshot()',
+    },
+    teresa: {
+      description:
+        'Przenosi zaznaczone elementy pod spód (kolejność rysowania) na Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku — brak odbiornika na szynie, Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=send_to_back + IdeaWhiteboardTool.tsx:3054',
+  },
+  {
+    id: 'idea.node.lock',
+    // Bazowa etykieta = stan "zablokuj" (jak w oryginalnym BASE_NODE_ACTIONS).
+    // Komponent nadal robi lokalny swap na "Odblokuj"/"Unlock" wg
+    // `target.nodeLocked`, dokładnie jak przed tym wpisem — rejestr nie modeluje
+    // stanu per-instancja, tylko domyślną etykietę.
+    label: { pl: 'Zablokuj', en: 'Lock' },
+    icon: 'Lock',
+    scope: 'selected_items',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.lock', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'IdeaWhiteboardTool.tsx lockSelected:3023-3038 → pushUndoSnapshot()',
+    },
+    teresa: {
+      description:
+        'Przełącza blokadę (edycja/przesuwanie/usuwanie) zaznaczonych elementów na Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku — brak odbiornika na szynie, Teresa tego jeszcze nie wywoła.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx BASE_NODE_ACTIONS kind=lock + IdeaWhiteboardTool.tsx:3023',
+  },
+  {
+    id: 'idea.node.delete',
+    label: { pl: 'Usuń', en: 'Delete' },
+    icon: 'Trash2',
+    scope: 'selected_items',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.node.delete', RUNTIME_NODE_DELETE, ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'useWhiteboardNodes.ts deleteSelected:107-129 → pushSnapshot() (stos Ctrl+Z)',
+    },
+    destructive: true,
+    teresa: {
+      description:
+        'Usuwa zaznaczone elementy z Tablicy (cofnięcie przez Ctrl+Z w tej samej sesji). UWAGA: działa na to, co jest DZIŚ zaznaczone na płótnie w przeglądarce użytkownika — nie przyjmuje `nodeId`, więc bez wcześniejszego zaznaczenia przez użytkownika nie ma czego usunąć.',
+    },
+    runtime: RUNTIME_NODE_DELETE,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx DESTRUCTIVE_NODE_ACTIONS kind=delete + useWhiteboardNodes.ts:107',
+  },
+  {
+    id: 'idea.node.expand',
+    label: { pl: 'AI: Rozbuduj', en: 'AI: Expand' },
+    icon: 'GitBranch',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.expand', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence:
+        'generateAIProposal(generatorType:"mindmap_expand") → onGenerateProposal → IdeaProposalReview (accept/reject)',
+    },
+    teresa: {
+      description:
+        'Proponuje rozbudowanie wskazanego elementu Tablicy o nowe powiązane elementy (AI). Zawsze do akceptacji w podglądzie. Dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=expand:166-174',
+  },
+  {
+    id: 'idea.node.challenge',
+    label: { pl: 'AI: Kwestionuj', en: 'AI: Challenge' },
+    icon: 'Target',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.challenge', ctx),
+    // Nie mutuje grafu — wysyła pytanie do czatu (onSendToChat), sam element
+    // zostaje bez zmian.
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Wysyła do czatu pytanie kwestionujące wskazany element Tablicy (nie zmienia elementu — to prompt do rozmowy). Dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=challenge:175-183',
+  },
+  {
+    id: 'idea.node.find_evidence',
+    label: { pl: 'AI: Znajdź dowody', en: 'AI: Find evidence' },
+    icon: 'Search',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.find_evidence', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Wysyła do czatu prośbę o dowody dla wskazanego elementu Tablicy (nie zmienia elementu — to prompt do rozmowy). Dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=evidence:184-192',
+  },
+  {
+    id: 'idea.node.suggest_connections',
+    label: { pl: 'AI: Sugeruj połączenia', en: 'AI: Suggest connections' },
+    icon: 'Link2',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.suggest_connections', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Wysyła do czatu prośbę o sugestie połączeń dla wskazanego elementu Tablicy (nie zmienia elementu — to prompt do rozmowy). Dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=connections:193-201',
+  },
+  {
+    id: 'idea.node.attach_knowledge',
+    label: { pl: 'Dołącz wiedzę', en: 'Attach knowledge' },
+    icon: 'BookOpen',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.attach_knowledge', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        // Sprawdzone: `attach_artifact` na szynie `idea-workspace-quick-action`
+        // MA odbiornik (IdeaMapWorkspace.tsx:985), ale czyta `selectionRef`
+        // (bieżące zaznaczenie UI) i CAŁKOWICIE IGNORUJE `detail.nodeId` — nie
+        // jest więc adresowalne po id z czatu, tylko z żywego zaznaczenia w
+        // przeglądarce. Ta sama klasa ograniczenia co "martwy fallback
+        // ctx.selection" udokumentowany przy idea.edge.* — tu nawet gorzej,
+        // bo nie ma ŻADNEJ parametrowej ścieżki. Stąd UI-only, nie bus-wired.
+        'Otwiera panel dołączania wiedzy (Vault) dla wskazanego elementu Tablicy. Dziś dostępne WYŁĄCZNIE z menu prawego kliku — odbiornik na szynie istnieje, ale działa na bieżące zaznaczenie w przeglądarce, nie na `nodeId` z czatu.',
+    },
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=attach_knowledge:202-208 + IdeaMapWorkspace.tsx:985 (attach_artifact, selection-only)',
+  },
+  {
+    id: 'idea.node.comments',
+    label: { pl: 'Komentarze', en: 'Comments' },
+    icon: 'MessageSquare',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.node.comments', ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel komentarzy wskazanego elementu Tablicy (lokalny stan panelu, nie mutuje elementu). Dziś dostępne WYŁĄCZNIE z menu prawego kliku.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=wb_comments:211-218',
+  },
+  {
+    id: 'idea.node.ai_find_themes',
+    label: { pl: 'AI: Znajdź tematy', en: 'AI: Find themes' },
+    icon: 'Layers',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.node.ai_find_themes', RUNTIME_AI_FIND_THEMES, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'POST /my-ideas/:id/ai-generate (wb_find_themes) → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        // Wersja tej samej AI generacji co `idea.ai.find_themes` (rail/panel),
+        // ale wywołana z menu węzła: ludzki klik ogniskuje seedText na
+        // wskazanym elemencie ("Focus on: <label>"), a dispatch na szynę
+        // (Teresa) NIE niesie tego ogniska — trafia do `runWhiteboardAIAction`,
+        // który generuje z całej Tablicy + bieżącym zaznaczeniem UI (jeśli
+        // jest), nie z konkretnego `nodeId`. Uczciwie różne zachowanie
+        // UI-vs-Teresa, nie regres — świadomy kompromis zamiast nowej szyny.
+        'Grupuje karteczki Tablicy w tematy i proponuje ramkę dla każdego (do akceptacji). Wywołane z czatu działa na całej Tablicy (i bieżącym zaznaczeniu w przeglądarce, jeśli jest) — nie da się dziś ograniczyć do jednego wskazanego elementu spoza UI.',
+    },
+    runtime: RUNTIME_AI_FIND_THEMES,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=wb_find_themes:219-228 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+  {
+    id: 'idea.node.ai_name_clusters',
+    label: { pl: 'AI: Nazwij klastry', en: 'AI: Name clusters' },
+    icon: 'Tags',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.node.ai_name_clusters', RUNTIME_AI_NAME_CLUSTERS, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'POST /my-ideas/:id/ai-generate (wb_name_clusters) → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Nadaje nazwy skupiskom karteczek na Tablicy (do akceptacji). Wywołane z czatu działa na całej Tablicy, nie tylko na jednym wskazanym elemencie spoza UI (patrz idea.node.ai_find_themes).',
+    },
+    runtime: RUNTIME_AI_NAME_CLUSTERS,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=wb_name_clusters:229-237 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+  {
+    id: 'idea.node.ai_extract_actions',
+    label: { pl: 'AI: Wyodrębnij akcje', en: 'AI: Extract actions' },
+    icon: 'ListChecks',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.node.ai_extract_actions', RUNTIME_AI_EXTRACT_ACTIONS, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'POST /my-ideas/:id/ai-generate (wb_extract_actions) → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Wyciąga konkretne działania z Tablicy jako nowe elementy (do akceptacji). Wywołane z czatu działa na całej Tablicy, nie tylko na jednym wskazanym elemencie spoza UI (patrz idea.node.ai_find_themes).',
+    },
+    runtime: RUNTIME_AI_EXTRACT_ACTIONS,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx NODE_ACTIONS id=wb_extract_actions:238-246 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+  {
+    id: 'idea.canvas.fill_gap',
+    label: { pl: 'AI: Wypełnij luki', en: 'AI: Fill gaps' },
+    icon: 'Lightbulb',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.canvas.fill_gap', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'generateAIProposal(generatorType:"suggestions") → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Proponuje nowe elementy wypełniające luki na Tablicy (do akceptacji). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tle — brak odbiornika na szynie, Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=fill_gap:250-257',
+  },
+  {
+    id: 'idea.canvas.brainstorm_here',
+    label: { pl: 'AI: Brainstorm tutaj', en: 'AI: Brainstorm here' },
+    icon: 'Brain',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runContextMenuUiOnlyCallback('idea.canvas.brainstorm_here', ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'generateAIProposal(generatorType:"whiteboard_brainstorm") → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Generuje pomysły przy pozycji kliknięcia na Tablicy (do akceptacji). Dziś dostępne WYŁĄCZNIE z menu prawego kliku na tle — brak odbiornika na szynie, Teresa tego jeszcze nie wywoła.',
+    },
+    source: 'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=brainstorm:258-265',
+  },
+  {
+    id: 'idea.canvas.to_mindmap',
+    label: { pl: 'AI: Przekształć w mapę myśli', en: 'AI: Convert to mind map' },
+    icon: 'Network',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.to_mindmap', RUNTIME_WB_TO_MINDMAP, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'POST /my-ideas/:id/ai-generate (wb_to_map_branches) → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Proponuje przekształcenie zawartości Tablicy w gałęzie Mapy myśli — wynik pokazuje się jako podgląd NA Tablicy, do akceptacji (nie tworzy sam z siebie nowej Mapy).',
+    },
+    runtime: RUNTIME_WB_TO_MINDMAP,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=wb_to_map_branches:269-276 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
+  },
+  {
+    id: 'idea.canvas.to_table',
+    label: { pl: 'AI: Przekształć w tabelę', en: 'AI: Convert to table' },
+    icon: 'Table2',
+    scope: 'current_view',
+    tools: ['whiteboard'],
+    surfaces: ['context'],
+    handler: (ctx) => runToolbarBusAction('idea.canvas.to_table', RUNTIME_WB_TO_TABLE, ctx),
+    mutates: true,
+    requiresPreview: true,
+    undo: {
+      kind: 'proposal',
+      evidence: 'POST /my-ideas/:id/ai-generate (wb_to_table) → IdeaProposalReview',
+    },
+    teresa: {
+      description:
+        'Proponuje przekształcenie zawartości Tablicy w wiersze Tabeli — wynik pokazuje się jako podgląd NA Tablicy, do akceptacji (nie tworzy sam z siebie nowej Tabeli).',
+    },
+    runtime: RUNTIME_WB_TO_TABLE,
+    source:
+      'src/components/MyWork/IdeaCanvasContextMenu.tsx EMPTY_ACTIONS id=wb_to_table:277-285 + useWhiteboardQuickActions.ts AI_ACTION_MAP',
   },
 ];
 

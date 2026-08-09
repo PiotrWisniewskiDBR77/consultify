@@ -34,12 +34,17 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  type ActionContext,
+  getActionsForSurface,
+  runIdeaAction,
+} from '@/actions/ideaActionRegistry';
 import { CanvasContextMenu } from '@/components/shared/CanvasContextMenu';
 import i18n from '@/i18n';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 
 import { getCanvasNodeTypeLabel } from './canvas/canvasNodeTypeVocabulary';
-import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
+import { EMPTY_SELECTION, type AIProposalBatch, type CanvasToolType } from './ideaSelectionTypes';
 
 interface ContextMenuPosition {
   x: number;
@@ -285,6 +290,82 @@ const EMPTY_ACTIONS: MenuItem[] = [
   },
 ];
 
+// ─────────────────── Action Registry wiring (N7, 2026-08-09) ───────────────────
+// Whiteboard's PPM (node + pane) is now driven by IDEA_ACTION_REGISTRY for
+// `activeTool === 'whiteboard'` ONLY — the four arrays above stay the SOURCE
+// OF BEHAVIOR (icons + handleBaseAction/handleAction execute exactly as
+// before) AND the fallback rendering path for any OTHER `activeTool` value.
+// This component is imported by IdeaProcessFlowTool.tsx too, but — verified
+// by grepping for `<IdeaCanvasContextMenu` across src/ — Process Flow does
+// NOT render it (kept its own `ProcessFlowContextMenu`, see comment at
+// IdeaProcessFlowTool.tsx:3730). The `activeTool === 'whiteboard'` gate below
+// is therefore a no-op today for every caller except Whiteboard, kept as a
+// safety net in case that ever changes (matches the component's own existing
+// `tools`-array filtering mechanism on NODE_ACTIONS/EMPTY_ACTIONS).
+//
+// Order below is 1:1 with the pre-registry hardcoded render order (base ops,
+// then AI/collab items, then destructive last for the node menu; declaration
+// order for the pane menu) — `getActionsForSurface` preserves `IDEA_ACTIONS`
+// declaration order, so these two id lists ARE the render order.
+const REGISTRY_NODE_MENU_IDS = [
+  'idea.node.edit',
+  'idea.node.duplicate',
+  'idea.node.copy',
+  'idea.node.bring_to_front',
+  'idea.node.send_to_back',
+  'idea.node.lock',
+  'idea.node.expand',
+  'idea.node.challenge',
+  'idea.node.find_evidence',
+  'idea.node.suggest_connections',
+  'idea.node.attach_knowledge',
+  'idea.node.comments',
+  'idea.node.ai_find_themes',
+  'idea.node.ai_name_clusters',
+  'idea.node.ai_extract_actions',
+  'idea.node.delete',
+];
+const REGISTRY_PANE_MENU_IDS = [
+  'idea.canvas.fill_gap',
+  'idea.canvas.brainstorm_here',
+  'idea.canvas.to_mindmap',
+  'idea.canvas.to_table',
+];
+
+/** Registry id → BASE_NODE_ACTIONS/DESTRUCTIVE_NODE_ACTIONS `kind` (K1 ops). */
+const REGISTRY_ID_TO_BASE_KIND: Partial<Record<string, BaseActionKind>> = {
+  'idea.node.edit': 'edit',
+  'idea.node.duplicate': 'duplicate',
+  'idea.node.copy': 'copy',
+  'idea.node.bring_to_front': 'bring_to_front',
+  'idea.node.send_to_back': 'send_to_back',
+  'idea.node.lock': 'lock',
+  'idea.node.delete': 'delete',
+};
+const BASE_ACTION_BY_KIND: Partial<Record<BaseActionKind, BaseMenuItem>> = Object.fromEntries(
+  [...BASE_NODE_ACTIONS, ...DESTRUCTIVE_NODE_ACTIONS].map((item) => [item.kind, item])
+);
+
+/** Registry id → original `MenuItem.id` in NODE_ACTIONS/EMPTY_ACTIONS (AI/collab items). */
+const REGISTRY_ID_TO_ITEM_ID: Partial<Record<string, string>> = {
+  'idea.node.expand': 'expand',
+  'idea.node.challenge': 'challenge',
+  'idea.node.find_evidence': 'evidence',
+  'idea.node.suggest_connections': 'connections',
+  'idea.node.attach_knowledge': 'attach_knowledge',
+  'idea.node.comments': 'wb_comments',
+  'idea.node.ai_find_themes': 'wb_find_themes',
+  'idea.node.ai_name_clusters': 'wb_name_clusters',
+  'idea.node.ai_extract_actions': 'wb_extract_actions',
+  'idea.canvas.fill_gap': 'fill_gap',
+  'idea.canvas.brainstorm_here': 'brainstorm',
+  'idea.canvas.to_mindmap': 'wb_to_map_branches',
+  'idea.canvas.to_table': 'wb_to_table',
+};
+const GENERATOR_ITEM_BY_ID: Partial<Record<string, MenuItem>> = Object.fromEntries(
+  [...NODE_ACTIONS, ...EMPTY_ACTIONS].map((item) => [item.id, item])
+);
+
 export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   position,
   target,
@@ -466,6 +547,138 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
         defaultValue: 'Canvas actions',
       });
 
+  // Runs a registry action: the UI path (`ctx.params.run`) executes the
+  // ORIGINAL component behavior (handleBaseAction/handleAction) unchanged;
+  // any other caller (Teresa) goes through that action's own registry
+  // handler (bus dispatch or an honest UI-only refusal — see
+  // `ideaActionRegistry.ts`, `runContextMenuUiOnlyCallback`/`runToolbarBusAction`/
+  // `runNodeEditLabelCallback`).
+  const runViaRegistry = (actionId: string, run: () => void) => {
+    const ctx: ActionContext = {
+      ideaId,
+      tool: activeTool,
+      selection: EMPTY_SELECTION,
+      surface: 'context',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run },
+    };
+    void runIdeaAction(actionId, ctx);
+  };
+
+  // Registry-driven path (N7, 2026-08-09) — Whiteboard only. Every OTHER
+  // `activeTool` keeps the pre-registry hardcoded arrays below completely
+  // untouched (Process Flow doesn't render this component at all today, see
+  // the comment above `REGISTRY_NODE_MENU_IDS`, but the gate stays literal
+  // per-tool as a safety net rather than relying on that fact).
+  const useRegistry = activeTool === 'whiteboard';
+  const registryById = useRegistry
+    ? new Map(
+        getActionsForSurface('context', { tool: 'whiteboard' }).map((entry) => [
+          entry.def.id,
+          entry,
+        ])
+      )
+    : null;
+
+  const registryBaseItems =
+    useRegistry && isOnNode && registryById
+      ? REGISTRY_NODE_MENU_IDS.filter(
+          (id) => REGISTRY_ID_TO_BASE_KIND[id] && id !== 'idea.node.delete'
+        )
+          .map((id) => registryById.get(id))
+          .filter((entry): entry is NonNullable<typeof entry> => !!entry)
+          .map(({ def }) => {
+            const kind = REGISTRY_ID_TO_BASE_KIND[def.id]!;
+            const item = BASE_ACTION_BY_KIND[kind]!;
+            const isLockItem = kind === 'lock';
+            const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
+            const label = isLockItem
+              ? target.nodeLocked
+                ? isPl
+                  ? 'Odblokuj'
+                  : 'Unlock'
+                : isPl
+                  ? def.label.pl
+                  : def.label.en
+              : isPl
+                ? def.label.pl
+                : def.label.en;
+            return {
+              id: def.id,
+              label,
+              icon: <Icon size={14} className="text-c-text-muted" />,
+              danger: item.danger,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              // Kept out of the destructive group visually (separator handled
+              // below by `idea.node.delete` itself) — matches original order.
+              onSelect: () => runViaRegistry(def.id, () => handleBaseAction(item)),
+            };
+          })
+      : [];
+
+  const registryGeneratorIds = useRegistry
+    ? isOnNode
+      ? REGISTRY_NODE_MENU_IDS.filter((id) => REGISTRY_ID_TO_ITEM_ID[id])
+      : REGISTRY_PANE_MENU_IDS
+    : [];
+  const registryGeneratorItems =
+    useRegistry && registryById
+      ? registryGeneratorIds
+          .map((id) => registryById.get(id))
+          .filter((entry): entry is NonNullable<typeof entry> => !!entry)
+          .map(({ def }, index) => {
+            const item = GENERATOR_ITEM_BY_ID[REGISTRY_ID_TO_ITEM_ID[def.id]!]!;
+            const Icon = item.icon;
+            const isLoading = loadingId === item.id;
+            return {
+              id: def.id,
+              label: isPl ? def.label.pl : def.label.en,
+              icon: isLoading ? (
+                <Loader2 size={14} className="animate-spin text-c-info" />
+              ) : (
+                <Icon size={14} className="text-c-info" />
+              ),
+              disabled: !isAccepted || !!loadingId,
+              disabledReason: !isAccepted
+                ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')
+                : loadingId
+                  ? t('common.loading', 'Loading')
+                  : undefined,
+              separatorBefore: isOnNode && index === 0,
+              closeOnSelect: false,
+              onSelect: () => runViaRegistry(def.id, () => void handleAction(item)),
+            };
+          })
+      : [];
+
+  const registryDestructiveItems =
+    useRegistry && isOnNode && registryById
+      ? (() => {
+          const entry = registryById.get('idea.node.delete');
+          if (!entry) return [];
+          const { def } = entry;
+          const item = BASE_ACTION_BY_KIND.delete!;
+          return [
+            {
+              id: def.id,
+              label: isPl ? def.label.pl : def.label.en,
+              icon: <item.icon size={14} />,
+              danger: true,
+              disabled: !!locked,
+              disabledReason: locked
+                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                : undefined,
+              separatorBefore: true,
+              onSelect: () => runViaRegistry(def.id, () => handleBaseAction(item)),
+            },
+          ];
+        })()
+      : [];
+
   return (
     <CanvasContextMenu
       x={position.x}
@@ -490,77 +703,81 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
           </div>
         ) : undefined
       }
-      items={[
-        ...(isOnNode
-          ? BASE_NODE_ACTIONS.map((item) => {
-              const isLockItem = item.kind === 'lock';
-              const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
-              const label = isLockItem
-                ? target.nodeLocked
-                  ? isPl
-                    ? 'Odblokuj'
-                    : 'Unlock'
-                  : isPl
-                    ? item.labelPl
-                    : item.labelEn
-                : isPl
-                  ? item.labelPl
-                  : item.labelEn;
-              return {
-                id: item.id,
-                label,
-                icon: <Icon size={14} className="text-c-text-muted" />,
-                danger: item.danger,
-                disabled: !!locked,
-                disabledReason: locked
-                  ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
-                  : undefined,
-                onSelect: () => handleBaseAction(item),
-              };
-            })
-          : []),
-        ...actions.map((item, index) => {
-          const Icon = item.icon;
-          const isLoading = loadingId === item.id;
-          return {
-            id: item.id,
-            label: isPl ? item.labelPl : item.labelEn,
-            icon: isLoading ? (
-              <Loader2 size={14} className="animate-spin text-c-info" />
-            ) : (
-              <Icon size={14} className="text-c-info" />
-            ),
-            disabled: !isAccepted || !!loadingId,
-            disabledReason: !isAccepted
-              ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')
-              : loadingId
-                ? t('common.loading', 'Loading')
-                : undefined,
-            separatorBefore: isOnNode && index === 0,
-            closeOnSelect: false,
-            onSelect: () => void handleAction(item),
-          };
-        }),
-        // RB-043/RV-004: destructive group — final position, visually
-        // separated from the base/AI groups above (separatorBefore). Delete
-        // still routes through the same handler wired to the canvas's local
-        // undo stack (LOCAL_STACK_UNDO), and the rail's Undo button stays on
-        // screen, so this stays reversible/visible like every other op.
-        ...(isOnNode
-          ? DESTRUCTIVE_NODE_ACTIONS.map((item) => ({
-              id: item.id,
-              label: isPl ? item.labelPl : item.labelEn,
-              icon: <item.icon size={14} />,
-              danger: true,
-              disabled: !!locked,
-              disabledReason: locked
-                ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
-                : undefined,
-              separatorBefore: true,
-              onSelect: () => handleBaseAction(item),
-            }))
-          : []),
-      ]}
+      items={
+        useRegistry
+          ? [...registryBaseItems, ...registryGeneratorItems, ...registryDestructiveItems]
+          : [
+              ...(isOnNode
+                ? BASE_NODE_ACTIONS.map((item) => {
+                    const isLockItem = item.kind === 'lock';
+                    const Icon = isLockItem && target.nodeLocked ? Unlock : item.icon;
+                    const label = isLockItem
+                      ? target.nodeLocked
+                        ? isPl
+                          ? 'Odblokuj'
+                          : 'Unlock'
+                        : isPl
+                          ? item.labelPl
+                          : item.labelEn
+                      : isPl
+                        ? item.labelPl
+                        : item.labelEn;
+                    return {
+                      id: item.id,
+                      label,
+                      icon: <Icon size={14} className="text-c-text-muted" />,
+                      danger: item.danger,
+                      disabled: !!locked,
+                      disabledReason: locked
+                        ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                        : undefined,
+                      onSelect: () => handleBaseAction(item),
+                    };
+                  })
+                : []),
+              ...actions.map((item, index) => {
+                const Icon = item.icon;
+                const isLoading = loadingId === item.id;
+                return {
+                  id: item.id,
+                  label: isPl ? item.labelPl : item.labelEn,
+                  icon: isLoading ? (
+                    <Loader2 size={14} className="animate-spin text-c-info" />
+                  ) : (
+                    <Icon size={14} className="text-c-info" />
+                  ),
+                  disabled: !isAccepted || !!loadingId,
+                  disabledReason: !isAccepted
+                    ? t('myWorkIdeas.canvasContextMenu.acceptChallengeUnlockAi')
+                    : loadingId
+                      ? t('common.loading', 'Loading')
+                      : undefined,
+                  separatorBefore: isOnNode && index === 0,
+                  closeOnSelect: false,
+                  onSelect: () => void handleAction(item),
+                };
+              }),
+              // RB-043/RV-004: destructive group — final position, visually
+              // separated from the base/AI groups above (separatorBefore). Delete
+              // still routes through the same handler wired to the canvas's local
+              // undo stack (LOCAL_STACK_UNDO), and the rail's Undo button stays on
+              // screen, so this stays reversible/visible like every other op.
+              ...(isOnNode
+                ? DESTRUCTIVE_NODE_ACTIONS.map((item) => ({
+                    id: item.id,
+                    label: isPl ? item.labelPl : item.labelEn,
+                    icon: <item.icon size={14} />,
+                    danger: true,
+                    disabled: !!locked,
+                    disabledReason: locked
+                      ? t('myWorkIdeas.canvasContextMenu.canvasLocked', 'Canvas is locked')
+                      : undefined,
+                    separatorBefore: true,
+                    onSelect: () => handleBaseAction(item),
+                  }))
+                : []),
+            ]
+      }
     />
   );
 };
