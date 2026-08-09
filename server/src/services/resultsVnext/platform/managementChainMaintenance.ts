@@ -144,6 +144,49 @@ export interface UpdateManagerAndRecomposeClosureResult {
   closureRowsChanged: number;
 }
 
+/**
+ * KPI-E005 prerequisite (docs/product/results-vnext/KPI_E005_DESIGN.md §B.1):
+ * `listOrganizationKpiAttention`'s chain-scoping needs every user who reports
+ * (transitively) to a manager — a plain read over the closure table this
+ * file already maintains, not a new algorithm. `getManagementChain()` does
+ * not exist anywhere in this repo (verified via `grep -rn
+ * "getManagementChain" server/src` before adding this — zero hits) — this is
+ * the first read-side function in this module, alongside the existing
+ * write-side `updateManagerAndRecomposeClosure`.
+ */
+export interface ListManagementChainDescendantsParams {
+  organizationId: string;
+  managerId: string;
+  /** When `true`, includes `managerId` itself (the `depth = 0` self row) in
+   * the result. Defaults to `false` — callers that want "everyone who
+   * reports to X" (the common case) do not want X's own id mixed in. */
+  includeSelf?: boolean;
+}
+
+/**
+ * Reads every descendant of `managerId` from the materialized closure table
+ * (`rvn_platform_management_chain_closure`) — i.e. everyone who reports to
+ * `managerId`, directly or transitively. Read-only; does not itself acquire
+ * or release `client` (same pinned-`PoolClient` convention as
+ * `updateManagerAndRecomposeClosure` above — the caller owns the
+ * connection/transaction).
+ */
+export async function listManagementChainDescendants(
+  client: PoolClient,
+  params: ListManagementChainDescendantsParams
+): Promise<string[]> {
+  const { organizationId, managerId, includeSelf = false } = params;
+
+  const result = await client.query<{ descendant_user_id: string }>(
+    `SELECT descendant_user_id
+       FROM rvn_platform_management_chain_closure
+      WHERE organization_id = $1 AND ancestor_user_id = $2
+        ${includeSelf ? '' : 'AND depth > 0'}`,
+    [organizationId, managerId]
+  );
+  return result.rows.map((row) => row.descendant_user_id);
+}
+
 // ==========================================
 // INTERNAL HELPERS
 // ==========================================
