@@ -361,18 +361,32 @@ export async function createRoiCase(
       // Decision D3: creator gets a 'contribute' ACL row; if ownerUserId
       // differs from createdBy, ownerUserId gets a second one. No automatic
       // grant to anyone else.
+      //
+      // -- DEVIATION FROM AN EARLIER DRAFT OF THIS FILE (real Postgres bug,
+      // caught by roiVisibilityJoin.realdb.test.ts): `rvn_platform_resource_acl`
+      // (server/migrations/20260809_rvn_platform_visibility_core.sql) has NO
+      // `organization_id` column — its PRIMARY KEY is
+      // `(resource_type, resource_id, grantee_type, grantee_id)`. An earlier
+      // version of this INSERT included `organization_id` (matching every
+      // OTHER table in this file, which all carry one) and failed with
+      // Postgres 42703 "column organization_id does not exist" the instant a
+      // real Postgres ran it — this file's design doc §4.1 snippet already
+      // omits it (`resource_type/resource_id/grantee_type/grantee_id/
+      // access_level/granted_by` only); the fix here is to match both the
+      // design doc's literal column list AND the real table, not to ALTER
+      // the platform table to add a column no other caller needs.
       await client.query(
         `INSERT INTO rvn_platform_resource_acl
-           (resource_type, resource_id, organization_id, grantee_type, grantee_id, access_level, granted_by)
-         VALUES ($1, $2, $3, 'user', $4, 'contribute', $4)`,
-        [ROI_RESOURCE_TYPE, caseRow.case_id, organizationId, createdBy]
+           (resource_type, resource_id, grantee_type, grantee_id, access_level, granted_by)
+         VALUES ($1, $2, 'user', $3, 'contribute', $3)`,
+        [ROI_RESOURCE_TYPE, caseRow.case_id, createdBy]
       );
       if (ownerUserId !== createdBy) {
         await client.query(
           `INSERT INTO rvn_platform_resource_acl
-             (resource_type, resource_id, organization_id, grantee_type, grantee_id, access_level, granted_by)
-           VALUES ($1, $2, $3, 'user', $4, 'contribute', $5)`,
-          [ROI_RESOURCE_TYPE, caseRow.case_id, organizationId, ownerUserId, createdBy]
+             (resource_type, resource_id, grantee_type, grantee_id, access_level, granted_by)
+           VALUES ($1, $2, 'user', $3, 'contribute', $4)`,
+          [ROI_RESOURCE_TYPE, caseRow.case_id, ownerUserId, createdBy]
         );
       }
 
