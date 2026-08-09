@@ -104,3 +104,9 @@ Remaining release blockers identified by the audits:
 **NO-GO for broad cleanup or starting four rebuilds from the current root worktree.**
 
 **GO to continue validation of the clean reconciliation candidate while the Documents package finishes.**
+
+## Safe local cleanup executed
+
+After rechecking clean status, ancestry and absence of live processes, ten clean worktree directories whose commits are already reachable from the candidate were removed. Their branch refs and commits remain preserved. One stale registration pointing to a non-existent temporary UI45 directory was pruned after `git worktree prune --dry-run` identified exactly that entry. Worktree count decreased from 36 (including the two new reconciliation worktrees) to 25.
+
+No dirty worktree, unique branch, shared stash, active Documents path, quarantine candidate, remote ref, or Railway/database state was removed.
