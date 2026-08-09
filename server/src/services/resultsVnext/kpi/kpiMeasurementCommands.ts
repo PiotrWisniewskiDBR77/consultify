@@ -29,6 +29,19 @@
  * `data_quality_status` target and required fields) — implemented as thin
  * wrappers over one shared `insertSupersedingMeasurement` helper below to
  * avoid restating the same INSERT four times.
+ *
+ * KPI-E003 (docs/product/results-vnext/KPI_E003_DESIGN.md decision #3):
+ * `recordMeasurement` and `correctMeasurement` are the two commands that can
+ * produce a NEW `performance_status` fact, so both call
+ * `openOrEscalateDeviationCase` on the SAME pinned client, INSIDE
+ * `applyMutation`, immediately after their own measurement INSERT commits
+ * to that same (not-yet-committed) transaction — "same transaction as the
+ * measurement insert", not a post-commit side effect, per decision #3's own
+ * text ("the outbox has zero working consumers today ... 'async' would mean
+ * deviation cases silently never get created"). `verifyMeasurement`/
+ * `disputeMeasurement` do NOT call it — neither changes
+ * `performance_status`, only `data_quality_status`, so there is no new
+ * performance fact for a deviation case to react to.
  */
 import { randomUUID } from 'node:crypto';
 
@@ -41,7 +54,30 @@ import {
 } from '../platform/atomicWrite.js';
 
 import { computeStateHash, KPI_EVENT_SOURCE } from './kpiDefinitionCommands.js';
+import { openOrEscalateDeviationCase } from './kpiDeviationCommands.js';
 import { toKpiMeasurement, type KpiMeasurement, type KpiMeasurementRow } from './kpiTypes.js';
+
+/**
+ * Resolves the deviation case's `owner_user_id` (decision #1 requires SOME
+ * value — this domain does not resolve `manager_user_id`, but a case must
+ * still have an owner). Prefers the KPI's own `owner_user_id`; falls back to
+ * the person recording/correcting the measurement when the KPI has none set
+ * (`rvn_kpi_definitions.owner_user_id` is nullable) — an unowned KPI should
+ * not silently fail to open a deviation case, and the person who just
+ * recorded the bad measurement is a reasonable interim owner of "explain
+ * this deviation" until the KPI itself is assigned one.
+ */
+async function resolveDeviationCaseOwner(
+  client: PoolClient,
+  kpiId: string,
+  fallbackUserId: string
+): Promise<string> {
+  const result = await client.query<{ owner_user_id: string | null }>(
+    `SELECT owner_user_id FROM rvn_kpi_definitions WHERE kpi_id = $1`,
+    [kpiId]
+  );
+  return result.rows[0]?.owner_user_id ?? fallbackUserId;
+}
 
 // ==========================================
 // ERRORS
@@ -87,6 +123,14 @@ export interface RecordMeasurementInput {
   correlationId?: string;
   causationId?: string | null;
   reason?: string | null;
+  /** Decision #1 (KPI_E003_DESIGN.md): the deviation domain does not
+   * resolve a management chain itself — caller-provided, `null` if omitted
+   * (a case with no `manager_user_id` is still valid, just unrouted to a
+   * manager escalation path). */
+  deviationManagerUserId?: string | null;
+  /** Passed straight through to `openOrEscalateDeviationCase` — omit to use
+   * that function's own defaults (120h warning / 48h critical). */
+  deviationResponseHoursOverride?: { warning: number; critical: number };
 }
 
 export async function recordMeasurement(
@@ -109,6 +153,8 @@ export async function recordMeasurement(
     correlationId,
     causationId = null,
     reason = null,
+    deviationManagerUserId = null,
+    deviationResponseHoursOverride,
   } = input;
 
   return executeAtomicCreate<KpiMeasurement>({
@@ -138,6 +184,24 @@ export async function recordMeasurement(
       if (!row) {
         throw new Error('[recordMeasurement] insert returned no row');
       }
+
+      // Decision #3: same transaction, same pinned client — see file
+      // header. Only 'warning'/'critical' facts open/escalate a case;
+      // openOrEscalateDeviationCase itself no-ops (returns null) for
+      // 'on_target'/'neutral'.
+      const ownerUserId = await resolveDeviationCaseOwner(client, kpiId, recordedBy);
+      await openOrEscalateDeviationCase(client, {
+        organizationId,
+        kpiId,
+        measurementId: row.measurement_id,
+        performanceStatus,
+        ownerUserId,
+        managerUserId: deviationManagerUserId,
+        responseHoursOverride: deviationResponseHoursOverride,
+        actorUserId: recordedBy,
+        actorEffectiveRole,
+      });
+
       return toKpiMeasurement(row);
     },
     buildEvent: ({ result }) => {
@@ -329,6 +393,10 @@ export interface CorrectMeasurementInput {
   idempotencyKey: string;
   correlationId?: string;
   causationId?: string | null;
+  /** See RecordMeasurementInput's identical fields — same decision #1/#3
+   * rationale, this is the correction-path counterpart. */
+  deviationManagerUserId?: string | null;
+  deviationResponseHoursOverride?: { warning: number; critical: number };
 }
 
 export async function correctMeasurement(
@@ -345,12 +413,14 @@ export async function correctMeasurement(
     idempotencyKey,
     correlationId,
     causationId = null,
+    deviationManagerUserId = null,
+    deviationResponseHoursOverride,
   } = input;
 
   return executeAtomicCreate<SupersedingMeasurementResult>({
     organizationId,
-    applyMutation: (client) =>
-      insertSupersedingMeasurement(client, {
+    applyMutation: async (client) => {
+      const result = await insertSupersedingMeasurement(client, {
         originalMeasurementId: measurementId,
         organizationId,
         actualValueOverride: actualValue,
@@ -363,7 +433,27 @@ export async function correctMeasurement(
         // own data_quality_status when omitted.
         correctionReason,
         recordedBy,
-      }),
+      });
+
+      // Decision #3: same transaction as the correction's own INSERT — see
+      // file header. A correction can produce a NEW performance_status fact
+      // (unlike verify/dispute), so it re-runs the same deviation-loop
+      // trigger recordMeasurement does, against the SUPERSEDING row.
+      const ownerUserId = await resolveDeviationCaseOwner(client, result.superseding.kpiId, recordedBy);
+      await openOrEscalateDeviationCase(client, {
+        organizationId,
+        kpiId: result.superseding.kpiId,
+        measurementId: result.superseding.measurementId,
+        performanceStatus,
+        ownerUserId,
+        managerUserId: deviationManagerUserId,
+        responseHoursOverride: deviationResponseHoursOverride,
+        actorUserId: recordedBy,
+        actorEffectiveRole,
+      });
+
+      return result;
+    },
     buildEvent: ({ result }) =>
       buildSupersedingEvent({
         eventType: 'kpi.measurement_corrected',

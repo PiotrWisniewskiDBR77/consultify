@@ -109,6 +109,34 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.measurement_disputed': ['mywork_projection'],
   'roi_case.decided': ['mywork_projection', 'finance_projection'],
   'okr_set.published': ['mywork_projection'],
+
+  // KPI-E003 (docs/product/results-vnext/KPI_E003_DESIGN.md §A/§B) — the
+  // deviation closed-loop's full event catalog. The design doc's own task
+  // spec names 9 of these explicitly (opened/escalated/acknowledged/
+  // corrective_plan_submitted/corrective_plan_approved/
+  // corrective_action_updated/recovery_observed/effectiveness_verified/
+  // closed); `corrective_action_added`, `deescalated` and `reopened` are
+  // filled in here for the same reason KPI-E001/E002's §16 fix filled in
+  // `kpi.definition_rejected`/`kpi.suspended`/`kpi.archived` — every
+  // state-changing command in kpiDeviationCommands.ts/
+  // kpiCorrectiveActionCommands.ts appends an event, and an event type
+  // missing from this map does not fail the write (resolveConsumerGroups
+  // logs a warning and returns []) but DOES silently drop outbox fan-out —
+  // a documentation gap, not an intentional per-event opt-out. All fan out
+  // to 'mywork_projection' only, same as every other domain entry above.
+  'kpi.deviation_opened': ['mywork_projection'],
+  'kpi.deviation_escalated': ['mywork_projection'],
+  'kpi.deviation_deescalated': ['mywork_projection'],
+  'kpi.deviation_acknowledged': ['mywork_projection'],
+  'kpi.deviation_root_cause_submitted': ['mywork_projection'],
+  'kpi.deviation_corrective_action_added': ['mywork_projection'],
+  'kpi.deviation_corrective_plan_submitted': ['mywork_projection'],
+  'kpi.deviation_corrective_plan_approved': ['mywork_projection'],
+  'kpi.deviation_corrective_action_updated': ['mywork_projection'],
+  'kpi.deviation_recovery_observed': ['mywork_projection'],
+  'kpi.deviation_effectiveness_verified': ['mywork_projection'],
+  'kpi.deviation_closed': ['mywork_projection'],
+  'kpi.deviation_reopened': ['mywork_projection'],
 };
 
 /**
@@ -116,8 +144,17 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
  * resolve to an empty list (no outbox fan-out) rather than throwing — a
  * domain forgetting to register its event_type here should not crash the
  * write, but it IS silently dropping delivery, so this logs a warning.
+ *
+ * Exported (KPI-E003) so a caller that manually inserts an
+ * `rvn_platform_events` row OUTSIDE `executeAtomicCommand`/
+ * `executeAtomicCreate` — `kpiDeviationCommands.ts`'s
+ * `openOrEscalateDeviationCase`, which must write its `kpi.deviation_opened`/
+ * `kpi.deviation_escalated` events on an already-open pinned client inside
+ * `recordMeasurement`/`correctMeasurement`'s own transaction (design
+ * decision #3) rather than nesting a second atomic-write helper — can fan
+ * out to the outbox identically instead of re-deriving this lookup.
  */
-function resolveConsumerGroups(eventType: string): readonly string[] {
+export function resolveConsumerGroups(eventType: string): readonly string[] {
   const groups = EVENT_TYPE_CONSUMER_GROUPS[eventType];
   if (!groups || groups.length === 0) {
     logger.warn(
@@ -232,7 +269,15 @@ export interface AtomicCommandOutcome<TResult> {
 // IMPLEMENTATION
 // ==========================================
 
-const EVENT_INSERT_SQL = `
+/**
+ * Exported (KPI-E003) for the same reason `resolveConsumerGroups` is
+ * exported above — `openOrEscalateDeviationCase`'s manual
+ * `rvn_platform_events` inserts must match this column list/order exactly
+ * (same `ON CONFLICT (organization_id, idempotency_key) DO NOTHING`
+ * idempotency guard, same columns) without restating it as a second literal
+ * copy that could drift from this one.
+ */
+export const EVENT_INSERT_SQL = `
   INSERT INTO rvn_platform_events (
     schema_version, event_type, aggregate_type, aggregate_id, organization_id,
     actor_user_id, actor_effective_role, command_id, correlation_id, causation_id,

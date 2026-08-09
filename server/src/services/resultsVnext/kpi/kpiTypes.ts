@@ -183,8 +183,9 @@ export interface KpiDefinitionVersion {
 }
 
 /** NUMERIC columns come back from `pg` as strings — parse defensively; a
- * NULL DB value must stay `null`, never become `NaN`. */
-function toNullableNumber(value: string | null): number | null {
+ * NULL DB value must stay `null`, never become `NaN`. Exported (KPI-E003)
+ * so `kpiDeviationTypes.ts` reuses this instead of restating it. */
+export function toNullableNumber(value: string | null): number | null {
   if (value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
