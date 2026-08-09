@@ -434,9 +434,56 @@ Pełny raport (wszystkie pliki/linie, agentProposalGovernanceService jako
 cięższy alternatywny governance layer, pełna analiza organization/team): transkrypt
 agenta `a16c12524cb5c7c80`.
 
-## 4. File ownership / allowlists
+## 4. File ownership / allowlists / integration DAG (RN-G0, napisane bezpośrednio przez
+Integration Ownera na bazie wave-1 findings §3)
 
-_(uzupełniane w miarę otwierania kolejnych bounded packages)_
+### 4.1 Workstream ownership
+
+| Workstream | Właściciel | Zakres plików (NOWE, namespaced) | Zależy od |
+|---|---|---|---|
+| Platform | Integration Owner (ta sesja) | `server/src/services/resultsVnext/platform/*` (event envelope+outbox, ABAC/visibility resolver, management-chain traversal, typed MyWork/Decision refs), migracje `server/migrations/<8-digit-date>_rvn_platform_*.sql` | — (blokuje wszystko poniżej) |
+| Registry UX | Integration Owner + Sonnet impl. | `src/components/ResultsVNext/shell/*` (Menu1/2/3, routing `/results/{kpi,roi,okr}`) — NOWY folder, NIE `src/components/Results/` (już przeciążony 44+ plikami legacy/v8) | Platform (auth/visibility) |
+| KPI | Sonnet impl. | `server/src/services/resultsVnext/kpi/*`, `src/components/ResultsVNext/kpi/*`, `server/migrations/<date>_rvn_kpi_*.sql`, API `/api/vnext/results/kpi/*` | Platform, Registry shell |
+| ROI | Sonnet impl. | `server/src/services/resultsVnext/roi/*`, `src/components/ResultsVNext/roi/*`, `server/migrations/<date>_rvn_roi_*.sql` (prefiks `rvn_` per plan §10), API `/api/vnext/results/roi/*` | Platform, Registry shell, Initiative (istniejące) |
+| OKR | Sonnet impl. | `server/src/services/resultsVnext/okr/*`, `src/components/ResultsVNext/okr/*`, `server/migrations/<date>_rvn_okr_*.sql` (prefiks `okr_vnext_` per plan), API `/api/vnext/results/okr/*` | Platform, Registry shell |
+| Teresa | Sonnet impl. | Rozszerzenie `teresaCopilotCanon.ts`/`teresaCopilotService.ts` — TYLKO dopisanie `results/kpi/roi/okr` do `P08_HANDOFF_TARGETS` + handlery, ZAKAZ zmiany istniejących targetów | Platform (proposal audit już istnieje), domeny (po pierwszym gold flow każdej) |
+| QA/Evidence | Sonnet impl. | `tests/resultsVnext/*`, evidence manifest | wszystkie |
+
+**Reguła krytyczna z §3.8**: migracje Results Next MUSZĄ używać prefiksu
+`<8-cyfrowa-data>_` (np. `20260810_rvn_kpi_core.sql`), NIGDY numeracji `9xx_`
+(potwierdzone niedziałająca na boot — `DatabaseInitializer.ts` łapie tylko
+`/^(7\d{2}|\d{8})_/`). Migracja `932_decision_workflow_canonical.sql` (CAS wzorzec)
+sama jest w tej martwej strefie — **do zweryfikowania na żywej bazie demo przed
+oparciem się na jej kolumnach**.
+
+### 4.2 Integration DAG (kolejność landowania, blokująca)
+
+```
+Platform (event envelope+outbox, ABAC/visibility resolver, mgmt-chain)
+  → Registry shell (Menu1/2/3, routing)
+    → [KPI | ROI | OKR równolegle — D14, niezależne workstreamy]
+      → Teresa wiring (per domena, po pierwszym zaakceptowanym slice — D15/WP4 OKR)
+        → Cross-domain (XDOM-E001..E007, G6) — TYLKO po samodzielnym G4 każdej domeny
+```
+
+Żaden domenowy workstream nie może definiować własnego auth/event-envelope/table
+standard — łamie to regułę z 01_MASTER §10.2 i multiplikuje dokładnie ten sam
+fragmentacyjny wzorzec znaleziony w §3.7/§3.8 (5 równoległych systemów ROI, 4
+równoległe tabele KPI). Platform jest SSOT dla tych trzech mechanizmów.
+
+### 4.3 Threat model (RN-G0 wymóg, przed implementacją zależnego kontraktu)
+
+| # | Zagrożenie | Wektor | Mitygacja wymagana w G1 | Dowód wymagany |
+|---|---|---|---|---|
+| T1 | Cross-tenant leakage | Dziś widoczność = ręczny `WHERE organization_id=?` per-serwis (§3.9) — jeden zapomniany serwis = wyciek | Centralny visibility-resolver, egzekwowany na poziomie query-buildera nie per-serwis | IDOR + foreign-tenant negative test na KAŻDYM nowym endpoincie |
+| T2 | Self-approval bypass | Maker-checker wymagany dla ROI approval/KPI definition/OKR Set — dziś capability-checki są **shadow-only** (`CAPABILITY_ENFORCE` domyślnie nie blokuje, §3.9) | Server-side twarda reguła porównująca `submitted_by`≠`approved_by`, NIE tylko UI disable | Test: autor próbuje zatwierdzić własną wersję → 403, drugi user → 200 |
+| T3 | Visibility leakage przez agregację | Liczniki/search/export/AI muszą filtrować PRZED agregacją — dziś zero infrastruktury ABAC (§3.9 — potwierdzone: 0 wyników `OPEN_ORG`/`SCOPE`/itd. w repo) | Budować filter-before-aggregate jako wzorzec od pierwszego query, nie doklejać później | Restricted-outsider widzi count=0 nie N |
+| T4 | Teresa overreach | Silent write / autonomiczny approval / wymyślone evidence | P08 proposal lifecycle JUŻ ISTNIEJE i jest dobry (`no_silent_writes`, audit) — tylko poprawnie wpiąć nowe domeny, nie omijać istniejącego kontraktu | Adversarial: prompt injection + cross-tenant test na każdym wired handlerze |
+| T5 | Legacy write leakage | 5 równoległych systemów ROI + 4 równoległe KPI (§3.7/§3.8) — nowa UI przypadkiem trafia w stary endpoint | Fizyczna izolacja: legacy handler = tylko GET, brak POST/PUT/PATCH/DELETE route w ogóle (nie tylko brak wpisu w routerze) | Test: POST na dowolny legacy write endpoint z nowego kontekstu → odrzucony |
+| T6 | Naruszenie immutability | Approved snapshot/definition version musi być niemutowalny — dziś "append-only" to WYŁĄCZNIE konwencja aplikacyjna (§3.9: audit_events bez triggera/REVOKE) | DB-level constraint/trigger blokujący UPDATE na zatwierdzonych wierszach, nie tylko aplikacyjny check | Bezpośredni UPDATE przez SQL (nie przez API) też musi failować |
+| T7 | Idempotency/replay | Duplicate event/retry tworzący drugi obligation/deviation case/check-in | Deterministic dedupe key (cadence occurrence + obligation type + aggregate) — WZORZEC z Decisions CAS (§3.9) do powielenia, PRAWDZIWY transactional outbox (dziś nie istnieje) | Retry tego samego eventu 2x → jeden efekt, nie dwa |
+| T8 | Money/decimal unsafety | ROI operuje na pieniądzach — plan wymaga decimal-safe, zero floating point (§3.5) | Typ kolumny NUMERIC/DECIMAL, nigdy FLOAT/REAL, w nowych tabelach `rvn_*` | Known-answer fixture z dokładnością co do grosza |
+| T9 | Stale-compute-at-approval | Approval zatwierdza wynik silnika, który mógł się zdezaktualizować między compute a submit | Plan już to adresuje (§3.5: "approval requires successful current run matching submitted snapshot") — pilnować przy implementacji WP5 | Test: zmiana inputu po compute, przed approve → approval odrzucony/wymusza recompute |
 
 ## 5. Epic ledger seed
 
