@@ -258,7 +258,12 @@ function mapMembershipRow(row: OrganizationMemberRow): OrgMembership {
     role: row.role,
     status: row.status ?? 'ACTIVE',
     invitedByUserId: row.invited_by_user_id,
-    createdAt: row.created_at,
+    // organization_members.created_at is TIMESTAMPTZ (unlike case_core's TEXT
+    // created_at elsewhere in this directory), so node-postgres hands this
+    // back as a native Date, not a string, despite OrganizationMemberRow's
+    // declared shape — normalize to an ISO string to actually satisfy the
+    // documented `OrgMembership.createdAt: string` contract.
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
   };
 }
 
