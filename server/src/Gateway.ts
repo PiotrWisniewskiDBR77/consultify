@@ -262,6 +262,10 @@ import resultsDriverTreeRoutes from './routes/resultsDriverTree.routes.js';
 import resultsExtendedRoutes from './routes/resultsExtended.routes.js';
 import resultsStrategicRoutes from './routes/resultsStrategic.routes.js';
 import resultsValueIntelligenceRoutes from './routes/resultsValueIntelligence.routes.js';
+// Results vNext (KPI-E001/E002) — separate namespace from every legacy
+// /api/results* surface above (see kpi.routes.ts's own header comment:
+// "not aliases for new commands", plan §7).
+import resultsVnextKpiRoutes from './routes/resultsVnext/kpi.routes.js';
 import revenueRoutes from './routes/revenue.routes.js';
 import rolloutRoutes from './routes/rollout.routes.js';
 // M14 wiring — service route surfaces (mounted below)
@@ -1086,6 +1090,9 @@ export class ApiGateway {
       app.use('/api/results-strategic', resultsStrategicRoutes);
       app.use('/api/results-driver-tree', resultsDriverTreeRoutes);
       app.use('/api/results-extended', resultsExtendedRoutes);
+      // Results vNext (KPI-E001/E002) — own auth (verifyToken +
+      // requireOrgAccess) applied inside the router.
+      app.use('/api/vnext/results/kpi', resultsVnextKpiRoutes);
       app.use('/api/realtime-v4', realtimePlatformRoutes);
       app.use('/api/inbox-v4', inboxEnterpriseRoutes);
       app.use('/api/assessments-v4', assessmentEnterpriseRoutes);
