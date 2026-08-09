@@ -84,7 +84,13 @@ describe('GET /api/workbook/:id/schema', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.title).toBe('Test WB');
-    expect(res.body.sheets).toEqual(sheets);
+    expect(res.body.sheets).toEqual([
+      {
+        ...sheets[0],
+        id: expect.any(String),
+      },
+    ]);
+    expect(res.body.sheets[0].id).not.toHaveLength(0);
     expect(res.body.sheets[0].rows[1].cells.value.formula).toBe('SUM(B2:B2)');
     // Org-scoped: the second bound param must be the requesting user's org.
     expect(queryOneMock).toHaveBeenCalledWith(expect.any(String), ['wb-1', 'org-1']);
