@@ -200,6 +200,7 @@ const TARGET_LABELS: Partial<Record<HandoffTargetModule, string>> = {
   interview: 'Interview Insights',
   excele: 'Excele Workbooks',
   documents: 'Document Studio',
+  presentations: 'Presentation Studio',
 };
 
 // ---------------------------------------------------------------------------
@@ -851,6 +852,12 @@ function inferTargetModuleFromChatRegex(
   ) {
     return { targetModule: 'documents', handoffIntent: 'append' };
   }
+  if (
+    /\b(presentation|presentation studio|deck|slide|pptx)\b/i.test(text) ||
+    /\b(prezentacj\w*|slajd\w*)\b/i.test(text)
+  ) {
+    return { targetModule: 'presentations', handoffIntent: 'append' };
+  }
 
   for (const candidate of CHAT_ACTION_KEYWORDS) {
     if (candidate.patterns.some((pattern) => pattern.test(text))) {
@@ -885,6 +892,8 @@ function inferTargetModuleFromChatRegex(
     return { targetModule: 'excele', handoffIntent: 'generate' };
   if (moduleHint.includes('document') || moduleHint.includes('doc-studio'))
     return { targetModule: 'documents', handoffIntent: 'append' };
+  if (moduleHint.includes('presentation') || moduleHint.includes('deck'))
+    return { targetModule: 'presentations', handoffIntent: 'append' };
 
   return null;
 }
@@ -898,8 +907,9 @@ Given a user message, determine if it contains an actionable intent for one of t
 - interview: insights from interviews, generate insights, review insights, findings, evidence map, completed sessions
 - excele: spreadsheets, tables, Table Studio tables, workbooks, Excel files, financial models, budgets, P&L, balance sheets, cash flow forecasts, multi-sheet calculations, xlsx generation
 - documents: edits to an opened Document Studio document, its selected text, block, or section
+- presentations: edits to an opened Presentation Studio deck, slide, or block
 
-Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|"documents"|null,"intent":"string describing the action"}
+Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebook"|"interview"|"excele"|"documents"|"presentations"|null,"intent":"string describing the action"}
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
 
 async function inferTargetModuleWithLLM(
@@ -1207,6 +1217,25 @@ function buildTargetPayloadForChat(params: {
         scope,
         ...(sectionId ? { section_id: sectionId } : {}),
         ...(blockId ? { block_id: blockId } : {}),
+      },
+      proposal_only: true,
+    };
+  }
+
+  if (targetModule === 'presentations') {
+    const workspace = (context.workspaceContext || {}) as Record<string, unknown>;
+    const entityData = (workspace.entityData || {}) as Record<string, unknown>;
+    const selection = (entityData.selection || {}) as Record<string, unknown>;
+    return {
+      deck_id: String(entityData.deckId || workspace.entityId || '').trim(),
+      instruction: trimPreview(userMessage, 500),
+      presentation_context: {
+        version_id: entityData.versionId ?? null,
+        classification: entityData.classification ?? null,
+        lifecycle: entityData.lifecycle ?? null,
+        language: entityData.language ?? null,
+        ...(selection.slideId ? { slide_id: selection.slideId } : {}),
+        ...(selection.blockId ? { block_id: selection.blockId } : {}),
       },
       proposal_only: true,
     };
@@ -2090,6 +2119,14 @@ async function performHandoff(params: {
         handoffContext,
         targetPayload
       );
+    case 'presentations':
+      return handlePresentationsHandoff(
+        proposalId,
+        organizationId,
+        userId,
+        handoffContext,
+        targetPayload
+      );
     default:
       throw new TeresaCopilotError(`Unknown target module: ${targetModule}`, 'P08_UNKNOWN_TARGET');
   }
@@ -2549,6 +2586,77 @@ async function handleDocumentsHandoff(
     scope,
     version_after: approval?.proposal?.versionAfterId ?? null,
     navigate_to: `/document-studio/${encodeURIComponent(artifactId)}`,
+    user_intent: context.user_intent,
+  };
+}
+
+async function handlePresentationsHandoff(
+  proposalId: string,
+  organizationId: string,
+  userId: string,
+  context: TeresaHandoffContext,
+  payload: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const deckId = typeof payload.deck_id === 'string' ? payload.deck_id.trim() : '';
+  const instruction = typeof payload.instruction === 'string' ? payload.instruction.trim() : '';
+  const presentationContext =
+    payload.presentation_context && typeof payload.presentation_context === 'object'
+      ? (payload.presentation_context as Record<string, unknown>)
+      : {};
+  if (!deckId) {
+    throw new TeresaCopilotError(
+      'Presentation write is unavailable without an opened deck context',
+      'P08_PRESENTATION_DECK_REQUIRED',
+      409
+    );
+  }
+  if (!instruction) {
+    throw new TeresaCopilotError(
+      'Presentation edit requires an explicit instruction',
+      'P08_PRESENTATION_INSTRUCTION_REQUIRED',
+      409
+    );
+  }
+
+  const presentationMod = await tryImport('../presentationTeresaBridgeService.js');
+  if (!presentationMod?.applyApprovedPresentationTeresaEdit) {
+    throw new TeresaCopilotError(
+      'Presentation Studio writer is unavailable',
+      'P08_PRESENTATION_WRITE_UNAVAILABLE',
+      503
+    );
+  }
+  const expectedVersionRaw = presentationContext.version_id;
+  const expectedVersion =
+    expectedVersionRaw == null || expectedVersionRaw === ''
+      ? null
+      : Number(expectedVersionRaw);
+  const applied = await presentationMod.applyApprovedPresentationTeresaEdit({
+    deckId,
+    organizationId,
+    userId,
+    instruction,
+    expectedVersion: Number.isFinite(expectedVersion) ? expectedVersion : null,
+    language: presentationContext.language ?? null,
+  });
+
+  await dbRun(
+    `INSERT INTO teresa_handoff_results (id, proposal_id, organization_id, target_module, result_ref, created_at)
+     VALUES (?, ?, ?, 'presentations', ?, ?)`,
+    [randomUUID(), proposalId, organizationId, deckId, new Date().toISOString()],
+    { fallback: true }
+  );
+  return {
+    handoff: 'presentations',
+    deck_ref: deckId,
+    operation_ref: applied.operationId,
+    real_entity: true,
+    proposal_only: false,
+    mutation_applied: true,
+    version_before: applied.versionBefore,
+    version_after: applied.versionAfter,
+    skipped_locked_slides: applied.skippedLockedSlides,
+    navigate_to: `/presentations/decks/${encodeURIComponent(deckId)}`,
     user_intent: context.user_intent,
   };
 }

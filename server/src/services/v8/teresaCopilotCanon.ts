@@ -212,6 +212,13 @@ export const P08_HANDOFF_TARGETS = {
     required_common_payload: true,
     required_extra_fields: ['artifact_id', 'instruction', 'document_context'] as const,
   },
+  presentations: {
+    module: 'Prezentacje' as const,
+    contract_ref: 'ARTIFACT_STUDIO_PPT',
+    description: 'Governed edits of an opened Presentation Studio deck',
+    required_common_payload: true,
+    required_extra_fields: ['deck_id', 'instruction', 'presentation_context'] as const,
+  },
 } as const;
 
 export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
@@ -223,6 +230,7 @@ export const P08_HANDOFF_TARGET_MODULES: HandoffTargetModule[] = [
   'excele',
   'ideas',
   'documents',
+  'presentations',
 ];
 
 export const P08_COMMON_PAYLOAD_FIELDS = [
