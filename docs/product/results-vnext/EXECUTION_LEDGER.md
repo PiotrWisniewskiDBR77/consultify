@@ -723,3 +723,114 @@ przyszłe domenowe repozytoria KPI/ROI/OKR będą musiały owijać każde
 list/count/search/export zapytanie. Nic z platform kernel nie jest jeszcze
 wpięte do żadnego callera — to świadomie inert scaffolding, gotowe pod
 pierwszą domenę.
+
+## 13. RN-G1 — platform core kernel KOMPLETNY (2026-08-09)
+
+Commit `51bb010f6f`: `visibilityScopedQuery.ts` — `buildVisibilityScopedCte()`
+i `wrapWithVisibilityScope()`, siostrzany mechanizm do `visibilityResolver.ts`
+(§B.3 jeden resolve-per-resource) dla list/count/search/export: JEDNO zapytanie
+CTE `rvn_visible_resources(resource_type, resource_id)`, UNION (nie UNION ALL)
+po tych samych gałęziach co resolver — RBAC/PBAC override, OPEN_ORG, PRIVATE,
+SCOPE (tylko `team_members`, ta sama dewiacja co resolver — `initiative_contributors`
+nie istnieje), MANAGEMENT_CHAIN (owner + closure), RESTRICTED_ACL (user grantee
+only). To jest mechanizm z threat modelu T3 (§4.3) — ma czynić "zapomnienie
+filtra" w liczniku/wyszukiwarce/eksporcie strukturalnie niemożliwym.
+**Zweryfikowane osobiście**: przeczytałem plik w całości + niezależnie
+uruchomiłem `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` w
+`server/` DWA razy (raz z `tee` do logu, raz bez pipe żeby exit code był
+wiarygodny, zgodnie z lekcją z §9 o niewiarygodnym exit code za pipe bez
+`pipefail`) — **0 błędów oba razy**.
+
+Dewiacja od dosłownego §B.4 (udokumentowana w pliku): projekt nazywa
+funkcję `rvnVisibilityScopedQuery(baseQuery, {userId, organizationId,
+resourceType, action})`; zadanie zleciło dwie mniejsze funkcje
+(`buildVisibilityScopedCte` / `wrapWithVisibilityScope`) bez parametru
+`action` — RBAC/PBAC override liczony jest więc względem stałej capability
+`${resourceType}.view` (najniższy rank), bo operacja listowa nie ma
+pojedynczej mutującej akcji tak jak resolve pojedynczego zasobu. Przyszły
+wołający potrzebujący bulk-akcji innej niż `view` powinien zawężać wynik tej
+CTE per-wiersz przez `resolveVisibility()`, nie rozszerzać gałąź RBAC tej CTE
+— visibility i capability muszą zostać rozdzielone zgodnie z §B.3 krok 4.
+Druga dewiacja: numeracja parametrów SQL — `baseQuerySql` przekazywany do
+`wrapWithVisibilityScope` musi numerować własne `$N` od `VISIBILITY_CTE_PARAM_COUNT
++ 1` (dziś `$4`), bo Postgres numeruje placeholdery globalnie po doklejeniu
+CTE; to udokumentowane w komentarzu funkcji i w przykładzie użycia na górze
+pliku (hipotetyczny `kpiRepository.listScorecards` — KPI repo jeszcze nie
+istnieje, sam przykład jest tylko w komentarzu).
+
+### RN-G1 Platform core kernel — pełna lista (schema + serwisy, od początku)
+
+| Commit | Zawartość |
+|---|---|
+| `370017d3b7` | docs: zamrożenie projektu RN_G1_PLATFORM_DESIGN.md przed implementacją |
+| `57015efbf6` | migracje: `20260809_rvn_platform_events_outbox.sql`, `20260809_rvn_platform_visibility_core.sql`, `20260809_rvn_platform_management_chain.sql`, `20260809_rvn_platform_canonical_object_type_extend.sql` |
+| `c912f505dc` | TS scaffolding: `eventEnvelope.ts`, `resourceTypes.ts` (RVN_RESOURCE_TYPES SSOT), `visibilityResolver.ts` (§B.3 algorytm), rozszerzenie `CanonicalObjectTypeValues`, `README.md` |
+| `9adbd593bb` | docs: nota o potrzebie `npm ci` do realnego tsc |
+| `5f88783b6d` | docs: slice 1 zweryfikowany, realny tsc czysty, 0 błędów |
+| `21ddd501ed` | serwisy: `atomicWrite.ts` (§A.4 — generyczny `executeAtomicCommand`, CAS+event+outbox w transakcji), `outboxDrain.ts` (§A.5 — claim/reclaim/dispatch/fail z backoff+dead_letter) |
+| `b33e39a48f` | docs: kernel kompletny + niezależnie zreweryfikowany, 0 błędów tsc |
+| `13ee6ac36f` | docs: migracje zweryfikowane na realnym Postgresie 16 (efemeryczny), PASS częściowego zakresu (§11) |
+| `72d284805e` | serwis: `managementChainMaintenance.ts` (`updateManagerAndRecomposeClosure`, decyzja #1 — service-layer w tej samej transakcji co `manager_id` UPDATE, cycle protection) |
+| `c47d701e12` | docs: management-chain service zweryfikowany, core kernel kompletny poza CTE wrapperem |
+| `51bb010f6f` | serwis: `visibilityScopedQuery.ts` (§B.4 — `buildVisibilityScopedCte`/`wrapWithVisibilityScope`, T3 mitigation) |
+
+**Pliki źródłowe kompletnego kernela** (`server/src/services/resultsVnext/platform/`):
+`README.md`, `eventEnvelope.ts`, `resourceTypes.ts`, `visibilityResolver.ts`,
+`atomicWrite.ts`, `outboxDrain.ts`, `managementChainMaintenance.ts`,
+`visibilityScopedQuery.ts` — plus 4 migracje w `server/migrations/20260809_rvn_platform_*.sql`.
+
+### Co POZOSTAJE przed pełnym RN-G1 PASS (wg `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md` §5)
+
+Handbook §5 RN-G1 wymaga: addytywne clean-start schemas · repozytoria i typed
+commands/queries · optimistic concurrency i idempotency · server-side RBAC+ABAC
+· visibility policies · append-only audit/events i transactional outbox ·
+evidence/provenance · MyWork/Decision typed references · legacy adapters
+read-only · migracja na pustej i realistycznej kopii bazy · rollback lub
+forward-repair rehearsal. Stan wobec tej listy:
+
+- **Zrobione i zweryfikowane**: clean-start schemas (4 migracje, §11) · optimistic
+  concurrency+idempotency (`atomicWrite.ts` CAS + `idempotency_key` unique
+  constraint) · server-side RBAC+ABAC (`visibilityResolver.ts` + `hasEffectiveCapability`,
+  nie UI-only) · visibility policies (schema §B.1 + resolver §B.3 + CTE wrapper
+  §B.4 — teraz kompletne) · append-only audit/events+transactional outbox
+  (`rvn_platform_events` REVOKE-owany + `rvn_platform_outbox` + `outboxDrain.ts`)
+  · MyWork/Decision typed references (`CanonicalObjectTypeValues` rozszerzony,
+  `link_graph_edges` reużyty bez migracji per §C.2) · migracja na PUSTEJ kopii
+  bazy (efemeryczny Postgres 16, §11, PASS).
+- **Jawnie NIEDOKOŃCZONE — do zrobienia PRZED pełnym RN-G1 PASS**:
+  1. **Nic z tej warstwy nie jest jeszcze wpięte do żadnego callera/route/kontrolera.**
+     Wszystkie 8 plików serwisowych to celowo inert scaffolding — pierwsze
+     realne wpięcie nastąpi dopiero gdy domena KPI, ROI lub OKR (osobny,
+     jeszcze nie rozpoczęty workstream) zacznie budować własny agregat i
+     repozytorium na tym fundamencie.
+  2. **"Repozytoria i typed commands/queries"** z listy handbooka to wymóg
+     PER DOMENA — `atomicWrite.ts`/`visibilityScopedQuery.ts` to generyczne
+     prymitywy, ale ŻADNE konkretne domenowe repozytorium (KPI/ROI/OKR) nie
+     istnieje jeszcze, więc ten punkt handbooka jest tylko częściowo spełniony
+     na poziomie platformy.
+  3. **Migracja na REALISTYCZNEJ kopii bazy** (§11 pkt (a) — pełny `db:migrate`
+     łańcuch od zera na kopii demo/staging z 1000+ istniejącymi migracjami,
+     nie tylko pusta baza) — NIE zrobione.
+  4. **Rollback lub forward-repair rehearsal** (§11 pkt (b), drugi wymóg §5
+     handbooka wprost) — NIE testowane; migracje nie mają jawnych plików
+     rollback.
+  5. **Legacy adapters read-only** (T5 z §4.3 — fizyczna izolacja: legacy
+     handlery mają mieć TYLKO GET, brak route'ów POST/PUT/PATCH/DELETE) — poza
+     zakresem tego bounded package, nie dotknięte.
+  6. **Evidence/provenance** — kolumna `evidence_refs` istnieje w schemacie
+     `rvn_platform_events` (§A.1), ale nie ma funkcjonalnego testu który by ją
+     faktycznie wypełniał i czytał przez pełny cykl zapisu.
+  7. **RESTRICTED_ACL break-glash audit event** — resolver i CTE wrapper obie
+     failują closed (`RESTRICTED_REQUIRES_BREAK_GLASS`) zamiast emitować
+     zdarzenie audytowe, bo sam mechanizm break-glass nie jest zbudowany.
+  8. **RESTRICTED_ACL team/role grantee** i **SCOPE poza `scope_type='team'`**
+     pozostają NOT_IMPLEMENTED (fail-closed) w obu plikach — świadome,
+     udokumentowane zawężenie do tego co realnie istnieje w repo, nie luka
+     odkryta przypadkiem.
+
+**Wniosek**: RN-G1 core kernel (schema+ABAC resolver+atomic write+outbox
+drain+management chain+CTE wrapper) jest teraz KOMPLETNY jako fundament —
+wszystkie elementy §B/§A projektu z `RN_G1_PLATFORM_DESIGN.md` mają
+odpowiadający, zweryfikowany kod. Pełne RN-G1 PASS pozostaje otwarte na
+punkty 1–8 powyżej, z czego (1) i (3)/(4) są największe — wpięcie do
+pierwszej realnej domeny i weryfikacja migracji poza pustą bazą.
