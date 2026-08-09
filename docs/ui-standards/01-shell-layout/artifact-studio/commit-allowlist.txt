@@ -11,10 +11,15 @@ docs/ui-standards/01-shell-layout/artifact-studio/09_EXECUTION_CONTROL_BOARD.md
 docs/ui-standards/01-shell-layout/artifact-studio/10_BASELINE_AND_SAFETY_MAP.md
 docs/ui-standards/01-shell-layout/artifact-studio/11_IMPLEMENTATION_EVIDENCE_AND_REMAINING_GAPS.md
 docs/ui-standards/01-shell-layout/artifact-studio/12_BOUNDED_HANDOFF_AND_COMMIT_ALLOWLIST.md
+docs/ui-standards/01-shell-layout/artifact-studio/13_RELEASE_EVIDENCE_RUNBOOK.md
+docs/ui-standards/01-shell-layout/artifact-studio/14_EXTERNAL_EVIDENCE_COLLECTION_TEMPLATES.md
 docs/ui-standards/01-shell-layout/artifact-studio/commit-allowlist.txt
 docs/ui-standards/01-shell-layout/artifact-studio/program-gates.json
+docs/ui-standards/01-shell-layout/artifact-studio/release-evidence.json
 playwright.config.ts
+scripts/testing/__tests__/artifact-studio-release-evidence-gate.test.mjs
 scripts/testing/artifact-studio-program-gate.mjs
+scripts/testing/artifact-studio-release-evidence-gate.mjs
 server/migrations/20260807_origin_runtime_assessment_report.sql
 server/migrations/20260809_artifact_studio_audit_and_presentation_cards.sql
 server/src/database/Database.ts
