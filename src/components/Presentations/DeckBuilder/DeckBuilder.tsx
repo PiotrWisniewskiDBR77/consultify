@@ -1047,7 +1047,7 @@ export const DeckBuilder: React.FC = () => {
       try {
         const restored = await restoreVersion(versionId);
         if (restored) {
-          setDeck(restored);
+          setDeck(restored.deck);
           toast.success(t('presentations.versionRestored'));
         } else {
           toast.error(t('presentations.couldNotRestoreThatVersion'));
