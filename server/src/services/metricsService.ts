@@ -180,6 +180,21 @@ export const apiRequestsByOrg = new Counter({
   registers: [register],
 });
 
+/**
+ * KPI-E007 — Legacy Archive read-only adapter hit counter.
+ * Labels: source_table (kpis | kpi_definitions | v8_kpi_definitions | tp_kpi_definitions)
+ *
+ * Design: docs/product/results-vnext/KPI_E007_DESIGN.md §9. Minimal
+ * monitoring scope — one counter, incremented once per successful response
+ * in `kpiLegacyArchive.routes.ts`. No dashboard, no alerting rule.
+ */
+export const resultsVnextLegacyArchiveHitsTotal = new Counter({
+  name: 'results_vnext_legacy_archive_hits_total',
+  help: 'Requests served by the KPI legacy archive read-only adapter, by source table',
+  labelNames: ['source_table'],
+  registers: [register],
+});
+
 // ==========================================
 // THROUGHPUT METRICS
 // ==========================================
