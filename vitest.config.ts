@@ -265,6 +265,15 @@ export default defineConfig({
       // real DB needed. Without this glob these tests are uncollectable by
       // `npm run test:unit`/CI regardless of `git add -f`ing the files.
       'tests/resultsVnext/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // KPI-E006: server/src/services/v8 unit tests that live under a
+      // repo-root `tests/v8/` tree (KPI_E006_TERESA_DESIGN.md §E pins
+      // `tests/v8/teresa-kpi-handoff.test.ts`) rather than a colocated
+      // `__tests__/` dir. No prior file used this path — same gap the
+      // `tests/resultsVnext/**` glob above was added to close; without this
+      // line an explicit `npx vitest run tests/v8/...` positional path
+      // still matches zero tests, since positional paths are intersected
+      // with `include`, not additive to it.
+      'tests/v8/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Table Platform service tests
       'server/src/services/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
       // V8 integration tests (nested under __tests__/integration/)
