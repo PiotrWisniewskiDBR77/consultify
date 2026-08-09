@@ -849,3 +849,70 @@ platformie: brak `executeAtomicCreate` (sibling `executeAtomicCommand` dla
 tworzenia nowych agregatów) i brak `getActiveVisibilityPolicy` — oba
 dopisywane do `platform/*` jako część tego pakietu (platform pozostaje SSOT,
 KPI nie tworzy równoległego mechanizmu). Implementacja w toku.
+
+## 15. KPI-E001/E002 — platform additions + core schema migracja na realnym Postgresie (2026-08-09)
+
+**Ważne odkrycie przed implementacją**: pełny tekst DDL/kodu z draftu agenta
+`a2f31db3dd772a6e2` (sekcje §A.2-A.7, §B, §C, §D), o którym
+`KPI_E001_E002_DESIGN.md` mówi "ratified as-is... see conversation/ledger for
+complete text", **NIE istnieje nigdzie w tym worktree** — zweryfikowane przez
+`grep -rln "rvn_kpi_definitions\|executeAtomicCreate\|targetGeometryEvaluator"
+. --include="*.md" --include="*.ts" --include="*.sql"` PRZED napisaniem
+jakiegokolwiek kodu KPI: zero trafień poza samym `KPI_E001_E002_DESIGN.md` i
+tym ledgerem. Implementacja poniżej jest więc od-zera rekonstrukcją, która
+spełnia dosłownie każdy jawny wymóg z decyzji #1-#12 i z listy "Key points"
+tego dokumentu (nazwy tabel, partial EXCLUDE, nazwa i semantyka triggera
+`protect_approved`, dwie niezależne kolumny statusu na measurements, jeden
+resource_type='kpi' dla widoczności, append-only REVOKE, rozwiązanie
+cyklicznego FK przez ALTER po utworzeniu obu tabel, semantyka boundary
+rule/exact geometry z decyzji #7/#9/#10) — nazwy kolumn i typy POZA tym co
+dokument dosłownie przypina są osądem implementatora, nie odtworzeniem
+oryginału. Flaga do weryfikacji, gdyby oryginalny tekst draftu się odnalazł.
+
+**Package 1** (`2ae8170be9`): `executeAtomicCreate<TResult>` w
+`atomicWrite.ts` (sibling `executeAtomicCommand`, bez CAS/loadForUpdate),
+literówka `kpi.definition.approved` → `kpi.definition_approved` naprawiona,
+pełny katalog 12 zdarzeń KPI dopisany do `EVENT_TYPE_CONSUMER_GROUPS`
+(decyzja #8 — luka dokumentacyjna, nie celowe pominięcie).
+`getActiveVisibilityPolicy(client, {organizationId, domain})` w
+`visibilityResolver.ts` (decyzja #11) — `null` gdy brak aktywnej polityki,
+caller musi fail-closed.
+
+**Package 2** — migracja `server/migrations/20260810_rvn_kpi_core.sql` (data
+= jutro względem G1 z 0809, zgodnie z poleceniem; data systemowa sesji to
+2026-08-09). Zweryfikowana na efemerycznym Postgresie 16 (Homebrew, ten sam
+przepis co RN-G1 §11: `initdb --locale=C`, gniazdo w `/private/tmp`) —
+**wszystkie sprawdzenia PASS**:
+1. Aplikacja na pustej bazie — exit 0, 3 tabele (`rvn_kpi_definitions`,
+   `rvn_kpi_definition_versions`, `rvn_kpi_measurements`).
+2. Idempotencja — drugi run exit 0. **Złapany i naprawiony bug w locie**:
+   `EXCLUDE USING gist` tworzy też indeks pod tą samą nazwą, więc re-run
+   rzuca `duplicate_table` (42P07), NIE `duplicate_object` (42710) jak
+   zwykły CHECK/FK — pierwszy przebieg idempotencji failował na tym (exit 3),
+   DO-blok naprawiony na `EXCEPTION WHEN duplicate_object OR duplicate_table`,
+   zweryfikowany ponownie na świeżej bazie.
+3. Trigger `trg_rvn_kpi_definition_versions_protect_approved` blokuje
+   `UPDATE formula_text` na zatwierdzonym wierszu (`ERRCODE 23001`), ale
+   **pozwala** na `UPDATE effective_to` tego samego wiersza.
+4. `EXCLUDE` odrzuca nakładające się okresy dwóch ZATWIERDZONYCH wersji tego
+   samego `kpi_id` (`conflicting key value violates exclusion constraint`),
+   ale **pozwala** na nakładający się `draft` i `rejected` wiersz o
+   identycznym okresie i `kpi_id`.
+5. Append-only REVOKE na `rvn_kpi_measurements` — INSERT jako owner OK;
+   `UPDATE` jako dedykowana rola NIE-ownera (`rvn_kpi_nonowner`, tylko
+   `GRANT SELECT, INSERT`) → `ERROR: permission denied for table
+   rvn_kpi_measurements` (ta sama udokumentowana granica co
+   `rvn_platform_events` — nie chroni przed połączeniem jako
+   owner/superuser).
+
+Sprzątanie: `pg_ctl -m fast stop` + `rm -rf` katalogu danych i gniazda —
+zweryfikowane że `/private/tmp/cfy-rn-kpi-*` nie zostawiło artefaktów.
+Weryfikacyjny skrypt SQL był jednorazowy (uruchomiony ręcznie przez `psql`
+w tej sesji) — celowo NIE dodany do `scripts/` (podobnie jak RN-G1 §11 nie
+zostawił trwałego pliku), wynik udokumentowany tutaj zamiast.
+
+**Co pozostaje NIEZWERYFIKOWANE tym krokiem** (świadomie poza zakresem):
+migracja na realistycznej kopii bazy demo/staging (1000+ istniejących
+migracji) — testowano tylko pustą bazę, ten sam zakres co RN-G1 §11 punkt
+(a); rollback/forward-repair rehearsal — nie testowany, brak jawnych plików
+rollback.
