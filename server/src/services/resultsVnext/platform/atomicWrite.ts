@@ -186,6 +186,35 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.baseline_captured': ['mywork_projection'],
   'roi.baseline_updated': ['mywork_projection'],
   'roi.baseline_frozen': ['mywork_projection'],
+
+  // ROI-E002 (docs/product/results-vnext/ROI_E002_DESIGN.md §8) — Economic
+  // Model. `roi_case.decided` (top of this map) stays UNTOUCHED per its own
+  // Decision D7 note — reserved for ROI-E003. `roi.economic_model_frozen`
+  // has no E002 caller yet (`freezeRoiEconomicModel` itself builds no
+  // event, same contract shape as `roi.baseline_frozen` above — ROI-E003's
+  // future `approveRoiCase` builds and inserts that event) — registered now
+  // so ROI-E003 does not need its own atomicWrite.ts edit for it, same
+  // forward-declaration precedent. All fan out to 'mywork_projection' only,
+  // same default every other domain entry above.
+  'roi.calculation_policy_updated': ['mywork_projection'],
+  'roi.assumption_added': ['mywork_projection'],
+  'roi.assumption_updated': ['mywork_projection'],
+  'roi.assumption_removed': ['mywork_projection'],
+  'roi.cost_line_added': ['mywork_projection'],
+  'roi.cost_line_updated': ['mywork_projection'],
+  'roi.cost_line_removed': ['mywork_projection'],
+  'roi.benefit_line_added': ['mywork_projection'],
+  'roi.benefit_line_updated': ['mywork_projection'],
+  'roi.benefit_line_removed': ['mywork_projection'],
+  'roi.benefit_evidence_link_added': ['mywork_projection'],
+  'roi.benefit_evidence_link_removed': ['mywork_projection'],
+  'roi.benefit_evidence_link_disputed': ['mywork_projection'],
+  'roi.scenario_added': ['mywork_projection'],
+  'roi.scenario_updated': ['mywork_projection'],
+  'roi.scenario_removed': ['mywork_projection'],
+  'roi.calculation_run_completed': ['mywork_projection'],
+  'roi.calculation_run_failed': ['mywork_projection'],
+  'roi.economic_model_frozen': ['mywork_projection'],
 };
 
 /**

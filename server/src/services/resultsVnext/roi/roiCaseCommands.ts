@@ -36,6 +36,12 @@ import {
 import { createObligation } from '../platform/obligations.js';
 import { getActiveVisibilityPolicy } from '../platform/visibilityResolver.js';
 
+import { isRoiCaseReadyForReviewEligibleWithEconomicModel } from './roiEconomicModelReadiness.js';
+import {
+  toRoiCalculationPolicy,
+  type RoiCalculationPolicy,
+  type RoiCalculationPolicyRow,
+} from './roiEconomicModelTypes.js';
 import {
   toRoiBaseline,
   toRoiCase,
@@ -160,6 +166,11 @@ export interface CreateRoiCaseInput {
 export interface CreateRoiCaseResult {
   case: RoiCase;
   baseline: RoiBaseline;
+  /** ROI-E002 §4.1: the calculation-policy shell, always inserted alongside
+   * the baseline shell in the same transaction (Decision D5) — a 1:1 row
+   * that always exists so the command layer never branches on "does this
+   * row exist yet." */
+  calculationPolicy: RoiCalculationPolicy;
   /** false when a pre-existing active Case for this Initiative was found
    * and returned instead of creating a new one — AC-02's idempotent-
    * duplicate behavior, distinct from the idempotencyKey retry mechanism
@@ -188,7 +199,20 @@ async function loadCaseWithBaseline(
   if (!baselineRow) {
     throw new Error(`[createRoiCase] winning case ${caseId} has no baseline shell row`);
   }
-  return { case: toRoiCase(caseRow), baseline: toRoiBaseline(baselineRow), created: false };
+  const policyResult = await client.query<RoiCalculationPolicyRow>(
+    `SELECT * FROM rvn_roi_calculation_policy WHERE case_id = $1 AND organization_id = $2`,
+    [caseId, organizationId]
+  );
+  const policyRow = policyResult.rows[0];
+  if (!policyRow) {
+    throw new Error(`[createRoiCase] winning case ${caseId} has no calculation-policy shell row`);
+  }
+  return {
+    case: toRoiCase(caseRow),
+    baseline: toRoiBaseline(baselineRow),
+    calculationPolicy: toRoiCalculationPolicy(policyRow),
+    created: false,
+  };
 }
 
 /**
@@ -341,6 +365,20 @@ export async function createRoiCase(
         throw new Error('[createRoiCase] insert into rvn_roi_baselines returned no row');
       }
 
+      // ROI-E002 §4.1, Decision D5: calculation-policy shell, same
+      // transaction, immediately after the baseline shell. rounding_policy
+      // takes its DDL default ('half_up_2dp') — no value passed here.
+      const calculationPolicyInsert = await client.query<RoiCalculationPolicyRow>(
+        `INSERT INTO rvn_roi_calculation_policy (case_id, organization_id, created_by)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [caseRow.case_id, organizationId, createdBy]
+      );
+      const calculationPolicyRow = calculationPolicyInsert.rows[0];
+      if (!calculationPolicyRow) {
+        throw new Error('[createRoiCase] insert into rvn_roi_calculation_policy returned no row');
+      }
+
       await client.query(
         `INSERT INTO rvn_platform_resource_visibility
            (resource_type, resource_id, organization_id, visibility_mode, policy_id, scope_type, scope_id, owner_user_id, sensitivity)
@@ -401,10 +439,20 @@ export async function createRoiCase(
         deduplicationKey: `${organizationId}:roi_case:${caseRow.case_id}:${START_ROI_STUDY_OBLIGATION_TYPE}`,
       });
 
-      return { case: toRoiCase(caseRow), baseline: toRoiBaseline(baselineRow), created: true };
+      return {
+        case: toRoiCase(caseRow),
+        baseline: toRoiBaseline(baselineRow),
+        calculationPolicy: toRoiCalculationPolicy(calculationPolicyRow),
+        created: true,
+      };
     },
     buildEvent: ({ result }) => {
-      const afterState: Record<string, unknown> = { case: result.case, baseline: result.baseline };
+      // ROI-E002 §4.1: afterState gains a `calculationPolicy` key.
+      const afterState: Record<string, unknown> = {
+        case: result.case,
+        baseline: result.baseline,
+        calculationPolicy: result.calculationPolicy,
+      };
       return {
         schemaVersion: 1,
         eventType: 'roi.case_created',
@@ -437,7 +485,11 @@ export async function createRoiCase(
 // updateRoiCaseDetails
 // ==========================================
 
-const NON_EDITABLE_STATUSES: readonly RoiCaseStatus[] = [
+// ROI-E002 §4: exported so roiAssumptionCommands.ts/roiCostLineCommands.ts/
+// roiBenefitLineCommands.ts/roiBenefitEvidenceLinkCommands.ts/
+// roiScenarioCommands.ts can guard on the same "case is pre-approval,
+// author-editable only" set rather than re-declaring it.
+export const NON_EDITABLE_STATUSES: readonly RoiCaseStatus[] = [
   'approved',
   'rejected',
   'tracking',
@@ -719,11 +771,16 @@ interface RoiCaseLifecycleTransitionSpec {
   eventType: string;
   fromStatuses: readonly RoiCaseStatus[];
   toStatus: RoiCaseStatus;
-  /** Optional guard evaluated against the locked case row AND its baseline
-   * row (fetched inside the same transaction) — design §4.3's
-   * `markReadyForReview` guard shape. Throws `RoiCaseNotReadyForReviewError`
-   * on failure. */
-  guard?: (caseRow: RoiCaseRow, baselineRow: RoiBaselineRow) => RoiCaseReadyForReviewCheck;
+  /** Optional guard evaluated against the pinned transactional client plus
+   * the locked case row AND its baseline row (fetched inside the same
+   * transaction) — design §4.3's `markReadyForReview` guard shape. ROI-E002
+   * §5 widens this from a synchronous `(caseRow, baselineRow) => check` to
+   * an async `(client, caseRow, baselineRow) => Promise<check>` so
+   * `isRoiCaseReadyForReviewEligibleWithEconomicModel` (roiEconomicModelReadiness.ts)
+   * can run its own `SELECT` against `rvn_roi_calculation_runs` on the SAME
+   * client/transaction, rather than being restricted to pure in-memory
+   * row checks. Throws `RoiCaseNotReadyForReviewError` on failure. */
+  guard?: (client: PoolClient, caseRow: RoiCaseRow, baselineRow: RoiBaselineRow) => Promise<RoiCaseReadyForReviewCheck>;
 }
 
 export interface RunRoiCaseLifecycleTransitionInput {
@@ -783,7 +840,7 @@ async function runRoiCaseLifecycleTransition(
         if (!baselineRow) {
           throw new Error(`[${spec.eventType}] no baseline row found for case ${caseId}`);
         }
-        const check = spec.guard(currentRow, baselineRow);
+        const check = await spec.guard(client, currentRow, baselineRow);
         if (!check.eligible) {
           throw new RoiCaseNotReadyForReviewError(caseId, check.reason ?? 'unspecified');
         }
@@ -855,7 +912,12 @@ export function markReadyForReview(
       eventType: 'roi.case_ready_for_review',
       fromStatuses: ['modeling'],
       toStatus: 'ready_for_review',
-      guard: (caseRow, baselineRow) => isRoiCaseReadyForReviewEligible(caseRow, baselineRow),
+      // ROI-E002 §5: wraps E001's own isRoiCaseReadyForReviewEligible with
+      // the economic-model guard (successful+fresh calculation run, no
+      // unresolved double-counting) — imported from the new file, not
+      // implemented inline, to avoid a circular import (design §5).
+      guard: (client, caseRow, baselineRow) =>
+        isRoiCaseReadyForReviewEligibleWithEconomicModel(client, caseRow, baselineRow),
     },
     input
   );
