@@ -513,3 +513,26 @@ Zgodnie z kryteriami `06_ACCEPTANCE_AND_VERIFICATION_HANDBOOK.md` §5 RN-G0:
 §13). Kontynuuję do E1/RN-G1 (platform foundation) — to jest dozwolone: dokument
 mówi "po RN-G0, E1 Platform Foundation executes toward RN-G1", nie wymaga
 zewnętrznego sign-off między G0 a startem G1.
+
+## 7. RN-G1 Platform Foundation — decyzje projektowe (2026-08-09)
+
+Draft agenta `a46aed05740e0f273` zrecenzowany i zaakceptowany z 4 decyzjami na
+otwartych pytaniach (odpowiedzialność Integration Ownera, nie Foundera — zwykłe
+wybory architektoniczne, nie nieodwracalne/finansowe/prawne):
+
+| # | Pytanie | Decyzja | Uzasadnienie |
+|---|---|---|---|
+| 1 | Maintenance closure table: DB trigger czy service-layer? | **Service-layer**, w tej samej transakcji co UPDATE `manager_id` | Spójność z resztą repo (Decisions CAS też jest service-layer), łatwiejsze testowanie/debug niż trigger. Trigger rezerwujemy wyłącznie dla granic bezpieczeństwa (REVOKE na eventach), nie logiki biznesowej |
+| 2 | Seed domyślnych visibility policies: migracja danych czy rollout script per-org? | **Rollout script per-org**, NIE migracja danych | D13-safe (clean start bez backfillu/zgadywania domyślnej polityki dla istniejących organizacji w samej migracji); fail-closed dopóki polityka nie zostanie jawnie autorowana |
+| 3 | Weryfikacja żywej kopii `v8_canonical_object_states` (public vs v8 schema) przed ALTER | **Odroczone do momentu promocji na demo**, nie blokuje pracy w izolowanej gałęzi | Migracje w tej gałęzi nie dotykają demo automatycznie (promocja = osobny, gated krok wg `consultify-promocja-demo`). Migracja #4 pisana pod `public.` (zgodnie ze wzorcem WSZYSTKICH innych tabel znalezionych w §3) z jawnym komentarzem-gate w pliku migracji: NIE promować bez `information_schema` SELECT na demo najpierw |
+| 4 | Consumer_group routing: kod czy tabela? | **Statyczna mapa w kodzie** (event_type→consumer_groups) | Mniej ruchomych części na start, rozszerzalne później bez zmiany schematu — zgodne z zasadą "nie budować dla hipotetycznej przyszłości" |
+
+Dodatkowa luka znaleziona przy okazji (do zgłoszenia workstreamowi Teresa, nie
+Platform): `HandoffTargetModule` w `teresaCopilotCanon.ts` ma już `'results'|
+'kpi'|'roi'`, ale **brakuje `'okr'`** mimo że ledger §3.9 cytuje wszystkie trzy
+jako zarezerwowane. Czysto TS, zero migracji.
+
+**Zatwierdzone do implementacji**: 4 migracje w kolejności z draftu (events+outbox
+→ visibility core → management chain closure → canonical_object_type extend),
+serwisy w `server/src/services/resultsVnext/platform/*`. Pełny schemat/algorytm/
+uzasadnienia: transkrypt agenta `a46aed05740e0f273`.
