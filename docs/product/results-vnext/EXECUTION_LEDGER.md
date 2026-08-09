@@ -834,3 +834,18 @@ wszystkie elementy §B/§A projektu z `RN_G1_PLATFORM_DESIGN.md` mają
 odpowiadający, zweryfikowany kod. Pełne RN-G1 PASS pozostaje otwarte na
 punkty 1–8 powyżej, z czego (1) i (3)/(4) są największe — wpięcie do
 pierwszej realnej domeny i weryfikacja migracji poza pustą bazą.
+
+## 14. E4 KPI-E001/E002 — design zamrożony (2026-08-09)
+
+Draft agenta `a2f31db3dd772a6e2` zrecenzowany, 12 otwartych pytań rozstrzygniętych.
+Pełny projekt: `docs/product/results-vnext/KPI_E001_E002_DESIGN.md`. Kluczowe
+decyzje: partial `EXCLUDE` na zatwierdzonych wersjach (draft/reject cykle
+muszą pozostać możliwe), nowy wzorzec DB trigger dla częściowej niemutowalności
+(precedens dla ROI/OKR Approved snapshots), measurement commands NIE przechodzą
+przez CAS rodzica (własny unique constraint na okres wystarcza, unika
+niepotrzebnej serializacji zapisów), self-approval denial wymuszony
+server-side wewnątrz `applyMutation`. Zidentyfikowana i zaakceptowana luka w
+platformie: brak `executeAtomicCreate` (sibling `executeAtomicCommand` dla
+tworzenia nowych agregatów) i brak `getActiveVisibilityPolicy` — oba
+dopisywane do `platform/*` jako część tego pakietu (platform pozostaje SSOT,
+KPI nie tworzy równoległego mechanizmu). Implementacja w toku.
