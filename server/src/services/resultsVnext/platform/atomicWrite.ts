@@ -165,6 +165,27 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'kpi.initiative_impact_committed': ['mywork_projection'],
   'kpi.initiative_impact_reviewed': ['mywork_projection'],
   'kpi.initiative_impact_superseded': ['mywork_projection'],
+
+  // ROI-E001 (docs/product/results-vnext/ROI_E001_DESIGN.md §8) — Case &
+  // Baseline. Decision D7: the pre-existing `roi_case.decided` entry above
+  // is scaffolding reserved for ROI-E003 ("decided" = approved/rejected
+  // outcome) and is left UNTOUCHED — these are E001's own new `roi.case_*`/
+  // `roi.baseline_*` keys, in the naming convention `kpi.*` already
+  // established. All fan out to 'mywork_projection' only, same default
+  // every other domain entry above. `roi.baseline_frozen` has no E001
+  // caller yet (`freezeRoiBaseline` itself builds no event — design §4.5's
+  // contract is that ROI-E003's future `approveRoiCase` builds and inserts
+  // that event on the same transaction) — registered now so ROI-E003 does
+  // not need its own atomicWrite.ts edit for it, same forward-declaration
+  // precedent as the KPI domain's own trailing entries.
+  'roi.case_created': ['mywork_projection'],
+  'roi.case_details_updated': ['mywork_projection'],
+  'roi.case_archived': ['mywork_projection'],
+  'roi.case_modeling_started': ['mywork_projection'],
+  'roi.case_ready_for_review': ['mywork_projection'],
+  'roi.baseline_captured': ['mywork_projection'],
+  'roi.baseline_updated': ['mywork_projection'],
+  'roi.baseline_frozen': ['mywork_projection'],
 };
 
 /**
