@@ -204,3 +204,63 @@ section and in `RESUME_HANDOFF.md` §5:
   QG-05 remains open per `03_CODEX_QUALITY_BACKLOG.md`).
 
 This file is updated as the program proceeds; do not treat it as final until Program H closes.
+
+---
+
+## UPDATE 2026-08-10 (orchestrator session, HEAD `fc2c177377`)
+
+Everything above this line is left intact as the record of what was true when it
+was written. This section supersedes it where they disagree — and the direction
+of the correction matters: the section above now **understates** the candidate in
+four places, and leaving a stale "NOT VERIFIED" standing is its own form of
+inaccuracy.
+
+### Superseded statements
+
+| Statement above | Now |
+|---|---|
+| "Full root type-check: still NOT VERIFIED (QG-05 remains open)" | **QG-05 CLOSED.** `npm run type-check` exit 0, 0 errors, captured bare rather than through a pipe (`cmd \| tail` returns tail's status). Re-run and re-confirmed after every merge in this session. |
+| "QG-01 open" | **QG-01 RESOLVED** (`4afa10c31b`). See `03_CODEX_QUALITY_BACKLOG.md` for the per-item evidence, including the two defects the implementing stream did not report. |
+| "Four migrations … are UNAPPLIED … Nothing has been run against any database" | **Owner-authorised and applied 2026-08-10** on isolated local ephemeral Postgres only — never demo, never production. Reviewed against four conditions before executing, then proven through `information_schema`/`pg_constraint` rather than the migration runner's report, whose `--safe` mode reports failure as `skipped` with exit 0. Evidence: `13_RUNTIME_GATE_EVIDENCE.md`. |
+| "Runtime verification: NOT VERIFIED for any tool at this or any prior SHA" | **PARTIAL.** E12 server-side enforcement is proven at runtime on a real 1011-table Postgres, and the persistence chain (save → refresh → **cold reopen** → direct-SQL readback) now PASSES for **7 of 8** chains: all four tools plus maturity gates, business case and conversion mapping-version. Both suites were proven falsifiable by sabotage before their green was accepted. |
+
+### Gate board at `fc2c177377`
+
+| Gate | State | Evidence |
+|---|---|---|
+| 1 — full type-check | **PASS** | exit 0 / 0 errors |
+| 2 — QG backlog | QG-01/02/04/05/06 **RESOLVED**; QG-03 **PARTIAL** | `03_CODEX_QUALITY_BACKLOG.md` |
+| 3 — runtime + persistence | **PARTIAL PASS** | `13_RUNTIME_GATE_EVIDENCE.md`; 7/8 chains, one blocked by a product gap (RISK-22), zero browser-surface evidence |
+| 4 — visual + CX + a11y | **NOT VERIFIED** | in flight |
+| E15 — two clean rounds | **NOT STARTED** (round 1 in flight) | — |
+
+### The one finding that changes what E12 means
+
+**RISK-22 (P1).** `my_ideas.confidentiality` can be read and enforced but can
+never be **set**: no HTTP write route exists anywhere, the create route omits the
+column, the update route enumerates nine other fields, `GET` does not select it
+back, and `ideaConfidentiality.ts` exports exactly two functions — both readers.
+Verified by grep, not inferred.
+
+So the E12 protection proven at runtime is **dormant in production**: no Idea can
+reach the `restricted` state that triggers it. A passing security test against a
+state the product cannot produce is a true statement about a situation that never
+occurs. Recorded rather than quietly rounded up into "E12 works".
+
+### Method note — why these numbers should be trusted more than the last set
+
+Nothing in this update comes from a subagent's report. Every claim was re-run by
+the orchestrator, and every green was attacked before it was accepted: the E12
+suite (delete one gate → `expected 404 to be 403`), the persistence suite
+(neuter `edges_json` → `warm refresh (process flow) missing mutateMark`), the
+QG-04 guard (reintroduce the duplicate hex → all 10 tests red), and the QG-01
+guard rule R11 (remove an id, then add an orphan → named failure both ways). Each
+was then reverted and the green confirmed to return. One stream's own sabotage
+came back **vacuous** — omitting a write that a column `DEFAULT` silently
+backfills — and it reported that instead of banking the green; the assertion was
+rewritten (RISK-23).
+
+**Still NOT VERIFIED and not to be claimed:** any evidence on a browser surface;
+the visual/CX and a11y matrices; E15's two clean rounds; full-repo schema
+convergence (broken by both runners — RISK-24). This candidate is **NOT**
+`READY_FOR_CODEX_REVIEW`.
