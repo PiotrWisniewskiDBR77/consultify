@@ -34,6 +34,7 @@
 }
 .proto-bar__label {
   text-transform: uppercase;
+  max-width: 100%;
   letter-spacing: 0.08em;
   padding: 4px 8px;
   background: rgba(0, 0, 0, 0.35);
@@ -53,6 +54,7 @@
 }
 .proto-bar button.is-active { background: #fff; color: #000; }
 .proto-bar .proto-spacer { flex: 1; }
+.proto-bar__switches { display: contents; }
 .proto-bar a.proto-link { color: #fff; text-decoration: underline; font-weight: 600; }
 
 /* ---------- generic pill / chip / badge ---------- */
@@ -185,8 +187,55 @@
   border-bottom: 1px solid var(--c-border-subtle);
   flex: none;
 }
-.underline-tab { height: 40px; display: flex; align-items: center; padding: 0 4px; border-bottom: 2px solid transparent; color: var(--c-text-muted); font-size: 13px; font-weight: 500; cursor: pointer; background: none; border-left: none; border-right: none; border-top: none; margin-right: 20px; }
+.underline-tab { height: 40px; display: flex; align-items: center; padding: 0 4px; border-bottom: 2px solid transparent; color: var(--c-text-muted); font-size: 13px; font-weight: 500; cursor: pointer; background: none; border-left: none; border-right: none; border-top: none; margin-right: 20px; white-space: nowrap; flex: none; }
 .underline-tab.is-active { color: var(--c-text); border-bottom-color: var(--c-focus-solid); }
+
+/* ---------- pasek zakładek ze scrollem (mobile-first afordancja) ----------
+ * 6 zakładek Zlecenia nie mieszczą się przy 320px. Zamiast chować je poza
+ * viewportem: własny kontener scrollowany poziomo + JAWNA afordancja
+ * (gradient krawędziowy + strzałka ‹ ›, sterowane data-overflow z app.js).
+ * Zero ukrytych zakładek — każda osiągalna palcem. */
+.tabscroll { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+.tabscroll__track { display: flex; align-items: center; gap: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; flex: 1 1 auto; min-width: 0; }
+.tabscroll__track::-webkit-scrollbar { height: 3px; }
+.tabscroll__track::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 3px; }
+.tabscroll__track::-webkit-scrollbar-track { background: transparent; }
+.tabscroll__edge {
+  position: absolute; top: 0; bottom: 0; width: 28px; display: none;
+  align-items: center; justify-content: center;
+  font-size: 15px; line-height: 1; color: var(--c-text-secondary);
+  border: none; cursor: pointer; padding: 0; z-index: 3;
+}
+.tabscroll__edge--l { left: 0; background: linear-gradient(to right, var(--c-bg) 55%, transparent); }
+.tabscroll__edge--r { right: 0; background: linear-gradient(to left, var(--c-bg) 55%, transparent); }
+.tabscroll[data-overflow="start"] .tabscroll__edge--r,
+.tabscroll[data-overflow="middle"] .tabscroll__edge--r,
+.tabscroll[data-overflow="middle"] .tabscroll__edge--l,
+.tabscroll[data-overflow="end"] .tabscroll__edge--l { display: flex; }
+
+/* ---------- graf: viewport + zoom/fit (SPEC-A Archetyp A, wariant statyczny) ----------
+ * Wybór: kontener ze scrollem + CSS transform scale (patrz DECISIONS pkt 1).
+ * Sizer trzyma PRZESKALOWANY rozmiar, więc scrollWidth nie zostaje "na zapas"
+ * po zmniejszeniu — bez tego fit-to-view zostawiał martwy pas z prawej. */
+.graph-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.graph-toolbar__scale { font-size: 11px; color: var(--c-text-muted); font-variant-numeric: tabular-nums; min-width: 42px; text-align: center; }
+.graph-toolbar__hint { font-size: 11px; color: var(--c-text-muted); margin-left: auto; }
+.graph-viewport {
+  position: relative;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  max-height: 62vh;
+}
+.graph-viewport::-webkit-scrollbar { height: 8px; width: 8px; }
+.graph-viewport::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 8px; }
+.graph-viewport::-webkit-scrollbar-track { background: var(--c-surface-raised); border-radius: 8px; }
+.graph-sizer { position: relative; }
+.graph-stage { transform-origin: 0 0; width: max-content; }
 
 /* Menu 3 — dynamic command row */
 .menu3 {
@@ -201,7 +250,7 @@
   flex: none;
 }
 .menu3-artifact { padding: 8px 16px; }
-.menu3__search { display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: var(--radius-pill); border: 1px solid var(--c-border); color: var(--c-text-muted); font-size: 12px; width: 220px; }
+.menu3__search { white-space: nowrap; flex: none; display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: var(--radius-pill); border: 1px solid var(--c-border); color: var(--c-text-muted); font-size: 12px; width: 220px; }
 .menu3__right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: var(--radius-pill); border: 1px solid var(--c-border); font-size: 11px; color: var(--c-text-secondary); background: transparent; cursor: pointer; white-space: nowrap; }
 .chip.is-active { border-color: var(--c-border-strong); background: rgba(148, 163, 184, 0.12); color: var(--c-text); }
@@ -245,18 +294,21 @@ table.std-table td.empty-cell { color: var(--c-text-muted); }
 .table-toolbar { display: flex; align-items: center; justify-content: flex-end; padding: 6px 24px; }
 
 /* ---------- preview pane (SPEC-L §14.5 / MY_WORK_TABLE_SURFACE_CONTRACT §6) ---------- */
+/* DIETA (runda 2, uwaga #4): panel podglądu był PODNIESIONĄ powierzchnią, na
+ * której leżały jeszcze ramkowane karty — czyli pudełko w pudełku. Panel
+ * schodzi do tła strony, więc zostaje JEDEN poziom pudełka (karta). */
 .preview-pane {
   width: clamp(340px, 28%, 480px);
   flex: none;
-  background: var(--c-surface-raised);
+  background: var(--c-bg);
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow-y: auto;
   border-left: 1px solid var(--c-border-subtle);
 }
-.pv-card { background: var(--c-surface); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-md); padding: 12px; }
+.pv-card { background: var(--c-surface); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-md); padding: 10px 12px; }
 .pv-header { display: flex; align-items: center; gap: 8px; }
 .pv-header__title { font-size: 14px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pv-icon-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid transparent; background: transparent; color: var(--c-text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
@@ -295,8 +347,11 @@ table.std-table td.empty-cell { color: var(--c-text-muted); }
 .acc-section.is-open .acc-chevron { transform: rotate(180deg); }
 .acc-body { padding: 0 16px 16px; display: none; }
 .acc-section.is-open .acc-body { display: block; }
-.acc-actions { display: flex; flex-direction: column; gap: 8px; }
-.acc-actions .pill { justify-content: flex-start; width: 100%; }
+/* DIETA (runda 2, uwaga #4): trzy pełnowymiarowe, pełnej szerokości pigułki
+ * ustawione w stos = trzy pudełka na 124 px wysokości. Zwijamy je w jeden
+ * zawijany rząd kompaktowych pigułek — ta sama treść, ~1/3 wysokości. */
+.acc-actions { display: flex; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+.acc-actions .pill { justify-content: center; width: auto; height: 30px; padding: 0 10px; font-size: 12px; }
 
 /* ---------- centre content (artefakt) ---------- */
 .center-pad { padding: 24px; flex: 1; overflow-y: auto; }
@@ -310,17 +365,25 @@ table.std-table td.empty-cell { color: var(--c-text-muted); }
 .lifecycle--failed { color: var(--c-danger-text); border-color: color-mix(in srgb, var(--c-danger) 55%, var(--c-border)); background: color-mix(in srgb, var(--c-danger) 12%, transparent); }
 .lifecycle--cancelled { color: var(--c-text-muted); border-color: var(--c-border); }
 
-/* ---------- cards / sections generic ---------- */
-.card { background: var(--c-surface); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-md); padding: 16px; }
-.card + .card { margin-top: 12px; }
-.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-text-muted); margin: 0 0 10px; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.closure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+/* ---------- cards / sections generic ----------
+ * DIETA WIZUALNA (runda 2): karta = JEDNA ramka. Wszystko zagnieżdżone w karcie
+ * odróżnia się subtelnym tłem (--c-surface-raised), nigdy drugą/trzecią ramką.
+ * Padding ścieśniony 16 -> 12/14 bez usuwania treści. */
+.card { background: var(--c-surface); border: 1px solid var(--c-border-subtle); border-radius: var(--radius-md); padding: 12px 14px; }
+.card + .card { margin-top: 10px; }
+.section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--c-text-muted); margin: 0 0 8px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.closure-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 @media (max-width: 640px) { .closure-grid { grid-template-columns: repeat(2, 1fr); } }
 
-/* progress bar */
-.progress-track { height: 8px; border-radius: var(--radius-pill); background: var(--c-surface-raised); overflow: hidden; border: 1px solid var(--c-border-subtle); }
+/* Zagnieżdżona powierzchnia — zamiast kolejnej ramki (patrz DECISIONS pkt 4). */
+.nest { background: var(--c-surface-raised); border: 1px solid transparent; border-radius: var(--radius-sm); }
+:root[data-theme="light"] .nest { background: rgba(15, 23, 42, 0.035); }
+
+/* progress bar — bez własnej ramki wewnątrz karty (dieta) */
+.progress-track { height: 6px; border-radius: var(--radius-pill); background: var(--c-surface-raised); overflow: hidden; }
+:root[data-theme="light"] .progress-track { background: rgba(15, 23, 42, 0.08); }
 .progress-fill { height: 100%; background: var(--c-info); border-radius: var(--radius-pill); }
 .progress-fill.is-blocked { background: var(--c-danger); }
 
@@ -361,6 +424,22 @@ table.std-table td.empty-cell { color: var(--c-text-muted); }
 /* toast */
 .toast { position: fixed; bottom: 20px; right: 20px; z-index: 200; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 10px 14px; font-size: 12px; box-shadow: var(--shadow-card-hover); display: flex; align-items: center; gap: 8px; }
 
+/* ---------- pasek powrotu w preview na mobile ----------
+ * Preview na telefonie zajmuje cały ekran, więc MUSI mieć własny, zawsze
+ * widoczny (sticky) powrót do listy — nie polegamy na "wstecz" przeglądarki. */
+.pv-mobile-back { display: none; }
+@media (max-width: 768px) {
+  .pv-mobile-back {
+    display: flex; align-items: center; gap: 8px;
+    position: sticky; top: 0; z-index: 5;
+    margin: 0; padding: 8px 12px;
+    background: var(--c-surface); border-bottom: 1px solid var(--c-border-subtle);
+  }
+  /* preview-pane ma własny padding 12 — pasek ma sięgać krawędzi */
+  .preview-pane .pv-mobile-back { margin: -12px -12px 0; }
+  .pv-mobile-back__ctx { font-size: 11px; color: var(--c-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
 /* ---------- responsive (§19.1) ---------- */
 @media (max-width: 1280px) {
   .right-panel { position: absolute; right: 0; top: 0; bottom: 0; z-index: 50; transform: translateX(100%); transition: transform 200ms var(--ease-standard); box-shadow: -8px 0 24px rgba(0,0,0,0.25); }
@@ -371,18 +450,128 @@ table.std-table td.empty-cell { color: var(--c-text-muted); }
   .body-row.preview-closed .preview-pane { display: none; }
 }
 @media (max-width: 768px) {
-  .menu2, .menu3 { padding-left: 16px; padding-right: 16px; overflow-x: auto; }
-  .menu1, .menu1-artifact { padding-left: 16px; padding-right: 16px; }
-  .center-pad { padding: 16px; }
+  /* nic z chrome'u nie może wypchnąć strony w poziomie — szeroka treść
+     (graf, tabela) scrolluje we WŁASNYM kontenerze, nigdy w <body>. */
+  .app-frame { overflow-x: clip; }
+  /* Menu 2 modułu ZAWIJA się (a nie chowa CTA „+ Nowe zlecenie" w niewidocznym
+     scrollu) — podstawowa akcja musi zostać w viewporcie. */
+  .menu2 { height: auto; min-height: 44px; flex-wrap: wrap; row-gap: 8px; padding: 8px 12px; }
+  .menu2__right { margin-left: 0; width: 100%; }
+  .menu2__right .pill--primary { flex: 1 1 auto; justify-content: center; }
+  /* Menu 3 (chipy filtrów) scrolluje poziomo, ale z WIDOCZNYM paskiem. */
+  .menu3 { padding-left: 12px; padding-right: 12px; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; scrollbar-width: thin; padding-bottom: 10px; }
+  .menu3::-webkit-scrollbar { height: 4px; }
+  .menu3::-webkit-scrollbar-thumb { background: var(--c-border-strong); border-radius: 4px; }
+  .menu3__right { margin-left: 8px; flex-wrap: nowrap; }
+  .menu1, .menu1-artifact { padding-left: 12px; padding-right: 12px; gap: 8px; }
+  .menu2-artifact { padding-left: 12px; padding-right: 12px; }
+  /* tylko wiersz podzakładek Planu zawija meta (Plan v3 · digest) pod taby */
+  .menu2-artifact--meta { height: auto; flex-wrap: wrap; row-gap: 2px; }
+  .menu2-artifact--meta .menu3__right { width: 100%; margin-left: 0 !important; padding: 0 0 6px !important; justify-content: flex-start; }
+  .underline-tab { margin-right: 14px; font-size: 13px; }
+  .center-pad { padding: 12px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
+
+  /* ---- STOS KART zamiast tabeli: KAŻDA komórka niesie własną etykietę ----
+     Wymóg właściciela: w wierszu Planu Lista widoczne wszystkie 5 pól
+     (kolejność, status, wykonawca, wynik, następne działanie). */
   table.std-table thead { display: none; }
   table.std-table, table.std-table tbody, table.std-table tr, table.std-table td { display: block; width: 100%; }
-  table.std-table tr { border-bottom: 1px solid var(--c-border-subtle); padding: 10px 12px; }
-  table.std-table td { border-bottom: none; padding: 2px 0; }
+  table.std-table tr {
+    border: 1px solid var(--c-border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--c-surface);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+  table.std-table tbody tr:hover td { background: transparent; }
+  /* zaznaczenie na karcie = obwódka, nie kafelkowanie tła każdej komórki */
+  table.std-table tbody tr.is-selected td { background: transparent; }
+  table.std-table tbody tr.is-selected { border-color: var(--c-focus-solid); box-shadow: inset 0 0 0 1px var(--c-focus-solid); }
+  /* Karta wiersza = SIATKA 2-kolumnowa (dieta wysokości): 9 pełnowymiarowych
+     wierszy zamieniamy na tytuł + 3–4 pary etykieta/wartość. Nic nie ginie. */
+  table.std-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; position: relative; }
+  /* UWAGA specyficzności (defekt znaleziony w rundzie 2): reguła bazowa to
+     `table.std-table tbody td` (3 elementy) — selektor `table.std-table td`
+     (2 elementy) JEJ NIE NADPISUJE. Efekt: komórki karty zachowywały desktopowy
+     `padding:10px 12px` + `border-bottom`, przez co karta na telefonie rosła
+     ~2× i dostawała siatkę kresek. Stąd `tbody` w selektorze poniżej. */
+  table.std-table tbody td { border-bottom: none; padding: 0; display: flex; flex-direction: column; gap: 0; text-align: left; min-width: 0; line-height: 1.35; }
+  table.std-table tbody td.num { text-align: left; }
+  table.std-table tbody td[data-th]::before {
+    content: attr(data-th);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+  /* tytuł (nazwa zlecenia / węzła) = nagłówek karty, pełna szerokość, na górze */
+  table.std-table tbody td[data-th-title] { grid-column: 1 / -1; order: -1; padding-right: 34px; }
+  table.std-table tbody td[data-th-title]::before { display: none; }
+  /* długie zdania (np. „Następne działanie") dostają pełną szerokość */
+  table.std-table tbody td[data-th-wide] { grid-column: 1 / -1; }
+  /* zaznaczanie zbiorcze = afordancja desktopu; na telefonie wiersz otwiera dotyk */
+  table.std-table tbody td[data-bulk-cell] { display: none; }
+  /* kebab przypięty do prawego górnego rogu karty, nie jako osobny wiersz */
+  table.std-table tbody td[data-kebab-cell] { position: absolute; top: 4px; right: 4px; left: auto; width: auto; padding: 0; }
+  table.std-table tbody td:empty { display: none; }
+
   .preview-pane { width: 100vw; max-width: none; }
   .right-panel { width: 100vw; }
   .menu1-artifact__saved { display: none; }
-  .menu1-artifact__right [data-panel-toggle] { display: none; }
+  /* Panel WŁAŚCIWOŚCI musi zostać osiągalny na telefonie — przełącznik
+     zwężamy do ikony, ale NIE chowamy (poprzednio display:none = panel
+     nieosiągalny, bo sam panel jest przesunięty poza ekran). */
+  .menu1-artifact__right [data-panel-toggle] { width: 32px; padding: 0; justify-content: center; font-size: 13px; }
+  .menu1-artifact__right [data-panel-toggle] .pill-label { display: none; }
   .menu1-artifact__right .pill { padding: 0 10px; font-size: 12px; }
   .menu1-artifact__divider { display: none; }
+  .menu1-artifact__title { font-size: 12px; }
+  /* pasek przewijania grafu ZAWSZE widoczny na mobile = jawna afordancja */
+  .graph-viewport { max-height: 56vh; padding: 8px; overflow-x: scroll; }
+  .graph-toolbar__hint { display: none; }
+  .graph-toolbar { margin-left: 0; }
+  .state-banner { padding: 10px; }
+  .card { padding: 10px 12px; }
+  /* Pasek deweloperski prototypu zjadał pół ekranu telefonu. Na mobile
+     zostaje sam znacznik + motyw; stan/zakładkę ustawia się parametrem URL
+     (?state=&tab=&view=) — to chrome prototypu, nie element projektu. */
+  .proto-bar { padding: 6px 10px; gap: 6px; }
+  .proto-bar__switches { display: none; }
+}
+
+/* 430 / 375 / 320 — najciaśniejsze telefony */
+@media (max-width: 430px) {
+  .menu1__meta { display: none; }
+  .menu1-artifact__icon { display: none; }
+  .menu1-artifact { gap: 6px; }
+  .menu1-artifact__left { gap: 6px; }
+  .menu1-artifact__title { min-width: 72px; }
+  /* Menu 1 artefaktu ŁAMIE SIĘ na dwa wiersze zamiast ucinać chip statusu:
+     wiersz 1 = powrót + nazwa + status, wiersz 2 = akcje. Nic nie znika. */
+  .menu1-artifact { height: auto; flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; row-gap: 6px; }
+  .menu1-artifact__left { flex: 1 1 100%; overflow: visible; flex-wrap: wrap; row-gap: 4px; }
+  .menu1-artifact__right { flex: 1 1 100%; }
+  .menu1-artifact__right .pill--primary,
+  .menu1-artifact__right .pill--warning { flex: 1 1 auto; justify-content: center; }
+  .menu3__search { width: 150px; }
+  .pill { height: 32px; font-size: 12px; }
+  .pill--sm { height: 26px; }
+  /* WYJĄTEK od diety: sterowanie NAWIGACYJNE (powrót do listy, powrót ze
+     zdjętego preview/panelu) musi zostać trafialne palcem — 26 px to za mało.
+     Dotyczy wyłącznie powrotów, nie wszystkich małych pigułek. */
+  .pv-mobile-back .pill--sm,
+  .menu1-artifact__left .pill--sm,
+  .rtc-bar .pill--sm { height: 32px; padding: 0 12px; font-size: 12px; }
+}
+@media (max-width: 360px) {
+  .menu1-artifact__right .pill { font-size: 11px; padding: 0 8px; }
+  .menu3__search { width: 120px; }
+  .lifecycle { padding: 0 8px; }
+}
+
+/* Pasek deweloperski prototypu nie może rozpychać dokumentu na wąskim ekranie. */
+@media (max-width: 640px) {
+  .proto-bar__label { white-space: normal; }
 }

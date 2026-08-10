@@ -96,6 +96,10 @@ a { color: inherit; }
 
 ::selection { background: var(--c-focus); }
 
+/* Długie tokeny techniczne (digest sha256:…, node_result_acceptance,
+   „Prosty/Ekspercki/Lista") nie mogą rozpychać dokumentu na 320px. */
+.l1, .l2, .l3, .l4, .l5 { overflow-wrap: break-word; }
+
 /* Typography scale — TRIADA C7 */
 .l1 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; color: var(--c-text-muted); }
 .l2 { font-size: 13px; font-weight: 600; color: var(--c-text); }

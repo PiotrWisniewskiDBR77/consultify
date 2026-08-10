@@ -19,6 +19,7 @@
   <span>Motyw:</span>
   <button data-proto-theme-btn="light">Light</button>
   <button data-proto-theme-btn="dark">Dark</button>
+  <div class="proto-bar__switches">
   <span style="width:1px;height:16px;background:rgba(255,255,255,.4)"></span>
   <span>Stan:</span>
   <button data-proto-state-btn="default">Domyślny</button>
@@ -28,6 +29,7 @@
   <button data-proto-state-btn="stale">Nieaktualne</button>
   <button data-proto-state-btn="partial">Częściowe</button>
   <button data-proto-state-btn="blocked">Zablokowane</button>
+  </div>
 </div>
 
 <div class="app-frame">
@@ -155,94 +157,94 @@
             </thead>
             <tbody id="case-rows">
               <tr data-row-select="case-1" class="is-selected" data-row-class="default,stale,partial">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Redukcja kosztów operacyjnych — Fabryka Wrocław</div>
                   <div class="row-sub">CASE-2026-0142 · <span data-i18n="profile_transformation" data-i18n-upper>TRANSFORMACJA</span></div>
                 </td>
-                <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
-                <td class="l4" data-i18n="profile_transformation">Transformacja</td>
-                <td class="l4" data-i18n="gov_standard">Standardowy</td>
-                <td class="l4">Plan v3 · <span data-i18n="plan_status_published">Opublikowany</span></td>
-                <td class="num">64%</td>
-                <td><span class="row-avatar">MK</span></td>
-                <td class="l4">2 godz. temu</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_transformation">Transformacja</td>
+                <td class="l4" data-th="Nadzór" data-i18n="gov_standard">Standardowy</td>
+                <td class="l4" data-th="Plan">Plan v3 · <span data-i18n="plan_status_published">Opublikowany</span></td>
+                <td class="num" data-th="Postęp">64%</td>
+                <td data-th="Sponsor"><span class="row-avatar">MK</span></td>
+                <td class="l4" data-th="Zaktualizowano">2 godz. temu</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
               <tr data-row-select="case-2" data-row-class="default,stale,partial,blocked">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Wdrożenie modelu cenowego SaaS</div>
                   <div class="row-sub">CASE-2026-0139 · <span data-i18n="profile_standard" data-i18n-upper>STANDARDOWY</span></div>
                 </td>
-                <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
-                <td class="l4" data-i18n="profile_standard">Standardowy</td>
-                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
-                <td class="l4">Plan v2 · <span data-i18n="plan_status_published">Opublikowany</span></td>
-                <td class="num">38%</td>
-                <td><span class="row-avatar">AS</span></td>
-                <td class="l4">wczoraj</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_standard">Standardowy</td>
+                <td class="l4" data-th="Nadzór" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4" data-th="Plan">Plan v2 · <span data-i18n="plan_status_published">Opublikowany</span></td>
+                <td class="num" data-th="Postęp">38%</td>
+                <td data-th="Sponsor"><span class="row-avatar">AS</span></td>
+                <td class="l4" data-th="Zaktualizowano">wczoraj</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
               <tr data-row-select="case-3" data-row-class="default,stale">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Audyt zgodności RODO — Grupa Kapitałowa</div>
                   <div class="row-sub">CASE-2026-0137 · <span data-i18n="profile_standard" data-i18n-upper>STANDARDOWY</span></div>
                 </td>
-                <td><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Zamknięte</span></td>
-                <td class="l4" data-i18n="profile_standard">Standardowy</td>
-                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
-                <td class="l4">Plan v1 · <span data-i18n="plan_status_superseded">Zastąpiony</span></td>
-                <td class="num">100%</td>
-                <td><span class="row-avatar">JN</span></td>
-                <td class="l4">4 dni temu</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--success"><span class="status-chip__dot"></span>Zamknięte</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_standard">Standardowy</td>
+                <td class="l4" data-th="Nadzór" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4" data-th="Plan">Plan v1 · <span data-i18n="plan_status_superseded">Zastąpiony</span></td>
+                <td class="num" data-th="Postęp">100%</td>
+                <td data-th="Sponsor"><span class="row-avatar">JN</span></td>
+                <td class="l4" data-th="Zaktualizowano">4 dni temu</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
               <tr data-row-select="case-4" data-row-class="default,stale">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Strategia wejścia na rynek DACH</div>
                   <div class="row-sub">CASE-2026-0145 · <span data-i18n="profile_light" data-i18n-upper>LEKKI</span></div>
                 </td>
-                <td><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Wersja robocza</span></td>
-                <td class="l4" data-i18n="profile_light">Lekki</td>
-                <td class="l4" data-i18n="gov_lightweight">Lekki</td>
-                <td class="l4 empty-cell">—</td>
-                <td class="num empty-cell">—</td>
-                <td><span class="row-avatar">PW</span></td>
-                <td class="l4">15 min temu</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--neutral"><span class="status-chip__dot"></span>Wersja robocza</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_light">Lekki</td>
+                <td class="l4" data-th="Nadzór" data-i18n="gov_lightweight">Lekki</td>
+                <td class="l4 empty-cell" data-th="Plan">—</td>
+                <td class="num empty-cell" data-th="Postęp">—</td>
+                <td data-th="Sponsor"><span class="row-avatar">PW</span></td>
+                <td class="l4" data-th="Zaktualizowano">15 min temu</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
               <tr data-row-select="case-5" data-row-class="default,stale,partial">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Monitoring wdrożenia systemu WMS</div>
                   <div class="row-sub">CASE-2026-0098 · <span data-i18n="profile_monitoring" data-i18n-upper>MONITORING</span></div>
                 </td>
-                <td><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
-                <td class="l4" data-i18n="profile_monitoring">Monitoring</td>
-                <td class="l4 empty-cell" data-partial-blank>—</td>
-                <td class="l4 empty-cell" data-partial-blank>—</td>
-                <td class="num">n/d</td>
-                <td><span class="row-avatar">MK</span></td>
-                <td class="l4">3 godz. temu</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--info"><span class="status-chip__dot"></span>Aktywne</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_monitoring">Monitoring</td>
+                <td class="l4 empty-cell" data-th="Nadzór" data-partial-blank>—</td>
+                <td class="l4 empty-cell" data-th="Plan" data-partial-blank>—</td>
+                <td class="num" data-th="Postęp">n/d</td>
+                <td data-th="Sponsor"><span class="row-avatar">MK</span></td>
+                <td class="l4" data-th="Zaktualizowano">3 godz. temu</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
               <tr data-row-select="case-6" data-row-class="default,stale,blocked">
-                <td><input type="checkbox" data-no-select /></td>
-                <td>
+                <td data-no-select data-bulk-cell><input type="checkbox" /></td>
+                <td data-th="Zlecenie" data-th-title>
                   <div class="row-title">Restrukturyzacja łańcucha dostaw EMEA</div>
                   <div class="row-sub">CASE-2026-0151 · <span data-i18n="profile_transformation" data-i18n-upper>TRANSFORMACJA</span></div>
                 </td>
-                <td><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
-                <td class="l4" data-i18n="profile_transformation">Transformacja</td>
-                <td class="l4" data-i18n="gov_controlled">Kontrolowany</td>
-                <td class="l4">Plan v1 · <span data-i18n="plan_status_in_review">W przeglądzie</span></td>
-                <td class="num">12%</td>
-                <td><span class="row-avatar">AS</span></td>
-                <td class="l4">6 godz. temu</td>
-                <td data-no-select><button class="kebab-btn">⋮</button></td>
+                <td data-th="Status"><span class="status-chip status-chip--danger"><span class="status-chip__dot"></span>Zablokowane</span></td>
+                <td class="l4" data-th="Profil" data-i18n="profile_transformation">Transformacja</td>
+                <td class="l4" data-th="Nadzór" data-i18n="gov_controlled">Kontrolowany</td>
+                <td class="l4" data-th="Plan">Plan v1 · <span data-i18n="plan_status_in_review">W przeglądzie</span></td>
+                <td class="num" data-th="Postęp">12%</td>
+                <td data-th="Sponsor"><span class="row-avatar">AS</span></td>
+                <td class="l4" data-th="Zaktualizowano">6 godz. temu</td>
+                <td data-no-select data-kebab-cell><button class="kebab-btn">⋮</button></td>
               </tr>
             </tbody>
           </table>
@@ -253,11 +255,15 @@
     <!-- PREVIEW PANE -->
     <div class="preview-pane" id="preview-pane">
       <div data-preview-for="case-1" class="pv-set">
+        <div class="pv-mobile-back">
+          <button class="pill pill--sm pill--neutral" data-preview-close>← Wróć do listy</button>
+          <span class="pv-mobile-back__ctx">Podgląd zlecenia</span>
+        </div>
         <div class="pv-card pv-header">
           <div class="pv-header__title">Redukcja kosztów operacyjnych — Fabryka Wrocław</div>
           <button class="pv-icon-btn" title="Przypnij">📌</button>
           <button class="pv-open-btn" onclick="location.href='zlecenie.html?case=case-1'">Otwórz ↗</button>
-          <button class="pv-icon-btn" title="Zamknij">✕</button>
+          <button class="pv-icon-btn" title="Zamknij" data-preview-close>✕</button>
         </div>
         <div class="pv-card">
           <div class="pv-meta-row">
@@ -305,11 +311,15 @@
       </div>
 
       <div data-preview-for="case-2" class="pv-set" style="display:none;">
+        <div class="pv-mobile-back">
+          <button class="pill pill--sm pill--neutral" data-preview-close>← Wróć do listy</button>
+          <span class="pv-mobile-back__ctx">Podgląd zlecenia</span>
+        </div>
         <div class="pv-card pv-header">
           <div class="pv-header__title">Wdrożenie modelu cenowego SaaS</div>
           <button class="pv-icon-btn">📌</button>
           <button class="pv-open-btn" onclick="location.href='zlecenie.html?case=case-2&amp;state=blocked'">Otwórz ↗</button>
-          <button class="pv-icon-btn">✕</button>
+          <button class="pv-icon-btn" title="Zamknij" data-preview-close>✕</button>
         </div>
         <div class="pv-card">
           <div class="pv-meta-row">
