@@ -52,7 +52,43 @@ na tej samej efemerycznej bazie — wynik bajt-identyczny, zero regresji.
 | Command/query/API | `POST /api/vnext/results/okr/sets` | `GET .../sets?perspective=&cycle=&scope=`, `GET .../okr/company` | `POST .../sets/:id/submit`, `/request-changes`, `/approve` | `POST .../sets/:id/request-revision` | `PATCH .../sets/:id/draft` |
 | Schema/migration/constraint | `okr_vnext_sets` (unique constraint) | `okr_vnext_sets`, `okr_vnext_set_versions` | `okr_vnext_approved_snapshots` | `okr_vnext_set_versions` (bez nadpisania approved) | `okr_vnext_visibility_policies` |
 | Roles/visibility | Set Owner (create) | wg scope (D10) | Set Owner (submit), Manager (approve) — maker-checker | Set Owner, Manager | Program Admin (policy), Set Owner (narrow) |
-| Status | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED | NOT_IMPLEMENTED |
+| Status | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED | IMPLEMENTED |
+
+**IMPLEMENTED 2026-08-10** (agent tej sesji, EXECUTION_LEDGER.md §41).
+Zbudowane dosłownie wg `OKR_E002_DESIGN.md` §3-§7, po standing
+re-verification E001's landed code (zero rozjazdów znalezionych):
+migracja `20260823_rvn_okr_set.sql` (3 tabele `okr_vnext_sets`/
+`okr_vnext_approved_snapshots`/`okr_vnext_set_versions`, Decyzja D1 ABAC
++ D3 partial unique index z `cancelled`-zwalnia/`closed`-nie-zwalnia),
+`server/src/services/resultsVnext/okr/okrSetCommands.ts` +
+`okrSetMaterialChangeCommands.ts` + `okrSetRepository.ts` (10 komend +
+4 funkcje repozytorium, wszystkie z bezpośrednim testem na realnym
+Postgresie), 14 nowych endpointów `/api/vnext/results/okr/*`. Sety to
+PIERWSZY prawdziwy writer `resource_type='okr_set'` w tym repo — ABAC
+przez `buildVisibilityScopedCte`/`wrapWithVisibilityScope`, `::text`
+cast na każdym joinie. `narrowOkrSetVisibility` (D19) i local narrowing-
+only enforcement (D12) budowane od zera — platforma nie miała żadnej
+egzekwującej logiki mimo kolumny `allow_narrowing_only`. 65 nowych
+testów, wszystkie PASS na efemerycznym Postgresie 17 — literalny dowód
+D3 (cancelled zwalnia slot / closed nie), F-005-AC-01 self-approval
+denial obie gałęzie, **literalny dowód F-005-AC-02** (approved snapshot
+bajt-identyczny po material change), pełna macierz rank narrowing (25
+par), `::text` cast na wszystkich 3 nowych tabelach. `tsc --noEmit`
+czysty (weryfikowany wielokrotnie w trakcie budowy). Pełne suity
+KPI+ROI+OKR-E001 (72→78 plików) zweryfikowane before/after na tej samej
+efemerycznej bazie (osobny `git worktree` na commicie sprzed tego
+epiku vs HEAD) — identyczna liczba pre-existing failures (35/35),
+distinct failing-test-identifier set w "after" jest ścisłym podzbiorem
+"before" — zero nowych regresji, dowiedzione nie zadeklarowane.
+
+**Dwie luki designu restated explicite (nie ciche)**: D13 —
+`resolveScopeVisibility`/`buildVisibilityScopedCte`'s SCOPE branch
+obsługuje tylko `scope_type='team'`; pod polityką `SCOPE`, Sety
+company/business_unit/individual failują `OUT_OF_SCOPE` (platform-layer
+gap, poza zakresem plików tego epiku, nie bloker dla domyślnego
+`OPEN_ORG`). D17 — kolumny `recommit_status`/`recommit_by`/`recommit_at`
+na `okr_vnext_set_versions` zarezerwowane, ale recommit workflow
+niezbudowany i bez właściciela.
 
 ### OKR-E003 Objectives & KRs
 

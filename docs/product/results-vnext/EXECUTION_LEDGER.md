@@ -3701,3 +3701,241 @@ polityka (design §2/§11, plan §20 EVIDENCE_NEEDED #3 wciąż otwarte).
 **Domena OKR: 1/8 epików zbudowanych. OKR-E002 Materialized Set
 następny.**
 
+## 41. OKR-E002 Materialized Set — implementacja + odbiór (2026-08-10)
+
+**Drugi epik domeny OKR, buduje na OKR-E001 (Program & Cycle).** Design
+doc (`OKR_E002_DESIGN.md`) niósł własny standing re-verification
+requirement — powstał w trakcie budowy E001. Zre-weryfikowano dosłownie
+przed implementacją: `okr_vnext_programs`/`okr_vnext_cycles` nazwy i typy
+kolumn, `runOkrCycleLifecycleTransition`'s sygnatura,
+`OkrCycleValidationError`'s kształt, `publishVisibilityPolicy`/
+`getActiveVisibilityPolicy` finalna sygnatura, `resolveScopeVisibility`'s
+realny SCOPE-mode gap. **Zero rozjazdów znalezionych** — E001 wylądował
+DOKŁADNIE jak design zakładał; jedyna literalna zmiana wymagana przez
+re-weryfikację to potwierdzenie, że `'okr_set.published'` nie miał
+jeszcze żadnego callera (grep-confirmed) przed tym epikiem.
+
+**Schema** (`server/migrations/20260823_rvn_okr_set.sql`) — 3 tabele:
+`okr_vnext_sets` (root aggregate #3, Decyzja D1: ABAC, ŻADNEJ kolumny
+`visibility_mode`/`visibility_policy_id` — visibility żyje wyłącznie w
+platformowym `rvn_platform_resource_visibility`/`rvn_platform_resource_acl`,
+dokładnie jak KPI/ROI), `okr_vnext_approved_snapshots` (immutable,
+`REVOKE UPDATE, DELETE`, jeden wiersz per approval, D5/D8), `okr_vnext_set_versions`
+(append-only OKRMaterialChange, `REVOKE UPDATE, DELETE`, kolumny
+`recommit_status`/`recommit_by`/`recommit_at` zarezerwowane NIEUŻYWANE —
+D17, workflow recommitu niezbudowany i bez właściciela, stan jawny nie
+cichy). Partial unique index D3:
+`(organization_id, program_id, cycle_id, scope_type, scope_id, owner_user_id)
+WHERE status <> 'cancelled'` — `cancelled` zwalnia slot, `closed`
+CELOWO NIE (zweryfikowane bezpośrednio realnym Postgresem, patrz testy
+niżej). Migracja zweryfikowana idempotentna (dwa uruchomienia, drugie
+same `NOTICE...skipping`) na efemerycznym Postgresie 17 niosącym pełny
+łańcuch migracji przez OKR-E001.
+
+**Warstwa domenowa** (`server/src/services/resultsVnext/okr/`):
+`okrSetTypes.ts`/`okrSetApprovedSnapshotTypes.ts` (Row/DTO), `okrSetCommands.ts` —
+`createOkrSet` (fail-closed brak aktywnej polityki widoczności domain='okr',
+dwuetapowy lookup identyczny jak `createKpiDraft`/`createRoiCase`; D3
+duplicate-prevention: SAVEPOINT pattern skopiowany DOSŁOWNIE z
+`createRoiCase` — tania pre-check SELECT dla ścieżki nie-wyścigowej, SAVEPOINT
+wokół kandydackiego INSERT-u dla wyścigu, catch `23505`, `ROLLBACK TO SAVEPOINT`,
+retry-SELECT zwraca zwycięzcę z `created:false`; naiwny catch-then-retry
+BEZ SAVEPOINT-u pada `25P02` — błąd już raz złapany w tym programie,
+zbudowany od razu poprawnie), `updateOkrSetDraft` (CAS, tylko
+`draft`/`changes_requested`), `narrowOkrSetVisibility` (D19: osobna,
+WĄŻSZA komenda dozwolona też w `active` — narrowing jest z konstrukcji
+bezpieczny; D12: `VISIBILITY_NARROWNESS_RANK`/`isVisibilityModeNarrowerOrEqual`
+zbudowane LOKALNIE, bo platformowe `allow_narrowing_only` nie ma ŻADNEGO
+kodu egzekwującego nigdzie w repo — grep-confirmed, ten epik jest
+pierwszym prawdziwym callerem narrowing-only), `isOkrSetReadyForSubmissionEligible`
+(D7 stub — sprawdza tylko `reviewer_user_id IS NOT NULL`, eksportowany do
+owinięcia przez OKR-E003, NIE zastąpienia) + `submitOkrSetForApproval`,
+`buildOkrSetApprovalSnapshotPayload` (D8 — `{set, objectives:[]}`, pusta
+tablica placeholder, punkt rozszerzenia dla E003) + `approveOkrSet`
+(self-approval denial `submitted_by` PRZED `created_by`, PRZED
+jakimkolwiek zapisem — D10/D11, własna klasa błędu
+`OkrSetSelfApprovalDeniedError`, nie reużyta z KPI/ROI), `requestChangesOnOkrSet`
+(bez self-approval check, jak `rejectRoiCase`), `runOkrSetLifecycleTransition`
++ `OKR_SET_ACTIVATE_SPEC`/`OKR_SET_CANCEL_SPEC` (D9: `activate` REPURPOSES
+istniejący placeholder `okr_set.published` zamiast dodawać duplikat
+klucza; D15: `cancel` to świadomy dodatek, jak `okr_cycle.cancel` w E001).
+`okrSetMaterialChangeCommands.ts` — `recordOkrSetMaterialChange`
+(F-005-AC-02: guard `status='active'`, wersjonuje `title`/`owner_user_id`/
+`reviewer_user_id`, bumpuje `current_version` NIEZALEŻNIE od CAS
+`row_version`, NIGDY nie dotyka `okr_vnext_approved_snapshots` — dowiedzione
+bezpośrednio testem, patrz niżej). `okrSetRepository.ts` — celowo NIE
+rozszerzenie `okrRepository.ts` (ten ma plain `organization_id` scoping,
+Program/Cycle nie mają ABAC per E001 P2) — Sety potrzebują prawdziwego
+ABAC, więc własny plik, mirror `roiRepository.ts` vs
+`roiEconomicModelRepository.ts` split. WSZYSTKIE odczyty przez
+`buildVisibilityScopedCte`/`wrapWithVisibilityScope({resourceType:'okr_set'})`,
+`::text` cast na KAŻDYM joinie przeciw `set_id` — ten epik jest PIERWSZYM
+prawdziwym writerem `resource_type='okr_set'` w całym repo.
+
+**14 nowych tras** (`okr.routes.ts`, rozszerzony) — Sety to zasoby ABAC
+(w przeciwieństwie do RBAC Program/Cycle z E001): trasy zapisu NIE mają
+`requireOrgRole` — zweryfikowany precedens: ani `roi.routes.ts` ani
+`kpi.routes.ts` nie wołają `requireOrgRole`/`resolveVisibility()` na
+poziomie route'a dla własnych zasobów ABAC (grep-confirmed);
+autoryzacja to `requireOrgAccess()` (członkostwo w org) + guardy warstwy
+komend. Design doc's error-mapping table wymienia "ACL failure→403" jako
+możliwy wynik — żadna trasa w tym repo nie implementuje live per-route
+ACL gate (prawdziwa, jawna luka, tej samej klasy co D13), więc ta gałąź
+jest nieosiągalna, spójnie z ROI/KPI. Każda mutująca trasa celująca w
+istniejący `setId` pre-fetchuje przez `getOkrSet` (ABAC-scoped) przed
+wywołaniem komendy — dopisane po odkryciu, że pierwsza wersja tego pliku
+tego nie robiła, w przeciwieństwie do zweryfikowanego wzorca w
+`roi.routes.ts` (KAŻDA mutująca trasa tam pre-fetchuje `getRoiCase`) i
+własnych tras Program/Cycle w tym samym pliku. `GET /company` to cienki
+wrapper `listOkrSets` przypinający `scope_type='company'` — F-004-AC-02
+"widok firmowy to projekcja, nie osobny model" strukturalnie wymuszone
+przez współdzielenie funkcji repozytorium, nie duplikat zapytania.
+Walidatory Zod (`resultsVnextOkr.validators.ts`, rozszerzone). 8 nowych
+event type'ów w `EVENT_TYPE_CONSUMER_GROUPS` (`okr_set.published`
+REPURPOSED zgodnie z D9, nie duplikat).
+
+**Testy — 65 nowych, WSZYSTKIE PASS na efemerycznym Postgresie 17**
+(`initdb --locale=C`, TCP `127.0.0.1:5591`, pełny `npm run db:migrate --safe`
+— zero błędów, wszystkie tabele OKR-E001+E002 obecne):
+- `okrSetCreate.test.ts` (6, fake-PoolClient unit, bez realnej bazy —
+  SAVEPOINT dedupe race NIE da się wiernie odtworzyć przeciw fake
+  klientowi in-process, więc ten plik prowadzi `createOkrSet` przez
+  ŚCIEŻKĘ KODU odpalaną przy złapanym `23505`, dowodząc że sekwencja
+  ROLLBACK TO SAVEPOINT + retry-SELECT zwraca zwycięzcę zamiast rzucić)
+  — no-active-policy fail-closed, scopeId required dla KAŻDEGO scopeType
+  (włącznie z `'company'`), D3 duplicate prevention (pre-check/race/happy).
+- `okrSetLifecycle.realdb.test.ts` (7) — D7 eligibility guard, pełny
+  pipeline draft→submitted→approved→active (weryfikuje wiersz eventu
+  `okr_set.published` REPURPOSED), out-of-order rejection,
+  `requestChangesOnOkrSet` roundtrip, cancel z każdego nieterminalnego
+  stanu, i LITERALNY dowód D3: cancelled zwalnia slot (nowy Set na tej
+  samej krotce), closed NIE zwalnia (fixture-manipulacja, `created:false`
+  zwraca stary wiersz, dokładnie 1 wiersz w bazie).
+- `okrSetApproval.realdb.test.ts` (6) — self-approval denial OBIE gałęzie
+  (`submitted_by` sprawdzany pierwszy nawet gdy `created_by` różny;
+  `created_by` z innym submitterem), genuine-reviewer happy path,
+  snapshot insert + `sequence_number`/`approved_version`/
+  `latest_approved_snapshot_id` pointer correctness, DRUGI realny cykl
+  approvalu dowodzący że wiersz v1 zostaje bajt-identyczny, REVOKE
+  UPDATE/DELETE grant check na poziomie bazy.
+- `okrSetMaterialChange.realdb.test.ts` (5) — active-only guard (odrzucony
+  z draft i z approved-not-yet-active), `version_number` increment dla
+  wszystkich 3 dozwolonych pól sekwencyjnie, i **LITERALNY dowód
+  F-005-AC-02**: po material change tytułu na aktywnym Secie, wiersz
+  approved snapshot (zamrożony ze STARYM tytułem) jest bajt-identyczny
+  (ten sam `content_hash`, ten sam JSON) i wciąż pokazuje stary tytuł
+  podczas gdy żywy Set pokazuje nowy; dokładnie jeden wiersz snapshotu
+  przez cały czas.
+- `okrSetVisibilityJoin.realdb.test.ts` (5) — `::text` cast na WSZYSTKICH
+  3 tabelach: OPEN_ORG/RESTRICTED_ACL/PRIVATE na `okr_vnext_sets`,
+  odziedziczona widoczność przez `snap.set_id::text` na
+  `okr_vnext_approved_snapshots`, i ad-hoc join `buildVisibilityScopedCte`
+  dowodzący tego samego wzorca przeciw `okr_vnext_set_versions` (ta
+  tabela nie ma żadnego shipped repository readera w tym epiku — D17 —
+  więc to bezpośredni dowód gotowy dla przyszłego epiku).
+- `okrSetVisibilityNarrowing.realdb.test.ts` (7) — PEŁNA macierz rank:
+  dla każdego z 5 możliwych ceilingów (`visibility_default` Programu),
+  KAŻDY z 5 kandydackich modów — zaakceptowany dokładnie gdy
+  rank(kandydat) >= rank(ceiling), odrzucony inaczej; odrzucona próba
+  NIE zmienia `row_version` (25 par pokrytych przez pętlę 5×5). D19:
+  narrowing zaakceptowany w `active`; próba poszerzenia w tym samym
+  stanie wciąż odrzucona. Guard: narrowing odrzucony na `cancelled` Secie.
+- `okr.routes.test.ts` rozszerzony (+29, razem 47) — kontrakt HTTP dla
+  wszystkich 14 tras: roundtrip create→get (obie gałęzie `created:true`→201
+  i D3 found-existing→200), lista z pełnym przekazaniem filtrów,
+  `GET /company` przypinający `scope_type`, edycja draftu, narrowing
+  (sukces + widening-denied 409 + invalid-enum 400), submit (+ not-ready
+  409), approve (+ self-approval-denied 403), request-changes, przejścia
+  activate/cancel, material-change request-revision (+ NOT_ACTIVE 409 +
+  invalid fieldName 400), oba trasy odczytu approval-snapshot.
+
+**Dwa błędy w SAMYCH testach znalezione i naprawione podczas pisania
+(nie w kodzie produkcyjnym)**: (1) fixture Sety w
+`okrSetVisibilityJoin.realdb.test.ts` kolidowały na realnym unikalnym
+indeksie D3, bo `scope_id` domyślnie równał się `owner_user_id`, którego
+kilka scenariuszy celowo reużywa — naprawione przypinając `scope_id` do
+unikalnego `setId`; (2) jeden placeholder `$1` związany zarówno z
+kolumną UUID `set_id` jak i kolumną TEXT `scope_id` w tym samym INSERT-cie
+wywołał Postgresowy `42P08` ("inconsistent types deduced for parameter")
+— naprawione osobnym placeholderem per kolumna.
+
+**Odkrycie dotyczące `computeStateHash` + JSONB, dotyczy CAŁEGO programu,
+nie tylko OKR-E002**: `content_hash` liczony jest RAZ z obiektu JS PRZED
+`JSON.stringify`+INSERT. Postgresowe przechowywanie JSONB NIE zachowuje
+oryginalnej kolejności kluczy (zweryfikowane wprost:
+`SELECT jsonb_build_object('b',1,'a',2)::text` zwraca `{"a": 2, "b": 1}`,
+alfabetycznie) — więc przeliczenie `computeStateHash` z wartości
+odczytanej z kolumny JSONB NIGDY nie odtworzy oryginalnego zapisanego
+hasha. Hash to fingerprint w momencie zapisu, nie weryfikowalny przy
+każdym odczycie checksum bajtów kolumny JSONB. Osiągalna, przetestowana
+gwarancja: sama zapisana kolumna TEXT nigdy nie dryfuje między odczytami
+— nie że można ją zweryfikować ponownym haszowaniem odczytanego payloadu.
+Dotyczy to każdej kolumny `content_hash` w tym programie (KPI/ROI też),
+nie tylko OKR-E002.
+
+**Decyzja implementacyjna, odstępstwo od dosłownego snippetu w designie,
+stwierdzone jawnie w kodzie**: `narrowOkrSetVisibility` design's own
+snippet mówi "Set's own table is untouched" — zaimplementowano to
+literalnie w sensie kolumn DOMENOWYCH (żadna kolumna treści Setu nie jest
+dotykana, zgodnie z D1: nie ma kolumny `visibility_mode` na
+`okr_vnext_sets`), ALE komenda i tak bumpuje `okr_vnext_sets.row_version`
+(kolumna housekeeping, `updated_by`/`updated_at`) żeby kontrakt CAS/
+`resultingVersion` honorowany przez KAŻDĄ inną komendę w tym pliku
+pozostał spójny dla kolejnych callerów — bez tego `outcome.resultingVersion`
+kłamałby o faktycznym stanie wiersza. Udokumentowane w kodzie, nie ciche.
+
+**`tsc --noEmit`**: root — czysty, 0 błędów, WIELOKROTNIE zweryfikowany
+(po schemacie, po warstwie komend, po routes, po finalnym pre-fetch
+fixie) — zero regresji na żadnym etapie.
+
+**Before/after na pełnym `tests/resultsVnext/kpi` + `tests/resultsVnext/roi`
++ `tests/resultsVnext/okr` + trasy/serwisy resultsVnext (78 plików po
+zmianach, 72 przed)** — dwa PEŁNE przebiegi na TEJ SAMEJ efemerycznej
+bazie: raz na osobnym `git worktree` przy commicie `615544e014` (TIP
+sprzed pierwszego commita OKR-E002, "before"), raz na HEAD tego
+worktree z pełnym OKR-E002 ("after"). Wynik: **35 failed w OBU
+przebiegach** (identyczna liczba), lista distinct (plik>describe>test)
+identyfikatorów niepowodzeń w "after" jest ŚCISŁYM PODZBIOREM "before"
+(`diff` pokazuje WYŁĄCZNIE usunięcia, zero dodań) — **zero nowych
+regresji wprowadzonych przez ten epik**, dowiedzione, nie zadeklarowane.
+"After" ma więcej PASS (635 vs 565) — 65 z tego to nowe testy OKR-E002
+tego epiku; pozostała różnica to 3 pliki KPI
+(`initiativeKpiImpactBaselineFreeze.realdb.test.ts`/
+`kpiIdentityAcrossSurfaces.realdb.test.ts`/
+`kpiInitiativeImpactPerspectivesRoutesRealdb.test.ts`), które miały już
+NIEZACOMMITOWANE lokalne poprawki w tym worktree PRZED rozpoczęciem tej
+sesji (widoczne w `git status` na starcie, niezwiązane z OKR-E002, NIE
+moje) — "before"-worktree (świeży checkout z commita) nie niósł tych
+niezacommitowanych zmian, więc te 3 pliki failowały tam, a przechodzą w
+"after" (mój główny worktree). Nie przypisuję sobie tej zasługi — stan
+jawnie odnotowany. `~35 failed` to DOKŁADNIE ten sam pre-existing
+`initiatives.status` DEFAULT `'step3'` defekt udokumentowany w §37/§39,
+niezwiązany z tym epikiem.
+
+**Poza zakresem, świadomie NIEZBUDOWANE**: Objective/KeyResult CRUD i
+prawdziwy guard ≥2-KR (OKR-E003), check-ins (E004), alignment (E005),
+support/decisions (E006), review/reflection/carry-forward (E007), Teresa/
+perspektywy/legacy (E008), `okr_vnext_population_rules` (D2 — brak
+auto-scaffoldingu pustych Setów, tylko jawna komenda tworząca), modele
+`/my`/`/team-health`/`/attention`/`/advisor/*`.
+
+**Dwie jawnie zgłoszone luki designu, restated tutaj explicite, nie
+ciche**:
+1. **D13 platform gap**: `resolveScopeVisibility()` (`visibilityResolver.ts`)
+   i `buildVisibilityScopedCte()`'s SCOPE branch obsługują TYLKO
+   `scope_type='team'` (przez `team_members`) — pod polityką Programu w
+   trybie `SCOPE`, Sety `company`/`business_unit`/`individual` failują
+   closed z `OUT_OF_SCOPE`. Nie jest to bloker dla MVP default
+   (`OPEN_ORG`), ale jest to realna, nienaprawiona luka platformy — poza
+   zakresem pliku tego epiku (zmiana warstwy platformowej), zgłoszona do
+   przodu tak jak ROI-E003 D20 zrobił dla swojej granularności ACL.
+2. **D17 workflow recommitu niezbudowany**: kolumny
+   `okr_vnext_set_versions.recommit_status`/`recommit_by`/`recommit_at`
+   zarezerwowane (ta sama dyscyplina "zarezerwuj teraz, unikaj ALTER na
+   żywej tabeli później" użyta 4 razy wcześniej w tym programie), ale
+   ŻADNA komenda E002 ich nie zapisuje — recommit workflow jest
+   nieozbudowany i bez właściciela, stan jawny w kodzie i tutaj.
+
+**Domena OKR: 2/8 epików zbudowanych. OKR-E003 Objective/KeyResult
+następny.**
+
