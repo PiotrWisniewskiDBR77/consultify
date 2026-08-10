@@ -333,7 +333,8 @@ describe('listSubscriberTokens', () => {
     expect(result.status).toBe('ok');
     const t = result.tokens?.[0];
     expect(t).toBeDefined();
-    expect((t as Record<string, unknown>).tokenHash).toBeUndefined();
+    const tokenRecord: Record<string, unknown> = { ...t };
+    expect(tokenRecord.tokenHash).toBeUndefined();
     expect(JSON.stringify(t)).not.toContain('token_hash');
   });
 

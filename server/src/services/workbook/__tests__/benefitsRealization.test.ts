@@ -31,7 +31,7 @@ describe('benefitsRealization premium workbook', () => {
     expect(workbook.getWorksheet('Scenario Model')?.getCell('C3').value).toMatchObject({ formula: expect.stringContaining('Benefits Register') });
     expect(workbook.getWorksheet('Monthly Tracking')?.getCell('E13').value).toMatchObject({ formula: 'SUM($C$2:C13)' });
     expect(workbook.getWorksheet('Monthly Tracking')?.getCell('D2').font.color?.argb).toBe('FFC2415D');
-    expect(workbook.getWorksheet('Monthly Tracking')?.conditionalFormattings[0].ref).toBe('D2:D13');
+    expect((workbook.getWorksheet('Monthly Tracking') as unknown as { conditionalFormattings: Array<{ ref: string }> } | undefined)?.conditionalFormattings[0]?.ref).toBe('D2:D13');
   });
 
   it('is discoverable and passes deterministic quality critique', () => {

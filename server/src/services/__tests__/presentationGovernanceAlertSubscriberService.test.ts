@@ -178,7 +178,13 @@ describe('sendTestDelivery', () => {
   });
 
   it('returns ok with httpStatus + signaturePreview on a 200 response', async () => {
-    const fetchMock = vi.fn(async () => ({ status: 200, ok: true }));
+    // Declare the parameters so `mock.calls[0]` is the recorded (url, init) pair.
+    const fetchMock = vi.fn(
+      async (_url: string, _init: RequestInit & { headers: Record<string, string> }) => ({
+        status: 200,
+        ok: true,
+      })
+    );
     const overrides = makeOverrides({
       row: makeRow(),
       fetch: fetchMock as unknown as typeof fetch,
@@ -207,10 +213,7 @@ describe('sendTestDelivery', () => {
     });
     expect(typeof result.durationMs).toBe('number');
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [, init] = fetchMock.mock.calls[0] as [
-      string,
-      RequestInit & { headers: Record<string, string> },
-    ];
+    const [, init] = fetchMock.mock.calls[0]!;
     expect(init.headers['x-consultify-signature']).toMatch(/^[0-9a-f]{64}$/);
     expect(init.headers['x-consultify-signature-algorithm']).toBe('HMAC-SHA256');
     expect(init.headers['x-consultify-event-id']).toMatch(/^test_/);

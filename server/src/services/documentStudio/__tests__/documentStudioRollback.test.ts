@@ -22,7 +22,11 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const liveSchema = {
+import type { DocumentSchema } from '../documentStudioTypes.js';
+
+// Typed against the contract: the literal widened every enum field to `string`
+// and carried two non-members ('medium', 'consulting_neutral').
+const liveSchema: DocumentSchema = {
   documentId: 'doc-rb',
   artifactId: 'artifact-rb-1',
   title: 'Live title v3',
@@ -31,8 +35,8 @@ const liveSchema = {
   audience: ['Board'],
   goal: 'decide',
   communicationRegister: 'executive',
-  density: 'medium',
-  languageStyle: 'consulting_neutral',
+  density: 'standard',
+  languageStyle: 'consulting',
   confidentiality: 'internal',
   formattingSchema: {
     fonts: { body: 'Aptos 11', heading: 'Aptos Display' },

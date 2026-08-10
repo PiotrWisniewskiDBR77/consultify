@@ -132,7 +132,14 @@ const unified = {
     {
       intent: 'cover' as const,
       key_message: 'k',
-      content: { type: 'cover' as const, title: 't', subtitle: 's' },
+      // `CoverContent` also requires organization + date.
+      content: {
+        type: 'cover' as const,
+        title: 't',
+        subtitle: 's',
+        organization: 'c',
+        date: '2026-08-08',
+      },
     },
   ],
 };

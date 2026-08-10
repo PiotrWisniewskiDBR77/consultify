@@ -145,7 +145,12 @@ describe('agentResourceGovernanceService', () => {
 
   it('cannot replay a same-key reservation from a foreign tenant', async () => {
     const rows = [[], [], []];
-    const query = vi.fn(async () => ({ rows: rows.shift() || [], rowCount: 1 }));
+    // Declare the parameters so `mock.calls[n]` is the recorded (sql, params)
+    // pair rather than an element of an empty tuple.
+    const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({
+      rows: rows.shift() || [],
+      rowCount: 1,
+    }));
     transactionClients.push({ query });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
     await expect(reserveAgentResource({ ...base, organizationId: 'org-foreign' })).rejects.toThrow('resource_policy_not_found');
@@ -227,7 +232,12 @@ describe('agentResourceGovernanceService', () => {
       [{ active_count: 0, reserved_cost: 0 }],
       [reclaimed],
     ];
-    const query = vi.fn(async () => ({ rows: rows.shift() || [], rowCount: 1 }));
+    // Declare the parameters so `mock.calls[n]` is the recorded (sql, params)
+    // pair rather than an element of an empty tuple.
+    const query = vi.fn(async (_sql: string, _params?: unknown[]) => ({
+      rows: rows.shift() || [],
+      rowCount: 1,
+    }));
     transactionClients.push({ query });
     const { reserveAgentResource } = await import('../agentResourceGovernanceService.js');
     const result = await reserveAgentResource({

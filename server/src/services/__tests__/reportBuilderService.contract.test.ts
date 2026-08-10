@@ -55,7 +55,9 @@ describe('reportBuilderService — contract tests', () => {
       const templateRow = {
         id: 'tpl-1',
         name: 'Default',
-        source_type: 'MANUAL',
+        // Must match the `sourceType` passed to createReport below — the service
+        // rejects a template whose source type differs.
+        source_type: 'WORK_CANVAS',
         report_type: null,
         sections_json: JSON.stringify([
           { key: 'intro', title: 'Introduction', contentType: 'text' },
@@ -87,7 +89,10 @@ describe('reportBuilderService — contract tests', () => {
       const result = await createReport({
         organizationId: 'org-1',
         createdBy: 'user-1',
-        sourceType: 'MANUAL',
+        // 'MANUAL' is not a member of ReportSourceType; the template row above
+        // carries the same (now valid) discriminant, so the source-type match
+        // the service performs behaves exactly as before.
+        sourceType: 'WORK_CANVAS',
         sourceId: 'src-1',
         title: 'Test Report',
         templateId: 'tpl-1',
@@ -203,12 +208,15 @@ describe('reportBuilderService — contract tests', () => {
 
   describe('createBlockType', () => {
     it('creates a block type and returns it', async () => {
+      // `createBlockType` takes { organizationId, userId, name, renderKind, ... };
+      // the previous literal was shaped for an older API (category / schema /
+      // defaultConfig are not parameters and never reached the INSERT).
       const blockData = {
         organizationId: 'org-1',
+        userId: 'user-1',
         name: 'Custom Table',
-        category: 'data',
-        schema: { columns: ['A', 'B'] },
-        defaultConfig: {},
+        renderKind: 'table' as const,
+        inputSchema: { columns: ['A', 'B'] },
       };
 
       mockDb.get.mockImplementation((_sql: string, _params: unknown[], cb: DbCallback<unknown>) => {
