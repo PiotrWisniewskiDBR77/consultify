@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "case-workspace-live-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:frontend:local"],
+      "port": 3000
+    },
+    {
       "name": "p10-p11-p12-document-studio",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "dev-render/vite.config.ts", "--port", "3079"],

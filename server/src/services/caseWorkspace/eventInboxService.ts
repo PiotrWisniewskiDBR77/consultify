@@ -103,14 +103,54 @@ export const INBOX_DEAD_LETTER_ATTEMPT_THRESHOLD = 10;
 
 export type InboxRecordStatus = 'RECEIVED' | 'APPLIED' | 'REJECTED' | 'DEAD_LETTER';
 
+/**
+ * The DURABLE rejection vocabulary. Every member here must also be a member of
+ * the `rejection_code` CHECK constraint on `case_workspace_event_inbox` —
+ * adding one to this union alone makes the rejecting UPDATE fail with 23514,
+ * which would turn a rejection into a 500 with NO audit row (the exact failure
+ * mode that once justified folding AMBIGUOUS onto CORRELATION_UNKNOWN).
+ *
+ * Constraint source of truth:
+ *   server/migrations/20260810_case_workspace_node_run_and_inbox.sql (original)
+ *   server/migrations/20260810c_case_workspace_inbox_ambiguous_code.sql
+ *     (widened with CORRELATION_AMBIGUOUS)
+ *
+ * `eventInboxService.pg.test.ts` asserts the two lists agree, so the pairing is
+ * enforced by a test rather than by this comment.
+ */
 export type InboxRejectionCode =
   | 'SIGNATURE_INVALID'
   | 'CHANNEL_UNKNOWN'
   | 'TENANT_MISMATCH'
   | 'CORRELATION_UNKNOWN'
+  /**
+   * The key IS registered — several times — in the claimed organization, and
+   * the delivery named no Case to disambiguate. Distinct from
+   * CORRELATION_UNKNOWN on purpose: that one means "fix the sender's token",
+   * this one means "the delivery is under-addressed (send caseId)". They are
+   * opposite operator actions and must not share a bucket in the
+   * reconciliation view.
+   */
+  | 'CORRELATION_AMBIGUOUS'
   | 'PAYLOAD_INVALID'
   | 'WAIT_NOT_ACTIVE'
   | 'WAIT_TYPE_MISMATCH';
+
+/**
+ * Runtime mirror of the union above — exported so a test can compare it to the
+ * live CHECK constraint. A type alone is erased at runtime and can therefore
+ * drift from the database without anything noticing until production.
+ */
+export const INBOX_REJECTION_CODES: readonly InboxRejectionCode[] = [
+  'SIGNATURE_INVALID',
+  'CHANNEL_UNKNOWN',
+  'TENANT_MISMATCH',
+  'CORRELATION_UNKNOWN',
+  'CORRELATION_AMBIGUOUS',
+  'PAYLOAD_INVALID',
+  'WAIT_NOT_ACTIVE',
+  'WAIT_TYPE_MISMATCH',
+] as const;
 
 export interface ReceiveExternalEventInput {
   /** The SENDER's event id. Half of the dedup key; never minted by us. */
@@ -537,16 +577,24 @@ export async function receiveExternalEvent(
       // Several waits in the claimed org carry this key and the delivery named
       // no Case. WHICH wait the sender meant is a fact that was never
       // established, and §9's rule is that an unestablished fact is neither yes
-      // nor no — so nothing is satisfied. Reported under the existing
-      // CORRELATION_UNKNOWN code (the durable `rejection_code` vocabulary is a
-      // DB CHECK constraint; inventing a value the constraint does not know
-      // would turn every ambiguous delivery into a 500 with NO audit row, which
-      // is worse than a slightly coarse code) with the count carried in the
-      // audit summary so an operator can see it was ambiguity, not absence.
+      // nor no — so nothing is satisfied.
+      //
+      // Recorded under its OWN code. This used to fold onto CORRELATION_UNKNOWN
+      // because the durable vocabulary is a DB CHECK constraint and a value the
+      // constraint did not know would have turned every ambiguous delivery into
+      // a 500 with NO audit row. That reasoning was right about the 500 and
+      // wrong about the remedy: the fix is to widen the constraint, which
+      // server/migrations/20260810c_case_workspace_inbox_ambiguous_code.sql
+      // does (and which also reclassifies the rows the workaround mislabelled,
+      // so the reconciliation view does not keep lying about the past).
+      //
+      // The count stays in the audit summary — the code says WHAT happened,
+      // the summary says HOW BAD (2 candidates is a payload bug; 40 is a
+      // key-minting bug).
       logger.warn(
         `[eventInbox] AMBIGUOUS correlation key: source=${source} matched ${lookup.candidateCount} waits in the claimed organization with no caseId to disambiguate`
       );
-      return reject('CORRELATION_UNKNOWN', {
+      return reject('CORRELATION_AMBIGUOUS', {
         ambiguousCandidates: lookup.candidateCount,
         caseIdSupplied: false,
       });
