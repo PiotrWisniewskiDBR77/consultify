@@ -7,42 +7,56 @@
  * §6, cancel/kill switch §7, retry/DLQ §10). Gate FC-11.
  *
  * ============================================================================
- * WHAT ACTUALLY EXISTS — established by reading the code BEFORE writing tests,
- * per the brief's instruction not to build anything that is missing.
+ * UPDATED for the W2 queue contract closeout
+ * (`docs/validation/finance-v3/generated/gate-d/W2_QUEUE_CONTRACT_report.md`).
+ * This file originally documented six ADR elements as EVIDENCE_MISSING plus
+ * one defect (W9-B-1/W9-B4-a). All seven are now closed; the tests below
+ * were rewritten from "prove the absence" to "prove the fix", per the golden
+ * rule that a test which cannot go red proves nothing — see the negative
+ * control section of the W2 report for the revert-and-confirm-red evidence.
  * ============================================================================
  *
  * IMPLEMENTED in `computeJobService.ts` (and therefore tested below):
  *   - `enqueue()`   — idempotent on (organization_id, job_type, idempotency_key)
  *   - `claim()`     — `FOR UPDATE SKIP LOCKED`, sets `lease_owner`/`lease_expires_at`,
- *                     bumps `attempt_count`, inserts the `compute_job_runs` attempt row
+ *                     bumps `attempt_count`, inserts the `compute_job_runs` attempt row,
+ *                     now also consults `is_org_compute_killed()` (EM-3) and
+ *                     `org_concurrency_limit()` (EM-4)
+ *   - `heartbeat()` — EM-2: extends the lease + `compute_job_runs.last_heartbeat_at`
+ *   - `reapExpiredLeases()` — EM-1: ADR §5.3 recovery, requeues (backoff) or
+ *                     dead-letters an abandoned job, closes its run row as
+ *                     `outcome = 'lease_expired'`. Wired into
+ *                     `server/src/cron/Scheduler.ts` (job 42, every minute) —
+ *                     NOT auto-invoked by anything inside a bare test process,
+ *                     so it must be called explicitly below (mirrors how a
+ *                     real deployment's cron tick calls it out-of-band).
  *   - `completeJobSuccess()` — append-only output, `UNIQUE(job_id)` makes a second
  *                     commit a typed `OUTPUT_ALREADY_COMMITTED`, not a raw 23505
- *   - `failJob()`   — linear backoff requeue while attempts remain, terminal `failed` after
- *   - `cancelJob()` — flips `queued`/`running` to `cancelled`
+ *   - `failJob()`   — linear backoff requeue while attempts remain, terminal
+ *                     `failed` after — which now also raises an EM-6 dead-letter
+ *                     exception (`finance_exceptions`, `reasonCode = 'COMPUTE_JOB_DEAD_LETTER'`)
+ *   - `cancelJob()` — flips `queued`/`running` to `cancelled`; W9-B-1 fix: now
+ *                     also sets `finished_at`, releases the lease, and closes
+ *                     the open `compute_job_runs` row as `outcome = 'cancelled'`
+ *   - `setKillSwitch()`/`clearKillSwitch()` — EM-3 admin surface over
+ *                     `compute_kill_switches` (org/job_type wildcards via NULL)
+ *   - `setOrgConcurrencyLimit()` — EM-4 admin surface over
+ *                     `compute_org_concurrency_limits`, generous global
+ *                     default (50) seeded by the migration so existing callers
+ *                     are unaffected unless a tighter cap is explicitly set
  *
- * NOT IMPLEMENTED ANYWHERE IN `server/src` (verified by grep over the whole
- * server tree, not inferred from docs) — reported as EVIDENCE_MISSING and
- * PROVEN missing by the `describe('B — EVIDENCE_MISSING …')` block below, which
- * asserts the ABSENCE as a fact rather than skipping:
- *   - REAPER (ADR §5.3). Nothing reads `compute_jobs.lease_expires_at`. No code
- *     ever writes `compute_job_runs.outcome = 'lease_expired'`. An expired lease
- *     therefore strands the job in `running` forever.
- *   - HEARTBEAT (ADR §5.2). Nothing ever UPDATEs `compute_job_runs.last_heartbeat_at`
- *     or extends `lease_expires_at`. The column exists and is never written after
- *     its DEFAULT.
- *   - KILL SWITCH / PER-ORG CONCURRENCY (ADR §5.1, §7.2, §8). `org_concurrency_limit()`
- *     and `is_org_compute_killed()` have no DDL (the WP-C01 migration says so in its
- *     own header) and no application-side equivalent.
- *   - WORKER LOOP. There is no daemon, no poller, no scheduler that drains the queue.
- *     `claim()` is only ever called INLINE, by the compute service that just
- *     enqueued the job in the same function call (`baselineComputeService.ts:411`,
- *     `predictionComputeService.ts:261/444`, `valuationComputeService.ts:340`) —
- *     a self-claim, not a worker pool. Consequence: any job left `queued` (by a
- *     requeue-on-failure, or by a crash before the inline claim) is never picked
- *     up by anything, ever.
- *
- * These are findings about the SYSTEM, not gaps in this test file. This work
- * package measures; it does not implement.
+ * STILL NOT IMPLEMENTED (honest EVIDENCE_MISSING, not silently dropped):
+ *   - WORKER POOL that drains `queued` jobs a process did NOT itself enqueue
+ *     and actually executes the corresponding domain compute (EM-5, partial).
+ *     `claim()` is still only ever called INLINE by the compute service that
+ *     just enqueued the job in the same function call
+ *     (`baselineComputeService.ts:420`, `predictionComputeService.ts:262/452`,
+ *     `valuationComputeService.ts:373`) — a self-claim, not a worker pool.
+ *     `compute_jobs` has no payload column to reconstruct the domain-specific
+ *     call parameters those services need (businessVersionId, entityId,
+ *     forecastPeriodIds, ...), so a real drain-and-execute loop needs a
+ *     schema/contract decision beyond this work package's scope. See the W2
+ *     report §EM-5 for the full reasoning.
  *
  * HOW TO RUN (own throwaway ephemeral cluster only — NEVER shared/demo/staging/prod):
  *
@@ -160,7 +174,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
   // B1 — job abandoned by a worker (lease expires)
   // =========================================================================
   describe('B1 — abandoned job / expired lease', () => {
-    it('EVIDENCE_MISSING: no reaper exists — an expired lease strands the job in `running` forever', async () => {
+    it('FIXED EM-1: reapExpiredLeases() requeues an abandoned job and closes the run as lease_expired (was: EVIDENCE_MISSING, stranded forever)', async () => {
       const jobType = `w9b1_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
@@ -181,33 +195,116 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       );
       expect(expired.changes).toBe(1);
 
-      // A healthy system would have a reaper (ADR §5.3) requeue this row.
-      // Give any hypothetical background process a real window to act.
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Nothing recovers it on its own — reapExpiredLeases() is cron-driven
+      // (server/src/cron/Scheduler.ts, job 42), not auto-invoked inside a
+      // bare test process. This mirrors production: the row sits `running`
+      // until the next scheduler tick calls the function below.
+      const untouched = await readJob(job.id);
+      expect(untouched!.status).toBe('running');
 
-      const afterExpiry = await readJob(job.id);
-      // THE FINDING: still `running`, still leased to a worker that no longer exists.
-      expect(afterExpiry!.status).toBe('running');
-      expect(afterExpiry!.lease_owner).toBe('w9b1-doomed-worker');
+      // THE FIX: call the real reaper entry point directly.
+      const reaped = await jobs.reapExpiredLeases({ batchSize: 10 });
+      const mine = reaped.find((r) => r.jobId === job.id);
+      expect(mine).toBeDefined();
+      expect(mine!.outcome).toBe('requeued');
+      expect(mine!.deadWorkerId).toBe('w9b1-doomed-worker');
 
-      // ...and `claim()` will never see it again, because the claim query only
-      // looks at `status = 'queued'`. The job is unreachable, permanently.
+      // Independent physical read — never the function's return value.
+      const afterReap = await readJob(job.id);
+      expect(afterReap!.status).toBe('queued');
+      expect(afterReap!.lease_owner).toBeNull();
+      expect(afterReap!.lease_expires_at).toBeNull();
+      // Same linear backoff as failJob() (30s * attempt_count) — the reaper
+      // does not dump the job back to the front of the queue immediately.
+      expect(new Date(afterReap!.next_attempt_at).getTime()).toBeGreaterThan(Date.now() + 20_000);
+
+      // The abandoned attempt's run row is now closed, not left NULL forever.
+      const runsAfterReap = await readRuns(job.id);
+      expect(runsAfterReap).toHaveLength(1);
+      expect(runsAfterReap[0].outcome).toBe('lease_expired');
+      expect(runsAfterReap[0].finished_at).toBeTruthy();
+
+      // claim() does NOT see it yet — its backoff window has not passed.
+      const tooEarly = await jobs.claim({ workerId: 'w9b1-too-early', jobTypes: [jobType], limit: 5 });
+      expect(tooEarly).toHaveLength(0);
+
+      // Fast-forward the backoff clock (test-side only, same pattern used
+      // elsewhere in this file for failJob()'s backoff) so the retry is
+      // claimable now — proving `claim()` DOES see it once its window opens.
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE compute_jobs SET next_attempt_at = now() WHERE id = ?`, [job.id])
+      );
       const reclaimed = await jobs.claim({ workerId: 'w9b1-rescuer', jobTypes: [jobType], limit: 5 });
-      expect(reclaimed).toHaveLength(0);
+      expect(reclaimed).toHaveLength(1);
+      expect(reclaimed[0].id).toBe(job.id);
+      expect(reclaimed[0].attempt_count).toBe(2); // bumped by the ORIGINAL claim, not reset by the reaper
 
-      // No `lease_expired` run outcome was ever written (nothing in the codebase writes it).
-      const runs = await readRuns(job.id);
-      expect(runs).toHaveLength(1);
-      expect(runs[0].outcome).toBeNull();
-
-      // No double result — trivially true, because there is no first result either.
       expect(await readOutputs(job.id)).toHaveLength(0);
     });
 
-    it('the RECOVERY the reaper would perform is sound if someone performs it — no double output after requeue', async () => {
-      // This proves the *rest* of the mechanism is fine and the reaper is the
-      // only missing piece: we apply the ADR §5.3 UPDATE by hand and show the
-      // job then completes exactly once.
+    it('reaper safety: a FRESH heartbeat prevents the reaper from stealing the lease; a STALE one lets it reclaim', async () => {
+      // This is the mandatory safety proof for EM-1: without it, a slow-but-
+      // alive worker could have its job stolen mid-computation.
+      const jobType = `w9b1hb_${randomUUID()}`;
+
+      // --- case 1: fresh heartbeat -> untouched ---
+      const { job: freshJob } = await enqueueOne(jobType);
+      const [freshClaimed] = await jobs.claim({ workerId: 'w9b1hb-alive', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 2 });
+      expect(freshClaimed.id).toBe(freshJob.id);
+
+      // Worker heartbeats BEFORE its short lease would expire, extending it
+      // well past "now".
+      const hb = await jobs.heartbeat({ jobId: freshJob.id, workerId: 'w9b1hb-alive', leaseDurationSeconds: 300 });
+      expect(hb.ok).toBe(true);
+      if (!hb.ok) throw new Error('unreachable');
+      expect(new Date(hb.leaseExpiresAt).getTime()).toBeGreaterThan(Date.now() + 60_000);
+
+      const runsBeforeReap = await readRuns(freshJob.id);
+      expect(runsBeforeReap[0].last_heartbeat_at).toBeTruthy();
+
+      const reapedFresh = await jobs.reapExpiredLeases({ batchSize: 50 });
+      expect(reapedFresh.find((r) => r.jobId === freshJob.id)).toBeUndefined();
+
+      const stillRunning = await readJob(freshJob.id);
+      expect(stillRunning!.status).toBe('running'); // NOT stolen
+      expect(stillRunning!.lease_owner).toBe('w9b1hb-alive');
+
+      // --- case 2: stale (no heartbeat, past its short lease) -> reclaimed ---
+      const { job: staleJob } = await enqueueOne(jobType);
+      const [staleClaimed] = await jobs.claim({ workerId: 'w9b1hb-dead', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+      expect(staleClaimed.id).toBe(staleJob.id);
+
+      await new Promise((resolve) => setTimeout(resolve, 1200)); // let the 1s lease actually pass wall-clock
+
+      const reapedStale = await jobs.reapExpiredLeases({ batchSize: 50 });
+      const staleResult = reapedStale.find((r) => r.jobId === staleJob.id);
+      expect(staleResult).toBeDefined();
+      expect(staleResult!.outcome).toBe('requeued');
+
+      const staleAfter = await readJob(staleJob.id);
+      expect(staleAfter!.status).toBe('queued'); // reclaimed
+    });
+
+    it('heartbeat on a lease already reaped/lost returns LEASE_LOST (ADR §5.2: worker must stop computing)', async () => {
+      const jobType = `w9b1hbl_${randomUUID()}`;
+      const { job } = await enqueueOne(jobType);
+      await jobs.claim({ workerId: 'w9b1hbl-worker', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const reaped = await jobs.reapExpiredLeases({ batchSize: 50 });
+      expect(reaped.find((r) => r.jobId === job.id)).toBeDefined();
+
+      // The original worker, unaware it was reaped, tries to heartbeat.
+      const hb = await jobs.heartbeat({ jobId: job.id, workerId: 'w9b1hbl-worker' });
+      expect(hb.ok).toBe(false);
+      if (hb.ok) throw new Error('unreachable');
+      expect(hb.code).toBe('LEASE_LOST');
+    });
+
+    it('the RECOVERY the reaper performs is sound — no double output after requeue', async () => {
+      // This proves the mechanism end-to-end using the REAL reapExpiredLeases()
+      // entry point (previously this test applied the ADR §5.3 UPDATE by hand,
+      // because the function did not exist).
       const jobType = `w9b1r_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
@@ -218,18 +315,13 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
         tx.queryRun(`UPDATE compute_jobs SET lease_expires_at = now() - interval '1 minute' WHERE id = ?`, [job.id])
       );
 
-      // ADR §5.3 reaper statement, applied manually (this statement lives in NO
-      // production file — that is the finding; here it only proves recoverability).
-      const reaped = await withPinnedPostgresTransaction((tx) =>
-        tx.queryAll<{ id: string }>(
-          `UPDATE compute_jobs
-              SET status = 'queued', lease_owner = NULL, lease_expires_at = NULL, next_attempt_at = now()
-            WHERE status = 'running' AND lease_expires_at < now() AND id = ?
-            RETURNING id`,
-          [job.id]
-        )
+      const reaped = await jobs.reapExpiredLeases({ batchSize: 10 });
+      expect(reaped.find((r) => r.jobId === job.id)?.outcome).toBe('requeued');
+
+      // Fast-forward the reaper's backoff clock (test-side only) so the retry is claimable now.
+      await withPinnedPostgresTransaction((tx) =>
+        tx.queryRun(`UPDATE compute_jobs SET next_attempt_at = now() WHERE id = ?`, [job.id])
       );
-      expect(reaped).toHaveLength(1);
 
       const [reclaimed] = await jobs.claim({ workerId: 'w9b1r-live', jobTypes: [jobType], limit: 1 });
       expect(reclaimed.id).toBe(job.id);
@@ -253,6 +345,48 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       // trail of at-least-once execution.
       const runs = await readRuns(job.id);
       expect(runs.map((r) => r.attempt_number)).toEqual([1, 2]);
+      expect(runs[0].outcome).toBe('lease_expired');
+      expect(runs[1].outcome).toBe('succeeded');
+    });
+
+    it('reaper dead-letters (does not requeue forever) once attempts are exhausted, and raises an EM-6 exception', async () => {
+      const jobType = `w9b1dlq_${randomUUID()}`;
+      const enqueued = await jobs.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifactId,
+        inputRevisionHash: `hash-${randomUUID()}`,
+        engineManifestId,
+        idempotencyKey: `w9b1dlq-${randomUUID()}`,
+        requestedByUserId: userId,
+        maxAttempts: 1,
+      });
+      const jobId = enqueued.job.id;
+
+      await jobs.claim({ workerId: 'w9b1dlq-dead', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 1 });
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      const reaped = await jobs.reapExpiredLeases({ batchSize: 10 });
+      const mine = reaped.find((r) => r.jobId === jobId);
+      expect(mine).toBeDefined();
+      expect(mine!.outcome).toBe('dead_lettered'); // attempt_count(1) >= max_attempts(1)
+
+      const terminal = await readJob(jobId);
+      expect(terminal!.status).toBe('failed');
+      expect(terminal!.finished_at).toBeTruthy();
+      expect(terminal!.lease_owner).toBeNull();
+
+      const runs = await readRuns(jobId);
+      expect(runs[0].outcome).toBe('lease_expired');
+
+      const raised = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string; severity: string; reason_code: string }>(
+          `SELECT id, severity, reason_code FROM finance_exceptions WHERE organization_id = ? AND source_ref::text LIKE ?`,
+          [orgId, `%${jobId}%`]
+        )
+      );
+      expect(raised).toHaveLength(1);
+      expect(raised[0].reason_code).toBe('COMPUTE_JOB_DEAD_LETTER');
     });
   });
 
@@ -481,13 +615,13 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect((await readJob(job.id))!.status).toBe('cancelled');
     });
 
-    it('DEFECT W9-B4-a: cancelling a RUNNING job leaves finished_at NULL and the attempt row open forever', async () => {
-      // Documented as a finding, asserted so it cannot regress silently in
-      // either direction. `cancelJob()` writes neither `finished_at` on the
-      // job nor `outcome`/`finished_at` on the in-flight `compute_job_runs`
-      // row, even though the schema has a `'cancelled'` outcome value for
-      // exactly this. Any "how long did jobs take" / "how many attempts ended
-      // how" query over compute_job_runs silently under-counts.
+    it('FIXED W9-B-1: cancelling a RUNNING job now closes finished_at, releases the lease, and closes the run row (was: DEFECT W9-B4-a)', async () => {
+      // Was: `cancelJob()` wrote neither `finished_at` on the job nor
+      // `outcome`/`finished_at` on the in-flight `compute_job_runs` row, even
+      // though the schema has a `'cancelled'` outcome value for exactly this.
+      // Any "how long did jobs take" / "how many attempts ended how" query
+      // over compute_job_runs silently under-counted. Fixed in
+      // computeJobService.cancelJob().
       const jobType = `w9b4b_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
       await jobs.claim({ workerId: 'w9b4b-worker', jobTypes: [jobType], limit: 1 });
@@ -495,13 +629,27 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
 
       const physical = await readJob(job.id);
       expect(physical!.status).toBe('cancelled');
-      expect(physical!.finished_at).toBeNull(); // <-- the defect
-      expect(physical!.lease_owner).toBe('w9b4b-worker'); // <-- lease never released
+      expect(physical!.finished_at).toBeTruthy(); // FIXED — was NULL
+      expect(physical!.lease_owner).toBeNull(); // FIXED — lease released, was still 'w9b4b-worker'
 
       const runs = await readRuns(job.id);
       expect(runs).toHaveLength(1);
-      expect(runs[0].outcome).toBeNull(); // <-- never closed as 'cancelled'
-      expect(runs[0].finished_at).toBeNull();
+      expect(runs[0].outcome).toBe('cancelled'); // FIXED — was NULL forever
+      expect(runs[0].finished_at).toBeTruthy();
+    });
+
+    it('cancelling a QUEUED (never claimed) job does not touch compute_job_runs — there is no run row to close', async () => {
+      // Edge case for the W9-B-1 fix: a job cancelled before claim() never
+      // had a compute_job_runs row inserted (only claim() inserts one). The
+      // fix must not try to close a row that never existed.
+      const jobType = `w9b4q_${randomUUID()}`;
+      const { job } = await enqueueOne(jobType);
+      const cancelled = await jobs.cancelJob(orgId, job.id, 'cancelled while still queued, bookkeeping probe');
+      expect(cancelled!.status).toBe('cancelled');
+      expect(cancelled!.finished_at).toBeTruthy();
+
+      const runs = await readRuns(job.id);
+      expect(runs).toHaveLength(0);
     });
 
     it('a cancelled job is NOT resurrected by a later claim()', async () => {
@@ -569,7 +717,7 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(await readOutputs(jobId)).toHaveLength(0);
     });
 
-    it('EVIDENCE_MISSING: nothing raises an exception-ledger entry when a job dead-letters (ADR §10 names WP-B05 as the consumer)', async () => {
+    it('FIXED EM-6: failJob() raises a finance_exceptions dead-letter entry once attempts are exhausted', async () => {
       const jobType = `w9bdlq2_${randomUUID()}`;
       const enqueued = await jobs.enqueue({
         organizationId: orgId,
@@ -587,13 +735,68 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       const dead = await jobs.failJob({ jobId, organizationId: orgId, error: 'terminal failure' });
       expect(dead!.status).toBe('failed');
 
-      // `failJob()` does not touch the exception ledger. Proven, not assumed:
-      // no finance_exceptions row references this job/artifact as a result of
-      // the dead-lettering.
+      // Independent read straight from the table — never the service's return value.
+      const raised = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string; severity: string; reason_code: string; artifact_id: string; organization_id: string }>(
+          `SELECT id, severity, reason_code, artifact_id, organization_id FROM finance_exceptions
+            WHERE organization_id = ? AND source_ref::text LIKE ?`,
+          [orgId, `%${jobId}%`]
+        )
+      );
+      expect(raised).toHaveLength(1);
+      expect(raised[0].reason_code).toBe('COMPUTE_JOB_DEAD_LETTER');
+      expect(raised[0].severity).toBe('WARNING'); // non-VALUATION job_type -> WARNING (MATERIAL reserved for VALUATION_*)
+      expect(raised[0].artifact_id).toBe(artifactId);
+      expect(raised[0].organization_id).toBe(orgId);
+    });
+
+    it('FIXED EM-6: a VALUATION_* job_type dead-lettering is raised at MATERIAL, not WARNING', async () => {
+      const jobType = `VALUATION_COMPUTE_dlqsev_${randomUUID()}`;
+      const enqueued = await jobs.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifactId,
+        inputRevisionHash: 'hash-dlq-sev',
+        engineManifestId,
+        idempotencyKey: `w9bdlqsev-${randomUUID()}`,
+        requestedByUserId: userId,
+        maxAttempts: 1,
+      });
+      const jobId = enqueued.job.id;
+      await jobs.claim({ workerId: 'dlqsev-w1', jobTypes: [jobType], limit: 1 });
+      await jobs.failJob({ jobId, organizationId: orgId, error: 'terminal failure' });
+
+      const raised = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ severity: string }>(
+          `SELECT severity FROM finance_exceptions WHERE organization_id = ? AND source_ref::text LIKE ?`,
+          [orgId, `%${jobId}%`]
+        )
+      );
+      expect(raised).toHaveLength(1);
+      expect(raised[0].severity).toBe('MATERIAL');
+    });
+
+    it('a job that RETRIES (not yet exhausted) does NOT raise a dead-letter exception', async () => {
+      // Negative case for EM-6: only the TERMINAL failure is a dead-letter.
+      const jobType = `w9bdlqno_${randomUUID()}`;
+      const enqueued = await jobs.enqueue({
+        organizationId: orgId,
+        jobType,
+        inputArtifactId: artifactId,
+        inputRevisionHash: 'hash-dlq-no',
+        engineManifestId,
+        idempotencyKey: `w9bdlqno-${randomUUID()}`,
+        requestedByUserId: userId,
+        maxAttempts: 3,
+      });
+      const jobId = enqueued.job.id;
+      await jobs.claim({ workerId: 'dlqno-w1', jobTypes: [jobType], limit: 1 });
+      const retried = await jobs.failJob({ jobId, organizationId: orgId, error: 'transient' });
+      expect(retried!.status).toBe('queued'); // attempts remain
+
       const raised = await withPinnedPostgresTransaction((tx) =>
         tx.queryAll<{ id: string }>(
-          `SELECT id FROM finance_exceptions
-            WHERE organization_id = ? AND source_ref::text LIKE ?`,
+          `SELECT id FROM finance_exceptions WHERE organization_id = ? AND source_ref::text LIKE ?`,
           [orgId, `%${jobId}%`]
         )
       );
@@ -602,46 +805,132 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
   });
 
   // =========================================================================
-  // EVIDENCE_MISSING block — absences asserted as facts
+  // EM-2 heartbeat, EM-3 kill switch, EM-4 per-org concurrency — FIXED,
+  // rewritten from "prove the absence" to "prove the fix". EM-5 (worker pool
+  // draining jobs it did not itself enqueue) remains genuinely unbuilt — see
+  // the module doc comment and the W2 report for why.
   // =========================================================================
-  describe('B — EVIDENCE_MISSING: contract elements with no implementation', () => {
-    it('heartbeat (ADR §5.2): `last_heartbeat_at` is never advanced by any code path', async () => {
+  describe('B — fixed contract elements (EM-2/EM-3/EM-4) and the one still missing (EM-5)', () => {
+    it('FIXED EM-2: heartbeat() advances last_heartbeat_at and extends lease_expires_at', async () => {
       const jobType = `w9bhb_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
-      await jobs.claim({ workerId: 'hb-worker', jobTypes: [jobType], limit: 1 });
+      await jobs.claim({ workerId: 'hb-worker', jobTypes: [jobType], limit: 1, leaseDurationSeconds: 2 });
 
       const before = (await readRuns(job.id))[0];
       const leaseBefore = (await readJob(job.id))!.lease_expires_at;
 
-      // A worker "computing" for a while. In a system with heartbeats, both
-      // `last_heartbeat_at` and `lease_expires_at` would have moved.
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
+      const hb = await jobs.heartbeat({ jobId: job.id, workerId: 'hb-worker', leaseDurationSeconds: 300 });
+      expect(hb.ok).toBe(true);
+
+      // Independent physical read — never the heartbeat() return value.
       const after = (await readRuns(job.id))[0];
       const leaseAfter = (await readJob(job.id))!.lease_expires_at;
 
-      // `pg` hands back Date objects for timestamptz — compare the instants.
-      expect(new Date(after.last_heartbeat_at).getTime()).toBe(new Date(before.last_heartbeat_at).getTime()); // never advanced
-      expect(new Date(leaseAfter!).getTime()).toBe(new Date(leaseBefore!).getTime()); // lease never extended
+      expect(new Date(after.last_heartbeat_at).getTime()).toBeGreaterThan(new Date(before.last_heartbeat_at).getTime());
+      expect(new Date(leaseAfter!).getTime()).toBeGreaterThan(new Date(leaseBefore!).getTime());
+      expect(new Date(leaseAfter!).getTime()).toBeGreaterThan(Date.now() + 60_000); // extended ~300s out
     });
 
-    it('kill switch / per-org concurrency (ADR §5.1, §7.2, §8): the SQL functions do not exist', async () => {
+    it('heartbeat() from the WRONG worker_id (lease held by someone else) is refused, not silently accepted', async () => {
+      const jobType = `w9bhbw_${randomUUID()}`;
+      const { job } = await enqueueOne(jobType);
+      await jobs.claim({ workerId: 'hb-real-owner', jobTypes: [jobType], limit: 1 });
+
+      const hb = await jobs.heartbeat({ jobId: job.id, workerId: 'hb-impostor' });
+      expect(hb.ok).toBe(false);
+      if (hb.ok) throw new Error('unreachable');
+      expect(hb.code).toBe('LEASE_LOST');
+
+      // Physical proof: the real owner's lease was not disturbed by the impostor's call.
+      expect((await readJob(job.id))!.lease_owner).toBe('hb-real-owner');
+    });
+
+    it('FIXED EM-3: is_org_compute_killed()/org_concurrency_limit() now exist as SQL functions (were: absent from pg_proc)', async () => {
       const present = await withPinnedPostgresTransaction((tx) =>
         tx.queryAll<{ proname: string }>(
           `SELECT proname FROM pg_proc WHERE proname IN ('org_concurrency_limit', 'is_org_compute_killed')`
         )
       );
-      expect(present).toHaveLength(0);
-
-      // And there is no application-side cap either: N jobs for one org are
-      // all claimable at once, with no limit consulted.
-      const jobType = `w9bconc_${randomUUID()}`;
-      await Promise.all(Array.from({ length: 6 }, () => enqueueOne(jobType)));
-      const claimed = await jobs.claim({ workerId: 'conc-worker', jobTypes: [jobType], limit: 6 });
-      expect(claimed).toHaveLength(6); // no per-org concurrency limit applied
+      expect(present.map((r) => r.proname).sort()).toEqual(['is_org_compute_killed', 'org_concurrency_limit']);
     });
 
-    it('worker loop: a queued job is drained by NOTHING — only an inline self-claim ever runs', async () => {
+    it('FIXED EM-3: an active kill switch for (org, job_type) makes claim() see zero eligible jobs; clearing it un-blocks', async () => {
+      const jobType = `w9bkill_${randomUUID()}`;
+      const { job } = await enqueueOne(jobType);
+
+      await jobs.setKillSwitch({ organizationId: orgId, jobType, reason: 'w9b kill switch probe', actorId: userId });
+      expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(true);
+
+      const blockedClaim = await jobs.claim({ workerId: 'kill-worker', jobTypes: [jobType], limit: 5 });
+      expect(blockedClaim).toHaveLength(0);
+      expect((await readJob(job.id))!.status).toBe('queued'); // untouched, not silently dropped
+
+      await jobs.clearKillSwitch({ organizationId: orgId, jobType });
+      expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(false);
+
+      const unblockedClaim = await jobs.claim({ workerId: 'kill-worker', jobTypes: [jobType], limit: 5 });
+      expect(unblockedClaim).toHaveLength(1);
+      expect(unblockedClaim[0].id).toBe(job.id);
+    });
+
+    it('FIXED EM-3: a GLOBAL kill switch (organization_id NULL) blocks every organization for that job_type', async () => {
+      const jobType = `w9bkillg_${randomUUID()}`;
+      const { job } = await enqueueOne(jobType);
+
+      await jobs.setKillSwitch({ organizationId: null, jobType, reason: 'global kill probe', actorId: userId });
+      try {
+        expect(await jobs.isOrgComputeKilled(orgId, jobType)).toBe(true);
+        expect(await jobs.isOrgComputeKilled(`some-other-org-${randomUUID()}`, jobType)).toBe(true);
+        const claimed = await jobs.claim({ workerId: 'global-kill-worker', jobTypes: [jobType], limit: 5 });
+        expect(claimed).toHaveLength(0);
+      } finally {
+        await jobs.clearKillSwitch({ organizationId: null, jobType });
+      }
+      expect((await readJob(job.id))!.status).toBe('queued');
+    });
+
+    it('FIXED EM-4: an explicit LOW concurrency limit for (org, job_type) caps claim() even when more jobs are queued and limit param requests more', async () => {
+      const jobType = `w9bconclow_${randomUUID()}`;
+      await jobs.setOrgConcurrencyLimit({ organizationId: orgId, jobType, maxConcurrent: 2, actorId: userId });
+
+      await Promise.all(Array.from({ length: 6 }, () => enqueueOne(jobType)));
+      const claimed = await jobs.claim({ workerId: 'conc-low-worker', jobTypes: [jobType], limit: 6 });
+      expect(claimed).toHaveLength(2); // capped, not 6
+
+      // The remaining 4 are still queued, not lost.
+      const stillQueued = await withPinnedPostgresTransaction((tx) =>
+        tx.queryAll<{ id: string }>(`SELECT id FROM compute_jobs WHERE job_type = ? AND status = 'queued'`, [jobType])
+      );
+      expect(stillQueued).toHaveLength(4);
+
+      // A SECOND claim call, while the first 2 are still `running`, claims nothing more — the cap holds across calls.
+      const secondAttempt = await jobs.claim({ workerId: 'conc-low-worker-2', jobTypes: [jobType], limit: 6 });
+      expect(secondAttempt).toHaveLength(0);
+    });
+
+    it('FIXED EM-4: without an explicit override, the seeded generous global default (50) does not block a normal batch — backward compatible', async () => {
+      // This is the direct replacement for the old "no per-org concurrency
+      // limit applied" EVIDENCE_MISSING assertion: the mechanism now exists
+      // and IS consulted (proven above), but the DEFAULT is deliberately
+      // generous so this unconfigured job_type still claims all 6 — exactly
+      // the old observable behaviour, now for a documented reason instead of
+      // an absent function. See the migration file for why a low default was
+      // rejected (canonicalServices.pg.test.ts's SKIP LOCKED test).
+      const jobType = `w9bconcdefault_${randomUUID()}`;
+      await Promise.all(Array.from({ length: 6 }, () => enqueueOne(jobType)));
+      const claimed = await jobs.claim({ workerId: 'conc-default-worker', jobTypes: [jobType], limit: 6 });
+      expect(claimed).toHaveLength(6);
+      expect(await jobs.getOrgConcurrencyLimit(orgId, jobType)).toBe(50);
+    });
+
+    it('EVIDENCE_MISSING (EM-5, still open): a queued job this process did not itself enqueue-and-immediately-claim is drained by NOTHING', async () => {
+      // Unchanged from before the W2 closeout — this is the one gap that
+      // remains genuinely open. reapExpiredLeases() (proven above) recovers
+      // ABANDONED (previously-claimed) jobs; it does not claim jobs that were
+      // never claimed in the first place. No process in this codebase does
+      // that inline self-claim aside (see module doc comment).
       const jobType = `w9bloop_${randomUUID()}`;
       const { job } = await enqueueOne(jobType);
 
@@ -652,6 +941,10 @@ describe.skipIf(!REAL_PG)('W9-B — compute queue fault injection (real PostgreS
       expect(stillQueued!.status).toBe('queued');
       expect(stillQueued!.attempt_count).toBe(0);
       expect(await readRuns(job.id)).toHaveLength(0);
+
+      // The reaper does not help here either — there is no expired lease to reap.
+      const reaped = await jobs.reapExpiredLeases({ batchSize: 50 });
+      expect(reaped.find((r) => r.jobId === job.id)).toBeUndefined();
     });
   });
 });
