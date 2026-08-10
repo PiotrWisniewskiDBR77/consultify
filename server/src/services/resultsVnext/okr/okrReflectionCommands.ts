@@ -619,3 +619,432 @@ export async function recordObjectiveReflection(
     client.release();
   }
 }
+
+// ==========================================
+// recordOkrReflectionTeresaDraft (OKR-E008, OKR-F-027, D-OKR8-7/D-OKR8-8)
+//
+// IO-1 re-verification: OKR-E007's own AC table (OKR-F-021..024, re-read
+// verbatim) names no Teresa draft mechanism — OKR-E008 is the first place
+// this requirement is written down (D-OKR8-8's own open question, resolved
+// here: lands inside THIS file, OKR-E007's now-landed command layer, same
+// placement ROI-E008 chose for `recordRoiPirTeresaLessonsDraft` inside
+// ROI-E006's own `roiPirCommands.ts`).
+//
+// Deliberately NOT `executeAtomicCommand` — mirrors `recordObjectiveReflection`
+// immediately above: a reflection row may not exist yet when Teresa first
+// drafts (an Objective can reach 'active'/'review' before either
+// `finalScoreOkrSet` or a human's own `recordObjectiveReflection` has ever
+// run), and `executeAtomicCommand.loadForUpdate` returning nothing is
+// hard-coded to `AtomicWriteAggregateNotFoundError` — the wrong shape for
+// "create it if absent, CAS it if present". Same file-header convention:
+// `expectedVersion=0` = no row exists yet (create path); `expectedVersion>=1`
+// CAS's against an existing row's own `row_version` (update/regenerate path).
+// ==========================================
+
+export interface RecordOkrReflectionTeresaDraftInput {
+  objectiveId: string;
+  setId: string;
+  organizationId: string;
+  expectedVersion: number;
+  draftPayload: Record<string, unknown>;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+}
+
+/**
+ * Teresa's ONLY OKR reflection write path. The `UPDATE`/`INSERT` below
+ * touches ONLY `teresa_draft_reflection_payload`/`teresa_draft_generated_at`
+ * — NEVER `what_worked`/`what_did_not_work`/`why`/`learning`/
+ * `next_cycle_change`/`disposition`/`final_score*` (D-OKR8-7's core
+ * correctness guarantee, structurally identical to ROI-E008's AC-03 for
+ * `recordRoiPirTeresaLessonsDraft`). Guard: parent Set `status IN
+ * ('active','review')` (same as `recordObjectiveReflection`). Guard: if a
+ * row already exists, `status === 'draft'` AND `teresa_draft_disposition IS
+ * NULL` (D6/D13 analog — block regeneration after a human already disposed
+ * of a prior draft, never silently invalidate a human decision).
+ */
+export async function recordOkrReflectionTeresaDraft(
+  input: RecordOkrReflectionTeresaDraftInput
+): Promise<AtomicCommandOutcome<OkrReflection>> {
+  const {
+    objectiveId,
+    setId,
+    organizationId,
+    expectedVersion,
+    draftPayload,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+  } = input;
+
+  const client = await acquirePgClient();
+  try {
+    await client.query('BEGIN');
+
+    const objectiveResult = await client.query<{ set_id: string }>(
+      `SELECT set_id FROM okr_vnext_objectives WHERE objective_id = $1 AND organization_id = $2`,
+      [objectiveId, organizationId]
+    );
+    const objectiveRow = objectiveResult.rows[0];
+    if (!objectiveRow) {
+      await client.query('ROLLBACK');
+      throw new OkrReflectionValidationError(`OKR Objective ${objectiveId} not found`, 'OBJECTIVE_NOT_FOUND', {
+        objectiveId,
+      });
+    }
+    if (objectiveRow.set_id !== setId) {
+      await client.query('ROLLBACK');
+      throw new OkrReflectionValidationError(
+        `OKR Objective ${objectiveId} does not belong to Set ${setId}`,
+        'OBJECTIVE_SET_MISMATCH',
+        { objectiveId, setId }
+      );
+    }
+
+    const setResult = await client.query<{ status: string }>(
+      `SELECT status FROM okr_vnext_sets WHERE set_id = $1 AND organization_id = $2 FOR UPDATE`,
+      [setId, organizationId]
+    );
+    const setRow = setResult.rows[0];
+    if (!setRow) {
+      await client.query('ROLLBACK');
+      throw new OkrSetValidationError(`OKR Set ${setId} not found`, 'SET_NOT_FOUND', { setId });
+    }
+    if (setRow.status !== 'active' && setRow.status !== 'review') {
+      await client.query('ROLLBACK');
+      throw new OkrSetValidationError(
+        `OKR Set ${setId} is "${setRow.status}" — Teresa may only draft a reflection while the Set is "active" or "review"`,
+        'SET_NOT_REFLECTABLE',
+        { setId, status: setRow.status }
+      );
+    }
+
+    const existingResult = await client.query<OkrReflectionRow>(
+      `SELECT * FROM okr_vnext_reflections WHERE objective_id = $1 AND organization_id = $2 FOR UPDATE`,
+      [objectiveId, organizationId]
+    );
+    const existingRow = existingResult.rows[0];
+
+    let beforeState: Record<string, unknown> | null = null;
+    let resultRow: OkrReflectionRow;
+    let nextVersion: number;
+
+    if (!existingRow) {
+      if (expectedVersion !== 0) {
+        await client.query('ROLLBACK');
+        throw new OkrReflectionNotFoundError(objectiveId);
+      }
+      nextVersion = 1;
+      const insertResult = await client.query<OkrReflectionRow>(
+        `INSERT INTO okr_vnext_reflections
+           (set_id, objective_id, organization_id, teresa_draft_reflection_payload,
+            teresa_draft_generated_at, created_by)
+         VALUES ($1, $2, $3, $4, now(), $5)
+         RETURNING *`,
+        [setId, objectiveId, organizationId, JSON.stringify(draftPayload), actorUserId]
+      );
+      const inserted = insertResult.rows[0];
+      if (!inserted) {
+        throw new Error(`[recordOkrReflectionTeresaDraft] insert returned no row for objective ${objectiveId}`);
+      }
+      resultRow = inserted;
+    } else {
+      if (existingRow.row_version !== expectedVersion) {
+        await client.query('ROLLBACK');
+        throw new OkrReflectionValidationError(
+          `OKR Reflection for Objective ${objectiveId} was modified since it was last read`,
+          'STALE_VERSION',
+          { objectiveId, currentVersion: existingRow.row_version, expectedVersion }
+        );
+      }
+      if (existingRow.status !== 'draft') {
+        await client.query('ROLLBACK');
+        throw new OkrReflectionValidationError(
+          `OKR Reflection for Objective ${objectiveId} is finalized — Teresa may not draft over it`,
+          'NOT_EDITABLE',
+          { objectiveId, status: existingRow.status }
+        );
+      }
+      // D6/D13 analog (ROI-E008): block regeneration once a human already
+      // disposed of a prior draft — never silently invalidate that decision.
+      if (existingRow.teresa_draft_disposition !== null) {
+        await client.query('ROLLBACK');
+        throw new OkrReflectionValidationError(
+          `OKR Reflection for Objective ${objectiveId} already has a recorded Teresa draft disposition — regenerating would silently invalidate a human decision`,
+          'DISPOSITION_ALREADY_RECORDED',
+          { objectiveId }
+        );
+      }
+      beforeState = { reflection: toOkrReflection(existingRow) };
+      nextVersion = existingRow.row_version + 1;
+      const updateResult = await client.query<OkrReflectionRow>(
+        `UPDATE okr_vnext_reflections
+            SET teresa_draft_reflection_payload = $1, teresa_draft_generated_at = now(),
+                row_version = $2, updated_by = $3, updated_at = now()
+          WHERE objective_id = $4
+          RETURNING *`,
+        [JSON.stringify(draftPayload), nextVersion, actorUserId, objectiveId]
+      );
+      const updated = updateResult.rows[0];
+      if (!updated) {
+        throw new Error(`[recordOkrReflectionTeresaDraft] update returned no row for objective ${objectiveId}`);
+      }
+      resultRow = updated;
+    }
+
+    const result = toOkrReflection(resultRow);
+    const afterState: Record<string, unknown> = { reflection: result };
+    const eventInput: AtomicEventInput = {
+      schemaVersion: 1,
+      eventType: 'okr_set.objective_reflection_teresa_draft_recorded',
+      aggregateType: 'okr_set',
+      aggregateId: setId,
+      organizationId,
+      actorUserId,
+      actorEffectiveRole,
+      commandId: randomUUID(),
+      correlationId: correlationId ?? randomUUID(),
+      causationId,
+      occurredAt: new Date().toISOString(),
+      policyVersion: '',
+      beforeState,
+      afterState,
+      stateHash: computeStateHash(afterState),
+      reason,
+      evidenceRefs: [],
+      source: OKR_EVENT_SOURCE,
+      idempotencyKey,
+      expectedVersion,
+      resultingVersion: nextVersion,
+      payload: { setId, objectiveId },
+    };
+
+    const eventResult = await client.query<{ event_id: string; resulting_version: number }>(EVENT_INSERT_SQL, [
+      eventInput.schemaVersion,
+      eventInput.eventType,
+      eventInput.aggregateType,
+      eventInput.aggregateId,
+      eventInput.organizationId,
+      eventInput.actorUserId,
+      eventInput.actorEffectiveRole,
+      eventInput.commandId,
+      eventInput.correlationId,
+      eventInput.causationId,
+      eventInput.occurredAt,
+      eventInput.policyVersion,
+      eventInput.beforeState === null ? null : JSON.stringify(eventInput.beforeState),
+      eventInput.afterState === null ? null : JSON.stringify(eventInput.afterState),
+      eventInput.stateHash,
+      eventInput.reason,
+      JSON.stringify(eventInput.evidenceRefs ?? []),
+      eventInput.source,
+      eventInput.idempotencyKey,
+      eventInput.expectedVersion,
+      eventInput.resultingVersion,
+      JSON.stringify(eventInput.payload ?? {}),
+    ]);
+
+    const insertedEvent = eventResult.rows[0];
+    if (!insertedEvent) {
+      const existingEventResult = await client.query<ExistingEventRow>(
+        `SELECT event_id, sequence, event_type, aggregate_type, aggregate_id, organization_id,
+                occurred_at, recorded_at, before_state, after_state, resulting_version, idempotency_key
+           FROM rvn_platform_events
+          WHERE organization_id = $1 AND idempotency_key = $2`,
+        [organizationId, idempotencyKey]
+      );
+      const existingEvent = existingEventResult.rows[0];
+      await client.query('ROLLBACK');
+      if (!existingEvent) {
+        throw new Error(
+          `[recordOkrReflectionTeresaDraft] idempotency conflict on (${organizationId}, ${idempotencyKey}) but existing event row not found`
+        );
+      }
+      const duplicateReflectionResult = await client.query<OkrReflectionRow>(
+        `SELECT * FROM okr_vnext_reflections WHERE objective_id = $1 AND organization_id = $2`,
+        [objectiveId, organizationId]
+      );
+      const duplicateRow = duplicateReflectionResult.rows[0];
+      return {
+        outcome: 'duplicate',
+        eventId: existingEvent.event_id,
+        resultingVersion: existingEvent.resulting_version,
+        result: duplicateRow ? toOkrReflection(duplicateRow) : result,
+      };
+    }
+
+    const consumerGroups = resolveConsumerGroups(eventInput.eventType);
+    if (consumerGroups.length > 0) {
+      await client.query(
+        `INSERT INTO rvn_platform_outbox (event_id, consumer_group, status)
+           SELECT $1, cg, 'pending' FROM unnest($2::text[]) AS cg`,
+        [insertedEvent.event_id, consumerGroups]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return {
+      outcome: 'applied',
+      eventId: insertedEvent.event_id,
+      resultingVersion: insertedEvent.resulting_version,
+      result,
+    };
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      logger.warn('[resultsVnext/okr/okrReflectionCommands] rollback after error failed (teresa draft)', {
+        error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+      });
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ==========================================
+// recordOkrReflectionTeresaDraftDisposition (OKR-E008, D-OKR8-7)
+// ==========================================
+
+export type OkrReflectionTeresaDraftDisposition = 'accepted' | 'rejected';
+
+export interface RecordOkrReflectionTeresaDraftDispositionInput {
+  objectiveId: string;
+  organizationId: string;
+  expectedVersion: number;
+  disposition: OkrReflectionTeresaDraftDisposition;
+  actorUserId: string;
+  actorEffectiveRole: string;
+  idempotencyKey: string;
+  correlationId?: string;
+  causationId?: string | null;
+  reason?: string | null;
+}
+
+async function loadOkrReflectionForUpdate(
+  client: PoolClient,
+  objectiveId: string,
+  organizationId: string
+): Promise<OkrReflectionRow | undefined> {
+  const result = await client.query<OkrReflectionRow>(
+    `SELECT * FROM okr_vnext_reflections WHERE objective_id = $1 AND organization_id = $2 FOR UPDATE`,
+    [objectiveId, organizationId]
+  );
+  return result.rows[0];
+}
+
+function reflectionRowVersion(row: OkrReflectionRow): number {
+  return row.row_version;
+}
+
+/**
+ * The human's own explicit disposition gate (D-OKR8-7). CAS on the
+ * reflection row (`aggregateId` = `objectiveId`, its own unique key —
+ * `loadOkrReflectionForUpdate` above resolves it, the reflection row is
+ * guaranteed to already exist by the time a disposition can be recorded).
+ * Guard: `status === 'draft'`.
+ *
+ * DEVIATION FROM the ROI-E008 precedent, stated plainly: unlike ROI's PIR
+ * (a single `lessons_learned` text field, so `recordRoiPirTeresaDraftDisposition`
+ * can copy the human-approved final text straight into it), OKR's
+ * reflection narrative is FIVE separate structured fields
+ * (`what_worked`/`what_did_not_work`/`why`/`learning`/`next_cycle_change`)
+ * plus `disposition` — there is no single "final text" this command could
+ * honestly copy. This command therefore ONLY records
+ * `teresa_draft_disposition`/`_by`/`_at` (blocking further regeneration and
+ * surfacing the human's decision to the UI) — it NEVER writes
+ * `what_worked`/`what_did_not_work`/`why`/`learning`/`next_cycle_change`/
+ * `disposition` itself. The design's own text is honored exactly: "human
+ * still calls POST .../objectives/:id/reflection to commit" — that EXISTING
+ * `recordObjectiveReflection` command (unchanged) remains the ONLY path
+ * that ever writes those five narrative fields, whether or not the human
+ * started from Teresa's draft text.
+ */
+export async function recordOkrReflectionTeresaDraftDisposition(
+  input: RecordOkrReflectionTeresaDraftDispositionInput
+): Promise<AtomicCommandOutcome<OkrReflection>> {
+  const {
+    objectiveId,
+    organizationId,
+    expectedVersion,
+    disposition,
+    actorUserId,
+    actorEffectiveRole,
+    idempotencyKey,
+    correlationId,
+    causationId = null,
+    reason = null,
+  } = input;
+
+  let beforeState: Record<string, unknown> | null = null;
+  let setIdForEvent = '';
+
+  return executeAtomicCommand<OkrReflectionRow, OkrReflection>({
+    organizationId,
+    aggregateId: objectiveId,
+    expectedVersion,
+    loadForUpdate: loadOkrReflectionForUpdate,
+    getCurrentVersion: reflectionRowVersion,
+    applyMutation: async (client, currentRow, nextVersion) => {
+      if (currentRow.status !== 'draft') {
+        throw new OkrReflectionValidationError(
+          `OKR Reflection for Objective ${objectiveId} is "${currentRow.status}" — a Teresa draft disposition may only be recorded while the reflection is a draft`,
+          'NOT_EDITABLE',
+          { objectiveId, status: currentRow.status }
+        );
+      }
+      setIdForEvent = currentRow.set_id;
+      beforeState = { reflection: toOkrReflection(currentRow) };
+
+      const updateResult = await client.query<OkrReflectionRow>(
+        `UPDATE okr_vnext_reflections
+            SET teresa_draft_disposition = $1, teresa_draft_disposition_by = $2, teresa_draft_disposition_at = now(),
+                row_version = $3, updated_by = $2, updated_at = now()
+          WHERE objective_id = $4
+          RETURNING *`,
+        [disposition, actorUserId, nextVersion, objectiveId]
+      );
+      const updatedRow = updateResult.rows[0];
+      if (!updatedRow) {
+        throw new Error(`[recordOkrReflectionTeresaDraftDisposition] update returned no row for objective ${objectiveId}`);
+      }
+      return toOkrReflection(updatedRow);
+    },
+    buildEvent: ({ result, nextVersion }) => {
+      const afterState = { reflection: result };
+      return {
+        schemaVersion: 1,
+        eventType: 'okr_set.objective_reflection_teresa_draft_disposition_recorded',
+        aggregateType: 'okr_set',
+        aggregateId: setIdForEvent,
+        organizationId,
+        actorUserId,
+        actorEffectiveRole,
+        commandId: randomUUID(),
+        correlationId: correlationId ?? randomUUID(),
+        causationId,
+        occurredAt: new Date().toISOString(),
+        policyVersion: '',
+        beforeState,
+        afterState,
+        stateHash: computeStateHash(afterState),
+        reason,
+        evidenceRefs: [],
+        source: OKR_EVENT_SOURCE,
+        idempotencyKey,
+        expectedVersion,
+        resultingVersion: nextVersion,
+        payload: { objectiveId },
+      } satisfies AtomicEventInput;
+    },
+  });
+}

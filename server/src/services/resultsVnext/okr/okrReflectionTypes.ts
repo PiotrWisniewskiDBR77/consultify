@@ -7,6 +7,10 @@
  * Row interfaces (`*Row`) are snake_case, matching DB columns 1:1. DTO
  * interfaces are camelCase. Same convention as `okrSetTypes.ts`/
  * `okrObjectiveTypes.ts`.
+ *
+ * OKR-E008 (D-OKR8-7) appends `teresa_draft_reflection_payload`/
+ * `teresa_draft_generated_at`/`teresa_draft_disposition(_by/_at)` — see
+ * server/migrations/20260827_rvn_okr_teresa_reflection_draft.sql.
  */
 
 export const OKR_REFLECTION_STATUSES = ['draft', 'finalized'] as const;
@@ -48,12 +52,23 @@ export interface OkrReflectionRow {
   disposition: OkrReflectionDisposition | null;
   finalized_by: string | null;
   finalized_at: string | null;
+  // OKR-E008 (D-OKR8-7) — Teresa's proposed patch + the human's disposition
+  // gate. Never authoritative; see okrReflectionCommands.ts's
+  // recordOkrReflectionTeresaDraft/recordOkrReflectionTeresaDraftDisposition.
+  teresa_draft_reflection_payload: Record<string, unknown> | null;
+  teresa_draft_generated_at: string | null;
+  teresa_draft_disposition: OkrReflectionTeresaDraftDispositionValue | null;
+  teresa_draft_disposition_by: string | null;
+  teresa_draft_disposition_at: string | null;
   row_version: number;
   created_by: string;
   created_at: string;
   updated_by: string | null;
   updated_at: string;
 }
+
+export const OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS = ['accepted', 'rejected'] as const;
+export type OkrReflectionTeresaDraftDispositionValue = (typeof OKR_REFLECTION_TERESA_DRAFT_DISPOSITIONS)[number];
 
 export interface OkrReflection {
   reflectionId: string;
@@ -75,6 +90,11 @@ export interface OkrReflection {
   disposition: OkrReflectionDisposition | null;
   finalizedBy: string | null;
   finalizedAt: string | null;
+  teresaDraftReflectionPayload: Record<string, unknown> | null;
+  teresaDraftGeneratedAt: string | null;
+  teresaDraftDisposition: OkrReflectionTeresaDraftDispositionValue | null;
+  teresaDraftDispositionBy: string | null;
+  teresaDraftDispositionAt: string | null;
   rowVersion: number;
   createdBy: string;
   createdAt: string;
@@ -103,6 +123,11 @@ export function toOkrReflection(row: OkrReflectionRow): OkrReflection {
     disposition: row.disposition,
     finalizedBy: row.finalized_by,
     finalizedAt: row.finalized_at,
+    teresaDraftReflectionPayload: row.teresa_draft_reflection_payload,
+    teresaDraftGeneratedAt: row.teresa_draft_generated_at,
+    teresaDraftDisposition: row.teresa_draft_disposition,
+    teresaDraftDispositionBy: row.teresa_draft_disposition_by,
+    teresaDraftDispositionAt: row.teresa_draft_disposition_at,
     rowVersion: row.row_version,
     createdBy: row.created_by,
     createdAt: row.created_at,
