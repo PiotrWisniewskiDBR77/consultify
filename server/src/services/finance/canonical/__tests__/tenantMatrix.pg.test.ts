@@ -448,16 +448,26 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(Number(bValue!.value_decimal)).toBe(B.marker);
     });
 
-    it('FIXED W9-C-1: baselineComputeService.loadContext() refuses ANOTHER ORG\'s statement cells and model (was: DEFECT — returned B\'s data)', async () => {
-      // BEFORE the fix this asserted `loaded.ok === true` and that org A,
-      // calling with org B's baseline businessVersionId, received B's
+    it('FIXED W9-C-1 + NEW-2: baselineComputeService.loadContext() refuses ANOTHER ORG\'s statement cells and model (was: DEFECT — returned B\'s data)', async () => {
+      // BEFORE the W9-C-1 fix this asserted `loaded.ok === true` and that org
+      // A, calling with org B's baseline businessVersionId, received B's
       // model/assumptions/schedules (identified by B's marker) — a full
       // cross-tenant model-data read. `loadContext()` now predicates every
       // one of those reads (finance_baseline_models, finance_business_versions,
       // finance_stmt_lines, finance_baseline_schedules,
-      // finance_baseline_assumptions) on organization_id, so the FIRST one
-      // (finance_baseline_models) refuses and the typed NOT_FOUND-shaped
-      // result propagates — never another org's data, never a raw error.
+      // finance_baseline_assumptions) on organization_id.
+      //
+      // NEW-2 fix (W2_SELF_CLAIM_TENANT_FIX_report.md): the code this test
+      // pinned briefly asserted `NO_BASELINE_MODEL_ROW` — that was the FIRST
+      // org-scoped check the W9-C-1 fix added, but `resolveSourceStatementPackVersion()`
+      // (the actual first read of the two, against `finance_lineage_edges`)
+      // was still unscoped at the time, so it silently found B's edge before
+      // the org-scoped finance_baseline_models check ran and refused. Now
+      // `resolveSourceStatementPackVersion()` is org-scoped too and refuses
+      // FIRST, before finance_baseline_models is even queried — a strictly
+      // earlier, more correct refusal point. `NO_SOURCE_STATEMENT_PACK_EDGE`
+      // is the right code for that: still a typed NOT_FOUND-shaped result,
+      // never another org's data, never a raw error.
       const loaded = await baseline.loadContext({
         organizationId: A.orgId,
         businessVersionId: B.baselineBvId,
@@ -470,7 +480,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
 
       expect(loaded.ok).toBe(false);
       if (loaded.ok) throw new Error('unreachable');
-      expect(loaded.code).toBe('NO_BASELINE_MODEL_ROW');
+      expect(loaded.code).toBe('NO_SOURCE_STATEMENT_PACK_EDGE');
 
       // Independent physical read: B's own baseline model row is untouched —
       // this was a read-only attempt, and it never even reached B's data.
@@ -512,14 +522,22 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       expect(rows).toHaveLength(0);
     });
 
-    it('FIXED W9-C-6 (P2): computeAnalysisKpis(orgA, bvB) fails closed with a TYPED result (was: DEFECT — untyped throw)', async () => {
+    it('FIXED W9-C-6 (P2) + NEW-2: computeAnalysisKpis(orgA, bvB) fails closed with a TYPED result (was: DEFECT — untyped throw)', async () => {
       // `computeAnalysisKpis` guards on `getBusinessVersion(organizationId, ...)`
-      // returning null, which IS org-scoped — isolation held even before this
-      // fix. BEFORE the fix it threw a bare `Error` instead of returning a
-      // typed `{ok:false}` like every other failure mode of the same
-      // function, so an HTTP layer mapped a tenant-boundary refusal to a 500
-      // rather than a 404. Now returns `{ok:false, code:'BUSINESS_VERSION_NOT_FOUND'}`
-      // — a resolved Promise, not a rejection.
+      // returning null, which IS org-scoped — isolation held even before the
+      // W9-C-6 fix. BEFORE that fix it threw a bare `Error` instead of
+      // returning a typed `{ok:false}` like every other failure mode of the
+      // same function, so an HTTP layer mapped a tenant-boundary refusal to a
+      // 500 rather than a 404. That fix landed as `{ok:false, code:'BUSINESS_VERSION_NOT_FOUND'}`.
+      //
+      // NEW-2 fix (W2_SELF_CLAIM_TENANT_FIX_report.md): this test briefly
+      // pinned that code, but `resolveSourceStatementPackVersion()` (the
+      // ACTUAL first read of the two, against `finance_lineage_edges`) was
+      // still unscoped at the time, so it silently found B's edge before the
+      // org-scoped `getBusinessVersion` check ran and refused. Now
+      // `resolveSourceStatementPackVersion()` is org-scoped too and refuses
+      // FIRST — `NO_SOURCE_STATEMENT_PACK_EDGE`, a strictly earlier, more
+      // correct typed refusal, still a resolved Promise, never a rejection.
       const result = await kpi.computeAnalysisKpis({
         organizationId: A.orgId,
         businessVersionId: B.anaBvId,
@@ -527,7 +545,7 @@ describe.skipIf(!REAL_PG)('W9-C — tenant isolation matrix (real PostgreSQL)', 
       });
       expect(result.ok).toBe(false);
       if (result.ok) throw new Error('unreachable');
-      expect(result.code).toBe('BUSINESS_VERSION_NOT_FOUND');
+      expect(result.code).toBe('NO_SOURCE_STATEMENT_PACK_EDGE');
 
       // No KPI value of B's was recomputed or overwritten.
       const bValue = await t((tx) =>
