@@ -413,7 +413,15 @@ export type ComputeAnalysisKpisResult =
         businessVersion?: BusinessVersionRow;
       };
     }
-  | { ok: false; code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'BUSINESS_VERSION_NOT_FOUND'; message: string };
+  | {
+      ok: false;
+      // W9-B-2 fix: `completeJobSuccess()` reported `NOT_RUNNING` (job
+      // cancelled/lease-expired/already terminal before we could commit its
+      // output) — never report success for a run whose compute_job_outputs
+      // commit did not happen. See W2_FALSE_SUCCESS_W9B2_report.md.
+      code: 'NO_SOURCE_STATEMENT_PACK_EDGE' | 'BUSINESS_VERSION_NOT_FOUND' | 'JOB_NOT_RUNNING';
+      message: string;
+    };
 
 /** ADR section 8.1 point 3 — Analysis -> source Statement Pack Version, exclusively via `finance_lineage_edges`. */
 async function resolveSourceStatementPackVersion(businessVersionId: string): Promise<string | null> {
@@ -499,7 +507,7 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
   if (runningJob.status === 'running') {
     const contentSemanticHash = createHash('sha256').update(JSON.stringify(results)).digest('hex');
     const outputWorkingRevisionId = bv.source_working_revision_id ?? params.businessVersionId;
-    await computeJobService.completeJobSuccess({
+    const completed = await computeJobService.completeJobSuccess({
       jobId: runningJob.id,
       organizationId: params.organizationId,
       outputArtifactId: bv.artifact_id,
@@ -507,6 +515,21 @@ export async function computeAnalysisKpis(params: ComputeAnalysisKpisParams): Pr
       outputWorkingRevisionId,
       contentSemanticHash,
     });
+    // W9-B-2 fix: NOT_RUNNING means the job was cancelled/lease-expired/already
+    // terminal by the time we tried to commit — never report success for a run
+    // whose compute_job_outputs commit did not happen. (The local
+    // `runningJob.status === 'running'` guard above only reflects the status
+    // at claim() time — it does NOT catch a cancellation that happened during
+    // `evaluateAllRows`/`persistResults`, which is exactly the race this
+    // fixes.) OUTPUT_ALREADY_COMMITTED is treated as an idempotent-safe
+    // outcome — see report §"NOT_RUNNING vs OUTPUT_ALREADY_COMMITTED".
+    if (!completed.ok && completed.code === 'NOT_RUNNING') {
+      return {
+        ok: false,
+        code: 'JOB_NOT_RUNNING',
+        message: `computeAnalysisKpis: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
+      };
+    }
     // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
     await stampWorkingRevisionComputeIdentity({
       organizationId: params.organizationId,

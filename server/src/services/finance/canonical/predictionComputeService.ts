@@ -149,7 +149,19 @@ export type RunPredictionComputeResult =
   | { ok: true; mode: 'COMPUTED'; job: ComputeJobRow; periodsComputed: number; periods: PredictionPeriodResult[] }
   | {
       ok: false;
-      code: 'READINESS_GATE_FAILED' | 'NO_SCENARIO_ROW' | 'NO_BASELINE_LINEAGE_EDGE' | 'MISSING_DEBT_MATURITY_SCHEDULE' | 'CIRCULARITY_NOT_CONVERGED' | 'BASELINE_COMPUTE_FAILED';
+      code:
+        | 'READINESS_GATE_FAILED'
+        | 'NO_SCENARIO_ROW'
+        | 'NO_BASELINE_LINEAGE_EDGE'
+        | 'MISSING_DEBT_MATURITY_SCHEDULE'
+        | 'CIRCULARITY_NOT_CONVERGED'
+        | 'BASELINE_COMPUTE_FAILED'
+        // W9-B-2 fix: `completeJobSuccess()` reported `NOT_RUNNING` (job
+        // cancelled/lease-expired/already terminal before we could commit its
+        // output) — never report success for a run whose compute_job_outputs
+        // commit did not happen. Raised from both runStandardBase() and
+        // runOverlayCompute(). See W2_FALSE_SUCCESS_W9B2_report.md.
+        | 'JOB_NOT_RUNNING';
       message: string;
       readiness?: Array<{ check_name: string; passed: boolean; detail: string }>;
     };
@@ -271,7 +283,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     throw new Error(`predictionComputeService: finance_business_versions.source_working_revision_id is not set for ${params.businessVersionId}`);
   }
 
-  await computeJobService.completeJobSuccess({
+  const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
     outputArtifactId: runningJob.input_artifact_id,
@@ -279,6 +291,18 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     outputWorkingRevisionId: scenarioWorkingRevision.source_working_revision_id,
     contentSemanticHash, // identical derivation from the SAME baseline job's own monthlyResults — proves bit-for-bit equivalence at the job-output level, not just the DB-row level
   });
+  // W9-B-2 fix: NOT_RUNNING means the job was cancelled/lease-expired/already
+  // terminal by the time we tried to commit — never report success for a run
+  // whose compute_job_outputs commit did not happen. OUTPUT_ALREADY_COMMITTED
+  // is treated as an idempotent-safe outcome — see report §"NOT_RUNNING vs
+  // OUTPUT_ALREADY_COMMITTED".
+  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runStandardBase: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
+    };
+  }
   // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
   await stampWorkingRevisionComputeIdentity({
     organizationId: params.organizationId,
@@ -286,7 +310,7 @@ async function runStandardBase(params: RunPredictionComputeParams, baselineModel
     contentSemanticHash,
     computeRunId: runningJob.id,
   });
-  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
+  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   const passthroughRows = await withPinnedPostgresTransaction((tx) =>
     tx.queryAll<{ n: string }>(`SELECT count(*)::text AS n FROM finance_prediction_outputs_effective WHERE business_version_id = ?`, [params.businessVersionId])
@@ -669,7 +693,7 @@ async function runOverlayCompute(
     throw new Error(`predictionComputeService: finance_business_versions.source_working_revision_id is not set for the Prediction Scenario ${params.businessVersionId}`);
   }
   const contentSemanticHash = createHash('sha256').update(JSON.stringify(periods)).digest('hex');
-  await computeJobService.completeJobSuccess({
+  const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
     outputArtifactId: scenarioArtifactEarly.artifact_id,
@@ -677,6 +701,18 @@ async function runOverlayCompute(
     outputWorkingRevisionId: scenarioArtifactEarly.source_working_revision_id,
     contentSemanticHash,
   });
+  // W9-B-2 fix: NOT_RUNNING means the job was cancelled/lease-expired/already
+  // terminal by the time we tried to commit — never report success for a run
+  // whose compute_job_outputs commit did not happen. OUTPUT_ALREADY_COMMITTED
+  // is treated as an idempotent-safe outcome — see report §"NOT_RUNNING vs
+  // OUTPUT_ALREADY_COMMITTED".
+  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `runOverlayCompute: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
+    };
+  }
   // W10-D01 fix — see baselineComputeService.ts's identical call for the full rationale.
   await stampWorkingRevisionComputeIdentity({
     organizationId: params.organizationId,
@@ -684,7 +720,7 @@ async function runOverlayCompute(
     contentSemanticHash,
     computeRunId: runningJob.id,
   });
-  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
+  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
 
   return { ok: true, mode: 'COMPUTED', job: finalJob, periodsComputed: periods.length, periods };
 }

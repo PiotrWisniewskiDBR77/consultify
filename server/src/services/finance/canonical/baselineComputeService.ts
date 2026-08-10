@@ -365,7 +365,15 @@ export type RunBaselineComputeResult =
         | 'FORECAST_PERIOD_COUNT_MISMATCH'
         | 'MISSING_DEBT_MATURITY_SCHEDULE'
         | 'CIRCULARITY_NOT_CONVERGED'
-        | 'TIE_OUT_FAILED';
+        | 'TIE_OUT_FAILED'
+        // W9-B-2 fix: `completeJobSuccess()` reported `NOT_RUNNING` — the job was
+        // cancelled (or otherwise left 'running') between claim() and this call, so
+        // NO `compute_job_outputs` row and NO 'succeeded' transition happened for it.
+        // Per-period `finance_baseline_outputs` rows above may already be persisted
+        // (written in their own transaction, before this point), but the job-level
+        // commit that makes this run the authoritative/linked one did NOT happen —
+        // this must NOT be reported as success. See W2_FALSE_SUCCESS_W9B2_report.md.
+        | 'JOB_NOT_RUNNING';
       message: string;
       failedAtPeriodId?: string;
       partialResults?: PeriodComputeSummary[];
@@ -638,7 +646,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     );
   }
   const contentSemanticHash = createHash('sha256').update(JSON.stringify(monthlyResults)).digest('hex');
-  await computeJobService.completeJobSuccess({
+  const completed = await computeJobService.completeJobSuccess({
     jobId: runningJob.id,
     organizationId: params.organizationId,
     outputArtifactId: runningJob.input_artifact_id,
@@ -646,6 +654,19 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     outputWorkingRevisionId: ctx.sourceWorkingRevisionId,
     contentSemanticHash,
   });
+  // W9-B-2 fix: NOT_RUNNING means the job was cancelled/lease-expired/already
+  // terminal by the time we tried to commit — never report success for a run
+  // whose compute_job_outputs commit did not happen. OUTPUT_ALREADY_COMMITTED
+  // is treated as an idempotent-safe outcome (see report §"NOT_RUNNING vs
+  // OUTPUT_ALREADY_COMMITTED"): another attempt for this SAME job_id already
+  // committed an output, so we fall through and reuse the authoritative row.
+  if (!completed.ok && completed.code === 'NOT_RUNNING') {
+    return {
+      ok: false,
+      code: 'JOB_NOT_RUNNING',
+      message: `baselineComputeService: completeJobSuccess reported NOT_RUNNING for job ${runningJob.id}: ${completed.message}`,
+    };
+  }
   // W10-D01 fix: stamp the SAME hash + the compute job that produced it onto
   // the working revision itself — before this, `content_semantic_hash` only
   // ever reached `compute_job_outputs`, never `finance_working_revisions`, so
@@ -658,7 +679,7 @@ export async function runBaselineCompute(params: RunBaselineComputeParams): Prom
     computeRunId: runningJob.id,
   });
 
-  const finalJob = (await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob;
+  const finalJob = completed.ok ? completed.job : ((await computeJobService.getJob(params.organizationId, job.id)) ?? runningJob);
   return { ok: true, job: finalJob, periodsComputed: monthlyResults.length, monthlyResults };
 }
 
