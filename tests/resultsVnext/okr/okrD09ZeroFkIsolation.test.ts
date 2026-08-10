@@ -27,6 +27,15 @@
  *      `kpiDefinitionService`/`kpi_time_series` string matches — the exact
  *      violation `okrService.ts` (legacy) itself has, structurally
  *      forbidden from recurring in vNext.
+ *
+ * OKR-E004 addition: `okrCheckInSuggestionService.ts` (AC-F-012-AC-01, the
+ * "isolating AC" for check-ins) joins the SAME exemption list for the SAME
+ * reason as `okrLegacyArchiveRepository.ts` above — its entire job is to
+ * document, in its own header comment, exactly what it must never import or
+ * query (both forbidden names appear there in prose, by design). A
+ * comment-stripped, code-only re-check for it lives both here (mirroring
+ * `okrLegacyArchiveRepository.ts`'s own pattern immediately below) and,
+ * independently, in `tests/resultsVnext/okr/okrCheckInSuggestion.test.ts`.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -67,7 +76,7 @@ describe('OKR-E008 D09 zero-FK isolation (static)', () => {
   describe('§2 — no okr vNext service file imports the legacy KPI cross-domain read path', () => {
     it('zero references to kpiDefinitionService / kpi_time_series outside okrLegacyArchiveRepository.ts', () => {
       const files = readdirSync(OKR_VNEXT_SERVICE_DIR).filter(
-        (f) => f.endsWith('.ts') && f !== 'okrLegacyArchiveRepository.ts'
+        (f) => f.endsWith('.ts') && f !== 'okrLegacyArchiveRepository.ts' && f !== 'okrCheckInSuggestionService.ts'
       );
       expect(files.length).toBeGreaterThan(0);
 
@@ -93,6 +102,19 @@ describe('OKR-E008 D09 zero-FK isolation (static)', () => {
       expect(
         matches,
         `okrLegacyArchiveRepository.ts has a non-comment reference to kpi_time_series: ${JSON.stringify(matches)}`
+      ).toEqual([]);
+    });
+
+    it('okrCheckInSuggestionService.ts itself never queries kpi_time_series or imports kpiDefinitionService (comments-only reference allowed)', () => {
+      const fullPath = path.join(OKR_VNEXT_SERVICE_DIR, 'okrCheckInSuggestionService.ts');
+      const source = readFileSync(fullPath, 'utf8');
+      const codeLines = source
+        .split('\n')
+        .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'));
+      const matches = codeLines.join('\n').match(/\b(kpiDefinitionService|kpi_time_series)\b/g) ?? [];
+      expect(
+        matches,
+        `okrCheckInSuggestionService.ts has a non-comment reference to the forbidden legacy path: ${JSON.stringify(matches)}`
       ).toEqual([]);
     });
   });

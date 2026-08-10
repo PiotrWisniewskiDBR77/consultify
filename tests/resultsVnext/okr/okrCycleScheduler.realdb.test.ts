@@ -345,6 +345,12 @@ describe('OKR-E001 Cycle scheduler — two-call idempotency (real Postgres)', ()
     });
 
     const run = await generateCadenceOccurrences({ organizationId, cycleId: cycle.result.cycleId });
-    expect(run).toEqual({ created: 0, skippedExisting: 0 });
+    // OKR-E004 addition (IO-6, additive/backward-compatible): the result
+    // shape now also carries `createdOccurrenceIds` — updated here to
+    // match, still asserting the exact full shape rather than switching to
+    // objectContaining (a regression in either `created`/`skippedExisting`
+    // OR an unexpectedly non-empty `createdOccurrenceIds` should still
+    // fail this test).
+    expect(run).toEqual({ created: 0, skippedExisting: 0, createdOccurrenceIds: [] });
   });
 });
