@@ -36,7 +36,46 @@ import { z } from 'zod';
 // extension pattern.
 // ---------------------------------------------------------------------------
 
-export const FinanceTableNameValues = ['finance_stmt_lines'] as const;
+export const FinanceTableNameValues = [
+  'finance_stmt_lines',
+  // AP-05 (Compare) additive extension — one literal + one row/column branch
+  // per table, exactly as this file's header describes. Real DDL sources:
+  //   - finance_analysis_kpi_values: `20260809_finance_v3_d03_analysis_01_tables.sql`
+  //     (`uq_finance_analysis_kpi_values_cell UNIQUE (business_version_id,
+  //     kpi_catalog_id, entity_id, period_id)` — no consolidation_scope/
+  //     accumulation_basis axis, this domain table never had one).
+  //   - finance_baseline_outputs: `20260809_finance_v3_d05_baseline_01_tables.sql`
+  //     (`uq_finance_baseline_outputs_cell UNIQUE (business_version_id,
+  //     entity_id, canonical_line_id, period_id, consolidation_scope)` — has
+  //     consolidation_scope but, unlike finance_stmt_lines, no
+  //     accumulation_basis column at all: a Baseline Model has exactly one
+  //     accumulation convention per period, not four).
+  //   - finance_prediction_outputs_effective: the VIEW (not a table) defined
+  //     by `20260809_finance_v3_d07_prediction_03_readiness.sql` section 8.3
+  //     — "the ONLY place Models/Results reads" (ADR section 8.3). Same
+  //     row/column shape as finance_baseline_outputs (it unions
+  //     finance_prediction_outputs with a finance_baseline_outputs
+  //     passthrough for scenario_mode=STANDARD_BASE) plus a non-key `source`
+  //     discriminator column Compare surfaces but never keys on.
+  //   - finance_valuation_methods: `20260809_finance_v3_d09_valuation_01_tables.sql`
+  //     (`uq_finance_valuation_methods_bv_type UNIQUE (business_version_id,
+  //     method_type)`). NOT finance_valuation_variants — that table
+  //     (`uq_finance_valuation_variants_bv UNIQUE (business_version_id)`) is
+  //     the one-row-per-variant header (case_id/name/description) with no
+  //     comparable value column at all; the actual per-method headline
+  //     result (`result_ev_decimal`) Compare's compareValuationMethods()
+  //     needs to diff (DCF vs comps) lives on finance_valuation_methods. See
+  //     `AP-05_compare_report.md` section "Judgment calls" for the full
+  //     rationale — same "don't hand-wave a table name, read the real DDL"
+  //     discipline ArtifactRef.ts's header documents for its own artifactType
+  //     literals. This table has no period axis at all — every table shipped
+  //     before it did, so it is the first real user of the `period: null`
+  //     escape hatch `CellPeriodRefSchema.nullable()` below was written for.
+  'finance_analysis_kpi_values',
+  'finance_baseline_outputs',
+  'finance_prediction_outputs_effective',
+  'finance_valuation_methods',
+] as const;
 export type FinanceTableName = (typeof FinanceTableNameValues)[number];
 export const FinanceTableNameSchema = z.enum(FinanceTableNameValues);
 
@@ -66,30 +105,135 @@ export const financeStmtLinesColumnKeySchema = z.object({
 export type FinanceStmtLinesColumnKey = z.infer<typeof financeStmtLinesColumnKeySchema>;
 
 // ---------------------------------------------------------------------------
+// finance_analysis_kpi_values row/column key branches (WP-D03 section 4.3 —
+// `uq_finance_analysis_kpi_values_cell`).
+// ---------------------------------------------------------------------------
+
+export const financeAnalysisKpiValuesRowKeySchema = z.object({
+  tableName: z.literal('finance_analysis_kpi_values'),
+  entityId: z.string().min(1),
+  kpiCatalogId: z.string().min(1),
+});
+export type FinanceAnalysisKpiValuesRowKey = z.infer<typeof financeAnalysisKpiValuesRowKeySchema>;
+
+export const financeAnalysisKpiValuesColumnKeySchema = z.object({
+  tableName: z.literal('finance_analysis_kpi_values'),
+  periodId: z.string().min(1),
+});
+export type FinanceAnalysisKpiValuesColumnKey = z.infer<typeof financeAnalysisKpiValuesColumnKeySchema>;
+
+// ---------------------------------------------------------------------------
+// finance_baseline_outputs row/column key branches (WP-D05 section 4.4 —
+// `uq_finance_baseline_outputs_cell`). No accumulation_basis axis.
+// ---------------------------------------------------------------------------
+
+export const financeBaselineOutputsRowKeySchema = z.object({
+  tableName: z.literal('finance_baseline_outputs'),
+  entityId: z.string().min(1),
+  canonicalLineId: z.string().min(1),
+  consolidationScope: z.enum(FinanceConsolidationScopeValues),
+});
+export type FinanceBaselineOutputsRowKey = z.infer<typeof financeBaselineOutputsRowKeySchema>;
+
+export const financeBaselineOutputsColumnKeySchema = z.object({
+  tableName: z.literal('finance_baseline_outputs'),
+  periodId: z.string().min(1),
+});
+export type FinanceBaselineOutputsColumnKey = z.infer<typeof financeBaselineOutputsColumnKeySchema>;
+
+// ---------------------------------------------------------------------------
+// finance_prediction_outputs_effective row/column key branches — same shape
+// as finance_baseline_outputs (see FinanceTableNameValues comment above: the
+// VIEW unions finance_prediction_outputs with a finance_baseline_outputs
+// passthrough, both of which share this row/column shape).
+// ---------------------------------------------------------------------------
+
+export const financePredictionOutputsEffectiveRowKeySchema = z.object({
+  tableName: z.literal('finance_prediction_outputs_effective'),
+  entityId: z.string().min(1),
+  canonicalLineId: z.string().min(1),
+  consolidationScope: z.enum(FinanceConsolidationScopeValues),
+});
+export type FinancePredictionOutputsEffectiveRowKey = z.infer<typeof financePredictionOutputsEffectiveRowKeySchema>;
+
+export const financePredictionOutputsEffectiveColumnKeySchema = z.object({
+  tableName: z.literal('finance_prediction_outputs_effective'),
+  periodId: z.string().min(1),
+});
+export type FinancePredictionOutputsEffectiveColumnKey = z.infer<typeof financePredictionOutputsEffectiveColumnKeySchema>;
+
+// ---------------------------------------------------------------------------
+// finance_valuation_methods row/column key branches (WP-D09 section 4.2 —
+// `uq_finance_valuation_methods_bv_type`). No period axis at all — the first
+// real user of `CellRef.period === null` (see file header / section below).
+// ---------------------------------------------------------------------------
+
+export const FinanceValuationMethodTypeValues = [
+  'DCF_FCFF',
+  'DCF_FCFE',
+  'DIVIDEND_DISCOUNT',
+  'TRADING_COMPS',
+  'PRECEDENT_TRANSACTIONS',
+  'ASSET_BASED',
+  'OTHER_WITH_POLICY',
+] as const;
+export type FinanceValuationMethodType = (typeof FinanceValuationMethodTypeValues)[number];
+
+export const financeValuationMethodsRowKeySchema = z.object({
+  tableName: z.literal('finance_valuation_methods'),
+  methodType: z.enum(FinanceValuationMethodTypeValues),
+});
+export type FinanceValuationMethodsRowKey = z.infer<typeof financeValuationMethodsRowKeySchema>;
+
+/** No period column on `finance_valuation_methods` — the column-key branch carries only the table discriminant. */
+export const financeValuationMethodsColumnKeySchema = z.object({
+  tableName: z.literal('finance_valuation_methods'),
+});
+export type FinanceValuationMethodsColumnKey = z.infer<typeof financeValuationMethodsColumnKeySchema>;
+
+// ---------------------------------------------------------------------------
 // CellRowKey / CellColumnKey — discriminated unions on `tableName`. Adding a
 // table means adding one branch here, per the file header's extension note.
 // ---------------------------------------------------------------------------
 
-export const CellRowKeySchema = z.discriminatedUnion('tableName', [financeStmtLinesRowKeySchema]);
+export const CellRowKeySchema = z.discriminatedUnion('tableName', [
+  financeStmtLinesRowKeySchema,
+  financeAnalysisKpiValuesRowKeySchema,
+  financeBaselineOutputsRowKeySchema,
+  financePredictionOutputsEffectiveRowKeySchema,
+  financeValuationMethodsRowKeySchema,
+]);
 export type CellRowKey = z.infer<typeof CellRowKeySchema>;
 
-export const CellColumnKeySchema = z.discriminatedUnion('tableName', [financeStmtLinesColumnKeySchema]);
+export const CellColumnKeySchema = z.discriminatedUnion('tableName', [
+  financeStmtLinesColumnKeySchema,
+  financeAnalysisKpiValuesColumnKeySchema,
+  financeBaselineOutputsColumnKeySchema,
+  financePredictionOutputsEffectiveColumnKeySchema,
+  financeValuationMethodsColumnKeySchema,
+]);
 export type CellColumnKey = z.infer<typeof CellColumnKeySchema>;
 
 // ---------------------------------------------------------------------------
 // Period — a denormalized, table-agnostic convenience projection. AP-05
 // (Compare) and AP-01's freeze/find-by-period features need to read "what
 // period is this cell in" WITHOUT knowing each table's table-specific
-// columnKey shape. `null` for a table whose grid has no period axis at all
-// (task: "period jeśli dotyczy" — "if applicable"); every table shipped so
-// far (finance_stmt_lines) does have one, so `period` is non-null there, but
-// the field stays optional-by-type so a future non-periodic domain table
-// (e.g. a flat entity-perimeter grid) does not need a fabricated value.
+// columnKey shape. The whole `period` object is `null` for a table whose
+// grid has no period axis at all (task: "period jeśli dotyczy" — "if
+// applicable") — `finance_valuation_methods` (added by AP-05) is the first
+// real user of that escape hatch. `accumulationBasis` inside `CellPeriodRef`
+// is separately nullable: `finance_stmt_lines` is still the only table with
+// a real accumulation_basis COLUMN (QUARTER_ONLY/YTD/LTM/FULL_YEAR — one
+// period can be sliced four ways); `finance_analysis_kpi_values`,
+// `finance_baseline_outputs` and `finance_prediction_outputs_effective` all
+// have a real `period_id` but no such column (one row per period, full
+// stop), so their constructors below pass `accumulationBasis: null` rather
+// than fabricating a basis value the source table cannot actually express.
 // ---------------------------------------------------------------------------
 
 export const CellPeriodRefSchema = z.object({
   periodId: z.string().min(1),
-  accumulationBasis: z.enum(FinanceAccumulationBasisValues),
+  accumulationBasis: z.enum(FinanceAccumulationBasisValues).nullable(),
 });
 export type CellPeriodRef = z.infer<typeof CellPeriodRefSchema>;
 
@@ -147,6 +291,84 @@ export function financeStmtLinesCellRef(params: {
       accumulationBasis: params.accumulationBasis,
     },
     period: { periodId: params.periodId, accumulationBasis: params.accumulationBasis },
+  };
+}
+
+export function financeAnalysisKpiValuesCellRef(params: {
+  organizationId: string;
+  businessVersionId: string;
+  entityId: string;
+  kpiCatalogId: string;
+  periodId: string;
+}): CellRef {
+  return {
+    organizationId: params.organizationId,
+    businessVersionId: params.businessVersionId,
+    tableName: 'finance_analysis_kpi_values',
+    rowKey: { tableName: 'finance_analysis_kpi_values', entityId: params.entityId, kpiCatalogId: params.kpiCatalogId },
+    columnKey: { tableName: 'finance_analysis_kpi_values', periodId: params.periodId },
+    period: { periodId: params.periodId, accumulationBasis: null },
+  };
+}
+
+export function financeBaselineOutputsCellRef(params: {
+  organizationId: string;
+  businessVersionId: string;
+  entityId: string;
+  canonicalLineId: string;
+  consolidationScope: FinanceConsolidationScope;
+  periodId: string;
+}): CellRef {
+  return {
+    organizationId: params.organizationId,
+    businessVersionId: params.businessVersionId,
+    tableName: 'finance_baseline_outputs',
+    rowKey: {
+      tableName: 'finance_baseline_outputs',
+      entityId: params.entityId,
+      canonicalLineId: params.canonicalLineId,
+      consolidationScope: params.consolidationScope,
+    },
+    columnKey: { tableName: 'finance_baseline_outputs', periodId: params.periodId },
+    period: { periodId: params.periodId, accumulationBasis: null },
+  };
+}
+
+export function financePredictionOutputsEffectiveCellRef(params: {
+  organizationId: string;
+  businessVersionId: string;
+  entityId: string;
+  canonicalLineId: string;
+  consolidationScope: FinanceConsolidationScope;
+  periodId: string;
+}): CellRef {
+  return {
+    organizationId: params.organizationId,
+    businessVersionId: params.businessVersionId,
+    tableName: 'finance_prediction_outputs_effective',
+    rowKey: {
+      tableName: 'finance_prediction_outputs_effective',
+      entityId: params.entityId,
+      canonicalLineId: params.canonicalLineId,
+      consolidationScope: params.consolidationScope,
+    },
+    columnKey: { tableName: 'finance_prediction_outputs_effective', periodId: params.periodId },
+    period: { periodId: params.periodId, accumulationBasis: null },
+  };
+}
+
+export function financeValuationMethodsCellRef(params: {
+  organizationId: string;
+  businessVersionId: string;
+  methodType: FinanceValuationMethodType;
+}): CellRef {
+  return {
+    organizationId: params.organizationId,
+    businessVersionId: params.businessVersionId,
+    tableName: 'finance_valuation_methods',
+    rowKey: { tableName: 'finance_valuation_methods', methodType: params.methodType },
+    columnKey: { tableName: 'finance_valuation_methods' },
+    period: null,
   };
 }
 
