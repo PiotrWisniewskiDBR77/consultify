@@ -30,7 +30,8 @@ cd "$REPO"
 
 OUT="$REPO/docs/validation/finance-v3/generated/gate-d/_evidence_run_${TAG}"
 RAW="$OUT/raw"
-mkdir -p "$RAW"
+# UWAGA: katalog wyjściowy tworzymy DOPIERO po bramce czystości drzewa (§0) —
+# inaczej skrypt sam sobie brudzi drzewo i przerywa na własnym artefakcie.
 
 PGBIN=/opt/homebrew/opt/postgresql@15/bin      # @15, NIE @16 (@16 bez pgvector)
 PGDATA="/private/tmp/fv3-evidence-${TAG}-pgdata" # NIE w scratchpadzie sesji!
@@ -45,7 +46,8 @@ SHA="$(git rev-parse HEAD)"
 SHA_SHORT="$(git rev-parse --short=10 HEAD)"
 BRANCH="$(git branch --show-current)"
 
-: > "$SUMMARY"
+: > /dev/null
+log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "${SUMMARY:-/dev/null}" 2>/dev/null || echo "[$(date +%H:%M:%S)] $*"; }
 log "=========================================================="
 log "CANDIDATE SHA : $SHA"
 log "  (short)     : $SHA_SHORT"
@@ -61,6 +63,7 @@ if [ "$DIRTY" != "0" ]; then
   exit 2
 fi
 
+mkdir -p "$RAW"
 git rev-parse HEAD > "$OUT/CANDIDATE_SHA.txt"
 
 # --- 1. Świeży, efemeryczny klaster PostgreSQL 15 ----------------------------
