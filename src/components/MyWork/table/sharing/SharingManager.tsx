@@ -25,6 +25,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -135,27 +137,54 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
     }
   };
 
-  const handleInvite = async () => {
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru: klik człowieka =
+  // `ctx.params.run` (rejestr wykonuje ORYGINALNY callback wprost); Teresa =
+  // ta sama funkcja rejestru woła REST bezpośrednio (`runTableSharing*Callback`
+  // w `ideaActionRegistry.ts`).
+  const runSharingAction = (
+    actionId: string,
+    run: () => void,
+    params?: Record<string, unknown>
+  ) => {
+    const ctx: ActionContext = {
+      ideaId: baseId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run, ...(params || {}) },
+    };
+    void runIdeaAction(actionId, ctx);
+  };
+
+  const handleInvite = () => {
     if (!inviteEmail.trim()) {
       toast.error(t('ideas.table.enterEmailAddress', 'Enter email address'));
       return;
     }
-    setInviting(true);
-    try {
-      const result = await TablePlatformApi.inviteCollaborator(
-        baseId,
-        inviteEmail.trim(),
-        inviteRole
-      );
-      setCollaborators((prev) => [...prev, result]);
-      toast.success(t('ideas.table.invitationSent', 'Invitation sent'));
-      setInviteEmail('');
-      setShowInvite(false);
-    } catch {
-      toast.error(t('ideas.table.failedToInvite', 'Failed to invite'));
-    } finally {
-      setInviting(false);
-    }
+    runSharingAction(
+      'table.sharing.invite',
+      async () => {
+        setInviting(true);
+        try {
+          const result = await TablePlatformApi.inviteCollaborator(
+            baseId,
+            inviteEmail.trim(),
+            inviteRole
+          );
+          setCollaborators((prev) => [...prev, result]);
+          toast.success(t('ideas.table.invitationSent', 'Invitation sent'));
+          setInviteEmail('');
+          setShowInvite(false);
+        } catch {
+          toast.error(t('ideas.table.failedToInvite', 'Failed to invite'));
+        } finally {
+          setInviting(false);
+        }
+      },
+      { baseId, email: inviteEmail.trim(), role: inviteRole }
+    );
   };
 
   const handleChangeRole = async (userId: string, newRole: string) => {
@@ -171,14 +200,20 @@ export const SharingManager: React.FC<SharingManagerProps> = ({ baseId, views = 
     setRoleMenuOpen(null);
   };
 
-  const handleRemoveCollaborator = async (userId: string) => {
-    try {
-      await TablePlatformApi.removeCollaborator(baseId, userId);
-      setCollaborators((prev) => prev.filter((c) => c.userId !== userId));
-      toast.success(t('ideas.table.accessRemoved', 'Access removed'));
-    } catch {
-      toast.error(t('ideas.table.failedToRemove', 'Failed to remove'));
-    }
+  const handleRemoveCollaborator = (userId: string) => {
+    runSharingAction(
+      'table.sharing.remove_collaborator',
+      async () => {
+        try {
+          await TablePlatformApi.removeCollaborator(baseId, userId);
+          setCollaborators((prev) => prev.filter((c) => c.userId !== userId));
+          toast.success(t('ideas.table.accessRemoved', 'Access removed'));
+        } catch {
+          toast.error(t('ideas.table.failedToRemove', 'Failed to remove'));
+        }
+      },
+      { baseId, userId }
+    );
   };
 
   // ── Render ─────────────────────────────────────────────────────

@@ -17,6 +17,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -200,18 +202,34 @@ export function InterfacesIndex({
     [onCreateView, tableId, t]
   );
 
+  // Program B (E02) — klik człowieka = `ctx.params.run` (rejestr wykonuje
+  // ORYGINALNY callback wprost); Teresa = ta sama funkcja rejestru woła REST
+  // bezpośrednio (`runTableInterfaceDeleteCallback` w `ideaActionRegistry.ts`).
   const handleDelete = useCallback(
-    async (ifaceId: string) => {
-      try {
-        await TablePlatformApi.deleteView(ifaceId);
-        setInterfaces((prev) => prev.filter((i) => i.id !== ifaceId));
-        setDeleteConfirm(null);
-        toast.success(t('interfacesIndex.deleted', 'Interface deleted'));
-      } catch {
-        toast.error(t('interfacesIndex.deleteError', 'Failed to delete interface'));
-      }
+    (ifaceId: string) => {
+      const ctx: ActionContext = {
+        ideaId: baseId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: {
+          interfaceId: ifaceId,
+          run: async () => {
+            try {
+              await TablePlatformApi.deleteView(ifaceId);
+              setInterfaces((prev) => prev.filter((i) => i.id !== ifaceId));
+              setDeleteConfirm(null);
+              toast.success(t('interfacesIndex.deleted', 'Interface deleted'));
+            } catch {
+              toast.error(t('interfacesIndex.deleteError', 'Failed to delete interface'));
+            }
+          },
+        },
+      };
+      void runIdeaAction('table.interface.delete', ctx);
     },
-    [t]
+    [t, baseId]
   );
 
   const handleCopyShareLink = useCallback((ifaceId: string) => {

@@ -34,11 +34,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import type { ArtifactLink } from '@/utils/artifactLinks';
 
 import TeresaMark from '../../shared/TeresaMark';
+import { EMPTY_SELECTION } from '../ideaSelectionTypes';
 import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -751,7 +753,21 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                       {s}
                     </span>
                     <button
-                      onClick={() => handleApplyAISuggestion(s)}
+                      onClick={() => {
+                        // `idea.node.mm_apply_ai_suggestion` (ideaActionRegistry.ts,
+                        // closure 2026-08-10) — routes the SAME closure through
+                        // the registry so the id is a real, connected entry
+                        // point, not a documented-but-orphaned one.
+                        const actionCtx: ActionContext = {
+                          ideaId,
+                          tool: 'mindmap',
+                          selection: EMPTY_SELECTION,
+                          surface: 'panel',
+                          source: 'ui',
+                          params: { run: () => handleApplyAISuggestion(s) },
+                        };
+                        void runIdeaAction('idea.node.mm_apply_ai_suggestion', actionCtx);
+                      }}
                       className="text-[9px] font-bold text-c-text-secondary dark:text-c-text-muted hover:underline shrink-0"
                     >
                       {t('ideas.mindmap.add', 'Add')}

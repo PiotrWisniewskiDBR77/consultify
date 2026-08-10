@@ -1042,6 +1042,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setExportMenuOpen(true);
         return;
       }
+      // Odbiornik dla akcji rejestru `idea.template.apply` gdy woła ją Teresa
+      // (`ideaActionRegistry.ts`, closure 2026-08-10). Świadomie REUŻYWA
+      // `handleApplyTemplate` (ten sam, który `onApplyTemplate` niżej daje
+      // lewemu railowi) zamiast wołać `applyIdeaTemplate` bezpośrednio z
+      // rejestru — `handleApplyTemplate` niesie poprawny `baseVersion`
+      // (`graphRuntime.graph.version`) i `handleTemplateApplied()` (refresh
+      // + bump `mapRefreshToken`), którego brak historycznie gubił treść w
+      // Przepływie/Mapie po zastosowaniu szablonu (patrz komentarz przy
+      // `handleTemplateApplied` wyżej) — rejestr NIE duplikuje tej naprawy.
+      if (action === 'apply_idea_template') {
+        const templateId = eventDetail?.templateId;
+        if (typeof templateId === 'string' && templateId) {
+          void handleApplyTemplate(templateId);
+        }
+        return;
+      }
       // Odbiornik dla akcji rejestru `idea.templates.open` (Menu 3 „Szablony").
       // Rejestr nadaje ten string na szynę, bo otwarcie modala żyje w stanie
       // React hosta — analogicznie do `open_export_menu` wyżej.
@@ -1183,6 +1199,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         action === 'accept_challenge' ||
         action === 'open_export_menu' ||
         action === 'open_template_gallery' ||
+        // `idea.template.apply` (ideaActionRegistry.ts, closure 2026-08-10) —
+        // Teresa path dispatches this after `findIdeaTemplate` validation;
+        // without this line the event was silently dropped by this allowlist
+        // before ever reaching `handleQuickAction`/`handleApplyTemplate`.
+        action === 'apply_idea_template' ||
         action.startsWith('convert_') ||
         action.startsWith('wb_convert_') ||
         action.startsWith('pf_convert_') ||

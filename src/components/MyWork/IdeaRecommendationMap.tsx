@@ -6878,17 +6878,18 @@ function MindMapInner({
               isPl={isPolish}
               current={structureType}
               onSelect={(type) => {
-                pushUndo();
-                setStructureType(type);
-                const laid = applyStructureLayout(type, nodes, edges, autoLayout);
-                setNodes(laid);
-                setTimeout(() => {
-                  try {
-                    fitView({ padding: 0.3, duration: 400 });
-                  } catch {
-                    /* */
-                  }
-                }, 50);
+                // Closure (2026-08-10, `idea.view.mm_structure_type` in
+                // ideaActionRegistry.ts): routed through the SAME bus event
+                // Teresa uses (and MindmapCommandPalette.tsx:330 already used)
+                // instead of duplicating pushUndo+setStructureType+
+                // applyStructureLayout+setNodes+fitView a second time in this
+                // component — one real mechanism (useMindMapQuickActions.ts
+                // `mm_set_structure`), not two.
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-quick-action', {
+                    detail: { action: 'mm_set_structure', structureType: type },
+                  })
+                );
               }}
               onClose={() => setShowStructurePicker(false)}
             />

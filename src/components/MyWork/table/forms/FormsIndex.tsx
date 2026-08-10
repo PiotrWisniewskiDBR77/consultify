@@ -19,6 +19,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import { EmptyState } from '@/components/ui/composed/EmptyState';
 import { LoadingState } from '@/components/ui/primitives';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
@@ -108,18 +110,34 @@ export function FormsIndex({
     }
   }, [tableId, loadForms, t]);
 
+  // Program B (E02) — klik człowieka = `ctx.params.run` (rejestr wykonuje
+  // ORYGINALNY callback wprost); Teresa = ta sama funkcja rejestru woła REST
+  // bezpośrednio (`runTableFormDeleteCallback` w `ideaActionRegistry.ts`).
   const handleDelete = useCallback(
-    async (formId: string) => {
-      try {
-        await TablePlatformApi.deleteForm(formId);
-        setForms((prev) => prev.filter((f) => f.id !== formId));
-        setDeleteConfirm(null);
-        toast.success(t('formsIndex.deleted', 'Form deleted'));
-      } catch {
-        toast.error(t('formsIndex.deleteError', 'Failed to delete form'));
-      }
+    (formId: string) => {
+      const ctx: ActionContext = {
+        ideaId: tableId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: {
+          formId,
+          run: async () => {
+            try {
+              await TablePlatformApi.deleteForm(formId);
+              setForms((prev) => prev.filter((f) => f.id !== formId));
+              setDeleteConfirm(null);
+              toast.success(t('formsIndex.deleted', 'Form deleted'));
+            } catch {
+              toast.error(t('formsIndex.deleteError', 'Failed to delete form'));
+            }
+          },
+        },
+      };
+      void runIdeaAction('table.form.delete', ctx);
     },
-    [t]
+    [t, tableId]
   );
 
   const handleCopyLink = useCallback(
@@ -131,24 +149,42 @@ export function FormsIndex({
     [baseUrl]
   );
 
+  // Program B (E02) — klik człowieka = `ctx.params.run` (rejestr wykonuje
+  // ORYGINALNY callback wprost); Teresa = ta sama funkcja rejestru pobiera
+  // bieżący rekord formularza (nie ma lokalnego stanu `forms`) i woła REST
+  // (`runTableFormShareModeChangeCallback` w `ideaActionRegistry.ts`).
   const handleShareModeChange = useCallback(
-    async (form: FormRecord, mode: ShareMode) => {
-      try {
-        await TablePlatformApi.updateForm(form.id, {
-          is_published: mode !== 'authenticated' || form.is_published,
-          config: {
-            ...form.config,
-            requireAuth: mode === 'authenticated',
+    (form: FormRecord, mode: ShareMode) => {
+      const ctx: ActionContext = {
+        ideaId: tableId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: {
+          formId: form.id,
+          mode,
+          run: async () => {
+            try {
+              await TablePlatformApi.updateForm(form.id, {
+                is_published: mode !== 'authenticated' || form.is_published,
+                config: {
+                  ...form.config,
+                  requireAuth: mode === 'authenticated',
+                },
+              });
+              await loadForms();
+              setShareMenuId(null);
+              toast.success(t('formsIndex.shareUpdated', 'Sharing updated'));
+            } catch {
+              toast.error(t('formsIndex.shareError', 'Failed to update sharing'));
+            }
           },
-        });
-        await loadForms();
-        setShareMenuId(null);
-        toast.success(t('formsIndex.shareUpdated', 'Sharing updated'));
-      } catch {
-        toast.error(t('formsIndex.shareError', 'Failed to update sharing'));
-      }
+        },
+      };
+      void runIdeaAction('table.form.share_mode_change', ctx);
     },
-    [loadForms, t]
+    [loadForms, t, tableId]
   );
 
   const getShareMode = (form: FormRecord): ShareMode => {

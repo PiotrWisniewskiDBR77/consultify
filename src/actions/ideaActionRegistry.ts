@@ -35,8 +35,23 @@ import type {
   CanvasToolType,
   IdeaWorkspaceSelection,
 } from '@/components/MyWork/ideaSelectionTypes';
+// `idea.template.apply` (closure 2026-08-10) reuses the REAL, already-exported
+// lookup instead of re-implementing the ~40-template catalog here — the ONE
+// deliberate exception to this file's "only `Api.*`, never a component
+// import" convention, because `ALL_TEMPLATES` lives exclusively in this
+// component and has no other exposed entry point. Only used for VALIDATING
+// a Teresa-supplied `templateId` (honest error instead of a silent no-op) —
+// the actual mutation dispatches to `handleApplyTemplate`
+// (IdeaMapWorkspace.tsx) via the quick-action bus, not called from here, see
+// `idea.template.apply`'s handler comment below for why.
+import { findIdeaTemplate } from '@/components/MyWork/IdeaTemplateGallery';
 import type { UserRole } from '@/types/core';
 import { Api } from '@/services/api';
+// Alias `TP` (NIE `TablePlatformApi`) — patrz komentarz przy funkcjach
+// `runTable*Callback` (N-TP, 2026-08-10) niżej DLACZEGO nazwa nie może kończyć
+// się na „Api" tuż przed kropką (`check-actions.sh` R8 łapie to jako fałszywe
+// wywołanie gołego `Api` z `src/services/api.ts`).
+import * as TP from '@/services/api/tablePlatform.api';
 
 // ───────────────────────────── TYPY KONTRAKTU ─────────────────────────────
 
@@ -244,7 +259,13 @@ export type IconName =
   | 'FileText' // idea.node.mm_summarize_branch — mindmap/NodeContextMenu.tsx
   | 'Globe' // idea.view.mm_ai_competitors — mindmap/PaneContextMenu.tsx
   | 'UserPlus' // idea.node.mm_assign — mindmap/NodeContextMenu.tsx
-  | 'Share2'; // idea.node.mm_copy_link — mindmap/NodeContextMenu.tsx
+  | 'Share2' // idea.node.mm_copy_link — mindmap/NodeContextMenu.tsx
+  // N-TP (2026-08-10) — 22 class-d paneli platformy Tabeli (Automatyzacje/
+  // Synchronizacja/Dystrybucja×2/Współdzielenie/Formularze/Interfejsy/
+  // Webhooki/Szablony rekordów/Zależności dat), 1:1 z ikonami już
+  // importowanymi w plikach źródłowych z lucide-react.
+  | 'RefreshCw' // table.date_dependency.recalculate — DateDependencyConfig.tsx
+  | 'Play'; // table.automation.run_now / table.sync.run_now / table.distribution*.execute
 // UWAGA (N8.2, 2026-08-10, ZAKTUALIZOWANA przy naprawie Group B) — menu
 // kolumny Tabeli ŚWIADOMIE nie dokłada tu nic nowego (kandydowały
 // 'ArrowUpDown'/'EyeOff'). Powód: `ICON_BY_NAME` w
@@ -868,6 +889,37 @@ async function runPanelUiOnlyCallback(actionId: string, ctx: ActionContext): Pro
 }
 
 /**
+ * `idea.node.mm_apply_ai_suggestion` (closure 2026-08-10) — Node Detail
+ * Drawer "Apply" click on an already-fetched AI suggestion chip. UI-only
+ * BY DESIGN, not by oversight: the suggestion text lives in `aiSuggestions`,
+ * transient LOCAL component state populated by a PRIOR, separate request
+ * (`handleAIExpand`, `Api.expandMyIdeaMap({proposeOnly:true})`) that is out
+ * of scope for this entry and has no addressable id of its own — Teresa has
+ * no way to say "accept suggestion #2" without first seeing the SAME open
+ * drawer's live-rendered list, which is not something a chat message can
+ * reference. Fabricating a `text` parameter for Teresa would silently change
+ * the action's meaning from "accept a previously proposed suggestion" to
+ * "insert arbitrary text I invented" — a different, already-covered
+ * capability (`idea.element.add`), not this one.
+ */
+async function runMindmapAiSuggestionApplyUiOnlyCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z otwartego panelu szczegółów węzła, na już wygenerowanej sugestii AI — nie mam jak wskazać konkretnej sugestii z czatu. Mogę za to wygenerować i wstawić nowe węzły przez „AI: rozwiń mapę" (pełny cykl podgląd→akceptacja).',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
  * `idea.node.edit` (N7 kontynuacja, 2026-08-09) — jedyna pozycja menu węzła,
  * której realna mutacja NIE żyje na szynie `idea-workspace-quick-action`, tylko
  * na osobnym, już istniejącym evencie `idea-workspace-node-update`
@@ -1041,6 +1093,28 @@ const RUNTIME_NODE_REMOVE_FROM_FRAME: ToolActionMap = {
  */
 const RUNTIME_PF_ADD_DECISION: ToolActionMap = {
   process_flow: 'pf_add_decision',
+};
+
+/**
+ * `idea.view.pf_add_start` (N-inventory-c4, 2026-08-10) — empty-canvas CTA
+ * (`IdeaProcessFlowTool.tsx` empty state, "Dodaj pierwszy krok"). Inventory
+ * (04_ACTION_COVERAGE_INVENTORY.csv, class c #4) proposed reusing
+ * `idea.element.add` (runtime `pf_add_step`) — DECLINED: `pf_add_step` is
+ * hardcoded to shape `'action'` (useProcessFlowQuickActions.ts:158-161), while
+ * this CTA always adds `'start'` (classic/automation/BPMN/system/org modes) or
+ * `'vsm_process'` (VSM mode) — never `'action'`. Same trap already documented
+ * for `idea.view.pf_add_decision` above ("kształt 'decision' nie ma
+ * odpowiednika w idea.element.add... NIE jest ta sama akcja mimo sąsiedztwa").
+ * Both `pf_add_start` and `pf_add_vsm_process` already have real, pre-existing
+ * handlers (`handlers.addNode('start')` / `handlers.addNode('vsm_process')`,
+ * useProcessFlowQuickActions.ts:164/186) — no new runtime infrastructure, only
+ * the missing registry entry + call site.
+ */
+const RUNTIME_PF_ADD_START: ToolActionMap = {
+  process_flow: 'pf_add_start',
+};
+const RUNTIME_PF_ADD_VSM_PROCESS: ToolActionMap = {
+  process_flow: 'pf_add_vsm_process',
 };
 
 /**
@@ -1657,6 +1731,33 @@ async function runNodeEditLabelCallback(ctx: ActionContext): Promise<ActionResul
   return { ok: true, actionId: 'idea.node.edit', data: { nodeId } };
 }
 
+/**
+ * `idea.node.wb_open_detail` (N-inventory-c5, 2026-08-10) — pure function of
+ * `nodeId`, no closure/`ctx.params.run` needed (unlike most UI-only callbacks
+ * here): dispatching `idea-node-open-detail` with `{ nodeId }` is EXACTLY what
+ * `CommentPinBadge.tsx`'s onClick already did before this wave — same event
+ * name, same detail shape — so both the UI click and a future Teresa call
+ * take the identical, real code path.
+ */
+async function runWbOpenDetailCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.node.wb_open_detail';
+  const nodeId =
+    typeof ctx.params?.nodeId === 'string' && ctx.params.nodeId
+      ? ctx.params.nodeId
+      : ctx.selection?.type === 'node' && typeof ctx.selection.primaryId === 'string'
+        ? ctx.selection.primaryId
+        : undefined;
+  if (!nodeId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `nodeId` elementu Tablicy, którego szczegóły mam otworzyć.',
+    };
+  }
+  window.dispatchEvent(new CustomEvent('idea-node-open-detail', { detail: { nodeId } }));
+  return { ok: true, actionId, data: { nodeId } };
+}
+
 // ───────────────────── MAPY RUNTIME (parsowane przez strażnika) ─────────────────────
 
 /**
@@ -1673,6 +1774,20 @@ const RUNTIME_ADD_ELEMENT: ToolActionMap = {
 /** Auto-układ. Przepływ ma WŁASNY silnik (`pf_auto_layout`, f5d0271992). */
 const RUNTIME_AUTO_LAYOUT: ToolActionMap = {
   process_flow: 'pf_auto_layout',
+};
+
+/**
+ * GAP-3 „Map structure type" (closure 2026-08-10, 04_ACTION_COVERAGE_INVENTORY.csv
+ * class-d) — Mapa myśli WYŁĄCZNIE. `mm_set_structure` ma już żywy odbiornik
+ * (`useMindMapQuickActions.ts` ~L1296: `pushUndo()` + `setStructureType` +
+ * `applyStructureLayout` + `setNodes` + `fitView` + toast), dziś wołany z
+ * `MindmapCommandPalette.tsx:330`. Ten wpis daje mu id rejestru + wpina
+ * `StructurePickerPopover`'s `onSelect` (IdeaRecommendationMap.tsx ~L6880) w
+ * TĘ SAMĄ szynę zamiast duplikować identyczną logikę drugi raz w komponencie
+ * (poprzedni stan: dwie niezależne implementacje tej samej mutacji).
+ */
+const RUNTIME_MM_SET_STRUCTURE: ToolActionMap = {
+  mindmap: 'mm_set_structure',
 };
 
 /** Tryb kursora — stan wyłącznie Mapy myśli (obsługa: IdeaMapWorkspace.tsx:1060). */
@@ -1882,6 +1997,16 @@ const RUNTIME_TBL_CROSS_RELATIONS: ToolActionMap = {
 };
 const RUNTIME_TBL_HEATMAP: ToolActionMap = {
   table: 'tbl_heatmap',
+};
+// 04_ACTION_COVERAGE_INVENTORY.csv class-d closure (2026-08-10): `tbl_export_csv`
+// already existed and works (`useTableQuickActions.ts` ~L285, real
+// exportToCSV+downloadCSV) — only the registry id was missing. `tbl_copy_clipboard`
+// is NEW wiring (same file, mirrors `tbl_export_csv` 1:1) added alongside this entry.
+const RUNTIME_TBL_EXPORT_CSV: ToolActionMap = {
+  table: 'tbl_export_csv',
+};
+const RUNTIME_TBL_COPY_CLIPBOARD: ToolActionMap = {
+  table: 'tbl_copy_clipboard',
 };
 
 /**
@@ -2348,6 +2473,27 @@ async function runTableToolbarUiOnlyCallback(
 }
 
 /**
+ * `idea.ai.table_schema_propose` (N-inventory-b-medium, 2026-08-10) — panel
+ * Chat-to-Schema Tabeli. Ten sam kształt co `runTableToolbarUiOnlyCallback`
+ * powyżej, osobna funkcja WYŁĄCZNIE dla uczciwego komunikatu ("panel", nie
+ * "górny pasek narzędzi").
+ */
+async function runTableChatToSchemaProposeCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'idea.ai.table_schema_propose';
+  const run = ctx.params?.run;
+  if (ctx.source !== 'ui' || typeof run !== 'function') {
+    return {
+      ok: false,
+      actionId,
+      message:
+        'Ta akcja działa dziś wyłącznie z otwartego panelu Chat-to-Schema Tabeli — nie mam jeszcze sposobu wywołania jej z czatu.',
+    };
+  }
+  (run as () => void)();
+  return { ok: true, actionId };
+}
+
+/**
  * Jak `runKeyboardOnlyCallback`, ale dla trzech akcji Tabeli, które od tej
  * zmiany (N10, 2026-08-10) mają DWA realne wejścia UI (skrót klawiszowy I
  * przycisk `TableToolbar.tsx`) — żadne z nich nie ma dziś wejścia dla Teresy,
@@ -2744,6 +2890,641 @@ async function runTableCellClearCallback(ctx: ActionContext): Promise<ActionResu
     };
   }
   return runByTool(actionId, RUNTIME_TBL_CELL_CLEAR, ctx, { rowId, colKey });
+}
+
+
+/**
+ * N-TP (2026-08-10) — 22 class-d z audytu (`04_ACTION_COVERAGE_INVENTORY.csv`,
+ * plik → linia dowodu w `source` każdej akcji niżej) w jedenastu samodzielnych
+ * panelach zarządzania platformą Tabeli (`src/components/MyWork/table/**` —
+ * Automatyzacje/Synchronizacja/Dystrybucja×2 (legacy „Distribute" +
+ * platformowy „Distribution Manager")/Współdzielenie/Formularze/Formularz-JWT/
+ * Interfejsy/Webhooki/Szablony rekordów/Zależności dat). Każdy panel jest
+ * MODALEM/prawym panelem-drawerem montowanym WYŁĄCZNIE gdy otwarty z overflow
+ * menu Tabeli — nie ma wspólnego hooka `use*QuickActions.ts` jak
+ * mapa/tablica/przepływ/tabela-wiersze-kolumny-komórki, więc te akcje NIE
+ * idą przez `runByTool`/szynę `idea-workspace-quick-action`.
+ *
+ * DWIE ścieżki, ten sam kształt co `runToolbarBusAction` gdzie indziej w tym
+ * pliku:
+ *  • `ctx.source === 'ui'` + `ctx.params.run` (funkcja) — wykonuje ORYGINALNY
+ *    prop-callback panelu WPROST (byte-identyczne zachowanie kliku człowieka:
+ *    toast, lokalny `setState` listy/formularza, ewentualny refetch).
+ *  • Teresa (`ctx.source !== 'ui'`) — panel może nie być zamontowany (otwiera
+ *    się dopiero z overflow menu Tabeli), więc NIE MA dostępu do `run`;
+ *    rejestr woła TĘ SAMĄ funkcję REST z `tablePlatform.api.ts`, którą
+ *    wołałby klik człowieka, bezpośrednio z parametrami LLM — realna,
+ *    asynchroniczna mutacja/odczyt serwerowy (żaden no-op), uczciwie BEZ
+ *    odświeżenia lokalnej listy panelu (ten sam panel przy następnym
+ *    otwarciu i tak robi `loadX()`/`fetchX()` w `useEffect`, patrz każdy z
+ *    jedenastu plików źródłowych — zero utraty spójności, tylko późniejsze
+ *    odświeżenie widoku niż przy kliku człowieka).
+ *
+ * Import z aliasem `TP` (NIE „TablePlatformApi", pisane tu ROZDZIELONE, żeby
+ * ten akapit sam siebie nie złapał) u góry pliku — `check-actions.sh` R8
+ * grepuje dosłowny wzorzec `Api` + kropka + nazwa metody + otwierający
+ * nawias w CAŁYM pliku (nie tylko w blokach akcji), a moduł „TablePlatform" +
+ * „Api" złożony z kropką i wywołaniem zawiera ten wzorzec jako PODCIĄG (nazwa
+ * modułu kończy się na „Api" tuż przed kropką) — R8 próbowałby znaleźć taką
+ * metodę w GOŁYM `Api` z `src/services/api.ts` i failowałby fałszywie. Alias
+ * `TP` tego problemu nie ma.
+ *
+ * Brak pola `runtime`/`RUNTIME_TBL_*` na żadnym z 22 wpisów niżej — to NIE jest
+ * przeoczenie: `runtime` istnieje wyłącznie dla akcji idących przez
+ * `dispatchQuickAction`/`runByTool` (szyna `idea-workspace-quick-action`), a
+ * te wołają REST bezpośrednio (jak `idea.workspace.duplicate` → `Api.duplicateMyIdea`
+ * gdzie indziej w tym pliku) — R6 (odbiornik w hooku reprezentacji) nie ma
+ * więc czego pilnować dla tej grupy, dokładnie jak przy `Api.duplicateMyIdea`.
+ */
+
+// ─── Distribution (create/execute/delete) — dwa niezależne UI, jeden kontrakt REST ───
+// `DistributionBuilder.tsx` (legacy „Distribute", zawsze widoczne — `show: !locked`)
+// i `DistributionManager.tsx` (platformowy „Distribution Manager" — `show: usePlatform`)
+// są DWOMA różnymi widocznymi komendami menu (różne etykiety, różne komponenty,
+// różne id akcji niżej — `table.distribution_builder.*` vs `table.distribution.*`),
+// ale wołają DOKŁADNIE te same trzy endpointy `tablePlatform.api.ts` — stąd
+// współdzielone funkcje parametryzowane `actionId`, żeby nie duplikować logiki
+// REST/walidacji dwukrotnie (identyczna zasada co `runToolbarBusAction`
+// współdzielona przez wiele id).
+async function runTableDistributionCreateCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
+  const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : '';
+  const channel = typeof ctx.params?.channel === 'string' ? ctx.params.channel : undefined;
+  if (!baseId || !name || !channel) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `baseId` bazy, `name` dystrybucji i `channel` (email|slack|teams|webhook).',
+    };
+  }
+  const sourceId = typeof ctx.params?.sourceId === 'string' ? ctx.params.sourceId : baseId;
+  try {
+    const data = await TP.createDistribution(baseId, {
+      name,
+      sourceType: typeof ctx.params?.sourceType === 'string' ? ctx.params.sourceType : 'table',
+      sourceId: sourceId || baseId,
+      channel,
+      channelConfig:
+        ctx.params?.channelConfig && typeof ctx.params.channelConfig === 'object'
+          ? (ctx.params.channelConfig as Record<string, unknown>)
+          : {},
+      format: typeof ctx.params?.format === 'string' ? ctx.params.format : 'csv',
+      schedule: typeof ctx.params?.schedule === 'string' ? ctx.params.schedule : undefined,
+    });
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się utworzyć dystrybucji.',
+    };
+  }
+}
+
+async function runTableDistributionExecuteCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const distributionId =
+    typeof ctx.params?.distributionId === 'string' ? ctx.params.distributionId : undefined;
+  if (!distributionId) {
+    return { ok: false, actionId, message: 'Podaj `distributionId` dystrybucji do wysłania.' };
+  }
+  try {
+    const data = await TP.executeDistribution(distributionId);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Wysyłka dystrybucji się nie powiodła.',
+    };
+  }
+}
+
+async function runTableDistributionDeleteCallback(
+  actionId: string,
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const distributionId =
+    typeof ctx.params?.distributionId === 'string' ? ctx.params.distributionId : undefined;
+  if (!distributionId) {
+    return { ok: false, actionId, message: 'Podaj `distributionId` dystrybucji do usunięcia.' };
+  }
+  try {
+    await TP.deleteDistribution(distributionId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć dystrybucji.',
+    };
+  }
+}
+
+// ─── Date dependency config (DateDependencyConfig.tsx) ───
+function buildDateDependencyConfigFromParams(ctx: ActionContext) {
+  return {
+    startDateFieldId: ctx.params?.startDateFieldId as string,
+    endDateFieldId: ctx.params?.endDateFieldId as string,
+    durationFieldId:
+      typeof ctx.params?.durationFieldId === 'string' ? ctx.params.durationFieldId : undefined,
+    predecessorFieldId:
+      typeof ctx.params?.predecessorFieldId === 'string' ? ctx.params.predecessorFieldId : undefined,
+    defaultDependencyType: (typeof ctx.params?.defaultDependencyType === 'string'
+      ? ctx.params.defaultDependencyType
+      : 'FS') as 'FS' | 'SS' | 'FF' | 'SF',
+    defaultLagDays: typeof ctx.params?.defaultLagDays === 'number' ? ctx.params.defaultLagDays : 0,
+    skipWeekends:
+      typeof ctx.params?.skipWeekends === 'boolean' ? ctx.params.skipWeekends : false,
+  };
+}
+
+async function runTableDateDependencySaveCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.date_dependency.save';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const tableId = typeof ctx.params?.tableId === 'string' ? ctx.params.tableId : undefined;
+  const startDateFieldId =
+    typeof ctx.params?.startDateFieldId === 'string' ? ctx.params.startDateFieldId : undefined;
+  const endDateFieldId =
+    typeof ctx.params?.endDateFieldId === 'string' ? ctx.params.endDateFieldId : undefined;
+  if (!tableId || !startDateFieldId || !endDateFieldId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `tableId`, `startDateFieldId` i `endDateFieldId`.',
+    };
+  }
+  try {
+    await TP.putDependencyConfig(tableId, buildDateDependencyConfigFromParams(ctx));
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się zapisać konfiguracji zależności dat.',
+    };
+  }
+}
+
+async function runTableDateDependencyRecalculateCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const actionId = 'table.date_dependency.recalculate';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const tableId = typeof ctx.params?.tableId === 'string' ? ctx.params.tableId : undefined;
+  const startDateFieldId =
+    typeof ctx.params?.startDateFieldId === 'string' ? ctx.params.startDateFieldId : undefined;
+  const endDateFieldId =
+    typeof ctx.params?.endDateFieldId === 'string' ? ctx.params.endDateFieldId : undefined;
+  if (!tableId || !startDateFieldId || !endDateFieldId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `tableId`, `startDateFieldId` i `endDateFieldId`.',
+    };
+  }
+  const config = buildDateDependencyConfigFromParams(ctx);
+  try {
+    const cycle = await TP.detectDateDependencyCycle(tableId, config);
+    if (cycle?.hasCycle && cycle.cycleNodes?.length) {
+      return {
+        ok: false,
+        actionId,
+        message: `Wykryto cykl zależności w ${cycle.cycleNodes.length} rekordach — przerywam przeliczanie.`,
+        data: { cycleNodes: cycle.cycleNodes },
+      };
+    }
+    const result = await TP.recalculateDateDependencies(tableId, config);
+    return { ok: true, actionId, data: { updatedRecords: result?.updatedRecords ?? 0 } };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się przeliczyć zależności dat.',
+    };
+  }
+}
+
+// ─── Record templates (RecordTemplateManager.tsx) ───
+async function runTableRecordTemplateDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.record_template.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const templateId = typeof ctx.params?.templateId === 'string' ? ctx.params.templateId : undefined;
+  if (!templateId) {
+    return { ok: false, actionId, message: 'Podaj `templateId` szablonu do usunięcia.' };
+  }
+  try {
+    await TP.deleteRecordTemplate(templateId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć szablonu rekordu.',
+    };
+  }
+}
+
+async function runTableRecordTemplateSaveCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.record_template.save';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const name = typeof ctx.params?.name === 'string' ? ctx.params.name.trim() : '';
+  const data =
+    ctx.params?.data && typeof ctx.params.data === 'object'
+      ? (ctx.params.data as Record<string, unknown>)
+      : undefined;
+  const templateId = typeof ctx.params?.templateId === 'string' ? ctx.params.templateId : undefined;
+  const tableId = typeof ctx.params?.tableId === 'string' ? ctx.params.tableId : undefined;
+  if (!name || !data) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `name` szablonu i `data` (mapę pól → wartości domyślne).',
+    };
+  }
+  if (!templateId && !tableId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `tableId` (dla nowego szablonu) albo `templateId` (dla edycji istniejącego).',
+    };
+  }
+  try {
+    const result = templateId
+      ? await TP.updateRecordTemplate(templateId, { name, data })
+      : await TP.createRecordTemplate(tableId as string, name, data);
+    return { ok: true, actionId, data: result };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się zapisać szablonu rekordu.',
+    };
+  }
+}
+
+// ─── Automations (automations/AutomationsManager.tsx) ───
+async function runTableAutomationRunNowCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.automation.run_now';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const automationId =
+    typeof ctx.params?.automationId === 'string' ? ctx.params.automationId : undefined;
+  if (!automationId) {
+    return { ok: false, actionId, message: 'Podaj `automationId` automatyzacji do uruchomienia.' };
+  }
+  try {
+    const data = await TP.runAutomationNow(automationId);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się uruchomić automatyzacji.',
+    };
+  }
+}
+
+async function runTableAutomationDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.automation.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const automationId =
+    typeof ctx.params?.automationId === 'string' ? ctx.params.automationId : undefined;
+  if (!automationId) {
+    return { ok: false, actionId, message: 'Podaj `automationId` automatyzacji do usunięcia.' };
+  }
+  try {
+    await TP.deleteAutomation(automationId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć automatyzacji.',
+    };
+  }
+}
+
+// ─── Webhook relays (connectors/WebhookRelayPanel.tsx) ───
+async function runTableWebhookRelayDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.webhook_relay.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const relayId = typeof ctx.params?.relayId === 'string' ? ctx.params.relayId : undefined;
+  if (!relayId) {
+    return { ok: false, actionId, message: 'Podaj `relayId` webhooka do usunięcia.' };
+  }
+  try {
+    await TP.deleteWebhookRelay(relayId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć webhooka.',
+    };
+  }
+}
+
+// ─── Forms (forms/FormsIndex.tsx, forms/IntakeJwtPanel.tsx) ───
+async function runTableFormShareModeChangeCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.form.share_mode_change';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
+  const mode = typeof ctx.params?.mode === 'string' ? ctx.params.mode : undefined;
+  if (!formId || !mode || !['public', 'organization', 'authenticated'].includes(mode)) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `formId` formularza i `mode` (public|organization|authenticated).',
+    };
+  }
+  try {
+    // `handleShareModeChange` w FormsIndex.tsx czyta `form.is_published`/
+    // `form.config` z JUŻ załadowanego lokalnego stanu — Teresa nie ma tego
+    // stanu (panel może być niezamontowany), więc uczciwy odpowiednik to
+    // najpierw pobrać BIEŻĄCY rekord formularza, dokładnie ten sam kształt.
+    const form = await TP.getForm(formId);
+    const isPublished = mode !== 'authenticated' || !!form?.is_published;
+    const data = await TP.updateForm(formId, {
+      is_published: isPublished,
+      config: { ...(form?.config || {}), requireAuth: mode === 'authenticated' },
+    });
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się zmienić trybu udostępniania formularza.',
+    };
+  }
+}
+
+async function runTableFormDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.form.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
+  if (!formId) {
+    return { ok: false, actionId, message: 'Podaj `formId` formularza do usunięcia.' };
+  }
+  try {
+    await TP.deleteForm(formId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć formularza.',
+    };
+  }
+}
+
+async function runTableFormIntakeSaveAllowListCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.form_intake.save_allow_list';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const formId = typeof ctx.params?.formId === 'string' ? ctx.params.formId : undefined;
+  if (!formId) {
+    return { ok: false, actionId, message: 'Podaj `formId` formularza.' };
+  }
+  const fieldIdsRaw = ctx.params?.fieldIds;
+  const fieldIds = Array.isArray(fieldIdsRaw)
+    ? fieldIdsRaw.filter((v): v is string => typeof v === 'string')
+    : [];
+  try {
+    const data = await TP.setFormIntakeAllowList(formId, fieldIds.length > 0 ? fieldIds : null);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się zapisać allow-listy formularza.',
+    };
+  }
+}
+
+// ─── Interfaces (interfaces/InterfacesIndex.tsx) ───
+async function runTableInterfaceDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.interface.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const interfaceId =
+    typeof ctx.params?.interfaceId === 'string' ? ctx.params.interfaceId : undefined;
+  if (!interfaceId) {
+    return { ok: false, actionId, message: 'Podaj `interfaceId` interfejsu do usunięcia.' };
+  }
+  try {
+    await TP.deleteView(interfaceId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć interfejsu.',
+    };
+  }
+}
+
+// ─── Sharing (sharing/SharingManager.tsx) ───
+async function runTableSharingInviteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.sharing.invite';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
+  const email = typeof ctx.params?.email === 'string' ? ctx.params.email.trim() : '';
+  const role = typeof ctx.params?.role === 'string' ? ctx.params.role : 'editor';
+  if (!baseId || !email) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `baseId` bazy i `email` osoby do zaproszenia.',
+    };
+  }
+  try {
+    const data = await TP.inviteCollaborator(baseId, email, role);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się wysłać zaproszenia.',
+    };
+  }
+}
+
+async function runTableSharingRemoveCollaboratorCallback(
+  ctx: ActionContext
+): Promise<ActionResult> {
+  const actionId = 'table.sharing.remove_collaborator';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const baseId = typeof ctx.params?.baseId === 'string' ? ctx.params.baseId : undefined;
+  const userId = typeof ctx.params?.userId === 'string' ? ctx.params.userId : undefined;
+  if (!baseId || !userId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `baseId` bazy i `userId` współpracownika do usunięcia.',
+    };
+  }
+  try {
+    await TP.removeCollaborator(baseId, userId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć dostępu współpracownika.',
+    };
+  }
+}
+
+// ─── Table sync (sync/SyncManager.tsx) ───
+async function runTableSyncCreateCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.sync.create';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const sourceTableId =
+    typeof ctx.params?.sourceTableId === 'string' ? ctx.params.sourceTableId : undefined;
+  const targetTableId =
+    typeof ctx.params?.targetTableId === 'string' ? ctx.params.targetTableId : undefined;
+  if (!sourceTableId || !targetTableId) {
+    return {
+      ok: false,
+      actionId,
+      message: 'Podaj `sourceTableId` i `targetTableId` synchronizacji.',
+    };
+  }
+  const fieldMapping =
+    ctx.params?.fieldMapping && typeof ctx.params.fieldMapping === 'object'
+      ? (ctx.params.fieldMapping as Record<string, string>)
+      : { '*': '*' };
+  const syncMode = ctx.params?.syncMode === 'two_way' ? 'two_way' : 'one_way';
+  try {
+    const data = await TP.createTableSync(sourceTableId, targetTableId, fieldMapping, syncMode);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się utworzyć synchronizacji.',
+    };
+  }
+}
+
+async function runTableSyncRunNowCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.sync.run_now';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const syncId = typeof ctx.params?.syncId === 'string' ? ctx.params.syncId : undefined;
+  if (!syncId) {
+    return { ok: false, actionId, message: 'Podaj `syncId` synchronizacji do uruchomienia.' };
+  }
+  try {
+    const data = await TP.executeTableSync(syncId);
+    return { ok: true, actionId, data };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Synchronizacja się nie powiodła.',
+    };
+  }
+}
+
+async function runTableSyncDeleteCallback(ctx: ActionContext): Promise<ActionResult> {
+  const actionId = 'table.sync.delete';
+  const run = ctx.params?.run;
+  if (ctx.source === 'ui' && typeof run === 'function') {
+    (run as () => void)();
+    return { ok: true, actionId };
+  }
+  const syncId = typeof ctx.params?.syncId === 'string' ? ctx.params.syncId : undefined;
+  if (!syncId) {
+    return { ok: false, actionId, message: 'Podaj `syncId` synchronizacji do usunięcia.' };
+  }
+  try {
+    await TP.deleteTableSync(syncId);
+    return { ok: true, actionId };
+  } catch (e) {
+    return {
+      ok: false,
+      actionId,
+      message: (e as Error)?.message || 'Nie udało się usunąć synchronizacji.',
+    };
+  }
 }
 
 // ──────────────────────────────── REJESTR ────────────────────────────────
@@ -3248,6 +4029,63 @@ const IDEA_ACTIONS: ActionDef[] = [
       'src/components/MyWork/table/useTableQuickActions.ts:85 + TableToolbar.tsx More/Mobile menu "AI Categorize" (N10, 2026-08-10)',
   },
   {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d — GAP-3
+    // „Map structure type" (source comments IdeaRecommendationMap.tsx ~L2883/
+    // ~L6870). UCZCIWOŚĆ (rozdz. 10 §1 reguła rozstrzygająca): to NIE jest
+    // Eksport ani Konwersja — nie tworzy pliku, nie tworzy trwałego rekordu
+    // poza Ideą, tylko przekłada graf na inny układ (mindmap/org_chart/
+    // tree_right/fishbone/timeline/semantic) WEWNĄTRZ tej samej Idei. Siostra
+    // `idea.view.auto_layout` (bezpośrednio nad tym wpisem) jest dokładnie tej
+    // samej klasy — stąd ten sam namespace `idea.view.*`, nie `idea.export.*`/
+    // `idea.template.*`, mimo że zadanie zbiorcze grupowało ten wiersz razem
+    // z eksportem/szablonami.
+    id: 'idea.view.mm_structure_type',
+    label: { pl: 'Typ struktury mapy', en: 'Map structure type' },
+    icon: 'Shapes',
+    scope: 'current_view',
+    tools: ['mindmap'],
+    surfaces: ['toolbar', 'panel'],
+    handler: (ctx) => {
+      const structureType =
+        typeof ctx.params?.structureType === 'string' ? ctx.params.structureType : undefined;
+      if (!structureType) {
+        return Promise.resolve({
+          ok: false,
+          actionId: 'idea.view.mm_structure_type',
+          message: 'Nie wiem, jaki typ struktury zastosować — podaj `structureType`.',
+        });
+      }
+      return runByTool('idea.view.mm_structure_type', RUNTIME_MM_SET_STRUCTURE, ctx, {
+        structureType,
+      });
+    },
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaRecommendationMap.tsx pushUndo() (undoStackRef, 50-deep, Ctrl+Z) wołane PRZED setNodes w useMindMapQuickActions.ts mm_set_structure handlerze.',
+    },
+    teresa: {
+      description:
+        'Zmienia układ struktury Mapy myśli (mindmap/org_chart/tree_right/fishbone/timeline/semantic) — przekłada te same węzły na inny szkielet wizualny, nie zmienia treści węzłów.',
+      parameters: {
+        type: 'object',
+        properties: {
+          structureType: {
+            type: 'string',
+            enum: ['mindmap', 'org_chart', 'tree_right', 'fishbone', 'timeline', 'semantic'],
+            description: 'Docelowy typ struktury.',
+          },
+        },
+        required: ['structureType'],
+      },
+    },
+    runtime: RUNTIME_MM_SET_STRUCTURE,
+    source:
+      'src/components/MyWork/mindmap/toolbar-popovers/StructurePickerPopover.tsx (klik człowieka) → IdeaRecommendationMap.tsx:6880 onSelect, przełączone na dispatch szyny `mm_set_structure` (2026-08-10) zamiast duplikowanej logiki lokalnej — jeden, realny mechanizm, ten sam co MindmapCommandPalette.tsx:330 i useMindMapQuickActions.ts ~L1296.',
+  },
+  {
     id: 'idea.ai.table_framework',
     label: {
       pl: 'AI: generator frameworka',
@@ -3373,6 +4211,113 @@ const IDEA_ACTIONS: ActionDef[] = [
   // nowe id, rozjazd legacy/platforma, brak stosu cofania dla kolumn) w
   // komentarzu blokowym nad `tableColumnGuard`.
   {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+    // IdeaTemplateGallery.tsx `handleApply` (wołane z L2206 bez AI-fill i
+    // L2217 z `withAIFill=true` — JEDNA funkcja, drugi parametr, więc JEDEN
+    // wpis rejestru z `withAIFill` jako parametr Teresy, nie dwa id). Realna,
+    // destrukcyjna mutacja — `applyIdeaTemplate` woła `Api.syncMyIdeaMap`,
+    // które ZASTĘPUJE nodes/edges całej Idei (rozdz. 10 §5/§8 `idea.template.apply`).
+    // UI: `ctx.params.run` = oryginalny `handleApply` (zachowuje istniejące
+    // okno potwierdzenia „Zastąpić istniejące elementy?" 1:1 — rozdz. 10 §5
+    // wymóg confirm-before-overwrite, już spełniony, nie regresowany).
+    // Teresa: `confirmBeforeRun: true` (framework `runIdeaAction` wymusza
+    // potwierdzenie PRZED wywołaniem handlera — rozdz. 10 §5 „bez wyjątków",
+    // więc Teresa potwierdza ZAWSZE, nawet gdy graf jest pusty — ściślej niż
+    // UI, nigdy luźniej) → rozwiązuje `templateId` przez `findIdeaTemplate`
+    // (walidacja, ten sam katalog `ALL_TEMPLATES` co galeria) i dispatchuje
+    // NOWY string szyny `apply_idea_template`, którego odbiornik
+    // (IdeaMapWorkspace.tsx handleQuickAction, dodane 2026-08-10) woła
+    // ISTNIEJĄCY `handleApplyTemplate` — ŚWIADOMIE NIE woła `applyIdeaTemplate`
+    // bezpośrednio stąd: `handleApplyTemplate` niesie poprawny `baseVersion`
+    // (`graphRuntime.graph.version`) i `handleTemplateApplied()` (refresh +
+    // bump `mapRefreshToken`), którego brak historycznie gubił treść w
+    // Przepływie/Mapie po zastosowaniu szablonu (komentarz przy
+    // `handleTemplateApplied`, IdeaMapWorkspace.tsx ~L1258) — wołanie
+    // `applyIdeaTemplate` wprost z rejestru odtworzyłoby TEN SAM, już
+    // naprawiony defekt.
+    id: 'idea.template.apply',
+    label: { pl: 'Zastosuj szablon', en: 'Apply template' },
+    icon: 'LayoutTemplate',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['panel'],
+    handler: async (ctx) => {
+      const actionId = 'idea.template.apply';
+      const run = ctx.params?.run;
+      if (ctx.source === 'ui' && typeof run === 'function') {
+        await (run as () => void | Promise<void>)();
+        return { ok: true, actionId };
+      }
+      const templateId =
+        typeof ctx.params?.templateId === 'string' ? ctx.params.templateId : undefined;
+      if (!templateId) {
+        return {
+          ok: false,
+          actionId,
+          message: 'Nie wiem, który szablon zastosować — podaj `templateId`.',
+        };
+      }
+      const template = findIdeaTemplate(templateId);
+      if (!template) {
+        return { ok: false, actionId, message: `Nie znam szablonu „${templateId}".` };
+      }
+      const withAIFill = ctx.params?.withAIFill === true;
+      dispatchQuickAction('apply_idea_template', ctx, { templateId });
+      if (withAIFill && template.nodes.length > 0) {
+        try {
+          const { generateAIProposal } = await import('@/services/ideaAIGenerator');
+          const batch = await generateAIProposal({
+            ideaId: ctx.ideaId,
+            generatorType: 'mindmap_expand',
+            tool: ctx.tool,
+            context: {
+              seedText: `Fill the ${template.namePl} template with company-specific data`,
+              title: template.namePl,
+              existingNodes: template.nodes,
+              existingEdges: template.edges,
+              language: ctx.language || 'pl',
+            },
+          });
+          if (batch?.proposals?.length) {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-ai-proposal', { detail: { batch } })
+            );
+          }
+        } catch {
+          // AI-fill jest best-effort — szablon jest już zastosowany nawet gdy to zawiedzie
+          // (dokładnie ten sam kontrakt co IdeaTemplateGallery.tsx handleApply).
+        }
+      }
+      return { ok: true, actionId, data: { runtime: 'apply_idea_template', templateId } };
+    },
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      evidence:
+        'Api.syncMyIdeaMap zastępuje nodes/edges bez tworzenia snapshotu PRZED zmianą — rozdz. 10 §5 wymaga confirm-before-overwrite (spełnione), ale nie wymaga jeszcze snapshotu/cofnięcia (§4.1 ma ten wymóg dla Import, nie dla Szablonu). Prawdziwa luka: żaden mechanizm nie przywraca poprzedniego grafu po zastosowaniu szablonu poza ręcznym Ctrl+Z, jeśli sesja przeglądarki jeszcze żyje.',
+      reason: 'unrecoverable',
+    },
+    teresa: {
+      description:
+        'Stosuje gotowy szablon (strukturę węzłów/krawędzi) na całej Idei — ZASTĘPUJE bieżącą treść. Zawsze wymaga potwierdzenia. Opcjonalnie od razu generuje propozycję AI wypełnienia szablonu danymi (do ręcznej akceptacji, nie automatyczna).',
+      confirmBeforeRun: true,
+      parameters: {
+        type: 'object',
+        properties: {
+          templateId: { type: 'string', description: 'Id szablonu z galerii (np. "swot").' },
+          withAIFill: {
+            type: 'boolean',
+            description: 'Czy od razu wygenerować propozycję AI wypełnienia szablonu danymi.',
+          },
+        },
+        required: ['templateId'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaTemplateGallery.tsx:2206 (handleApply(template)) + :2217 (handleApply(template, true)) → applyIdeaTemplate (export, ~L1900) + findIdeaTemplate (export, ~L1896).',
+  },
+  {
     id: 'idea.column.rename',
     label: { pl: 'Zmień nazwę', en: 'Rename' },
     icon: 'Pencil',
@@ -3433,6 +4378,72 @@ const IDEA_ACTIONS: ActionDef[] = [
     runtime: RUNTIME_TBL_COLUMN_SORT,
     source:
       'src/components/MyWork/IdeaTableTool.tsx colContextMenu "table.column.sort" (~L3999) + klik w nagłówek kolumny (~L3760) → effectiveCycleSort (~L518, dwutorowe)',
+  },
+  {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+    // `idea.export.open` (bezpośrednio nad tym wpisem) otwiera WYŁĄCZNIE
+    // modal — sam per-format klik (`handleExport`, IdeaExportMenu.tsx:838;
+    // + JSON-fallback button ~L1045, sama funkcja `exportJSON` wywołana
+    // wprost) nie miał żadnego id. Wszystkie 8 formatów (PNG/SVG/PDF/
+    // Markdown/JSON/pakiet diagramu/raport mapowania/manifest share) realnie
+    // produkują plik przez `downloadBlob` — rozdz. 10 §3/§8 `idea.export.file`.
+    // NOWE okablowanie (2026-08-10): `IdeaExportMenu.tsx` dostał listener
+    // `run_export_format` na tej samej szynie — działa NIEZALEŻNIE od tego,
+    // czy modal jest wizualnie otwarty (`canvasContainerRef`/`graphNodes`/
+    // `graphEdges` to trwałe referencje/propy warsztatu, nie stan modala).
+    id: 'idea.export.file',
+    label: {
+      pl: 'Eksportuj plik',
+      en: 'Export file',
+    },
+    icon: 'Download',
+    scope: 'workspace',
+    tools: 'all',
+    surfaces: ['panel'],
+    handler: async (ctx) => {
+      const format = typeof ctx.params?.format === 'string' ? ctx.params.format : undefined;
+      if (!format) {
+        return {
+          ok: false,
+          actionId: 'idea.export.file',
+          message: 'Nie wiem, do jakiego formatu eksportować — podaj `format`.',
+        };
+      }
+      dispatchQuickAction('run_export_format', ctx, { format });
+      return {
+        ok: true,
+        actionId: 'idea.export.file',
+        data: { runtime: 'run_export_format', format },
+      };
+    },
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Eksportuje otwartą reprezentację Idei do realnego pliku do pobrania — PNG/SVG/PDF (obraz bieżącego płótna), Markdown (outline), JSON/pakiet diagramu (surowe dane), raport mapowania fidelity, manifest share/embed. Nie mutuje Idei.',
+      parameters: {
+        type: 'object',
+        properties: {
+          format: {
+            type: 'string',
+            enum: [
+              'png',
+              'svg',
+              'pdf',
+              'markdown',
+              'json',
+              'package',
+              'mapping_report',
+              'share_manifest',
+            ],
+            description: 'Format pliku do wyeksportowania.',
+          },
+        },
+        required: ['format'],
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaExportMenu.tsx:838 (handleExport, per-format przyciski) + :1045 (exportJSON fallback button) → NOWY listener `run_export_format` na szynie `idea-workspace-quick-action` (2026-08-10).',
   },
   {
     id: 'idea.column.hide',
@@ -3763,6 +4774,54 @@ const IDEA_ACTIONS: ActionDef[] = [
     source:
       'src/components/MyWork/IdeaTableTool.tsx cellContextMenu "table.cell.copy" (~L4102-4113)',
   },
+  {
+    // N-inventory-b-medium (2026-08-10). Inventory flagged
+    // `ChatToSchemaPanel.tsx:707` (`handleSubmit`) as a LOWER-CONFIDENCE
+    // class-b judgment call ("worth an explicit decision by the epic owner"),
+    // analogized (without verification) to `idea.ai.table_assistant`'s
+    // open-panel precedent. Fail-closed re-analysis: `handleSubmit` is NOT a
+    // free-form chat turn like AICopilotMode's `handleSend` (declined below,
+    // see its own comment) — it calls `useSchemaProposal.ts`'s
+    // `generateProposal`/`refineProposal` → `TablePlatformApi.
+    // generateSchemaProposal`/`refineSchemaProposal`, a REAL server call that
+    // creates a persisted, addressable schema-CHANGE PROPOSAL object (with
+    // its own lifecycle: refine/execute/reject/undo/redo — `SchemaDiffPreview`
+    // is a literal preview component). This is structurally the SAME shape as
+    // the canon's own worked Z4 example (`02_REJESTR_AKCJI.md` §"Z4 w
+    // praktyce": "Wypełnij puste komórki w kolumnie Koszt" →
+    // `table.ai_fill`) — a discrete, addressable "ask AI to propose a change"
+    // command, not incidental panel chrome. `mutates: false` here follows the
+    // SAME established convention as `idea.ai.table_assistant`/
+    // `idea.ai.table_categorize` above (the trigger opens/requests a
+    // proposal; the proposal's OWN execute step is the real mutation, not
+    // registered by this fix — separate, pre-existing gap, out of scope).
+    // UI-only (not yet Teresa-reachable): `existingSchema`/`companyContext`
+    // live as local component state with no bus/ActionContext carrier today
+    // — making this genuinely Teresa-callable needs new plumbing, honestly
+    // declined rather than faked.
+    id: 'idea.ai.table_schema_propose',
+    label: { pl: 'AI: zaproponuj schemat', en: 'AI: propose schema' },
+    icon: 'Sparkles',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableChatToSchemaProposeCallback(ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Prosi AI o propozycję zmiany schematu Tabeli (kolumny) na podstawie opisu w języku naturalnym w panelu Chat-to-Schema — tworzy PROPOZYCJĘ (diff) do osobnego zatwierdzenia, nie zmienia schematu od razu. Dziś dostępne WYŁĄCZNIE z otwartego panelu Chat-to-Schema — Teresa tego jeszcze nie wywoła (brak nośnika dla `existingSchema`/kontekstu firmy poza lokalnym stanem panelu).',
+    },
+    source:
+      'src/components/MyWork/table/ChatToSchemaPanel.tsx handleSubmit (~L396-420, Send button ~L707 + Enter-to-send ~L693) → useSchemaProposal.ts generateProposal/refineProposal → TablePlatformApi.generateSchemaProposal/refineSchemaProposal',
+  },
+  // ── N8 (2026-08-10) — Tabela, menu widoku zapisanego (`IdeaTableTool.tsx`'s
+  // `viewContextMenu`, `CanvasContextMenu` na prawy klik zakładki widoku,
+  // legacy/non-platform ścieżka WYŁĄCZNIE — patrz komentarz przy
+  // `runTableSavedViewRenameCallback` wyżej dla pełnego uzasadnienia decyzji
+  // (TableToolbar.tsx ma osobną, zduplikowaną implementację przez INNY
+  // mechanizm — `platformIntegration`'s async `updateSavedView`/
+  // `deleteSavedView` — świadomie NIEOKABLOWANĄ tutaj).
   {
     id: 'idea.cell.paste',
     label: { pl: 'Wklej', en: 'Paste' },
@@ -4584,6 +5643,70 @@ const IDEA_ACTIONS: ActionDef[] = [
       },
     },
     source: 'src/components/MyWork/mindmap/useMindMapQuickActions.ts mm_edge_edit_relation',
+  },
+  {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+    // IdeaTableTool.tsx:3372 (legacy `!guidedBar` inline toolbar button) —
+    // trzecie niezależne miejsce wołające DOKŁADNIE `exportToCSV(_cols,
+    // effectiveNodes)` + `downloadCSV(...)` (pozostałe dwa: data-menu
+    // overflow item `export-csv` ~L2094 i `P15TableToolbar`'s `onExportCSV`
+    // prop ~L2380 — poza zakresem tej zmiany, nie dotknięte). Realny,
+    // file-producing eksport (docs/standards/idea-workspace/
+    // 10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md §3/§8 `idea.export.table_csv`).
+    // `tbl_export_csv` na szynie JUŻ ISTNIAŁ i działa (useTableQuickActions.ts
+    // ~L285) — Teresie brakowało wyłącznie wpisu rejestru, nie mechanizmu.
+    // ZASTRZEŻENIE (odkryte tu, nie naprawiane): `tbl_export_csv` czyta
+    // `columns`/`nodes` z `UseTableQuickActionsOpts` — wersje LEGACY, NIE
+    // `usePlatform`-świadome `_cols`/`effectiveNodes`, których używa klik
+    // człowieka (patrz komentarz przy `QuickActionHandlers.fieldChange`
+    // powyżej dla tego samego, wcześniej udokumentowanego rozjazdu). W trybie
+    // platform Teresa eksportuje inny (legacy) zestaw danych niż to, co widzi
+    // użytkownik na ekranie — PRAWDZIWA, PRZEDISTNIEJĄCA luka.
+    id: 'idea.export.table_csv',
+    label: { pl: 'Eksportuj CSV', en: 'Export CSV' },
+    icon: 'Download',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) => runToolbarBusAction('idea.export.table_csv', RUNTIME_TBL_EXPORT_CSV, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Eksportuje bieżącą Tabelę do pliku CSV (widoczne kolumny/wiersze) — produkuje realny plik do pobrania. UWAGA: w trybie platformowym eksportuje legacy zestaw danych, nie zawsze identyczny z tym, co widać na ekranie (przedistniejąca luka, nie naprawiona tym wpisem).',
+    },
+    runtime: RUNTIME_TBL_EXPORT_CSV,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx:3372 (legacy inline toolbar button) + useTableQuickActions.ts tbl_export_csv (już istniał, sierocy przed tą zmianą)',
+  },
+  {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+    // IdeaTableTool.tsx:3382 — analogiczny trzeci niezależny call site
+    // `copyTableToClipboard(_cols, effectiveNodes)`. UCZCIWOŚĆ (rozdz. 10 §1
+    // reguła rozstrzygająca): kopiowanie do schowka NIE tworzy pliku ani
+    // trwałego rekordu poza Ideą — to NIE jest Eksport (mimo że UI umieszcza
+    // ten przycisk zaraz obok „Export CSV" w tej samej grupie paska), więc
+    // id świadomie NIE żyje w przestrzeni `idea.export.*`. `tbl_copy_clipboard`
+    // to NOWE okablowanie (useTableQuickActions.ts, dodane razem z tym
+    // wpisem) — mirror 1:1 mechanizmu `tbl_export_csv` powyżej, więc ten sam
+    // zastrzeżony rozjazd legacy/platform dotyczy i tego wpisu.
+    id: 'idea.table.copy_clipboard',
+    label: { pl: 'Kopiuj tabelę do schowka', en: 'Copy table to clipboard' },
+    icon: 'ClipboardCopy',
+    scope: 'current_view',
+    tools: ['table'],
+    surfaces: ['toolbar'],
+    handler: (ctx) =>
+      runToolbarBusAction('idea.table.copy_clipboard', RUNTIME_TBL_COPY_CLIPBOARD, ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Kopiuje bieżącą Tabelę (widoczne kolumny/wiersze) do schowka systemowego — nie tworzy pliku ani rekordu, tylko wypełnia schowek przeglądarki. UWAGA: ten sam legacy/platform rozjazd danych co `idea.export.table_csv` (nienaprawiony tu).',
+    },
+    runtime: RUNTIME_TBL_COPY_CLIPBOARD,
+    source:
+      'src/components/MyWork/IdeaTableTool.tsx:3382 (legacy inline toolbar button) + useTableQuickActions.ts tbl_copy_clipboard (NOWE okablowanie, 2026-08-10)',
   },
   {
     id: 'idea.edge.delete',
@@ -5822,6 +6945,45 @@ const IDEA_ACTIONS: ActionDef[] = [
       'src/components/MyWork/whiteboard/WhiteboardToolbar.tsx:238-243 (dropdown „Wstaw") + useWhiteboardQuickActions.ts:102 (wb_add_shape_hexagon, dotąd nieużywany odbiornik)',
   },
   {
+    id: 'idea.view.pf_add_start',
+    label: { pl: 'Dodaj pierwszy krok', en: 'Add first step' },
+    icon: 'Plus',
+    scope: 'current_view',
+    tools: ['process_flow'],
+    surfaces: ['inline'],
+    // `ctx.params.vsm` (opcjonalny bool) wybiera runtime: pusty canvas w
+    // trybie VSM potrzebuje węzła 'vsm_process', każdy inny tryb — 'start'.
+    // To NIE jest ta sama akcja co `idea.element.add` (patrz komentarz przy
+    // `RUNTIME_PF_ADD_START` wyżej — shape mismatch, świadomie NOWY id).
+    handler: (ctx) =>
+      runByTool(
+        'idea.view.pf_add_start',
+        ctx.params?.vsm === true ? RUNTIME_PF_ADD_VSM_PROCESS : RUNTIME_PF_ADD_START,
+        ctx
+      ),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence: 'addNode() → pushUndo() w IdeaProcessFlowTool.tsx:1536 (ta sama funkcja co „Dodaj akcję"/„Dodaj decyzję").',
+    },
+    teresa: {
+      description:
+        'Dodaje pierwszy element do pustego Przepływu: węzeł Start (klasyczny/automatyzacja/BPMN/system/organizacja) albo Proces (w trybie VSM). Bez współrzędnych ekranu — węzeł ląduje w domyślnym miejscu układu, ta sama uczciwa granica co „Dodaj element"/„Dodaj decyzję".',
+      parameters: {
+        type: 'object',
+        properties: {
+          vsm: {
+            type: 'boolean',
+            description: 'true, jeśli otwarty Przepływ jest w trybie VSM (dodaje węzeł Proces zamiast Start).',
+          },
+        },
+      },
+    },
+    source:
+      'src/components/MyWork/IdeaProcessFlowTool.tsx empty-state CTA "addStart" (~L3458, `addNode(flowMode === \'vsm\' ? \'vsm_process\' : \'start\')`) + processflow/useProcessFlowQuickActions.ts pf_add_start/pf_add_vsm_process (odbiorniki istniały już przed tą falą, bez wołającego z rejestru)',
+  },
+  {
     id: 'idea.canvas.insert_image',
     label: { pl: 'Wstaw obraz', en: 'Insert image' },
     icon: 'Image',
@@ -6801,6 +7963,47 @@ const IDEA_ACTIONS: ActionDef[] = [
   // above unchanged (its dispatch is generic over any node id/label, a frame
   // already listens for the same `idea-workspace-node-update` event via
   // `FrameNode.tsx`'s `onLabelChange`).
+  {
+    // N-inventory-c5 (2026-08-10). Inventory (04_ACTION_COVERAGE_INVENTORY.csv,
+    // class c #5) proposed reusing `idea.node.mm_open_detail` — DECLINED,
+    // wrong tool AND wrong mechanism: `mm_open_detail` is `tools: ['mindmap']`
+    // only and calls `setDrawerNodeId` inside `IdeaRecommendationMap.tsx`
+    // (mindmap's OWN drawer state). `CommentPinBadge` lives in
+    // `whiteboard/nodes/` (six whiteboard-only consumers: ShapeNode/ImageNode/
+    // TextBlockNode/FrameNode/LinkNode/StickyNoteNode) and dispatches
+    // `idea-node-open-detail`, whose only listener (`IdeaMapWorkspace.tsx`
+    // handleOpenNodeDetail) is a COMPLETELY SEPARATE shell-level drawer, zero
+    // shared code with the mindmap one — SAME class of mismatch this file
+    // already documented for Process Flow "properties" declining the same
+    // `mm_open_detail` (see comment "properties DEKLINOWANE od Mapy myśli
+    // idea.node.mm_open_detail" above `idea.node.pf_properties`). Whiteboard's
+    // own node double-click (`IdeaWhiteboardTool.tsx:4572`,
+    // `onNodeDoubleClick={onNodeDetail}`) reaches the SAME shell drawer via a
+    // direct prop call (not this event) and was already unregistered before
+    // this wave — out of scope here, left untouched.
+    id: 'idea.node.wb_open_detail',
+    label: { pl: 'Otwórz szczegóły', en: 'Open details' },
+    icon: 'ExternalLink',
+    scope: 'single_item',
+    tools: ['whiteboard'],
+    surfaces: ['inline'],
+    handler: (ctx) => runWbOpenDetailCallback(ctx),
+    mutates: false,
+    requiresPreview: false,
+    teresa: {
+      description:
+        'Otwiera panel szczegółów wskazanego elementu Tablicy (dymek liczby komentarzy w rogu karteczki/kształtu/obrazu/ramki/linku). Podaj `nodeId` elementu.',
+      parameters: {
+        type: 'object',
+        properties: {
+          nodeId: { type: 'string', description: 'Id elementu na Tablicy.' },
+        },
+        required: ['nodeId'],
+      },
+    },
+    source:
+      'src/components/MyWork/whiteboard/nodes/CommentPinBadge.tsx onClick (~L39-42) → CustomEvent `idea-node-open-detail` → IdeaMapWorkspace.tsx:3008-3014 handleOpenNodeDetail',
+  },
   {
     id: 'idea.frame.select_contents',
     label: { pl: 'Zaznacz zawartość', en: 'Select contents' },
@@ -8161,6 +9364,59 @@ const IDEA_ACTIONS: ActionDef[] = [
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:298 (ctx_what_if)',
   },
   {
+    // Closure (2026-08-10) 04_ACTION_COVERAGE_INVENTORY.csv class-d:
+    // `handleApplyAISuggestion` — NodeDetailDrawer.tsx:754 AND
+    // UnifiedNodeDetailDrawer.tsx:1824 (flag `mindmapDrawerUnified`, default
+    // OFF, gates which of the two DRAWERS renders — IdeaRecommendationMap.tsx
+    // ~L4103; the two are mutually exclusive per node-panel open, never both
+    // mounted-and-visible for the same click, and their `handleApplyAISuggestion`
+    // bodies are byte-identical). ONE id for both, not two — same real effect,
+    // same mechanism, genuine reuse (precedent: `idea.view.auto_layout`'s
+    // NODE-menu reuse comment above).
+    //
+    // Rozdz. 09 (AI i Teresa) cykl VERIFIED, nie założony:
+    //   request      → `handleAIExpand` (OSOBNA, niezarejestrowana tu funkcja)
+    //                  woła `Api.expandMyIdeaMap({proposeOnly:true})` — realne
+    //                  AI, serwer NIE mutuje nic (proposeOnly).
+    //   proposal     → `setAiSuggestions(string[])` — lista tekstów, lokalny
+    //                  stan komponentu, NIC nie zapisane.
+    //   preview/diff → lista renderuje się jako chipy w drawerze PRZED
+    //                  jakąkolwiek akcją — użytkownik widzi treść przed
+    //                  kliknięciem.
+    //   accept       → klik "Apply" na KONKRETNYM chipie = ten wpis.
+    //   apply        → `window.dispatchEvent('idea-workspace-insert', {items:
+    //                  [{text, type:'topics'}], anchorNodeId, parentId})`.
+    //   history      → odbiornik `idea-workspace-insert`
+    //                  (IdeaRecommendationMap.tsx:3473) woła `pushUndo()`
+    //                  PRZED `setNodes`/`setEdges` — zweryfikowane w kodzie,
+    //                  nie założone.
+    //   undo         → `undoStackRef` (50-deep, Ctrl+Z / `undo()`,
+    //                  IdeaRecommendationMap.tsx ~L2549) — REALNY, DZIAŁAJĄCY
+    //                  mechanizm, nie brakujący (w przeciwieństwie do sugestii
+    //                  zadania — sprawdzone przed napisaniem tego wpisu).
+    id: 'idea.node.mm_apply_ai_suggestion',
+    label: { pl: 'Zastosuj sugestię AI', en: 'Apply AI suggestion' },
+    icon: 'Check',
+    scope: 'single_item',
+    tools: ['mindmap'],
+    surfaces: ['panel'],
+    handler: (ctx) =>
+      runMindmapAiSuggestionApplyUiOnlyCallback('idea.node.mm_apply_ai_suggestion', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'local_stack',
+      evidence:
+        'IdeaRecommendationMap.tsx:3473 pushUndo() (undoStackRef, 50-deep) wołane w odbiorniku idea-workspace-insert PRZED setNodes/setEdges; cofnięcie przez undo()/Ctrl+Z.',
+    },
+    teresa: {
+      description:
+        'Wstawia do Mapy myśli JEDNĄ, już wygenerowaną i wyświetloną w otwartym panelu węzła sugestię AI, jako dziecko tego węzła. DZIŚ NIEDOSTĘPNE dla Teresy: sugestia pochodzi z lokalnego stanu otwartego panelu (poprzedni krok „AI: rozwiń" w tym samym panelu) — nie ma adresowalnego id, którym czat mógłby wskazać KTÓRĄ sugestię zaakceptować.',
+    },
+    source:
+      'src/components/MyWork/mindmap/NodeDetailDrawer.tsx:754 + UnifiedNodeDetailDrawer.tsx:1824 (identyczne handleApplyAISuggestion, flaga mindmapDrawerUnified wybiera który drawer renderuje się).',
+  },
+  {
     id: 'idea.node.mm_summarize_branch',
     label: { pl: 'Podsumuj gałąź', en: 'Summarize branch' },
     icon: 'FileText',
@@ -8642,6 +9898,712 @@ const IDEA_ACTIONS: ActionDef[] = [
     },
     runtime: RUNTIME_MM_NODE_DELETE,
     source: 'src/components/MyWork/mindmap/NodeContextMenu.tsx:404 (ctx_delete)',
+  },
+  // ─────────────── N-TP (2026-08-10) — 22 class-d, panele platformy Tabeli ───────────────
+  {
+    id: 'table.date_dependency.save',
+    label: { pl: 'Zapisz zależności dat', en: 'Save date dependencies' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDateDependencySaveCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.putDependencyConfig` nadpisuje (upsert) JEDYNĄ konfigurację zależności dat tabeli — bez historii wersji, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Zapisuje konfigurację zależności dat (Airtable-style) tabeli — pole daty startu/końca, opcjonalnie czas trwania/poprzednik, domyślny typ zależności, opóźnienie w dniach, pomijanie weekendów.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tableId: { type: 'string', description: 'Id tabeli platformowej.' },
+          startDateFieldId: { type: 'string', description: 'Id pola daty startu.' },
+          endDateFieldId: { type: 'string', description: 'Id pola daty końca.' },
+          durationFieldId: { type: 'string', description: 'Id pola czasu trwania (opcjonalne).' },
+          predecessorFieldId: {
+            type: 'string',
+            description: 'Id pola powiązania z poprzednikiem (opcjonalne).',
+          },
+          defaultDependencyType: {
+            type: 'string',
+            description: 'FS|SS|FF|SF — domyślny typ zależności.',
+          },
+          defaultLagDays: { type: 'number', description: 'Domyślne opóźnienie w dniach.' },
+          skipWeekends: { type: 'boolean', description: 'Czy pomijać weekendy przy przeliczaniu.' },
+        },
+        required: ['tableId', 'startDateFieldId', 'endDateFieldId'],
+      },
+    },
+    source: 'src/components/MyWork/table/DateDependencyConfig.tsx:290 (handleSave)',
+  },
+  {
+    id: 'table.date_dependency.recalculate',
+    label: { pl: 'Przelicz zależności dat', en: 'Recalculate date dependencies' },
+    icon: 'RefreshCw',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDateDependencyRecalculateCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.recalculateDateDependencies` nadpisuje pola dat WIELU rekordów naraz zgodnie z konfiguracją zależności — bez historii wersji ani stosu cofania, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Przelicza pola dat wszystkich rekordów tabeli wg zapisanej konfiguracji zależności (kaskadowo, jak w Ganttcie). Najpierw sprawdza cykl zależności — jeśli wykryty, przerywa i zwraca listę rekordów w cyklu zamiast przeliczać.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tableId: { type: 'string', description: 'Id tabeli platformowej.' },
+          startDateFieldId: { type: 'string', description: 'Id pola daty startu.' },
+          endDateFieldId: { type: 'string', description: 'Id pola daty końca.' },
+          durationFieldId: { type: 'string', description: 'Id pola czasu trwania (opcjonalne).' },
+          predecessorFieldId: {
+            type: 'string',
+            description: 'Id pola powiązania z poprzednikiem (opcjonalne).',
+          },
+          defaultDependencyType: {
+            type: 'string',
+            description: 'FS|SS|FF|SF — domyślny typ zależności.',
+          },
+          defaultLagDays: { type: 'number', description: 'Domyślne opóźnienie w dniach.' },
+          skipWeekends: { type: 'boolean', description: 'Czy pomijać weekendy przy przeliczaniu.' },
+        },
+        required: ['tableId', 'startDateFieldId', 'endDateFieldId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/DateDependencyConfig.tsx:299 (handleRecalculate)',
+  },
+  {
+    id: 'table.distribution_builder.create',
+    label: { pl: 'Utwórz dystrybucję (Distribute)', en: 'Create distribution (Distribute)' },
+    icon: 'Plus',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionCreateCallback('table.distribution_builder.create', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Tworzy NOWY obiekt dystrybucji (`TablePlatformApi.createDistribution`) — cofnięcie = ręczne usunięcie przez `table.distribution_builder.delete`.',
+    },
+    teresa: {
+      description:
+        'Tworzy nową dystrybucję danych z tabeli (legacy panel „Distribute", zawsze dostępny — niezależny od trybu platformowego) — email/Slack/Teams/webhook, w formacie CSV/XLSX/JSON/PDF/PNG, opcjonalnie na harmonogramie cron.',
+      parameters: {
+        type: 'object',
+        properties: {
+          baseId: { type: 'string', description: 'Id bazy (Idei) tabeli.' },
+          name: { type: 'string', description: 'Nazwa dystrybucji.' },
+          sourceType: { type: 'string', description: '"table" albo "view".' },
+          sourceId: { type: 'string', description: 'Id tabeli/widoku źródłowego.' },
+          channel: { type: 'string', description: 'email|slack|teams|webhook.' },
+          channelConfig: { type: 'object', description: 'Konfiguracja kanału (np. adresy email, webhookUrl).' },
+          format: { type: 'string', description: 'csv|xlsx|pdf|png|json.' },
+          schedule: { type: 'string', description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).' },
+        },
+        required: ['baseId', 'name', 'channel'],
+      },
+    },
+    source: 'src/components/MyWork/table/DistributionBuilder.tsx:367 (handleCreate)',
+  },
+  {
+    id: 'table.distribution_builder.execute',
+    label: { pl: 'Wyślij teraz (Distribute)', en: 'Send now (Distribute)' },
+    icon: 'Play',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionExecuteCallback('table.distribution_builder.execute', ctx),
+    mutates: true,
+    requiresPreview: false,
+    external: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.executeDistribution` faktycznie wysyła dane przez kanał (email/Slack/Teams/webhook) — nieodwoływalne po wysłaniu, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Wysyła dystrybucję (legacy panel „Distribute") natychmiast, poza harmonogramem — realnie wysyła dane przez skonfigurowany kanał.',
+      parameters: {
+        type: 'object',
+        properties: {
+          distributionId: { type: 'string', description: 'Id dystrybucji do wysłania.' },
+        },
+        required: ['distributionId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/DistributionBuilder.tsx:439 (handleExecute)',
+  },
+  {
+    id: 'table.distribution_builder.delete',
+    label: { pl: 'Usuń dystrybucję (Distribute)', en: 'Delete distribution (Distribute)' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionDeleteCallback('table.distribution_builder.delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteDistribution` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa dystrybucję (legacy panel „Distribute").',
+      parameters: {
+        type: 'object',
+        properties: {
+          distributionId: { type: 'string', description: 'Id dystrybucji do usunięcia.' },
+        },
+        required: ['distributionId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/DistributionBuilder.tsx:466 (handleDelete)',
+  },
+  {
+    id: 'table.record_template.delete',
+    label: { pl: 'Usuń szablon rekordu', en: 'Delete record template' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableRecordTemplateDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteRecordTemplate` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa szablon rekordu (pre-wypełnione wartości pól do szybkiego dodawania wierszy).',
+      parameters: {
+        type: 'object',
+        properties: {
+          templateId: { type: 'string', description: 'Id szablonu do usunięcia.' },
+        },
+        required: ['templateId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/RecordTemplateManager.tsx:193 (handleDelete)',
+  },
+  {
+    id: 'table.record_template.save',
+    label: { pl: 'Zapisz szablon rekordu', en: 'Save record template' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableRecordTemplateSaveCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        'Dla NOWEGO szablonu (brak `templateId`) skutkiem jest nowy obiekt — kasowalny ręcznie przez `table.record_template.delete` (czyli sam w sobie byłby `manual_delete`); dla EDYCJI istniejącego (`templateId` podany) `TablePlatformApi.updateRecordTemplate` nadpisuje `name`/`data` bez historii wersji — poprzednie wartości giną bezpowrotnie. Uczciwa, słabsza wspólna klasyfikacja dla jednej akcji obsługującej oba przypadki: `no_undo`.',
+    },
+    teresa: {
+      description:
+        'Tworzy nowy szablon rekordu (podaj `tableId`) albo nadpisuje istniejący (podaj `templateId`) — nazwa + mapa pól→wartości domyślne.',
+      parameters: {
+        type: 'object',
+        properties: {
+          tableId: { type: 'string', description: 'Id tabeli — wymagane przy tworzeniu NOWEGO szablonu.' },
+          templateId: { type: 'string', description: 'Id istniejącego szablonu — wymagane przy edycji.' },
+          name: { type: 'string', description: 'Nazwa szablonu.' },
+          data: { type: 'object', description: 'Mapa id/nazwa pola → wartość domyślna.' },
+        },
+        required: ['name', 'data'],
+      },
+    },
+    source: 'src/components/MyWork/table/RecordTemplateManager.tsx:407 (TemplateEditor handleSave)',
+  },
+  {
+    id: 'table.automation.run_now',
+    label: { pl: 'Uruchom teraz (automatyzacja)', en: 'Run now (automation)' },
+    icon: 'Play',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableAutomationRunNowCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    external: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.runAutomationNow` realnie wykonuje akcje automatyzacji (mogą wysyłać webhooki/e-maile/zmieniać rekordy) — nieodwoływalne po uruchomieniu, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Uruchamia wskazaną automatyzację natychmiast, poza jej triggerem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          automationId: { type: 'string', description: 'Id automatyzacji do uruchomienia.' },
+        },
+        required: ['automationId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/automations/AutomationsManager.tsx:499 (handleRunNow)',
+  },
+  {
+    id: 'table.automation.delete',
+    label: { pl: 'Usuń automatyzację', en: 'Delete automation' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableAutomationDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteAutomation` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa automatyzację tabeli.',
+      parameters: {
+        type: 'object',
+        properties: {
+          automationId: { type: 'string', description: 'Id automatyzacji do usunięcia.' },
+        },
+        required: ['automationId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/automations/AutomationsManager.tsx:526 (handleDelete)',
+  },
+  {
+    id: 'table.webhook_relay.delete',
+    label: { pl: 'Usuń webhook relay', en: 'Delete webhook relay' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableWebhookRelayDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteWebhookRelay` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa webhook relay (przekaźnik zdarzeń tabeli do Zapier/zewnętrznego URL).',
+      parameters: {
+        type: 'object',
+        properties: {
+          relayId: { type: 'string', description: 'Id webhook relay do usunięcia.' },
+        },
+        required: ['relayId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/connectors/WebhookRelayPanel.tsx:309 (handleDelete)',
+  },
+  {
+    id: 'table.distribution.create',
+    label: { pl: 'Utwórz dystrybucję (Distribution Manager)', en: 'Create distribution (Distribution Manager)' },
+    icon: 'Plus',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionCreateCallback('table.distribution.create', ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Tworzy NOWY obiekt dystrybucji (`TablePlatformApi.createDistribution`) — cofnięcie = ręczne usunięcie przez `table.distribution.delete`.',
+    },
+    teresa: {
+      description:
+        'Tworzy nową dystrybucję danych z tabeli (platformowy panel „Distribution Manager", widoczny wyłącznie w trybie platformowym) — email/Slack/Teams/webhook, w formacie CSV/JSON/XLSX/PDF/link, opcjonalnie na harmonogramie cron. Ta sama operacja co `table.distribution_builder.create`, INNY punkt wejścia UI (osobny, platformowy panel z kreatorem krokowym).',
+      parameters: {
+        type: 'object',
+        properties: {
+          baseId: { type: 'string', description: 'Id bazy (Idei) tabeli.' },
+          name: { type: 'string', description: 'Nazwa dystrybucji.' },
+          sourceType: { type: 'string', description: '"table" albo "view".' },
+          sourceId: { type: 'string', description: 'Id tabeli/widoku źródłowego.' },
+          channel: { type: 'string', description: 'email|slack|teams|webhook.' },
+          channelConfig: { type: 'object', description: 'Konfiguracja kanału (np. adresy email, webhookUrl).' },
+          format: { type: 'string', description: 'csv|json|xlsx|pdf|link.' },
+          schedule: { type: 'string', description: 'Wyrażenie cron (opcjonalne — puste = na żądanie).' },
+        },
+        required: ['baseId', 'name', 'channel'],
+      },
+    },
+    source: 'src/components/MyWork/table/distribution/DistributionManager.tsx:567 (handleCreate)',
+  },
+  {
+    id: 'table.distribution.execute',
+    label: { pl: 'Wyślij teraz (Distribution Manager)', en: 'Send now (Distribution Manager)' },
+    icon: 'Play',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionExecuteCallback('table.distribution.execute', ctx),
+    mutates: true,
+    requiresPreview: false,
+    external: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.executeDistribution` faktycznie wysyła dane przez kanał (email/Slack/Teams/webhook) — nieodwoływalne po wysłaniu, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Wysyła dystrybucję (platformowy panel „Distribution Manager") natychmiast, poza harmonogramem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          distributionId: { type: 'string', description: 'Id dystrybucji do wysłania.' },
+        },
+        required: ['distributionId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/distribution/DistributionManager.tsx:692 (handleExecute)',
+  },
+  {
+    id: 'table.distribution.delete',
+    label: { pl: 'Usuń dystrybucję (Distribution Manager)', en: 'Delete distribution (Distribution Manager)' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableDistributionDeleteCallback('table.distribution.delete', ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteDistribution` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa dystrybucję (platformowy panel „Distribution Manager").',
+      parameters: {
+        type: 'object',
+        properties: {
+          distributionId: { type: 'string', description: 'Id dystrybucji do usunięcia.' },
+        },
+        required: ['distributionId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/distribution/DistributionManager.tsx:719 (handleDelete)',
+  },
+  {
+    id: 'table.form.share_mode_change',
+    label: { pl: 'Zmień tryb udostępniania formularza', en: 'Change form share mode' },
+    icon: 'Globe',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableFormShareModeChangeCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.updateForm` nadpisuje `is_published`/`config.requireAuth` formularza — poprzedni tryb udostępniania nie jest nigdzie zapisany, bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Zmienia tryb udostępniania formularza — publiczny/tylko organizacja/wymaga uwierzytelnienia. Dla Teresy: najpierw pobiera bieżący rekord formularza (Teresa nie ma lokalnego stanu panelu), potem zapisuje nowy tryb — dokładnie ten sam kształt co klik człowieka.',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string', description: 'Id formularza.' },
+          mode: { type: 'string', description: 'public|organization|authenticated.' },
+        },
+        required: ['formId', 'mode'],
+      },
+    },
+    source: 'src/components/MyWork/table/forms/FormsIndex.tsx:354 (handleShareModeChange)',
+  },
+  {
+    id: 'table.form.delete',
+    label: { pl: 'Usuń formularz', en: 'Delete form' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableFormDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteForm` to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa formularz (i jego publiczny link).',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string', description: 'Id formularza do usunięcia.' },
+        },
+        required: ['formId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/forms/FormsIndex.tsx:409 (handleDelete)',
+  },
+  {
+    id: 'table.form_intake.save_allow_list',
+    label: { pl: 'Zapisz allow-listę formularza (JWT)', en: 'Save form intake allow-list (JWT)' },
+    icon: 'Save',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableFormIntakeSaveAllowListCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.setFormIntakeAllowList` nadpisuje listę dozwolonych pól prywatnego linku JWT formularza — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description:
+        'Zapisuje allow-listę pól dla prywatnych linków formularza (Form Intake JWT, EPIC-T14) — pusta lista = brak filtra (wszystkie skonfigurowane pola).',
+      parameters: {
+        type: 'object',
+        properties: {
+          formId: { type: 'string', description: 'Id formularza.' },
+          fieldIds: {
+            type: 'array',
+            description: 'Lista id pól dozwolonych w intake — pusta tablica usuwa filtr.',
+          },
+        },
+        required: ['formId'],
+      },
+    },
+    source: 'src/components/MyWork/table/forms/IntakeJwtPanel.tsx:340 (handleSaveAllowList)',
+  },
+  {
+    id: 'table.interface.delete',
+    label: { pl: 'Usuń interfejs', en: 'Delete interface' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableInterfaceDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteView` (interfejsy są przechowywane jako widoki platformowe typu "interface") to trwałe serwerowe usunięcie — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa interfejs (dashboard/widok szczegółów rekordu zbudowany w Interface Designer).',
+      parameters: {
+        type: 'object',
+        properties: {
+          interfaceId: { type: 'string', description: 'Id interfejsu do usunięcia.' },
+        },
+        required: ['interfaceId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/interfaces/InterfacesIndex.tsx:413 (handleDelete)',
+  },
+  {
+    id: 'table.sharing.invite',
+    label: { pl: 'Zaproś współpracownika', en: 'Invite collaborator' },
+    icon: 'UserPlus',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableSharingInviteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    external: true,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Tworzy NOWEGO współpracownika bazy (`TablePlatformApi.inviteCollaborator`, wysyła też zaproszenie e-mail) — cofnięcie = ręczne usunięcie dostępu przez `table.sharing.remove_collaborator`.',
+    },
+    teresa: {
+      description: 'Zaprasza osobę (po e-mailu) do współpracy nad bazą tabeli, z rolą (owner/editor/commenter/viewer).',
+      parameters: {
+        type: 'object',
+        properties: {
+          baseId: { type: 'string', description: 'Id bazy (Idei) tabeli.' },
+          email: { type: 'string', description: 'E-mail osoby zapraszanej.' },
+          role: { type: 'string', description: 'owner|editor|commenter|viewer (domyślnie editor).' },
+        },
+        required: ['baseId', 'email'],
+      },
+    },
+    source: 'src/components/MyWork/table/sharing/SharingManager.tsx:321 (handleInvite)',
+  },
+  {
+    id: 'table.sharing.remove_collaborator',
+    label: { pl: 'Usuń dostęp współpracownika', en: 'Remove collaborator access' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableSharingRemoveCollaboratorCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.removeCollaborator` to trwałe serwerowe odebranie dostępu — bez historii, ani dla kliku człowieka, ani dla Teresy (ponowny dostęp wymaga NOWEGO zaproszenia przez `table.sharing.invite`).',
+    },
+    teresa: {
+      description: 'Trwale usuwa dostęp współpracownika do bazy tabeli.',
+      parameters: {
+        type: 'object',
+        properties: {
+          baseId: { type: 'string', description: 'Id bazy (Idei) tabeli.' },
+          userId: { type: 'string', description: 'Id współpracownika do usunięcia.' },
+        },
+        required: ['baseId', 'userId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/sharing/SharingManager.tsx:430 (handleRemoveCollaborator)',
+  },
+  {
+    id: 'table.sync.create',
+    label: { pl: 'Utwórz synchronizację', en: 'Create sync' },
+    icon: 'Plus',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableSyncCreateCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'manual_delete',
+      evidence:
+        'Tworzy NOWĄ konfigurację synchronizacji (`TablePlatformApi.createTableSync`) — cofnięcie = ręczne usunięcie przez `table.sync.delete`. Sama konfiguracja nie synchronizuje jeszcze danych (to robi `table.sync.run_now`).',
+    },
+    teresa: {
+      description: 'Tworzy konfigurację synchronizacji danych między dwiema tabelami (mapowanie pól, tryb jedno/dwukierunkowy).',
+      parameters: {
+        type: 'object',
+        properties: {
+          sourceTableId: { type: 'string', description: 'Id tabeli źródłowej.' },
+          targetTableId: { type: 'string', description: 'Id tabeli docelowej.' },
+          fieldMapping: {
+            type: 'object',
+            description: 'Mapa pól źródło→cel; domyślnie {"*":"*"} (wszystkie pola).',
+          },
+          syncMode: { type: 'string', description: 'one_way|two_way (domyślnie one_way).' },
+        },
+        required: ['sourceTableId', 'targetTableId'],
+      },
+    },
+    source: 'src/components/MyWork/table/sync/SyncManager.tsx:449 (handleCreateSync)',
+  },
+  {
+    id: 'table.sync.run_now',
+    label: { pl: 'Synchronizuj teraz', en: 'Sync now' },
+    icon: 'Play',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableSyncRunNowCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.executeTableSync` realnie tworzy/aktualizuje rekordy w tabeli docelowej — bez automatycznego cofnięcia, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Uruchamia wskazaną synchronizację natychmiast, poza jej harmonogramem.',
+      parameters: {
+        type: 'object',
+        properties: {
+          syncId: { type: 'string', description: 'Id synchronizacji do uruchomienia.' },
+        },
+        required: ['syncId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/sync/SyncManager.tsx:565 (handleSyncNow)',
+  },
+  {
+    id: 'table.sync.delete',
+    label: { pl: 'Usuń synchronizację', en: 'Delete sync' },
+    icon: 'Trash2',
+    scope: 'workspace',
+    tools: ['table'],
+    surfaces: ['panel'],
+    handler: (ctx) => runTableSyncDeleteCallback(ctx),
+    mutates: true,
+    requiresPreview: false,
+    destructive: true,
+    undo: {
+      kind: 'no_undo',
+      reason: 'unrecoverable',
+      evidence:
+        '`TablePlatformApi.deleteTableSync` to trwałe serwerowe usunięcie konfiguracji — bez historii, ani dla kliku człowieka, ani dla Teresy.',
+    },
+    teresa: {
+      description: 'Trwale usuwa konfigurację synchronizacji (nie cofa już zsynchronizowanych danych).',
+      parameters: {
+        type: 'object',
+        properties: {
+          syncId: { type: 'string', description: 'Id synchronizacji do usunięcia.' },
+        },
+        required: ['syncId'],
+      },
+      confirmBeforeRun: true,
+    },
+    source: 'src/components/MyWork/table/sync/SyncManager.tsx:577 (handleDelete)',
   },
 ];
 

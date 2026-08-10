@@ -20,6 +20,10 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+
+import { EMPTY_SELECTION } from '../ideaSelectionTypes';
+
 import {
   type ExecutionOperation,
   ExecutionProgress,
@@ -431,6 +435,30 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
     ]
   );
 
+  /**
+   * N-inventory-b-medium (2026-08-10): routes the Send button/Enter-to-send
+   * through the registry (idea.ai.table_schema_propose) instead of calling
+   * handleSubmit directly — see the action's comment in
+   * ideaActionRegistry.ts for why this is a real, registrable command (not
+   * incidental chat chrome). `ideaId: ''` — this panel only has
+   * `workspaceId` in scope, same established pattern as other leaf
+   * components with no idea-id (see e.g. WhiteboardToolbar.tsx).
+   */
+  const runSchemaProposeAction = useCallback(
+    (overrideMsg?: string) => {
+      const ctx: ActionContext = {
+        ideaId: '',
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'panel',
+        source: 'ui',
+        params: { run: () => handleSubmit(overrideMsg) },
+      };
+      void runIdeaAction('idea.ai.table_schema_propose', ctx);
+    },
+    [handleSubmit]
+  );
+
   const handleQuickAction = useCallback((text: string) => {
     setInputValue(text);
     setTimeout(() => textareaRef.current?.focus(), 0);
@@ -690,7 +718,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  handleSubmit();
+                  runSchemaProposeAction();
                 }
               }}
               placeholder={
@@ -704,7 +732,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             />
           </div>
           <button
-            onClick={() => handleSubmit()}
+            onClick={() => runSchemaProposeAction()}
             disabled={!inputValue.trim() || loading}
             className="p-2.5 rounded-xl bg-c-text text-c-surface hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
           >

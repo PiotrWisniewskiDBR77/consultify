@@ -1861,6 +1861,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [ideaId, isPl]
   );
 
+  /**
+   * N-inventory-c1/c2/c3 (2026-08-10): the LEGACY non-platform toolbar
+   * (`!usePlatform` branch below, ~L2440+) renders its own view tabs / save-view
+   * dialog / bulk-convert menu that call `applyView`/`saveCurrentView`/
+   * `handleBulkConvert` DIRECTLY — the exact same functions (same `views` hook
+   * instance, same `handleBulkConvert` passed to `TableToolbar` as
+   * `onBulkConvert`) that `TableToolbar.tsx`'s platform-mode toolbar already
+   * routes through `idea.view.table_apply_view` / `idea.view.table_save_view` /
+   * `idea.workspace.table_bulk_convert` (confirmed genuine match, not just
+   * label similarity — verified against `TableToolbar.tsx`'s `runAction` call
+   * sites before wiring). Same run-callback shape as `runTblKeyboardAction`
+   * above, `surface: 'toolbar'` to match the registered `surfaces: ['toolbar']`.
+   */
+  const runTblLegacyToolbarAction = useCallback(
+    (actionId: string, run: () => void) => {
+      const ctx: ActionContext = {
+        ideaId,
+        tool: 'table',
+        selection: EMPTY_SELECTION,
+        surface: 'toolbar',
+        source: 'ui',
+        language: isPl ? 'pl' : 'en',
+        params: { run },
+      };
+      void runIdeaAction(actionId, ctx);
+    },
+    [ideaId, isPl]
+  );
+
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
     colCount: _visCols.length,
@@ -2497,7 +2526,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       />
                     ) : (
                       <button
-                        onClick={() => applyView(v)}
+                        onClick={() =>
+                          runTblLegacyToolbarAction('idea.view.table_apply_view', () => applyView(v))
+                        }
                         onContextMenu={(e) => {
                           e.preventDefault();
                           if (v.id !== 'default')
@@ -2563,10 +2594,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       </button>
                       <button
                         disabled={!saveViewName.trim()}
-                        onClick={() => {
-                          saveCurrentView(saveViewName.trim(), columns);
-                          setShowSaveViewDialog(false);
-                        }}
+                        onClick={() =>
+                          runTblLegacyToolbarAction('idea.view.table_save_view', () => {
+                            saveCurrentView(saveViewName.trim(), columns);
+                            setShowSaveViewDialog(false);
+                          })
+                        }
                         className="px-3 py-1.5 text-xs rounded-lg bg-c-text text-c-surface hover:brightness-95 disabled:opacity-40"
                       >
                         {t('ideas.table.save', 'Save')}
@@ -3369,20 +3402,24 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {!guidedBar && (
                   <>
                     <button
-                      onClick={() => {
-                        const csv = exportToCSV(_cols, effectiveNodes);
-                        downloadCSV(csv, `idea-${ideaId}.csv`);
-                      }}
+                      onClick={() =>
+                        runTblLegacyToolbarAction('idea.export.table_csv', () => {
+                          const csv = exportToCSV(_cols, effectiveNodes);
+                          downloadCSV(csv, `idea-${ideaId}.csv`);
+                        })
+                      }
                       className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
                       title={t('ideas.table.exportCsv', 'Export CSV')}
                     >
                       <Download size={12} />
                     </button>
                     <button
-                      onClick={() => {
-                        copyTableToClipboard(_cols, effectiveNodes);
-                        toast.success(t('ideas.table.copied', 'Copied'));
-                      }}
+                      onClick={() =>
+                        runTblLegacyToolbarAction('idea.table.copy_clipboard', () => {
+                          copyTableToClipboard(_cols, effectiveNodes);
+                          toast.success(t('ideas.table.copied', 'Copied'));
+                        })
+                      }
                       className="p-1.5 rounded-lg text-c-text-muted hover:text-c-text-secondary transition-colors"
                       title={t('ideas.table.copyToClipboard', 'Copy to clipboard')}
                     >
@@ -3488,7 +3525,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             {(['initiative', 'task', 'decision'] as const).map((bulkTarget) => (
                               <button
                                 key={bulkTarget}
-                                onClick={() => handleBulkConvert(bulkTarget)}
+                                onClick={() =>
+                                  runTblLegacyToolbarAction('idea.workspace.table_bulk_convert', () =>
+                                    handleBulkConvert(bulkTarget)
+                                  )
+                                }
                                 className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-c-text-secondary hover:bg-c-surface-raised transition-colors capitalize"
                               >
                                 →{' '}

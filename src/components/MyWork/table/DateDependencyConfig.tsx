@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import type { DateDependencyConfigPayload } from '@/services/api/tablePlatform.api';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type { TablePlatformField } from '@/types/tablePlatform';
@@ -69,48 +71,81 @@ export const DateDependencyConfig: React.FC<DateDependencyConfigProps> = ({
     loadConfig();
   }, [loadConfig]);
 
-  const handleSave = async () => {
-    if (!config || !config.startDateFieldId || !config.endDateFieldId || locked || saving) return;
-    setSaving(true);
-    setCycleWarning(null);
-    try {
-      await TablePlatformApi.putDependencyConfig(tableId, config);
-      toast.success(t('myWorkTable.dateDependencyConfig.configSaved'));
-      onConfigSaved?.();
-    } catch {
-      toast.error(t('myWorkTable.dateDependencyConfig.failedToSave'));
-    } finally {
-      setSaving(false);
-    }
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru
+  // (`table.date_dependency.save`/`.recalculate`): klik człowieka przekazuje
+  // SWÓJ oryginalny callback jako `ctx.params.run` (rejestr wykonuje go wprost,
+  // zero zmiany zachowania), Teresa idzie tą samą ścieżką REST bezpośrednio
+  // (`ideaActionRegistry.ts` woła `TablePlatformApi.putDependencyConfig`/
+  // `.recalculateDateDependencies` z aliasu `TP`). Patrz `runTableDateDependency*Callback`.
+  const runDateDependencyAction = (actionId: string, run: () => void) => {
+    const ctx: ActionContext = {
+      ideaId: tableId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: {
+        run,
+        tableId,
+        startDateFieldId: config?.startDateFieldId,
+        endDateFieldId: config?.endDateFieldId,
+        durationFieldId: config?.durationFieldId,
+        predecessorFieldId: config?.predecessorFieldId,
+        defaultDependencyType: config?.defaultDependencyType,
+        defaultLagDays: config?.defaultLagDays,
+        skipWeekends: config?.skipWeekends,
+      },
+    };
+    void runIdeaAction(actionId, ctx);
   };
 
-  const handleRecalculate = async () => {
+  const handleSave = () => {
+    if (!config || !config.startDateFieldId || !config.endDateFieldId || locked || saving) return;
+    runDateDependencyAction('table.date_dependency.save', async () => {
+      setSaving(true);
+      setCycleWarning(null);
+      try {
+        await TablePlatformApi.putDependencyConfig(tableId, config);
+        toast.success(t('myWorkTable.dateDependencyConfig.configSaved'));
+        onConfigSaved?.();
+      } catch {
+        toast.error(t('myWorkTable.dateDependencyConfig.failedToSave'));
+      } finally {
+        setSaving(false);
+      }
+    });
+  };
+
+  const handleRecalculate = () => {
     if (!config || !config.startDateFieldId || !config.endDateFieldId || locked || recalculating)
       return;
-    setRecalculating(true);
-    setCycleWarning(null);
+    runDateDependencyAction('table.date_dependency.recalculate', async () => {
+      setRecalculating(true);
+      setCycleWarning(null);
 
-    try {
-      const cycleRes = await TablePlatformApi.detectDateDependencyCycle(tableId, config);
-      if (cycleRes.hasCycle && cycleRes.cycleNodes?.length) {
-        setCycleWarning({ cycleNodes: cycleRes.cycleNodes });
-        toast.error(
-          t('myWorkTable.dateDependencyConfig.cycleDetectedCount', {
-            value: cycleRes.cycleNodes.length,
-          })
-        );
-        return;
+      try {
+        const cycleRes = await TablePlatformApi.detectDateDependencyCycle(tableId, config);
+        if (cycleRes.hasCycle && cycleRes.cycleNodes?.length) {
+          setCycleWarning({ cycleNodes: cycleRes.cycleNodes });
+          toast.error(
+            t('myWorkTable.dateDependencyConfig.cycleDetectedCount', {
+              value: cycleRes.cycleNodes.length,
+            })
+          );
+          return;
+        }
+
+        const recalcRes = await TablePlatformApi.recalculateDateDependencies(tableId, config);
+        const count = recalcRes.updatedRecords ?? 0;
+        toast.success(t('myWorkTable.dateDependencyConfig.recordsUpdated', { value: count }));
+        onRecordsUpdated?.();
+      } catch {
+        toast.error(t('myWorkTable.dateDependencyConfig.failedToRecalculate'));
+      } finally {
+        setRecalculating(false);
       }
-
-      const recalcRes = await TablePlatformApi.recalculateDateDependencies(tableId, config);
-      const count = recalcRes.updatedRecords ?? 0;
-      toast.success(t('myWorkTable.dateDependencyConfig.recordsUpdated', { value: count }));
-      onRecordsUpdated?.();
-    } catch {
-      toast.error(t('myWorkTable.dateDependencyConfig.failedToRecalculate'));
-    } finally {
-      setRecalculating(false);
-    }
+    });
   };
 
   const updateConfig = (updates: Partial<DateDependencyConfigPayload>) => {

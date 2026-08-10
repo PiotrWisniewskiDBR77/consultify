@@ -12,7 +12,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import type { FieldFillProposal, FieldFillRowChange } from './AITableFieldProposal';
-import { downloadCSV, exportToCSV } from './csvUtils';
+import { copyTableToClipboard, downloadCSV, exportToCSV } from './csvUtils';
 import { isTableFieldProposalEnabled } from './tableFieldProposalFlag';
 import type { ColumnDef, FilterGroup, SavedView, SortConfig, TableNode } from './tableTypes';
 import type { ViewLayout } from './useTableViews';
@@ -285,6 +285,19 @@ export function useTableQuickActions(opts: UseTableQuickActionsOpts): void {
       if (action === 'tbl_export_csv') {
         const csv = exportToCSV(columns, nodes);
         downloadCSV(csv, `idea-${ideaId}.csv`);
+        return;
+      }
+
+      // `idea.table.copy_clipboard` (ideaActionRegistry.ts) — NOT an export
+      // (docs/standards/idea-workspace/10_KONWERSJA_EKSPORT_IMPORT_SZABLONY.md
+      // §1 deciding rule: produces neither a file nor a persistent record, so
+      // it is neither Export nor Convert). Mirrors `tbl_export_csv` immediately
+      // above 1:1 (same `columns`/`nodes` source, same pre-existing legacy/
+      // platform divergence noted at `QuickActionHandlers.fieldChange` above —
+      // not fixed here).
+      if (action === 'tbl_copy_clipboard') {
+        copyTableToClipboard(columns, nodes);
+        toast.success(i18n.t('ideas.table.copied', 'Copied'));
         return;
       }
 

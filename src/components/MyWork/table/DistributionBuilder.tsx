@@ -19,7 +19,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
 import { EmptyState, LoadingState } from '@/components/shared/states';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 
 interface DistributionBuilderProps {
@@ -97,14 +99,58 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
     loadDistributions();
   }, [loadDistributions]);
 
-  const handleCreate = async () => {
+  // Program B (E02) — dwie ścieżki, jedna funkcja rejestru (klik człowieka =
+  // `ctx.params.run`, wykonuje ORYGINALNY callback wprost; Teresa = ta sama
+  // funkcja rejestru woła REST bezpośrednio, patrz `runTableDistribution*Callback`
+  // w `ideaActionRegistry.ts`, aliasowane `table.distribution_builder.*`).
+  const runDistributionAction = (
+    actionId: string,
+    run: () => void,
+    params?: Record<string, unknown>
+  ) => {
+    const ctx: ActionContext = {
+      ideaId: baseId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { run, ...(params || {}) },
+    };
+    void runIdeaAction(actionId, ctx);
+  };
+
+  const handleCreate = () => {
     if (!form.name.trim()) {
       toast.error(t('myWorkTable.distributionBuilder.nameIsRequired'));
       return;
     }
-    try {
-      setCreating(true);
-      await TablePlatformApi.createDistribution(baseId, {
+    runDistributionAction(
+      'table.distribution_builder.create',
+      async () => {
+        try {
+          setCreating(true);
+          await TablePlatformApi.createDistribution(baseId, {
+            name: form.name.trim(),
+            sourceType: form.sourceType,
+            sourceId: form.sourceId || baseId,
+            channel: form.channel,
+            channelConfig: form.channelConfig,
+            format: form.format,
+            schedule: form.schedule || undefined,
+          });
+          toast.success(t('myWorkTable.distributionBuilder.distributionCreated'));
+          setShowForm(false);
+          setForm({ ...INITIAL_FORM });
+          await loadDistributions();
+        } catch {
+          toast.error(t('myWorkTable.distributionBuilder.failedToCreate'));
+        } finally {
+          setCreating(false);
+        }
+      },
+      {
+        baseId,
         name: form.name.trim(),
         sourceType: form.sourceType,
         sourceId: form.sourceId || baseId,
@@ -112,26 +158,24 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
         channelConfig: form.channelConfig,
         format: form.format,
         schedule: form.schedule || undefined,
-      });
-      toast.success(t('myWorkTable.distributionBuilder.distributionCreated'));
-      setShowForm(false);
-      setForm({ ...INITIAL_FORM });
-      await loadDistributions();
-    } catch {
-      toast.error(t('myWorkTable.distributionBuilder.failedToCreate'));
-    } finally {
-      setCreating(false);
-    }
+      }
+    );
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await TablePlatformApi.deleteDistribution(id);
-      toast.success(t('myWorkTable.distributionBuilder.deleted'));
-      setDistributions((prev) => prev.filter((d) => d.id !== id));
-    } catch {
-      toast.error(t('myWorkTable.distributionBuilder.failedToDelete'));
-    }
+  const handleDelete = (id: string) => {
+    runDistributionAction(
+      'table.distribution_builder.delete',
+      async () => {
+        try {
+          await TablePlatformApi.deleteDistribution(id);
+          toast.success(t('myWorkTable.distributionBuilder.deleted'));
+          setDistributions((prev) => prev.filter((d) => d.id !== id));
+        } catch {
+          toast.error(t('myWorkTable.distributionBuilder.failedToDelete'));
+        }
+      },
+      { distributionId: id }
+    );
   };
 
   const handleToggle = async (id: string) => {
@@ -143,22 +187,28 @@ export function DistributionBuilder({ baseId, onClose }: DistributionBuilderProp
     }
   };
 
-  const handleExecute = async (id: string) => {
-    try {
-      setExecutingId(id);
-      const result = await TablePlatformApi.executeDistribution(id);
-      toast.success(
-        t('myWorkTable.distributionBuilder.sentRecordsVia', {
-          records: result.recordCount,
-          channel: result.channel,
-        })
-      );
-      await loadDistributions();
-    } catch {
-      toast.error(t('myWorkTable.distributionBuilder.sendFailed'));
-    } finally {
-      setExecutingId(null);
-    }
+  const handleExecute = (id: string) => {
+    runDistributionAction(
+      'table.distribution_builder.execute',
+      async () => {
+        try {
+          setExecutingId(id);
+          const result = await TablePlatformApi.executeDistribution(id);
+          toast.success(
+            t('myWorkTable.distributionBuilder.sentRecordsVia', {
+              records: result.recordCount,
+              channel: result.channel,
+            })
+          );
+          await loadDistributions();
+        } catch {
+          toast.error(t('myWorkTable.distributionBuilder.sendFailed'));
+        } finally {
+          setExecutingId(null);
+        }
+      },
+      { distributionId: id }
+    );
   };
 
   const updateChannelConfig = (key: string, value: string) => {

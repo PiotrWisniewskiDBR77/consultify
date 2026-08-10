@@ -2500,6 +2500,28 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   );
 
   /**
+   * N-inventory-c4 (2026-08-10): empty-canvas CTA "Dodaj pierwszy krok" now
+   * routes through the registry (`idea.view.pf_add_start`, NEW id — see
+   * `RUNTIME_PF_ADD_START` comment in ideaActionRegistry.ts for why this is
+   * NOT a reuse of `idea.element.add`: shape mismatch, same trap as
+   * `addDefaultStep` above). `ctx.params.vsm` carries the mode branch the
+   * handler needs (start vs vsm_process) since the registry has no notion of
+   * Process Flow sub-modes.
+   */
+  const runPfAddStartAction = useCallback(() => {
+    const ctx: ActionContext = {
+      ideaId,
+      tool: 'process_flow',
+      selection: EMPTY_SELECTION,
+      surface: 'inline',
+      source: 'ui',
+      language: isPl ? 'pl' : 'en',
+      params: { vsm: flowMode === 'vsm' },
+    };
+    void runIdeaAction('idea.view.pf_add_start', ctx);
+  }, [ideaId, isPl, flowMode]);
+
+  /**
    * PF-P3-01: lane-aware "Fit view" — a plain `fitView()` only bounds actual
    * ReactFlow nodes, but Process Flow's swimlanes are painted OUTSIDE the
    * node graph (see `LaneSystem.tsx`), so it silently crops an empty or
@@ -3455,7 +3477,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   </div>
                   {!locked && (
                     <button
-                      onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
+                      onClick={runPfAddStartAction}
                       className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-c-info hover:brightness-110 transition-all ${FOCUS_RING}`}
                       style={{
                         backgroundColor: 'color-mix(in srgb, var(--c-info) 12%, transparent)',

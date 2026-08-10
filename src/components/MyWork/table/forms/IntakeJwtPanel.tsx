@@ -37,6 +37,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import { type ActionContext, runIdeaAction } from '@/actions/ideaActionRegistry';
+import { EMPTY_SELECTION } from '@/components/MyWork/ideaSelectionTypes';
 import {
   type FormIntakeContext,
   getFormIntakeContext,
@@ -181,19 +183,36 @@ export const IntakeJwtPanel: React.FC<IntakeJwtPanelProps> = ({
     setAllowListDraft([]);
   }, []);
 
-  const handleSaveAllowList = useCallback(async () => {
-    setSavingAllowList(true);
-    try {
-      const next = allowListDraft.length > 0 ? Array.from(new Set(allowListDraft)) : null;
-      const updated = await setFormIntakeAllowList(formId, next);
-      setContext(updated);
-      setAllowListDraft(updated.fieldAllowList ?? []);
-      toast.success('Allow-list saved');
-    } catch (e) {
-      toast.error(`Failed to save allow-list: ${(e as Error)?.message ?? 'unknown'}`);
-    } finally {
-      setSavingAllowList(false);
-    }
+  // Program B (E02) — klik człowieka = `ctx.params.run` (rejestr wykonuje
+  // ORYGINALNY callback wprost); Teresa = ta sama funkcja rejestru woła REST
+  // bezpośrednio (`runTableFormIntakeSaveAllowListCallback` w `ideaActionRegistry.ts`).
+  const handleSaveAllowList = useCallback(() => {
+    const ctx: ActionContext = {
+      ideaId: formId,
+      tool: 'table',
+      selection: EMPTY_SELECTION,
+      surface: 'panel',
+      source: 'ui',
+      params: {
+        formId,
+        fieldIds: allowListDraft,
+        run: async () => {
+          setSavingAllowList(true);
+          try {
+            const next = allowListDraft.length > 0 ? Array.from(new Set(allowListDraft)) : null;
+            const updated = await setFormIntakeAllowList(formId, next);
+            setContext(updated);
+            setAllowListDraft(updated.fieldAllowList ?? []);
+            toast.success('Allow-list saved');
+          } catch (e) {
+            toast.error(`Failed to save allow-list: ${(e as Error)?.message ?? 'unknown'}`);
+          } finally {
+            setSavingAllowList(false);
+          }
+        },
+      },
+    };
+    void runIdeaAction('table.form_intake.save_allow_list', ctx);
   }, [formId, allowListDraft]);
 
   // ── Render ────────────────────────────────────────────────────────────────
