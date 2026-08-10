@@ -19,6 +19,26 @@
  *   4. the FULL GRAPH declared explicitly as an AUXILIARY view, off by default
  *      ("pełny graf tylko jako widok pomocniczy").
  *
+ * Five things were added after the first round of this contract was reviewed,
+ * each with its own section below and its own rationale in place:
+ *
+ *   - TENANT ISOLATION enforced HERE, not only in the SQL one layer down
+ *     (`organization_id` is a required parameter of every entry point, and
+ *     foreign edges/versions are refused AND reported);
+ *   - TERMINAL LIFECYCLE STATES (archived / superseded / invalidated): badge,
+ *     dimming, a panel filter, and — the real defect — no `+ Nowy` from a
+ *     closed version;
+ *   - CYCLES REPORTED rather than silently ending a walk (the DB trigger
+ *     stays the enforcement);
+ *   - INDIRECT ANCESTORS, mirroring indirect descendants, so the upstream
+ *     routes the single-parent trail cannot show are not lost;
+ *   - the RELATED DRAWER plus the navigation stack / restore point that
+ *     brings filters, scroll and the selected row back after a jump.
+ *
+ * NOT IN SCOPE HERE: propagating staleness when a source changes. That is
+ * `lineageFreshnessService` (its own service, its own Postgres-backed tests);
+ * this module only DISPLAYS the freshness it is handed.
+ *
  * SCOPE: pure logic plus one injectable port. No React, no DOM. The DB access
  * is reached only through `LineageServicePort`, so every function here is
  * testable against mocked `lineageService` results with no database — see the
