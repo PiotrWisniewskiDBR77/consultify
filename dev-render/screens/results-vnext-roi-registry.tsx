@@ -1,12 +1,15 @@
 /**
- * RN-G2 P2 — visual QA harness for the ROI registry (`ResultsRoiHub` /
- * `roiRegistryPresenters.tsx`). Mounts the REAL `ResultsVNextRegistryShell`
- * fed by the REAL presenter functions (`buildRoiCaseColumns`/
+ * RN-G2 P2/G2-create — visual QA harness for the ROI registry
+ * (`ResultsRoiHub` / `roiRegistryPresenters.tsx`) PLUS the quick-create
+ * modal (`RoiCaseCreateModal`) and the 7-transition dialog
+ * (`RoiTransitionDialog`). Mounts the REAL `ResultsVNextRegistryShell` fed
+ * by the REAL presenter functions (`buildRoiCaseColumns`/
  * `buildRoiCaseRowMenu`/`buildRoiCasePreview`/
  * `buildRoiBenefitsRealizationColumns`/`buildRoiBenefitsRealizationPreview`)
- * with mock case + calculation-run data — NOT `ResultsRoiHub` itself, which
- * does live `fetch()` calls with no backend available in this harness (same
- * reason the P0 `results-vnext-registry-shell.tsx` screen mounts the shell
+ * and the REAL `RoiCaseCreateModal`/`RoiTransitionDialog` components fed by
+ * mock initiatives/case data — NOT `ResultsRoiHub` itself, which does live
+ * `fetch()` calls with no backend available in this harness (same reason
+ * the P0 `results-vnext-registry-shell.tsx` screen mounts the shell
  * directly rather than a data-fetching page).
  *
  * URL params:
@@ -16,11 +19,20 @@
  *   &calc=loading|ready           force the "All cases" preview's lazy calc-run fetch to stay
  *                                  in-flight (shows the "Wczytywanie…/Loading…" honest-missing
  *                                  interim state) vs resolved (default ready)
+ *   &create=open|saving|error|conflict   opens `RoiCaseCreateModal` in the given state
+ *   &transition=<akcja>           opens `RoiTransitionDialog` for the given transition id
+ *                                  (approve|reject|request_changes|reopen_for_revision|
+ *                                  cancel|start_pir|close) against the row picked by
+ *                                  `&selected=` (default: first row)
+ *   &transitionState=idle|saving|error|conflict   the transition dialog's write state
+ *                                  (default idle)
  */
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ResultsVNextRegistryShell } from '../../src/components/ResultsVNext/ResultsVNextRegistryShell';
+import { RoiCaseCreateModal, type RoiCaseCreateInitiativeOption } from '../../src/components/ResultsVNext/roi/RoiCaseCreateModal';
+import { RoiTransitionDialog } from '../../src/components/ResultsVNext/roi/RoiTransitionDialog';
 import type { RoiCalculationRunSummary, RoiCaseListItem, RoiOrgBenefitsRealizationRow } from '../../src/components/ResultsVNext/roi/roiApi';
 import {
   buildRoiBenefitsRealizationColumns,
@@ -30,6 +42,7 @@ import {
   buildRoiCaseRowMenu,
   type RoiBenefitsRealizationRowVm,
 } from '../../src/components/ResultsVNext/roi/roiRegistryPresenters';
+import { ROI_TRANSITIONS, type RoiTransitionId } from '../../src/components/ResultsVNext/roi/roiRegistryMappers';
 import type { StandardCounterChip, TableRow } from '../../src/components/standard';
 
 // ── Mock "All cases" data — one representative case per bucket, spanning the
@@ -282,6 +295,24 @@ const MOCK_BENEFITS_ROWS: RoiOrgBenefitsRealizationRow[] = [
   },
 ];
 
+// ── Mock initiatives — the create modal's `initiativeId` picker. Titles
+//    deliberately overlap with `MOCK_CASES[*].initiativeId` (init-101..106)
+//    plus two extra WITHOUT an existing ROI case yet (init-201/202), so a
+//    QA reviewer can see the picker is a real, independent initiative list,
+//    not derived from the case rows already on screen.
+const MOCK_INITIATIVES: RoiCaseCreateInitiativeOption[] = [
+  { id: 'init-101', title: 'Automatyzacja linii pakowania' },
+  { id: 'init-102', title: 'Migracja legacy MES' },
+  { id: 'init-103', title: 'Program szkoleń Lean' },
+  { id: 'init-104', title: 'Rollup finansowy — jedno źródło' },
+  { id: 'init-105', title: 'Wdrożenie robotyzacji magazynu' },
+  { id: 'init-106', title: 'Cyfryzacja obiegu dokumentów' },
+  { id: 'init-201', title: 'Konsolidacja dostawców logistycznych' },
+  { id: 'init-202', title: 'Modernizacja floty serwisowej' },
+];
+
+const MOCK_CURRENT_USER_ID = 'user-anna-kowalska';
+
 function withId<T extends { caseId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.caseId };
 }
@@ -291,6 +322,9 @@ const initialTab = (params.get('tab') as 'all' | 'benefits') || 'all';
 const state = params.get('state') || 'ready';
 const calcState = params.get('calc') || 'ready';
 const initialSelected = params.get('selected');
+const createParam = params.get('create') as 'open' | 'saving' | 'error' | 'conflict' | null;
+const transitionParam = params.get('transition') as RoiTransitionId | null;
+const transitionStateParam = (params.get('transitionState') as 'idle' | 'saving' | 'error' | 'conflict' | null) ?? 'idle';
 
 const ResultsVNextRoiRegistryScreen: React.FC = () => {
   const [tab, setTab] = useState<'all' | 'benefits'>(initialTab);
@@ -389,6 +423,39 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
   const calculationRun =
     calcState === 'loading' ? undefined : selectedCaseId ? (MOCK_RUNS[selectedCaseId] ?? null) : undefined;
 
+  // ── Quick-create modal — state driven entirely by `&create=` so a single
+  //    load renders one static, screenshot-able state (no click simulation
+  //    needed for these 4 snapshots).
+  const createOpen = createParam !== null;
+  const createBusy = createParam === 'saving';
+  const createErrorMessage =
+    createParam === 'error'
+      ? isPolish
+        ? 'Nazwa sprawy jest wymagana.'
+        : 'Case title is required.'
+      : createParam === 'conflict'
+        ? isPolish
+          ? 'Sprawa została zmieniona przez kogoś innego w międzyczasie.'
+          : 'The case was modified by someone else in the meantime.'
+        : null;
+
+  // ── Transition dialog — `&transition=<id>` opens it against the row
+  //    picked by `&selected=` (falls back to the first mock case), state
+  //    driven by `&transitionState=`.
+  const transitionRow = selectedCase ?? MOCK_CASES[0] ?? null;
+  const transitionOpen = transitionParam !== null && !!transitionRow;
+  const transitionBusy = transitionStateParam === 'saving';
+  const transitionErrorMessage =
+    transitionStateParam === 'error'
+      ? isPolish
+        ? 'Powód jest wymagany dla tego przejścia.'
+        : 'A reason is required for this transition.'
+      : transitionStateParam === 'conflict'
+        ? isPolish
+          ? 'Sprawa została zmieniona przez kogoś innego w międzyczasie.'
+          : 'The case was modified by someone else in the meantime.'
+        : null;
+
   return (
     <div className="h-screen bg-c-bg text-c-text">
       <ResultsVNextRegistryShell
@@ -403,6 +470,11 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
           chips,
           activeChip: 'all',
           onChipChange: () => {},
+          primaryCta: {
+            label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+            onClick: () => {},
+            testId: 'roi-registry-create-cta',
+          },
         }}
         table={{
           columns: buildRoiCaseColumns(isPolish),
@@ -430,6 +502,7 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
           rowMenu: (row) =>
             buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
               onPreview: (r) => setSelectedCaseId(r.caseId),
+              onTransition: () => {},
             }),
           defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}
@@ -443,6 +516,30 @@ const ResultsVNextRoiRegistryScreen: React.FC = () => {
             : null
         }
       />
+      <RoiCaseCreateModal
+        open={createOpen}
+        onClose={() => {}}
+        onSubmit={() => {}}
+        isPolish={isPolish}
+        initiatives={MOCK_INITIATIVES}
+        currentUserId={MOCK_CURRENT_USER_ID}
+        busy={createBusy}
+        errorMessage={createErrorMessage}
+        isConflict={createParam === 'conflict'}
+      />
+      {transitionRow ? (
+        <RoiTransitionDialog
+          open={transitionOpen}
+          transitionId={transitionParam && ROI_TRANSITIONS[transitionParam] ? transitionParam : null}
+          caseTitle={transitionRow.title}
+          isPolish={isPolish}
+          onClose={() => {}}
+          onSubmit={() => {}}
+          busy={transitionBusy}
+          errorMessage={transitionErrorMessage}
+          isConflict={transitionStateParam === 'conflict'}
+        />
+      ) : null}
     </div>
   );
 };

@@ -1,10 +1,12 @@
 /**
- * ResultsRoiHub — RN-G2 P2, the real "/results/roi" screen: ROI Case
- * registry list + preview (RN_G2_UI_SCOPE.md §G #11), built on the P0 shared
- * shell (`ResultsVNextRegistryShell`). Deliberately NOT the full 15-sub-
- * resource ROI Case tool (create/baseline/assumptions/cost+benefit lines/
- * scenarios/lifecycle transitions/forecast/actuals/variances/PIR/finance
- * links — §G #12-21) — those are later packages.
+ * ResultsRoiHub — RN-G2 P2/G2-create, the real "/results/roi" screen: ROI
+ * Case registry list + preview (RN_G2_UI_SCOPE.md §G #11), quick-create
+ * (§G #12, master plan §9 Etap 3 "quick create zapisujący prawdziwy Draft")
+ * and 7 lifecycle transitions (§G #16 subset), built on the P0 shared shell
+ * (`ResultsVNextRegistryShell`). Deliberately NOT the full 15-sub-resource
+ * ROI Case tool (baseline/assumptions/cost+benefit lines/scenarios/forecast/
+ * actuals/variances/PIR/finance links — §G #13-21, minus the transitions
+ * slice of #16 this package DOES cover) — those stay later packages.
  *
  * Two Menu 2 tabs, both real backend data, no fabricated rows:
  *  - "All cases"           → `GET /cases` (§C `roi.routes.ts`), the actual
@@ -15,7 +17,10 @@
  *                             fetching them per-row would mean an N+1 calc-
  *                             run request per visible row. They ARE shown in
  *                             the PREVIEW, lazily fetched for the one
- *                             selected case only.
+ *                             selected case only. The Menu 2 `primaryCta`
+ *                             ("New ROI case") opens `RoiCaseCreateModal` —
+ *                             only on THIS tab, quick-create has no meaning
+ *                             on the org rollup tab below.
  *  - "Benefits realization" → `GET /org/benefits-realization` (§C
  *                             `roiPerspectives.routes.ts`), a manager-chain-
  *                             scoped rollup that DOES carry two honest-
@@ -26,25 +31,48 @@
  * Menu 3 chips on "All cases" bucket the real 13-state machine into 4 groups
  * (`ROI_STATUS_BUCKET` in `roiRegistryMappers.ts`) — counts always shown,
  * including 0, computed from the currently loaded page.
+ *
+ * Quick create's `initiativeId` picker uses `InitiativeApi.getInitiatives()`
+ * (`src/services/api/initiatives.api.ts`) — the SAME real, already-used
+ * endpoint `InitiativeObservabilityTable.tsx` calls for its own initiative
+ * picker (`GET /initiatives`, org-scoped server-side via auth) — not a new
+ * endpoint, not a mock list.
  */
+import { Plus } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { StandardCounterChip, StandardModuleTab, TableRow } from '@/components/standard';
+import { InitiativeApi } from '@/services/api/initiatives.api';
+import { tokenService } from '@/services/tokenService';
 
 import { ResultsVNextRegistryShell } from '../ResultsVNextRegistryShell';
+import { RoiCaseCreateModal, type RoiCaseCreateFormValues, type RoiCaseCreateInitiativeOption } from './RoiCaseCreateModal';
+import { RoiTransitionDialog } from './RoiTransitionDialog';
 import {
+  approveRoiCase,
+  cancelRoiCase,
+  closeRoiCase,
+  createRoiCase,
   getLatestRoiCalculationRun,
   listOrgRoiBenefitsRealization,
   listRoiCases,
+  newRoiIdempotencyKey,
+  rejectRoiCase,
+  reopenRoiCaseForRevision,
+  requestChangesOnRoiCase,
+  RoiApiError,
+  startPirRoiCase,
   type RoiCalculationRunSummary,
   type RoiCaseListItem,
   type RoiOrgBenefitsRealizationRow,
+  type RoiTransitionResult,
 } from './roiApi';
 import {
   ROI_STATUS_BUCKET,
   ROI_STATUS_BUCKET_LABEL,
   type RoiStatusBucket,
+  type RoiTransitionId,
 } from './roiRegistryMappers';
 import {
   buildRoiBenefitsRealizationColumns,
@@ -57,6 +85,62 @@ import {
 
 type RoiTab = 'all' | 'benefits';
 const ROI_CASES_FETCH_LIMIT = 200;
+
+/** Same JWT-decode pattern already used by `DeckCommentsPanel.tsx`/
+ * `DocumentCommentsPanel.tsx` (`resolveCurrentUserIdFromToken`) — there is
+ * no generally-available "list org members" endpoint a normal member can
+ * call (`/users` is ADMIN/OWNER/SUPERADMIN-only, `users.routes.ts` L134),
+ * so quick-create's `ownerUserId` defaults to (and is not editable beyond)
+ * the current user, resolved the same real way every other "who am I"
+ * read in this codebase already does. */
+function resolveCurrentUserIdFromToken(): string | null {
+  try {
+    const token = tokenService.getToken();
+    if (!token) return null;
+    return tokenService.decodeToken(token)?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Routes a transition id to its `roiApi.ts` call with the right body shape
+ * — the one place that knows all 7 endpoints' distinct field names
+ * (`rejectionReason`/`changeRequestNotes`/plain `reason`). Mandatory-reason
+ * transitions are asserted non-null defensively (should be unreachable:
+ * `RoiTransitionDialog` already blocks submit when its field is required
+ * and empty) rather than silently sent as `''`. */
+async function runRoiTransition(
+  id: RoiTransitionId,
+  caseId: string,
+  expectedVersion: number,
+  reason: string | null,
+  idempotencyKey: string
+): Promise<RoiTransitionResult> {
+  switch (id) {
+    case 'approve':
+      return approveRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'reject':
+      if (!reason) throw new Error('rejectionReason is required');
+      return rejectRoiCase(caseId, { expectedVersion, rejectionReason: reason, idempotencyKey });
+    case 'request_changes':
+      if (!reason) throw new Error('changeRequestNotes is required');
+      return requestChangesOnRoiCase(caseId, { expectedVersion, changeRequestNotes: reason, idempotencyKey });
+    case 'reopen_for_revision':
+      if (!reason) throw new Error('reason is required');
+      return reopenRoiCaseForRevision(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'cancel':
+      if (!reason) throw new Error('reason is required');
+      return cancelRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'start_pir':
+      return startPirRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
+    case 'close':
+      return closeRoiCase(caseId, { expectedVersion, reason, idempotencyKey });
+    default: {
+      const exhaustive: never = id;
+      throw new Error(`Unknown ROI transition id: ${exhaustive}`);
+    }
+  }
+}
 
 function withId<T extends { caseId: string }>(row: T): T & { id: string } {
   return { ...row, id: row.caseId };
@@ -103,6 +187,115 @@ export const ResultsRoiHub: React.FC = () => {
       )
       .finally(() => setBenefitsLoading(false));
   }, []);
+
+  // Quick-create ("New ROI case") state — resolved once, real endpoints only.
+  const currentUserId = useMemo(() => resolveCurrentUserIdFromToken(), []);
+  const [initiatives, setInitiatives] = useState<RoiCaseCreateInitiativeOption[] | null>(null);
+  const [initiativesLoading, setInitiativesLoading] = useState(false);
+  const [initiativesError, setInitiativesError] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createIsConflict, setCreateIsConflict] = useState(false);
+  const [createIdempotencyKey, setCreateIdempotencyKey] = useState<string>('');
+
+  // Lifecycle-transition dialog state — one shared dialog for all 7 wired
+  // transitions (§G #16 subset), keyed by {row, transitionId}.
+  const [transition, setTransition] = useState<{ row: RoiCaseListItem; id: RoiTransitionId } | null>(null);
+  const [transitionBusy, setTransitionBusy] = useState(false);
+  const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [transitionIsConflict, setTransitionIsConflict] = useState(false);
+  const [transitionIdempotencyKey, setTransitionIdempotencyKey] = useState<string>('');
+
+  const loadInitiatives = useCallback(() => {
+    setInitiativesLoading(true);
+    setInitiativesError(null);
+    InitiativeApi.getInitiatives()
+      .then((list) =>
+        setInitiatives(
+          [...list]
+            .map((i) => ({ id: i.id, title: i.title }))
+            .sort((a, b) => a.title.localeCompare(b.title))
+        )
+      )
+      .catch((err) => setInitiativesError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setInitiativesLoading(false));
+  }, []);
+
+  const openCreateModal = useCallback(() => {
+    setCreateError(null);
+    setCreateIsConflict(false);
+    // Fresh idempotency key per form OPEN, not per submit — a retry within
+    // the same open (e.g. after a transient network error) reuses it so a
+    // double-send can never create two cases (RN_G2_UI_SCOPE.md §A).
+    setCreateIdempotencyKey(newRoiIdempotencyKey());
+    setCreateOpen(true);
+    if (initiatives === null && !initiativesLoading) loadInitiatives();
+  }, [initiatives, initiativesLoading, loadInitiatives]);
+
+  const handleCreateSubmit = useCallback(
+    (values: RoiCaseCreateFormValues) => {
+      setCreateBusy(true);
+      setCreateError(null);
+      setCreateIsConflict(false);
+      createRoiCase({ ...values, idempotencyKey: createIdempotencyKey })
+        .then((res) => {
+          const newCase = res.case;
+          // Merge the server-returned case immediately (honest, real data —
+          // not a fabricated optimistic row) so selection/preview work
+          // without waiting on the refetch below, then refresh from the
+          // server for full list consistency (chip counts, ordering).
+          setCases((prev) => {
+            const withoutDup = (prev ?? []).filter((c) => c.caseId !== newCase.caseId);
+            return [newCase, ...withoutDup];
+          });
+          setSelectedCaseId(newCase.caseId);
+          setChip('all'); // ensure the new row is visible regardless of prior filter
+          setCreateOpen(false);
+          loadCases();
+        })
+        .catch((err) => {
+          const isConflict = err instanceof RoiApiError && err.status === 409;
+          setCreateIsConflict(isConflict);
+          setCreateError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setCreateBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [createIdempotencyKey, loadCases]
+  );
+
+  const openTransition = useCallback((row: RoiCaseListItem, id: RoiTransitionId) => {
+    setTransitionError(null);
+    setTransitionIsConflict(false);
+    setTransitionIdempotencyKey(newRoiIdempotencyKey());
+    setTransition({ row, id });
+  }, []);
+
+  const handleTransitionSubmit = useCallback(
+    (reason: string | null) => {
+      if (!transition) return;
+      const { row, id } = transition;
+      setTransitionBusy(true);
+      setTransitionError(null);
+      setTransitionIsConflict(false);
+      runRoiTransition(id, row.caseId, row.rowVersion, reason, transitionIdempotencyKey)
+        .then((res) => {
+          const updated = res.case;
+          setCases((prev) => (prev ?? []).map((c) => (c.caseId === updated.caseId ? updated : c)));
+          setTransition(null);
+          loadCases();
+        })
+        .catch((err) => {
+          const isConflict = err instanceof RoiApiError && err.status === 409;
+          setTransitionIsConflict(isConflict);
+          setTransitionError(err instanceof Error ? err.message : String(err));
+        })
+        .finally(() => setTransitionBusy(false));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [transition, transitionIdempotencyKey, loadCases]
+  );
 
   useEffect(() => {
     if (tab === 'all' && cases === null && !casesLoading) loadCases();
@@ -186,9 +379,79 @@ export const ResultsRoiHub: React.FC = () => {
     },
   ];
 
+  // Shared across both tabs: the transition dialog can be triggered from the
+  // "All cases" kebab only, but is rendered once here regardless of `tab` so
+  // it survives (and is memory-cheap to always mount).
+  const transitionDialog = (
+    <RoiTransitionDialog
+      open={!!transition}
+      transitionId={transition?.id ?? null}
+      caseTitle={transition?.row.title ?? ''}
+      isPolish={isPolish}
+      onClose={() => (transitionBusy ? undefined : setTransition(null))}
+      onSubmit={handleTransitionSubmit}
+      busy={transitionBusy}
+      errorMessage={transitionError}
+      isConflict={transitionIsConflict}
+    />
+  );
+
   if (tab === 'benefits') {
     const rows: TableRow[] = (benefitsRows ?? []).map(withId);
     return (
+      <>
+        <ResultsVNextRegistryShell
+          domain="roi"
+          moduleBar={{
+            tabs,
+            activeTab: tab,
+            onTabChange: (id) => setTab(id as RoiTab),
+            showTabCounts: false,
+            viewModes: ['table'],
+            viewMode: 'table',
+          }}
+          table={{
+            columns: buildRoiBenefitsRealizationColumns(isPolish),
+            data: rows,
+            persistKey: 'results-vnext.roi-registry.benefits',
+            loading: benefitsLoading,
+            error: benefitsError,
+            onRetry: loadBenefits,
+            empty:
+              !benefitsLoading && !benefitsError && rows.length === 0
+                ? {
+                    title: isPolish ? 'Brak spraw w realizacji' : 'No cases in realization',
+                    description: isPolish
+                      ? 'Żadna sprawa w Twoim łańcuchu zarządzania nie jest obecnie w fazie śledzenia/realizacji.'
+                      : 'No case in your management chain is currently tracking or realizing benefits.',
+                  }
+                : undefined,
+            selectedRowId: selectedBenefitsCaseId,
+            // `row` is `TableRow` (`{id: string; [key: string]: any}`) — `caseId`
+            // reads through the index signature, no cast needed/possible (the
+            // shapes don't sufficiently overlap for a direct `as`).
+            onRowClick: (row) => setSelectedBenefitsCaseId(String(row.caseId)),
+            defaultSort: { columnId: 'realizationPct', direction: 'desc' },
+          }}
+          preview={
+            selectedBenefitsRow
+              ? buildRoiBenefitsRealizationPreview(
+                  selectedBenefitsRow as RoiBenefitsRealizationRowVm,
+                  isPolish,
+                  () => setSelectedBenefitsCaseId(null)
+                )
+              : null
+          }
+        />
+        {transitionDialog}
+      </>
+    );
+  }
+
+  const rows: TableRow[] = filteredCases.map(withId);
+
+  return (
+    <>
       <ResultsVNextRegistryShell
         domain="roi"
         moduleBar={{
@@ -198,98 +461,75 @@ export const ResultsRoiHub: React.FC = () => {
           showTabCounts: false,
           viewModes: ['table'],
           viewMode: 'table',
+          chips,
+          activeChip: chip,
+          onChipChange: (id) => setChip(id as 'all' | RoiStatusBucket),
+          // Quick create (master plan §9 Etap 3) — only meaningful on the
+          // real case registry, not the read-only org rollup tab.
+          primaryCta: {
+            label: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+            icon: Plus,
+            onClick: openCreateModal,
+            testId: 'roi-registry-create-cta',
+          },
         }}
         table={{
-          columns: buildRoiBenefitsRealizationColumns(isPolish),
+          columns: buildRoiCaseColumns(isPolish),
           data: rows,
-          persistKey: 'results-vnext.roi-registry.benefits',
-          loading: benefitsLoading,
-          error: benefitsError,
-          onRetry: loadBenefits,
+          persistKey: 'results-vnext.roi-registry',
+          loading: casesLoading,
+          error: casesError,
+          onRetry: loadCases,
           empty:
-            !benefitsLoading && !benefitsError && rows.length === 0
+            !casesLoading && !casesError && rows.length === 0
               ? {
-                  title: isPolish ? 'Brak spraw w realizacji' : 'No cases in realization',
-                  description: isPolish
-                    ? 'Żadna sprawa w Twoim łańcuchu zarządzania nie jest obecnie w fazie śledzenia/realizacji.'
-                    : 'No case in your management chain is currently tracking or realizing benefits.',
+                  title: isPolish ? 'Brak spraw ROI' : 'No ROI cases yet',
+                  description:
+                    chip === 'all'
+                      ? isPolish
+                        ? 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.'
+                        : 'No ROI case has been created in this organization yet.'
+                      : isPolish
+                        ? 'Żadna sprawa nie pasuje do tego filtra.'
+                        : 'No case matches this filter.',
+                  actionLabel: isPolish ? 'Nowa sprawa ROI' : 'New ROI case',
+                  onAction: openCreateModal,
                 }
               : undefined,
-          selectedRowId: selectedBenefitsCaseId,
-          // `row` is `TableRow` (`{id: string; [key: string]: any}`) — `caseId`
-          // reads through the index signature, no cast needed/possible (the
-          // shapes don't sufficiently overlap for a direct `as`).
-          onRowClick: (row) => setSelectedBenefitsCaseId(String(row.caseId)),
-          defaultSort: { columnId: 'realizationPct', direction: 'desc' },
+          selectedRowId: selectedCaseId,
+          onRowClick: (row) => setSelectedCaseId(String(row.caseId)),
+          rowMenu: (row) =>
+            buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
+              onPreview: (r) => setSelectedCaseId(r.caseId),
+              onTransition: (r, id) => openTransition(r, id),
+            }),
+          defaultSort: { columnId: 'updatedAt', direction: 'desc' },
         }}
         preview={
-          selectedBenefitsRow
-            ? buildRoiBenefitsRealizationPreview(
-                selectedBenefitsRow as RoiBenefitsRealizationRowVm,
+          selectedCase
+            ? buildRoiCasePreview(selectedCase, {
                 isPolish,
-                () => setSelectedBenefitsCaseId(null)
-              )
+                onClose: () => setSelectedCaseId(null),
+                calculationRun,
+              })
             : null
         }
       />
-    );
-  }
-
-  const rows: TableRow[] = filteredCases.map(withId);
-
-  return (
-    <ResultsVNextRegistryShell
-      domain="roi"
-      moduleBar={{
-        tabs,
-        activeTab: tab,
-        onTabChange: (id) => setTab(id as RoiTab),
-        showTabCounts: false,
-        viewModes: ['table'],
-        viewMode: 'table',
-        chips,
-        activeChip: chip,
-        onChipChange: (id) => setChip(id as 'all' | RoiStatusBucket),
-      }}
-      table={{
-        columns: buildRoiCaseColumns(isPolish),
-        data: rows,
-        persistKey: 'results-vnext.roi-registry',
-        loading: casesLoading,
-        error: casesError,
-        onRetry: loadCases,
-        empty:
-          !casesLoading && !casesError && rows.length === 0
-            ? {
-                title: isPolish ? 'Brak spraw ROI' : 'No ROI cases yet',
-                description:
-                  chip === 'all'
-                    ? isPolish
-                      ? 'W tej organizacji nie utworzono jeszcze żadnej sprawy ROI.'
-                      : 'No ROI case has been created in this organization yet.'
-                    : isPolish
-                      ? 'Żadna sprawa nie pasuje do tego filtra.'
-                      : 'No case matches this filter.',
-              }
-            : undefined,
-        selectedRowId: selectedCaseId,
-        onRowClick: (row) => setSelectedCaseId(String(row.caseId)),
-        rowMenu: (row) =>
-          buildRoiCaseRowMenu(row as unknown as RoiCaseListItem, isPolish, {
-            onPreview: (r) => setSelectedCaseId(r.caseId),
-          }),
-        defaultSort: { columnId: 'updatedAt', direction: 'desc' },
-      }}
-      preview={
-        selectedCase
-          ? buildRoiCasePreview(selectedCase, {
-              isPolish,
-              onClose: () => setSelectedCaseId(null),
-              calculationRun,
-            })
-          : null
-      }
-    />
+      <RoiCaseCreateModal
+        open={createOpen}
+        onClose={() => (createBusy ? undefined : setCreateOpen(false))}
+        onSubmit={handleCreateSubmit}
+        isPolish={isPolish}
+        initiatives={initiatives ?? []}
+        initiativesLoading={initiativesLoading}
+        initiativesError={initiativesError}
+        currentUserId={currentUserId}
+        busy={createBusy}
+        errorMessage={createError}
+        isConflict={createIsConflict}
+      />
+      {transitionDialog}
+    </>
   );
 };
 
