@@ -5366,4 +5366,178 @@ zweryfikowanych.**
 
 **OKR domain backend complete: 8/8 epics (E001-E008) built and verified.**
 
+## 49. RN-G3 Outbox Dispatcher + `mywork_projection` consumer — implementacja + odbiór, pierwszy realny konsument (2026-08-10)
+
+Design: `docs/product/results-vnext/RN_G3_OUTBOX_DISPATCHER_DESIGN.md`
+(FROZEN, 5 wiążących rulingów Integration Ownera §2). Domyka największą
+lukę operacyjną programu: wszystkie trzy domeny (KPI 7 epików, ROI 8, OKR 8)
+poprawnie piszą `rvn_platform_events`/`rvn_platform_outbox`, ale przed tym
+pakietem NIC ich nie konsumowało — `outboxDrain.ts` był zestawem czystych
+funkcji bez cronu/rejestru/wywołania, potwierdzone grepem przed startem.
+
+**Zbudowane** (wszystko nowe poza jednym additive-only edytem):
+- `server/migrations/20260828_rvn_platform_consumer_processed.sql` —
+  tabela idempotencji konsumenta (`(consumer_group, event_id)` PK,
+  `ON CONFLICT DO NOTHING` guard) — główny mechanizm ochrony przed
+  redelivery pod at-least-once (design §5: `rvn_platform_obligations
+  .deduplication_key` NIE wystarcza — inna oś, inna warstwa).
+- `server/migrations/20260829_rvn_platform_outbox_parked_status.sql` —
+  rozszerza CHECK na `rvn_platform_outbox.status` o `'parked'` (IO-C).
+- `server/src/services/resultsVnext/platform/outboxDrain.ts` — **additive
+  only**: `markParked()` + poszerzony `RvnOutboxStatus`. Cztery istniejące,
+  już przetestowane funkcje (`claimOutboxBatch`/`reclaimExpiredClaims`/
+  `markDispatched`/`markFailed`) NIETKNIĘTE.
+- `server/src/services/resultsVnext/platform/consumerRegistry.ts` —
+  `CONSUMER_REGISTRY` (jeden wpis: `mywork_projection`) +
+  `UNBUILT_CONSUMER_GROUPS` (IO-C: `finance_projection` — 11 żywych typów
+  zdarzeń, zero konsumenta).
+- `server/src/services/resultsVnext/platform/myworkProjectionConsumer.ts` —
+  `dispatchMyWorkProjection`, `RVN_CANONICAL_STATES` (IO-A, jedyny
+  eksportowany const słownika, zero inline literali w miejscach wywołania).
+  Dwa zapisy w JEDNEJ transakcji per zdarzenie: upsert
+  `v8_canonical_object_states` (kopiowany SQL z `myWorkRoofService
+  .setCanonicalObjectState()`, NIE wywołany bezpośrednio — ta funkcja
+  używa `DbPromise`/osobnego połączenia z poola, co złamałoby atomowość
+  dwóch zapisów) + INSERT `notifications` (realna ścieżka do Inboxa przez
+  już wdrożone `materializeInboxItems()`, ZERO zmian w `inboxService.ts`).
+  Obsłużone realnie 4 typy zdarzeń z tabeli §8 designu
+  (`kpi.deviation_opened`/`kpi.deviation_closed`/`roi.case_approved`/
+  `okr_support.decision_requested`); pozostałe ~140 typów kierowanych na
+  `mywork_projection` (praktycznie każde zdarzenie KPI/ROI/OKR) są
+  celowym no-opem (zaklejmowane przez idempotency-insert, `dispatched`,
+  bez efektu) — rzucanie błędem zamiast no-opu dead-letterowałoby niemal
+  cały strumień zdarzeń KPI/ROI/OKR, dokładnie ten sam alert-fatigue który
+  IO-C odrzuca dla `finance_projection`. Rozszerzenie realnej obsługi na
+  więcej typów to zakres kolejnego pakietu.
+- `server/src/services/resultsVnext/platform/platformOutboxDrainCron.ts` —
+  strukturalne lustro `notificationOutboxService.ts`'s cronu (zmienne env,
+  `NODE_ENV==='test'` skip, boot-delay+interval, swallow-and-log), ale
+  ciało na `acquirePgClient()` (pinned `PoolClient`), nie `DbPromise` —
+  `claimOutboxBatch`/`reclaimExpiredClaims` wymagają realnych transakcji z
+  `FOR UPDATE SKIP LOCKED`. `runOutboxDispatchTick()` eksportowany osobno
+  do deterministycznego testowania jednego ticku.
+- `server/src/index.ts` — rejestracja cronu obok
+  `startNotificationOutboxDrainCron()`, jedna linia + import, try/catch
+  fail-soft jak wszystkie sąsiednie crony.
+
+**Osiem dowodów odbioru (design §10) — WSZYSTKIE 8 przechodzą na realnym
+lokalnym Postgresie 17** (`tests/acceptance/rvn-outbox-mywork-projection
+.e2e.test.ts`, wzorzec `outbox-drain.e2e.test.ts`: raw `pg.Client`, marker
+`odbior--rn-g3--<tag>`, `afterAll` sprząta, zero pozostałości potwierdzone
+zapytaniem po runie):
+1. Atomowy zapis event+outbox (realna komenda `openOrEscalateDeviationCase`
+   przez `recordMeasurement`) — PASS. Negatywna kontrola: `applyMutation`
+   rzuca (przez `executeAtomicCreate` bezpośrednio, realny insert do
+   `rvn_kpi_measurements` + throw) — ani agregat, ani event, ani outbox nie
+   istnieją po rollbacku — PASS.
+2. Exactly-once claim pod współbieżnością (5 realnych połączeń,
+   `Promise.all`, `claimOutboxBatch` na 12 zasianych wierszach
+   referencujących jeden realny event) — brak duplikatów, pełne pokrycie —
+   PASS.
+3. Realna mutacja: jeden tick na `kpi.deviation_opened` → wiersz
+   `v8_canonical_object_states` (`needs_attention`) + `notifications` dla
+   assignee obligacji — PASS.
+4. Brak duplikatu przy redelivery: `dispatchMyWorkProjection` wywołany
+   DWA razy na tym samym evencie → dokładnie jedna notyfikacja, jeden stan
+   kanoniczny, jeden wiersz `rvn_platform_consumer_processed` — PASS.
+5. Retry z backoff: `NO_CONSUMER_REGISTERED` → `next_attempt_at` przesunięty
+   o `backoffSeconds(30) * 2^0`, status `failed` (nie `dead_letter`) — PASS.
+6. Dead-letter + realny alert: `markFailed` napędzony do `max_attempts` →
+   `dead_letter`; realny tick doprowadzający OSTATNIĄ próbę → dokładnie
+   jedno wywołanie `sendSystemAlert` CRITICAL dla tej grupy — PASS.
+   Dodatkowo (IO-C): wiersz `finance_projection` parkuje (`status='parked'`,
+   `attempts=0`, `last_error='CONSUMER_NOT_BUILT'`) z jednym INFO notice,
+   ZERO wywołań CRITICAL — PASS.
+7. Cold reopen: `materializeInboxItems` po raz pierwszy odnajduje
+   projekcję; po `kpi.deviation_closed` i IO-E resolution, ponowna
+   materializacja NIE pokazuje itemu jako unread (trigger
+   `20260805_m02p03_inbox_projection_lifecycle.sql`, `AFTER UPDATE OF read`,
+   retiruje projekcję automatycznie w TEJ SAMEJ transakcji co UPDATE
+   konsumenta) — PASS.
+8. Izolacja międzyorganizacyjna: dwa orgi z `kpi.deviation_opened`
+   dzielącym LITERALNY `aggregate_id` (org B skonstruowany przez
+   `EVENT_INSERT_SQL`+`resolveConsumerGroups`, te same prymitywy co
+   `openOrEscalateDeviationCase` — `rvn_kpi_deviation_cases.case_id` jest
+   globalnym UUID PK, więc DWIE realne komendy nigdy nie kolidują; kolizja
+   testowana jest na `rvn_platform_events.aggregate_id`, który NIE ma
+   takiego ograniczenia) — zapytanie org-scoped nigdy nie zwraca danych
+   drugiego orga — PASS.
+
+**Dwa realne błędy produkcyjne złapane przez ten test** (opisane w commit
+message `test(rn-g3): ...`): (a) `notifications.is_read`/`read` są
+`INTEGER` na realnej, w pełni zmigrowanej tabeli — `000_initdb_core_tables
+.sql`'owa deklaracja `BOOLEAN` dla `is_read` jest przykryta późniejszą
+migracją; zapis JS `true`/`false` rzucał błąd typu, cicho rollbackujący
+CAŁĄ transakcję (stan kanoniczny + notyfikacja) — naprawione na `0`/`1`.
+(b) (tylko plik testowy) ręczne bloki `BEGIN`/`COMMIT` bez `ROLLBACK` przy
+błędzie zostawiały pulowane połączenia `pg` w stanie "aborted transaction",
+zatruwając kolejne, niepowiązane testy dzielące tę samą pulę — naprawione
+wspólnym helperem `withTransaction()`.
+
+**`npx tsc --noEmit` (`--max-old-space-size=8192`, `server/tsconfig.json`)
+czysty** poza tymi samymi 18 przedistniejącymi błędami `decimal.js` w
+`roiCalculationEngine.ts` (plik nietknięty przez ten pakiet; wcześniejsze
+wpisy w tym rejestrze notowały 28 — rozbieżność licznika nieweryfikowana w
+tej sesji, plik i przyczyna identyczne). Zero błędów w jakimkolwiek nowym/
+zmienionym pliku RN-G3.
+
+**Regresja KPI/ROI/OKR — `npx vitest run --config vitest.config.ts
+tests/resultsVnext` na tym samym lokalnym Postgresie (`RUN_DB_TESTS=1` —
+bez tego `getDatabase()` cicho zwraca mock, patrz pułapka niżej): 666/707
+pass, 33 failed, 8 skipped, w 18 plikach. WSZYSTKIE 18 plików to
+`tests/resultsVnext/roi/*.realdb.test.ts` i WSZYSTKIE 33 failury to ten sam
+`initiatives_organization_id_fkey` (fixture nie wstawia wiersza do
+`organizations` przed insertem do `initiatives`) — dokładnie
+przeddokumentowany, znany gap (`INITIATIVES_STATUS_FIX_RECONCILIATION.md`,
+18 z 36 plików ROI realdb), zero nowych failurów, zero plików KPI/OKR w
+liście failed.**
+
+**Pułapka złapana w tej sesji (dla następcy)**: `getDatabase()`
+(`server/src/database/Database.ts`) cicho zwraca `createMockDatabase()`
+gdy `NODE_ENV=test` i `RUN_DB_TESTS !== '1'` — `inboxService.ts`'s
+`materializeInboxItems`/`getInboxItems` idą przez tę warstwę (nie przez
+`acquirePgClient()`), więc bez `RUN_DB_TESTS=1` proof 7 raportował
+`upserted: 0` na PUSTYM mocku, mimo że notyfikacja realnie istniała w
+Postgresie — ta sama rodzina pułapki co `FIN-005`/audyt bazy z MEMORY.
+
+**IO-D — blocker promocyjny, NIE designowy, zapisany tu jawnie**: CHECK
+`v8_canonical_object_states_object_type_check` rozszerzony o
+`kpi`/`roi_case`/`okr_set`/`deviation_case` istnieje w
+`server/migrations/20260809_rvn_platform_canonical_object_type_extend.sql`
+wyłącznie dla `public.v8_canonical_object_states` — kopia w schemacie `v8`
+(`server/migrations/20260719_baseline_gap.sql`) NIE jest dotknięta. Ten
+pakiet buduje i testuje wyłącznie przeciw efemerycznemu Postgresowi ze
+świeżą migracją (`public` schema, zgodnie z `search_path` runnera migracji)
+— PRZED promocją na demo trzeba zweryfikować przez `information_schema`
+które schema (`public` czy `v8`) jest realnie żywe na demo (ta sama
+niedomknięta decyzja #3 z §7 tego rejestru, restated tu dla RN-G3
+konkretnie — jeśli demo faktycznie czyta `v8.v8_canonical_object_states`,
+ten konsument pisze do martwej kopii).
+
+**Dwa martwe placeholdery w routing mapie (IO-B), pozostawione bez zmian**:
+`decisions_projection`/`notifications_projection` w `atomicWrite.ts`'s
+`EVENT_TYPE_CONSUMER_GROUPS` mają ZERO producentów (żaden `event_type` nie
+routuje do nich) — nie usunięte (decyzja write-side, poza zakresem tego
+pakietu dispatch-side), nie dodano dla nich wpisów w `CONSUMER_REGISTRY`.
+Nigdy nie dead-letterują, bo nigdy nie dostają wierszy.
+
+**Co jeszcze potrzebuje `finance_projection` (IO-C, §9 designu)**: 11 żywych
+typów zdarzeń (`roi.case_approved` i pokrewne) parkuje bez konsumenta.
+Brakuje: (1) identyfikacji docelowego read-modelu Finance (nieustalone w
+tej sesji ani w designie), (2) napisania funkcji konsumenta, (3)
+zarejestrowania jej w `CONSUMER_REGISTRY`, (4) usunięcia
+`'finance_projection'` z `UNBUILT_CONSUMER_GROUPS`. Do tego czasu wiersze
+zostają widoczne i replayable (status `parked`), nigdy nie giną cicho.
+
+**Świadomie NIEZBUDOWANE / poza zakresem tego pakietu**: realna obsługa
+projekcji dla ~140 typów zdarzeń innych niż te 4 z tabeli §8 designu (patrz
+wyżej, "Zbudowane"); `finance_projection`'owy konsument; usunięcie martwych
+placeholderów z routing mapy.
+
+**RN-G3 zamyka pierwszą pionową kromkę end-to-end: domenowa komenda →
+event+outbox (atomowo) → dispatcher → konsument → MyWork (stan kanoniczny)
++ Inbox (notyfikacja realnie widoczna przez istniejący pull path), z retry/
+backoff/dead-letter/park i izolacją multi-tenant, dowiedzione na realnym
+Postgresie, nie na docach.**
+
 
