@@ -120,6 +120,11 @@ import {
 } from '../../services/resultsVnext/roi/roiScenarioCommands.js';
 import { startRoiCaseTracking } from '../../services/resultsVnext/roi/roiTrackingCommands.js';
 import {
+  cancelRoiCase,
+  startRoiCaseBenefitsRealization,
+} from '../../services/resultsVnext/roi/roiBenefitsRealizationCommands.js';
+import { getRoiCaseBenefitsRealizationView } from '../../services/resultsVnext/roi/roiBenefitsRealizationRepository.js';
+import {
   createRoiForecastVersion,
   RoiForecastVersionValidationError,
 } from '../../services/resultsVnext/roi/roiForecastVersionCommands.js';
@@ -208,6 +213,7 @@ import {
   RecordActualEntrySchema,
   RecordVarianceSchema,
   RemoveVarianceCauseSchema,
+  RoiCaseCancellationSchema,
   RoiActualEntryParamsSchema,
   RoiActualSnapshotParamsSchema,
   RoiForecastVersionParamsSchema,
@@ -2453,6 +2459,88 @@ router.delete(
       });
     } catch (err) {
       handleRoiRouteError(res, err, 'removeVarianceCause');
+    }
+  }
+);
+
+// ==========================================================================
+// ROI-E005 — Benefits Realization routes (design §4)
+// ==========================================================================
+
+// ---------- POST .../transitions/start-benefits-realization ----------
+// Reuses mountTransitionRoute — startRoiCaseBenefitsRealization's input shape
+// is RunRoiCaseLifecycleTransitionInput-compatible (caseId/organizationId/
+// expectedVersion/actorUserId/actorEffectiveRole/idempotencyKey/
+// correlationId/causationId/reason), same as startRoiCaseTracking above.
+
+mountTransitionRoute(
+  '/cases/:caseId/transitions/start-benefits-realization',
+  'startRoiCaseBenefitsRealization',
+  startRoiCaseBenefitsRealization
+);
+
+// ---------- POST .../transitions/cancel — cancelRoiCase ----------
+// NOT routed through mountTransitionRoute — cancelRoiCase's `reason` is
+// mandatory (Decision D8), unlike RoiCaseTransitionSchema's optional/
+// nullable one mountTransitionRoute hardcodes, so this needs its own schema
+// (RoiCaseCancellationSchema) and its own handler — same shape as the
+// `/transitions/reject` route above (RejectRoiCaseSchema's mandatory
+// rejectionReason).
+
+router.post(
+  '/cases/:caseId/transitions/cancel',
+  validateParams(RoiCaseIdParamsSchema),
+  validateBody(RoiCaseCancellationSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      if (!(await requireExistingRoiCase(auth, caseId, res))) return;
+      const body = req.body as import('zod').infer<typeof RoiCaseCancellationSchema>;
+      const outcome = await cancelRoiCase({
+        caseId,
+        organizationId: auth.organizationId,
+        expectedVersion: body.expectedVersion,
+        reason: body.reason,
+        actorUserId: auth.userId,
+        actorEffectiveRole: auth.role,
+        idempotencyKey: resolveIdempotencyKey(body.idempotencyKey),
+        correlationId: getCorrelationId(req),
+      });
+      res.status(200).json({
+        outcome: outcome.outcome,
+        eventId: outcome.eventId,
+        resultingVersion: outcome.resultingVersion,
+        case: outcome.result,
+      });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'cancelRoiCase');
+    }
+  }
+);
+
+// ---------- GET .../benefits-realization — getRoiCaseBenefitsRealizationView ----------
+// Decision D14: no status restriction — readable in any status, same "no
+// status restriction on GET routes" convention `getRoiCaseCompareView`'s own
+// route above uses.
+
+router.get(
+  '/cases/:caseId/benefits-realization',
+  validateParams(RoiCaseIdParamsSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    const auth = requireAuth(req, res);
+    if (!auth) return;
+    try {
+      const { caseId } = req.params as { caseId: string };
+      const view = await getRoiCaseBenefitsRealizationView({ userId: auth.userId, organizationId: auth.organizationId, caseId });
+      if (!view) {
+        res.status(404).json({ error: 'ROI case not found', code: 'NOT_FOUND' });
+        return;
+      }
+      res.status(200).json({ benefitsRealization: view });
+    } catch (err) {
+      handleRoiRouteError(res, err, 'getRoiCaseBenefitsRealizationView');
     }
   }
 );

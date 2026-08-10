@@ -252,6 +252,15 @@ export const EVENT_TYPE_CONSUMER_GROUPS: Readonly<Record<string, readonly string
   'roi.material_variance_detected': ['mywork_projection'],
   'roi.variance_status_updated': ['mywork_projection'],
   'roi.variance_cause_added': ['mywork_projection'],
+
+  // ROI-E005 (docs/product/results-vnext/ROI_E005_DESIGN.md §4) — Benefits
+  // Realization. Both new event types fan to BOTH 'mywork_projection' AND
+  // 'finance_projection' — same rationale ROI-E004's own tracking/actual
+  // events above used: a status transition into/out of the financially
+  // -relevant tracking lifecycle is a durable financial-facing fact, not
+  // just a MyWork-facing one.
+  'roi.benefits_realization_started': ['mywork_projection', 'finance_projection'],
+  'roi.case_cancelled': ['mywork_projection', 'finance_projection'],
 };
 
 /**

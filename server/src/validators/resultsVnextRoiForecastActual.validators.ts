@@ -76,6 +76,16 @@ export const RoiCaseTransitionSchema = z.object({
 });
 
 // ==========================================
+// POST .../transitions/cancel — cancelRoiCase (ROI-E005 design §4)
+// ==========================================
+
+/** `reason` is REQUIRED here (Decision D8) — overrides the base schema's
+ * optional/nullable `reason` field with a mandatory non-empty string. */
+export const RoiCaseCancellationSchema = RoiCaseTransitionSchema.extend({
+  reason: z.string().min(1).max(MAX_REASON_CHARS),
+});
+
+// ==========================================
 // POST .../forecast-versions — createRoiForecastVersion
 // ==========================================
 
