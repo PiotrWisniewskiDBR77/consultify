@@ -44,6 +44,10 @@ const mockListOkrSets = vi.fn();
 const mockListOkrSetApprovedSnapshots = vi.fn();
 const mockGetOkrSetApprovedSnapshot = vi.fn();
 
+// OKR-E008 — Half B (Perspectives)
+const mockListMyOkrSets = vi.fn();
+const mockListOrganizationOkrTeamHealth = vi.fn();
+
 // OKR-E003
 const mockCreateObjective = vi.fn();
 const mockUpdateObjective = vi.fn();
@@ -147,6 +151,12 @@ vi.mock('../../../services/resultsVnext/okr/okrSetRepository.js', () => ({
   listOkrSets: (...args: unknown[]) => mockListOkrSets(...args),
   listOkrSetApprovedSnapshots: (...args: unknown[]) => mockListOkrSetApprovedSnapshots(...args),
   getOkrSetApprovedSnapshot: (...args: unknown[]) => mockGetOkrSetApprovedSnapshot(...args),
+}));
+
+// OKR-E008 — Half B (Perspectives)
+vi.mock('../../../services/resultsVnext/okr/okrPerspectivesRepository.js', () => ({
+  listMyOkrSets: (...args: unknown[]) => mockListMyOkrSets(...args),
+  listOrganizationOkrTeamHealth: (...args: unknown[]) => mockListOrganizationOkrTeamHealth(...args),
 }));
 
 // OKR-E003
@@ -798,6 +808,43 @@ describe('GET /company — listOkrSets pinned to scope_type company', () => {
     expect(mockListOkrSets).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId: 'org-1', scopeType: 'company' })
     );
+  });
+});
+
+// ==========================================
+// OKR-E008 — Half B (Perspectives): GET /my, GET /team-health
+// ==========================================
+
+describe('GET /my — listMyOkrSets', () => {
+  it('passes userId/organizationId/limit/offset through to the repository', async () => {
+    mockListMyOkrSets.mockResolvedValue([setFixture()]);
+    const response = await request(createApp()).get('/api/vnext/results/okr/my?limit=10&offset=5');
+    expect(response.status).toBe(200);
+    expect(response.body.sets).toHaveLength(1);
+    expect(mockListMyOkrSets).toHaveBeenCalledWith({
+      userId: 'user-1',
+      organizationId: 'org-1',
+      limit: 10,
+      offset: 5,
+    });
+  });
+});
+
+describe('GET /team-health — listOrganizationOkrTeamHealth', () => {
+  it('passes managerId/organizationId through to the repository, no query params', async () => {
+    mockListOrganizationOkrTeamHealth.mockResolvedValue({
+      countsByStatus: [{ status: 'active', count: 1 }],
+      countsByScopeType: [{ scopeType: 'individual', count: 1 }],
+      attentionBreakdown: [{ attentionState: 'none', count: 1 }],
+      sets: [{ setId: SET_ID, currentVersion: 1, status: 'active', scopeType: 'individual' }],
+    });
+    const response = await request(createApp()).get('/api/vnext/results/okr/team-health');
+    expect(response.status).toBe(200);
+    expect(response.body.teamHealth.sets).toHaveLength(1);
+    expect(mockListOrganizationOkrTeamHealth).toHaveBeenCalledWith({
+      managerId: 'user-1',
+      organizationId: 'org-1',
+    });
   });
 });
 
